@@ -1,38 +1,35 @@
 // backend/config/config.js
 
-// As variáveis de ambiente agora são carregadas apenas no server.js
+require('dotenv').config();
 
 module.exports = {
-  // Configuração de DESENVOLVIMENTO (o que você está usando agora)
+  // Configuração LOCAL (Seu computador)
   development: {
-    username: process.env.DB_USER,     // Puxa do .env
-    password: process.env.DB_PASSWORD, // Puxa do .env
-    database: process.env.DB_NAME,     // Puxa do .env
-    host: process.env.DB_HOST,         // Puxa do .env
-    dialect: process.env.DB_DIALECT    // Puxa do .env (deve ser 'postgres')
+    username: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    host: process.env.DB_HOST,
+    dialect: 'postgres',
   },
 
-  // Configuração de TESTE (para testes automatizados no futuro)
+  // Configuração de TESTE
   test: {
     username: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     host: process.env.DB_HOST,
-    dialect: process.env.DB_DIALECT
+    dialect: 'postgres'
   },
 
-  // Configuração de PRODUÇÃO (quando você hospedar o site)
+  // Configuração de PRODUÇÃO (Render)
   production: {
-  username: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  host: process.env.DB_HOST,
-  dialect: process.env.DB_DIALECT,
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false
+    use_env_variable: 'DATABASE_URL', // <--- O SEGREDO: Usa a URL completa do Render
+    dialect: 'postgres',
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false // Necessário para o Render aceitar a conexão
+      }
     }
   }
-}
-}
+};
