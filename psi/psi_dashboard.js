@@ -1,7 +1,7 @@
 // Arquivo: psi_dashboard.js (VERSÃO FINAL 2.1)
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("--- SISTEMA GIRASSOL V2.1 INICIADO ---");
+    console.log("--- SISTEMA Yelo V2.1 INICIADO ---");
     
     let psychologistData = null; 
     
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
             this.textContent = "Saindo...";
             
             // 2. Remove o "crachá" de acesso (Token)
-            localStorage.removeItem('girassol_token');
+            localStorage.removeItem('Yelo_token');
             
             // 3. Redireciona imediatamente para o Login
             window.location.href = '../login.html';
@@ -123,13 +123,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function apiFetch(url, options = {}) {
-        const token = localStorage.getItem('girassol_token');
+        const token = localStorage.getItem('Yelo_token');
         if (!token) throw new Error("Token não encontrado.");
         const headers = { 'Authorization': `Bearer ${token}`, ...options.headers };
         if (!(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
         const response = await fetch(url, { ...options, headers });
         if (response.status === 401) {
-            localStorage.removeItem('girassol_token');
+            localStorage.removeItem('Yelo_token');
             window.location.href = '../login.html';
             throw new Error("Sessão expirada.");
         }
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function fetchPsychologistData() {
-        const token = localStorage.getItem('girassol_token');
+        const token = localStorage.getItem('Yelo_token');
         if (!token) { window.location.href = '../login.html'; return false; }
         try {
             const response = await fetch(`${API_BASE_URL}/api/psychologists/me`, {
@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             throw new Error("Token inválido");
         } catch (error) {
-            localStorage.removeItem('girassol_token');
+            localStorage.removeItem('Yelo_token');
             window.location.href = '../login.html';
             return false;
         }
@@ -924,7 +924,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     border: none;
                     padding: 5px;
                     cursor: pointer;
-                    color: #1B4332; /* Verde Jano */
+                    color: #1B4332; /* Verde Yelo */
                     opacity: 0.4;
                     transition: all 0.3s ease;
                     z-index: 2;
@@ -990,7 +990,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const len = textarea.value.length;
             charCounter.textContent = `${len}/50 caracteres`;
             if (len >= 50) {
-                charCounter.style.color = "#1B4332"; // Verde Jano
+                charCounter.style.color = "#1B4332"; // Verde Yelo
                 charCounter.style.fontWeight = "bold";
                 btnSubmit.disabled = false;
             } else {
@@ -1065,7 +1065,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const li = document.createElement('li');
                 li.className = `message-item`;
                 
-                // Ícone Vermelho para Suporte (Visual Jano)
+                // Ícone Vermelho para Suporte (Visual Yelo)
                 const avatarLetra = conv.type === 'support' ? 'S' : (conv.participant.nome[0] || '?');
                 const bgAvatar = conv.type === 'support' ? '#E63946' : 'var(--verde-escuro)'; 
                 
@@ -1229,7 +1229,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 renderInboxList([{
                     id: 'suporte_admin',
                     type: 'support',
-                    participant: { nome: 'Suporte Jano', role: 'Administração' },
+                    participant: { nome: 'Suporte Yelo', role: 'Administração' },
                     lastMessage: 'Clique para conectar.'
                 }]);
             });
@@ -1429,7 +1429,7 @@ function setupMultiselects() {
         } catch (e) { return []; }
     }
 
-// --- FUNÇÃO AUXILIAR: MODAL DE CONFIRMAÇÃO PERSONALIZADO (TEMA JANO) ---
+// --- FUNÇÃO AUXILIAR: MODAL DE CONFIRMAÇÃO PERSONALIZADO (TEMA Yelo) ---
 function abrirModalConfirmacaoPersonalizado(titulo, mensagem, onConfirm) {
     // 1. Cria o fundo escuro (overlay)
     const overlay = document.createElement('div');

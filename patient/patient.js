@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. FUNÇÃO DE SEGURANÇA E BUSCA DE DADOS REAIS
     // -----------------------------------------------------
     async function fetchPatientData() {
-        const token = localStorage.getItem('girassol_token');
+        const token = localStorage.getItem('Yelo_token');
 
         if (!token) {
             window.location.href = loginUrl;
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error('Falha na autenticação inicial:', error.message);
-            localStorage.removeItem('girassol_token');
+            localStorage.removeItem('Yelo_token');
             window.location.href = loginUrl;
         }
     }
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
         matchesGrid.innerHTML = '<p class="text-center">Buscando profissionais compatíveis...</p>';
 
         try {
-            const token = localStorage.getItem('girassol_token');
+            const token = localStorage.getItem('Yelo_token');
             
             const response = await fetch(`${API_BASE_URL}/api/psychologists/matches`, {
                 method: 'GET',
@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
         favoritosGrid.innerHTML = '<p>Carregando seus favoritos...</p>';
 
         try {
-            const token = localStorage.getItem('girassol_token');
+            const token = localStorage.getItem('Yelo_token');
             const response = await fetch(`${API_BASE_URL}/api/patients/me/favorites`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -234,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!container || !emptyState) return;
 
         try {
-            const token = localStorage.getItem('girassol_token');
+            const token = localStorage.getItem('Yelo_token');
             const response = await fetch(`${API_BASE_URL}/api/patients/me/reviews`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
         favoriteButtons.forEach(button => {
             button.addEventListener('click', async () => {
                 const psychologistId = button.dataset.id;
-                const token = localStorage.getItem('girassol_token');
+                const token = localStorage.getItem('Yelo_token');
 
                 try { // prettier-ignore
                     const response = await fetch(`${API_BASE_URL}/api/patients/me/favorites`, {
@@ -354,7 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Lógica para atualizar dados pessoais ---
         formDados.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const token = localStorage.getItem('girassol_token');
+            const token = localStorage.getItem('Yelo_token');
 
             try {
                 const response = await fetch(`${API_BASE_URL}/api/patients/me`, {
@@ -386,7 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Lógica para alterar a senha ---
         formSenha.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const token = localStorage.getItem('girassol_token');
+            const token = localStorage.getItem('Yelo_token');
 
             const senhaAtual = document.getElementById('senha-atual').value;
             const novaSenha = document.getElementById('nova-senha').value;
@@ -445,7 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
 
                         try {
-                            const token = localStorage.getItem('girassol_token');
+                            const token = localStorage.getItem('Yelo_token');
                             const response = await fetch(`${API_BASE_URL}/api/patients/me`, {
                                 method: 'DELETE',
                                 headers: {
@@ -459,7 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             if (response.ok) {
                                 alert(result.message);
-                                localStorage.removeItem('girassol_token');
+                                localStorage.removeItem('Yelo_token');
                                 window.location.href = '../index.html';
                             } else {
                                 modalErrorMsg.textContent = result.error || 'Ocorreu um erro.';
@@ -551,7 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (logoutLink) {
             logoutLink.addEventListener('click', (e) => {
                 e.preventDefault();
-                localStorage.removeItem('girassol_token'); 
+                localStorage.removeItem('Yelo_token'); 
                 window.location.href = '../login.html'; // MANDA PARA A PÁGINA DE LOGIN (NA RAIZ)
             });
         }

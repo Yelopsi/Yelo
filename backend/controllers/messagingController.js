@@ -11,7 +11,7 @@ exports.getConversations = async (req, res) => {
         id: 'suporte_admin',
         type: 'support',
         participant: {
-          nome: 'Suporte Jano',
+          nome: 'Suporte Yelo',
           role: 'Administração'
         },
         lastMessage: 'Canal direto com a administração.',

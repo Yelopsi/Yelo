@@ -7,7 +7,7 @@ window.initializePage = async function() {
     if (!container) return;
 
     // 1. RECUPERA O TOKEN DE SEGURANÇA
-    const token = localStorage.getItem('girassol_token');
+    const token = localStorage.getItem('Yelo_token');
 
     // Se não tiver token, nem tenta buscar (força logout ou avisa)
     if (!token) {

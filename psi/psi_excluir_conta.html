@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Encerrar Conta - Projeto Girassol</title>
+    <title>Encerrar Conta - Projeto Yelo</title>
 
     <link rel="stylesheet" href="../style.css?v=2.3">
     <link rel="stylesheet" href="psi_dashboard.css?v=2.3">
@@ -18,7 +18,7 @@
         
         <aside class="dashboard-sidebar">
             <div class="sidebar-header"> 
-                <img src="../assets/logos/logo_duplo_branco.png" alt="Logo Girassol" class="sidebar-logo">
+                <img src="../assets/logos/logo_duplo_branco.png" alt="Logo Yelo" class="sidebar-logo">
             </div>
             <nav class="sidebar-nav">
                 <ul>
@@ -37,7 +37,7 @@
             </div>
 
             <div class="widget">
-                <h3>Sua Jornada no Girassol</h3>
+                <h3>Sua Jornada no Yelo</h3>
                 <div class="exit-stats-grid">
                     <div class="exit-stat-card">
                         <div class="stat-icon">📅</div>
@@ -135,7 +135,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            const token = localStorage.getItem('girassol_token');
+            const token = localStorage.getItem('Yelo_token');
             if(!token) window.location.href = '../login.html';
 
             // --- 1. CARREGAR DADOS ---
@@ -272,7 +272,7 @@
                     document.getElementById('modal-decisao-saida').style.display = 'none';
                     
                     showToast('Conta e assinatura encerradas. Sentiremos sua falta.', 'success');
-                    localStorage.removeItem('girassol_token');
+                    localStorage.removeItem('Yelo_token');
                     setTimeout(() => { window.location.href = '../index.html'; }, 3000);
                 } else {
                     const err = await response.json();

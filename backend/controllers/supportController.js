@@ -29,7 +29,7 @@ exports.getConversations = async (req, res) => {
         return res.json([{
             id: 'suporte_admin',
             type: 'support',
-            participant: { nome: 'Suporte Jano', role: 'Administração' }
+            participant: { nome: 'Suporte Yelo', role: 'Administração' }
         }]);
     }
   } catch (error) {

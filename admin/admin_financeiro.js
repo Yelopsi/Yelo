@@ -1,7 +1,7 @@
 // admin/admin_financeiro.js
 
 window.initializePage = function() {
-    const token = localStorage.getItem('girassol_token');
+    const token = localStorage.getItem('Yelo_token');
     if (!token) {
         console.error("Token de autenticação não encontrado.");
         return;

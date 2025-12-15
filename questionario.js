@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const questions = [
         { id: 'boas-vindas', question: "Vamos encontrar a pessoa certa para te acompanhar nessa jornada.", subtitle: "Responda algumas perguntas para começarmos.", type: 'welcome' },
         { id: 'nome', question: "Olá! Para começarmos, como podemos te chamar?", subtitle: "Isso nos ajuda a te entregar uma experiência personalizada.", type: 'text', placeholder: "Digite seu nome ou apelido", required: true, autocomplete: 'off' },
-        { id: 'idade', question: "Certo, [NOME]. Muito prazer! E qual a sua faixa etária?", subtitle: "Isso nos ajuda a entender melhor quem busca a Girassol.", type: 'choice', choices: ["Menor de 18 anos", "18-24 anos", "25-34 anos", "35-44 anos", "45-54 anos", "55+ anos"], required: true },
+        { id: 'idade', question: "Certo, [NOME]. Muito prazer! E qual a sua faixa etária?", subtitle: "Isso nos ajuda a entender melhor quem busca a Yelo.", type: 'choice', choices: ["Menor de 18 anos", "18-24 anos", "25-34 anos", "35-44 anos", "45-54 anos", "55+ anos"], required: true },
         { id: 'identidade_genero', question: "Agora, [NOME], com qual gênero você se identifica?", subtitle: "Sua identidade é importante. Selecione a opção que melhor te representa.", type: 'choice', scrollable: true, choices: ["Masculino", "Feminino", "Não-binário", "Agênero", "Bigênero", "Pangênero", "Genderqueer", "Gênero fluido", "Demigênero", "Andrógeno", "Outro", "Prefiro não informar"], required: true },
         { id: 'pref_genero_prof', question: "Você tem preferência pelo gênero do(a) profissional?", subtitle: "Sua segurança e conforto são nossa prioridade.", type: 'choice', choices: ["Indiferente", "Masculino", "Feminino", "Não-binário"], required: true },
         { id: 'motivacao', question: "[NOME], o que te motivou a buscar terapia agora?", subtitle: "Saber seu ponto de partida nos ajuda a encontrar o melhor caminho. Selecione as principais opções.", type: 'multiple-choice', scrollable: true, choices: ["Estou passando por um desafio específico", "Quero me conhecer melhor", "Recebi uma recomendação", "Estou lidando com sintomas difíceis (ansiedade, tristeza)", "Quero melhorar meus relacionamentos", "Outro", "Não tenho certeza"], required: true },
@@ -20,11 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'faixa_valor', question: "Qual faixa de valor você pode investir por sessão?", subtitle: "Isso garante que vamos te conectar com profissionais que cabem no seu orçamento.", type: 'choice', choices: ["Até R$ 50", "R$ 51 - R$ 90", "R$ 91 - R$ 150", "Acima de R$ 150"], required: true },
         { id: 'modalidade_atendimento', question: "Como você prefere ser atendido?", subtitle: "Isso nos ajuda a filtrar profissionais pela sua localização ou disponibilidade online.", type: 'choice', choices: ["Online", "Presencial", "Indiferente (Online ou Presencial)"], required: true },
         { id: 'cep', question: "Qual o seu CEP?", subtitle: "Isso nos ajuda a encontrar profissionais que atendem presencialmente perto de você.", type: 'text', placeholder: "00000-000", required: true, inputMode: 'numeric' },
-        { id: 'whatsapp', question: "Para finalizar, [NOME], qual seu número de WhatsApp?", subtitle: "Seu número será usado apenas para o contato inicial do profissional e mensagens de acompanhamento da Girassol.", type: 'tel', placeholder: "(XX) XXXXX-XXXX", required: true, inputMode: 'numeric' },
+        { id: 'whatsapp', question: "Para finalizar, [NOME], qual seu número de WhatsApp?", subtitle: "Seu número será usado apenas para o contato inicial do profissional e mensagens de acompanhamento da Yelo.", type: 'tel', placeholder: "(XX) XXXXX-XXXX", required: true, inputMode: 'numeric' },
         { id: 'avaliacao_ux', question: "Como você avalia sua experiência ao preencher este questionário?", subtitle: "Seu feedback nos ajuda a melhorar!", type: 'rating', required: true },
         { id: 'agradecimento', type: 'thank-you', question: "Obrigado pelo seu feedback, [NOME]!", subtitle: "Sua jornada de cuidado está prestes a começar." },
         { id: 'final', type: 'final', question: "Tudo pronto, [NOME]!", subtitle: "Estamos cruzando suas respostas para encontrar as conexões mais significativas. Em instantes, você verá suas recomendações."},
-        { id: 'erro-idade', type: 'error', question: "Atenção", subtitle: "A plataforma Girassol é destinada apenas para maiores de 18 anos...", buttonText: "Entendi e Sair"}
+        { id: 'erro-idade', type: 'error', question: "Atenção", subtitle: "A plataforma Yelo é destinada apenas para maiores de 18 anos...", buttonText: "Entendi e Sair"}
     ];
     
     let currentStep = 0;
@@ -361,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // --- LÓGICA DE IDADE ---
                     if (currentQuestion.id === 'idade' && target.dataset.value === 'Menor de 18 anos') {
-                        sessionStorage.setItem('jano_user_name', userAnswers.nome || ''); 
+                        sessionStorage.setItem('Yelo_user_name', userAnswers.nome || ''); 
                         window.location.href = 'menor_de_idade.html';
                     } else {
                         let proximoPasso = currentStep + 1;

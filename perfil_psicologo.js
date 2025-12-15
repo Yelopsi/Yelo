@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (profile.telefone) {
                 const cleanPhone = profile.telefone.replace(/\D/g, '');
                 // Link oficial da API do WhatsApp
-                btnZap.href = `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=Olá!%20Encontrei%20seu%20perfil%20na%20plataforma%20Jano/Girassol%20e%20gostaria%20de%20saber%20sobre%20horários.`;
+                btnZap.href = `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=Olá!%20Encontrei%20seu%20perfil%20na%20plataforma%20Yelo/Yelo%20e%20gostaria%20de%20saber%20sobre%20horários.`;
                 
                 // TRACKING: Adiciona o evento de clique
                 btnZap.onclick = () => trackConversion(profile.id, 'whatsapp');

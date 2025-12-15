@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Função para buscar os dados da API
     async function fetchPendingVerifications() {
         try {
-            const token = localStorage.getItem('girassol_token_admin');
+            const token = localStorage.getItem('Yelo_token_admin');
             const response = await fetch('/api/admin/verifications', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const token = localStorage.getItem('girassol_token_admin');
+            const token = localStorage.getItem('Yelo_token_admin');
             const response = await fetch(`/api/admin/psychologists/${id}/moderate`, {
                 method: 'PUT',
                 headers: {

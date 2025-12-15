@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const questions = [
         // Etapa 1: Boas-vindas e Dados Básicos
-        { id: 'boas-vindas', type: 'welcome', question: "Boas-vindas ao Girassol, colega.", subtitle: "Estamos felizes por ter você aqui. Este questionário inicial é a etapa mais importante: ele define seu perfil para que possamos conectá-lo(a) aos pacientes certos. Responda com calma." },        
+        { id: 'boas-vindas', type: 'welcome', question: "Boas-vindas ao Yelo, colega.", subtitle: "Estamos felizes por ter você aqui. Este questionário inicial é a etapa mais importante: ele define seu perfil para que possamos conectá-lo(a) aos pacientes certos. Responda com calma." },        
         { id: 'nome', type: 'text', question: "Primeiro, qual o seu nome completo?", placeholder: "Nome Completo", required: true },
         { id: 'email', type: 'email', question: "Qual o seu melhor e-mail profissional?", placeholder: "E-mail Profissional", required: true, inputMode: 'email' },
         { id: 'crp', type: 'text', question: "E o seu número de registro no CRP?", placeholder: "Número do CRP (ex: 06/123456)", required: true, inputMode: 'numeric' },
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
           question: "Ótima notícia! Há uma grande procura por seu perfil."
         },
 
-        { id: 'waitlisted', type: 'waitlisted', question: "Agradecemos seu interesse na Girassol!", subtitle: "No momento, a busca por profissionais com seu perfil específico já está bem atendida. Para garantir que todos os nossos parceiros tenham sucesso, adicionamos seu perfil à nossa lista de espera. Deixe seu e-mail abaixo para ser notificado(a) assim que surgir uma nova oportunidade.", buttonText: "Confirmar E-mail e Finalizar" },
+        { id: 'waitlisted', type: 'waitlisted', question: "Agradecemos seu interesse na Yelo!", subtitle: "No momento, a busca por profissionais com seu perfil específico já está bem atendida. Para garantir que todos os nossos parceiros tenham sucesso, adicionamos seu perfil à nossa lista de espera. Deixe seu e-mail abaixo para ser notificado(a) assim que surgir uma nova oportunidade.", buttonText: "Confirmar E-mail e Finalizar" },
         { id: 'error', type: 'error', question: "Oops! Ocorreu um problema.", subtitle: "Não foi possível conectar ao servidor para verificar a demanda. Por favor, tente novamente em alguns instantes.", buttonText: "Tentar Novamente" }
     ];
 

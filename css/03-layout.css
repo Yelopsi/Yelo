@@ -151,9 +151,9 @@ header.header-rolagem .btn-solid {
     transition: all 0.3s ease;
 }
 
-/* Efeito ao passar o mouse (Fica Amarelo Girassol) */
+/* Efeito ao passar o mouse (Fica Amarelo Yelo) */
 .rodape-social a:hover svg {
-    fill: var(--cor-girassol);
+    fill: var(--cor-Yelo);
     transform: translateY(-3px); /* Sobe um pouquinho */
 }
 
@@ -163,7 +163,7 @@ header.header-rolagem .btn-solid {
 .rodape-nav a, .rodape-links-legais a {
     color: #e9ecef; text-decoration: none; font-size: 16px; transition: color 0.3s ease;
 }
-.rodape-nav a:hover, .rodape-links-legais a:hover { color: var(--cor-girassol); }
+.rodape-nav a:hover, .rodape-links-legais a:hover { color: var(--cor-Yelo); }
 
 .rodape-divisor { border: none; height: 1px; background-color: #495057; width: 100%; margin: 0; display: block; }
 

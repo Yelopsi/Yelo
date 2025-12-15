@@ -1,5 +1,5 @@
 window.initializePage = function() {
-    const token = localStorage.getItem('girassol_token');
+    const token = localStorage.getItem('Yelo_token');
 
     const formDados = document.getElementById('form-dados-admin');
     const formSenha = document.getElementById('form-senha-admin');

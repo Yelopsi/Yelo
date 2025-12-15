@@ -6,7 +6,7 @@
 
 :root {
     --verde-escuro: #1B4332;
-    --cor-girassol: #FFEE8C;
+    --cor-Yelo: #FFEE8C;
     --branco-puro: #FFFFFF;
     --cinza-fundo: #f8f9fa;
     --cinza-borda: #e9ecef;
@@ -138,7 +138,7 @@ h1, h2, h3, h4 { font-family: 'New Kansas', serif; color: var(--verde-escuro); }
 }
 .user-info p { margin: 0; font-weight: 600; color: var(--branco-puro); font-size: 1rem; }
 .user-info .sidebar-logout {
-    font-size: 0.85rem; color: var(--cor-girassol);
+    font-size: 0.85rem; color: var(--cor-Yelo);
     text-decoration: none; opacity: 0.8; transition: opacity 0.2s; font-weight: bold;
 }
 .user-info .sidebar-logout:hover { opacity: 1; }
@@ -147,7 +147,7 @@ h1, h2, h3, h4 { font-family: 'New Kansas', serif; color: var(--verde-escuro); }
 #btn-view-public-profile {
     display: flex; align-items: center; justify-content: center; gap: 8px;
     width: 100%; padding: 10px; margin-top: 15px;
-    background-color: var(--cor-girassol);
+    background-color: var(--cor-Yelo);
     border: none; border-radius: 25px;
     color: var(--verde-escuro);
     text-decoration: none; font-size: 0.9rem; font-weight: 700;
@@ -185,7 +185,7 @@ h1, h2, h3, h4 { font-family: 'New Kansas', serif; color: var(--verde-escuro); }
 
 /* Badges (Notificação) */
 .notification-badge, .badge-em-breve {
-    background-color: var(--cor-girassol); color: var(--verde-escuro);
+    background-color: var(--cor-Yelo); color: var(--verde-escuro);
     font-size: 0.7rem; font-weight: bold;
     padding: 2px 6px; border-radius: 10px;
     margin-left: auto; flex-shrink: 0;
@@ -280,7 +280,7 @@ h1, h2, h3, h4 { font-family: 'New Kansas', serif; color: var(--verde-escuro); }
 #verification-widget.status-verified { background-color: #f0fdf4; border-left-color: #16a34a; color: #14532d; }
 
 /* ==========================================================================
-   MULTISELECT CUSTOMIZADO (MODERNO & ESTILO GIRASSOL)
+   MULTISELECT CUSTOMIZADO (MODERNO & ESTILO Yelo)
    ========================================================================== */
 
 /* 1. O Campo de Input (Display) */
@@ -319,7 +319,7 @@ h1, h2, h3, h4 { font-family: 'New Kansas', serif; color: var(--verde-escuro); }
 
 /* 2. As Etiquetas (Tags) - Estilo Pílula */
 .multiselect-display .tag {
-    background-color: var(--cor-girassol); /* Amarelo da marca */
+    background-color: var(--cor-Yelo); /* Amarelo da marca */
     color: var(--verde-escuro); /* Texto verde para contraste */
     padding: 3px 14px;
     border-radius: 15px; /* Formato Pílula */
@@ -360,7 +360,7 @@ h1, h2, h3, h4 { font-family: 'New Kansas', serif; color: var(--verde-escuro); }
 
 .multiselect-display .tag .remove-tag:hover {
     background: var(--verde-escuro); /* Fica verde sólido no hover */
-    color: var(--cor-girassol); /* O 'x' vira amarelo */
+    color: var(--cor-Yelo); /* O 'x' vira amarelo */
 }
 
 /* 3. O Menu Dropdown (Lista de Opções) */
@@ -511,7 +511,7 @@ h1, h2, h3, h4 { font-family: 'New Kansas', serif; color: var(--verde-escuro); }
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.05);
     margin-bottom: 40px;
-    border-left: 6px solid var(--cor-girassol); /* Detalhe amarelo */
+    border-left: 6px solid var(--cor-Yelo); /* Detalhe amarelo */
     display: flex;
     justify-content: space-between; /* Separa texto dos links */
     align-items: center;
@@ -671,7 +671,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 }
 
 .meta-badge {
-    background-color: var(--cor-girassol);
+    background-color: var(--cor-Yelo);
     color: var(--verde-escuro);
     padding: 2px 8px;
     border-radius: 4px;
@@ -972,7 +972,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 
 /* Cores por tipo */
 .toast-success {
-    background-color: #1B4332; /* Verde Jano */
+    background-color: #1B4332; /* Verde Yelo */
     border-left: 5px solid #4ade80;
 }
 
@@ -1163,7 +1163,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 .message-item.unread .sender-name { color: var(--verde-escuro); }
 .message-item.unread::after {
     content: ''; position: absolute; right: 15px; top: 50%;
-    width: 8px; height: 8px; background-color: var(--cor-girassol);
+    width: 8px; height: 8px; background-color: var(--cor-Yelo);
     border-radius: 50%;
 }
 
@@ -1229,11 +1229,11 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     color: var(--verde-escuro);
     font-weight: bold;
     text-decoration: none;
-    border-bottom: 2px solid var(--cor-girassol);
+    border-bottom: 2px solid var(--cor-Yelo);
     padding-bottom: 2px;
     transition: all 0.2s;
 }
-.btn-link:hover { background-color: var(--cor-girassol); color: var(--verde-escuro); }
+.btn-link:hover { background-color: var(--cor-Yelo); color: var(--verde-escuro); }
 
 /* Botão do Header (Branco/Transparente) */
 .btn-outline-light {

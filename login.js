@@ -112,8 +112,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 4. Tratamento da Resposta
                 if (response.ok) {
                     showMessage('Login bem-sucedido! Redirecionando...', false);
-                    localStorage.setItem('girassol_token', data.token);
-                    localStorage.setItem('girassol_role', role); // <-- LINHA ADICIONADA
+                    localStorage.setItem('Yelo_token', data.token);
+                    localStorage.setItem('Yelo_role', role); // <-- LINHA ADICIONADA
 
                     // --- INÍCIO DA CORREÇÃO ---
                     // 1. Procura por um parâmetro 'return_url' na URL
@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             return;
                         }
 
-                        const savedAnswers = localStorage.getItem('girassol_questionario_respostas');
+                        const savedAnswers = localStorage.getItem('Yelo_questionario_respostas');
                         if (savedAnswers) {
                             window.location.href = 'resultados.html';
                         } else {

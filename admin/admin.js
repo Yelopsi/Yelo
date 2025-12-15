@@ -2,12 +2,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const mainContent = document.getElementById('main-content');
 
     function logout() {
-        localStorage.removeItem('girassol_token');
+        localStorage.removeItem('Yelo_token');
         window.location.replace('login.html');
     }
 
     async function initializeAndProtect() {
-        const token = localStorage.getItem('girassol_token');
+        const token = localStorage.getItem('Yelo_token');
         if (!token) { logout(); return; }
 
         try {
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         try {
-            const token = localStorage.getItem('girassol_token');
+            const token = localStorage.getItem('Yelo_token');
             const query = `?startDate=${startInput.value}&endDate=${endInput.value}`;
             
             const response = await fetch(`${API_BASE_URL}/api/admin/reports/charts${query}`, {

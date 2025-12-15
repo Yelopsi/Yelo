@@ -1,8 +1,8 @@
 {
-  "name": "Girassol - Encontre seu Psicólogo",
-  "short_name": "Girassol",
+  "name": "Yelo - Encontre seu Psicólogo",
+  "short_name": "Yelo",
   "description": "Conectando cuidado e propósito através de um questionário inteligente.",
-  "start_url": "/projeto-girassol/", 
+  "start_url": "/projeto-Yelo/", 
   "display": "standalone", 
   "background_color": "#1B4332", 
   "theme_color": "#1B4332", 

@@ -1,7 +1,7 @@
 /* Adicione este bloco no topo do seu style.css */
 :root {
     --verde-escuro: #1B4332;
-    --cor-girassol: #FFEE8C;
+    --cor-Yelo: #FFEE8C;
     --branco-puro: #FFFFFF;
     --off-white: #fdfaf6;
     --cinza-texto: #555;
@@ -213,7 +213,7 @@ header.header-rolagem .menu-hamburguer .barra {
     background-color: #333;
 }
 header.header-rolagem nav a:hover {
-    color: var(--cor-girassol);
+    color: var(--cor-Yelo);
 }
 
 /* --- Seções --- */
@@ -236,7 +236,7 @@ header.header-rolagem nav a:hover {
 }
 .btn-cta-principal {
     display: inline-block;
-    background-color: var(--cor-girassol);
+    background-color: var(--cor-Yelo);
     color: var(--verde-escuro);
     font-size: 18px; /* Fonte do CTA reduzida */
     font-weight: bold;
@@ -580,7 +580,7 @@ header.header-rolagem nav a:hover {
 
 .rodape-nav a:hover, 
 .rodape-links-legais a:hover {
-    color: var(--cor-girassol);
+    color: var(--cor-Yelo);
 }
 
 .rodape-divisor {
@@ -1003,7 +1003,7 @@ header.header-rolagem nav a:hover {
 
 #faq-busca:focus {
     outline: none;
-    border-color: var(--cor-girassol);
+    border-color: var(--cor-Yelo);
 }
 
 .faq-categoria {
@@ -1275,7 +1275,7 @@ header.header-rolagem nav a:hover {
 /* Ajuste no botão CTA principal, caso precise */
 .btn-cta-principal {
     display: inline-block;
-    background-color: var(--cor-girassol);
+    background-color: var(--cor-Yelo);
     color: var(--verde-escuro);
     padding: 15px 35px;
     border-radius: 30px;
@@ -1463,7 +1463,7 @@ header.header-rolagem nav a:hover {
     left: 0;
     top: 0;
     color: var(--verde-escuro);
-    background-color: var(--cor-girassol);
+    background-color: var(--cor-Yelo);
     border-radius: 50%;
     width: 25px;
     height: 25px;
@@ -1784,7 +1784,7 @@ header.header-rolagem nav a:hover {
 .progress-bar-fill {
     width: 0%;
     height: 100%;
-    background-color: var(--cor-girassol);
+    background-color: var(--cor-Yelo);
     transition: width 0.4s ease-in-out;
     border-radius: 0 5px 5px 0;
 }
@@ -1855,7 +1855,7 @@ header.header-rolagem nav a:hover {
 }
 .slide-body::-webkit-scrollbar { width: 8px; }
 .slide-body::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); border-radius: 10px; }
-.slide-body::-webkit-scrollbar-thumb { background: var(--cor-girassol); border-radius: 10px; }
+.slide-body::-webkit-scrollbar-thumb { background: var(--cor-Yelo); border-radius: 10px; }
 
 /* 3. A NAVEGAÇÃO (BOTÕES) */
 .navigation-buttons {
@@ -1882,11 +1882,11 @@ header.header-rolagem nav a:hover {
 }
 .back-button {background: none; border: none; color: rgba(255, 255, 255, 0.7); font-family: 'Inter', sans-serif; font-weight: 500; font-size: 1rem; cursor: pointer; padding: 10px; transition: color 0.2s ease;}
 .back-button:hover {color: var(--branco-puro);}
-.cta-button {background-color: var(--cor-girassol); color: var(--verde-escuro); border: none; padding: 15px 40px; border-radius: 30px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: transform 0.2s ease;}
+.cta-button {background-color: var(--cor-Yelo); color: var(--verde-escuro); border: none; padding: 15px 40px; border-radius: 30px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: transform 0.2s ease;}
 .cta-button:hover {transform: scale(1.05);}
 .text-input, .choices-container {width: 100%; max-width: 500px; margin-top: 20px;}
 .text-input {background: none; border: none; border-bottom: 2px solid rgba(255, 255, 255, 0.5); color: var(--branco-puro); font-size: 1.6rem; text-align: center; padding: 10px;} /* Fonte reduzida */
-.text-input:focus {outline: none; border-bottom-color: var(--cor-girassol);}
+.text-input:focus {outline: none; border-bottom-color: var(--cor-Yelo);}
 .choices-container {display: flex; flex-direction: column; gap: 12px;}
 .choice-button {background-color: rgba(255, 255, 255, 0.1); color: var(--off-white); border: 2px solid rgba(255, 255, 255, 0.3); padding: 14px 18px; border-radius: 12px; font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; text-align: center;} /* Botão mais compacto */
 
@@ -1905,7 +1905,7 @@ header.header-rolagem nav a:hover {
     border-radius: 10px;
 }
 .choices-container.scrollable::-webkit-scrollbar-thumb {
-    background-color: var(--cor-girassol);
+    background-color: var(--cor-Yelo);
     border-radius: 10px;
 }
 
@@ -1948,7 +1948,7 @@ header.header-rolagem nav a:hover {
 .text-input:not(:placeholder-shown) + .input-label {
     top: 0;
     font-size: 0.8rem;
-    color: var(--cor-girassol);
+    color: var(--cor-Yelo);
     background-color: var(--verde-escuro); /* Cor de fundo do questionário escuro */
 }
 
@@ -2015,7 +2015,7 @@ header.header-rolagem nav a:hover {
     width: 100%;
     height: 100%;
     fill: transparent; 
-    stroke: #FFEE8C; /* Amarelo Girassol */
+    stroke: #FFEE8C; /* Amarelo Yelo */
     stroke-width: 1.5px;
     transition: fill 0.3s ease;
 }
@@ -2182,7 +2182,7 @@ header.header-rolagem nav a:hover {
     margin-bottom: 15px;
 }
 .tag {
-    background-color: var(--cor-girassol);
+    background-color: var(--cor-Yelo);
     color: var(--verde-escuro);
     padding: 4px 10px; /* Tag mais compacta */
     border-radius: 20px;
@@ -2331,7 +2331,7 @@ header.header-rolagem nav a:hover {
 
 .form-group-questionario .text-input:focus {
     background-color: rgba(255, 255, 255, 0.15);
-    border-color: var(--cor-girassol);
+    border-color: var(--cor-Yelo);
 }
 
 /* --- Estilo para o componente de Upload --- */
@@ -2367,7 +2367,7 @@ header.header-rolagem nav a:hover {
 
 .upload-label:hover {
     background-color: rgba(255, 255, 255, 0.1);
-    border-color: var(--cor-girassol);
+    border-color: var(--cor-Yelo);
 }
 
 .upload-label span {
@@ -2529,7 +2529,7 @@ body.pagina-dashboard {
 }
 .select-input:focus {
     outline: none;
-    border-color: var(--cor-girassol);
+    border-color: var(--cor-Yelo);
 }
 /* Estilo para as opções dentro do dropdown */
 .select-input option {
@@ -2691,7 +2691,7 @@ body.pagina-dashboard {
 .card-auth h2 {
     font-size: 24px;
     font-weight: 700;
-    color: #1B4332; /* Verde Girassol */
+    color: #1B4332; /* Verde Yelo */
     margin-bottom: 24px;
     text-align: center; /* Centraliza o texto */
 }
@@ -3035,7 +3035,7 @@ body.pagina-dashboard {
      background-color: #f5f5f5;
  }
  .conversation-item.active {
-     background-color: var(--cor-girassol);
+     background-color: var(--cor-Yelo);
  }
  .conversation-item img {
      width: 50px;
@@ -3224,7 +3224,7 @@ body.pagina-dashboard {
     /* Cor de fundo do círculo (branco/transparente) */
     border: 5px solid rgba(255, 255, 255, 0.2); 
     
-    /* Cor principal da animação (amarelo-girassol) */
+    /* Cor principal da animação (amarelo-Yelo) */
     border-top-color: #FFEE8C; 
     
     animation: spin 1s linear infinite;
@@ -3542,7 +3542,7 @@ body.pagina-dashboard {
     margin-top: 15px;
 }
 .tag, .small-tag {
-    background-color: var(--cor-girassol);
+    background-color: var(--cor-Yelo);
     color: var(--verde-escuro);
     padding: 5px 12px;
     border-radius: 20px;
@@ -3926,7 +3926,7 @@ header.header-rolagem .botoes-acao .btn-outline:hover {
 }
 
 .feedback-textarea:focus {
-    border-color: var(--cor-girassol);
+    border-color: var(--cor-Yelo);
     background-color: rgba(255, 255, 255, 0.1);
 }
 
@@ -3936,7 +3936,7 @@ header.header-rolagem .botoes-acao .btn-outline:hover {
     top: -10px !important; /* Sobe o label para fora da caixa */
     background-color: var(--verde-escuro);
     font-size: 0.8rem;
-    color: var(--cor-girassol);
+    color: var(--cor-Yelo);
 }
 /* Estrelas de Média no Topo */
 .rating-summary-stars {
@@ -4150,7 +4150,7 @@ header.header-rolagem .botoes-acao .btn-outline:hover {
     left: 20px;
     font-family: 'New Kansas', serif;
     font-size: 4rem;
-    color: var(--cor-girassol);
+    color: var(--cor-Yelo);
     opacity: 0.4;
     line-height: 0;
 }
@@ -4205,7 +4205,7 @@ header.header-rolagem .botoes-acao .btn-outline:hover {
 
 .practice-tag::before {
     content: '•';
-    color: var(--cor-girassol);
+    color: var(--cor-Yelo);
     font-size: 1.2rem;
     line-height: 0;
 }
@@ -4304,7 +4304,7 @@ header.header-rolagem .botoes-acao .btn-outline:hover {
 
 /* Estado Selecionado (Ativo) */
 .choice-button.selected {
-    background-color: #FFEE8C !important; /* Amarelo Girassol */
+    background-color: #FFEE8C !important; /* Amarelo Yelo */
     color: #1B4332 !important;           /* Verde Escuro */
     border-color: #FFEE8C !important;
     font-weight: 700;                     /* Negrito para destaque */
@@ -4323,7 +4323,7 @@ header.header-rolagem .botoes-acao .btn-outline:hover {
 
 button.choice-button.selected,
 .choice-button.selected {
-    background-color: #FFEE8C !important; /* Amarelo Girassol */
+    background-color: #FFEE8C !important; /* Amarelo Yelo */
     color: #1B4332 !important;           /* Verde Escuro */
     border-color: #FFEE8C !important;     /* Borda Amarela */
     font-weight: 700 !important;          /* Negrito */
@@ -4483,7 +4483,7 @@ header .logo .logo-escura { opacity: 0 !important; }
     position: absolute;
     top: 15px;
     left: 15px;
-    background-color: var(--verde-escuro); /* Fundo Verde Jano */
+    background-color: var(--verde-escuro); /* Fundo Verde Yelo */
     color: #ffffff;
     font-family: 'Inter', sans-serif;
     font-size: 0.75rem;

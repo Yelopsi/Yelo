@@ -1,6 +1,6 @@
 {
-  "name": "Girassol - Apoio Psicológico",
-  "short_name": "Girassol",
+  "name": "Yelo - Apoio Psicológico",
+  "short_name": "Yelo",
   "description": "Plataforma de apoio psicológico que conecta pacientes a psicólogos com foco em acolhimento e compatibilidade.",
   "start_url": "/index.html?source=pwa",
   "display": "standalone",

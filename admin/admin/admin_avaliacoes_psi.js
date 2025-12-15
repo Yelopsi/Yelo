@@ -1,6 +1,6 @@
 window.initializePage = async function() {
     const container = document.getElementById('lista-exit');
-    const token = localStorage.getItem('girassol_token');
+    const token = localStorage.getItem('Yelo_token');
 
     try {
         const response = await fetch('/api/admin/exit-surveys', {

@@ -5,7 +5,7 @@ window.initializePage = async function() {
     
     // Configuração da API
     const API_BASE_URL = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : 'http://localhost:3001';
-    const token = localStorage.getItem('girassol_token');
+    const token = localStorage.getItem('Yelo_token');
 
     if (!token) {
         console.error("Token não encontrado.");

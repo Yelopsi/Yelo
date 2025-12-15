@@ -16,8 +16,8 @@ async function sendInvitationEmail(psychologist, invitationLink) {
 
     const emailContent = {
         to: email,
-        from: 'nao-responda@jano.com', // Use um e-mail verificado no seu serviço
-        subject: 'Uma oportunidade para você na Jano!',
+        from: 'nao-responda@Yelo.com', // Use um e-mail verificado no seu serviço
+        subject: 'Uma oportunidade para você na Yelo!',
         html: `
             <div style="font-family: sans-serif; line-height: 1.6;">
                 <h2>Olá, ${nome},</h2>
@@ -28,7 +28,7 @@ async function sendInvitationEmail(psychologist, invitationLink) {
                 <a href="${invitationLink}" style="background-color: #FFEE8C; color: #1B4332; padding: 15px 25px; text-decoration: none; border-radius: 30px; font-weight: bold; display: inline-block; margin: 20px 0;">Completar Cadastro Agora</a>
                 <p>Após esse período, o convite expirará e a oportunidade será oferecida ao próximo profissional da lista.</p>
                 <p>Estamos ansiosos para ter você conosco!</p>
-                <p>Atenciosamente,<br>Equipe Jano</p>
+                <p>Atenciosamente,<br>Equipe Yelo</p>
             </div>
         `,
     };
@@ -47,16 +47,16 @@ async function sendPasswordResetEmail(user, resetLink) {
 
     const emailContent = {
         to: email,
-        from: 'nao-responda@jano.com',
-        subject: 'Redefinição de Senha - Jano',
+        from: 'nao-responda@Yelo.com',
+        subject: 'Redefinição de Senha - Yelo',
         html: `
             <div style="font-family: sans-serif; line-height: 1.6;">
                 <h2>Olá, ${nome},</h2>
-                <p>Recebemos uma solicitação para redefinir sua senha na plataforma Jano.</p>
+                <p>Recebemos uma solicitação para redefinir sua senha na plataforma Yelo.</p>
                 <p>Se foi você, clique no botão abaixo para criar uma nova senha. Este link é válido por 1 hora.</p>
                 <a href="${resetLink}" style="background-color: #FFEE8C; color: #1B4332; padding: 15px 25px; text-decoration: none; border-radius: 30px; font-weight: bold; display: inline-block; margin: 20px 0;">Redefinir Minha Senha</a>
                 <p>Se você não solicitou esta alteração, pode ignorar este e-mail com segurança.</p>
-                <p>Atenciosamente,<br>Equipe Jano</p>
+                <p>Atenciosamente,<br>Equipe Yelo</p>
             </div>
         `,
     };
@@ -80,18 +80,18 @@ async function sendRejectionEmail(psychologist, reason) {
 
     const emailContent = {
         to: email,
-        from: 'nao-responda@jano.com',
-        subject: 'Atualização sobre seu cadastro na Jano',
+        from: 'nao-responda@Yelo.com',
+        subject: 'Atualização sobre seu cadastro na Yelo',
         html: `
             <div style="font-family: sans-serif; line-height: 1.6;">
                 <h2>Olá, ${nome},</h2>
-                <p>Agradecemos seu interesse em fazer parte da comunidade Jano.</p>
+                <p>Agradecemos seu interesse em fazer parte da comunidade Yelo.</p>
                 <p>Após análise, seu cadastro não pôde ser aprovado neste momento pelo seguinte motivo:</p>
                 <div style="background-color: #f8f9fa; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
                     <p style="margin: 0;"><em>${reason}</em></p>
                 </div>
                 <p>Se você acredita que isso foi um erro ou pode corrigir a pendência, por favor, entre em contato com nosso suporte.</p>
-                <p>Atenciosamente,<br>Equipe Jano</p>
+                <p>Atenciosamente,<br>Equipe Yelo</p>
             </div>
         `,
     };
@@ -109,12 +109,12 @@ async function sendApprovalEmail(psychologist) {
 
     const emailContent = {
         to: email,
-        from: 'nao-responda@jano.com',
-        subject: 'Seu perfil na Jano foi aprovado!',
+        from: 'nao-responda@Yelo.com',
+        subject: 'Seu perfil na Yelo foi aprovado!',
         html: `
             <div style="font-family: sans-serif; line-height: 1.6;">
                 <h2>Parabéns, ${nome}!</h2>
-                <p>Temos o prazer de informar que seu cadastro na plataforma Jano foi <strong>aprovado</strong> por nossa equipe!</p>
+                <p>Temos o prazer de informar que seu cadastro na plataforma Yelo foi <strong>aprovado</strong> por nossa equipe!</p>
                 <p>Seu perfil já está ativo e pode ser recomendado para pacientes que buscam um profissional com suas qualificações.</p>
                 <p>Sugerimos os seguintes próximos passos:</p>
                 <ul>
@@ -123,7 +123,7 @@ async function sendApprovalEmail(psychologist) {
                 </ul>
                 <a href="http://127.0.0.1:5500/login.html" style="background-color: #FFEE8C; color: #1B4332; padding: 15px 25px; text-decoration: none; border-radius: 30px; font-weight: bold; display: inline-block; margin: 20px 0;">Acessar meu Painel</a>
                 <p>Seja bem-vindo(a) à nossa comunidade!</p>
-                <p>Atenciosamente,<br>Equipe Jano</p>
+                <p>Atenciosamente,<br>Equipe Yelo</p>
             </div>
         `,
     };

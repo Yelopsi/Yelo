@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showToast(message, type = 'success') {
-        let toast = document.getElementById('jano-toast');
+        let toast = document.getElementById('Yelo-toast');
         if (!toast) return alert(message);
         toast.textContent = message;
         toast.className = `toast toast-${type}`;

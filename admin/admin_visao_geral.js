@@ -14,7 +14,7 @@ window.initializePage = function() {
         ? window.API_BASE_URL 
         : 'http://localhost:3001';
 
-    const token = localStorage.getItem('girassol_token');
+    const token = localStorage.getItem('Yelo_token');
     if (!token) {
         // Se não houver token, a lógica em admin.js já fará o logout.
         console.error("Token de autenticação não encontrado.");
@@ -137,7 +137,7 @@ window.initializePage = function() {
                         {
                             label: 'Novos Psicólogos',
                             data: chartData.psychologistData,
-                            backgroundColor: 'rgba(255, 238, 140, 0.7)', // Amarelo Girassol
+                            backgroundColor: 'rgba(255, 238, 140, 0.7)', // Amarelo Yelo
                             borderColor: 'rgba(255, 238, 140, 1)',
                             borderWidth: 1
                         }

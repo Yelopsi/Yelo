@@ -1,9 +1,9 @@
-// admin_caixa_entrada.js (Versão Adaptada para Suporte Jano)
+// admin_caixa_entrada.js (Versão Adaptada para Suporte Yelo)
 
 window.initializePage = function() {
     console.log("Admin Chat Simplificado Iniciado");
 
-    const token = localStorage.getItem('girassol_token');
+    const token = localStorage.getItem('Yelo_token');
     if (!token) { window.location.href = 'login.html'; return; }
 
     // --- 1. CAPTURA DE ELEMENTOS (Conforme seu HTML) ---

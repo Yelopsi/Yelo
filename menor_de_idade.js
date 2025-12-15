@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Tenta buscar o nome salvo no sessionStorage
-    const nome = sessionStorage.getItem('jano_user_name');
+    const nome = sessionStorage.getItem('Yelo_user_name');
     const titleElement = document.getElementById('welcome-title');
 
     if (!titleElement) return;
@@ -14,5 +14,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 3. Limpa o nome do sessionStorage para não vazar
-    sessionStorage.removeItem('jano_user_name');
+    sessionStorage.removeItem('Yelo_user_name');
 });

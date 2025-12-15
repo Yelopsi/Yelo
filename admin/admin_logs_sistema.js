@@ -1,7 +1,7 @@
 // admin/admin_logs_sistema.js
 
 window.initializePage = function() {
-    const token = localStorage.getItem('girassol_token');
+    const token = localStorage.getItem('Yelo_token');
     const tableBody = document.getElementById('logs-table-body');
 
     if (!tableBody || !token) {

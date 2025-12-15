@@ -1,7 +1,7 @@
 window.initializePage = function() {
     const tableBody = document.getElementById('patients-table-body');
     const rowTemplate = document.getElementById('patient-row-template');
-    const token = localStorage.getItem('girassol_token');
+    const token = localStorage.getItem('Yelo_token');
 
     if (!tableBody || !rowTemplate || !token) {
         console.error("Elementos essenciais ou token não encontrados.");

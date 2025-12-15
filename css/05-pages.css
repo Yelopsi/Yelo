@@ -546,7 +546,7 @@
 .lista-beneficios-moderna li:hover {
     transform: translateY(-3px);
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    border-color: var(--cor-girassol);
+    border-color: var(--cor-Yelo);
 }
 
 /* O ícone de Check (feito com CSS e SVG) */
@@ -598,7 +598,7 @@
 .coluna-item:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    border-color: var(--cor-girassol);
+    border-color: var(--cor-Yelo);
 }
 
 /* Detalhe visual (Borda colorida no topo do card) */
@@ -888,8 +888,8 @@
     line-height: 1.5;
 }
 
-/* Card "O que é a Jano" (Verde Menta) */
-.card-sobre-jano {
+/* Card "O que é a Yelo" (Verde Menta) */
+.card-sobre-Yelo {
     background-color: #E0F2F1 !important; /* Verde Menta Suave */
     border: 1px solid #B2DFDB !important; /* Borda Verde um pouco mais escura */
     border-left: 5px solid var(--verde-escuro) !important; /* Detalhe lateral */
@@ -899,13 +899,13 @@
     padding: 40px !important;
     border-radius: 12px !important;
 }
-.card-sobre-jano h3 {
+.card-sobre-Yelo h3 {
     color: var(--verde-escuro) !important;
     font-size: 1.5rem !important;
     margin-top: 0;
     font-family: 'New Kansas', serif;
 }
-.card-sobre-jano p {
+.card-sobre-Yelo p {
     color: #2c3e35 !important; /* Texto escuro legível sobre o menta */
 }
 /* --- SEÇÃO COMO FUNCIONA (Estilo Rico/Humanizado) --- */
@@ -1008,7 +1008,7 @@
     height: 100%;
     top: 20px;
     left: 20px;
-    background-color: var(--cor-girassol);
+    background-color: var(--cor-Yelo);
     border-radius: 24px;
     z-index: 1; /* Atrás da imagem */
     opacity: 0.4;
@@ -1111,7 +1111,7 @@
     width: 25px;
 }
 
-/* --- COLUNA DESTAQUE (JANO) --- */
+/* --- COLUNA DESTAQUE (Yelo) --- */
 .coluna-tabela.destaque {
     border: 2px solid var(--verde-escuro);
     box-shadow: 0 10px 40px rgba(27, 67, 50, 0.15);
@@ -1128,7 +1128,7 @@
     left: 50%;
     transform: translateX(-50%);
     background-color: var(--verde-escuro);
-    color: var(--cor-girassol);
+    color: var(--cor-Yelo);
     padding: 5px 15px;
     border-radius: 20px;
     font-size: 0.85rem;
@@ -1286,7 +1286,7 @@
     transform: none; /* Remove efeitos de clique */
 }
 
-/* Estado PRONTO (50+ caracteres) - Verde Jano */
+/* Estado PRONTO (50+ caracteres) - Verde Yelo */
 #submit-question-btn:not(:disabled) {
     background-color: var(--verde-escuro, #1B4332); /* Fallback se a var não carregar */
     color: #fff;
@@ -1329,7 +1329,7 @@
 
 /* Estado PRONTO (50+ caracteres) */
 #submit-question-btn:not(:disabled) {
-    background-color: var(--verde-escuro, #1B4332); /* Fallback para Verde Jano */
+    background-color: var(--verde-escuro, #1B4332); /* Fallback para Verde Yelo */
     color: #ffffff;
     border: none;
     cursor: pointer;

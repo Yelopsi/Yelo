@@ -1,4 +1,4 @@
-const CACHE_NAME = 'girassol-cache-v1';
+const CACHE_NAME = 'Yelo-cache-v1';
 const urlsToCache = [
   '/',
   '/index.html',

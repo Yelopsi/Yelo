@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // --- LÓGICA NOVA DE FAVORITO ---
         // Verifica se já está favoritado (seja via API ou localmente)
-        const token = localStorage.getItem('girassol_token');
+        const token = localStorage.getItem('Yelo_token');
         let isFav = profile.isFavorited;
 
         if (!token) {
@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const clearLoadingInterval = () => clearInterval(messageInterval);
 
         // 1. Pega o token do localStorage
-        const token = localStorage.getItem('girassol_token');
+        const token = localStorage.getItem('Yelo_token');
 
         // 2. Se não houver token, redireciona para o login
         if (!token) {
@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Se o token for inválido ou expirado, a API retornará um erro 401
                 clearLoadingInterval();
                 console.error("Falha na autenticação ou erro na API:", response.status);
-                localStorage.removeItem('girassol_token'); // Limpa o token inválido
+                localStorage.removeItem('Yelo_token'); // Limpa o token inválido
                 window.location.href = loginUrl; // Envia para o login
             }
 
@@ -316,7 +316,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 e.stopPropagation(); // Evita clicar no card se houver link
                 
                 const psychologistId = newButton.dataset.id;
-                const token = localStorage.getItem('girassol_token');
+                const token = localStorage.getItem('Yelo_token');
 
                 // --- CENÁRIO 1: USUÁRIO NÃO LOGADO (OFFLINE) ---
                 if (!token) {

@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const mensagemEl = document.getElementById('mensagem-login');
 
     // Se já existe um token, tenta redirecionar direto para o dashboard
-    if (localStorage.getItem('girassol_token')) {
+    if (localStorage.getItem('Yelo_token')) {
         window.location.href = 'admin.html';
     }
 
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 showMessage('Login bem-sucedido! Redirecionando...', false);
-                localStorage.setItem('girassol_token', data.token);
+                localStorage.setItem('Yelo_token', data.token);
                 setTimeout(() => {
                     window.location.href = 'admin.html';
                 }, 500);

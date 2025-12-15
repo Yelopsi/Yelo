@@ -19,7 +19,7 @@ async function seedTestData() {
         const patientPassword = await bcrypt.hash('password123', 10);
         const patientData = {
             nome: "Paciente Teste",
-            email: "paciente.teste@girassol.com",
+            email: "paciente.teste@Yelo.com",
             senha: patientPassword,
             telefone: "(11) 98765-4321",
             valor_sessao_faixa: "R$ 91 - R$ 150", // Para match de preço
@@ -44,7 +44,7 @@ async function seedTestData() {
         const psychologistData = {
             nome: "Dra. Ana Psicóloga",
             crp: "06/123456",
-            email: "ana.psicologa@girassol.com",
+            email: "ana.psicologa@Yelo.com",
             senha: psychologistPassword,
             slug: generateSlug("Dra. Ana Psicóloga"),
             plano: 'Luz', // Plano atribuído
@@ -75,7 +75,7 @@ async function seedTestData() {
         const psychologist2Data = {
             nome: "Dr. Carlos Terapeuta",
             crp: "06/654321",
-            email: "carlos.terapeuta@girassol.com",
+            email: "carlos.terapeuta@Yelo.com",
             senha: await bcrypt.hash('password123', 10),
             slug: generateSlug("Dr. Carlos Terapeuta"),
             plano: 'Semente', // Plano atribuído
@@ -104,11 +104,11 @@ async function seedTestData() {
         // --- 4. Criar um Psicólogo Administrador ---
         const adminPassword = await bcrypt.hash('admin123', 10);
         const adminData = {
-            nome: "Admin Girassol",
+            nome: "Admin Yelo",
             crp: "00/000000",
-            email: "admin@girassol.com",
+            email: "admin@Yelo.com",
             senha: adminPassword,
-            slug: generateSlug("Admin Girassol"),
+            slug: generateSlug("Admin Yelo"),
             status: 'active',
             isAdmin: true // Define este usuário como administrador
         };

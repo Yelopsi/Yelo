@@ -21,7 +21,7 @@ router.get('/community-resources', adminController.getCommunityResources);
 
 router.use(admin);
 
-// --- Rotas de Configuração do Sistema (Jano v2.1) ---
+// --- Rotas de Configuração do Sistema (Yelo v2.1) ---
 router.get('/settings', settingsController.getSettings);
 router.post('/settings', settingsController.updateSettings);
 

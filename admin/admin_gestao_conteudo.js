@@ -1,7 +1,7 @@
 // admin/admin_gestao_conteudo.js
 
 window.initializePage = function() {
-    const token = localStorage.getItem('girassol_token');
+    const token = localStorage.getItem('Yelo_token');
     const reviewsList = document.getElementById('pending-reviews-list');
     const loadingState = document.getElementById('reviews-loading-state');
     const emptyState = document.getElementById('reviews-empty-state');

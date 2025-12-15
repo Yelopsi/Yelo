@@ -3,7 +3,7 @@
 window.initializePage = function() {
     const tableBody = document.getElementById('waiting-list-body');
     const rowTemplate = document.getElementById('waiting-list-row-template');
-    const token = localStorage.getItem('girassol_token'); // Supondo que o token de admin esteja salvo
+    const token = localStorage.getItem('Yelo_token'); // Supondo que o token de admin esteja salvo
 
     if (!tableBody || !rowTemplate || !token) {
         console.error("Elementos essenciais ou token não encontrados para a página da lista de espera.");

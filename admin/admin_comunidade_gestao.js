@@ -1,6 +1,6 @@
 window.initializePage = async function() {
     const BASE_URL = typeof window.API_BASE_URL !== 'undefined' ? window.API_BASE_URL : 'http://localhost:3001';
-    const token = localStorage.getItem('girassol_token');
+    const token = localStorage.getItem('Yelo_token');
 
     // --- TOAST VISUAL ---
     function showAdminToast(message, type = 'success') {

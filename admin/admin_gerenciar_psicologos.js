@@ -2,7 +2,7 @@ window.initializePage = function() {
     console.log("Iniciando Gerenciador de Psicólogos..."); 
     const tableBody = document.getElementById('psychologists-table-body');
     const rowTemplate = document.getElementById('psychologist-row-template');
-    const token = localStorage.getItem('girassol_token');
+    const token = localStorage.getItem('Yelo_token');
     
     // Usa o endereço definido no config.js ou força o localhost:3001
     const API_PREFIX = (typeof API_BASE_URL !== 'undefined') 

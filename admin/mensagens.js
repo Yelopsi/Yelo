@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const token = localStorage.getItem('girassol_token');
+    const token = localStorage.getItem('Yelo_token');
     if (!token) {
         window.location.href = '/login.html';
         return;

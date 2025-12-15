@@ -5,7 +5,7 @@
 /* --- Configurações Globais --- */
 :root {
     --verde-escuro: #1B4332;
-    --cor-girassol: #FFEE8C;
+    --cor-Yelo: #FFEE8C;
     --branco-puro: #FFFFFF;
     --off-white: #fdfaf6;
     --cinza-texto: #555;
@@ -118,7 +118,7 @@ body.pagina-dashboard {
 }
 .sidebar-footer .nome-admin { font-size: 15px; font-weight: 500; margin-bottom: 10px; }
 .sidebar-footer .btn-sair {
-    color: var(--cor-girassol);
+    color: var(--cor-Yelo);
     text-decoration: none;
     font-size: 14px;
     font-weight: bold;
@@ -296,7 +296,7 @@ body.pagina-dashboard {
 }
 
 .acao-numero {
-    background-color: var(--cor-girassol);
+    background-color: var(--cor-Yelo);
     color: var(--verde-escuro);
     font-weight: bold;
     font-size: 14px;
@@ -550,7 +550,7 @@ body.pagina-dashboard {
 .avaliacao-rating {
     margin: 10px 0;
     font-weight: bold;
-    color: var(--cor-girassol);
+    color: var(--cor-Yelo);
     -webkit-text-stroke: 1px #d1b742; /* Adiciona um contorno para as estrelas ficarem mais visíveis */
     text-stroke: 1px #d1b742;
 }
@@ -2303,7 +2303,7 @@ input:checked + .slider:before { transform: translateX(22px); }
 
 /* Botão Filtrar: Igual aos outros botões primários */
 .btn-filter {
-    background-color: #1a4d2e; /* Verde Girassol */
+    background-color: #1a4d2e; /* Verde Yelo */
     color: white;
     border: none;
     padding: 9px 20px;
