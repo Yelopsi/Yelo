@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete seu Perfil - Girassol</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="assets/images/favicon.png?v=2" type="image/png">
+    <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png?v=2">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body class="pagina-registro">
+    <div class="container-auth">
+        <div class="card-auth">
+            <img src="assets/logos/logo_completo.png" alt="Logo Girassol" class="logo-auth">
+            <h2>Falta pouco para começar!</h2>
+            <p style="text-align: center; margin-bottom: 20px;">Para ativarmos seu perfil na plataforma, precisamos de mais algumas informações.</p>
+            <form id="form-completar-perfil">
+                <div class="form-group">
+                    <label for="crp">Número do CRP</label>
+                    <input type="text" id="crp" name="crp" placeholder="00/000000" required>
+                </div>
+                <div class="form-group">
+                    <label for="telefone">Telefone (WhatsApp)</label>
+                    <input type="tel" id="telefone" name="telefone" placeholder="(XX) XXXXX-XXXX">
+                </div>
+                <button type="submit" class="btn btn-principal">Finalizar e Acessar Painel</button>
+            </form>
+            <p id="mensagem-completar-perfil" class="mensagem-oculta"></p>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/imask"></script>
+    <script src="psi_completar_perfil.js"></script>
+</body>
+</html>

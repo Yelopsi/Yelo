@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Psicólogo - Girassol</title>
+    
+    <link rel="stylesheet" href="../style.css?v=1.6">
+    
+    <link rel="icon" href="assets/images/favicon.png?v=2" type="image/png">
+    <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png?v=2">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="pagina-registro">
+    <script>
+        // CÓDIGO NOVO (QUE TE DEIXA ENTRAR)
+        const urlParams = new URLSearchParams(window.location.search);
+        const isInvite = urlParams.get('token'); // Se tiver token de convite, libera
+        const isAdminMode = urlParams.get('mode') === 'admin'; // Se for admin, libera
+        
+        // Só bloqueia se NÃO for admin E NÃO tiver respostas E NÃO for convite
+        if (!isAdminMode && !isInvite && !localStorage.getItem('psi_questionario_respostas')) {
+            alert("Você precisa preencher o questionário de perfil primeiro.");
+            window.location.href = "psi_questionario.html";
+        }
+    </script>
+    
+    <div class="container-auth">
+        <div class="card-auth">
+            <img src="assets/logos/logo_completo.png" alt="Logo Girassol" class="logo-auth">
+            <h2>Registro de Psicólogo</h2>
+            <form id="form-registro-psi">
+                
+                <div class="form-group">
+                    <label for="nome-completo">Nome Completo</label>
+                    <input type="text" id="nome-completo" name="nome-completo" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="crp">Número do CRP</label>
+                    <input type="text" id="crp" name="crp" required>
+                </div>
+
+<div class="form-group">
+    <label for="documento">CPF ou CNPJ</label>
+    <div class="input-wrapper-relative">
+        <input type="text" id="documento" name="documento" required placeholder="000.000.000-00">
+        <span class="password-toggle-icon" style="pointer-events: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        </span>
+    </div>
+    <small id="doc-feedback" style="display: none; color: #1B4332; font-weight: bold; margin-top: 5px; font-size: 13px;"></small>
+</div>
+
+                <div class="form-group">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+<div class="form-group">
+    <label for="senha">Senha</label>
+    <div class="input-wrapper-relative">
+        <input type="password" id="senha" name="senha" required placeholder="Crie uma senha forte">
+        <span class="password-toggle-icon" id="toggleSenhaPsi">
+            <svg class="eye-closed" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+            </svg>
+            
+            <svg class="eye-open hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+        </span>
+    </div>
+</div>
+
+<div class="form-group">
+    <label for="confirmar-senha">Confirmar Senha</label>
+    <div class="input-wrapper-relative">
+        <input type="password" id="confirmar-senha" name="confirmar-senha" required placeholder="Repita a senha">
+        <span class="password-toggle-icon" id="toggleConfirmarSenhaPsi">
+            <svg class="eye-closed" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+            </svg>
+            
+            <svg class="eye-open hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+        </span>
+    </div>
+</div>
+                
+                <div class="form-group-checkbox">
+                    <input type="checkbox" id="termos-aceite" name="termos-aceite" required>
+                    <label for="termos-aceite">Eu li e aceito os <a href="termos.html" target="_blank">Termos e Condições</a>.</label>
+                </div>
+                
+                <button type="submit" class="btn btn-principal">Registrar</button>
+            </form>
+            <p id="mensagem-registro-psi" class="mensagem-oculta"></p>
+            <p class="link-auth">Já tem uma conta? <a href="login.html">Faça login aqui</a></p>
+        </div>
+    </div>
+
+<script>
+  function setupPasswordToggle(toggleId, inputId) {
+    const toggle = document.getElementById(toggleId);
+    const input = document.getElementById(inputId);
+
+    if (toggle && input) {
+        const eyeClosed = toggle.querySelector('.eye-closed');
+        const eyeOpen = toggle.querySelector('.eye-open');
+
+        toggle.addEventListener("click", () => {
+            const isPassword = input.type === "password";
+            input.type = isPassword ? "text" : "password";
+            
+            // Alterna a visibilidade dos ícones
+            if (isPassword) {
+                // Virou texto -> Mostra olho aberto
+                eyeClosed.classList.add('hidden');
+                eyeOpen.classList.remove('hidden');
+            } else {
+                // Virou senha -> Mostra olho fechado
+                eyeClosed.classList.remove('hidden');
+                eyeOpen.classList.add('hidden');
+            }
+        });
+    }
+  }
+
+  // Ativa para os campos do profissional
+  setupPasswordToggle("toggleSenhaPsi", "senha");
+  setupPasswordToggle("toggleConfirmarSenhaPsi", "confirmar-senha");
+</script>
+    <script src="https://unpkg.com/imask"></script>
+    <script src="/config.js?v=1.6"></script>
+    <script src="psi_registro.js?v=1.6"></script>
+</body>
+</html>

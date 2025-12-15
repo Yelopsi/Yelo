@@ -1,0 +1,4540 @@
+/* Adicione este bloco no topo do seu style.css */
+:root {
+    --verde-escuro: #1B4332;
+    --cor-girassol: #FFEE8C;
+    --branco-puro: #FFFFFF;
+    --off-white: #fdfaf6;
+    --cinza-texto: #555;
+}
+
+/* --- Reset Básico e Fontes Globais --- */
+body {
+    margin: 0;
+    font-family: 'Lato', 'Montserrat', Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    background-color: #fdfaf6;
+    color: #222;
+    
+}
+
+.profile-tags span, .profile-body-tabs, .profile-body-tabs nav, .profile-body-tabs .tab-content, #profile-container, .conversion-card, .card {
+    font-family: inherit;
+    color: #222;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'New Kansas', serif;
+    font-weight: 700;
+}   
+
+#error-state.hidden {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* --- DECLARAÇÃO DA FONTE CUSTOMIZADA (NEW KANSAS) --- */
+@font-face {
+    font-family: 'New Kansas';
+    /* Caminho relativo a partir da localização do style.css (que está na raiz) */
+    src: url('assets/fonts/newkansas-bold.woff2') format('woff2'),
+         url('assets/fonts/newkansas-bold.woff') format('woff');
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+}
+
+/* --- Estilos do Cabeçalho --- */
+header {
+    background-color: #1B4332;
+    color: white;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 30px; /* Espaçamento reduzido */
+    position: fixed;
+    top: 0; 
+    left: 0;
+    margin-top: 0;         /* ESSENCIAL */
+    margin-bottom: 0;      /* ESSENCIAL */
+    width: 100%;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    box-sizing: border-box;
+
+    /* CORREÇÃO CRÍTICA DE CAMADA */
+    z-index: 10000 !important; /* Tem que ser maior que 9999 (ruído) */
+    
+    /* GARANTIAS DE VISIBILIDADE (Anti-Bug de Cache) */
+    opacity: 1 !important; 
+    visibility: visible !important;
+    display: flex !important; /* Força ele a aparecer mesmo que o JS demore */
+    
+    /* Previne problemas de transformação que criam novos contextos de pilha */
+    transform: translateZ(0); 
+    -webkit-font-smoothing: antialiased;
+}
+
+/* --- ESTILOS DA LOGO DINÂMICA --- */
+.logo {
+    position: relative;
+    display: block;
+    width: 150px;
+    height: 40px;
+}
+.logo img {
+    height: 100%;
+    width: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: opacity 0.4s ease-in-out;
+}
+.logo .logo-escura {
+    opacity: 0;
+}
+.logo .logo-branca {
+    opacity: 1;
+}
+header.header-rolagem .logo .logo-escura {
+    opacity: 1;
+}
+header.header-rolagem .logo .logo-branca {
+    opacity: 0;
+}
+header.header-rolagem .logo img {
+    filter: none;
+}
+
+.menu-hamburguer {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 30px;
+    height: 25px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 10;
+}
+.menu-hamburguer .barra {
+    width: 100%;
+    height: 3px;
+    background-color: white;
+    border-radius: 2px;
+}
+.container-navegacao {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    background-color: #1B4332;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    padding-top: 80px;
+}
+.container-navegacao.ativo {
+    display: flex;
+}
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+    width: 100%;
+}
+nav a {
+    text-decoration: none;
+    color: white;
+    font-family: 'Inter', sans-serif; /* PADRONIZAÇÃO: Garante a fonte correta no menu */
+    font-size: 18px; /* Fonte do menu reduzida */
+}
+nav a:hover {
+    opacity: 0.8;
+}
+.botoes-acao {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 30px;
+    width: 80%;
+}
+.btn {
+    padding: 8px 18px; /* Botões mais compactos */
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 15px; /* Fonte do botão reduzida */
+    text-align: center;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+.btn-outline {
+    border-color: white;
+    color: white;
+}
+.btn-outline:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+.btn-solid {
+    background-color: #ffffff;
+    color: #1B4332;
+    border-color: white;
+}
+.btn-solid:hover {
+    opacity: 0.9;
+}
+.header-rolagem {
+    background-color: white !important;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+}
+header.header-rolagem .logo, header.header-rolagem nav a, header.header-rolagem .btn-outline {
+    color: #333;
+}
+header.header-rolagem .logo img {
+    filter: none;
+}
+header.header-rolagem .btn-outline {
+    border-color: #333;
+}
+header.header-rolagem .btn-solid {
+    background-color: #1B4332;
+    color: white;
+    border-color: #1B4332;
+}
+header.header-rolagem .menu-hamburguer .barra {
+    background-color: #333;
+}
+header.header-rolagem nav a:hover {
+    color: var(--cor-girassol);
+}
+
+/* --- Seções --- */
+.hero {
+    padding: 80px 50px 100px 50px; /* Padding reduzido */
+    text-align: center;
+    background-color: #1B4332;
+    position: relative;
+    margin-top: -2px;
+}
+.hero-texto h1 {
+    font-size: 48px; /* Título principal reduzido */
+    color: white;
+    margin-bottom: 10px;
+}
+.hero-texto p {
+    font-size: 19px; /* Subtítulo reduzido */
+    color: white;
+    margin-bottom: 40px;
+}
+.btn-cta-principal {
+    display: inline-block;
+    background-color: var(--cor-girassol);
+    color: var(--verde-escuro);
+    font-size: 18px; /* Fonte do CTA reduzida */
+    font-weight: bold;
+    padding: 15px 35px; /* Padding do CTA reduzido */
+    border-radius: 30px;
+    text-decoration: none;
+    margin-top: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.btn-cta-principal:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Botão CTA Secundário: Menor e mais discreto */
+.btn-cta-secundario {
+    display: inline-block;
+    background-color: transparent;
+    color: var(--verde-escuro);
+    border: 2px solid var(--verde-escuro);
+    font-size: 16px;
+    font-weight: bold;
+    padding: 12px 30px;
+    border-radius: 30px;
+    text-decoration: none;
+    margin-top: 20px;
+    transition: all 0.3s ease;
+}
+.wave-divider {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    overflow: hidden;
+    line-height: 0;
+}
+.wave-divider svg {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 80px;
+    top: -1px;
+}
+.secao-terapeutas {
+    padding: 70px 20px 100px 20px; /* Padding reduzido */
+    overflow: hidden;
+    transition: opacity 1s ease-out, transform 0.8s ease-out;
+    position: relative;
+    background-color: #fdfaf6;
+}
+.secao-conteudo {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+    align-items: center;
+}
+.texto-terapeutas h2 {
+    font-size: 32px; /* Título reduzido */
+    color: #1B4332;
+    margin-top: 0;
+    line-height: 1.2;
+}
+.texto-terapeutas p {
+    font-size: 16px; /* Texto reduzido */
+    line-height: 1.6;
+    color: #333;
+}
+.btn-verde {
+    display: inline-block;
+    background-color: #5a8a6f;
+    color: white;
+    padding: 10px 22px; /* Padding reduzido */
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    margin-top: 20px;
+    transition: background-color 0.3s ease;
+}
+.btn-verde:hover {
+    background-color: #4a755e;
+}
+.imagens-terapeutas {
+    position: relative;
+    min-height: 400px;
+}
+.foto-terapeuta {
+    position: absolute;
+    border-radius: 12px;
+    border: 4px solid white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+.foto-1 {
+    width: 45%;
+    top: 0;
+    left: 10%;
+}
+.foto-2 {
+    width: 35%;
+    top: 20%;
+    right: 5%;
+}
+.foto-3 {
+    width: 30%;
+    top: 55%;
+    left: 0;
+}
+.foto-4 {
+    width: 50%;
+    top: 60%;
+    right: 15%;
+}
+.como-funciona {
+    padding: 70px 20px; /* Padding reduzido */
+    background-color: white;
+    transition: opacity 1s ease-out, transform 0.8s ease-out;
+    position: relative;
+}
+.titulo-secao {
+    text-align: center;
+    font-size: 36px; /* Título reduzido */
+    color: #333;
+    margin-bottom: 60px;
+}
+.subtitulo-secao {
+    text-align: center;
+    font-size: 16px; /* Subtítulo reduzido */
+    line-height: 1.7;
+    color: #555;
+    max-width: 700px;
+    margin: 0 auto 50px auto;
+}
+.passo {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 50px;
+    align-items: center;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+.passo-texto h3 {
+    font-size: 28px; /* Título reduzido */
+    color: #1B4332;
+    line-height: 1.3;
+    margin-top: 0;
+}
+.passo-texto p {
+    font-size: 16px; /* Texto reduzido */
+    line-height: 1.6;
+    color: #333;
+}
+.passo-imagens {
+    position: relative;
+    min-height: 450px;
+}
+.passo-foto, .passo-ilustracao, .forma {
+    position: absolute;
+    border-radius: 16px;
+}
+.passo-foto {
+    border: 4px solid white;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+.foto-passo1-1 {
+    width: 40%;
+    top: 0;
+    left: 15%;
+}
+.foto-passo1-2 {
+    width: 35%;
+    top: 40%;
+    right: 10%;
+}
+.forma-circulo {
+    width: 80px;
+    height: 80px;
+    background-color: #D4E2D4;
+    border-radius: 50%;
+    top: 65%;
+    right: 5%;
+    z-index: -1;
+}
+.forma-meia-lua {
+    width: 100px;
+    height: 50px;
+    background-color: #E8D8C2;
+    border-radius: 50px 50px 0 0;
+    top: 10%;
+    left: 5%;
+    z-index: -1;
+}
+.faq-secao {
+    padding: 70px 20px 100px 20px; /* Padding reduzido */
+    background-color: #fdfaf6;
+    transition: opacity 1s ease-out, transform 0.8s ease-out;
+    position: relative;
+}
+.acordeao-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+.acordeao-item {
+    border-bottom: 1px solid #ddd;
+}
+.acordeao-titulo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 20px 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: center; /* Mude de 'left' para 'center' */
+    font-size: 18px; /* Fonte reduzida */
+    font-weight: 500;
+    color: #333;
+}
+.acordeao-titulo::after {
+    content: '▼';
+    font-size: 10px;
+    transition: transform 0.3s ease;
+}
+.acordeao-titulo.ativo::after {
+    transform: rotate(180deg);
+}
+.acordeao-conteudo {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out;
+}
+.acordeao-conteudo p {
+    padding: 0 10px 20px 10px;
+    margin: 0;
+    font-size: 14px; /* Texto reduzido */
+    line-height: 1.6;
+    color: #555;
+    text-align: justify;
+}
+.aviso-crise {
+    padding: 40px 20px 120px 20px;
+    background-color: #fdfaf6;
+    border-top: 1px solid #e9ecef;
+    transition: opacity 1s ease-out, transform 0.8s ease-out;
+    position: relative;
+}
+.aviso-conteudo {
+    max-width: 1100px;
+    margin: 0 auto;
+    text-align: center;
+}
+.aviso-texto p {
+    margin: 5px 0;
+    color: #555;
+}
+.aviso-texto a {
+    color: #007bff;
+    text-decoration: underline;
+}
+.aviso-ssl {
+    margin-top: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #6c757d;
+}
+
+/* ==========================================================================
+   ESTILOS DEFINITIVOS DO RODAPÉ (DESKTOP E MOBILE)
+   ========================================================================== */
+
+/* --- 1. ESTILOS PADRÃO (PENSADO PARA DESKTOP) --- */
+
+.rodape-principal {
+    background-color: var(--verde-escuro);
+    color: #adb5bd;
+    padding: 60px 40px;
+    position: relative;
+}
+
+.rodape-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column; /* Blocos principais empilhados por padrão */
+    gap: 30px;
+}
+
+.rodape-bloco-superior,
+.rodape-base {
+    display: flex;
+    flex-direction: row; /* Em linha por padrão */
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.rodape-nav ul,
+.rodape-links-legais {
+    display: flex;
+    flex-direction: row; /* Em linha por padrão */
+    flex-wrap: wrap;
+    gap: 25px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.rodape-social {
+    display: flex;
+    gap: 25px;
+}
+
+.rodape-social img {
+    width: 28px; /* Tamanho para Desktop */
+    height: auto;
+    transition: transform 0.2s ease;
+}
+.rodape-social img:hover {
+    transform: scale(1.1);
+}
+
+.rodape-bloco-rt { text-align: left; }
+
+.rodape-bloco-rt p,
+.rodape-copyright p {
+    font-size: 14px;
+    margin: 0;
+}
+
+.rodape-nav a,
+.rodape-links-legais a {
+    color: #e9ecef;
+    text-decoration: none;
+    font-size: 16px;
+    transition: color 0.3s ease;
+}
+
+.rodape-nav a:hover, 
+.rodape-links-legais a:hover {
+    color: var(--cor-girassol);
+}
+
+.rodape-divisor {
+    border: none;
+    height: 1px;
+    background-color: #495057;
+    width: 100%;
+    margin: 0;
+    display: block; /* Visível por padrão */
+}
+/* --- ESTILOS DAS PÁGINAS DE LOGIN E REGISTRO --- */
+.login-main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 80px 20px; /* Padding reduzido */
+    background-color: var(--off-white);
+    position: relative;
+    min-height: calc(100vh - 160px); /* Ocupa a altura da tela menos o header/footer */
+    box-sizing: border-box;
+}
+
+.login-container {
+    background-color: var(--branco-puro);
+    padding: 35px; /* Padding reduzido */
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+}
+
+.login-titulo {
+    color: var(--verde-escuro);
+    margin-bottom: 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: var(--cinza-texto);
+    text-align: left;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 11px; /* Padding reduzido */
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-family: 'Lato', sans-serif;
+    font-size: 15px; /* Fonte reduzida */
+    /* GARANTE ESPAÇO PARA O ÍCONE DE 24PX + MARGEM */
+    padding-right: 40px; 
+}
+
+.btn-login {
+    width: 100%;
+    padding: 12px; /* Padding reduzido */
+    background-color: var(--verde-escuro);
+    color: var(--branco-puro);
+    border: none;
+    border-radius: 8px;
+    font-family: 'Lato', sans-serif;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-login:hover {
+    background-color: #2a624d;
+}
+
+.login-links {
+    margin-top: 25px;
+}
+
+.login-links a {
+    display: block;
+    color: var(--cinza-texto);
+    text-decoration: none;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.login-links a:hover {
+    text-decoration: underline;
+}
+
+/* --- Estilos do Login Social --- */
+.divisor {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 25px 0;
+    color: #aaa;
+}
+.divisor::before, .divisor::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #ddd;
+}
+.divisor span {
+    padding: 0 15px;
+    font-size: 14px;
+}
+
+.social-login {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.btn-social {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px; /* Padding reduzido */
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    text-decoration: none;
+    font-size: 15px; /* Fonte reduzida */
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    gap: 10px;
+}
+.btn-social.google { background-color: var(--branco-puro); color: #444; }
+.btn-social.google:hover { background-color: #f5f5f5; }
+.btn-social.apple { background-color: black; color: var(--branco-puro); border-color: black; }
+.btn-social.apple:hover { background-color: #333; }
+.btn-social svg { width: 20px; height: 20px; }
+
+/* --- Estilo para o Checkbox de Termos --- */
+.form-group-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+.form-group-checkbox input[type="checkbox"] {
+    width: auto; /* Reseta a largura padrão dos inputs */
+    margin: 0;
+    flex-shrink: 0; /* Impede que o checkbox encolha */
+}
+.form-group-checkbox label {
+    font-weight: normal;
+    color: var(--cinza-texto);
+    font-size: 13px; /* Fonte reduzida */
+    margin-bottom: 0;
+    line-height: 1.4;
+}
+.form-group-checkbox a { color: var(--verde-escuro); text-decoration: underline; font-weight: bold; }
+
+/* --- Estilo para o Seletor de Tipo de Usuário --- */
+/* Container para os botões */
+.role-selector {
+  display: flex;
+  gap: 10px; /* Espaçamento entre os botões */
+  margin-bottom: 20px;
+}
+
+/* Estilo base para ambos os botões */
+.role-btn {
+  flex: 1; /* Faz com que ambos ocupem o mesmo espaço */
+  padding: 10px; /* Padding reduzido */
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 15px; /* Fonte reduzida */
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid #1B4332; /* Verde Floresta (usando a variável do projeto) */
+}
+
+/* Estilo do botão INATIVO (estilo "outline") */
+.role-btn {
+  background-color: #FFFFFF; /* Fundo branco */
+  color: #1B4332; /* Texto Verde Floresta */
+}
+
+/* Estilo do botão ATIVO */
+.role-btn.active {
+  background-color: #1B4332; /* Fundo Verde Floresta */
+  color: #FFFFFF; /* Texto branco */
+}
+
+/* ==========================================================================
+   CORREÇÃO DO ÍCONE DE SENHA (TOGGLE)
+   ========================================================================== */
+
+/* 1. A "Caixinha" que segura o Input e o Ícone juntos */
+.input-wrapper-relative {
+    position: relative; /* Isso diz pro ícone: "Use este bloco como referência" */
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+/* 2. Garante que o ícone fique por cima do input, na direita */
+.password-toggle-icon {
+    position: absolute;
+    right: 15px;        /* Distância da direita */
+    top: 50%;           /* Metade da altura */
+    transform: translateY(-50%); /* Ajuste fino para centralizar exato */
+    cursor: pointer;
+    z-index: 10;        /* Garante que fique na frente do texto */
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    color: var(--cinza-texto);
+    padding: 5px;       /* Aumenta a área de toque para mobile */
+}
+
+/* 3. Garante espaço para o texto não bater no ícone */
+.input-wrapper-relative input {
+    padding-right: 45px !important; /* Espaço de segurança na direita */
+    width: 100%;
+}
+
+/* Efeito Hover para o botão INATIVO */
+.role-btn:not(.active):hover {
+  background-color: #F8F9FA; /* Nosso Branco-Nuvem, um cinza bem claro */
+}
+/* ==========================================================================
+   CORREÇÃO DO COLLAGE DE IMAGENS DOS TERAPEUTAS
+   ========================================================================== */
+
+/* Garante que o container das imagens tenha um espaço definido */
+.secao-terapeutas .imagens-terapeutas {
+    position: relative;
+    min-height: 400px; /* Ajuste esta altura se o seu collage precisar de mais ou menos espaço vertical */
+}
+
+/* Estilo base para todas as fotos no collage */
+.imagens-terapeutas .foto-terapeuta {
+    position: absolute;
+    border-radius: 12px;
+    border: 4px solid var(--branco-puro);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    height: auto; /* Mantém a proporção da imagem */
+}
+
+/* Definindo a LARGURA e POSIÇÃO de cada foto em porcentagem do container pai */
+.imagens-terapeutas .foto-1 { 
+    width: 45%; 
+    top: 0; 
+    left: 10%; 
+}
+.imagens-terapeutas .foto-2 { 
+    width: 35%; 
+    top: 20%; 
+    right: 5%; 
+}
+.imagens-terapeutas .foto-3 { 
+    width: 30%; 
+    top: 55%; 
+    left: 0; 
+}
+.imagens-terapeutas .foto-4 { 
+    width: 50%; 
+    top: 60%; 
+    right: 15%; 
+}
+/* ==========================================================================
+   CORREÇÃO AGRESSIVA DAS LINHAS NA DIVISÓRIA DE ONDA
+   ========================================================================== */
+
+.wave-divider {
+    position: absolute;
+    /* MUDANÇA PRINCIPAL: Puxa a onda 1px para baixo, forçando a sobreposição */
+    bottom: -1px; 
+    left: 0;
+    width: 100%;
+    line-height: 0; /* Essencial para remover espaços verticais */
+
+    /* Garantia extra: remove qualquer borda que possa existir no container */
+    border: none !important;
+    outline: none !important;
+}
+
+.wave-divider svg {
+    display: block; /* Remove espaço extra de elementos inline */
+    width: 100%;
+    height: 80px; /* Sua altura original */
+    
+    /* Garantia extra: reseta o posicionamento e bordas do próprio SVG */
+    position: static;
+    top: auto;
+    border: none !important;
+    outline: none !important;
+}
+/* ==========================================================================
+   CORREÇÃO DO LAYOUT DE DUAS COLUNAS (TABLET E DESKTOP)
+   ========================================================================== */
+
+@media (min-width: 768px) {
+  
+  /* Transforma as seções principais em duas colunas */
+  .secao-conteudo, 
+  .passo { 
+    grid-template-columns: 1fr 1fr; 
+  }
+
+  /* Aproveitei para restaurar outros layouts de grid 
+    que provavelmente se perderam junto com a regra acima.
+  */
+  .layout-3-colunas { grid-template-columns: repeat(3, 1fr); }
+  .layout-2-colunas { grid-template-columns: repeat(2, 1fr); }
+  .contato-container { grid-template-columns: 1fr 1.5fr; }
+  .post-destaque { grid-template-columns: 1fr 1fr; }
+  .post-grid { grid-template-columns: repeat(2, 1fr); }
+}
+/* --- ESTILOS DA PÁGINA 'SOBRE NÓS' --- */
+
+.secao-conteudo-pagina {
+    padding: 80px 20px 120px 20px;
+    position: relative;
+}
+
+.container-sobre {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.sobre-intro {
+    text-align: center;
+    margin-bottom: 80px;
+}
+
+.sobre-foto {
+    margin-bottom: 30px;
+}
+
+.sobre-foto img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover; /* Garante que a foto não fique distorcida */
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.sobre-missao h1 {
+    font-size: 48px;
+    color: var(--verde-escuro);
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.sobre-missao .texto-destaque {
+    font-size: 20px;
+    line-height: 1.6;
+    color: var(--cinza-texto);
+}
+
+.sobre-historia, .sobre-pilares {
+    margin-bottom: 80px;
+    text-align: center;
+}
+
+.sobre-historia h2, .sobre-pilares h2 {
+    font-size: 42px;
+    color: var(--verde-escuro);
+    margin-bottom: 40px;
+}
+
+.sobre-historia p {
+    font-size: 18px;
+    line-height: 1.8;
+    margin-bottom: 20px;
+}
+
+.sobre-pilares .layout-3-colunas {
+    margin-top: 20px;
+}
+/* --- ESTILOS DA PÁGINA DE FAQ --- */
+
+.faq-hero {
+    padding: 60px 20px;
+    text-align: center;
+    background-color: var(--verde-escuro);
+    color: white;
+    
+}
+
+.faq-hero h1 {
+    font-size: 56px;
+    margin-top: 0;
+    
+}
+
+.faq-hero .subtitulo-secao {
+    color: #eee;
+    margin-bottom: 40px;
+}
+
+.faq-busca-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+#faq-busca {
+    width: 100%;
+    padding: 15px 20px;
+    font-size: 16px;
+    border-radius: 30px;
+    border: 2px solid transparent;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+#faq-busca:focus {
+    outline: none;
+    border-color: var(--cor-girassol);
+}
+
+.faq-categoria {
+    margin-bottom: 60px;
+}
+
+.titulo-secao-menor {
+    font-size: 32px;
+    color: var(--verde-escuro);
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.faq-cta {
+    text-align: center;
+    background-color: #f8f9fa;
+    padding: 40px;
+    border-radius: 16px;
+    margin-top: 80px;
+}
+.faq-cta h3 {
+    margin-top: 0;
+}
+/* =============================================================
+   CORREÇÃO FINAL: FUSÃO DO HEADER COM SEÇÕES DE FUNDO ESCURO
+   ============================================================= */
+
+/* Aplica a margem negativa em QUALQUER seção que tenha a classe
+   .hero-fundo-escuro, resolvendo o problema em todas as páginas. */
+.hero-fundo-escuro {
+    margin-top: -2px;
+}
+/* --- ESTILOS DA PÁGINA DE CONTATO --- */
+.contato-container {
+    display: grid;
+    grid-template-columns: 1fr; /* 1 coluna no mobile */
+    gap: 50px;
+    text-align: left;
+}
+
+@media (min-width: 768px) {
+    .contato-container {
+        grid-template-columns: 1fr 1.5fr; /* 2 colunas no desktop */
+    }
+}
+
+.info-contato h3 {
+    margin-top: 0;
+    color: var(--verde-escuro);
+}
+
+.info-contato p {
+    line-height: 1.7;
+}
+
+.info-contato ul {
+    list-style: none;
+    padding: 0;
+}
+
+.info-contato li {
+    font-size: 16px;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.form-contato {
+    background-color: #f8f9fa;
+    padding: 30px;
+    border-radius: 16px;
+}
+
+.form-contato .form-group {
+    margin-bottom: 20px;
+}
+
+/* --- ESTILOS DA PÁGINA DE BLOG --- */
+
+.container-blog {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.post-destaque {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+    align-items: center;
+    margin-bottom: 80px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.post-destaque img {
+    width: 100%;
+    border-radius: 16px;
+    object-fit: cover;
+    height: 300px;
+}
+
+.post-destaque-texto span {
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--verde-escuro);
+    margin-bottom: 10px;
+    display: block;
+}
+
+.post-destaque-texto h2 {
+    font-size: 36px;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.post-destaque-texto p {
+    font-size: 18px;
+    line-height: 1.7;
+    color: var(--cinza-texto);
+}
+
+.post-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+}
+
+.post-card {
+    background-color: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.post-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+}
+
+.post-card a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.post-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover; /* Garante que a imagem preencha o espaço sem distorcer */
+}
+
+.post-card-conteudo {
+    padding: 25px;
+}
+
+.post-card-conteudo h3 {
+    margin-top: 0;
+    font-size: 22px;
+    color: #333;
+}
+
+.post-card-conteudo p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--cinza-texto);
+}
+
+@media (min-width: 768px) {
+    .post-destaque {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .post-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* --- ESTILOS DESKTOP (CORRIGIDO PARA NÃO QUEBRAR O ADMIN) --- */
+@media (min-width: 992px) {
+    
+    /* Esconde o botão de sanduíche */
+    .menu-hamburguer {
+        display: none !important;
+    }
+
+    /* Mostra a barra de navegação completa DA HOME */
+    .container-navegacao {
+        display: flex !important;
+        position: static !important;
+        height: auto !important;
+        padding: 0 !important;
+        background-color: transparent !important;
+        flex-direction: row !important;
+        justify-content: flex-end !important;
+        width: auto !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+
+    /* ESPECIFICIDADE É A CHAVE: Só afeta a lista dentro do container de navegação */
+    .container-navegacao nav ul {
+        flex-direction: row !important; /* Horizontal */
+        gap: 30px !important;
+        margin: 0 40px 0 0 !important;
+    }
+
+    /* Links do menu público */
+    .container-navegacao nav a {
+        color: #ffffff !important;
+        font-size: 16px !important;
+        font-weight: 500;
+    }
+
+    /* Botões de Ação (Entrar/Registrar) */
+    .botoes-acao {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 15px !important;
+        margin-top: 0 !important;
+        width: auto !important;
+    }
+}
+/* --- ESTILOS GERAIS PARA SEÇÕES DE CONTEÚDO --- */
+
+/* O container que centraliza o conteúdo dentro de cada seção */
+.container {
+    max-width: 900px; /* Largura máxima para boa legibilidade */
+    margin: 0 auto; /* Truque clássico para centralizar */
+    padding: 60px 20px; /* Espaçamento interno (vertical, horizontal) */
+    text-align: center; /* Centraliza o texto dentro do container */
+}
+
+/* Títulos principais de cada seção */
+.secao-conteudo-pro h2 {
+    font-family: 'New Kansas', serif; /* PADRONIZAÇÃO: Usa a fonte de destaque do projeto */
+    font-weight: 700;
+    font-size: 2.5rem;
+    color: var(--verde-escuro);
+    margin-bottom: 15px;
+}
+
+/* Subtítulos/parágrafos de apoio de cada seção */
+.subtitulo-secao {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: var(--cinza-texto);
+    max-width: 700px;
+    margin: 0 auto 40px auto; /* Centraliza o subtítulo também */
+}
+
+
+/* --- SEÇÃO HERO --- */
+.hero-profissionais {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    /* Ajuste: Padding vertical reduzido para diminuir o espaço em branco */
+    padding: 80px 20px;
+}
+
+
+.hero-profissionais .hero-texto {
+    max-width: 800px;
+}
+
+/* Ajuste no botão CTA principal, caso precise */
+.btn-cta-principal {
+    display: inline-block;
+    background-color: var(--cor-girassol);
+    color: var(--verde-escuro);
+    padding: 15px 35px;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: bold;
+    font-family: 'Inter', sans-serif;
+    transition: transform 0.2s ease;
+    margin-top: 20px;
+}
+.btn-cta-principal:hover {
+    transform: scale(1.05);
+}
+
+/* --- CSS NOVO PARA PÁGINA DE RESULTADOS (Adicionar ao final) --- */
+
+/* Introdução centralizada */
+.resultados-intro {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 0 20px;
+}
+.resultados-intro h1 {
+    font-size: 1.8rem;
+    color: var(--verde-escuro);
+    margin-bottom: 10px;
+}
+
+/* --- AJUSTE DE GRID (3 CARDS LADO A LADO) --- */
+
+.pro-results-grid {
+    display: grid;
+    /* Mobile: Ajusta automaticamente */
+    grid-template-columns: 1fr; 
+    gap: 20px; /* Reduzi o espaçamento entre eles */
+    padding: 0 10px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Desktop (Telas acima de 992px): Força exatamente 3 colunas */
+@media (min-width: 992px) {
+    .pro-results-grid {
+        /* O segredo: 'repeat(3, 1fr)' obriga a ter 3 colunas iguais */
+        grid-template-columns: repeat(3, 1fr) !important; 
+    }
+    
+    /* Opcional: Limita a largura máxima do card para ele não ficar "esticadão" se a tela for gigante */
+    .pro-card-resultado {
+        max-width: 380px; 
+        margin: 0 auto; /* Centraliza o card na sua coluna */
+        width: 100%;
+    }
+}
+
+/* NOVO CARD PREMIUM */
+.pro-card-resultado {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    overflow: hidden;
+    border: 1px solid #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+}
+.pro-card-resultado:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+/* Header com Foto (Altura fixa) */
+.pro-card-header {
+    position: relative;
+    height: 180px; 
+    background-color: var(--off-white);
+    overflow: hidden;
+}
+.pro-card-header .pro-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Corpo do Card */
+.pro-card-body {
+    padding: 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+/* --- AJUSTE DE FONTE DO NOME (NEW KANSAS) --- */
+
+.pro-info h3 {
+    font-family: 'New Kansas', serif !important; /* Aplica a fonte da marca */
+    font-size: 1.35rem; /* Aumentei um pouquinho para destacar melhor a fonte */
+    color: var(--verde-escuro);
+    margin: 0 0 5px 0;
+    font-weight: 700;
+}
+.pro-info .crp {
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 8px;
+}
+
+/* Tags de Match (Destaque visual) */
+.match-reasons {
+    margin: 12px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+/* --- CORREÇÃO: TAGS DE UMA LINHA SÓ --- */
+
+.tag-match, .tag {
+    /* Mantém o estilo visual */
+    background-color: #e8f5e9;
+    color: var(--verde-escuro);
+    border: 1px solid #c8e6c9;
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    
+    /* PROPRIEDADES QUE IMPEDEM A QUEBRA */
+    white-space: nowrap !important; /* Obriga a ficar em uma linha */
+    display: inline-block;          /* Garante que o bloco respeite o conteúdo */
+    max-width: 100%;                /* Segurança para não estourar o card */
+    overflow: hidden;               /* Esconde se for absurdamente grande */
+    text-overflow: ellipsis;        /* Adiciona "..." se cortar */
+}
+
+/* Footer do Card (Preço e Botão) */
+.pro-footer {
+    margin-top: auto; /* Empurra para o fundo */
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.price-tag {
+    display: flex;
+    flex-direction: column;
+}
+.price-tag .label { font-size: 0.7rem; color: #999; }
+.price-tag .value { font-size: 1.1rem; font-weight: 700; color: #333; }
+
+.btn-sm {
+    padding: 8px 20px;
+    font-size: 0.9rem;
+}
+
+/* Badge de Novo */
+.new-badge {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+/* --- LISTA COM ÍCONES PERSONALIZADOS --- */
+.lista-com-icones {
+    list-style: none; /* Remove o marcador padrão */
+    padding-left: 0;
+    text-align: left; /* Alinha o texto da lista à esquerda */
+    max-width: 600px;
+    margin: 0 auto; /* Centraliza o bloco da lista */
+}
+
+.lista-com-icones li {
+    padding-left: 35px; /* Espaço para o ícone */
+    position: relative;
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin-bottom: 20px;
+}
+
+/* Adiciona um ícone de "check" estilizado antes de cada item */
+.lista-com-icones li::before {
+    content: '✓'; /* Você pode usar qualquer ícone ou imagem aqui */
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--verde-escuro);
+    background-color: var(--cor-girassol);
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    text-align: center;
+    line-height: 25px;
+    font-weight: bold;
+}
+
+
+/* --- LAYOUT DE 3 COLUNAS --- */
+.layout-3-colunas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+    text-align: left; /* Alinha o texto dentro de cada coluna à esquerda */
+    margin-top: 50px;
+}
+
+.coluna-item h3 {
+    font-family: 'New Kansas', serif; /* PADRONIZAÇÃO: Usa a fonte de destaque do projeto */
+    font-size: 1.4rem;
+    color: var(--verde-escuro);
+    margin-bottom: 10px;
+}
+
+.coluna-item p {
+    line-height: 1.6;
+}
+
+
+/* --- SEÇÃO CTA FINAL --- */
+.cta-final .container {
+    padding-top: 60px;
+    padding-bottom: 120px; /* Mais espaço antes do footer */
+}
+
+/* Classe utilitária para a última seção antes do rodapé */
+.secao-final .container {
+    /* Garante um respiro maior no final da página */
+    padding-bottom: 100px;
+}
+
+/* --- AJUSTES GERAIS --- */
+/* Garante que os divisores de onda ocupem toda a largura */
+.wave-divider {
+    width: 100%;
+    line-height: 0; /* Remove espaço extra abaixo do SVG */
+    position: absolute;
+    bottom: 0;
+    left: 0;
+}
+/* Cada seção precisa de position: relative para o divisor funcionar */
+.hero-profissionais, .secao-conteudo-pro, .faq-secao {
+    position: relative;
+    padding-bottom: 60px; /* Espaço para o divisor não sobrepor o conteúdo */
+}
+/* --- CORREÇÃO DE COR: TÍTULO DA PÁGINA PROFISSIONAIS --- */
+
+/* Alvo: O H1 dentro da seção hero-profissionais */
+.hero-profissionais .hero-texto h1 {
+    font-family: 'New Kansas', serif; /* Garante a aplicação da fonte correta */
+    color: var(--verde-escuro); /* Define a cor do título principal para verde */
+}
+
+/* Alvo: O parágrafo dentro da seção hero-profissionais */
+.hero-profissionais .hero-texto p {
+    color: var(--cinza-texto);  /* Define a cor do texto de apoio para um cinza escuro legível */
+}
+/* ==========================================================================
+   DASHBOARD DO PACIENTE (VERSÃO COMPLETA)
+   ========================================================================== */
+
+/* --- ESTRUTURA BASE DO DASHBOARD --- */
+.pagina-dashboard {font-family: 'Inter', sans-serif; background-color: #f8f9fa; color: #555; margin: 0;}
+.dashboard-container {display: flex; min-height: 100vh;}
+.dashboard-sidebar {width: 250px; background-color: #1B4332; color: #FFFFFF; display: flex; flex-direction: column; padding: 25px; box-shadow: 5px 0px 15px rgba(0,0,0,0.1); z-index: 10;}
+.sidebar-nav ul {list-style: none; padding: 0; margin-top: 30px;}
+.sidebar-nav li a {display: block; color: #adb5bd; text-decoration: none; padding: 15px; border-radius: 8px; transition: all 0.2s ease; font-weight: 500; text-align: center;}
+.sidebar-nav li.active a, .sidebar-nav li a:hover {background-color: rgba(255, 255, 255, 0.1); color: #FFFFFF; transform: translateX(5px);}
+.sidebar-footer {margin-top: auto; text-align: center;}
+.sidebar-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    margin-top: 20px;
+}
+.sidebar-profile img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.sidebar-profile p {
+    margin: 0;
+}
+.sidebar-logout {color: #FFEE8C; font-weight: bold; text-decoration: none; display: block; margin-top: 10px;}
+.dashboard-main {flex-grow: 1; padding: 40px; overflow-y: auto;}
+
+/* --- ESTILOS GERAIS DE COMPONENTES --- */
+.card {background-color: #FFFFFF; padding: 30px; border-radius: 16px; margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);}
+.card h2 {font-family: 'Montserrat', sans-serif; margin-top: 0; margin-bottom: 15px; color: #1B4332;}
+.card p {line-height: 1.7; font-size: 1.1rem; color: #555;}
+.btn {
+    display: inline-block;
+    padding: 10px 22px; /* Padding reduzido */
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    text-align: center;
+    cursor: pointer;
+    border: 2px solid transparent; /* Adiciona uma borda transparente para estabilizar o tamanho */
+    transition: all 0.2s ease;
+}
+
+/* --- 2. VARIAÇÕES DE COR --- */
+
+/* Botão Primário (fundo verde) */
+.btn-principal {
+    background-color: var(--verde-escuro);
+    border-color: var(--verde-escuro);
+    color: var(--branco-puro);
+}
+.btn-principal:hover {
+    transform: scale(1.05);
+}
+
+/* Botão Secundário (fundo transparente) */
+.btn-secundario {
+    background-color: transparent;
+    border-color: var(--verde-escuro);
+    color: var(--verde-escuro);
+}
+.btn-secundario:hover {
+    background-color: rgba(27, 67, 50, 0.1);
+}
+.main-header {margin-bottom: 30px;}
+.main-header h1 {font-family: 'New Kansas', serif; font-size: 2.2rem; font-weight: 500; color: #1B4332;}
+
+/* --- SEÇÃO 1: VISÃO GERAL --- */
+.welcome-header h1 {font-size: 2.5rem; margin-bottom: 30px; line-height: 1.2;}
+.card-proximos-passos {background-color: #FFEE8C;}
+
+/* --- SEÇÃO 2: MATCHES & CONTATOS --- */
+.matches-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px;}
+.pro-card {background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); overflow: hidden; position: relative;}
+.pro-card-img {width: 100%; height: 200px; object-fit: cover;}
+.pro-card h3, .pro-card p, .pro-card-actions {padding: 0 10px;}
+.pro-card h3 {margin-top: 15px; margin-bottom: 5px; font-family: 'Montserrat', sans-serif;}
+.pro-card p {font-size: 0.9rem; color: #555;}
+.pro-card-actions .btn {
+    flex: 1; /* Faz os botões crescerem igualmente para preencher o espaço */
+}
+.selo-contato {position: absolute; top: 15px; right: 15px; background-color: #FFEE8C; color: #0a0a0a; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;}
+
+/* --- SEÇÃO 3: FAVORITOS --- */
+.empty-state {text-align: center; padding: 60px 20px; background-color: #f8f9fa; border-radius: 16px;}
+.empty-state-icon {font-size: 4rem; color: #FFEE8C; margin-bottom: 20px;}
+
+/* --- SEÇÃO 4: MINHA CONTA --- */
+.form-section {background-color: #fff; padding: 30px; border-radius: 16px; margin-bottom: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);}
+.form-section h2 {margin-top: 0;}
+.form-group {margin-bottom: 20px;}
+.form-group label {display: block; font-weight: 500; margin-bottom: 8px;}
+.form-group input {width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 1rem;}
+.form-section-acoes {display: flex; flex-direction: column; gap: 15px; align-items: flex-start;}
+.btn-perigo {background: none; border: none; color: #E63946; font-weight: bold; cursor: pointer; padding: 0;}
+/* ==========================================================================
+   ESTILOS PARA ANIMAÇÃO DE SCROLL (REVELAR AO ROLAR)
+   ========================================================================== */
+
+/* ESTA É A FORMA CORRETA de preparar os elementos para a animação */
+/* O elemento fica transparente e um pouco para baixo, mas ainda ocupa espaço */
+.hidden {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+/* Esta classe será ADICIONADA pelo JavaScript para fazer o elemento aparecer */
+.visivel {
+    opacity: 1;
+    transform: translateY(0);
+}
+/* --- CORREÇÃO E ESTILO DO HEADER DE BOAS-VINDAS --- */
+
+/* --- ESTILO UNIFICADO PARA OS CABEÇALHOS DAS PÁGINAS DO DASHBOARD --- */
+
+/* Aplica o estilo do bloco verde para AMBOS os tipos de cabeçalho */
+.welcome-header,
+.main-header {
+    background-color: var(--verde-escuro);
+    color: var(--branco-puro);
+    padding: 40px;
+    border-radius: 16px;
+    margin-bottom: 30px;
+    position: relative; /* Garante o comportamento correto de posicionamento */
+    z-index: 1;
+}
+
+/* Garante que os títulos H1 dentro de AMBOS os cabeçalhos fiquem brancos e estilizados */
+.welcome-header h1,
+.main-header h1 {
+    font-family: 'New Kansas', serif;
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-weight: 500;
+    line-height: 1.2;
+    margin-bottom: 0;
+    color: var(--branco-puro); /* Força a cor branca para todos os títulos */
+}
+/* --- AJUSTE DEFINITIVO DE TAMANHO PARA BOTÃO 'VER PERFIL' --- */
+
+.pro-card-actions .btn-secundario {
+    /* Ajuste de LARGURA (laterais) que já fizemos */
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+    
+    /* NOVO AJUSTE: Diminui a ALTURA (achatar) do botão */
+    padding-top: 18px !important;
+    padding-bottom: 18px !important;
+}
+/* ==========================================================================
+   RESPONSIVIDADE MOBILE - DASHBOARD (VERSÃO CORRIGIDA)
+   ========================================================================== */
+
+/* Regras para telas com 992px de largura ou menos */
+@media (max-width: 992px) {
+
+    /* --- Botão do Menu Hambúrguer --- */
+    
+    .menu-toggle {
+        display: block;
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 1001; /* Camada mais alta: sempre visível */
+        background: var(--branco-puro);
+        border: none;
+        padding: 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    /* --- Ajustes na Sidebar --- */
+    .dashboard-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+        z-index: 1000; /* Camada intermediária: acima do conteúdo, abaixo do botão */
+    }
+
+    .dashboard-sidebar.is-open {
+        transform: translateX(0);
+    }
+
+    /* --- Ajustes na Área de Conteúdo --- */
+    .dashboard-main {
+        width: 100%;
+        padding: 80px 20px 20px 20px;
+        
+        /* CORREÇÃO ADICIONADA AQUI */
+        position: relative; /* Define um contexto para o z-index */
+        z-index: 5;         /* Garante que o conteúdo principal fique na camada de baixo */
+    }
+}
+
+/* Regra para esconder o botão de menu em telas grandes (continua igual) */
+@media (min-width: 993px) {
+    .menu-toggle {
+        display: none;
+    }
+}
+/* --- Estilos para Animação de Scroll --- */
+.hidden {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.visivel {
+    opacity: 1;
+    transform: translateY(0);
+}
+/* ==========================================================================
+   PÁGINA DO QUESTIONÁRIO (VERSÃO FINAL E DEFINITIVA)
+   ========================================================================== */
+
+/* --- ESTRUTURA GERAL --- */
+.pagina-questionario {
+    background-color: var(--verde-escuro);
+    color: var(--off-white);
+    font-family: 'Inter', sans-serif;
+    padding-top: 0 !important; /* Garante que não haja padding global */
+}
+
+.questionario-container {
+    display: flex;
+    flex-direction: column;
+    /* Small Viewport Height: adapta-se ao espaço 100% visível, ignorando barras de UI do navegador */
+    height: 100svh;
+    width: 100%;
+}
+
+.progress-bar {
+    height: 12px;
+    position: sticky;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 10;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+.progress-bar-fill {
+    width: 0%;
+    height: 100%;
+    background-color: var(--cor-girassol);
+    transition: width 0.4s ease-in-out;
+    border-radius: 0 5px 5px 0;
+}
+
+.slides-container {
+    position: relative;
+    flex-grow: 1; /* Faz ele ocupar o espaço restante */
+    display: flex; /* Adicionado para centralizar o slide */
+    width: 100%;
+}
+
+/* --- LAYOUT DO SLIDE (CSS GRID) --- */
+.slide {
+    position: absolute; 
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%; /* Ocupa 100% do .slides-container */
+    box-sizing: border-box;
+    padding: 20px 20px 120px 20px; /* Aumenta o padding inferior para compensar o rodapé fixo */
+    
+    display: flex;
+    flex-direction: column;
+    /* display: grid; grid-template-rows: auto 1fr auto; */
+    gap: 15px;
+    
+    opacity: 0; 
+    pointer-events: none;
+    transition: opacity 0.4s ease-out;
+}
+.slide.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none; /* Remove transformações antigas */
+}
+
+/* 1. O CABEÇALHO (PERGUNTA) */
+.slide-header {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center !important
+}
+.slide-header h1 {
+    font-family: 'New Kansas', serif;
+    font-size: clamp(1.8rem, 5vw, 2.5rem); /* Título reduzido */
+    margin: 0 0 15px 0;
+}
+.slide-header p.subtitle {
+    max-width: 600px;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin: 0 auto;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* 2. O CORPO (OPÇÕES) - ROLÁVEL */
+.slide-body {
+    flex-grow: 1; /* Faz o conteúdo crescer e empurrar o rodapé para baixo */
+    overflow-y: auto; /* Permite a rolagem apenas do conteúdo */
+    min-height: 0; /* Fix para rolagem funcionar no Grid */
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.slide-body::-webkit-scrollbar { width: 8px; }
+.slide-body::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); border-radius: 10px; }
+.slide-body::-webkit-scrollbar-thumb { background: var(--cor-girassol); border-radius: 10px; }
+
+/* 3. A NAVEGAÇÃO (BOTÕES) */
+.navigation-buttons {
+    position: sticky; /* Fica "preso" na parte inferior do slide */
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-width: 100%; /* Ocupa toda a largura */
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px; /* Espaçamento interno */
+    background-color: var(--verde-escuro); /* Garante que não seja transparente */
+    box-sizing: border-box;
+}
+.navigation-buttons.single-button {
+    justify-content: center;
+}
+
+/* --- ELEMENTOS DO QUESTIONÁRIO --- */
+.back-button, .cta-button, .text-input, .choices-container, .choice-button {
+    position: static !important; /* GARANTE A REMOÇÃO DE QUALQUER 'position: absolute' ANTIGO */
+}
+.back-button {background: none; border: none; color: rgba(255, 255, 255, 0.7); font-family: 'Inter', sans-serif; font-weight: 500; font-size: 1rem; cursor: pointer; padding: 10px; transition: color 0.2s ease;}
+.back-button:hover {color: var(--branco-puro);}
+.cta-button {background-color: var(--cor-girassol); color: var(--verde-escuro); border: none; padding: 15px 40px; border-radius: 30px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: transform 0.2s ease;}
+.cta-button:hover {transform: scale(1.05);}
+.text-input, .choices-container {width: 100%; max-width: 500px; margin-top: 20px;}
+.text-input {background: none; border: none; border-bottom: 2px solid rgba(255, 255, 255, 0.5); color: var(--branco-puro); font-size: 1.6rem; text-align: center; padding: 10px;} /* Fonte reduzida */
+.text-input:focus {outline: none; border-bottom-color: var(--cor-girassol);}
+.choices-container {display: flex; flex-direction: column; gap: 12px;}
+.choice-button {background-color: rgba(255, 255, 255, 0.1); color: var(--off-white); border: 2px solid rgba(255, 255, 255, 0.3); padding: 14px 18px; border-radius: 12px; font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; text-align: center;} /* Botão mais compacto */
+
+/* AUMENTA A ALTURA DO CONTAINER DE OPÇÕES ROLÁVEIS */
+.choices-container.scrollable {
+    max-height: 300px; /* Aumenta a altura máxima para mostrar mais opções */
+    overflow-y: auto;  /* Garante que a barra de rolagem apareça quando necessário */
+}
+
+/* ESTILO DA BARRA DE ROLAGEM PARA O CONTAINER DE OPÇÕES */
+.choices-container.scrollable::-webkit-scrollbar {
+    width: 8px;
+}
+.choices-container.scrollable::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+.choices-container.scrollable::-webkit-scrollbar-thumb {
+    background-color: var(--cor-girassol);
+    border-radius: 10px;
+}
+
+/* SUGESTÃO: Adiciona um "fade" visual para indicar que a lista é rolável */
+.slide-body {
+    position: relative; /* Necessário para o pseudo-elemento */
+}
+.slide-body.scrollable::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px; /* Altura do gradiente */
+    background: linear-gradient(to top, var(--verde-escuro), transparent);
+    pointer-events: none; /* Garante que o gradiente não bloqueie cliques */
+}
+
+.form-group-questionario {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin-top: 20px;
+}
+
+.input-label {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.7);
+    pointer-events: none;
+    transition: all 0.2s ease-out;
+    background-color: transparent;
+    padding: 0 5px;
+}
+
+/* Efeito de label flutuante */
+.text-input:focus + .input-label,
+.text-input:not(:placeholder-shown) + .input-label {
+    top: 0;
+    font-size: 0.8rem;
+    color: var(--cor-girassol);
+    background-color: var(--verde-escuro); /* Cor de fundo do questionário escuro */
+}
+
+/* --- VARIAÇÃO PARA O QUESTIONÁRIO CLARO --- */
+.questionario-em-fundo-claro .text-input:focus + .input-label,
+.questionario-em-fundo-claro .text-input:not(:placeholder-shown) + .input-label {
+    background-color: var(--off-white); /* Cor de fundo do questionário claro */
+}
+
+/* --- No final do arquivo style.css --- */
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+.shake-error {
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+/* Quando o erro acontece no input de texto, pintamos a linha de baixo de vermelho */
+.form-group-questionario.shake-error .text-input {
+    border-bottom-color: #ff6b6b !important;
+    transition: border-color 0.2s;
+}
+
+/* Quando o erro acontece nos botões de escolha, pintamos a borda do container */
+.choices-container.shake-error {
+    border: 1px solid #ff6b6b;
+    border-radius: 12px;
+    padding: 10px; /* Um pouco de respiro para a borda não colar */
+}
+/* =====================================================================
+//* --- CORREÇÃO VISUAL: ESTRELAS E INPUT --- */
+
+.rating-stars {
+    display: flex !important;
+    flex-direction: row-reverse;
+    justify-content: center;
+    gap: 15px;
+    margin: 5px 0 10px 0; /* Reduzi drasticamente as margens verticais */
+    border: none;
+}
+
+/* Esconde a bolinha do rádio, mas mantém funcional */
+.rating-stars input[type="radio"] {
+    display: none; 
+}
+
+/* Estilo do SVG (A Estrela) */
+.rating-stars label {
+    cursor: pointer;
+    width: 42px; /* Tamanho da estrela */
+    height: 42px;
+    transition: transform 0.2s ease;
+    padding: 0;
+    margin: 0;
+}
+
+/* A cor da linha da estrela (quando vazia) */
+.rating-stars label svg {
+    width: 100%;
+    height: 100%;
+    fill: transparent; 
+    stroke: #FFEE8C; /* Amarelo Girassol */
+    stroke-width: 1.5px;
+    transition: fill 0.3s ease;
+}
+
+/* A Mágica: Preenche a estrela ao passar o mouse ou selecionar */
+.rating-stars input[type="radio"]:checked ~ label svg,
+.rating-stars label:hover svg,
+.rating-stars label:hover ~ label svg {
+    fill: #FFEE8C; /* Fica toda amarela */
+}
+
+.rating-stars label:hover {
+    transform: scale(1.1); /* Aumenta um pouquinho ao passar o mouse */
+}
+
+/* --- INPUT DE TEXTO (TEXTAREA) ESTILIZADO --- */
+.form-group-questionario {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto; /* Centraliza o bloco */
+    position: relative;
+}
+
+.feedback-textarea {
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.08); /* Fundo translúcido (efeito vidro) */
+    border: 1px solid rgba(255, 255, 255, 0.4); /* Borda suave */
+    border-radius: 12px;
+    color: #ffffff; /* Texto branco */
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    padding: 25px 15px 15px 15px; /* Espaço interno */
+    resize: none; /* Impede redimensionar */
+    outline: none;
+    box-sizing: border-box; /* Garante que não estoure a largura */
+    transition: all 0.3s ease;
+}
+
+.feedback-textarea:focus {
+    border-color: #FFEE8C; /* Borda amarela ao clicar */
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Label Flutuante */
+.input-label {
+    position: absolute;
+    left: 15px;
+    top: 20px;
+    color: rgba(255, 255, 255, 0.6);
+    pointer-events: none;
+    transition: 0.2s ease all;
+    font-size: 16px;
+}
+
+/* Animação do Label subindo */
+.feedback-textarea:focus + .input-label,
+.feedback-textarea:not(:placeholder-shown) + .input-label {
+    top: 8px;
+    font-size: 12px;
+    color: #FFEE8C;
+    font-weight: bold;
+}
+/* =====================================================================
+/* PÁGINA DE RESULTADOS (ESTILOS UNIFICADOS)
+   ========================================================================== */
+
+.pagina-resultados main.container {
+    padding-top: 60px; /* Reduz o padding-top padrão do body para esta página */
+    padding-bottom: 80px;
+}
+
+/* --- Estado de Carregamento --- */
+#loading-state {
+    text-align: center;
+    padding: 40px 0;
+}
+#loading-state h1 {
+    font-family: 'New Kansas', serif;
+    color: var(--verde-escuro);
+    font-size: 2rem; /* Título reduzido */
+    margin-top: 20px;
+}
+#loading-state p {
+    font-size: 1rem; /* Texto reduzido */
+    color: var(--cinza-texto);
+    max-width: 500px;
+    margin: 15px auto 0 auto;
+}
+.loading-animation img {
+    max-width: 80px; /* Controla o tamanho do logo girando */
+    animation: spin 2.5s linear infinite;
+}
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* --- Cabeçalho dos Resultados (Dentro do #results-container) --- */
+.resultados-header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+.resultados-header h1 {
+    font-family: 'New Kansas', serif;
+    color: var(--verde-escuro);
+    font-size: clamp(1.8rem, 5vw, 2.5rem); /* Fonte responsiva reduzida */
+}
+.resultados-header p {
+    font-size: 1.1rem; /* Texto reduzido */
+    color: var(--cinza-texto);
+    max-width: 650px;
+    margin: 15px auto 0 auto;
+}
+
+/* --- Grid de Cards dos Profissionais --- */
+.pro-results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 30px;
+}
+.pro-card {
+    background: var(--branco-puro);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.pro-card:hover {
+    transform: translateY(-5px) scale(1.03); /* Aumenta ligeiramente o tamanho e eleva o card */
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+.pro-card-img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+}
+.pro-card-content {
+    padding: 20px; /* Padding reduzido */
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; /* Faz este container crescer para empurrar as ações para baixo */
+}
+.pro-card-content h3 {
+    font-family: 'Montserrat', sans-serif;
+    margin: 0 0 5px 0;
+    color: var(--verde-escuro);
+}
+.pro-card-content .crp {
+    font-size: 0.9rem;
+    color: var(--cinza-texto);
+    margin-bottom: 10px;
+}
+.rating {
+    color: #f39c12;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+.compatibility-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+.tag {
+    background-color: var(--cor-girassol);
+    color: var(--verde-escuro);
+    padding: 4px 10px; /* Tag mais compacta */
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+.bio-snippet {
+    font-style: italic;
+    color: var(--cinza-texto);
+    flex-grow: 1; /* Ocupa o espaço restante */
+    margin-bottom: 20px;
+}
+.pro-card-actions {
+    margin-top: auto; /* Empurra para o final do card */
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+.pro-card-actions .btn-principal {
+    flex-grow: 1; /* Faz o botão principal ocupar mais espaço */
+}
+.heart-icon {
+    font-size: 28px;
+    color: #ccc;
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+.heart-icon:hover {
+    color: #E63946; /* Cor de "favoritado" */
+    transform: scale(1.1);
+}
+
+/* --- Cenário B: Etiqueta de Contexto --- */
+.context-label {
+    background-color: #e9ecef;
+    padding: 12px; /* Padding reduzido */
+    margin: -25px 0 25px 0; /* Ajuste para encaixar melhor */
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-align: center;
+}
+.context-label strong {
+    color: var(--verde-escuro);
+}
+
+/* --- Cenário C: Nenhum Resultado --- */
+.no-results-container {
+    text-align: center;
+}
+.no-results-container .ilustracao {
+    max-width: 100%;
+    width: 300px; /* Define uma largura base */
+    margin: 20px auto 40px auto;
+}
+.action-box {
+    background: var(--branco-puro);
+    padding: 30px;
+    border-radius: 16px;
+    margin-top: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+.action-box h3 {
+    margin-top: 0;
+    font-family: 'New Kansas', serif;
+    color: var(--verde-escuro);
+}
+.action-box .btn {
+    margin-top: 15px;
+}
+/* ================================================= */
+/* CORREÇÃO DEFINITIVA: INTEGRAÇÃO ONDA + RODAPÉ   */
+/* ================================================= */
+
+/* Garante que o container da onda não tenha margens e se comporte bem */
+.wave-divider-footer {
+    /* O fundo deve ser da mesma cor do conteúdo principal que vem antes dele */
+    background-color: transparent; /* ou var(--off-white) se necessário */
+    line-height: 0; /* Remove espaço vertical extra */
+
+    /* A 'cola' que vai unir as duas partes. Puxa o rodapé 1px para cima. */
+    margin-bottom: -1px; 
+}
+
+/* Garante que o SVG preencha o container corretamente */
+.wave-divider-footer svg {
+    display: block; /* Remove o espaço que a tag svg tem por padrão */
+    width: 100%;
+    height: 80px; /* Sua altura definida para a onda */
+}
+
+/* DEFINE A COR DA ONDA para ser a mesma do rodapé */
+.wave-divider-footer .shape-fill {
+    fill: var(--verde-escuro);
+}
+
+/* Zera qualquer margem superior do rodapé que possa estar causando o espaço */
+.rodape-principal {
+    margin-top: 0;
+}
+/* ================================================= */
+/* CORREÇÃO (RE-ADICIONADA): REMOVER O CONTAINER DE 'LOADING' */
+/* ================================================= */
+
+/* Garante que o container de 'loading' suma completamente do layout
+   quando a classe 'hidden' for adicionada a ele via JavaScript. */
+#loading-state.hidden {
+    display: none !important;
+}
+/* ==========================================================================
+   PÁGINA: PRÉ-CADASTRO DE PSICÓLOGOS (/psi/cadastro)
+   ========================================================================== */
+
+/* --- Ajustes no layout do slide para formulários --- */
+.slide-body {
+    justify-content: flex-start; /* Alinha o conteúdo no topo em vez de no centro */
+    padding-top: 20px;
+}
+
+/* --- Estilo para os grupos de formulário (label + input) --- */
+.form-group-questionario {
+    width: 100%;
+    max-width: 500px; /* Mantém a mesma largura dos botões de escolha */
+    margin-bottom: 25px;
+    text-align: left; /* Alinha o texto dentro do grupo à esquerda */
+}
+
+.form-group-questionario label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 10px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Ajuste fino nos inputs de texto para este formulário */
+.form-group-questionario .text-input {
+    width: 100%;
+    text-align: left; /* Alinha o texto do input à esquerda */
+    font-size: 1.2rem;
+    margin: 0;
+    padding: 12px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5); /* Remove a borda inferior grossa */
+}
+
+.form-group-questionario .text-input:focus {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: var(--cor-girassol);
+}
+
+/* --- Estilo para o componente de Upload --- */
+.upload-container {
+    width: 100%;
+    max-width: 600px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+}
+
+.upload-container h3 {
+    font-family: 'New Kansas', serif;
+    color: var(--branco-puro);
+    margin-top: 0;
+}
+
+.upload-container p {
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.6;
+}
+
+.upload-label {
+    display: block;
+    margin-top: 20px;
+    padding: 40px 20px;
+    border: 2px dashed rgba(255, 255, 255, 0.4);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.upload-label:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--cor-girassol);
+}
+
+.upload-label span {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+}
+
+/* Esconde o input de arquivo padrão */
+#crp-upload {
+    display: none;
+}
+
+/* ==========================================================================
+   VARIAÇÃO DO QUESTIONÁRIO PARA FUNDO CLARO (PÁGINA PROFISSIONAIS)
+   ========================================================================== */
+
+/* Container principal da variação */
+.questionario-em-fundo-claro {
+    color: var(--cinza-texto); /* Cor do texto padrão para cinza escuro */
+}
+
+/* Títulos e subtítulos */
+.questionario-em-fundo-claro .slide-header h1 {
+    color: var(--verde-escuro);
+}
+.questionario-em-fundo-claro .slide-header p.subtitle {
+    color: var(--cinza-texto);
+}
+
+/* Inputs de texto */
+.questionario-em-fundo-claro .text-input {
+    color: var(--verde-escuro); /* Cor do texto digitado */
+    border-color: rgba(0, 0, 0, 0.2);
+    background-color: transparent;
+}
+.questionario-em-fundo-claro .input-label {
+    color: var(--cinza-texto); /* Cor do placeholder */
+}
+.questionario-em-fundo-claro .text-input:focus {
+    border-color: var(--verde-escuro);
+}
+.questionario-em-fundo-claro .text-input:focus + .input-label {
+    color: var(--verde-escuro); /* Cor do label quando focado */
+}
+
+/* Botões de escolha */
+.questionario-em-fundo-claro .choice-button {
+    background-color: rgba(27, 67, 50, 0.05); /* Verde bem clarinho */
+    border-color: rgba(27, 67, 50, 0.2);
+    color: var(--verde-escuro);
+}
+.questionario-em-fundo-claro .choice-button:hover,
+.questionario-em-fundo-claro .choice-button.selected {
+    background-color: var(--verde-escuro);
+    border-color: var(--verde-escuro);
+    color: var(--branco-puro);
+}
+/* =====================================================================
+   CORREÇÃO: FORÇAR ESTILO CLARO NO MENU MOBILE ABERTO
+   ===================================================================== */
+
+/* Alvo: Links de navegação dentro do menu mobile ativo */
+.container-navegacao.ativo nav a {
+    color: white !important;
+}
+
+/* Alvo: Botão de contorno ("Entrar") dentro do menu mobile ativo */
+.container-navegacao.ativo .btn-outline {
+    color: white !important;
+    border-color: white !important;
+}
+
+/* Alvo: Botão sólido ("Registrar") dentro do menu mobile ativo */
+.container-navegacao.ativo .btn-solid {
+    background-color: white !important;
+    color: var(--verde-escuro) !important;
+    border-color: white !important;
+}
+/* ================================================= */
+/* CORREÇÃO: GARANTIR EFEITO DE RUÍDO NO MOBILE    */
+/* ================================================= */
+
+/* Garante que o body ocupe a altura total, melhorando a consistência */
+html, body {
+    height: 100%;
+}
+
+/* Regra do ruído, agora mais robusta para mobile */
+body::after {
+    content: "";
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%; /* Mais estável que 100vh em alguns celulares */
+    
+    z-index: 9999; /* Garante que fique acima de quase tudo */
+    pointer-events: none; /* Impede que bloqueie cliques */
+    opacity: 0.05; 
+}
+/* =============================================================
+   SOLUÇÃO ARQUITETURAL: ESPAÇAMENTO DO CABEÇALHO FIXO
+   ============================================================= */
+
+/* Para seções 'hero' com fundo escuro (como na Home e FAQ), 
+   o padding fica dentro do próprio elemento, preenchendo o espaço 
+   com a cor de fundo correta e eliminando a "linha branca".
+*/
+.hero-fundo-escuro {
+    padding-top: 100px; /* Ajuste este valor se necessário */
+}
+
+/* Para páginas de conteúdo geral com fundo claro, como 'Profissionais',
+   'Sobre', etc., aplicamos o padding no container principal da página.
+*/
+.secao-conteudo-pagina {
+    padding-top: 100px; /* Ajuste este valor se necessário */
+}
+
+/* Garante que o questionário e os dashboards, que não têm o header principal,
+   não recebam nenhum espaçamento extra.
+*/
+body.pagina-questionario,
+body.pagina-dashboard {
+    padding-top: 0 !important;
+}
+/* =============================================================
+   CORREÇÃO FINAL: ALINHAMENTO DE TODO O CABEÇALHO DO SLIDE
+   ============================================================= */
+
+/* Alvo: O título (h1) E o subtítulo (p.subtitle) dentro do header do slide,
+   forçando ambos a ficarem centralizados. */
+.slide-header h1,
+.slide-header p.subtitle {
+    text-align: center !important;
+}
+/* Estilo para o Dropdown de Idade */
+.select-input {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--off-white);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 15px 20px; /* Padding reduzido */
+    border-radius: 12px;
+    font-size: 1rem; /* Fonte reduzida */
+    font-weight: 500;
+    cursor: pointer;
+    width: 100%;
+    max-width: 500px;
+    text-align: center; /* Centraliza o texto selecionado */
+    -webkit-appearance: none; /* Remove a aparência padrão no Chrome/Safari */
+    -moz-appearance: none; /* Remove a aparência padrão no Firefox */
+    appearance: none; /* Remove a aparência padrão */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23FFEE8C' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E"); /* Adiciona uma seta amarela customizada */
+    background-repeat: no-repeat;
+    background-position: right 20px center;
+    background-size: 16px 16px;
+}
+.select-input:focus {
+    outline: none;
+    border-color: var(--cor-girassol);
+}
+/* Estilo para as opções dentro do dropdown */
+.select-input option {
+    background-color: var(--verde-escuro);
+    color: var(--off-white);
+}
+/* =============================================================
+   CORREÇÃO: REMOVER ANIMAÇÃO INDESEJADA DA ONDA DO RODAPÉ
+   ============================================================= */
+
+/* Remove qualquer transição que possa estar afetando a posição 
+   vertical da onda ou do rodapé, forçando o posicionamento imediato. */
+.wave-divider-footer,
+.rodape-principal {
+    transition: none !important; 
+}
+/* =============================================================
+   RESPONSIVIDADE: PÁGINA PROFISSIONAIS
+   ============================================================= */
+
+@media (max-width: 767px) {
+
+    /* Reduz o padding vertical do hero em telas menores */
+    .hero-profissionais {
+        padding-top: 60px;
+        padding-bottom: 60px;
+    }
+
+    /* Reduz o padding vertical dos containers de conteúdo */
+    .secao-conteudo-pro .container {
+        padding-top: 60px;
+        padding-bottom: 60px;
+    }
+
+    /* Garante que o espaçamento final também seja reduzido */
+    .secao-final .container {
+        padding-bottom: 60px;
+    }
+}
+/* =============================================================
+   CORREÇÃO: ALINHAMENTO DE TEXTO NAS PÁGINAS LEGAIS
+   ============================================================= */
+
+/* Alvo: O container principal dentro das páginas legais */
+.pagina-legal .secao-conteudo-pagina {
+    text-align: left; /* Força o alinhamento padrão à esquerda */
+}
+
+/* Garante que títulos e subtítulos também sigam o alinhamento */
+.pagina-legal .secao-conteudo-pagina h1,
+.pagina-legal .secao-conteudo-pagina h2,
+.pagina-legal .secao-conteudo-pagina h3,
+.pagina-legal .secao-conteudo-pagina p,
+.pagina-legal .secao-conteudo-pagina ul,
+.pagina-legal .secao-conteudo-pagina li {
+    text-align: left; /* Garante alinhamento à esquerda */
+    /* Se preferir justificado: text-align: justify; */
+}
+
+/* Ajusta a margem do subtítulo para o alinhamento esquerdo */
+.pagina-legal .subtitulo-secao {
+    margin-left: 0;
+    margin-right: 0;
+    text-align: left;
+}
+
+/* Ajusta a lista para ter recuo padrão */
+.pagina-legal ul {
+    padding-left: 40px; /* Adiciona recuo padrão da lista */
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+/* =============================================================
+   MODAL DE CONFIRMAÇÃO
+   ============================================================= */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(27, 67, 50, 0.6); /* Fundo verde translúcido */
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-content {
+    background-color: var(--branco-puro);
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    max-width: 500px;
+    width: 90%;
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.is-visible .modal-content {
+    transform: scale(1);
+}
+
+/* ================================================== */
+/* ESTILOS DE AUTENTICAÇÃO (Login / Registro) */
+/* ================================================== */
+
+/* Define o fundo da página (cinza claro) */
+.pagina-registro {
+    background-color: #f9fafb;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* Centraliza o card na tela */
+.container-auth {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+/* O card branco que centraliza tudo e dá "espaço nas laterais" */
+.card-auth {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    padding: 32px 40px;
+    width: 100%;
+    max-width: 450px; /* Limita a largura máxima */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centraliza o conteúdo (logo, título) */
+}
+
+/* Logo dentro do card */
+.logo-auth {
+    width: 150px;
+    height: auto;
+    margin-bottom: 24px;
+}
+
+/* Título (Registro de Psicólogo) */
+.card-auth h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1B4332; /* Verde Girassol */
+    margin-bottom: 24px;
+    text-align: center; /* Centraliza o texto */
+}
+
+/* Formulário e seus grupos */
+.card-auth form {
+    width: 100%;
+}
+
+.form-group {
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151; /* Cinza escuro */
+    margin-bottom: 6px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #D1D5DB; /* Borda cinza clara */
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+/* Checkbox de Termos */
+.form-group-checkbox {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.form-group-checkbox input {
+    margin-right: 10px;
+}
+
+.form-group-checkbox label {
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.form-group-checkbox label a {
+    color: #1B4332;
+    text-decoration: underline;
+}
+
+/* Botão principal (Registrar) */
+.btn.btn-principal {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    background-color: #1B4332;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn.btn-principal:hover {
+    background-color: #295e4a;
+}
+
+/* Mensagens de erro/sucesso */
+.mensagem-oculta {
+    display: none;
+}
+.mensagem-erro, .mensagem-sucesso {
+    /* Sua mensagem de erro na página ("Erro interno no servidor") */
+    background-color: #fef2f2; /* Vermelho muito claro, quase branco */
+    color: #cc0000; /* Texto vermelho escuro */
+    border: 1px solid #fecaca;
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin: 10px auto 20px auto; /* Centraliza no card */
+    max-width: 90%;
+    text-align: center;
+    font-weight: 500;
+}
+.mensagem-sucesso {
+    background-color: #ecfdf5;
+    color: #065f46;
+}
+
+/* Link inferior (Já tem uma conta?) */
+.link-auth {
+    margin-top: 24px;
+    font-size: 14px;
+    text-align: center; /* Centraliza o texto */
+    color: #4b5563;
+}
+
+.link-auth a {
+    color: #1B4332;
+    font-weight: 500;
+    text-decoration: none;
+}
+.link-auth a:hover {
+    text-decoration: underline;
+}
+
+/* Estilos do Banner PWA (iOS) */
+.pwa-banner {
+    display: none; /* Começa escondido */
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 400px;
+    background-color: #f4f4f4;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    border: 1px solid #ddd;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.pwa-banner-content {
+    display: flex;
+    align-items: center;
+}
+
+.pwa-banner-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.pwa-banner-content div {
+    flex-grow: 1;
+}
+
+.pwa-banner-content strong {
+    font-size: 15px;
+    color: #333;
+    display: block;
+}
+
+.pwa-banner-content p {
+    font-size: 13px;
+    color: #555;
+    margin: 4px 0 0 0;
+    line-height: 1.4;
+}
+
+.pwa-banner-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #aaa;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.modal-header h2 { margin: 0; font-family: 'New Kansas', serif; color: var(--verde-escuro); }
+.modal-close { background: none; border: none; font-size: 2rem; cursor: pointer; color: #aaa; }
+.modal-body p { line-height: 1.7; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px; }
+.btn-perigo { background-color: #E63946; border-color: #E63946; color: white; }
+.btn-perigo:hover { background-color: #c9303c; border-color: #c9303c; }
+
+/* =============================================================
+   NOTIFICAÇÕES (TOAST)
+   ============================================================= */
+
+.toast-container {
+    position: absolute; /* Altera de 'fixed' para 'absolute' */
+    top: 20px;
+    right: 20px;
+    z-index: 3000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    transform: translateX(100%);
+    animation: slideIn 0.5s forwards, fadeOut 0.5s 4s forwards;
+}
+
+.toast.toast-success {
+    background-color: var(--verde-escuro);
+}
+
+.toast.toast-error {
+    background-color: #E63946; /* Cor de perigo */
+}
+
+#pwa-install-banner {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(200%); /* Começa fora da tela */
+    width: 100%;
+    max-width: 95%;
+    background-color: var(--verde-escuro);
+    color: var(--branco-puro);
+    padding: 15px 20px;
+    border-radius: 12px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.25);
+    z-index: 1500;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    transition: transform 0.5s ease-in-out;
+    box-sizing: border-box;
+}
+
+#pwa-install-banner.visible {
+    transform: translateX(-50%) translateY(0); /* Entra na tela */
+}
+
+.pwa-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.pwa-banner-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+}
+
+.pwa-banner-text strong {
+    font-size: 16px;
+    display: block;
+}
+
+.pwa-banner-text p {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.pwa-banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+#pwa-install-button {
+    flex-shrink: 0; /* Impede que o botão encolha */
+}
+
+.pwa-banner-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+@keyframes slideIn {
+    to { opacity: 1; transform: translateX(0); }
+}
+ 
+ /* =============================================================
+    PÁGINA DE MENSAGENS DO ADMIN (CHAT) - REFORMULADO
+    ============================================================= */
+ 
+ .chat-container {
+     display: flex;
+     height: 100vh;
+     width: calc(100% - 250px); /* Largura total menos a sidebar do admin */
+     margin-left: 250px; /* Espaço para a sidebar do admin */
+     background-color: #f0f2f5;
+     font-family: 'Inter', sans-serif;
+ }
+ 
+ /* --- Barra Lateral de Conversas --- */
+ .chat-sidebar {
+     width: 350px;
+     background-color: #fff;
+     border-right: 1px solid #e0e0e0;
+     display: flex;
+     flex-direction: column;
+     flex-shrink: 0;
+ }
+ 
+ .chat-sidebar-header {
+     padding: 16px;
+     border-bottom: 1px solid #e0e0e0;
+ }
+ .chat-sidebar-header h2 {
+     margin: 0 0 15px 0;
+     font-family: 'New Kansas', serif;
+     color: var(--verde-escuro);
+     font-size: 1.5rem;
+ }
+ #search-conversations {
+     width: 100%;
+     padding: 10px 15px;
+     border-radius: 8px;
+     border: 1px solid #ddd;
+     background-color: #f0f2f5;
+     font-family: 'Inter', sans-serif;
+     box-sizing: border-box;
+ }
+ 
+ .conversations-list {
+     overflow-y: auto;
+     flex-grow: 1;
+ }
+ 
+ .conversation-item {
+     display: flex;
+     align-items: center;
+     gap: 15px;
+     padding: 12px 16px;
+     cursor: pointer;
+     border-bottom: 1px solid #f0f2f5;
+     transition: background-color 0.2s ease;
+ }
+ .conversation-item:hover {
+     background-color: #f5f5f5;
+ }
+ .conversation-item.active {
+     background-color: var(--cor-girassol);
+ }
+ .conversation-item img {
+     width: 50px;
+     height: 50px;
+     border-radius: 50%;
+     object-fit: cover;
+ }
+ .conversation-details {
+     flex-grow: 1;
+     overflow: hidden;
+ }
+ .conversation-details .name {
+     font-weight: 600;
+     color: #111;
+ }
+ .conversation-item.active .conversation-details .name {
+     color: var(--verde-escuro);
+ }
+ .conversation-details .last-message {
+     font-size: 0.9rem;
+     color: #666;
+     white-space: nowrap;
+     overflow: hidden;
+     text-overflow: ellipsis;
+ }
+ .empty-chat-list {
+     text-align: center;
+     padding: 40px 20px;
+     color: #888;
+ }
+ 
+ /* --- Janela Principal do Chat --- */
+ .chat-main {
+     flex-grow: 1;
+     display: flex;
+     flex-direction: column;
+     background-color: #e5ddd5; /* Fundo similar ao WhatsApp */
+     background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARMAAAARMAAQCAYAAADqj3s6AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAABYSURBVHja7cExAQAAAMKg9U9tCF8gAAAAAAAAAADg3wK4ICAggIAAAgICCAgIIAggICCggACCgAICgggICCggACCgAICCAgIIAggICCggAAAAAAAAADg3wK4ICAggIAAAgICCAgIIAggICCggACCgAICgggICCggACCgAICCAgIIAggICCggAAAAAAAAADg3wK4ICAggIAAAgICCAgIIAggICCggACCgAICgggICCggACCgAICCAgIIAggICCggAAAAAAAAADg3wK4ICAggIAAAgICCAgIIAggICCggACCgAICgggICCggACCgAICCAgIIAggICCggAAAAAAAAADg3wK4ICAggIAAAgICCAgIIAggICCggACCgAICgggICCggACCgAICCAgIIAggICCggAAAAAAAAADg3wK4sCAgIIAggICCggACCgAICCAgIIAggICCggACCgAICgggICCggACCgAICCAgIIAggICCggACCgAICgggICCggACCgAICCAgIIAggICCggACCgAICgggICCggACCgAICCAgIIAggICCggACCgAICgggICCggACCgAICCAgIIAggICCggACCgAICgggICCggACCgAICCAgIIAggICAgAAAAAADA/30Bt0gBPPsZs6sAAAAASUVORK5CYII=");
+ }
+ 
+ .chat-window-welcome {
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     justify-content: center;
+     height: 100%;
+     text-align: center;
+     color: #555;
+     padding: 20px;
+ }
+ .chat-welcome-logo {
+     width: 120px;
+     height: auto;
+     opacity: 0.5;
+     margin-bottom: 20px;
+ }
+ .chat-window-welcome h3 { font-family: 'New Kansas', serif; font-size: 1.4rem; color: #333; }
+ 
+ .chat-header {
+     display: flex;
+     align-items: center;
+     padding: 10px 20px;
+     background-color: #f0f2f5;
+     border-bottom: 1px solid #e0e0e0;
+     flex-shrink: 0;
+ }
+ .chat-header-user { display: flex; align-items: center; gap: 15px; }
+ .chat-header-user img { width: 40px; height: 40px; border-radius: 50%; }
+ .chat-header-user h3 { margin: 0; font-size: 1.1rem; color: #111; }
+ .chat-header-user span { font-size: 0.8rem; color: #666; }
+ 
+ /* ==========================================================================
+   REFINAMENTO CHAT MODERNO
+   ========================================================================== */
+
+/* --- Estilização das Mensagens (Balões de Chat) --- */
+.chat-messages {
+    flex-grow: 1; 
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Espaçamento ligeiramente reduzido para sensação de chat contínuo */
+}
+
+.message-bubble {
+    padding: 12px 18px;
+    border-radius: 18px;
+    max-width: 75%; /* Ligeiramente maior */
+    line-height: 1.5;
+    word-break: break-word; /* Solução para o problema de vazamento horizontal */
+}
+
+/* Bolha Recebida (Alinhada à Esquerda) */
+.message-bubble.received {
+    background-color: var(--branco-puro);
+    border-bottom-left-radius: 4px; /* Borda mais suave */
+    align-self: flex-start;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+}
+
+/* Bolha Enviada (Alinhada à Direita) */
+.message-bubble.sent {
+    background-color: #dcf8c6; /* Verde bem claro - Mantendo o tema */
+    border-bottom-right-radius: 4px; /* Borda mais suave */
+    align-self: flex-end;
+}
+
+/* --- Área de Resposta (Melhorando a Usabilidade) --- */
+.chat-input-area {
+    padding: 15px 25px;
+    background-color: #f0f2f5;
+    border-top: 1px solid var(--cinza-borda);
+    flex-shrink: 0;
+}
+
+.message-form {
+    display: flex;
+    gap: 15px;
+    align-items: flex-end; /* Alinha o botão com a parte inferior do textarea */
+}
+
+#message-input {
+    flex-grow: 1;
+    border-radius: 20px; /* Borda mais suave */
+    border: 1px solid #ced4da;
+    padding: 14px 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    resize: none;
+    height: auto; /* Altura automática para se ajustar ao conteúdo */
+    min-height: 50px; /* Altura mínima */
+}
+
+ .message-form button {
+     background-color: var(--verde-escuro);
+     color: white;
+     border: none;
+     border-radius: 50%;
+     width: 50px;
+     height: 50px;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     cursor: pointer;
+     transition: background-color 0.2s, transform 0.2s;
+     flex-shrink: 0;
+ }
+ .message-form button:hover {
+     background-color: #2a624d;
+     transform: scale(1.1);
+ }
+ .message-form button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+ }
+@keyframes fadeOut {
+    to { opacity: 0; transform: translateX(100%); }
+}
+
+/* Estilo para o botão de avançar desabilitado no questionário */
+.cta-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* --- SPINNER DE CARREGAMENTO MODERNO (LOADER) --- */
+
+/* O contêiner para centralizar */
+.loader-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 40px; /* Espaçamento */
+}
+
+/* O spinner em si */
+.loader-spinner {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    
+    /* Cor de fundo do círculo (branco/transparente) */
+    border: 5px solid rgba(255, 255, 255, 0.2); 
+    
+    /* Cor principal da animação (amarelo-girassol) */
+    border-top-color: #FFEE8C; 
+    
+    animation: spin 1s linear infinite;
+}
+
+/* A animação de rotação */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Exibe o olho aberto quando ativo */
+.password-toggle-icon.active .eye-closed {
+  display: none;
+}
+.password-toggle-icon.active .eye-open {
+  display: block;
+}
+
+/* =============================================================
+   CORREÇÃO: PÁGINA PROFISSIONAIS (NOV/2025)
+   ============================================================= */
+
+/* 1. Reduz o espaçamento em branco entre as seções */
+.secao-conteudo-pagina {
+    padding-top: 60px;
+    padding-bottom: 60px;
+}
+
+/* 2. Garante que o rodapé cole na seção verde acima dele */
+.rodape-principal {
+    margin-top: 0 !important; /* Remove qualquer margem que cause o espaço */
+}
+
+/* 3. Estilo dos novos Pricing Cards (Modernos) */
+.pricing-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* 1 coluna no mobile */
+    gap: 20px;
+    max-width: 1100px;
+    margin: 40px auto 0 auto;
+}
+
+.pricing-card {
+    background-color: var(--branco-puro);
+    border: 1px solid #eee;
+    border-radius: 16px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    
+    /* LINHA NOVA ADICIONADA: */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* REGRA NOVA ADICIONADA: */
+.pricing-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+}
+
+/* 4. Estilo de Destaque (Plano Ecossistema) */
+.pricing-card.highlighted {
+    border: 2px solid var(--verde-escuro);
+    transform: none; /* Reseta o scale(1.03) antigo */
+}
+
+.pricing-card-header {
+    text-align: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+}
+
+.pricing-card-header h3 {
+    font-family: 'New Kansas', serif;
+    font-size: 1.8rem;
+    color: var(--verde-escuro);
+    margin: 0 0 10px 0;
+}
+
+.pricing-card-header .price-subtitle {
+    font-size: 0.9rem;
+    color: var(--cinza-texto);
+    min-height: 40px; /* Garante altura uniforme */
+}
+
+.pricing-card-features {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+    flex-grow: 1; /* Empurra o botão para baixo */
+}
+
+.pricing-card-features li {
+    padding: 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+}
+
+/* Ícone de Check (✓) */
+.pricing-card-features li::before {
+    content: '✓';
+    font-weight: bold;
+    color: var(--verde-escuro);
+    font-size: 1.2rem;
+}
+
+/* Ícone de 'X' para features ausentes */
+.pricing-card-features li.disabled {
+    color: #aaa;
+}
+.pricing-card-features li.disabled::before {
+    content: '–'; /* Traço no lugar do check */
+    color: #ccc;
+    font-size: 1.5rem;
+}
+
+
+.pricing-card-cta {
+    margin-top: 30px;
+}
+
+.pricing-card-cta .btn {
+    width: 100%;
+    text-align: center; /* Centraliza o texto do botão */
+}
+
+/* 5. Regra para o Grid em Desktop */
+@media (min-width: 992px) {
+    .pricing-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* 6. Helper para seções com onda (para o padding-bottom) */
+.secao-com-onda-inferior {
+    position: relative;
+    /* Ajusta o padding para a onda não sobrepor o conteúdo */
+    padding-bottom: 100px; 
+}
+.wave-divider-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    line-height: 0;
+}
+
+/* =============================================================
+   PÁGINA DE RECURSOS DE CRISE
+   ============================================================= */
+
+/* O Bloco de Aviso Vermelho */
+.aviso-crise-box {
+    background-color: #fef2f2; /* Vermelho bem claro */
+    border: 2px solid #E63946;  /* Vermelho de perigo */
+    border-radius: 12px;
+    padding: 25px;
+    margin: 30px 0 40px 0;
+}
+.aviso-crise-box h2 {
+    color: #991b1b; /* Vermelho escuro */
+}
+.aviso-crise-box p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #b91c1c; /* Vermelho escuro */
+    margin-bottom: 0;
+}
+
+/* Grid para os Cards de Emergência */
+.recursos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+}
+
+.recurso-card {
+    background-color: var(--branco-puro);
+    border: 1px solid #eee;
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centraliza os botões */
+}
+.recurso-card h3 {
+    font-family: 'New Kansas', serif;
+    color: var(--verde-escuro);
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+.recurso-card p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    flex-grow: 1; /* Empurra o botão para baixo */
+}
+
+/* Botão de Emergência */
+.btn-emergencia {
+    display: block;
+    width: 100%;
+    background-color: #E63946;
+    color: var(--branco-puro);
+    border-color: #E63946;
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 12px;
+    text-align: center;
+    margin-top: 15px;
+}
+.btn-emergencia:hover {
+    background-color: #c9303c;
+    border-color: #c9303c;
+    transform: none; /* Remove o scale do :hover padrão */
+}
+
+.link-externo {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+    font-weight: bold;
+    color: var(--verde-escuro);
+}
+
+/* Bloco de Aviso Informativo (Amarelo/Gentil) */
+.aviso-info-box {
+    background-color: #fffbeb; /* Amarelo bem claro */
+    border: 2px solid #FBBF24;  /* Amarelo/Laranja */
+    border-radius: 12px;
+    padding: 25px;
+    margin: 30px 0 40px 0;
+}
+.aviso-info-box h2 {
+    color: #b45309; /* Laranja escuro */
+}
+.aviso-info-box p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #d97706; /* Laranja escuro */
+    margin-bottom: 15px;
+}
+/* =============================================================
+   PÁGINA DE PERFIL PÚBLICO DO PSICÓLOGO
+   ============================================================= */
+
+.profile-page-main {
+    padding-top: 60px;
+    padding-bottom: 80px;
+    background-color: #f8f9fa; /* Fundo cinza claro */
+}
+
+/* Grid Principal (Info + Card) */
+.profile-header-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* 1 coluna no mobile */
+    gap: 30px;
+    margin-bottom: 40px;
+}
+@media (min-width: 992px) {
+    .profile-header-grid {
+        /* 2 colunas no desktop: 2/3 para info, 1/3 para card */
+        grid-template-columns: 2fr 1fr; 
+    }
+}
+
+/* Coluna 1: Infos */
+.profile-info {
+    text-align: center;
+}
+.profile-photo-wrapper {
+    width: 180px;
+    height: 180px;
+    margin: 0 auto 20px auto;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+.profile-photo-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.profile-info h1 {
+    font-family: 'New Kansas', serif;
+    font-size: 2.5rem;
+    color: var(--verde-escuro);
+    margin: 0;
+}
+.profile-info .crp {
+    font-size: 1rem;
+    color: var(--cinza-texto);
+    margin: 5px 0 15px 0;
+}
+.profile-tags-container {
+    margin-top: 25px;
+    text-align: left;
+}
+.profile-tags-container h3 {
+    font-family: 'New Kansas', serif;
+    color: var(--verde-escuro);
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+.profile-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 15px;
+}
+.tag, .small-tag {
+    background-color: var(--cor-girassol);
+    color: var(--verde-escuro);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+.small-tag {
+    background-color: #f1f3f5;
+    color: #555;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+}
+
+
+/* Coluna 2: Card de Conversão */
+.conversion-card-wrapper {
+    position: relative;
+}
+.conversion-card {
+    background-color: var(--branco-puro);
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    border: 1px solid #eee;
+    position: sticky;
+    top: 100px; /* (Header tem 80px) + 20px de margem */
+    text-align: center; /* LINHA ADICIONADA */
+}
+.conversion-card h3 {
+    font-size: 1rem;
+    color: var(--cinza-texto);
+    font-weight: 400;
+    margin: 0;
+}
+.conversion-card .price {
+    font-family: 'New Kansas', serif;
+    font-size: 2.2rem;
+    color: var(--verde-escuro);
+    margin: 5px 0 20px 0;
+}
+.conversion-card .cta-subtitle {
+    font-size: 0.9rem;
+    text-align: center;
+    color: var(--cinza-texto);
+    margin-top: 10px;
+}
+.conversion-card .small-tags {
+    margin-top: 25px;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}
+
+.conversion-card .btn {
+  margin: 0 auto;                /* centraliza horizontalmente */
+  text-align: center;            /* centraliza texto dentro */
+  display: block;                /* ocupa a largura disponível */
+  width: 100%;                   /* ocupa toda a largura do card */
+  max-width: 320px;              /* impede que o botão fique "gigante" em telas grandes */
+  box-sizing: border-box;
+}
+
+/* Sistema de Abas */
+.tabs-nav {
+    border-bottom: 2px solid #ddd;
+    margin-bottom: 30px;
+}
+.tab-link {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    font-weight: 500;
+    font-family: 'Montserrat', sans-serif;
+    padding: 15px 25px;
+    cursor: pointer;
+    color: var(--cinza-texto);
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px; /* Puxa para cima da borda principal */
+}
+.tab-link.active, .tab-link:hover {
+    color: var(--verde-escuro);
+    border-bottom-color: var(--verde-escuro);
+}
+.tab-content {
+    display: none; /* Escondido por padrão */
+}
+.tab-content.active {
+    display: block; /* Visível */
+}
+.tab-content h2 {
+    font-family: 'New Kansas', serif;
+    color: var(--verde-escuro);
+    margin-top: 0;
+}
+
+/* Sistema de Avaliação (Estrelas) */
+.rating-summary-stars .star,
+.review-card .star {
+    font-size: 1.5rem;
+    color: #ccc;
+}
+.rating-summary-stars .star.filled,
+.review-card .star.filled {
+    color: #f39c12; /* Cor de estrela */
+}
+.rating-summary-stars span {
+    margin-left: 10px;
+    font-weight: bold;
+    color: var(--cinza-texto);
+}
+
+/* Formulário de Avaliação (Input) */
+.star-rating-input {
+    display: flex;
+    flex-direction: row-reverse; /* Faz as estrelas acenderem da direita p/ esquerda */
+    justify-content: flex-end;
+}
+.star-rating-input input[type="radio"] {
+    display: none;
+}
+.star-rating-input label {
+    font-size: 2.5rem;
+    color: #ccc;
+    cursor: pointer;
+    padding: 0 3px;
+    transition: color 0.2s;
+}
+.star-rating-input input[type="radio"]:checked ~ label,
+.star-rating-input label:hover,
+.star-rating-input label:hover ~ label {
+    color: #f39c12;
+}
+
+/* Card de Avaliação Individual */
+#reviews-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 30px;
+}
+.review-card {
+    background-color: var(--branco-puro);
+    border: 1px solid #eee;
+    padding: 20px;
+    border-radius: 12px;
+}
+.review-card .review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.review-card .review-header h4 {
+    margin: 0;
+    font-family: 'Montserrat', sans-serif;
+}
+.review-card .review-header .rating-stars .star {
+    font-size: 1.1rem;
+}
+.review-card .review-comment {
+    font-style: italic;
+    color: var(--cinza-texto);
+    margin: 0;
+}
+.form-group { margin-bottom: 1em; }
+.form-status { min-height:1.5em; font-size:1em; }
+.btn-login { width: 100%; max-width: 240px; margin: 0 auto; display: block; }
+body, input, textarea, select, button {
+  font-family: Lato, Montserrat, Arial, sans-serif;
+  font-size: 1em;
+  color: #154734;
+}
+label { font-weight: 700; }
+.map-container iframe { border-radius:8px; }
+/* =============================================================
+   ESTILO DO "LOGIN WALL" (Página de Perfil)
+   ============================================================= */
+
+.login-wall-box {
+    background-color: #f8f9fa; /* Cinza claro */
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 25px;
+    margin: 20px 0 30px 0;
+    text-align: center;
+}
+.login-wall-box h4 {
+    font-family: 'New Kansas', serif;
+    color: var(--verde-escuro);
+    font-size: 1.5rem;
+    margin-top: 0;
+}
+.login-wall-box p {
+    font-size: 1.1rem;
+    color: var(--cinza-texto);
+}
+.login-wall-actions {
+    /* display: flex, justify-content, e gap removidos */
+    margin-top: 20px;
+    /* O .login-wall-box (container pai) já tem 'text-align: center',
+       o que vai centralizar este único botão perfeitamente. */
+}
+
+/* =============================================================
+   CORREÇÃO DE LAYOUT: Botão de Login no Perfil Público
+   ============================================================= */
+
+/* * Alvo: O botão dentro da caixa de 'login wall'.
+ * Ação: Força a largura a ser automática (auto) e o display
+ * a ser inline-block, para que o 'text-align: center' do pai funcione.
+*/
+.login-wall-actions .btn {
+    width: auto;
+    display: inline-block; 
+}
+/* =============================================================
+   CORREÇÃO: ESTILO DO FORMULÁRIO DE AVALIAÇÃO (PERFIL PÚBLICO)
+   ============================================================= */
+
+/* 1. Corrige o Textarea (caixa de comentário) */
+#review-form textarea {
+    width: 100%;
+    padding: 11px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-family: 'Lato', sans-serif;
+    font-size: 15px;
+    min-height: 100px;
+}
+
+/* 2. Corrige o botão "Enviar Avaliação" (para ter tamanho automático) */
+#review-form button[type="submit"] {
+    width: auto;
+    display: inline-block;
+}
+/* =============================================================
+   PERFIL PÚBLICO: ÍCONES DE AÇÃO (SOCIAL, SHARE, BLOG)
+   ============================================================= */
+
+.profile-action-icons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+    padding: 15px 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+}
+
+.icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-color: #f1f3f5; /* Cinza claro */
+    color: var(--cinza-texto);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.icon-btn:hover {
+    background-color: #e9ecef;
+    color: var(--verde-escuro);
+    transform: scale(1.1);
+}
+
+.icon-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* Container dos links sociais (para o caso de 5 ícones) */
+#psi-social-links {
+    display: contents; /* Faz os 'a' tags de dentro agirem como filhos do flex */
+}
+/* =============================================================
+   PERFIL PÚBLICO: ÍCONES DE AÇÃO (SOCIAL, SHARE, BLOG)
+   ============================================================= */
+.profile-action-icons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+    padding: 15px 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+}
+.icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-color: #f1f3f5; /* Cinza claro */
+    color: var(--cinza-texto);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+}
+.icon-btn:hover {
+    background-color: #e9ecef;
+    color: var(--verde-escuro);
+    transform: scale(1.1);
+}
+.icon-btn svg {
+    width: 24px;
+    height: 24px;
+}
+#psi-social-links {
+    display: contents; /* Faz os 'a' tags de dentro agirem como filhos do flex */
+}
+/* =============================================================
+   PERFIL PÚBLICO: SELO DE VERIFICAÇÃO
+   ============================================================= */
+
+.verification-badge {
+    display: inline-block;
+    background-color: var(--verde-escuro);
+    color: var(--branco-puro);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    line-height: 25px; /* Alinha o '✓' verticalmente */
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin-left: 10px;
+    vertical-align: middle; /* Alinha o selo com o texto */
+    transform: translateY(-2px); /* Ajuste fino */
+}
+/* =============================================================
+   CORREÇÃO DE BORDA: BOTÃO ENTRAR (HEADER)
+   ============================================================= */
+
+/* 1. Estado Inicial (Fundo Verde): Força borda e texto BRANCOS */
+header:not(.header-rolagem) .botoes-acao .btn-outline {
+    border: 2px solid #ffffff !important;
+    color: #ffffff !important;
+}
+
+/* Hover no Estado Inicial: Fundo branco semitransparente */
+header:not(.header-rolagem) .botoes-acao .btn-outline:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 2. Estado de Rolagem (Fundo Branco): Força borda e texto VERDES
+   (Isso garante que fique verde igual ao botão 'Registrar', e não cinza #333) */
+header.header-rolagem .botoes-acao .btn-outline {
+    border: 2px solid var(--verde-escuro) !important;
+    color: var(--verde-escuro) !important;
+}
+
+/* Hover no Estado de Rolagem: Fundo verde bem clarinho */
+header.header-rolagem .botoes-acao .btn-outline:hover {
+    background-color: rgba(27, 67, 50, 0.05) !important;
+}
+/* Adicionar ao final do style.css */
+
+/* Estilo específico para a área de texto de feedback */
+.feedback-textarea {
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.05); /* Fundo levemente transparente */
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    color: var(--branco-puro);
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    padding: 15px;
+    resize: none; /* Impede o usuário de quebrar o layout esticando a caixa */
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.feedback-textarea:focus {
+    border-color: var(--cor-girassol);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Ajuste para o label flutuante funcionar com textarea */
+.feedback-textarea:focus + .input-label,
+.feedback-textarea:not(:placeholder-shown) + .input-label {
+    top: -10px !important; /* Sobe o label para fora da caixa */
+    background-color: var(--verde-escuro);
+    font-size: 0.8rem;
+    color: var(--cor-girassol);
+}
+/* Estrelas de Média no Topo */
+.rating-summary-stars {
+    margin-top: 5px;
+    margin-bottom: 15px;
+}
+
+/* Ícones de Rede Social */
+#psi-social-links .icon-btn {
+    display: inline-flex;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #f1f3f5;
+    color: #555;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+#psi-social-links .icon-btn:hover {
+    background-color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+/* --- NOVO LAYOUT DE PERFIL PÚBLICO --- */
+
+/* Centraliza e alinha a média de estrelas */
+.rating-display-hero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    height: 24px;
+}
+
+/* Container da linha de ícones (Redes + Share) */
+.social-share-row {
+    background-color: transparent; /* Fundo transparente */
+    box-shadow: none; /* Sem sombra */
+    border: none; /* Sem borda */
+    padding: 0;
+    margin-bottom: 20px;
+}
+
+/* Agrupamento dos ícones sociais */
+.social-links-group {
+    display: flex;
+    gap: 10px;
+}
+
+/* Estilo Moderno dos Botões Redondos */
+.icon-btn-modern, 
+#psi-social-links .icon-btn {
+    width: 42px;
+    height: 42px;
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    color: #555;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.icon-btn-modern:hover,
+#psi-social-links .icon-btn:hover {
+    background-color: var(--verde-escuro) !important;
+    color: #ffffff !important;
+    border-color: var(--verde-escuro) !important;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(27, 67, 50, 0.2);
+}
+
+/* Pequeno traço separador */
+.vertical-divider {
+    display: none;
+}
+.conversion-card .profile-tags .tag,
+.conversion-card .profile-tags span {
+    background-color: transparent;
+    color: var(--cinza-texto);
+    font-weight: 400;
+    padding: 0;
+    font-size: 0.95rem;
+    border-radius: 0;
+    display: block; /* Quebra linha */
+    text-align: center;
+    font-style: italic;
+}
+.location-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 5px;
+    font-size: 0.9rem;
+    color: #666;
+}
+/* ==========================================================================
+   AJUSTE FINO: ÍCONES SOCIAIS NO CARD LATERAL (PEQUENOS)
+   ========================================================================== */
+
+/* 1. Container da linha de ícones */
+.conversion-card .social-share-row {
+    display: flex;
+    flex-wrap: wrap;       /* Permite quebrar linha se tiver muitos ícones */
+    justify-content: center;
+    gap: 8px;              /* Espaço menor entre eles (era 15px) */
+    margin-top: 20px;
+    padding: 0;            /* Remove padding extra */
+    background: transparent; /* Remove fundo branco */
+    border: none;          /* Remove bordas do container */
+    box-shadow: none;
+}
+
+/* 2. Estilo Unificado para Social E Compartilhar */
+.conversion-card #psi-social-links .icon-btn,
+.conversion-card .icon-btn-modern {
+    width: 36px;           /* Tamanho reduzido (era 42px) */
+    height: 36px;
+    border-radius: 50%;    /* FORÇA O REDONDO */
+    border: 1px solid #e0e0e0;
+    background-color: #fff;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;            /* Garante que o ícone fique centralizado */
+    transition: all 0.2s ease;
+    flex-shrink: 0;        /* Impede que o botão amasse */
+}
+
+/* 3. Efeito Hover (Verde) */
+.conversion-card #psi-social-links .icon-btn:hover,
+.conversion-card .icon-btn-modern:hover {
+    background-color: var(--verde-escuro) !important;
+    color: #ffffff !important;
+    border-color: var(--verde-escuro) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(27, 67, 50, 0.15);
+}
+
+/* 4. Ajuste do tamanho do SVG interno */
+.conversion-card .icon-btn svg,
+.conversion-card .icon-btn-modern svg {
+    width: 16px;  /* Ícone menor para caber no botão */
+    height: 16px;
+}
+/* ==========================================================================
+   NOTIFICAÇÕES MODERNAS (TOAST)
+   ========================================================================== */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    color: #fff;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    display: none; /* JS controla o display block */
+    opacity: 0;    /* JS controla a opacidade */
+    transition: opacity 0.4s ease-in-out;
+}
+
+/* Tipos de Toast */
+.toast.toast-success { background-color: #1B4332; border-left: 5px solid #FFEE8C; }
+.toast.toast-error { background-color: #E63946; border-left: 5px solid #ffb4b4; }
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeOut {
+    to { opacity: 0; transform: translateY(-10px); }
+}
+/* ==========================================================================
+   ESTILO MODERNO: SEÇÃO SOBRE MIM
+   ========================================================================== */
+
+/* Container principal da aba Sobre */
+.about-section-modern {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: left; /* Texto alinhado à esquerda é mais moderno e legível */
+}
+
+/* O Bloco da Biografia */
+.bio-card {
+    background-color: #ffffff;
+    border-left: 5px solid var(--verde-escuro); /* Detalhe da marca */
+    padding: 30px 40px;
+    border-radius: 0 16px 16px 0;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.03); /* Sombra muito suave */
+    margin-bottom: 40px;
+    position: relative;
+}
+
+/* Detalhe decorativo (aspas) */
+.bio-card::before {
+    content: '“';
+    position: absolute;
+    top: 10px;
+    left: 20px;
+    font-family: 'New Kansas', serif;
+    font-size: 4rem;
+    color: var(--cor-girassol);
+    opacity: 0.4;
+    line-height: 0;
+}
+
+.bio-text {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #444;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+}
+
+/* Subtítulo de Práticas */
+.practices-title {
+    font-family: 'New Kansas', serif;
+    font-size: 1.5rem;
+    color: var(--verde-escuro);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.practices-title::after {
+    content: '';
+    flex-grow: 1;
+    height: 1px;
+    background-color: #e0e0e0;
+}
+
+/* Container das Tags de Prática */
+.practices-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* Tag específica para Práticas (pode ser diferente das outras se quiser) */
+.practice-tag {
+    background-color: #f0f7f4; /* Verde menta bem claro */
+    color: var(--verde-escuro);
+    border: 1px solid rgba(27, 67, 50, 0.1);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.practice-tag::before {
+    content: '•';
+    color: var(--cor-girassol);
+    font-size: 1.2rem;
+    line-height: 0;
+}
+/* =============================================================
+   CORREÇÃO FINAL: BIOGRAFIA (QUEBRA DE LINHA)
+   ============================================================= */
+
+#psi-bio-text {
+    /* Força a quebra de palavras muito longas ou URLs */
+    overflow-wrap: break-word;  
+    word-wrap: break-word;      
+    word-break: break-word;     
+
+    /* Garante que o texto respeite a largura da coluna */
+    max-width: 100%;            
+    display: block;
+}
+
+/* Garante que a coluna da esquerda não estoure o Grid */
+.profile-info {
+    min-width: 0; /* Truque de CSS Grid para impedir vazamento */
+}
+/* === SOBREPOR MODAL, GARANTIR VISIBILIDADE, EVITAR COLAPSO === */
+#payment-modal,
+#payment-modal.modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0,0,0,0.8) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    z-index: 99999 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+#payment-modal .modal-content {
+    background: #fff !important;
+    border-radius: 8px !important;
+    width: 100%;
+    max-width: 500px !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.20) !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+#payment-element {
+    min-height: 64px !important;
+    width: 100% !important;
+    margin-bottom: 20px !important;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+#payment-modal,
+#payment-modal.modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0,0,0,0.8) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    z-index: 99999 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+#payment-modal .modal-content {
+    background: #fff !important;
+    border-radius: 8px !important;
+    width: 100%;
+    max-width: 500px !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.20) !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+#payment-element {
+    min-height: 64px !important;
+    width: 100% !important;
+    margin-bottom: 20px !important;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* --- ESTILO DE SELEÇÃO DOS BOTÕES (No final do style.css) --- */
+
+/* Estado Selecionado (Ativo) */
+.choice-button.selected {
+    background-color: #FFEE8C !important; /* Amarelo Girassol */
+    color: #1B4332 !important;           /* Verde Escuro */
+    border-color: #FFEE8C !important;
+    font-weight: 700;                     /* Negrito para destaque */
+    transform: scale(1.02);               /* Leve aumento para feedback tátil */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Garante que o hover no selecionado mantenha o estilo */
+.choice-button.selected:hover {
+    background-color: #ffe66d !important; /* Amarelo um pouco mais intenso */
+    border-color: #ffe66d !important;
+}
+
+/* --- CORREÇÃO VISUAL: ESTADO SELECIONADO (AMARELO) --- */
+/* Adicione isso no final absoluto do seu style.css */
+
+button.choice-button.selected,
+.choice-button.selected {
+    background-color: #FFEE8C !important; /* Amarelo Girassol */
+    color: #1B4332 !important;           /* Verde Escuro */
+    border-color: #FFEE8C !important;     /* Borda Amarela */
+    font-weight: 700 !important;          /* Negrito */
+    transform: scale(1.02);               /* Leve aumento */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+/* Garante que, ao passar o mouse num item JÁ selecionado, ele continue amarelo */
+button.choice-button.selected:hover,
+.choice-button.selected:hover {
+    background-color: #ffe66d !important; /* Um amarelo levemente mais forte */
+    border-color: #ffe66d !important;
+    opacity: 1 !important;
+}
+
+/* Botão de Reativação (Amarelo Ouro) */
+.plano-card .btn-reativar {
+    background-color: #F59E0B !important; /* Amarelo/Laranja vibrante */
+    color: #ffffff !important;
+    border: 1px solid #d97706 !important;
+    font-weight: 700 !important;
+    animation: pulse 2s infinite;
+}
+
+.plano-card .btn-reativar:hover {
+    background-color: #d97706 !important; /* Laranja mais escuro no hover */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+/* --- CORREÇÃO DO BOTÃO DE PERGUNTAS --- */
+
+/* Estado 1: Bloqueado (Menos de 50 caracteres) */
+#submit-question-btn:disabled {
+    background-color: #cccccc !important;
+    color: #666666 !important;
+    cursor: not-allowed;
+    border: 1px solid #bbbbbb;
+    transform: none !important;
+}
+
+/* Estado 2: Liberado (Pronto para enviar) */
+#submit-question-btn:not(:disabled) {
+    background-color: var(--verde-escuro) !important; /* #1B4332 */
+    color: #FFFFFF !important;
+    cursor: pointer;
+    border: 1px solid var(--verde-escuro);
+    transition: all 0.3s ease;
+}
+
+#submit-question-btn:not(:disabled):hover {
+    background-color: #2a624d !important; /* Um verde um pouco mais claro no hover */
+    transform: scale(1.02);
+}
+
+/* --- CORREÇÃO FINAL DE CABEÇALHO E MENU (PÁGINA RESULTADOS) --- */
+
+/* 1. Garante que o cabeçalho tenha fundo VERDE por padrão */
+header {
+    background-color: #1B4332 !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* 2. Garante que a Logo Branca apareça e a Escura suma no fundo verde */
+header .logo .logo-branca { opacity: 1 !important; }
+header .logo .logo-escura { opacity: 0 !important; }
+
+/* 3. FORÇA O MENU A APARECER NO DESKTOP (Largura > 992px) */
+@media (min-width: 992px) {
+    
+    /* Esconde o botão de sanduíche do celular */
+    .menu-hamburguer {
+        display: none !important;
+    }
+
+    /* Mostra a barra de navegação completa */
+    .container-navegacao {
+        display: flex !important;
+        position: static !important;
+        height: auto !important;
+        padding: 0 !important;
+        background-color: transparent !important;
+        flex-direction: row !important;
+        justify-content: flex-end !important;
+        width: auto !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+
+    /* Arruma os links em linha */
+    nav ul {
+        flex-direction: row !important;
+        gap: 30px !important;
+        margin: 0 40px 0 0 !important;
+    }
+
+    /* Cor dos links (Branco sobre o Verde) */
+    nav a {
+        color: #ffffff !important;
+        font-size: 16px !important;
+        font-weight: 500;
+    }
+
+    /* Arruma os Botões (Entrar/Registrar) */
+    .botoes-acao {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 15px !important;
+        margin-top: 0 !important;
+        width: auto !important;
+    }
+
+    /* Botão Entrar (Borda Branca) */
+    .botoes-acao .btn-outline {
+        border: 2px solid #ffffff !important;
+        color: #ffffff !important;
+    }
+    
+    /* Botão Registrar (Branco Sólido) */
+    .botoes-acao .btn-solid {
+        background-color: #ffffff !important;
+        color: #1B4332 !important;
+        border: 2px solid #ffffff !important;
+    }
+}
+
+/* 4. Ajuste para o conteúdo não ficar escondido atrás do cabeçalho fixo */
+.pagina-resultados main.container {
+    padding-top: 120px !important; /* Empurra o conteúdo para baixo */
+}
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+
+/* --- AJUSTE FINO: BOTÃO "VER PERFIL" (MENOR E REDONDO) --- */
+
+.pro-footer .btn {
+    /* Tamanho */
+    padding: 8px 24px !important;      /* Mais compacto */
+    font-size: 0.85rem !important;     /* Texto menor */
+    min-width: auto !important;        /* Remove largura forçada */
+    
+    /* Forma */
+    border-radius: 50px !important;    /* Bem arredondado (formato pílula) */
+    
+    /* Comportamento no Flexbox */
+    flex-grow: 0 !important;           /* CRÍTICO: Impede o botão de esticar e esmagar o preço */
+    margin-left: 10px;                 /* Um respiro entre o preço e o botão */
+}
+
+/* --- SELO DE PORCENTAGEM (MATCH SCORE) --- */
+.match-percentage-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background-color: var(--verde-escuro); /* Fundo Verde Jano */
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 20px;
+    z-index: 5;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* --- CORREÇÃO DO ÍCONE DE FAVORITO --- */
+
+.pro-card-header .heart-icon {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    
+    /* Garante visibilidade */
+    width: 35px;
+    height: 35px;
+    background-color: rgba(255, 255, 255, 0.9); /* Fundo branco quase sólido */
+    border-radius: 50%;
+    
+    /* Centraliza o coração */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* Estilo do texto (coração) */
+    color: #ccc; /* Cor padrão (cinza) */
+    font-size: 1.5rem; /* Tamanho visível */
+    line-height: 1;
+    cursor: pointer;
+    z-index: 10; /* Garante que fique acima da foto */
+    
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: all 0.2s ease;
+}
+
+/* Estado Favoritado (Vermelho) */
+.pro-card-header .heart-icon.favorited {
+    color: #E63946;
+}
+
+/* Hover */
+.pro-card-header .heart-icon:hover {
+    transform: scale(1.1);
+    background-color: #fff;
+    color: #E63946;
+}

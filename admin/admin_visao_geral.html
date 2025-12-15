@@ -1,0 +1,85 @@
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <h4>Receita Recorrente (MRR)</h4>
+        <p class="kpi-numero" id="kpi-mrr">R$ 0,00</p>
+    </div>
+    <div class="kpi-card">
+        <h4>Novos Pacientes (30d)</h4>
+        <p class="kpi-numero" id="kpi-new-patients">0</p>
+    </div>
+    <div class="kpi-card">
+        <h4>Novos Psicólogos (30d)</h4>
+        <p class="kpi-numero" id="kpi-new-psychologists">0</p>
+    </div>
+    <div class="kpi-card">
+        <h4>Questionários (Hoje)</h4>
+        <p class="kpi-numero" id="kpi-questionnaires-today">0</p>
+    </div>
+</div>
+
+<h3 style="margin: 30px 0 15px 0; color: #1B4332; font-family: 'New Kansas', serif; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+    Raio-X da Base (Histórico Completo)
+</h3>
+
+<div class="kpi-grid">
+    
+    <div class="kpi-card" style="border-left: 4px solid #1B4332;">
+        <h4>Pacientes (Total)</h4>
+        <div class="kpi-detalhes" style="margin-top: 10px; font-size: 0.9rem;">
+            <p>Cadastrados: <strong id="kpi-pat-total">-</strong></p>
+            <p style="color: #2e7d32;">Ativos: <strong id="kpi-pat-active">-</strong></p>
+            <p style="color: #c62828;">Excluídos: <strong id="kpi-pat-deleted">-</strong></p>
+        </div>
+    </div>
+
+    <div class="kpi-card" style="border-left: 4px solid #FFC107;">
+        <h4>Psicólogos (Total)</h4>
+        <div class="kpi-detalhes" style="margin-top: 10px; font-size: 0.9rem;">
+            <p>Cadastrados: <strong id="kpi-psi-total">-</strong></p>
+            <div style="background: #f8f9fa; padding: 5px; border-radius: 4px; margin: 5px 0;">
+                <small>Planos Ativos:</small><br>
+                🌱 <span id="kpi-plan-semente">0</span> | 
+                💡 <span id="kpi-plan-luz">0</span> | 
+                ☀️ <span id="kpi-plan-sol">0</span>
+            </div>
+            <p style="color: #c62828;">Excluídos: <strong id="kpi-psi-deleted">-</strong></p>
+        </div>
+    </div>
+
+    <div class="kpi-card" style="border-left: 4px solid #E63946;">
+        <h4>Questionários (Total)</h4>
+        <div class="kpi-detalhes" style="margin-top: 10px; font-size: 0.9rem;">
+            <p>Total Gerado: <strong id="kpi-quest-total">-</strong></p>
+            <p style="color: #c62828;">Desistências: <strong id="kpi-quest-deleted">-</strong></p>
+        </div>
+    </div>
+</div>
+
+<div class="widgets-container">
+    <div class="widget">
+        <h3>Alertas e Ações Rápidas</h3>
+        <ul class="lista-acoes">
+            <li>
+                <span class="acao-numero" id="waiting-list-count">0</span>
+                <p class="acao-texto">Candidatos na Lista de Espera</p>
+                <a href="#" class="acao-link" data-page-link="admin_lista_espera.html">Gerenciar →</a>
+            </li>
+            <li>
+                <span class="acao-numero" id="pending-reviews-count">0</span>
+                <p class="acao-texto">Avaliações para Moderação</p>
+                <a href="#" class="acao-link" data-page-link="admin_gestao_conteudo.html">Revisar →</a>
+            </li>
+        </ul>
+    </div>
+    <div class="widget">
+        <h3>Atividade Recente</h3>
+        <p>(Em breve...)</p>
+    </div>
+</div>
+<!-- Seção para o Gráfico -->
+<div class="widget">
+    <h3>Novos Usuários (Últimos 6 Meses)</h3>
+    <div class="chart-container">
+        <canvas id="new-users-chart"></canvas>
+    </div>
+</div>

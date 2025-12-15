@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caixa de Entrada - Painel Admin | Jano</title>
+
+    <!-- Fontes e Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <!-- Estilos principais -->
+    <link rel="stylesheet" href="../assets/css/reset.css">
+    <link rel="stylesheet" href="admin_caixa_entrada.css">
+    <link rel="stylesheet" href="../assets/css/admin_global.css">
+
+    <!-- Favicon -->
+    <link rel="icon" href="../assets/images/favicon.png">
+</head>
+<body>
+
+<div class="chat-layout">
+    <!-- ================================================== -->
+    <!-- PAINEL ESQUERDO: LISTA DE CONVERSAS                  -->
+    <!-- ================================================== -->
+    <aside class="chat-list-panel">
+
+        <div class="search-and-filter-bar">
+            <div class="search-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="search" id="chat-search" placeholder="Buscar...">
+            </div>
+            <button id="btn-new-chat" title="Nova Conversa" style="margin-left: 8px; width: 38px; height: 38px; border-radius: 50%; background: #1B4332; color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+ 
+        <nav class="chat-filter-tabs">
+            <button class="filter-tab active" data-filter="all">Todas</button>
+            <button class="filter-tab" data-filter="unread">Não Lidas</button>
+            <button class="filter-tab" data-filter="waiting">Aguardando</button>
+        </nav>
+ 
+        <ul id="conversation-list" class="conversations-list">
+            <li style="padding:20px; text-align:center; color:#999;">Carregando...</li>
+        </ul>
+    </aside>
+
+    <!-- ================================================== -->
+    <!-- PAINEL DIREITO: CONVERSA ATIVA                     -->
+    <!-- ================================================== -->
+    <main class="chat-view-panel">
+        <!-- Tela de Boas-Vindas (quando nenhuma conversa está selecionada) -->
+        <div class="chat-welcome-view" id="chat-welcome-screen">
+            <img src="../assets/images/ilustracao-chat.png" alt="Ilustração de comunicação">
+            <h3>Mantenha-se conectado</h3>
+            <p>Selecione uma conversa para começar a interagir.</p>
+        </div>
+
+        <!-- Visualização da Conversa Ativa (escondida por padrão) -->
+        <div class="active-chat-wrapper" id="active-chat-screen" style="display: none;">
+            <!-- Cabeçalho da Conversa Ativa -->
+            <header class="chat-panel-header">
+                <img src="../assets/images/placeholder-user-2.png" alt="Avatar de Ana" class="avatar" id="active-chat-avatar">
+                <div class="contact-info">
+                    <h4 id="active-chat-name">Ana Silva</h4>
+                    <span id="active-chat-status">Online</span>
+                </div>
+                <div class="header-actions">
+                    <button class="icon-btn" title="Buscar na Conversa"><i class="fas fa-search"></i></button>
+                    <button class="icon-btn" title="Mais Opções"><i class="fas fa-ellipsis-v"></i></button>
+                </div>
+            </header>
+
+            <!-- Corpo Principal com as Mensagens -->
+            <div class="messages-thread" id="messages-thread">
+                <!-- Overlay para Drag-and-Drop -->
+                <div class="drag-drop-overlay" id="drag-drop-overlay">
+                    <div class="drag-drop-content">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <h3>Solte os arquivos aqui</h3>
+                        <p>Envie fotos, vídeos ou documentos diretamente.</p>
+                    </div>
+                </div>
+                <!-- Mensagens serão carregadas aqui -->
+            </div>
+
+            <!-- Menu Flutuante de Respostas Rápidas (Admin) -->
+            <div class="quick-reply-menu" id="quick-reply-menu">
+                <div class="quick-reply-item" data-value="Olá! Sou da equipe Jano. Como posso ajudar?">
+                    <strong>/saudacao</strong> - Mensagem de boas-vindas padrão.
+                </div>
+                <div class="quick-reply-item" data-value="Agradecemos seu contato e retornaremos em breve.">
+                    <strong>/agradecimento</strong> - Mensagem de encerramento.
+                </div>
+            </div>
+
+            <!-- Rodapé com a Barra de Entrada -->
+            <footer class="message-input-bar">
+                <!-- Painel de Emojis -->
+                <div class="emoji-panel" id="emoji-panel">
+                    <!-- Conteúdo do painel de emojis (abas, busca, etc.) iria aqui -->
+                    <p>Painel de Emojis, GIFs e Figurinhas</p>
+                </div>
+
+                <!-- Menu de Anexos -->
+                <div class="attachment-menu" id="attachment-menu">
+                    <button class="attachment-item"><i class="fas fa-image"></i> Fotos e Vídeos</button>
+                    <button class="attachment-item"><i class="fas fa-file-alt"></i> Documento</button>
+                    <button class="attachment-item"><i class="fas fa-user"></i> Contato</button>
+                </div>
+
+                <button class="icon-btn" id="emoji-btn" title="Emojis"><i class="far fa-smile"></i></button>
+                <button class="icon-btn" id="attachment-btn" title="Anexar Arquivo"><i class="fas fa-paperclip"></i></button>
+                <div class="text-input-wrapper">
+                    <div id="rich-text-input" contenteditable="true" class="rich-text-editor" data-placeholder="Digite sua mensagem ou / para respostas rápidas..."></div>
+                </div>
+                <button class="icon-btn btn-send" id="send-btn" title="Enviar Mensagem"><i class="fas fa-paper-plane"></i></button>
+            </div>
+
+            
+    </main>
+
+    <!-- ================================================== -->
+    <!-- PAINEL LATERAL DE NOTAS INTERNAS (ESCONDIDO)       -->
+    <!-- ================================================== -->
+    <aside class="internal-notes-panel" id="internal-notes-panel">
+        <header class="notes-header">
+            <h3>Notas Internas</h3>
+            <button class="icon-btn" id="close-notes-panel" title="Fechar Notas"><i class="fas fa-times"></i></button>
+        </header>
+        <div class="notes-thread" id="notes-thread-container">
+            <!-- Notas serão carregadas aqui -->
+            <p class="notes-empty-state">Nenhuma nota para esta conversa ainda.</p>
+        </div>
+        <footer class="note-input-footer">
+            <form id="add-note-form">
+                <textarea id="note-input" placeholder="Adicionar uma nota interna..." required></textarea>
+                <button type="submit" class="icon-btn btn-send" title="Salvar Nota"><i class="fas fa-paper-plane"></i></button>
+            </form>
+        </footer>
+    </aside>
+</div>
+<!-- Scripts -->
+<script src="../assets/js/admin_caixa_entrada.js"></script>
+<script src="../assets/js/admin_menu.js"></script>
+<script src="../assets/js/auth_check.js"></script> <!-- se você tiver verificação de login -->
+</body>
+</html>

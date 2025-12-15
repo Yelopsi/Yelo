@@ -1,0 +1,1464 @@
+/* ==========================================================================
+   1. VARIÁVEIS E FONTES GLOBAIS
+   ========================================================================== */
+/* IMPORTANTE: Importar a fonte Inter do Google */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --verde-escuro: #1B4332;
+    --cor-girassol: #FFEE8C;
+    --branco-puro: #FFFFFF;
+    --cinza-fundo: #f8f9fa;
+    --cinza-borda: #e9ecef;
+    --cinza-texto: #555;
+    --cinza-texto-claro: #adb5bd;
+    --coral-quente: #E63946;
+}
+
+/* Fonte Serifada (Títulos) */
+@font-face {
+    font-family: 'New Kansas';
+    /* Garante que se a fonte não carregar, usa serif padrão */
+    src: url('../assets/fonts/NewKansas-Bold.woff2') format('woff2'),
+         url('../assets/fonts/NewKansas-Bold.woff') format('woff');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+/* ==========================================================================
+   2. ESTRUTURA DO LAYOUT (DASHBOARD)
+   ========================================================================== */
+body.pagina-dashboard {
+    font-family: 'Inter', sans-serif !important; /* Força a fonte Inter */
+    background-color: var(--cinza-fundo);
+    color: var(--cinza-texto);
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden; /* Remove barra de rolagem dupla */
+}
+
+/* Correção para Modais (Garante que fiquem escondidos e sobrepostos) */
+.custom-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none; /* Oculto por padrão */
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* Muito acima de tudo */
+    backdrop-filter: blur(3px);
+}
+
+/* Garante que quando tiver a classe flex, ele apareça */
+.custom-modal-overlay[style*="display: flex"] {
+    display: flex !important;
+}
+
+.custom-modal-box {
+    background: #fff;
+    padding: 30px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    position: relative;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.dashboard-container { 
+    display: flex; 
+    height: 100vh; 
+}
+
+/* Área Principal de Conteúdo */
+.dashboard-main {
+    flex-grow: 1;
+    padding: 40px;
+    overflow-y: auto; /* A rolagem acontece AQUI, não no body */
+    height: 100vh;
+    box-sizing: border-box;
+}
+
+/* Títulos Gerais */
+h1, h2, h3, h4 { font-family: 'New Kansas', serif; color: var(--verde-escuro); }
+
+/* ==========================================================================
+   3. SIDEBAR (CORRIGIDA - ESTILO ADMIN + BOTÃO AMARELO)
+   ========================================================================== */
+.dashboard-sidebar {
+    background-color: var(--verde-escuro);
+    color: var(--branco-puro);
+    display: flex;
+    flex-direction: column;
+    width: 280px; /* Largura fixa igual ao Admin */
+    min-width: 280px;
+    padding: 25px 20px;
+    height: 100vh; 
+    box-sizing: border-box;
+    position: relative;
+    z-index: 10;
+    box-shadow: 5px 0 15px rgba(0,0,0,0.05);
+}
+
+/* Efeito Ruído (Fundo) */
+.dashboard-sidebar::before {
+    content: "";
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 600 600' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.06;
+    z-index: 0;
+}
+
+/* Elementos acima do ruído */
+.sidebar-header, .sidebar-nav, .sidebar-footer { position: relative; z-index: 1; }
+
+/* Cabeçalho */
+.sidebar-header { text-align: center; margin-bottom: 10px; }
+.sidebar-logo { height: 35px; margin: 0 auto 20px auto; display: block; }
+
+/* Usuário (Foto e Nome) */
+.sidebar-user-block { text-align: center; margin-bottom: 15px; }
+#psi-sidebar-photo {
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.2);
+    object-fit: cover;
+    margin-bottom: 10px;
+}
+.user-info p { margin: 0; font-weight: 600; color: var(--branco-puro); font-size: 1rem; }
+.user-info .sidebar-logout {
+    font-size: 0.85rem; color: var(--cor-girassol);
+    text-decoration: none; opacity: 0.8; transition: opacity 0.2s; font-weight: bold;
+}
+.user-info .sidebar-logout:hover { opacity: 1; }
+
+/* --- BOTÃO "VER COMO PACIENTE" (AMARELO) --- */
+#btn-view-public-profile {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 10px; margin-top: 15px;
+    background-color: var(--cor-girassol);
+    border: none; border-radius: 25px;
+    color: var(--verde-escuro);
+    text-decoration: none; font-size: 0.9rem; font-weight: 700;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+#btn-view-public-profile:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+
+/* Navegação */
+.sidebar-nav { margin-top: 20px; flex-grow: 1; overflow-y: auto; }
+.sidebar-nav ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 5px; }
+
+/* Item do Menu */
+.sidebar-nav li a {
+    display: flex; align-items: center; justify-content: space-between; /* Espaço entre texto e badge */
+    gap: 12px;
+    padding: 12px 15px;
+    border-radius: 10px;
+    color: var(--cinza-texto-claro);
+    text-decoration: none;
+    font-weight: 500; font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+/* Estado Ativo e Hover */
+.sidebar-nav li.active a, 
+.sidebar-nav li a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--branco-puro);
+}
+
+.sidebar-nav li a svg { width: 20px; height: 20px; opacity: 0.8; }
+.sidebar-nav li.active a svg { opacity: 1; }
+
+/* Badges (Notificação) */
+.notification-badge, .badge-em-breve {
+    background-color: var(--cor-girassol); color: var(--verde-escuro);
+    font-size: 0.7rem; font-weight: bold;
+    padding: 2px 6px; border-radius: 10px;
+    margin-left: auto; flex-shrink: 0;
+}
+
+/* Rodapé Sidebar */
+.sidebar-footer { margin-top: auto; padding-top: 20px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); }
+
+/* --- ESCONDER BARRA DE ROLAGEM DA SIDEBAR --- */
+
+/* Para Chrome, Safari e Opera */
+.sidebar-nav::-webkit-scrollbar {
+    display: none;
+}
+
+/* Para Firefox, IE e Edge */
+.sidebar-nav {
+    -ms-overflow-style: none;  /* IE e Edge */
+    scrollbar-width: none;  /* Firefox */
+    
+    /* Garante rolagem suave */
+    overflow-y: auto; 
+}
+
+/* Ajuste fino para o container principal não criar barra dupla */
+.dashboard-sidebar {
+    overflow: hidden; /* A rolagem fica só na lista (.sidebar-nav) */
+}
+/* ==========================================================================
+   4. FORMULÁRIOS E PERFIL (RESTAUROU SEU CÓDIGO AQUI)
+   ========================================================================== */
+.form-secao {
+    background-color: var(--branco-puro);
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    margin-bottom: 30px;
+}
+
+.form-secao h2 {
+    font-family: 'Montserrat', sans-serif;
+    margin-bottom: 25px;
+    border-bottom: 1px solid var(--cinza-borda);
+    padding-bottom: 15px;
+}
+
+/* Grids */
+.form-grid-2col { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; }
+.form-grid-credenciais { display: flex; flex-wrap: wrap; gap: 25px; align-items: flex-end; }
+
+/* Inputs */
+.form-group { margin-bottom: 20px; position: relative; }
+.form-group label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 14px; }
+.form-group input, .form-group textarea, .form-group select, .filtro-select {
+    width: 100%; padding: 11px;
+    border: 1px solid #ced4da; border-radius: 8px;
+    font-family: 'Inter', sans-serif; font-size: 16px;
+    background-color: #f8f9fa; box-sizing: border-box;
+}
+.form-group textarea#bio { min-height: 120px; text-align: justify; }
+
+/* Validação */
+.form-group input.input-error { border-color: var(--coral-quente); }
+.form-error-message { color: var(--coral-quente); font-size: 13px; margin-top: 5px; }
+
+/* Botões de Formulário */
+.btn { padding: 10px 24px; border-radius: 25px; font-weight: 700; border: none; cursor: pointer; transition: transform 0.2s; display: inline-block; }
+.btn-principal, .btn-rapido, .btn-primario { background-color: var(--verde-escuro); color: var(--branco-puro); }
+.btn-secundario { background-color: transparent; border: 2px solid var(--verde-escuro); color: var(--verde-escuro); }
+.btn:hover { transform: scale(1.03); }
+.form-acoes { display: flex; justify-content: flex-end; margin-top: 20px; }
+
+/* ==========================================================================
+   5. COMPONENTES ESPECÍFICOS (UPLOAD, MULTISELECT, WIDGETS)
+   ========================================================================== */
+
+/* Upload */
+.form-group-upload .upload-label {
+    display: block; padding: 40px 20px;
+    border: 2px dashed var(--cinza-borda); border-radius: 8px;
+    text-align: center; cursor: pointer; transition: all 0.2s;
+}
+.form-group-upload .upload-label:hover { background-color: var(--cinza-fundo); border-color: var(--verde-escuro); }
+.form-group-upload input[type="file"] { display: none; }
+
+/* Widget Verificação */
+#verification-widget {
+    display: flex; flex-direction: column; gap: 8px; padding: 20px;
+    border-left-width: 5px; border-left-style: solid; margin-bottom: 30px;
+}
+#verification-widget.status-pending { background-color: #fffbeb; border-left-color: #f59e0b; color: #b45309; }
+#verification-widget.status-verified { background-color: #f0fdf4; border-left-color: #16a34a; color: #14532d; }
+
+/* ==========================================================================
+   MULTISELECT CUSTOMIZADO (MODERNO & ESTILO GIRASSOL)
+   ========================================================================== */
+
+/* 1. O Campo de Input (Display) */
+.multiselect-tag .multiselect-display {
+    border: 1px solid #d1d5db; /* Cinza suave */
+    border-radius: 12px; /* Bordas mais arredondadas */
+    padding: 10px 12px; /* Mais espaço interno */
+    min-height: 50px;
+    cursor: pointer;
+    background-color: #ffffff;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px; /* Espaço entre as tags */
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+/* Efeito de Foco (Quando aberto ou hover) */
+.multiselect-tag:hover .multiselect-display,
+.multiselect-tag.open .multiselect-display {
+    border-color: var(--verde-escuro);
+    box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1); /* Glow suave verde */
+}
+
+/* Seta indicativa (Opcional, para mostrar que é clicável) */
+.multiselect-tag .multiselect-display::after {
+    content: '▼';
+    font-size: 0.7rem;
+    color: #9ca3af;
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+/* 2. As Etiquetas (Tags) - Estilo Pílula */
+.multiselect-display .tag {
+    background-color: var(--cor-girassol); /* Amarelo da marca */
+    color: var(--verde-escuro); /* Texto verde para contraste */
+    padding: 3px 14px;
+    border-radius: 15px; /* Formato Pílula */
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: transform 0.1s ease;
+    z-index: 2; /* Fica acima da seta */
+}
+
+.multiselect-display .tag:hover {
+    transform: scale(1.02);
+}
+
+/* Botão de Remover (x) dentro da tag */
+.multiselect-display .tag .remove-tag {
+    background: rgba(27, 67, 50, 0.1); /* Usando a cor verde com transparência */
+    border: none;
+    color: var(--verde-escuro);
+    /* MUDANÇA AQUI: Tamanho reduzido de 18px para 15px */
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* MUDANÇA AQUI: Ícone 'x' menor */
+    font-size: 0.8rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.2s;
+    margin-left: 2px; /* Um tiquinho de margem extra */
+}
+
+.multiselect-display .tag .remove-tag:hover {
+    background: var(--verde-escuro); /* Fica verde sólido no hover */
+    color: var(--cor-girassol); /* O 'x' vira amarelo */
+}
+
+/* 3. O Menu Dropdown (Lista de Opções) */
+.multiselect-tag .multiselect-options {
+    display: none;
+    position: absolute;
+    top: 105%; /* Um pouco abaixo do input */
+    left: 0;
+    background-color: #ffffff;
+    border: 1px solid #f3f4f6;
+    width: 100%;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 20;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1); /* Sombra flutuante elegante */
+    padding: 5px; /* Espaço interno para as opções não colarem na borda */
+    animation: fadeIn 0.2s ease-out;
+}
+
+.multiselect-tag.open .multiselect-options {
+    display: block;
+}
+
+/* Item da Lista */
+.multiselect-options .option {
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 8px; /* Itens arredondados */
+    color: #4b5563;
+    font-weight: 500;
+    transition: background 0.1s;
+    margin-bottom: 2px;
+}
+
+/* Hover no Item */
+.multiselect-options .option:hover {
+    background-color: #f0fdf4; /* Verde menta bem clarinho */
+    color: var(--verde-escuro);
+}
+
+/* Item Selecionado */
+.multiselect-options .option.selected {
+    background-color: var(--verde-escuro);
+    color: #ffffff;
+}
+
+/* Barra de rolagem do dropdown (Estilo Mac/Moderno) */
+.multiselect-options::-webkit-scrollbar {
+    width: 6px;
+}
+.multiselect-options::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 4px;
+}
+
+/* Animação suave de entrada */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   6. CAIXA DE ENTRADA E PLANOS
+   ========================================================================== */
+/* Inbox */
+.inbox-container {
+    display: flex; height: calc(100vh - 150px);
+    background: var(--branco-puro); border-radius: 16px;
+    overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+.inbox-sidebar { width: 35%; max-width: 350px; border-right: 1px solid #e9ecef; overflow-y: auto; }
+.inbox-content { flex-grow: 1; padding: 25px; overflow-y: auto; }
+.message-item { padding: 15px; border-bottom: 1px solid #e9ecef; cursor: pointer; }
+.message-item.active { background-color: #e9f5ff; }
+.message-item.unread .message-subject { font-weight: bold; }
+
+/* KPIs e Planos */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; padding: 24px 0; }
+.kpi-card { background: #fff; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; }
+/* Adicionei font-family: 'New Kansas', serif; */
+.kpi-card .kpi-value { 
+    font-family: 'New Kansas', serif; 
+    font-size: 36px; 
+    font-weight: 700; 
+    color: var(--verde-escuro); 
+}
+
+.plan-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 24px; padding: 24px 0; }
+.plano-card { flex: 1 1 300px; max-width: 320px; background: #fff; border: 2px solid var(--cinza-borda); padding: 30px; border-radius: 16px; display: flex; flex-direction: column; }
+.plano-card--ativo { border-color: var(--verde-escuro); transform: scale(1.03); }
+
+/* ==========================================================================
+   7. Q&A COMUNIDADE
+   ========================================================================== */
+.qna-card-psi { background: #fff; padding: 25px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+.qna-question-title { font-size: 1.2rem; margin-bottom: 10px; }
+.qna-card-body { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+
+/* Modal Q&A */
+#qna-answer-modal textarea { width: 100%; min-height: 150px; border: 1px solid #ced4da; padding: 10px; }
+#qna-answer-modal .modal-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+#qna-answer-modal .btn { width: 100%; justify-content: center; }
+
+/* ==========================================================================
+   8. RESPONSIVIDADE MOBILE
+   ========================================================================== */
+@media (max-width: 992px) {
+    .dashboard-sidebar { position: fixed; top: 0; left: 0; height: 100%; transform: translateX(-100%); transition: transform 0.3s; }
+    .dashboard-sidebar.is-open { transform: translateX(0); }
+    .menu-toggle { display: block; position: fixed; top: 20px; left: 20px; z-index: 1001; background: #fff; border: none; padding: 10px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; }
+    .dashboard-main { width: 100%; padding: 80px 20px 20px 20px; }
+    .inbox-container { flex-direction: column; }
+    .inbox-sidebar { width: 100%; max-width: none; height: auto; }
+    .inbox-content { display: none; }
+    .inbox-container.mostrando-conteudo .inbox-sidebar { display: none; }
+    .inbox-container.mostrando-conteudo .inbox-content { display: block; }
+    .btn-voltar-inbox { display: block; margin-bottom: 15px; }
+}
+@media (min-width: 993px) { .menu-toggle { display: none; } .btn-voltar-inbox { display: none; } }
+/* ==========================================================================
+   PÁGINA: ASSINATURA E PAGAMENTOS (RESTAURAÇÃO DO LAYOUT)
+   ========================================================================== */
+
+/* 1. Cabeçalho Verde (Igual Visão Geral) */
+.main-header {
+    background-color: var(--verde-escuro);
+    color: var(--branco-puro);
+    padding: 40px;
+    border-radius: 16px;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+.main-header h1 { 
+    color: var(--branco-puro); /* Força branco no fundo verde */
+    margin: 0 0 10px 0; 
+}
+.subtitulo-header {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+/* 2. Card de Plano Atual (Topo) */
+.plano-atual-card {
+    background-color: var(--branco-puro);
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    margin-bottom: 40px;
+    border-left: 6px solid var(--cor-girassol); /* Detalhe amarelo */
+    display: flex;
+    justify-content: space-between; /* Separa texto dos links */
+    align-items: center;
+    flex-wrap: wrap; /* Permite quebrar no mobile */
+    gap: 20px;
+}
+
+.plano-info h3 { 
+    font-size: 0.9rem; text-transform: uppercase; color: var(--cinza-texto-claro); margin: 0 0 5px 0; letter-spacing: 1px;
+}
+.plano-nome { 
+    font-family: 'New Kansas', serif; font-size: 2rem; color: var(--verde-escuro); margin: 0; 
+}
+.plano-preco { font-weight: bold; color: var(--cinza-texto); margin: 5px 0; }
+.plano-data { font-size: 0.9rem; color: var(--cinza-texto-claro); margin: 0; }
+
+.plano-acoes { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.plano-acoes a { color: var(--verde-escuro); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+.plano-acoes a:hover { text-decoration: underline; }
+
+/* 3. Grid de Planos (Lado a Lado) */
+.planos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Cria colunas automáticas */
+    gap: 30px;
+    align-items: start; /* Alinha cards pelo topo */
+}
+
+/* Card Individual */
+.plano-card {
+    background-color: var(--branco-puro);
+    border: 1px solid var(--cinza-borda);
+    border-radius: 16px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s, box-shadow 0.3s;
+    position: relative;
+}
+.plano-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+
+/* Destaque do Plano Ativo */
+.plano-card--ativo { border: 2px solid var(--verde-escuro); transform: scale(1.02); }
+.plano-card--ativo:hover { transform: scale(1.02) translateY(-5px); }
+
+.selo-plano-atual {
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    background-color: var(--verde-escuro); color: var(--branco-puro);
+    padding: 5px 15px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase;
+}
+
+/* Conteúdo do Card */
+.plano-card h2 { text-align: center; margin-top: 10px; }
+.plano-card .preco { 
+    font-family: 'New Kansas', serif; /* ADICIONADO */
+    text-align: center; 
+    font-size: 2.5rem; 
+    font-weight: 700; 
+    color: var(--verde-escuro); 
+    margin: 15px 0; 
+}
+.plano-card .preco span { font-size: 1rem; color: var(--cinza-texto-claro); font-weight: 400; }
+
+.beneficios-lista { list-style: none; padding: 0; margin: 20px 0; }
+.beneficios-lista li {
+    padding: 10px 0; border-bottom: 1px solid #f0f0f0; color: var(--cinza-texto); display: flex; gap: 10px;
+}
+.beneficios-lista li::before { content: "✓"; color: var(--verde-escuro); font-weight: bold; }
+
+/* Botões dos Planos */
+.plano-cta button { width: 100%; padding: 12px; border-radius: 25px; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; }
+
+.btn-mudar-plano { background: transparent; border: 2px solid var(--verde-escuro) !important; color: var(--verde-escuro); }
+.btn-mudar-plano:hover { background: rgba(27, 67, 50, 0.05); }
+
+.btn-upgrade { background: var(--verde-escuro) !important; color: var(--branco-puro); }
+.btn-upgrade:hover { background: #143d2e !important; }
+
+button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-allowed; border: none; }
+
+/* Responsividade Mobile para Assinatura */
+@media (max-width: 768px) {
+    .plano-atual-card { flex-direction: column; align-items: flex-start; }
+    .plano-acoes { align-items: flex-start; margin-top: 15px; }
+    .plano-card--ativo { transform: none; }
+}
+/* ==========================================================================
+   AJUSTES FINAIS: CAIXA DE ENTRADA
+   ========================================================================== */
+
+/* 1. Ajuste do Cabeçalho Verde (Flexbox para alinhar botão) */
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; /* Permite quebrar no mobile */
+    gap: 20px;
+}
+
+/* Botão do Cabeçalho (Estilo Transparente/Branco) */
+.btn-header-action {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: var(--branco-puro);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+.btn-header-action:hover {
+    background-color: var(--branco-puro);
+    color: var(--verde-escuro);
+}
+
+/* 2. Ajuste da Largura da Lista de Mensagens */
+.inbox-container {
+    /* Garante altura fixa para ter rolagem interna */
+    height: calc(100vh - 240px); 
+    min-height: 500px;
+}
+
+.inbox-sidebar {
+    width: 320px; /* Largura fixa confortável */
+    flex-shrink: 0; /* Impede que a lista seja esmagada */
+    background-color: #fcfcfc;
+}
+
+/* Item da Lista */
+.message-item {
+    padding: 18px 20px;
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s;
+}
+.message-item.active {
+    background-color: #e8f5e9; /* Verde bem claro */
+    border-left: 4px solid var(--verde-escuro);
+}
+
+/* 3. Conteúdo da Mensagem */
+.inbox-content {
+    padding: 40px; /* Mais espaço para leitura */
+    background-color: var(--branco-puro);
+}
+
+.message-header h2 {
+    margin-top: 0;
+    font-size: 1.8rem;
+    color: var(--verde-escuro);
+    line-height: 1.3;
+}
+
+.meta-info {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    font-size: 0.9rem;
+    color: #777;
+}
+
+.meta-badge {
+    background-color: var(--cor-girassol);
+    color: var(--verde-escuro);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.message-body {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: #444;
+}
+
+/* Ajuste para Mobile */
+@media (max-width: 768px) {
+    .main-header { flex-direction: column; align-items: flex-start; }
+    .btn-header-action { width: 100%; }
+    .inbox-container { height: auto; min-height: auto; }
+}
+/* ==========================================================================
+   AJUSTES FINAIS: PÁGINA MEU PERFIL
+   ========================================================================== */
+
+/* 1. Botões de Ação (Alterar/Salvar) */
+.form-actions {
+    margin-top: 30px;
+    display: flex;
+    justify-content: flex-start; /* Alinha à esquerda */
+    gap: 15px;
+}
+
+/* Força o botão a ter tamanho normal, não 100% */
+#perfil-form .btn, 
+#password-form .btn {
+    width: auto; 
+    min-width: 180px; /* Tamanho mínimo elegante */
+    padding: 12px 30px;
+    font-size: 1rem;
+}
+
+/* 2. Botão de Excluir Conta */
+#btn-excluir-conta {
+    background: none;
+    border: 2px solid #d32f2f; /* Vermelho borda */
+    color: #d32f2f;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s;
+    margin-top: 10px;
+}
+#btn-excluir-conta:hover {
+    background-color: #d32f2f;
+    color: white;
+}
+
+/* 3. Ajuste de Espaçamento entre Widgets */
+.widget {
+    background-color: var(--branco-puro);
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    margin-bottom: 40px;
+}
+.widget h3 {
+    margin-top: 0;
+    margin-bottom: 25px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+    font-size: 1.5rem;
+    color: var(--verde-escuro);
+}
+/* ==========================================================================
+   PÁGINA DE EXCLUSÃO DE CONTA (OFFBOARDING)
+   ========================================================================== */
+
+/* Grid de Estatísticas */
+.exit-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.exit-stat-card {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.2s;
+}
+.exit-stat-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--verde-escuro);
+}
+
+.stat-icon { font-size: 24px; margin-bottom: 10px; }
+.stat-value {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--verde-escuro);
+    margin-bottom: 5px;
+}
+.stat-label { font-size: 13px; color: var(--cinza-texto); line-height: 1.4; }
+
+/* Estrelas de Avaliação (Reutilizando lógica, mas com estilo específico) */
+.rating-exit-stars {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end; /* Alinha à esquerda */
+    gap: 10px;
+    width: fit-content;
+}
+.rating-exit-stars input { display: none; }
+.rating-exit-stars label {
+    font-size: 30px;
+    color: #ddd;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.rating-exit-stars input:checked ~ label,
+.rating-exit-stars label:hover,
+.rating-exit-stars label:hover ~ label {
+    color: #FFC107; /* Amarelo */
+}
+
+/* Botão Final de Exclusão */
+.btn-perigo-final {
+    background-color: #E63946;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-perigo-final:hover {
+    background-color: #c9303c;
+}
+
+/* --- ESTADO DESABILITADO DO MULTISELECT --- */
+.multiselect-tag.disabled {
+    opacity: 0.7;
+    pointer-events: none; /* Garante que o clique não funciona */
+}
+
+.multiselect-tag.disabled .multiselect-display {
+    background-color: #e9ecef; /* Cinza padrão de input disabled */
+    color: #6c757d;
+    cursor: not-allowed;
+    border-color: #ced4da;
+}
+
+.multiselect-tag.disabled .multiselect-display::after {
+    display: none; /* Esconde a setinha quando bloqueado */
+}
+
+/* ==========================================================================
+   CORREÇÃO VISUAL: ASSINATURA E PAGAMENTOS
+   (Cole isso no final do arquivo psi_dashboard.css)
+   ========================================================================== */
+
+/* 1. O Banner do Plano Atual (Caixa Branca com Borda Verde) */
+#card-resumo-assinatura {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;       /* Borda cinza suave */
+    border-left: 6px solid #1B4332;  /* Borda grossa verde na esquerda */
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 40px;
+    
+    /* Organização interna (Texto na esquerda, Preço na direita) */
+    display: flex; 
+    justify-content: space-between;
+    align-items: center;
+    
+    /* Sombra elegante */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+/* Responsividade do Banner (Para celular) */
+@media (max-width: 768px) {
+    #card-resumo-assinatura {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+    #card-resumo-assinatura .info-lado-direito {
+        align-self: flex-start;
+        text-align: left;
+    }
+    #banner-renovacao {
+        text-align: left !important; /* Força alinhamento à esquerda no mobile */
+    }
+}
+
+/* 2. Área de Cancelamento (Zona de Perigo no rodapé) */
+#area-cancelamento {
+    margin-top: 50px;
+    padding-top: 20px;
+    border-top: 1px dashed #ccc; /* Linha pontilhada separadora */
+    width: 100%;
+}
+
+#btn-cancelar-assinatura {
+    background: none;
+    border: none;
+    color: #d32f2f; /* Vermelho alerta */
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0;
+    transition: color 0.2s;
+}
+
+#btn-cancelar-assinatura:hover {
+    color: #b71c1c; /* Vermelho mais escuro ao passar o mouse */
+}
+
+/* ==========================================================================
+   CORREÇÃO FINAL: VISUAL DO CARD DE ASSINATURA
+   ========================================================================== */
+
+/* 1. Nome do Plano (Correção de cor e fonte) */
+#banner-nome-plano, .nome-plano-banner {
+    color: #1B4332 !important;        /* Força Verde Escuro (estava branco invisível) */
+    font-family: 'New Kansas', serif !important;
+    font-size: 2.2rem !important;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+/* 2. Pílula "Ativo" (Estilo Badge Verde Claro) */
+.status-badge {
+    background-color: #E0F2F1 !important; /* Fundo Verde Menta */
+    color: #1B4332 !important;            /* Texto Verde Escuro */
+    border: 1px solid #B2DFDB;
+    border-radius: 50px !important;       /* Borda bem redonda (Pílula) */
+    padding: 6px 16px !important;
+    font-size: 0.85rem;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: auto !important;               /* Garante que ajusta ao texto */
+}
+
+/* 3. Centralizar Link de Cancelamento */
+#area-cancelamento {
+    text-align: center !important;        /* Centraliza o texto e o botão */
+    width: 100%;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px dashed #e0e0e0;
+}
+
+#btn-cancelar-assinatura {
+    color: #d32f2f;
+    text-decoration: underline;
+    font-size: 0.9rem;
+    cursor: pointer;
+    background: none;
+    border: none;
+    display: inline-block;                /* Necessário para centralizar corretamente */
+}
+
+/* ==========================================================================
+   CORREÇÃO FINAL: NOTIFICAÇÕES (TOASTS)
+   ========================================================================== */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2147483647; /* Valor máximo para ficar acima de tudo */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    min-width: 250px;
+    padding: 16px 20px;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideInToast 0.3s ease-out forwards;
+    opacity: 0;
+}
+
+/* Cores por tipo */
+.toast-success {
+    background-color: #1B4332; /* Verde Jano */
+    border-left: 5px solid #4ade80;
+}
+
+.toast-error {
+    background-color: #d32f2f; /* Vermelho Erro */
+    border-left: 5px solid #ff8a80;
+}
+
+.toast-info {
+    background-color: #0288d1; /* Azul Info */
+    border-left: 5px solid #81d4fa;
+}
+
+@keyframes slideInToast {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* --- ADICIONE ISSO NO FINAL DO ARQUIVO PARA ARRUMAR A COMUNIDADE --- */
+
+/* Loader (Rodinha girando) */
+.loader-wrapper { display: flex; justify-content: center; padding: 40px; }
+.loader-spinner {
+    width: 40px; height: 40px;
+    border: 4px solid #f3f3f3; border-top: 4px solid var(--verde-escuro);
+    border-radius: 50%; animation: spin 1s linear infinite;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Estilos Específicos do Modal da Comunidade (compatível com seu HTML atual) */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none; /* Controlado pelo JS */
+    justify-content: center; align-items: center;
+    z-index: 10000; backdrop-filter: blur(3px);
+}
+/* Regra para garantir que o JS consiga mostrar o modal */
+.modal-overlay[style*="display: flex"] { display: flex !important; }
+
+.modal-content {
+    background: #fff; padding: 30px; border-radius: 16px;
+    width: 90%; max-width: 600px; position: relative;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+.modal-close {
+    position: absolute; top: 15px; right: 20px;
+    background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;
+}
+.modal-header h2 { margin-top: 0; font-size: 1.5rem; font-family: 'New Kansas', serif; color: var(--verde-escuro); }
+
+.modal-body textarea {
+    width: 100%; height: 150px; padding: 12px;
+    border: 1px solid #ced4da; border-radius: 8px; resize: vertical;
+    font-family: 'Inter', sans-serif;
+}
+.char-counter-modal { text-align: right; font-size: 0.8rem; color: #666; margin-top: 5px; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+/* INPUT COM PREFIXO (Redes Sociais) */
+.input-prefix-group {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #f8f9fa;
+}
+
+.input-prefix-group .prefix {
+    background-color: #e9ecef;
+    color: #555;
+    padding: 11px 15px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-right: 1px solid #ced4da;
+    white-space: nowrap;
+}
+
+.input-prefix-group input {
+    border: none !important; /* Remove a borda do input interno */
+    border-radius: 0 !important;
+    background-color: transparent !important;
+    flex-grow: 1;
+}
+
+.input-prefix-group input:focus {
+    outline: none;
+}
+
+/* Foco no grupo inteiro quando o input é focado */
+.input-prefix-group:focus-within {
+    border-color: var(--verde-escuro);
+    box-shadow: 0 0 0 2px rgba(27, 67, 50, 0.1);
+}
+
+/* ==========================================================================
+   MODERN INBOX (CAIXA DE ENTRADA)
+   ========================================================================== */
+
+/* Container Principal */
+.inbox-container {
+    display: flex;
+    height: calc(100vh - 180px); /* Ajusta altura para caber na tela */
+    min-height: 500px;
+    background-color: var(--branco-puro);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid var(--cinza-borda);
+    overflow: hidden;
+}
+
+/* --- SIDEBAR (Lista de Mensagens) --- */
+.inbox-sidebar {
+    width: 320px;
+    border-right: 1px solid var(--cinza-borda);
+    background-color: #fcfcfc;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.sidebar-search {
+    padding: 15px;
+    border-bottom: 1px solid var(--cinza-borda);
+}
+
+.message-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;
+}
+
+.message-item {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    position: relative;
+}
+
+.message-item:hover {
+    background-color: #f1f3f5;
+}
+
+/* Item Ativo (Selecionado) */
+.message-item.active {
+    background-color: #fff;
+    border-left: 4px solid var(--verde-escuro);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Avatar (Bolinha com iniciais) */
+.sender-avatar {
+    width: 35px; height: 35px;
+    background-color: var(--verde-escuro);
+    color: white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: bold;
+    flex-shrink: 0;
+}
+
+.message-info {
+    flex-grow: 1;
+    min-width: 0; /* Garante que o texto corte com ellipsis */
+}
+
+.message-top {
+    display: flex; justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.sender-name { font-weight: 600; font-size: 0.9rem; color: #333; }
+.message-time { font-size: 0.75rem; color: #888; }
+
+.message-subject {
+    font-size: 0.9rem; color: #333;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-bottom: 4px;
+}
+
+/* Estilo para Não Lido */
+.message-item.unread .message-subject { font-weight: 700; }
+.message-item.unread .sender-name { color: var(--verde-escuro); }
+.message-item.unread::after {
+    content: ''; position: absolute; right: 15px; top: 50%;
+    width: 8px; height: 8px; background-color: var(--cor-girassol);
+    border-radius: 50%;
+}
+
+.message-preview {
+    font-size: 0.8rem; color: #888;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+
+/* --- CONTEÚDO (Leitura) --- */
+.inbox-content {
+    flex-grow: 1;
+    padding: 0;
+    background-color: var(--branco-puro);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.email-wrapper {
+    padding: 40px;
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.email-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    border-bottom: 1px solid var(--cinza-borda);
+    padding-bottom: 20px; margin-bottom: 30px;
+}
+
+.email-meta { display: flex; gap: 15px; align-items: center; }
+.sender-avatar-large {
+    width: 48px; height: 48px;
+    background-color: var(--verde-escuro); color: white;
+    border-radius: 50%; font-size: 1.2rem; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+}
+
+.email-meta-text h2 {
+    font-family: 'New Kansas', serif;
+    font-size: 1.5rem; color: var(--verde-escuro);
+    margin: 0 0 5px 0;
+}
+.email-meta-text p { font-size: 0.9rem; color: #666; margin: 0; }
+
+.email-body { font-size: 1rem; line-height: 1.7; color: #444; }
+.email-body p { margin-bottom: 15px; }
+
+/* Caixa de Destaque no Email */
+.highlight-box {
+    background-color: #f0fdf4;
+    border-left: 4px solid var(--verde-escuro);
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+.btn-link {
+    color: var(--verde-escuro);
+    font-weight: bold;
+    text-decoration: none;
+    border-bottom: 2px solid var(--cor-girassol);
+    padding-bottom: 2px;
+    transition: all 0.2s;
+}
+.btn-link:hover { background-color: var(--cor-girassol); color: var(--verde-escuro); }
+
+/* Botão do Header (Branco/Transparente) */
+.btn-outline-light {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.5);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-outline-light:hover {
+    background: white;
+    color: var(--verde-escuro);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .inbox-container { flex-direction: column; height: auto; }
+    .inbox-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #eee; height: 300px; }
+    .email-wrapper { padding: 20px; }
+    .email-meta { flex-direction: column; align-items: flex-start; }
+    .email-header { flex-direction: column; gap: 15px; }
+}
+/* ==========================================================================
+   ESTILOS DA PÁGINA DE EXCLUSÃO (OFFBOARDING) - RECUPERADOS
+   ========================================================================== */
+
+/* Estilo do Card Branco (Widget) */
+.widget {
+    background-color: var(--branco-puro);
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    margin-bottom: 30px;
+}
+
+.widget h3 {
+    margin-top: 0;
+    color: var(--verde-escuro);
+    font-family: 'New Kansas', serif;
+}
+
+/* Grid de Estatísticas (Os 4 quadrados) */
+.exit-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.exit-stat-card {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.exit-stat-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--verde-escuro);
+}
+
+.stat-icon { 
+    font-size: 24px; 
+    margin-bottom: 10px; 
+    display: block; 
+}
+
+.stat-value {
+    font-family: 'Montserrat', sans-serif; /* Ou a fonte padrão do sistema */
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--verde-escuro);
+    margin-bottom: 5px;
+    display: block;
+}
+
+.stat-label { 
+    font-size: 13px; 
+    color: #666; 
+    line-height: 1.4; 
+    display: block;
+}
+
+/* Estrelas de Avaliação (Específicas desta página) */
+.rating-exit-stars {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end; /* Alinha à esquerda */
+    gap: 5px;
+}
+
+.rating-exit-stars input { 
+    display: none; 
+}
+
+.rating-exit-stars label {
+    font-size: 30px;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: color 0.2s;
+    line-height: 1;
+}
+
+/* Efeito de Hover e Seleção (Amarelo) */
+.rating-exit-stars input:checked ~ label,
+.rating-exit-stars label:hover,
+.rating-exit-stars label:hover ~ label {
+    color: #FFC107; 
+}
+
+/* Botão de Confirmação (Vermelho) */
+.btn-perigo-final {
+    background-color: #E63946;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-perigo-final:hover {
+    background-color: #c9303c;
+}
+/* ==========================================================================
+   9. FEATURE GATING (BLOQUEIO PREMIUM DE RECURSOS)
+   ========================================================================== */
+
+/* Container relativo para posicionar o cadeado por cima */
+.premium-feature-container {
+    position: relative;
+    overflow: hidden; /* Garante que o blur não vaze para fora do card */
+}
+
+/* O conteúdo que será borrado (Cards de métricas) */
+.premium-blur {
+    filter: blur(5px);
+    opacity: 0.6;
+    pointer-events: none; /* Impede clique nos botões borrados */
+    user-select: none;    /* Impede copiar texto */
+    transition: all 0.3s ease;
+}
+
+/* A camada do cadeado e botão de ação */
+.premium-lock-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.7); /* Fundo branco semitransparente mais forte */
+    padding: 15px;
+    text-align: center;
+    border-radius: 12px; /* Segue o arredondamento do card */
+}
+
+/* Círculo do Ícone do Cadeado */
+.lock-icon-circle {
+    width: 45px;
+    height: 45px;
+    background: var(--verde-escuro); /* Usa a variável global */
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.lock-icon-circle svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Texto Explicativo (ex: "Veja quem salvou...") */
+.premium-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--verde-escuro);
+    font-weight: 600;
+    margin-bottom: 12px;
+    line-height: 1.3;
+    max-width: 80%;
+}
+
+/* Botão "Liberar Acesso" */
+.btn-unlock-feature {
+    background: #fff;
+    border: 2px solid var(--verde-escuro);
+    color: var(--verde-escuro);
+    padding: 8px 20px;
+    border-radius: 25px;
+    font-size: 0.85rem;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    font-weight: 700;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.btn-unlock-feature:hover {
+    background: var(--verde-escuro);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+/* --- CORREÇÃO: FONTE DO PREÇO NO BANNER DE ASSINATURA --- */
+#banner-preco {
+    font-family: 'New Kansas', serif !important;
+    font-weight: 500; /* Ajuste fino para a fonte não ficar pesada demais */
+    letter-spacing: 0.5px;
+}

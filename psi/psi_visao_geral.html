@@ -1,0 +1,64 @@
+<div class="main-header">
+    <div class="header-content">
+        <h1>Visão Geral</h1>
+        <p id="psi-welcome-name">Bem-vindo(a)!</p>
+    </div>
+</div>
+
+<div id="alert-complete-profile" style="display: none; background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; border: 1px solid #ffeeba; margin-bottom: 25px; align-items: center; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span><strong>Atenção:</strong> Seu perfil está incompleto. Pacientes não conseguirão te encontrar.</span>
+    </div>
+    <button onclick="document.querySelector('[data-page=\'psi_meu_perfil.html\']').click()" style="background: #856404; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">
+        Completar Agora
+    </button>
+</div>
+
+<div class="kpi-grid">
+    <div class="kpi-card" id="card-cliques">
+        <h3>Cliques no WhatsApp</h3>
+        <p class="kpi-value" id="kpi-cliques-contato">0</p>
+        <span class="kpi-link">Pacientes que iniciaram conversa.</span>
+    </div>
+    
+    <div class="kpi-card" id="card-recomendacoes">
+        <h3>Aparições no Top 3</h3>
+        <p class="kpi-value" id="kpi-recomendacoes">0</p>
+        <span class="kpi-link">Vezes que o algoritmo te recomendou.</span>
+    </div>
+
+    <div class="kpi-card" id="card-favoritos">
+        <h3>Pacientes que Favoritaram</h3> <p class="kpi-value" id="kpi-favoritos">0</p>
+        <span class="kpi-link">Usuários que salvaram seu perfil.</span>
+    </div>
+
+    <div class="kpi-card" id="card-demandas">
+        <h3>O que buscam em você?</h3> <div id="lista-demandas" style="margin-top: 10px;">
+            <div style="font-size: 0.9rem; margin-bottom: 5px;">1. Ansiedade (60%)</div>
+            <div style="font-size: 0.9rem; margin-bottom: 5px;">2. Terapia de Casal (30%)</div>
+            <div style="font-size: 0.9rem; color: #666;">3. Burnout (10%)</div>
+        </div>
+        <span class="kpi-link" style="margin-top: 10px;">Temas que mais geram match com você.</span>
+    </div>
+
+    <div class="kpi-card" id="card-benchmarking" style="grid-column: 1 / -1;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <h3>Sua Performance vs. Média</h3> <p class="kpi-value" id="kpi-benchmarking-texto">Você converte +20%</p>
+                <span class="kpi-link">Comparativo com psicólogos da sua região/preço.</span>
+            </div>
+            <div style="opacity: 0.2; transform: scale(1.5); margin-right: 20px;">
+                <svg width="40" height="40" fill="none" stroke="#1B4332" stroke-width="2" viewBox="0 0 24 24">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+            </div>
+        </div>
+    </div>
+</div>

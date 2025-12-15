@@ -1,0 +1,55 @@
+<div class="main-header">
+    <h1>Verificações Pendentes</h1>
+    <p>Analise e aprove os documentos CRP dos novos profissionais.</p>
+</div>
+
+<div class="card">
+    <div class="table-container">
+        <table id="verifications-table">
+            <thead>
+                <tr>
+                    <th>Profissional</th>
+                    <th>CRP</th>
+                    <th>Data de Envio</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="verifications-table-body">
+                <!-- Linhas serão inseridas aqui pelo JS -->
+            </tbody>
+        </table>
+    </div>
+    <div id="verifications-empty-state" class="empty-state" style="display: none;">
+        <p>Nenhuma verificação pendente no momento.</p>
+    </div>
+</div>
+
+<!-- Modal para Visualizar o Documento -->
+<div id="document-viewer-modal" class="modal-overlay">
+    <div class="modal-content modal-lg">
+        <button class="modal-close">&times;</button>
+        <h2 class="modal-title">Visualizador de Documento</h2>
+        <div class="modal-body" id="document-viewer-content">
+            <!-- O iframe ou img será inserido aqui -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secundario modal-cancel">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Motivo da Rejeição -->
+<div id="rejection-reason-modal" class="modal-overlay">
+    <div class="modal-content">
+        <button class="modal-close">&times;</button>
+        <h2 class="modal-title">Rejeitar Profissional</h2>
+        <div class="modal-body">
+            <p>Por favor, forneça um motivo claro para a rejeição. Esta mensagem será enviada ao profissional por e-mail.</p>
+            <textarea id="rejection-reason-textarea" class="form-control" rows="4" placeholder="Ex: A imagem do CRP estava ilegível. Por favor, envie um novo documento com melhor qualidade."></textarea>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secundario modal-cancel">Cancelar</button>
+            <button class="btn btn-perigo" id="confirm-rejection-btn">Confirmar Rejeição</button>
+        </div>
+    </div>
+</div>

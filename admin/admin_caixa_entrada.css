@@ -1,0 +1,289 @@
+/* admin/admin_caixa_entrada.css */
+
+html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden; /* Impede a página de rolar, focando no chat */
+}
+
+
+/* --- LAYOUT PRINCIPAL (O segredo do Zoom) --- */
+.chat-layout {
+    display: flex;
+    height: calc(100vh - 90px); /* Ajuste conforme a altura do seu cabeçalho verde */
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border: 1px solid #e9ecef;
+    overflow: hidden; /* Impede que nada saia para fora */
+    font-family: 'Inter', sans-serif;
+    margin-top: 10px;
+    position: relative;
+    z-index: 1;
+}
+
+/* --- Lado Esquerdo: Lista --- */
+.chat-list-panel {
+    width: 360px;
+    border-right: 1px solid #e9ecef;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    /* Adições para corrigir sobreposição visual */
+    background: #fff; 
+    position: relative; 
+    z-index: 5; 
+}
+
+.search-and-filter-bar {
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f0;
+    /* ADICIONADO PARA ALINHAR O BOTÃO */
+    display: flex;
+    align-items: center;
+    gap: 10px; 
+}
+
+.btn-new-chat {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #1B4332;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+    flex-shrink: 0; /* Garante que não seja esmagado */
+}
+.btn-new-chat:hover {
+    background: #2e7d32;
+    transform: scale(1.05);
+}
+/* --- CORREÇÃO 2: POSICIONAMENTO DA LUPA --- */
+.search-wrapper {
+    position: relative; /* Pai relativo para o filho absoluto */
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+/* Ícone da Lupa */
+.search-wrapper i {
+    position: absolute;
+    left: 12px;         /* Fixa na esquerda */
+    top: 50%;
+    transform: translateY(-50%); /* Centraliza verticalmente */
+    color: #999;
+    font-size: 0.9rem;
+    pointer-events: none; /* O clique passa através do ícone */
+    z-index: 10;
+}
+
+#chat-search {
+    width: 100%;
+    padding: 12px 10px 12px 35px; /* Padding esquerdo maior para não encavalar na lupa */
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    outline: none;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+/* --- CORREÇÃO 3: ABAS DE FILTRO (Lado a Lado) --- */
+.chat-filter-tabs {
+    display: flex;
+    justify-content: space-between; /* Espalha igualmente */
+    gap: 5px;
+    padding: 10px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fff;
+    overflow: hidden; /* Remove rolagem */
+}
+
+.filter-tab {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.75rem; /* Fonte um pouco menor para caber */
+    color: #666;
+    padding: 6px 4px;   /* Padding lateral reduzido */
+    white-space: nowrap;
+    flex: 1;            /* Força todos a terem o mesmo tamanho */
+    text-align: center;
+    transition: all 0.2s;
+    min-width: 0;       /* Permite encolher se necessário */
+}
+.filter-tab:hover { background: #e2e6ea; }
+.filter-tab.active {
+    background: #e8f5e9;
+    color: #1B4332;
+    border-color: #1B4332;
+    font-weight: bold;
+}
+
+.conversations-list {
+    flex: 1;
+    overflow-y: auto; /* Rola apenas a lista */
+}
+
+/* Item da Lista */
+.conversation-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #f9f9f9;
+    transition: background 0.2s;
+}
+.conversation-item:hover { background: #f8f9fa; }
+.conversation-item.active { 
+    background: #e8f5e9; 
+    border-left: 4px solid #1B4332; 
+}
+.conversation-item .avatar {
+    width: 45px; height: 45px; border-radius: 50%; object-fit: cover; margin-right: 12px;
+}
+.conversation-details {
+    flex: 1;
+    min-width: 0; /* OBRIGATÓRIO para o texto ser cortado corretamente com '...' */
+    overflow: hidden;
+}
+.contact-name { font-weight: 600; color: #333; font-size: 0.95rem; }
+.last-message { font-size: 0.85rem; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* --- Lado Direito: Chat Ativo --- */
+.chat-view-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    min-width: 0; /* Flexbox trick */
+    height: 100%; /* Garante que ocupe a altura do pai */
+}
+
+/* Header do Chat (Banner Corrigido) */
+.chat-panel-header {
+    height: 70px; /* Altura fixa */
+    flex-shrink: 0; /* Não deixa encolher */
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    border-bottom: 1px solid #e9ecef;
+    background: #fff;
+}
+.chat-panel-header .avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 15px; }
+.contact-info h4 { margin: 0; font-size: 1rem; color: #1B4332; font-weight: 700; }
+.contact-info span { font-size: 0.8rem; color: #888; }
+
+/* Wrapper da Conversa */
+.active-chat-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Área de Mensagens */
+.messages-thread {
+    flex: 1;
+    overflow-y: auto; /* Scroll aqui */
+    padding: 20px;
+    background-color: #f4f2ee;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Balões */
+.message-bubble {
+    max-width: 70%;
+    padding: 10px 15px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.message-bubble.sent {
+    align-self: flex-end;
+    background-color: #d9fdd3;
+    color: #111;
+    border-bottom-right-radius: 0;
+}
+
+.message-bubble.received {
+    align-self: flex-start;
+    background-color: #fff;
+    color: #111;
+    border-bottom-left-radius: 0;
+}
+
+.message-meta {
+    text-align: right;
+    font-size: 0.7rem;
+    color: #999;
+    margin-top: 4px;
+}
+
+/* Rodapé de Input */
+.message-input-bar {
+    padding: 15px 20px;
+    background: #f0f2f5;
+    border-top: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0; /* Não deixa encolher */
+}
+.text-input-wrapper {
+    flex: 1;
+    background: #fff;
+    border-radius: 20px;
+    padding: 10px 15px;
+    border: 1px solid #fff;
+}
+.rich-text-editor {
+    max-height: 100px;
+    overflow-y: auto;
+    outline: none;
+}
+/* Placeholder visível */
+.rich-text-editor:empty:before {
+    content: attr(data-placeholder);
+    color: #999;
+    cursor: text;
+}
+
+.btn-send {
+    width: 45px; height: 45px;
+    border-radius: 50%;
+    background: #1B4332;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+}
+.btn-send:hover { transform: scale(1.05); }
+
+/* Esconde elementos não usados ainda (arrastar, emojis, notas) */
+.drag-drop-overlay, .quick-reply-menu, .internal-notes-panel, .emoji-panel, .attachment-menu {
+    display: none !important;
+}
+
+/* Responsividade */
+@media (max-width: 900px) {
+    /* No mobile a altura muda um pouco */
+    .chat-layout { height: calc(100vh - 80px); flex-direction: column; }
+    
+    .chat-list-panel { width: 100%; height: 100%; }
+    .chat-view-panel { display: none; } /* Esconde chat no mobile inicialmente */
+    
+    /* Classes de controle que o JS pode usar no futuro para mobile */
+    .chat-layout.mobile-chat-open .chat-list-panel { display: none; }
+    .chat-layout.mobile-chat-open .chat-view-panel { display: flex; height: 100%; }
+}

@@ -1,0 +1,94 @@
+.hero-ajuda {
+  background-color: var(--verde-escuro);
+  color: var(--branco-puro);
+  text-align: center;
+  padding: 120px 20px 100px 20px;
+}
+
+.hero-ajuda h1 {
+  font-size: 3rem;
+  margin-bottom: 15px;
+  font-family: 'New Kansas', serif;
+}
+
+.hero-ajuda p {
+  font-size: 1.2rem;
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.7;
+  color: #f1f1f1;
+}
+
+.secao-ajuda {
+  background-color: var(--off-white);
+  padding: 80px 20px 100px 20px;
+  text-align: center;
+}
+
+.lista-ajuda {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 30px;
+  margin-top: 50px;
+}
+
+.card-ajuda {
+  background-color: var(--branco-puro);
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  text-align: left;
+  transition: transform 0.3s ease;
+}
+
+.card-ajuda:hover {
+  transform: translateY(-5px);
+}
+
+.card-ajuda h3 {
+  color: var(--verde-escuro);
+  margin-top: 0;
+}
+
+.card-ajuda p {
+  color: var(--cinza-texto);
+  line-height: 1.6;
+}
+
+.card-ajuda a {
+  color: var(--verde-escuro);
+  text-decoration: underline;
+}
+
+.secao-apoio {
+  background-color: var(--cor-girassol);
+  color: var(--verde-escuro);
+  text-align: center;
+  padding: 100px 20px;
+}
+
+.secao-apoio h2 {
+  font-size: 2.2rem;
+  margin-bottom: 20px;
+}
+
+.secao-apoio p {
+  font-size: 1.2rem;
+  max-width: 650px;
+  margin: 0 auto 40px auto;
+}
+
+.secao-apoio .btn {
+  background-color: var(--verde-escuro);
+  color: var(--branco-puro);
+  padding: 15px 40px;
+  border-radius: 30px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: transform 0.2s ease, background-color 0.3s ease;
+}
+
+.secao-apoio .btn:hover {
+  transform: scale(1.05);
+  background-color: #2a624d;
+}

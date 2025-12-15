@@ -1,0 +1,1402 @@
+/* public/css/05-pages.css */
+
+/* --- SEÇÕES GERAIS --- */
+.container { max-width: 900px; margin: 0 auto; padding: 60px 20px; text-align: center; }
+.secao-conteudo-pro h2, .titulo-secao { font-family: 'New Kansas', serif; font-weight: 700; font-size: 2.5rem; color: #333; margin-bottom: 60px; text-align: center; }
+.subtitulo-secao { font-size: 1.2rem; line-height: 1.6; color: var(--cinza-texto); max-width: 700px; margin: 0 auto 50px auto; text-align: center; }
+
+/* --- HERO (Home) --- */
+.hero { padding: 80px 50px 100px 50px; text-align: center; background-color: #1B4332; position: relative; margin-top: -2px; }
+.hero-fundo-escuro { padding-top: 100px; }
+.hero-texto h1 { font-size: 48px; color: white; margin-bottom: 10px; }
+.hero-texto p { font-size: 19px; color: white; margin-bottom: 40px; }
+.wave-divider { position: absolute; bottom: -1px; left: 0; width: 100%; line-height: 0; border: none !important; }
+.wave-divider svg { display: block; width: 100%; height: 80px; }
+
+/* --- SEÇÃO TERAPEUTAS --- */
+.secao-terapeutas { padding: 70px 20px 100px 20px; position: relative; background-color: #fdfaf6; overflow: hidden; }
+.secao-conteudo { display: grid; grid-template-columns: 1fr; gap: 40px; max-width: 1100px; margin: 0 auto; align-items: center; }
+.texto-terapeutas h2 { font-size: 32px; color: #1B4332; margin-top: 0; line-height: 1.2; }
+.texto-terapeutas p { font-size: 16px; line-height: 1.6; color: #333; }
+
+/* Collage de Imagens */
+.imagens-terapeutas { position: relative; min-height: 400px; }
+.foto-terapeuta { position: absolute; border-radius: 12px; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); height: auto; }
+.foto-1 { width: 45%; top: 0; left: 10%; }
+.foto-2 { width: 35%; top: 20%; right: 5%; }
+.foto-3 { width: 30%; top: 55%; left: 0; }
+.foto-4 { width: 50%; top: 60%; right: 15%; }
+
+/* --- SEÇÃO COMO FUNCIONA --- */
+.como-funciona { padding: 70px 20px; background-color: white; position: relative; }
+.passo { display: grid; grid-template-columns: 1fr; gap: 50px; align-items: center; max-width: 1100px; margin: 0 auto; }
+.passo-texto h3 { font-size: 28px; color: #1B4332; line-height: 1.3; margin-top: 0; }
+.passo-texto p { font-size: 16px; line-height: 1.6; color: #333; }
+
+.passo-imagens { position: relative; min-height: 450px; }
+.passo-foto { position: absolute; border-radius: 16px; border: 4px solid white; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+.foto-passo1-1 { width: 40%; top: 0; left: 15%; }
+.foto-passo1-2 { width: 35%; top: 40%; right: 10%; }
+.forma-circulo { width: 80px; height: 80px; background-color: #D4E2D4; border-radius: 50%; position: absolute; top: 65%; right: 5%; z-index: -1; }
+.forma-meia-lua { width: 100px; height: 50px; background-color: #E8D8C2; border-radius: 50px 50px 0 0; position: absolute; top: 10%; left: 5%; z-index: -1; }
+
+/* --- FAQ & AVISO --- */
+.faq-secao { padding: 70px 20px 100px 20px; background-color: #fdfaf6; position: relative; }
+.acordeao-container { max-width: 600px; margin: 0 auto; }
+.acordeao-item { border-bottom: 1px solid #ddd; }
+.acordeao-titulo { display: flex; justify-content: space-between; width: 100%; padding: 20px 0; background: none; border: none; cursor: pointer; text-align: center; font-size: 18px; font-weight: 500; color: #333; }
+.acordeao-conteudo { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; }
+.acordeao-conteudo p { padding: 0 10px 20px 10px; font-size: 14px; text-align: justify; color: #555; }
+
+.aviso-crise { padding: 40px 20px 120px 20px; background-color: #fdfaf6; border-top: 1px solid #e9ecef; position: relative; text-align: center; }
+.aviso-conteudo { max-width: 1100px; margin: 0 auto; }
+.aviso-texto a { color: #007bff; text-decoration: underline; }
+
+/* --- PÁGINAS DE LOGIN / REGISTRO --- */
+.login-main { display: flex; justify-content: center; align-items: center; padding: 80px 20px; background-color: var(--off-white); min-height: calc(100vh - 160px); }
+.login-container { background-color: var(--branco-puro); padding: 35px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); width: 100%; max-width: 420px; text-align: center; }
+.login-titulo { color: var(--verde-escuro); margin-bottom: 30px; }
+.login-links { margin-top: 25px; }
+.login-links a { display: block; color: var(--cinza-texto); margin-top: 15px; }
+
+.social-login { display: flex; flex-direction: column; gap: 15px; }
+.btn-social { display: flex; align-items: center; justify-content: center; padding: 10px; border-radius: 8px; border: 1px solid #ccc; text-decoration: none; font-size: 15px; font-weight: bold; gap: 10px; }
+.btn-social.google { background: white; color: #444; }
+.btn-social.apple { background: black; color: white; border-color: black; }
+.btn-social svg { width: 20px; height: 20px; }
+.divisor { display: flex; align-items: center; margin: 25px 0; color: #aaa; }
+.divisor::before, .divisor::after { content: ''; flex: 1; border-bottom: 1px solid #ddd; }
+.divisor span { padding: 0 15px; font-size: 14px; }
+
+/* Role Selector (Psicólogo vs Paciente) */
+.role-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+.role-btn { flex: 1; padding: 10px; border-radius: 8px; font-weight: 700; cursor: pointer; border: 2px solid #1B4332; background-color: white; color: #1B4332; transition: all 0.3s; }
+.role-btn.active { background-color: #1B4332; color: white; }
+
+/* --- DASHBOARD --- */
+.dashboard-container { display: flex; min-height: 100vh; }
+.dashboard-sidebar { width: 250px; background-color: #1B4332; color: white; display: flex; flex-direction: column; padding: 25px; box-shadow: 5px 0px 15px rgba(0,0,0,0.1); z-index: 10; }
+.sidebar-nav ul { margin-top: 30px; }
+.sidebar-nav li a { display: block; color: #adb5bd; padding: 15px; border-radius: 8px; transition: all 0.2s; }
+.sidebar-nav li.active a, .sidebar-nav li a:hover { background-color: rgba(255,255,255,0.1); color: white; }
+.dashboard-main { flex-grow: 1; padding: 40px; overflow-y: auto; background-color: #f8f9fa; }
+.welcome-header { background-color: var(--verde-escuro); color: white; padding: 40px; border-radius: 16px; margin-bottom: 30px; }
+.welcome-header h1 { font-family: 'New Kansas', serif; color: white; margin: 0; }
+
+.matches-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+.pro-card { background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); overflow: hidden; position: relative; }
+.pro-card-img { width: 100%; height: 200px; object-fit: cover; }
+.pro-card h3, .pro-card p { padding: 0 15px; }
+
+/* --- MEDIA QUERIES GERAIS --- */
+@media (min-width: 768px) {
+    .secao-conteudo, .passo { grid-template-columns: 1fr 1fr; }
+    .contato-container { grid-template-columns: 1fr 1.5fr; }
+    .post-destaque { grid-template-columns: 1fr 1fr; }
+    .post-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 992px) {
+    .dashboard-sidebar { position: fixed; top: 0; left: 0; height: 100%; transform: translateX(-100%); transition: transform 0.3s; }
+    .dashboard-sidebar.is-open { transform: translateX(0); }
+    .menu-toggle { display: block; position: fixed; top: 20px; left: 20px; z-index: 1001; }
+}
+/* --- PÁGINA FAQ (Correções de Layout) --- */
+/* --- PÁGINA FAQ (Layout Verde e Branco) --- */
+
+/* 1. Topo da Página (Hero Verde) */
+.faq-hero {
+    text-align: center;
+    background-color: var(--verde-escuro); /* Fundo Verde */
+    position: relative; /* Essencial para segurar a onda */
+    padding: 80px 20px 120px 20px; /* Padding extra embaixo para a onda não cobrir o texto */
+    margin-top: -2px; /* Cola no menu */
+}
+
+/* Texto Branco */
+.faq-hero h1,
+.faq-hero .subtitulo-secao {
+    color: var(--branco-puro) !important; 
+}
+
+/* 2. Barra de Busca */
+.faq-busca-container {
+    max-width: 600px;
+    margin: 30px auto 0 auto;
+    position: relative;
+    z-index: 2; /* Garante que a busca fique acima da onda */
+}
+
+#faq-busca {
+    width: 100%;
+    padding: 18px 25px;
+    border-radius: 30px;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    outline: none;
+}
+
+/* 3. Onda de Transição (Do Verde para o Branco) */
+/* Esta classe controla a onda que fica DENTRO do Hero */
+.faq-wave-bottom {
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    line-height: 0;
+    z-index: 1;
+}
+.faq-wave-bottom svg {
+    display: block;
+    width: 100%;
+    height: 80px;
+}
+/* A cor da onda deve ser BRANCA para se fundir com o conteúdo abaixo */
+.faq-wave-bottom .shape-fill {
+    fill: #FFFFFF; 
+}
+
+/* 4. Títulos das Categorias (Para Pacientes / Para Profissionais) */
+.titulo-secao-menor {
+    font-family: 'New Kansas', serif;
+    font-size: 28px;
+    color: var(--verde-escuro);
+    margin-top: 60px;
+    margin-bottom: 25px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 15px;
+    text-align: center; /* AQUI: Centraliza o texto */
+}
+
+/* 5. Box Final (Ainda com dúvidas / Fale Conosco) */
+.faq-cta {
+    background-color: #e9ecef;
+    padding: 40px;
+    border-radius: 16px;
+    text-align: center;
+    
+    /* AQUI ESTÁ A MÁGICA DO CARD: */
+    max-width: 600px; /* Limita a largura para não esticar */
+    width: 100%;      /* Garante responsividade em telas menores */
+    margin: 80px auto 40px auto; /* Margem auto nas laterais CENTRALIZA o card */
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    
+    /* Um toque extra para parecer um cartão flutuante */
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+.faq-cta h3 {
+    font-family: 'New Kansas', serif;
+    color: var(--verde-escuro);
+    margin-top: 0;
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.faq-cta p {
+    margin-bottom: 25px;
+    color: #555;
+}
+/* --- PÁGINA DE BLOG --- */
+
+.container-blog {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Post em Destaque (Topo) */
+.post-destaque {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+    align-items: center;
+    margin-bottom: 80px;
+    text-decoration: none;
+    color: inherit;
+}
+.post-destaque img {
+    width: 100%;
+    border-radius: 16px;
+    object-fit: cover;
+    height: 350px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+.post-destaque-texto span {
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--verde-escuro);
+    margin-bottom: 10px;
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.post-destaque-texto h2 {
+    font-family: 'New Kansas', serif;
+    font-size: 32px;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+    line-height: 1.2;
+}
+.post-destaque-texto p {
+    font-size: 18px;
+    line-height: 1.7;
+    color: var(--cinza-texto);
+}
+
+/* Grid de Posts Menores */
+.post-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+}
+
+.post-card {
+    background-color: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid #eee;
+}
+.post-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+}
+.post-card a {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.post-card img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+}
+.post-card-conteudo {
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+.post-card-conteudo h3 {
+    font-family: 'New Kansas', serif;
+    margin-top: 0;
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 10px;
+    line-height: 1.3;
+}
+.post-card-conteudo p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--cinza-texto);
+    margin-bottom: 0;
+}
+
+/* Responsividade do Blog */
+@media (min-width: 768px) {
+    .post-destaque { grid-template-columns: 1fr 1fr; }
+    .post-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 992px) {
+    .post-grid { grid-template-columns: repeat(3, 1fr); }
+}
+/* Link "Ver todas as perguntas" na Home */
+.faq-ver-mais {
+    display: block;
+    text-align: center;
+    margin-top: 30px;
+    font-weight: bold;
+    color: var(--verde-escuro);
+    text-decoration: none;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.faq-ver-mais:hover {
+    color: #2a624d; /* Um tom levemente mais claro ou escuro para feedback */
+    text-decoration: underline;
+    transform: translateY(-2px);
+}
+
+/* Adiciona uma setinha via CSS */
+.faq-ver-mais::after {
+    content: ' →';
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+
+.faq-ver-mais:hover::after {
+    transform: translateX(4px); /* A setinha se move para a direita */
+}
+
+/* --- PÁGINA PERGUNTAS E RESPOSTAS (Q&A) --- */
+
+/* 1. Cards de Benefícios (Topo) */
+.beneficios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin: 40px auto;
+    text-align: left;
+}
+.beneficio-card {
+    background-color: var(--branco-puro);
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid #eee;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
+.beneficio-card h3 {
+    font-family: 'New Kansas', serif;
+    font-size: 1.2rem;
+    color: var(--verde-escuro);
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+.beneficio-card p {
+    font-size: 0.9rem;
+    color: #666;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* 2. Barra de Busca Grande */
+.qa-search-container {
+    max-width: 800px;
+    margin: 40px auto;
+    position: relative;
+}
+.qa-search-container input {
+    width: 100%;
+    padding: 18px 25px 18px 50px; /* Espaço para ícone */
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    outline: none;
+    transition: border-color 0.3s;
+}
+.qa-search-container input:focus {
+    border-color: var(--verde-escuro);
+}
+.qa-search-icon {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    color: #999;
+}
+
+/* 3. Caixa "Faça sua Pergunta" */
+.ask-box-container {
+    background-color: #f0f9f6; /* Verde bem clarinho */
+    border: 1px solid #d4e9e2;
+    border-radius: 16px;
+    padding: 30px;
+    max-width: 900px;
+    margin: 50px auto;
+    text-align: left;
+}
+.ask-box-container h3 {
+    font-family: 'New Kansas', serif;
+    color: var(--verde-escuro);
+    margin-top: 0;
+    font-size: 1.5rem;
+}
+.ask-box-container textarea {
+    width: 100%;
+    height: 120px;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-family: 'Lato', sans-serif;
+    font-size: 1rem;
+    resize: vertical;
+    margin-top: 15px;
+}
+.ask-disclaimers {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 15px;
+    padding-left: 20px;
+}
+.ask-disclaimers li { margin-bottom: 5px; }
+
+/* 4. Cards de Perguntas e Respostas */
+.qa-card { margin-bottom: 40px; }
+
+.qa-card-question {
+    background-color: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 25px;
+    position: relative;
+    text-align: left;
+}
+.qa-card-question h2 {
+    font-family: 'New Kansas', serif;
+    font-size: 1.4rem;
+    color: var(--verde-escuro);
+    margin-top: 0;
+}
+
+.qa-card-answer {
+    background-color: var(--branco-puro);
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    margin-top: 15px;
+    margin-left: 20px; /* Indentação visual */
+    display: flex;
+    flex-direction: column; /* Mobile first */
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+/* Layout Desktop da Resposta (Texto esquerda | Psi direita) */
+@media (min-width: 768px) {
+    .qa-card-answer {
+        flex-direction: row;
+    }
+    .answer-text-content { flex: 2; padding: 25px; text-align: left; }
+    .answer-psy-sidebar { 
+        flex: 1; 
+        background-color: #f8f9fa; 
+        border-left: 1px solid #eee; 
+        padding: 25px; 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        text-align: center;
+    }
+}
+
+.answer-psy-sidebar img {
+    width: 70px; height: 70px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;
+}
+.data-psy-name { font-weight: bold; color: var(--verde-escuro); margin: 0; }
+.data-psy-crp { font-size: 0.85rem; color: #777; margin: 5px 0 10px 0; }
+
+/* 5. Grid de Profissionais Ativos */
+.active-pro-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+}
+.active-pro-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #eee;
+    text-align: left;
+}
+.active-pro-card img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; }
+.pro-metric { margin-left: auto; text-align: center; }
+.metric-number { font-size: 1.5rem; font-weight: bold; color: var(--verde-escuro); display: block; }
+.metric-label { font-size: 0.7rem; color: #888; text-transform: uppercase; }
+
+/* --- PÁGINA PROFISSIONAIS --- */
+
+/* Força o subtítulo do topo a ficar verde */
+.hero-profissionais .subtitulo-secao {
+    color: var(--verde-escuro) !important;
+    font-weight: 500; /* Um pouco mais de peso para destacar */
+}
+
+/* --- Lista de Benefícios Moderna (Página Profissionais) --- */
+
+/* O container da lista */
+.lista-beneficios-moderna {
+    list-style: none; /* Remove as bolinhas padrão */
+    padding: 0;
+    margin: 40px 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Grid de 2 colunas no desktop */
+    gap: 20px;
+}
+
+/* Cada item da lista */
+.lista-beneficios-moderna li {
+    background-color: #fdfaf6; /* Fundo off-white suave */
+    padding: 20px 25px;
+    border-radius: 12px;
+    border: 1px solid #eee;
+    display: flex;
+    align-items: flex-start; /* Alinha o ícone no topo do texto */
+    gap: 15px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Efeito sutil ao passar o mouse */
+.lista-beneficios-moderna li:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border-color: var(--cor-girassol);
+}
+
+/* O ícone de Check (feito com CSS e SVG) */
+.lista-beneficios-moderna li::before {
+    content: '';
+    display: inline-block;
+    min-width: 24px;
+    height: 24px;
+    /* Ícone de check verde usando SVG inline */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231B4332'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    margin-top: 2px; /* Ajuste fino para alinhar com o texto */
+}
+
+/* --- CORREÇÕES VISUAIS PÁGINA PROFISSIONAIS --- */
+
+/* 1. Correção do HERO (Texto Verde) */
+.hero-profissionais h1,
+.hero-profissionais h2 {
+    color: var(--verde-escuro) !important;
+    text-shadow: none !important;
+}
+.hero-profissionais p {
+    color: var(--cinza-texto) !important;
+    font-size: 1.1rem;
+}
+
+/* 2. Design Moderno dos Benefícios (Colunas) */
+.layout-2-colunas {
+    display: grid;
+    grid-template-columns: 1fr; /* Mobile: 1 coluna */
+    gap: 30px;
+    margin-top: 40px;
+}
+
+.coluna-item {
+    background-color: var(--branco-puro);
+    padding: 35px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06); /* Sombra suave */
+    border: 1px solid #f0f0f0;
+    transition: transform 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.coluna-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border-color: var(--cor-girassol);
+}
+
+/* Detalhe visual (Borda colorida no topo do card) */
+.coluna-item::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 6px;
+    background-color: var(--verde-escuro);
+}
+
+.coluna-item h3 {
+    margin-top: 10px;
+    font-family: 'New Kansas', serif;
+    font-size: 1.5rem;
+    color: var(--verde-escuro);
+}
+
+/* 3. Melhoria do Card "Ecossistema" */
+.card-ecossistema {
+    background-color: #ffffff !important; /* Fundo branco para destaque */
+    border: 2px solid #eef2f0;
+    padding: 40px !important;
+    border-radius: 20px !important;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.08) !important;
+}
+
+.texto-destaque-eco {
+    font-size: 1.15rem;
+    line-height: 1.8;
+    color: #333;
+    margin-bottom: 30px;
+}
+
+.highlight-verde {
+    color: var(--verde-escuro);
+    font-weight: 800;
+    background-color: #e8f5e9; /* Marca texto verde suave */
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Ajuste do Grid para Desktop */
+@media (min-width: 768px) {
+    .layout-2-colunas {
+        grid-template-columns: 1fr 1fr; /* 2 Colunas lado a lado */
+    }
+}
+
+/* --- PÁGINA RECURSOS DE CRISE --- */
+
+/* Caixa de Alerta Principal (Vermelha) */
+.aviso-crise-box {
+    background-color: #fef2f2; /* Vermelho muito suave */
+    border: 2px solid #E63946;  /* Vermelho Alerta */
+    border-radius: 12px;
+    padding: 30px;
+    margin: 30px 0 50px 0;
+    text-align: center;
+}
+.aviso-crise-box h2 {
+    color: #b91c1c; /* Vermelho Escuro */
+    margin-top: 0;
+    font-size: 1.8rem;
+}
+.aviso-crise-box p {
+    color: #7f1d1d;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+/* --- PÁGINA RECURSOS DE CRISE (Ajuste Fino) --- */
+
+.recursos-grid {
+    display: grid;
+    /* Item 5: Cards menores. Mudamos minmax para 250px (era 300px) e limitamos a largura máxima */
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px; /* Espaço menor entre eles */
+    max-width: 1000px; /* Trava a largura total do grid */
+    margin: 0 auto 60px auto; /* Centraliza o grid na tela */
+}
+
+/* 1. Configuração do Card para ocupar toda a altura */
+.recurso-card {
+    background-color: var(--branco-puro);
+    padding: 40px 30px;
+    border-radius: 16px;
+    border: 1px solid #eee;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    text-align: center;
+    
+    /* FLEXBOX PARA ALINHAMENTO VERTICAL */
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Garante que todos os cards tenham a mesma altura no grid */
+    
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.recurso-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 6px;
+    background-color: #E63946;
+}
+
+/* Ícone */
+.card-icon-wrapper {
+    width: 60px; /* Ícone levemente menor */
+    height: 60px;
+    background-color: #fef2f2;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px auto;
+    color: #E63946;
+}
+.card-icon-wrapper svg { width: 28px; height: 28px; fill: currentColor; }
+
+/* Título do Card de Crise */
+.recurso-card h3 {
+    font-family: 'New Kansas', serif;
+    color: #333;
+    margin-top: 0;
+    font-size: 1.4rem;
+    margin-bottom: 15px;
+    line-height: 1.2;
+    min-height: 3.6em; /* Reserva espaço para 3 linhas */
+    
+    /* NOVO: Garante que o título e o subtítulo fiquem um embaixo do outro e centralizados */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+}
+
+/* Subtítulo (o texto entre parênteses) */
+.recurso-card h3 span {
+    display: block;
+    font-size: 0.75em; /* Um pouco menor para hierarquia */
+    font-weight: 400; /* Fonte normal, não negrito */
+    margin-top: 4px;
+    color: #555;
+}
+
+/* Descrição do Card (Área de Texto) */
+.recurso-card p {
+    color: #666;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    margin-bottom: 0; /* Removemos margem aqui para controlar no container */
+    
+    /* CORREÇÃO DE ALINHAMENTO NUMÉRICO: */
+    min-height: 90px; /* Força todos os textos a terem pelo menos essa altura */
+    /* AQUI ESTÁ O SEGREDO: Altura Mínima Fixa */
+    /* Isso força todos os textos a terem o mesmo tamanho da caixa do SAMU (o maior texto) */
+    min-height: 110px; 
+    
+    flex-grow: 1; /* Garante que o botão vá para o fundo se o texto for curto */
+    display: flex;
+    align-items: flex-start; /* Alinha texto no topo */
+    justify-content: center; /* Centraliza texto horizontalmente */
+    align-items: flex-start; /* Texto começa no topo */
+    justify-content: center;
+    /* flex-grow: 1;  <-- REMOVIDO: Não queremos mais que o texto estique até o fundo */
+}
+
+/* 2. O Segredo do Alinhamento: Botão no Rodapé */
+/* Seleciona a div que contém o botão (a última div dentro do card) */
+/* Container do Botão */
+.recurso-card > div:last-child {
+    margin-top: auto; /* ISSO EMPURRA O BOTÃO PARA O FINAL ABSOLUTO */
+    /* margin-top: auto; <-- REMOVIDO: O botão não vai mais para o chão */
+    margin-top: 20px; /* Espaço fixo e elegante entre o texto e o botão */
+    width: 100%;
+    display: flex;
+    justify-content: center; /* Garante que o botão fique no meio horizontalmente */
+    padding-top: 20px; /* Um respiro mínimo caso o texto de cima seja muito longo */
+    justify-content: center;
+}
+
+.btn-emergencia {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: #E63946;
+    color: white;
+    font-weight: bold;
+    font-size: 1rem;
+    padding: 12px 25px;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(230, 57, 70, 0.3);
+    width: fit-content; /* Botão do tamanho do texto */
+    margin: 0 auto; /* Centraliza o botão horizontalmente */
+}
+.btn-emergencia:hover {
+    background-color: #c9303c;
+    transform: scale(1.02);
+}
+.btn-emergencia svg { width: 18px; height: 18px; fill: white; }
+
+/* Força os 3 cards de crise a ficarem lado a lado no Desktop */
+@media (min-width: 992px) {
+    .recursos-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+}
+
+/* --- Cards de Apoio Secundário (Ligue 180, etc) --- */
+.apoio-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+}
+
+/* Força 3 colunas no desktop para alinhar com o grid de cima */
+@media (min-width: 992px) {
+    .apoio-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.apoio-card {
+    background-color: #f8f9fa; /* Fundo cinza bem claro */
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 25px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: transform 0.2s ease;
+}
+
+.apoio-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--verde-escuro);
+}
+
+.apoio-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.apoio-header h4 {
+    font-family: 'New Kansas', serif;
+    color: var(--verde-escuro);
+    font-size: 1.2rem;
+    margin: 0;
+    line-height: 1.3;
+}
+
+/* Estilo do ícone pequeno */
+.apoio-icon {
+    width: 40px;
+    height: 40px;
+    background-color: var(--verde-escuro);
+    color: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.apoio-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+.apoio-card p {
+    font-size: 0.95rem;
+    color: #555;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Card "O que é a Jano" (Verde Menta) */
+.card-sobre-jano {
+    background-color: #E0F2F1 !important; /* Verde Menta Suave */
+    border: 1px solid #B2DFDB !important; /* Borda Verde um pouco mais escura */
+    border-left: 5px solid var(--verde-escuro) !important; /* Detalhe lateral */
+    text-align: center !important;
+    max-width: 800px;
+    margin: 60px auto 0 auto !important; /* Mais espaço acima e centralizado */
+    padding: 40px !important;
+    border-radius: 12px !important;
+}
+.card-sobre-jano h3 {
+    color: var(--verde-escuro) !important;
+    font-size: 1.5rem !important;
+    margin-top: 0;
+    font-family: 'New Kansas', serif;
+}
+.card-sobre-jano p {
+    color: #2c3e35 !important; /* Texto escuro legível sobre o menta */
+}
+/* --- SEÇÃO COMO FUNCIONA (Estilo Rico/Humanizado) --- */
+
+.como-funciona {
+    padding: 100px 20px; /* Mais respiro vertical */
+    background-color: #fdfaf6; /* Fundo Off-white quente */
+    overflow: hidden; /* Para conter decorações */
+}
+
+.steps-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 80px; /* Espaço generoso entre os passos */
+    max-width: 1100px;
+    margin: 60px auto 0 auto;
+}
+
+/* O Bloco do Passo (Zig-Zag) */
+.step-row {
+    display: flex;
+    align-items: center;
+    gap: 60px;
+}
+
+/* Inverte a ordem para o segundo passo (Imagem na esquerda, Texto na direita) */
+.step-row.reverse {
+    flex-direction: row-reverse;
+}
+
+/* Coluna de Texto */
+.step-content {
+    flex: 1;
+    text-align: left;
+}
+
+.step-tag {
+    display: inline-block;
+    background-color: #E0F2F1; /* Verde menta bem claro */
+    color: var(--verde-escuro);
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 6px 14px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.step-content h3 {
+    font-family: 'New Kansas', serif;
+    font-size: 2.2rem;
+    color: var(--verde-escuro);
+    margin-top: 0;
+    margin-bottom: 20px;
+    line-height: 1.2;
+}
+
+.step-content p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #555;
+}
+
+/* Coluna de Imagem (Com decorações) */
+.step-image-col {
+    flex: 1;
+    position: relative;
+    display: flex;
+    justify-content: center;
+}
+
+/* A Imagem em si */
+.step-img-frame {
+    position: relative;
+    z-index: 2;
+    border-radius: 24px; /* Bordas bem arredondadas */
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(27, 67, 50, 0.15); /* Sombra rica */
+    width: 100%;
+    max-width: 450px;
+    height: 350px;
+}
+
+.step-img-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.step-row:hover .step-img-frame img {
+    transform: scale(1.05); /* Zoom suave ao passar o mouse */
+}
+
+/* Decoração "Blob" atrás da imagem */
+.step-blob {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 20px;
+    left: 20px;
+    background-color: var(--cor-girassol);
+    border-radius: 24px;
+    z-index: 1; /* Atrás da imagem */
+    opacity: 0.4;
+}
+
+.step-row.reverse .step-blob {
+    left: -20px; /* Inverte a sombra decorativa */
+}
+
+/* Responsividade para Mobile */
+@media (max-width: 900px) {
+    .step-row, .step-row.reverse {
+        flex-direction: column; /* Empilha tudo */
+        gap: 30px;
+        text-align: center;
+    }
+    
+    .step-content {
+        text-align: center;
+    }
+    
+    .step-blob {
+        top: 15px; left: 15px;
+    }
+    
+    .step-row.reverse .step-blob {
+        left: 15px;
+    }
+}
+
+/* --- TABELA COMPARATIVA (Profissionais) --- */
+
+.comparativo-secao {
+    padding: 80px 20px;
+    background-color: #fdfaf6; /* Fundo off-white para destacar do resto */
+}
+
+.tabela-comparativa {
+    display: grid;
+    grid-template-columns: 1fr; /* Mobile: empilhado */
+    gap: 30px;
+    max-width: 900px;
+    margin: 40px auto 0 auto;
+}
+
+/* Estilo base das colunas */
+.coluna-tabela {
+    background: #ffffff;
+    padding: 40px 30px;
+    border-radius: 16px;
+    border: 1px solid #e0e0e0;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.coluna-tabela h3 {
+    font-family: 'New Kansas', serif;
+    font-size: 1.5rem;
+    margin-bottom: 25px;
+    color: #555;
+}
+
+.coluna-tabela ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-align: left; /* Itens alinhados à esquerda para leitura fácil */
+}
+
+.coluna-tabela li {
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 1rem;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.coluna-tabela li:last-child {
+    border-bottom: none;
+}
+
+/* Destaques Visuais (Ícones) */
+.icone-x::before {
+    content: '✕';
+    color: #E63946; /* Vermelho */
+    font-weight: bold;
+    font-size: 1.2rem;
+    display: inline-block;
+    width: 25px;
+}
+
+.icone-check::before {
+    content: '✓';
+    color: var(--verde-escuro);
+    font-weight: bold;
+    font-size: 1.2rem;
+    display: inline-block;
+    width: 25px;
+}
+
+/* --- COLUNA DESTAQUE (JANO) --- */
+.coluna-tabela.destaque {
+    border: 2px solid var(--verde-escuro);
+    box-shadow: 0 10px 40px rgba(27, 67, 50, 0.15);
+    transform: scale(1.02); /* Levemente maior */
+    position: relative;
+    background-color: #fff;
+    z-index: 2;
+}
+
+/* Etiqueta "Recomendado" */
+.tag-destaque {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--verde-escuro);
+    color: var(--cor-girassol);
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.coluna-tabela.destaque h3 {
+    color: var(--verde-escuro);
+    font-size: 1.8rem; /* Título maior */
+}
+
+.coluna-tabela.destaque li {
+    color: #333;
+    font-weight: 500;
+}
+
+/* Responsividade Desktop */
+@media (min-width: 768px) {
+    .tabela-comparativa {
+        grid-template-columns: 1fr 1fr; /* Lado a lado */
+        align-items: center; /* Centraliza verticalmente */
+    }
+    /* A coluna "Outros" fica um pouco menor visualmente */
+    .coluna-tabela:not(.destaque) {
+        transform: scale(0.95); 
+        background-color: #f9f9f9;
+    }
+}
+/* --- CORES DE FUNDO ALTERNADAS (Ritmo Visual) --- */
+
+/* Seção 2: Terapeutas -> BRANCO */
+.secao-terapeutas {
+    background-color: var(--branco-puro) !important;
+}
+
+/* Seção 3: Como Funciona -> OFF-WHITE (Creme) */
+.como-funciona {
+    background-color: var(--off-white) !important;
+}
+
+/* --- PÁGINA DE CONTATO --- */
+
+.contato-container {
+    display: grid;
+    grid-template-columns: 1fr; /* Mobile: 1 coluna */
+    gap: 50px;
+    max-width: 1100px;
+    margin: 0 auto;
+    align-items: start;
+}
+
+/* No Desktop, divide em 2 colunas (1/3 para info, 2/3 para formulário) */
+@media (min-width: 992px) {
+    .contato-container {
+        grid-template-columns: 1fr 1.5fr;
+    }
+}
+
+/* Lado Esquerdo: Informações */
+.info-contato h3 {
+    font-family: 'New Kansas', serif;
+    color: var(--verde-escuro);
+    font-size: 1.8rem;
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.info-contato p {
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.info-contato ul {
+    list-style: none;
+    padding: 0;
+}
+
+.info-contato li {
+    margin-bottom: 25px;
+    font-size: 1.05rem;
+    color: #333;
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.info-contato li strong {
+    color: var(--verde-escuro);
+    display: block;
+    margin-bottom: 5px;
+}
+
+.info-contato a {
+    color: var(--verde-escuro);
+    text-decoration: underline;
+}
+
+/* Lado Direito: Formulário (Cartão) */
+.form-contato {
+    background-color: #f8f9fa; /* Fundo cinza suave */
+    padding: 40px;
+    border-radius: 16px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+.form-contato .form-group {
+    margin-bottom: 20px;
+}
+
+.form-contato label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+}
+
+.form-contato input,
+.form-contato select,
+.form-contato textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    background-color: #fff;
+}
+
+.form-contato textarea {
+    resize: vertical; /* Permite redimensionar só na altura */
+}
+
+/* Seção 4: FAQ -> BRANCO */
+.faq-secao {
+    background-color: var(--branco-puro) !important;
+}
+
+/* Seção 5: Aviso de Crise -> OFF-WHITE */
+.aviso-crise {
+    background-color: var(--off-white) !important;
+    border-top: none; /* Remove borda se houver, para ficar limpo */
+}
+
+/* Estado TRAVADO (Menos de 50 caracteres) */
+#submit-question-btn:disabled {
+    background-color: #e0e0e0; /* Cinza claro */
+    color: #888;
+    border: 1px solid #ccc;
+    cursor: not-allowed;
+    opacity: 0.7;
+    transform: none; /* Remove efeitos de clique */
+}
+
+/* Estado PRONTO (50+ caracteres) - Verde Jano */
+#submit-question-btn:not(:disabled) {
+    background-color: var(--verde-escuro, #1B4332); /* Fallback se a var não carregar */
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Efeito Hover quando pronto */
+#submit-question-btn:not(:disabled):hover {
+    background-color: #2D6A4F; /* Um tom um pouco mais claro */
+    transform: translateY(-2px);
+}
+
+/* Estilo para o status "Aguardando Resposta" */
+.status-aguardando {
+    display: inline-block;
+    background-color: #f0f0f0;
+    color: #666;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-top: 10px;
+    border: 1px solid #ddd;
+}
+
+/* --- 1. BOTÃO DE ENVIAR (Lógica de Estado) --- */
+
+/* Estado TRAVADO (Menos de 50 caracteres) */
+#submit-question-btn:disabled {
+    background-color: #e0e0e0;
+    color: #999;
+    border: 1px solid #ccc;
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.8;
+}
+
+/* Estado PRONTO (50+ caracteres) */
+#submit-question-btn:not(:disabled) {
+    background-color: var(--verde-escuro, #1B4332); /* Fallback para Verde Jano */
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(27, 67, 50, 0.2);
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+#submit-question-btn:not(:disabled):hover {
+    background-color: #2D6A4F;
+    transform: translateY(-2px);
+}
+
+#submit-question-btn:not(:disabled):active {
+    transform: translateY(0);
+}
+
+/* --- 2. STATUS AGUARDANDO (Card de Pergunta) --- */
+
+.status-aguardando {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #f8f9fa;
+    color: #6c757d;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px dashed #dee2e6;
+    margin-top: 15px;
+}
+
+/* --- 3. TOAST (Mensagem Flutuante de Sucesso) --- */
+
+.toast {
+    visibility: hidden; /* O JS muda para visible/display block */
+    min-width: 300px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 50px; /* Arredondado estilo app */
+    padding: 16px;
+    position: fixed;
+    z-index: 9999;
+    left: 50%;
+    bottom: 30px;
+    transform: translateX(-50%);
+    font-size: 0.95rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    opacity: 0;
+    transition: opacity 0.4s ease, bottom 0.4s ease;
+}
+
+/* Variações de cor do Toast */
+.toast-success {
+    background-color: var(--verde-escuro, #1B4332);
+    border: 2px solid #52b788;
+}
+
+.toast-error {
+    background-color: #d90429;
+    border: 2px solid #ef233c;
+}
+
+/* Animação de entrada (Opcional, mas elegante) */
+.toast.show {
+    visibility: visible;
+    opacity: 1;
+    bottom: 50px; /* Sobe um pouquinho ao aparecer */
+}

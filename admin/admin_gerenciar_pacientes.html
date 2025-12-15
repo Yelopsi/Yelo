@@ -1,0 +1,38 @@
+<section class="filtros-container">
+    <input type="text" class="campo-busca" placeholder="Buscar por nome ou e-mail...">
+    <button class="btn-primario">Adicionar Paciente</button>
+</section>
+
+<section class="tabela-container">
+    <h3>Gerenciamento de Pacientes</h3>
+    <p class="subtitulo-secao">Visualize e gerencie todos os pacientes da plataforma.</p>
+    
+    <div class="tabela-wrapper">
+        <table class="tabela-gerenciamento">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>E-mail</th>
+                    <th>Data de Cadastro</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="patients-table-body">
+                <tr>
+                    <td colspan="5" class="loading-row">Carregando pacientes...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<template id="patient-row-template">
+    <tr>
+        <td data-label="Nome"></td>
+        <td data-label="E-mail"></td>
+        <td data-label="Data de Cadastro"></td>
+        <td data-label="Status"><span class="status"></span></td>
+        <td data-label="Ações"></td>
+    </tr>
+</template>

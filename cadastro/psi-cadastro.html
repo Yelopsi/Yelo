@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pré-Cadastro de Psicólogos - Jano</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+
+<body class="pagina-questionario">
+
+    <main class="questionario-container">
+        <div class="progress-bar"><div class="progress-bar-fill"></div></div>
+
+        <div class="slides-container">
+
+            <div class="slide active" id="slide-1">
+                <div class="slide-header">
+                    <h1>Junte-se à Comunidade Jano</h1>
+                    <p class="subtitle">Olá! Ficamos felizes com seu interesse. Este pré-cadastro rápido nos ajudará a entender sua prática e a verificar a demanda para seu perfil.</p>
+                </div>
+                <div class="slide-body">
+                    <div class="form-group-questionario"><label for="fullName">Nome Completo</label><input type="text" id="fullName" name="fullName" class="text-input" placeholder="Seu nome completo" required></div>
+                    <div class="form-group-questionario"><label for="email">E-mail Profissional</label><input type="email" id="email" name="email" class="text-input" placeholder="seu@email.com" required></div>
+                    <div class="form-group-questionario"><label for="crp">Número do seu CRP</label><input type="text" id="crp" name="crp" class="text-input" placeholder="00/00000" required></div>
+                </div>
+                <div class="navigation-buttons single-button"><button class="cta-button" data-action="next">Avançar</button></div>
+            </div>
+
+            <div class="slide" id="slide-2">
+                <div class="slide-header">
+                    <h1>Entendendo sua Prática</h1>
+                    <p class="subtitle">Suas respostas aqui são cruciais para a análise de demanda.</p>
+                </div>
+                <div class="slide-body">
+                    <div class="form-group-questionario">
+                        <label>Em qual faixa de preço você pretende atender por sessão?</label>
+                        <div class="choices-container" data-question="priceTier">
+                            <button class="choice-button" data-value="Até R$ 50">Até R$ 50</button>
+                            <button class="choice-button" data-value="R$ 51 - R$ 90">R$ 51 - R$ 90</button>
+                            <button class="choice-button" data-value="R$ 91 - R$ 150">R$ 91 - R$ 150</button>
+                            <button class="choice-button" data-value="Acima de R$ 150">Acima de R$ 150</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="navigation-buttons">
+                    <button class="back-button" data-action="prev">← Voltar</button>
+                    </div>
+            </div>
+            
+            <div class="slide" id="slide-3">
+                 <div class="slide-header">
+                    <h1>Quais são seus principais temas de atuação?</h1>
+                    <p class="subtitle">Selecione até 5. Isso define seu "bolsão de demanda".</p>
+                </div>
+                <div class="slide-body">
+                    <div class="form-group-questionario">
+                        <div class="choices-container" data-question="topics">
+                            <button class="choice-button multi-choice" data-value="Ansiedade">Ansiedade</button>
+                            <button class="choice-button multi-choice" data-value="Estresse">Estresse</button>
+                            <button class="choice-button multi-choice" data-value="Depressão">Depressão</button>
+                            <button class="choice-button multi-choice" data-value="Relacionamentos">Relacionamentos</button>
+                            <button class="choice-button multi-choice" data-value="Carreira">Carreira</button>
+                            <button class="choice-button multi-choice" data-value="Autoestima">Autoestima</button>
+                            <button class="choice-button multi-choice" data-value="Luto">Luto</button>
+                            <button class="choice-button multi-choice" data-value="Traumas">Traumas</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="navigation-buttons">
+                    <button class="back-button" data-action="prev">← Voltar</button>
+                    <button class="cta-button" data-action="next">Avançar</button>
+                </div>
+            </div>
+            
+            <div class="slide" id="slide-4">
+                 <div class="slide-header">
+                    <h1>Qual a sua principal abordagem teórica?</h1> <p class="subtitle">Selecione a que melhor descreve sua prática principal.</p> </div>
+    <div class="slide-body">
+                   <div class="form-group-questionario">
+            <div class="choices-container" data-question="approaches">
+                <button class="choice-button" data-value="TCC">TCC (Terapia Cognitivo-Comportamental)</button>
+                <button class="choice-button" data-value="Comportamental">Comportamental (Behaviorismo)</button>
+                <button class="choice-button" data-value="Psicanálise">Psicanálise</button>
+                <button class="choice-button" data-value="Humanista">Humanista / Centrada na Pessoa</button>
+                <button class="choice-button" data-value="Gestalt-terapia">Gestalt-terapia</button>
+                <button class="choice-button" data-value="Outra">Outra</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="navigation-buttons">
+        <button class="back-button" data-action="prev">← Voltar</button>
+        </div>
+</div>
+
+            <div class="slide" id="slide-5">
+                 <div class="slide-header">
+                    <h1>Sua prática é afirmativa para alguma comunidade?</h1>
+                    <p class="subtitle">Selecione todas que se aplicam.</p>
+                </div>
+                <div class="slide-body">
+                    <div class="form-group-questionario">
+                        <div class="choices-container" data-question="affirmativePractices">
+                            <button class="choice-button multi-choice" data-value="LGBTQIAPN+">LGBTQIAPN+ afirmativa</button>
+                            <button class="choice-button multi-choice" data-value="Antirracista">Prática antirracista</button>
+                            <button class="choice-button multi-choice" data-value="Feminista">Perspectiva feminista</button>
+                            <button class="choice-button multi-choice" data-value="Neurodiversidade">Neurodiversidade (TDAH, Autismo, etc.)</button>
+                            <button class="choice-button multi-choice" data-value="Cirurgias">Cirurgias</button>
+                            <button class="choice-button multi-choice" data-value="Outra">Outra</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="navigation-buttons">
+                    <button class="back-button" data-action="prev">← Voltar</button>
+                    <button class="cta-button" data-action="check">Verificar</button>
+                </div>
+            </div>
+
+            <div class="slide" id="slide-vaga-disponivel"> ... </div>
+            <div class="slide" id="slide-lista-espera"> ... </div>
+
+        </div>
+    </main>
+    
+    <script src="https://unpkg.com/imask"></script>
+    <script src="psi-cadastro.js"></script>
+</body>
+</html>

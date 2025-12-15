@@ -1,0 +1,210 @@
+/* public/css/03-layout.css */
+
+/* --- HEADER & NAVEGAÇÃO (Mobile First) --- */
+header {
+    background-color: #1B4332;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 30px;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    z-index: 1000;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    box-sizing: border-box;
+}
+
+/* Logo */
+.logo { position: relative; display: block; width: 150px; height: 40px; }
+.logo img { height: 100%; width: auto; position: absolute; top: 0; left: 0; transition: opacity 0.4s; }
+.logo .logo-escura { opacity: 0; }
+.logo .logo-branca { opacity: 1; }
+
+/* Menu Hamburguer (Mobile) */
+.menu-hamburguer {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 30px; height: 25px;
+    background: transparent; border: none; cursor: pointer; padding: 0; z-index: 10;
+}
+.menu-hamburguer .barra { width: 100%; height: 3px; background-color: white; border-radius: 2px; }
+
+/* Gaveta de Navegação (Mobile) */
+.container-navegacao {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    background-color: #1B4332;
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100vh;
+    padding-top: 80px;
+}
+.container-navegacao.ativo { display: flex; }
+
+/* Itens do Menu */
+nav ul { display: flex; flex-direction: column; align-items: center; gap: 25px; width: 100%; }
+nav a { color: white; font-family: 'Inter', sans-serif; font-size: 18px; text-decoration: none; }
+nav a:hover { opacity: 0.8; }
+
+.botoes-acao { display: flex; flex-direction: column; gap: 10px; margin-top: 30px; width: 80%; }
+
+/* --- Header Rolagem (Estado ao descer a página) --- */
+header.header-rolagem {
+    background-color: white !important;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Troca a logo branca pela escura */
+header.header-rolagem .logo .logo-escura { opacity: 1; }
+header.header-rolagem .logo .logo-branca { opacity: 0; }
+
+/* CORREÇÃO AQUI: Separação das regras para evitar fundos pretos nos links */
+
+/* 1. Links de navegação: Mudam apenas a cor do TEXTO */
+header.header-rolagem nav a {
+    color: #333 !important;
+    background-color: transparent !important; /* Garante que não tenha fundo */
+}
+
+/* 2. Menu Hambúrguer: Muda a cor de FUNDO das barrinhas */
+header.header-rolagem .menu-hamburguer .barra {
+    background-color: #333 !important;
+}
+
+/* Botões de ação no header rolado */
+header.header-rolagem .btn-outline {
+    color: #333 !important;
+    border-color: #333 !important;
+}
+header.header-rolagem .btn-solid {
+    background-color: #1B4332;
+    color: white;
+    border-color: #1B4332;
+}
+
+/* Correção de cores no Menu Mobile Aberto */
+.container-navegacao.ativo nav a, 
+.container-navegacao.ativo .btn-outline { color: white !important; border-color: white !important; }
+.container-navegacao.ativo .btn-solid { background-color: white !important; color: var(--verde-escuro) !important; }
+
+
+/* --- RODAPÉ (FOOTER) --- */
+.rodape-principal {
+    background-color: var(--verde-escuro);
+    color: #adb5bd;
+    padding: 60px 40px;
+    position: relative;
+    margin-top: 0;
+}
+
+.rodape-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.rodape-bloco-superior,
+.rodape-base {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.rodape-nav ul,
+.rodape-links-legais {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 25px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* --- Ícones Sociais (Rodapé) --- */
+.rodape-social {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.rodape-social a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+/* Estilo dos Ícones SVG */
+.rodape-social svg {
+    width: 24px;
+    height: 24px;
+    fill: #adb5bd; /* Cor cinza padrão do texto */
+    transition: all 0.3s ease;
+}
+
+/* Efeito ao passar o mouse (Fica Amarelo Girassol) */
+.rodape-social a:hover svg {
+    fill: var(--cor-girassol);
+    transform: translateY(-3px); /* Sobe um pouquinho */
+}
+
+.rodape-bloco-rt { text-align: left; }
+.rodape-bloco-rt p, .rodape-copyright p { font-size: 14px; margin: 0; }
+
+.rodape-nav a, .rodape-links-legais a {
+    color: #e9ecef; text-decoration: none; font-size: 16px; transition: color 0.3s ease;
+}
+.rodape-nav a:hover, .rodape-links-legais a:hover { color: var(--cor-girassol); }
+
+.rodape-divisor { border: none; height: 1px; background-color: #495057; width: 100%; margin: 0; display: block; }
+
+/* Onda do Footer */
+.wave-divider-footer { background-color: transparent; line-height: 0; margin-bottom: -1px; }
+.wave-divider-footer svg { display: block; width: 100%; height: 80px; }
+.wave-divider-footer .shape-fill { fill: var(--verde-escuro); }
+
+
+/* --- MEDIA QUERIES DE LAYOUT --- */
+@media (min-width: 992px) {
+    /* Menu Desktop Horizontal */
+    .menu-hamburguer { display: none !important; }
+    
+    .container-navegacao {
+        display: flex !important;
+        position: static;
+        height: auto;
+        padding: 0;
+        background-color: transparent;
+        flex-direction: row;
+        justify-content: flex-end;
+        width: auto;
+    }
+    
+    nav ul { flex-direction: row !important; gap: 30px; width: auto; margin-right: 30px; }
+    .botoes-acao { flex-direction: row; margin-top: 0; width: auto; }
+    
+    /* Cores Desktop */
+    header:not(.header-rolagem) nav a { color: white; }
+    header.header-rolagem nav a { color: #333; }
+    
+    /* Header Borda Botão Entrar */
+    header:not(.header-rolagem) .botoes-acao .btn-outline { border: 2px solid #ffffff !important; color: #ffffff !important; }
+    header:not(.header-rolagem) .botoes-acao .btn-outline:hover { background-color: rgba(255, 255, 255, 0.1) !important; }
+    header.header-rolagem .botoes-acao .btn-outline { border: 2px solid var(--verde-escuro) !important; color: var(--verde-escuro) !important; }
+}
+
+@media (max-width: 991px) {
+    /* Footer Stack no Mobile */
+    .rodape-bloco-superior, .rodape-base { flex-direction: column; gap: 20px; align-items: center; text-align: center; }
+    .rodape-nav ul, .rodape-links-legais { justify-content: center; }
+    .rodape-bloco-rt { text-align: center; }
+}

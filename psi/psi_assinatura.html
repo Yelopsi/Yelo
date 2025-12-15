@@ -1,0 +1,102 @@
+<header class="main-header">
+    <h1>Gerencie sua Assinatura</h1>
+    <p class="subtitulo-header">Escolha o plano que melhor se alinha ao seu momento profissional.</p>
+</header>
+
+            <section id="card-resumo-assinatura" class="plano-atual-moderno" style="display: none;">
+                <div class="info-lado-esquerdo">
+                    <div class="nome-plano-banner" id="banner-nome-plano">--</div>
+                    
+                    <div class="status-badge">
+                        <span style="width: 8px; height: 8px; background: #4ade80; border-radius: 50%;"></span>
+                        Ativo e Validado
+                    </div>
+                </div>
+                
+                <div class="info-lado-direito">
+                    <div class="preco-destaque" id="banner-preco" style="font-size: 1.8rem; font-weight: 700;">R$ -- / mês</div>
+                    <span class="data-renovacao" id="banner-renovacao" style="display:block; text-align:right; opacity:0.8; margin-top:5px; font-size:0.9rem;">Renova em: --/--/----</span>
+                </div>
+            </section>
+
+<section class="planos-grid">
+    <div class="plano-card">
+        <div style="background: #eef; color: #333; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-bottom: 8px;">
+            1º Mês Grátis
+        </div>
+        <h2>Plano Essencial</h2>
+        <div class="preco" id="preco-essencial">R$ 99<span>/mês</span></div>
+        <ul class="beneficios-lista">
+            <li>✅ Participação no Match</li>
+            <li>✅ Perfil Básico (Foto + Bio)</li>
+            <li>✅ Métricas de Visualização</li>
+        </ul>
+        <div class="plano-cta">
+            <button class="btn-mudar-plano" data-plano="ESSENTIAL">Começar Teste Grátis</button>
+        </div>
+    </div>
+
+    <div class="plano-card destaque-visual" style="border: 2px solid #ccc; opacity: 0.8; position: relative;">
+        <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #999; color: #fff; font-size: 0.75rem; font-weight: bold; padding: 2px 10px; border-radius: 12px;">
+            EM BREVE
+        </div>
+        <h2 style="color: #666;">Plano Clínico</h2>
+        <div class="preco" style="color: #666; font-family: 'New Kansas', serif;">R$ 159<span>/mês</span></div>
+        <ul class="beneficios-lista" style="filter: grayscale(100%);">
+            <li>✨ <strong>Tudo do Essencial, mais:</strong></li>
+            <li>✅ Link Personalizado (jano.com/voce)</li>
+            <li>✅ Acesso à Comunidade Jano</li>
+            <li>✅ Selo de Verificação</li>
+        </ul>
+        <div class="plano-cta">
+            <button class="btn-mudar-plano" disabled style="background-color: #e0e0e0; color: #888; border: none; cursor: not-allowed; width: 100%;">
+                Disponível em Breve
+            </button>
+        </div>
+    </div>
+
+    <div class="plano-card" style="border-color: #eee; opacity: 0.7;">
+        <div style="background: #f0f0f0; color: #999; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-bottom: 8px;">
+            Expansão
+        </div>
+        <h2 style="color: #666;">Plano Referência</h2>
+        <div class="preco" style="color: #666; font-family: 'New Kansas', serif;">R$ 259<span>/mês</span></div>
+        <ul class="beneficios-lista" style="filter: grayscale(100%);">
+            <li>🚀 <strong>Tudo do Clínico, mais:</strong></li>
+            <li>✅ Destaque em Conteúdo/Blog</li>
+            <li>✅ Perfil Premium (Vídeo + Galeria)</li>
+            <li>✅ Acesso a Grupos de Estudo</li>
+        </ul>
+        <div class="plano-cta">
+            <button class="btn-mudar-plano" disabled style="background-color: #e0e0e0; color: #888; border: none; cursor: not-allowed; width: 100%;">
+                Disponível em Breve
+            </button>
+        </div>
+    </div>
+</section>
+
+<div id="area-cancelamento" class="danger-zone" style="display: none;">
+    <p style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">Deseja encerrar sua assinatura?</p>
+    <button id="btn-cancelar-assinatura" class="btn-cancelar-discreto">
+        Cancelar renovação automática
+    </button>
+</div>
+
+<div id="modal-cancelamento" class="custom-modal-overlay">
+    <div class="custom-modal-box">
+        <div style="margin-bottom: 20px; color: #e63946;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+            </svg>
+        </div>
+        <h3 style="margin-bottom: 10px; color: #333;">Tem certeza?</h3>
+        <p style="color: #666; margin-bottom: 25px; line-height: 1.5;">
+            Você continuará com acesso aos benefícios até o fim do período pago, mas sua assinatura não será renovada.
+        </p>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="btn-fechar-modal-cancel" style="padding: 10px 20px; border: 1px solid #ddd; background: #fff; border-radius: 6px; cursor: pointer; color: #555;">Manter Plano</button>
+            <button id="btn-confirmar-cancelamento" style="padding: 10px 20px; border: none; background: #e63946; border-radius: 6px; cursor: pointer; color: #fff; font-weight: bold;">Sim, Cancelar</button>
+        </div>
+    </div>
+</div>

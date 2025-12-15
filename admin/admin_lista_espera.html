@@ -1,0 +1,62 @@
+<!-- Conteúdo da página Gerenciar Psicólogos -->
+<div class="card">
+    <div class="card-header">
+        <h2>Profissionais na Lista de Espera</h2>
+        <p>Visualize e gerencie os profissionais que aguardam um convite para entrar na plataforma.</p>
+    </div>
+    <div class="table-container">
+        <table id="waiting-list-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>CRP</th>
+                    <th>Status</th>
+                    <th>Data de Entrada</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="waiting-list-body">
+                <!-- Linhas serão inseridas aqui pelo JavaScript -->
+                <tr>
+                    <td colspan="6" class="loading-row">Carregando dados da lista de espera...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Template do Modal de Confirmação -->
+<div id="confirmation-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-title">Confirmar Ação</h2>
+            <button id="modal-close-btn" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="modal-message">Você tem certeza que deseja realizar esta ação?</p>
+        </div>
+        <div class="modal-footer">
+            <button id="modal-cancel-btn" class="btn btn-secundario">Cancelar</button>
+            <button id="modal-confirm-btn" class="btn btn-principal">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Template do Toast (Notificação) -->
+<div id="toast-container" class="toast-container"></div>
+<template id="toast-template">
+    <div class="toast"></div>
+</template>
+
+<!-- Template da Linha da Tabela -->
+<template id="waiting-list-row-template">
+    <tr>
+        <td data-label="Nome"></td>
+        <td data-label="Email"></td>
+        <td data-label="CRP"></td>
+        <td data-label="Status"><span class="status-badge"></span></td>
+        <td data-label="Data de Entrada"></td>
+        <td data-label="Ações"></td>
+    </tr>
+</template>

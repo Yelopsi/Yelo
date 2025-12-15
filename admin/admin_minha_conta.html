@@ -1,0 +1,54 @@
+<!-- admin/admin_minha_conta.html -->
+<div class="widgets-container widgets-container--vertical">
+
+    <!-- Seção de Dados Pessoais -->
+    <div class="form-section">
+        <h2>Meus Dados</h2>
+        <form id="form-dados-admin">
+            <div class="profile-photo-section">
+                <label for="admin-photo-upload" class="profile-photo-label" title="Clique para alterar a foto">
+                    <img src="https://placehold.co/100x100/1B4332/FFFFFF?text=A" alt="Foto de Perfil" id="admin-profile-photo-preview" class="profile-photo-preview">
+                </label>
+                <input type="file" id="admin-photo-upload" accept="image/*" style="display: none;">
+            </div>
+
+            <div class="form-group">
+                <label for="admin-nome">Nome Completo</label>
+                <input type="text" id="admin-nome" required>
+            </div>
+            <div class="form-group">
+                <label for="admin-email">E-mail</label>
+                <input type="email" id="admin-email" required>
+            </div>
+            <div class="form-group">
+                <label for="admin-telefone">Telefone</label>
+                <input type="tel" id="admin-telefone">
+            </div>
+            <div class="form-section-acoes">
+                <button type="submit" class="btn btn-principal">Salvar Alterações</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Seção de Alteração de Senha -->
+    <div class="form-section">
+        <h2>Alterar Senha</h2>
+        <form id="form-senha-admin">
+            <div class="form-group">
+                <label for="admin-senha-atual">Senha Atual</label>
+                <input type="password" id="admin-senha-atual" required>
+            </div>
+            <div class="form-group">
+                <label for="admin-nova-senha">Nova Senha</label>
+                <input type="password" id="admin-nova-senha" required>
+            </div>
+            <div class="form-group">
+                <label for="admin-confirmar-senha">Confirmar Nova Senha</label>
+                <input type="password" id="admin-confirmar-senha" required>
+            </div>
+            <div class="form-section-acoes">
+                <button type="submit" class="btn btn-principal">Alterar Senha</button>
+            </div>
+        </form>
+    </div>
+</div>

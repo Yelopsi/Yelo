@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crie sua Conta - Girassol</title>
+    
+    <link rel="stylesheet" href="/css/01-variables.css">
+    <link rel="stylesheet" href="/css/02-base.css">
+    <link rel="stylesheet" href="/css/03-layout.css">
+    <link rel="stylesheet" href="/css/04-components.css">
+    <link rel="stylesheet" href="/css/05-pages.css">
+    <link rel="stylesheet" href="/css/06-utilities.css">
+
+    <link rel="icon" href="assets/images/favicon.png?v=2" type="image/png">
+    <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png?v=2">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        .password-toggle-icon svg.hidden { display: none; }
+    </style>
+</head>
+<body class="pagina-login">
+
+    <header>
+        <a href="index.html" class="logo">
+            <img src="assets/images/logo-branca.png" alt="Logo Jano" class="logo-branca">
+            <img src="assets/images/logo-escura.png" alt="Logo Jano" class="logo-escura">
+        </a>
+    
+        <button class="menu-hamburguer" aria-label="Abrir menu" onclick="toggleMenu()">
+            <span class="barra"></span>
+            <span class="barra"></span>
+            <span class="barra"></span>
+        </button>
+    
+        <div class="container-navegacao">
+            <nav>
+                <ul>
+                    <li><a href="index.html">Início</a></li>
+                    <li><a href="perguntas.html">Para Comunidade</a></li>
+                    <li><a href="profissionais.html">Para Profissionais</a></li>
+                    <li><a href="faq.html">FAQ</a></li>
+                    <li><a href="blog.html">Blog</a></li>
+                </ul>
+            </nav>
+    
+            <div class="botoes-acao">
+                <a href="login.html" class="btn btn-outline">Entrar</a>
+                <a href="registrar.html" class="btn btn-solid">Registrar</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="login-main ruido">
+        <div class="login-container">
+            <h1 class="login-titulo">Crie sua conta</h1>
+            
+            <div style="background-color: #E0F2F1; border: 1px solid #A8DADC; color: #1B4332; padding: 15px; border-radius: 10px; margin-bottom: 25px; font-size: 0.9rem; line-height: 1.5; text-align: center;">
+                <span style="display: block; margin-bottom: 4px;">Este formulário é exclusivo para <strong>Pacientes</strong>.</span>
+                <span>
+                    É psicólogo(a)? 
+                    <a href="psi_questionario.html" style="color: #1B4332; font-weight: 800; text-decoration: underline; cursor: pointer;">
+                        Comece por aqui
+                    </a>.
+                </span>
+            </div>                        
+            
+            <form class="login-form" id="form-registro">
+                <div class="form-group">
+                    <label for="nome-completo">Nome completo</label>
+                    <input type="text" id="nome-completo" name="nome-completo" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group form-group-password-wrapper">
+                  <label for="senha">Crie uma senha</label>
+                  <input type="password" id="senha" name="senha" required>
+                  <span class="password-toggle-icon" id="toggleSenha">
+                    <svg class="eye-closed" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                    <svg class="eye-open hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </span>
+                </div>
+
+                <div class="form-group form-group-password-wrapper">
+                  <label for="confirmar-senha">Confirme sua senha</label>
+                  <input type="password" id="confirmar-senha" name="confirmar-senha" required>
+                  <span class="password-toggle-icon" id="toggleConfirmarSenha">
+                    <svg class="eye-closed" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                    <svg class="eye-open hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </span>
+                </div>
+
+                <p id="mensagem-registro" style="text-align: center; margin-top: 15px; font-size: 0.9em;"></p>
+
+                <button type="submit" class="btn-login">Criar Conta</button>
+            </form>
+            <div class="login-links">
+                <a href="login.html">Já tem uma conta? <strong>Faça login</strong></a>
+            </div>
+        </div>
+    </main>
+
+    <div class="wave-divider-footer">
+        <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z" class="shape-fill" style="fill:var(--verde-escuro);"></path>
+        </svg>
+    </div>
+
+    <footer class="rodape-principal">
+        <div class="rodape-container">
+            <div class="rodape-bloco-superior">
+                <nav class="rodape-nav">
+                    <ul>
+                        <li><a href="index.html">Início</a></li>
+                        <li><a href="perguntas.html">Comunidade</a></li>
+                        <li><a href="profissionais.html">Profissionais</a></li>
+                        <li><a href="faq.html">FAQ</a></li>
+                        <li><a href="blog.html">Blog</a></li>
+                    </ul>
+                </nav>
+                <div class="rodape-social">
+                    <a href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>
+                    <a href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4.98 3.5c0 1.381-1.11 2.5-2.48 2.5s-2.48-1.119-2.48-2.5c0-1.38 1.11-2.5 2.48-2.5s2.48 1.12 2.48 2.5zm.02 4.5h-5v16h5v-16zm7.982 0h-4.968v16h4.969v-8.399c0-4.67 6.029-5.052 6.029 0v8.399h4.988v-10.131c0-7.88-8.922-7.593-11.018-3.714v-2.155z"/></svg></a>
+                    <a href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg></a>
+                </div>
+            </div>
+            <hr class="rodape-divisor">
+            <div class="rodape-base">
+                <div class="rodape-bloco-rt">
+                    <p><strong>Jano Saúde Mental</strong></p>
+                    <p>Responsável Técnico: Anderson Costa | CRP: 06/190861</p>
+                </div>
+                <div class="rodape-links-legais">
+                    <a href="termos.html">Termos de Uso</a>
+                    <a href="privacidade.html">Privacidade</a>
+                </div>
+                <div class="rodape-copyright">
+                    <p>© 2025 Jano. Todos os direitos reservados.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/config.js"></script>
+    <script src="script.js"></script>
+    <script src="registrar.js"></script>
+
+    <script>
+      function setupPasswordToggle(toggleId, inputId) {
+        const toggle = document.getElementById(toggleId);
+        const input = document.getElementById(inputId);
+    
+        if (toggle && input) {
+            const eyeClosed = toggle.querySelector('.eye-closed');
+            const eyeOpen = toggle.querySelector('.eye-open');
+
+            toggle.addEventListener("click", () => {
+                const isPassword = input.type === "password";
+                input.type = isPassword ? "text" : "password";
+                
+                // Alterna a classe hidden (como fizemos no Login)
+                if (isPassword) {
+                    // Se virou texto, mostra o olho aberto
+                    eyeClosed.classList.add('hidden');
+                    eyeOpen.classList.remove('hidden');
+                } else {
+                    // Se virou senha, mostra o olho fechado (riscado)
+                    eyeClosed.classList.remove('hidden');
+                    eyeOpen.classList.add('hidden');
+                }
+            });
+        }
+      }
+    
+      // Ativa para os dois campos
+      setupPasswordToggle("toggleSenha", "senha");
+      setupPasswordToggle("toggleConfirmarSenha", "confirmar-senha");
+    </script>
+
+</body>
+</html>

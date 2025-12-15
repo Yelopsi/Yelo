@@ -1,0 +1,81 @@
+<div class="page-content">
+    <div class="page-header">
+        <h1>Configurações do Sistema</h1>
+        <p>Central de comando operacional da plataforma Jano.</p>
+    </div>
+
+    <form id="form-configuracoes">
+        <div class="card">
+            <div class="card-header">
+                <h2>🚦 Estado da Plataforma</h2>
+            </div>
+            <div class="card-body">
+                <div class="config-item">
+                    <div class="config-infos">
+                        <strong>Modo Manutenção</strong>
+                        <p class="desc">Bloqueia o acesso de usuários (exceto admins).</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="maintenance_mode" name="maintenance_mode">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+
+                <div class="divisor"></div>
+
+                <div class="config-item">
+                    <div class="config-infos">
+                        <strong>Novos Cadastros</strong>
+                        <p class="desc">Permitir que novos pacientes/psis se registrem.</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="allow_registrations" name="allow_registrations">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>💰 Tabela de Preços (Mensal)</h2>
+            </div>
+            <div class="card-body grid-prices">
+                <div class="input-group">
+                    <label for="price_semente">Plano Semente (R$)</label>
+                    <input type="number" id="price_semente" name="price_semente" step="0.01" placeholder="0.00">
+                </div>
+                <div class="input-group">
+                    <label for="price_luz">Plano Luz (R$)</label>
+                    <input type="number" id="price_luz" name="price_luz" step="0.01" placeholder="0.00">
+                </div>
+                <div class="input-group">
+                    <label for="price_sol">Plano Sol (R$)</label>
+                    <input type="number" id="price_sol" name="price_sol" step="0.01" placeholder="0.00">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>📞 Contato Visível aos Usuários</h2>
+            </div>
+            <div class="card-body">
+                <div class="input-group">
+                    <label for="whatsapp_support">WhatsApp Oficial (apenas números)</label>
+                    <input type="text" id="whatsapp_support" name="whatsapp_support" placeholder="Ex: 5511999999999">
+                </div>
+                <div class="input-group">
+                    <label for="email_support">E-mail de Suporte</label>
+                    <input type="email" id="email_support" name="email_support" placeholder="suporte@jano.com.br">
+                </div>
+            </div>
+        </div>
+
+        <div class="fab-container-static">
+            <button type="submit" class="btn-primario btn-lg" id="btn-salvar-config">
+                💾 Salvar Alterações
+            </button>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,151 @@
+/* admin_chat.css - Visual Padrão Jano */
+
+/* Container Principal */
+.inbox-container {
+    display: flex;
+    height: calc(100vh - 140px); /* Ajusta altura para caber na tela */
+    background-color: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Sidebar (Lista) */
+.inbox-sidebar {
+    width: 320px;
+    border-right: 1px solid #e9ecef;
+    background-color: #fcfcfc;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header-chat {
+    padding: 20px;
+    border-bottom: 1px solid #e9ecef;
+}
+.sidebar-header-chat h3 {
+    margin: 0;
+    color: #1B4332;
+    font-family: 'New Kansas', serif; /* Se tiver a fonte */
+}
+
+.message-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.message-item {
+    padding: 15px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background 0.2s;
+}
+
+.message-item:hover { background-color: #f8f9fa; }
+.message-item.active { background-color: #e8f5e9; border-left: 4px solid #1B4332; }
+
+.avatar-circle {
+    width: 40px; height: 40px;
+    background-color: #1B4332; color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold; flex-shrink: 0;
+}
+.avatar-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+
+.msg-info h4 { margin: 0; font-size: 0.95rem; color: #333; }
+.msg-info p { margin: 3px 0 0 0; font-size: 0.8rem; color: #666; }
+
+/* Área de Chat (Direita) */
+.inbox-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+}
+
+.chat-header {
+    padding: 15px 25px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex; align-items: center; gap: 15px;
+    background: #fff;
+}
+
+.chat-scroller {
+    flex: 1;
+    padding: 25px;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+    display: flex; flex-direction: column; gap: 12px;
+}
+
+/* Balões de Mensagem */
+.msg-bubble {
+    max-width: 70%;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* Minha mensagem (Admin - Direita) */
+.msg-me {
+    align-self: flex-end;
+    background-color: #1B4332;
+    color: #fff;
+    border-bottom-right-radius: 2px;
+}
+
+/* Mensagem dele (Psicólogo - Esquerda) */
+.msg-other {
+    align-self: flex-start;
+    background-color: #fff;
+    border: 1px solid #e9ecef;
+    color: #333;
+    border-bottom-left-radius: 2px;
+}
+
+.msg-time {
+    display: block;
+    font-size: 0.7rem;
+    margin-top: 5px;
+    text-align: right;
+    opacity: 0.8;
+}
+
+/* Input Area */
+.chat-input-area {
+    padding: 20px;
+    border-top: 1px solid #e9ecef;
+    background: #fff;
+}
+.chat-form { display: flex; gap: 10px; }
+.chat-input {
+    flex: 1;
+    padding: 12px 20px;
+    border: 1px solid #ced4da;
+    border-radius: 30px;
+    outline: none;
+    font-family: 'Inter', sans-serif;
+}
+.btn-send {
+    width: 45px; height: 45px;
+    border-radius: 50%;
+    background-color: #1B4332;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s;
+}
+.btn-send:hover { transform: scale(1.1); }

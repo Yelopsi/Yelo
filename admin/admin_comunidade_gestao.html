@@ -1,0 +1,89 @@
+<div id="admin-toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
+
+<div class="kpi-grid" style="display: block;"> 
+    
+    <div class="kpi-card" style="width: 100%; max-width: 800px; margin: 0 auto 30px auto;">
+        <div style="border-bottom: 1px solid #eee; margin-bottom: 20px; padding-bottom: 10px;">
+            <h3 style="margin:0; color:#1B4332;">Banner da Comunidade</h3>
+            <p style="color:#666; font-size:0.9rem;">Configure o destaque principal.</p>
+        </div>
+
+        <form id="form-evento-comunidade">
+            <fieldset id="fieldset-banner" disabled style="border: none; padding: 0; margin: 0;">
+                <div class="form-group">
+                    <label>Título do Evento</label>
+                    <input type="text" id="evt-titulo" placeholder="Ex: Marketing Ético">
+                </div>
+                <div class="form-group">
+                    <label>Subtítulo</label>
+                    <input type="text" id="evt-subtitulo" placeholder="Ex: Como atrair pacientes...">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label>Data e Hora</label>
+                        <input type="text" id="evt-data" placeholder="Ex: 15/12 às 19h">
+                    </div>
+                    <div class="form-group">
+                        <label>Formato</label>
+                        <select id="evt-tipo" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; background-color: #f9f9f9;">
+                            <option value="Online">Online</option>
+                            <option value="Presencial">Presencial</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label>Link de Ação</label>
+                        <input type="text" id="evt-link" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label>Texto do Botão</label>
+                        <input type="text" id="evt-btn-text" placeholder="Ex: Confirmar Presença">
+                    </div>
+                </div>
+
+                <div class="form-group-checkbox" style="margin-top: 15px;">
+                    <input type="checkbox" id="evt-ativo">
+                    <label for="evt-ativo">Exibir Banner</label>
+                </div>
+            </fieldset>
+
+            <div style="text-align: right; margin-top: 25px;">
+                <button type="button" id="btn-toggle-banner" class="btn" style="background-color: #1B4332; color: white; padding: 8px 24px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; width: auto; display: inline-block;">
+                    Editar Banner
+                </button>
+            </div>
+        </form>
+    </div>
+    <div class="kpi-card" style="width: 100%; max-width: 800px; margin: 0 auto;">
+        <div style="border-bottom: 1px solid #eee; margin-bottom: 20px; padding-bottom: 10px;">
+            <h3 style="margin:0; color:#1B4332;">Links dos Recursos</h3>
+            <p style="color:#666; font-size:0.9rem;">Botões inferiores (Intervisão, Biblioteca, Cursos).</p>
+        </div>
+
+        <form id="form-recursos-comunidade">
+            <fieldset id="fieldset-links" disabled style="border: none; padding: 0; margin: 0;">
+                <div class="form-group">
+                    <label>Link Intervisão</label>
+                    <input type="text" id="link-intervisao" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Link Biblioteca</label>
+                    <input type="text" id="link-biblioteca" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Link Cursos</label>
+                    <input type="text" id="link-cursos" placeholder="https://...">
+                </div>
+            </fieldset>
+
+            <div style="text-align: right; margin-top: 20px;">
+                <button type="button" id="btn-toggle-links" class="btn" style="background-color: #1B4332; color: white; padding: 8px 24px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; width: auto; display: inline-block;">
+                    Editar Links
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

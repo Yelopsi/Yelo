@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1B4332">
+    <meta name="apple-mobile-web-app-capable" content="yes"> 
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> 
+    <meta name="apple-mobile-web-app-title" content="Girassol">
+    <title>Girassol</title>
+
+    <link rel="stylesheet" href="/css/01-variables.css">
+    <link rel="stylesheet" href="/css/02-base.css">
+    <link rel="stylesheet" href="/css/03-layout.css">
+    <link rel="stylesheet" href="/css/04-components.css">
+    <link rel="stylesheet" href="/css/05-pages.css">
+    <link rel="stylesheet" href="/css/06-utilities.css">
+    <link rel="icon" href="assets/images/favicon.png?v=2" type="image/png">
+    <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png?v=2">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header>
+        <a href="index.html" class="logo">
+            <img src="assets/logos/logo-branca.png" alt="Logo Yelo" class="logo-branca">
+            <img src="assets/logos/logo-escura.png" alt="Logo Yelo" class="logo-escura">
+        </a>
+    
+        <button class="menu-hamburguer" aria-label="Abrir menu" onclick="toggleMenu()">
+            <span class="barra"></span>
+            <span class="barra"></span>
+            <span class="barra"></span>
+        </button>
+    
+        <div class="container-navegacao">
+            <nav>
+                <ul>
+                    <li><a href="index.html">Início</a></li>
+                    <li><a href="perguntas.html">Para Comunidade</a></li>
+                    <li><a href="profissionais.html">Para Profissionais</a></li>
+                    <li><a href="faq.html">FAQ</a></li>
+                    <li><a href="blog.html">Blog</a></li>
+                </ul>
+            </nav>
+    
+            <div class="botoes-acao">
+                <a href="login.html" class="btn btn-outline">Entrar</a>
+                <a href="registro.html" class="btn btn-solid">Registrar</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero ruido hero-fundo-escuro">
+            <div class="hero-texto">
+                <h1>Você merece ficar bem.</h1>
+                <p>Encontrar a pessoa certa para te acompanhar nessa jornada é o primeiro passo.</p>
+            </div>
+            <a href="questionario.html" class="btn-cta-principal">Começar</a>
+            <div class="wave-divider">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#ffffff" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
+        </section>
+
+        <section class="secao-terapeutas ruido">
+            <div class="secao-conteudo">
+                <div class="texto-terapeutas">
+                    <h2>Terapeutas profissionais e qualificados em quem você pode confiar.</h2>
+                    <p>Tenha acesso à maior rede de terapeutas qualificados e experientes do mundo, que podem te ajudar com uma variedade de questões, incluindo depressão, ansiedade, relacionamentos, luto e muito mais.</p>
+                    <a href="questionario.html" class="btn-verde">Encontre seu terapeuta</a>
+                </div>
+                <!-- Adicionado ID para manipulação via JS -->
+                <div class="imagens-terapeutas" id="vitrine-terapeutas">
+                    <img src="https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg" alt="Foto de terapeuta 1" class="foto-terapeuta foto-1">
+                    <img src="https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg" alt="Foto de terapeuta 2" class="foto-terapeuta foto-2">
+                    <img src="https://images.pexels.com/photos/1043473/pexels-photo-1043473.jpeg" alt="Foto de terapeuta 3" class="foto-terapeuta foto-3">
+                    <img src="https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg" alt="Foto de terapeuta 4" class="foto-terapeuta foto-4">
+                </div>
+            </div>
+            <div class="wave-divider">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#fdfaf6" fill-opacity="1" d="M0,64L48,80C96,96,192,128,288,128C384,128,480,96,576,90.7C672,85,768,107,864,122.7C960,139,1056,149,1152,133.3C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
+        </section>
+
+        <section class="como-funciona ruido">
+            <div class="container">
+                <h2 class="titulo-secao" style="font-size: 3rem; margin-bottom: 10px;">Como a Jano funciona</h2>
+                <p class="subtitulo-secao">Uma jornada simples, transparente e focada no seu bem-estar.</p>
+                
+                <div class="steps-wrapper">
+                    
+                    <div class="step-row">
+                        <div class="step-content">
+                            <span class="step-tag">Passo 01</span>
+                            <h3>Encontre o profissional ideal para você</h3>
+                            <p>Esqueça as listas infinitas. Responda ao nosso questionário inteligente sobre suas necessidades e preferências. Nossa tecnologia fará a curadoria e te apresentará os psicólogos mais compatíveis com o seu perfil.</p>
+                        </div>
+                        <div class="step-image-col">
+                            <div class="step-blob"></div>
+                            <div class="step-img-frame">
+                                <img src="https://images.pexels.com/photos/4098228/pexels-photo-4098228.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Pessoa respondendo questionário">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-row reverse">
+                        <div class="step-content">
+                            <span class="step-tag">Passo 02</span>
+                            <h3>Conheça e conecte-se com segurança</h3>
+                            <p>Veja o perfil detalhado, assista ao vídeo de apresentação e leia avaliações reais. Quando sentir confiança, inicie uma conversa ou agende sua sessão diretamente pela plataforma, sem intermediários.</p>
+                        </div>
+                        <div class="step-image-col">
+                            <div class="step-blob"></div>
+                            <div class="step-img-frame">
+                                <img src="https://images.pexels.com/photos/7653109/pexels-photo-7653109.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Psicólogo em videochamada">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-row">
+                        <div class="step-content">
+                            <span class="step-tag">Passo 03</span>
+                            <h3>Comece sua jornada de transformação</h3>
+                            <p>Realize suas sessões online no conforto da sua casa. Se não se adaptar, nosso sistema de <strong>Troca Facilitada</strong> permite que você encontre outro profissional rapidamente, sem custo adicional.</p>
+                        </div>
+                        <div class="step-image-col">
+                            <div class="step-blob"></div>
+                            <div class="step-img-frame">
+                                <img src="https://images.pexels.com/photos/3772612/pexels-photo-3772612.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Pessoa feliz fazendo terapia">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div style="margin-top: 80px; text-align: center;">
+                    <a href="questionario.html" class="btn-cta-principal">Começar minha jornada agora</a>
+                </div>
+            </div>
+            <div class="wave-divider">
+                <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                    <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z" class="shape-fill" style="fill:#FFFFFF;"></path>
+                </svg>
+            </div>
+        </section>
+
+        <section class="faq-secao ruido">
+            <h2 class="titulo-secao">Perguntas Frequentes</h2>
+            <div class="acordeao-container">
+                
+                <div class="acordeao-item">
+                    <button class="acordeao-titulo">Quem são os terapeutas da Jano?</button>
+                    <div class="acordeao-conteudo">
+                        <p>Apenas aceitamos Psicólogos com registro ativo no CRP (Conselho Regional de Psicologia). Todos passam por um processo de verificação de credenciais para garantir que você seja atendido por profissionais qualificados e éticos.</p>
+                    </div>
+                </div>
+
+                <div class="acordeao-item">
+                    <button class="acordeao-titulo">Como o "match" encontra o ideal para mim?</button>
+                    <div class="acordeao-conteudo">
+                        <p>Diferente de uma lista comum, nosso algoritmo analisa suas respostas sobre o que você está sentindo e suas preferências (como abordagem ou gênero do terapeuta) para conectar você aos 3 profissionais mais compatíveis com o seu momento.</p>
+                    </div>
+                </div>
+
+                <div class="acordeao-item">
+                    <button class="acordeao-titulo">Qual o valor das sessões?</button>
+                    <div class="acordeao-conteudo">
+                        <p>Na Jano, você tem liberdade de escolha. Nossos profissionais definem seus próprios honorários, criando uma variedade de faixas de preço para que você encontre alguém excelente que também caiba no seu orçamento.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <a href="faq.html" class="faq-ver-mais">Ver todas as perguntas frequentes</a>
+            <div class="wave-divider">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#fdfaf6" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
+        </section>
+
+        <section class="aviso-crise ruido">
+            <div class="aviso-conteudo">
+                <div class="aviso-texto">
+                    <p>
+                        Se você está em crise ou qualquer outra pessoa pode estar em perigo, <strong>não</strong> use este site <a href="recursos_crise.html">Estes recursos</a> podem fornecer ajuda imediata.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="wave-divider-footer">
+        <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z" class="shape-fill" style="fill:var(--verde-escuro);"></path>
+        </svg>
+    </div>
+
+    <footer class="rodape-principal">
+        <div class="rodape-container">
+            <div class="rodape-bloco-superior">
+                <nav class="rodape-nav">
+                    <ul>
+                        <li><a href="index.html">Início</a></li>
+                        <li><a href="perguntas.html">Para Comunidade</a></li>
+                        <li><a href="profissionais.html">Para Profissionais</a></li>
+                        <li><a href="faq.html">FAQ</a></li>
+                        <li><a href="blog.html">Blog</a></li>
+                        <li><a href="contato.html">Contato</a></li>
+                        <li>
+                            <a href="https://site.cfp.org.br/wp-content/uploads/2012/07/codigo_etica.pdf" target="_blank" rel="noopener noreferrer">
+                                Código de Ética
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                <div class="rodape-social">
+                    <a href="https://instagram.com/seu_perfil" target="_blank" aria-label="Instagram">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                        </svg>
+                    </a>
+
+                    <a href="https://linkedin.com/company/jano" target="_blank" aria-label="LinkedIn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M4.98 3.5c0 1.381-1.11 2.5-2.48 2.5s-2.48-1.119-2.48-2.5c0-1.38 1.11-2.5 2.48-2.5s2.48 1.12 2.48 2.5zm.02 4.5h-5v16h5v-16zm7.982 0h-4.968v16h4.969v-8.399c0-4.67 6.029-5.052 6.029 0v8.399h4.988v-10.131c0-7.88-8.922-7.593-11.018-3.714v-2.155z"/>
+                        </svg>
+                    </a>
+
+                    <a href="https://open.spotify.com/" target="_blank" aria-label="Spotify">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+            
+            <hr class="rodape-divisor">
+            
+            <div class="rodape-base">
+                <div class="rodape-bloco-rt">
+                    <p><strong>Jano Saúde Mental</strong></p>
+                    <p>Responsável Técnico: Anderson Costa | CRP: 06/190861</p>
+                </div>
+                <div class="rodape-links-legais">
+                    <a href="termos.html">Termos de Uso</a>
+                    <a href="privacidade.html">Privacidade</a>
+                </div>
+                <div class="rodape-copyright">
+                    <p>© 2025 Jano. Todos os direitos reservados.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div id="pwa-install-banner" class="pwa-banner" style="display: none;">
+        <button id="pwa-banner-close" class="pwa-banner-close">&times;</button>
+        <div class="pwa-banner-content">
+            <img src="/assets/images/apple-touch-icon.png" alt="Ícone Girassol" class="pwa-banner-icon">
+            <div>
+                <strong>Instale o Girassol no seu iPhone</strong>
+                <p>Tenha acesso mais rápido. Toque em 
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" width="16px" height="16px" style="display: inline-block; vertical-align: middle; margin-top: -2px;">
+                        <path d="M 24.181641 0 C 23.496094 0.015625 22.847656 0.234375 22.3125 0.625 L 22.28125 0.65625 C 21.78125 1.03125 21.390625 1.515625 21.125 2.0625 L 21.09375 2.125 C 20.828125 2.671875 20.6875 3.296875 20.6875 3.9375 L 20.6875 28.0625 C 20.6875 28.671875 20.828125 29.28125 21.09375 29.84375 L 21.125 29.875 C 21.390625 30.4375 21.78125 30.9375 22.28125 31.3125 L 22.3125 31.34375 C 22.847656 31.734375 23.496094 31.953125 24.181641 31.96875 L 25.818359 31.96875 C 26.503906 31.953125 27.152344 31.734375 27.6875 31.34375 L 27.71875 31.3125 C 28.21875 30.9375 28.609375 30.4375 28.875 29.875 L 28.90625 29.84375 C 29.171875 29.28125 29.3125 28.671875 29.3125 28.0625 L 29.3125 3.9375 C 29.3125 3.296875 29.171875 2.671875 28.90625 2.125 L 28.875 2.0625 C 28.609375 1.515625 28.21875 1.03125 27.71875 0.65625 L 27.6875 0.625 C 27.152344 0.234375 26.503906 0.015625 25.818359 0 Z M 25 3.03125 L 36 14.03125 L 33.15625 16.875 L 27 10.71875 L 27 38 L 23 38 L 23 10.71875 L 16.84375 16.875 L 14 14.03125 Z M 11 36 L 11 47 L 39 47 L 39 36 L 35 36 L 35 43 L 15 43 L 15 36 Z"/>
+                    </svg> 
+                    e "Adicionar à Tela de Início".
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/config.js?v=1.6"></script>
+    <script src="script.js?v=1.6"></script>
+
+    <div vw class="enabled">
+        <div vw-access-button class="active"></div>
+        <div vw-plugin-wrapper>
+            <div class="vw-plugin-top-wrapper"></div>
+        </div>
+    </div>
+    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+    <script>
+        new window.VLibras.Widget('https://vlibras.gov.br/app');
+    </script>
+
+<script>
+    // Contador de Visitas Simples (Jano Analytics)
+    document.addEventListener("DOMContentLoaded", () => {
+        // Evita contar acessos do localhost se preferir (opcional)
+        // if (window.location.hostname === 'localhost') return;
+
+        fetch('http://localhost:3001/api/demand/visit', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ page: 'home' })
+        }).catch(err => console.log('Analytics offline'));
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Psicólogo - Girassol</title>
+    <link rel="stylesheet" href="/css/01-variables.css">
+    <link rel="stylesheet" href="/css/02-base.css">
+    <link rel="stylesheet" href="/css/03-layout.css">
+    <link rel="stylesheet" href="/css/04-components.css">
+    <link rel="stylesheet" href="/css/05-pages.css">
+    <link rel="stylesheet" href="/css/06-utilities.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Montserrat+Alternates:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body class="pagina-questionario">
+
+    <div class="questionario-container">
+        <div class="progress-bar">
+            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+        </div>
+
+        <div class="slides-container">
+            <!-- Slide 1: Boas-vindas -->
+            <div class="slide active" data-slide-id="0">
+                <div class="slide-header">
+                    <h1>Boas-vindas ao Girassol!</h1>
+                    <p class="subtitle">Vamos começar seu cadastro. Leva apenas alguns minutos.</p>
+                </div>
+                <div class="slide-body"></div>
+                <div class="navigation-buttons single-button">
+                    <button class="cta-button" data-action="next">Começar</button>
+                </div>
+            </div>
+
+            <!-- Slide 2: Nome Completo (Obrigatório) -->
+            <div class="slide" data-slide-id="1">
+                <div class="slide-header">
+                    <h1>Qual é o seu nome completo?</h1>
+                </div>
+                <div class="slide-body">
+                    <div class="form-group-questionario">
+                        <input type="text" id="nome" class="text-input" placeholder="Digite seu nome aqui" required>
+                    </div>
+                </div>
+                <div class="navigation-buttons">
+                    <button class="back-button" data-action="prev">Voltar</button>
+                    <button class="cta-button" data-action="next">Avançar</button>
+                </div>
+            </div>
+
+            <!-- Slide 3: E-mail (Obrigatório) -->
+            <div class="slide" data-slide-id="2">
+                <div class="slide-header">
+                    <h1>Qual é o seu melhor e-mail profissional?</h1>
+                </div>
+                <div class="slide-body">
+                    <div class="form-group-questionario">
+                        <input type="email" id="email" class="text-input" placeholder="exemplo@email.com" required>
+                    </div>
+                </div>
+                <div class="navigation-buttons">
+                    <button class="back-button" data-action="prev">Voltar</button>
+                    <button class="cta-button" data-action="next">Avançar</button>
+                </div>
+            </div>
+
+            <!-- Slide 4: Senha (Obrigatório) -->
+            <div class="slide" data-slide-id="3">
+                <div class="slide-header">
+                    <h1>Crie uma senha segura</h1>
+                </div>
+                <div class="slide-body">
+                    <div class="form-group-questionario">
+                        <input type="password" id="senha" class="text-input" placeholder="Mínimo 8 caracteres" required minlength="8">
+                    </div>
+                </div>
+                <div class="navigation-buttons">
+                    <button class="back-button" data-action="prev">Voltar</button>
+                    <button class="cta-button" data-action="next">Avançar</button>
+                </div>
+            </div>
+
+            <!-- Slide 5: Modalidade (Seleção Única - Avanço Automático) -->
+            <div class="slide" data-slide-id="4" data-type="single-choice">
+                <div class="slide-header">
+                    <h1>Como você prefere atender?</h1>
+                </div>
+                <div class="slide-body">
+                    <div class="choices-container">
+                        <button class="choice-button" data-value="online">Apenas Online</button>
+                        <button class="choice-button" data-value="presencial">Apenas Presencial</button>
+                        <button class="choice-button" data-value="hibrido">Híbrido (Online e Presencial)</button>
+                    </div>
+                </div>
+                <div class="navigation-buttons">
+                    <button class="back-button" data-action="prev">Voltar</button>
+                    <!-- O botão de avançar é omitido aqui, pois o avanço é automático -->
+                </div>
+            </div>
+
+            <!-- Slide 6: Modalidade (Seleção Única - Avanço Automático) -->
+            <div class="slide" data-slide-id="5" data-type="single-choice">
+                <div class="slide-header">
+                    <h1>Como você prefere atender?</h1>
+                    <p class="subtitle">Isso nos ajuda a filtrar profissionais pela sua localização ou disponibilidade online.</p>
+                </div>
+                <div class="slide-body">
+                    <div class="choices-container">
+                        <button class="choice-button" data-value="online">Online</button>
+                        <button class="choice-button" data-value="presencial">Presencial</button>
+                        <button class="choice-button" data-value="hibrido">Indiferente (Online ou Presencial)</button>
+                    </div>
+                </div>
+                <div class="navigation-buttons">
+                    <button class="back-button" data-action="prev">Voltar</button>
+                </div>
+            </div>
+
+            <!-- Outros slides podem ser adicionados aqui -->
+
+        </div>
+    </div>
+
+    <script src="../config.js"></script>
+    <script src="cadastro.js"></script>
+</body>
+</html>

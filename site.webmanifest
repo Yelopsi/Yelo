@@ -1,0 +1,21 @@
+{
+  "name": "Girassol - Encontre seu Psicólogo",
+  "short_name": "Girassol",
+  "description": "Conectando cuidado e propósito através de um questionário inteligente.",
+  "start_url": "/projeto-girassol/", 
+  "display": "standalone", 
+  "background_color": "#1B4332", 
+  "theme_color": "#1B4332", 
+  "icons": [
+    {
+      "src": "assets/images/android-chrome-192x192.png", 
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/images/android-chrome-512x512.png", 
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

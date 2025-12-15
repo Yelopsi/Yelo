@@ -1,0 +1,223 @@
+<div class="main-header">
+    <div class="header-content">
+        <h1>Meu Perfil</h1>
+        <p>Gerencie suas informações pessoais e profissionais.</p>
+    </div>
+    <a href="#" id="btn-view-public-profile" class="btn btn-secundario" target="_blank" style="opacity: 0; pointer-events: none; transition: opacity 0.3s;">
+        Ver como Paciente
+    </a>
+</div>
+
+<div class="widget">
+    <h3>Informações do Perfil</h3>
+    <form id="perfil-form">
+        <fieldset id="form-fieldset" disabled>
+            
+            <div class="form-group">
+                <label for="nome">Nome de Exibição (Perfil Público)</label>
+                <input type="text" id="nome" name="nome" required placeholder="Como os pacientes verão seu nome">
+            </div>
+
+            <div class="form-group">
+                <label for="cpf" id="label-documento">CPF / CNPJ *</label>
+                <input type="text" id="cpf" name="cpf" required placeholder="Digite CPF ou CNPJ" inputmode="numeric">
+                <small id="cpf-feedback" style="color: #e63946; display: none; margin-top: 5px;">Documento inválido</small>
+            </div>
+
+            <div class="form-group hidden" id="group-razao-social">
+                <label for="razao_social">Razão Social (Para Notas Fiscais)</label>
+                <input type="text" id="razao_social" name="razao_social" placeholder="Nome da empresa no CNPJ">
+            </div>
+            
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="crp">Número do CRP</label>
+                <input type="text" id="crp" name="crp" required>
+            </div>
+            <div class="form-group">
+                <label for="telefone">Telefone (WhatsApp)</label>
+                <input type="tel" id="telefone" name="telefone" inputmode="numeric" placeholder="(00) 00000-0000">
+            </div>
+
+            <div class="form-group">
+                <label for="cep">CEP (Somente números)</label>
+                <div style="position: relative;">
+                    <input type="text" id="cep" name="cep" placeholder="00000-000" maxlength="9">
+                    <div id="cep-loading" style="display:none; position:absolute; right:10px; top:12px; color:#1B4332; font-size:0.8rem; font-weight:bold;">
+                        Buscando...
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label>Cidade</label>
+                    <input type="text" id="cidade" name="cidade" readonly style="background-color: #e9ecef; cursor: not-allowed;">
+                </div>
+                <div class="form-group">
+                    <label>Estado</label>
+                    <input type="text" id="estado" name="estado" readonly style="background-color: #e9ecef; cursor: not-allowed;">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="slug">Link do Perfil Personalizado</label>
+                <div class="input-prefix-group">
+                    <span class="prefix">projeto-girassol.onrender.com/</span>
+                    <input type="text" id="slug" name="slug" placeholder="seu-nome" pattern="[a-z0-9\-]+" title="Use apenas letras minúsculas, números e hífen">
+                </div>
+                <small style="color: #666; font-size: 0.85rem; margin-top: 5px; display: block;">Este será o endereço do seu perfil público.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="linkedin_url">LinkedIn</label>
+                <div class="input-prefix-group">
+                    <span class="prefix">linkedin.com/in/</span>
+                    <input type="text" id="linkedin_url" name="linkedin_url" placeholder="usuario">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="instagram_url">Instagram</label>
+                <div class="input-prefix-group">
+                    <span class="prefix">instagram.com/</span>
+                    <input type="text" id="instagram_url" name="instagram_url" placeholder="usuario">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="facebook_url">Facebook</label>
+                <div class="input-prefix-group">
+                    <span class="prefix">facebook.com/</span>
+                    <input type="text" id="facebook_url" name="facebook_url" placeholder="usuario">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="tiktok_url">TikTok</label>
+                <div class="input-prefix-group">
+                    <span class="prefix">tiktok.com/@</span>
+                    <input type="text" id="tiktok_url" name="tiktok_url" placeholder="usuario">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="x_url">X (Twitter)</label>
+                <div class="input-prefix-group">
+                    <span class="prefix">x.com/</span>
+                    <input type="text" id="x_url" name="x_url" placeholder="usuario">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="bio">Biografia</label>
+                <textarea id="bio" name="bio" rows="5" placeholder="Conte um pouco sobre sua trajetória e como você trabalha..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="valor_sessao_numero">Valor da Sessão (R$)</label>
+                <input type="number" id="valor_sessao_numero" name="valor_sessao_numero" step="0.01">
+            </div>
+
+            <div class="form-group">
+                <label>Temas de Atuação</label>
+                <div class="multiselect-tag disabled" id="temas_atuacao_multiselect">
+                    <div class="multiselect-display"></div>
+                    <div class="multiselect-options">
+                        <div class="option" data-value="Ansiedade">Ansiedade</div>
+                        <div class="option" data-value="Estresse">Estresse</div>
+                        <div class="option" data-value="Depressão">Depressão</div>
+                        <div class="option" data-value="Relacionamentos">Relacionamentos</div>
+                        <div class="option" data-value="Carreira">Carreira</div>
+                        <div class="option" data-value="Autoestima">Autoestima</div>
+                        <div class="option" data-value="Luto">Luto</div>
+                        <div class="option" data-value="Traumas">Traumas</div>
+                        <div class="option" data-value="TDAH">TDAH</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Abordagens e Técnicas</label>
+                <div class="multiselect-tag disabled" id="abordagens_tecnicas_multiselect" data-single-select="true">
+                    <div class="multiselect-display"></div>
+                    <div class="multiselect-options">
+                        <div class="option" data-value="Psicanálise">Psicanálise</div>
+                        <div class="option" data-value="TCC">TCC</div>
+                        <div class="option" data-value="Humanista">Humanista</div>
+                        <div class="option" data-value="Gestalt-terapia">Gestalt-terapia</div>
+                        <div class="option" data-value="Sistêmica">Sistêmica</div>
+                        <div class="option" data-value="Jungiana">Jungiana</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Gênero de Identidade</label>
+                <div class="multiselect-tag disabled" id="genero_identidade_multiselect" data-single-select="true">
+                    <div class="multiselect-display"></div>
+                    <div class="multiselect-options">
+                        <div class="option" data-value="Feminino">Feminino</div>
+                        <div class="option" data-value="Masculino">Masculino</div>
+                        <div class="option" data-value="Não-binário">Não-binário</div>
+                        <div class="option" data-value="Outro">Outro</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Modalidade de Atendimento</label>
+                <div class="multiselect-tag disabled" id="modalidade_atendimento_multiselect">
+                    <div class="multiselect-display"></div>
+                    <div class="multiselect-options">
+                        <div class="option" data-value="Presencial">Presencial</div>
+                        <div class="option" data-value="Online">Online</div>
+                    </div>
+                </div>
+                <small style="color: #666; font-size: 0.85rem; margin-top: 5px; display: block;">Selecione as duas opções para indicar atendimento Híbrido (Ambos).</small>
+            </div>
+
+            <div class="form-group">
+                <label>Disponibilidade</label>
+                <div class="multiselect-tag disabled" id="disponibilidade_periodo_multiselect">
+                    <div class="multiselect-display"></div>
+                    <div class="multiselect-options">
+                        <div class="option" data-value="Manhã">Manhã</div>
+                        <div class="option" data-value="Tarde">Tarde</div>
+                        <div class="option" data-value="Noite">Noite</div>
+                    </div>
+                </div>
+            </div>
+
+        </fieldset>
+        <div class="form-actions">
+            <button type="button" id="btn-alterar" class="btn btn-principal">Alterar Dados</button>
+            <button type="submit" id="btn-salvar" class="btn btn-principal hidden">Salvar Alterações</button>
+        </div>
+    </form>
+</div>
+
+<div class="widget" style="margin-top: 20px;">
+    <h3>Alterar Senha</h3>
+    <form id="password-form">
+        <div class="form-group">
+            <label for="senha_atual">Senha Atual</label>
+            <input type="password" id="senha_atual" name="senha_atual" required>
+        </div>
+        <div class="form-group">
+            <label for="nova_senha">Nova Senha</label>
+            <input type="password" id="nova_senha" name="nova_senha" required>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primario">Alterar Senha</button>
+        </div>
+    </form>
+</div>
+
+<div class="widget" style="margin-top: 20px;">
+    <h3>Excluir Conta</h3>
+    <p>Esta ação é irreversível e removerá todos os seus dados da plataforma.</p>
+    <a id="btn-excluir-conta" href="psi_excluir_conta.html" class="btn btn-perigo" style="display: inline-block; margin-top: 10px;">Excluir Minha Conta</a>
+</div>

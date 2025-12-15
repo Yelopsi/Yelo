@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jano - Seus Matches</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css?v=2.0">
+    <style>
+        .page-results-header {
+            background-color: var(--verde-escuro);
+            color: white;
+            padding: 60px 20px 100px 20px;
+            text-align: center;
+            border-radius: 0 0 40px 40px;
+            margin-bottom: -50px; /* Sobreposição dos cards */
+        }
+        .match-badge {
+            background-color: var(--cor-girassol);
+            color: var(--verde-escuro);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px 80px 20px;
+        }
+        .match-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+            position: relative;
+            border: 1px solid #eee;
+        }
+        .match-card:hover {
+            transform: translateY(-10px);
+        }
+        /* Faixa de Compatibilidade */
+        .compatibility-score {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            color: var(--verde-escuro);
+            font-size: 0.85rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .score-circle {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #27ae60; /* Verde sucesso */
+        }
+        .pro-photo-cover {
+            height: 180px;
+            width: 100%;
+            object-fit: cover;
+            background-color: #e0e0e0;
+        }
+        .match-card-body {
+            padding: 25px;
+        }
+        .pro-name {
+            font-family: 'New Kansas', serif;
+            font-size: 1.4rem;
+            margin: 0 0 5px 0;
+            color: #333;
+        }
+        .pro-crp {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 15px;
+            display: block;
+        }
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .tag-pill {
+            background-color: #f0f7f4;
+            color: var(--verde-escuro);
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        .price-value {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--verde-escuro);
+        }
+        .price-label {
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body style="background-color: #fcfcfc;">
+
+    <header style="position: relative;">
+        <div class="logo">
+            <h2 style="color: white; margin:0; font-family: 'New Kansas', serif;">Jano</h2>
+        </div>
+        <a href="#" class="btn-outline" style="border-color: white; color: white; padding: 8px 20px; border-radius: 20px; text-decoration: none;">Sair</a>
+    </header>
+
+    <div class="page-results-header">
+        <span class="match-badge">✨ Análise concluída</span>
+        <h1 style="font-family: 'New Kansas', serif; margin: 15px 0 10px 0;">Encontramos 3 perfis ideais para você</h1>
+        <p style="opacity: 0.9; max-width: 600px; margin: 0 auto;">Baseado nas suas respostas sobre ansiedade e preferência por atendimento online, selecionamos estes especialistas com alta compatibilidade.</p>
+    </div>
+
+    <div class="results-grid">
+
+        <div class="match-card">
+            <div class="compatibility-score">
+                <div class="score-circle"></div> 98% Compatível
+            </div>
+            <img src="https://placehold.co/400x300/1B4332/white?text=Dra.+Ana" alt="Foto Dra Ana" class="pro-photo-cover">
+            
+            <div class="match-card-body">
+                <h3 class="pro-name">Dra. Ana Clara</h3>
+                <span class="pro-crp">Psicóloga Clínica • CRP 06/12345</span>
+                
+                <p style="color: #555; font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px;">
+                    Especialista em TCC com foco em ansiedade e burnout. Minha abordagem é acolhedora e prática, focada em resultados.
+                </p>
+
+                <div class="tags-container">
+                    <span class="tag-pill">Ansiedade</span>
+                    <span class="tag-pill">Burnout</span>
+                    <span class="tag-pill">Online</span>
+                </div>
+
+                <div class="price-row">
+                    <div class="price-value">R$ 150 <span class="price-label">/ sessão</span></div>
+                    <button class="btn" style="background-color: var(--verde-escuro); color: white; border-radius: 20px; padding: 8px 20px; font-size: 0.9rem;">Ver Perfil</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="match-card">
+            <div class="compatibility-score">
+                <div class="score-circle" style="background-color: #8bc34a;"></div> 92% Compatível
+            </div>
+            <img src="https://placehold.co/400x300/e67e22/white?text=Dr.+Carlos" alt="Foto Dr Carlos" class="pro-photo-cover">
+            
+            <div class="match-card-body">
+                <h3 class="pro-name">Dr. Carlos Mendes</h3>
+                <span class="pro-crp">Psicanalista • CRP 06/98765</span>
+                
+                <p style="color: #555; font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px;">
+                    Espaço de escuta livre de julgamentos. Trabalho com questões de carreira, autoestima e conflitos familiares.
+                </p>
+
+                <div class="tags-container">
+                    <span class="tag-pill">Carreira</span>
+                    <span class="tag-pill">Autoestima</span>
+                    <span class="tag-pill">Híbrido</span>
+                </div>
+
+                <div class="price-row">
+                    <div class="price-value">R$ 130 <span class="price-label">/ sessão</span></div>
+                    <button class="btn" style="background-color: var(--verde-escuro); color: white; border-radius: 20px; padding: 8px 20px; font-size: 0.9rem;">Ver Perfil</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="match-card">
+            <div class="compatibility-score">
+                <div class="score-circle" style="background-color: #ffc107;"></div> 85% Compatível
+            </div>
+            <img src="https://placehold.co/400x300/8e44ad/white?text=Dra.+Julia" alt="Foto Dra Julia" class="pro-photo-cover">
+            
+            <div class="match-card-body">
+                <h3 class="pro-name">Dra. Julia Santos</h3>
+                <span class="pro-crp">Psicóloga Sistêmica • CRP 06/54321</span>
+                
+                <p style="color: #555; font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px;">
+                    Foco em relacionamentos e terapia de casal. Acredito que entender nossas conexões é a chave para o bem-estar.
+                </p>
+
+                <div class="tags-container">
+                    <span class="tag-pill">Relacionamentos</span>
+                    <span class="tag-pill">LGBTQIA+</span>
+                    <span class="tag-pill">Online</span>
+                </div>
+
+                <div class="price-row">
+                    <div class="price-value">R$ 180 <span class="price-label">/ sessão</span></div>
+                    <button class="btn" style="background-color: var(--verde-escuro); color: white; border-radius: 20px; padding: 8px 20px; font-size: 0.9rem;">Ver Perfil</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,65 @@
+<div class="main-header">
+    <h1>Comunidade Q&A</h1>
+</div>
+
+<div class="qna-container-admin" id="qna-list-container">
+    <div class="loader-wrapper">
+        <div class="loader-spinner"></div>
+    </div>
+</div>
+
+<template id="qna-card-template-psi">
+    <div class="card qna-card-psi">
+        <div class="qna-card-header">
+            <h3 class="qna-question-title">Carregando título...</h3>
+            <span class="qna-question-author">Perguntado por Anônimo</span>
+        </div>
+        <div class="qna-card-body">
+            <p class="qna-question-content">Carregando conteúdo da pergunta...</p>
+        </div>
+        
+        <div class="existing-answers-list">
+            </div>
+
+        <div class="qna-card-actions">
+            <button class="btn btn-principal btn-responder">Responder</button>
+            <span class="badge-respondido hidden">Respondido por você</span>
+        </div>
+    </div>
+</template>
+
+<template id="qna-existing-answer-template">
+    <div class="answer-item">
+        <img src="https://placehold.co/40x40" alt="Foto do Psi" class="answer-psi-photo">
+        <div class="answer-content">
+            <strong><span class="answer-psi-name"></span></strong>
+            <p class="answer-psi-text"></p>
+        </div>
+    </div>
+</template>
+
+
+<div id="qna-answer-modal" class="modal-overlay">
+    <div class="modal-content">
+        <button class="modal-close">&times;</button>
+        <div class="modal-header">
+            <h2 class="modal-title">Responder Pergunta</h2>
+        </div>
+        <form id="qna-answer-form">
+            <div class="modal-body">
+                <p style="font-size: 14px; color: var(--cinza-texto); margin-bottom: 15px;">
+                    Sua resposta será pública e ajudará este usuário e outros na comunidade.
+                </p>
+                <div class="form-group">
+                    <label for="qna-answer-textarea" style="font-weight: 500; font-size: 14px;">Sua Resposta (mín. 50 caracteres):</label>
+                    <textarea id="qna-answer-textarea" minlength="50" required></textarea>
+                    <div id="qna-char-counter" class="char-counter-modal">0/50 caracteres</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secundario modal-cancel">Cancelar</button>
+                <button type="submit" class="btn btn-principal" id="qna-submit-answer" disabled>Enviar Resposta</button>
+            </div>
+        </form>
+    </div>
+</div>

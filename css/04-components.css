@@ -1,0 +1,144 @@
+/* public/css/04-components.css */
+
+/* --- BOTÕES --- */
+.btn {
+    padding: 8px 18px; border-radius: 25px; text-decoration: none;
+    font-weight: bold; font-size: 15px; text-align: center;
+    border: 2px solid transparent; transition: all 0.3s ease; display: inline-block; cursor: pointer; font-family: 'Inter', sans-serif;
+}
+.btn-outline { border-color: white; color: white; }
+.btn-outline:hover { background-color: rgba(255, 255, 255, 0.1); }
+
+.btn-solid { background-color: #ffffff; color: #1B4332; border-color: white; }
+.btn-solid:hover { opacity: 0.9; }
+
+.btn-cta-principal {
+    display: inline-block;
+    background-color: var(--cor-girassol);
+    color: var(--verde-escuro);
+    font-size: 18px; font-weight: bold;
+    padding: 15px 35px; border-radius: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-decoration: none; margin-top: 30px;
+}
+.btn-cta-principal:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); }
+
+.btn-verde {
+    display: inline-block; background-color: #5a8a6f; color: white;
+    padding: 10px 22px; border-radius: 25px; text-decoration: none; font-weight: bold;
+    margin-top: 20px; transition: background-color 0.3s ease;
+}
+.btn-verde:hover { background-color: #4a755e; }
+
+/* --- FORM ELEMENTS --- */
+.form-group { margin-bottom: 20px; text-align: left; position: relative; }
+.form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--cinza-texto); }
+.form-group input {
+    width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px;
+    box-sizing: border-box; font-family: 'Lato', sans-serif; font-size: 15px; padding-right: 40px;
+}
+.password-toggle-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; width: 24px; height: 24px; color: #555; }
+.form-group-checkbox { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+.form-group-password-wrapper { position: relative; }
+.form-group-checkbox input[type="checkbox"] { width: auto; margin: 0; }
+.form-group-checkbox label { font-weight: normal; font-size: 13px; margin: 0; }
+
+/* --- CARDS & PRICING --- */
+.card { background-color: #FFFFFF; padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 25px; }
+
+/* Grid de Preços (Planos) */
+.pricing-grid {
+    display: grid;
+    /* No celular é 1 coluna, no desktop são 3 colunas lado a lado */
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+    gap: 25px;
+    max-width: 1000px; /* Reduzi a largura total para os cards ficarem mais compactos */
+    margin: 40px auto 0 auto;
+    align-items: stretch; /* Faz todos terem a mesma altura */
+}
+.pricing-card {
+    background-color: var(--branco-puro);
+    border: 1px solid #eee;
+    border-radius: 16px;
+    padding: 25px; /* REDUZIDO DE 30px PARA 25px */
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+.pricing-card:hover { transform: translateY(-8px); box-shadow: 0 10px 30px rgba(0,0,0,0.12); }
+.pricing-card-header { text-align: center; border-bottom: 1px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
+.pricing-card-header h3 { font-family: 'New Kansas', serif; font-size: 1.8rem; color: var(--verde-escuro); margin: 0 0 10px 0; }
+.pricing-card-features { list-style: none; padding-left: 0; margin: 0; flex-grow: 1; }
+.pricing-card-features li { padding: 10px 0; display: flex; align-items: center; gap: 10px; font-size: 0.95rem; }
+.pricing-card-features li::before { content: '✓'; font-weight: bold; color: var(--verde-escuro); font-size: 1.2rem; }
+
+/* --- TOASTS --- */
+#toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+.toast {
+    min-width: 300px; padding: 16px 20px; border-radius: 12px; background-color: var(--branco-puro);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 12px;
+    animation: slideInRight 0.3s ease-out forwards; border-left: 5px solid transparent; font-family: 'Inter', sans-serif;
+}
+.toast.success { border-left-color: var(--verde-escuro); }
+.toast.error { border-left-color: #E63946; }
+@keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* --- FORMULÁRIO DE LOGIN (Correções) --- */
+
+/* 1. Botão Entrar (Largura Total) */
+.btn-login {
+    width: 100%; /* Ocupa todo o espaço */
+    padding: 12px;
+    background-color: var(--verde-escuro);
+    color: var(--branco-puro);
+    border: none;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif; /* Fonte mais moderna */
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px; /* Espaço acima */
+    transition: background-color 0.3s ease;
+}
+.btn-login:hover {
+    background-color: #2a624d; /* Verde um pouco mais claro */
+}
+
+/* 2. Correção do Olho da Senha */
+/* O ícone deve ficar DENTRO do input visualmente */
+/* O container do ícone (área clicável) */
+.password-toggle-icon {
+    position: absolute;
+    right: 0px;      /* Distância da borda direita */
+    bottom: -30px;     /* AQUI ESTÁ A CORREÇÃO: Alinha pela base */
+    top: auto;        /* Ignora o topo */
+    right: 10px;       /* Afasta um pouco da borda direita */
+    bottom: -30px;      /* Alinha verticalmente com o texto digitado */
+    top: auto;         
+    width: 30px;       /* Largura fixa para não pular */
+    height: 30px;      /* Altura fixa */
+    cursor: pointer;
+    width: 50px;
+    height: 50px;
+    color: #666;
+    z-index: 2;
+    z-index: 5;
+    
+    /* Centraliza o SVG dentro da área clicável */
+    display: flex;
+    align-items: center;
+    justify-content: center; 
+}
+
+/* Garante que o SVG ocupe o tamanho certo e não estoure */
+.password-toggle-icon svg {
+    width: 20px;
+    height: 20px;
+    display: block; /* Remove comportamentos estranhos de linha */
+}
+/* Ajuste para garantir que o texto não fique embaixo do ícone */
+.form-group-password-wrapper input {
+    padding-right: 45px; 
+}

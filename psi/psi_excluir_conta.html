@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encerrar Conta - Projeto Girassol</title>
+
+    <link rel="stylesheet" href="../style.css?v=2.3">
+    <link rel="stylesheet" href="psi_dashboard.css?v=2.3">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Montserrat:wght@700&display.swap" rel="stylesheet">
+</head>
+<body class="pagina-dashboard">
+
+    <div class="dashboard-container">
+        
+        <aside class="dashboard-sidebar">
+            <div class="sidebar-header"> 
+                <img src="../assets/logos/logo_duplo_branco.png" alt="Logo Girassol" class="sidebar-logo">
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="psi_dashboard.html"><span>← Voltar ao Painel</span></a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="dashboard-main">
+            
+            <div class="main-header" style="background-color: #E63946; margin-bottom: 30px;">
+                <div class="header-content">
+                    <h1 style="color: white; font-family: 'New Kansas', serif;">É uma pena ver você partir, <span id="display-nome-psi"></span></h1>
+                    <p class="subtitulo-header" style="color: rgba(255,255,255,0.9);">Sentiremos sua falta na nossa comunidade. Antes de ir, confira o impacto que você gerou na plataforma.</p>
+                </div>
+            </div>
+
+            <div class="widget">
+                <h3>Sua Jornada no Girassol</h3>
+                <div class="exit-stats-grid">
+                    <div class="exit-stat-card">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-value" id="stat-dias">...</div>
+                        <div class="stat-label">Dias com a gente</div>
+                    </div>
+                    <div class="exit-stat-card">
+                        <div class="stat-icon">👁️</div>
+                        <div class="stat-value" id="stat-views">...</div>
+                        <div class="stat-label">Visualizações de Perfil</div>
+                    </div>
+                    <div class="exit-stat-card">
+                        <div class="stat-icon">💬</div>
+                        <div class="stat-value" id="stat-contatos">...</div>
+                        <div class="stat-label">Contatos Recebidos</div>
+                    </div>
+                    <div class="exit-stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-value" id="stat-avaliacao">5.0</div>
+                        <div class="stat-label">Sua Reputação</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="widget" style="margin-top: 30px;">
+                <h3>Por que você está nos deixando?</h3>
+                <p style="margin-bottom: 20px; color: #666;">Sua opinião é fundamental para melhorarmos.</p>
+                
+                <form id="exit-form">
+                    <div class="form-group">
+                        <label for="motivo-saida">Selecione o principal motivo:</label>
+                        <div class="custom-select-wrapper">
+                            <select id="motivo-saida" name="motivo" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; background: #f9f9f9;">
+                                <option value="" disabled selected>Selecione uma opção...</option>
+                                <option value="custo">Achei o valor da assinatura alto</option>
+                                <option value="pouco_retorno">Recebi poucos contatos de pacientes</option>
+                                <option value="plataforma_dificil">Achei a plataforma difícil de usar</option>
+                                <option value="migracao">Estou migrando para outra plataforma</option>
+                                <option value="pausa">Vou dar uma pausa nos atendimentos</option>
+                                <option value="outro">Outro motivo</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Qual nota você daria para sua experiência geral?</label>
+                        <div class="rating-exit-stars">
+                            <input type="radio" id="star5" name="avaliacao" value="5" /><label for="star5" title="Excelente">★</label>
+                            <input type="radio" id="star4" name="avaliacao" value="4" /><label for="star4" title="Muito Bom">★</label>
+                            <input type="radio" id="star3" name="avaliacao" value="3" /><label for="star3" title="Bom">★</label>
+                            <input type="radio" id="star2" name="avaliacao" value="2" /><label for="star2" title="Ruim">★</label>
+                            <input type="radio" id="star1" name="avaliacao" value="1" /><label for="star1" title="Péssimo">★</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sugestao-saida">O que poderíamos ter feito diferente?</label>
+                        <textarea id="sugestao-saida" name="sugestao" rows="4" class="feedback-textarea" placeholder="Deixe sua sugestão ou crítica aqui..." style="color: #333333;"></textarea>
+                    </div>
+
+                    <div class="form-group" style="margin: 30px 0; background: #fff5f5; padding: 20px; border-radius: 8px; border: 1px solid #feb2b2; box-sizing: border-box; width: 100%;">
+                        <label for="senha-exclusao" style="display:block; margin-bottom:10px; font-weight:bold; color:#c53030;">
+                            Digite sua senha para confirmar a exclusão definitiva:
+                        </label>
+                        <input type="password" id="senha-exclusao" name="senha" required 
+                               style="width: 100%; max-width: 300px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem;" 
+                               placeholder="Sua senha atual">
+                    </div>
+
+                    <div class="form-actions" style="display: flex; justify-content: space-between; align-items: center; margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">
+                        <a href="psi_dashboard.html" class="btn btn-secundario" style="text-decoration: none;">Desisti, quero ficar!</a>
+                        <button type="submit" class="btn btn-perigo-final">Confirmar Exclusão</button>
+                    </div>
+                </form>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="/config.js"></script>
+    <script>
+        // Variável para guardar o estado do plano
+        let userPlanStatus = null; 
+
+        // Helper de Toast
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('girassol_token');
+            if(!token) window.location.href = '../login.html';
+
+            // --- 1. CARREGAR DADOS ---
+            try {
+                // Busca Perfil (Para pegar nome e status do plano)
+                const resProfile = await fetch(`${API_BASE_URL}/api/psychologists/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if(resProfile.ok) {
+                    const profile = await resProfile.json();
+                    
+                    // Salva o plano para usar na lógica de exclusão
+                    userPlanStatus = profile.plano; // Ex: 'ESSENTIAL', 'CLINICAL' ou null
+
+                    // Formatação do Nome
+                    if(profile.nome) {
+                        const nomes = profile.nome.split(' ');
+                        const primeiroNome = nomes[0].charAt(0).toUpperCase() + nomes[0].slice(1).toLowerCase();
+                        document.getElementById('display-nome-psi').textContent = primeiroNome + '!';
+                    }
+                }
+                
+                // Busca Stats (Mantido igual)
+                const resStats = await fetch(`${API_BASE_URL}/api/psychologists/me/stats`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if(resStats.ok) {
+                    const stats = await resStats.json();
+                    document.getElementById('stat-dias').textContent = stats.daysActive || '--';
+                    document.getElementById('stat-views').textContent = stats.profileViews || '--';
+                    document.getElementById('stat-contatos').textContent = stats.contactsReceived || '--';
+                }
+
+            } catch(e) {
+                console.error("Erro ao carregar dados:", e);
+            }
+
+            // --- 2. LÓGICA DO FORMULÁRIO ---
+            const form = document.getElementById('exit-form');
+            const modal = document.getElementById('modal-decisao-saida');
+
+            form.onsubmit = async (e) => {
+                e.preventDefault();
+
+                // Validação preliminar da senha (apenas se preenchido)
+                const senha = document.getElementById('senha-exclusao').value;
+                if(!senha) {
+                    showToast('Por favor, digite sua senha.', 'error');
+                    return;
+                }
+
+                // LÓGICA DE DECISÃO:
+                // Se o usuário tem plano ativo, mostramos o Modal.
+                // Se não tem (plano === null), excluímos direto.
+                if (userPlanStatus) {
+                    modal.style.display = 'flex'; // Abre o modal
+                } else {
+                    // Sem plano? Exclui direto (Fluxo B)
+                    executarExclusaoDefinitiva(token);
+                }
+            };
+
+            // --- AÇÕES DO MODAL ---
+            
+            // Botão Voltar (Fecha modal)
+            document.getElementById('btn-cancelar-modal').onclick = () => {
+                modal.style.display = 'none';
+            };
+
+            // OPÇÃO 1: Cancelar Apenas Renovação (Backend: cancel-subscription)
+            document.getElementById('btn-opt-cancelar-renovacao').onclick = async () => {
+                const btn = document.getElementById('btn-opt-cancelar-renovacao');
+                btn.style.opacity = '0.5';
+                btn.style.pointerEvents = 'none';
+                showToast('Cancelando renovação...', 'info');
+
+                try {
+                    const res = await fetch(`${API_BASE_URL}/api/psychologists/me/cancel-subscription`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if(res.ok) {
+                        showToast('Renovação cancelada! Seu acesso continua até o fim do período.', 'success');
+                        setTimeout(() => {
+                            window.location.href = 'psi_dashboard.html'; // Volta para o dashboard
+                        }, 2500);
+                    } else {
+                        throw new Error('Erro ao cancelar renovação.');
+                    }
+                } catch (err) {
+                    showToast('Erro ao processar. Tente novamente.', 'error');
+                    btn.style.opacity = '1';
+                    btn.style.pointerEvents = 'auto';
+                }
+            };
+
+            // OPÇÃO 2: Excluir Tudo (Backend: DELETE /me)
+            document.getElementById('btn-opt-excluir-tudo').onclick = () => {
+                executarExclusaoDefinitiva(token);
+            };
+        });
+
+        // Função Isolada para Excluir (Usada nos dois fluxos)
+        async function executarExclusaoDefinitiva(token) {
+            const btnSubmitForm = document.querySelector('.btn-perigo-final');
+            const originalText = btnSubmitForm.textContent;
+            
+            // Feedback visual no botão principal do form (atrás do modal se estiver aberto)
+            btnSubmitForm.disabled = true;
+            btnSubmitForm.textContent = "Excluindo...";
+            
+            const senha = document.getElementById('senha-exclusao').value;
+            const motivo = document.getElementById('motivo-saida').value;
+            const sugestao = document.getElementById('sugestao-saida').value;
+            
+            // Captura avaliação (radio buttons)
+            const avaliacaoEl = document.querySelector('input[name="avaliacao"]:checked');
+            const avaliacao = avaliacaoEl ? avaliacaoEl.value : null;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/psychologists/me`, {
+                    method: 'DELETE',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ senha, motivo, sugestao, avaliacao })
+                });
+
+                if (response.ok) {
+                    // Esconde modal se estiver aberto
+                    document.getElementById('modal-decisao-saida').style.display = 'none';
+                    
+                    showToast('Conta e assinatura encerradas. Sentiremos sua falta.', 'success');
+                    localStorage.removeItem('girassol_token');
+                    setTimeout(() => { window.location.href = '../index.html'; }, 3000);
+                } else {
+                    const err = await response.json();
+                    showToast('Erro: ' + (err.error || 'Senha incorreta'), 'error');
+                    btnSubmitForm.disabled = false;
+                    btnSubmitForm.textContent = originalText;
+                    document.getElementById('modal-decisao-saida').style.display = 'none';
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('Erro de conexão.', 'error');
+                btnSubmitForm.disabled = false;
+                btnSubmitForm.textContent = originalText;
+            }
+        }
+    </script>
+
+<div id="modal-decisao-saida" class="custom-modal-overlay" style="display: none;">
+    <div class="custom-modal-box" style="text-align: left;">
+        <div style="background: #FFF3CD; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #FFEEBA;">
+            <h3 style="color: #856404; margin: 0 0 10px 0; font-family: 'New Kansas', serif;">⚠️ Você possui uma assinatura ativa</h3>
+            <p style="color: #856404; font-size: 0.9rem; margin: 0;">Identificamos que seu plano ainda está válido. Como deseja proceder?</p>
+        </div>
+
+        <div class="option-card" id="btn-opt-cancelar-renovacao" style="border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;">
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <div style="background: #E0F2F1; color: #1B4332; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">1</div>
+                <div>
+                    <h4 style="margin: 0; color: #1B4332;">Cancelar Renovação e Manter Acesso</h4>
+                    <p style="margin: 5px 0 0 0; font-size: 0.8rem; color: #666;">Você não será cobrado novamente, mas continua usando o sistema até o fim do período já pago. Seu perfil continua no ar.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="option-card" id="btn-opt-excluir-tudo" style="border: 1px solid #fee2e2; padding: 15px; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <div style="background: #fee2e2; color: #c53030; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">2</div>
+                <div>
+                    <h4 style="margin: 0; color: #c53030;">Excluir Conta e Assinatura Agora</h4>
+                    <p style="margin: 5px 0 0 0; font-size: 0.8rem; color: #666;">Seu perfil sai do ar imediatamente. A assinatura é cancelada e você perde o acesso agora. Nenhuma cobrança futura será feita.</p>
+                </div>
+            </div>
+        </div>
+
+        <button id="btn-cancelar-modal" style="margin-top: 20px; width: 100%; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">Voltar</button>
+    </div>
+</div>
+
+<style>
+    /* Efeito Hover nas opções */
+    .option-card:hover {
+        background-color: #f9f9f9;
+        border-color: #bbb;
+    }
+    #btn-opt-excluir-tudo:hover {
+        background-color: #fff5f5;
+        border-color: #fc8181;
+    }
+</style>
+</body>
+</html>

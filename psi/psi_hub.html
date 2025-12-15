@@ -1,0 +1,104 @@
+<div id="admin-toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
+
+<div class="main-header">
+    <div class="header-content">
+        <h1>Comunidade Jano</h1>
+        <p>Evolução contínua, workshops e networking.</p>
+    </div>
+</div>
+
+<div id="hub-content-to-lock">
+    
+<div class="card" style="
+    position: relative;
+    background: radial-gradient(circle at top left, #2D6A4F 0%, #1B4332 60%, #0d2e21 100%);
+    color: white;
+    border: none;
+    margin-bottom: 40px;
+    padding: 40px; /* Mais espaço interno */
+    overflow: hidden; /* Para cortar os elementos decorativos que vazarem */
+    box-shadow: 0 15px 30px -10px rgba(27, 67, 50, 0.5); /* Sombra mais difusa e elegante */;
+    border-radius: 24px; /* <--- ADICIONE ISSO AQUI */
+">
+    <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
+    <div style="position: absolute; bottom: -80px; left: 10%; width: 150px; height: 150px; background: rgba(255,255,255,0.03); border-radius: 50%;"></div>
+
+    <div style="position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 30px;">
+        <div style="flex: 1 1 300px; /* Garante que não fique muito estreito em telas médias */">
+            <span style="
+                background: #FFEE8C; color: #1B4332; 
+                padding: 6px 14px; border-radius: 20px; 
+                font-size: 0.7rem; font-weight: 800; 
+                text-transform: uppercase; letter-spacing: 1px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            ">Evento do Mês</span>
+            
+            <h2 style="
+                color: white; margin-top: 20px; 
+                font-family: 'New Kansas', serif; 
+                font-size: 2.2rem; /* Maior e mais impactante */
+                line-height: 1.1;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            ">Marketing Ético na Clínica</h2>
+            
+            <p style="
+                color: rgba(255,255,255,0.9); 
+                margin-top: 15px; margin-bottom: 0; 
+                font-size: 1.05rem; max-width: 450px;
+            ">Como atrair pacientes particulares respeitando o código de ética e construindo autoridade.</p>
+        </div>
+        
+        <div style="text-align: right; flex: 0 0 auto;">
+            <div style="
+                font-size: 1rem; margin-bottom: 15px; 
+                display: flex; align-items: center; justify-content: flex-end; gap: 8px;
+                font-weight: 600; background: rgba(0,0,0,0.2); padding: 8px 15px; border-radius: 8px;
+            ">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                15/12 às 19h • Online
+            </div>
+            <button class="btn" style="
+                background: #FFEE8C; /* Mudança: Botão Amarelo chama mais atenção no fundo verde */
+                color: #1B4332; border: none; 
+                font-weight: 800; font-size: 0.95rem;
+                padding: 12px 28px;
+                box-shadow: 0 4px 15px rgba(255, 238, 140, 0.3); /* Glow amarelo */
+            ">Confirmar Presença</button>
+        </div>
+    </div>
+</div>
+
+    <div class="pricing-grid" style="margin-top: 0;">
+        
+        <div class="card" style="text-align: center; padding: 30px; display: flex; flex-direction: column; align-items: center;">
+            <div style="font-size: 2.5rem; margin-bottom: 15px;">🤝</div>
+            <h3 style="margin: 0; color: #1B4332;">Intervisão</h3>
+            <p style="font-size: 0.9rem; color: #666; margin: 10px 0 20px 0;">Encontre parceiros clínicos para troca de casos.</p>
+            
+            <a id="btn-link-intervisao" href="#" target="_blank" class="btn btn-secundario" style="width: auto; padding: 8px 24px; text-decoration: none; display: inline-block;">
+                Acessar Grupo
+            </a>
+        </div>
+
+        <div class="card" style="text-align: center; padding: 30px; display: flex; flex-direction: column; align-items: center;">
+            <div style="font-size: 2.5rem; margin-bottom: 15px;">📚</div>
+            <h3 style="margin: 0; color: #1B4332;">Biblioteca</h3>
+            <p style="font-size: 0.9rem; color: #666; margin: 10px 0 20px 0;">Modelos de contratos, prontuários e recibos.</p>
+            
+            <a id="btn-link-biblioteca" href="#" target="_blank" class="btn btn-secundario" style="width: auto; padding: 8px 24px; text-decoration: none; display: inline-block;">
+                Baixar Arquivos
+            </a>
+        </div>
+
+        <div class="card" style="text-align: center; padding: 30px; display: flex; flex-direction: column; align-items: center;">
+            <div style="font-size: 2.5rem; margin-bottom: 15px;">🎓</div>
+            <h3 style="margin: 0; color: #1B4332;">Cursos Rápidos</h3>
+            <p style="font-size: 0.9rem; color: #666; margin: 10px 0 20px 0;">Aulas gravadas sobre gestão de consultório.</p>
+            
+            <a id="btn-link-cursos" href="#" target="_blank" class="btn btn-secundario" style="width: auto; padding: 8px 24px; text-decoration: none; display: inline-block;">
+                Assistir Aulas
+            </a>
+        </div>
+
+    </div>
+</div>

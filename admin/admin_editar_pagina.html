@@ -1,0 +1,28 @@
+<!-- admin/admin_editar_pagina.html -->
+<div class="widget">
+    <h3 id="editor-page-title">Editando Página: ...</h3>
+    <p class="subtitulo-secao">Use o editor abaixo para modificar o conteúdo da página. As alterações serão salvas automaticamente.</p>
+
+    <div class="editor-container">
+        <div class="editor-toolbar">
+            <button class="editor-btn" data-command="bold" title="Negrito"><i class="fas fa-bold"></i></button>
+            <button class="editor-btn" data-command="italic" title="Itálico"><i class="fas fa-italic"></i></button>
+            <button class="editor-btn" data-command="underline" title="Sublinhado"><i class="fas fa-underline"></i></button>
+            <button class="editor-btn" data-command="insertUnorderedList" title="Lista não ordenada"><i class="fas fa-list-ul"></i></button>
+            <button class="editor-btn" data-command="insertOrderedList" title="Lista ordenada"><i class="fas fa-list-ol"></i></button>
+            <button class="editor-btn" data-command="createLink" title="Inserir Link"><i class="fas fa-link"></i></button>
+            <button class="editor-btn" data-command="unlink" title="Remover Link"><i class="fas fa-unlink"></i></button>
+        </div>
+        <div 
+            id="rich-text-editor" 
+            class="rich-text-editor" 
+            contenteditable="true"
+            aria-label="Editor de conteúdo da página"
+        ></div>
+    </div>
+
+    <div class="form-section-acoes" style="margin-top: 20px;">
+        <button id="save-content-btn" class="btn btn-principal">Salvar Conteúdo</button>
+        <a href="#" data-page-link="admin_gestao_conteudo.html" class="btn-tabela">Voltar para Gestão de Conteúdo</a>
+    </div>
+</div>

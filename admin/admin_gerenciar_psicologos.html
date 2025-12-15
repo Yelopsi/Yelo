@@ -1,0 +1,59 @@
+<section class="filtros-container">
+    <input type="text" class="campo-busca" placeholder="Buscar por nome, e-mail ou CRP...">
+    
+    <select id="filtro-status" class="filtro-select">
+        <option value="">Filtrar por Status</option>
+        <option value="active">Ativo</option>
+        <option value="pending">Pendente</option>
+        <option value="inactive">Inativo</option>
+    </select>
+
+    <select id="filtro-plano" class="filtro-select">
+        <option value="">Filtrar por Plano</option>
+        <option value="Semente">Semente</option>
+        <option value="Luz">Luz</option>
+        <option value="Sol">Sol</option>
+    </select>
+
+    <button id="btn-add-psi" class="btn-primario">Adicionar Psicólogo</button>
+</section>
+
+<section class="tabela-container">
+    <h3>Gerenciamento de Psicólogos</h3>
+    <p class="subtitulo-secao">Visualize, filtre e gerencie todos os profissionais da plataforma.</p>
+    
+    <div class="tabela-wrapper">
+        <table class="tabela-gerenciamento">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>E-mail</th>
+                    <th>CRP</th>
+                    <th>Plano</th>
+                    <th>Cliques (Usados/Limite)</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="psychologists-table-body">
+                <!-- Linhas serão inseridas aqui pelo JavaScript -->
+                <tr>
+                    <td colspan="7" class="loading-row">Carregando psicólogos...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Template para a linha da tabela de psicólogos -->
+<template id="psychologist-row-template">
+    <tr>
+        <td data-label="Nome"></td>
+        <td data-label="E-mail"></td>
+        <td data-label="CRP"></td>
+        <td data-label="Plano"></td>
+        <td data-label="Cliques"></td>
+        <td data-label="Status"><span class="status"></span></td>
+        <td data-label="Ações"></td>
+    </tr>
+</template>

@@ -1,0 +1,28 @@
+<header class="main-header">
+    <div>
+        <h1>Caixa de Entrada</h1>
+        <p class="subtitulo-header">Gerencie seus contatos e mensagens de pacientes.</p>
+    </div>
+</header>
+
+<div class="inbox-container">
+    <aside class="inbox-sidebar">
+        <div class="sidebar-search">
+            <input type="text" placeholder="Buscar mensagem..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+        </div>
+        <ul class="message-list" id="inbox-message-list">
+            <li style="padding:20px; text-align:center; color:#999; font-size:0.9rem;">
+                Carregando conversas...
+            </li>
+        </ul>
+    </aside>
+
+    <section class="inbox-content" id="inbox-message-content">
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:#999; text-align:center;">
+            <svg width="60" height="60" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="opacity:0.2; margin-bottom:15px;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+            </svg>
+            <p>Selecione uma mensagem à esquerda para ler.</p>
+        </div>
+    </section>
+</div>
