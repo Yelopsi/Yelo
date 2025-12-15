@@ -30,6 +30,11 @@ const seedTestData = require('./controllers/seed_test_data');
 
 const app = express();
 
+// --- ADICIONE ISTO ---
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, '../views'));
+// ---------------------
+
 console.log('[DEPLOY_SYNC] Versão Final Prioritária - v3.1');
 const server = http.createServer(app);
 
@@ -133,14 +138,21 @@ app.get('/api/admin/exit-surveys', async (req, res) => {
 // =============================================================
 app.use(express.static(path.join(__dirname, '..')));
 
+// NOVA ROTA PRINCIPAL (Renderiza o EJS com Header/Footer unificados)
+app.get('/', (req, res) => {
+    res.render('index');
+});
+
+// Mantém a lógica de perfil (não remova isso se ainda estiver usando)
 app.get('/:slug', (req, res, next) => {
-    const reserved = ['api', 'assets', 'css', 'js', 'patient', 'psi', 'fix-db'];
+    const reserved = ['api', 'assets', 'css', 'js', 'patient', 'psi', 'fix-db', 'uploads'];
     if (reserved.some(p => req.params.slug.startsWith(p)) || req.params.slug.includes('.')) return next();
     res.sendFile(path.join(__dirname, '..', 'perfil_psicologo.html'));
 });
 
+// Fallback para qualquer outra coisa (envia para a home nova)
 app.get(/(.*)/, (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'index.html'));
+  res.render('index');
 });
 
 // Inicialização
