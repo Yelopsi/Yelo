@@ -147,14 +147,26 @@ app.get('/', (req, res) => {
 // Se não for a Home, ele procura CSS, JS ou imagens na pasta raiz.
 app.use(express.static(path.join(__dirname, '..')));
 
-// 3º: Rota Inteligente para outras páginas (Perguntas, Login, etc)
+// ATUALIZAÇÃO PARA DEBUG (MOSTRAR ERRO NA TELA)
 app.get('/:pagina', (req, res, next) => {
     const pagina = req.params.pagina.replace('.html', '');
+    
+    // Proteção de arquivos reservados
     const reservado = ['api', 'assets', 'css', 'js', 'uploads', 'favicon.ico'];
     if (reservado.some(p => pagina.startsWith(p))) return next();
 
+    // Tenta renderizar
     res.render(pagina, (err, html) => {
-        if (err) return next();
+        if (err) {
+            // --- AQUI ESTÁ A MUDANÇA ---
+            console.error(`Erro ao abrir ${pagina}:`, err); // Mostra no terminal (Logs da Render)
+            return res.status(500).send(`
+                <h1>ERRO DETALHADO (Debug)</h1>
+                <p>O servidor tentou abrir o arquivo: <strong>views/${pagina}.ejs</strong></p>
+                <p>O erro foi: <strong>${err.message}</strong></p>
+                <pre style="background:#eee; padding:10px;">${err.stack}</pre>
+            `);
+        }
         res.send(html);
     });
 });
