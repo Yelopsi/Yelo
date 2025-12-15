@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title>Yelo - Bem-vindo</title>
+    <%- include('partials/head') %>
+</head>
+<body>
+
+    <%- include('partials/header') %>
+
+    <main>
+        <section class="hero ruido hero-fundo-escuro">
+            <div class="hero-texto">
+                <h1>Você merece ficar bem.</h1>
+                <p>Encontrar a pessoa certa para te acompanhar nessa jornada é o primeiro passo.</p>
+            </div>
+            <a href="/questionario.html" class="btn-cta-principal">Começar</a>
+            <div class="wave-divider">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#ffffff" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
+        </section>
+
+        <section class="secao-terapeutas ruido">
+            <div class="secao-conteudo">
+                <div class="texto-terapeutas">
+                    <h2>Terapeutas profissionais e qualificados em quem você pode confiar.</h2>
+                    <p>Tenha acesso à maior rede de terapeutas qualificados e experientes do mundo, que podem te ajudar com uma variedade de questões, incluindo depressão, ansiedade, relacionamentos, luto e muito mais.</p>
+                    <a href="/questionario.html" class="btn-verde">Encontre seu terapeuta</a>
+                </div>
+                <div class="imagens-terapeutas" id="vitrine-terapeutas">
+                    <img src="https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg" alt="Foto de terapeuta 1" class="foto-terapeuta foto-1">
+                    <img src="https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg" alt="Foto de terapeuta 2" class="foto-terapeuta foto-2">
+                    <img src="https://images.pexels.com/photos/1043473/pexels-photo-1043473.jpeg" alt="Foto de terapeuta 3" class="foto-terapeuta foto-3">
+                    <img src="https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg" alt="Foto de terapeuta 4" class="foto-terapeuta foto-4">
+                </div>
+            </div>
+            <div class="wave-divider">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#fdfaf6" fill-opacity="1" d="M0,64L48,80C96,96,192,128,288,128C384,128,480,96,576,90.7C672,85,768,107,864,122.7C960,139,1056,149,1152,133.3C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
+        </section>
+
+        <section class="como-funciona ruido">
+            <div class="container">
+                <h2 class="titulo-secao" style="font-size: 3rem; margin-bottom: 10px;">Como a Yelo funciona</h2>
+                <p class="subtitulo-secao">Uma jornada simples, transparente e focada no seu bem-estar.</p>
+                <div class="steps-wrapper">
+                    <div class="step-row">
+                        <div class="step-content">
+                            <span class="step-tag">Passo 01</span>
+                            <h3>Encontre o profissional ideal para você</h3>
+                            <p>Esqueça as listas infinitas. Responda ao nosso questionário inteligente sobre suas necessidades e preferências. Nossa tecnologia fará a curadoria e te apresentará os psicólogos mais compatíveis com o seu perfil.</p>
+                        </div>
+                        <div class="step-image-col">
+                            <div class="step-blob"></div>
+                            <div class="step-img-frame">
+                                <img src="https://images.pexels.com/photos/4098228/pexels-photo-4098228.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Pessoa respondendo questionário">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-row reverse">
+                        <div class="step-content">
+                            <span class="step-tag">Passo 02</span>
+                            <h3>Conheça e conecte-se com segurança</h3>
+                            <p>Veja o perfil detalhado, assista ao vídeo de apresentação e leia avaliações reais. Quando sentir confiança, inicie uma conversa ou agende sua sessão diretamente pela plataforma, sem intermediários.</p>
+                        </div>
+                        <div class="step-image-col">
+                            <div class="step-blob"></div>
+                            <div class="step-img-frame">
+                                <img src="https://images.pexels.com/photos/7653109/pexels-photo-7653109.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Psicólogo em videochamada">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-row">
+                        <div class="step-content">
+                            <span class="step-tag">Passo 03</span>
+                            <h3>Comece sua jornada de transformação</h3>
+                            <p>Realize suas sessões online no conforto da sua casa. Se não se adaptar, nosso sistema de <strong>Troca Facilitada</strong> permite que você encontre outro profissional rapidamente, sem custo adicional.</p>
+                        </div>
+                        <div class="step-image-col">
+                            <div class="step-blob"></div>
+                            <div class="step-img-frame">
+                                <img src="https://images.pexels.com/photos/3772612/pexels-photo-3772612.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Pessoa feliz fazendo terapia">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 80px; text-align: center;">
+                    <a href="/questionario.html" class="btn-cta-principal">Começar minha jornada agora</a>
+                </div>
+            </div>
+            <div class="wave-divider">
+                <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                    <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z" class="shape-fill" style="fill:#FFFFFF;"></path>
+                </svg>
+            </div>
+        </section>
+
+        <section class="faq-secao ruido">
+            <h2 class="titulo-secao">Perguntas Frequentes</h2>
+            <div class="acordeao-container">
+                <div class="acordeao-item">
+                    <button class="acordeao-titulo">Quem são os terapeutas da Yelo?</button>
+                    <div class="acordeao-conteudo">
+                        <p>Apenas aceitamos Psicólogos com registro ativo no CRP (Conselho Regional de Psicologia). Todos passam por um processo de verificação de credenciais para garantir que você seja atendido por profissionais qualificados e éticos.</p>
+                    </div>
+                </div>
+                <div class="acordeao-item">
+                    <button class="acordeao-titulo">Como o "match" encontra o ideal para mim?</button>
+                    <div class="acordeao-conteudo">
+                        <p>Diferente de uma lista comum, nosso algoritmo analisa suas respostas sobre o que você está sentindo e suas preferências (como abordagem ou gênero do terapeuta) para conectar você aos 3 profissionais mais compatíveis com o seu momento.</p>
+                    </div>
+                </div>
+                <div class="acordeao-item">
+                    <button class="acordeao-titulo">Qual o valor das sessões?</button>
+                    <div class="acordeao-conteudo">
+                        <p>Na Yelo, você tem liberdade de escolha. Nossos profissionais definem seus próprios honorários, criando uma variedade de faixas de preço para que você encontre alguém excelente que também caiba no seu orçamento.</p>
+                    </div>
+                </div>
+            </div>
+            <a href="/faq.html" class="faq-ver-mais">Ver todas as perguntas frequentes</a>
+            <div class="wave-divider">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#fdfaf6" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
+        </section>
+
+        <section class="aviso-crise ruido">
+            <div class="aviso-conteudo">
+                <div class="aviso-texto">
+                    <p>
+                        Se você está em crise ou qualquer outra pessoa pode estar em perigo, <strong>não</strong> use este site. <a href="/recursos_crise.html">Estes recursos</a> podem fornecer ajuda imediata.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <%- include('partials/footer') %>
+</body>
+</html>
