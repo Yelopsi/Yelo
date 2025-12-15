@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <title>Cadastro de Psicólogo - Yelo</title>
+    <%- include('partials/head') %>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Montserrat+Alternates:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body class="pagina-questionario">
+
+    <div class="questionario-container">
+        <div class="progress-bar">
+            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+        </div>
+
+        <div class="slides-container">
+            <div class="slide active" data-slide-id="0">
+                <div class="slide-header">
+                    <h1>Boas-vindas ao Yelo!</h1>
+                    <p class="subtitle">Vamos começar seu cadastro. Leva apenas alguns minutos.</p>
+                </div>
+                <div class="slide-body"></div>
+                <div class="navigation-buttons single-button">
+                    <button class="cta-button" data-action="next">Começar</button>
+                </div>
+            </div>
+
+            <div class="slide" data-slide-id="1">
+                <div class="slide-header">
+                    <h1>Qual é o seu nome completo?</h1>
+                </div>
+                <div class="slide-body">
+                    <div class="form-group-questionario">
+                        <input type="text" id="nome" class="text-input" placeholder="Digite seu nome aqui" required>
+                    </div>
+                </div>
+                <div class="navigation-buttons">
+                    <button class="back-button" data-action="prev">Voltar</button>
+                    <button class="cta-button" data-action="next">Avançar</button>
+                </div>
+            </div>
+
+            <div class="slide" data-slide-id="2">
+                <div class="slide-header"><h1>Qual é o seu melhor e-mail profissional?</h1></div>
+                <div class="slide-body"><div class="form-group-questionario"><input type="email" id="email" class="text-input" placeholder="exemplo@email.com" required></div></div>
+                <div class="navigation-buttons"><button class="back-button" data-action="prev">Voltar</button><button class="cta-button" data-action="next">Avançar</button></div>
+            </div>
+            
+             <div class="slide" data-slide-id="3">
+                <div class="slide-header"><h1>Crie uma senha segura</h1></div>
+                <div class="slide-body"><div class="form-group-questionario"><input type="password" id="senha" class="text-input" placeholder="Mínimo 8 caracteres" required minlength="8"></div></div>
+                <div class="navigation-buttons"><button class="back-button" data-action="prev">Voltar</button><button class="cta-button" data-action="next">Avançar</button></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/config.js"></script>
+    <script src="/js/cadastro.js"></script>
+</body>
+</html>

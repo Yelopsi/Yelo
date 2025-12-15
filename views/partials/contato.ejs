@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title>Fale Conosco - Yelo</title>
+    <%- include('partials/head') %>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <%- include('partials/header') %>
+
+    <main style="padding-top: 120px; padding-bottom: 80px;">
+        <div class="container">
+            
+            <div class="titulo-secao" style="margin-bottom: 60px;">
+                <h1>Fale Conosco</h1>
+                <p class="subtitulo-secao">Tem alguma dúvida, sugestão ou feedback? Adoraríamos ouvir você.</p>
+            </div>
+
+            <div class="contato-container">
+                <div class="info-contato">
+                    <h3>Canais de Atendimento</h3>
+                    <p>Estamos aqui para ajudar. Para dúvidas gerais, parcerias ou suporte técnico, utilize um dos canais abaixo.</p>
+                    <ul>
+                        <li>
+                            <div style="font-size: 1.5rem;">✉️</div>
+                            <div>
+                                <strong>Email:</strong>
+                                <a href="mailto:contato@Yelo.com.br">contato@Yelo.com.br</a>
+                            </div>
+                        </li>
+                        <li>
+                            <div style="font-size: 1.5rem;">⏰</div>
+                            <div>
+                                <strong>Horário de Atendimento:</strong>
+                                Segunda a Sexta, das 9h às 18h.
+                            </div>
+                        </li>
+                        <li>
+                            <div style="font-size: 1.5rem;">📍</div>
+                            <div>
+                                <strong>Localização:</strong>
+                                Atendemos 100% online em todo o Brasil.
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <form class="form-contato">
+                    <div class="form-group">
+                        <label for="nome">Seu Nome</label>
+                        <input type="text" id="nome" name="nome" placeholder="Como gostaria de ser chamado?" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email-contato">Seu E-mail</label>
+                        <input type="email" id="email-contato" name="email-contato" placeholder="exemplo@email.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="assunto">Assunto</label>
+                        <select id="assunto" name="assunto">
+                            <option>Dúvida Geral</option>
+                            <option>Sou Paciente</option>
+                            <option>Sou Profissional</option>
+                            <option>Imprensa / Parcerias</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="mensagem">Sua Mensagem</label>
+                        <textarea id="mensagem" name="mensagem" rows="5" placeholder="Escreva sua mensagem aqui..." required></textarea>
+                    </div>
+                    
+                    <div class="form-status" aria-live="polite" style="min-height:1.5em; margin-bottom: 15px; font-weight: bold;"></div>
+                    
+                    <button type="submit" class="btn-login" style="margin-top: 0;">Enviar Mensagem</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <%- include('partials/footer') %>
+
+    <script>
+        const form = document.querySelector('.form-contato');
+        if(form) {
+            form.onsubmit = function(e) {
+                e.preventDefault();
+                var nome = this.nome.value.trim();
+                var email = this["email-contato"].value.trim();
+                var mensagem = this.mensagem.value.trim();
+                var status = this.querySelector('.form-status');
+                
+                if (!nome || !email || !mensagem) {
+                    status.textContent = 'Preencha todos os campos obrigatórios.';
+                    status.style.color = '#e22';
+                    return false;
+                }
+                
+                this.querySelector('button').disabled = true;
+                this.querySelector('button').textContent = 'Enviando...';
+                
+                // Simulação de envio
+                setTimeout(() => { 
+                    this.querySelector('button').disabled = false;
+                    this.querySelector('button').textContent = 'Enviar Mensagem';
+                    status.textContent = 'Mensagem enviada com sucesso! Responderemos em breve.';
+                    status.style.color = '#198754';
+                    this.reset();
+                }, 1500);
+            };
+        }
+    </script>
+</body>
+</html>

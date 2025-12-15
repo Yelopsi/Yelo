@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title>Blog - Yelo</title>
+    <%- include('partials/head') %>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <%- include('partials/header') %>
+
+    <main style="padding-top: 120px; padding-bottom: 80px; background-color: #fdfaf6;">
+        <section>
+            <div class="container-blog">
+                
+                <div class="titulo-secao" style="margin-bottom: 60px; text-align: center;">
+                    <h1 style="font-family: 'New Kansas', serif; font-size: 3rem; color: var(--verde-escuro);">Blog Yelo</h1>
+                    <p class="subtitulo-secao">Reflexões e ferramentas para sua jornada de autoconhecimento e bem-estar.</p>
+                </div>
+
+                <a href="#" class="post-destaque">
+                    <img src="https://images.pexels.com/photos/4101143/pexels-photo-4101143.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Imagem de destaque">
+                    <div class="post-destaque-texto">
+                        <span>MAIS RECENTE</span>
+                        <h2>A Coragem de Ser Imperfeito: Como a Vulnerabilidade Transforma</h2>
+                        <p>Exploramos como abraçar nossas imperfeições não é um sinal de fraqueza, mas sim o caminho para uma conexão mais autêntica consigo mesmo e com os outros...</p>
+                    </div>
+                </a>
+
+                <div class="post-grid">
+                     <article class="post-card">
+                        <a href="#">
+                            <img src="https://images.pexels.com/photos/4101143/pexels-photo-4101143.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Imagem do post">
+                            <div class="post-card-conteudo">
+                                <h3>5 Mitos Sobre a Terapia que Você Precisa Superar</h3>
+                                <p>Desmistificamos as ideias mais comuns que impedem as pessoas de buscar ajuda psicológica e mostramos a realidade do processo terapêutico.</p>
+                            </div>
+                        </a>
+                    </article>
+                    </div>
+            </div>
+        </section>
+        <section class="aviso-crise ruido">
+            <div class="aviso-conteudo">
+                <div class="aviso-texto">
+                    <p>Se você está em crise ou qualquer outra pessoa pode estar em perigo, <strong>não</strong> use este site. <a href="/recursos_crise.html">Estes recursos</a> podem fornecer ajuda imediata.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title>Perguntas Frequentes - Yelo</title>
+    <%- include('partials/head') %>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body class="pagina-com-conteudo-atras">
+
+    <%- include('partials/header') %>
+
+    <main>
+    <section class="faq-hero ruido">
+        <div class="container-sobre">
+            <h1>Perguntas Frequentes</h1>
+            <p class="subtitulo-secao">Encontre aqui as respostas para as suas principais dúvidas sobre a Yelo.</p>
+            <div class="faq-busca-container">
+                <input type="search" id="faq-busca" placeholder="Digite uma palavra-chave (ex: preço, cadastro, terapia)...">
+            </div>
+        </div>
+
+        <div class="faq-wave-bottom">
+            <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z" class="shape-fill"></path>
+            </svg>
+        </div>
+    </section>
+
+    <section class="secao-conteudo-pagina" style="padding-top: 60px;">
+        <div class="container-sobre">
+            <%- include('partials/conteudo_faq_original') %> 
+            <div class="faq-cta">
+                <h3>Ainda com dúvidas?</h3>
+                <p>Nossa equipe está pronta para te ajudar. Entre em contato conosco.</p>
+                <a href="/contato.html" class="btn-verde">Fale Conosco</a>
+            </div>
+        </div>
+    </section>
+    </main>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

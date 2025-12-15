@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title>Um Recado Importante - Yelo</title>
+    <%- include('partials/head') %>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body class="pagina-legal">
+
+    <%- include('partials/header') %>
+
+    <main class="secao-conteudo-pagina">
+        <div class="container">
+            <h1 id="welcome-title" class="titulo-secao" style="text-align: center;">Um recado importante sobre o seu cadastro</h1>
+
+            <div class="aviso-info-box">
+                <h2 style="margin-top: 0;">Vimos que você tem menos de 18 anos.</h2>
+                <p>Ficamos muito felizes que você esteja buscando apoio e cuidando da sua saúde mental! Isso é um sinal de grande coragem.</p>
+                <p>Para que a terapia aconteça da forma mais segura e correta, a lei brasileira exige que um responsável legal (como seus pais ou guardiões) autorize o início do seu acompanhamento.</p>
+                <p style="margin-bottom: 0;">Na Yelo, levamos isso muito a sério para proteger você e garantir um processo terapêutico ético.</p>
+            </div>
+
+            <div class="card" style="background-color: #F0F7F4; border: 1px solid #D4E9E2; border-radius: 12px; padding: 30px; margin-top: 40px; text-align: left;">
+                <h3 style="margin-top: 0; font-family: 'New Kansas', serif; color: var(--verde-escuro);">O que você pode fazer?</h3>
+                <p style="color: #333; font-size: 1rem;">O melhor caminho é conversar com um adulto da sua confiança sobre o seu desejo de fazer terapia. Ele(a) pode nos ajudar a encontrar o profissional certo para você e formalizar a autorização.</p>
+                <a href="/" class="btn btn-secundario" style="margin-top: 15px; display: inline-block;">Voltar para a página inicial</a>
+            </div>
+
+            <h2 class="titulo-secao-menor" style="margin-top: 50px;">Se você precisar de ajuda imediata...</h2>
+            <p>Se você está se sentindo em risco, passando por uma crise grave ou precisa de ajuda urgente, por favor, não espere. Existem canais gratuitos e seguros que podem te ouvir agora.</p>
+
+            <div class="recursos-grid" style="margin-top: 30px;">
+                <div class="recurso-card">
+                    <h3>Polícia Militar <br><span>(Risco Imediato)</span></h3>
+                    <p style="min-height: 80px;">Para situações de perigo imediato, ameaça à vida ou violência em andamento.</p>
+                    <div style="margin-top: 10px;"><a href="tel:190" class="btn btn-emergencia">Ligar 190</a></div>
+                </div>
+                <div class="recurso-card">
+                    <h3>SAMU <br><span>(Emergência Médica)</span></h3>
+                    <p style="min-height: 80px;">Para emergências médicas de qualquer natureza, acidentes ou surtos graves.</p>
+                    <div style="margin-top: 10px;"><a href="tel:192" class="btn btn-emergencia">Ligar 192</a></div>
+                </div>
+                <div class="recurso-card">
+                    <h3>CVV <br><span>(Apoio Emocional)</span></h3>
+                    <p style="min-height: 80px;">Atendimento voluntário e gratuito de apoio emocional e prevenção ao suicídio.</p>
+                    <div style="margin-top: 10px;"><a href="https://www.cvv.org.br/" target="_blank" class="btn btn-emergencia">Acessar o site</a></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <%- include('partials/footer') %>
+    
+    <script src="/js/menor_de_idade.js" defer></script>
+</body>
+</html>
