@@ -134,25 +134,34 @@ app.get('/api/admin/exit-surveys', async (req, res) => {
 });
 
 // =============================================================
-// FRONTEND E CATCH-ALL (DEVE SER O ÚLTIMO)
+// FRONTEND DINÂMICO (EJS) - ORDEM CORRIGIDA
 // =============================================================
-app.use(express.static(path.join(__dirname, '..')));
 
-// NOVA ROTA PRINCIPAL (Renderiza o EJS com Header/Footer unificados)
+// 1º: PRIMEIRO defina a rota da Home.
+// Isso garante que o servidor renderize o index.ejs ao acessar a raiz '/'
 app.get('/', (req, res) => {
     res.render('index');
 });
 
-// Mantém a lógica de perfil (não remova isso se ainda estiver usando)
-app.get('/:slug', (req, res, next) => {
-    const reserved = ['api', 'assets', 'css', 'js', 'patient', 'psi', 'fix-db', 'uploads'];
-    if (reserved.some(p => req.params.slug.startsWith(p)) || req.params.slug.includes('.')) return next();
-    res.sendFile(path.join(__dirname, '..', 'perfil_psicologo.html'));
+// 2º: DEPOIS configure os arquivos estáticos.
+// Se não for a Home, ele procura CSS, JS ou imagens na pasta raiz.
+app.use(express.static(path.join(__dirname, '..')));
+
+// 3º: Rota Inteligente para outras páginas (Perguntas, Login, etc)
+app.get('/:pagina', (req, res, next) => {
+    const pagina = req.params.pagina.replace('.html', '');
+    const reservado = ['api', 'assets', 'css', 'js', 'uploads', 'favicon.ico'];
+    if (reservado.some(p => pagina.startsWith(p))) return next();
+
+    res.render(pagina, (err, html) => {
+        if (err) return next();
+        res.send(html);
+    });
 });
 
-// Fallback para qualquer outra coisa (envia para a home nova)
-app.get(/(.*)/, (req, res) => {
-  res.render('index');
+// 4º: Catch-All (Se nada acima funcionar)
+app.use((req, res) => {
+    res.redirect('/');
 });
 
 // Inicialização
