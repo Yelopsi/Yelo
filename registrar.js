@@ -1,11 +1,12 @@
 // Lógica para registrar um novo paciente usando a API REST
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- CORREÇÃO DE ROTA ---
-    // Pega do config.js ou assume localhost:3001
-    const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') 
-        ? window.API_BASE_URL 
-        : 'http://localhost:3001';
+    // --- CORREÇÃO DE ROTA (GPS) ---
+    // Tenta pegar a variável global do config.js. 
+    // Se ela não existir, usa o endereço oficial do Render como garantia.
+    const BASE_URL = window.API_BASE_URL || 'https://yelo.onrender.com';
+    
+    console.log('🔗 Conectando API em:', BASE_URL);
 
     // Encontra o formulário e a área de mensagens usando os IDs do HTML
     const formRegistro = document.getElementById('form-registro');
