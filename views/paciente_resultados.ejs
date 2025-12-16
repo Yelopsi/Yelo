@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <title>Yelo - Seus Matches</title>
+    <%- include('partials/head') %>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        .page-results-header {
+            background-color: var(--verde-escuro);
+            color: white;
+            padding: 60px 20px 100px 20px;
+            text-align: center;
+            border-radius: 0 0 40px 40px;
+            margin-bottom: -50px;
+        }
+        .match-badge {
+            background-color: var(--cor-Yelo);
+            color: var(--verde-escuro);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px 80px 20px;
+        }
+        .match-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            position: relative;
+            border: 1px solid #eee;
+        }
+        .compatibility-score {
+            position: absolute;
+            top: 15px; right: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            color: var(--verde-escuro);
+            font-size: 0.85rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .pro-photo-cover { height: 180px; width: 100%; object-fit: cover; }
+        .match-card-body { padding: 25px; }
+        .tag-pill { background: #f0f7f4; color: var(--verde-escuro); padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; }
+    </style>
+</head>
+<body style="background-color: #fcfcfc;">
+
+    <%- include('partials/header') %>
+
+    <div class="page-results-header">
+        <span class="match-badge">✨ Análise concluída</span>
+        <h1 style="font-family: 'New Kansas', serif; margin: 15px 0 10px 0;">Encontramos 3 perfis ideais para você</h1>
+        <p style="opacity: 0.9; max-width: 600px; margin: 0 auto;">Baseado nas suas respostas, selecionamos estes especialistas com alta compatibilidade.</p>
+    </div>
+
+    <div class="results-grid">
+        <div class="match-card">
+            <div class="compatibility-score">98% Compatível</div>
+            <img src="https://placehold.co/400x300/1B4332/white?text=Dra.+Ana" alt="Foto Dra Ana" class="pro-photo-cover">
+            <div class="match-card-body">
+                <h3 style="margin-top:0;">Dra. Ana Clara</h3>
+                <p>Especialista em TCC com foco em ansiedade.</p>
+                <div style="margin: 10px 0;"><span class="tag-pill">Ansiedade</span> <span class="tag-pill">Online</span></div>
+                <button class="btn btn-verde" style="width:100%">Ver Perfil</button>
+            </div>
+        </div>
+        </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

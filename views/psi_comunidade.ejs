@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title>Comunidade Q&A - Yelo</title>
+    <%- include('partials/head') %>
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <main class="container" style="padding-top: 120px; padding-bottom: 60px;">
+        <div class="main-header">
+            <h1>Comunidade Q&A</h1>
+        </div>
+
+        <div class="qna-container-admin" id="qna-list-container">
+            <div class="loader-wrapper">
+                <div class="loader-spinner"></div>
+            </div>
+        </div>
+
+        <div id="qna-answer-modal" class="modal-overlay">
+            <div class="modal-content">
+                <button class="modal-close">&times;</button>
+                <div class="modal-header"><h2 class="modal-title">Responder Pergunta</h2></div>
+                <form id="qna-answer-form">
+                    <div class="modal-body">
+                        <textarea id="qna-answer-textarea" minlength="50" required placeholder="Sua resposta..."></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secundario modal-cancel">Cancelar</button>
+                        <button type="submit" class="btn btn-principal">Enviar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

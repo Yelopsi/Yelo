@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title>Crie sua Conta - Yelo</title>
+    <%- include('partials/head') %>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body class="pagina-login">
+
+    <%- include('partials/header') %>
+
+    <main class="login-main ruido">
+        <div class="login-container">
+            <h1 class="login-titulo">Criar conta</h1>
+            <p style="text-align:center; margin-bottom:20px;">Junte-se à Yelo para encontrar o profissional ideal.</p>
+            
+            <form class="login-form" id="form-registro">
+                <p id="mensagem-registro" class="mensagem-oculta"></p>
+                
+                <div class="form-group">
+                    <label for="nome">Nome Completo</label>
+                    <input type="text" id="nome" name="nome" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="senha">Senha</label>
+                    <input type="password" id="senha" name="senha" required minlength="6">
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmar-senha">Confirmar Senha</label>
+                    <input type="password" id="confirmar-senha" name="confirmar-senha" required>
+                </div>
+
+                <div class="form-group-checkbox">
+                    <input type="checkbox" id="termos" name="termos" required>
+                    <label for="termos">Li e aceito os <a href="/termos" target="_blank">Termos de Uso</a> e <a href="/privacidade" target="_blank">Privacidade</a>.</label>
+                </div>
+
+                <button type="submit" class="btn-login">Criar Conta Gratuita</button>
+            </form>
+
+            <div class="login-links">
+                <a href="/login">Já tem uma conta? <strong>Faça Login</strong></a>
+            </div>
+        </div>
+    </main>
+
+    <%- include('partials/footer') %>
+    
+    <script src="/config.js"></script>
+    <script src="/js/registro.js"></script>
+</body>
+</html>

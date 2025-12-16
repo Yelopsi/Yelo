@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title>Perfil do Psicólogo - Yelo</title>
+    <%- include('partials/head') %>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Montserrat:wght@400;700;900&display.swap" rel="stylesheet">
+</head>
+<body>
+
+    <%- include('partials/header') %>
+
+    <div id="loading-state" class="container" style="text-align: center; padding: 5rem 1rem;">
+        <h2>Carregando...</h2>
+        <p>Buscando as informações do profissional.</p>
+    </div>
+
+    <div id="error-state" class="container hidden" style="text-align: center; padding: 5rem 1rem;">
+        <h2>Perfil Indisponível</h2>
+        <p>Não foi possível carregar os dados deste profissional no momento.</p>
+    </div>
+
+    <main id="profile-container" class="profile-page-main hidden">
+        <div class="container">
+            <div class="profile-header-grid">
+                <div class="profile-info">
+                    <div class="profile-photo-wrapper">
+                        <img id="psi-foto" src="https://placehold.co/180x180/1B4332/FFFFFF?text=Foto" alt="Foto do Psicólogo">
+                    </div>
+                    <h1 id="psi-nome">Carregando...</h1>
+                    <p id="psi-crp" class="crp" style="margin-bottom: 10px;">CRP: --/------</p>
+                    <div id="psi-rating-summary" class="rating-display-hero"></div>
+                    <div class="profile-bio-hero" style="margin-top: 30px; text-align: left;">
+                        <h3 style="color: var(--verde-escuro); font-family: 'New Kansas'; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center; font-size: 1.4rem;">Sobre Mim</h3>
+                        <p id="psi-bio-text" style="line-height: 1.7; color: #555; margin-top: 15px; text-align: justify; font-size: 0.95rem;"></p>
+                    </div>
+                </div>
+
+                <div class="conversion-card-wrapper">
+                    <div class="conversion-card">
+                        <h3>Valor da sessão</h3>
+                        <p id="psi-valor" class="price">Sob Consulta</p>
+                        <h3>Modalidade de Atendimento</h3>
+                        <p id="psi-modalidade" style="margin-bottom: 5px;">Online e Presencial</p>
+                        <div id="psi-localizacao" class="location-display"></div>
+                        <a href="#" id="btn-agendar-whatsapp" class="btn btn-principal" style="width: 100%; margin-top: 15px;">Agendar uma conversa</a>
+                        <div id="psi-tags-abordagens" class="profile-tags small-tags" style="margin-top: 15px; justify-content: center;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-body-tabs">
+                <nav class="tabs-nav">
+                    <button type="button" class="tab-link active" data-tab="sobre">Detalhes Profissionais</button>
+                    <button type="button" class="tab-link" data-tab="avaliacoes" id="tab-btn-avaliacoes">Avaliações</button>
+                </nav>
+                <div id="tab-sobre" class="tab-content active"></div>
+                <div id="tab-avaliacoes" class="tab-content">
+                    <div id="reviews-list-container"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <%- include('partials/footer') %>
+    
+    <div id="toast-container"></div>
+    <script src="/config.js"></script>
+    <script src="/script.js"></script>
+    <script src="/js/perfil_psicologo.js"></script>
+</body>
+</html>

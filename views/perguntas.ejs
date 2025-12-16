@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title>Perguntas e Respostas - Yelo</title>
+    <%- include('partials/head') %>
+</head>
+<body>
+
+    <%- include('partials/header') %>
+
+    <main style="padding-top: 120px; padding-bottom: 60px;">
+        <div class="container">
+            <h1 class="titulo-secao" style="margin-bottom: 20px;">Perguntas e Respostas</h1>
+            <p class="subtitulo-secao">Tire suas dúvidas sobre saúde mental com os profissionais da nossa plataforma.<br>Este é um espaço seguro e anônimo.</p>
+            
+            <div class="beneficios-grid">
+                <div class="beneficio-card"><h3>100% Gratuito</h3><p>Serviço gratuito para democratizar o acesso à informação de qualidade.</p></div>
+                <div class="beneficio-card"><h3>Respondido por Psis</h3><p>Respostas voluntárias de psicólogos verificados (CRP ativo).</p></div>
+                <div class="beneficio-card"><h3>Seguro e Anônimo</h3><p>Sua identidade é protegida. Nunca compartilhe dados pessoais.</p></div>
+            </div>
+
+            <div class="qa-search-container">
+                <svg class="qa-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                </svg>
+                <input type="text" id="qa-search-input" placeholder="Busque por ansiedade, depressão, terapia...">
+            </div>
+
+            <div class="ask-box-container">
+                <h3>Pergunte aqui!</h3>
+                <form id="anonymous-question-form">
+                    <textarea id="question-text" placeholder="Escreva aqui sua dúvida... (Mínimo 50 caracteres)"></textarea>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.9rem;">
+                        <span id="char-error-message" style="color: #E63946; font-weight: bold;"></span>
+                        <span id="char-counter" style="color: #666;">0/50 caracteres</span>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <button type="submit" class="btn btn-principal" id="submit-question-btn" disabled style="width: 100%; max-width: 300px;">Enviar Pergunta</button>
+                    </div>
+                </form>
+            </div>
+
+            <h2 class="titulo-secao" style="margin-top: 80px;">Últimas perguntas respondidas</h2>
+            <div id="qa-container"></div>
+        </div>
+
+        <section class="aviso-crise ruido">
+            <div class="aviso-conteudo">
+                <div class="aviso-texto">
+                    <p>Se você está em crise, <strong>não</strong> use este site. <a href="/recursos_crise.html">Estes recursos</a> podem fornecer ajuda imediata.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <%- include('partials/footer') %>
+
+    <div id="Yelo-toast" class="toast"></div>
+
+    <template id="qa-card-template">
+        <div class="qa-card">
+            <div class="qa-card-question">
+                <h2 class="font-new-kansas data-question-title"></h2>
+                <p class="data-question-content" style="margin-bottom: 10px;"></p>
+                <span class="data-patient-name" style="font-size: 0.8rem; color: #888;"></span>
+            </div>
+            <div class="qa-card-answers-container"></div>
+        </div>
+    </template>
+
+    <template id="qa-answer-template">
+        <div class="qa-card-answer">
+            <div class="answer-text-content"><p class="data-answer-content">Carregando resposta...</p></div>
+            <div class="answer-psy-sidebar">
+                <img class="data-psy-photo" src="" alt="Foto">
+                <h4 class="data-psy-name">Nome do Psicólogo</h4>
+                <p class="data-psy-crp">CRP 00/000000</p>
+                <a href="#" class="btn btn-verde btn-ver-perfil" style="padding: 5px 15px; font-size: 0.8rem;">Ver perfil</a>
+            </div>
+        </div>
+    </template>
+
+    <script src="/config.js"></script>
+    <script src="/js/perguntas.js"></script>
+</body>
+</html>

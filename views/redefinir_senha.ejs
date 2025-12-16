@@ -1,38 +1,42 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redefinir Senha - Yelo</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="assets/images/favicon.png?v=2" type="image/png">
+    <%- include('partials/head') %>
 </head>
 <body class="pagina-login">
-    <div id="header-placeholder"></div>
+
+    <%- include('partials/header') %>
+
     <main class="login-main ruido">
         <div class="login-container">
             <h1 class="login-titulo">Crie uma Nova Senha</h1>
             <p style="text-align: center; margin-bottom: 20px; color: var(--cinza-texto);">Sua nova senha deve ser diferente da anterior.</p>
+            
             <form class="login-form" id="form-redefinir-senha">
                 <p id="mensagem-redefinir-senha" class="mensagem-oculta"></p>
+                
                 <div class="form-group password-container">
                     <label for="nova-senha">Nova Senha</label>
                     <input type="password" id="nova-senha" name="nova-senha" required minlength="6">
-                    <i class="password-toggle-icon" data-target="nova-senha"></i>
                 </div>
+                
                 <div class="form-group password-container">
                     <label for="confirmar-nova-senha">Confirmar Nova Senha</label>
                     <input type="password" id="confirmar-nova-senha" name="confirmar-nova-senha" required>
-                    <i class="password-toggle-icon" data-target="confirmar-nova-senha"></i>
                 </div>
+                
                 <button type="submit" class="btn-login">Redefinir Senha</button>
             </form>
+            
             <div class="login-links">
-                <a href="login.html">Voltar para o Login</a>
+                <a href="/login">Voltar para o Login</a>
             </div>
         </div>
     </main>
-    <script src="config.js"></script> 
-    <script src="redefinir_senha.js"></script>
+
+    <%- include('partials/footer') %>
+    <script src="/config.js"></script>
+    <script src="/js/redefinir_senha.js"></script>
 </body>
 </html>

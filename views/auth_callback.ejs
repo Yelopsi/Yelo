@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Autenticando...</title>
+    <title>Autenticando... - Yelo</title>
     <style>
         body { display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; background-color: #1B4332; color: white; }
         .container { text-align: center; }
@@ -18,12 +18,18 @@
             const params = new URLSearchParams(window.location.search);
             const token = params.get('token');
             const dashboardPath = params.get('dashboard');
+            
             if (token && dashboardPath) {
-                localStorage.setItem('Yelo_token', token); // Salva o token
-                // Adiciona um pequeno delay para garantir que o localStorage seja escrito antes do redirecionamento
+                // Salva o token seguro
+                localStorage.setItem('Yelo_token', token); 
+                
+                // Redireciona com pequeno delay para garantir gravação
                 setTimeout(() => {
                     window.location.href = dashboardPath;
                 }, 200);
+            } else {
+                // Se der erro, volta para o login
+                setTimeout(() => { window.location.href = '/login'; }, 2000);
             }
         });
     </script>

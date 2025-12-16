@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <title>Seus Resultados - Yelo</title>
+    <%- include('partials/head') %>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        .page-results-header {
+            background-color: var(--verde-escuro);
+            color: white;
+            padding: 60px 20px 100px 20px;
+            text-align: center;
+            border-radius: 0 0 40px 40px;
+            margin-bottom: -50px; /* Efeito de sobreposição */
+        }
+    </style>
+</head>
+
+<body class="pagina-resultados">
+
+    <%- include('partials/header') %>
+
+    <div class="page-results-header">
+        <h1 style="font-family: 'New Kansas', serif;">Seus Matches Ideais</h1>
+        <p>Baseado no seu perfil, selecionamos estes profissionais para você.</p>
+    </div>
+
+    <main class="container" style="padding-bottom: 80px;">
+        <div id="loading-results" style="text-align: center; padding: 50px;">
+            <div class="spinner"></div> <p>Analisando compatibilidade...</p>
+        </div>
+
+        <div id="results-grid" class="results-grid hidden">
+            </div>
+    </main>
+
+    <%- include('partials/footer') %>
+    
+    <script src="/config.js"></script>
+    <script src="/js/resultados.js"></script> </body>
+</html>
