@@ -3,18 +3,69 @@
 <head>
     <title>Política de Privacidade - Yelo</title> 
     <%- include('partials/head') %>
+    <meta name="description" content="Política de privacidade da Yelo. Saiba como protegemos seus dados sensíveis e garantimos seu sigilo.">
 </head>
 <body class="pagina-legal">
 
     <%- include('partials/header') %> 
 
     <main class="container secao-conteudo-pagina"> 
-        <h1>Política de Privacidade - Yelo</h1>
-        <p class="subtitulo-secao">Última atualização: Dezembro 2024</p>
+        <header class="cabecalho-texto">
+            <h1>Política de Privacidade</h1>
+            <p class="subtitulo-secao">Última atualização: <span id="data-atualizacao">Dezembro 2025</span></p>
+            <p class="intro-texto">
+                No <strong>Yelo</strong>, lidamos com sentimentos. Por isso, a proteção dos seus dados não é apenas uma lei, é nossa ética. Veja como cuidamos das suas informações.
+            </p>
+        </header>
 
-        <h2>1. Introdução</h2>
-        <p>A sua privacidade é fundamental para a Yelo...</p>
-        
+        <div class="conteudo-legal">
+            <section class="termos-secao">
+                <h2>1. Quais dados coletamos</h2>
+                <ul class="lista-legal">
+                    <li><strong>Dados de Identificação:</strong> Nome e e-mail (necessários para criar sua conta segura).</li>
+                    <li><strong>Dados Sensíveis (O Questionário):</strong> Para realizar o "Match Terapêutico", coletamos informações sobre seu estado emocional e preferências.</li>
+                    <li><strong>Dados Técnicos:</strong> Endereço IP e tipo de dispositivo (para segurança e correção de erros).</li>
+                </ul>
+            </section>
+
+            <section class="termos-secao">
+                <h2>2. Como usamos seus dados</h2>
+                <p>2.1. <strong>Exclusivamente para o Match:</strong> Seus dados sensíveis são processados pelo algoritmo apenas para encontrar psicólogos compatíveis.</p>
+                <p>2.2. <strong>Anonimização:</strong> Podemos usar dados agregados (sem identificar você) para entender a saúde mental coletiva (ex: "temas mais buscados no ano").</p>
+                <p>2.3. <strong>Não vendemos seus dados:</strong> Jamais vendemos informações de saúde ou emocionais para anunciantes.</p>
+            </section>
+
+            <section class="termos-secao">
+                <h2>3. Quem vê seus dados?</h2>
+                <p>3.1. <strong>O Psicólogo:</strong> Ele <strong>não</strong> tem acesso automático às suas respostas detalhadas. Ele recebe apenas seu contato caso você decida, voluntariamente, clicar no botão de WhatsApp.</p>
+                <p>3.2. <strong>Parceiros Tecnológicos:</strong> Compartilhamos apenas o estritamente necessário com fornecedores de infraestrutura (como nosso servidor seguro), que também seguem a LGPD.</p>
+            </section>
+
+            <section class="termos-secao">
+                <h2>4. Segurança</h2>
+                <p>Utilizamos criptografia e protocolos modernos (HTTPS) para proteger o tráfego de dados. Recomendamos que você nunca compartilhe sua senha de acesso com terceiros.</p>
+            </section>
+
+            <section class="termos-secao">
+                <h2>5. Seus Direitos (Você no controle)</h2>
+                <p>Conforme a LGPD, você pode solicitar a qualquer momento:</p>
+                <ul class="lista-legal">
+                    <li>A confirmação e o acesso aos seus dados.</li>
+                    <li>A correção de informações incompletas.</li>
+                    <li>A <strong>exclusão total</strong> da sua conta e dados dos nossos registros.</li>
+                </ul>
+            </section>
+
+            <section class="termos-secao">
+                <h2>6. Cookies</h2>
+                <p>Utilizamos apenas cookies essenciais para o funcionamento do site (manter você logado). Não usamos cookies de rastreamento invasivos de terceiros.</p>
+            </section>
+
+            <section class="termos-secao contato-secao">
+                <h2>Fale com nosso DPO</h2>
+                <p>Para exercer seus direitos ou tirar dúvidas, envie um e-mail para: <a href="mailto:privacidade@yelo.com.br">privacidade@yelo.com.br</a></p>
+            </section>
+        </div>
     </main>
 
     <%- include('partials/footer') %>
