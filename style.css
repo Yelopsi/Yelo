@@ -4544,12 +4544,40 @@ header .logo .logo-escura { opacity: 0 !important; }
     padding-bottom: 80px;
 }
 
+/* --- CORREÇÃO DE ESPAÇAMENTO: PÁGINAS LEGAIS --- */
+
 .container-legal {
     max-width: 900px; /* Um pouco mais largo para acomodar cláusulas */
+    /* Largura máxima de leitura (para não cansar a vista em monitores grandes) */
+    max-width: 800px; 
+    
+    /* Centraliza o bloco no meio da tela */
     margin: 0 auto;
     padding: 60px 20px;
     text-align: left; /* Alinhamento estrito à esquerda */
     color: #333;
+    
+    /* O SEGREDO DO DESGRUDE: */
+    /* 60px em cima/baixo e 5% nas laterais (responsivo) */
+    padding: 60px 5%; 
+    
+    /* Garante que o padding conte dentro da largura total, evitando barra de rolagem horizontal */
+    box-sizing: border-box; 
+    
+    /* Garante alinhamento à esquerda como solicitado */
+    text-align: left; 
+    background-color: #fff;
+}
+
+/* Ajuste extra para telas muito pequenas (celulares antigos) */
+@media (max-width: 480px) {
+    .container-legal {
+        padding: 40px 20px; /* Um pouco menos de espaço, mas ainda seguro */
+    }
+    /* MELHORIA DE LEITURA: Remove justificação em telas pequenas para evitar buracos no texto */
+    .container-legal p, .container-legal li {
+        text-align: left !important;
+    }
 }
 
 .container-legal h1 {
