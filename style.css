@@ -4538,3 +4538,82 @@ header .logo .logo-escura { opacity: 0 !important; }
     background-color: #fff;
     color: #E63946;
 }
+/* --- ESTILOS JURÍDICOS (Versão Completa) --- */
+.pagina-legal {
+    background-color: #ffffff;
+    padding-bottom: 80px;
+}
+
+.container-legal {
+    max-width: 900px; /* Um pouco mais largo para acomodar cláusulas */
+    margin: 0 auto;
+    padding: 60px 20px;
+    text-align: left; /* Alinhamento estrito à esquerda */
+    color: #333;
+}
+
+.container-legal h1 {
+    font-family: 'New Kansas', serif;
+    color: var(--verde-escuro);
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 20px;
+}
+
+.container-legal .intro-legal {
+    font-size: 1.1rem;
+    font-style: italic;
+    color: #555;
+    margin-bottom: 40px;
+    display: block;
+}
+
+/* Hierarquia Jurídica */
+.container-legal h2 {
+    color: var(--verde-escuro);
+    font-family: 'New Kansas', serif;
+    font-size: 1.6rem;
+    margin-top: 50px;
+    margin-bottom: 20px;
+    border-left: 5px solid var(--cor-Yelo); /* Destaque visual na cláusula */
+    padding-left: 15px;
+}
+
+.container-legal h3 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.2rem;
+    color: #1B4332;
+    margin-top: 30px;
+    font-weight: 700;
+}
+
+.container-legal p {
+    font-size: 1rem;
+    line-height: 1.8;
+    margin-bottom: 15px;
+    text-align: justify; /* Texto justificado passa mais formalidade em contratos */
+}
+
+/* Listas numeradas para cláusulas (1.1, 1.2...) */
+.container-legal ol {
+    counter-reset: item;
+    padding-left: 20px;
+}
+.container-legal ol > li {
+    display: block;
+    margin-bottom: 10px;
+    line-height: 1.7;
+}
+.container-legal ol > li:before {
+    content: counters(item, ".") ". ";
+    counter-increment: item;
+    font-weight: bold;
+    color: var(--verde-escuro);
+}
+
+/* Destaques no texto */
+.termo-destaque {
+    font-weight: bold;
+    color: #000;
+}

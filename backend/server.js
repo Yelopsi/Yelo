@@ -30,6 +30,12 @@ const seedTestData = require('./controllers/seed_test_data');
 
 const app = express();
 
+// EM VEZ DE MOVER AS PASTAS, LIBERE O ACESSO ONDE ELAS JÁ ESTÃO:
+// 1. Libera a pasta 'assets' (para imagens, logos, fontes)
+app.use('/assets', express.static(path.join(__dirname, '../assets')));
+// 2. Libera a pasta 'css' (para seus estilos)
+app.use('/css', express.static(path.join(__dirname, '../css')));
+
 // --- ADICIONE ISTO ---
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../views'));
