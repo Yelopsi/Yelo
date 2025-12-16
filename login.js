@@ -77,78 +77,95 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Evento de Submissão do Formulário
     if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); 
+    // --- NOVA LÓGICA DE LOGIN UNIFICADO ---
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // UI: Feedback visual imediato
+        const originalBtnText = loginForm.querySelector('button[type="submit"]').textContent;
+        const submitBtn = loginForm.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Verificando...';
+        if(mensagemEl) mensagemEl.style.display = 'none';
 
-            const email = emailInput.value;
-            const senha = senhaInput.value;
+        const email = emailInput.value.trim();
+        const senha = senhaInput.value;
 
-            mensagemEl.textContent = '';
-            mensagemEl.classList.add('mensagem-oculta');
-
-            // Pega o 'selectedRole' do JS, que é mais confiável
-            const role = selectedRole; 
-
-            const apiUrl = role === 'patient'
-                ? `${API_BASE_URL}/api/patients/login`
-                : `${API_BASE_URL}/api/psychologists/login`;
-
-            const dashboardPath = role === 'patient'
-                ? '/patient/patient_dashboard.html'
-                : '/psi/psi_dashboard.html';
-
-            const payload = JSON.stringify({ email, senha });
-
+        // Função auxiliar para tentar o login em uma URL específica
+        const attemptLogin = async (url, type) => {
             try {
-                // 3. Chamada à API de Login
-                const response = await fetch(apiUrl, {
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: payload,
+                    body: JSON.stringify({ email, senha })
                 });
-
-                const data = await response.json();
-
-                // 4. Tratamento da Resposta
+                
                 if (response.ok) {
-                    showMessage('Login bem-sucedido! Redirecionando...', false);
-                    localStorage.setItem('Yelo_token', data.token);
-                    localStorage.setItem('Yelo_role', role); // <-- LINHA ADICIONADA
-
-                    // --- INÍCIO DA CORREÇÃO ---
-                    // 1. Procura por um parâmetro 'return_url' na URL
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const returnUrl = urlParams.get('return_url');
-                    // --- FIM DA CORREÇÃO ---
-
-                    setTimeout(() => {
-                        // --- CORREÇÃO 2: Verifica o 'returnUrl' PRIMEIRO ---
-                        if (returnUrl) {
-                            window.location.href = returnUrl; // Volta para a página de perfil
-                            return;
-                        }
-                        // --- FIM DA CORREÇÃO 2 ---
-
-                        if (role === 'psychologist') {
-                            window.location.href = window.location.origin + dashboardPath;
-                            return;
-                        }
-
-                        const savedAnswers = localStorage.getItem('Yelo_questionario_respostas');
-                        if (savedAnswers) {
-                            window.location.href = 'resultados.html';
-                        } else {
-                            window.location.href = window.location.origin + dashboardPath;
-                        }
-                    }, 500); 
-                } else {
-                    const errorMessage = data.error || 'Email ou senha inválidos. Tente novamente.';
-                    showMessage(errorMessage, true);
+                    const data = await response.json();
+                    return { success: true, data, type };
                 }
-            } catch (error) {
-                console.error('Erro de conexão:', error);
-                showMessage('Falha na conexão com o servidor. Verifique se o backend está ligado.', true);
+                return { success: false };
+            } catch (err) {
+                return { success: false, error: err };
             }
-        });
+        };
+
+        try {
+            // 1ª Tentativa: Tenta logar como PACIENTE
+            let result = await attemptLogin(`${API_BASE_URL}/api/patients/login`, 'patient');
+
+            // 2ª Tentativa: Se falhou, tenta como PSICÓLOGO
+            if (!result.success) {
+                console.log('Não é paciente, verificando registro profissional...');
+                result = await attemptLogin(`${API_BASE_URL}/api/psychologists/login`, 'psychologist');
+            }
+
+            // --- RESULTADO FINAL ---
+            if (result.success) {
+                // SUCESSO! Salva os dados
+                const { token, user } = result.data;
+                localStorage.setItem('Yelo_token', token);
+                localStorage.setItem('Yelo_user_type', result.type);
+                if (user && user.nome) localStorage.setItem('Yelo_user_name', user.nome);
+
+                // Feedback visual de sucesso
+                if (mensagemEl) {
+                    mensagemEl.textContent = 'Login realizado! Redirecionando...';
+                    mensagemEl.className = 'mensagem-sucesso';
+                    mensagemEl.style.display = 'block';
+                }
+
+                // Verifica se tem URL de retorno salva ou define o destino padrão
+                const returnUrl = localStorage.getItem('returnUrl');
+                localStorage.removeItem('returnUrl'); // Limpa após usar
+
+                setTimeout(() => {
+                    if (returnUrl) {
+                        window.location.href = returnUrl;
+                    } else if (result.type === 'psychologist') {
+                        // Painel do Psicólogo (AJUSTE AQUI SE SUA ROTA FOR DIFERENTE)
+                        window.location.href = '/psi/psi_dashboard.html'; 
+                    } else {
+                        // Painel do Paciente (AJUSTE AQUI SE SUA ROTA FOR DIFERENTE)
+                        window.location.href = '/patient/patient_dashboard.html';
+                    }
+                }, 800);
+
+            } else {
+                // FALHOU NAS DUAS: Usuário ou senha incorretos
+                throw new Error('E-mail ou senha incorretos.');
+            }
+
+        } catch (error) {
+            console.error('Erro no login:', error);
+            if (mensagemEl) {
+                mensagemEl.textContent = error.message || 'Erro ao conectar. Tente novamente.';
+                mensagemEl.className = 'mensagem-erro'; // Garante cor vermelha
+                mensagemEl.style.display = 'block';
+            }
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalBtnText;
+        }
+    });
     }
 });
