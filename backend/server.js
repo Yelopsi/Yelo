@@ -6,6 +6,8 @@ const http = require('http');
 const path = require('path');
 const { initSocket } = require('./config/socket');
 const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const { Op } = require('sequelize');
 
 // Banco de Dados
 const db = require('./models');
@@ -148,6 +150,47 @@ app.get('/admin-setup-secreto', async (req, res) => {
         res.send('<h1>Sucesso!</h1><p>O usuário Admin foi criado/atualizado.</p><p>Login: admin@Yelo.com</p><p>Senha: admin123</p><br><a href="/login">Ir para Login</a>');
     } catch (error) {
         res.status(500).send('Erro ao criar admin: ' + error.message);
+    }
+});
+
+// --- ROTA DE LOGIN DO ADMIN (VIA BANCO DE DADOS) ---
+app.post('/api/login-admin-check', async (req, res) => {
+    try {
+        const { email, senha } = req.body;
+
+        // 1. Busca o usuário no banco (ajuste 'Usuario' se sua tabela tiver outro nome, ex: User, Admin)
+        // Estamos buscando alguém com esse email E que seja do tipo 'admin'
+        const usuario = await db.Usuario.findOne({ 
+            where: { 
+                email: email,
+                tipo: 'admin' // Garante que só admin entra aqui
+            } 
+        });
+
+        // 2. Se não achou ninguém
+        if (!usuario) {
+            return res.status(401).json({ success: false, message: 'Admin não encontrado.' });
+        }
+
+        // 3. Verifica a senha (compara a digitada com a hash do banco)
+        const senhaValida = await bcrypt.compare(senha, usuario.senha);
+
+        if (!senhaValida) {
+            return res.status(401).json({ success: false, message: 'Senha incorreta.' });
+        }
+
+        // 4. Sucesso! Retorna os dados para o frontend redirecionar
+        return res.json({ 
+            success: true, 
+            redirect: '/admin', // Sua rota de dashboard
+            type: 'admin',
+            user: { nome: usuario.nome, email: usuario.email },
+            token: 'admin-token-simulado' // Em produção, gere um JWT aqui
+        });
+
+    } catch (error) {
+        console.error('Erro no login de admin:', error);
+        return res.status(500).json({ success: false, error: 'Erro interno do servidor.' });
     }
 });
 
