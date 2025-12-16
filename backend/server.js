@@ -153,6 +153,40 @@ app.get('/admin-setup-secreto', async (req, res) => {
     }
 });
 
+// --- ROTA TEMPORÁRIA PARA CRIAR O ADMIN ---
+app.get('/instalar-admin', async (req, res) => {
+    try {
+        // 1. Define a senha que você quer usar
+        const senhaAberta = 'admin123'; 
+        
+        // 2. Criptografa a senha (Obrigatório para o login funcionar)
+        const senhaCriptografada = await bcrypt.hash(senhaAberta, 10);
+
+        // 3. Cria o usuário no banco
+        // IMPORTANTE: Verifique se sua tabela se chama 'Usuario' ou 'User' no models/index.js
+        const novoAdmin = await db.Usuario.create({
+            nome: 'Administrador Geral',
+            email: 'admin@yelo.com',
+            senha: senhaCriptografada, // Salva o hash, não a senha texto puro
+            tipo: 'admin'
+        });
+
+        return res.send(`
+            <h1>Sucesso!</h1>
+            <p>Admin criado no banco de dados.</p>
+            <p><strong>Login:</strong> admin@yelo.com</p>
+            <p><strong>Senha:</strong> admin123</p>
+            <br>
+            <a href="/login">Ir para Login</a>
+        `);
+
+    } catch (error) {
+        console.error(error);
+        // Se der erro de "Validation error", provavelmente o email já existe.
+        return res.status(500).send('Erro ao criar admin (talvez o email já exista?): ' + error.message);
+    }
+});
+
 // --- ROTA DE LOGIN DO ADMIN (VIA BANCO DE DADOS) ---
 app.post('/api/login-admin-check', async (req, res) => {
     try {
