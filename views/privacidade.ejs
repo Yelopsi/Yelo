@@ -3,73 +3,120 @@
 <head>
     <title>Política de Privacidade - Yelo</title> 
     <%- include('partials/head') %>
-    <meta name="description" content="Política de privacidade da Yelo. Saiba como protegemos seus dados sensíveis.">
+    <meta name="description" content="Política de privacidade da Yelo. Saiba como protegemos seus dados sensíveis e garantimos o sigilo do seu match terapêutico.">
+    
+    <style>
+        .pagina-legal {
+            background-color: var(--cor-fundo-claro, #fdfaf6);
+            color: var(--cor-texto-principal, #333);
+            line-height: 1.6;
+        }
+        .container-legal {
+            width: 90%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding-top: 120px;
+            padding-bottom: 60px;
+        }
+        .cabecalho-legal { text-align: center; margin-bottom: 40px; }
+        .cabecalho-legal h1 { font-size: 2rem; color: var(--cor-primaria, #2ecc71); margin-bottom: 10px; }
+        .data-atualizacao { font-size: 0.9rem; color: #666; display: block; margin-bottom: 20px; }
+        .conteudo-legal section {
+            margin-bottom: 30px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+        .conteudo-legal h2 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: var(--cor-destaque, #2c3e50);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .conteudo-legal ul { padding-left: 20px; }
+        .conteudo-legal li { margin-bottom: 8px; color: #555; }
+        .destaque-etico {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-left: 4px solid #2ecc71;
+            border-radius: 4px;
+            margin: 20px 0;
+            font-style: italic;
+        }
+    </style>
 </head>
 <body class="pagina-legal">
 
     <%- include('partials/header') %> 
 
-    <main class="container secao-conteudo-pagina" style="padding-top: 140px; padding-bottom: 80px;"> 
-        <header class="cabecalho-texto">
+    <main class="container-legal"> 
+        <header class="cabecalho-legal">
             <h1>Política de Privacidade</h1>
-            <p class="subtitulo-secao">Última atualização: <span id="data-atualizacao">Dezembro 2025</span></p>
-            <p class="intro-texto">
-                No <strong>Yelo</strong>, lidamos com sentimentos. Por isso, a proteção dos seus dados não é apenas uma lei, é nossa ética. Veja como cuidamos das suas informações.
-            </p>
+            <span class="data-atualizacao">Última atualização: Dezembro 2025</span>
+            <p>No <strong>Yelo</strong>, lidamos com sentimentos. Por isso, a proteção dos seus dados não é apenas cumprimento da lei (LGPD), é a base da nossa ética.</p>
         </header>
 
         <div class="conteudo-legal">
-            <section class="termos-secao">
+            <section>
                 <h2>1. Quais dados coletamos</h2>
-                <ul class="lista-legal">
-                    <li><strong>Dados de Identificação:</strong> Nome e e-mail (necessários para criar sua conta segura).</li>
-                    <li><strong>Dados Sensíveis (O Questionário):</strong> Para realizar o "Match Terapêutico", coletamos informações sobre seu estado emocional e preferências.</li>
-                    <li><strong>Dados Técnicos:</strong> Endereço IP e tipo de dispositivo, para segurança e melhoria da experiência.</li>
+                <p>Para criar o "Match" perfeito, precisamos entender quem você é. Coletamos:</p>
+                <ul>
+                    <li><strong>Dados de Identificação:</strong> Nome, e-mail e telefone (para que o psicólogo possa contatar você).</li>
+                    <li><strong>Dados Sensíveis de Saúde/Emocionais:</strong> As respostas do seu questionário (sentimentos, sintomas, preferências de abordagem). Estes dados são usados <strong>estritamente</strong> para o algoritmo de recomendação.</li>
+                    <li><strong>Dados Técnicos:</strong> Endereço IP e tipo de dispositivo, para segurança e melhoria da experiência mobile.</li>
                 </ul>
             </section>
 
-            <section class="termos-secao">
+            <section>
                 <h2>2. Como usamos seus dados</h2>
-                <p>O coração do Yelo é o <strong>Match</strong>. Usamos suas respostas para conectar você ao psicólogo ideal. Além disso, usamos para:</p>
-                <ul class="lista-legal">
-                    <li>Agendamento e comunicação entre você e o profissional.</li>
-                    <li>Envio de conteúdos de bem-estar (apenas se você autorizar).</li>
-                    <li>Melhoria contínua do nosso algoritmo de recomendação.</li>
+                <p>O coração do Yelo é a conexão humana. Seus dados servem para:</p>
+                <ul>
+                    <li>Processar o algoritmo de "Match" e sugerir os 3 melhores psicólogos.</li>
+                    <li>Notificar o psicólogo escolhido de que existe um novo paciente interessado (Você).</li>
+                    <li>Melhorar continuamente nossa plataforma e prevenir fraudes.</li>
+                    <li>Enviar conteúdos de bem-estar (Newsletter), apenas se você autorizar explicitamente.</li>
+                </ul>
+                <div class="destaque-etico">
+                    Importante: O Yelo <strong>NÃO</strong> tem acesso ao conteúdo das suas sessões de terapia. O sigilo da consulta pertence exclusivamente a você e ao seu psicólogo.
+                </div>
+            </section>
+
+            <section>
+                <h2>3. Com quem compartilhamos</h2>
+                <p><strong>Nós NÃO vendemos seus dados para anunciantes.</strong> O compartilhamento ocorre apenas:</p>
+                <ul>
+                    <li>Com o <strong>Psicólogo</strong> que você escolheu (enviamos seus dados de contato e o resumo do perfil para iniciar o atendimento).</li>
+                    <li>Com autoridades judiciais, apenas se formos obrigados por lei ou ordem judicial.</li>
+                    <li>Com prestadores de serviço essenciais (ex: servidor de hospedagem Render, serviço de e-mail), que possuem contratos de confidencialidade conosco.</li>
                 </ul>
             </section>
 
-            <section class="termos-secao">
-                <h2>3. Compartilhamento (Sigilo Absoluto)</h2>
-                <p><strong>Nós NÃO vendemos seus dados.</strong> O compartilhamento ocorre apenas:</p>
-                <ul class="lista-legal">
-                    <li>Com o <strong>Psicólogo</strong> escolhido (apenas os dados necessários para o atendimento).</li>
-                    <li>Por obrigação legal ou judicial.</li>
-                </ul>
-            </section>
-
-            <section class="termos-secao">
+            <section>
                 <h2>4. Segurança</h2>
-                <p>Utilizamos criptografia e protocolos modernos (HTTPS) para proteger o tráfego de dados. Recomendamos que você nunca compartilhe sua senha de acesso com terceiros.</p>
+                <p>Utilizamos criptografia de ponta a ponta (SSL/HTTPS) em todo o site. Seus dados sensíveis são armazenados em banco de dados seguro (PostgreSQL) com acesso restrito.</p>
+                <p>Recomendamos que você nunca compartilhe sua senha de acesso com terceiros.</p>
             </section>
 
-            <section class="termos-secao">
-                <h2>5. Seus Direitos (Você no controle)</h2>
-                <p>Conforme a LGPD, você pode solicitar a qualquer momento:</p>
-                <ul class="lista-legal">
-                    <li>A confirmação e o acesso aos seus dados.</li>
-                    <li>A correção de informações incompletas.</li>
-                    <li>A <strong>exclusão total</strong> da sua conta e dados dos nossos registros.</li>
+            <section>
+                <h2>5. Seus Direitos (LGPD)</h2>
+                <p>Você está no controle. A qualquer momento, você pode solicitar:</p>
+                <ul>
+                    <li>A confirmação e o acesso aos dados que temos sobre você.</li>
+                    <li>A correção de informações incompletas ou erradas.</li>
+                    <li>A <strong>exclusão total</strong> da sua conta e histórico dos nossos registros.</li>
                 </ul>
             </section>
 
-            <section class="termos-secao">
+            <section>
                 <h2>6. Cookies</h2>
-                <p>Utilizamos apenas cookies essenciais para o funcionamento do site (manter você logado). Não usamos cookies de rastreamento invasivos de terceiros.</p>
+                <p>Utilizamos apenas cookies essenciais para o funcionamento do site (ex: manter você logado enquanto navega). Não usamos cookies de rastreamento invasivos de terceiros para "perseguir" você com anúncios.</p>
             </section>
 
-            <section class="termos-secao contato-secao">
+            <section>
                 <h2>Fale com nosso DPO</h2>
-                <p>Para exercer seus direitos ou tirar dúvidas, envie um e-mail para: <a href="mailto:privacidade@yelo.com.br">privacidade@yelo.com.br</a></p>
+                <p>Para exercer seus direitos ou tirar dúvidas sobre privacidade, envie um e-mail para nosso Encarregado de Dados: <a href="mailto:privacidade@yelo.com.br" style="color: var(--cor-primaria); font-weight: bold;">privacidade@yelo.com.br</a></p>
             </section>
         </div>
     </main>

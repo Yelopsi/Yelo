@@ -3,69 +3,153 @@
 <head>
     <title>Termos de Uso - Yelo</title>
     <%- include('partials/head') %>
-    <meta name="description" content="Termos de uso e condições da plataforma Yelo.">
+    <meta name="description" content="Termos de uso e condições da plataforma Yelo. Entenda como funciona nosso match e as responsabilidades.">
+    
+    <style>
+        .pagina-legal {
+            background-color: var(--cor-fundo-claro, #fdfaf6);
+            color: var(--cor-texto-principal, #333);
+            line-height: 1.6;
+        }
+
+        .container-legal {
+            width: 90%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding-top: 120px; /* Espaço para o header fixo */
+            padding-bottom: 60px;
+        }
+
+        .cabecalho-legal {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .cabecalho-legal h1 {
+            font-size: 2rem;
+            color: var(--cor-primaria, #2ecc71); /* Ajuste conforme seu CSS global */
+            margin-bottom: 10px;
+        }
+
+        .data-atualizacao {
+            font-size: 0.9rem;
+            color: #666;
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        .conteudo-legal section {
+            margin-bottom: 30px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+
+        .conteudo-legal h2 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: var(--cor-destaque, #2c3e50);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .conteudo-legal p, .conteudo-legal li {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        .conteudo-legal ul {
+            padding-left: 20px;
+        }
+
+        .aviso-crise-box {
+            background-color: #ffebee;
+            border: 1px solid #ffcdd2;
+            color: #b71c1c;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        @media (max-width: 480px) {
+            .container-legal {
+                padding-top: 100px; /* Ajuste fino para mobile */
+            }
+            .cabecalho-legal h1 {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
 </head>
 <body class="pagina-legal">
 
     <%- include('partials/header') %> 
 
-    <main class="container secao-conteudo-pagina" style="padding-top: 140px; padding-bottom: 80px;"> 
-        <header class="cabecalho-texto">
+    <main class="container-legal"> 
+        
+        <div class="aviso-crise-box">
+            ATENÇÃO: Este site não oferece atendimento de emergência. Se você ou alguém estiver em perigo imediato ou risco de suicídio, ligue para 188 (CVV) ou dirija-se ao hospital mais próximo.
+        </div>
+
+        <header class="cabecalho-legal">
             <h1>Termos de Uso</h1>
-            <p class="subtitulo-secao">Última atualização: <span id="data-atualizacao">Dezembro 2025</span></p>
-            <p class="intro-texto">
-                Bem-vindo ao <strong>Yelo</strong>. Estes termos definem as regras da nossa "casa". Ao usar nosso sistema de match, você concorda com eles.
-            </p>
+            <span class="data-atualizacao">Última atualização: Dezembro 2025</span>
+            <p>Bem-vindo ao <strong>Yelo</strong>. Estes termos regem a nossa relação. Ao usar nosso sistema de "Match", você concorda com as regras abaixo.</p>
         </header>
 
         <div class="conteudo-legal">
-            <section class="termos-secao">
-                <h2>1. O que é o Yelo</h2>
-                <p>1.1. O Yelo é uma plataforma tecnológica que atua exclusivamente como <strong>intermediadora</strong> entre pessoas que buscam atendimento psicológico ("Pacientes") e psicólogos credenciados ("Profissionais").</p>
-                <p>1.2. <strong>Não somos uma clínica.</strong> O Yelo não presta serviços de saúde, não realiza diagnósticos e não interfere na conduta técnica dos Profissionais.</p>
+            <section>
+                <h2>1. O que é (e o que não é) o Yelo</h2>
+                <p>1.1. O Yelo é uma plataforma tecnológica de **intermediação**. Nosso objetivo é facilitar o encontro ("Match") entre pessoas que buscam terapia e psicólogos qualificados.</p>
+                <p>1.2. **Não somos uma clínica.** O Yelo não presta serviços de saúde, não emite diagnósticos médicos e não interfere na conduta técnica dos Profissionais.</p>
+                <p>1.3. A responsabilidade pelo tratamento terapêutico é exclusiva do Psicólogo, que possui autonomia profissional garantida por lei e pelo Conselho Federal de Psicologia (CFP).</p>
             </section>
 
-            <section class="termos-secao">
-                <h2>2. O "Match" Terapêutico</h2>
-                <p>Nosso algoritmo sugere profissionais com base nas suas respostas. Embora trabalhemos para a melhor compatibilidade possível, <strong>a escolha final e o resultado da terapia dependem da relação construída entre as partes</strong>.</p>
+            <section>
+                <h2>2. Como funciona o "Match"</h2>
+                <p>2.1. Nosso algoritmo sugere profissionais com base nas respostas fornecidas por você no questionário inicial.</p>
+                <p>2.2. Embora trabalhemos para oferecer a melhor compatibilidade possível, a afinidade terapêutica é subjetiva. O "Match" é uma sugestão tecnológica, não uma garantia de sucesso clínico.</p>
             </section>
 
-            <section class="termos-secao">
+            <section>
                 <h2>3. Pagamentos e Agendamentos</h2>
-                <p>3.1. O agendamento e o pagamento das sessões são combinados e realizados <strong>diretamente entre Paciente e Profissional</strong>. A Yelo não retém valores de consulta.</p>
-                <p>3.2. A Yelo não se responsabiliza por faltas, atrasos ou disputas financeiras referentes às sessões.</p>
+                <p>3.1. **Modelo de Pagamento Direto:** O Yelo atua apenas na conexão. O agendamento das sessões e o pagamento das consultas são combinados e realizados **diretamente entre Paciente e Profissional** (via WhatsApp, Pix, transferência, etc.).</p>
+                <p>3.2. **Isenção Financeira:** O Yelo não processa pagamentos de consultas, não retém comissões sobre sessões e não se responsabiliza por reembolsos, recibos fiscais ou disputas financeiras entre as partes.</p>
             </section>
 
-            <section class="termos-secao">
-                <h2>4. Responsabilidades</h2>
-                <p>4.1. <strong>Do Profissional:</strong> É responsável por manter seu registro no CRP ativo, agir com ética e sigilo profissional.</p>
-                <p>4.2. <strong>Do Paciente:</strong> É responsável por fornecer informações verdadeiras e comparecer às sessões agendadas.</p>
+            <section>
+                <h2>4. Deveres e Responsabilidades</h2>
+                <ul>
+                    <li><strong>Do Profissional:</strong> Deve manter registro ativo no CRP, cadastro no e-Psi (para atendimento online), agir com ética, sigilo absoluto e cumprir os horários agendados.</li>
+                    <li><strong>Do Paciente:</strong> Deve fornecer informações verdadeiras no questionário, respeitar os horários combinados e realizar o pagamento conforme acordado com o profissional.</li>
+                    <li><strong>Do Yelo:</strong> Manter a plataforma no ar, proteger seus dados cadastrais e garantir que apenas psicólogos com CRP válido entrem na base.</li>
+                </ul>
             </section>
 
-            <section class="termos-secao">
-                <h2>5. Uso Aceitável</h2>
-                <p>5.1. Você se compromete a fornecer dados verdadeiros no questionário para garantir a eficácia do "Match".</p>
-                <p>5.2. É proibido utilizar a plataforma para fins ilícitos, spam, fraudes ou assédio aos Profissionais cadastrados.</p>
+            <section>
+                <h2>5. Gratuidade e Assinaturas</h2>
+                <p>5.1. Para o <strong>Paciente</strong>, o uso da ferramenta de busca e Match do Yelo é gratuito.</p>
+                <p>5.2. Para o <strong>Profissional</strong>, o Yelo cobra uma assinatura (SaaS) para manutenção do perfil, visibilidade no algoritmo e acesso às ferramentas administrativas.</p>
             </section>
 
-            <section class="termos-secao">
+            <section>
                 <h2>6. Propriedade Intelectual</h2>
-                <p>Todo o design, marca (Yelo), código-fonte e conteúdo autoral do blog são propriedade exclusiva da plataforma Yelo.</p>
+                <p>A marca Yelo, o design, o código-fonte, o algoritmo de Match e o conteúdo do blog são propriedade exclusiva da plataforma. O uso indevido (cópia, engenharia reversa) é proibido.</p>
             </section>
 
-            <section class="termos-secao">
-                <h2>7. Foro</h2>
-                <p>Fica eleito o foro da comarca de São Paulo/SP para dirimir quaisquer dúvidas oriundas destes termos.</p>
+            <section>
+                <h2>7. Cancelamento e Foro</h2>
+                <p>7.1. Você pode solicitar a exclusão da sua conta e dados a qualquer momento enviando um e-mail para nossa equipe.</p>
+                <p>7.2. Fica eleito o foro da comarca de São Paulo/SP para dirimir quaisquer dúvidas oriundas destes termos, aplicando-se a legislação brasileira.</p>
             </section>
 
-            <section class="termos-secao">
-                <h2>8. Capacidade Civil (Idade)</h2>
-                <p>Para utilizar o Yelo, você deve ter pelo menos <strong>18 anos</strong> ou ser emancipado. O uso por menores de idade deve ser supervisionado ou realizado por seus pais ou responsáveis legais.</p>
-            </section>
-
-            <section class="termos-secao contato-secao">
-                <h2>Dúvidas?</h2>
-                <p>Entre em contato conosco através do e-mail: <a href="mailto:contato@yelo.com.br">contato@yelo.com.br</a></p>
+            <section>
+                <h2>Fale Conosco</h2>
+                <p>Dúvidas sobre estes termos? Entre em contato: <a href="mailto:contato@yelo.com.br" style="color: var(--cor-primaria); font-weight: bold;">contato@yelo.com.br</a></p>
             </section>
         </div>
     </main>
