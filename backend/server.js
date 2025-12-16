@@ -153,78 +153,94 @@ app.get('/admin-setup-secreto', async (req, res) => {
     }
 });
 
-// --- ROTA TEMPORÁRIA PARA CRIAR O ADMIN ---
+// =============================================================
+// ÁREA DO ADMINISTRADOR (ROBUSTA)
+// =============================================================
+
+// 1. ROTA DE INSTALAÇÃO (CRIA TABELA E USUÁRIO NA FORÇA BRUTA)
 app.get('/instalar-admin', async (req, res) => {
     try {
-        // 1. Define a senha que você quer usar
-        const senhaAberta = 'admin123'; 
-        
-        // 2. Criptografa a senha (Obrigatório para o login funcionar)
-        const senhaCriptografada = await bcrypt.hash(senhaAberta, 10);
+        // A) Cria a tabela 'Admins' se ela não existir (SQL Puro para garantir)
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "Admins" (
+                id SERIAL PRIMARY KEY,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                senha VARCHAR(255) NOT NULL,
+                nome VARCHAR(255),
+                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
 
-        // 3. Cria o usuário no banco
-        // IMPORTANTE: Verifique se sua tabela se chama 'Usuario' ou 'User' no models/index.js
-        const novoAdmin = await db.Usuario.create({
-            nome: 'Administrador Geral',
-            email: 'admin@yelo.com',
-            senha: senhaCriptografada, // Salva o hash, não a senha texto puro
-            tipo: 'admin'
+        // B) Criptografa a senha
+        const senhaHash = await bcrypt.hash('admin123', 10);
+
+        // C) Tenta inserir o Admin (Se já existir, não faz nada graças ao ON CONFLICT)
+        // Nota: O 'ON CONFLICT' evita erro se você recarregar a página
+        await db.sequelize.query(`
+            INSERT INTO "Admins" (email, senha, nome, "createdAt", "updatedAt")
+            VALUES (:email, :senha, 'Administrador Geral', NOW(), NOW())
+            ON CONFLICT (email) DO UPDATE 
+            SET senha = :senha; -- Atualiza a senha se o admin já existir
+        `, {
+            replacements: { email: 'admin@yelo.com', senha: senhaHash }
         });
 
-        return res.send(`
-            <h1>Sucesso!</h1>
-            <p>Admin criado no banco de dados.</p>
-            <p><strong>Login:</strong> admin@yelo.com</p>
-            <p><strong>Senha:</strong> admin123</p>
-            <br>
-            <a href="/login">Ir para Login</a>
+        res.send(`
+            <div style="font-family: sans-serif; text-align: center; padding: 50px;">
+                <h1 style="color: #1B4332;">Admin Configurado com Sucesso!</h1>
+                <p>A tabela foi criada e o usuário registrado.</p>
+                <hr>
+                <p><strong>Login:</strong> admin@yelo.com</p>
+                <p><strong>Senha:</strong> admin123</p>
+                <br>
+                <a href="/login" style="background: #1B4332; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Ir para Login</a>
+            </div>
         `);
 
     } catch (error) {
-        console.error(error);
-        // Se der erro de "Validation error", provavelmente o email já existe.
-        return res.status(500).send('Erro ao criar admin (talvez o email já exista?): ' + error.message);
+        console.error('Erro ao instalar admin:', error);
+        res.status(500).send('Erro fatal ao criar admin: ' + error.message);
     }
 });
 
-// --- ROTA DE LOGIN DO ADMIN (VIA BANCO DE DADOS) ---
+// 2. ROTA DE LOGIN DO ADMIN (VERIFICA NA TABELA 'Admins')
 app.post('/api/login-admin-check', async (req, res) => {
     try {
         const { email, senha } = req.body;
 
-        // 1. Busca o usuário no banco (ajuste 'Usuario' se sua tabela tiver outro nome, ex: User, Admin)
-        // Estamos buscando alguém com esse email E que seja do tipo 'admin'
-        const usuario = await db.Usuario.findOne({ 
-            where: { 
-                email: email,
-                tipo: 'admin' // Garante que só admin entra aqui
-            } 
-        });
+        // A) Busca o usuário usando SQL Puro (Mais seguro contra erros de Model)
+        const [results] = await db.sequelize.query(
+            `SELECT * FROM "Admins" WHERE email = :email LIMIT 1`,
+            { replacements: { email: email } }
+        );
 
-        // 2. Se não achou ninguém
-        if (!usuario) {
-            return res.status(401).json({ success: false, message: 'Admin não encontrado.' });
+        const adminUser = results[0];
+
+        // B) Se não achou ninguém
+        if (!adminUser) {
+            return res.status(401).json({ success: false }); // Deixa o front tentar login de paciente
         }
 
-        // 3. Verifica a senha (compara a digitada com a hash do banco)
-        const senhaValida = await bcrypt.compare(senha, usuario.senha);
+        // C) Verifica a senha
+        const senhaValida = await bcrypt.compare(senha, adminUser.senha);
 
         if (!senhaValida) {
-            return res.status(401).json({ success: false, message: 'Senha incorreta.' });
+            return res.status(401).json({ success: false, message: 'Senha de Admin incorreta' });
         }
 
-        // 4. Sucesso! Retorna os dados para o frontend redirecionar
+        // D) Sucesso!
         return res.json({ 
             success: true, 
-            redirect: '/admin', // Sua rota de dashboard
+            redirect: '/admin', 
             type: 'admin',
-            user: { nome: usuario.nome, email: usuario.email },
-            token: 'admin-token-simulado' // Em produção, gere um JWT aqui
+            user: { nome: adminUser.nome }
         });
 
     } catch (error) {
         console.error('Erro no login de admin:', error);
-        return res.status(500).json({ success: false, error: 'Erro interno do servidor.' });
+        // Retorna 401 para não quebrar o fluxo, mas loga o erro
+        return res.status(401).json({ success: false }); 
     }
 });
 
