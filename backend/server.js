@@ -38,6 +38,21 @@ app.use('/assets', express.static(path.join(__dirname, '../assets')));
 // 2. Libera a pasta 'css' (para seus estilos)
 app.use('/css', express.static(path.join(__dirname, '../css')));
 
+// 1. LIBERA A PASTA ADMIN PARA O NAVEGADOR ACESSAR OS ARQUIVOS (CSS, JS, Imagens do Admin)
+app.use('/admin', express.static(path.join(__dirname, '../admin')));
+
+// 2. ROTA DA PÁGINA INICIAL DO ADMIN
+// Quando acessar yelo.onrender.com/admin, entrega o arquivo HTML principal
+app.get('/admin', (req, res) => {
+    // IMPORTANTE: Verifique se o nome do seu arquivo principal na pasta admin é 'index.html' ou 'admin.html'
+    // Estou assumindo que seja 'index.html' ou 'admin.html'. 
+    // Se o seu arquivo principal se chamar "admin.html", use a linha abaixo:
+    
+    res.sendFile(path.join(__dirname, '../admin/admin.html'));
+    
+    // Se der erro de arquivo não encontrado, troque 'admin.html' por 'index.html' acima.
+});
+
 // --- ADICIONE ISTO ---
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../views'));
