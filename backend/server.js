@@ -134,6 +134,18 @@ app.get('/api/admin/exit-surveys', async (req, res) => {
 });
 
 // =============================================================
+// ROTA DE EMERGÊNCIA (Cria o Admin no Banco de Dados)
+// =============================================================
+app.get('/admin-setup-secreto', async (req, res) => {
+    try {
+        await seedTestData(); // Roda a função que cria o Admin e os testes
+        res.send('<h1>Sucesso!</h1><p>O usuário Admin foi criado/atualizado.</p><p>Login: admin@Yelo.com</p><p>Senha: admin123</p><br><a href="/login">Ir para Login</a>');
+    } catch (error) {
+        res.status(500).send('Erro ao criar admin: ' + error.message);
+    }
+});
+
+// =============================================================
 // FRONTEND DINÂMICO (EJS) - ORDEM CORRIGIDA
 // =============================================================
 
