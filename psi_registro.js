@@ -9,26 +9,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- PRÉ-PREENCHIMENTO E MODO ADMIN ---
     const params = new URLSearchParams(window.location.search);
-    
-    // CORREÇÃO: Pega 'nome' OU 'nome-completo' (resolve o problema de vir vazio)
-    const nomeParam = params.get('nome') || params.get('nome-completo');
-    const emailParam = params.get('email');
-    const crpParam = params.get('crp');
     const tokenParam = params.get('token'); 
     const modeParam = params.get('mode'); 
-
-    // --- LIMPEZA DE URL (SEGURANÇA E ESTÉTICA) ---
-    // Remove os dados visíveis da barra de endereço sem recarregar a página
-    if (nomeParam || emailParam || crpParam) {
-        const newUrl = window.location.pathname + (modeParam ? '?mode=' + modeParam : '');
-        window.history.replaceState({}, document.title, newUrl);
-    }
 
     // --- MÁSCARAS DE INPUT ---
     const crpInput = document.getElementById('crp');
     const docInput = document.getElementById('documento');
     const docFeedback = document.getElementById('doc-feedback');
     const emailInput = document.getElementById('email'); 
+
+    // --- NOVO TRECHO (Copie e cole no lugar do antigo) ---
+
+    // 1. Tenta recuperar respostas salvas no navegador (LocalStorage)
+    let storedAnswers = {};
+    try {
+        const rawData = localStorage.getItem('psi_questionario_respostas');
+        if (rawData) storedAnswers = JSON.parse(rawData);
+    } catch (e) { console.warn("Sem dados prévios."); }
+
+    // 2. Define o valor final (Prioridade: URL > LocalStorage > Vazio)
+    const finalNome = params.get('nome') || params.get('nome-completo') || storedAnswers.nome || '';
+    const finalEmail = params.get('email') || storedAnswers.email || '';
+    const finalCrp = params.get('crp') || storedAnswers.crp || '';
+
+    // 3. Aplica nos campos do formulário
+    const nomeInput = document.getElementById('nome-completo');
+    if (nomeInput && finalNome) nomeInput.value = finalNome;
+
+    if (emailInput && finalEmail) emailInput.value = finalEmail;
+
+    if (crpInput && finalCrp) {
+        crpInput.value = finalCrp;
+        // Se usar IMask, atualize o valor interno também
+        if (typeof crpInput.updateValue === 'function') crpInput.updateValue(); 
+    }
+
+    // --- LIMPEZA DE URL (SEGURANÇA E ESTÉTICA) ---
+    // Remove os dados visíveis da barra de endereço sem recarregar a página
+    if (params.get('nome') || params.get('nome-completo') || params.get('email') || params.get('crp')) {
+        const newUrl = window.location.pathname + (modeParam ? '?mode=' + modeParam : '');
+        window.history.replaceState({}, document.title, newUrl);
+    }
 
     if (crpInput && window.IMask) {
         IMask(crpInput, { mask: '00/000000' });
@@ -65,10 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    if (nomeParam) document.getElementById('nome-completo').value = nomeParam;
-    if (emailParam && emailInput) emailInput.value = emailParam;
-    if (crpParam && crpInput) crpInput.value = crpParam;
 
     // --- LÓGICA DO FORMULÁRIO ---
     const formRegistro = document.getElementById('form-registro-psi');
