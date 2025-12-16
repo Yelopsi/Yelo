@@ -9,11 +9,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- PRÉ-PREENCHIMENTO E MODO ADMIN ---
     const params = new URLSearchParams(window.location.search);
-    const nomeParam = params.get('nome');
+    
+    // CORREÇÃO: Pega 'nome' OU 'nome-completo' (resolve o problema de vir vazio)
+    const nomeParam = params.get('nome') || params.get('nome-completo');
     const emailParam = params.get('email');
     const crpParam = params.get('crp');
     const tokenParam = params.get('token'); 
-    const modeParam = params.get('mode'); // Captura se é modo admin
+    const modeParam = params.get('mode'); 
+
+    // --- LIMPEZA DE URL (SEGURANÇA E ESTÉTICA) ---
+    // Remove os dados visíveis da barra de endereço sem recarregar a página
+    if (nomeParam || emailParam || crpParam) {
+        const newUrl = window.location.pathname + (modeParam ? '?mode=' + modeParam : '');
+        window.history.replaceState({}, document.title, newUrl);
+    }
 
     // --- MÁSCARAS DE INPUT ---
     const crpInput = document.getElementById('crp');
