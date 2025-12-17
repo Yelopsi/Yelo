@@ -6,121 +6,139 @@
     <%- include('partials/head') %>
     
     <style>
-    /* --- CONFIGURAÇÃO GERAL --- */
-    .pagina-blog {
-        padding-top: 140px; /* Garante que o menu verde não cubra o título */
-        padding-bottom: 80px;
-        background-color: #fdfaf6;
-        min-height: 100vh;
-    }
+        /* --- ESTRUTURA GERAL --- */
+        .pagina-blog {
+            padding-top: 140px; /* Espaço para o menu não cobrir o título */
+            padding-bottom: 80px;
+            background-color: #fdfaf6;
+            min-height: 100vh;
+        }
 
-    .container-blog {
-        max-width: 1200px; /* Largura maior para ficar elegante */
-        margin: 0 auto;
-        padding: 0 20px;
-    }
+        .container-blog {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
 
-    /* --- CABEÇALHO (HERO) --- */
-    .blog-hero {
-        text-align: center;
-        margin-bottom: 50px;
-    }
-    .blog-hero h1 {
-        font-family: 'New Kansas', serif;
-        font-size: 3.5rem;
-        color: #1B4332;
-        margin: 0 0 10px 0;
-    }
-    .blog-hero p {
-        font-family: 'Lato', sans-serif;
-        font-size: 1.2rem;
-        color: #666;
-        margin: 0;
-    }
+        /* --- CABEÇALHO (HERO) RESTAURADO --- */
+        .blog-hero {
+            text-align: center;
+            margin-bottom: 60px; /* Espaço entre título e o destaque */
+            padding: 20px;
+        }
+        .blog-hero h1 {
+            font-family: 'New Kansas', serif;
+            font-size: 3.5rem;
+            color: #1B4332;
+            margin: 0 0 15px 0;
+        }
+        .blog-hero p {
+            font-family: 'Lato', sans-serif;
+            font-size: 1.25rem; /* Levemente maior para leitura fácil */
+            color: #555;
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
 
-    /* --- POST DESTAQUE (LARGURA TOTAL) --- */
-    .post-destaque {
-        display: flex; /* Força lado a lado */
-        background: #fff;
-        border-radius: 20px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-        margin-bottom: 60px;
-        text-decoration: none;
-        color: inherit;
-        height: 450px; /* Altura fixa para impacto visual */
-        border: 1px solid rgba(0,0,0,0.02);
-    }
-    
-    .destaque-img-wrapper {
-        flex: 1.2; /* Imagem ocupa 60% */
-        height: 100%;
-        overflow: hidden;
-    }
-    .destaque-img-wrapper img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.5s;
-    }
-    .post-destaque:hover .destaque-img-wrapper img { transform: scale(1.03); }
+        /* --- POST DESTAQUE (ESTILO CARTÃO HORIZONTAL) --- */
+        .post-destaque {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr; /* Imagem um pouco maior que o texto */
+            background: #fff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.06); /* Sombra suave profissional */
+            margin-bottom: 80px; /* Separação clara dos posts antigos */
+            text-decoration: none;
+            color: inherit;
+            min-height: 420px;
+            border: 1px solid rgba(0,0,0,0.02);
+            transition: transform 0.3s ease;
+        }
+        .post-destaque:hover { transform: translateY(-4px); }
 
-    .destaque-conteudo {
-        flex: 0.8; /* Texto ocupa 40% */
-        padding: 60px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
+        .destaque-img-wrapper {
+            position: relative;
+            height: 100%;
+            overflow: hidden;
+        }
+        .destaque-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+        .post-destaque:hover .destaque-img-wrapper img { transform: scale(1.03); }
 
-    .tag-destaque {
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        font-weight: bold;
-        color: #1B4332;
-        margin-bottom: 20px;
-        display: block;
-    }
+        .destaque-conteudo {
+            padding: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
 
-    .destaque-conteudo h2 {
-        font-family: 'New Kansas', serif;
-        font-size: 2.5rem;
-        color: #1B4332;
-        margin: 0 0 20px 0;
-        line-height: 1.1;
-    }
+        .tag-destaque {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 800;
+            color: #1B4332;
+            margin-bottom: 20px;
+            display: inline-block;
+            opacity: 0.8;
+        }
 
-    .destaque-conteudo p {
-        font-size: 1.1rem;
-        color: #555;
-        line-height: 1.6;
-        margin-bottom: 30px;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
+        .destaque-conteudo h2 {
+            font-family: 'New Kansas', serif;
+            font-size: 2.2rem;
+            color: #1B4332;
+            margin: 0 0 15px 0;
+            line-height: 1.15;
+        }
 
-    /* --- GRID DE BAIXO (MANTIDO IGUAL) --- */
-    .blog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
-    .post-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: transform 0.3s; height: 100%; display: flex; flex-direction: column; }
-    .post-card:hover { transform: translateY(-5px); }
-    .post-card img { width: 100%; height: 220px; object-fit: cover; }
-    .post-card-body { padding: 25px; flex: 1; display: flex; flex-direction: column; }
-    .post-card-body h3 { font-family: 'New Kansas', serif; font-size: 1.4rem; color: #1B4332; margin: 10px 0; line-height: 1.3; }
-    .post-card-body p { font-size: 0.95rem; color: #666; line-height: 1.5; margin-bottom: 20px; flex: 1; }
-    .post-card-footer { border-top: 1px solid #eee; padding-top: 15px; display: flex; align-items: center; gap: 10px; margin-top: auto; }
-    .post-card-footer img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
-    .post-card-footer span { font-size: 0.85rem; color: #555; font-weight: 600; }
+        .destaque-conteudo p {
+            font-size: 1.05rem;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            display: -webkit-box;
+            -webkit-line-clamp: 4; /* Limita a 4 linhas */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
 
-    /* MOBILE */
-    @media (max-width: 900px) {
-        .post-destaque { flex-direction: column; height: auto; }
-        .destaque-img-wrapper { height: 250px; flex: none; }
-        .destaque-conteudo { padding: 30px; flex: none; }
-        .destaque-conteudo h2 { font-size: 2rem; }
-    }
+        .autor-destaque {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            margin-top: auto; /* Empurra para o final do card */
+        }
+        .autor-destaque img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+        .autor-destaque span { font-size: 0.9rem; font-weight: 600; color: #333; }
+
+        /* --- GRID INFERIOR (MANTIDO) --- */
+        .blog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
+        .post-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: transform 0.3s; height: 100%; display: flex; flex-direction: column; }
+        .post-card:hover { transform: translateY(-5px); }
+        .post-card img { width: 100%; height: 220px; object-fit: cover; }
+        .post-card-body { padding: 25px; flex: 1; display: flex; flex-direction: column; }
+        .post-card-body h3 { font-family: 'New Kansas', serif; font-size: 1.4rem; color: #1B4332; margin: 10px 0; line-height: 1.3; }
+        .post-card-body p { font-size: 0.95rem; color: #666; line-height: 1.5; margin-bottom: 20px; flex: 1; }
+        .post-card-footer { border-top: 1px solid #eee; padding-top: 15px; display: flex; align-items: center; gap: 10px; margin-top: auto; }
+        .post-card-footer img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+        .post-card-footer span { font-size: 0.85rem; color: #555; font-weight: 600; }
+
+        /* MOBILE */
+        @media (max-width: 900px) {
+            .blog-hero h1 { font-size: 2.8rem; }
+            .post-destaque { grid-template-columns: 1fr; height: auto; min-height: auto; }
+            .destaque-img-wrapper { height: 280px; order: -1; }
+            .destaque-conteudo { padding: 30px; }
+            .destaque-conteudo h2 { font-size: 1.8rem; }
+        }
     </style>
 </head>
 <body>
@@ -133,7 +151,7 @@
         
         <header class="blog-hero">
             <h1>Blog Yelo</h1>
-            <p>Reflexões e ferramentas para sua jornada de autoconhecimento.</p>
+            <p>Reflexões e ferramentas para sua jornada de autoconhecimento e bem-estar.</p>
         </header>
 
         <% if (posts && posts.length > 0) { %>
@@ -143,12 +161,13 @@
                 <div class="destaque-img-wrapper">
                     <img src="<%= destaque.imagem_url || 'https://images.pexels.com/photos/4101143/pexels-photo-4101143.jpeg?auto=compress&cs=tinysrgb&w=1260' %>" alt="<%= destaque.titulo %>">
                 </div>
+                
                 <div class="destaque-conteudo">
                     <span class="tag-destaque">MAIS RECENTE</span>
                     <h2><%= destaque.titulo %></h2>
                     <p><%= destaque.conteudo.substring(0, 180) %>...</p>
                     
-                    <div class="post-card-footer" style="border:none; padding:0;">
+                    <div class="autor-destaque">
                         <img src="<%= destaque.autor && destaque.autor.fotoUrl ? formatImageUrl(destaque.autor.fotoUrl) : 'https://placehold.co/40x40' %>" alt="Autor">
                         <span>Psi. <%= destaque.autor ? destaque.autor.nome.split(' ')[0] : 'Yelo' %></span>
                     </div>
