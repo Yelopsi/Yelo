@@ -187,6 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 else if (url.includes('comunidade')) inicializarComunidade(); // Mantém o antigo Q&A
                 else if (url.includes('caixa_de_entrada')) inicializarCaixaEntrada();
                 else if (url.includes('psi_hub')) inicializarHubComunidade(); 
+                else if (url.includes('psi_blog')) inicializarBlog();
             })
             .catch(e => mainContent.innerHTML = `<p>Erro ao carregar: ${e}</p>`);
     }
@@ -1528,4 +1529,172 @@ function setupCepSearch() {
             }
         }
     });
+}
+
+// --- LÓGICA DO BLOG (MEUS ARTIGOS) ---
+function inicializarBlog() {
+    const viewLista = document.getElementById('view-lista-artigos');
+    const viewForm = document.getElementById('view-form-artigo');
+    const containerLista = document.getElementById('lista-artigos-render');
+    const form = document.getElementById('form-blog');
+    
+    if (!viewLista || !viewForm) return;
+
+    // Navegação Interna (Lista <-> Form)
+    const toggleView = (showForm) => {
+        if (showForm) {
+            viewLista.style.display = 'none';
+            viewForm.style.display = 'block';
+        } else {
+            viewForm.style.display = 'none';
+            viewLista.style.display = 'block';
+            limparFormulario();
+        }
+    };
+
+    const btnNovo = document.getElementById('btn-novo-artigo');
+    if(btnNovo) btnNovo.onclick = () => {
+        document.getElementById('form-titulo-acao').textContent = "Novo Artigo";
+        toggleView(true);
+    };
+    
+    const btnVoltar = document.getElementById('btn-voltar-lista');
+    if(btnVoltar) btnVoltar.onclick = () => toggleView(false);
+
+    const btnCancelar = document.getElementById('btn-cancelar-artigo');
+    if(btnCancelar) btnCancelar.onclick = () => toggleView(false);
+
+    function limparFormulario() {
+        form.reset();
+        document.getElementById('blog-id').value = '';
+    }
+
+    // 1. CARREGAR ARTIGOS
+    async function carregarArtigos() {
+        containerLista.innerHTML = '<div style="text-align:center; padding:20px;">Carregando...</div>';
+        try {
+            const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/posts`);
+            if (res.ok) {
+                const posts = await res.json();
+                renderizarLista(posts);
+            } else {
+                // Se der 404 é porque a rota ainda não existe no backend, mostramos vazio
+                renderizarLista([]); 
+            }
+        } catch (error) {
+            console.warn("Backend do Blog ainda não respondeu:", error);
+            // Mostra lista vazia se der erro de conexão
+            renderizarLista([]);
+        }
+    }
+
+    function renderizarLista(posts) {
+        containerLista.innerHTML = '';
+        if (!posts || posts.length === 0) {
+            containerLista.innerHTML = `
+                <div style="text-align:center; padding:40px; color:#666;">
+                    <p style="font-size:3rem; margin-bottom:10px;">📝</p>
+                    <p>Você ainda não escreveu nenhum artigo.</p>
+                    <p>Clique em <strong>+ Escrever Novo</strong> para começar.</p>
+                </div>`;
+            return;
+        }
+
+        posts.forEach(post => {
+            const div = document.createElement('div');
+            div.className = 'artigo-item';
+            
+            const dataStr = post.created_at || post.createdAt || new Date();
+            const dataF = new Date(dataStr).toLocaleDateString('pt-BR');
+
+            div.innerHTML = `
+                <div>
+                    <strong style="font-size:1.1rem; color:#1B4332;">${post.titulo}</strong>
+                    <div style="font-size:0.8rem; color:#666; margin-top:4px;">Publicado em: ${dataF}</div>
+                </div>
+                <div class="artigo-acoes" style="display:flex; gap:10px;">
+                    <button class="btn-editar" style="background:none; border:1px solid #ddd; padding:5px 10px; border-radius:4px; cursor:pointer;">✏️ Editar</button>
+                    <button class="btn-excluir" style="background:none; border:1px solid #ffcccc; color:red; padding:5px 10px; border-radius:4px; cursor:pointer;">🗑️</button>
+                </div>
+            `;
+
+            // Ação Editar
+            div.querySelector('.btn-editar').onclick = () => {
+                carregarParaEdicao(post);
+            };
+
+            // Ação Excluir
+            div.querySelector('.btn-excluir').onclick = () => {
+                if(confirm('Tem certeza que deseja apagar este artigo?')) {
+                    deletarArtigo(post.id);
+                }
+            };
+
+            containerLista.appendChild(div);
+        });
+    }
+
+    async function deletarArtigo(id) {
+        try {
+            await apiFetch(`${API_BASE_URL}/api/psychologists/me/posts/${id}`, { method: 'DELETE' });
+            showToast('Artigo excluído.', 'success');
+            carregarArtigos();
+        } catch (e) {
+            showToast('Erro ao excluir: ' + e.message, 'error');
+        }
+    }
+
+    function carregarParaEdicao(post) {
+        document.getElementById('form-titulo-acao').textContent = "Editar Artigo";
+        document.getElementById('blog-id').value = post.id;
+        document.getElementById('blog-titulo').value = post.titulo;
+        document.getElementById('blog-conteudo').value = post.conteudo || '';
+        document.getElementById('blog-imagem').value = post.imagem_url || '';
+        toggleView(true);
+    }
+
+    // 2. SALVAR (CRIAR OU EDITAR)
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btn-salvar-artigo');
+        const originalText = btn.textContent;
+        btn.textContent = "Salvando...";
+        btn.disabled = true;
+
+        const id = document.getElementById('blog-id').value;
+        const method = id ? 'PUT' : 'POST';
+        const url = id 
+            ? `${API_BASE_URL}/api/psychologists/me/posts/${id}`
+            : `${API_BASE_URL}/api/psychologists/me/posts`;
+        
+        const payload = {
+            titulo: document.getElementById('blog-titulo').value,
+            conteudo: document.getElementById('blog-conteudo').value,
+            imagem_url: document.getElementById('blog-imagem').value
+        };
+
+        try {
+            const res = await apiFetch(url, {
+                method: method,
+                body: JSON.stringify(payload)
+            });
+            
+            if(res.ok) {
+                showToast('Artigo salvo com sucesso!', 'success');
+                toggleView(false);
+                carregarArtigos();
+            } else {
+                throw new Error("Erro ao salvar");
+            }
+        } catch (error) {
+            console.error(error);
+            showToast('Erro ao salvar. Verifique se o Backend foi atualizado.', 'error');
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    };
+
+    // Inicializa carregando a lista
+    carregarArtigos();
 }

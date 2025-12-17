@@ -26,6 +26,7 @@ const qnaRoutes = require('./routes/qnaRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const supportRoutes = require('./routes/supportRoutes');
 const adminSupportRoutes = require('./routes/adminSupportRoutes');
+const blogRoutes = require('./routes/blogRoutes');
 
 // Controllers
 const demandController = require('./controllers/demandController');
@@ -160,6 +161,10 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/qna', qnaRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/support', supportRoutes);
+
+// ADICIONE ESTA LINHA:
+// Nota: O frontend chama '/api/psychologists/me/posts', então montamos assim:
+app.use('/api/psychologists/me/posts', blogRoutes);
 
 // Rotas Específicas do Admin
 app.get('/api/admin/feedbacks', demandController.getRatings);
