@@ -9,15 +9,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function initializeAndProtect() {
         const token = localStorage.getItem('Yelo_token');
-        if (!token) { logout(); return; }
+        
+        // Se não tiver token nenhum, aí sim redireciona
+        if (!token) { 
+            console.log("Sem token, redirecionando...");
+            logout(); 
+            return; 
+        }
 
         try {
-            // --- A ALTERAÇÃO É NESTA LINHA ABAIXO (Adicionamos ${API_BASE_URL}) ---
+            console.log("Tentando validar token em: " + `${API_BASE_URL}/api/admin/me`);
+            
             const response = await fetch(`${API_BASE_URL}/api/admin/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            if (!response.ok) throw new Error('Token inválido');
+            if (!response.ok) {
+                // SE DER ERRO, VAMOS VER O QUE É EM VEZ DE SAIR
+                const textoErro = await response.text();
+                console.error("Erro do servidor:", textoErro);
+                throw new Error(`Servidor respondeu com erro ${response.status}: ${textoErro}`);
+            }
 
             const admin = await response.json();
             window.adminId = admin.id;
@@ -29,8 +41,12 @@ document.addEventListener('DOMContentLoaded', function() {
             updateWelcomeMessage();
 
         } catch (error) {
-            console.error("Auth Error:", error);
-            logout();
+            // --- MUDANÇA IMPORTANTE: ALERTA VISUAL ---
+            console.error("Auth Error Detalhado:", error);
+            alert("Erro de Autenticação no Painel:\n" + error.message + "\n\nVerifique o console (F12) para mais detalhes.");
+            
+            // Comentei o logout para você não entrar em loop e conseguir ler o erro
+            // logout(); 
         }
     }
 
