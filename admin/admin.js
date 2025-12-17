@@ -10,43 +10,34 @@ document.addEventListener('DOMContentLoaded', function() {
     async function initializeAndProtect() {
         const token = localStorage.getItem('Yelo_token');
         
-        // Se não tiver token nenhum, aí sim redireciona
+        // Se não tiver token, manda pro login unificado imediatamente
         if (!token) { 
-            console.log("Sem token, redirecionando...");
             logout(); 
             return; 
         }
 
         try {
-            console.log("Tentando validar token em: " + `${API_BASE_URL}/api/admin/me`);
-            
+            // Verifica se o token é válido no backend
             const response = await fetch(`${API_BASE_URL}/api/admin/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            if (!response.ok) {
-                // SE DER ERRO, VAMOS VER O QUE É EM VEZ DE SAIR
-                const textoErro = await response.text();
-                console.error("Erro do servidor:", textoErro);
-                throw new Error(`Servidor respondeu com erro ${response.status}: ${textoErro}`);
-            }
+            if (!response.ok) throw new Error('Sessão inválida ou expirada');
 
             const admin = await response.json();
             window.adminId = admin.id;
             
+            // Atualiza o nome no menu lateral
             const adminNameEl = document.querySelector('.nome-admin');
             if (adminNameEl) adminNameEl.textContent = admin.nome;
 
+            // Inicia o restante do painel
             setupPageNavigation();
             updateWelcomeMessage();
 
         } catch (error) {
-            // --- MUDANÇA IMPORTANTE: ALERTA VISUAL ---
-            console.error("Auth Error Detalhado:", error);
-            alert("Erro de Autenticação no Painel:\n" + error.message + "\n\nVerifique o console (F12) para mais detalhes.");
-            
-            // Comentei o logout para você não entrar em loop e conseguir ler o erro
-            // logout(); 
+            console.error("Erro de autenticação:", error);
+            logout(); // Segurança: Se der erro, desloga para evitar estado inconsistente
         }
     }
 
