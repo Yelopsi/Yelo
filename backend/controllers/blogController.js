@@ -147,5 +147,22 @@ module.exports = {
             console.error("Erro ao abrir post:", error);
             res.redirect('/blog');
         }
+    },
+
+    // --- NOVA FUNÇÃO: DAR LIKE ---
+    curtirPost: async (req, res) => {
+        try {
+            const { id } = req.params;
+            // Incrementa 1 no contador de curtidas deste post
+            await Post.increment('curtidas', { where: { id: id } });
+            
+            // Busca o valor atualizado para devolver pro site
+            const postAtualizado = await Post.findByPk(id, { attributes: ['curtidas'] });
+            
+            res.json({ success: true, curtidas: postAtualizado.curtidas });
+        } catch (error) {
+            console.error("Erro ao dar like:", error);
+            res.status(500).json({ error: "Erro ao processar like." });
+        }
     }
 };

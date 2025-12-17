@@ -127,6 +127,15 @@ app.get('/api/fix-status-completed', async (req, res) => {
     }
 });
 
+// Rota para criar a coluna CURTIDAS na tabela posts
+app.get('/api/fix-add-likes-column', async (req, res) => {
+    try {
+        await db.sequelize.query('ALTER TABLE posts ADD COLUMN IF NOT EXISTS curtidas INTEGER DEFAULT 0;');
+        res.send("Sucesso! Coluna 'curtidas' criada no banco de dados.");
+    } catch (error) {
+        res.status(500).send("Erro ao criar coluna: " + error.message);
+    }
+});
 
 // =============================================================
 // ROTAS DA APLICAÇÃO
@@ -303,6 +312,8 @@ app.get('/', (req, res) => {
 // Rotas Públicas do Blog
 app.get('/blog', blogController.exibirBlogPublico);
 app.get('/blog/post/:id', blogController.exibirPostUnico);
+// Rota para dar Like (Incrementa +1)
+app.post('/blog/post/:id/like', blogController.curtirPost);
 
 // 2º: DEPOIS configure os arquivos estáticos.
 // Se não for a Home, ele procura CSS, JS ou imagens na pasta raiz.
