@@ -30,6 +30,7 @@ const blogRoutes = require('./routes/blogRoutes');
 
 // Controllers
 const demandController = require('./controllers/demandController');
+const blogController = require('./controllers/blogController');
 const seedTestData = require('./controllers/seed_test_data');
 
 const app = express();
@@ -298,6 +299,10 @@ app.post('/api/login-admin-check', async (req, res) => {
 app.get('/', (req, res) => {
     res.render('index');
 });
+
+// --- ROTA PÚBLICA DO BLOG (NOVA) ---
+// Sobrescreve o comportamento padrão para carregar dados do banco
+app.get('/blog', blogController.exibirBlogPublico);
 
 // 2º: DEPOIS configure os arquivos estáticos.
 // Se não for a Home, ele procura CSS, JS ou imagens na pasta raiz.
