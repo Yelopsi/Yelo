@@ -1531,20 +1531,31 @@ function setupCepSearch() {
     });
 }
 
-// --- LÓGICA DO BLOG (MEUS ARTIGOS) ---
+// --- LÓGICA DO BLOG (MEUS ARTIGOS) - VERSÃO ROBUSTA COM DEBUG ---
 function inicializarBlog() {
+    console.log("Iniciando lógica do Blog...");
+
+    // Tenta achar os elementos cruciais
     const viewLista = document.getElementById('view-lista-artigos');
     const viewForm = document.getElementById('view-form-artigo');
     const containerLista = document.getElementById('lista-artigos-render');
     const form = document.getElementById('form-blog');
+    const btnSalvar = document.getElementById('btn-salvar-artigo');
     
-    if (!viewLista || !viewForm) return;
+    // Verificação de segurança: se a página não carregou direito, para tudo.
+    if (!viewLista || !viewForm || !form || !btnSalvar) {
+        console.error("ERRO CRÍTICO: Elementos do blog não encontrados no HTML.");
+        showToast("Erro ao carregar componentes da página. Atualize (F5).", "error");
+        return;
+    }
 
-    // Navegação Interna (Lista <-> Form)
+    // --- Navegação ---
     const toggleView = (showForm) => {
         if (showForm) {
             viewLista.style.display = 'none';
             viewForm.style.display = 'block';
+            // Foca no título para facilitar
+            setTimeout(() => document.getElementById('blog-titulo').focus(), 100);
         } else {
             viewForm.style.display = 'none';
             viewLista.style.display = 'block';
@@ -1552,39 +1563,54 @@ function inicializarBlog() {
         }
     };
 
-    const btnNovo = document.getElementById('btn-novo-artigo');
-    if(btnNovo) btnNovo.onclick = () => {
+    // --- Listeners dos Botões de Navegação ---
+    const setupBtn = (id, action) => {
+        const btn = document.getElementById(id);
+        if(btn) btn.onclick = action;
+    };
+    setupBtn('btn-novo-artigo', () => {
         document.getElementById('form-titulo-acao').textContent = "Novo Artigo";
         toggleView(true);
-    };
-    
-    const btnVoltar = document.getElementById('btn-voltar-lista');
-    if(btnVoltar) btnVoltar.onclick = () => toggleView(false);
-
-    const btnCancelar = document.getElementById('btn-cancelar-artigo');
-    if(btnCancelar) btnCancelar.onclick = () => toggleView(false);
+    });
+    setupBtn('btn-voltar-lista', () => toggleView(false));
+    setupBtn('btn-cancelar-artigo', () => toggleView(false));
 
     function limparFormulario() {
         form.reset();
         document.getElementById('blog-id').value = '';
     }
 
-    // 1. CARREGAR ARTIGOS
+
+    // --- 1. FUNÇÃO DE CARREGAR (GET) ---
     async function carregarArtigos() {
-        containerLista.innerHTML = '<div style="text-align:center; padding:20px;">Carregando...</div>';
+        console.log("Tentando carregar artigos do servidor...");
+        containerLista.innerHTML = '<div style="text-align:center; padding:40px; color:#666;"><span style="font-size:2rem;">⏳</span><br>Carregando seus artigos...</div>';
+        
         try {
+            // Verifica se API_BASE_URL existe
+            if (typeof API_BASE_URL === 'undefined') throw new Error("API_BASE_URL não está definida no JS global.");
+
             const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/posts`);
+            console.log("Resposta do servidor (Carregar):", res.status);
+
             if (res.ok) {
                 const posts = await res.json();
                 renderizarLista(posts);
-            } else {
-                // Se der 404 é porque a rota ainda não existe no backend, mostramos vazio
+            } else if (res.status === 404) {
+                 // Se for 404, pode ser que a rota não exista ou o psi não tenha posts ainda.
+                console.warn("Rota 404 ou nenhum post encontrado.");
                 renderizarLista([]); 
+            } else {
+                throw new Error(`Erro no servidor: ${res.status}`);
             }
         } catch (error) {
-            console.warn("Backend do Blog ainda não respondeu:", error);
-            // Mostra lista vazia se der erro de conexão
-            renderizarLista([]);
+            console.error("ERRO AO CARREGAR ARTIGOS:", error);
+            containerLista.innerHTML = `
+                <div style="text-align:center; padding:30px; color:#d32f2f; background:#fff0f0; border-radius:8px;">
+                    <p><strong>Não foi possível carregar seus artigos.</strong></p>
+                    <p style="font-size:0.9rem;">Verifique sua conexão ou se o servidor (Backend) está rodando.</p>
+                    <p style="font-size:0.8rem; color:#666;">Erro: ${error.message}</p>
+                </div>`;
         }
     }
 
@@ -1592,10 +1618,11 @@ function inicializarBlog() {
         containerLista.innerHTML = '';
         if (!posts || posts.length === 0) {
             containerLista.innerHTML = `
-                <div style="text-align:center; padding:40px; color:#666;">
+                <div style="text-align:center; padding:50px 20px; color:#666; background:#f9f9f9; border-radius:12px;">
                     <p style="font-size:3rem; margin-bottom:10px;">📝</p>
-                    <p>Você ainda não escreveu nenhum artigo.</p>
-                    <p>Clique em <strong>+ Escrever Novo</strong> para começar.</p>
+                    <h3 style="color:#1B4332;">Você ainda não tem artigos.</h3>
+                    <p>Escrever é a melhor forma de demonstrar autoridade.</p>
+                    <p>Clique em <strong>+ Escrever Novo</strong> acima para começar!</p>
                 </div>`;
             return;
         }
@@ -1605,46 +1632,46 @@ function inicializarBlog() {
             div.className = 'artigo-item';
             
             const dataStr = post.created_at || post.createdAt || new Date();
-            const dataF = new Date(dataStr).toLocaleDateString('pt-BR');
+            const dataF = new Date(dataStr).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
 
             div.innerHTML = `
-                <div>
-                    <strong style="font-size:1.1rem; color:#1B4332;">${post.titulo}</strong>
-                    <div style="font-size:0.8rem; color:#666; margin-top:4px;">Publicado em: ${dataF}</div>
+                <div style="flex: 1;">
+                    <strong style="font-size:1.2rem; color:#1B4332; display:block; margin-bottom:5px;">${post.titulo}</strong>
+                    <div style="font-size:0.85rem; color:#666;">📅 Publicado em: ${dataF}</div>
                 </div>
-                <div class="artigo-acoes" style="display:flex; gap:10px;">
-                    <button class="btn-editar" style="background:none; border:1px solid #ddd; padding:5px 10px; border-radius:4px; cursor:pointer;">✏️ Editar</button>
-                    <button class="btn-excluir" style="background:none; border:1px solid #ffcccc; color:red; padding:5px 10px; border-radius:4px; cursor:pointer;">🗑️</button>
+                <div class="btn-acoes-grupo">
+                    <button class="btn-acao btn-editar">✏️ Editar</button>
+                    <button class="btn-acao btn-excluir">🗑️ Excluir</button>
                 </div>
             `;
 
-            // Ação Editar
-            div.querySelector('.btn-editar').onclick = () => {
-                carregarParaEdicao(post);
-            };
-
-            // Ação Excluir
+            div.querySelector('.btn-editar').onclick = () => carregarParaEdicao(post);
             div.querySelector('.btn-excluir').onclick = () => {
-                if(confirm('Tem certeza que deseja apagar este artigo?')) {
+                if(confirm(`Tem certeza que deseja apagar o artigo "${post.titulo}"? Essa ação não pode ser desfeita.`)) {
                     deletarArtigo(post.id);
                 }
             };
-
             containerLista.appendChild(div);
         });
     }
 
     async function deletarArtigo(id) {
         try {
-            await apiFetch(`${API_BASE_URL}/api/psychologists/me/posts/${id}`, { method: 'DELETE' });
-            showToast('Artigo excluído.', 'success');
-            carregarArtigos();
+            const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/posts/${id}`, { method: 'DELETE' });
+            if(res.ok) {
+                showToast('Artigo excluído com sucesso.', 'success');
+                carregarArtigos();
+            } else {
+                throw new Error("Falha ao excluir");
+            }
         } catch (e) {
-            showToast('Erro ao excluir: ' + e.message, 'error');
+            console.error(e);
+            showToast('Erro ao excluir artigo.', 'error');
         }
     }
 
     function carregarParaEdicao(post) {
+        console.log("Carregando para edição:", post.id);
         document.getElementById('form-titulo-acao').textContent = "Editar Artigo";
         document.getElementById('blog-id').value = post.id;
         document.getElementById('blog-titulo').value = post.titulo;
@@ -1653,48 +1680,63 @@ function inicializarBlog() {
         toggleView(true);
     }
 
-    // 2. SALVAR (CRIAR OU EDITAR)
-    form.onsubmit = async (e) => {
-        e.preventDefault();
+    // --- 2. FUNÇÃO DE SALVAR (IMPORTANTE: Corrigido o evento) ---
+    // Removemos qualquer listener anterior para não duplicar
+    const novoForm = form.cloneNode(true);
+    form.parentNode.replaceChild(novoForm, form);
+    
+    novoForm.addEventListener('submit', async function(e) {
+        e.preventDefault(); // IMPEDE O RECARREGAMENTO DA PÁGINA
+        console.log("Botão PUBLICAR clicado! Iniciando envio...");
+
         const btn = document.getElementById('btn-salvar-artigo');
-        const originalText = btn.textContent;
-        btn.textContent = "Salvando...";
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "⏳ Salvando...";
         btn.disabled = true;
 
-        const id = document.getElementById('blog-id').value;
-        const method = id ? 'PUT' : 'POST';
-        const url = id 
-            ? `${API_BASE_URL}/api/psychologists/me/posts/${id}`
-            : `${API_BASE_URL}/api/psychologists/me/posts`;
-        
-        const payload = {
-            titulo: document.getElementById('blog-titulo').value,
-            conteudo: document.getElementById('blog-conteudo').value,
-            imagem_url: document.getElementById('blog-imagem').value
-        };
-
         try {
+            // Verifica API_BASE_URL novamente
+            if (typeof API_BASE_URL === 'undefined') throw new Error("API_BASE_URL indefinida.");
+
+            const id = document.getElementById('blog-id').value;
+            const method = id ? 'PUT' : 'POST';
+            const url = id 
+                ? `${API_BASE_URL}/api/psychologists/me/posts/${id}`
+                : `${API_BASE_URL}/api/psychologists/me/posts`;
+            
+            const payload = {
+                titulo: document.getElementById('blog-titulo').value,
+                conteudo: document.getElementById('blog-conteudo').value,
+                imagem_url: document.getElementById('blog-imagem').value
+            };
+            
+            console.log("Enviando dados para:", url, "Método:", method, "Payload:", payload);
+
             const res = await apiFetch(url, {
                 method: method,
+                headers: { 'Content-Type': 'application/json' }, // Garante que o back entenda que é JSON
                 body: JSON.stringify(payload)
             });
             
+            console.log("Resposta do servidor (Salvar):", res.status);
+
             if(res.ok) {
-                showToast('Artigo salvo com sucesso!', 'success');
+                showToast(id ? 'Artigo atualizado!' : 'Artigo publicado com sucesso!', 'success');
                 toggleView(false);
                 carregarArtigos();
             } else {
-                throw new Error("Erro ao salvar");
+                const erroData = await res.json();
+                throw new Error(erroData.error || "Erro desconhecido ao salvar no servidor.");
             }
         } catch (error) {
-            console.error(error);
-            showToast('Erro ao salvar. Verifique se o Backend foi atualizado.', 'error');
+            console.error("ERRO AO SALVAR:", error);
+            showToast('Não foi possível salvar: ' + error.message, 'error');
         } finally {
-            btn.textContent = originalText;
+            btn.innerHTML = originalText;
             btn.disabled = false;
         }
-    };
+    });
 
-    // Inicializa carregando a lista
+    // Inicializa carregando a lista assim que abre a tela
     carregarArtigos();
 }

@@ -1,6 +1,9 @@
-<div class="page-header">
-    <h2>Meus Artigos</h2>
-    <p>Compartilhe conhecimento e atraia mais pacientes.</p>
+<div class="comunidade-header">
+    <div>
+        <h2>Meus Artigos</h2>
+        <p>Compartilhe sua expertise. Artigos aumentam sua visibilidade e autoridade na plataforma.</p>
+    </div>
+    <img src="../assets/images/blog-header.svg" alt="Ilustração" onerror="this.style.display='none'">
 </div>
 
 <div id="blog-container" style="max-width: 800px; margin: 0 auto; padding-bottom: 80px;">
@@ -63,16 +66,49 @@
 </div>
 
 <style>
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .artigo-item {
-        background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 15px;
-        display: flex; justify-content: space-between; align-items: center;
-        transition: box-shadow 0.2s;
+    /* 1. Estilo do Banner Verde (NOVO) */
+    .comunidade-header {
+        background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 4px 15px rgba(27, 67, 50, 0.15);
+        margin-bottom: 30px; /* Espaço para o conteúdo abaixo */
     }
-    .artigo-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .comunidade-header h2 { margin: 0 0 10px 0; font-family: 'New Kansas', serif; font-size: 1.8rem; }
+    .comunidade-header p { margin: 0; opacity: 0.9; font-size: 1.1rem; max-width: 600px; }
+    .comunidade-header img { height: 120px; width: auto; }
+
+    /* 2. Animação e Lista (MANTIDO) */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     
-    @media (max-width: 600px) {
-        .artigo-item { flex-direction: column; align-items: flex-start; gap: 10px; }
-        .artigo-acoes { width: 100%; display: flex; justify-content: flex-end; }
+    .artigo-item {
+        background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 20px;
+        display: flex; justify-content: space-between; align-items: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    }
+    .artigo-item:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.08); border-color: #ccebe0; transform: translateY(-2px); }
+    
+    .btn-acoes-grupo { display: flex; gap: 10px; }
+    .btn-acao { border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: background 0.2s; }
+    
+    .btn-editar { background: #e9f5f0; color: #1B4332; }
+    .btn-editar:hover { background: #d0eadd; }
+    
+    .btn-excluir { background: #fff0f0; color: #d32f2f; }
+    .btn-excluir:hover { background: #ffe0e0; }
+
+    /* 3. Responsividade (Mobile) */
+    @media (max-width: 768px) {
+        .comunidade-header { flex-direction: column; text-align: center; padding: 25px; }
+        .comunidade-header img { margin-top: 20px; height: 100px; }
+        
+        .artigo-item { flex-direction: column; align-items: flex-start; gap: 15px; }
+        .btn-acoes-grupo { width: 100%; justify-content: space-between; border-top: 1px solid #eee; padding-top: 15px; }
+        .btn-acao { flex: 1; padding: 12px; }
     }
 </style>
