@@ -9,7 +9,8 @@ module.exports = {
             // O ID vem do token (req.userId foi definido na rota)
             const posts = await Post.findAll({
                 where: { psychologist_id: req.userId },
-                order: [['createdAt', 'DESC']]
+                // CORREÇÃO AQUI: Mudamos de 'createdAt' para 'created_at'
+                order: [['created_at', 'DESC']] 
             });
             res.json(posts);
         } catch (error) {
