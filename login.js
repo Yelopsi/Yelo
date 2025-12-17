@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Mensagem de sucesso
                     if (mensagemEl) {
-                        mensagemEl.textContent = `Bem-vindo(a), ${user ? user.nome : 'Usuário'}!`;
+                        mensagemEl.textContent = `Bem-vindo(a), ${user ? user.nome : 'Psi'}!`;
                         mensagemEl.className = 'mensagem-sucesso';
                         mensagemEl.style.display = 'block';
                     }
