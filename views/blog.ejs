@@ -1,102 +1,109 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <title>Blog - Yelo</title>
+    <title>Blog | Yelo</title>
+    <meta name="description" content="Reflexões, psicoeducação e conteúdos sobre saúde mental.">
     <%- include('partials/head') %>
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <%- include('partials/header') %>
+<%- include('partials/header') %>
 
-    <main style="padding-top: 120px; padding-bottom: 80px; background-color: #fdfaf6;">
-        <section>
-            <div class="container-blog">
-                
-                <div class="titulo-secao" style="margin-bottom: 40px; text-align: center;">
-                    <h1 style="font-family: 'New Kansas', serif; font-size: 3rem; color: #1B4332;">Blog Yelo</h1>
-                    <p class="subtitulo-secao">Reflexões e ferramentas para sua jornada.</p>
+<main class="pagina-blog ruido">
+
+    <!-- HERO -->
+    <section class="blog-hero">
+        <h1>Blog Yelo</h1>
+        <p>Reflexões clínicas, sem autoajuda rasa.</p>
+    </section>
+
+    <section class="blog-container">
+
+        <% if (posts && posts.length > 0) { %>
+        <% const destaque = posts[0]; %>
+
+        <!-- POST DESTAQUE -->
+        <a href="/blog/post/<%= destaque.id %>" class="post-destaque">
+            <img
+                src="<%= destaque.imagem_url || 'https://images.pexels.com/photos/4101143/pexels-photo-4101143.jpeg' %>"
+                alt="<%= destaque.titulo %>"
+            />
+
+            <div class="post-destaque-overlay"></div>
+
+            <div class="post-destaque-conteudo">
+                <span class="tag-destaque">Mais recente</span>
+
+                <h2><%= destaque.titulo %></h2>
+
+                <p>
+                    <%= destaque.conteudo.substring(0, 180) %>...
+                </p>
+
+                <div class="autor">
+                    <img src="<%= destaque.autor?.fotoUrl ? formatImageUrl(destaque.autor.fotoUrl) : 'https://placehold.co/40x40' %>">
+                    <span>Psi. <%= destaque.autor ? destaque.autor.nome.split(' ')[0] : 'Yelo' %></span>
                 </div>
+            </div>
+        </a>
 
-                <% if (posts && posts.length > 0) { %>
-                    <% const destaque = posts[0]; %>
-                    
-                    <a href="/blog/post/<%= destaque.id %>" class="post-destaque" style="display: block; position: relative; border-radius: 16px; overflow: hidden; margin-bottom: 60px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-decoration: none; color: inherit;">
-                        <div style="position: relative; height: 450px;">
-                            <img src="<%= destaque.imagem_url || 'https://images.pexels.com/photos/4101143/pexels-photo-4101143.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' %>" 
-                                 alt="Destaque" 
-                                 style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
-                            
-                            <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 70%; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);"></div>
-                            
-                            <div class="post-destaque-texto" style="position: absolute; bottom: 0; left: 0; padding: 40px; width: 100%; max-width: 800px;">
-                                <span style="background: #FFEE8C; color: #1B4332; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">
-                                    Mais Recente
-                                </span>
-                                <h2 style="color: #fff; font-family: 'New Kansas', serif; font-size: 2.5rem; margin: 15px 0; line-height: 1.2;">
-                                    <%= destaque.titulo %>
-                                </h2>
-                                <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
-                                    <%= destaque.conteudo %>
-                                </p>
-                                <div style="margin-top: 20px; display: flex; align-items: center; gap: 10px; color: #fff;">
-                                    <img src="<%= destaque.autor && destaque.autor.fotoUrl ? formatImageUrl(destaque.autor.fotoUrl) : 'https://placehold.co/40x40' %>" 
-                                         style="width: 30px; height: 30px; border-radius: 50%; border: 1px solid #fff;">
-                                    <span style="font-size: 0.9rem;">Por Psi. <%= destaque.autor ? destaque.autor.nome.split(' ')[0] : 'Yelo' %></span>
-                                </div>
-                            </div>
+        <!-- GRID -->
+        <% const outros = posts.slice(1); %>
+        <% if (outros.length > 0) { %>
+
+        <div class="blog-grid">
+            <% outros.forEach(post => { %>
+            <article class="post-card">
+                <a href="/blog/post/<%= post.id %>">
+                    <img
+                        src="<%= post.imagem_url || 'https://images.pexels.com/photos/4101143/pexels-photo-4101143.jpeg' %>"
+                        alt="<%= post.titulo %>"
+                    />
+
+                    <div class="post-card-body">
+                        <span class="data">
+                            <%= new Date(post.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }) %>
+                        </span>
+
+                        <h3><%= post.titulo %></h3>
+
+                        <p>
+                            <%= post.conteudo.substring(0, 120) %>...
+                        </p>
+
+                        <div class="autor">
+                            <img src="<%= post.autor?.fotoUrl ? formatImageUrl(post.autor.fotoUrl) : 'https://placehold.co/30x30' %>">
+                            <span>Psi. <%= post.autor ? post.autor.nome.split(' ')[0] : 'Yelo' %></span>
                         </div>
-                    </a>
-
-                    <% const outros = posts.slice(1); %>
-                    <% if (outros.length > 0) { %>
-                        <div class="post-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px;">
-                            <% outros.forEach(post => { %>
-                                <article class="post-card" style="background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.3s; display: flex; flex-direction: column;">
-                                    <a href="/blog/post/<%= post.id %>" style="text-decoration: none; color: inherit; flex: 1; display: flex; flex-direction: column;">
-                                        <div style="height: 220px; overflow: hidden;">
-                                            <img src="<%= post.imagem_url || 'https://images.pexels.com/photos/4101143/pexels-photo-4101143.jpeg' %>" 
-                                                 alt="<%= post.titulo %>" 
-                                                 style="width: 100%; height: 100%; object-fit: cover;">
-                                        </div>
-                                        <div class="post-card-conteudo" style="padding: 25px; flex: 1; display: flex; flex-direction: column;">
-                                            <span style="font-size: 0.8rem; color: #999; margin-bottom: 10px;">
-                                                <%= new Date(post.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }) %>
-                                            </span>
-                                            <h3 style="margin: 0 0 10px 0; font-family: 'New Kansas', serif; font-size: 1.4rem; color: #1B4332; line-height: 1.3;">
-                                                <%= post.titulo %>
-                                            </h3>
-                                            <p style="font-size: 0.95rem; color: #666; line-height: 1.6; margin-bottom: 20px; flex: 1;">
-                                                <%= post.conteudo.substring(0, 100) %>...
-                                            </p>
-                                            <div style="border-top: 1px solid #eee; padding-top: 15px; display: flex; align-items: center; gap: 8px;">
-                                                <img src="<%= post.autor && post.autor.fotoUrl ? formatImageUrl(post.autor.fotoUrl) : 'https://placehold.co/30x30' %>" 
-                                                     style="width: 24px; height: 24px; border-radius: 50%;">
-                                                <span style="font-size: 0.85rem; color: #555;">Psi. <%= post.autor ? post.autor.nome.split(' ')[0] : 'Yelo' %></span>
-                                            </div>
-                                        </div>
-                                    </a>
-                                </article>
-                            <% }) %>
-                        </div>
-                    <% } %>
-
-                <% } else { %>
-                    <div style="text-align: center; padding: 60px; background: #fff; border-radius: 12px;">
-                        <p style="color: #666; font-size: 1.2rem;">Nenhum artigo publicado ainda.</p>
                     </div>
-                <% } %>
-            </div>
-        </section>
-        <section class="aviso-crise ruido">
-            <div class="aviso-conteudo">
-                <div class="aviso-texto">
-                    <p>Se você está em crise ou qualquer outra pessoa pode estar em perigo, <strong>não</strong> use este site. <a href="/recursos_crise.html">Estes recursos</a> podem fornecer ajuda imediata.</p>
-                </div>
-            </div>
-        </section>
-    </main>
+                </a>
+            </article>
+            <% }) %>
+        </div>
 
-    <%- include('partials/footer') %>
+        <% } %>
+        <% } else { %>
+
+        <div class="blog-vazio">
+            <p>Nenhum artigo publicado ainda.</p>
+        </div>
+
+        <% } %>
+
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-blog">
+        <h2>Conteúdo ajuda. Terapia transforma.</h2>
+        <p>Quando quiser ir além da leitura, a gente te conecta.</p>
+        <a href="/questionario.html" class="btn-cta-principal">Encontrar meu terapeuta</a>
+    </section>
+
+    <%- include('partials/aviso-crise') %>
+
+</main>
+
+<%- include('partials/footer') %>
+
 </body>
 </html>
