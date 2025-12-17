@@ -1635,9 +1635,24 @@ function inicializarBlog() {
 
             div.innerHTML = `
                 <div style="flex: 1;">
-                    <strong style="font-size:1.2rem; color:#1B4332; display:block; margin-bottom:5px;">${post.titulo}</strong>
-                    <div style="font-size:0.85rem; color:#666;">📅 Publicado em: ${dataF}</div>
+                    <strong style="font-size:1.2rem; color:#1B4332; display:block; margin-bottom:8px;">${post.titulo}</strong>
+                    
+                    <div style="display: flex; align-items: center; gap: 20px; font-size:0.85rem; color:#666;">
+                        
+                        <span style="display: flex; align-items: center; gap: 5px;">
+                            📅 ${dataF}
+                        </span>
+
+                        <span style="display: flex; align-items: center; gap: 5px; color: #e63946; font-weight: bold;" title="Total de leitores que curtiram">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
+                            </svg>
+                            ${post.curtidas || 0}
+                        </span>
+
+                    </div>
                 </div>
+
                 <div class="btn-acoes-grupo">
                     <button class="btn-acao btn-editar">✏️ Editar</button>
                     <button class="btn-acao btn-excluir">🗑️ Excluir</button>
