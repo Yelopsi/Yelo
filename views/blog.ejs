@@ -159,7 +159,7 @@
             <% const destaque = posts[0]; %>
             <a href="/blog/post/<%= destaque.id %>" class="post-destaque">
                 <div class="destaque-img-wrapper">
-                    <img src="<%= destaque.imagem_url || 'https://images.pexels.com/photos/4101143/pexels-photo-4101143.jpeg?auto=compress&cs=tinysrgb&w=1260' %>" alt="<%= destaque.titulo %>">
+                    <img src="<%= destaque.imagem_url || getImagemPadrao() %>" alt="<%= destaque.titulo %>">
                 </div>
                 
                 <div class="destaque-conteudo">
@@ -180,7 +180,7 @@
                     <% outros.forEach(post => { %>
                         <article class="post-card">
                             <a href="/blog/post/<%= post.id %>" class="card-link">
-                                <img src="<%= post.imagem_url || 'https://images.pexels.com/photos/4101143/pexels-photo-4101143.jpeg?auto=compress&cs=tinysrgb&w=600' %>" alt="<%= post.titulo %>" class="card-img">
+                                <img src="<%= post.imagem_url || getImagemPadrao() %>" alt="<%= post.titulo %>" class="card-img">
                                 <div class="post-card-body">
                                     <span class="card-date">
                                         <%= new Date(post.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }) %>
