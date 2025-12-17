@@ -2,7 +2,8 @@
 const db = require('../models');
 const Post = db.Post; 
 // Precisamos do modelo Psychologist para saber quem escreveu
-const Psychologist = db.Psychologist; 
+// Tenta carregar com maiúscula ou minúscula para evitar erro no Linux/Render
+const Psychologist = db.Psychologist || db.psychologist || db.Sequelize.models.Psychologist;
 
 // Função auxiliar para formatar URL da imagem (mesma lógica do frontend)
 const formatImageUrl = (path) => {
@@ -73,18 +74,25 @@ module.exports = {
     // ÁREA PÚBLICA: Lista do Blog
     exibirBlogPublico: async (req, res) => {
         try {
-            const posts = await Post.findAll({
-                order: [['created_at', 'DESC']],
-                include: [{
+            let queryOptions = {
+                order: [['created_at', 'DESC']]
+            };
+
+            // Só tenta buscar o autor se o modelo do Psicólogo carregou corretamente
+            if (Psychologist) {
+                queryOptions.include = [{
                     model: Psychologist,
                     as: 'autor',
                     attributes: ['nome', 'fotoUrl', 'slug'] 
-                }]
-            });
+                }];
+            }
+
+            const posts = await Post.findAll(queryOptions);
             res.render('blog', { posts: posts, formatImageUrl: formatImageUrl });
         } catch (error) {
             console.error("Erro blog público:", error);
-            res.render('blog', { posts: [], formatImageUrl: formatImageUrl });
+            // Se der erro, renderiza a página vazia em vez de travar (Erro 500)
+            res.render('blog', { posts: [], formatImageUrl: formatImageUrl, error: "Erro de conexão." });
         }
     },
 
