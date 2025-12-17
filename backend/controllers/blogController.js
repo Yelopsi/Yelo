@@ -146,11 +146,22 @@ module.exports = {
         }
     },
 
-    // Dar Like
+    // Dar Like ou Deslike (Toggle)
     curtirPost: async (req, res) => {
         try {
             const { id } = req.params;
-            await Post.increment('curtidas', { where: { id: id } });
+            const { action } = req.body; // Recebe 'like' ou 'unlike' do frontend
+
+            if (action === 'unlike') {
+                // Se for descurtir, subtrai 1 (mas não deixa ficar negativo)
+                await Post.decrement('curtidas', { where: { id: id } });
+                // Garante que não ficou negativo (segurança extra)
+                await db.sequelize.query('UPDATE posts SET curtidas = 0 WHERE curtidas < 0 AND id = :id', { replacements: { id } });
+            } else {
+                // Padrão: Soma 1
+                await Post.increment('curtidas', { where: { id: id } });
+            }
+            
             const postAtualizado = await Post.findByPk(id, { attributes: ['curtidas'] });
             res.json({ success: true, curtidas: postAtualizado.curtidas });
         } catch (error) {
