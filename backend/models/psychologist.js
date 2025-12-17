@@ -21,6 +21,17 @@ module.exports = (sequelize, DataTypes) => {
         through: 'PatientFavorites', // Mesmo nome da tabela de junção
         as: 'favoritedBy'
       });
+
+      // --- NOVO TRECHO (COLE ISTO AQUI) ---
+      // Um Psicólogo pode ter muitos Artigos (Posts)
+      // Usamos 'Post' (nome que demos no models/Post.js)
+      if (models.Post) {
+          this.hasMany(models.Post, { 
+              foreignKey: 'psychologist_id', 
+              as: 'posts' 
+          });
+      }
+      // ------------------------------------
     }
   }
   Psychologist.init({
