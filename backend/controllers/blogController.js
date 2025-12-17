@@ -129,22 +129,42 @@ module.exports = {
         }
     },
 
-    // ÁREA PÚBLICA: Post Único
+    // ÁREA PÚBLICA: Post Único (Com Sidebar)
     exibirPostUnico: async (req, res) => {
         try {
             const { id } = req.params;
-            const post = await Post.findByPk(id, {
-                include: [{
+            
+            // 1. Busca o Post Principal
+            let queryOptions = {};
+            if (Psychologist) {
+                queryOptions.include = [{
                     model: Psychologist,
                     as: 'autor',
                     attributes: ['nome', 'fotoUrl', 'slug']
-                }]
-            });
+                }];
+            }
+            const post = await Post.findByPk(id, queryOptions);
 
             if (!post) return res.redirect('/blog');
-            res.render('post_completo', { post: post, formatImageUrl: formatImageUrl });
+
+            // 2. Busca posts recentes para a Sidebar (excluindo o atual)
+            // Usamos db.Sequelize.Op para fazer a exclusão "Not Equal" (ne)
+            const Op = db.Sequelize.Op; 
+            const recentes = await Post.findAll({
+                where: { id: { [Op.ne]: id } }, // Exclui o ID atual
+                limit: 3, // Traz 3 sugestões
+                order: [['created_at', 'DESC']],
+                attributes: ['id', 'titulo', 'imagem_url', 'created_at'] // Leve, só o necessário
+            });
+
+            res.render('post_completo', { 
+                post: post, 
+                recentes: recentes, // Enviamos a lista para a lateral
+                formatImageUrl: formatImageUrl 
+            });
+
         } catch (error) {
-            console.error("Erro ao abrir post:", error);
+            console.error("Erro ao abrir post único:", error);
             res.redirect('/blog');
         }
     },
