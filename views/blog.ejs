@@ -189,15 +189,21 @@
                                     <p><%= post.conteudo.substring(0, 100) %>...</p>
                                     
                                     <div class="post-card-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 15px; border-top: 1px solid #eee;">
+                                        
                                         <div style="display: flex; align-items: center; gap: 10px;">
                                             <img src="<%= post.autor && post.autor.fotoUrl ? formatImageUrl(post.autor.fotoUrl) : 'https://placehold.co/30x30' %>" alt="Autor" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;">
                                             <span style="font-size: 0.85rem; color: #555; font-weight: 600;">Psi. <%= post.autor ? post.autor.nome.split(' ')[0] : 'Yelo' %></span>
                                         </div>
 
-                                        <button onclick="darLike(event, '<%= post.id %>')" data-post-id="<%= post.id %>" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; color: #e63946; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="<%= post.curtidas > 0 ? '#e63946' : 'none' %>" stroke="currentColor" stroke-width="2" viewBox="0 0 16 16">
-                                                <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
+                                        <button onclick="darLike(event, '<%= post.id %>')" data-post-id="<%= post.id %>" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; color: #555; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                                            
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" 
+                                                 fill="<%= post.curtidas > 0 ? '#e63946' : 'none' %>" 
+                                                 stroke="<%= post.curtidas > 0 ? '#e63946' : 'currentColor' %>" 
+                                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                                             </svg>
+
                                             <span id="likes-<%= post.id %>" style="font-size: 0.9rem; font-weight: bold; color: #333;"><%= post.curtidas || 0 %></span>
                                         </button>
                                     </div>
@@ -221,25 +227,30 @@
 <%- include('partials/footer') %>
 
 <script>
-    // Executa ao carregar para pintar os corações que o usuário já clicou antes
+    // 1. Ao carregar a página: Verifica o localStorage e pinta os corações já curtidos
     document.addEventListener("DOMContentLoaded", function() {
         document.querySelectorAll('[data-post-id]').forEach(btn => {
             const pid = btn.getAttribute('data-post-id');
+            // Se já curtiu, pinta de vermelho
             if (localStorage.getItem('liked_' + pid)) {
                 const svg = btn.querySelector('svg');
                 svg.setAttribute('fill', '#e63946');
+                svg.setAttribute('stroke', '#e63946');
                 svg.style.fill = "#e63946";
             }
         });
     });
 
+    // 2. Ação de Clique
     async function darLike(event, postId) {
-        event.preventDefault(); event.stopPropagation();
+        event.preventDefault(); 
+        event.stopPropagation();
         
         const contador = document.getElementById(`likes-${postId}`);
-        const btn = event.currentTarget; // O botão clicado
+        const btn = event.currentTarget; 
         const svg = btn.querySelector('svg');
         
+        // Verifica estado atual
         const jaCurtiu = localStorage.getItem('liked_' + postId);
         const action = jaCurtiu ? 'unlike' : 'like';
 
@@ -255,13 +266,15 @@
                 contador.innerText = data.curtidas;
                 
                 if (action === 'like') {
+                    // Curtiu: Preenche e borda vermelha
                     localStorage.setItem('liked_' + postId, 'true');
                     svg.setAttribute('fill', '#e63946');
-                    svg.style.fill = "#e63946";
+                    svg.setAttribute('stroke', '#e63946');
                 } else {
+                    // Descurtiu: Remove preenchimento e volta borda para cor original
                     localStorage.removeItem('liked_' + postId);
-                    svg.setAttribute('fill', 'none'); // Remove o preenchimento
-                    svg.style.fill = "none";
+                    svg.setAttribute('fill', 'none');
+                    svg.setAttribute('stroke', 'currentColor');
                 }
             }
         } catch (error) { console.error('Erro:', error); }
