@@ -4,9 +4,14 @@
     <title>Blog | Yelo</title>
     <meta name="description" content="Reflexões, psicoeducação e conteúdos sobre saúde mental.">
     <%- include('partials/head') %>
+    
     <style>
-        /* ESTILOS DE RECUPERAÇÃO DO DESIGN */
-        .pagina-blog { background-color: #fdfaf6; padding-top: 100px; padding-bottom: 80px; min-height: 100vh; }
+        .pagina-blog {
+            padding-top: 100px;
+            padding-bottom: 80px;
+            background-color: #fdfaf6;
+            min-height: 100vh;
+        }
 
         .blog-hero { text-align: center; margin-bottom: 60px; padding: 40px 20px; }
         .blog-hero h1 { font-family: 'New Kansas', serif; font-size: 3.5rem; color: #1B4332; margin-bottom: 15px; }
@@ -23,26 +28,35 @@
             transition: transform 0.3s;
         }
         .post-destaque:hover { transform: translateY(-5px); }
-        .post-destaque img { width: 100%; height: 100%; object-fit: cover; }
+        .destaque-img-wrapper { height: 100%; overflow: hidden; }
+        .destaque-img-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+        .post-destaque:hover .destaque-img-wrapper img { transform: scale(1.05); }
+        
         .post-destaque-conteudo { padding: 40px; display: flex; flex-direction: column; justify-content: center; }
         .post-destaque-conteudo h2 { font-family: 'New Kansas', serif; font-size: 2rem; color: #1B4332; margin: 15px 0; line-height: 1.2; }
+        .post-destaque-conteudo p { color: #555; font-size: 1.1rem; line-height: 1.6; margin-bottom: 30px; }
         .tag-destaque { background: #FFEE8C; color: #1B4332; padding: 5px 10px; border-radius: 15px; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; align-self: flex-start; }
 
         /* Grid */
         .blog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; }
-        .post-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.3s; }
-        .post-card:hover { transform: translateY(-5px); }
-        .post-card img { width: 100%; height: 200px; object-fit: cover; }
-        .post-card-body { padding: 20px; }
-        .post-card-body h3 { font-family: 'New Kansas', serif; font-size: 1.4rem; color: #1B4332; margin: 10px 0; }
-        .post-card-body p { font-size: 0.95rem; color: #666; line-height: 1.5; }
-        .autor { display: flex; align-items: center; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; }
-        .autor img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
-        .autor span { font-size: 0.85rem; color: #555; font-weight: bold; }
+        .post-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: transform 0.3s; display: flex; flex-direction: column; }
+        .post-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
+        
+        .card-link { text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%; }
+        .card-img { width: 100%; height: 200px; object-fit: cover; }
+        .card-body { padding: 25px; flex: 1; display: flex; flex-direction: column; }
+        .card-date { font-size: 0.8rem; color: #999; margin-bottom: 10px; }
+        .card-body h3 { font-family: 'New Kansas', serif; font-size: 1.4rem; color: #1B4332; margin: 0 0 10px 0; line-height: 1.3; }
+        .card-body p { font-size: 0.95rem; color: #666; line-height: 1.5; margin-bottom: 20px; flex: 1; }
+        
+        .card-author { display: flex; align-items: center; gap: 10px; padding-top: 15px; border-top: 1px solid #eee; }
+        .card-author img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+        .card-author span { font-size: 0.85rem; color: #555; font-weight: 600; }
 
         @media (max-width: 768px) {
             .post-destaque { grid-template-columns: 1fr; }
-            .post-destaque img { height: 250px; }
+            .destaque-img-wrapper { height: 250px; }
+            .post-destaque-conteudo { padding: 30px; }
             .blog-hero h1 { font-size: 2.5rem; }
         }
     </style>
@@ -51,95 +65,67 @@
 
 <%- include('partials/header') %>
 
-<main class="pagina-blog ruido">
-
-    <!-- HERO -->
-    <section class="blog-hero">
-        <h1>Blog Yelo</h1>
-        <p>Reflexões clínicas, sem autoajuda rasa.</p>
-    </section>
-
-    <section class="blog-container">
+<main class="pagina-blog">
+    
+    <div class="container-blog">
+        
+        <header class="blog-hero">
+            <h1>Blog Yelo</h1>
+            <p>Reflexões e ferramentas para sua jornada de autoconhecimento.</p>
+        </header>
 
         <% if (posts && posts.length > 0) { %>
-        <% const destaque = posts[0]; %>
-
-        <!-- POST DESTAQUE -->
-        <a href="/blog/post/<%= destaque.id %>" class="post-destaque">
-            <img
-                src="<%= destaque.imagem_url || 'https://images.pexels.com/photos/4101143/pexels-photo-4101143.jpeg' %>"
-                alt="<%= destaque.titulo %>"
-            />
-
-            <div class="post-destaque-conteudo">
-                <span class="tag-destaque">Mais recente</span>
-
-                <h2><%= destaque.titulo %></h2>
-
-                <p>
-                    <%= destaque.conteudo.substring(0, 180) %>...
-                </p>
-
-                <div class="autor">
-                    <img src="<%= destaque.autor?.fotoUrl ? formatImageUrl(destaque.autor.fotoUrl) : 'https://placehold.co/40x40' %>">
-                    <span>Psi. <%= destaque.autor ? destaque.autor.nome.split(' ')[0] : 'Yelo' %></span>
+            
+            <% const destaque = posts[0]; %>
+            <a href="/blog/post/<%= destaque.id %>" class="post-destaque">
+                <div class="destaque-img-wrapper">
+                    <img src="<%= destaque.imagem_url || 'https://images.pexels.com/photos/4101143/pexels-photo-4101143.jpeg?auto=compress&cs=tinysrgb&w=1260' %>" alt="<%= destaque.titulo %>">
                 </div>
-            </div>
-        </a>
-
-        <!-- GRID -->
-        <% const outros = posts.slice(1); %>
-        <% if (outros.length > 0) { %>
-
-        <div class="blog-grid">
-            <% outros.forEach(post => { %>
-            <article class="post-card">
-                <a href="/blog/post/<%= post.id %>" style="text-decoration: none; color: inherit;">
-                    <img
-                        src="<%= post.imagem_url || 'https://images.pexels.com/photos/4101143/pexels-photo-4101143.jpeg' %>"
-                        alt="<%= post.titulo %>"
-                    />
-
-                    <div class="post-card-body">
-                        <span class="data">
-                            <%= new Date(post.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }) %>
-                        </span>
-
-                        <h3><%= post.titulo %></h3>
-
-                        <p>
-                            <%= post.conteudo.substring(0, 120) %>...
-                        </p>
-
-                        <div class="autor">
-                            <img src="<%= post.autor?.fotoUrl ? formatImageUrl(post.autor.fotoUrl) : 'https://placehold.co/30x30' %>">
-                            <span>Psi. <%= post.autor ? post.autor.nome.split(' ')[0] : 'Yelo' %></span>
-                        </div>
+                <div class="post-destaque-conteudo">
+                    <span class="tag-destaque">Mais Recente</span>
+                    <h2><%= destaque.titulo %></h2>
+                    <p><%= destaque.conteudo.substring(0, 150) %>...</p>
+                    
+                    <div class="card-author">
+                        <img src="<%= destaque.autor && destaque.autor.fotoUrl ? formatImageUrl(destaque.autor.fotoUrl) : 'https://placehold.co/40x40' %>" alt="Autor">
+                        <span>Psi. <%= destaque.autor ? destaque.autor.nome.split(' ')[0] : 'Yelo' %></span>
                     </div>
-                </a>
-            </article>
-            <% }) %>
-        </div>
+                </div>
+            </a>
 
-        <% } %>
+            <% const outros = posts.slice(1); %>
+            <% if (outros.length > 0) { %>
+                <div class="blog-grid">
+                    <% outros.forEach(post => { %>
+                        <article class="post-card">
+                            <a href="/blog/post/<%= post.id %>" class="card-link">
+                                <img src="<%= post.imagem_url || 'https://images.pexels.com/photos/4101143/pexels-photo-4101143.jpeg?auto=compress&cs=tinysrgb&w=600' %>" alt="<%= post.titulo %>" class="card-img">
+                                <div class="card-body">
+                                    <span class="card-date">
+                                        <%= new Date(post.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }) %>
+                                    </span>
+                                    <h3><%= post.titulo %></h3>
+                                    <p><%= post.conteudo.substring(0, 100) %>...</p>
+                                    
+                                    <div class="card-author">
+                                        <img src="<%= post.autor && post.autor.fotoUrl ? formatImageUrl(post.autor.fotoUrl) : 'https://placehold.co/30x30' %>" alt="Autor">
+                                        <span>Psi. <%= post.autor ? post.autor.nome.split(' ')[0] : 'Yelo' %></span>
+                                    </div>
+                                </div>
+                            </a>
+                        </article>
+                    <% }) %>
+                </div>
+            <% } %>
+
         <% } else { %>
-
-        <div class="blog-vazio">
-            <p>Nenhum artigo publicado ainda.</p>
-        </div>
-
+            <div style="text-align: center; padding: 80px 0; color: #888;">
+                <p style="font-size: 1.2rem;">Ainda não temos artigos publicados.</p>
+                <p>Volte em breve para conferir novidades.</p>
+            </div>
         <% } %>
 
-    </section>
-
-    <!-- CTA -->
-    <section class="cta-blog">
-        <h2>Conteúdo ajuda. Terapia transforma.</h2>
-        <p>Quando quiser ir além da leitura, a gente te conecta.</p>
-        <a href="/questionario.html" class="btn-cta-principal">Encontrar meu terapeuta</a>
-    </section>
-
-    <%- include('partials/aviso-crise') %>
+    </div>
 
 </main>
 

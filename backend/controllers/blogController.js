@@ -71,14 +71,13 @@ module.exports = {
         }
     },
 
-    // ÁREA PÚBLICA: Lista do Blog
+    // ÁREA PÚBLICA: Lista do Blog (Com Mockups Automáticos)
     exibirBlogPublico: async (req, res) => {
         try {
             let queryOptions = {
                 order: [['created_at', 'DESC']]
             };
 
-            // Só tenta buscar o autor se o modelo do Psicólogo carregou corretamente
             if (Psychologist) {
                 queryOptions.include = [{
                     model: Psychologist,
@@ -87,12 +86,46 @@ module.exports = {
                 }];
             }
 
-            const posts = await Post.findAll(queryOptions);
+            // 1. Busca os posts reais do banco
+            let posts = await Post.findAll(queryOptions);
+
+            // 2. GERADOR DE MOCKUPS (Se tiver menos de 4 posts, completa com fakes)
+            if (posts.length < 4) {
+                const mocks = [
+                    {
+                        id: 'mock-1',
+                        titulo: "Como a ansiedade afeta o sono",
+                        conteudo: "Dificuldade para dormir é um dos sintomas mais comuns. Descubra técnicas de higiene do sono...",
+                        imagem_url: "https://images.pexels.com/photos/3771097/pexels-photo-3771097.jpeg?auto=compress&cs=tinysrgb&w=600",
+                        created_at: new Date('2025-11-20'),
+                        autor: { nome: "Equipe Yelo", fotoUrl: null, slug: "#" }
+                    },
+                    {
+                        id: 'mock-2',
+                        titulo: "Terapia Online funciona mesmo?",
+                        conteudo: "Estudos mostram que a eficácia é a mesma do presencial para a maioria dos casos. Entenda as vantagens.",
+                        imagem_url: "https://images.pexels.com/photos/4098228/pexels-photo-4098228.jpeg?auto=compress&cs=tinysrgb&w=600",
+                        created_at: new Date('2025-11-15'),
+                        autor: { nome: "Equipe Yelo", fotoUrl: null, slug: "#" }
+                    },
+                    {
+                        id: 'mock-3',
+                        titulo: "O poder da escuta ativa",
+                        conteudo: "Muitas vezes, tudo que precisamos é ser ouvidos sem julgamentos. A escuta é uma ferramenta de cura.",
+                        imagem_url: "https://images.pexels.com/photos/7176026/pexels-photo-7176026.jpeg?auto=compress&cs=tinysrgb&w=600",
+                        created_at: new Date('2025-11-10'),
+                        autor: { nome: "Equipe Yelo", fotoUrl: null, slug: "#" }
+                    }
+                ];
+                
+                // Junta os reais com os mocks
+                posts = posts.concat(mocks);
+            }
+
             res.render('blog', { posts: posts, formatImageUrl: formatImageUrl });
         } catch (error) {
             console.error("Erro blog público:", error);
-            // Se der erro, renderiza a página vazia em vez de travar (Erro 500)
-            res.render('blog', { posts: [], formatImageUrl: formatImageUrl, error: "Erro de conexão." });
+            res.render('blog', { posts: [], formatImageUrl: formatImageUrl, error: "Erro." });
         }
     },
 
