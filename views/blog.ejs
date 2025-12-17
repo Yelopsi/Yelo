@@ -194,7 +194,7 @@
                                             <span style="font-size: 0.85rem; color: #555; font-weight: 600;">Psi. <%= post.autor ? post.autor.nome.split(' ')[0] : 'Yelo' %></span>
                                         </div>
 
-                                        <button onclick="darLike(event, '<%= post.id %>')" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; color: #e63946; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                                        <button onclick="darLike(event, '<%= post.id %>')" data-post-id="<%= post.id %>" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; color: #e63946; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="<%= post.curtidas > 0 ? '#e63946' : 'none' %>" stroke="currentColor" stroke-width="2" viewBox="0 0 16 16">
                                                 <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
                                             </svg>
@@ -221,16 +221,48 @@
 <%- include('partials/footer') %>
 
 <script>
+    // Executa ao carregar para pintar os corações que o usuário já clicou antes
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll('[data-post-id]').forEach(btn => {
+            const pid = btn.getAttribute('data-post-id');
+            if (localStorage.getItem('liked_' + pid)) {
+                const svg = btn.querySelector('svg');
+                svg.setAttribute('fill', '#e63946');
+                svg.style.fill = "#e63946";
+            }
+        });
+    });
+
     async function darLike(event, postId) {
         event.preventDefault(); event.stopPropagation();
+        
         const contador = document.getElementById(`likes-${postId}`);
+        const btn = event.currentTarget; // O botão clicado
+        const svg = btn.querySelector('svg');
+        
+        const jaCurtiu = localStorage.getItem('liked_' + postId);
+        const action = jaCurtiu ? 'unlike' : 'like';
+
         try {
-            const response = await fetch(`/blog/post/${postId}/like`, { method: 'POST' });
+            const response = await fetch(`/blog/post/${postId}/like`, { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: action })
+            });
             const data = await response.json();
+            
             if (data.success) {
                 contador.innerText = data.curtidas;
-                const svg = event.currentTarget.querySelector('svg');
-                svg.style.fill = "#e63946";
+                
+                if (action === 'like') {
+                    localStorage.setItem('liked_' + postId, 'true');
+                    svg.setAttribute('fill', '#e63946');
+                    svg.style.fill = "#e63946";
+                } else {
+                    localStorage.removeItem('liked_' + postId);
+                    svg.setAttribute('fill', 'none'); // Remove o preenchimento
+                    svg.style.fill = "none";
+                }
             }
         } catch (error) { console.error('Erro:', error); }
     }
