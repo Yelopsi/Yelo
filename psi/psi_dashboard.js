@@ -1541,6 +1541,39 @@ function inicializarBlog() {
     const form = document.getElementById('form-blog');
     const btnSalvar = document.getElementById('btn-salvar-artigo');
     
+    // --- LIMITE DE CARACTERES DO TÍTULO (50) ---
+    const inputTitulo = document.getElementById('blog-titulo');
+    
+    if (inputTitulo && !document.getElementById('contador-titulo-blog')) {
+        // 1. Define o limite físico no input HTML
+        inputTitulo.setAttribute('maxlength', '50');
+
+        // 2. Cria o contador visual dinamicamente
+        const contador = document.createElement('div');
+        contador.id = 'contador-titulo-blog';
+        contador.style.cssText = "font-size: 0.85rem; color: #666; text-align: right; margin-top: 4px;";
+        contador.textContent = `${inputTitulo.value.length}/50 caracteres`;
+        
+        // Insere o contador logo abaixo do input de título
+        inputTitulo.parentNode.insertBefore(contador, inputTitulo.nextSibling);
+
+        // 3. Ouve a digitação para atualizar o número
+        inputTitulo.addEventListener('input', function() {
+            const atual = this.value.length;
+            contador.textContent = `${atual}/50 caracteres`;
+
+            // Muda de cor se chegar no limite
+            if (atual >= 50) {
+                contador.style.color = "#e63946"; // Vermelho
+                contador.style.fontWeight = "bold";
+            } else {
+                contador.style.color = "#666";
+                contador.style.fontWeight = "normal";
+            }
+        });
+    }
+    // -------------------------------------------
+
     // Verificação de segurança: se a página não carregou direito, para tudo.
     if (!viewLista || !viewForm || !form || !btnSalvar) {
         console.error("ERRO CRÍTICO: Elementos do blog não encontrados no HTML.");
