@@ -191,6 +191,49 @@
                 <% }) %>
             </div>
 
+            <div style="margin: 40px 0; padding: 20px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                <button onclick="darLikeInterno('<%= post.id %>')" id="btn-like-interno" style="background: none; border: 1px solid #e0e0e0; padding: 8px 20px; border-radius: 25px; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #555; transition: all 0.2s;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="<%= post.curtidas > 0 ? '#e63946' : 'none' %>" stroke="<%= post.curtidas > 0 ? '#e63946' : 'currentColor' %>" stroke-width="2" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
+                    </svg>
+                    <span style="font-weight: 600;">Curtir (<span id="count-interno"><%= post.curtidas || 0 %></span>)</span>
+                </button>
+
+                <button onclick="compartilharPost()" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #1B4332; font-weight: 600;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M13.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5zm-8.5 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm11 5.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/>
+                    </svg>
+                    Compartilhar
+                </button>
+            </div>
+            
+            <script>
+                async function darLikeInterno(postId) {
+                    const btn = document.getElementById('btn-like-interno');
+                    const count = document.getElementById('count-interno');
+                    const svg = btn.querySelector('svg');
+                    try {
+                        const response = await fetch(`/blog/post/${postId}/like`, { method: 'POST' });
+                        const data = await response.json();
+                        if (data.success) {
+                            count.innerText = data.curtidas;
+                            svg.style.fill = "#e63946";
+                            svg.style.stroke = "#e63946";
+                            btn.style.borderColor = "#e63946";
+                            btn.style.color = "#e63946";
+                        }
+                    } catch (e) { console.error(e); }
+                }
+                function compartilharPost() {
+                    if (navigator.share) {
+                        navigator.share({ title: '<%= post.titulo %>', url: window.location.href }).catch(console.error);
+                    } else {
+                        navigator.clipboard.writeText(window.location.href);
+                        alert('Link copiado!');
+                    }
+                }
+            </script>
+
             <div style="margin-top: 50px; text-align: center;">
                 <a href="/blog" style="display: inline-block; padding: 10px 30px; border: 1px solid #1B4332; border-radius: 25px; text-decoration: none; color: #1B4332; font-weight: bold;">
                     ← Voltar para o Blog
