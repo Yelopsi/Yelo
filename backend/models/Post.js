@@ -24,7 +24,13 @@ module.exports = (sequelize, DataTypes) => {
         psychologist_id: {
             type: DataTypes.INTEGER,
             allowNull: false
+        },
+        // --- ADICIONE ISTO AQUI: ---
+        curtidas: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0
         }
+        // ---------------------------
     }, {
         tableName: 'posts', 
         timestamps: true,
