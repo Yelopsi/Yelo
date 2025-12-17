@@ -5,6 +5,33 @@ const Post = db.Post;
 // Tenta carregar com maiúscula ou minúscula para evitar erro no Linux/Render
 const Psychologist = db.Psychologist || db.psychologist || db.Sequelize.models.Psychologist;
 
+// --- BANCO DE IMAGENS PADRÃO (Estilo Flat/Minimalista/Verde Yelo) ---
+const imagensPadrao = [
+    "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80", // Abstrato Verde
+    "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&w=800&q=80", // Plantas Flat
+    "https://images.unsplash.com/photo-1490682143684-14369e18dce8?auto=format&fit=crop&w=800&q=80", // Minimalismo Bege
+    "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=800&q=80", // Gradiente Verde
+    "https://images.unsplash.com/photo-1586035025785-5b4d6a6d6342?auto=format&fit=crop&w=800&q=80", // Escritório Clean
+    "https://images.unsplash.com/photo-1527689368864-3a821dbccc34?auto=format&fit=crop&w=800&q=80", // Folhas Flat
+    "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=800&q=80", // Abstrato Geométrico
+    "https://images.unsplash.com/photo-1620121692029-d088224ddc74?auto=format&fit=crop&w=800&q=80", // Verde Escuro Clean
+    "https://images.unsplash.com/photo-1470790376778-a9fcd48d50e9?auto=format&fit=crop&w=800&q=80", // Natureza Minimalista
+    "https://images.unsplash.com/photo-1621839673705-6617adf9e890?auto=format&fit=crop&w=800&q=80", // Formas Bege/Verde
+    "https://images.unsplash.com/photo-1507646227500-4d389b0012be?auto=format&fit=crop&w=800&q=80", // Estilo Zen
+    "https://images.unsplash.com/photo-1596464716127-f9a862557963?auto=format&fit=crop&w=800&q=80", // Ilustração 3D Soft
+    "https://images.unsplash.com/photo-1606925797300-0b35e9d1794e?auto=format&fit=crop&w=800&q=80", // Design Gráfico Verde
+    "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=800&q=80", // Terapia/Conversa
+    "https://images.unsplash.com/photo-1615196677587-b2094dc63973?auto=format&fit=crop&w=800&q=80", // Textura Papel Verde
+    "https://images.unsplash.com/photo-1564419434663-c49967363849?auto=format&fit=crop&w=800&q=80", // Montanhas Flat
+    "https://images.unsplash.com/photo-1614851099175-e5b30eb6f696?auto=format&fit=crop&w=800&q=80", // Fluido Verde
+    "https://images.unsplash.com/photo-1584448141569-69f34551225a?auto=format&fit=crop&w=800&q=80", // Livros/Estudos
+    "https://images.unsplash.com/photo-1505330622279-bf7d7fc918f4?auto=format&fit=crop&w=800&q=80", // Relaxamento
+    "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=800&q=80"  // Modelo Feminino Clean
+];
+
+// Função de Sorteio
+const getImagemPadrao = () => imagensPadrao[Math.floor(Math.random() * imagensPadrao.length)];
+
 // Função auxiliar para formatar URL da imagem (mesma lógica do frontend)
 const formatImageUrl = (path) => {
     if (!path) return null;
@@ -86,20 +113,24 @@ module.exports = {
                 const mocks = [
                     {
                         id: 'mock-1', titulo: "Como a ansiedade afeta o sono", conteudo: "Dificuldade para dormir é um dos sintomas mais comuns...",
-                        imagem_url: "https://images.pexels.com/photos/3771097/pexels-photo-3771097.jpeg?auto=compress&cs=tinysrgb&w=600",
+                        imagem_url: null,
                         created_at: new Date('2025-11-20'), autor: { nome: "Equipe Yelo", fotoUrl: null, slug: "#" },
                         curtidas: 24
                     },
                     {
                         id: 'mock-2', titulo: "Terapia Online funciona mesmo?", conteudo: "Estudos mostram que a eficácia é a mesma...",
-                        imagem_url: "https://images.pexels.com/photos/4098228/pexels-photo-4098228.jpeg?auto=compress&cs=tinysrgb&w=600",
+                        imagem_url: null,
                         created_at: new Date('2025-11-15'), autor: { nome: "Equipe Yelo", fotoUrl: null, slug: "#" },
                         curtidas: 56
                     }
                 ];
                 posts = posts.concat(mocks);
             }
-            res.render('blog', { posts: posts, formatImageUrl: formatImageUrl });
+            res.render('blog', { 
+                posts: posts, 
+                formatImageUrl: formatImageUrl,
+                getImagemPadrao: getImagemPadrao
+            });
         } catch (error) {
             console.error("Erro blog público:", error);
             res.render('blog', { posts: [], formatImageUrl: formatImageUrl, error: "Erro." });
@@ -137,7 +168,8 @@ module.exports = {
             res.render('post_completo', { 
                 post: post, 
                 recentes: recentes, // Enviamos a lista para a lateral
-                formatImageUrl: formatImageUrl 
+                formatImageUrl: formatImageUrl,
+                getImagemPadrao: getImagemPadrao
             });
 
         } catch (error) {
