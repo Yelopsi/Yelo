@@ -179,7 +179,7 @@
                 </div>
             </div>
 
-            <img src="<%= post.imagem_url || getImagemPadrao() %>" alt="<%= post.titulo %>" class="imagem-destaque-artigo">
+            <img src="<%= post.imagem_url || getImagemFixa(post.id) %>" alt="<%= post.titulo %>" class="imagem-destaque-artigo">
 
             <div class="conteudo-texto">
                 <% post.conteudo.split('\n').forEach(paragrafo => { %>
@@ -290,7 +290,7 @@
             <% if (recentes && recentes.length > 0) { %>
                 <% recentes.forEach(item => { %>
                     <a href="/blog/post/<%= item.id %>" class="card-lateral">
-                        <img src="<%= item.imagem_url || getImagemPadrao() %>" alt="Capa">
+                        <img src="<%= item.imagem_url || getImagemFixa(item.id) %>" alt="Capa">
                         <div class="card-lateral-info">
                             <h4><%= item.titulo %></h4>
                             <span><%= new Date(item.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }) %></span>

@@ -79,14 +79,18 @@
         }
 
         .tag-destaque {
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             text-transform: uppercase;
             letter-spacing: 1.5px;
             font-weight: 800;
-            color: #1B4332;
+            color: #fff; /* Texto branco */
+            background-color: #1B4332; /* Fundo Verde Yelo */
+            padding: 5px 12px; /* Espaçamento interno */
+            border-radius: 4px;
             margin-bottom: 20px;
-            display: inline-block;
-            opacity: 0.8;
+            display: inline-block !important; /* Força aparecer */
+            opacity: 1; /* Remove transparência */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         .destaque-conteudo h2 {
@@ -159,7 +163,7 @@
             <% const destaque = posts[0]; %>
             <a href="/blog/post/<%= destaque.id %>" class="post-destaque">
                 <div class="destaque-img-wrapper">
-                    <img src="<%= destaque.imagem_url || getImagemPadrao() %>" alt="<%= destaque.titulo %>">
+                    <img src="<%= destaque.imagem_url || getImagemFixa(destaque.id) %>" alt="<%= destaque.titulo %>">
                 </div>
                 
                 <div class="destaque-conteudo">
@@ -180,7 +184,7 @@
                     <% outros.forEach(post => { %>
                         <article class="post-card">
                             <a href="/blog/post/<%= post.id %>" class="card-link">
-                                <img src="<%= post.imagem_url || getImagemPadrao() %>" alt="<%= post.titulo %>" class="card-img">
+                                <img src="<%= post.imagem_url || getImagemFixa(post.id) %>" alt="<%= post.titulo %>" class="card-img">
                                 <div class="post-card-body">
                                     <span class="card-date">
                                         <%= new Date(post.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }) %>
