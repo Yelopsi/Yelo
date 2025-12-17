@@ -1606,15 +1606,6 @@ function inicializarBlog() {
         toggleView(true);
     });
     setupBtn('btn-voltar-lista', () => toggleView(false));
-    
-    // --- BOTÃO CANCELAR (Igual ao Voltar para Lista) ---
-    const btnCancelar = document.getElementById('btn-cancelar-artigo');
-    if (btnCancelar) {
-        btnCancelar.onclick = (e) => {
-            e.preventDefault(); // Bloqueia o envio do formulário (evita recarregar)
-            toggleView(false);  // Executa a mesma ação do link "Voltar"
-        };
-    }
 
     function limparFormulario() {
         if(form) form.reset(); // Limpa título e conteúdo
@@ -1743,10 +1734,21 @@ function inicializarBlog() {
     }
 
     // --- 2. FUNÇÃO DE SALVAR (IMPORTANTE: Corrigido o evento) ---
-    // Removemos qualquer listener anterior para não duplicar
+    // Removemos qualquer listener anterior clonando o form
     const novoForm = form.cloneNode(true);
     form.parentNode.replaceChild(novoForm, form);
     
+    // --- CORREÇÃO DO CANCELAR (Aqui é o lugar certo!) ---
+    // Como clonamos o form, precisamos pegar o botão "novo" que acabou de nascer
+    const btnCancelarNovo = document.getElementById('btn-cancelar-artigo');
+    if (btnCancelarNovo) {
+        btnCancelarNovo.onclick = (e) => {
+            e.preventDefault(); // Impede recarregar
+            toggleView(false);  // Volta para a lista mantendo o rascunho
+        };
+    }
+
+    // Listener de Submit no NOVO form
     novoForm.addEventListener('submit', async function(e) {
         e.preventDefault(); // IMPEDE O RECARREGAMENTO DA PÁGINA
         console.log("Botão PUBLICAR clicado! Iniciando envio...");
