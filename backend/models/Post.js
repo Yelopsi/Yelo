@@ -1,4 +1,4 @@
-// models/Post.js
+// models/Post.js (CORRIGIDO PARA MAPEAMENTO DE DATA)
 module.exports = (sequelize, DataTypes) => {
     const Post = sequelize.define('Post', {
         titulo: {
@@ -26,20 +26,21 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: false
         }
     }, {
-        tableName: 'posts', // Garante que usa a tabela que criamos manualmente
-        timestamps: true    // Gerencia createdAt e updatedAt sozinho
+        tableName: 'posts', 
+        timestamps: true,
+        
+        // --- AQUI ESTÁ A CORREÇÃO MÁGICA ---
+        // Dizemos ao Sequelize: "Quando você quiser usar createdAt, use a coluna created_at do banco"
+        createdAt: 'created_at',
+        updatedAt: 'updated_at'
+        // -----------------------------------
     });
 
     Post.associate = (models) => {
-        // CORREÇÃO: Verifica se o modelo existe com letra maiúscula OU minúscula
-        // Isso resolve o erro no Render (Linux)
+        // Correção de compatibilidade (Linux/Windows)
         const PsiModel = models.Psychologist || models.psychologist;
-        
         if (PsiModel) {
-            Post.belongsTo(PsiModel, { 
-                foreignKey: 'psychologist_id', 
-                as: 'autor' 
-            });
+            Post.belongsTo(PsiModel, { foreignKey: 'psychologist_id', as: 'autor' });
         }
     };
 
