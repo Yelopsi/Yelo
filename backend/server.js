@@ -267,6 +267,32 @@ app.post('/api/login-admin-check', async (req, res) => {
     }
 });
 
+// --- ADICIONE ISTO LOGO APÓS A ROTA '/api/login-admin-check' ---
+
+// ROTA DE VERIFICAÇÃO DE SESSÃO (Para o admin.js não te expulsar)
+app.get('/api/admin/me', (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) return res.status(401).json({ error: 'Token ausente' });
+
+        // Pega o token depois de "Bearer "
+        const token = authHeader.split(' ')[1];
+        
+        // Verifica se é válido usando a mesma chave secreta do login
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+        
+        // Retorna os dados que o admin.js espera para montar a tela
+        res.json({ 
+            id: decoded.id, 
+            nome: decoded.nome, 
+            role: decoded.role 
+        });
+    } catch (error) {
+        console.error("Erro na verificação do token:", error.message);
+        return res.status(401).json({ error: 'Token inválido ou expirado' });
+    }
+});
+
 // =============================================================
 // FRONTEND DINÂMICO (EJS) - ORDEM CORRIGIDA
 // =============================================================

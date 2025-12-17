@@ -3,7 +3,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function logout() {
         localStorage.removeItem('Yelo_token');
-        window.location.replace('login.html');
+        // CORREÇÃO: Redireciona para a raiz (/login.html) e não para o login antigo
+        window.location.href = '/login.html'; 
     }
 
     async function initializeAndProtect() {
