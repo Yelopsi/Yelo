@@ -13,79 +13,79 @@
         <section>
             <div class="container-blog">
                 
-                <div class="titulo-secao" style="margin-bottom: 60px; text-align: center;">
-                    <h1 style="font-family: 'New Kansas', serif; font-size: 3rem; color: var(--verde-escuro);">Blog Yelo</h1>
-                    <p class="subtitulo-secao">Reflexões e ferramentas para sua jornada de autoconhecimento e bem-estar.</p>
+                <div class="titulo-secao" style="margin-bottom: 40px; text-align: center;">
+                    <h1 style="font-family: 'New Kansas', serif; font-size: 3rem; color: #1B4332;">Blog Yelo</h1>
+                    <p class="subtitulo-secao">Reflexões e ferramentas para sua jornada.</p>
                 </div>
 
-                <a href="#" class="post-destaque">
-                    <img src="https://images.pexels.com/photos/4101143/pexels-photo-4101143.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Imagem de destaque">
-                    <div class="post-destaque-texto">
-                        <span>MAIS RECENTE</span>
-                        <h2>A Coragem de Ser Imperfeito: Como a Vulnerabilidade Transforma</h2>
-                        <p>Exploramos como abraçar nossas imperfeições não é um sinal de fraqueza, mas sim o caminho para uma conexão mais autêntica consigo mesmo e com os outros...</p>
-                    </div>
-                </a>
+                <% if (posts && posts.length > 0) { %>
+                    <% const destaque = posts[0]; %>
+                    
+                    <a href="/blog/post/<%= destaque.id %>" class="post-destaque" style="display: block; position: relative; border-radius: 16px; overflow: hidden; margin-bottom: 60px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-decoration: none; color: inherit;">
+                        <div style="position: relative; height: 450px;">
+                            <img src="<%= destaque.imagem_url || 'https://images.pexels.com/photos/4101143/pexels-photo-4101143.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' %>" 
+                                 alt="Destaque" 
+                                 style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
+                            
+                            <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 70%; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);"></div>
+                            
+                            <div class="post-destaque-texto" style="position: absolute; bottom: 0; left: 0; padding: 40px; width: 100%; max-width: 800px;">
+                                <span style="background: #FFEE8C; color: #1B4332; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">
+                                    Mais Recente
+                                </span>
+                                <h2 style="color: #fff; font-family: 'New Kansas', serif; font-size: 2.5rem; margin: 15px 0; line-height: 1.2;">
+                                    <%= destaque.titulo %>
+                                </h2>
+                                <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                                    <%= destaque.conteudo %>
+                                </p>
+                                <div style="margin-top: 20px; display: flex; align-items: center; gap: 10px; color: #fff;">
+                                    <img src="<%= destaque.autor && destaque.autor.fotoUrl ? formatImageUrl(destaque.autor.fotoUrl) : 'https://placehold.co/40x40' %>" 
+                                         style="width: 30px; height: 30px; border-radius: 50%; border: 1px solid #fff;">
+                                    <span style="font-size: 0.9rem;">Por Psi. <%= destaque.autor ? destaque.autor.nome.split(' ')[0] : 'Yelo' %></span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
 
-                <div class="post-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px;">
-    
-                    <% if (posts && posts.length > 0) { %>
-                        <% posts.forEach(post => { %>
-                            <article class="post-card" style="background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.3s; display: flex; flex-direction: column;">
-                                
-                                <a href="/blog/post/<%= post.id %>" style="text-decoration: none; color: inherit; flex: 1; display: flex; flex-direction: column;">
-                                    
-                                    <div style="height: 200px; overflow: hidden; background: #eee;">
-                                        <img src="<%= post.imagem_url || 'https://images.pexels.com/photos/4101143/pexels-photo-4101143.jpeg?auto=compress&cs=tinysrgb&w=600' %>" 
-                                             alt="<%= post.titulo %>" 
-                                             style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;"
-                                             onmouseover="this.style.transform='scale(1.05)'"
-                                             onmouseout="this.style.transform='scale(1.0)'">
-                                    </div>
-                                    
-                                    <div class="post-card-conteudo" style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
-                                        
-                                        <span style="font-size: 0.75rem; color: #999; margin-bottom: 8px; display: block;">
-                                            <%= new Date(post.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) %>
-                                        </span>
-                                        
-                                        <h3 style="margin: 0 0 10px 0; font-family: 'New Kansas', serif; font-size: 1.3rem; line-height: 1.3; color: #1B4332;">
-                                            <%= post.titulo %>
-                                        </h3>
-                                        
-                                        <p style="font-size: 0.95rem; color: #666; line-height: 1.6; margin-bottom: 20px; flex: 1;">
-                                            <%= post.conteudo.substring(0, 120) %>...
-                                        </p>
-                
-                                        <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 15px; border-top: 1px solid #f0f0f0; margin-top: auto;">
-                                            
-                                            <object> <a href="/<%= post.autor ? post.autor.slug : '#' %>" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit;">
-                                                    <img src="<%= post.autor && post.autor.fotoUrl ? formatImageUrl(post.autor.fotoUrl) : 'https://placehold.co/40x40' %>" 
-                                                         alt="Foto Psi" 
-                                                         style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">
-                                                    <span style="font-size: 0.85rem; color: #555; font-weight: 500;">
-                                                        Psi. <%= post.autor ? post.autor.nome.split(' ')[0] : 'Yelo' %>
-                                                    </span>
-                                                </a>
-                                            </object>
-
-                                            <div style="display: flex; align-items: center; gap: 4px; color: #e63946;">
-                                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/></svg>
-                                                <span style="font-size: 0.85rem; font-weight: bold;">0</span>
-                                            </div>
-
+                    <% const outros = posts.slice(1); %>
+                    <% if (outros.length > 0) { %>
+                        <div class="post-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px;">
+                            <% outros.forEach(post => { %>
+                                <article class="post-card" style="background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.3s; display: flex; flex-direction: column;">
+                                    <a href="/blog/post/<%= post.id %>" style="text-decoration: none; color: inherit; flex: 1; display: flex; flex-direction: column;">
+                                        <div style="height: 220px; overflow: hidden;">
+                                            <img src="<%= post.imagem_url || 'https://images.pexels.com/photos/4101143/pexels-photo-4101143.jpeg' %>" 
+                                                 alt="<%= post.titulo %>" 
+                                                 style="width: 100%; height: 100%; object-fit: cover;">
                                         </div>
-                                    </div>
-                                </a>
-                            </article>
-                        <% }) %>
-                    <% } else { %>
-                        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #666;">
-                            <p>Nenhum artigo encontrado.</p>
+                                        <div class="post-card-conteudo" style="padding: 25px; flex: 1; display: flex; flex-direction: column;">
+                                            <span style="font-size: 0.8rem; color: #999; margin-bottom: 10px;">
+                                                <%= new Date(post.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }) %>
+                                            </span>
+                                            <h3 style="margin: 0 0 10px 0; font-family: 'New Kansas', serif; font-size: 1.4rem; color: #1B4332; line-height: 1.3;">
+                                                <%= post.titulo %>
+                                            </h3>
+                                            <p style="font-size: 0.95rem; color: #666; line-height: 1.6; margin-bottom: 20px; flex: 1;">
+                                                <%= post.conteudo.substring(0, 100) %>...
+                                            </p>
+                                            <div style="border-top: 1px solid #eee; padding-top: 15px; display: flex; align-items: center; gap: 8px;">
+                                                <img src="<%= post.autor && post.autor.fotoUrl ? formatImageUrl(post.autor.fotoUrl) : 'https://placehold.co/30x30' %>" 
+                                                     style="width: 24px; height: 24px; border-radius: 50%;">
+                                                <span style="font-size: 0.85rem; color: #555;">Psi. <%= post.autor ? post.autor.nome.split(' ')[0] : 'Yelo' %></span>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </article>
+                            <% }) %>
                         </div>
                     <% } %>
-                
-                </div>
+
+                <% } else { %>
+                    <div style="text-align: center; padding: 60px; background: #fff; border-radius: 12px;">
+                        <p style="color: #666; font-size: 1.2rem;">Nenhum artigo publicado ainda.</p>
+                    </div>
+                <% } %>
             </div>
         </section>
         <section class="aviso-crise ruido">

@@ -3,43 +3,154 @@
 <head>
     <title><%= post.titulo %> - Blog Yelo</title>
     <%- include('partials/head') %>
+    
     <style>
-        .artigo-container { max-width: 800px; margin: 0 auto; padding: 0 20px; }
-        .artigo-header { text-align: center; margin-bottom: 40px; }
-        .artigo-meta { display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 20px; color: #666; font-size: 0.9rem; }
-        .artigo-autor { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; transition: opacity 0.2s; }
-        .artigo-autor:hover { opacity: 0.7; }
-        .artigo-img-destaque { width: 100%; height: auto; max-height: 500px; object-fit: cover; border-radius: 12px; margin-bottom: 40px; }
-        .artigo-texto { font-family: 'Georgia', serif; font-size: 1.15rem; line-height: 1.8; color: #333; }
-        .artigo-texto p { margin-bottom: 20px; }
+        /* Estilos modernos de Blog (Estilo Medium/Substack) */
+        body {
+            background-color: #fff; /* Fundo branco limpo para leitura */
+            color: #2c3e50;
+        }
+
+        .artigo-main {
+            padding-top: 140px; /* Espaço para o menu fixo não cobrir o título */
+            padding-bottom: 100px;
+        }
+
+        .artigo-wrapper {
+            max-width: 740px; /* Largura ideal para leitura humana */
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .artigo-header {
+            margin-bottom: 40px;
+        }
+
+        .categoria-tag {
+            color: #1B4332;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            display: block;
+            margin-bottom: 15px;
+        }
+
+        .artigo-titulo {
+            font-family: 'New Kansas', serif;
+            font-size: 3rem; /* Título grande e impactante */
+            line-height: 1.1;
+            color: #1B4332;
+            margin: 0 0 25px 0;
+        }
+
+        /* Meta dados (Autor e Data) */
+        .artigo-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+            padding: 15px 0;
+            margin-bottom: 40px;
+        }
+
+        .autor-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .autor-foto {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .autor-texto strong { display: block; color: #1B4332; font-size: 1rem; }
+        .autor-texto span { display: block; color: #666; font-size: 0.85rem; }
+
+        .data-leitura {
+            color: #777;
+            font-size: 0.9rem;
+            text-align: right;
+        }
+
+        /* Imagem */
+        .artigo-img-container {
+            margin-bottom: 50px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .artigo-img {
+            width: 100%;
+            height: auto;
+            max-height: 450px; /* Limita altura para não ocupar a tela toda */
+            object-fit: cover;
+            display: block;
+        }
+
+        /* O Texto em si */
+        .artigo-conteudo {
+            font-family: 'Georgia', 'Times New Roman', serif; /* Fontes com serifa são melhores para leitura longa */
+            font-size: 1.25rem; /* Tamanho confortável (20px) */
+            line-height: 1.8;
+            color: #2c3e50;
+        }
+
+        .artigo-conteudo p {
+            margin-bottom: 30px; /* Bom espaço entre parágrafos */
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .artigo-titulo { font-size: 2.2rem; }
+            .artigo-conteudo { font-size: 1.1rem; }
+            .artigo-meta { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .data-leitura { text-align: left; }
+        }
     </style>
 </head>
 <body>
+
     <%- include('partials/header') %>
 
-    <main style="padding-top: 120px; padding-bottom: 80px; background-color: #fdfaf6;">
-        <article class="artigo-container">
+    <main class="artigo-main">
+        <article class="artigo-wrapper">
             
             <header class="artigo-header">
-                <span style="text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem; color: #1B4332; font-weight: bold;">Blog Yelo</span>
-                <h1 style="font-family: 'New Kansas', serif; font-size: 2.5rem; color: #1B4332; margin: 15px 0;"><%= post.titulo %></h1>
+                <span class="categoria-tag">Blog Yelo</span>
+                <h1 class="artigo-titulo"><%= post.titulo %></h1>
                 
                 <div class="artigo-meta">
-                    <a href="/<%= post.autor ? post.autor.slug : '#' %>" class="artigo-autor" title="Ver perfil público">
-                        <img src="<%= post.autor && post.autor.fotoUrl ? formatImageUrl(post.autor.fotoUrl) : 'https://placehold.co/40x40' %>" 
-                             style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                        <strong>Psi. <%= post.autor ? post.autor.nome : 'Equipe Yelo' %></strong>
+                    <a href="/<%= post.autor ? post.autor.slug : '#' %>" class="autor-info">
+                        <img src="<%= post.autor && post.autor.fotoUrl ? formatImageUrl(post.autor.fotoUrl) : 'https://placehold.co/50x50' %>" class="autor-foto" alt="Foto Psi">
+                        <div class="autor-texto">
+                            <strong>Psi. <%= post.autor ? post.autor.nome : 'Equipe Yelo' %></strong>
+                            <span>Ver perfil profissional</span>
+                        </div>
                     </a>
-                    <span>•</span>
-                    <time><%= new Date(post.created_at).toLocaleDateString('pt-BR', {day: 'numeric', month: 'long', year: 'numeric'}) %></time>
+
+                    <div class="data-leitura">
+                        <%= new Date(post.created_at).toLocaleDateString('pt-BR', {day: 'numeric', month: 'short', year: 'numeric'}) %>
+                        <br>
+                        <span>~<%= Math.ceil(post.conteudo.split(' ').length / 200) %> min de leitura</span>
+                    </div>
                 </div>
             </header>
 
             <% if (post.imagem_url) { %>
-                <img src="<%= post.imagem_url %>" alt="<%= post.titulo %>" class="artigo-img-destaque">
+                <figure class="artigo-img-container">
+                    <img src="<%= post.imagem_url %>" alt="<%= post.titulo %>" class="artigo-img">
+                </figure>
             <% } %>
 
-            <div class="artigo-texto">
+            <div class="artigo-conteudo">
                 <% post.conteudo.split('\n').forEach(paragrafo => { %>
                     <% if (paragrafo.trim()) { %>
                         <p><%= paragrafo %></p>
@@ -47,10 +158,16 @@
                 <% }) %>
             </div>
 
-            <div style="margin-top: 60px; text-align: center;">
-                <a href="/blog" style="display: inline-block; padding: 12px 30px; border: 1px solid #1B4332; color: #1B4332; border-radius: 25px; text-decoration: none; font-weight: bold; transition: all 0.3s;">
-                    ← Voltar para o Blog
-                </a>
+            <div style="margin-top: 60px; padding-top: 40px; border-top: 1px solid #eee; text-align: center;">
+                <p style="margin-bottom: 20px; font-weight: bold; color: #1B4332;">Gostou deste artigo?</p>
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <a href="/blog" style="padding: 10px 25px; border: 1px solid #1B4332; border-radius: 25px; text-decoration: none; color: #1B4332; transition: all 0.2s;">
+                        ← Voltar ao Blog
+                    </a>
+                    <a href="/<%= post.autor ? post.autor.slug : '#' %>" style="padding: 10px 25px; background: #1B4332; border-radius: 25px; text-decoration: none; color: #fff; box-shadow: 0 4px 10px rgba(27,67,50,0.3);">
+                        Agendar com este Psi
+                    </a>
+                </div>
             </div>
 
         </article>
