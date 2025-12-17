@@ -79,18 +79,21 @@
         }
 
         .tag-destaque {
-            font-size: 0.8rem;
+            background-color: #1B4332 !important; /* Verde Yelo Sólido */
+            color: #ffffff !important; /* Texto Branco Puro */
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 1.5px;
             font-weight: 800;
-            color: #fff; /* Texto branco */
-            background-color: #1B4332; /* Fundo Verde Yelo */
-            padding: 5px 12px; /* Espaçamento interno */
-            border-radius: 4px;
+            display: inline-block;
             margin-bottom: 20px;
-            display: inline-block !important; /* Força aparecer */
-            opacity: 1; /* Remove transparência */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* Sombra para destacar do fundo */
+            border: none;
+            opacity: 1 !important;
+            z-index: 10;
+            position: relative;
         }
 
         .destaque-conteudo h2 {
