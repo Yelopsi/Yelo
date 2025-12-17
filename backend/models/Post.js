@@ -31,10 +31,15 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     Post.associate = (models) => {
-        // Um Post pertence a um Psicólogo
-        // Nota: Assumindo que seu model de psicólogo chama 'Psychologist'
-        if(models.Psychologist) {
-            Post.belongsTo(models.Psychologist, { foreignKey: 'psychologist_id', as: 'autor' });
+        // CORREÇÃO: Verifica se o modelo existe com letra maiúscula OU minúscula
+        // Isso resolve o erro no Render (Linux)
+        const PsiModel = models.Psychologist || models.psychologist;
+        
+        if (PsiModel) {
+            Post.belongsTo(PsiModel, { 
+                foreignKey: 'psychologist_id', 
+                as: 'autor' 
+            });
         }
     };
 
