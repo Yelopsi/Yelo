@@ -1607,12 +1607,12 @@ function inicializarBlog() {
     });
     setupBtn('btn-voltar-lista', () => toggleView(false));
     
-    // Botão Cancelar (Correção)
+    // --- BOTÃO CANCELAR (Igual ao Voltar para Lista) ---
     const btnCancelar = document.getElementById('btn-cancelar-artigo');
     if (btnCancelar) {
         btnCancelar.onclick = (e) => {
-            e.preventDefault(); // Impede recarregar página
-            toggleView(false);  // Apenas fecha, mantendo o texto digitado (rascunho)
+            e.preventDefault(); // Bloqueia o envio do formulário (evita recarregar)
+            toggleView(false);  // Executa a mesma ação do link "Voltar"
         };
     }
 
