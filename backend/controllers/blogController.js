@@ -70,9 +70,7 @@ module.exports = {
         }
     },
 
-    // --- ÁREA PÚBLICA ---
-
-    // 1. O Blog Geral (Lista)
+    // ÁREA PÚBLICA: Lista do Blog
     exibirBlogPublico: async (req, res) => {
         try {
             const posts = await Post.findAll({
@@ -83,19 +81,17 @@ module.exports = {
                     attributes: ['nome', 'fotoUrl', 'slug'] 
                 }]
             });
-            // Enviamos a função formatImageUrl para o EJS usar
             res.render('blog', { posts: posts, formatImageUrl: formatImageUrl });
         } catch (error) {
-            console.error("Erro ao carregar blog público:", error);
+            console.error("Erro blog público:", error);
             res.render('blog', { posts: [], formatImageUrl: formatImageUrl });
         }
     },
 
-    // 2. NOVO: O Post Completo (Leitura)
+    // ÁREA PÚBLICA: Post Único
     exibirPostUnico: async (req, res) => {
         try {
             const { id } = req.params;
-            
             const post = await Post.findByPk(id, {
                 include: [{
                     model: Psychologist,
@@ -104,10 +100,7 @@ module.exports = {
                 }]
             });
 
-            if (!post) {
-                return res.redirect('/blog'); // Se não achar, volta pra lista
-            }
-
+            if (!post) return res.redirect('/blog');
             res.render('post_completo', { post: post, formatImageUrl: formatImageUrl });
         } catch (error) {
             console.error("Erro ao abrir post:", error);

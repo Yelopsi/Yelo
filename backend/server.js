@@ -300,11 +300,8 @@ app.get('/', (req, res) => {
     res.render('index');
 });
 
-// --- ROTA PÚBLICA DO BLOG (NOVA) ---
-// Sobrescreve o comportamento padrão para carregar dados do banco
+// Rotas Públicas do Blog
 app.get('/blog', blogController.exibirBlogPublico);
-
-// ADICIONE ESTA LINHA:
 app.get('/blog/post/:id', blogController.exibirPostUnico);
 
 // 2º: DEPOIS configure os arquivos estáticos.
