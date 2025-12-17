@@ -8,7 +8,7 @@
     <style>
         /* --- ESTRUTURA GERAL --- */
         .pagina-blog {
-            padding-top: 140px; /* Espaço para o menu não cobrir o título */
+            padding-top: 140px;
             padding-bottom: 80px;
             background-color: #fdfaf6;
             min-height: 100vh;
@@ -20,10 +20,10 @@
             padding: 0 20px;
         }
 
-        /* --- CABEÇALHO (HERO) RESTAURADO --- */
+        /* --- HERO (Título) --- */
         .blog-hero {
             text-align: center;
-            margin-bottom: 60px; /* Espaço entre título e o destaque */
+            margin-bottom: 50px;
             padding: 20px;
         }
         .blog-hero h1 {
@@ -34,25 +34,27 @@
         }
         .blog-hero p {
             font-family: 'Lato', sans-serif;
-            font-size: 1.25rem; /* Levemente maior para leitura fácil */
+            font-size: 1.25rem;
             color: #555;
             max-width: 700px;
             margin: 0 auto;
             line-height: 1.6;
         }
 
-        /* --- POST DESTAQUE (ESTILO CARTÃO HORIZONTAL) --- */
+        /* --- POST DESTAQUE (CORRIGIDO: Menor e Proporcional) --- */
         .post-destaque {
             display: grid;
-            grid-template-columns: 1.1fr 0.9fr; /* Imagem um pouco maior que o texto */
+            /* Imagem ocupa 40%, Texto ocupa 60% (Equilíbrio melhor) */
+            grid-template-columns: 0.7fr 1fr; 
             background: #fff;
             border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.06); /* Sombra suave profissional */
-            margin-bottom: 80px; /* Separação clara dos posts antigos */
+            box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+            margin-bottom: 60px;
             text-decoration: none;
             color: inherit;
-            min-height: 420px;
+            /* TRAVA A ALTURA: Maior que os comuns, mas não gigante */
+            height: 340px; 
             border: 1px solid rgba(0,0,0,0.02);
             transition: transform 0.3s ease;
         }
@@ -62,25 +64,27 @@
             position: relative;
             height: 100%;
             overflow: hidden;
+            border-right: 1px solid #f0f0f0;
         }
         .destaque-img-wrapper img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: cover; /* Garante preenchimento perfeito */
             transition: transform 0.6s ease;
         }
         .post-destaque:hover .destaque-img-wrapper img { transform: scale(1.03); }
 
         .destaque-conteudo {
-            padding: 50px;
+            padding: 40px; /* Reduzi um pouco o padding para caber tudo */
             display: flex;
             flex-direction: column;
             justify-content: center;
         }
 
+        /* TAG "MAIS RECENTE" (Blindada e Visível) */
         .tag-destaque {
-            background-color: #1B4332 !important; /* Verde Yelo Sólido */
-            color: #ffffff !important; /* Texto Branco Puro */
+            background-color: #1B4332 !important;
+            color: #ffffff !important;
             padding: 6px 14px;
             border-radius: 4px;
             font-size: 0.75rem;
@@ -88,61 +92,68 @@
             letter-spacing: 1.5px;
             font-weight: 800;
             display: inline-block;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* Sombra para destacar do fundo */
+            margin-bottom: 15px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
             border: none;
             opacity: 1 !important;
-            z-index: 10;
-            position: relative;
+            width: fit-content;
         }
 
         .destaque-conteudo h2 {
             font-family: 'New Kansas', serif;
-            font-size: 2.2rem;
+            font-size: 2rem; /* Tamanho controlado */
             color: #1B4332;
             margin: 0 0 15px 0;
             line-height: 1.15;
-        }
-
-        .destaque-conteudo p {
-            font-size: 1.05rem;
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 30px;
+            
+            /* Limita título a 2 linhas */
             display: -webkit-box;
-            -webkit-line-clamp: 4; /* Limita a 4 linhas */
+            -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
 
+        .destaque-conteudo p {
+            font-size: 1rem;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            
+            /* Limita resumo a 3 linhas */
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Rodapé do destaque (Autor) */
         .autor-destaque {
             display: flex;
             align-items: center;
             gap: 12px;
             border-top: 1px solid #eee;
             padding-top: 20px;
-            margin-top: auto; /* Empurra para o final do card */
+            margin-top: auto;
         }
-        .autor-destaque img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+        .autor-destaque img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
         .autor-destaque span { font-size: 0.9rem; font-weight: 600; color: #333; }
 
-        /* --- GRID INFERIOR (MANTIDO) --- */
+        /* --- GRID INFERIOR (Cards Menores) --- */
         .blog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
         .post-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: transform 0.3s; height: 100%; display: flex; flex-direction: column; }
         .post-card:hover { transform: translateY(-5px); }
-        .post-card img { width: 100%; height: 220px; object-fit: cover; }
+        .post-card img { width: 100%; height: 200px; object-fit: cover; }
         .post-card-body { padding: 25px; flex: 1; display: flex; flex-direction: column; }
         .post-card-body h3 { font-family: 'New Kansas', serif; font-size: 1.4rem; color: #1B4332; margin: 10px 0; line-height: 1.3; }
-        .post-card-body p { font-size: 0.95rem; color: #666; line-height: 1.5; margin-bottom: 20px; flex: 1; }
-        .post-card-footer { border-top: 1px solid #eee; padding-top: 15px; display: flex; align-items: center; gap: 10px; margin-top: auto; }
-        .post-card-footer img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
-        .post-card-footer span { font-size: 0.85rem; color: #555; font-weight: 600; }
+        .post-card-body p { font-size: 0.95rem; color: #666; line-height: 1.5; margin-bottom: 20px; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .post-card-footer { border-top: 1px solid #eee; padding-top: 15px; display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
 
         /* MOBILE */
         @media (max-width: 900px) {
             .blog-hero h1 { font-size: 2.8rem; }
+            /* No celular, empilha e deixa a altura automática */
             .post-destaque { grid-template-columns: 1fr; height: auto; min-height: auto; }
-            .destaque-img-wrapper { height: 280px; order: -1; }
+            .destaque-img-wrapper { height: 250px; order: -1; }
             .destaque-conteudo { padding: 30px; }
             .destaque-conteudo h2 { font-size: 1.8rem; }
         }
