@@ -304,6 +304,9 @@ app.get('/', (req, res) => {
 // Sobrescreve o comportamento padrão para carregar dados do banco
 app.get('/blog', blogController.exibirBlogPublico);
 
+// ADICIONE ESTA LINHA:
+app.get('/blog/post/:id', blogController.exibirPostUnico);
+
 // 2º: DEPOIS configure os arquivos estáticos.
 // Se não for a Home, ele procura CSS, JS ou imagens na pasta raiz.
 app.use(express.static(path.join(__dirname, '..')));

@@ -4,9 +4,18 @@ const Post = db.Post;
 // Precisamos do modelo Psychologist para saber quem escreveu
 const Psychologist = db.Psychologist; 
 
+// Função auxiliar para formatar URL da imagem (mesma lógica do frontend)
+const formatImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    let cleanPath = path.replace(/\\/g, '/');
+    if (cleanPath.includes('uploads/')) cleanPath = cleanPath.substring(cleanPath.lastIndexOf('uploads/'));
+    if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
+    return cleanPath;
+};
+
 module.exports = {
-    // --- ÁREA RESTRITA DO PSICÓLOGO ---
-    
+    // --- ÁREA RESTRITA (DASHBOARD) ---
     listarMeusPosts: async (req, res) => {
         try {
             const posts = await Post.findAll({
@@ -61,25 +70,48 @@ module.exports = {
         }
     },
 
-    // --- NOVA FUNÇÃO: ÁREA PÚBLICA ---
+    // --- ÁREA PÚBLICA ---
+
+    // 1. O Blog Geral (Lista)
     exibirBlogPublico: async (req, res) => {
         try {
-            // Busca todos os posts, incluindo nome e foto do autor
             const posts = await Post.findAll({
                 order: [['created_at', 'DESC']],
                 include: [{
                     model: Psychologist,
                     as: 'autor',
-                    attributes: ['nome', 'fotoUrl', 'slug'] // Só pegamos o necessário
+                    attributes: ['nome', 'fotoUrl', 'slug'] 
                 }]
             });
-            
-            // Renderiza a página blog.ejs enviando a lista de posts
-            res.render('blog', { posts: posts });
+            // Enviamos a função formatImageUrl para o EJS usar
+            res.render('blog', { posts: posts, formatImageUrl: formatImageUrl });
         } catch (error) {
             console.error("Erro ao carregar blog público:", error);
-            // Se der erro, renderiza vazio para não quebrar o site
-            res.render('blog', { posts: [] });
+            res.render('blog', { posts: [], formatImageUrl: formatImageUrl });
+        }
+    },
+
+    // 2. NOVO: O Post Completo (Leitura)
+    exibirPostUnico: async (req, res) => {
+        try {
+            const { id } = req.params;
+            
+            const post = await Post.findByPk(id, {
+                include: [{
+                    model: Psychologist,
+                    as: 'autor',
+                    attributes: ['nome', 'fotoUrl', 'slug']
+                }]
+            });
+
+            if (!post) {
+                return res.redirect('/blog'); // Se não achar, volta pra lista
+            }
+
+            res.render('post_completo', { post: post, formatImageUrl: formatImageUrl });
+        } catch (error) {
+            console.error("Erro ao abrir post:", error);
+            res.redirect('/blog');
         }
     }
 };

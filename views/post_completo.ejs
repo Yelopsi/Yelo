@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title><%= post.titulo %> - Blog Yelo</title>
+    <%- include('partials/head') %>
+    <style>
+        .artigo-container { max-width: 800px; margin: 0 auto; padding: 0 20px; }
+        .artigo-header { text-align: center; margin-bottom: 40px; }
+        .artigo-meta { display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 20px; color: #666; font-size: 0.9rem; }
+        .artigo-autor { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; transition: opacity 0.2s; }
+        .artigo-autor:hover { opacity: 0.7; }
+        .artigo-img-destaque { width: 100%; height: auto; max-height: 500px; object-fit: cover; border-radius: 12px; margin-bottom: 40px; }
+        .artigo-texto { font-family: 'Georgia', serif; font-size: 1.15rem; line-height: 1.8; color: #333; }
+        .artigo-texto p { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <main style="padding-top: 120px; padding-bottom: 80px; background-color: #fdfaf6;">
+        <article class="artigo-container">
+            
+            <header class="artigo-header">
+                <span style="text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem; color: #1B4332; font-weight: bold;">Blog Yelo</span>
+                <h1 style="font-family: 'New Kansas', serif; font-size: 2.5rem; color: #1B4332; margin: 15px 0;"><%= post.titulo %></h1>
+                
+                <div class="artigo-meta">
+                    <a href="/<%= post.autor ? post.autor.slug : '#' %>" class="artigo-autor" title="Ver perfil público">
+                        <img src="<%= post.autor && post.autor.fotoUrl ? formatImageUrl(post.autor.fotoUrl) : 'https://placehold.co/40x40' %>" 
+                             style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                        <strong>Psi. <%= post.autor ? post.autor.nome : 'Equipe Yelo' %></strong>
+                    </a>
+                    <span>•</span>
+                    <time><%= new Date(post.created_at).toLocaleDateString('pt-BR', {day: 'numeric', month: 'long', year: 'numeric'}) %></time>
+                </div>
+            </header>
+
+            <% if (post.imagem_url) { %>
+                <img src="<%= post.imagem_url %>" alt="<%= post.titulo %>" class="artigo-img-destaque">
+            <% } %>
+
+            <div class="artigo-texto">
+                <% post.conteudo.split('\n').forEach(paragrafo => { %>
+                    <% if (paragrafo.trim()) { %>
+                        <p><%= paragrafo %></p>
+                    <% } %>
+                <% }) %>
+            </div>
+
+            <div style="margin-top: 60px; text-align: center;">
+                <a href="/blog" style="display: inline-block; padding: 12px 30px; border: 1px solid #1B4332; color: #1B4332; border-radius: 25px; text-decoration: none; font-weight: bold; transition: all 0.3s;">
+                    ← Voltar para o Blog
+                </a>
+            </div>
+
+        </article>
+    </main>
+
+    <%- include('partials/footer') %>
+</body>
+</html>
