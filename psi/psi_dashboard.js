@@ -1591,7 +1591,7 @@ function inicializarBlog() {
         } else {
             viewForm.style.display = 'none';
             viewLista.style.display = 'block';
-            limparFormulario();
+            // limparFormulario(); // Removido para manter o rascunho se cancelar
         }
     };
 
@@ -1601,15 +1601,30 @@ function inicializarBlog() {
         if(btn) btn.onclick = action;
     };
     setupBtn('btn-novo-artigo', () => {
+        limparFormulario(); // Limpa apenas ao iniciar um novo
         document.getElementById('form-titulo-acao').textContent = "Novo Artigo";
         toggleView(true);
     });
     setupBtn('btn-voltar-lista', () => toggleView(false));
-    setupBtn('btn-cancelar-artigo', () => toggleView(false));
+    
+    // Botão Cancelar (Correção)
+    const btnCancelar = document.getElementById('btn-cancelar-artigo');
+    if (btnCancelar) {
+        btnCancelar.onclick = (e) => {
+            e.preventDefault(); // Impede recarregar página
+            toggleView(false);  // Apenas fecha, mantendo o texto digitado (rascunho)
+        };
+    }
 
     function limparFormulario() {
-        form.reset();
-        document.getElementById('blog-id').value = '';
+        if(form) form.reset(); // Limpa título e conteúdo
+        document.getElementById('blog-id').value = ''; // Limpa o ID (modo edição)
+        // Se tiver o contador de caracteres, reseta ele também
+        const contador = document.getElementById('contador-titulo-blog');
+        if(contador) {
+            contador.textContent = "0/50 caracteres";
+            contador.style.color = "#666";
+        }
     }
 
 
@@ -1769,6 +1784,7 @@ function inicializarBlog() {
 
             if(res.ok) {
                 showToast(id ? 'Artigo atualizado!' : 'Artigo publicado com sucesso!', 'success');
+                limparFormulario(); // Limpa tudo para o próximo post
                 toggleView(false);
                 carregarArtigos();
             } else {
