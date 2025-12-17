@@ -13,6 +13,12 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            // --- ADICIONE ESTAS 3 LINHAS DE LIMPEZA AQUI ---
+            localStorage.removeItem('Yelo_token');
+            localStorage.removeItem('Yelo_user_type');
+            localStorage.removeItem('Yelo_user_name');
+            // ------------------------------------------------
+
             const submitBtn = loginForm.querySelector('button[type="submit"]');
             const originalBtnText = submitBtn.textContent;
             

@@ -7,6 +7,7 @@ const path = require('path');
 const { initSocket } = require('./config/socket');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
 
 // Banco de Dados
@@ -224,7 +225,7 @@ app.post('/api/login-admin-check', async (req, res) => {
     try {
         const { email, senha } = req.body;
 
-        // A) Busca o usuário usando SQL Puro (Mais seguro contra erros de Model)
+        // A) Busca o usuário
         const [results] = await db.sequelize.query(
             `SELECT * FROM "Admins" WHERE email = :email LIMIT 1`,
             { replacements: { email: email } }
@@ -234,7 +235,7 @@ app.post('/api/login-admin-check', async (req, res) => {
 
         // B) Se não achou ninguém
         if (!adminUser) {
-            return res.status(401).json({ success: false }); // Deixa o front tentar login de paciente
+            return res.status(401).json({ success: false }); 
         }
 
         // C) Verifica a senha
@@ -244,17 +245,24 @@ app.post('/api/login-admin-check', async (req, res) => {
             return res.status(401).json({ success: false, message: 'Senha de Admin incorreta' });
         }
 
-        // D) Sucesso!
+        // D) GERA O TOKEN (A Correção Principal)
+        const token = jwt.sign(
+            { id: adminUser.id, role: 'admin', nome: adminUser.nome },
+            process.env.JWT_SECRET || 'secreto_yelo_dev', // Usa sua chave secreta
+            { expiresIn: '24h' }
+        );
+
+        // E) Sucesso! Envia o token junto
         return res.json({ 
             success: true, 
             redirect: '/admin', 
             type: 'admin',
+            token: token, // <--- O Frontend precisa disso para não deslogar
             user: { nome: adminUser.nome }
         });
 
     } catch (error) {
         console.error('Erro no login de admin:', error);
-        // Retorna 401 para não quebrar o fluxo, mas loga o erro
         return res.status(401).json({ success: false }); 
     }
 });
