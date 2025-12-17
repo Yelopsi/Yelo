@@ -1294,7 +1294,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
-});
 
 // --- FUNÇÕES DOS CAMPOS MULTISELECT (V3 - ESTILO BULLETS & TOGGLE) ---
 
@@ -1740,3 +1739,4 @@ function inicializarBlog() {
     // Inicializa carregando a lista assim que abre a tela
     carregarArtigos();
 }
+});
