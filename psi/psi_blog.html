@@ -1,0 +1,78 @@
+<div class="page-header">
+    <h2>Meus Artigos</h2>
+    <p>Compartilhe conhecimento e atraia mais pacientes.</p>
+</div>
+
+<div id="blog-container" style="max-width: 800px; margin: 0 auto; padding-bottom: 80px;">
+
+    <div id="view-lista-artigos">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="color: #1B4332; margin: 0;">Seus Publicados</h3>
+            <button id="btn-novo-artigo" style="background-color: #1B4332; color: #fff; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px;">
+                <span style="font-size: 1.2rem;">+</span> Escrever Novo
+            </button>
+        </div>
+
+        <div id="lista-artigos-render" style="display: flex; flex-direction: column; gap: 15px;">
+            <div style="text-align: center; color: #999; padding: 40px;">
+                Carregando seus artigos...
+            </div>
+        </div>
+    </div>
+
+    <div id="view-form-artigo" style="display: none; animation: fadeIn 0.3s;">
+        <div style="margin-bottom: 20px;">
+            <button id="btn-voltar-lista" style="background: none; border: none; color: #666; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 0.9rem;">
+                ← Voltar para lista
+            </button>
+        </div>
+
+        <div class="card-dashboard" style="padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+            <h3 id="form-titulo-acao" style="margin-top: 0; color: #1B4332;">Novo Artigo</h3>
+            
+            <form id="form-blog">
+                <input type="hidden" id="blog-id" name="id">
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #333;">Título do Artigo</label>
+                    <input type="text" id="blog-titulo" name="titulo" required placeholder="Ex: A importância da terapia..." 
+                        style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #333;">Link da Imagem (URL)</label>
+                    <input type="url" id="blog-imagem" name="imagem_url" placeholder="https://..." 
+                        style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px;">
+                    <small style="color: #666; font-size: 0.8rem;">Cole o link de uma imagem (ex: Pexels, Unsplash).</small>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #333;">Conteúdo</label>
+                    <textarea id="blog-conteudo" name="conteudo" required rows="12" placeholder="Escreva seu texto aqui..." 
+                        style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-family: sans-serif; line-height: 1.5; resize: vertical;"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" id="btn-cancelar-artigo" style="padding: 10px 20px; background: #eee; border: none; border-radius: 6px; cursor: pointer;">Cancelar</button>
+                    <button type="submit" id="btn-salvar-artigo" style="padding: 10px 20px; background: #1B4332; color: #fff; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Publicar Artigo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .artigo-item {
+        background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 15px;
+        display: flex; justify-content: space-between; align-items: center;
+        transition: box-shadow 0.2s;
+    }
+    .artigo-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    
+    @media (max-width: 600px) {
+        .artigo-item { flex-direction: column; align-items: flex-start; gap: 10px; }
+        .artigo-acoes { width: 100%; display: flex; justify-content: flex-end; }
+    }
+</style>
