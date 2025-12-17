@@ -1,88 +1,85 @@
 // controllers/blogController.js
 const db = require('../models');
 const Post = db.Post; 
+// Precisamos do modelo Psychologist para saber quem escreveu
+const Psychologist = db.Psychologist; 
 
 module.exports = {
-    // 1. Listar apenas os posts do psicólogo logado
+    // --- ÁREA RESTRITA DO PSICÓLOGO ---
+    
     listarMeusPosts: async (req, res) => {
         try {
-            // O ID vem do token (req.userId foi definido na rota)
             const posts = await Post.findAll({
                 where: { psychologist_id: req.userId },
-                // CORREÇÃO AQUI: Mudamos de 'createdAt' para 'created_at'
-                order: [['created_at', 'DESC']] 
+                order: [['created_at', 'DESC']]
             });
             res.json(posts);
         } catch (error) {
-            console.error("Erro ao listar posts:", error);
-            res.status(500).json({ error: "Erro interno ao buscar posts." });
+            console.error(error);
+            res.status(500).json({ error: "Erro interno." });
         }
     },
 
-    // 2. Criar novo post
     criarPost: async (req, res) => {
         try {
             const { titulo, conteudo, imagem_url } = req.body;
-            
-            if (!titulo || !conteudo) {
-                return res.status(400).json({ error: "Título e conteúdo são obrigatórios." });
-            }
+            if (!titulo || !conteudo) return res.status(400).json({ error: "Título e conteúdo obrigatórios." });
 
             const novoPost = await Post.create({
-                titulo,
-                conteudo,
-                imagem_url,
-                psychologist_id: req.userId // Pega o ID seguro do token
+                titulo, conteudo, imagem_url,
+                psychologist_id: req.userId
             });
-
             res.status(201).json(novoPost);
         } catch (error) {
-            console.error("Erro ao criar post:", error);
-            res.status(500).json({ error: "Erro ao salvar o artigo." });
+            console.error(error);
+            res.status(500).json({ error: "Erro ao salvar." });
         }
     },
 
-    // 3. Atualizar post existente
     atualizarPost: async (req, res) => {
         try {
             const { id } = req.params;
             const { titulo, conteudo, imagem_url } = req.body;
-
-            // Segurança: Garante que o post pertence mesmo a quem está tentando editar
-            const post = await Post.findOne({ 
-                where: { id: id, psychologist_id: req.userId } 
-            });
-
-            if (!post) {
-                return res.status(404).json({ error: "Artigo não encontrado ou sem permissão." });
-            }
+            
+            const post = await Post.findOne({ where: { id, psychologist_id: req.userId } });
+            if (!post) return res.status(404).json({ error: "Não encontrado." });
 
             await post.update({ titulo, conteudo, imagem_url });
-            res.json({ message: "Atualizado com sucesso!", post });
-
+            res.json({ message: "Atualizado!", post });
         } catch (error) {
-            console.error("Erro ao atualizar:", error);
             res.status(500).json({ error: "Erro ao atualizar." });
         }
     },
 
-    // 4. Deletar post
     deletarPost: async (req, res) => {
         try {
             const { id } = req.params;
-            
-            const deletado = await Post.destroy({
-                where: { id: id, psychologist_id: req.userId }
-            });
-
-            if (!deletado) {
-                return res.status(404).json({ error: "Artigo não encontrado ou sem permissão." });
-            }
-
-            res.json({ message: "Artigo excluído." });
+            await Post.destroy({ where: { id, psychologist_id: req.userId } });
+            res.json({ message: "Excluído." });
         } catch (error) {
-            console.error("Erro ao deletar:", error);
             res.status(500).json({ error: "Erro ao excluir." });
+        }
+    },
+
+    // --- NOVA FUNÇÃO: ÁREA PÚBLICA ---
+    exibirBlogPublico: async (req, res) => {
+        try {
+            // Busca todos os posts, incluindo nome e foto do autor
+            const posts = await Post.findAll({
+                order: [['created_at', 'DESC']],
+                include: [{
+                    model: Psychologist,
+                    as: 'autor',
+                    attributes: ['nome', 'fotoUrl', 'slug'] // Só pegamos o necessário
+                }]
+            });
+            
+            // Renderiza a página blog.ejs enviando a lista de posts
+            res.render('blog', { posts: posts });
+        } catch (error) {
+            console.error("Erro ao carregar blog público:", error);
+            // Se der erro, renderiza vazio para não quebrar o site
+            res.render('blog', { posts: [] });
         }
     }
 };
