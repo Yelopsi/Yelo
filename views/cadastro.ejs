@@ -1,59 +1,83 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <title>Cadastro de Psicólogo - Yelo</title>
     <%- include('partials/head') %>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Montserrat+Alternates:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        .login-container { max-width: 500px !important; margin-top: 40px; margin-bottom: 60px; }
+        .form-group input { width: 100%; box-sizing: border-box; }
+        .aviso-legal { font-size: 0.85rem; color: #666; margin: 15px 0; line-height: 1.4; }
+    </style>
 </head>
-<body class="pagina-questionario">
+<body class="pagina-login">
 
-    <div class="questionario-container">
-        <div class="progress-bar">
-            <div class="progress-bar-fill" id="progress-bar-fill"></div>
-        </div>
+    <%- include('partials/header') %>
 
-        <div class="slides-container">
-            <div class="slide active" data-slide-id="0">
-                <div class="slide-header">
-                    <h1>Boas-vindas ao Yelo!</h1>
-                    <p class="subtitle">Vamos começar seu cadastro. Leva apenas alguns minutos.</p>
+    <main class="login-main ruido">
+        <div class="login-container">
+            <h1 class="login-titulo">Parceiro Yelo</h1>
+            <p style="text-align:center; margin-bottom:30px; color: #555;">
+                Cadastre-se para expandir sua clínica e conectar-se com novos pacientes.
+            </p>
+            
+            <form class="login-form" id="form-cadastro-psi">
+                <p id="mensagem-erro" class="mensagem-oculta" style="color: #e63946; text-align: center; display: none; margin-bottom: 15px; font-weight: bold;"></p>
+                
+                <div class="form-group">
+                    <label for="nome">Nome Completo</label>
+                    <input type="text" id="nome" name="nome" placeholder="Ex: Ana Silva" required>
                 </div>
-                <div class="slide-body"></div>
-                <div class="navigation-buttons single-button">
-                    <button class="cta-button" data-action="next">Começar</button>
-                </div>
-            </div>
 
-            <div class="slide" data-slide-id="1">
-                <div class="slide-header">
-                    <h1>Qual é o seu nome completo?</h1>
+                <div class="form-group">
+                    <label for="email">E-mail Profissional</label>
+                    <input type="email" id="email" name="email" placeholder="nome@email.com" required>
                 </div>
-                <div class="slide-body">
-                    <div class="form-group-questionario">
-                        <input type="text" id="nome" class="text-input" placeholder="Digite seu nome aqui" required>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label for="documento">CPF ou CNPJ</label>
+                        <input type="text" id="documento" name="documento" placeholder="Apenas números" required inputmode="numeric">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="crp">CRP (Ativo)</label>
+                        <input type="text" id="crp" name="crp" placeholder="00/00000" required>
                     </div>
                 </div>
-                <div class="navigation-buttons">
-                    <button class="back-button" data-action="prev">Voltar</button>
-                    <button class="cta-button" data-action="next">Avançar</button>
-                </div>
-            </div>
 
-            <div class="slide" data-slide-id="2">
-                <div class="slide-header"><h1>Qual é o seu melhor e-mail profissional?</h1></div>
-                <div class="slide-body"><div class="form-group-questionario"><input type="email" id="email" class="text-input" placeholder="exemplo@email.com" required></div></div>
-                <div class="navigation-buttons"><button class="back-button" data-action="prev">Voltar</button><button class="cta-button" data-action="next">Avançar</button></div>
-            </div>
-            
-             <div class="slide" data-slide-id="3">
-                <div class="slide-header"><h1>Crie uma senha segura</h1></div>
-                <div class="slide-body"><div class="form-group-questionario"><input type="password" id="senha" class="text-input" placeholder="Mínimo 8 caracteres" required minlength="8"></div></div>
-                <div class="navigation-buttons"><button class="back-button" data-action="prev">Voltar</button><button class="cta-button" data-action="next">Avançar</button></div>
+                <div class="form-group">
+                    <label for="senha">Criar Senha</label>
+                    <input type="password" id="senha" name="senha" placeholder="Mínimo 6 caracteres" required minlength="6">
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmar-senha">Confirmar Senha</label>
+                    <input type="password" id="confirmar-senha" name="confirmar-senha" placeholder="Repita a senha" required>
+                </div>
+
+                <div class="form-group-checkbox" style="display: flex; gap: 10px; align-items: start; margin-top: 10px;">
+                    <input type="checkbox" id="termos" name="termos" required style="margin-top: 4px;">
+                    <label for="termos" class="aviso-legal">
+                        Declaro que sou psicólogo(a) com registro ativo e aceito os <a href="/termos" target="_blank" style="color: var(--verde-escuro); font-weight: bold; text-decoration: underline;">Termos de Uso</a> e a <a href="/privacidade" target="_blank" style="color: var(--verde-escuro); font-weight: bold; text-decoration: underline;">Política de Privacidade</a>.
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-cta-principal" style="width: 100%; border: none; cursor: pointer; margin-top: 10px;">
+                    Criar Conta Profissional
+                </button>
+            </form>
+
+            <div class="login-links" style="margin-top: 20px; text-align: center;">
+                <a href="/login">Já tem cadastro? <strong>Faça Login</strong></a>
             </div>
         </div>
-    </div>
+    </main>
 
+    <%- include('partials/footer') %>
+    
     <script src="/config.js"></script>
-    <script src="/js/cadastro.js"></script>
+    
+    <script src="/cadastro.js"></script> 
 </body>
 </html>
