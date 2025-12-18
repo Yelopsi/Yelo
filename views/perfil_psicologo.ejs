@@ -37,14 +37,21 @@
             <div class="profile-header-grid">
                 <div class="profile-info">
                     <div class="profile-photo-wrapper">
-                        <img id="psi-foto" src="https://placehold.co/180x180/1B4332/FFFFFF?text=Foto" alt="Foto do Psicólogo">
+                        <img id="psi-foto" src="" alt="Foto do Psicólogo">
                     </div>
+                    
                     <h1 id="psi-nome">Carregando...</h1>
-                    <p id="psi-crp" class="crp" style="margin-bottom: 10px;">CRP: --/------</p>
-                    <div id="psi-rating-summary" class="rating-display-hero"></div>
-                    <div class="profile-bio-hero" style="margin-top: 30px; text-align: left;">
-                        <h3 style="color: var(--verde-escuro); font-family: 'New Kansas'; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center; font-size: 1.4rem;">Sobre Mim</h3>
-                        <p id="psi-bio-text" style="line-height: 1.7; color: #555; margin-top: 15px; text-align: justify; font-size: 0.95rem;"></p>
+                    
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 5px; margin-bottom: 20px;">
+                        <p id="psi-crp" class="crp" style="margin:0;">CRP: --/------</p>
+                        <div id="hero-rating-display" class="hero-stars-container"></div>
+                    </div>
+
+                    <div id="psi-social-links" class="social-links-profile"></div>
+
+                    <div class="profile-bio-hero">
+                        <h3 class="titulo-bio">Sobre Mim</h3>
+                        <p id="psi-bio-text"></p>
                     </div>
                 </div>
 
@@ -52,11 +59,18 @@
                     <div class="conversion-card">
                         <h3>Valor da sessão</h3>
                         <p id="psi-valor" class="price">Sob Consulta</p>
+                        
                         <h3>Modalidade de Atendimento</h3>
-                        <p id="psi-modalidade" style="margin-bottom: 5px;">Online e Presencial</p>
-                        <div id="psi-localizacao" class="location-display"></div>
-                        <a href="#" id="btn-agendar-whatsapp" class="btn btn-principal" style="width: 100%; margin-top: 15px;">Agendar uma conversa</a>
-                        <div id="psi-tags-abordagens" class="profile-tags small-tags" style="margin-top: 15px; justify-content: center;"></div>
+                        <p id="psi-modalidade" style="margin-bottom: 15px;">Online e Presencial</p>
+                        
+                        <div id="psi-localizacao-container" style="margin-bottom: 20px; display: none;">
+                            <h3 style="margin-bottom: 5px;">Localização</h3>
+                            <p id="psi-cidade-estado" style="font-weight: 600; color: var(--verde-escuro);"></p>
+                        </div>
+
+                        <a href="#" id="btn-agendar-whatsapp" class="btn btn-principal" style="width: 100%;">
+                            Agendar uma conversa
+                        </a>
                     </div>
                 </div>
             </div>
@@ -64,11 +78,32 @@
             <div class="profile-body-tabs">
                 <nav class="tabs-nav">
                     <button type="button" class="tab-link active" data-tab="sobre">Detalhes Profissionais</button>
-                    <button type="button" class="tab-link" data-tab="avaliacoes" id="tab-btn-avaliacoes">Avaliações</button>
+                    <button type="button" class="tab-link" data-tab="avaliacoes">Avaliações</button>
                 </nav>
-                <div id="tab-sobre" class="tab-content active"></div>
+                
+                <div id="tab-sobre" class="tab-content active">
+                    </div>
+                
                 <div id="tab-avaliacoes" class="tab-content">
-                    <div id="reviews-list-container"></div>
+                    <div class="review-form-box">
+                        <h4>Deixe sua avaliação</h4>
+                        <form id="form-nova-avaliacao">
+                            <div class="star-rating-input">
+                                <input type="radio" id="star5" name="rating" value="5" /><label for="star5" title="Excelente">★</label>
+                                <input type="radio" id="star4" name="rating" value="4" /><label for="star4" title="Muito bom">★</label>
+                                <input type="radio" id="star3" name="rating" value="3" /><label for="star3" title="Bom">★</label>
+                                <input type="radio" id="star2" name="rating" value="2" /><label for="star2" title="Regular">★</label>
+                                <input type="radio" id="star1" name="rating" value="1" /><label for="star1" title="Ruim">★</label>
+                            </div>
+                            <textarea name="comentario" placeholder="Escreva sobre sua experiência (opcional)..." rows="3"></textarea>
+                            <button type="submit" class="btn btn-verde" style="margin-top: 10px;">Enviar Avaliação</button>
+                        </form>
+                    </div>
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;">
+                    
+                    <div id="reviews-list-container">
+                        <p style="text-align: center; color: #777;">Nenhuma avaliação ainda.</p>
+                    </div>
                 </div>
             </div>
         </div>
