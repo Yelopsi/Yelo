@@ -1673,3 +1673,113 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
         order: -1; /* Joga o preço para cima (opcional) ou deixe normal */
     }
 }
+
+/* ==========================================================================
+   ATUALIZAÇÕES DO PERFIL PÚBLICO (New Kansas + Estrelas)
+   ========================================================================== */
+
+/* 1. Tipografia das Abas (New Kansas) */
+.tab-link {
+    font-family: 'New Kansas', serif !important; /* Força a fonte */
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+}
+
+/* 2. Título "Sobre Mim" */
+.titulo-bio {
+    font-family: 'New Kansas', serif;
+    color: var(--verde-escuro);
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    text-align: center;
+    font-size: 1.4rem;
+}
+
+/* 3. Redes Sociais (Botões Redondos) */
+.social-links-profile {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.icon-social {
+    width: 40px;
+    height: 40px;
+    background-color: #f0fdf4;
+    color: var(--verde-escuro);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    border: 1px solid #dcfce7;
+}
+
+.icon-social:hover {
+    background-color: var(--verde-escuro);
+    color: #fff;
+    transform: translateY(-3px);
+}
+
+/* 4. Estrelas no Topo (Abaixo do CRP) */
+.hero-stars-container {
+    color: #FFC107; /* Amarelo ouro */
+    font-size: 1.1rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.hero-rating-text {
+    color: #666;
+    font-size: 0.85rem;
+    font-weight: normal;
+    font-family: 'Inter', sans-serif;
+}
+
+/* 5. Formulário de Avaliação (Input de Estrelas) */
+.review-form-box {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #eee;
+}
+
+.review-form-box h4 { margin-top: 0; font-family: 'New Kansas', serif; }
+
+.review-form-box textarea {
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+    font-family: 'Inter', sans-serif;
+    margin-top: 10px;
+}
+
+/* Sistema de Estrelas Interativo (CSS Only) */
+.star-rating-input {
+    display: flex;
+    flex-direction: row-reverse; /* Inverte para o hover funcionar da esq p/ dir visualmente */
+    justify-content: flex-end;
+    gap: 5px;
+}
+
+.star-rating-input input { display: none; }
+
+.star-rating-input label {
+    font-size: 30px;
+    color: #ddd;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+/* Hover e Checked: Pinta as estrelas de amarelo */
+.star-rating-input input:checked ~ label,
+.star-rating-input label:hover,
+.star-rating-input label:hover ~ label {
+    color: #FFC107;
+}
