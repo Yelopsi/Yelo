@@ -1400,3 +1400,196 @@
     opacity: 1;
     bottom: 50px; /* Sobe um pouquinho ao aparecer */
 }
+/* ==========================================================================
+   ESTILOS DO WIZARD DE CADASTRO (cadastro.ejs)
+   Cole isso no final de public/css/05-pages.css
+   ========================================================================== */
+
+/* 1. Layout da Página de Questionário */
+.pagina-questionario {
+    background-color: var(--off-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.questionario-container {
+    background-color: #fff;
+    width: 100%;
+    max-width: 600px;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 500px; /* Altura mínima para não pular */
+}
+
+/* 2. Barra de Progresso */
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background-color: #eee;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background-color: var(--verde-escuro);
+    width: 0%;
+    transition: width 0.4s ease;
+}
+
+/* 3. Área dos Slides */
+.slides-container {
+    padding: 40px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centraliza verticalmente */
+}
+
+.slide {
+    display: none; /* Esconde todos por padrão */
+    animation: fadeInSlide 0.5s ease;
+}
+
+.slide.active {
+    display: block; /* Mostra só o ativo */
+}
+
+@keyframes fadeInSlide {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 4. Tipografia do Wizard */
+.slide-header h1 {
+    font-family: 'New Kansas', serif;
+    font-size: 2rem;
+    color: var(--verde-escuro);
+    margin-bottom: 10px;
+    line-height: 1.2;
+}
+
+.slide-header .subtitle {
+    color: #666;
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+}
+
+/* 5. Inputs Grandes (Estilo Typeform) */
+.form-group-questionario {
+    margin: 30px 0;
+}
+
+.text-input {
+    width: 100%;
+    border: none;
+    border-bottom: 2px solid #ddd;
+    font-size: 1.5rem; /* Letra grande */
+    padding: 10px 0;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    background: transparent;
+    transition: border-color 0.3s;
+    color: #333;
+}
+
+.text-input:focus {
+    border-bottom-color: var(--verde-escuro);
+}
+
+.text-input::placeholder {
+    color: #ccc;
+}
+
+/* 6. Botões de Opção (Seleção Única/Múltipla) */
+.options-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.choice-button {
+    background: #f8f9fa;
+    border: 2px solid #eee;
+    padding: 15px 20px;
+    border-radius: 12px;
+    text-align: left;
+    font-size: 1.1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #555;
+    font-family: 'Inter', sans-serif;
+}
+
+.choice-button:hover {
+    border-color: var(--verde-escuro);
+    background-color: #f0fdf4; /* Verde bem clarinho */
+    color: var(--verde-escuro);
+}
+
+.choice-button.selected {
+    background-color: var(--verde-escuro);
+    color: white;
+    border-color: var(--verde-escuro);
+}
+
+/* 7. Botões de Navegação (Rodapé) */
+.navigation-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto; /* Empurra para o fundo */
+    padding-top: 30px;
+}
+
+.navigation-buttons.single-button {
+    justify-content: flex-end; /* Se só tiver botão de avançar */
+}
+
+.back-button {
+    background: transparent;
+    border: none;
+    color: #999;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 10px 20px;
+    transition: color 0.3s;
+}
+
+.back-button:hover { color: #666; }
+
+.cta-button {
+    background-color: var(--verde-escuro);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+}
+
+.cta-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(27, 67, 50, 0.2);
+}
+
+.cta-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
