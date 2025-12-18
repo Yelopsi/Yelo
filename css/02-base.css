@@ -1,34 +1,33 @@
 /* public/css/02-base.css */
 
-/* --- Fontes --- */
-@font-face {
-    font-family: 'New Kansas';
-    /* Ajuste o caminho se suas fontes estiverem em outro lugar */
-    src: url('../assets/fonts/newkansas-bold.woff2') format('woff2'),
-         url('../assets/fonts/newkansas-bold.woff') format('woff');
-    font-style: normal;
-    font-weight: 700;
-    font-display: swap;
-}
-
 /* --- Reset Básico --- */
 html, body {
     margin: 0;
     padding: 0;
     height: 100%;
-    font-family: 'Lato', 'Montserrat', Arial, Helvetica, sans-serif;
-    font-size: 15px;
+    /* Fonte Principal de Texto (Leitura) */
+    font-family: 'Lato', sans-serif;
+    font-size: 16px; /* Aumentei levemente para 16px para melhor leitura na Lato */
     background-color: var(--off-white);
     color: #222;
+    line-height: 1.6; /* Lato pede um respiro maior entre linhas */
 }
 
+/* --- Títulos (Personalidade da Marca) --- */
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'New Kansas', serif;
-    font-weight: 700;
+    font-family: 'Fraunces', serif;
+    font-weight: 600; /* Fraunces tem bastante peso visual, 600 já é bem forte */
+    letter-spacing: -0.02em; /* Títulos serifados ficam mais elegantes um pouco mais juntos */
+    color: var(--verde-escuro); /* Garante a cor da marca nos títulos */
 }
 
-a { text-decoration: none; }
+/* Ajuste específico para links e botões herdarem a Lato */
+a, button, input, textarea, select {
+    font-family: 'Lato', sans-serif;
+}
+
 ul { list-style: none; padding: 0; margin: 0; }
+a { text-decoration: none; }
 
 /* Ruído de fundo (Mobile Friendly) */
 body::after {
