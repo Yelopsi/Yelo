@@ -799,54 +799,47 @@ exports.getShowcasePsychologists = async (req, res) => {
 // Rota: GET /api/psychologists/slug/:slug (NOVA ROTA)
 // ----------------------------------------------------------------------
 // ----------------------------------------------------------------------
-// Rota: GET /api/psychologists/slug/:slug (VERSÃO DIAGNÓSTICA)
+// Rota: GET /api/psychologists/slug/:slug (VERSÃO DESTRAVADA PARA DEV)
 // ----------------------------------------------------------------------
 exports.getProfileBySlug = async (req, res) => {
   try {
     const { slug } = req.params;
-    console.log(`\n[DIAGNÓSTICO] Iniciando busca pelo perfil: "${slug}"`);
+    console.log(`\n[VISITA] Buscando perfil: "${slug}"`);
 
-    // 1. Busca SOMENTE pelo slug primeiro (sem travas de status/data)
-    // Isso nos diz se o link existe, independente de estar pago ou não.
+    // 1. Busca pelo slug (Case Insensitive)
     const psychologist = await db.Psychologist.findOne({
       where: { slug: { [Op.iLike]: slug } }, // Case insensitive
       attributes: { exclude: ['senha', 'resetPasswordToken', 'resetPasswordExpires', 'cpf'] },
     });
 
-    // Cenario 1: Slug errado (Link inexistente)
     if (!psychologist) {
-      console.log(`❌ [DIAGNÓSTICO] Perfil não encontrado no banco de dados. Verifique se o slug está correto.`);
+      console.log(`❌ Perfil não existe no banco.`);
       return res.status(404).json({ error: 'Perfil não encontrado.' });
     }
 
-    // Coleta dados para análise
+    // --- LÓGICA DE TRAVAS (COMENTADA PARA VOCÊ CONSEGUIR TRABALHAR) ---
+    // Em produção, você deve descomentar isso para bloquear inadimplentes.
+    
     const hoje = new Date();
     const validade = psychologist.subscription_expires_at ? new Date(psychologist.subscription_expires_at) : null;
     const status = psychologist.status;
-    const nome = psychologist.nome;
 
-    console.log(`🔎 [DIAGNÓSTICO] Usuário encontrado: ${nome}`);
-    console.log(`   - Status no Banco: ${status}`);
-    console.log(`   - Validade do Pagamento: ${validade ? validade.toLocaleString() : 'NENHUMA (NULL)'}`);
-    console.log(`   - Data de Hoje (Servidor): ${hoje.toLocaleString()}`);
+    // Log para você saber a saúde do perfil
+    console.log(`🔎 Status: ${status} | Validade: ${validade ? validade.toLocaleDateString() : 'NENHUMA'}`);
 
-    // Cenario 2: Falta de Pagamento (Data nula ou vencida)
-    // Nota: Se validade for null, consideramos vencido.
+    /* // --- BLOQUEIO ORIGINAL (Desativado temporariamente) ---
     if (!validade || validade < hoje) {
-        console.log(`🚫 [BLOQUEIO] O pagamento está vencido ou inexistente.`);
-        return res.status(404).json({ error: 'Perfil indisponível (Assinatura inativa).' });
+        console.log(`🚫 [BLOQUEIO IGNORADO] Pagamento vencido, mas liberado para DEV.`);
+        // return res.status(404).json({ error: 'Perfil indisponível (Assinatura inativa).' });
     }
 
-    // Cenario 3: Status Pendente (Mesmo pago, está oculto?)
     if (status !== 'active') {
-        console.log(`🚫 [BLOQUEIO] O status do usuário não é 'active'. Status atual: '${status}'.`);
-        // Opcional: Se você quiser que o pagamento ative automaticamente, descomente a linha abaixo:
-        // await psychologist.update({ status: 'active' }); 
-        return res.status(404).json({ error: 'Perfil em análise.' });
+        console.log(`🚫 [BLOQUEIO IGNORADO] Status pendente, mas liberado para DEV.`);
+        // return res.status(404).json({ error: 'Perfil em análise.' });
     }
-
-    // Se chegou aqui, está TUDO CERTO (Pago e Ativo)
-    console.log(`✅ [SUCESSO] Perfil aprovado para exibição pública!`);
+    */
+   
+    // ------------------------------------------------------------------
 
     // Busca reviews
     const reviews = await db.Review.findAll({
