@@ -90,7 +90,7 @@ body.pagina-dashboard {
 }
 
 /* Títulos Gerais */
-h1, h2, h3, h4 { font-family: 'New Kansas', serif; color: var(--verde-escuro); }
+h1, h2, h3, h4 { font-family: 'Fraunces', serif; color: var(--verde-escuro); }
 
 /* ==========================================================================
    3. SIDEBAR (CORRIGIDA - ESTILO ADMIN + BOTÃO AMARELO)
@@ -443,7 +443,7 @@ h1, h2, h3, h4 { font-family: 'New Kansas', serif; color: var(--verde-escuro); }
 .kpi-card { background: #fff; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; }
 /* Adicionei font-family: 'New Kansas', serif; */
 .kpi-card .kpi-value { 
-    font-family: 'New Kansas', serif; 
+    font-family: 'Fraunces', serif; 
     font-size: 36px; 
     font-weight: 700; 
     color: var(--verde-escuro); 
@@ -523,7 +523,7 @@ h1, h2, h3, h4 { font-family: 'New Kansas', serif; color: var(--verde-escuro); }
     font-size: 0.9rem; text-transform: uppercase; color: var(--cinza-texto-claro); margin: 0 0 5px 0; letter-spacing: 1px;
 }
 .plano-nome { 
-    font-family: 'New Kansas', serif; font-size: 2rem; color: var(--verde-escuro); margin: 0; 
+    font-family: 'Fraunces', serif; font-size: 2rem; color: var(--verde-escuro); margin: 0; 
 }
 .plano-preco { font-weight: bold; color: var(--cinza-texto); margin: 5px 0; }
 .plano-data { font-size: 0.9rem; color: var(--cinza-texto-claro); margin: 0; }
@@ -566,7 +566,7 @@ h1, h2, h3, h4 { font-family: 'New Kansas', serif; color: var(--verde-escuro); }
 /* Conteúdo do Card */
 .plano-card h2 { text-align: center; margin-top: 10px; }
 .plano-card .preco { 
-    font-family: 'New Kansas', serif; /* ADICIONADO */
+    font-family: 'Fraunces', serif; /* ADICIONADO */
     text-align: center; 
     font-size: 2.5rem; 
     font-weight: 700; 
@@ -903,7 +903,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 /* 1. Nome do Plano (Correção de cor e fonte) */
 #banner-nome-plano, .nome-plano-banner {
     color: #1B4332 !important;        /* Força Verde Escuro (estava branco invisível) */
-    font-family: 'New Kansas', serif !important;
+    font-family: 'Fraunces', serif !important;
     font-size: 2.2rem !important;
     font-weight: 700;
     margin-bottom: 10px;
@@ -1022,7 +1022,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     position: absolute; top: 15px; right: 20px;
     background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;
 }
-.modal-header h2 { margin-top: 0; font-size: 1.5rem; font-family: 'New Kansas', serif; color: var(--verde-escuro); }
+.modal-header h2 { margin-top: 0; font-size: 1.5rem; font-family: 'Fraunces', serif; color: var(--verde-escuro); }
 
 .modal-body textarea {
     width: 100%; height: 150px; padding: 12px;
@@ -1206,7 +1206,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 }
 
 .email-meta-text h2 {
-    font-family: 'New Kansas', serif;
+    font-family: 'Fraunces', serif;
     font-size: 1.5rem; color: var(--verde-escuro);
     margin: 0 0 5px 0;
 }
@@ -1275,7 +1275,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 .widget h3 {
     margin-top: 0;
     color: var(--verde-escuro);
-    font-family: 'New Kansas', serif;
+    font-family: 'Fraunces', serif;
 }
 
 /* Grid de Estatísticas (Os 4 quadrados) */
@@ -1458,7 +1458,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 
 /* --- CORREÇÃO: FONTE DO PREÇO NO BANNER DE ASSINATURA --- */
 #banner-preco {
-    font-family: 'New Kansas', serif !important;
+    font-family: 'Fraunces', serif !important;
     font-weight: 500; /* Ajuste fino para a fonte não ficar pesada demais */
     letter-spacing: 0.5px;
 }
@@ -1518,7 +1518,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 
 /* Títulos e Textos */
 .profile-info h1 {
-    font-family: 'New Kansas', serif;
+    font-family: 'Fraunces', serif;
     font-size: 2.2rem;
     color: var(--verde-escuro);
     margin: 10px 0 5px 0;
@@ -1569,7 +1569,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 }
 
 .conversion-card .price {
-    font-family: 'New Kansas', serif;
+    font-family: 'Fraunces', serif;
     font-size: 2.5rem;
     color: var(--verde-escuro);
     font-weight: 700;
@@ -1680,14 +1680,14 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 
 /* 1. Tipografia das Abas (New Kansas) */
 .tab-link {
-    font-family: 'New Kansas', serif !important; /* Força a fonte */
+    font-family: 'Fraunces', serif !important; /* Força a fonte */
     font-size: 1.1rem;
     letter-spacing: 0.5px;
 }
 
 /* 2. Título "Sobre Mim" */
 .titulo-bio {
-    font-family: 'New Kansas', serif;
+    font-family: 'Fraunces', serif;
     color: var(--verde-escuro);
     border-bottom: 1px solid #eee;
     padding-bottom: 10px;
@@ -1749,7 +1749,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     border: 1px solid #eee;
 }
 
-.review-form-box h4 { margin-top: 0; font-family: 'New Kansas', serif; }
+.review-form-box h4 { margin-top: 0; font-family: 'Fraunces', serif; }
 
 .review-form-box textarea {
     width: 100%;

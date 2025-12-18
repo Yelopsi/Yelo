@@ -69,7 +69,7 @@
 }
 .pricing-card:hover { transform: translateY(-8px); box-shadow: 0 10px 30px rgba(0,0,0,0.12); }
 .pricing-card-header { text-align: center; border-bottom: 1px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
-.pricing-card-header h3 { font-family: 'New Kansas', serif; font-size: 1.8rem; color: var(--verde-escuro); margin: 0 0 10px 0; }
+.pricing-card-header h3 { font-family: 'Fraunces', serif; font-size: 1.8rem; color: var(--verde-escuro); margin: 0 0 10px 0; }
 .pricing-card-features { list-style: none; padding-left: 0; margin: 0; flex-grow: 1; }
 .pricing-card-features li { padding: 10px 0; display: flex; align-items: center; gap: 10px; font-size: 0.95rem; }
 .pricing-card-features li::before { content: '✓'; font-weight: bold; color: var(--verde-escuro); font-size: 1.2rem; }

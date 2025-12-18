@@ -2,7 +2,7 @@
 
 /* --- SEÇÕES GERAIS --- */
 .container { max-width: 900px; margin: 0 auto; padding: 60px 20px; text-align: center; }
-.secao-conteudo-pro h2, .titulo-secao { font-family: 'New Kansas', serif; font-weight: 700; font-size: 2.5rem; color: #333; margin-bottom: 60px; text-align: center; }
+.secao-conteudo-pro h2, .titulo-secao { font-family: 'Fraunces', serif; font-weight: 700; font-size: 2.5rem; color: #333; margin-bottom: 60px; text-align: center; }
 .subtitulo-secao { font-size: 1.2rem; line-height: 1.6; color: var(--cinza-texto); max-width: 700px; margin: 0 auto 50px auto; text-align: center; }
 
 /* --- HERO (Home) --- */
@@ -81,7 +81,7 @@
 .sidebar-nav li.active a, .sidebar-nav li a:hover { background-color: rgba(255,255,255,0.1); color: white; }
 .dashboard-main { flex-grow: 1; padding: 40px; overflow-y: auto; background-color: #f8f9fa; }
 .welcome-header { background-color: var(--verde-escuro); color: white; padding: 40px; border-radius: 16px; margin-bottom: 30px; }
-.welcome-header h1 { font-family: 'New Kansas', serif; color: white; margin: 0; }
+.welcome-header h1 { font-family: 'Fraunces', serif; color: white; margin: 0; }
 
 .matches-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
 .pro-card { background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); overflow: hidden; position: relative; }
@@ -160,7 +160,7 @@
 
 /* 4. Títulos das Categorias (Para Pacientes / Para Profissionais) */
 .titulo-secao-menor {
-    font-family: 'New Kansas', serif;
+    font-family: 'Fraunces', serif;
     font-size: 28px;
     color: var(--verde-escuro);
     margin-top: 60px;
@@ -191,7 +191,7 @@
 }
 
 .faq-cta h3 {
-    font-family: 'New Kansas', serif;
+    font-family: 'Fraunces', serif;
     color: var(--verde-escuro);
     margin-top: 0;
     font-size: 24px;
@@ -237,7 +237,7 @@
     letter-spacing: 1px;
 }
 .post-destaque-texto h2 {
-    font-family: 'New Kansas', serif;
+    font-family: 'Fraunces', serif;
     font-size: 32px;
     margin-top: 0;
     margin-bottom: 15px;
@@ -288,7 +288,7 @@
     flex-grow: 1;
 }
 .post-card-conteudo h3 {
-    font-family: 'New Kansas', serif;
+    font-family: 'Fraunces', serif;
     margin-top: 0;
     font-size: 20px;
     color: #333;
@@ -356,7 +356,7 @@
     box-shadow: 0 4px 15px rgba(0,0,0,0.03);
 }
 .beneficio-card h3 {
-    font-family: 'New Kansas', serif;
+    font-family: 'Fraunces', serif;
     font-size: 1.2rem;
     color: var(--verde-escuro);
     margin-top: 0;
@@ -410,7 +410,7 @@
     text-align: left;
 }
 .ask-box-container h3 {
-    font-family: 'New Kansas', serif;
+    font-family: 'Fraunces', serif;
     color: var(--verde-escuro);
     margin-top: 0;
     font-size: 1.5rem;
@@ -446,7 +446,7 @@
     text-align: left;
 }
 .qa-card-question h2 {
-    font-family: 'New Kansas', serif;
+    font-family: 'Fraunces', serif;
     font-size: 1.4rem;
     color: var(--verde-escuro);
     margin-top: 0;
@@ -611,7 +611,7 @@
 
 .coluna-item h3 {
     margin-top: 10px;
-    font-family: 'New Kansas', serif;
+    font-family: 'Fraunces', serif;
     font-size: 1.5rem;
     color: var(--verde-escuro);
 }
@@ -723,7 +723,7 @@
 
 /* Título do Card de Crise */
 .recurso-card h3 {
-    font-family: 'New Kansas', serif;
+    font-family: 'Fraunces', serif;
     color: #333;
     margin-top: 0;
     font-size: 1.4rem;
@@ -856,7 +856,7 @@
 }
 
 .apoio-header h4 {
-    font-family: 'New Kansas', serif;
+    font-family: 'Fraunces', serif;
     color: var(--verde-escuro);
     font-size: 1.2rem;
     margin: 0;
@@ -903,7 +903,7 @@
     color: var(--verde-escuro) !important;
     font-size: 1.5rem !important;
     margin-top: 0;
-    font-family: 'New Kansas', serif;
+    font-family: 'Fraunces', serif;
 }
 .card-sobre-Yelo p {
     color: #2c3e35 !important; /* Texto escuro legível sobre o menta */
@@ -956,7 +956,7 @@
 }
 
 .step-content h3 {
-    font-family: 'New Kansas', serif;
+    font-family: 'Fraunces', serif;
     font-size: 2.2rem;
     color: var(--verde-escuro);
     margin-top: 0;
@@ -1065,7 +1065,7 @@
 }
 
 .coluna-tabela h3 {
-    font-family: 'New Kansas', serif;
+    font-family: 'Fraunces', serif;
     font-size: 1.5rem;
     margin-bottom: 25px;
     color: #555;
@@ -1191,7 +1191,7 @@
 
 /* Lado Esquerdo: Informações */
 .info-contato h3 {
-    font-family: 'New Kansas', serif;
+    font-family: 'Fraunces', serif;
     color: var(--verde-escuro);
     font-size: 1.8rem;
     margin-top: 0;
@@ -1472,7 +1472,7 @@
 
 /* 4. Tipografia do Wizard */
 .slide-header h1 {
-    font-family: 'New Kansas', serif;
+    font-family: 'Fraunces', serif;
     font-size: 2rem;
     color: var(--verde-escuro);
     margin-bottom: 10px;
