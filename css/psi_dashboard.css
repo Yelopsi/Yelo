@@ -1462,3 +1462,214 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     font-weight: 500; /* Ajuste fino para a fonte não ficar pesada demais */
     letter-spacing: 0.5px;
 }
+/* ==========================================================================
+   CSS EXTRA: LAYOUT DO PERFIL PÚBLICO (Recuperação)
+   Cole isso no final do arquivo css/psi_dashboard.css
+   ========================================================================== */
+
+/* 1. Container Principal do Perfil */
+.profile-page-main {
+    padding: 40px 0 80px 0;
+    background-color: #fcfcfc;
+    min-height: 80vh;
+}
+
+.profile-page-main .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* 2. O GRID (Divide: Esquerda=Bio/Foto | Direita=Preço) */
+.profile-header-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr; /* 2 partes para Bio, 1 parte para Preço */
+    gap: 40px;
+    align-items: start;
+    margin-bottom: 40px;
+}
+
+/* 3. Coluna da Esquerda (Foto e Bio) */
+.profile-info {
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid #e9ecef;
+    text-align: center; /* Centraliza foto e nome inicialmente */
+}
+
+/* Foto Redonda Grande */
+.profile-photo-wrapper {
+    width: 180px;
+    height: 180px;
+    margin: 0 auto 20px auto;
+    border-radius: 50%;
+    padding: 5px;
+    border: 2px dashed var(--verde-escuro); /* Charme visual */
+}
+
+.profile-photo-wrapper img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Títulos e Textos */
+.profile-info h1 {
+    font-family: 'New Kansas', serif;
+    font-size: 2.2rem;
+    color: var(--verde-escuro);
+    margin: 10px 0 5px 0;
+}
+
+.profile-info .crp {
+    color: #666;
+    font-weight: 500;
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+    display: inline-block;
+    background: #f0fdf4;
+    padding: 5px 15px;
+    border-radius: 20px;
+    color: var(--verde-escuro);
+}
+
+/* Texto da Bio (Alinhado à esquerda para leitura) */
+.profile-bio-hero {
+    margin-top: 30px;
+    text-align: left !important; /* Força alinhamento à esquerda */
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}
+
+/* 4. Coluna da Direita (Card de Valor/Preço) */
+.conversion-card-wrapper {
+    position: sticky; /* Faz o card acompanhar a rolagem */
+    top: 20px;
+}
+
+.conversion-card {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(27, 67, 50, 0.08); /* Sombra mais forte p/ destaque */
+    border: 1px solid #e9ecef;
+    text-align: center;
+}
+
+.conversion-card h3 {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    color: #888;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+    font-family: 'Inter', sans-serif;
+}
+
+.conversion-card .price {
+    font-family: 'New Kansas', serif;
+    font-size: 2.5rem;
+    color: var(--verde-escuro);
+    font-weight: 700;
+    margin: 5px 0 20px 0;
+}
+
+/* Botão Agendar (WhatsApp) */
+#btn-agendar-whatsapp {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background-color: #25D366; /* Verde Zap */
+    color: white;
+    width: 100%;
+    padding: 15px;
+    border-radius: 30px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-sizing: border-box; /* Garante que padding não estoure */
+}
+
+#btn-agendar-whatsapp:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(37, 211, 102, 0.4);
+    background-color: #1ebc57;
+}
+
+/* 5. Abas (Detalhes e Avaliações) */
+.profile-body-tabs {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+    margin-top: 20px;
+}
+
+.tabs-nav {
+    display: flex;
+    border-bottom: 1px solid #eee;
+    background: #f8f9fa;
+}
+
+.tab-link {
+    flex: 1;
+    padding: 20px;
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-bottom: 3px solid transparent;
+}
+
+.tab-link:hover { background: #eee; }
+
+.tab-link.active {
+    color: var(--verde-escuro);
+    border-bottom-color: var(--verde-escuro);
+    background: #fff;
+}
+
+.tab-content {
+    display: none;
+    padding: 40px;
+}
+.tab-content.active { display: block; animation: fadeIn 0.3s; }
+
+/* 6. Tags de Especialidade (Pílulas) */
+.practices-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.practice-tag {
+    background-color: var(--cor-Yelo); /* Amarelo */
+    color: var(--verde-escuro);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* 7. Responsividade Mobile */
+@media (max-width: 768px) {
+    .profile-header-grid {
+        grid-template-columns: 1fr; /* Vira uma coluna só */
+        gap: 20px;
+    }
+    
+    .profile-info { padding: 25px; }
+    
+    .conversion-card-wrapper {
+        position: static; /* Remove sticky no mobile */
+        order: -1; /* Joga o preço para cima (opcional) ou deixe normal */
+    }
+}
