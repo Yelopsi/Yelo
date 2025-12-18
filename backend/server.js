@@ -324,6 +324,29 @@ app.post('/blog/post/:id/like', blogController.curtirPost);
 app.use(express.static(path.join(__dirname, '..')));
 
 // =============================================================
+// MAPEAMENTO DE PÁGINAS (Correção de Links do Menu)
+// =============================================================
+
+// Corrige o link "Comunidade" para abrir o arquivo "perguntas.ejs"
+app.get('/comunidade', (req, res) => {
+    res.render('perguntas'); 
+});
+
+// Garante que "Profissionais" abra o arquivo correto (se existir profissionais.ejs)
+app.get('/profissionais', (req, res) => {
+    res.render('profissionais');
+});
+
+// Garante que "FAQ" abra o arquivo correto
+app.get('/faq', (req, res) => {
+    res.render('faq');
+});
+
+// Rotas de Autenticação (opcional, mas recomendado para segurança)
+app.get('/login', (req, res) => { res.render('login'); });
+app.get('/cadastro', (req, res) => { res.render('cadastro'); });
+
+// =============================================================
 // ROTEAMENTO INTELIGENTE (PÁGINAS ESTÁTICAS vs PERFIL PÚBLICO)
 // =============================================================
 
