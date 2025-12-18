@@ -38,8 +38,12 @@ const app = express();
 // EM VEZ DE MOVER AS PASTAS, LIBERE O ACESSO ONDE ELAS JÁ ESTÃO:
 // 1. Libera a pasta 'assets' (para imagens, logos, fontes)
 app.use('/assets', express.static(path.join(__dirname, '../assets')));
+
 // 2. Libera a pasta 'css' (para seus estilos)
 app.use('/css', express.static(path.join(__dirname, '../css')));
+
+// 3. [NOVO] Libera a pasta 'js' (CRUCIAL PARA O PERFIL FUNCIONAR)
+app.use('/js', express.static(path.join(__dirname, '../js')));
 
 // 1. LIBERA A PASTA ADMIN PARA O NAVEGADOR ACESSAR OS ARQUIVOS (CSS, JS, Imagens do Admin)
 app.use('/admin', express.static(path.join(__dirname, '../admin')));
@@ -324,38 +328,32 @@ app.use(express.static(path.join(__dirname, '..')));
 // =============================================================
 
 app.get('/:slug', (req, res, next) => {
-    const slug = req.params.slug.replace('.html', '');
+    const slug = req.params.slug; // Removemos o replace aqui para verificar a extensão primeiro
     
-    // 1. Lista de palavras reservadas (Pastas e Rotas de API que não são perfis)
+    // 1. PROTEÇÃO DE ARQUIVOS (NOVO): 
+    // Se o link tiver um ponto (ex: script.js, estilo.css, imagem.png), 
+    // o servidor entende que NÃO é um perfil de usuário e deixa passar para o download.
+    if (slug.includes('.')) return next();
+
+    // 2. Lista de palavras reservadas
     const reservado = ['api', 'assets', 'css', 'js', 'uploads', 'favicon.ico', 'admin', 'login', 'cadastro', 'dashboard'];
     
-    // Se a URL começar com algo reservado, passa para o próximo manipulador
     if (reservado.some(p => slug.startsWith(p))) return next();
 
-    // 2. Tenta renderizar como se fosse um arquivo físico na pasta views (ex: index.ejs, termos.ejs)
-    res.render(slug, (err, html) => {
+    // 3. Tenta renderizar
+    const paginaLimpa = slug.replace('.html', ''); // Limpa apenas para renderizar
+    
+    res.render(paginaLimpa, (err, html) => {
         if (err) {
-            // AQUI ESTÁ A CORREÇÃO MÁGICA:
-            // Se o erro for "Failed to lookup view", significa que não existe um arquivo com esse nome.
-            // Logo, assumimos que é um SLUG DE PSICÓLOGO (ex: /anderson-costa).
+            // Se não achar o arquivo físico, assume que é o SLUG DO PSICÓLOGO
             if (err.message.includes('Failed to lookup view')) {
-                
-                // Renderiza o template ÚNICO de perfil público.
-                // O arquivo 'perfil_psicologo.ejs' vai abrir e o JS dele vai ler a URL para puxar os dados.
                 return res.render('perfil_psicologo');
             }
 
-            // Se for outro tipo de erro (código quebrado dentro do arquivo), mostramos o debug
             console.error(`Erro ao abrir ${slug}:`, err);
-            return res.status(500).send(`
-                <h1>ERRO DETALHADO (Debug)</h1>
-                <p>O servidor tentou abrir: <strong>views/${slug}.ejs</strong></p>
-                <p>O erro foi: <strong>${err.message}</strong></p>
-                <pre style="background:#eee; padding:10px;">${err.stack}</pre>
-            `);
+            return res.status(500).send('Erro interno no servidor');
         }
         
-        // Se achou o arquivo físico (ex: termos.ejs), envia ele
         res.send(html);
     });
 });
