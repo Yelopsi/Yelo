@@ -319,26 +319,43 @@ app.post('/blog/post/:id/like', blogController.curtirPost);
 // Se não for a Home, ele procura CSS, JS ou imagens na pasta raiz.
 app.use(express.static(path.join(__dirname, '..')));
 
-// ATUALIZAÇÃO PARA DEBUG (MOSTRAR ERRO NA TELA)
-app.get('/:pagina', (req, res, next) => {
-    const pagina = req.params.pagina.replace('.html', '');
-    
-    // Proteção de arquivos reservados
-    const reservado = ['api', 'assets', 'css', 'js', 'uploads', 'favicon.ico'];
-    if (reservado.some(p => pagina.startsWith(p))) return next();
+// =============================================================
+// ROTEAMENTO INTELIGENTE (PÁGINAS ESTÁTICAS vs PERFIL PÚBLICO)
+// =============================================================
 
-    // Tenta renderizar
-    res.render(pagina, (err, html) => {
+app.get('/:slug', (req, res, next) => {
+    const slug = req.params.slug.replace('.html', '');
+    
+    // 1. Lista de palavras reservadas (Pastas e Rotas de API que não são perfis)
+    const reservado = ['api', 'assets', 'css', 'js', 'uploads', 'favicon.ico', 'admin', 'login', 'cadastro', 'dashboard'];
+    
+    // Se a URL começar com algo reservado, passa para o próximo manipulador
+    if (reservado.some(p => slug.startsWith(p))) return next();
+
+    // 2. Tenta renderizar como se fosse um arquivo físico na pasta views (ex: index.ejs, termos.ejs)
+    res.render(slug, (err, html) => {
         if (err) {
-            // --- AQUI ESTÁ A MUDANÇA ---
-            console.error(`Erro ao abrir ${pagina}:`, err); // Mostra no terminal (Logs da Render)
+            // AQUI ESTÁ A CORREÇÃO MÁGICA:
+            // Se o erro for "Failed to lookup view", significa que não existe um arquivo com esse nome.
+            // Logo, assumimos que é um SLUG DE PSICÓLOGO (ex: /anderson-costa).
+            if (err.message.includes('Failed to lookup view')) {
+                
+                // Renderiza o template ÚNICO de perfil público.
+                // O arquivo 'perfil_psicologo.ejs' vai abrir e o JS dele vai ler a URL para puxar os dados.
+                return res.render('perfil_psicologo');
+            }
+
+            // Se for outro tipo de erro (código quebrado dentro do arquivo), mostramos o debug
+            console.error(`Erro ao abrir ${slug}:`, err);
             return res.status(500).send(`
                 <h1>ERRO DETALHADO (Debug)</h1>
-                <p>O servidor tentou abrir o arquivo: <strong>views/${pagina}.ejs</strong></p>
+                <p>O servidor tentou abrir: <strong>views/${slug}.ejs</strong></p>
                 <p>O erro foi: <strong>${err.message}</strong></p>
                 <pre style="background:#eee; padding:10px;">${err.stack}</pre>
             `);
         }
+        
+        // Se achou o arquivo físico (ex: termos.ejs), envia ele
         res.send(html);
     });
 });
