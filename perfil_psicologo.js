@@ -36,15 +36,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // --- FUNÇÕES DE UI ---
+    // --- FUNÇÕES DE UI (ATUALIZADAS PARA REMOVER O ESPAÇO EM BRANCO) ---
     const showToast = (message, type = 'success') => {
         if (!toastContainer) return;
         const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`; // Corrigido classe CSS
-        toast.innerHTML = message; // Simplificado
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = message;
         toastContainer.appendChild(toast);
         
-        // Remove após 4s
         setTimeout(() => {
             toast.style.opacity = '0';
             setTimeout(() => toast.remove(), 500);
@@ -52,58 +51,70 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     const showLoading = () => {
-        if(loadingElement) loadingElement.classList.remove('hidden');
-        if(profileContainer) profileContainer.classList.add('hidden');
-        if(errorElement) errorElement.classList.add('hidden');
+        // Força display flex/block para aparecer e none para sumir
+        if(loadingElement) loadingElement.style.display = 'block';
+        if(profileContainer) profileContainer.style.display = 'none';
+        if(errorElement) errorElement.style.display = 'none';
     };
 
     const showError = (message) => {
-        if(loadingElement) loadingElement.classList.add('hidden');
-        if(profileContainer) profileContainer.classList.add('hidden');
+        if(loadingElement) loadingElement.style.display = 'none';
+        if(profileContainer) profileContainer.style.display = 'none';
+        
         if(errorElement) {
             const p = errorElement.querySelector('p');
             if(p) p.textContent = message;
-            errorElement.classList.remove('hidden');
+            errorElement.style.display = 'block'; // Mostra o erro
         }
     };
 
     const showProfile = () => {
-        if(loadingElement) loadingElement.classList.add('hidden');
-        if(errorElement) errorElement.classList.add('hidden');
-        if(profileContainer) profileContainer.classList.remove('hidden');
+        // AQUI ESTÁ A MÁGICA: Removemos fisicamente o loading da tela
+        if(loadingElement) loadingElement.style.display = 'none';
+        if(errorElement) errorElement.style.display = 'none';
+        
+        if(profileContainer) {
+            profileContainer.classList.remove('hidden');
+            profileContainer.style.display = 'block'; // Garante que o perfil apareça
+            // Pequeno delay para a animação de opacidade (se houver CSS para isso)
+            setTimeout(() => profileContainer.style.opacity = '1', 10);
+        }
     };
 
-    // --- CORE: EXTRAÇÃO DO SLUG (CORRIGIDO) ---
+    // --- CORE: EXTRAÇÃO DO SLUG ---
     const extractSlug = () => {
-        // Tenta pegar da URL amigável (ex: /psi/anderson-costa)
         const pathParts = window.location.pathname.split('/').filter(Boolean);
         let slug = pathParts[pathParts.length - 1];
-
-        // Se for arquivo .html (desenvolvimento local), tenta pegar do ?slug=...
         if (slug && (slug.endsWith('.html') || slug === 'perfil_psicologo')) {
             const urlParams = new URLSearchParams(window.location.search);
             slug = urlParams.get('slug');
         }
-
         return slug;
     };
 
-    // --- CORE: POPULAR PERFIL ---
+    // --- CORE: POPULAR PERFIL (CORREÇÃO DO LOOP DE IMAGEM) ---
     const populateProfile = (profile) => {
-        // Helper seguro para texto
         const setText = (id, text) => {
             const el = document.getElementById(id);
             if (el) el.textContent = text || '';
         };
 
-        // Header
         setText('psi-nome', profile.nome);
         setText('psi-crp', profile.crp ? `CRP: ${profile.crp}` : '');
         
         const foto = document.getElementById('psi-foto');
         if (foto) {
-            foto.src = profile.fotoUrl || 'assets/images/default-avatar.png'; // Caminho absoluto ou relativo seguro
-            foto.onerror = () => { foto.src = 'assets/images/default-avatar.png'; }; // Fallback se a imagem quebrar
+            // Se tiver foto, usa. Se não, usa um placeholder EXTERNO seguro para não travar o carregamento
+            // Evitamos buscar arquivo local que pode não existir no servidor
+            const placeholderSeguro = "https://placehold.co/180x180/1B4332/FFFFFF?text=Sem+Foto";
+            
+            foto.src = profile.fotoUrl || placeholderSeguro;
+            
+            // Se a foto do perfil falhar (404), carrega o placeholder imediatamente e remove o evento para evitar loop
+            foto.onerror = () => { 
+                foto.src = placeholderSeguro; 
+                foto.onerror = null; 
+            }; 
         }
 
         // Bio
