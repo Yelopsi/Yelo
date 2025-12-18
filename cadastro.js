@@ -1,107 +1,94 @@
+// Arquivo: cadastro.js (VERSÃO SIMPLIFICADA - RAIZ)
+
 document.addEventListener('DOMContentLoaded', () => {
-    const slides = document.querySelectorAll('.slide');
-    const progressBarFill = document.getElementById('progress-bar-fill');
-    let currentSlide = 0;
-    const totalSlides = slides.length;
-    const formData = {};
+    
+    // Configuração da API
+    const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') 
+        ? window.API_BASE_URL 
+        : 'https://yelo.onrender.com';
 
-    function updateProgressBar() {
-        const progress = ((currentSlide + 1) / totalSlides) * 100;
-        progressBarFill.style.width = `${progress}%`;
-    }
+    const form = document.getElementById('form-cadastro-psi');
+    const msgErro = document.getElementById('mensagem-erro');
+    const btnSubmit = form.querySelector('button[type="submit"]');
 
-    function showSlide(slideIndex) {
-        slides.forEach((slide, index) => {
-            slide.classList.toggle('active', index === slideIndex);
-        });
-        currentSlide = slideIndex;
-        updateProgressBar();
-        checkNextButtonState(slides[slideIndex]);
-    }
+    if (!form) return;
 
-    function checkNextButtonState(slide) {
-        const nextButton = slide.querySelector('[data-action="next"]');
-        if (!nextButton) return;
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-        const input = slide.querySelector('input[required]');
-        if (input) {
-            const isInputValid = input.value.trim() !== '' && (!input.minlength || input.value.length >= input.minlength);
-            nextButton.disabled = !isInputValid;
-        }
-    }
+        // 1. Limpa erros anteriores e muda estado do botão
+        msgErro.style.display = 'none';
+        msgErro.textContent = '';
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = 'Criando conta...';
+        btnSubmit.style.opacity = '0.7';
 
-    function handleNext() {
-        const currentSlideElement = slides[currentSlide];
-        const input = currentSlideElement.querySelector('input[required]');
+        // 2. Coleta dados
+        const nome = document.getElementById('nome').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const documento = document.getElementById('documento').value.replace(/\D/g, ''); // Remove pontos
+        const crp = document.getElementById('crp').value.trim();
+        const senha = document.getElementById('senha').value;
+        const confirmarSenha = document.getElementById('confirmar-senha').value;
 
-        // Validação para campos de texto obrigatórios
-        if (input) {
-            if (input.value.trim() === '') {
-                alert('Este campo é obrigatório.');
-                return;
-            }
-            if (input.type === 'email' && !/^\S+@\S+\.\S+$/.test(input.value)) {
-                alert('Por favor, insira um e-mail válido.');
-                return;
-            }
-            if (input.minlength && input.value.length < input.minlength) {
-                alert(`A senha deve ter no mínimo ${input.minlength} caracteres.`);
-                return;
-            }
-            formData[input.id] = input.value;
+        // 3. Validações Frontend Rápidas
+        if (senha !== confirmarSenha) {
+            mostrarErro('As senhas não coincidem.');
+            restaurarBotao();
+            return;
         }
 
-        if (currentSlide < totalSlides - 1) {
-            showSlide(currentSlide + 1);
-        } else {
-            // Lógica de finalização do formulário
-            console.log('Formulário concluído:', formData);
-            alert('Cadastro finalizado! (Ver console para dados)');
-            // Aqui você faria a chamada para a API para registrar o psicólogo
-        }
-    }
-
-    function handlePrev() {
-        if (currentSlide > 0) {
-            showSlide(currentSlide - 1);
-        }
-    }
-
-    slides.forEach((slide, index) => {
-        // Lógica para botões de avançar e voltar
-        const nextButton = slide.querySelector('[data-action="next"]');
-        const prevButton = slide.querySelector('[data-action="prev"]');
-
-        if (nextButton) {
-            nextButton.addEventListener('click', handleNext);
-        }
-        if (prevButton) {
-            prevButton.addEventListener('click', handlePrev);
+        if (documento.length !== 11 && documento.length !== 14) {
+            mostrarErro('Documento inválido. Digite um CPF (11 dígitos) ou CNPJ (14 dígitos).');
+            restaurarBotao();
+            return;
         }
 
-        // Lógica para campos de input obrigatórios
-        const input = slide.querySelector('input[required]');
-        if (input) {
-            input.addEventListener('input', () => checkNextButtonState(slide));
-        }
+        // 4. Envio para API
+        try {
+            const payload = {
+                nome,
+                email,
+                senha,
+                documento, // Backend espera "documento" (que vira cpf ou cnpj)
+                crp,
+                // Campos padrão para não quebrar o banco
+                genero_identidade: 'Não informado',
+                valor_sessao_faixa: 'Sob Consulta'
+            };
 
-        // Lógica para avanço automático em questões de seleção única
-        if (slide.dataset.type === 'single-choice') {
-            const choiceButtons = slide.querySelectorAll('.choice-button');
-            choiceButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const key = slide.dataset.slideId === '4' ? 'modalidade_atendimento' : slide.querySelector('h1').innerText;
-                    formData[key] = button.dataset.value;
-                    
-                    // Adiciona um pequeno delay para o usuário ver a seleção
-                    setTimeout(() => {
-                        handleNext();
-                    }, 300);
-                });
+            const response = await fetch(`${BASE_URL}/api/psychologists/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Erro ao realizar cadastro.');
+            }
+
+            // 5. Sucesso!
+            alert('Cadastro realizado com sucesso! Faça login para completar seu perfil.');
+            window.location.href = '/login';
+
+        } catch (error) {
+            console.error(error);
+            mostrarErro(error.message);
+            restaurarBotao();
         }
     });
 
-    // Inicializa o questionário
-    showSlide(0);
+    // Funções Auxiliares
+    function mostrarErro(texto) {
+        msgErro.textContent = texto;
+        msgErro.style.display = 'block';
+    }
+
+    function restaurarBotao() {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Criar Conta Profissional';
+        btnSubmit.style.opacity = '1';
+    }
 });
