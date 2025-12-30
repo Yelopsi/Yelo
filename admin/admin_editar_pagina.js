@@ -6,8 +6,8 @@ window.initializePage = function() {
     const saveBtn = document.getElementById('save-content-btn');
     const toolbar = document.querySelector('.editor-toolbar');
 
-    // Pega o nome da página a ser editada da URL (ex: ?page=/sobre-nos)
-    const params = new URLSearchParams(window.location.search);
+    // CORREÇÃO: Lê os parâmetros da variável global definida pelo admin.js
+    const params = new URLSearchParams(window.pageQueryString || '');
     const pageKey = params.get('page');
 
     if (!pageKey) {

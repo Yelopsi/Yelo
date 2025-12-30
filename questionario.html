@@ -3,11 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Questionário - Yelo</title>
+    
+    <title>Questionário Inteligente - Yelo | Encontre seu Psicólogo</title>
+    <meta name="description" content="Responda a algumas perguntas e nossa tecnologia encontrará os 3 psicólogos ideais para o seu perfil. Terapia online ou presencial.">
+    
+    <meta property="og:title" content="Encontre o Psicólogo Ideal na Yelo">
+    <meta property="og:description" content="Match inteligente com profissionais verificados. Comece sua jornada de saúde mental agora.">
+    <meta property="og:type" content="website">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/01-variables.css">
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="assets/images/favicon.png?v=2" type="image/png">
     <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png?v=2">
@@ -16,8 +23,47 @@
 <link rel="manifest" href="../site.webmanifest">
 <meta name="theme-color" content="#1B4332">
 <meta name="apple-mobile-web-app-capable" content="yes"> 
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> 
+<meta name="apple-mobile-web-app-status-bar-style" content="default"> 
 <meta name="apple-mobile-web-app-title" content="Yelo">
+<style>
+    /* Feedback Visual de Seleção */
+    .choice-button.selected {
+        background-color: var(--cor-Yelo) !important;
+        color: var(--verde-escuro) !important;
+        border-color: var(--verde-escuro) !important;
+        font-weight: bold;
+    }
+    /* Centralizar Títulos e Subtítulos */
+    .slide-header {
+        text-align: center;
+    }
+    /* Modal Styles */
+    .custom-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        animation: fadeIn 0.3s ease;
+    }
+    .custom-modal-box {
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 400px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        animation: slideUp 0.3s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+</style>
 </head>
 
 <body class="pagina-questionario">
@@ -26,10 +72,24 @@
         <div class="progress-bar">
             <div class="progress-bar-fill"></div>
         </div>
+        <div class="step-counter"></div>
 
         <div class="slides-container">
             </div>
     </main>
+
+    <!-- Modal de Validação de Avaliação -->
+    <div id="rating-validation-modal" class="custom-modal-overlay" style="display: none;">
+        <div class="custom-modal-box">
+            <div style="margin-bottom: 15px; font-size: 3rem;">💛</div>
+            <h3 style="color: var(--verde-escuro); margin-bottom: 10px; font-family: var(--font-titulos);">Sua opinião guia nossa evolução</h3>
+            <p style="color: var(--cinza-texto); line-height: 1.5; margin-bottom: 20px; font-family: var(--font-principal);">
+                Para continuarmos conectando pessoas aos profissionais ideais, precisamos muito saber como foi sua experiência até aqui. É rapidinho, prometemos!
+            </p>
+            <button id="btn-close-rating-modal" style="background-color: var(--verde-escuro); color: white; border: none; padding: 12px 24px; border-radius: 50px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; transition: transform 0.2s;">Avaliar agora</button>
+        </div>
+    </div>
+
     <script src="config.js"></script>
     <script src="https://unpkg.com/imask"></script>
     <script src="questionario.js?v=2"></script> 

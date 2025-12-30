@@ -9,16 +9,45 @@ document.addEventListener('DOMContentLoaded', () => {
     const senhaInput = document.getElementById('senha-login');
     const mensagemEl = document.getElementById('mensagem-login');
 
+    // --- LIMPEZA DE SESSÃO (LOGOUT FORÇADO) ---
+    // Se o usuário acessou a página de login, limpamos qualquer sessão anterior
+    localStorage.removeItem('Yelo_token');
+    localStorage.removeItem('Yelo_user_type');
+    localStorage.removeItem('Yelo_user_name');
+
+    // --- CORREÇÃO DE LINKS (Remove .html para compatibilidade com rotas do servidor) ---
+    // Isso impede que o clique leve para uma página 404 que redireciona para a Home
+    const regLinks = document.querySelectorAll('a[href*="registrar"], a[href*="cadastro"], a[href*="registro"]');
+    regLinks.forEach(link => {
+        let rawHref = link.getAttribute('href');
+        // AJUSTE: Redireciona para a rota '/cadastro' que está funcional
+        const query = rawHref && rawHref.includes('?') ? rawHref.substring(rawHref.indexOf('?')) : '';
+        link.setAttribute('href', '/cadastro' + query);
+    });
+
+    // --- LÓGICA DE REDIRECIONAMENTO (Preserva o link de volta se vier de outra página) ---
+    const params = new URLSearchParams(window.location.search);
+    const redirectParam = params.get('redirect');
+
+    if (redirectParam) {
+        // Atualiza links de cadastro para manter o redirect caso o usuário decida criar conta
+        const registerLinks = document.querySelectorAll('a[href*="registrar"], a[href*="cadastro"], a[href*="registro"]');
+        registerLinks.forEach(link => {
+            if (link.href.includes('?')) link.href += `&redirect=${encodeURIComponent(redirectParam)}`;
+            else link.href += `?redirect=${encodeURIComponent(redirectParam)}`;
+        });
+    }
+    
+    // --- NOVO: PREENCHIMENTO AUTOMÁTICO DE E-MAIL (PÓS-CADASTRO) ---
+    const emailParam = params.get('email');
+    if (emailParam && emailInput) {
+        emailInput.value = emailParam;
+    }
+
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // --- ADICIONE ESTAS 3 LINHAS DE LIMPEZA AQUI ---
-            localStorage.removeItem('Yelo_token');
-            localStorage.removeItem('Yelo_user_type');
-            localStorage.removeItem('Yelo_user_name');
-            // ------------------------------------------------
-
             const submitBtn = loginForm.querySelector('button[type="submit"]');
             const originalBtnText = submitBtn.textContent;
             
@@ -26,8 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
             submitBtn.disabled = true;
             submitBtn.textContent = 'Autenticando...';
             if(mensagemEl) mensagemEl.style.display = 'none';
-
-            const email = emailInput.value.trim();
+            const email = emailInput.value.trim().toLowerCase();
             const senha = senhaInput.value;
 
             // Função auxiliar de fetch
@@ -38,9 +66,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email, senha })
                     });
-                    
+
                     // Se o status for 401 ou 404, apenas retorna falha sem jogar erro
-                    if (!response.ok) return { success: false };
+                    if (!response.ok) {
+                        return { success: false };
+                    }
 
                     const data = await response.json();
                     return { success: true, data, type };
@@ -75,11 +105,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Salva dados na sessão
                     if (token) localStorage.setItem('Yelo_token', token);
                     localStorage.setItem('Yelo_user_type', result.type);
-                    if (user && user.nome) localStorage.setItem('Yelo_user_name', user.nome);
+                    
+                    // CORREÇÃO: Pega o nome se estiver dentro de 'user' OU direto na raiz da resposta
+                    const nomeSalvo = (user && user.nome) ? user.nome : result.data.nome;
+                    if (nomeSalvo) localStorage.setItem('Yelo_user_name', nomeSalvo);
 
                     // Mensagem de sucesso
                     if (mensagemEl) {
-                        mensagemEl.textContent = `Bem-vindo(a), ${user ? user.nome : 'Psi'}!`;
+                        if (result.type === 'patient') mensagemEl.textContent = "Bem-vindo(a), Paciente";
+                        else if (result.type === 'psychologist') mensagemEl.textContent = "Bem-vindo(a), Psi";
+                        else if (result.type === 'admin') mensagemEl.textContent = "Bem-vindo(a), Admin";
                         mensagemEl.className = 'mensagem-sucesso';
                         mensagemEl.style.display = 'block';
                     }
@@ -89,10 +124,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Prioridade para o redirecionamento que vem do servidor (caso do Admin)
                         if (redirect) {
                             window.location.href = redirect;
+                        } else if (redirectParam) {
+                            // Se tiver um redirect na URL (ex: veio do perfil), volta pra lá
+                            window.location.href = decodeURIComponent(redirectParam);
                         } else if (result.type === 'psychologist') {
                             window.location.href = '/psi/psi_dashboard.html'; 
                         } else {
-                            window.location.href = '/patient/patient_dashboard.html';
+                            window.location.href = '/patient/patient_dashboard';
                         }
                     }, 800);
 

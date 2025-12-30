@@ -3,12 +3,28 @@
 <head>
     <title>Perguntas e Respostas - Yelo</title>
     <%- include('partials/head') %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Mulish:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --fonte-titulo: 'Lora', serif;
+            --fonte-corpo: 'Mulish', sans-serif;
+        }
+        body {
+            font-family: var(--fonte-corpo);
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--fonte-titulo);
+            font-weight: 600;
+        }
+    </style>
 </head>
 <body>
 
     <%- include('partials/header') %>
 
-    <main style="padding-top: 120px; padding-bottom: 60px;">
+    <main class="main-perguntas" style="padding-top: 120px; padding-bottom: 60px;">
         <div class="container">
             <h1 class="titulo-secao" style="margin-bottom: 20px;">Perguntas e Respostas</h1>
             <p class="subtitulo-secao">Tire suas dúvidas sobre saúde mental com os profissionais da nossa plataforma.<br>Este é um espaço seguro e anônimo.</p>
@@ -23,7 +39,7 @@
                 <svg class="qa-search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                 </svg>
-                <input type="text" id="qa-search-input" placeholder="Busque por ansiedade, depressão, terapia...">
+                <input type="text" id="qa-search-input" placeholder="Busque por temas..." autocomplete="off">
             </div>
 
             <div class="ask-box-container">
@@ -42,6 +58,11 @@
 
             <h2 class="titulo-secao" style="margin-top: 80px;">Últimas perguntas respondidas</h2>
             <div id="qa-container"></div>
+            
+            <!-- Botão Ver Mais (Paginação) -->
+            <div id="load-more-container" style="text-align: center; margin-top: 30px; display: none;">
+                <button id="btn-load-more" class="btn btn-outline" style="border-color: var(--verde-escuro); color: var(--verde-escuro); min-width: 200px;">Ver mais perguntas</button>
+            </div>
         </div>
 
         <section class="aviso-crise ruido">

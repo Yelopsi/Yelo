@@ -4,14 +4,48 @@ require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const path = require('path');
+const fs = require('fs'); // Adicionado para verificar arquivos
 const { initSocket } = require('./config/socket');
+const { Server } = require('socket.io'); // Fallback para inicialização manual
 const cors = require('cors');
+const cookieParser = require('cookie-parser'); // <-- Adicionado para sessões
+const crypto = require('crypto'); // <-- ADICIONADO PARA GERAR IDs DE SESSÃO
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { Op } = require('sequelize');
+const { Op, DataTypes } = require('sequelize');
 
 // Banco de Dados
 const db = require('./models');
+
+// --- FIX: Patch Message Model to include 'status' if missing ---
+// Garante que o campo 'status' seja retornado nas consultas GET (API),
+// resolvendo o bug onde os "risquinhos" somem ao atualizar a página.
+if (db.Message && !db.Message.rawAttributes.status) {
+    console.log("[FIX] Patching Message model to include 'status' field.");
+    db.Message.rawAttributes.status = {
+        type: DataTypes.STRING,
+        defaultValue: 'sent'
+    };
+    if (typeof db.Message.refreshAttributes === 'function') {
+        db.Message.refreshAttributes();
+    }
+}
+
+// --- HOOK GLOBAL: DESARQUIVAMENTO AUTOMÁTICO ---
+// Se um psicólogo ou paciente enviar mensagem, a conversa é desarquivada (status = 'active')
+if (db.Message && db.Conversation) {
+    db.Message.addHook('afterCreate', async (message, options) => {
+        try {
+            if (message.senderType !== 'admin') {
+                // CORREÇÃO: Usando SQL puro para garantir que funcione mesmo se o Model não tiver o campo 'status' mapeado
+                await db.sequelize.query(
+                    `UPDATE "Conversations" SET "status" = 'active', "updatedAt" = NOW() WHERE "id" = :id`,
+                    { replacements: { id: message.conversationId } }
+                );
+            }
+        } catch (e) { console.error("Erro no hook de desarquivamento:", e.message); }
+    });
+}
 
 // Importação de Rotas
 const patientRoutes = require('./routes/patientRoutes');
@@ -25,12 +59,16 @@ const reviewRoutes = require('./routes/reviewRoutes');
 const qnaRoutes = require('./routes/qnaRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const supportRoutes = require('./routes/supportRoutes');
+const adminMessageRoutes = require('./routes/adminMessageRoutes');
 const adminSupportRoutes = require('./routes/adminSupportRoutes');
 const blogRoutes = require('./routes/blogRoutes');
+const newsletterRoutes = require('./routes/newsletterRoutes'); // <-- ADICIONADO
+const forumRoutes = require('./routes/forumRoutes'); // <--- ADICIONADO
 
 // Controllers
 const demandController = require('./controllers/demandController');
 const blogController = require('./controllers/blogController');
+const psychologistController = require('./controllers/psychologistController'); // Importar o controller
 const seedTestData = require('./controllers/seed_test_data');
 
 const app = express();
@@ -62,16 +100,210 @@ app.get('/admin', (req, res) => {
 
 // --- ADICIONE ISTO ---
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, '../views'));
+// CORREÇÃO: Adiciona a pasta raiz do projeto como um local secundário para procurar views.
+// Isso permite que ele encontre 'patient/patient_dashboard.ejs' mesmo que não esteja em /views.
+app.set('views', [path.join(__dirname, '../views'), path.join(__dirname, '..')]);
 // ---------------------
 
 console.log('[DEPLOY_SYNC] Versão Final Prioritária - v3.1');
 const server = http.createServer(app);
 
-initSocket(server);
+// --- INICIALIZAÇÃO ROBUSTA DO SOCKET.IO ---
+let io;
+try {
+    // Tenta usar a configuração existente
+    io = initSocket(server);
+} catch (e) {
+    console.warn("Aviso: initSocket encontrou um problema:", e.message);
+}
+
+// Se initSocket não retornou a instância (comum se o arquivo config/socket.js não tiver return),
+// tentamos recuperar do módulo ou inicializar manualmente.
+if (!io) {
+    try {
+        const socketConfig = require('./config/socket');
+        if (socketConfig.io) io = socketConfig.io;
+        else if (socketConfig.getIO) io = socketConfig.getIO();
+        else if (socketConfig.getIo) io = socketConfig.getIo();
+    } catch (e) { /* Ignora erro de require */ }
+
+    if (!io) {
+        console.log("⚠️ Socket.IO não retornado pelo config. Inicializando manualmente...");
+        io = new Server(server, {
+            cors: { origin: "*", methods: ["GET", "POST", "PUT", "DELETE"] }
+        });
+    }
+}
+
+// --- CORREÇÃO: HANDLERS DE STATUS DE MENSAGEM (LIDO/ENTREGUE) ---
+if (io) {
+    io.on('connection', (socket) => {
+        console.log(`[SOCKET] Nova conexão estabelecida: ${socket.id}`);
+        // Tenta identificar quem é o usuário para filtrar atualizações
+        let user = null;
+        try {
+            const token = socket.handshake.auth.token;
+            if (token) {
+                user = jwt.verify(token, process.env.JWT_SECRET || '***REMOVED_JWT_SECRET***');
+                
+                // --- CORREÇÃO CRÍTICA: Entra na sala do usuário para receber mensagens ---
+                // Inscreve em múltiplas variações de sala para garantir que o Controller encontre o socket
+                if (user && user.id) {
+                    // 1. Padrão genérico
+                    socket.join(`user-${user.id}`);
+                    
+                    // 2. Padrão específico por tipo (Psicólogo)
+                    if (user.role === 'psychologist' || user.type === 'psychologist') {
+                        socket.join(`psychologist-${user.id}`);
+                    }
+                    
+                    // 3. Padrão específico por tipo (Paciente)
+                    else if (user.role === 'patient' || user.type === 'patient') {
+                        socket.join(`patient-${user.id}`);
+                    }
+                }
+                
+                if (user && (user.role === 'admin' || user.type === 'admin')) {
+                    socket.join('admins');
+                }
+            }
+        } catch (e) { /* Token inválido ou ausente */ }
+
+        // --- CORREÇÃO: Relay manual de mensagem do Admin para garantir entrega instantânea ---
+        socket.on('admin_sent_message', (msg) => {
+            // O Admin envia este evento para forçar a notificação ao usuário alvo
+            if (msg.targetUserId) {
+                // Envia para todas as variações possíveis de sala do usuário (Union para evitar duplicatas)
+                io.to(`user-${msg.targetUserId}`)
+                  .to(`psychologist-${msg.targetUserId}`)
+                  .to(`patient-${msg.targetUserId}`)
+                  .emit('receiveMessage', msg);
+            }
+        });
+
+        // 1. Quando o destinatário confirma que recebeu a mensagem
+        socket.on('message_delivered', async ({ messageId }) => {
+            try {
+                if (!messageId) return;
+                const [updated] = await db.Message.update(
+                    { status: 'delivered' },
+                    { where: { id: messageId, status: 'sent' } }
+                );
+                if (updated > 0) {
+                    io.emit('message_status_updated', { messageId, status: 'delivered' });
+                }
+            } catch (err) { console.error("Erro socket message_delivered:", err.message); }
+        });
+
+        // 2. Quando o usuário abre a conversa (Lê as mensagens)
+        socket.on('messages_read', async ({ conversationId }) => {
+            try {
+                if (!conversationId) return;
+                
+                // Log para debug
+                console.log(`[SOCKET] messages_read recebido. ConversationId: ${conversationId}, User: ${user ? user.id : 'Anon'}`);
+                
+                // CORREÇÃO: Busca explicitamente mensagens 'sent' ou 'delivered' para marcar como lidas
+                const whereClause = { conversationId, status: { [Op.in]: ['sent', 'delivered'] } };
+                
+                if (user) {
+                    // Se quem leu foi o Admin, marca como lido as mensagens que NÃO são do Admin
+                    if (user.role === 'admin' || user.type === 'admin') whereClause.senderType = { [Op.ne]: 'admin' };
+                    // Se quem leu foi o Psicólogo, marca como lido as mensagens que NÃO são do Psicólogo
+                    else if (user.role === 'psychologist' || user.type === 'psychologist') whereClause.senderType = { [Op.ne]: 'psychologist' };
+                    // Se quem leu foi o Paciente, marca como lido as mensagens que NÃO são do Paciente
+                    else if (user.role === 'patient' || user.type === 'patient') whereClause.senderType = { [Op.ne]: 'patient' };
+                }
+
+                const msgs = await db.Message.findAll({ attributes: ['id'], where: whereClause });
+                
+                if (msgs.length > 0) {
+                    // console.log(`[SOCKET] Atualizando ${msgs.length} mensagens para 'read'.`);
+                    // CORREÇÃO: Força atualização via SQL puro para garantir persistência
+                    const ids = msgs.map(m => m.id);
+                    
+                    // Atualiza no banco
+                    await db.sequelize.query(
+                        `UPDATE "Messages" SET "status" = 'read', "updatedAt" = NOW() WHERE "id" IN (:ids)`,
+                        { replacements: { ids } }
+                    );
+                    
+                    // Emite evento individual para cada mensagem para atualizar a UI do remetente (Admin)
+                    msgs.forEach(m => io.emit('message_status_updated', { messageId: m.id, status: 'read' }));
+                } else {
+                    // console.log(`[SOCKET] Nenhuma mensagem para atualizar.`);
+                }
+            } catch (err) { console.error("Erro socket messages_read:", err.message); }
+        });
+    });
+} else {
+    console.error("❌ ERRO CRÍTICO: Não foi possível inicializar o Socket.IO. O chat em tempo real não funcionará.");
+}
+// -----------------------------------------------------------------
 
 // --- MIDDLEWARES ---
 app.use(cors());
+app.use(cookieParser()); // <-- Adicionado para ler cookies de sessão
+
+// --- MIDDLEWARE DE SESSÃO ATIVA (NOVO) ---
+// Rastreia todos os visitantes (logados ou não) para o card "Acessos Simultâneos"
+app.use(async (req, res, next) => {
+    // Ignora requisições de API e arquivos estáticos para não sobrecarregar o banco
+    if (req.path.startsWith('/api/') || req.path.includes('.')) {
+        return next();
+    }
+
+    let sessionId = req.cookies.yelo_session;
+
+    if (!sessionId) {
+        sessionId = crypto.randomBytes(16).toString('hex');
+        // Define um cookie com validade de 1 ano
+        res.cookie('yelo_session', sessionId, { maxAge: 365 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax' });
+    }
+
+    try {
+        // Insere ou atualiza o timestamp da sessão no banco. É uma operação muito rápida.
+        await db.sequelize.query(
+            `INSERT INTO "ActiveSessions" ("sessionId", "lastSeen") VALUES (:sessionId, NOW()) ON CONFLICT ("sessionId") DO UPDATE SET "lastSeen" = NOW();`,
+            { replacements: { sessionId }, type: db.sequelize.QueryTypes.INSERT }
+        );
+    } catch (e) {
+        // Falha silenciosa para não quebrar a navegação do usuário
+    }
+    next();
+});
+
+// --- MIDDLEWARES ---
+app.use(cors());
+
+// --- MIDDLEWARE DE VISITAS (NOVO) ---
+// Regex para ignorar arquivos estáticos comuns
+const staticFileRegex = /\.(css|js|json|ico|png|jpg|jpeg|webp|svg|woff|woff2|ttf|eot)$/i;
+
+// Registra cada acesso ao site para alimentar o gráfico e o card de "Acessos"
+app.use(async (req, res, next) => {
+    // Filtra para não contar requisições de API ou de arquivos estáticos
+    if (req.method === 'GET' && !req.path.startsWith('/api') && !staticFileRegex.test(req.path)) {
+        
+        try {
+            // [MELHORIA] Captura dados estratégicos da visita
+            const userAgent = req.headers['user-agent'] || 'Unknown';
+            const url = req.originalUrl || req.path;
+            const referrer = req.headers['referer'] || null;
+            
+            // Tenta inserir com dados ricos (Requer que a tabela tenha essas colunas, ou falhará silenciosamente como antes)
+            // Se as colunas não existirem, sugiro criar uma migration ou usar a rota de fix abaixo
+            db.sequelize.query(
+                `INSERT INTO "SiteVisits" ("url", "userAgent", "referrer", "createdAt", "updatedAt") VALUES (:url, :ua, :ref, NOW(), NOW())`,
+                { replacements: { url, ua: userAgent, ref: referrer } }
+            ).catch(() => {
+                // Fallback para o modo simples se as colunas não existirem ainda
+                db.sequelize.query(`INSERT INTO "SiteVisits" ("createdAt", "updatedAt") VALUES (NOW(), NOW())`).catch(() => {});
+            });
+        } catch (e) { console.error("Erro ao registrar visita:", e.message); }
+    }
+    next();
+});
 
 // Isso permite que a gente pegue o 'rawBody' apenas na rota do webhook
 app.use(express.json({
@@ -79,9 +311,41 @@ app.use(express.json({
     req.rawBody = buf.toString();
   }
 }));
-app.use(express.text({ type: 'application/json' }));
+
+// Middleware para injetar o 'io' do Socket.IO em todas as requisições
+app.use((req, res, next) => {
+    req.io = io;
+    next();
+});
 app.use(express.urlencoded({ extended: true }));
 
+// =============================================================
+// ROTA DE ANALYTICS (SESSÃO ANÔNIMA)
+// =============================================================
+app.post('/api/analytics/session-end', async (req, res) => {
+    try {
+        const { sessionId, duration } = req.body;
+
+        if (sessionId && duration && duration > 0) {
+            // Usamos 'upsert' com SQL puro para inserir ou atualizar a sessão.
+            await db.sequelize.query(
+                `INSERT INTO "AnonymousSessions" ("sessionId", "durationInSeconds", "endedAt", "createdAt", "updatedAt")
+                 VALUES (:sessionId, :duration, NOW(), NOW(), NOW())
+                 ON CONFLICT ("sessionId") DO UPDATE SET
+                 "durationInSeconds" = :duration,
+                 "endedAt" = NOW(),
+                 "updatedAt" = NOW();`,
+                {
+                    replacements: { sessionId, duration: parseInt(duration, 10) },
+                    type: db.sequelize.QueryTypes.INSERT
+                }
+            );
+        }
+        res.status(204).send();
+    } catch (error) {
+        res.status(204).send();
+    }
+});
 // =============================================================
 // 🚨 ROTAS DE EMERGÊNCIA (DESATIVADAS PARA PRODUÇÃO) 🚨
 // =============================================================
@@ -117,6 +381,26 @@ app.get('/api/fix-add-modalidade-column', async (req, res) => {
     }
 });
 
+// Rota para criar a coluna STATUS na tabela Conversations (CORREÇÃO DO CHAT)
+app.get('/api/fix-add-conversation-status', async (req, res) => {
+    try {
+        await db.sequelize.query(`ALTER TABLE "Conversations" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
+        res.send("Sucesso! Coluna 'status' criada em Conversations.");
+    } catch (error) {
+        res.status(500).send("Erro: " + error.message);
+    }
+});
+
+// Rota para criar a coluna STATUS na tabela Messages (CORREÇÃO DO CHAT)
+app.get('/api/fix-add-message-status', async (req, res) => {
+    try {
+        await db.sequelize.query(`ALTER TABLE "Messages" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'sent';`);
+        res.send("Sucesso! Coluna 'status' criada em Messages.");
+    } catch (error) {
+        res.status(500).send("Erro: " + error.message);
+    }
+});
+
 // ROTA DE CORREÇÃO: Conserta o histórico (started -> completed)
 app.get('/api/fix-status-completed', async (req, res) => {
     try {
@@ -131,6 +415,56 @@ app.get('/api/fix-status-completed', async (req, res) => {
     }
 });
 
+// Rota para criar colunas de inteligência na tabela SiteVisits
+app.get('/api/fix-add-analytics-columns', async (req, res) => {
+    try {
+        await db.sequelize.query('ALTER TABLE "SiteVisits" ADD COLUMN IF NOT EXISTS "url" VARCHAR(255);');
+        await db.sequelize.query('ALTER TABLE "SiteVisits" ADD COLUMN IF NOT EXISTS "userAgent" TEXT;');
+        await db.sequelize.query('ALTER TABLE "SiteVisits" ADD COLUMN IF NOT EXISTS "referrer" TEXT;');
+        res.send("Sucesso! Colunas de Analytics criadas.");
+    } catch (error) {
+        res.status(500).send("Erro ao criar colunas: " + error.message);
+    }
+});
+
+// Rota para converter a coluna de JSON para JSONB (necessário para o índice GIN)
+app.get('/api/fix-json-to-jsonb', async (req, res) => {
+    try {
+        // Converte a coluna 'searchParams' da tabela 'DemandSearches' de JSON para JSONB.
+        // O 'USING "searchParams"::text::jsonb' é crucial para converter os dados existentes.
+        await db.sequelize.query('ALTER TABLE "DemandSearches" ALTER COLUMN "searchParams" TYPE JSONB USING "searchParams"::text::jsonb;');
+        res.send("Sucesso! A coluna 'searchParams' foi convertida para JSONB. Agora você pode criar o índice GIN.");
+    } catch (error) {
+        // Se a coluna já for JSONB, o erro "column is already of type jsonb" pode aparecer, o que é bom.
+        console.error("Erro ao converter JSON para JSONB:", error.message);
+        res.status(500).send(`Erro ao converter JSON para JSONB: ${error.message}. Se a mensagem for "column is already of type jsonb", ignore e prossiga para a criação do índice.`);
+    }
+});
+
+// Rota para criar índices GIN para acelerar buscas em JSONB
+app.get('/api/fix-add-jsonb-indexes', async (req, res) => {
+    try {
+        // Índice para a tabela DemandSearches (acelera a página de Analytics)
+        await db.sequelize.query('CREATE INDEX IF NOT EXISTS idx_gin_demandsearches_searchparams ON "DemandSearches" USING GIN ("searchParams");');
+        res.send("Sucesso! Índices GIN para colunas JSONB foram criados/verificados. A página de Analytics de Questionários ficará muito mais rápida.");
+    } catch (error) {
+        console.error("Erro detalhado ao criar índice GIN:", error);
+        res.status(500).send(`Erro ao criar índices GIN: ${error.message}. Verifique se a coluna 'searchParams' é do tipo JSONB. Se não for, acesse a rota /api/fix-json-to-jsonb primeiro.`);
+    }
+});
+
+// Rota para criar colunas de AUDITORIA na tabela Patients (LGPD/Segurança)
+app.get('/api/fix-patient-audit', async (req, res) => {
+    try {
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "ip_registro" VARCHAR(45);');
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "termos_aceitos" BOOLEAN DEFAULT FALSE;');
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "marketing_aceito" BOOLEAN DEFAULT FALSE;');
+        res.send("Sucesso! Colunas de auditoria (IP, Termos, Marketing) criadas em Patients.");
+    } catch (error) {
+        res.status(500).send("Erro ao criar colunas: " + error.message);
+    }
+});
+
 // Rota para criar a coluna CURTIDAS na tabela posts
 app.get('/api/fix-add-likes-column', async (req, res) => {
     try {
@@ -141,40 +475,166 @@ app.get('/api/fix-add-likes-column', async (req, res) => {
     }
 });
 
+// Rota para criar a tabela de Newsletter
+app.get('/api/fix-add-newsletter-table', async (req, res) => {
+    try {
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "NewsletterSubscriptions" (
+                "id" SERIAL PRIMARY KEY,
+                "email" VARCHAR(255) UNIQUE NOT NULL,
+                "origin" VARCHAR(255),
+                "ipAddress" VARCHAR(45),
+                "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+                "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL
+            );`);
+        res.send("Sucesso! Tabela 'NewsletterSubscriptions' criada/verificada.");
+    } catch (error) {
+        res.status(500).send("Erro ao criar tabela de newsletter: " + error.message);
+    }
+});
+
+// Rota para criar índice na tabela de posts (acelera "Meus Artigos")
+app.get('/api/fix-add-post-index', async (req, res) => {
+    try {
+        // Cria um índice na coluna "psychologistId" da tabela "posts" se ele não existir.
+        // CORREÇÃO: O nome da coluna no banco de dados é "psychologist_id" (snake_case).
+        await db.sequelize.query('CREATE INDEX IF NOT EXISTS idx_posts_psychologist_id ON posts ("psychologist_id");');
+        res.send("Sucesso! Índice criado na tabela de posts. A página 'Meus Artigos' ficará mais rápida.");
+    } catch (error) {
+        console.error("Erro ao criar índice em posts:", error.message);
+        res.status(500).send(`Erro ao criar índice: ${error.message}.`);
+    }
+});
+
 // =============================================================
 // ROTAS DA APLICAÇÃO
 // =============================================================
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/api/newsletter', newsletterRoutes); // <-- MOVIDO PARA O TOPO
 
-// --- COLAR AQUI (BEM NO TOPO, ANTES DAS OUTRAS) ---
-app.get('/api/admin/me', (req, res) => {
-    try {
-        const authHeader = req.headers.authorization;
-        if (!authHeader) return res.status(401).json({ error: 'Token ausente' });
+// --- ROTA DE RESGATE DE IMAGENS (SOLUÇÃO DEFINITIVA) ---
+// Intercepta requisições de perfil e procura o arquivo onde quer que ele esteja
+app.get('/uploads/profiles/:filename', (req, res) => {
+    const filename = req.params.filename;
+    
+    // Lista de lugares onde o arquivo pode ter ido parar
+    const possiblePaths = [
+        path.join(__dirname, '../uploads', filename),           // raiz/uploads/arquivo.webp
+        path.join(__dirname, '../uploads/profiles', filename),  // raiz/uploads/profiles/arquivo.webp
+        path.join(__dirname, 'uploads', filename),              // backend/uploads/arquivo.webp
+        path.join(__dirname, 'uploads/profiles', filename)      // backend/uploads/profiles/arquivo.webp
+    ];
 
-        const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || '***REMOVED_JWT_SECRET***');
-        
-        res.json({ id: decoded.id, nome: decoded.nome, role: decoded.role });
-    } catch (error) {
-        console.error("Erro auth admin:", error.message);
-        return res.status(401).json({ error: 'Token inválido' });
+    // Tenta encontrar o primeiro caminho que existe
+    const foundPath = possiblePaths.find(p => fs.existsSync(p));
+
+    if (foundPath) {
+        res.sendFile(foundPath);
+    } else {
+        console.error(`[404] Imagem não encontrada fisicamente: ${filename}`);
+        res.status(404).send('Imagem não encontrada');
     }
 });
-// ---------------------------------------------------
+
+// Fallback para outros arquivos na pasta uploads
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use('/api/patients', patientRoutes);
 app.use('/api/psychologists', psychologistRoutes);
 app.use('/api/messaging', messagingRoutes);
+app.use('/api/messages', messageRoutes);
 app.use('/api/demand', demandRoutes);
 app.use('/api/usuarios', usuarioRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/admin/support', adminSupportRoutes); 
+
+// --- CORREÇÃO: ROTA PARA ARQUIVAR/DESARQUIVAR CONVERSA ---
+// A rota foi movida para ANTES das rotas genéricas de admin (`/api/admin`)
+// para garantir que ela seja encontrada e executada primeiro, evitando que uma
+// rota mais genérica capture a requisição e retorne um erro 404.
+app.put('/api/admin/messages/conversation/:id/status', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        if (!['active', 'archived'].includes(status)) {
+            return res.status(400).json({ error: 'Status inválido. Use "active" ou "archived".' });
+        }
+
+        // CORREÇÃO: SQL Puro para bypassar problemas de definição do Model (Sequelize)
+        // O RETURNING id garante que sabemos se a linha foi encontrada e atualizada
+        const [results] = await db.sequelize.query(
+            `UPDATE "Conversations" SET "status" = :status, "updatedAt" = NOW() WHERE "id" = :id RETURNING id`,
+            { replacements: { status: status, id: parseInt(id, 10) } }
+        );
+
+        if (!results || results.length === 0) {
+            return res.status(404).json({ error: 'Conversa não encontrada no banco de dados.' });
+        }
+
+        res.json({ message: 'Status da conversa atualizado com sucesso.' });
+    } catch (error) {
+        console.error("Erro ao atualizar status da conversa:", error);
+        res.status(500).json({ error: 'Erro interno do servidor.' });
+    }
+});
+
+// ROTAS DE ADMIN (ORDEM DE ESPECIFICIDADE IMPORTA)
+app.use('/api/admin/messages', adminMessageRoutes); // Rotas de mensagem do admin (mais específicas)
+app.use('/api/admin/support', adminSupportRoutes); // Rotas de suporte do admin (mais específicas)
+app.use('/api/admin', adminRoutes); // Rotas genéricas do admin (devem vir por último)
+
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/qna', qnaRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/support', supportRoutes);
+// app.use('/api/newsletter', newsletterRoutes); // <-- REMOVIDO DAQUI
+app.use('/api/forum', forumRoutes); // <--- ROTAS DO FÓRUM
+
+// --- ROTAS PÚBLICAS DE KPI (Adicionadas Manualmente) ---
+app.post('/api/public/psychologists/:slug/whatsapp-click', async (req, res) => {
+    try {
+        const { slug } = req.params;
+        // Tenta pegar o patientId do corpo da requisição
+        const { patientId, guestPhone, guestName } = req.body;
+
+        const psychologist = await db.Psychologist.findOne({ where: { slug } });
+
+        if (!psychologist) {
+            return res.status(404).send('Psicólogo não encontrado.');
+        }
+
+        // Insere com o patientId (pode ser null se for visitante)
+        await db.sequelize.query(
+            `INSERT INTO "WhatsappClickLogs" ("psychologistId", "patientId", "guestPhone", "guestName", "createdAt", "updatedAt") VALUES (:id, :patId, :phone, :name, NOW(), NOW())`,
+            { replacements: { id: psychologist.id, patId: patientId || null, phone: guestPhone || null, name: guestName || null } }
+        );
+
+        res.status(200).send('Clique registrado com sucesso.');
+    } catch (error) {
+        console.error("Erro ao registrar clique no WhatsApp:", error);
+        res.status(500).send('Erro interno do servidor.');
+    }
+});
+app.post('/api/public/psychologists/:id/appearance', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const psychologist = await db.Psychologist.findByPk(id);
+
+        if (!psychologist) {
+            return res.status(404).send('Psicólogo não encontrado.');
+        }
+
+        // Insere um registro na tabela de logs de aparição
+        await db.sequelize.query(
+            `INSERT INTO "ProfileAppearanceLogs" ("psychologistId", "createdAt", "updatedAt") VALUES (:id, NOW(), NOW())`,
+            { replacements: { id: psychologist.id } }
+        );
+
+        res.status(200).send('Aparição registrada com sucesso.');
+    } catch (error) {
+        console.error("Erro ao registrar aparição no Top 3:", error);
+        res.status(500).send('Erro interno do servidor.');
+    }
+});
 
 // ADICIONE ESTA LINHA:
 // Nota: O frontend chama '/api/psychologists/me/posts', então montamos assim:
@@ -184,13 +644,49 @@ app.use('/api/psychologists/me/posts', blogRoutes);
 app.get('/api/admin/feedbacks', demandController.getRatings);
 app.get('/api/admin/exit-surveys', async (req, res) => {
     try {
-        try { await db.sequelize.query('SELECT 1 FROM "ExitSurveys" LIMIT 1'); } 
-        catch (e) { return res.json({ stats: {}, list: [] }); }
+        const { motivo, nota, startDate, endDate } = req.query;
+        
+        let whereClause = 'WHERE 1=1';
+        const replacements = {};
 
-        const [stats] = await db.sequelize.query(`SELECT COUNT(*) as total, AVG(avaliacao)::numeric(10,1) as media FROM "ExitSurveys"`);
-        const [list] = await db.sequelize.query(`SELECT * FROM "ExitSurveys" ORDER BY "createdAt" DESC LIMIT 50`);
+        if (motivo) {
+            whereClause += ' AND "motivo" ILIKE :motivo';
+            replacements.motivo = `%${motivo}%`;
+        }
+        if (nota) {
+            whereClause += ' AND "avaliacao" = :nota';
+            replacements.nota = parseInt(nota);
+        }
+        if (startDate) {
+            whereClause += ' AND "createdAt" >= :startDate';
+            replacements.startDate = startDate;
+        }
+        if (endDate) {
+            whereClause += ' AND "createdAt" <= :endDate';
+            // Ajusta para o final do dia
+            replacements.endDate = new Date(endDate + 'T23:59:59.999Z').toISOString();
+        }
+
+        // Stats Query (Inclui Moda para pegar o motivo mais comum)
+        const statsQuery = `
+            SELECT 
+                COUNT(*) as total, 
+                AVG(avaliacao)::numeric(10,1) as media,
+                COALESCE(MODE() WITHIN GROUP (ORDER BY motivo), 'Sem dados') as "topReason"
+            FROM "ExitSurveys" ${whereClause}
+        `;
+        
+        // List Query
+        const listQuery = `SELECT * FROM "ExitSurveys" ${whereClause} ORDER BY "createdAt" DESC LIMIT 100`;
+
+        const [stats] = await db.sequelize.query(statsQuery, { replacements });
+        const [list] = await db.sequelize.query(listQuery, { replacements });
+
         res.json({ stats: stats[0], list });
-    } catch (error) { res.status(500).json({ error: "Erro interno" }); }
+    } catch (error) { 
+        console.error("Erro em exit-surveys:", error);
+        res.status(500).json({ error: "Erro interno" }); 
+    }
 });
 
 // =============================================================
@@ -283,7 +779,7 @@ app.post('/api/login-admin-check', async (req, res) => {
 
         // D) GERA O TOKEN (A Correção Principal)
         const token = jwt.sign(
-            { id: adminUser.id, role: 'admin', nome: adminUser.nome },
+            { id: adminUser.id, role: 'admin', type: 'admin', nome: adminUser.nome }, // CORREÇÃO: Adicionado type: 'admin'
             process.env.JWT_SECRET || '***REMOVED_JWT_SECRET***', // Usa sua chave secreta
             { expiresIn: '24h' }
         );
@@ -309,8 +805,89 @@ app.post('/api/login-admin-check', async (req, res) => {
 
 // 1º: PRIMEIRO defina a rota da Home.
 // Isso garante que o servidor renderize o index.ejs ao acessar a raiz '/'
-app.get('/', (req, res) => {
-    res.render('index');
+app.get('/', async (req, res) => {
+    try {
+        // Busca até 10 psicólogos aleatórios que estejam ativos e tenham foto
+        const psicologos = await db.Psychologist.findAll({
+            where: {
+                status: 'active',
+                fotoUrl: { [Op.ne]: null } // Garante que só venham perfis com foto
+            },
+            order: db.sequelize.random(), // Pega de forma aleatória
+            limit: 10, // Um pouco a mais para garantir variedade
+            attributes: ['nome', 'fotoUrl', 'slug'] // Apenas os dados necessários
+        });
+
+        // --- NOVO: Busca Média de Avaliações (Prova Social) ---
+        let mediaAvaliacao = '4.9';
+        let totalAvaliacoes = '150+';
+        let depoimentos = [];
+
+        try {
+            // 1. Estatísticas Gerais (Média e Total)
+            const [result] = await db.sequelize.query(`
+                SELECT 
+                    AVG(CAST("searchParams"->'avaliacao_ux'->>'rating' AS NUMERIC)) as media, 
+                    COUNT(*) as total 
+                FROM "DemandSearches" 
+                WHERE "searchParams"->'avaliacao_ux'->>'rating' IS NOT NULL
+            `, { type: db.sequelize.QueryTypes.SELECT });
+            
+            if (result && result.media) mediaAvaliacao = parseFloat(result.media).toFixed(1);
+            if (result && result.total > 0) totalAvaliacoes = result.total;
+
+            // 2. Busca Depoimentos Reais (Texto + Nota)
+            // Filtra por quem deixou feedback escrito (> 10 chars) e nota boa (>= 4)
+            const rows = await db.sequelize.query(`
+                SELECT "searchParams"
+                FROM "DemandSearches"
+                WHERE "searchParams"->'avaliacao_ux'->>'feedback' IS NOT NULL
+                AND length("searchParams"->'avaliacao_ux'->>'feedback') > 10
+                AND CAST("searchParams"->'avaliacao_ux'->>'rating' AS NUMERIC) >= 4
+                ORDER BY "createdAt" DESC
+                LIMIT 4
+            `, { type: db.sequelize.QueryTypes.SELECT });
+
+            if (rows && rows.length > 0) {
+                depoimentos = rows.map(r => {
+                    const p = r.searchParams || {};
+                    const av = p.avaliacao_ux || {};
+                    const nome = p.nome || 'Anônimo';
+                    // Converte para iniciais (ex: "Ana Silva" -> "A. S.")
+                    const iniciais = nome.trim().split(/\s+/).map(n => n[0].toUpperCase() + '.').join(' ');
+                    
+                    return {
+                        nome: iniciais,
+                        texto: (av.feedback || "").replace("amei a plataforma (teste)", "amei a plataforma"),
+                        nota: parseInt(av.rating || 5),
+                        inicial: nome[0].toUpperCase()
+                    };
+                });
+            }
+        } catch (e) { 
+            console.log("Nota: Tabela 'DemandSearches' vazia ou com erro, usando valores padrão para a home.", e.message); 
+        }
+
+        // Fallback: Se não tiver depoimentos reais suficientes, completa com mocks
+        if (depoimentos.length < 4) {
+            const mocks = [
+                { nome: "M. S.", texto: "Eu adiava a terapia por achar difícil encontrar alguém. O questionário da Yelo foi certeiro.", nota: 5, inicial: "M" },
+                { nome: "C. E.", texto: "A facilidade de fazer online mudou tudo pra mim. Plataforma estável e segura.", nota: 5, inicial: "C" },
+                { nome: "F. L.", texto: "O acolhimento que recebi foi fundamental. Recomendo a Yelo para todos.", nota: 5, inicial: "F" },
+                { nome: "J. P.", texto: "Encontrei um espaço seguro para falar sobre minhas angústias.", nota: 5, inicial: "J" }
+            ];
+            // Adiciona os mocks necessários para chegar a 4
+            depoimentos = [...depoimentos, ...mocks.slice(0, 4 - depoimentos.length)];
+        }
+
+        // Renderiza a página inicial, passando a variável 'profissionais' para o EJS
+        res.render('index', { profissionais: psicologos, mediaAvaliacao, totalAvaliacoes, depoimentos });
+
+    } catch (error) {
+        console.error("Erro ao buscar profissionais para a home:", error);
+        // Em caso de erro, renderiza a página mesmo assim, mas sem os profissionais (mostrará os mocks)
+        res.render('index', { profissionais: [], mediaAvaliacao: '4.9', totalAvaliacoes: '100+', depoimentos: [] });
+    }
 });
 
 // Rotas Públicas do Blog
@@ -337,6 +914,13 @@ app.get('/profissionais', (req, res) => {
     res.render('profissionais');
 });
 
+// --- ADICIONE ESTE BLOCO AQUI ---
+// Rota para a página de Registro do Psicólogo (Pós-Questionário)
+app.get('/psi-registro', (req, res) => {
+    res.render('psi_registro'); 
+});
+// --------------------------------
+
 // Garante que "FAQ" abra o arquivo correto
 app.get('/faq', (req, res) => {
     res.render('faq');
@@ -345,6 +929,53 @@ app.get('/faq', (req, res) => {
 // Rotas de Autenticação (opcional, mas recomendado para segurança)
 app.get('/login', (req, res) => { res.render('login'); });
 app.get('/cadastro', (req, res) => { res.render('cadastro'); });
+app.get('/recuperar-senha', (req, res) => { res.render('esqueci_senha'); });
+app.get('/redefinir-senha', (req, res) => { res.render('redefinir_senha'); });
+
+// --- ROTA DE LOGOUT E CORREÇÕES DE REDIRECIONAMENTO ---
+app.get('/logout', (req, res) => {
+    // Envia script para limpar localStorage e redirecionar para a Home
+    res.send(`
+        <html><body><script>
+            localStorage.removeItem('Yelo_token');
+            localStorage.removeItem('Yelo_user_type');
+            localStorage.removeItem('Yelo_user_name');
+            window.location.href = '/';
+        </script></body></html>
+    `);
+});
+
+// Captura tentativas de logout com links relativos quebrados (ex: /admin/login)
+app.get(['/admin/login', '/psi/login', '/patient/login'], (req, res) => {
+    res.redirect('/logout');
+});
+
+// --- ROTA AUXILIAR PARA IDENTIFICAR TIPO DE USUÁRIO (RECUPERAÇÃO DE SENHA) ---
+app.post('/api/auth/identify-user', async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ error: 'E-mail obrigatório' });
+
+        // Verifica na tabela de Pacientes
+        const [patients] = await db.sequelize.query('SELECT 1 FROM "Patients" WHERE email = :email LIMIT 1', { replacements: { email } });
+        if (patients.length > 0) return res.json({ type: 'patient' });
+
+        // Verifica na tabela de Psicólogos
+        const [psis] = await db.sequelize.query('SELECT 1 FROM "Psychologists" WHERE email = :email LIMIT 1', { replacements: { email } });
+        if (psis.length > 0) return res.json({ type: 'psychologist' });
+
+        return res.status(404).json({ error: 'E-mail não encontrado em nossa base de dados.' });
+    } catch (error) {
+        console.error('Erro ao identificar usuário:', error);
+        res.status(500).json({ error: 'Erro interno ao verificar e-mail.' });
+    }
+});
+
+// --- ADICIONE ESTA ROTA PARA O DASHBOARD DO PACIENTE ---
+app.get('/patient/patient_dashboard', (req, res) => {
+    // Renderiza o arquivo que está em /views/patient/patient_dashboard.ejs
+    res.render('patient/patient_dashboard');
+});
 
 // =============================================================
 // ROTEAMENTO INTELIGENTE (PÁGINAS ESTÁTICAS vs PERFIL PÚBLICO)
@@ -382,24 +1013,189 @@ app.get('/:slug', (req, res, next) => {
 });
 
 // 4º: Catch-All (Se nada acima funcionar)
-app.use((req, res) => {
-    res.redirect('/');
+app.use((req, res, next) => {
+    res.status(404);
+
+    // Se aceitar HTML (navegador), renderiza a página 404 personalizada
+    if (req.accepts('html')) {
+        res.render('404', { url: req.url });
+        return;
+    }
+
+    // Se for API (JSON), retorna erro JSON limpo
+    if (req.accepts('json')) {
+        res.json({ error: 'Recurso não encontrado' });
+        return;
+    }
+
+    // Fallback para texto simples
+    res.type('txt').send('Página não encontrada');
+});
+
+// --- GLOBAL ERROR HANDLER (MULTER & OTHERS) ---
+app.use((err, req, res, next) => {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({ error: 'Arquivo muito grande. Limite máximo: 10MB.' });
+    }
+    console.error("[SERVER ERROR]", err);
+    res.status(500).json({ error: 'Erro interno no servidor.' });
 });
 
 // Inicialização
 const PORT = process.env.PORT || 3001;
 const startServer = async () => {
+    console.time('⏱️ Tempo Total de Inicialização');
+
     if (process.env.NODE_ENV !== 'production') {
-        console.log('Banco de dados sincronizado (DEV).');
-        // O "alter: true" mantém seus dados e só ajusta as colunas se necessário
-        await db.sequelize.sync({ alter: true });
+        console.log('🔄 Iniciando sincronização do Banco de Dados (DEV)...');
+        
+        // [CRITICAL FIX] Garante que a coluna status exista antes de criar índices
+        try {
+            await db.sequelize.query(`ALTER TABLE "ForumPosts" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
+        } catch (e) { /* Ignora se a tabela não existir ainda */ }
+
+        console.time('🗄️ Sequelize Sync');
+        await db.sequelize.sync();
+        console.timeEnd('🗄️ Sequelize Sync');
+        console.log('✅ Banco de dados sincronizado (DEV).');
+
+        // --- FIX AUTOMÁTICO DE EMERGÊNCIA ---
+        // Garante que as colunas críticas existam, mesmo que o Model não as tenha definido
+        console.time('🔧 Auto-Fix Queries');
+        try {
+            await db.sequelize.query(`ALTER TABLE "Messages" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'sent';`);
+            await db.sequelize.query(`ALTER TABLE "Conversations" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
+            await db.sequelize.query(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
+            // Cria a tabela de visitas se não existir
+            await db.sequelize.query(`CREATE TABLE IF NOT EXISTS "SiteVisits" ("id" SERIAL PRIMARY KEY, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);`);
+            // Garante colunas na tabela de Admins
+            await db.sequelize.query(`CREATE TABLE IF NOT EXISTS "Admins" ("id" SERIAL PRIMARY KEY, "email" VARCHAR(255) UNIQUE NOT NULL, "senha" VARCHAR(255) NOT NULL, "nome" VARCHAR(255), "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);`);
+            await db.sequelize.query(`ALTER TABLE "Admins" ADD COLUMN IF NOT EXISTS "telefone" VARCHAR(255);`);
+            await db.sequelize.query(`ALTER TABLE "Admins" ADD COLUMN IF NOT EXISTS "fotoUrl" VARCHAR(255);`);
+
+            console.log("✅ [AUTO-FIX] Colunas 'status' verificadas no banco de dados.");
+            // CRIA TABELA DE SESSÕES ATIVAS (para "Acessos Simultâneos")
+            await db.sequelize.query(`
+                CREATE TABLE IF NOT EXISTS "ActiveSessions" (
+                    "id" SERIAL PRIMARY KEY,
+                    "sessionId" VARCHAR(255) UNIQUE NOT NULL,
+                    "lastSeen" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            `);
+            console.log("✅ [AUTO-FIX] Tabela 'ActiveSessions' verificada.");
+
+            // CRIA TABELA DE SESSÕES ANÔNIMAS
+            await db.sequelize.query(`
+                CREATE TABLE IF NOT EXISTS "AnonymousSessions" (
+                    "id" SERIAL PRIMARY KEY,
+                    "sessionId" VARCHAR(255) UNIQUE NOT NULL,
+                    "durationInSeconds" INTEGER NOT NULL,
+                    "endedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            `);
+            console.log("✅ [AUTO-FIX] Tabela 'AnonymousSessions' verificada.");
+
+            // LIMPEZA: Remove sessões inativas há mais de 1 dia para manter a tabela leve
+            await db.sequelize.query(`DELETE FROM "ActiveSessions" WHERE "lastSeen" < NOW() - INTERVAL '1 day';`);
+            console.log("✅ [AUTO-FIX] Sessões antigas limpas.");
+
+            // CRIA TABELAS DE LOGS PARA KPIs (se não existirem)
+            await db.sequelize.query(`
+                CREATE TABLE IF NOT EXISTS "WhatsappClickLogs" (
+                    "id" SERIAL PRIMARY KEY,
+                    "psychologistId" INTEGER REFERENCES "Psychologists"(id) ON DELETE SET NULL,
+                    "patientId" INTEGER REFERENCES "Patients"(id) ON DELETE SET NULL,
+                    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            `);
+            console.log("✅ [AUTO-FIX] Tabela 'WhatsappClickLogs' verificada.");
+            
+            // Garante colunas extras para o Follow-up
+            await db.sequelize.query(`ALTER TABLE "WhatsappClickLogs" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'pending';`);
+            await db.sequelize.query(`ALTER TABLE "WhatsappClickLogs" ADD COLUMN IF NOT EXISTS "message_sent_at" TIMESTAMP WITH TIME ZONE;`);
+            await db.sequelize.query(`ALTER TABLE "WhatsappClickLogs" ADD COLUMN IF NOT EXISTS "guestPhone" VARCHAR(255);`);
+            await db.sequelize.query(`ALTER TABLE "WhatsappClickLogs" ADD COLUMN IF NOT EXISTS "guestName" VARCHAR(255);`);
+
+            await db.sequelize.query(`
+                CREATE TABLE IF NOT EXISTS "ProfileAppearanceLogs" (
+                    "id" SERIAL PRIMARY KEY,
+                    "psychologistId" INTEGER REFERENCES "Psychologists"(id) ON DELETE SET NULL,
+                    "searchId" VARCHAR(255),
+                    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            `);
+            console.log("✅ [AUTO-FIX] Tabela 'ProfileAppearanceLogs' verificada.");
+
+            await db.sequelize.query(`
+                CREATE TABLE IF NOT EXISTS "MatchEvents" (
+                    "id" SERIAL PRIMARY KEY,
+                    "psychologistId" INTEGER REFERENCES "Psychologists"(id) ON DELETE SET NULL,
+                    "matchTags" TEXT[],
+                    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            `);
+            console.log("✅ [AUTO-FIX] Tabela 'MatchEvents' verificada.");
+
+            // --- FIX CRÍTICO: FAVORITOS (Erro 500) ---
+            // Corrige o erro de "valor nulo na coluna createdAt" ao favoritar
+            try {
+                await db.sequelize.query(`ALTER TABLE "PatientFavorites" ALTER COLUMN "createdAt" SET DEFAULT NOW();`);
+                await db.sequelize.query(`ALTER TABLE "PatientFavorites" ALTER COLUMN "updatedAt" SET DEFAULT NOW();`);
+                console.log("✅ [AUTO-FIX] Tabela 'PatientFavorites' corrigida (Timestamps).");
+            } catch (e) { 
+                console.log("[AUTO-FIX] Nota sobre Favoritos (pode ser ignorado se já corrigido):", e.message); 
+            }
+
+            // CRIA TABELA DE NEWSLETTER (Correção do Erro 500)
+            await db.sequelize.query(`
+                CREATE TABLE IF NOT EXISTS "NewsletterSubscriptions" (
+                    "id" SERIAL PRIMARY KEY,
+                    "email" VARCHAR(255) UNIQUE NOT NULL,
+                    "origin" VARCHAR(255),
+                    "ipAddress" VARCHAR(45),
+                    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            `);
+            console.log("✅ [AUTO-FIX] Tabela 'NewsletterSubscriptions' verificada.");
+
+            // --- OTIMIZAÇÃO DE PERFORMANCE (ÍNDICES) ---
+            console.log("⚡ [AUTO-FIX] Verificando índices de performance...");
+            // Blog
+            await db.sequelize.query('CREATE INDEX IF NOT EXISTS idx_posts_psychologist_id ON posts (psychologist_id);');
+            // Fórum
+            await db.sequelize.query('CREATE INDEX IF NOT EXISTS idx_forumposts_psychologist_id ON "ForumPosts" ("PsychologistId");');
+            await db.sequelize.query('CREATE INDEX IF NOT EXISTS idx_forumcomments_post_id ON "ForumComments" ("ForumPostId");');
+            await db.sequelize.query('CREATE INDEX IF NOT EXISTS idx_forumcomments_psychologist_id ON "ForumComments" ("PsychologistId");');
+            await db.sequelize.query('CREATE INDEX IF NOT EXISTS idx_forumvotes_post_id ON "ForumVotes" ("ForumPostId");');
+            await db.sequelize.query('CREATE INDEX IF NOT EXISTS idx_forumvotes_psychologist_id ON "ForumVotes" ("PsychologistId");');
+            // KPIs
+            await db.sequelize.query('CREATE INDEX IF NOT EXISTS idx_whatsappclicks_psychologist_id ON "WhatsappClickLogs" ("psychologistId");');
+            await db.sequelize.query('CREATE INDEX IF NOT EXISTS idx_profileappearances_psychologist_id ON "ProfileAppearanceLogs" ("psychologistId");');
+            await db.sequelize.query('CREATE INDEX IF NOT EXISTS idx_patientfavorites_psychologist_id ON "PatientFavorites" ("PsychologistId");');
+            console.log("✅ [AUTO-FIX] Índices de performance verificados.");
+
+        } catch (e) { console.log("[AUTO-FIX] Nota:", e.message); }
+        console.timeEnd('🔧 Auto-Fix Queries');
+        // -------------------------------------
+
         // --- COMENTE A LINHA ABAIXO PARA PARAR DE RESETAR SEUS DADOS ---
         // await seedTestData(); 
     } else {
         await db.sequelize.sync();
         console.log('Banco de dados sincronizado (PROD).');
     }
-    server.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}.`));
+    server.listen(PORT, () => {
+        console.log(`Servidor rodando na porta ${PORT}.`);
+        console.timeEnd('⏱️ Tempo Total de Inicialização');
+    });
 };
 
 startServer().catch(err => console.error('Falha ao iniciar o servidor:', err));

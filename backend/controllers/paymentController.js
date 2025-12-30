@@ -47,6 +47,11 @@ exports.createPreference = async (req, res) => {
 
     } catch (error) {
         console.error('Erro Stripe:', error);
+        // GRAVA O ERRO NO SISTEMA PARA O DASHBOARD VER
+        await db.SystemLog.create({
+            level: 'error',
+            message: `Erro ao criar pagamento Stripe: ${error.message}`
+        });
         res.status(500).json({ error: 'Erro ao criar pagamento' });
     }
 };
@@ -64,6 +69,10 @@ exports.handleWebhook = async (req, res) => {
         event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
     } catch (err) {
         console.error(`Webhook Error: ${err.message}`);
+        await db.SystemLog.create({
+            level: 'error',
+            message: `Erro Crítico Webhook Stripe: ${err.message}`
+        });
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
@@ -93,6 +102,10 @@ exports.handleWebhook = async (req, res) => {
             }
         } catch (err) {
             console.error('Erro ao atualizar banco:', err);
+            await db.SystemLog.create({
+                level: 'error',
+                message: `Falha ao ativar plano após pagamento (Psi ID: ${psychologistId}): ${err.message}`
+            });
             // Retornamos 200 mesmo com erro no banco para a Stripe não ficar tentando reenviar infinitamente
             return res.json({received: true}); 
         }

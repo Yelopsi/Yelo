@@ -1,113 +1,132 @@
 const db = require('../models');
 const { Op } = require('sequelize');
+const { getIo } = require('../config/socket'); // Importa o Socket
 
-// Listar todas as conversas do usuário logado
-exports.getConversations = async (req, res) => {
-    try {
-        const user = req.patient || req.psychologist;
-        const userType = req.patient ? 'patient' : 'psychologist';
-
-        const whereClause = userType === 'patient'
-            ? { patientId: user.id }
-            : { psychologistId: user.id };
-
-        const conversations = await db.Conversation.findAll({
-            where: whereClause,
-            include: [
-                { model: db.Patient, as: 'patient', attributes: ['id', 'nome', 'fotoUrl'] },
-                { model: db.Psychologist, as: 'psychologist', attributes: ['id', 'nome', 'fotoUrl'] }
-            ],
-            order: [['updatedAt', 'DESC']]
-        });
-
-        res.status(200).json(conversations);
-    } catch (error) {
-        console.error("Erro ao buscar conversas:", error);
-        res.status(500).json({ error: 'Erro ao buscar conversas.' });
-    }
-};
-
-// Listar mensagens de uma conversa específica
+// Lista mensagens entre o usuário logado e um contato (Admin ou outro usuário)
 exports.getMessages = async (req, res) => {
     try {
-        const { conversationId } = req.params;
-        const user = req.patient || req.psychologist;
-        const userType = req.patient ? 'patient' : 'psychologist';
+        console.log('--- EXECUTANDO: messageController.getMessages ---');
 
-        const messages = await db.Message.findAll({
-            where: { conversationId },
-            order: [['createdAt', 'ASC']]
-        });
-
-        // Marcar mensagens como lidas
-        await db.Message.update({ isRead: true }, {
-            where: {
-                conversationId,
-                recipientId: user.id,
-                recipientType: userType
-            }
-        });
-
-        res.status(200).json(messages);
-    } catch (error) {
-        console.error("Erro ao buscar mensagens:", error);
-        res.status(500).json({ error: 'Erro ao buscar mensagens.' });
-    }
-};
-
-// Enviar uma nova mensagem
-exports.sendMessage = async (req, res) => {
-    try {
-        const { conversationId, recipientId, recipientType, content } = req.body;
-        const sender = req.patient || req.psychologist;
-        const senderType = req.patient ? 'patient' : 'psychologist';
-
-        if (!content) {
-            return res.status(400).json({ error: 'O conteúdo da mensagem é obrigatório.' });
-        }
-
-        const message = await db.Message.create({
-            conversationId,
-            senderId: sender.id,
-            senderType,
-            recipientId,
-            recipientType,
-            content
-        });
-
-        // Atualiza o 'updatedAt' da conversa para ordenação
-        await db.Conversation.update({ updatedAt: new Date() }, { where: { id: conversationId } });
-
-        res.status(201).json(message);
-    } catch (error) {
-        console.error("Erro ao enviar mensagem:", error);
-        res.status(500).json({ error: 'Erro ao enviar mensagem.' });
-    }
-};
-
-/**
- * Rota: PUT /api/messaging/conversations/:id/read
- * Descrição: Marca todas as mensagens de uma conversa como lidas para o usuário logado.
- */
-exports.markConversationAsRead = async (req, res) => {
-    try {
-        const conversationId = req.params.id;
-        const userId = req.psychologist?.id || req.patient?.id;
+        // --- CORREÇÃO DE ROBUSTEZ ---
+        // Em vez de confiar em 'req.user', verificamos 'req.psychologist' e 'req.patient'
+        // que são preenchidos de forma mais confiável pelo middleware.
+        const user = req.psychologist || req.patient;
         const userType = req.psychologist ? 'psychologist' : 'patient';
 
-        await db.Message.update(
-            { isRead: true },
-            {
-                where: {
-                    conversationId: conversationId,
-                    recipientId: userId,
-                    recipientType: userType
-                }
+        if (!user) {
+            console.error('[DIAGNÓSTICO] getMessages: Nenhum usuário autenticado encontrado. Verifique o token e o authMiddleware.');
+            return res.status(401).json({ error: 'Usuário não autenticado.' });
+        }
+        
+        const userId = user.id;
+        console.log(`--- [DIAGNÓSTICO] getMessages --- User: { id: ${userId}, type: ${userType} }`);
+
+        const { contactType } = req.query; // ex: 'admin'
+
+        if (contactType === 'admin') {
+            // 1. Encontra o ID da conversa entre este usuário e o admin.
+            // A convenção é que a conversa com o admin tem o patientId nulo.
+            const whereClause = { psychologistId: userId, patientId: null };
+            const conversation = await db.Conversation.findOne({ where: whereClause });
+
+            // Se nunca houve uma conversa, retorna uma lista vazia.
+            if (!conversation) {
+                return res.json([]);
             }
-        );
-        res.status(200).json({ message: 'Mensagens marcadas como lidas.' });
+
+            // 2. Busca todas as mensagens que pertencem a essa conversa.
+            const messages = await db.Message.findAll({
+                where: { conversationId: conversation.id },
+                order: [['createdAt', 'ASC']]
+            });
+            return res.json(messages);
+        }
+
+        return res.json([]); // Se não for para o admin, retorna vazio por enquanto.
     } catch (error) {
-        console.error('Erro ao marcar mensagens como lidas:', error);
-        res.status(500).json({ error: 'Erro interno no servidor.' });
+        console.error('Erro ao buscar mensagens:', error);
+        res.status(500).json({ error: 'Erro interno ao buscar mensagens: ' + error.message });
+    }
+};
+
+// Envia uma nova mensagem
+exports.sendMessage = async (req, res) => {
+    try {
+        console.log('--- EXECUTANDO: messageController.sendMessage ---');
+
+        // --- CORREÇÃO DE ROBUSTEZ ---
+        const sender = req.psychologist || req.patient;
+        const senderType = req.psychologist ? 'psychologist' : 'patient';
+
+        if (!sender) {
+            console.error('[DIAGNÓSTICO] sendMessage: Nenhum usuário autenticado encontrado. Verifique o token e o authMiddleware.');
+            return res.status(401).json({ error: 'Usuário não autenticado.' });
+        }
+
+        const senderId = sender.id;
+        console.log(`--- [DIAGNÓSTICO] sendMessage --- User: { id: ${senderId}, type: ${senderType} } | Body:`, req.body);
+
+        const { recipientId, recipientType, content } = req.body;
+
+        if (!content) {
+            return res.status(400).json({ error: 'Conteúdo da mensagem é obrigatório.' });
+        }
+
+        // --- CORREÇÃO PRINCIPAL ---
+        // 1. Encontra ou cria uma conversa entre o psicólogo e o admin.
+        // Usamos `findOrCreate` para evitar duplicatas.
+        const [conversation] = await db.Conversation.findOrCreate({
+            where: { psychologistId: senderId, patientId: null },
+            defaults: { psychologistId: senderId, patientId: null }
+        });
+
+        if (!conversation) {
+            throw new Error('Não foi possível criar ou encontrar a conversa.');
+        }
+
+        // 2. Cria a mensagem associando-a ao ID da conversa.
+        const newMessage = await db.Message.create({
+            conversationId: conversation.id,
+            senderId,
+            senderType,
+            recipientId: recipientId || null, 
+            recipientType: recipientType || 'admin',
+            content,
+            status: 'sent'
+        });
+        // --- FIM DA CORREÇÃO ---
+
+        // --- NOTIFICAÇÃO EM TEMPO REAL (SOCKET.IO) ---
+        const io = getIo();
+        if (io) {
+            console.log(`[SOCKET] Tentando emitir mensagem via Socket. RecipientType: ${recipientType}`);
+            
+            // --- DIAGNÓSTICO DE SALA ---
+            const adminRoom = io.sockets.adapter.rooms.get('admin_room');
+            const numAdmins = adminRoom ? adminRoom.size : 0;
+            console.log(`[SOCKET DIAGNOSTIC] Clientes conectados na sala 'admin_room': ${numAdmins}`);
+            // ----------------------------
+
+            const msgPayload = newMessage.toJSON();
+            
+            // Se o destinatário for Admin, envia para a sala 'admin_room'
+            if (recipientType === 'admin' || !recipientId) {
+                io.to('admin_room').emit('receiveMessage', msgPayload);
+                io.to('admin_room').emit('conversationUpdated', { id: conversation.id, lastMessage: msgPayload });
+            } else {
+                // Se for um usuário específico, envia para a sala do ID dele
+                console.log(`[SOCKET] Emitindo para user ID: ${recipientId}`);
+                io.to(recipientId.toString()).emit('receiveMessage', msgPayload);
+                io.to(recipientId.toString()).emit('conversationUpdated', { id: conversation.id, lastMessage: msgPayload });
+            }
+        } else {
+            console.error('[SOCKET] ERRO: Instância IO não encontrada no controller.');
+        }
+        // ---------------------------------------------
+
+        res.status(201).json(newMessage);
+    } catch (error) {
+        console.error('Erro ao enviar mensagem:', error);
+        res.status(500).json({ error: 'Erro interno ao enviar mensagem: ' + error.message });
     }
 };

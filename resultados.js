@@ -1,369 +1,220 @@
-// js/resultados.js
-// CORREÇÃO: Definição segura da API (evita o erro de configuração)
+document.addEventListener('DOMContentLoaded', () => {
+    // Pega a URL base do config.js ou usa fallback
+    const BASE_URL = window.API_BASE_URL || 'http://localhost:3001';
 
-// Se a variável global não existir, cria uma local apontando para o seu PC
-var BASE_URL = (typeof window.API_BASE_URL !== 'undefined') 
-    ? window.API_BASE_URL 
-    : 'http://localhost:3001';
+    const loadingScreen = document.getElementById('loading-screen');
+    const resultsContent = document.getElementById('results-content');
+    const grid = document.getElementById('results-grid');
+    
+    function createCard(profile) {
+        const tagsHtml = profile.tags.map(tag => `<span class="match-tag">${tag}</span>`).join('');
+        const priceFormatted = profile.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-document.addEventListener('DOMContentLoaded', async () => {
-
-    const loadingState = document.getElementById('loading-state');
-    const resultsContainer = document.getElementById('results-container');
-    const loginUrl = 'login.html'; // URL para redirecionar se não houver login
-
-    // --- FUNÇÃO PARA CRIAR O CARD (COM LÓGICA DE FAVORITO TEMPORÁRIO) ---
-    function createProfileCard(profile, tier, compromiseText = "") {
-        const contextLabel = tier === 'near' && compromiseText
-            ? `<div class="match-context-alert">⚠️ ${compromiseText}</div>`
-            : '';
-
-        const foto = profile.fotoUrl || 'assets/images/default-avatar.png'; 
-        const bio = profile.bio || "Profissional dedicado(a) a oferecer um espaço seguro para seu desenvolvimento.";
-        const preco = profile.valor_sessao_numero 
-            ? `R$ ${parseFloat(profile.valor_sessao_numero).toFixed(2).replace('.', ',')}` 
-            : 'Sob consulta';
-
-        // Lógica da Porcentagem
-        let score = profile.matchScore || 0; 
-        if (score > 99) score = 99; 
-        if (score < 60) score = 60;
-        if (!profile.matchScore) score = tier === 'ideal' ? 95 : 75;
-
-        // Tags
-        let tagsHtml = '';
-        if (profile.matchDetails && profile.matchDetails.length > 0) {
-            tagsHtml = profile.matchDetails.map(tag => {
-                // ABREVIAÇÃO AUTOMÁTICA
-                const textoAbreviado = tag.replace('Especialista em', 'Espec. em');
-                return `<span class="tag tag-match">✨ ${textoAbreviado}</span>`;
-            }).join('');
-        } else if (profile.temas_atuacao && profile.temas_atuacao.length > 0) {
-            tagsHtml = profile.temas_atuacao.slice(0, 3).map(tag => `<span class="tag">${tag}</span>`).join('');
-        }
-
-        // --- LÓGICA NOVA DE FAVORITO ---
-        // Verifica se já está favoritado (seja via API ou localmente)
-        const token = localStorage.getItem('Yelo_token');
+        // Lógica de Favorito (Verifica localStorage se não tiver info do backend)
         let isFav = profile.isFavorited;
-
+        const token = localStorage.getItem('Yelo_token');
+        
         if (!token) {
-            // Se não tá logado, olha na "memória temporária" do navegador
+            // Se não está logado, verifica a lista temporária
             const tempFavs = JSON.parse(localStorage.getItem('temp_favorites') || '[]');
-            if (tempFavs.includes(String(profile.id))) {
-                isFav = true;
-            }
+            if (tempFavs.includes(String(profile.id))) isFav = true;
         }
 
-        const heartIcon = isFav ? '♥' : '♡';
         const heartClass = isFav ? 'heart-icon favorited' : 'heart-icon';
-        // -------------------------------
+        const heartSymbol = isFav ? '♥' : '♡';
 
         return `
-            <div class="pro-card pro-card-resultado">
-                ${contextLabel}
-                <div class="pro-card-header">
-                    <div class="match-percentage-badge">${score}% Compatível</div>
-                    
-                    <img src="${foto}" alt="Foto de ${profile.nome}" class="pro-card-img">
-                    <span class="${heartClass}" data-id="${profile.id}" role="button" aria-label="Favoritar">${heartIcon}</span>
-                </div>
+            <div class="match-card">
+                <div class="match-badge">${profile.score}% Compatível</div>
+                <div class="${heartClass}" data-id="${profile.id}" title="Favoritar">${heartSymbol}</div>
                 
-                <div class="pro-card-body">
-                    <div class="pro-info">
-                        <h3>${profile.nome}</h3>
-                        <p class="crp">CRP ${profile.crp}</p>
-                        <div class="rating-badge">
-                            ${profile.review_count > 0 
-                                ? `★ ${profile.average_rating} <span class="review-count">(${profile.review_count})</span>` 
-                                : '<span class="new-badge">Novo</span>'}
-                        </div>
-                    </div>
-
-                    <div class="match-reasons">
+                <img src="${profile.fotoUrl}" alt="${profile.nome}" class="match-header-img">
+                
+                <div class="match-body">
+                    <h3 class="match-name">${profile.nome}</h3>
+                    <span class="match-crp">CRP ${profile.crp}</span>
+                    
+                    <div class="match-tags">
                         ${tagsHtml}
                     </div>
-
-                    <p class="bio-snippet">${bio.substring(0, 110)}${bio.length > 110 ? '...' : ''}</p>
                     
-                    <div class="pro-footer">
-                        <div class="price-tag">
-                            <span class="label">Sessão</span>
-                            <span class="value">${preco}</span>
+                    <p class="match-bio">${profile.bio}</p>
+                    
+                    <div class="match-footer">
+                        <div class="match-price">
+                            <span>Valor Sessão</span>
+                            <strong>${priceFormatted}</strong>
                         </div>
-                        <a href="perfil_psicologo.html?slug=${profile.slug}" class="btn btn-principal btn-sm">Ver Perfil</a>
+                        <a href="/${profile.slug}" class="btn-profile" target="_blank">Ver Perfil</a>
                     </div>
                 </div>
             </div>
         `;
     }
 
-    // --- FUNÇÃO PRINCIPAL DE RENDERIZAÇÃO ---
-    function renderResults(data) { // --- FUNÇÃO PRINCIPAL DE RENDERIZAÇÃO (TEXTOS HUMANIZADOS) ---
-        let htmlContent = '';
-        
-        // Novos textos: Mais acolhedores e menos "robóticos"
-        const titulo = data.matchTier === 'ideal' 
-            ? "Que bom que você chegou até aqui." 
-            : "Aqui estão caminhos possíveis para o seu bem-estar.";
-            
-        const subtitulo = data.matchTier === 'ideal'
-            ? "Com base nas suas respostas, sentimos que estes profissionais têm a escuta e a experiência que você procura."
-            : (data.compromiseText || "Ainda que a compatibilidade não seja total, acreditamos que estes profissionais podem te oferecer um ótimo acolhimento.");
-
-        if (data.results && data.results.length > 0) {
-            htmlContent = `
-                <div class="resultados-intro">
-                    <h1>${titulo}</h1>
-                    <p>${subtitulo}</p>
-                </div>
-                <div class="pro-results-grid">
-                    ${data.results.map(profile => createProfileCard(profile, data.matchTier)).join('')}
-                </div>
-                <div class="results-actions" style="text-align: center; margin-top: 40px;">
-                    <a href="questionario.html" class="btn btn-outline" style="color: var(--verde-escuro); border-color: var(--verde-escuro);">Refazer Busca</a>
-                </div>
-            `;
-        } else {
-            // Cenário: Nenhum resultado
-            htmlContent = `
-                <div class="no-results-container">
-                    <img src="assets/images/searching.svg" alt="Ilustração de busca" style="max-width: 200px; margin-bottom: 20px; opacity: 0.8;">
-                    <h2>Estamos expandindo nossa rede de cuidado.</h2>
-                    <p>No momento, não encontramos alguém com 100% das características específicas que você pediu, mas novos profissionais chegam todos os dias.</p>
-                    <a href="questionario.html" class="btn btn-principal">Tentar ajustar alguns filtros</a>
-                </div>
-            `;
-        }
-        
-        loadingState.classList.add('hidden');
-        resultsContainer.innerHTML = htmlContent;
-        resultsContainer.classList.remove('hidden');
-
-        setupFavoriteButtons();
-    }
-
-    // --- FUNÇÃO DE INICIALIZAÇÃO DA PÁGINA ---
-    function initializePage() {
-        // Tenta pegar o resultado real
-        let storedResults = sessionStorage.getItem('matchResults');
-
-        // --- MODO DE DESENVOLVIMENTO: DADOS MOCKADOS ---
-        // Se não tiver dados reais, cria dados falsos para você ver a tela
-        // Substitua o bloco "MODO DEV" antigo por este:
-    // --- DENTRO DE initializePage, SUBSTITUA O MOCK DATA POR ESTE ---
-    if (!storedResults) {
-        console.warn("MODO DEV: Gerando perfis com porcentagem.");
-            storedResults = JSON.stringify({
-                matchTier: 'ideal',
-                results: [
-                    {
-                        id: 1,
-                        nome: "Dra. Ana Silva",
-                        crp: "06/123456",
-                        fotoUrl: "https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=400",
-                        valor_sessao_numero: 150.00,
-                        bio: "Especialista em TCC com foco em ansiedade e desenvolvimento de carreira.",
-                        slug: "ana-silva",
-                        matchDetails: ["Dentro do orçamento", "Especialista em Ansiedade", "TCC"],
-                        matchScore: 98, // ADICIONADO: Porcentagem Alta
-                        average_rating: 4.9,
-                        review_count: 24,
-                        temas_atuacao: ["Ansiedade", "Carreira"],
-                        isFavorited: false
-                    },
-                    {
-                        id: 2,
-                        nome: "Dr. João Costa",
-                        crp: "06/987654",
-                        fotoUrl: "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400",
-                        valor_sessao_numero: 120.00,
-                        bio: "Psicanálise e escuta ativa. Um espaço seguro para entender suas emoções.",
-                        slug: "joao-costa",
-                        matchDetails: ["Estilo compatível", "Experiência em Luto"],
-                        matchScore: 85, // ADICIONADO: Porcentagem Média
-                        average_rating: 5.0,
-                        review_count: 12,
-                        temas_atuacao: ["Luto", "Depressão"],
-                        isFavorited: true
-                    },
-                    {
-                        id: 3,
-                        nome: "Psi. Mariana Luz",
-                        crp: "06/555123",
-                        fotoUrl: "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=400",
-                        valor_sessao_numero: 90.00,
-                        bio: "Atendimento humanizado para jovens e adultos. Foco em autoestima.",
-                        slug: "mariana-luz",
-                        matchDetails: ["Valor acessível", "Horário Flexível"],
-                        matchScore: 79, // ADICIONADO: Porcentagem Menor
-                        average_rating: 0,
-                        review_count: 0,
-                        temas_atuacao: ["Autoestima", "Relacionamentos"],
-                        isFavorited: false
-                    }
-                ]
-            });
-        }
-        // -----------------------------------------------
-
-        if (storedResults) {
-            renderResults(JSON.parse(storedResults));
-            // sessionStorage.removeItem('matchResults'); // Comente essa linha enquanto estiver desenvolvendo!
-        } else {
-            fetchAndRenderMatches();
-        }
-    }
-
-    // --- FUNÇÃO PARA BUSCAR OS DADOS REAIS DA API ---
-    async function fetchAndRenderMatches() {
-        // Esta função agora é o "fallback" para usuários já logados
-        console.log("Buscando recomendações na API...");
-
-        // SUGESTÃO: Lógica para texto de carregamento dinâmico
-        const loadingMessages = [
-            "Analisando suas respostas...",
-            "Buscando os perfis mais compatíveis...",
-            "Afinando os últimos detalhes...",
-            "Quase lá!"
-        ];
-        let messageIndex = 0;
-        const loadingTextElement = document.querySelector('#loading-state p');
-
-        const messageInterval = setInterval(() => {
-            if (loadingTextElement && messageIndex < loadingMessages.length) {
-                loadingTextElement.textContent = loadingMessages[messageIndex];
-                messageIndex++;
-            } else {
-                clearInterval(messageInterval);
-            }
-        }, 2000); // Muda a mensagem a cada 2 segundos
-
-        // Garante que o intervalo seja limpo quando os resultados chegarem
-        const clearLoadingInterval = () => clearInterval(messageInterval);
-
-        // 1. Pega o token do localStorage
-        const token = localStorage.getItem('Yelo_token');
-
-        // 2. Se não houver token, redireciona para o login
-        if (!token) {
-            console.error("Token não encontrado. Redirecionando para login.");
-            clearLoadingInterval();
-            window.location.href = loginUrl;
-            return;
-        }
-
-        try {
-            // 3. Faz a chamada para a API, enviando o token
-            const response = await fetch(`${BASE_URL}/api/psychologists/matches`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            // 4. Trata a resposta
-            if (response.ok) {
-                clearLoadingInterval();
-                const data = await response.json();
-                console.log("Dados recebidos da API:", data);
-                renderResults(data); // Renderiza os resultados reais
-            } else {
-                // Se o token for inválido ou expirado, a API retornará um erro 401
-                clearLoadingInterval();
-                console.error("Falha na autenticação ou erro na API:", response.status);
-                localStorage.removeItem('Yelo_token'); // Limpa o token inválido
-                window.location.href = loginUrl; // Envia para o login
-            }
-
-        } catch (error) {
-            clearLoadingInterval();
-            console.error("Erro de conexão ao buscar matches:", error);
-            // Renderiza o estado de "nenhum resultado" com uma mensagem de erro
-            renderResults({ matchTier: 'none', results: [] });
-        }
-    }
-
-    // --- FUNÇÃO PARA MOSTRAR NOTIFICAÇÕES (TOAST) ---
-    function showToast(message, type = 'success') {
-        const container = document.getElementById('toast-container');
-        if (!container) return;
-
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.textContent = message;
-
-        container.appendChild(toast);
-
-        // Remove o toast do DOM após a animação de saída
-        setTimeout(() => {
-            toast.remove();
-        }, 4500);
-    }
-
-    // --- FUNÇÃO PARA CONTROLAR OS BOTÕES DE FAVORITO (HÍBRIDA) ---
+    // Função para ativar os botões de coração
     function setupFavoriteButtons() {
-        // Usa delegação de eventos ou seleciona novamente (para garantir que pegue os novos cards)
-        const favoriteButtons = document.querySelectorAll('.heart-icon');
-        
-        favoriteButtons.forEach(button => {
-            // Clona e substitui para remover event listeners antigos e evitar cliques duplos
-            const newButton = button.cloneNode(true);
-            button.parentNode.replaceChild(newButton, button);
+        document.querySelectorAll('.heart-icon').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
 
-            newButton.addEventListener('click', async (e) => {
-                e.preventDefault(); 
-                e.stopPropagation(); // Evita clicar no card se houver link
-                
-                const psychologistId = newButton.dataset.id;
+                const id = btn.dataset.id;
                 const token = localStorage.getItem('Yelo_token');
+                
+                // Alterna visualmente na hora (Feedback instantâneo)
+                const isNowFav = btn.classList.toggle('favorited');
+                btn.textContent = isNowFav ? '♥' : '♡';
 
-                // --- CENÁRIO 1: USUÁRIO NÃO LOGADO (OFFLINE) ---
                 if (!token) {
-                    // 1. Alterna visualmente na hora (Feedback Imediato)
-                    const isNowFavorited = newButton.classList.toggle('favorited');
-                    newButton.textContent = isNowFavorited ? '♥' : '♡';
-
-                    // 2. Salva/Remove da lista temporária no navegador
+                    // --- MODO OFFLINE (Sem Login) ---
                     let tempFavs = JSON.parse(localStorage.getItem('temp_favorites') || '[]');
-                    
-                    if (isNowFavorited) {
-                        if (!tempFavs.includes(psychologistId)) tempFavs.push(psychologistId);
-                        // AVISO INTELIGENTE
-                        showToast("Salvo! Crie uma conta para não perder essa lista.", "success");
+                    if (isNowFav) {
+                        if (!tempFavs.includes(id)) tempFavs.push(id);
+                        showToast('Salvo nos favoritos temporários!', 'success');
                     } else {
-                        tempFavs = tempFavs.filter(id => id !== psychologistId);
+                        tempFavs = tempFavs.filter(favId => favId !== id);
                     }
-                    
                     localStorage.setItem('temp_favorites', JSON.stringify(tempFavs));
-                    return; // Para aqui, não chama a API
-                }
-
-                // --- CENÁRIO 2: USUÁRIO LOGADO (ONLINE/API) ---
-                try {
-                    const response = await fetch(`${BASE_URL}/api/patients/me/favorites`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({ psychologistId })
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        newButton.textContent = data.favorited ? '♥' : '♡';
-                        newButton.classList.toggle('favorited', data.favorited);
-                        showToast(data.message, 'success');
+                } else {
+                    // --- MODO ONLINE (Com API) ---
+                    try {
+                        await fetch(`${BASE_URL}/api/patients/me/favorites`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({ psychologistId: id })
+                        });
+                        // Não precisamos fazer nada se der certo, o visual já mudou
+                    } catch (error) {
+                        console.error("Erro ao favoritar", error);
+                        // Reverte se der erro
+                        btn.classList.toggle('favorited');
+                        btn.textContent = !isNowFav ? '♥' : '♡';
+                        showToast('Erro ao salvar favorito.', 'error');
                     }
-                } catch (error) {
-                    console.error("Erro ao favoritar:", error);
-                    showToast("Erro de conexão.", 'error');
                 }
             });
         });
     }
 
-    // --- INICIA O PROCESSO REAL ---
-    initializePage();
+    // Função para contabilizar o KPI "Aparições no Top 3"
+    function trackTop3Appearances(profiles) {
+        if (!profiles || !Array.isArray(profiles)) return;
+
+        // Pega apenas os 3 primeiros resultados (Top 3)
+        const top3 = profiles.slice(0, 3);
+
+        top3.forEach(profile => {
+            if (profile.id) {
+                // Envia o evento para o backend (Fire and Forget)
+                fetch(`${BASE_URL}/api/public/psychologists/${profile.id}/appearance`, { 
+                    method: 'POST' 
+                }).catch(err => console.warn(`Erro ao registrar aparição para ID ${profile.id}`, err));
+            }
+        });
+    }
+
+    function init() {
+        // BLOQUEIO: Verifica se há resultados para mostrar
+        if (!sessionStorage.getItem('matchResults')) {
+            createBlockingModal(
+                "Ops! Nenhum resultado.",
+                "Você precisa responder o questionário antes de ver os resultados.",
+                "/questionario.html"
+            );
+            return;
+        }
+
+        // Simula delay de carregamento
+        setTimeout(() => {
+            // Tenta pegar dados reais do sessionStorage
+            const stored = sessionStorage.getItem('matchResults');
+            let dataToRender = [];
+
+            if (stored) {
+                try {
+                    const parsed = JSON.parse(stored);
+                    if (parsed.results && parsed.results.length > 0) {
+                        // Mapeia os dados reais para o formato do card novo
+                        dataToRender = parsed.results.map(p => ({
+                            id: p.id,
+                            nome: p.nome,
+                            crp: p.crp,
+                            fotoUrl: p.fotoUrl || "https://placehold.co/400",
+                            valor: parseFloat(p.valor_sessao_numero || 0),
+                            bio: p.bio || "Sem biografia.",
+                            slug: p.slug,
+                            tags: p.matchDetails || p.temas_atuacao || [],
+                            score: p.matchScore || 90,
+                            isFavorited: p.isFavorited || false
+                        }));
+                    }
+                } catch (e) {
+                    console.error("Erro ao ler dados salvos", e);
+                }
+            }
+
+            // Renderiza
+            if (dataToRender.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #666;">Nenhum profissional encontrado com os critérios selecionados. <br><a href="/questionario.html" style="color: var(--verde-escuro); font-weight: bold;">Refazer busca</a></div>';
+            } else {
+                grid.innerHTML = dataToRender.map(createCard).join('');
+            }
+            
+            // Ativa os botões
+            setupFavoriteButtons();
+            
+            // KPI: Contabiliza aparições para os 3 primeiros
+            trackTop3Appearances(dataToRender);
+
+            // Troca telas
+            loadingScreen.style.display = 'none';
+            resultsContent.style.display = 'block';
+            
+        }, 1500);
+    }
+
+    // Função simples de Toast (Notificação)
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        toast.style.display = 'block';
+        toast.style.opacity = '1';
+        
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    init();
+
+    // Função para criar Modal de Bloqueio (Estilo Yelo)
+    function createBlockingModal(title, message, redirectUrl) {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:99999; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(3px);";
+        
+        const modal = document.createElement('div');
+        modal.style.cssText = "background:white; padding:30px; border-radius:16px; width:90%; max-width:400px; text-align:center; box-shadow:0 20px 40px rgba(0,0,0,0.2); font-family: 'Inter', sans-serif; animation: slideUp 0.3s ease-out;";
+        
+        modal.innerHTML = `
+            <div style="font-size:3rem; margin-bottom:15px;">⚠️</div>
+            <h3 style="color:#1B4332; margin:0 0 10px 0; font-size:1.5rem;">${title}</h3>
+            <p style="color:#555; font-size:1rem; line-height:1.5; margin-bottom:25px;">${message}</p>
+            <button id="btn-block-redirect" style="background:#1B4332; color:white; border:none; padding:12px 30px; border-radius:50px; font-weight:bold; font-size:1rem; cursor:pointer; width:100%; transition: transform 0.2s;">Entendi</button>
+        `;
+        
+        const style = document.createElement('style');
+        style.innerHTML = `@keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }`;
+        document.head.appendChild(style);
+
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        document.getElementById('btn-block-redirect').onclick = () => window.location.href = redirectUrl;
+    }
 });

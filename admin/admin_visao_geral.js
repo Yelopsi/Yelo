@@ -47,12 +47,44 @@ window.initializePage = function() {
         }
     }
 
+    // Listas de IDs para animação de carregamento
+    const bigKpis = ['kpi-mrr', 'kpi-new-patients', 'kpi-new-psychologists', 'kpi-questionnaires-today'];
+    const smallKpis = [
+        'kpi-pat-total', 'kpi-pat-active', 'kpi-pat-deleted',
+        'kpi-psi-total', 'kpi-psi-deleted',
+        'kpi-plan-Essencial', 'kpi-plan-Clínico', 'kpi-plan-sol',
+        'kpi-quest-total', 'kpi-quest-deleted',
+        'waiting-list-count', 'pending-reviews-count'
+    ];
+
     /**
      * Busca os dados da API e atualiza os cards do dashboard.
+     * @param {boolean} showLoading - Se true, mostra spinners antes de buscar.
      */
     // --- SUBSTITUA A SUA FUNÇÃO fetchAndRenderStats POR ESTA ---
 
-    async function fetchAndRenderStats() {
+    async function fetchAndRenderStats(showLoading = false) {
+         const btnRefresh = document.getElementById('btn-refresh-dashboard');
+         
+         if (showLoading) {
+             // Anima o ícone do botão
+             if(btnRefresh) {
+                 const icon = btnRefresh.querySelector('svg');
+                 if(icon) icon.classList.add('spin-anim');
+                 btnRefresh.disabled = true;
+             }
+
+             // Mostra spinners nos cards
+             bigKpis.forEach(id => {
+                 const el = document.getElementById(id);
+                 if(el) el.innerHTML = '<div class="loading-spinner" style="display:block"></div>';
+             });
+             smallKpis.forEach(id => {
+                 const el = document.getElementById(id);
+                 if(el) el.innerHTML = '<div class="loading-spinner-sm"></div>';
+             });
+         }
+
          try {
              // Usa a variável token que já está definida no escopo superior
              const response = await fetch(`${BASE_URL}/api/admin/stats`, {
@@ -80,8 +112,8 @@ window.initializePage = function() {
                  updateSafe('kpi-psi-deleted', stats.psychologists.deleted);
                  
                  const plans = stats.psychologists.byPlan || {};
-                 updateSafe('kpi-plan-semente', plans['Semente'] || 0);
-                 updateSafe('kpi-plan-luz', plans['Luz'] || 0);
+                 updateSafe('kpi-plan-Essencial', plans['Essencial'] || 0);
+                 updateSafe('kpi-plan-Clínico', plans['Clínico'] || 0);
                  updateSafe('kpi-plan-sol', plans['Sol'] || 0);
              }
  
@@ -99,6 +131,13 @@ window.initializePage = function() {
  
          } catch (error) {
              console.error("Erro no loop do Dashboard:", error);
+         } finally {
+             // Remove animação do botão
+             if(btnRefresh) {
+                 const icon = btnRefresh.querySelector('svg');
+                 if(icon) icon.classList.remove('spin-anim');
+                 btnRefresh.disabled = false;
+             }
          }
      }
 
@@ -120,7 +159,11 @@ window.initializePage = function() {
                 newUsersChartInstance.destroy(); // Destrói o gráfico antigo antes de criar um novo
             }
 
-            const ctx = document.getElementById('new-users-chart').getContext('2d');
+            const chartCanvas = document.getElementById('new-users-chart');
+            // BLINDAGEM: Se o elemento não existir (usuário mudou de página), para a execução silenciosamente
+            if (!chartCanvas) return;
+
+            const ctx = chartCanvas.getContext('2d');
 
             newUsersChartInstance = new Chart(ctx, {
                 type: 'bar',
@@ -156,19 +199,31 @@ window.initializePage = function() {
 
         } catch (error) {
             console.error("Erro ao renderizar gráfico:", error);
-            const chartContainer = document.getElementById('new-users-chart').parentElement;
-            chartContainer.innerHTML = '<p>Não foi possível carregar o gráfico.</p>';
+            const chartCanvas = document.getElementById('new-users-chart');
+            if (chartCanvas && chartCanvas.parentElement) {
+                chartCanvas.parentElement.innerHTML = '<p>Não foi possível carregar o gráfico.</p>';
+            }
         }
     }
 
     // Função para iniciar a atualização automática
     function startAutoRefresh() {
-        // Busca os dados imediatamente na primeira vez
-        fetchAndRenderStats();
+        // Configura o botão de atualizar manual
+        const btnRefresh = document.getElementById('btn-refresh-dashboard');
+        if (btnRefresh) {
+            btnRefresh.addEventListener('click', () => {
+                fetchAndRenderStats(true); // Força animação no clique manual
+                renderNewUsersChart();
+            });
+        }
+
+        // Busca os dados imediatamente na primeira vez (com animação)
+        fetchAndRenderStats(true);
         renderNewUsersChart();
 
         // Configura o intervalo para atualizar a cada 60 segundos (60000 ms)
-        refreshInterval = setInterval(fetchAndRenderStats, 60000);
+        // No refresh automático, passamos false para não piscar a tela com spinners
+        refreshInterval = setInterval(() => fetchAndRenderStats(false), 60000);
     }
 
     // Inicia o processo ao carregar a página

@@ -4,7 +4,7 @@
 .btn {
     padding: 8px 18px; border-radius: 25px; text-decoration: none;
     font-weight: bold; font-size: 15px; text-align: center;
-    border: 2px solid transparent; transition: all 0.3s ease; display: inline-block; cursor: pointer; font-family: 'Inter', sans-serif;
+    border: 2px solid transparent; transition: all 0.3s ease; display: inline-block; cursor: pointer; font-family: var(--font-principal);
 }
 .btn-outline { border-color: white; color: white; }
 .btn-outline:hover { background-color: rgba(255, 255, 255, 0.1); }
@@ -36,13 +36,25 @@
 .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--cinza-texto); }
 .form-group input {
     width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px;
-    box-sizing: border-box; font-family: 'Lato', sans-serif; font-size: 15px; padding-right: 40px;
+    box-sizing: border-box; font-family: var(--font-leitura); font-size: 15px; padding-right: 40px;
 }
 .password-toggle-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; width: 24px; height: 24px; color: #555; }
 .form-group-checkbox { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
 .form-group-password-wrapper { position: relative; }
 .form-group-checkbox input[type="checkbox"] { width: auto; margin: 0; }
 .form-group-checkbox label { font-weight: normal; font-size: 13px; margin: 0; }
+
+/* --- CARDS & PRICING --- */
+.mensagem-oculta {
+    display: none;
+}
+.mensagem-newsletter {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+.mensagem-newsletter.sucesso { color: #a7f3d0; }
+.mensagem-newsletter.erro { color: #fecaca; }
 
 /* --- CARDS & PRICING --- */
 .card { background-color: #FFFFFF; padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 25px; }
@@ -69,7 +81,7 @@
 }
 .pricing-card:hover { transform: translateY(-8px); box-shadow: 0 10px 30px rgba(0,0,0,0.12); }
 .pricing-card-header { text-align: center; border-bottom: 1px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
-.pricing-card-header h3 { font-family: 'Fraunces', serif; font-size: 1.8rem; color: var(--verde-escuro); margin: 0 0 10px 0; }
+.pricing-card-header h3 { font-family: var(--font-titulos); font-size: 1.8rem; color: var(--verde-escuro); margin: 0 0 10px 0; }
 .pricing-card-features { list-style: none; padding-left: 0; margin: 0; flex-grow: 1; }
 .pricing-card-features li { padding: 10px 0; display: flex; align-items: center; gap: 10px; font-size: 0.95rem; }
 .pricing-card-features li::before { content: '✓'; font-weight: bold; color: var(--verde-escuro); font-size: 1.2rem; }
@@ -79,7 +91,7 @@
 .toast {
     min-width: 300px; padding: 16px 20px; border-radius: 12px; background-color: var(--branco-puro);
     box-shadow: 0 5px 20px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 12px;
-    animation: slideInRight 0.3s ease-out forwards; border-left: 5px solid transparent; font-family: 'Inter', sans-serif;
+    animation: slideInRight 0.3s ease-out forwards; border-left: 5px solid transparent; font-family: var(--font-principal);
 }
 .toast.success { border-left-color: var(--verde-escuro); }
 .toast.error { border-left-color: #E63946; }
@@ -95,7 +107,7 @@
     color: var(--branco-puro);
     border: none;
     border-radius: 8px;
-    font-family: 'Inter', sans-serif; /* Fonte mais moderna */
+    font-family: var(--font-principal); /* Fonte mais moderna */
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;

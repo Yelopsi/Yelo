@@ -1,12 +1,16 @@
 /* public/css/02-base.css */
 
 /* --- Reset Básico --- */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
 html, body {
     margin: 0;
     padding: 0;
     height: 100%;
     /* Fonte Principal de Texto (Leitura) */
-    font-family: 'Lato', sans-serif;
+    font-family: var(--font-leitura); /* Inter */
     font-size: 16px; /* Aumentei levemente para 16px para melhor leitura na Lato */
     background-color: var(--off-white);
     color: #222;
@@ -15,27 +19,16 @@ html, body {
 
 /* --- Títulos (Personalidade da Marca) --- */
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'Fraunces', serif;
-    font-weight: 600; /* Fraunces tem bastante peso visual, 600 já é bem forte */
+    font-family: var(--font-titulos); /* New Kansas */
+    font-weight: 600;
     letter-spacing: -0.02em; /* Títulos serifados ficam mais elegantes um pouco mais juntos */
     color: var(--verde-escuro); /* Garante a cor da marca nos títulos */
 }
 
 /* Ajuste específico para links e botões herdarem a Lato */
 a, button, input, textarea, select {
-    font-family: 'Lato', sans-serif;
+    font-family: var(--font-leitura);
 }
 
 ul { list-style: none; padding: 0; margin: 0; }
 a { text-decoration: none; }
-
-/* Ruído de fundo (Mobile Friendly) */
-body::after {
-    content: "";
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    z-index: 9999;
-    pointer-events: none;
-    opacity: 0.05; 
-}

@@ -7,12 +7,24 @@ document.addEventListener('DOMContentLoaded', () => {
         ? window.API_BASE_URL 
         : 'http://localhost:3001';
 
+    // --- FORÇAR COR DA BARRA DO NAVEGADOR (MOBILE) ---
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', '#1B4332');
+    } else {
+        const meta = document.createElement('meta');
+        meta.name = "theme-color";
+        meta.content = "#1B4332";
+        document.head.appendChild(meta);
+    }
+    document.documentElement.style.backgroundColor = '#1B4332';
+
     const questions = [
         // Etapa 1: Boas-vindas e Dados Básicos
-        { id: 'boas-vindas', type: 'welcome', question: "Boas-vindas ao Yelo, colega.", subtitle: "Estamos felizes por ter você aqui. Este questionário inicial é a etapa mais importante: ele define seu perfil para que possamos conectá-lo(a) aos pacientes certos. Responda com calma." },        
+        { id: 'boas-vindas', type: 'welcome', question: "Boas-vindas à Yelo, colega.", subtitle: "Estamos felizes por ter você aqui. Este questionário inicial é a etapa mais importante: ele define seu perfil para que possamos conectá-lo(a) aos pacientes certos. Responda com calma." },        
         { id: 'nome', type: 'text', question: "Primeiro, qual o seu nome completo?", placeholder: "Nome Completo", required: true },
         { id: 'email', type: 'email', question: "Qual o seu melhor e-mail profissional?", placeholder: "E-mail Profissional", required: true, inputMode: 'email' },
-        { id: 'crp', type: 'text', question: "E o seu número de registro no CRP?", placeholder: "Número do CRP (ex: 06/123456)", required: true, inputMode: 'numeric' },
+        { id: 'crp', type: 'text', question: "E o seu número de registro no CRP?", placeholder: "Número do CRP (ex: 06/123456)", required: true, inputMode: 'numeric', footerLink: { text: "Não tenho CRP ativo", url: "sem_crp.html" } },
         // Etapa 2: Definição do Nicho
         { id: 'modalidade', type: 'choice', question: "Como você prefere atender?", choices: ["Apenas Online", "Apenas Presencial", "Híbrido (Online e Presencial)"], required: true },
         { id: 'cep', type: 'text', question: "Qual o CEP do seu local de atendimento?", placeholder: "CEP (ex: 12345-678)", required: true, inputMode: 'numeric' },
@@ -53,6 +65,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         <input type="${questionData.type}" id="input-${questionData.id}" class="text-input" placeholder=" " required ${inputMode}>
                         <label for="input-${questionData.id}" class="input-label">${questionData.placeholder}</label>
                     </div>`;
+                
+                if (questionData.footerLink) {
+                    contentHTML += `<div style="margin-top: 15px; text-align: center;">
+                        <a href="${questionData.footerLink.url}" style="color: rgba(255,255,255,0.6); font-size: 0.9rem; text-decoration: underline; transition: color 0.2s;">${questionData.footerLink.text}</a>
+                    </div>`;
+                }
                 break;
             case 'choice': case 'multiple-choice': 
                 const choicesClass = questionData.scrollable ? 'choices-container scrollable' : 'choices-container';
@@ -374,7 +392,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 sessionStorage.setItem('questionarioCompleto', 'true');
                 const { nome, email, crp } = userAnswers;
                 const params = new URLSearchParams({ nome: nome || '', email: email || '', crp: crp || '' });
-                window.location.href = `psi_registro.html?${params.toString()}`;
+                
+                // CORRETO: aponta para a rota que acabamos de criar no servidor
+                window.location.href = `/psi-registro?${params.toString()}`;
             } else if (checkBtn) {
                 const currentSlideEl = document.querySelector('.slide.active');
                 if (currentSlideEl.querySelectorAll('.choice-button.selected').length > 0) {

@@ -7,6 +7,49 @@
     <link rel="stylesheet" href="/css/style.css"> 
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Wrapper para posicionar o ícone dentro do input */
+        .input-wrapper-senha {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .input-wrapper-senha input {
+            padding-right: 45px; /* Espaço para o ícone não ficar em cima do texto */
+        }
+
+        /* Botão do ícone (Olho) */
+        .btn-toggle-senha {
+            position: absolute;
+            right: 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Força o botão de registro a ser Verde */
+        .btn-verde-sucesso {
+            background-color: #28a745 !important; /* Verde padrão de sucesso */
+            color: white !important;
+            border: none;
+            transition: background-color 0.3s;
+        }
+        .btn-verde-sucesso:hover {
+            background-color: #218838 !important; /* Verde mais escuro no hover */
+        }
+
+        /* Aumenta o tamanho do checkbox */
+        .form-group-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 
 <body class="login-main">
@@ -23,28 +66,38 @@
                 
                 <div class="form-group">
                     <label for="crp">Número do CRP</label>
-                    <input type="text" id="crp" name="crp" required>
+                    <input type="text" id="crp" name="crp" required inputmode="numeric">
                 </div>
 
                 <div class="form-group">
                     <label for="documento">CPF ou CNPJ</label>
-                    <input type="text" id="documento" name="documento" required>
+                    <input type="text" id="documento" name="documento" required inputmode="numeric">
                     <small id="doc-feedback" style="display:none; color: green; font-size: 0.8rem; margin-top: 5px;"></small>
                 </div>
 
                 <div class="form-group">
                     <label for="email">E-mail</label>
-                    <input type="email" id="email" name="email" required>
+                    <input type="email" id="email" name="email" required autocapitalize="none" autocomplete="email" autocorrect="off">
                 </div>
                 
                 <div class="form-group">
                     <label for="senha">Senha</label>
-                    <input type="password" id="senha" name="senha" required>
+                    <div class="input-wrapper-senha">
+                        <input type="password" id="senha" name="senha" required autocapitalize="none" autocomplete="new-password" autocorrect="off">
+                        <button type="button" class="btn-toggle-senha" onclick="toggleSenha('senha', this)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="confirmar-senha">Confirmar Senha</label>
-                    <input type="password" id="confirmar-senha" name="confirmar-senha" required>
+                    <div class="input-wrapper-senha">
+                        <input type="password" id="confirmar-senha" name="confirmar-senha" required autocapitalize="none" autocomplete="new-password" autocorrect="off">
+                        <button type="button" class="btn-toggle-senha" onclick="toggleSenha('confirmar-senha', this)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="form-group-checkbox">
@@ -52,7 +105,7 @@
                     <label for="termos-aceite">Eu li e aceito os <a href="/termos.html" target="_blank">Termos e Condições</a>.</label>
                 </div>
                 
-                <button type="submit" class="btn btn-principal">Registrar</button>
+                <button type="submit" class="btn btn-principal btn-verde-sucesso">Registrar</button>
             </form>
             <p id="mensagem-registro-psi" class="mensagem-oculta"></p>
             <p class="link-auth">Já tem uma conta? <a href="/login.html">Faça login aqui</a></p>
@@ -61,5 +114,19 @@
     <script src="https://unpkg.com/imask"></script>
     <script src="/config.js"></script>
     <script src="/psi_registro.js"></script>
+    <script>
+        function toggleSenha(id) {
+            const input = document.getElementById(id);
+            const btn = input.nextElementSibling; // Pega o botão do ícone
+            
+            if (input.type === "password") {
+                input.type = "text";
+                btn.style.color = "#1B4332"; // Muda a cor do ícone para indicar "visível"
+            } else {
+                input.type = "password";
+                btn.style.color = "#666"; // Volta a cor original
+            }
+        }
+    </script>
 </body>
 </html>

@@ -7,9 +7,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;700;900&display.swap" rel="stylesheet">
-    
-    <link href="https://fonts.googleapis.com/css2?family=New+Kansas&display=swap" rel="stylesheet"> 
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Mulish:wght@400;500;600&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="/css/01-variables.css"> 
     <link rel="stylesheet" href="/css/02-base.css">      
@@ -17,6 +15,443 @@
     <link rel="stylesheet" href="/css/04-components.css"> 
 
     <link rel="stylesheet" href="/css/psi_dashboard.css">
+    
+    <style>
+        :root {
+            --fonte-titulo: 'Lora', serif;
+            --fonte-corpo: 'Mulish', sans-serif;
+        }
+        body {
+            font-family: var(--fonte-corpo);
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--fonte-titulo);
+            font-weight: 600;
+        }
+        /* Estilos Específicos Modernos para o Perfil Público */
+        body {
+            background-color: #FFFDF5; /* Fundo creme suave da marca */
+            overflow-x: hidden; /* IMPEDE ROLAGEM HORIZONTAL INDESEJADA */
+            width: 100%;
+            max-width: 100vw;
+        }
+        html { overflow-x: hidden; }
+
+        .profile-layout-grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 40px;
+            margin-top: 40px;
+            align-items: start;
+        }
+
+        /* Coluna Esquerda (Conteúdo) */
+        .profile-hero-card {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .profile-header-flex {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+
+        .profile-photo-wrapper {
+            flex-shrink: 0;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 4px solid #FFEE8C; /* Amarelo Yelo */
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        .profile-photo-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-name-block h1 {
+            font-family: var(--fonte-titulo);
+            color: #1B4332;
+            font-size: 2.2rem;
+            margin: 0 0 5px 0;
+            line-height: 1.1;
+        }
+
+        .crp-badge {
+            display: inline-block;
+            background: #f0fdf4;
+            color: #166534;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        /* Tags de Especialidades */
+        .tags-container {
+            display: flex;
+            flex-direction: column; /* Um embaixo do outro */
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .tag-pill {
+            background: #f3f4f6;
+            color: #4b5563;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        /* Botão de Favorito (Coração) */
+        .btn-favorite {
+            background: white;
+            border: 1px solid #e5e7eb;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #d1d5db; /* Cinza desativado */
+            flex-shrink: 0;
+        }
+        .btn-favorite:hover { transform: scale(1.1); border-color: #fca5a5; }
+        .btn-favorite.active {
+            color: #ef4444; /* Vermelho */
+            background-color: #fef2f2;
+            border-color: #fecaca;
+        }
+        .btn-favorite svg { width: 24px; height: 24px; fill: currentColor; }
+
+        /* NOVO: Estilo padrão para a linha do cabeçalho (Desktop) */
+        .name-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        /* Estrelas Clicáveis */
+        .hero-stars-container {
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .hero-stars-container:hover { opacity: 0.7; }
+
+        /* Coluna Direita (Sticky) */
+        .sticky-sidebar {
+            position: sticky;
+            top: 100px; /* Ajuste conforme a altura do seu header fixo */
+        }
+
+        .conversion-card-modern {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(27, 67, 50, 0.08);
+            border: 1px solid rgba(27, 67, 50, 0.1);
+            text-align: center;
+        }
+
+        .price-display {
+            font-family: var(--fonte-titulo);
+            font-size: 2.5rem;
+            color: #1B4332;
+            margin: 10px 0;
+        }
+        .price-display span {
+            font-family: var(--fonte-corpo);
+            font-size: 1rem;
+            color: #666;
+            font-weight: 400;
+        }
+        .price-suffix {
+            font-size: 0.9rem;
+            color: #888;
+            display: block;
+            line-height: 1;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #555;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 900px) {
+            .profile-layout-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            .profile-header-flex {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            .profile-hero-card {
+                padding: 25px 20px; /* Padding reduzido no mobile */
+            }
+            .profile-photo-wrapper {
+                width: 120px; /* Foto um pouco menor */
+                height: 120px;
+            }
+            .profile-name-block h1 {
+                font-size: 1.8rem; /* Título ajustado */
+            }
+            .sticky-sidebar {
+                position: static;
+                order: -1; /* No mobile, o card de agendamento pode vir antes ou logo depois do hero */
+            }
+            .conversion-card-modern {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                border-radius: 20px 20px 0 0;
+                z-index: 100;
+                padding: 15px 20px;
+                box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                text-align: left;
+            }
+            .conversion-card-modern h3, .conversion-card-modern .info-row, .conversion-card-modern #psi-localizacao-container {
+                display: none; /* Simplifica no mobile */
+            }
+            .price-display {
+                font-size: 1.4rem;
+                margin: 0;
+                text-align: left;
+            }
+            .price-display span {
+                font-size: 0.8rem;
+                display: block; /* Coloca "por sessão" embaixo do preço */
+                line-height: 1;
+            }
+            .price-suffix {
+                font-size: 0.75rem;
+                margin-top: 2px;
+            }
+            .btn-principal {
+                width: auto !important;
+                padding: 10px 20px;
+                font-size: 0.95rem;
+            }
+            /* Ajuste para o conteúdo não ficar escondido atrás do card fixo no mobile */
+            body { padding-bottom: 100px; }
+            /* Mostra o bloco de info mobile */
+            .mobile-service-info { display: block !important; }
+            
+            /* Esconde badges de confiança no mobile para economizar espaço */
+            .trust-badges-row { display: none !important; }
+            
+            /* Ajuste da animação no mobile (menos intensa) */
+            @keyframes pulse-green-mobile {
+                0% { box-shadow: 0 0 0 0 rgba(27, 67, 50, 0.4); }
+                70% { box-shadow: 0 0 0 6px rgba(27, 67, 50, 0); }
+                100% { box-shadow: 0 0 0 0 rgba(27, 67, 50, 0); }
+            }
+            .btn-pulse { animation-name: pulse-green-mobile !important; }
+
+            /* --- NOVOS AJUSTES MOBILE (SOLICITADOS) --- */
+            .verified-badge-mobile {
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                margin-bottom: 15px;
+                color: #1B4332;
+                font-size: 0.85rem;
+                font-weight: 600;
+                background-color: #e8f5e9;
+                padding: 5px 15px;
+                border-radius: 20px;
+                width: fit-content;
+                margin-left: auto;
+                margin-right: auto;
+            }
+            
+            /* Reorganização do Topo */
+            .profile-name-block {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                width: 100%;
+            }
+            
+            /* Ajuste para centralizar Nome, CRP e Ícones */
+            .name-header-row {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                width: 100%;
+            }
+
+            /* Nome e CRP */
+            .name-info-wrapper {
+                display: flex;
+                flex-direction: column-reverse; /* Nome em cima, CRP embaixo */
+                align-items: center;
+                text-align: center;
+                margin-bottom: 10px;
+            }
+            
+            /* Estrelas */
+            #hero-rating-display {
+                justify-content: center !important;
+                margin-bottom: 15px !important;
+            }
+
+            /* Botões de Ação (Share/Fav) */
+            .header-actions {
+                justify-content: center;
+                margin-bottom: 15px;
+                width: 100%;
+                display: flex;
+                gap: 10px !important;
+            }
+
+            .header-actions .btn-favorite {
+                width: 36px;
+                height: 36px;
+            }
+            .header-actions .btn-favorite svg { width: 18px; height: 18px; }
+
+            /* Redes Sociais e Tags */
+            #psi-social-links { justify-content: center !important; }
+            #psi-tags-display { justify-content: center; }
+
+            /* Esconde o texto de verificado do rodapé */
+            .footer-verified-text { display: none !important; }
+            
+            /* Ajuste do Botão Agendar no Rodapé */
+            .conversion-card-modern {
+                padding: 12px 20px;
+                gap: 15px;
+            }
+            .btn-principal {
+                flex-grow: 1; /* Ocupa o espaço disponível */
+                margin: 0;
+                white-space: nowrap;
+            }
+        }
+
+        /* --- ANIMAÇÃO DE PULSO (CONVERSÃO) --- */
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(27, 67, 50, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(27, 67, 50, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(27, 67, 50, 0); }
+        }
+        .btn-pulse {
+            animation: pulse-green 2s infinite;
+        }
+
+        /* --- ESTILOS MODERNOS PARA AVALIAÇÕES --- */
+        .reviews-summary {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .summary-avg-rating {
+            font-family: var(--fonte-titulo);
+            font-size: 2.8rem;
+            color: #333;
+            line-height: 1;
+        }
+        .summary-stars {
+            color: #FFC107;
+            font-size: 1.2rem;
+        }
+        .summary-count {
+            color: #777;
+            font-size: 0.9rem;
+        }
+
+        .review-card {
+            padding: 20px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        #reviews-list-container .review-card:last-of-type {
+            border-bottom: none;
+        }
+        .review-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .review-avatar {
+            width: 48px; /* Levemente maior para apreciar os detalhes */
+            height: 48px;
+            border-radius: 50%;
+            overflow: hidden; /* Garante que o SVG fique redondo */
+            flex-shrink: 0;
+            background-color: #f0f0f0; /* Fallback sutil */
+        }
+        .review-avatar svg { width: 100%; height: 100%; display: block; }
+        
+        .review-author-name { font-weight: 600; color: #333; }
+        .review-date { font-size: 0.8rem; color: #888; display: block; }
+        .review-rating { color: #FFC107; font-size: 0.9rem; margin-bottom: 10px; }
+        .review-comment { color: #555; font-size: 0.95rem; line-height: 1.6; margin: 0; }
+
+        .btn-show-more {
+            display: block;
+            width: fit-content;
+            margin: 30px auto 0 auto;
+            padding: 10px 25px;
+            border: 1px solid #ccc;
+            background: #fff;
+            color: #333;
+            font-weight: 600;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-show-more:hover { background: #f5f5f5; border-color: #999; }
+
+        /* Badges de Confiança (Desktop) */
+        .trust-badges-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #f0f0f0;
+        }
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: 500;
+        }
+        .trust-item svg {
+            width: 16px;
+            height: 16px;
+            color: var(--verde-escuro);
+        }
+    </style>
 </head>
 <body>
 
@@ -34,77 +469,165 @@
 
     <main id="profile-container" class="profile-page-main hidden">
         <div class="container">
-            <div class="profile-header-grid">
-                <div class="profile-info">
-                    <div class="profile-photo-wrapper">
-                        <img id="psi-foto" src="" alt="Foto do Psicólogo">
-                    </div>
-                    
-                    <h1 id="psi-nome">Carregando...</h1>
-                    
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 5px; margin-bottom: 20px;">
-                        <p id="psi-crp" class="crp" style="margin:0;">CRP: --/------</p>
-                        <div id="hero-rating-display" class="hero-stars-container"></div>
-                    </div>
-
-                    <div id="psi-social-links" class="social-links-profile"></div>
-
-                    <div class="profile-bio-hero">
-                        <h3 class="titulo-bio">Sobre Mim</h3>
-                        <p id="psi-bio-text"></p>
-                    </div>
-                </div>
-
-                <div class="conversion-card-wrapper">
-                    <div class="conversion-card">
-                        <h3>Valor da sessão</h3>
-                        <p id="psi-valor" class="price">Sob Consulta</p>
-                        
-                        <h3>Modalidade de Atendimento</h3>
-                        <p id="psi-modalidade" style="margin-bottom: 15px;">Online e Presencial</p>
-                        
-                        <div id="psi-localizacao-container" style="margin-bottom: 20px; display: none;">
-                            <h3 style="margin-bottom: 5px;">Localização</h3>
-                            <p id="psi-cidade-estado" style="font-weight: 600; color: var(--verde-escuro);"></p>
-                        </div>
-
-                        <a href="#" id="btn-agendar-whatsapp" class="btn btn-principal" style="width: 100%;">
-                            Agendar uma conversa
-                        </a>
-                    </div>
-                </div>
+            
+            <!-- Botão Voltar (Navegação) -->
+            <div style="margin-bottom: 20px;">
+                <a href="javascript:history.back()" style="display: inline-flex; align-items: center; gap: 8px; color: #666; text-decoration: none; font-weight: 600; font-size: 0.95rem; transition: color 0.2s;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Voltar
+                </a>
             </div>
 
-            <div class="profile-body-tabs">
-                <nav class="tabs-nav">
-                    <button type="button" class="tab-link active" data-tab="sobre">Detalhes Profissionais</button>
-                    <button type="button" class="tab-link" data-tab="avaliacoes">Avaliações</button>
-                </nav>
+            <div class="profile-layout-grid">
                 
-                <div id="tab-sobre" class="tab-content active">
-                    </div>
-                
-                <div id="tab-avaliacoes" class="tab-content">
-                    <div class="review-form-box">
-                        <h4>Deixe sua avaliação</h4>
-                        <form id="form-nova-avaliacao">
-                            <div class="star-rating-input">
-                                <input type="radio" id="star5" name="rating" value="5" /><label for="star5" title="Excelente">★</label>
-                                <input type="radio" id="star4" name="rating" value="4" /><label for="star4" title="Muito bom">★</label>
-                                <input type="radio" id="star3" name="rating" value="3" /><label for="star3" title="Bom">★</label>
-                                <input type="radio" id="star2" name="rating" value="2" /><label for="star2" title="Regular">★</label>
-                                <input type="radio" id="star1" name="rating" value="1" /><label for="star1" title="Ruim">★</label>
+                <!-- COLUNA ESQUERDA: Informações Principais -->
+                <div class="left-column">
+                    <div class="profile-hero-card">
+                        <!-- Selo Verificado (Apenas Mobile) -->
+                        <div class="verified-badge-mobile" style="display: none;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            <span>Profissional verificado</span>
+                        </div>
+
+                        <div class="profile-header-flex">
+                            <div class="profile-photo-wrapper">
+                                <img id="psi-foto" src="" alt="Foto do Psicólogo">
                             </div>
-                            <textarea name="comentario" placeholder="Escreva sobre sua experiência (opcional)..." rows="3"></textarea>
-                            <button type="submit" class="btn btn-verde" style="margin-top: 10px;">Enviar Avaliação</button>
-                        </form>
+                            <div class="profile-name-block" style="flex-grow: 1;">
+                                <div class="name-header-row">
+                                    <div class="name-info-wrapper">
+                                        <span id="psi-crp" class="crp-badge">CRP: --/------</span>
+                                        <h1 id="psi-nome">Carregando...</h1>
+                                    </div>
+                                    <div class="header-actions" style="display: flex; gap: 10px;">
+                                        <button id="btn-share" class="btn-favorite" title="Compartilhar Perfil">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" id="Ios-Share--Streamline-Outlined-Material" height="24" width="24"><desc>Ios Share Streamline Icon: https://streamlinehq.com</desc><path fill="currentColor" d="M5.5 23c-0.4 0 -0.75 -0.15 -1.05 -0.45 -0.3 -0.3 -0.45 -0.65 -0.45 -1.05V8.775c0 -0.4 0.15 -0.75 0.45 -1.05 0.3 -0.3 0.65 -0.45 1.05 -0.45h4.225v1.5H5.5V21.5h13V8.775h-4.275v-1.5H18.5c0.4 0 0.75 0.15 1.05 0.45 0.3 0.3 0.45 0.65 0.45 1.05V21.5c0 0.4 -0.15 0.75 -0.45 1.05 -0.3 0.3 -0.65 0.45 -1.05 0.45H5.5Zm5.725 -7.675V3.9l-2.2 2.2 -1.075 -1.075L11.975 1 16 5.025l-1.075 1.075 -2.2 -2.2v11.425h-1.5Z" stroke-width="0.5"></path></svg>
+                                        </button>
+                                        <button id="btn-favorite" class="btn-favorite" title="Favoritar este profissional">
+                                            <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div id="hero-rating-display" class="hero-stars-container" style="justify-content: flex-start; margin-bottom: 15px;"></div>
+                                
+                                <div id="psi-social-links" class="social-links-profile" style="justify-content: flex-start;"></div>
+                                
+                                <!-- Container para Tags (Preenchido via JS se houver lógica, ou adicione lógica no JS para preencher aqui) -->
+                                <div id="psi-tags-display" class="tags-container">
+                                    <!-- Exemplo estático de como ficará -->
+                                    <!-- <span class="tag-pill">Ansiedade</span> -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="profile-bio-hero" style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                            <h3 class="titulo-bio" style="font-family: var(--fonte-titulo); color: #1B4332;">Sobre Mim</h3>
+                            <p id="psi-bio-text" style="line-height: 1.8; color: #444;"></p>
+                        </div>
                     </div>
-                    <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;">
-                    
-                    <div id="reviews-list-container">
-                        <p style="text-align: center; color: #777;">Nenhuma avaliação ainda.</p>
+
+                    <!-- BLOCO EXCLUSIVO MOBILE: Informações de Atendimento -->
+                    <!-- Como o card lateral vira rodapé fixo e esconde detalhes, mostramos aqui -->
+                    <div class="mobile-service-info" style="display: none; background: white; padding: 20px; border-radius: 16px; margin-bottom: 30px; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+                        <h3 style="margin-top: 0; color: #1B4332; font-size: 1.1rem; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">Informações de Atendimento</h3>
+                        
+                        <div class="info-row" style="justify-content: flex-start; margin-bottom: 12px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                            <span id="psi-modalidade-mobile">Online e Presencial</span>
+                        </div>
+                        
+                        <div id="psi-localizacao-container-mobile" class="info-row" style="display: none; justify-content: flex-start; margin-bottom: 12px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l8-4 8 4v14M8 21v-4h8v4"></path></svg>
+                            <span id="psi-cidade-estado-mobile"></span>
+                        </div>
+
+                        <div class="info-row" style="justify-content: flex-start;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            <span id="psi-disponibilidade-mobile">Consulte horários</span>
+                        </div>
+                    </div>
+
+                    <!-- Seção Detalhes Profissionais -->
+                    <div class="profile-section" style="margin-bottom: 50px;">
+                        <h3 style="font-family: var(--fonte-titulo); color: #1B4332; font-size: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 25px;">Detalhes Profissionais</h3>
+                        
+                        <div id="tab-sobre">
+                            <!-- O JS preenche aqui -->
+                        </div>
+                    </div>
+
+                    <!-- Seção Avaliações -->
+                    <div id="tab-avaliacoes" class="profile-section">
+                        <h3 style="font-family: var(--fonte-titulo); color: #1B4332; font-size: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 25px;">Avaliações de Pacientes</h3>
+                        
+                        <div id="reviews-list-container" style="margin-bottom: 40px;">
+                            <p style="text-align: center; color: #777;">Nenhuma avaliação ainda.</p>
+                        </div>
+
+                        <div class="review-form-box" style="background: #f9fafb; padding: 30px; border-radius: 16px; border: 1px solid #eee;">
+                            <h4 style="margin-top: 0; color: #1B4332; font-size: 1.2rem; margin-bottom: 10px;">Quer deixar uma avaliação?</h4>
+                            <p style="color: #666; font-size: 0.95rem; margin-bottom: 20px;">Conte como foi sua experiência. Seu feedback é anônimo e ajuda outras pessoas a encontrarem o profissional ideal.</p>
+                            
+                            <form id="form-nova-avaliacao">
+                                <div class="star-rating-input" style="margin-bottom: 15px;">
+                                    <input type="radio" id="star5" name="rating" value="5" /><label for="star5" title="Excelente">★</label>
+                                    <input type="radio" id="star4" name="rating" value="4" /><label for="star4" title="Muito bom">★</label>
+                                    <input type="radio" id="star3" name="rating" value="3" /><label for="star3" title="Bom">★</label>
+                                    <input type="radio" id="star2" name="rating" value="2" /><label for="star2" title="Regular">★</label>
+                                    <input type="radio" id="star1" name="rating" value="1" /><label for="star1" title="Ruim">★</label>
+                                </div>
+                                <textarea name="comentario" placeholder="Escreva aqui sua avaliação (Opcional)..." rows="3" style="width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
+                                <button type="submit" class="btn btn-verde" style="margin-top: 15px;">Enviar Avaliação</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
+
+                <!-- COLUNA DIREITA: Card de Conversão (Sticky) -->
+                <aside class="sticky-sidebar">
+                    <div class="conversion-card-modern">
+                        <h3 style="margin: 0; color: #666; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Valor da Sessão</h3>
+                        <div>
+                            <div id="psi-valor" class="price-display">Sob Consulta</div>
+                            <span class="price-suffix">por sessão</span>
+                        </div>
+                        
+                        <div style="margin: 20px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 15px 0;">
+                            <div class="info-row">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                <span id="psi-modalidade">Online e Presencial</span>
+                            </div>
+                            
+                            <div id="psi-localizacao-container" class="info-row" style="display: none;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l8-4 8 4v14M8 21v-4h8v4"></path></svg>
+                                <span id="psi-cidade-estado"></span>
+                            </div>
+
+                            <div class="info-row">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                <span id="psi-disponibilidade">Consulte horários</span>
+                            </div>
+                        </div>
+
+                        <a href="#" id="btn-agendar-whatsapp" target="_blank" class="btn btn-principal btn-pulse" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 15px;">
+                            <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.068-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
+                            Agendar Sessão
+                        </a>
+                        
+                        <div class="trust-badges-row footer-verified-text">
+                            <div class="trust-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                <span>CRP Ativo</span>
+                            </div>
+                            <div class="trust-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                <span>Sigilo Garantido</span>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
             </div>
         </div>
     </main>
@@ -112,8 +635,99 @@
     <%- include('partials/footer') %>
     
     <div id="toast-container"></div>
+
+    <!-- Modal Login Necessário (Avaliação) -->
+    <div id="modal-login-required" class="custom-modal-overlay" style="display: none;">
+        <div class="custom-modal-box">
+            <h3 style="margin-top: 0; color: #1B4332; font-family: 'Fraunces', serif;">Login Necessário</h3>
+            <p style="color: #666; margin-bottom: 25px; line-height: 1.5;">Para garantir a qualidade das avaliações, precisamos que você se identifique. É rapidinho!</p>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+                <button id="btn-modal-stay" style="padding: 10px 20px; background: #fff; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-weight: 600; color: #555;">Continuar na página</button>
+                <a id="btn-modal-login" href="#" style="padding: 10px 20px; background: #1B4332; color: #fff; border: none; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block; text-align: center;">Entrar ou Cadastrar</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Login Necessário (Favoritar) -->
+    <div id="modal-login-favorite" class="custom-modal-overlay" style="display: none;">
+        <div class="custom-modal-box">
+            <h3 style="margin-top: 0; color: #1B4332; font-family: 'Fraunces', serif;">Faça login para favoritar</h3>
+            <p style="color: #666; margin-bottom: 15px; line-height: 1.5;">
+                Para adicionar este psicólogo aos seus favoritos, é necessário acessar sua conta.
+            </p>
+            <p style="color: #666; margin-bottom: 15px; line-height: 1.5;">
+                No seu painel, você poderá ver tanto os <strong>favoritos</strong> como os <strong>matches</strong> que teve.
+            </p>
+            <div style="background-color: #e0f2f1; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; color: #004d40; display: flex; gap: 10px; align-items: flex-start;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                <span>Não se preocupe! Você será redirecionado automaticamente para cá e o profissional já estará favoritado ao finalizar o cadastro.</span>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+                <button id="btn-modal-fav-cancel" style="padding: 10px 20px; background: #fff; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-weight: 600; color: #555;">Cancelar</button>
+                <a id="btn-modal-fav-login" href="#" style="padding: 10px 20px; background: #1B4332; color: #fff; border: none; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block; text-align: center;">Criar conta / Entrar</a>
+            </div>
+        </div>
+    </div>
+
     <script src="/config.js"></script>
+    
     <script src="/script.js"></script>
-    <script src="/perfil_psicologo.js"></script>
+
+    <script src="/perfil_psicologo.js"></script> 
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Lógica para o botão de compartilhar
+            const btnShare = document.getElementById('btn-share');
+            if (btnShare) {
+                btnShare.addEventListener('click', async () => {
+                    if (navigator.share) {
+                        try {
+                            await navigator.share({
+                                title: document.title,
+                                url: window.location.href
+                            });
+                        } catch (err) { console.log('Erro ao compartilhar:', err); }
+                    } else {
+                        navigator.clipboard.writeText(window.location.href).then(() => {
+                            alert('Link do perfil copiado!');
+                        });
+                    }
+                });
+            }
+
+            // Lógica de Rastreamento de KPI (Cliques no WhatsApp)
+            const btnWhatsapp = document.getElementById('btn-agendar-whatsapp');
+            if (btnWhatsapp) {
+                btnWhatsapp.addEventListener('click', () => {
+                    // 1. Extração mais segura do slug (evita erro com barra no final)
+                    const pathParts = window.location.pathname.split('/').filter(p => p);
+                    const slug = pathParts.length > 0 ? pathParts[pathParts.length - 1] : null;
+                    
+                    if (slug && typeof API_BASE_URL !== 'undefined') {
+                        // 2. Usa keepalive: true para garantir o envio mesmo trocando de aba/app
+                        fetch(`${API_BASE_URL}/api/public/psychologists/${slug}/whatsapp-click`, { 
+                            method: 'POST',
+                            keepalive: true, // Mantém a requisição viva em background
+                            headers: { 'Content-Type': 'application/json' }
+                        }).catch(err => {
+                            // Log silencioso no console em caso de erro, não interfere com o usuário.
+                            console.warn('Falha ao registrar clique no WhatsApp:', err);
+                        });
+                    }
+                    // Removemos preventDefault() para o link abrir nativamente (melhor para mobile)
+                });
+            }
+
+            // Lógica para clicar nas estrelas e descer para avaliações
+            const ratingDisplay = document.getElementById('hero-rating-display');
+            if (ratingDisplay) {
+                ratingDisplay.addEventListener('click', () => {
+                    const reviewsSection = document.getElementById('tab-avaliacoes');
+                    if(reviewsSection) reviewsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            }
+        });
+    </script>
 </body>
 </html>

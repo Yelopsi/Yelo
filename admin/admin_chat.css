@@ -9,7 +9,7 @@
     box-shadow: 0 4px 20px rgba(0,0,0,0.03);
     border: 1px solid #e9ecef;
     overflow: hidden;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-principal);
 }
 
 /* Sidebar (Lista) */
@@ -28,7 +28,7 @@
 .sidebar-header-chat h3 {
     margin: 0;
     color: #1B4332;
-    font-family: 'New Kansas', serif; /* Se tiver a fonte */
+    font-family: var(--font-principal); /* Se tiver a fonte */
 }
 
 .message-list {
@@ -136,7 +136,7 @@
     border: 1px solid #ced4da;
     border-radius: 30px;
     outline: none;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-principal);
 }
 .btn-send {
     width: 45px; height: 45px;

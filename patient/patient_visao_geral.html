@@ -1,9 +1,185 @@
-<header class="welcome-header">
-    <h1>Bem-vindo(a) à sua jornada, <span id="nome-usuario"></span>!</h1>
-</header>
-<div class="card card-boas-vindas">
-    <h2>Seu espaço de cuidado</h2>
-    <p>Este é o seu painel pessoal na Yelo. Aqui você pode revisitar os perfis de profissionais compatíveis, gerenciar seus favoritos e nos contar sobre sua experiência. Lembre-se: dar o primeiro passo é um ato de coragem. Estamos aqui para te apoiar.</p>
-</div>
-<div id="card-proximos-passos" class="card card-proximos-passos">
+<style>
+    /* Estilos Modernos para Visão Geral (Injetados dinamicamente) */
+    .welcome-section {
+        background: linear-gradient(135deg, #1B4332 0%, #0f291e 100%);
+        color: white;
+        padding: 45px 50px;
+        border-radius: 24px;
+        margin-bottom: 50px;
+        box-shadow: 0 20px 40px rgba(27, 67, 50, 0.15);
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    /* Elemento decorativo de fundo */
+    .welcome-section::after {
+        content: '';
+        position: absolute;
+        top: -50%; right: -10%;
+        width: 400px; height: 400px;
+        background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .welcome-section h1 {
+        font-family: 'Lora', serif;
+        font-size: 2.5rem;
+        margin: 0 0 12px 0;
+        color: #FFFFFF;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+        position: relative;
+        z-index: 2;
+    }
+    .welcome-section p {
+        font-family: 'Mulish', sans-serif;
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0;
+        max-width: 600px;
+        line-height: 1.6;
+        font-weight: 300;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Grid de Cartões */
+    .quick-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+    }
+
+    .dash-card {
+        background: white;
+        padding: 35px 30px;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        border: 1px solid #f0f0f0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+    }
+
+    .dash-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(27, 67, 50, 0.08);
+        border-color: #e0e0e0;
+    }
+
+    .card-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 25px;
+        transition: transform 0.3s ease;
+    }
+    
+    .dash-card:hover .card-icon {
+        transform: scale(1.1) rotate(3deg);
+    }
+    
+    .card-icon svg { width: 30px; height: 30px; }
+
+    .match-icon { background-color: #E8F5E9; color: #1B4332; }
+    .fav-icon { background-color: #FFF8E1; color: #F59E0B; }
+    .account-icon { background-color: #F3F4F6; color: #374151; }
+
+    .dash-card h3 { 
+        margin: 0 0 10px 0; 
+        font-size: 1.35rem; 
+        color: #1B4332; 
+        font-family: 'Lora', serif;
+        font-weight: 700;
+    }
+    
+    .dash-card p { 
+        margin: 0; 
+        color: #6B7280; 
+        font-size: 0.95rem; 
+        line-height: 1.5;
+        font-family: 'Mulish', sans-serif;
+    }
+    
+    .card-arrow {
+        align-self: flex-end;
+        margin-top: 25px;
+        width: 42px; height: 42px;
+        border-radius: 50%;
+        background: #f9fafb;
+        display: flex; align-items: center; justify-content: center;
+        color: #1B4332;
+        transition: all 0.3s ease;
+    }
+    
+    .dash-card:hover .card-arrow {
+        background: #1B4332;
+        color: white;
+        transform: translateX(5px);
+    }
+    
+    .card-arrow svg { width: 20px; height: 20px; }
+</style>
+
+<div class="dashboard-home">
+    <!-- Banner de Boas-vindas -->
+    <div class="welcome-section">
+        <h1>Olá, <span id="nome-usuario-dash">Visitante</span>! 👋</h1>
+        <p>Que bom te ver por aqui. Este é o seu espaço seguro para gerenciar sua jornada de cuidado.</p>
     </div>
+
+    <!-- Grid de Ações Rápidas -->
+    <div class="quick-stats-grid">
+        <!-- Card Matches -->
+        <div class="dash-card action-card" data-page-target="patient_matches.html">
+            <div class="card-icon match-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </div>
+            <div>
+                <h3>Meus Matches</h3>
+                <p>Veja os profissionais compatíveis</p>
+            </div>
+            <div class="card-arrow">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+            </div>
+        </div>
+
+        <!-- Card Favoritos -->
+        <div class="dash-card action-card" data-page-target="patient_favoritos.html">
+            <div class="card-icon fav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+            </div>
+            <div>
+                <h3>Favoritos</h3>
+                <p>Profissionais que você salvou</p>
+            </div>
+            <div class="card-arrow">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+            </div>
+        </div>
+
+        <!-- Card Minha Conta -->
+        <div class="dash-card action-card" data-page-target="patient_minha_conta.html">
+            <div class="card-icon account-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+            <div>
+                <h3>Minha Conta</h3>
+                <p>Seus dados e configurações</p>
+            </div>
+            <div class="card-arrow">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+            </div>
+        </div>
+    </div>
+</div>

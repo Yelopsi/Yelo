@@ -1,148 +1,461 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caixa de Entrada - Painel Admin | Yelo</title>
+<style>
+    /* --- Estrutura Principal --- */
+    .chat-layout {
+        display: flex;
+        height: calc(100vh - 180px); /* Altura ajustada para garantir que o input apareça sem rolagem da página */
+        width: 100%;
+        background-color: #fff;
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        overflow: hidden;
+        font-family: 'Inter', sans-serif;
+    }
 
-    <!-- Fontes e Ícones -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    /* --- Painel Esquerdo: Lista de Conversas --- */
+    .chat-list-panel {
+        display: flex;
+        flex-direction: column;
+        width: 350px;
+        min-width: 300px;
+        border-right: 1px solid #e9ecef;
+        background-color: #fff;
+    }
+
+    .search-and-filter-bar {
+        padding: 10px 16px;        background-color: #f0f2f5;
+        border-bottom: 1px solid #e9ecef;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .filter-select {
+        padding: 8px 12px;
+        border-radius: 20px;
+        border: 1px solid #dee2e6;
+        background-color: #fff;
+        font-size: 13px;
+        color: #495057;
+        cursor: pointer;
+    }
+
+    .search-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+    }
+
+    .search-wrapper .search-icon {
+        position: absolute;
+        left: 15px;
+        color: #6c757d;
+    }
+
+    #chat-search {
+        width: 100%;
+        padding: 10px 15px 10px 40px;
+        border-radius: 20px;
+        border: 1px solid #dee2e6;
+        background-color: #fff;
+        font-size: 14px;
+    }
+
+    .conversations-list {
+        flex-grow: 1;
+        overflow-y: auto;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .conversation-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 16px;
+        cursor: pointer;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .conversation-item:hover { background-color: #f8f9fa; }
+    .conversation-item.active { background-color: #e9f5ff; }
+
+    /* Ações da Conversa (Arquivar/Excluir) */
+    .conversation-actions {
+        display: none; /* Oculto por padrão */
+        align-items: center;
+        gap: 5px;
+        margin-left: 8px;
+    }
+    .conversation-item:hover .conversation-actions {
+        display: flex; /* Aparece no hover */
+    }
+    .btn-action {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #6c757d;
+        padding: 4px;
+        transition: color 0.2s;
+    }
+    .btn-action:hover { color: #1B4332; }
+    .btn-action.delete:hover { color: #dc3545; }
+
+    .conversation-item .avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        margin-right: 12px;
+        object-fit: cover;
+    }
+
+    .conversation-details { flex-grow: 1; overflow: hidden; }
+    .details-header { display: flex; justify-content: space-between; align-items: center; }
+    .contact-name { font-weight: 600; color: #111; }
+    .timestamp { font-size: 12px; color: #6c757d; }
+    .last-message {
+        font-size: 14px;
+        color: #6c757d;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin: 0; /* Ajustado para alinhar com o badge */
+    }
+
+    /* --- Painel Direito: Conversa Ativa --- */
+    .chat-view-panel {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        height: 100%;
+        overflow: hidden; /* Impede que o painel cresça além da altura definida */
+    }
+
+    .last-message-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 2px;
+    }
+
+    .unread-badge {
+        background-color: #FFEE8C; /* Amarelo Yelo */
+        color: #1B4332; /* Verde Yelo Escuro */
+        min-width: 22px;
+        height: 22px;
+        padding: 0 4px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1;
+        margin-left: 10px; /* Espaço entre a mensagem e o badge */
+        flex-shrink: 0;
+    }
+    .unread-badge.hidden { display: none; }
+
+    .chat-welcome-view {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        text-align: center;
+        background-color: #f0f2f5;
+        padding: 20px;
+    }
+    .chat-welcome-view img { max-width: 250px; opacity: 0.8; margin-bottom: 20px; }
+    .chat-welcome-view h3 { font-size: 22px; color: #1B4332; }
+    .chat-welcome-view p { color: #6c757d; }
+
+    .active-chat-wrapper {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden; /* Garante que a rolagem fique apenas na thread de mensagens */
+    }
+
+    .chat-panel-header {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        flex-shrink: 0;
+    }
+    .contact-info { flex-grow: 1; }
+    .contact-info h4 { margin: 0; font-size: 16px; }
+
+    /* --- CORREÇÃO: Estilo do Avatar no Cabeçalho --- */
+    .chat-panel-header .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin-right: 15px;
+        object-fit: cover;
+    }
+
+    .messages-thread {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 5%;
+        background-color: #e5ddd5; /* Fundo WhatsApp */
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .message-bubble {
+        padding: 6px 12px;
+        border-radius: 8px;
+        max-width: 65%;
+        width: fit-content;
+        line-height: 1.3;
+        word-break: break-word;
+        font-size: 0.9rem;
+        box-shadow: none;
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+    }
+    .message-bubble p {
+        margin: 0;
+        padding: 0;
+    }
+
+    .message-bubble.received { 
+        background-color: #fff; 
+        align-self: flex-start; 
+        border-bottom-left-radius: 4px;
+        border: 1px solid #f0f0f0;
+    }
+    .message-bubble.sent { 
+        background-color: #1B4332; 
+        color: #fff;
+        align-self: flex-end; 
+        border-bottom-right-radius: 4px;
+    }
+    .message-bubble.sent .message-meta { color: rgba(255,255,255,0.7); }
+    .message-bubble.sent .message-status svg { stroke: rgba(255,255,255,0.8) !important; }
+
+    .message-meta { 
+        flex-shrink: 0;
+        white-space: nowrap;
+        font-size: 0.7rem;
+        color: #999;
+        align-self: flex-end;
+        display: flex; /* Para alinhar o ícone */
+        align-items: center;
+        justify-content: flex-end; /* Alinha à direita */
+        gap: 4px; /* Espaço entre hora e ícone */
+    }
+    .message-status svg { width: 18px; height: 18px; }
+
+    .message-input-bar {
+        display: flex;
+        align-items: flex-end; /* Alinha na base para inputs de múltiplas linhas */
+        padding: 8px 16px;
+        gap: 10px;
+        background-color: #f0f2f5;
+        border-top: 1px solid #e9ecef;
+        flex-shrink: 0;
+    }
+    #admin-reply-input {
+        flex: 1;
+        border: 1px solid #dee2e6;
+        border-radius: 20px;
+        padding: 12px 18px;
+        font-size: 15px;
+        resize: none;
+    }
+    .btn-send {
+        background-color: #1B4332;
+        color: white;
+        border: none;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Botão Nova Conversa (Estilo WhatsApp) */
+    .btn-icon-only {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #54656f;
+        padding: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background-color 0.2s;
+        position: relative; /* Garante que o z-index funcione */
+        z-index: 5; /* Garante que fique acima de elementos vizinhos */
+    }
+    .btn-icon-only:hover {
+        background-color: rgba(0,0,0,0.05);
+    }
+
+    /* --- Modal de Mensagem em Massa --- */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 2147483647; /* Z-Index máximo permitido pelo navegador */
+        justify-content: center;
+        align-items: center;
+        pointer-events: none; /* Permite que cliques "atravessem" o fundo cinza */
+    }
+    .modal-content {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        pointer-events: auto; /* Faz com que o conteúdo do modal volte a ser clicável */
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-header h3 { margin: 0; color: #1B4332; font-size: 18px; }
+    .close-modal { background: none; border: none; font-size: 24px; cursor: pointer; color: #666; }
     
-    <!-- Estilos principais -->
-    <link rel="stylesheet" href="../assets/css/reset.css">
-    <link rel="stylesheet" href="admin_caixa_entrada.css">
-    <link rel="stylesheet" href="../assets/css/admin_global.css">
-
-    <!-- Favicon -->
-    <link rel="icon" href="../assets/images/favicon.png">
-</head>
-<body>
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #333; font-size: 14px; }
+    .form-group select, .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+    }
+    .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #1B4332; }
+    
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+    .btn-cancel { background: #f0f2f5; color: #333; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 500; }
+    .btn-confirm { background: #1B4332; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 500; }
+    .btn-confirm:hover { background-color: #143628; }
+</style>
 
 <div class="chat-layout">
-    <!-- ================================================== -->
-    <!-- PAINEL ESQUERDO: LISTA DE CONVERSAS                  -->
-    <!-- ================================================== -->
     <aside class="chat-list-panel">
-
         <div class="search-and-filter-bar">
+            <select id="chat-filter" class="filter-select" title="Filtrar conversas">
+                <option value="all">Todas</option>
+                <option value="unread">Não Lidas</option>
+                <option value="archived">Arquivadas</option>
+            </select>
             <div class="search-wrapper">
-                <i class="fas fa-search"></i>
-                <input type="search" id="chat-search" placeholder="Buscar...">
+                <span class="search-icon">🔍</span>
+                <input type="search" id="chat-search" placeholder="Buscar psicólogo...">
             </div>
-            <button id="btn-new-chat" title="Nova Conversa" style="margin-left: 8px; width: 38px; height: 38px; border-radius: 50%; background: #1B4332; color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                <i class="fas fa-plus"></i>
+            <button id="btn-new-chat" class="btn-icon-only" title="Nova Conversa" type="button">
+                <span aria-hidden="true" data-icon="new-chat-outline" class="">
+                    <svg viewBox="0 0 24 24" height="24" width="24" preserveAspectRatio="xMidYMid meet" class="" fill="none">
+                        <title>new-chat-outline</title>
+                        <path d="M9.53277 12.9911H11.5086V14.9671C11.5086 15.3999 11.7634 15.8175 12.1762 15.9488C12.8608 16.1661 13.4909 15.6613 13.4909 15.009V12.9911H15.4672C15.9005 12.9911 16.3181 12.7358 16.449 12.3226C16.6659 11.6381 16.1606 11.0089 15.5086 11.0089H13.4909V9.03332C13.4909 8.60007 13.2361 8.18252 12.8233 8.05119C12.1391 7.83391 11.5086 8.33872 11.5086 8.991V11.0089H9.49088C8.83941 11.0089 8.33411 11.6381 8.55097 12.3226C8.68144 12.7358 9.09947 12.9911 9.53277 12.9911Z" fill="currentColor"></path>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M0.944298 5.52617L2.99998 8.84848V17.3333C2.99998 18.8061 4.19389 20 5.66665 20H19.3333C20.8061 20 22 18.8061 22 17.3333V6.66667C22 5.19391 20.8061 4 19.3333 4H1.79468C1.01126 4 0.532088 4.85997 0.944298 5.52617ZM4.99998 8.27977V17.3333C4.99998 17.7015 5.29845 18 5.66665 18H19.3333C19.7015 18 20 17.7015 20 17.3333V6.66667C20 6.29848 19.7015 6 19.3333 6H3.58937L4.99998 8.27977Z" fill="currentColor"></path>
+                    </svg>
+                </span>
             </button>
         </div>
- 
-        <nav class="chat-filter-tabs">
-            <button class="filter-tab active" data-filter="all">Todas</button>
-            <button class="filter-tab" data-filter="unread">Não Lidas</button>
-            <button class="filter-tab" data-filter="waiting">Aguardando</button>
-        </nav>
- 
         <ul id="conversation-list" class="conversations-list">
-            <li style="padding:20px; text-align:center; color:#999;">Carregando...</li>
+            <li style="padding:20px; text-align:center; color:#999;">Carregando conversas...</li>
         </ul>
     </aside>
 
-    <!-- ================================================== -->
-    <!-- PAINEL DIREITO: CONVERSA ATIVA                     -->
-    <!-- ================================================== -->
     <main class="chat-view-panel">
-        <!-- Tela de Boas-Vindas (quando nenhuma conversa está selecionada) -->
         <div class="chat-welcome-view" id="chat-welcome-screen">
-            <img src="../assets/images/ilustracao-chat.png" alt="Ilustração de comunicação">
-            <h3>Mantenha-se conectado</h3>
-            <p>Selecione uma conversa para começar a interagir.</p>
+            <svg width="200" height="160" viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width: 200px; margin-bottom: 20px;">
+                <!-- Balão de Fundo (Amarelo) -->
+                <path d="M100 20H160C171.046 20 180 28.9543 180 40V100C180 111.046 171.046 120 160 120H130L100 140V120H100C88.9543 120 80 111.046 80 100V40C80 28.9543 88.9543 20 100 20Z" fill="#FFEE8C"/>
+                <!-- Balão da Frente (Verde Yelo) -->
+                <path d="M40 40H120C131.046 40 140 48.9543 140 60V120C140 131.046 131.046 140 120 140H70L40 160V140H40C28.9543 140 20 131.046 20 120V60C20 48.9543 28.9543 40 40 40Z" fill="#1B4332"/>
+                <!-- Linhas de Texto (Brancas) -->
+                <rect x="45" y="70" width="70" height="8" rx="4" fill="white" fill-opacity="0.9"/>
+                <rect x="45" y="90" width="40" height="8" rx="4" fill="white" fill-opacity="0.9"/>
+                <!-- Pontos de Digitação (Verdes no Amarelo) -->
+                <circle cx="115" cy="70" r="5" fill="#1B4332" fill-opacity="0.2"/>
+                <circle cx="135" cy="70" r="5" fill="#1B4332" fill-opacity="0.2"/>
+                <circle cx="155" cy="70" r="5" fill="#1B4332" fill-opacity="0.2"/>
+            </svg>
+            <h3>Caixa de Entrada - Admin</h3>
+            <p>Selecione uma conversa para visualizar as mensagens.</p>
         </div>
 
-        <!-- Visualização da Conversa Ativa (escondida por padrão) -->
         <div class="active-chat-wrapper" id="active-chat-screen" style="display: none;">
-            <!-- Cabeçalho da Conversa Ativa -->
-            <header class="chat-panel-header">
-                <img src="../assets/images/placeholder-user-2.png" alt="Avatar de Ana" class="avatar" id="active-chat-avatar">
-                <div class="contact-info">
-                    <h4 id="active-chat-name">Ana Silva</h4>
-                    <span id="active-chat-status">Online</span>
-                </div>
-                <div class="header-actions">
-                    <button class="icon-btn" title="Buscar na Conversa"><i class="fas fa-search"></i></button>
-                    <button class="icon-btn" title="Mais Opções"><i class="fas fa-ellipsis-v"></i></button>
-                </div>
-            </header>
-
-            <!-- Corpo Principal com as Mensagens -->
             <div class="messages-thread" id="messages-thread">
-                <!-- Overlay para Drag-and-Drop -->
-                <div class="drag-drop-overlay" id="drag-drop-overlay">
-                    <div class="drag-drop-content">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <h3>Solte os arquivos aqui</h3>
-                        <p>Envie fotos, vídeos ou documentos diretamente.</p>
-                    </div>
-                </div>
-                <!-- Mensagens serão carregadas aqui -->
             </div>
 
-            <!-- Menu Flutuante de Respostas Rápidas (Admin) -->
-            <div class="quick-reply-menu" id="quick-reply-menu">
-                <div class="quick-reply-item" data-value="Olá! Sou da equipe Yelo. Como posso ajudar?">
-                    <strong>/saudacao</strong> - Mensagem de boas-vindas padrão.
-                </div>
-                <div class="quick-reply-item" data-value="Agradecemos seu contato e retornaremos em breve.">
-                    <strong>/agradecimento</strong> - Mensagem de encerramento.
-                </div>
-            </div>
-
-            <!-- Rodapé com a Barra de Entrada -->
             <footer class="message-input-bar">
-                <!-- Painel de Emojis -->
-                <div class="emoji-panel" id="emoji-panel">
-                    <!-- Conteúdo do painel de emojis (abas, busca, etc.) iria aqui -->
-                    <p>Painel de Emojis, GIFs e Figurinhas</p>
-                </div>
-
-                <!-- Menu de Anexos -->
-                <div class="attachment-menu" id="attachment-menu">
-                    <button class="attachment-item"><i class="fas fa-image"></i> Fotos e Vídeos</button>
-                    <button class="attachment-item"><i class="fas fa-file-alt"></i> Documento</button>
-                    <button class="attachment-item"><i class="fas fa-user"></i> Contato</button>
-                </div>
-
-                <button class="icon-btn" id="emoji-btn" title="Emojis"><i class="far fa-smile"></i></button>
-                <button class="icon-btn" id="attachment-btn" title="Anexar Arquivo"><i class="fas fa-paperclip"></i></button>
-                <div class="text-input-wrapper">
-                    <div id="rich-text-input" contenteditable="true" class="rich-text-editor" data-placeholder="Digite sua mensagem ou / para respostas rápidas..."></div>
-                </div>
-                <button class="icon-btn btn-send" id="send-btn" title="Enviar Mensagem"><i class="fas fa-paper-plane"></i></button>
-            </div>
-
-            
-    </main>
-
-    <!-- ================================================== -->
-    <!-- PAINEL LATERAL DE NOTAS INTERNAS (ESCONDIDO)       -->
-    <!-- ================================================== -->
-    <aside class="internal-notes-panel" id="internal-notes-panel">
-        <header class="notes-header">
-            <h3>Notas Internas</h3>
-            <button class="icon-btn" id="close-notes-panel" title="Fechar Notas"><i class="fas fa-times"></i></button>
-        </header>
-        <div class="notes-thread" id="notes-thread-container">
-            <!-- Notas serão carregadas aqui -->
-            <p class="notes-empty-state">Nenhuma nota para esta conversa ainda.</p>
+                <input type="text" id="admin-reply-input" placeholder="Digite sua resposta...">
+                <button class="btn-send" id="send-reply-btn" title="Enviar Mensagem" type="button">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" style="color: white;"><path d="M1.101 21.757 23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"></path></svg>
+                </button>
+            </footer>
         </div>
-        <footer class="note-input-footer">
-            <form id="add-note-form">
-                <textarea id="note-input" placeholder="Adicionar uma nota interna..." required></textarea>
-                <button type="submit" class="icon-btn btn-send" title="Salvar Nota"><i class="fas fa-paper-plane"></i></button>
-            </form>
-        </footer>
-    </aside>
+    </main>
 </div>
-<!-- Scripts -->
-<script src="../assets/js/admin_caixa_entrada.js"></script>
-<script src="../assets/js/admin_menu.js"></script>
-<script src="../assets/js/auth_check.js"></script> <!-- se você tiver verificação de login -->
-</body>
-</html>
+
+<!-- Template necessário para o JavaScript renderizar novas mensagens sem erro -->
+<template id="message-template">
+    <div class="message-bubble">
+        <span class="message-text"></span>
+        <div class="message-meta"></div>
+    </div>
+</template>
+
+<!-- Template para os itens da lista de conversas -->
+<template id="conversation-item-template">
+    <li class="conversation-item">
+        <!-- A imagem do avatar será definida pelo JS. O placeholder evita erros de imagem quebrada durante o carregamento. -->
+        <img class="avatar" src="/assets/images/avatar-placeholder.png" alt="Avatar">
+        <div class="conversation-details">
+            <div class="details-header">
+                <span class="contact-name"></span>
+                <span class="timestamp"></span>
+            </div>
+            <p class="last-message"></p>
+        </div>
+    </li>
+</template>
+
+<!-- Modal de Broadcast -->
+<div id="broadcast-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Nova Mensagem em Massa</h3>
+            <button class="close-modal" id="close-broadcast-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="broadcast-target">Destinatário (Segmento):</label>
+                <select id="broadcast-target">
+                    <option value="" disabled selected>Selecione um grupo...</option>
+                    <option value="psychologists">Todos os Psicólogos</option>
+                    <option value="psychologists-Sol">Psicólogos - Plano Referência(VIP)</option>
+                    <option value="psychologists-Clínico">Psicólogos - Plano Clínico</option>
+                    <option value="psychologists-Essencial">Psicólogos - Plano Essencial</option>
+                    <option value="patients">Todos os Pacientes</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="broadcast-message">Mensagem:</label>
+                <textarea id="broadcast-message" rows="5" placeholder="Digite a mensagem que será enviada para todos do grupo selecionado..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="btn-cancel-broadcast">Cancelar</button>
+                <button class="btn-confirm" id="btn-send-broadcast">Enviar Mensagem</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -6,9 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. VARIÁVEIS DE ESTADO E INFORMAÇÃO
     // -----------------------------------------------------
     let patientData = null; 
-    const loginUrl = '../login.html'; 
-    
-    const menuToggle = document.getElementById('menu-toggle');
+    const loginUrl = '/login'; 
+
     const sidebar = document.getElementById('sidebar');
     const mainContent = document.getElementById('patient-main-content');
     const navLinks = document.querySelectorAll('.sidebar-nav li');
@@ -51,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // -----------------------------------------------------
 
     function inicializarVisaoGeral() {
-        const welcomeHeader = document.querySelector('.welcome-header h1');
+        const welcomeHeader = document.querySelector('.welcome-section h1'); // Seletor atualizado
         if (welcomeHeader && patientData) {
             const nomeCurto = patientData.nome.split(' ')[0];
             let saudacao = 'Boas-vindas'; // Padrão neutro
@@ -64,42 +63,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Atualiza o conteúdo do H1 com a saudação e o nome
-            welcomeHeader.innerHTML = `${saudacao} à sua jornada, <span id="nome-usuario">${nomeCurto}</span>!`;
+            welcomeHeader.innerHTML = `${saudacao}, <span id="nome-usuario-dash">${nomeCurto}</span>! 👋`;
         } else {
-            const nomeUsuarioEl = document.getElementById('nome-usuario');
+            const nomeUsuarioEl = document.getElementById('nome-usuario-dash');
             if (nomeUsuarioEl && patientData && patientData.nome) nomeUsuarioEl.textContent = patientData.nome.split(' ')[0];
-        }
-
-        const statusPaciente = 'novo'; 
-        const cardPassosEl = document.getElementById('card-proximos-passos');
-        
-        if (cardPassosEl) {
-            if (statusPaciente === 'novo') {
-                cardPassosEl.innerHTML = `
-                    <h2>Pronto(a) para começar a conversa?</h2>
-                    <p>Explore os perfis que encontramos para você na seção 'Meus Matches' e inicie o contato com quem você mais se identificar.</p>
-                    <a href="#" class="btn btn-principal" data-target="patient_matches.html">Ver meus Matches</a>
-                `;
-            } else {
-                cardPassosEl.innerHTML = `
-                    <h2>Como foi sua experiência?</h2>
-                    <p>Sua opinião é muito importante para nossa comunidade. Quando se sentir confortável, você pode deixar uma avaliação sobre o profissional com quem conversou.</p>
-                    <a href="#" class="btn btn-principal" data-target="patient_matches.html">Avaliar Profissional</a>
-                `;
-            }
-
-            // Adiciona o evento de clique para o botão "Ver meus Matches"
-            const verMatchesBtn = cardPassosEl.querySelector('[data-target="patient_matches.html"]');
-            if (verMatchesBtn) {
-                verMatchesBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    // Encontra o link correspondente na barra lateral e simula um clique
-                    const matchesLink = document.querySelector('.sidebar-nav li[data-page="patient_matches.html"]');
-                    if (matchesLink) {
-                        matchesLink.click();
-                    }
-                });
-            }
         }
     }
     
@@ -126,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const responseData = await response.json();
-            const psychologists = responseData.results || []; 
+            const psychologists = Array.isArray(responseData) ? responseData : (responseData.results || []);
             
             if (psychologists.length === 0) {
                 const emptyState = document.getElementById('favoritos-vazio');
@@ -138,32 +105,44 @@ document.addEventListener('DOMContentLoaded', () => {
             const emptyState = document.getElementById('favoritos-vazio');
             if (emptyState) emptyState.classList.add('hidden');
 
-            matchesGrid.innerHTML = psychologists.map(pro => `
-                <div class="pro-card">
-                    <img src="${pro.fotoUrl || 'https://placehold.co/400x400/1B4332/FFFFFF?text=CRP'}" alt="Foto de ${pro.nome}" class="pro-card-img">
-                    <div class="pro-card-content" style="padding: 15px;">
-                        <span class="pro-crp">CRP ${pro.crp}</span>
-                        <h3>${pro.nome}</h3>
-                        
-                        <p class="pro-abordagem">
-                            <strong>Abordagens:</strong> ${pro.abordagens_tecnicas && pro.abordagens_tecnicas.length > 0 ? pro.abordagens_tecnicas.join(', ') : 'Não informado'}
-                        </p>
-                        <p class="pro-especialidades">
-                            <strong>Temas:</strong> ${pro.temas_atuacao && pro.temas_atuacao.length > 0 ? pro.temas_atuacao.join(', ') : 'Não informado'}
-                        </p>
-                        <p class="pro-valor">
-                            <strong>Valor:</strong> R$ ${pro.valor_sessao_numero ? pro.valor_sessao_numero.toFixed(2).replace('.', ',') : 'Não informado'}
-                        </p>
-                    </div>
+            matchesGrid.innerHTML = psychologists.map(pro => {
+                // Tratamento de Imagem
+                let fotoUrl = pro.fotoUrl || pro.foto || 'https://placehold.co/400x400/1B4332/FFFFFF?text=Psi';
+                if (fotoUrl && !fotoUrl.startsWith('http') && !fotoUrl.startsWith('data:')) {
+                    fotoUrl = `${API_BASE_URL}/${fotoUrl.replace(/^backend\/public\//, '').replace(/^\//, '')}`;
+                }
+
+                const tags = pro.temas_atuacao || pro.temas || [];
+                const tagsHtml = tags.slice(0, 3).map(tag => `<span class="match-tag">${tag}</span>`).join('');
+                const priceFormatted = (pro.valor_sessao_numero || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                const bio = pro.bio || "Sem biografia.";
+                const profileLink = pro.slug ? `/${pro.slug}` : `../perfil_psicologo.html?id=${pro.id}`;
+
+                return `
+                <div class="match-card">
+                    <div class="heart-icon" data-id="${pro.id}" title="Favoritar">♡</div>
                     
-                    <div class="pro-card-actions">
-                        <a href="../perfil_psicologo.html?id=${pro.id}" class="btn btn-principal">Ver Perfil</a>
-                        <button class="btn-favorito" data-id="${pro.id}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-                        </button>
+                    <img src="${fotoUrl}" alt="${pro.nome}" class="match-header-img">
+                    
+                    <div class="match-body">
+                        <h3 class="match-name">${pro.nome}</h3>
+                        <span class="match-crp">CRP ${pro.crp}</span>
+                        
+                        <div class="match-tags">${tagsHtml}</div>
+                        
+                        <p class="match-bio">${bio}</p>
+                        
+                        <div class="match-footer">
+                            <div class="match-price">
+                                <span>Valor Sessão</span>
+                                <strong>${priceFormatted}</strong>
+                            </div>
+                            <a href="${profileLink}" class="btn-profile">Ver Perfil</a>
+                        </div>
                     </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
 
             // ADICIONADO: Conecta a função de favoritar aos novos botões criados
             setupFavoriteButtonsInDashboard(inicializarMatches);
@@ -184,11 +163,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const token = localStorage.getItem('Yelo_token');
-            const response = await fetch(`${API_BASE_URL}/api/patients/me/favorites`, {
+            // CORREÇÃO: Usando a rota padronizada e corrigida '/favorites'
+            const response = await fetch(`${API_BASE_URL}/api/patients/favorites`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            if (!response.ok) throw new Error('Falha ao buscar favoritos.');
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Erro Backend Favoritos:", errorText);
+                throw new Error(`Falha ao buscar favoritos: ${response.status}`);
+            }
 
             const favorites = await response.json();
 
@@ -200,21 +184,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 favoritosVazio.classList.add('hidden');
 
                 // Reutiliza a lógica de criação de card (similar a 'inicializarMatches')
-                favoritosGrid.innerHTML = favorites.map(pro => `
-                    <div class="pro-card">
-                        <img src="${pro.fotoUrl || 'https://placehold.co/400x400/1B4332/FFFFFF?text=CRP'}" alt="Foto de ${pro.nome}" class="pro-card-img">
-                        <div class="pro-card-content" style="padding: 15px; flex-grow: 1;">
-                            <h3>${pro.nome}</h3>
-                            <p class="crp">CRP ${pro.crp}</p>
-                        </div>
-                        <div class="pro-card-actions">
-                            <a href="../perfil_psicologo.html?id=${pro.id}" class="btn btn-principal">Ver Perfil</a>
-                            <button class="btn-favorito favorited" data-id="${pro.id}" aria-label="Desfavoritar">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-                            </button>
+                favoritosGrid.innerHTML = favorites.map(pro => {
+                    // Tratamento de Imagem
+                    let fotoUrl = pro.fotoUrl || pro.foto || 'https://placehold.co/400x400/1B4332/FFFFFF?text=Psi';
+                    if (fotoUrl && !fotoUrl.startsWith('http') && !fotoUrl.startsWith('data:')) {
+                        fotoUrl = `${API_BASE_URL}/${fotoUrl.replace(/^backend\/public\//, '').replace(/^\//, '')}`;
+                    }
+
+                    const tags = pro.temas_atuacao || pro.temas || [];
+                    const tagsHtml = tags.slice(0, 3).map(tag => `<span class="match-tag">${tag}</span>`).join('');
+                    const priceFormatted = (pro.valor_sessao_numero || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    const bio = pro.bio || "Sem biografia.";
+                    const profileLink = pro.slug ? `/${pro.slug}` : `../perfil_psicologo.html?id=${pro.id}`;
+
+                    return `
+                    <div class="match-card">
+                        <div class="heart-icon favorited" data-id="${pro.id}" title="Desfavoritar">♥</div>
+                        
+                        <img src="${fotoUrl}" alt="${pro.nome}" class="match-header-img">
+                        
+                        <div class="match-body">
+                            <h3 class="match-name">${pro.nome}</h3>
+                            <span class="match-crp">CRP ${pro.crp}</span>
+                            
+                            <div class="match-tags">${tagsHtml}</div>
+                            
+                            <p class="match-bio">${bio}</p>
+                            
+                            <div class="match-footer">
+                                <div class="match-price">
+                                    <span>Valor Sessão</span>
+                                    <strong>${priceFormatted}</strong>
+                                </div>
+                                <a href="${profileLink}" class="btn-profile">Ver Perfil</a>
+                            </div>
                         </div>
                     </div>
-                `).join('');
+                    `;
+                }).join('');
 
                 // Adiciona a funcionalidade de desfavoritar na própria página
                 setupFavoriteButtonsInDashboard(inicializarFavoritos);
@@ -222,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error("Erro ao carregar favoritos:", error);
-            favoritosGrid.innerHTML = '<p style="color: red;">Ocorreu um erro ao carregar seus favoritos.</p>';
+            favoritosGrid.innerHTML = `<p style="color: red; text-align: center;">Ocorreu um erro ao carregar seus favoritos.<br><small>${error.message}</small></p>`;
             favoritosVazio.classList.add('hidden');
         }
     }
@@ -280,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Função de favoritar específica para o dashboard, que recarrega a lista
     function setupFavoriteButtonsInDashboard(callbackOnSuccess) {
         // CORREÇÃO: O seletor correto para o botão é '.btn-favorito'
-        const favoriteButtons = document.querySelectorAll('.btn-favorito');
+        const favoriteButtons = document.querySelectorAll('.btn-favorito, .heart-icon');
         favoriteButtons.forEach(button => {
             button.addEventListener('click', async () => {
                 const psychologistId = button.dataset.id;
@@ -346,15 +353,38 @@ document.addEventListener('DOMContentLoaded', () => {
         // Preenche os campos com os dados atuais do paciente
         const nomeInput = document.getElementById('nome-paciente');
         const emailInput = document.getElementById('email-paciente');
+        const btnDados = formDados.querySelector('button[type="submit"]');
+        
+        let isEditing = false; // Estado inicial: Visualização
+
         if (patientData && patientData.nome) {
             nomeInput.value = patientData.nome;
             emailInput.value = patientData.email;
         }
 
-        // --- Lógica para atualizar dados pessoais ---
+        // --- Lógica para atualizar dados pessoais (Toggle Alterar/Salvar) ---
         formDados.addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // 1. Se NÃO estiver editando, ativa o modo de edição
+            if (!isEditing) {
+                isEditing = true;
+                nomeInput.disabled = false;
+                emailInput.disabled = false;
+                nomeInput.focus();
+                
+                // Muda aparência do botão
+                btnDados.textContent = 'Salvar Dados';
+                btnDados.classList.remove('btn-secundario');
+                btnDados.classList.add('btn-principal');
+                return;
+            }
+
+            // 2. Se JÁ estiver editando, realiza o salvamento
             const token = localStorage.getItem('Yelo_token');
+            const originalText = btnDados.textContent;
+            btnDados.disabled = true;
+            btnDados.textContent = 'Salvando...';
 
             try {
                 const response = await fetch(`${API_BASE_URL}/api/patients/me`, {
@@ -375,11 +405,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Atualiza os dados locais para refletir a mudança
                     patientData.nome = nomeInput.value;
                     patientData.email = emailInput.value;
+                    
+                    // Atualiza o nome globalmente (Header e Dashboard)
+                    const novoNome = nomeInput.value;
+                    const primeiroNome = novoNome.split(' ')[0];
+                    
+                    localStorage.setItem('Yelo_user_name', novoNome);
+                    
+                    // Atualiza "Olá, [Nome]" no Header
+                    const headerGreeting = document.querySelector('.user-greeting');
+                    if (headerGreeting) headerGreeting.textContent = `Olá, ${primeiroNome}`;
+
+                    // Atualiza Banner de Boas-vindas (se estiver visível)
+                    const dashName = document.getElementById('nome-usuario-dash');
+                    if (dashName) dashName.textContent = primeiroNome;
+
+                    // Volta ao estado de visualização
+                    isEditing = false;
+                    nomeInput.disabled = true;
+                    emailInput.disabled = true;
+                    btnDados.textContent = 'Alterar Dados';
+                    btnDados.classList.remove('btn-principal');
+                    btnDados.classList.add('btn-secundario');
                 } else {
                     throw new Error(result.error);
                 }
             } catch (error) {
                 showToast(error.message || 'Erro ao atualizar dados.', 'error');
+            } finally {
+                btnDados.disabled = false;
+                if (isEditing) btnDados.textContent = 'Salvar Dados'; // Mantém texto se der erro
             }
         });
 
@@ -419,92 +474,42 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Lógica para Excluir Conta ---
         const btnExcluir = document.getElementById('btn-excluir-conta');
         if (btnExcluir) {
-            btnExcluir.addEventListener('click', (e) => {
+            btnExcluir.addEventListener('click', async (e) => {
                 e.preventDefault();
                 
-                // Abre o modal com as configurações para exclusão de conta
-                openConfirmationModal({
-                    title: 'Excluir sua conta?',
-                    body: `
-                        <p>Esta ação é <strong>permanente e não pode ser desfeita</strong>. Todos os seus dados, incluindo favoritos e avaliações, serão removidos.</p>
-                        <p>Para confirmar, por favor, digite sua senha atual:</p>
-                        <div class="form-group" style="margin-top: 15px;">
-                            <label for="modal-password-confirm" class="sr-only">Senha Atual</label>
-                            <input type="password" id="modal-password-confirm" class="form-group input" placeholder="Digite sua senha aqui" required>
-                        </div>
-                        <p id="modal-error-message" style="color: red; font-size: 0.9em;"></p>
-                    `,
-                    confirmText: 'Excluir Permanentemente',
-                    onConfirm: async () => {
-                        const senha = document.getElementById('modal-password-confirm').value;
-                        const modalErrorMsg = document.getElementById('modal-error-message');
+                if (!confirm("Tem certeza que deseja excluir sua conta? Essa ação é irreversível e apagará todos os seus dados.")) {
+                    return;
+                }
 
-                        if (!senha) {
-                            modalErrorMsg.textContent = 'A senha é obrigatória.';
-                            return; // Não fecha o modal
-                        }
+                const senha = prompt("Por favor, digite sua senha para confirmar a exclusão:");
+                if (!senha) return;
 
-                        try {
-                            const token = localStorage.getItem('Yelo_token');
-                            const response = await fetch(`${API_BASE_URL}/api/patients/me`, {
-                                method: 'DELETE',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${token}`
-                                },
-                                body: JSON.stringify({ senha })
-                            });
+                try {
+                    const token = localStorage.getItem('Yelo_token');
+                    const response = await fetch(`${API_BASE_URL}/api/patients/me`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ senha })
+                    });
 
-                            const result = await response.json();
+                    const result = await response.json();
 
-                            if (response.ok) {
-                                alert(result.message);
-                                localStorage.removeItem('Yelo_token');
-                                window.location.href = '../index.html';
-                            } else {
-                                modalErrorMsg.textContent = result.error || 'Ocorreu um erro.';
-                            }
-                        } catch (error) {
-                            modalErrorMsg.textContent = 'Erro de conexão ao tentar excluir a conta.';
-                        }
+                    if (response.ok) {
+                        alert(result.message);
+                        localStorage.removeItem('Yelo_token');
+                        window.location.href = '../index.html';
+                    } else {
+                        alert(result.error || 'Ocorreu um erro ao excluir a conta.');
                     }
-                });
+                } catch (error) {
+                    alert('Erro de conexão ao tentar excluir a conta.');
+                }
             });
         }
     }
-
-    // --- FUNÇÕES GLOBAIS PARA O MODAL ---
-    const modal = document.getElementById('confirmation-modal');
-    const modalConfirmBtn = document.getElementById('modal-confirm-btn');
-    let onConfirmCallback = null;
-
-    function openConfirmationModal({ title, body, confirmText, onConfirm }) {
-        document.getElementById('modal-title').textContent = title;
-        document.getElementById('modal-body').innerHTML = body;
-        modalConfirmBtn.textContent = confirmText;
-        onConfirmCallback = onConfirm;
-        modal.classList.add('is-visible');
-        modal.setAttribute('aria-hidden', 'false');
-    }
-
-    function closeModal() {
-        modal.classList.remove('is-visible');
-        modal.setAttribute('aria-hidden', 'true');
-        onConfirmCallback = null; // Limpa o callback
-    }
-
-    // Eventos para fechar o modal
-    modal.addEventListener('click', (e) => {
-        if (e.target.id === 'confirmation-modal' || e.target.id === 'modal-cancel-btn' || e.target.id === 'modal-close-btn') {
-            closeModal();
-        }
-    });
-
-    modalConfirmBtn.addEventListener('click', () => {
-        if (onConfirmCallback) {
-            onConfirmCallback();
-        }
-    });
 
     // -----------------------------------------------------
     // 4. GERENCIADOR DE CARREGAMENTO E INICIALIZAÇÃO
@@ -538,23 +543,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function initializeDashboard() {
         
-        // --- LÓGICA DO MENU MOBILE ---
-        if (menuToggle && sidebar) {
-            menuToggle.addEventListener('click', () => {
+        // --- LÓGICA DO MENU MOBILE (ADAPTADA PARA O HEADER GLOBAL) ---
+        const menuBtn = document.querySelector('.menu-hamburguer');
+        if (menuBtn && sidebar) {
+            // 1. Clona o botão para remover o listener do script.js (que abre o nav container)
+            const newMenuBtn = menuBtn.cloneNode(true);
+            menuBtn.parentNode.replaceChild(newMenuBtn, menuBtn);
+
+            // 2. Adiciona o novo listener que controla a sidebar do dashboard
+            newMenuBtn.addEventListener('click', (e) => {
+                e.preventDefault();
                 sidebar.classList.toggle('is-open');
             });
         }
 
         // --- LÓGICA DE LOGOUT ---
         // (Corrigido para usar a URL de login correta e o seletor de Sair)
-        const logoutLink = document.querySelector('.sidebar-footer a[href="../index.html"]'); // ACHA O BOTÃO "SAIR"
+        const logoutLink = document.querySelector('.sidebar-footer a[href="/index.html"]'); // ACHA O BOTÃO "SAIR"
         if (logoutLink) {
             logoutLink.addEventListener('click', (e) => {
                 e.preventDefault();
                 localStorage.removeItem('Yelo_token'); 
-                window.location.href = '../login.html'; // MANDA PARA A PÁGINA DE LOGIN (NA RAIZ)
+                window.location.href = '/login'; // MANDA PARA A PÁGINA DE LOGIN (NA RAIZ)
             });
         }
+
+        // --- NOVO: NAVEGAÇÃO INTERNA PELOS CARDS DO DASHBOARD ---
+        // Permite que qualquer elemento com 'data-page-target' funcione como link
+        mainContent.addEventListener('click', (e) => {
+            const targetCard = e.target.closest('[data-page-target]');
+            if (targetCard) {
+                const page = targetCard.getAttribute('data-page-target');
+                // Encontra o link correspondente na sidebar para ativar o estado visual
+                const sidebarLink = document.querySelector(`.sidebar-nav li[data-page="${page}"]`);
+                if (sidebarLink) sidebarLink.click();
+            }
+        });
 
         // --- ADICIONA EVENTO DE CLIQUE PARA A NAVEGAÇÃO ---
         navLinks.forEach(link => {

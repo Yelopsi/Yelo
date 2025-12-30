@@ -37,7 +37,7 @@ model PsychologistProfile {
   cpf       String   @unique
   slug      String   @unique
   status    String   @default("pending") // pending, active, rejected
-  plano     String   @default("Semente")
+  plano     String   @default("Essencial")
   isAdmin   Boolean  @default(false)
   fotoUrl   String?
   bio       String?

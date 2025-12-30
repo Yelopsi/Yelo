@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 mensagemEl.textContent = result.message + ' Redirecionando para o login...';
                 mensagemEl.className = 'mensagem-sucesso';
                 setTimeout(() => {
-                    window.location.href = 'login.html';
+                    window.location.href = '/login';
                 }, 3000);
             } else {
                 mensagemEl.textContent = result.error || 'Ocorreu um erro.';

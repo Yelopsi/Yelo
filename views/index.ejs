@@ -1,8 +1,88 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <title>Yelo - Bem-vindo</title>
+    <!-- Título: O que é + Benefício Principal -->
+    <title>Yelo | Terapia Online e Presencial com Psicólogos Verificados</title>
+    
+    <!-- Descrição: Resumo para o Google (até 160 caracteres) -->
+    <meta name="description" content="Encontre o psicólogo ideal para você. Conectamos pacientes a profissionais qualificados para terapia online ou presencial. Comece sua jornada hoje.">
+
+    <!-- Open Graph: Como aparece no WhatsApp/Facebook -->
+    <meta property="og:title" content="Yelo | Encontre seu Psicólogo Ideal">
+    <meta property="og:description" content="Terapia acessível e de qualidade. Conecte-se com profissionais verificados agora mesmo.">
+    <meta property="og:type" content="website">
+
     <%- include('partials/head') %>
+
+    <!-- SEO: Dados Estruturados (JSON-LD) para FAQ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [{
+        "@type": "Question",
+        "name": "Quem são os terapeutas da Yelo?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Apenas aceitamos Psicólogos com registro ativo no CRP (Conselho Regional de Psicologia). Todos passam por um processo de verificação de credenciais."
+        }
+      }, {
+        "@type": "Question",
+        "name": "Como o match encontra o ideal para mim?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Nosso algoritmo analisa suas respostas sobre o que você está sentindo e suas preferências para conectar você aos 3 profissionais mais compatíveis."
+        }
+      }, {
+        "@type": "Question",
+        "name": "Qual o valor das sessões?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Nossos profissionais definem seus próprios honorários, criando uma variedade de faixas de preço para que você encontre alguém que caiba no seu orçamento."
+        }
+      }]
+    }
+    </script>
+
+    <style>
+        /* Estilos inline para as novas seções sugeridas (Vantagens e Depoimentos) */
+        .secao-vantagens { padding: 4rem 1.5rem; background-color: #fff; text-align: center; }
+        .grid-vantagens { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; max-width: 1000px; margin: 2rem auto 0; }
+        .card-vantagem { padding: 1rem; border-radius: 12px; background: #fdfaf6; border: 1px solid #eee; transition: transform 0.3s ease; }
+        .card-vantagem:hover { transform: translateY(-5px); }
+        .icone-vantagem { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+        
+        /* --- SEÇÃO DEPOIMENTOS MODERNA --- */
+        .secao-depoimentos { padding: 6rem 1.5rem; background-color: #fdfaf6; position: relative; }
+        .header-depoimentos { text-align: center; margin-bottom: 4rem; }
+        
+        /* Badge de Nota */
+        .rating-badge { display: inline-flex; align-items: center; gap: 12px; background: #fff; padding: 10px 25px; border-radius: 50px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-top: 20px; border: 1px solid rgba(0,0,0,0.03); }
+        .rating-score { font-weight: 800; color: #1B4332; font-size: 1.2rem; }
+        .stars { color: #FFC107; letter-spacing: 2px; font-size: 1.1rem; }
+        .rating-count { color: #666; font-size: 0.9rem; font-weight: 500; }
+
+        @media (max-width: 600px) {
+            .rating-badge {
+                flex-wrap: wrap;
+                justify-content: center;
+                border-radius: 24px;
+                padding: 15px 20px;
+            }
+            .rating-count { width: 100%; margin-top: 5px; }
+        }
+
+        .grid-depoimentos { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; max-width: 1200px; margin: 0 auto; }
+        .card-depoimento { background: #fff; padding: 2.5rem; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); text-align: left; transition: transform 0.3s ease; border: 1px solid rgba(0,0,0,0.02); display: flex; flex-direction: column; }
+        .card-depoimento:hover { transform: translateY(-8px); box-shadow: 0 20px 50px rgba(0,0,0,0.08); }
+        .card-depoimento p { font-size: 1.05rem; line-height: 1.7; color: #444; font-style: italic; margin-bottom: 2rem; flex-grow: 1; }
+        
+        .autor-depoimento { display: flex; align-items: center; gap: 15px; border-top: 1px solid #f0f0f0; padding-top: 20px; }
+        .avatar-depoimento { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #1B4332; font-size: 1.1rem; }
+        .info-autor { display: flex; flex-direction: column; }
+        .nome-autor { font-weight: 700; color: #1B4332; font-size: 1rem; }
+        .status-autor { font-size: 0.8rem; color: #888; }
+    </style>
 </head>
 <body>
 
@@ -11,7 +91,23 @@
     <main>
         <section class="hero ruido hero-fundo-escuro">
             <div class="hero-texto">
-                <h1>Você merece ficar bem.</h1>
+                <% 
+                    const frases = [
+                        "ficar bem.",
+                        "ser feliz.",
+                        "ter paz.",
+                        "viver leve.",
+                        "ser ouvido(a).",
+                        "se reencontrar.",
+                        "acolhimento.",
+                        "cuidar de si.",
+                        "ser sua prioridade.",
+                        "investir em você.",
+                        "uma vida plena."
+                    ];
+                    const fraseAleatoria = frases[Math.floor(Math.random() * frases.length)];
+                %>
+                <h1>Você merece <%= fraseAleatoria %></h1>
                 <p>Encontrar a pessoa certa para te acompanhar nessa jornada é o primeiro passo.</p>
             </div>
             <a href="/questionario.html" class="btn-cta-principal">Começar</a>
@@ -22,18 +118,108 @@
             </div>
         </section>
 
-        <section class="secao-terapeutas ruido">
+        <!-- NOVA SEÇÃO: Vantagens (Por que Yelo?) -->
+        <section class="secao-vantagens hidden">
+            <div class="container">
+                <h2 class="titulo-secao">Por que escolher a Yelo?</h2>
+                <p class="subtitulo-secao">Cuidar da mente não precisa ser complicado.</p>
+                <div class="grid-vantagens">
+                    <div class="card-vantagem">
+                        <span class="icone-vantagem">🎯</span>
+                        <h3>Match Inteligente</h3>
+                        <p>Não perca tempo procurando. Nossa tecnologia conecta você aos especialistas ideais para sua necessidade específica.</p>
+                    </div>
+                    <div class="card-vantagem">
+                        <span class="icone-vantagem">🔒</span>
+                        <h3>100% Sigiloso e Seguro</h3>
+                        <p>Sua privacidade é nossa prioridade. Plataforma criptografada e profissionais éticos verificados pelo CRP.</p>
+                    </div>
+                    <div class="card-vantagem">
+                        <span class="icone-vantagem">🔄</span>
+                        <h3>Troca Facilitada</h3>
+                        <p>Não se adaptou? Acontece. Troque de profissional a qualquer momento sem burocracia ou custo extra.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="secao-terapeutas ruido hidden">
             <div class="secao-conteudo">
                 <div class="texto-terapeutas">
-                    <h2>Terapeutas profissionais e qualificados em quem você pode confiar.</h2>
-                    <p>Tenha acesso à maior rede de terapeutas qualificados e experientes do mundo, que podem te ajudar com uma variedade de questões, incluindo depressão, ansiedade, relacionamentos, luto e muito mais.</p>
+                    <h2>Profissionais verificados em quem você pode confiar.</h2>
+                    <p>Todos os psicólogos da Yelo possuem registro ativo no CRP e passam por um rigoroso processo de verificação. Aqui, você encontra especialistas em ansiedade, depressão, carreira, relacionamentos e muito mais.</p>
                     <a href="/questionario.html" class="btn-verde">Encontre seu terapeuta</a>
                 </div>
-                <div class="imagens-terapeutas" id="vitrine-terapeutas">
-                    <img src="https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg" alt="Foto de terapeuta 1" class="foto-terapeuta foto-1">
-                    <img src="https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg" alt="Foto de terapeuta 2" class="foto-terapeuta foto-2">
-                    <img src="https://images.pexels.com/photos/1043473/pexels-photo-1043473.jpeg" alt="Foto de terapeuta 3" class="foto-terapeuta foto-3">
-                    <img src="https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg" alt="Foto de terapeuta 4" class="foto-terapeuta foto-4">
+                <div class="therapist-collage" aria-hidden="true">
+                     <%
+                        const mocks = [
+                            { src: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg", alt: "Psicóloga especialista" },
+                            { src: "https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg", alt: "Psicólogo clínico" },
+                            { src: "https://images.pexels.com/photos/1043473/pexels-photo-1043473.jpeg", alt: "Terapeuta ocupacional" },
+                            { src: "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg", alt: "Psicóloga comportamental" },
+                            { src: "https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg", alt: "Psicólogo humanista" },
+                            { src: "https://images.pexels.com/photos/1024311/pexels-photo-1024311.jpeg", alt: "Psicanalista" },
+                            { src: "https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg", alt: "Terapeuta de casal" },
+                            { src: "https://images.pexels.com/photos/1587009/pexels-photo-1587009.jpeg", alt: "Psicóloga infantil" }
+                        ];
+
+                        let listaExibicao = [];
+                        
+                        // Tenta encontrar a variável de profissionais (suporte a 'profissionais' ou 'psicologos')
+                        // IMPORTANTE: O Controller deve enviar: res.render('index', { profissionais: [...] })
+                        let dadosProfissionais = [];
+                        
+                        if (typeof profissionais !== 'undefined' && profissionais) {
+                            dadosProfissionais = profissionais;
+                        } else if (typeof psicologos !== 'undefined' && psicologos) {
+                            dadosProfissionais = psicologos;
+                        }
+
+                        // Garante que é um array
+                        if (!Array.isArray(dadosProfissionais)) dadosProfissionais = [];
+
+                        if (dadosProfissionais.length > 0) {
+                            const reais = dadosProfissionais.map(p => {
+                                // Tenta várias propriedades de foto
+                                let img = p.fotoUrl || p.foto || p.fotoPerfil || p.avatar || '/assets/images/default-avatar.png';
+                                // Correção: Se o caminho for relativo (ex: "uploads/foto.jpg") e não tiver barra, adiciona.
+                                if (img && !img.startsWith('http') && !img.startsWith('/')) {
+                                    img = '/' + img;
+                                }
+                                return { 
+                                    src: img, 
+                                    alt: p.nome || 'Profissional Yelo'
+                                };
+                            });
+                            listaExibicao = [...reais];
+                            // Embaralha os reais
+                            listaExibicao.sort(() => 0.5 - Math.random());
+                        }
+
+                        // Completa com mocks até ter 6 itens
+                        if (listaExibicao.length < 6) {
+                            const faltam = 6 - listaExibicao.length;
+                            // Embaralha os mocks para variar
+                            const mocksEmbaralhados = mocks.sort(() => 0.5 - Math.random());
+                            
+                            for(let i = 0; i < faltam; i++) {
+                                listaExibicao.push(mocksEmbaralhados[i % mocksEmbaralhados.length]);
+                            }
+                        }
+                        
+                        // Garante exatamente 6 itens para o layout
+                        listaExibicao = listaExibicao.slice(0, 6);
+                    %>
+                    <!-- DEBUG: Profissionais encontrados no banco: <%= dadosProfissionais.length %> -->
+                    <!-- DEBUG: Total exibido (com mocks): <%= listaExibicao.length %> -->
+                    <div class="left-column">
+                        <% listaExibicao.slice(0, 3).forEach(prof => { %><img src="<%= prof.src %>" alt="<%= prof.alt %>" loading="lazy"><% }); %>
+                        <% listaExibicao.slice(0, 3).forEach(prof => { %><img src="<%= prof.src %>" alt="<%= prof.alt %>" loading="lazy"><% }); %>
+                    </div>
+                    <div class="right-column">
+                        <% listaExibicao.slice(3, 6).forEach(prof => { %><img src="<%= prof.src %>" alt="<%= prof.alt %>" loading="lazy"><% }); %>
+                        <% listaExibicao.slice(3, 6).forEach(prof => { %><img src="<%= prof.src %>" alt="<%= prof.alt %>" loading="lazy"><% }); %>
+                    </div>
                 </div>
             </div>
             <div class="wave-divider">
@@ -43,9 +229,9 @@
             </div>
         </section>
 
-        <section class="como-funciona ruido">
+        <section class="como-funciona ruido hidden">
             <div class="container">
-                <h2 class="titulo-secao" style="font-size: 3rem; margin-bottom: 10px;">Como a Yelo funciona</h2>
+                <h2 class="titulo-secao">Como a Yelo funciona</h2>
                 <p class="subtitulo-secao">Uma jornada simples, transparente e focada no seu bem-estar.</p>
                 <div class="steps-wrapper">
                     <div class="step-row">
@@ -57,7 +243,7 @@
                         <div class="step-image-col">
                             <div class="step-blob"></div>
                             <div class="step-img-frame">
-                                <img src="https://images.pexels.com/photos/4098228/pexels-photo-4098228.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Pessoa respondendo questionário">
+                                <img src="/assets/images/passo_1.png" alt="Ilustração flat de lista de verificação e questionário" width="450" height="350">
                             </div>
                         </div>
                     </div>
@@ -70,7 +256,7 @@
                         <div class="step-image-col">
                             <div class="step-blob"></div>
                             <div class="step-img-frame">
-                                <img src="https://images.pexels.com/photos/7653109/pexels-photo-7653109.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Psicólogo em videochamada">
+                                <img src="/assets/images/passo_2.png" alt="Ilustração flat de pessoa em videochamada no laptop" width="450" height="350">
                             </div>
                         </div>
                     </div>
@@ -83,13 +269,13 @@
                         <div class="step-image-col">
                             <div class="step-blob"></div>
                             <div class="step-img-frame">
-                                <img src="https://images.pexels.com/photos/3772612/pexels-photo-3772612.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Pessoa feliz fazendo terapia">
+                                <img src="/assets/images/passo_3.png" alt="Ilustração flat de pessoa em paz e equilíbrio mental" width="450" height="350">
                             </div>
                         </div>
                     </div>
                 </div>
                 <div style="margin-top: 80px; text-align: center;">
-                    <a href="/questionario.html" class="btn-cta-principal">Começar minha jornada agora</a>
+                    <a href="/questionario.html" class="btn-cta-principal">Começar agora</a>
                 </div>
             </div>
             <div class="wave-divider">
@@ -99,7 +285,43 @@
             </div>
         </section>
 
-        <section class="faq-secao ruido">
+        <!-- NOVA SEÇÃO: Depoimentos (Prova Social) -->
+        <section class="secao-depoimentos hidden">
+            <div class="container">
+                <div class="header-depoimentos">
+                    <h2 class="titulo-secao">Histórias de quem já começou</h2>
+                    <div class="rating-badge">
+                        <span class="rating-score"><%= typeof mediaAvaliacao !== 'undefined' ? mediaAvaliacao : '4.9' %>/5</span>
+                        <!-- Estrelas Dinâmicas (Preenchimento via CSS width) -->
+                        <div class="stars-wrapper" style="position: relative; display: inline-block; color: #e0e0e0; font-size: 1.1rem; letter-spacing: 2px;">
+                            ★★★★★
+                            <div style="position: absolute; top: 0; left: 0; overflow: hidden; width: <%= (parseFloat(typeof mediaAvaliacao !== 'undefined' ? mediaAvaliacao : 4.9) / 5) * 100 %>%; color: #FFC107; white-space: nowrap;">★★★★★</div>
+                        </div>
+                        <span class="rating-count">Baseado em <%= typeof totalAvaliacoes !== 'undefined' ? totalAvaliacoes : '2.000+' %> avaliações</span>
+                    </div>
+                </div>
+
+                <div class="grid-depoimentos">
+                    <% 
+                        const colors = ['#FFD166', '#06D6A0', '#118AB2', '#EF476F'];
+                        (typeof depoimentos !== 'undefined' ? depoimentos : []).forEach((depo, index) => { 
+                    %>
+                    <div class="card-depoimento">
+                        <p>"<%= depo.texto %>"</p>
+                        <div class="autor-depoimento">
+                            <div class="avatar-depoimento" style="background-color: <%= colors[index % colors.length] %>;"><%= depo.inicial %></div>
+                            <div class="info-autor">
+                                <span class="nome-autor"><%= depo.nome %></span>
+                                <span class="status-autor">Paciente Verificada</span>
+                            </div>
+                        </div>
+                    </div>
+                    <% }); %>
+                </div>
+            </div>
+        </section>
+
+        <section class="faq-secao ruido hidden">
             <h2 class="titulo-secao">Perguntas Frequentes</h2>
             <div class="acordeao-container">
                 <div class="acordeao-item">
@@ -129,11 +351,11 @@
             </div>
         </section>
 
-        <section class="aviso-crise ruido">
+        <section class="aviso-crise ruido hidden">
             <div class="aviso-conteudo">
                 <div class="aviso-texto">
                     <p>
-                        Se você está em crise ou qualquer outra pessoa pode estar em perigo, <strong>não</strong> use este site. <a href="/recursos_crise.html">Estes recursos</a> podem fornecer ajuda imediata.
+                        Se você está em crise ou qualquer outra pessoa pode estar em perigo, <strong>não</strong> use este site. <a href="/ajuda">Estes recursos</a> podem fornecer ajuda imediata.
                     </p>
                 </div>
             </div>

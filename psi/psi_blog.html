@@ -3,7 +3,7 @@
         <h2>Meus Artigos</h2>
         <p>Compartilhe sua expertise. Artigos aumentam sua visibilidade e autoridade na plataforma.</p>
     </div>
-    <img src="../assets/images/blog-header.svg" alt="Ilustração" onerror="this.style.display='none'">
+    <img src="/assets/images/blog-header.svg" alt="Ilustração" onerror="this.style.display='none'">
 </div>
 
 <div id="blog-container" style="max-width: 800px; margin: 0 auto; padding-bottom: 80px;">
@@ -20,6 +20,9 @@
             <div style="text-align: center; color: #999; padding: 40px;">
                 Carregando seus artigos...
             </div>
+        </div>
+        <div style="text-align: center; margin-top: 30px;">
+            <button id="btn-load-more-articles" class="btn btn-secundario hidden">Mostrar mais</button>
         </div>
     </div>
 
@@ -79,8 +82,8 @@
         margin-bottom: 30px; /* Espaço para o conteúdo abaixo */
     }
     /* Adicionamos !important para garantir que fique branco */
-    .comunidade-header h2 { margin: 0 0 10px 0; font-family: 'New Kansas', serif; font-size: 1.8rem; color: #ffffff !important; }
-    .comunidade-header p { margin: 0; opacity: 0.9; font-size: 1.1rem; max-width: 600px; }
+    .comunidade-header h2 { margin: 0 0 10px 0; font-family: var(--font-titulos); font-size: 2.2rem; color: #ffffff !important; }
+    .comunidade-header p { margin: 0; opacity: 0.9; font-size: 1.4rem; max-width: 600px; }
     .comunidade-header img { height: 120px; width: auto; }
 
     /* 2. Animação e Lista (MANTIDO) */

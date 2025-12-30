@@ -18,7 +18,7 @@
         
         <aside class="dashboard-sidebar">
             <div class="sidebar-header"> 
-                <img src="../assets/logos/logo_duplo_branco.png" alt="Logo Yelo" class="sidebar-logo">
+                <img src="../assets/logos/logo-branca.png" alt="Logo Yelo" class="sidebar-logo">
             </div>
             <nav class="sidebar-nav">
                 <ul>
@@ -31,13 +31,13 @@
             
             <div class="main-header" style="background-color: #E63946; margin-bottom: 30px;">
                 <div class="header-content">
-                    <h1 style="color: white; font-family: 'New Kansas', serif;">É uma pena ver você partir, <span id="display-nome-psi"></span></h1>
+                    <h1 style="color: white; font-family: 'Montserrat', sans-serif;">É uma pena ver você partir, <span id="display-nome-psi"></span></h1>
                     <p class="subtitulo-header" style="color: rgba(255,255,255,0.9);">Sentiremos sua falta na nossa comunidade. Antes de ir, confira o impacto que você gerou na plataforma.</p>
                 </div>
             </div>
 
             <div class="widget">
-                <h3>Sua Jornada no Yelo</h3>
+                <h3>Sua Jornada na Yelo</h3>
                 <div class="exit-stats-grid">
                     <div class="exit-stat-card">
                         <div class="stat-icon">📅</div>
@@ -157,6 +157,15 @@
                         const primeiroNome = nomes[0].charAt(0).toUpperCase() + nomes[0].slice(1).toLowerCase();
                         document.getElementById('display-nome-psi').textContent = primeiroNome + '!';
                     }
+
+                    // Alimentar KPI de Avaliação (Reputação)
+                    if (profile.reviews && Array.isArray(profile.reviews) && profile.reviews.length > 0) {
+                        const total = profile.reviews.reduce((acc, r) => acc + (r.rating || 0), 0);
+                        const media = total / profile.reviews.length;
+                        document.getElementById('stat-avaliacao').textContent = media.toFixed(1);
+                    } else {
+                        document.getElementById('stat-avaliacao').textContent = '5.0';
+                    }
                 }
                 
                 // Busca Stats (Mantido igual)
@@ -165,9 +174,11 @@
                 });
                 if(resStats.ok) {
                     const stats = await resStats.json();
-                    document.getElementById('stat-dias').textContent = stats.daysActive || '--';
-                    document.getElementById('stat-views').textContent = stats.profileViews || '--';
-                    document.getElementById('stat-contatos').textContent = stats.contactsReceived || '--';
+                    // Helper para aceitar 0 como valor válido
+                    const val = (v) => (v !== undefined && v !== null) ? v : '--';
+                    document.getElementById('stat-dias').textContent = val(stats.daysActive);
+                    document.getElementById('stat-views').textContent = val(stats.profileViews);
+                    document.getElementById('stat-contatos').textContent = val(stats.contactsReceived);
                 }
 
             } catch(e) {
@@ -293,7 +304,7 @@
 <div id="modal-decisao-saida" class="custom-modal-overlay" style="display: none;">
     <div class="custom-modal-box" style="text-align: left;">
         <div style="background: #FFF3CD; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #FFEEBA;">
-            <h3 style="color: #856404; margin: 0 0 10px 0; font-family: 'New Kansas', serif;">⚠️ Você possui uma assinatura ativa</h3>
+            <h3 style="color: #856404; margin: 0 0 10px 0; font-family: 'Montserrat', sans-serif;">⚠️ Você possui uma assinatura ativa</h3>
             <p style="color: #856404; font-size: 0.9rem; margin: 0;">Identificamos que seu plano ainda está válido. Como deseja proceder?</p>
         </div>
 

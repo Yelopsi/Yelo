@@ -25,7 +25,7 @@
                 <input type="tel" id="admin-telefone">
             </div>
             <div class="form-section-acoes">
-                <button type="submit" class="btn btn-principal">Salvar Alterações</button>
+                <button type="submit" class="btn-primario btn-sm">Salvar Alterações</button>
             </div>
         </form>
     </div>
@@ -34,20 +34,22 @@
     <div class="form-section">
         <h2>Alterar Senha</h2>
         <form id="form-senha-admin">
+            <!-- Campo oculto para acessibilidade e gerenciadores de senha -->
+            <input type="text" name="username" autocomplete="username" style="display:none;">
             <div class="form-group">
                 <label for="admin-senha-atual">Senha Atual</label>
-                <input type="password" id="admin-senha-atual" required>
+                <input type="password" id="admin-senha-atual" required autocomplete="current-password">
             </div>
             <div class="form-group">
                 <label for="admin-nova-senha">Nova Senha</label>
-                <input type="password" id="admin-nova-senha" required>
+                <input type="password" id="admin-nova-senha" required autocomplete="new-password">
             </div>
             <div class="form-group">
                 <label for="admin-confirmar-senha">Confirmar Nova Senha</label>
-                <input type="password" id="admin-confirmar-senha" required>
+                <input type="password" id="admin-confirmar-senha" required autocomplete="new-password">
             </div>
             <div class="form-section-acoes">
-                <button type="submit" class="btn btn-principal">Alterar Senha</button>
+                <button type="submit" class="btn-primario btn-sm">Alterar Senha</button>
             </div>
         </form>
     </div>

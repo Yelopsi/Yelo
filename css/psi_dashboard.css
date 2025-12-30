@@ -1,42 +1,28 @@
 /* ==========================================================================
    1. VARIÁVEIS E FONTES GLOBAIS
    ========================================================================== */
-/* IMPORTANTE: Importar a fonte Inter do Google */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
+@import url('01-variables.css');
 :root {
-    --verde-escuro: #1B4332;
-    --cor-Yelo: #FFEE8C;
-    --branco-puro: #FFFFFF;
-    --cinza-fundo: #f8f9fa;
-    --cinza-borda: #e9ecef;
-    --cinza-texto: #555;
-    --cinza-texto-claro: #adb5bd;
-    --coral-quente: #E63946;
-}
-
-/* Fonte Serifada (Títulos) */
-@font-face {
-    font-family: 'New Kansas';
-    /* Garante que se a fonte não carregar, usa serif padrão */
-    src: url('../assets/fonts/NewKansas-Bold.woff2') format('woff2'),
-         url('../assets/fonts/NewKansas-Bold.woff') format('woff');
-    font-weight: 700;
-    font-style: normal;
-    font-display: swap;
 }
 /* ==========================================================================
    2. ESTRUTURA DO LAYOUT (DASHBOARD)
    ========================================================================== */
+html {
+    overflow-x: hidden; /* Impede que a página inteira role para os lados */
+}
+
 body.pagina-dashboard {
-    font-family: 'Inter', sans-serif !important; /* Força a fonte Inter */
+    font-family: var(--font-principal) !important; /* Força a fonte Inter */
     background-color: var(--cinza-fundo);
     color: var(--cinza-texto);
     margin: 0;
     padding: 0;
-    height: 100vh;
-    width: 100vw;
+    height: 100vh; /* Fallback */
+    height: 100dvh; /* Altura dinâmica para mobile (ignora barra de endereço) */
+    width: 100%; /* Corrige a "dança" lateral (era 100vw) */
+    max-width: 100vw; /* Garante que não exceda a viewport */
     overflow: hidden; /* Remove barra de rolagem dupla */
+    position: relative;
 }
 
 /* Correção para Modais (Garante que fiquem escondidos e sobrepostos) */
@@ -86,11 +72,19 @@ body.pagina-dashboard {
     padding: 40px;
     overflow-y: auto; /* A rolagem acontece AQUI, não no body */
     height: 100vh;
+    position: relative; /* Necessário para o botão de menu mobile rolar junto */
     box-sizing: border-box;
+    background-color: transparent !important; /* Permite ver o ruído de fundo */
+    overflow-x: hidden; /* CRÍTICO: Impede a "dança" lateral no mobile */
+}
+
+/* Ajuste para quando o chat mobile estiver aberto */
+body.chat-mobile-open {
+    overflow: hidden; /* Trava o scroll do body */
 }
 
 /* Títulos Gerais */
-h1, h2, h3, h4 { font-family: 'Fraunces', serif; color: var(--verde-escuro); }
+h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); font-weight: 500; }
 
 /* ==========================================================================
    3. SIDEBAR (CORRIGIDA - ESTILO ADMIN + BOTÃO AMARELO)
@@ -110,16 +104,6 @@ h1, h2, h3, h4 { font-family: 'Fraunces', serif; color: var(--verde-escuro); }
     box-shadow: 5px 0 15px rgba(0,0,0,0.05);
 }
 
-/* Efeito Ruído (Fundo) */
-.dashboard-sidebar::before {
-    content: "";
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 600 600' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    opacity: 0.06;
-    z-index: 0;
-}
-
 /* Elementos acima do ruído */
 .sidebar-header, .sidebar-nav, .sidebar-footer { position: relative; z-index: 1; }
 
@@ -136,7 +120,13 @@ h1, h2, h3, h4 { font-family: 'Fraunces', serif; color: var(--verde-escuro); }
     object-fit: cover;
     margin-bottom: 10px;
 }
-.user-info p { margin: 0; font-weight: 600; color: var(--branco-puro); font-size: 1rem; }
+.user-info p { 
+    margin: 0; 
+    font-weight: 500; /* Medium weight for New Kansas */
+    color: var(--branco-puro); 
+    font-size: 1.1rem; /* Slightly larger for better presence */
+    font-family: var(--font-titulos); /* Use New Kansas font */
+}
 .user-info .sidebar-logout {
     font-size: 0.85rem; color: var(--cor-Yelo);
     text-decoration: none; opacity: 0.8; transition: opacity 0.2s; font-weight: bold;
@@ -145,12 +135,12 @@ h1, h2, h3, h4 { font-family: 'Fraunces', serif; color: var(--verde-escuro); }
 
 /* --- BOTÃO "VER COMO PACIENTE" (AMARELO) --- */
 #btn-view-public-profile {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    width: 100%; padding: 10px; margin-top: 15px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 8px 20px; margin-top: 15px;
     background-color: var(--cor-Yelo);
     border: none; border-radius: 25px;
     color: var(--verde-escuro);
-    text-decoration: none; font-size: 0.9rem; font-weight: 700;
+    text-decoration: none; font-size: 0.85rem; font-weight: 700;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     transition: all 0.2s ease;
     box-sizing: border-box;
@@ -159,18 +149,27 @@ h1, h2, h3, h4 { font-family: 'Fraunces', serif; color: var(--verde-escuro); }
 
 /* Navegação */
 .sidebar-nav { margin-top: 20px; flex-grow: 1; overflow-y: auto; }
-.sidebar-nav ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 5px; }
+
+/* Força a direção da coluna para sobrepor o style.css global */
+/* AQUI: Altere o 'gap' para aumentar/diminuir a distância entre os itens */
+.sidebar-nav ul { list-style: none; padding: 0; margin: 0; display: flex !important; flex-direction: column !important; gap: 5px !important; align-items: stretch !important; width: 100%; }
 
 /* Item do Menu */
 .sidebar-nav li a {
-    display: flex; align-items: center; justify-content: space-between; /* Espaço entre texto e badge */
-    gap: 12px;
-    padding: 12px 15px;
+    display: flex !important; align-items: center; justify-content: flex-start !important; /* Alinhado à esquerda */
+    /* AQUI: O primeiro valor (6px) é a altura (topo/baixo), o segundo (12px) é a largura */
+    gap: 10px;
+    padding: 10px 8px; 
+    width: 100%;
+    box-sizing: border-box;
     border-radius: 10px;
     color: var(--cinza-texto-claro);
     text-decoration: none;
+    text-align: left !important;
     font-weight: 500; font-size: 0.95rem;
     transition: all 0.2s ease;
+    overflow: hidden; /* Impede que a cor de fundo vaze */
+    margin: 0;
 }
 
 /* Estado Ativo e Hover */
@@ -194,20 +193,25 @@ h1, h2, h3, h4 { font-family: 'Fraunces', serif; color: var(--verde-escuro); }
 /* Rodapé Sidebar */
 .sidebar-footer { margin-top: auto; padding-top: 20px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); }
 
-/* --- ESCONDER BARRA DE ROLAGEM DA SIDEBAR --- */
+/* --- BARRA DE ROLAGEM DA SIDEBAR (CUSTOMIZADA) --- */
 
 /* Para Chrome, Safari e Opera */
 .sidebar-nav::-webkit-scrollbar {
-    display: none;
+    width: 5px; /* Largura fina e elegante */
+    display: block;
 }
+.sidebar-nav::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 3px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+.sidebar-nav::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
 
 /* Para Firefox, IE e Edge */
 .sidebar-nav {
-    -ms-overflow-style: none;  /* IE e Edge */
-    scrollbar-width: none;  /* Firefox */
+    scrollbar-width: thin;  /* Firefox */
+    scrollbar-color: rgba(255,255,255,0.2) transparent;
     
     /* Garante rolagem suave */
     overflow-y: auto; 
+    overflow-x: hidden;
 }
 
 /* Ajuste fino para o container principal não criar barra dupla */
@@ -226,7 +230,7 @@ h1, h2, h3, h4 { font-family: 'Fraunces', serif; color: var(--verde-escuro); }
 }
 
 .form-secao h2 {
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-titulos);
     margin-bottom: 25px;
     border-bottom: 1px solid var(--cinza-borda);
     padding-bottom: 15px;
@@ -242,14 +246,26 @@ h1, h2, h3, h4 { font-family: 'Fraunces', serif; color: var(--verde-escuro); }
 .form-group input, .form-group textarea, .form-group select, .filtro-select {
     width: 100%; padding: 11px;
     border: 1px solid #ced4da; border-radius: 8px;
-    font-family: 'Inter', sans-serif; font-size: 16px;
+    font-family: var(--font-principal); font-size: 16px;
     background-color: #f8f9fa; box-sizing: border-box;
 }
-.form-group textarea#bio { min-height: 120px; text-align: justify; }
+textarea#bio {
+    min-height: 120px;
+    text-align: justify;
+    white-space: pre-wrap;
+    line-height: 1.6;
+    padding: 15px;
+}
 
 /* Validação */
 .form-group input.input-error { border-color: var(--coral-quente); }
 .form-error-message { color: var(--coral-quente); font-size: 13px; margin-top: 5px; }
+
+#form-fieldset {
+    border: none;
+    padding: 0;
+    margin: 0;
+}
 
 /* Botões de Formulário */
 .btn { padding: 10px 24px; border-radius: 25px; font-weight: 700; border: none; cursor: pointer; transition: transform 0.2s; display: inline-block; }
@@ -439,19 +455,38 @@ h1, h2, h3, h4 { font-family: 'Fraunces', serif; color: var(--verde-escuro); }
 .message-item.unread .message-subject { font-weight: bold; }
 
 /* KPIs e Planos */
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; padding: 24px 0; }
-.kpi-card { background: #fff; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; }
-/* Adicionei font-family: 'New Kansas', serif; */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; padding: 10px 0 30px 0; }
+
+.kpi-card { 
+    background: #fff; 
+    padding: 20px; 
+    border-radius: 16px; 
+    border: 1px solid rgba(0,0,0,0.04); 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+}
+.kpi-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.08); }
+
+.kpi-card h3 { font-family: var(--font-principal); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-top: 0; margin-bottom: 10px; font-weight: 600; }
+
 .kpi-card .kpi-value { 
-    font-family: 'Fraunces', serif; 
-    font-size: 36px; 
+    font-family: var(--font-titulos); 
+    font-size: 2.2rem; 
     font-weight: 700; 
     color: var(--verde-escuro); 
+    line-height: 1;
 }
 
-.plan-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 24px; padding: 24px 0; }
-.plano-card { flex: 1 1 300px; max-width: 320px; background: #fff; border: 2px solid var(--cinza-borda); padding: 30px; border-radius: 16px; display: flex; flex-direction: column; }
+.plan-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px 0; }
+.plano-card { flex: 1 1 280px; max-width: 300px; background: #fff; border: 2px solid var(--cinza-borda); padding: 24px; border-radius: 16px; display: flex; flex-direction: column; position: relative; }
 .plano-card--ativo { border-color: var(--verde-escuro); transform: scale(1.03); }
+
+.plano-card.promo-ativa {
+    border: 2px solid #16a34a;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    position: relative;
+}
 
 /* ==========================================================================
    7. Q&A COMUNIDADE
@@ -459,6 +494,17 @@ h1, h2, h3, h4 { font-family: 'Fraunces', serif; color: var(--verde-escuro); }
 .qna-card-psi { background: #fff; padding: 25px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
 .qna-question-title { font-size: 1.2rem; margin-bottom: 10px; }
 .qna-card-body { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+
+/* Botão Responder (Ajuste solicitado: Pequeno e à esquerda) */
+.btn-responder {
+    width: auto !important;
+    display: inline-block !important;
+    padding: 8px 20px !important;
+    font-size: 0.9rem !important;
+    margin-top: 15px;
+    background-color: var(--verde-escuro);
+    color: #fff;
+}
 
 /* Modal Q&A */
 #qna-answer-modal textarea { width: 100%; min-height: 150px; border: 1px solid #ced4da; padding: 10px; }
@@ -469,16 +515,81 @@ h1, h2, h3, h4 { font-family: 'Fraunces', serif; color: var(--verde-escuro); }
    8. RESPONSIVIDADE MOBILE
    ========================================================================== */
 @media (max-width: 992px) {
-    .dashboard-sidebar { position: fixed; top: 0; left: 0; height: 100%; transform: translateX(-100%); transition: transform 0.3s; }
+    /* --- BACKDROP (FUNDO ESCURO PARA FOCO) --- */
+    .sidebar-backdrop {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background-color: rgba(27, 67, 50, 0.5); /* Verde escuro com transparência */
+        backdrop-filter: blur(2px);
+        z-index: 99999; /* ACIMA do chat (99990) */
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0s 0.3s;
+    }
+    .sidebar-backdrop.is-visible {
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 0.3s ease;
+    }
+
+    /* --- SIDEBAR (MENU LATERAL) --- */
+    .dashboard-sidebar {
+        position: fixed; top: 0; left: 0; height: 100%;
+        transform: translateX(-100%);
+        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 100000; /* ACIMA de tudo (Chat e Backdrop) */
+    }
     .dashboard-sidebar.is-open { transform: translateX(0); }
-    .menu-toggle { display: block; position: fixed; top: 20px; left: 20px; z-index: 1001; background: #fff; border: none; padding: 10px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; }
-    .dashboard-main { width: 100%; padding: 80px 20px 20px 20px; }
+
+    /* --- BOTÃO HAMBÚRGUER (ANIMADO) --- */
+    .menu-toggle {
+        display: flex; flex-direction: column; 
+        justify-content: center; /* Centraliza verticalmente */
+        align-items: center;     /* Centraliza horizontalmente */
+        gap: 5px;                /* Espaçamento das barras */
+        width: 45px; height: 45px; 
+        padding: 0;              /* Remove padding extra */
+        position: fixed; top: 20px; left: 20px;
+        z-index: 100001 !important; /* Camada mais alta, acima da sidebar */
+        background-color: var(--verde-escuro); /* Cor padrão (fechado) */
+        border: none;
+        border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Sombra suave */
+        cursor: pointer;
+        transition: background-color 0.3s ease; /* Transição suave da cor de fundo */
+    }
+    .menu-toggle span { display: block; width: 22px; height: 2px; background-color: #fff; border-radius: 2px; transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease; transform-origin: center; }
+    /* Estado Ativo (Aberto) */
+    .menu-toggle.is-active {
+        background-color: #fff; /* Fundo branco quando aberto */
+    }
+    .menu-toggle.is-active span {
+        background-color: var(--verde-escuro); /* Barras verdes quando aberto */
+    }
+    .menu-toggle.is-active span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+    .menu-toggle.is-active span:nth-child(2) { opacity: 0; }
+    .menu-toggle.is-active span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+    /* --- CONTEÚDO PRINCIPAL --- */
+    .dashboard-main { width: 100%; padding: 80px 20px 150px 20px; }
+
+    /* Empilha os campos do formulário de perfil no mobile para melhor UX */
+    .profile-section .form-row {
+        flex-direction: column;
+        gap: 0; /* Remove o espaçamento lateral */
+    }
+    .profile-section .form-row .form-group {
+        margin-bottom: 20px; /* Adiciona espaçamento vertical entre os campos */
+    }
     .inbox-container { flex-direction: column; }
     .inbox-sidebar { width: 100%; max-width: none; height: auto; }
     .inbox-content { display: none; }
     .inbox-container.mostrando-conteudo .inbox-sidebar { display: none; }
     .inbox-container.mostrando-conteudo .inbox-content { display: block; }
     .btn-voltar-inbox { display: block; margin-bottom: 15px; }
+    
+    /* Mantém área de toque confortável no mobile */
+    .sidebar-nav li a { padding: 12px 15px; gap: 12px; }
 }
 @media (min-width: 993px) { .menu-toggle { display: none; } .btn-voltar-inbox { display: none; } }
 /* ==========================================================================
@@ -489,17 +600,18 @@ h1, h2, h3, h4 { font-family: 'Fraunces', serif; color: var(--verde-escuro); }
 .main-header {
     background-color: var(--verde-escuro);
     color: var(--branco-puro);
-    padding: 40px;
+    padding: 25px 30px;
     border-radius: 16px;
     margin-bottom: 40px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 .main-header h1 { 
+    font-family: var(--font-titulos); /* Garante a fonte New Kansas */
     color: var(--branco-puro); /* Força branco no fundo verde */
     margin: 0 0 10px 0; 
 }
 .subtitulo-header {
-    color: rgba(255, 255, 255, 0.9);
+    color: #ffffff !important;
     font-size: 1.1rem;
     margin: 0;
 }
@@ -523,7 +635,7 @@ h1, h2, h3, h4 { font-family: 'Fraunces', serif; color: var(--verde-escuro); }
     font-size: 0.9rem; text-transform: uppercase; color: var(--cinza-texto-claro); margin: 0 0 5px 0; letter-spacing: 1px;
 }
 .plano-nome { 
-    font-family: 'Fraunces', serif; font-size: 2rem; color: var(--verde-escuro); margin: 0; 
+    font-family: var(--font-titulos); font-size: 2rem; color: var(--verde-escuro); margin: 0; 
 }
 .plano-preco { font-weight: bold; color: var(--cinza-texto); margin: 5px 0; }
 .plano-data { font-size: 0.9rem; color: var(--cinza-texto-claro); margin: 0; }
@@ -562,11 +674,16 @@ h1, h2, h3, h4 { font-family: 'Fraunces', serif; color: var(--verde-escuro); }
     background-color: var(--verde-escuro); color: var(--branco-puro);
     padding: 5px 15px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase;
 }
-
+.main-header p {
+    font-size: 1.4rem; /* Tamanho de subtítulo, para combinar com o h1 */
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.85); /* Levemente mais opaco para leitura */
+    margin: 0;
+}
 /* Conteúdo do Card */
 .plano-card h2 { text-align: center; margin-top: 10px; }
 .plano-card .preco { 
-    font-family: 'Fraunces', serif; /* ADICIONADO */
+    font-family: var(--font-titulos); /* ADICIONADO */
     text-align: center; 
     font-size: 2.5rem; 
     font-weight: 700; 
@@ -711,22 +828,22 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     min-width: 180px; /* Tamanho mínimo elegante */
     padding: 12px 30px;
     font-size: 1rem;
+    border-radius: 8px; /* Arredondamento padrão para botões de ação */
 }
 
 /* 2. Botão de Excluir Conta */
 #btn-excluir-conta {
-    background: none;
-    border: 2px solid #d32f2f; /* Vermelho borda */
+    background: transparent;
+    border: none;
     color: #d32f2f;
-    padding: 10px 20px;
-    border-radius: 8px;
+    padding: 0;
+    text-decoration: underline;
     font-weight: 600;
-    transition: all 0.2s;
     margin-top: 10px;
+    display: inline-block;
 }
 #btn-excluir-conta:hover {
-    background-color: #d32f2f;
-    color: white;
+    color: #b71c1c; /* Vermelho mais escuro */
 }
 
 /* 3. Ajuste de Espaçamento entre Widgets */
@@ -903,7 +1020,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 /* 1. Nome do Plano (Correção de cor e fonte) */
 #banner-nome-plano, .nome-plano-banner {
     color: #1B4332 !important;        /* Força Verde Escuro (estava branco invisível) */
-    font-family: 'Fraunces', serif !important;
+    font-family: var(--font-titulos) !important;
     font-size: 2.2rem !important;
     font-weight: 700;
     margin-bottom: 10px;
@@ -1022,12 +1139,12 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     position: absolute; top: 15px; right: 20px;
     background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;
 }
-.modal-header h2 { margin-top: 0; font-size: 1.5rem; font-family: 'Fraunces', serif; color: var(--verde-escuro); }
+.modal-header h2 { margin-top: 0; font-size: 1.5rem; font-family: var(--font-titulos); color: var(--verde-escuro); }
 
 .modal-body textarea {
     width: 100%; height: 150px; padding: 12px;
     border: 1px solid #ced4da; border-radius: 8px; resize: vertical;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-principal);
 }
 .char-counter-modal { text-align: right; font-size: 0.8rem; color: #666; margin-top: 5px; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
@@ -1206,7 +1323,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 }
 
 .email-meta-text h2 {
-    font-family: 'Fraunces', serif;
+    font-family: var(--font-titulos);
     font-size: 1.5rem; color: var(--verde-escuro);
     margin: 0 0 5px 0;
 }
@@ -1275,7 +1392,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 .widget h3 {
     margin-top: 0;
     color: var(--verde-escuro);
-    font-family: 'Fraunces', serif;
+    font-family: var(--font-titulos);
 }
 
 /* Grid de Estatísticas (Os 4 quadrados) */
@@ -1307,7 +1424,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 }
 
 .stat-value {
-    font-family: 'Montserrat', sans-serif; /* Ou a fonte padrão do sistema */
+    font-family: var(--font-titulos); /* Destaque numérico em New Kansas */
     font-size: 28px;
     font-weight: 700;
     color: var(--verde-escuro);
@@ -1373,6 +1490,8 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 .premium-feature-container {
     position: relative;
     overflow: hidden; /* Garante que o blur não vaze para fora do card */
+    /* Garante altura uniforme nos cards bloqueados (especialmente no mobile) */
+    height: 180px;
 }
 
 /* O conteúdo que será borrado (Cards de métricas) */
@@ -1396,7 +1515,8 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     align-items: center;
     justify-content: center;
     z-index: 10;
-    background: rgba(255, 255, 255, 0.7); /* Fundo branco semitransparente mais forte */
+    background: rgba(255, 255, 255, 0.85); /* Fundo mais sólido para leitura */
+    backdrop-filter: blur(8px); /* Efeito de vidro fosco moderno */
     padding: 15px;
     text-align: center;
     border-radius: 12px; /* Segue o arredondamento do card */
@@ -1404,61 +1524,59 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 
 /* Círculo do Ícone do Cadeado */
 .lock-icon-circle {
-    width: 45px;
-    height: 45px;
-    background: var(--verde-escuro); /* Usa a variável global */
-    color: #fff;
+    width: 40px;
+    height: 40px;
+    background: var(--cor-Yelo); /* Amarelo para chamar atenção */
+    color: var(--verde-escuro);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    box-shadow: 0 5px 15px rgba(255, 238, 140, 0.5); /* Glow amarelo */
+    font-size: 1rem;
 }
 
 .lock-icon-circle svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
 }
 
 /* Texto Explicativo (ex: "Veja quem salvou...") */
 .premium-text {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-principal);
     font-size: 0.9rem;
     color: var(--verde-escuro);
-    font-weight: 600;
+    font-weight: 700;
     margin-bottom: 12px;
-    line-height: 1.3;
-    max-width: 80%;
+    line-height: 1.4;
+    max-width: 90%;
 }
 
 /* Botão "Liberar Acesso" */
 .btn-unlock-feature {
-    background: #fff;
-    border: 2px solid var(--verde-escuro);
-    color: var(--verde-escuro);
-    padding: 8px 20px;
-    border-radius: 25px;
-    font-size: 0.85rem;
-    font-family: 'Inter', sans-serif;
+    background: var(--verde-escuro);
+    border: none;
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    font-family: var(--font-principal);
     cursor: pointer;
     font-weight: 700;
     transition: all 0.2s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 15px rgba(27, 67, 50, 0.3);
 }
 
 .btn-unlock-feature:hover {
-    background: var(--verde-escuro);
-    color: #fff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    background: #143d2e;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(27, 67, 50, 0.4);
 }
 
 /* --- CORREÇÃO: FONTE DO PREÇO NO BANNER DE ASSINATURA --- */
 #banner-preco {
-    font-family: 'Fraunces', serif !important;
+    font-family: var(--font-titulos) !important;
     font-weight: 500; /* Ajuste fino para a fonte não ficar pesada demais */
     letter-spacing: 0.5px;
 }
@@ -1518,7 +1636,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 
 /* Títulos e Textos */
 .profile-info h1 {
-    font-family: 'Fraunces', serif;
+    font-family: var(--font-titulos);
     font-size: 2.2rem;
     color: var(--verde-escuro);
     margin: 10px 0 5px 0;
@@ -1537,9 +1655,11 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 }
 
 /* Texto da Bio (Alinhado à esquerda para leitura) */
-.profile-bio-hero {
+.profile-bio-hero,
+#psi-bio-text {
     margin-top: 30px;
-    text-align: left !important; /* Força alinhamento à esquerda */
+    text-align: justify;
+    text-justify: inter-word;
     border-top: 1px solid #eee;
     padding-top: 20px;
 }
@@ -1565,11 +1685,11 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     color: #888;
     letter-spacing: 1px;
     margin-bottom: 5px;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-principal);
 }
 
 .conversion-card .price {
-    font-family: 'Fraunces', serif;
+    font-family: var(--font-titulos);
     font-size: 2.5rem;
     color: var(--verde-escuro);
     font-weight: 700;
@@ -1680,14 +1800,14 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 
 /* 1. Tipografia das Abas (New Kansas) */
 .tab-link {
-    font-family: 'Fraunces', serif !important; /* Força a fonte */
+    font-family: var(--font-titulos) !important; /* Força a fonte */
     font-size: 1.1rem;
     letter-spacing: 0.5px;
 }
 
 /* 2. Título "Sobre Mim" */
 .titulo-bio {
-    font-family: 'Fraunces', serif;
+    font-family: var(--font-titulos);
     color: var(--verde-escuro);
     border-bottom: 1px solid #eee;
     padding-bottom: 10px;
@@ -1744,7 +1864,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     color: #666;
     font-size: 0.85rem;
     font-weight: normal;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-principal);
 }
 
 /* 5. Formulário de Avaliação (Input de Estrelas) */
@@ -1755,14 +1875,14 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     border: 1px solid #eee;
 }
 
-.review-form-box h4 { margin-top: 0; font-family: 'Fraunces', serif; }
+.review-form-box h4 { margin-top: 0; font-family: var(--font-titulos); }
 
 .review-form-box textarea {
     width: 100%;
     border: 1px solid #ccc;
     border-radius: 8px;
     padding: 10px;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-principal);
     margin-top: 10px;
 }
 
@@ -1788,4 +1908,838 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 .star-rating-input label:hover,
 .star-rating-input label:hover ~ label {
     color: #FFC107;
+}
+
+/* --- TAG DE OFERTA (Topo do Card) --- */
+.tag-oferta-topo {
+    position: absolute;
+    top: -16px; /* Centraliza exatamente na linha da borda superior */
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); /* Gradiente Vermelho */
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 6px 18px;
+    border-radius: 50px;
+    box-shadow: 0 4px 10px rgba(220, 38, 38, 0.3);
+    white-space: nowrap;
+    z-index: 5;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* --- PREÇO COM DESCONTO (Estilo Novo) --- */
+.preco-desconto {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+    margin: 15px 0;
+}
+
+.preco-antigo {
+    font-size: 1.2rem;
+    color: #999;
+    text-decoration: line-through;
+    font-weight: 400;
+}
+
+.preco-novo {
+    font-family: var(--font-titulos);
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--verde-escuro);
+    white-space: nowrap;
+}
+
+.preco-desconto span:last-of-type {
+    font-size: 1rem;
+    color: #888;
+}
+
+/* --- ESTILOS MODERNOS DO PERFIL (psi_meu_perfil.html) --- */
+
+.profile-section {
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 1px dashed #e0e0e0;
+}
+
+.profile-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.section-title {
+    font-family: var(--font-principal);
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--verde-escuro);
+    margin-bottom: 20px;
+    font-weight: 700;
+    opacity: 0.8;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 20px; /* Garante distância padrão entre linhas */
+}
+
+/* Remove margem interna para que o gap do .form-row controle tudo perfeitamente */
+.form-row .form-group {
+    margin-bottom: 0;
+}
+
+.social-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.highlight-box {
+    background-color: #f0fdf4; /* Verde bem claro */
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #bbf7d0;
+}
+
+/* --- INDICADOR DE MODO DE FORMULÁRIO (Visualização / Edição) --- */
+.mode-indicator-view, .mode-indicator-edit {
+    font-size: 0.85rem;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+.mode-indicator-view {
+    background: #f0f2f5;
+    color: #555;
+}
+.mode-indicator-edit {
+    background: #fffbeb; /* Amarelo claro */
+    color: #b45309; /* Laranja escuro */
+}
+.mode-indicator-edit #form-mode-icon { color: #f59e0b; }
+
+/* --- ANIMAÇÃO DE CARREGAMENTO (SKELETON/SHIMMER) --- */
+
+@keyframes shimmer {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* A classe que transforma o texto em uma barra cinza */
+.skeleton-text {
+    color: transparent !important; /* Esconde o texto original */
+    background-color: #e9ecef; /* Cor do placeholder (cinza claro) */
+    border-radius: 4px;
+    user-select: none;
+    cursor: progress;
+    min-height: 1em; /* Garante que o elemento tenha alguma altura mesmo se estiver vazio */
+}
+
+/* A classe que ativa a animação no card */
+.is-loading {
+    position: relative;
+    overflow: hidden;
+}
+
+/* O pseudo-elemento que cria o brilho deslizante */
+.is-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 1.5s infinite;
+}
+.mode-indicator-edit #form-mode-icon { color: #f59e0b; }
+}
+
+/* Animação para o FAB */
+@keyframes pulse-fab {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 12px 30px rgba(255, 238, 140, 0.4);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    }
+}
+
+/* ==========================================================================
+   10. FÓRUM DA COMUNIDADE
+   ========================================================================== */
+
+/* Botão Flutuante (FAB) */
+#forum-fab {
+    position: fixed;
+    bottom: 30px;
+    right: 40px;
+    width: 64px; /* Ligeiramente maior */
+    height: 64px;
+    background-color: var(--cor-Yelo); /* Amarelo para destaque */
+    color: var(--verde-escuro); /* Verde para contraste */
+    border: none;
+    border-radius: 50%;
+    font-size: 2.8rem; /* Símbolo '+' maior */
+    font-weight: 300; /* Símbolo '+' mais fino e elegante */
+    line-height: 60px; /* Ajuste para centralizar o '+' verticalmente */
+    text-align: center;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.25); /* Sombra mais forte para 'flutuar' */
+    cursor: pointer;
+    z-index: 1050;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+    animation: pulse-fab 2.5s infinite ease-in-out; /* Animação de pulso para chamar atenção */
+}
+#forum-fab:hover {
+    transform: scale(1.1) !important; /* Garante que o hover sobreponha a animação */
+    background-color: #fde468; /* Amarelo um pouco mais claro no hover */
+    animation-play-state: paused; /* Pausa a animação ao passar o mouse */
+}
+
+/* Modal de Criação de Post */
+#forum-create-modal .custom-modal-box {
+    max-width: 700px;
+}
+#forum-create-modal .modal-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #999;
+}
+
+/* Abas de Filtro do Fórum */
+.forum-tabs .tab-item {
+    cursor: pointer;
+    padding: 5px 10px;
+    border-bottom: 2px solid transparent;
+    color: #666;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+.forum-tabs .tab-item:hover {
+    color: var(--verde-escuro);
+}
+.forum-tabs .tab-item.active {
+    color: var(--verde-escuro);
+    font-weight: 700;
+    border-bottom-color: var(--verde-escuro);
+}
+
+/* Card de Post no Feed */
+.forum-post-card {
+    display: flex;
+    gap: 15px;
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.forum-post-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.07);
+}
+
+/* Votos (Apoio) */
+.post-votes {
+    display: flex;
+    flex-direction: row; /* Alinha horizontalmente */
+    align-items: center; /* Centraliza verticalmente */
+    gap: 5px; /* Espaço menor entre coração e número */
+    max-width: 100%;
+}
+.support-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #888;
+    padding: 5px;
+    border-radius: 50%;
+    transition: color 0.2s, background-color 0.2s;
+}
+.support-btn:hover {
+    color: var(--coral-quente);
+    background-color: #fef2f2;
+}
+.support-btn.supported {
+    color: var(--coral-quente);
+}
+.support-btn.supported svg {
+    fill: var(--coral-quente);
+    stroke: var(--coral-quente);
+}
+.post-votes-count {
+    font-weight: 700;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+/* Conteúdo do Card */
+.post-content-summary {
+    flex: 1;
+    min-width: 0; /* CRÍTICO: Permite que o flex item encolha e o texto quebre linha */
+}
+/* Garante que textos longos não vazem o card */
+.post-title, .post-snippet, .full-post-content, .comment-body {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+.post-meta {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 8px;
+    display: flex;
+    flex-wrap: wrap; /* Permite quebrar linha se necessário */
+    gap: 8px; /* Espaçamento uniforme */
+    align-items: center;
+}
+.forum-avatar-small {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+.post-meta .post-category {
+    font-weight: bold;
+    color: var(--verde-escuro);
+}
+.post-category-mobile {
+    display: none; /* Oculto por padrão (Desktop) */
+}
+/* Adiciona o separador visualmente apenas onde necessário */
+.post-meta > span:not(:last-child)::after {
+    content: "•";
+    margin-left: 8px;
+    color: #ccc;
+    font-weight: normal;
+}
+.post-title {
+    margin: 0 0 8px 0;
+    font-size: 1.2rem;
+    color: #111;
+}
+.post-snippet {
+    margin: 0 0 15px 0;
+    color: #555;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    text-align: justify;
+}
+.post-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.post-actions-right {
+    display: flex;
+    gap: 8px; /* Reduzido para aproximar ícones */
+    align-items: center;
+    flex-wrap: nowrap; /* Impede quebra de linha nos ícones */
+}
+
+.delete-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 1rem; opacity: 0.7; transition: opacity 0.2s;
+}
+.delete-btn:hover { opacity: 1; }
+
+/* Botão Denunciar */
+.report-btn {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 5px 8px;
+    border-radius: 6px;
+    transition: color 0.2s, background-color 0.2s;
+}
+.report-btn:hover {
+    color: var(--coral-quente);
+    background-color: #fff5f5;
+}
+
+/* View de Post Completo */
+.full-post-content {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #333;
+    white-space: pre-wrap; /* Preserva quebras de linha e espaços */
+    text-align: justify;
+}
+.full-post-actions {
+    margin-top: 30px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+.full-post-actions .support-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 8px 15px;
+    border-radius: 25px;
+    border: 1px solid #ddd;
+}
+
+/* Seção de Comentários */
+.comment-thread {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.comment-card {
+    background: #f8f9fa;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 15px;
+}
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 8px;
+}
+.comment-author { font-weight: bold; color: #444; }
+/* Ajuste para alinhar foto no comentário */
+.comment-author img {
+    vertical-align: middle;
+}
+.comment-text-area {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 15px;
+    font-size: 0.95rem;
+    color: #333;
+    line-height: 1.5;
+}
+.comment-body { flex-grow: 1; }
+.comment-text-area .report-btn.inline-report {
+    display: inline-block;
+    font-size: 0.75rem;
+    color: #aaa;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+}
+.comment-text-area .report-btn.inline-report:hover {
+    color: var(--coral-quente);
+    text-decoration: underline;
+}
+
+/* --- AÇÕES DO COMENTÁRIO (Like, Responder, Denunciar) --- */
+.comment-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Reduzido para aproximar ícones */
+    margin-top: 10px;
+    width: 100%;
+    flex-wrap: wrap; /* Permite quebrar linha em telas muito pequenas */
+    flex-wrap: nowrap; /* Força ficar na mesma linha no mobile */
+}
+
+/* Botão de Like (Coração) */
+.comment-like-btn {
+    background: none; border: none; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    color: #888; font-weight: 600; font-size: 0.85rem;
+    padding: 5px 8px; border-radius: 20px; transition: all 0.2s;
+}
+.comment-like-btn:hover { color: var(--coral-quente); background-color: #fff5f5; }
+.comment-like-btn svg { transition: fill 0.2s; }
+
+.comment-like-btn.liked { color: var(--coral-quente); }
+.comment-like-btn.liked svg {
+    fill: var(--coral-quente);
+    stroke: var(--coral-quente);
+}
+
+/* Botão Responder (Estética do Site) */
+.comment-reply-btn {
+    background: none; border: none; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    color: var(--verde-escuro); /* Verde Yelo */
+    font-family: var(--font-principal); font-weight: 600; font-size: 0.85rem;
+    padding: 5px 12px; border-radius: 20px; transition: all 0.2s;
+}
+.comment-reply-btn:hover { background-color: rgba(27, 67, 50, 0.08); }
+
+/* Botão Denunciar (Ajustado à direita no limite) */
+.comment-actions .report-btn.inline-report {
+    margin-left: auto; /* Empurra para a direita */
+}
+
+/* Disclaimer Box for Case Discussions */
+.forum-disclaimer-box {
+    background-color: #fffbeb; /* Amarelo bem claro */
+    border-left: 4px solid #f59e0b; /* Borda amarela/laranja */
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #92400e; /* Laranja escuro para o texto */
+    line-height: 1.5;
+    transition: all 0.3s ease;
+}
+.forum-disclaimer-box.hidden {
+    display: none;
+}
+
+/* Layout da página de post com sidebar */
+.forum-post-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px; /* Conteúdo principal e sidebar */
+    gap: 40px;
+    align-items: flex-start;
+}
+
+.forum-post-sidebar .widget {
+    position: sticky;
+    top: 20px; /* Fica fixo ao rolar a página */
+}
+
+/* Itens na sidebar de relacionados */
+.related-post-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #f0f0f0;
+    text-decoration: none;
+    color: inherit;
+    transition: background-color 0.2s;
+}
+.related-post-item:last-child { border-bottom: none; }
+.related-post-item:hover .related-post-title { color: var(--verde-escuro); }
+
+.related-post-category { font-size: 0.75rem; font-weight: 700; color: var(--verde-escuro); display: block; margin-bottom: 5px; }
+.related-post-title { font-size: 0.95rem; font-weight: 600; color: #333; margin: 0; line-height: 1.4; transition: color 0.2s; }
+.related-post-meta { text-align: right; flex-shrink: 0; margin-left: 15px; font-size: 0.8rem; color: #666; }
+.related-post-meta span { display: block; }
+
+/* Responsividade */
+@media (max-width: 992px) {
+    .forum-post-layout { grid-template-columns: 1fr; } /* Empilha as colunas */
+    .forum-post-sidebar .widget { position: static; } /* Remove o sticky */
+}
+
+/* Caixa de Diretrizes do Fórum */
+.forum-guidelines-box {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    background-color: #f0fdf4; /* Verde bem claro */
+    border: 1px solid #bbf7d0;
+    border-left: 5px solid var(--verde-escuro);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+}
+.guidelines-icon {
+    font-size: 2rem;
+}
+.guidelines-content strong {
+    color: var(--verde-escuro);
+    font-family: var(--font-titulos);
+}
+
+/* Controles do Fórum (Busca e Abas) */
+.forum-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.forum-search-bar {
+    flex-grow: 1;
+    max-width: 400px;
+    position: relative;
+}
+
+#forum-search-input {
+    width: 100%;
+    padding: 10px 15px 10px 40px; /* Espaço para o ícone */
+    border-radius: 25px; /* Formato pílula */
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+    font-size: 0.95rem;
+}
+.forum-search-bar::before {
+    content: '🔍';
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+}
+
+/* ==========================================================================
+   CORREÇÕES MOBILE ESPECÍFICAS DO FÓRUM
+   ========================================================================== */
+@media (max-width: 768px) {
+    .welcome-header,
+    .main-header {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    /* 1. Ajuste do Card no Feed */
+    .forum-post-card {
+        flex-direction: column; /* Empilha votos e conteúdo */
+        padding: 15px; /* Reduz padding para ganhar espaço */
+        gap: 10px;
+        width: 100%; /* Força largura total */
+        max-width: 100%; /* Impede vazamento */
+        box-sizing: border-box;
+    }
+    
+    /* Limpeza do Meta no Mobile: Esconde categoria para focar no Autor e Tempo */
+    .post-meta .post-category {
+        display: none;
+    }
+
+    /* Garante que a sidebar do post ocupe a largura total no mobile */
+    .forum-post-sidebar {
+        width: 100%;
+    }
+
+    .post-votes {
+        flex-direction: row; /* Votos na horizontal no topo */
+        justify-content: flex-start;
+        width: 100%;
+        margin-bottom: 5px;
+        min-width: auto;
+    }
+    
+    .post-category-mobile {
+        display: inline-block;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--verde-escuro);
+        margin-left: 10px;
+    }
+
+    /* 2. Ajuste da View de Post Completo (Evita "dança" lateral) */
+    .forum-post-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        max-width: 100%; /* Impede vazamento do grid */
+    }
+
+    /* Garante que o conteúdo principal do post não estoure */
+    .forum-post-main {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .forum-post-main .widget {
+        padding: 20px; /* Reduz padding interno */
+    }
+
+    .full-post-actions {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    /* Garante que os ícones de comentário não quebrem linha no mobile */
+    .comment-actions {
+        flex-wrap: nowrap;
+    }
+
+    /* Ajuste do cabeçalho do post no mobile: Remove categoria e evita quebra no autor */
+    .category-wrapper {
+        display: none;
+    }
+    .author-wrapper {
+        white-space: nowrap;
+    }
+}
+/* ==========================================================================
+   NOVO SISTEMA DE RUÍDO - DASHBOARD (FUNDO APENAS)
+   ========================================================================== */
+
+/* 1. Define a cor do dashboard no HTML (Fundo cinza claro) */
+html {
+    background-color: var(--cinza-fundo); 
+}
+
+/* 2. Deixa o body transparente para ver a camada de ruído atrás dele */
+body.pagina-dashboard {
+    background-color: transparent !important; 
+}
+
+/* 3. Aplica o ruído na camada de fundo */
+body.pagina-dashboard::after {
+    content: "";
+    /* Mesma textura do site público */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 500 500' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1 0 0 0 -0.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
+    
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100vh;
+    
+    /* Garante que fique atrás dos cards e da sidebar */
+    z-index: -1; 
+    
+    opacity: 0.30; 
+    mix-blend-mode: multiply;
+    pointer-events: none;
+}
+
+/* ==========================================================================
+   AJUSTE MOBILE: CHAT DIRETO (TIPO WHATSAPP)
+   ========================================================================== */
+@media (max-width: 768px) {
+    /* 1. Esconde totalmente a lista de contatos (Sidebar do Chat) */
+    .chat-list-panel, 
+    .inbox-sidebar {
+        display: none !important;
+    }
+
+    /* 2. O Painel de Chat vira uma camada fixa sobre tudo (App Mode) */
+    .chat-view-panel {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: auto !important;
+        height: auto !important;
+        z-index: 99990; /* Alto, mas abaixo da Sidebar (100000) */
+        background-color: #efe7dd;
+        display: flex !important;
+        flex-direction: column;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        border-radius: 0 !important;
+        overflow: hidden !important; /* Impede rolagem da página inteira */
+        
+        /* CORREÇÃO: Garante visibilidade imediata */
+        transform: none !important;
+        visibility: visible !important;
+    }
+
+    /* 3. Garante que a tela de "Bem-vindo" suma e o Chat apareça */
+    #chat-welcome-screen {
+        display: none !important;
+    }
+
+    .active-chat-wrapper, #active-chat-screen {
+        display: flex !important;
+        flex-direction: column;
+        height: 100%;
+        width: 100%;
+        overflow: hidden; /* Impede rolagem externa */
+    }
+
+    /* 4. Ajustes do Header do Chat no Mobile */
+    .chat-panel-header {
+        flex: 0 0 auto; /* Altura fixa, não encolhe */
+        background-color: #ffffff; /* Fundo Claro */
+        color: #1B4332; /* Texto Verde */
+        padding: 10px 15px;
+        padding-top: max(10px, env(safe-area-inset-top)); /* Respeita o notch do iPhone */
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+    }
+    /* Ajuste da Foto no Mobile para alinhar com botão */
+    .chat-panel-header .avatar {
+        width: 36px !important; /* Mesmo tamanho visual do botão */
+        height: 36px !important;
+        margin-left: 15px; /* Distancia um pouco do botão voltar */
+        margin-right: 10px;
+    }
+    .chat-panel-header h4 { color: #1B4332; margin: 0; font-size: 1rem; }
+    .chat-panel-header span { color: #666; font-size: 0.8rem; }
+    
+    /* Botões do Header (Apenas Voltar) */
+    #btn-voltar-mobile {
+        display: flex !important;
+        margin-right: 10px;
+        color: #1B4332; /* Ícones Verdes */
+        background: none;
+        border: none;
+        padding: 5px;
+        cursor: pointer;
+    }
+
+    /* 5. Área de Mensagens */
+    .messages-thread {
+        flex: 1 1 auto; /* Ocupa todo o espaço restante */
+        overflow-y: auto; /* ÚNICA área que rola */
+        min-height: 0; /* Crítico para o flexbox funcionar no scroll */
+        background-color: #e5ddd5; /* Cor clássica de fundo de chat */
+        padding-bottom: 10px;
+        overscroll-behavior: contain; /* Evita que o scroll afete a página pai */
+    }
+
+    /* 6. Barra de Input (Limpa, sem anexos) */
+    .message-input-bar {
+        flex: 0 0 auto; /* Altura fixa */
+        position: relative; /* Flexbox já posiciona no fundo */
+        padding: 10px;
+        padding-bottom: max(10px, env(safe-area-inset-bottom)); /* Respeita a barra home do iPhone */
+        background: #f0f0f0;
+        gap: 8px;
+        z-index: 100;
+    }
+
+    #psi-reply-input {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 10px 15px;
+        height: 40px; /* Altura fixa confortável */
+        box-sizing: border-box;
+        font-size: 16px !important; /* CRÍTICO: Impede zoom automático no iOS */
+    }
+
+    .btn-send {
+        width: 40px; height: 40px;
+        background-color: #1B4332;
+        flex-shrink: 0; /* Impede que o botão amasse */
+    }
 }

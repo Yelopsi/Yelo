@@ -1,94 +1,245 @@
+@import url('css/01-variables.css');
+
+/* --- Estrutura Principal --- */
+.ajuda-main {
+    background-color: var(--off-white);
+    padding-top: 60px; /* Espaço para o header fixo */
+}
+
+/* --- Seção Hero Acolhedora --- */
 .hero-ajuda {
-  background-color: var(--verde-escuro);
-  color: var(--branco-puro);
-  text-align: center;
-  padding: 120px 20px 100px 20px;
+    background-color: var(--verde-escuro);
+    color: var(--branco-puro);
+    text-align: center;
+    padding: 80px 20px 140px 20px; /* Aumentado padding inferior para a onda não cobrir o texto */
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-ajuda .hero-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    animation: pulse-heart 2.5s infinite;
+}
+
+@keyframes pulse-heart {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
 }
 
 .hero-ajuda h1 {
-  font-size: 3rem;
-  margin-bottom: 15px;
-  font-family: 'New Kansas', serif;
+    font-family: var(--font-titulos);
+    font-size: clamp(2rem, 5vw, 3rem);
+    color: var(--branco-puro);
+    margin: 0 0 15px 0;
 }
 
 .hero-ajuda p {
-  font-size: 1.2rem;
-  max-width: 700px;
-  margin: 0 auto;
-  line-height: 1.7;
-  color: #f1f1f1;
+    font-size: 1.1rem;
+    max-width: 650px;
+    margin: 0 auto;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.85);
 }
 
-.secao-ajuda {
-  background-color: var(--off-white);
-  padding: 80px 20px 100px 20px;
-  text-align: center;
+/* --- Divisor de Onda --- */
+.custom-shape-divider-bottom-1689966469 {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    overflow: hidden;
+    line-height: 0;
+    transform: rotate(180deg);
 }
 
-.lista-ajuda {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 30px;
-  margin-top: 50px;
+.custom-shape-divider-bottom-1689966469 svg {
+    position: relative;
+    display: block;
+    width: calc(100% + 1.3px);
+    height: 70px;
 }
 
-.card-ajuda {
-  background-color: var(--branco-puro);
-  border-radius: 16px;
-  padding: 30px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-  text-align: left;
-  transition: transform 0.3s ease;
+.custom-shape-divider-bottom-1689966469 .shape-fill {
+    fill: var(--off-white);
 }
 
-.card-ajuda:hover {
-  transform: translateY(-5px);
+/* --- Seção de Recursos --- */
+.secao-recursos {
+    padding: 40px 20px 140px 20px; /* Aumentado para a onda */
+    position: relative;
 }
 
-.card-ajuda h3 {
-  color: var(--verde-escuro);
-  margin-top: 0;
+.secao-recursos .container {
+    max-width: 1300px; /* Aumentado para caber 4 cards lado a lado */
+    margin: 0 auto;
+    text-align: center;
 }
 
-.card-ajuda p {
-  color: var(--cinza-texto);
-  line-height: 1.6;
+.secao-recursos h2 {
+    font-family: var(--font-titulos);
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    color: var(--verde-escuro);
+    margin: 0 0 40px 0;
 }
 
-.card-ajuda a {
-  color: var(--verde-escuro);
-  text-decoration: underline;
+.recursos-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Mobile: 1 coluna */
+    gap: 15px;
+    align-items: stretch; /* Garante que todos os cards tenham a mesma altura */
 }
 
-.secao-apoio {
-  background-color: var(--cor-Yelo);
-  color: var(--verde-escuro);
-  text-align: center;
-  padding: 100px 20px;
+/* Tablet: 2 colunas */
+@media (min-width: 600px) {
+    .recursos-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
-.secao-apoio h2 {
-  font-size: 2.2rem;
-  margin-bottom: 20px;
+/* Desktop/Laptop: 4 cards lado a lado (Breakpoint reduzido para 900px) */
+@media (min-width: 900px) {
+    .recursos-grid {
+        grid-template-columns: repeat(4, 1fr); /* Força 4 colunas */
+        gap: 15px;
+    }
 }
 
-.secao-apoio p {
-  font-size: 1.2rem;
-  max-width: 650px;
-  margin: 0 auto 40px auto;
+.recurso-card {
+    background-color: var(--branco-puro);
+    border-radius: 16px;
+    padding: 15px; /* Padding reduzido para compactar */
+    text-align: center;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    border: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%; /* Ocupa toda a altura da célula do grid */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.secao-apoio .btn {
-  background-color: var(--verde-escuro);
-  color: var(--branco-puro);
-  padding: 15px 40px;
-  border-radius: 30px;
-  text-decoration: none;
-  font-weight: bold;
-  transition: transform 0.2s ease, background-color 0.3s ease;
+.recurso-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
-.secao-apoio .btn:hover {
-  transform: scale(1.05);
-  background-color: #2a624d;
+.recurso-card .card-icon {
+    font-size: 1.8rem; /* Ícone levemente menor */
+    margin-bottom: 12px;
+    background-color: #f0f0f0;
+    width: 50px; /* Círculo menor */
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.recurso-card h3 {
+    font-family: var(--font-principal);
+    font-size: 1rem; /* Fonte do título ajustada */
+    color: var(--verde-escuro);
+    margin: 0 0 8px 0;
+}
+
+.recurso-card p {
+    font-size: 0.85rem; /* Texto mais compacto */
+    color: var(--cinza-texto);
+    line-height: 1.4;
+    flex-grow: 1; /* Empurra os botões para baixo */
+    margin-bottom: 12px;
+}
+
+.btn-recurso {
+    display: block;
+    width: 100%;
+    padding: 8px 10px; /* Botão mais fino */
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease;
+}
+
+.link-secundario {
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: var(--verde-escuro);
+    font-weight: 500;
+    text-decoration: underline;
+}
+
+/* Cores específicas dos botões */
+.card-cvv .btn-recurso { background-color: #27ae60; color: white; }
+.card-cvv .btn-recurso:hover { background-color: #229954; }
+.card-cvv .card-icon { background-color: #eafaf1; }
+
+.card-emergencia .btn-recurso { background-color: #e63946; color: white; }
+.card-emergencia .btn-recurso:hover { background-color: #c9303c; }
+.card-emergencia .card-icon { background-color: #fdecec; }
+
+.card-mulher .btn-recurso { background-color: #8e44ad; color: white; }
+.card-mulher .btn-recurso:hover { background-color: #7d3c98; }
+.card-mulher .card-icon { background-color: #f4eef7; }
+
+.card-direitos .btn-recurso { background-color: #2980b9; color: white; }
+.card-direitos .btn-recurso:hover { background-color: #2471a3; }
+.card-direitos .card-icon { background-color: #eaf2f8; }
+
+
+/* --- Seção "Não é emergência?" --- */
+.secao-nao-emergencia {
+    background-color: var(--cor-Yelo);
+    padding: 80px 20px 180px 20px; /* Aumentado para garantir cobertura atrás da wave do rodapé */
+    text-align: center;
+    position: relative;
+    margin-bottom: -100px; /* Puxa o rodapé para cima (overlap) para a onda ficar sobre o amarelo */
+    z-index: 0; /* Garante que a seção fique atrás da onda do rodapé */
+}
+
+.secao-nao-emergencia .container {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.secao-nao-emergencia h2 {
+    font-family: var(--font-titulos);
+    color: var(--verde-escuro);
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    margin: 0 0 15px 0;
+}
+
+.secao-nao-emergencia p {
+    color: var(--verde-escuro);
+    opacity: 0.9;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+/* Reutiliza o estilo do botão principal da home */
+.secao-nao-emergencia .btn-cta-principal {
+    background-color: var(--verde-escuro);
+    color: var(--branco-puro);
+}
+.secao-nao-emergencia .btn-cta-principal:hover {
+    background-color: #2a624d;
+}
+
+/* --- Cores das Ondas --- */
+.wave-amarela .shape-fill {
+    fill: var(--cor-Yelo);
+}
+
+.wave-verde .shape-fill {
+    fill: var(--verde-escuro);
+}
+
+/* FIX: Garante que a onda e o rodapé fiquem POR CIMA da seção amarela */
+.wave-divider-footer,
+.rodape-principal {
+    position: relative;
+    z-index: 20 !important; /* Força ficar acima do main (que tem z-index 0) */
 }

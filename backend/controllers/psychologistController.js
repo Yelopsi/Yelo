@@ -1,12 +1,13 @@
 const db = require('../models');
-// ADICIONE ESTA LINHA ABAIXO:
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); 
 const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { sendPasswordResetEmail } = require('../services/emailService');
-const { findMatches } = require('../services/matchService'); // Importa o novo serviço de match
+const sharp = require('sharp');
+const path = require('path');
+const fs = require('fs').promises;
 
 // ----------------------------------------------------------------------
 // Função Auxiliar: Gera o Token JWT para Psicólogo
@@ -29,114 +30,163 @@ const generateSlug = (name) => {
     const randomSuffix = Math.floor(1000 + Math.random() * 9000); 
     return `${baseSlug}-${randomSuffix}`;
 };
-
-// ----------------------------------------------------------------------
-// Rota: POST /api/psychologists/register
-// Rota: POST /api/psychologists/register (VERSÃO COM REATIVAÇÃO AUTOMÁTICA)
-// ----------------------------------------------------------------------
+// ==============================================================================
+// 1. REGISTRO (CORRIGIDO: Detecta CPF ou CNPJ e salva na coluna certa)
+// ==============================================================================
 exports.registerPsychologist = async (req, res) => {
     try {
-        const {
-            nome, email, senha, crp, documento,
-            genero_identidade, valor_sessao_faixa, temas_atuacao,
-            abordagens_tecnicas, praticas_vivencias, modalidade, cep
-        } = req.body;
+        console.log("Dados recebidos no Registro:", req.body);
 
-        // Validação Básica
-        if (!nome || !email || !senha || !crp || !documento) {
-            return res.status(400).json({ error: 'Nome, email, senha, CRP e Documento (CPF/CNPJ) são obrigatórios.' });
-        }
+        const nome = req.body.nome || req.body['nome-completo'];
+        const passwordInput = req.body.password || req.body.senha;
+        const email = req.body.email;
+        const crp = req.body.crp;
+        // Recebe o documento cru (pode vir como 'documento', 'cpf' ou 'cnpj')
+        const rawDoc = req.body.documento || req.body.cpf || req.body.cnpj;
 
-        // --- 1. LÓGICA DE DETECÇÃO CPF vs CNPJ ---
-        const docClean = documento.replace(/\D/g, ''); 
-        let cpfToSave = null;
-        let cnpjToSave = null;
+        // --- 1. Validação de Campos Obrigatórios ---
+        if (!nome) return res.status(400).json({ error: 'O nome é obrigatório.' });
+        if (!email) return res.status(400).json({ error: 'O e-mail é obrigatório.' });
+        if (!passwordInput || passwordInput.trim() === '') return res.status(400).json({ error: 'A senha é obrigatória.' });
+        if (!crp) return res.status(400).json({ error: 'O CRP é obrigatório.' });
+        if (!rawDoc) return res.status(400).json({ error: 'O CPF ou CNPJ é obrigatório.' });
 
-        if (docClean.length === 11) {
-            cpfToSave = documento; 
-        } else if (docClean.length === 14) {
-            cnpjToSave = documento;
-        } else {
-            return res.status(400).json({ error: 'Documento inválido. Deve ser CPF (11 dígitos) ou CNPJ (14 dígitos).' });
-        }
+        // --- 2. Validação de Formato e Comprimento ---
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) return res.status(400).json({ error: 'Formato de e-mail inválido.' });
+        if (passwordInput.length < 6) return res.status(400).json({ error: 'A senha deve ter no mínimo 6 caracteres.' });
 
-        // --- 2. VERIFICAÇÃO INTELIGENTE (INCLUINDO EXCLUÍDOS) ---
-        // Buscamos se já existe alguém com esses dados, MESMO SE ESTIVER DELETADO (paranoid: false)
-        const checkConditions = [{ email }, { crp }];
-        if (cpfToSave) checkConditions.push({ cpf: cpfToSave });
-        if (cnpjToSave) checkConditions.push({ cnpj: cnpjToSave });
+        // --- 2. INTELIGÊNCIA: CPF vs CNPJ ---
+        // Limpa caracteres não numéricos para contar
+        const cleanDoc = rawDoc.replace(/\D/g, '');
+        const isCnpj = cleanDoc.length > 11; // Se tem mais de 11 números, é CNPJ
 
-        const existingPsychologist = await db.Psychologist.findOne({
-            where: { [Op.or]: checkConditions },
-            paranoid: false // <--- O PULO DO GATO: Olha na lixeira também!
-        });
+        // Define dinamicamente qual coluna usar no banco
+        // Se for CNPJ, cria objeto { cnpj: 'valor' }. Se CPF, { cpf: 'valor' }
+        const docQuery = isCnpj ? { cnpj: cleanDoc } : { cpf: cleanDoc };
 
-        // Hash da nova senha (será usado tanto para criar quanto para reativar)
-        const hashedPassword = await bcrypt.hash(senha, 10);
-
-        // --- CENÁRIO A: USUÁRIO EXISTE ---
-        if (existingPsychologist) {
-            
-            // Caso 1: Usuário está ATIVO (Não foi excluído) -> Erro de duplicidade
-            if (!existingPsychologist.deletedAt) {
-                if (existingPsychologist.email === email) return res.status(409).json({ error: 'Este email já está cadastrado.' });
-                if (existingPsychologist.crp === crp) return res.status(409).json({ error: 'Este CRP já está cadastrado.' });
-                return res.status(409).json({ error: 'Este documento (CPF/CNPJ) já está cadastrado.' });
+        // --- 3. VERIFICAÇÃO DE DUPLICIDADE ---
+        const existingUser = await db.Psychologist.findOne({
+            where: {
+                [Op.or]: [
+                    { email: email },
+                    { crp: crp },
+                    docQuery // Injeta a busca na coluna correta (cpf OU cnpj)
+                ]
             }
-
-            // Caso 2: Usuário está NA LIXEIRA (Reativação)
-            console.log(`[REATIVAÇÃO] Recuperando conta antiga: ${existingPsychologist.email}`);
-            
-            // Restaura o registro (remove o deletedAt)
-            await existingPsychologist.restore();
-
-            // Atualiza com os dados novos que a pessoa preencheu no formulário
-            await existingPsychologist.update({
-                nome, 
-                email, // Atualiza o email caso ele esteja tentando voltar com um novo
-                senha: hashedPassword, // Reseta a senha para a nova
-                crp,
-                cpf: cpfToSave,
-                cnpj: cnpjToSave,
-                status: 'pending', // Volta para aprovação/pendente
-                genero_identidade,
-                valor_sessao_faixa,
-                temas_atuacao: temas_atuacao || [],
-                abordagens_tecnicas: abordagens_tecnicas ? [abordagens_tecnicas] : [],
-                praticas_vivencias: praticas_vivencias || [],
-                modalidade,
-                cep
-            });
-
-            return res.status(200).json({ 
-                message: 'Sua conta antiga foi localizada e reativada com sucesso!', 
-                userId: existingPsychologist.id,
-                reactivated: true 
-            });
-        }
-
-        // --- CENÁRIO B: NOVO USUÁRIO (Criação Normal) ---
-        const newPsychologist = await db.Psychologist.create({
-            nome, email, crp,
-            cpf: cpfToSave,  
-            cnpj: cnpjToSave,
-            senha: hashedPassword,
-            slug: generateSlug(nome),
-            status: 'pending',
-            subscription_expires_at: null,
-            genero_identidade, 
-            valor_sessao_faixa,
-            temas_atuacao: temas_atuacao || [],
-            abordagens_tecnicas: abordagens_tecnicas ? [abordagens_tecnicas] : [],
-            praticas_vivencias: praticas_vivencias || [], 
-            modalidade, 
-            cep,
         });
 
-        res.status(201).json({ message: 'Psicólogo cadastrado com sucesso!', userId: newPsychologist.id });
+        if (existingUser) {
+            if (existingUser.email === email) return res.status(400).json({ error: 'E-mail já cadastrado.' });
+            if (existingUser.crp === crp) return res.status(400).json({ error: 'CRP já cadastrado.' });
+            
+            // Verifica duplicidade específica de documento (usando cleanDoc)
+            if (isCnpj && existingUser.cnpj === cleanDoc) return res.status(400).json({ error: 'CNPJ já cadastrado.' });
+            if (!isCnpj && existingUser.cpf === cleanDoc) return res.status(400).json({ error: 'CPF já cadastrado.' });
+        }
+
+        // --- 4. Geração de Slug ---
+        let generatedSlug = nome
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .trim()
+            .replace(/\s+/g, '-');
+        generatedSlug += `-${Math.floor(Math.random() * 10000)}`;
+
+        // --- 5. Criptografia ---
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(passwordInput, salt);
+
+        // --- 6. CRIAÇÃO NO BANCO (USANDO COLUNAS REAIS) ---
+        const newPsychologist = await db.Psychologist.create({
+            nome,
+            email,
+            senha: hashedPassword,
+            crp,
+            slug: generatedSlug,
+            status: 'active',
+            ...docQuery // <--- O PULO DO GATO: Espalha {cnpj: ...} ou {cpf: ...} aqui dentro
+        });
+
+        // --- 7. Token ---
+        const token = generateToken(newPsychologist.id);
+
+        res.status(201).json({
+            message: 'Cadastro realizado com sucesso!',
+            token,
+            user: {
+                id: newPsychologist.id,
+                nome: newPsychologist.nome,
+                email: newPsychologist.email,
+                slug: newPsychologist.slug
+            }
+        });
 
     } catch (error) {
-        console.error('Erro ao registrar psicólogo:', error);
+        console.error('Erro no registro:', error);
+        // GRAVA O ERRO NO LOG
+        await db.SystemLog.create({
+            level: 'error',
+            message: `Erro no registro de Psicólogo: ${error.message}`
+        });
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(400).json({ error: 'Dados duplicados (E-mail, CRP ou Documento).' });
+        }
+        res.status(500).json({ error: 'Erro interno ao criar conta: ' + error.message });
+    }
+};
+
+// ==============================================================================
+// 2. LOGIN (CORRIGIDO: Lê 'senha' em vez de 'password')
+// ==============================================================================
+exports.loginPsychologist = async (req, res) => {
+    try {
+        const { email } = req.body;
+        // Aceita 'password' ou 'senha' vindo do front
+        const passwordInput = req.body.password || req.body.senha;
+
+        if (!email || !passwordInput) {
+            return res.status(400).json({ error: 'Por favor, preencha e-mail e senha.' });
+        }
+
+        const psychologist = await db.Psychologist.findOne({ where: { email } });
+
+        if (!psychologist) {
+            return res.status(401).json({ error: 'E-mail não encontrado.' });
+        }
+
+        // --- A CORREÇÃO ESTÁ AQUI ---
+        // O banco tem a coluna 'senha', não 'password'.
+        // O objeto retornado é 'psychologist.senha'.
+        const isMatch = await bcrypt.compare(passwordInput, psychologist.senha);
+        
+        if (!isMatch) {
+            await db.SystemLog.create({
+                level: 'warning',
+                message: `Falha de login (Senha incorreta): ${email}`
+            });
+            return res.status(401).json({ error: 'Senha incorreta.' });
+        }
+
+        if (psychologist.status !== 'active') {
+            return res.status(403).json({ error: 'Esta conta está inativa.' });
+        }
+
+        const token = generateToken(psychologist.id);
+
+        res.json({
+            id: psychologist.id,
+            nome: psychologist.nome,
+            email: psychologist.email,
+            slug: psychologist.slug,
+            fotoUrl: psychologist.fotoUrl,
+            is_exempt: psychologist.is_exempt, // Retorna flag VIP no login
+            token: token
+        });
+
+    } catch (error) {
+        console.error('Erro no login:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };
@@ -213,46 +263,101 @@ const parsePriceRange = (rangeString) => {
     return { min, max };
 };
 
-// ----------------------------------------------------------------------
-// Rota: POST /api/psychologists/login
-// ----------------------------------------------------------------------
-exports.loginPsychologist = async (req, res) => {
-    try {
-        const { email, senha } = req.body;
-        console.log(`[LOGIN_PSY] 1. Tentativa de login recebida para o e-mail: ${email}`);
+// ==============================================================================
+// ALGORITMO DE MATCH (INTELIGÊNCIA YELO)
+// ==============================================================================
+async function calculateMatches(preferences) {
+    const {
+        valor_sessao_faixa,
+        temas_buscados = [],
+        estilo_desejado = [], // Antigo 'abordagem_desejada' / 'experiencia_desejada'
+        genero_profissional,
+        praticas_desejadas = [], // Antigo 'praticas_afirmativas' / 'caracteristicas_prof'
+        idade_paciente,
+        modalidade_preferida
+    } = preferences;
 
-        if (!email || !senha) {
-            console.log(`[LOGIN_PSY] 2. Falha: E-mail ou senha não fornecidos na requisição.`);
-            return res.status(400).json({ error: 'Email e senha são obrigatórios.' });
+    // 1. Busca todos os psicólogos ativos
+    const candidates = await db.Psychologist.findAll({
+        where: { status: 'active' },
+        attributes: { exclude: ['senha', 'resetPasswordToken'] }
+    });
+
+    const { min, max } = parsePriceRange(valor_sessao_faixa);
+
+    // 2. Pontuação e Filtragem
+    const scoredCandidates = candidates.map(psi => {
+        let score = 0;
+        let details = [];
+        let isViable = true;
+
+        // A. FILTRO RÍGIDO: Modalidade (Se o paciente escolheu Online, o Psi tem que atender Online)
+        // Se modalidade_preferida for indefinido, assume que aceita tudo.
+        if (modalidade_preferida && modalidade_preferida !== 'Indiferente') {
+            const psiMods = Array.isArray(psi.modalidade) ? psi.modalidade : [];
+            if (!psiMods.includes(modalidade_preferida) && !psiMods.includes('Indiferente')) {
+                // Penalidade leve em vez de exclusão total para não zerar resultados
+                score -= 50; 
+            }
         }
 
-        const psychologist = await db.Psychologist.findOne({ where: { email: email } });
-
-        if (!psychologist) {
-            console.log(`[LOGIN_PSY] 2. Falha: Nenhum psicólogo encontrado com o e-mail ${email}.`);
-            return res.status(401).json({ error: 'Email ou senha inválidos.' });
+        // B. PREÇO (Peso: 20)
+        const psiPrice = psi.valor_sessao_numero || 0;
+        if (psiPrice >= min && psiPrice <= max) {
+            score += 20;
+            details.push("Dentro do orçamento");
+        } else if (psiPrice < min) {
+            score += 20; // Mais barato também serve
+            details.push("Valor acessível");
+        } else if (psiPrice < max * 1.3) {
+            score += 10; // Até 30% acima do orçamento ganha alguns pontos
         }
 
-        console.log(`[LOGIN_PSY] 2. Sucesso: Psicólogo ${email} encontrado. Comparando senhas...`);
-        const isPasswordMatch = await bcrypt.compare(senha, psychologist.senha);
+        // C. TEMAS (Peso: 25)
+        const psiTemas = psi.temas_atuacao || [];
+        const commonTemas = temas_buscados.filter(t => psiTemas.includes(t));
+        if (commonTemas.length > 0) {
+            score += 25;
+            details.push(`Especialista em ${commonTemas[0]}`);
+        }
 
-        if (isPasswordMatch) {
-            console.log(`[LOGIN_PSY] 3. Sucesso: Senha correta para ${email}. Gerando token.`);
-            res.status(200).json({
-                id: psychologist.id,
-                nome: psychologist.nome,
-                email: psychologist.email,
-                token: generateToken(psychologist.id)
-            });
+        // D. IDENTIDADE E PRÁTICAS (Peso: 30 - O "Fit" Cultural)
+        const psiPraticas = psi.praticas_inclusivas || [];
+        const commonPraticas = praticas_desejadas.filter(p => psiPraticas.includes(p));
+        if (commonPraticas.length > 0) {
+            score += 30;
+            details.push("Identidade compatível");
+        }
+
+        // E. ESTILO DE TERAPIA (Peso: 15)
+        const psiEstilo = psi.estilo_terapia || [];
+        const commonEstilo = estilo_desejado.filter(e => psiEstilo.includes(e));
+        if (commonEstilo.length > 0) {
+            score += 15;
+            details.push("Estilo alinhado");
+        }
+
+        // F. GÊNERO (Peso: 10)
+        if (genero_profissional && genero_profissional !== 'Indiferente') {
+            if (psi.genero_identidade === genero_profissional) score += 10;
         } else {
-            console.log(`[LOGIN_PSY] 3. Falha: Senha incorreta para o e-mail ${email}.`);
-            res.status(401).json({ error: 'Email ou senha inválidos.' });
+            score += 10;
         }
-    } catch (error) {
-        console.error('Erro no login do psicólogo:', error);
-        res.status(500).json({ error: 'Erro interno no servidor.' });
-    }
-};
+
+        return {
+            ...psi.toJSON(),
+            matchScore: Math.max(0, Math.min(score, 99)), // Garante entre 0 e 99
+            matchDetails: details
+        };
+    });
+
+    // 3. Ordenação e Retorno
+    scoredCandidates.sort((a, b) => b.matchScore - a.matchScore);
+    const topResults = scoredCandidates.slice(0, 3); // Top 3
+    const matchTier = topResults.length > 0 && topResults[0].matchScore > 75 ? 'ideal' : 'near';
+
+    return { matchTier, results: topResults };
+}
 
 // ----------------------------------------------------------------------
 // Rota: GET /api/psychologists/me (Rota Protegida)
@@ -269,7 +374,7 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
         const psychologist = await db.Psychologist.findByPk(psychologistId, {
             // Agora permitimos o CPF, pois é o próprio usuário vendo seus dados
             attributes: { 
-                exclude: ['senha', 'resetPasswordToken', 'resetPasswordExpires'] 
+                    exclude: ['senha', 'resetPasswordToken', 'resetPasswordExpires']
             }
         });
 
@@ -378,77 +483,87 @@ exports.getWaitingList = async (req, res) => {
 };
 
 
-// ----------------------------------------------------------------------
-// Rota: PUT /api/psychologists/me (VERSÃO DIAGNÓSTICO)
-// ----------------------------------------------------------------------
+// ==============================================================================
+// 2. ATUALIZAÇÃO (Permite personalizar o Link e corrige dados faltantes)
+// ==============================================================================
 exports.updatePsychologistProfile = async (req, res) => {
     try {
-        console.log("\n--- [DEBUG] INICIANDO ATUALIZAÇÃO DE PERFIL ---");
-        
-        const psychologistToUpdate = await db.Psychologist.findByPk(req.psychologist.id);
-        if (!psychologistToUpdate) return res.status(404).json({ error: 'Psi não encontrado.' });
-
-        const body = req.body;
-
-        // Verifica se o slug mudou e se já existe
-        if (body.slug && body.slug !== psychologistToUpdate.slug) {
-            const slugExists = await db.Psychologist.findOne({ where: { slug: body.slug } });
-            if (slugExists) {
-                return res.status(409).json({ error: 'Este link personalizado já está em uso.' });
-            }
+        if (!req.psychologist || !req.psychologist.id) {
+            return res.status(401).json({ error: 'Não autorizado.' });
         }
 
-        // --- ANÁLISE FORENSE DOS DADOS ---
-        console.log("1. DADOS BRUTOS RECEBIDOS:", JSON.stringify(body, null, 2));
+        const psychologist = await db.Psychologist.findByPk(req.psychologist.id);
+        if (!psychologist) {
+            return res.status(404).json({ error: 'Psicólogo não encontrado' });
+        }
 
-        const arrayFields = ['temas_atuacao', 'abordagens_tecnicas', 'praticas_vivencias', 'disponibilidade_periodo'];
-        const stringFields = ['genero_identidade'];
+        // Extrai os dados enviados pelo Dashboard
+        const {
+            nome, telefone, bio, crp, cep, cidade, estado,
+            temas_atuacao, abordagens_tecnicas, modalidade,
+            publico_alvo, estilo_terapia, praticas_inclusivas, // NOVOS CAMPOS
+            valor_sessao_numero, disponibilidade, genero_identidade,
+            linkedin_url, instagram_url, facebook_url, tiktok_url, x_url,
+            slug // <--- AGORA ESTAMOS LENDO O CAMPO SLUG QUE VEM DO FORMULÁRIO
+        } = req.body;
 
-        console.log("2. VERIFICAÇÃO DE TIPOS:");
-        arrayFields.forEach(field => {
-            const val = body[field];
-            console.log(`   - ${field}: Valor="${val}" | Tipo=${typeof val} | É Array? ${Array.isArray(val)}`);
-        });
-        
-        stringFields.forEach(field => {
-            const val = body[field];
-            console.log(`   - ${field}: Valor="${val}" | Tipo=${typeof val} | É Array? ${Array.isArray(val)}`);
-        });
+        // --- LÓGICA DE PERSONALIZAÇÃO DO LINK (SLUG) ---
+        let finalSlug = psychologist.slug; // Padrão: Mantém o atual
 
-        // --- TENTATIVA DE CORREÇÃO AUTOMÁTICA (SANITIZAÇÃO) ---
-        // Se o banco espera Array mas veio String, converte.
-        const safeArrays = {};
-        arrayFields.forEach(field => {
-            let val = body[field];
-            if (!val) {
-                safeArrays[field] = [];
-            } else if (Array.isArray(val)) {
-                safeArrays[field] = val;
-            } else if (typeof val === 'string') {
-                // Se vier "Ansiedade,Depressão", vira ["Ansiedade", "Depressão"]
-                safeArrays[field] = val.split(',').map(s => s.trim()).filter(s => s);
-            } else {
-                safeArrays[field] = [];
+        // Cenário A: Usuário quer mudar o link (digitou algo novo no input 'slug')
+        if (slug && slug.trim() !== '' && slug !== psychologist.slug) {
+            // Sanitiza o que o usuário digitou (para não quebrar a URL)
+            finalSlug = slug
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '') // Remove tudo que não for letra, número ou traço
+                .replace(/\s+/g, '-');
+            
+            // Verifica se esse link já existe (para evitar duplicidade)
+            const slugExiste = await db.Psychologist.findOne({ 
+                where: { 
+                    slug: finalSlug, 
+                    id: { [Op.ne]: psychologist.id } // Ignora o próprio usuário
+                } 
+            });
+
+            if (slugExiste) {
+                return res.status(400).json({ error: 'Este link personalizado já está em uso. Escolha outro.' });
             }
+        }
+        
+        // Cenário B: Usuário não tem link (Correção de legado) e não enviou um novo
+        else if (!finalSlug && nome) {
+            finalSlug = nome.toLowerCase().replace(/\s+/g, '-') + `-${Math.floor(Math.random()*1000)}`;
+        }
+
+        // Atualiza no Banco
+        await psychologist.update({
+            slug: finalSlug, // Salva o slug (personalizado ou mantido)
+            nome, telefone, bio, crp, cep, cidade, estado,
+            temas_atuacao, abordagens_tecnicas, modalidade,
+            publico_alvo, estilo_terapia, praticas_inclusivas, // SALVA NO BANCO
+            valor_sessao_numero, disponibilidade_periodo: disponibilidade,
+            genero_identidade,
+            linkedin_url, instagram_url, facebook_url, tiktok_url, x_url
         });
 
-        console.log("3. DADOS SANITIZADOS (PARA O BANCO):", JSON.stringify(safeArrays, null, 2));
-
-        // Atualiza
-        const updatedPsychologist = await psychologistToUpdate.update({
-            ...body, // Pega campos normais (nome, email...)
-            ...safeArrays, // Sobrescreve com os arrays corrigidos
-            slug: body.slug || psychologistToUpdate.slug // Garante que o slug seja salvo
+        res.json({
+            id: psychologist.id,
+            slug: finalSlug, // Retorna o novo slug para atualizar a tela
+            nome: psychologist.nome,
+            email: psychologist.email,
+            modalidade: psychologist.modalidade,
+            fotoUrl: psychologist.fotoUrl
         });
-
-        console.log("--- [DEBUG] SUCESSO NA ATUALIZAÇÃO! ---\n");
-        res.status(200).json({ message: 'Perfil atualizado!', psychologist: updatedPsychologist });
 
     } catch (error) {
-        console.error("\n--- [DEBUG] ERRO FATAL NO SEQUELIZE ---");
-        console.error("Mensagem:", error.message);
-        console.error("Stack:", error.stack); 
-        res.status(500).json({ error: 'Erro interno (ver logs).' });
+        console.error('Erro ao atualizar perfil:', error);
+        // Tratamento amigável se der erro de duplicidade que passou pelo check
+        if (error.name === 'SequelizeUniqueConstraintError') {
+             return res.status(400).json({ error: 'Dados duplicados (Link ou CRP já existem).' });
+        }
+        res.status(500).json({ error: 'Erro ao atualizar perfil' });
     }
 };
 
@@ -573,31 +688,46 @@ exports.getUnreadMessageCount = async (req, res) => {
     }
 };
 
-// ----------------------------------------------------------------------
-// Rota: PUT /api/psychologists/me/photo
-// ----------------------------------------------------------------------
 exports.updateProfilePhoto = async (req, res) => {
     try {
+        // 1. Validação
         if (!req.psychologist || !req.psychologist.id) {
             return res.status(401).json({ error: 'Não autorizado, psicólogo não identificado.' });
         }
-
         if (!req.file) {
             return res.status(400).json({ error: 'Nenhum arquivo de imagem foi enviado.' });
         }
 
-        const fotoUrl = req.file.path;
         const psychologistToUpdate = await db.Psychologist.findByPk(req.psychologist.id);
-
         if (!psychologistToUpdate) {
             return res.status(404).json({ error: 'Psicólogo não encontrado no banco de dados.' });
         }
 
-        await psychologistToUpdate.update({ fotoUrl });
+        // 2. Otimização da Imagem com Sharp
+        const originalPath = req.file.path;
+        const filename = `profile-${psychologistToUpdate.id}-${Date.now()}.webp`;
+        const outputPath = path.join(req.file.destination, filename);
 
+        await sharp(originalPath)
+            .resize(500, 500, { fit: 'cover', position: 'attention' })
+            .webp({ quality: 80 })
+            .toFile(outputPath);
+
+        // 3. Atualiza o banco de dados com o novo caminho
+        const newFotoUrl = `/uploads/profiles/${filename}`;
+        await psychologistToUpdate.update({ fotoUrl: newFotoUrl });
+
+        // 4. Limpeza: Deleta o arquivo original que o multer salvou
+        try {
+            await fs.unlink(originalPath);
+        } catch (unlinkError) {
+            console.warn(`Aviso: Falha ao deletar arquivo original: ${originalPath}`, unlinkError);
+        }
+
+        // 5. Resposta de Sucesso
         res.status(200).json({
-            message: 'Foto de perfil atualizada com sucesso!',
-            fotoUrl: fotoUrl 
+            message: 'Foto de perfil atualizada e otimizada com sucesso!',
+            fotoUrl: newFotoUrl
         });
 
     } catch (error) {
@@ -605,6 +735,7 @@ exports.updateProfilePhoto = async (req, res) => {
         res.status(500).json({ error: 'Erro interno no servidor ao fazer upload da foto.' });
     }
 };
+
 
 // ----------------------------------------------------------------------
 // Rota: DELETE /api/psychologists/me (BLINDADA CONTRA COBRANÇA INDEVIDA)
@@ -690,9 +821,11 @@ exports.getPatientMatches = async (req, res) => {
         const patientPreferences = {
             valor_sessao_faixa: patient.valor_sessao_faixa,
             temas_buscados: patient.temas_buscados || [],
-            abordagem_desejada: patient.abordagem_desejada || [], // Agora o service sabe traduzir isso!
+            estilo_desejado: patient.abordagem_desejada || [], 
             genero_profissional: patient.genero_profissional,
-            praticas_afirmativas: patient.praticas_afirmativas || [],
+            praticas_desejadas: patient.praticas_afirmativas || [],
+            // Assumindo que salvamos idade no perfil do paciente, senão ignoramos
+            idade_paciente: patient.idade || '' 
         };
 
         // Validação rápida se o perfil está vazio
@@ -706,17 +839,7 @@ exports.getPatientMatches = async (req, res) => {
         }
 
         // --- A MÁGICA ACONTECE AQUI ---
-        // Chamamos o serviço centralizado.
-        // Se precisar passar o ID do paciente para verificar favoritos, podemos alterar o service depois.
-        const matchResult = await findMatches(patientPreferences);
-
-        // Se houver lógica extra de favoritos (isFavorited), injetamos aqui:
-        if (matchResult.results.length > 0) {
-            // Exemplo rápido: checar se o ID do psi está na lista de favoritos do paciente
-            // const favoritos = await db.Favorite.findAll({ where: { patientId: patient.id } });
-            // const favIds = favoritos.map(f => f.psychologistId);
-            // matchResult.results.forEach(r => r.isFavorited = favIds.includes(r.id));
-        }
+        const matchResult = await calculateMatches(patientPreferences);
 
         res.status(200).json({
             message: matchResult.matchTier === 'ideal' ? 'Psicólogos compatíveis encontrados!' : 'Psicólogos próximos encontrados!',
@@ -743,11 +866,11 @@ exports.getAnonymousMatches = async (req, res) => {
         const patientPreferences = {
             valor_sessao_faixa: patientAnswers.faixa_valor,
             temas_buscados: patientAnswers.temas || [],
-            // O front manda "experiencia_desejada" (Texto longo), o Service vai traduzir
-            abordagem_desejada: patientAnswers.experiencia_desejada || [],
+            estilo_desejado: patientAnswers.experiencia_desejada || [],
             genero_profissional: patientAnswers.pref_genero_prof,
-            // O front manda "caracteristicas_prof", mapeamos para praticas
-            praticas_afirmativas: patientAnswers.caracteristicas_prof || [],
+            praticas_desejadas: patientAnswers.caracteristicas_prof || [],
+            idade_paciente: patientAnswers.idade,
+            modalidade_preferida: patientAnswers.modalidade_atendimento
         };
 
         if (!patientPreferences.valor_sessao_faixa) {
@@ -755,7 +878,7 @@ exports.getAnonymousMatches = async (req, res) => {
         }
 
         // Reutiliza a MESMA lógica do usuário logado
-        const matchResult = await findMatches(patientPreferences);
+        const matchResult = await calculateMatches(patientPreferences);
 
         res.status(200).json(matchResult);
 
@@ -1121,5 +1244,141 @@ exports.reactivateSubscription = async (req, res) => {
     } catch (error) {
         console.error('Erro ao reativar assinatura:', error);
         res.status(500).json({ error: 'Erro ao processar reativação no Stripe.' });
+    }
+};
+
+// ----------------------------------------------------------------------
+// Rota: GET /api/psychologists/me/stats (NOVA - OTIMIZADA)
+// ----------------------------------------------------------------------
+exports.getStats = async (req, res) => {
+    try {
+        console.time('⏱️ Psi Stats Load');
+        const psychologistId = req.psychologist.id;
+        const { period } = req.query; 
+
+        // Filtro de Data (Padrão: Últimos 30 dias)
+        let dateCondition = "";
+        const replacements = { psiId: psychologistId };
+
+        if (period === 'last30days') {
+            dateCondition = `AND "createdAt" >= NOW() - INTERVAL '30 days'`;
+        } else if (period === 'last7days') {
+            dateCondition = `AND "createdAt" >= NOW() - INTERVAL '7 days'`;
+        } else if (period === 'last90days') {
+            dateCondition = `AND "createdAt" >= NOW() - INTERVAL '90 days'`;
+        }
+        // 'all_time' não adiciona filtro
+
+        // --- OTIMIZAÇÃO: PARALELISMO (Promise.all) ---
+        // Executa todas as contagens ao mesmo tempo
+        const [
+            clicksResult,
+            appearancesResult,
+            favoritesResult,
+            demandsResult
+        ] = await Promise.all([
+            // 1. Cliques no WhatsApp (Tabela de Logs)
+            db.sequelize.query(
+                `SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "psychologistId" = :psiId ${dateCondition}`,
+                { replacements, type: db.sequelize.QueryTypes.SELECT }
+            ).catch(err => [{ count: 0 }]),
+
+            // 2. Aparições no Perfil (Tabela de Logs)
+            db.sequelize.query(
+                `SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :psiId ${dateCondition}`,
+                { replacements, type: db.sequelize.QueryTypes.SELECT }
+            ).catch(err => [{ count: 0 }]),
+
+            // 3. Favoritos (Tabela de Associação)
+            // Nota: Verifica se a tabela existe para não quebrar
+            // CORREÇÃO: A contagem de favoritos é um total, não por período.
+            db.sequelize.query(
+                `SELECT COUNT(*) as count FROM "PatientFavorites" WHERE "PsychologistId" = :psiId`,
+                { replacements, type: db.sequelize.QueryTypes.SELECT }
+            ).catch(err => { console.error("KPI Error (Favorites):", err.message); return [{ count: 0 }]; }),
+
+            // 4. Demandas (Tendências Gerais)
+            // Busca as últimas 100 buscas concluídas para calcular tendências
+            db.sequelize.query(
+                `SELECT "searchParams" FROM "DemandSearches" WHERE status = 'completed' ${dateCondition} ORDER BY "createdAt" DESC LIMIT 100`,
+                { type: db.sequelize.QueryTypes.SELECT }
+            ).catch(err => [])
+        ]);
+
+        // Processamento das Demandas (Em memória, pois JSON é complexo de agregar no SQL puro de forma portável)
+        const demandCounts = {};
+        let totalDemands = 0;
+        
+        if (demandsResult) {
+            demandsResult.forEach(row => {
+                const params = row.searchParams || {};
+                let temas = params.temas;
+                
+                // Tratamento para string JSON
+                if (typeof temas === 'string') {
+                    try { temas = JSON.parse(temas); } catch(e) {}
+                }
+                
+                if (Array.isArray(temas)) {
+                    temas.forEach(t => {
+                        demandCounts[t] = (demandCounts[t] || 0) + 1;
+                        totalDemands++;
+                    });
+                }
+            });
+        }
+
+        // Top 3 Demandas
+        const topDemands = Object.entries(demandCounts)
+            .map(([name, count]) => ({ 
+                name, 
+                count, 
+                percentage: totalDemands > 0 ? Math.round((count / totalDemands) * 100) : 0 
+            }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 3);
+
+        const stats = {
+            whatsappClicks: parseInt(clicksResult[0]?.count || 0, 10),
+            profileAppearances: parseInt(appearancesResult[0]?.count || 0, 10),
+            favoritesCount: parseInt(favoritesResult[0]?.count || 0, 10),
+            topDemands
+        };
+
+        console.timeEnd('⏱️ Psi Stats Load');
+        res.json(stats);
+
+    } catch (error) {
+        console.error("Erro ao buscar KPIs do psicólogo:", error);
+        // Retorna zerado em vez de erro 500 para não quebrar o dashboard
+        res.json({ whatsappClicks: 0, profileAppearances: 0, favoritesCount: 0, topDemands: [] });
+    }
+};
+
+// ----------------------------------------------------------------------
+// KPIs: Incremento de Métricas (WhatsApp e Aparições)
+// ----------------------------------------------------------------------
+exports.incrementWhatsappClick = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        // Incrementa a coluna whatsapp_clicks onde o slug corresponde
+        await db.Psychologist.increment('whatsapp_clicks', { where: { slug } });
+        res.status(200).json({ success: true });
+    } catch (error) {
+        console.error('Erro ao contabilizar clique WhatsApp:', error);
+        // Não retorna erro 500 para não travar o front, apenas loga
+        res.status(200).json({ success: false });
+    }
+};
+
+exports.incrementProfileAppearance = async (req, res) => {
+    try {
+        const { id } = req.params;
+        // Incrementa a coluna profile_appearances onde o ID corresponde
+        await db.Psychologist.increment('profile_appearances', { where: { id } });
+        res.status(200).json({ success: true });
+    } catch (error) {
+        console.error('Erro ao contabilizar aparição:', error);
+        res.status(200).json({ success: false });
     }
 };

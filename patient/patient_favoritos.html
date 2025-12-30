@@ -1,10 +1,197 @@
-<header class="main-header">
-    <h1>Profissionais Favoritos</h1>
-</header>
-<div id="favoritos-grid" class="matches-grid">
+<style>
+    /* Estilos Exclusivos para os Cards de Profissionais (Estilo Resultados) */
+    #favoritos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 24px;
+        padding-bottom: 40px;
+    }
+
+    .match-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #f1f1f1;
+        position: relative;
+        height: 100%;
+    }
+    .match-card:hover { 
+        transform: translateY(-4px); 
+        box-shadow: 0 12px 24px rgba(27, 67, 50, 0.08);
+        border-color: #e0e0e0;
+    }
+
+    /* Botão de Favoritar (Coração) */
+    .heart-icon {
+        position: absolute;
+        top: 12px; 
+        right: 12px;
+        width: 36px; 
+        height: 36px;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(4px);
+        border-radius: 50%;
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        font-size: 1.2rem; 
+        color: #d1d5db;
+        cursor: pointer;
+        z-index: 20;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .heart-icon:hover { transform: scale(1.1); background: white; }
+    .heart-icon.favorited { color: #E63946; fill: #E63946; }
+
+    /* Foto do Profissional */
+    .match-header-img {
+        width: 100%;
+        height: 240px;
+        object-fit: cover;
+        background-color: #f0f2f5;
+        object-position: top center;
+        border-bottom: 1px solid #f5f5f5;
+    }
+
+    /* Corpo do Card */
+    .match-body {
+        padding: 18px;
+        text-align: left;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .match-name { 
+        font-size: 1.15rem; 
+        color: #1B4332; 
+        margin: 0 0 4px 0; 
+        font-family: 'Lora', serif; 
+        font-weight: 700;
+        line-height: 1.3;
+    }
+    
+    .match-crp { 
+        font-size: 0.75rem; 
+        color: #6B7280; 
+        margin-bottom: 12px; 
+        display: block; 
+        font-weight: 500;
+    }
+    
+    .match-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 12px;
+    }
+    .match-tag {
+        background: #E8F5E9;
+        color: #1B4332;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+    }
+
+    .match-bio {
+        font-size: 0.85rem;
+        color: #4B5563;
+        line-height: 1.5;
+        margin-bottom: 16px;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Rodapé do Card */
+    .match-footer {
+        margin-top: auto;
+        padding-top: 16px;
+        border-top: 1px solid #f3f4f6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .match-price {
+        display: flex;
+        flex-direction: column;
+    }
+    .match-price span { 
+        font-size: 0.7rem; 
+        color: #9CA3AF; 
+        text-transform: uppercase; 
+        font-weight: 600;
+        letter-spacing: 0.5px; 
+    }
+    .match-price strong { 
+        color: #1B4332; 
+        font-size: 1.1rem; 
+        font-weight: 800; 
+    }
+
+    .btn-profile {
+        background-color: #1B4332;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s;
+        text-align: center;
+    }
+    .btn-profile:hover { 
+        background-color: #2D6A4F; 
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(27, 67, 50, 0.2);
+    }
+
+    /* Empty State Melhorado */
+    .empty-state-box {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 20px;
+        border: 2px dashed #e0e0e0;
+        grid-column: 1 / -1;
+    }
+    
+    .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        display: block;
+        opacity: 0.8;
+    }
+</style>
+
+<div class="dashboard-home">
+    <div class="welcome-section">
+        <h1>Meus Favoritos</h1>
+        <p>Profissionais que você salvou para consultar depois.</p>
     </div>
-<div id="favoritos-vazio" class="empty-state hidden">
-    <div class="empty-state-icon">♡</div>
-    <h2>Sua lista de favoritos está vazia.</h2>
-    <p>Ao encontrar um profissional que te interessa, clique no ícone de coração para salvá-lo aqui para depois.</p>
+
+    <div id="favoritos-grid">
+        <div style="text-align: center; padding: 40px; grid-column: 1 / -1;">
+            <div class="loader-spinner" style="margin: 0 auto;"></div>
+            <p style="margin-top: 15px; color: #666;">Carregando seus favoritos...</p>
+        </div>
+    </div>
+
+    <div id="favoritos-vazio" class="hidden empty-state-box">
+        <span class="empty-icon">⭐</span>
+        <h3 style="color: #1B4332; margin-top: 0; font-family: 'Inter', sans-serif;">Nenhum favorito ainda</h3>
+        <p style="color: #666; margin-bottom: 25px;">Explore a lista de profissionais e clique no coração para salvar.</p>
+        <a href="/profissionais" class="btn btn-principal">Buscar Profissionais</a>
+    </div>
 </div>

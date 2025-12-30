@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') 
+        ? window.API_BASE_URL 
+        : 'http://localhost:3001';
+
     const form = document.getElementById('form-esqueci-senha');
     const emailInput = document.getElementById('email-recuperacao');
     const mensagemEl = document.getElementById('mensagem-esqueci-senha');
@@ -8,16 +12,32 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
 
             const email = emailInput.value;
-            const userType = document.querySelector('input[name="user-type"]:checked').value;
 
-            mensagemEl.textContent = 'Enviando...';
+            mensagemEl.textContent = 'Verificando e-mail...';
             mensagemEl.className = 'mensagem-sucesso';
 
-            const apiUrl = userType === 'patient'
-                ? `${API_BASE_URL}/api/patients/forgot-password`
-                : `${API_BASE_URL}/api/psychologists/forgot-password`;
-
             try {
+                // 1. Identifica o tipo de usuário
+                const identifyResponse = await fetch(`${BASE_URL}/api/auth/identify-user`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const identifyResult = await identifyResponse.json();
+
+                if (!identifyResponse.ok) {
+                    throw new Error(identifyResult.error || 'E-mail não encontrado.');
+                }
+
+                // 2. Define a URL correta com base no tipo identificado
+                const apiUrl = identifyResult.type === 'patient'
+                    ? `${BASE_URL}/api/patients/forgot-password`
+                    : `${BASE_URL}/api/psychologists/forgot-password`;
+
+                mensagemEl.textContent = 'Enviando link...';
+
+                // 3. Envia a solicitação de recuperação
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -37,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } catch (error) {
                 console.error('Erro de conexão:', error);
-                mensagemEl.textContent = 'Falha na conexão com o servidor.';
+                mensagemEl.textContent = error.message || 'Falha na conexão com o servidor.';
                 mensagemEl.className = 'mensagem-erro';
             }
         });

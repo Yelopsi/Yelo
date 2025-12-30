@@ -20,7 +20,11 @@ module.exports = (sequelize, DataTypes) => {
         sequelize,
         modelName: 'DemandSearch',
         paranoid: true, // Mantém o Soft Delete
-        timestamps: true
+        timestamps: true,
+        indexes: [
+            { name: 'idx_demandsearches_status_created_at', fields: ['status', 'createdAt'] },
+            { name: 'idx_demandsearches_status_updated_at', fields: ['status', 'updatedAt'] }
+        ]
     });
 
     return DemandSearch;

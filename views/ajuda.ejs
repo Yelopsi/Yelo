@@ -1,39 +1,83 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <title>Ajuda - Yelo</title>
+  <title>Ajuda e Apoio Imediato - Yelo</title>
   <%- include('partials/head') %>
+  <!-- Adiciona o CSS específico da página de ajuda -->
+  <link rel="stylesheet" href="/ajuda.css?v=2.0">
 </head>
 <body>
 
   <%- include('partials/header') %>
 
-  <main class="ajuda-main">
+  <main class="ajuda-main ruido">
     <section class="hero-ajuda">
-      <div class="hero-texto">
-        <h1>Você não está sozinho(a)</h1>
-        <p>Se você está passando por uma momento difícil, saiba que há pessoas e serviços prontos para ouvir e acolher você.</p>
+      <div class="hero-icon">❤️‍🩹</div>
+      <h1>Momentos difíceis pedem acolhimento.</h1>
+      <p>Se você está em crise ou precisa de ajuda imediata, não hesite em procurar apoio. Listamos abaixo canais de atendimento gratuitos e 24h.</p>
+      
+      <!-- Divisor de Onda (Wave) -->
+      <div class="custom-shape-divider-bottom-1689966469">
+          <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+              <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill"></path>
+          </svg>
       </div>
     </section>
 
-    <section class="secao-ajuda">
+    <section class="secao-recursos">
       <div class="container">
-        <h2>Recursos de Apoio Emocional no Brasil</h2>
-        <p class="subtitulo-secao">Se você precisa conversar agora ou sente que corre perigo, entre em contato com um dos serviços abaixo:</p>
+        <h2>Canais de Apoio e Emergência</h2>
 
-        <div class="lista-ajuda">
-          <div class="card-ajuda">
-            <h3>Emergência</h3>
-            <p><strong>Polícia Federal / Militar:</strong> 190</p>
-            <p><strong>SAMU (Serviço de Atendimento Móvel de Urgência):</strong> 192</p>
+        <div class="recursos-grid">
+          <!-- Card CVV -->
+          <div class="recurso-card card-cvv">
+            <div class="card-icon">📞</div>
+            <h3>CVV - Centro de Valorização da Vida</h3>
+            <p>Conversa de apoio para prevenção do suicídio. Gratuito, sigiloso e disponível 24h.</p>
+            <a href="tel:188" class="btn-recurso">Ligar 188</a>
+            <a href="https://www.cvv.org.br/chat/" target="_blank" class="link-secundario">Conversar por chat</a>
           </div>
-          <div class="card-ajuda">
-            <h3>Prevenção ao Suicídio</h3>
-            <p><strong>CVV - Centro de Valorização da Vida:</strong> 188</p>
-            <p>Atendimento gratuito e confidencial, 24h por dia. <a href="https://www.cvv.org.br" target="_blank">Acesse o site</a></p>
+
+          <!-- Card SAMU -->
+          <div class="recurso-card card-emergencia">
+            <div class="card-icon">🚑</div>
+            <h3>SAMU</h3>
+            <p>Para emergências médicas de qualquer natureza. Atendimento rápido em todo o Brasil.</p>
+            <a href="tel:192" class="btn-recurso">Ligar 192</a>
           </div>
+
+          <!-- Card Violência Contra Mulher -->
+          <div class="recurso-card card-mulher">
+            <div class="card-icon">♀️</div>
+            <h3>Ligue 180</h3>
+            <p>Central de Atendimento à Mulher em situação de violência. Denuncie e peça ajuda.</p>
+            <a href="tel:180" class="btn-recurso">Ligar 180</a>
           </div>
+          
+          <!-- Card Direitos Humanos -->
+          <div class="recurso-card card-direitos">
+            <div class="card-icon">⚖️</div>
+            <h3>Disque 100</h3>
+            <p>Para denúncias de violações de direitos humanos, como violência infantil, idosos, etc.</p>
+            <a href="tel:100" class="btn-recurso">Ligar 100</a>
+          </div>
+        </div>
+        
+        <!-- Divisor de Onda (Amarelo) -->
+        <div class="custom-shape-divider-bottom-1689966469 wave-amarela">
+            <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill"></path>
+            </svg>
+        </div>
       </div>
+    </section>
+
+    <section class="secao-nao-emergencia">
+        <div class="container">
+            <h2>Não é uma emergência, mas precisa conversar?</h2>
+            <p>A terapia é um espaço seguro para explorar suas emoções e encontrar caminhos. Na Yelo, você encontra o profissional ideal para sua jornada.</p>
+            <a href="/questionario.html" class="btn btn-cta-principal">Encontrar meu psicólogo</a>
+        </div>
     </section>
   </main>
 

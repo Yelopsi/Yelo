@@ -44,6 +44,7 @@ exports.recordSearch = async (req, res) => {
             // CENÁRIO A: Atualiza o rascunho existente
             await db.DemandSearch.update({
                 searchParams: finalPayload,
+                completedAt: new Date(), // [ESTRATÉGICO] Salva data exata da conclusão para cálculo de duração
                 status: 'completed' // <--- CORREÇÃO: Atualiza a coluna de status
             }, {
                 where: { id: searchId }
@@ -52,6 +53,7 @@ exports.recordSearch = async (req, res) => {
             // CENÁRIO B: Fallback (Cria novo se perdeu o ID)
             await db.DemandSearch.create({
                 searchParams: finalPayload,
+                completedAt: new Date(),
                 status: 'completed' // <--- CORREÇÃO: Já cria como concluído
             });
         }
@@ -109,7 +111,15 @@ exports.getRatings = async (req, res) => {
  */
 exports.recordVisit = async (req, res) => {
     try {
-        await db.SiteVisit.create({ page: req.body.page || 'home' });
+        // [ESTRATÉGICO] Captura metadados ricos para igualar ao middleware do server.js
+        const userAgent = req.headers['user-agent'] || 'Unknown';
+        const referrer = req.headers['referer'] || null;
+        
+        await db.SiteVisit.create({ 
+            page: req.body.page || 'home',
+            userAgent: userAgent,
+            referrer: referrer
+        });
         res.status(200).send('ok'); // Resposta leve e rápida
     } catch (error) {
         // Falha silenciosa para não atrapalhar a navegação do usuário

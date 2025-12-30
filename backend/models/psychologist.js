@@ -31,6 +31,24 @@ module.exports = (sequelize, DataTypes) => {
               as: 'posts' 
           });
       }
+      // Associação com o Fórum
+      if (models.ForumPost) {
+          this.hasMany(models.ForumPost, {
+              foreignKey: 'PsychologistId'
+          });
+      }
+      // Associação com Comentários do Fórum
+      if (models.ForumComment) {
+          this.hasMany(models.ForumComment, {
+              foreignKey: 'PsychologistId'
+          });
+      }
+      // Associação com Votos em Comentários do Fórum
+      if (models.ForumCommentVote) {
+          this.hasMany(models.ForumCommentVote, {
+              foreignKey: 'PsychologistId'
+          });
+      }
       // ------------------------------------
     }
   }
@@ -102,10 +120,16 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: false,
       allowNull: false
     },
+    // --- STATUS VIP / ISENTO ---
+    is_exempt: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false
+    },
     plano: {
       type: DataTypes.STRING,
       allowNull: true,
-      defaultValue: 'ESSENTIAL', // Valores: 'ESSENTIAL', 'CLINICAL', 'REFERENCE'
+      defaultValue: null, // Valores: 'ESSENTIAL', 'CLINICAL', 'REFERENCE'
     },
     status: {
       type: DataTypes.STRING,
@@ -154,6 +178,19 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ARRAY(DataTypes.STRING),
       allowNull: true
     },
+    // --- NOVOS CAMPOS DE MATCH (AFINIDADE) ---
+    publico_alvo: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      allowNull: true
+    },
+    estilo_terapia: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      allowNull: true
+    },
+    praticas_inclusivas: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      allowNull: true
+    },
 
     // --- INÍCIO DO NOVO CAMPO ---
     modalidade: {
@@ -182,12 +219,27 @@ module.exports = (sequelize, DataTypes) => {
     x_url: {
         type: DataTypes.STRING,
         allowNull: true
+    },
+    // --- KPIs (DEFINITIVO) ---
+    whatsapp_clicks: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        allowNull: false
+    },
+    profile_appearances: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        allowNull: false
     }
   }, {
     sequelize,
     modelName: 'Psychologist',
     paranoid: true, // <--- ISSO É O SEGREDO! Ativa o soft delete (deletedAt)
-    timestamps: true // Garante que createdAt e updatedAt existam
+    timestamps: true, // Garante que createdAt e updatedAt existam
+    indexes: [
+        { name: 'idx_psychologists_status_plano', fields: ['status', 'plano'] },
+        { name: 'idx_psychologists_status_created_at', fields: ['status', 'createdAt'] }
+    ]
   });
   return Psychologist;
 };

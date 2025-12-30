@@ -1,6 +1,8 @@
 // Arquivo: backend/routes/psychologistRoutes.js (VERSÃO FINAL CORRIGIDA)
 
 const express = require('express');
+const db = require('../models'); // Adicionado para acesso ao banco
+const { Op } = require('sequelize'); // Adicionado para queries complexas
 const router = express.Router();
 const psychologistController = require('../controllers/psychologistController');
 const { protect } = require('../middleware/authMiddleware');
@@ -33,6 +35,103 @@ router.use(protect);
 // Rotas "ME" (do usuário logado)
 router.get('/me', psychologistController.getAuthenticatedPsychologistProfile);
 router.put('/me', psychologistController.updatePsychologistProfile);
+
+// ROTA DE ESTATÍSTICAS REAIS (KPIs)
+router.get('/me/stats', async (req, res) => {
+    try {
+        // Verificação de segurança extra
+        if (!req.user) {
+            console.error("[KPI Error] Usuário não autenticado na rota de stats.");
+            return res.status(401).json({ error: "Usuário não autenticado." });
+        }
+
+        const psychologistId = req.user.id;
+        const { period = 'last30days' } = req.query;
+
+        let dateFilter = {};
+        let startDate, endDate;
+        let rawDateQuery = ""; // Query string para SQL puro
+        const replacements = { psychologistId };
+
+        if (period !== 'allTime') {
+            const now = new Date();
+            
+            if (period === 'last30days') {
+                startDate = new Date();
+                startDate.setDate(now.getDate() - 30);
+                endDate = now;
+            } else if (period === 'thisMonth') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                endDate = now;
+            } else if (period === 'lastMonth') {
+                startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                // Define o fim como o último momento do último dia do mês anterior
+                endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+            }
+            
+            if (startDate && endDate) {
+                dateFilter = { createdAt: { [Op.between]: [startDate, endDate] } };
+                rawDateQuery = 'AND "createdAt" BETWEEN :startDate AND :endDate';
+                replacements.startDate = startDate;
+                replacements.endDate = endDate;
+            }
+        }
+
+        // --- OTIMIZAÇÃO DE KPIs: Executa contagens em uma única query paralela ---
+        let kpiCounts = { whatsappClicks: 0, profileAppearances: 0, favoritesCount: 0 };
+        try {
+            const kpiQuery = `
+                SELECT
+                    (SELECT COUNT(*) FROM "WhatsappClickLogs" WHERE "psychologistId" = :psychologistId ${rawDateQuery}) as "whatsappClicks",
+                    (SELECT COUNT(*) FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :psychologistId ${rawDateQuery}) as "profileAppearances",
+                    (SELECT COUNT(*) FROM "PatientFavorites" WHERE "PsychologistId" = :psychologistId ${rawDateQuery}) as "favoritesCount"
+            `;
+            const [results] = await db.sequelize.query(kpiQuery, { replacements, type: db.sequelize.QueryTypes.SELECT });
+            kpiCounts = {
+                whatsappClicks: parseInt(results.whatsappClicks, 10) || 0,
+                profileAppearances: parseInt(results.profileAppearances, 10) || 0,
+                favoritesCount: parseInt(results.favoritesCount, 10) || 0,
+            };
+        } catch(e) {
+            console.error("Erro ao buscar KPIs agregados:", e.message);
+        }
+
+        let topDemands = [];
+        try {
+            // A query de demandas (unnest) é mais complexa e mantemos separada.
+            if (db && db.sequelize) { 
+                topDemands = await db.sequelize.query(`
+                    SELECT tag, COUNT(tag)::int as count
+                    FROM (
+                        SELECT unnest("matchTags") as tag 
+                        FROM "MatchEvents" 
+                        WHERE "psychologistId" = :psychologistId 
+                        ${rawDateQuery}
+                    ) as tags
+                    GROUP BY tag
+                    ORDER BY count DESC
+                    LIMIT 3
+                `, { 
+                    replacements: replacements, // Usa o objeto replacements unificado
+                    type: db.sequelize.QueryTypes.SELECT 
+                });
+            }
+        } catch(e) {
+            console.error("KPI Error (TopDemands):", e.message);
+        }
+
+        res.json({
+            whatsappClicks: kpiCounts.whatsappClicks,
+            profileAppearances: kpiCounts.profileAppearances,
+            favoritesCount: kpiCounts.favoritesCount,
+            topDemands: topDemands || []
+        });
+
+    } catch (error) {
+        console.error("Erro CRÍTICO na rota de estatísticas:", error);
+        res.status(500).json({ error: "Erro interno do servidor ao processar estatísticas.", details: error.message });
+    }
+});
 
 // Nota: O frontend envia para /me/foto via POST com campo 'foto'. 
 // Mantive conforme seu código original, mas verifique se o frontend bate com 'profilePhoto'

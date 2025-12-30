@@ -1,85 +1,84 @@
-// admin/admin_financeiro.js
-
 window.initializePage = function() {
     const token = localStorage.getItem('Yelo_token');
+    const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001';
+
+    const kpiMrr = document.getElementById('kpi-mrr');
+    const kpiChurn = document.getElementById('kpi-churn');
+    const kpiLtv = document.getElementById('kpi-ltv');
+    const faturasBody = document.getElementById('faturas-recentes-body');
+    const planosBody = document.getElementById('planos-ativos-body');
+
     if (!token) {
-        console.error("Token de autenticação não encontrado.");
+        console.error("Token não encontrado.");
         return;
     }
 
-    const faturasTableBody = document.getElementById('faturas-recentes-body');
-    const planosTableBody = document.getElementById('planos-ativos-body');
-
-    function formatCurrency(value) {
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-    }
-
-    async function fetchFinancialData() {
-        if (!faturasTableBody || !planosTableBody) {
-            console.error("Tabelas não encontradas no DOM.");
-            return;
-        }
-
-        faturasTableBody.innerHTML = '<tr><td colspan="5" class="loading-row">Carregando faturas...</td></tr>';
-        planosTableBody.innerHTML = '<tr><td colspan="4" class="loading-row">Carregando planos...</td></tr>';
-
+    async function loadFinancials() {
         try {
-            const response = await fetch('http://localhost:3001/api/admin/financials', {
+            const response = await fetch(`${API_BASE_URL}/api/admin/financials`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
             if (!response.ok) {
-                throw new Error('Falha ao buscar dados financeiros.');
+                throw new Error('Falha ao carregar dados financeiros.');
             }
 
             const data = await response.json();
+            
+            // 1. Atualizar KPIs
+            if (kpiMrr) kpiMrr.textContent = `R$ ${data.kpis.mrr.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            if (kpiChurn) kpiChurn.textContent = `${data.kpis.churnRate}%`;
+            if (kpiLtv) kpiLtv.textContent = `R$ ${data.kpis.ltv.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-            // Renderiza os KPIs
-            document.getElementById('kpi-mrr').textContent = formatCurrency(data.kpis.mrr);
-            document.getElementById('kpi-churn').textContent = `${data.kpis.churnRate}%`;
-            document.getElementById('kpi-ltv').textContent = formatCurrency(data.kpis.ltv);
+            // 2. Renderizar Faturas Recentes
+            if (faturasBody) {
+                faturasBody.innerHTML = ''; // Limpa o conteúdo
+                if (data.recentInvoices && data.recentInvoices.length > 0) {
+                    data.recentInvoices.forEach(invoice => {
+                        const row = document.createElement('tr');
+                        
+                        const statusClass = {
+                            'Paga': 'status-ativo',
+                            'Atrasada': 'status-pendente',
+                            'Cancelada': 'status-inativo'
+                        }[invoice.status] || 'status-inativo';
 
-            // Renderiza Faturas Recentes
-            faturasTableBody.innerHTML = '';
-            if (data.recentInvoices.length > 0) {
-                data.recentInvoices.forEach(invoice => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${invoice.psychologistName}</td>
-                        <td>${new Date(invoice.date).toLocaleDateString('pt-BR')}</td>
-                        <td>${formatCurrency(invoice.amount)}</td>
-                        <td><span class="status status-${invoice.status.toLowerCase()}">${invoice.status}</span></td>
-                        <td><button class="btn-tabela">Ver Detalhes</button></td>
-                    `;
-                    faturasTableBody.appendChild(row);
-                });
-            } else {
-                faturasTableBody.innerHTML = '<tr><td colspan="5" class="empty-row">Nenhuma fatura recente.</td></tr>';
+                        row.innerHTML = `
+                            <td data-label="Psicólogo">${invoice.psychologistName}</td>
+                            <td data-label="Data">${new Date(invoice.date).toLocaleDateString('pt-BR')}</td>
+                            <td data-label="Valor">R$ ${invoice.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                            <td data-label="Status"><span class="status ${statusClass}">${invoice.status}</span></td>
+                            <td data-label="Ações"><button class="btn-tabela btn-details">Ver Detalhes</button></td>
+                        `;
+
+                        // Adiciona o listener para o botão "Ver Detalhes"
+                        const detailsBtn = row.querySelector('.btn-details');
+                        detailsBtn.addEventListener('click', () => {
+                            const detailsHtml = `
+                                <p><strong>Psicólogo:</strong> ${invoice.psychologistName}</p>
+                                <p><strong>Data da Fatura:</strong> ${new Date(invoice.date).toLocaleString('pt-BR')}</p>
+                                <p><strong>Valor:</strong> R$ ${invoice.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                <p><strong>Status:</strong> ${invoice.status}</p>
+                                <p><strong>ID da Transação:</strong> (não disponível)</p>
+                            `;
+                            if (window.openConfirmationModal) {
+                                window.openConfirmationModal('Detalhes da Fatura', detailsHtml, () => {});
+                            } else {
+                                alert(detailsHtml.replace(/<[^>]*>/g, '\n'));
+                            }
+                        });
+
+                        faturasBody.appendChild(row);
+                    });
+                } else {
+                    faturasBody.innerHTML = '<tr><td colspan="5" class="empty-row">Nenhuma fatura recente encontrada.</td></tr>';
+                }
             }
-
-            // Renderiza Planos Ativos
-            planosTableBody.innerHTML = '';
-            if (data.activePlans.length > 0) {
-                data.activePlans.forEach(plan => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${plan.psychologistName}</td>
-                        <td>${plan.planName}</td>
-                        <td>${formatCurrency(plan.mrr)}</td>
-                        <td>${new Date(plan.nextBilling).toLocaleDateString('pt-BR')}</td>
-                    `;
-                    planosTableBody.appendChild(row);
-                });
-            } else {
-                planosTableBody.innerHTML = '<tr><td colspan="4" class="empty-row">Nenhum plano ativo.</td></tr>';
-            }
-
         } catch (error) {
             console.error("Erro ao carregar dados financeiros:", error);
-            faturasTableBody.innerHTML = `<tr><td colspan="5" class="error-row">${error.message}</td></tr>`;
-            planosTableBody.innerHTML = `<tr><td colspan="4" class="error-row">${error.message}</td></tr>`;
+            if (faturasBody) faturasBody.innerHTML = `<tr><td colspan="5" class="error-row">${error.message}</td></tr>`;
         }
     }
 
-    fetchFinancialData();
+    loadFinancials();
 };
