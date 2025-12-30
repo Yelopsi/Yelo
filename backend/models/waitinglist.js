@@ -62,6 +62,9 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'WaitingList',
+    indexes: [
+        { name: 'idx_waitinglist_status', fields: ['status'] }
+    ]
   });
   return WaitingList;
 };

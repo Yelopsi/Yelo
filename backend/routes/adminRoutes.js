@@ -44,11 +44,15 @@ router.put('/me/photo', upload.single('profilePhoto'), adminController.updateAdm
 router.get('/psychologists', adminController.getAllPsychologists);
 // Novas rotas para gerenciar psicólogos
 router.put('/psychologists/:id/status', adminController.updatePsychologistStatus);
+// Rota para ativar/desativar isenção (VIP)
+router.patch('/psychologists/:id/vip', adminController.updateVipStatus);
 router.delete('/psychologists/:id', adminController.deletePsychologist);
 
 
 // Rota para buscar todos os pacientes
 router.get('/patients', adminController.getAllPatients);
+// Rota para atualizar status do paciente (suspender/ativar)
+router.put('/patients/:id/status', adminController.updatePatientStatus);
 // Rota para deletar um paciente específico
 router.delete('/patients/:id', adminController.deletePatient);
 
@@ -56,6 +60,9 @@ router.delete('/patients/:id', adminController.deletePatient);
 router.get('/reviews', adminController.getAllReviews);
 // Novas rotas para moderação de avaliações
 router.get('/reviews/pending', adminController.getPendingReviews);
+// CORREÇÃO: Adiciona a rota que faltava para ATUALIZAR o status da avaliação
+router.put('/reviews/:id/moderate', adminController.moderateReview);
+
 
 
 // Rota para buscar os logs do sistema
@@ -91,6 +98,18 @@ router.get('/reports/charts', protect, admin, adminController.getDetailedReports
 
 // Rota para dados financeiros
 router.get('/financials', adminController.getFinancials);
+
+// Rota para indicadores dos questionários
+router.get('/questionnaire-analytics', adminController.getQuestionnaireAnalytics);
+
+// --- ROTAS DE FOLLOW-UP (NOVO) ---
+router.get('/followups', adminController.getFollowUps);
+router.put('/followups/:id', adminController.updateFollowUpStatus);
+router.delete('/followups/:id', adminController.deleteFollowUp);
+
+// --- ROTAS DE EXPORTAÇÃO DE DADOS (NOVO) ---
+router.get('/export/patients', adminController.exportPatients);
+router.get('/export/psychologists', adminController.exportPsychologists);
 
 // --- ROTAS DE MODERAÇÃO DE PERGUNTAS (Q&A) ---
 

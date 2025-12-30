@@ -1,0 +1,40 @@
+<div class="dashboard-header-actions">
+    <button class="btn-primario btn-sm" onclick="carregarDenuncias()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+        Atualizar
+    </button>
+</div>
+
+<div class="tabela-container">
+    <div class="tabela-wrapper">
+        <table class="tabela-gerenciamento">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Autor do Conteúdo</th>
+                    <th>Denúncias</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="lista-denuncias">
+                <!-- Preenchido via JS -->
+            </tbody>
+        </table>
+    </div>
+    <div id="empty-state-reports" style="text-align: center; padding: 40px; color: #888; display: none;">
+        <div style="font-size: 3rem; margin-bottom: 10px;">🌻</div>
+        <p>Nenhuma denúncia pendente. A comunidade está tranquila! 🌻</p>
+    </div>
+</div>
+
+<style>
+    .badge-count {
+        background-color: #E63946;
+        color: white;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-weight: bold;
+        font-size: 0.85rem;
+    }
+</style>

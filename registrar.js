@@ -19,24 +19,34 @@ window.toggleSenha = function(inputId, btn) {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-
     // Configuração da API
     const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') 
         ? window.API_BASE_URL 
         : 'https://yelo.onrender.com';
     
-    const formRegistro = document.getElementById('form-registro');
+    // Tenta pelo ID, mas faz fallback para tag 'form' se não achar (garante que funcione)
+    let formRegistro = document.getElementById('form-registro');
+    if (!formRegistro) {
+        formRegistro = document.querySelector('form');
+    }
+
     const mensagemRegistro = document.getElementById('mensagem-registro');
     const btnSubmit = formRegistro ? formRegistro.querySelector('button[type="submit"]') : null;
 
-    if (!formRegistro) return;
+    if (!formRegistro) {
+        console.error("Formulário não encontrado. O script não pode interceptar o envio.");
+        return;
+    }
 
     formRegistro.addEventListener('submit', async (event) => {
         event.preventDefault(); 
 
         // UI Feedback
-        mensagemRegistro.textContent = '';
-        mensagemRegistro.style.display = 'none';
+        if (mensagemRegistro) {
+            mensagemRegistro.textContent = '';
+            mensagemRegistro.style.display = 'none';
+        }
+
         if(btnSubmit) {
             btnSubmit.disabled = true;
             btnSubmit.textContent = 'Criando conta...';
@@ -48,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const email = document.getElementById('email').value.trim();
         const senha = document.getElementById('senha').value;
         const confirmarSenha = document.getElementById('confirmar-senha').value;
-        
+
         // 2. Validações
         if (senha !== confirmarSenha) {
             mostrarErro('As senhas não coincidem.');
@@ -82,15 +92,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 5. Sucesso
             if (response.ok) { 
-                mensagemRegistro.textContent = "Conta criada com sucesso! Redirecionando...";
-                mensagemRegistro.style.color = 'green';
-                mensagemRegistro.style.display = 'block';
+                if (mensagemRegistro) {
+                    mensagemRegistro.textContent = "Conta criada! Entrando...";
+                    mensagemRegistro.className = 'mensagem-sucesso';
+                    mensagemRegistro.style.color = ''; // Remove cor inline antiga se houver
+                    mensagemRegistro.style.display = 'block';
+                }
 
-                formRegistro.reset();
+                // Tenta login automático
+                try {
+                    const loginRes = await fetch(`${BASE_URL}/api/patients/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, senha })
+                    });
 
+                    if (loginRes.ok) {
+                        const loginData = await loginRes.json();
+                        
+                        if (loginData.token) localStorage.setItem('Yelo_token', loginData.token);
+                        localStorage.setItem('Yelo_user_type', 'patient');
+                        
+                        // CORREÇÃO: Garante que o nome seja salvo (da API ou do formulário)
+                        const nomeSalvo = (loginData.user && loginData.user.nome) ? loginData.user.nome : nome;
+                        localStorage.setItem('Yelo_user_name', nomeSalvo);
+
+                        const params = new URLSearchParams(window.location.search);
+                        const redirectParam = params.get('redirect');
+                        
+                        setTimeout(() => {
+                            if (redirectParam) {
+                                window.location.href = decodeURIComponent(redirectParam);
+                            } else {
+                                window.location.href = '/patient/patient_dashboard';
+                            }
+                        }, 1000);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn("Login automático falhou:", e);
+                }
+
+                // Fallback: Redireciona para login se o automático falhar
                 setTimeout(() => {
-                    // Redireciona para a rota de login do EJS
-                    window.location.href = '/login'; 
+                    const params = new URLSearchParams(window.location.search);
+                    const redirectParam = params.get('redirect');
+                    let target = '/login';
+                    if (redirectParam) target += `?redirect=${encodeURIComponent(redirectParam)}`;
+                    window.location.href = target; 
                 }, 1500);
 
             } else {
@@ -107,9 +156,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function mostrarErro(texto) {
-        mensagemRegistro.textContent = texto;
-        mensagemRegistro.style.color = '#e63946'; // Vermelho erro
-        mensagemRegistro.style.display = 'block';
+        if (mensagemRegistro) {
+            mensagemRegistro.textContent = texto;
+            mensagemRegistro.className = 'mensagem-erro';
+            mensagemRegistro.style.color = ''; // Remove cor inline antiga se houver
+            mensagemRegistro.style.display = 'block';
+        } else {
+            alert(texto);
+        }
     }
 
     function restaurarBotao() {

@@ -5,6 +5,25 @@
     </div>
 </div>
 
+<!-- FILTRO DE DATA PARA KPIs -->
+<div class="kpi-filter-container" style="margin-bottom: 25px; display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-wrap: wrap;">
+    <label for="kpi-date-filter" style="font-weight: 500; font-size: 0.9rem; color: #555;">Mostrar dados de:</label>
+    <select id="kpi-date-filter" class="filtro-select" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc; background-color: #fff; min-width: 180px;">
+        <option value="last30days" selected>Últimos 30 dias</option>
+        <option value="thisMonth">Este Mês</option>
+        <option value="lastMonth">Mês Passado</option>
+        <option value="allTime">Todo o Período</option>
+    </select>
+    <button id="btn-refresh-kpis" class="btn" style="padding: 8px 15px; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; border: 1px solid #ccc; background: #fff; color: #555; cursor: pointer; border-radius: 8px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 4v6h-6"></path>
+            <path d="M1 20v-6h6"></path>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+        Atualizar
+    </button>
+</div>
+
 <div id="alert-complete-profile" style="display: none; background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; border: 1px solid #ffeeba; margin-bottom: 25px; align-items: center; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
     <div style="display: flex; align-items: center; gap: 10px;">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

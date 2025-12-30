@@ -23,6 +23,12 @@ try {
     }
 }
 
+// --- CORREÇÃO: Forçar a porta correta se ela estiver no .env ---
+if (process.env.DB_PORT) {
+    config.port = process.env.DB_PORT;
+}
+// --------------------------------------------------------------
+
 // 2. INICIALIZA A CONEXÃO
 let sequelize;
 if (config.use_env_variable) {
@@ -45,6 +51,7 @@ fs
   .forEach(file => {
     const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
     db[model.name] = model;
+    // console.log(`[Model] Carregado: ${model.name}`);
   });
 
 // 4. FAZ AS ASSOCIAÇÕES (HASMANY, BELONGSTO)

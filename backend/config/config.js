@@ -1,5 +1,9 @@
 // backend/config/config.js
 
+const path = require('path');
+
+// Tenta carregar o .env da raiz do projeto (../../.env) e da pasta atual (.env)
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 require('dotenv').config();
 
 module.exports = {
@@ -9,6 +13,7 @@ module.exports = {
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     host: process.env.DB_HOST,
+    port: process.env.DB_PORT, // <--- ADICIONADO: Lê a porta 5433 do .env
     dialect: 'postgres',
   },
 
@@ -18,6 +23,7 @@ module.exports = {
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     host: process.env.DB_HOST,
+    port: process.env.DB_PORT, // <--- ADICIONADO
     dialect: 'postgres'
   },
 

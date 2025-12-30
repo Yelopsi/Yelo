@@ -1,16 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Tenta buscar o nome salvo no sessionStorage
-    const nome = sessionStorage.getItem('Yelo_user_name');
-    const titleElement = document.getElementById('welcome-title');
+    const nomeCompleto = sessionStorage.getItem('Yelo_user_name');
+    const subtitleElement = document.getElementById('aviso-idade-texto');
 
-    if (!titleElement) return;
+    if (!subtitleElement) return;
 
     // 2. Se encontrar o nome, personaliza o título
-    if (nome) {
-        titleElement.textContent = `Olá ${nome}, temos um recado importante!`;
-    } else {
-        // Fallback: Se o nome não for encontrado
-        titleElement.textContent = 'Temos um recado importante!';
+    if (nomeCompleto) {
+        const primeiroNome = nomeCompleto.split(' ')[0];
+        const nomeFormatado = primeiroNome.charAt(0).toUpperCase() + primeiroNome.slice(1).toLowerCase();
+        subtitleElement.textContent = `Olá, ${nomeFormatado}. Vimos que você tem menos de 18 anos.`;
     }
 
     // 3. Limpa o nome do sessionStorage para não vazar

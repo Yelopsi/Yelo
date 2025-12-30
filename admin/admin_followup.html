@@ -1,0 +1,209 @@
+<style>
+    .status-badge-pending {
+        background-color: #fff3cd;
+        color: #856404;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    .actions-cell {
+        display: flex;
+        gap: 10px;
+    }
+    .btn-icon {
+        background: none;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        padding: 5px;
+        cursor: pointer;
+        transition: background 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .btn-icon:hover {
+        background-color: #f8f9fa;
+    }
+    /* Ajuste para 4 colunas nos KPIs */
+    .kpi-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+    }
+    .sortable {
+        cursor: pointer;
+        user-select: none;
+    }
+    .sortable:hover {
+        background-color: #f8f9fa;
+    }
+    
+    /* Novos Estilos de Filtro e Ações */
+    .filter-bar {
+        background: #fff;
+        padding: 15px 20px;
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    
+    .filter-label {
+        color: #1B4332;
+        font-weight: 600;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-right: 5px;
+    }
+
+    .date-input-styled {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.9rem;
+        color: #444;
+        background-color: #fff;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .date-input-styled:focus {
+        border-color: #1B4332;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
+    }
+
+    .btn-filter {
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .btn-filter-primary {
+        background-color: #1B4332;
+        color: white;
+    }
+    .btn-filter-primary:hover {
+        background-color: #143625;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(27, 67, 50, 0.2);
+    }
+
+    .btn-filter-outline {
+        background-color: transparent;
+        color: #666;
+        border: 1px solid #ddd;
+    }
+    .btn-filter-outline:hover {
+        background-color: #f8f9fa;
+        color: #333;
+        border-color: #ccc;
+    }
+
+    .btn-refresh-header {
+        background-color: #fff;
+        color: #1B4332;
+        border: 1px solid #1B4332;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
+    .btn-refresh-header:hover {
+        background-color: #1B4332;
+        color: #fff;
+    }
+</style>
+
+<section class="content-section fade-in">
+    <div class="dashboard-header-actions">
+        <button id="btn-refresh-followup" class="btn-refresh-header" title="Atualizar Lista">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            Atualizar
+        </button>
+    </div>
+
+    <!-- Filtro de Datas Global -->
+    <div class="filter-bar">
+        <div class="filter-label">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            Período:
+        </div>
+        <input type="date" id="global-date-start" class="date-input-styled">
+        <span style="color: #999; font-size: 0.9rem;">até</span>
+        <input type="date" id="global-date-end" class="date-input-styled">
+        
+        <div style="margin-left: auto; display: flex; gap: 10px;">
+            <button id="btn-apply-filters" class="btn-filter btn-filter-primary">
+                Filtrar
+            </button>
+            <button id="btn-clear-filters" class="btn-filter btn-filter-outline" title="Limpar Filtros">
+                Limpar
+            </button>
+        </div>
+    </div>
+
+    <div class="kpi-grid" style="margin-bottom: 20px;">
+           </div>
+
+    <div class="kpi-grid" style="margin-bottom: 20px;">
+        <div class="kpi-card">
+            <h4>Taxa de Sucesso (Contato)</h4>
+            <p class="kpi-numero" id="kpi-success-rate">--%</p>
+            <small id="kpi-success-label" style="color: #666;">KPI-Mãe</small>
+        </div>
+        <div class="kpi-card">
+            <h4>Taxa de Falha (Qualidade)</h4>
+            <p class="kpi-numero" id="kpi-failure-rate">--%</p>
+            <small style="color: #666;">sem resposta</small>
+        </div>
+        <div class="kpi-card">
+            <h4>Indicador de Timing</h4>
+            <p class="kpi-numero" id="kpi-pending-rate">--%</p>
+            <small style="color: #666;">Ainda não tentou</small>
+        </div>
+        <div class="kpi-card">
+            <h4>Taxa de Opt-out (Atrito)</h4>
+            <p class="kpi-numero" id="kpi-optout-rate">--%</p>
+        </div>
+    </div>
+
+    <div class="tabela-container">
+        <div class="tabela-wrapper">
+            <table class="tabela-gerenciamento">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-sort="date">Data do Clique ↕</th>
+                        <th class="sortable" data-sort="patientName">Paciente (WhatsApp) ↕</th>
+                        <th class="sortable" data-sort="psychologistName">Psicólogo Buscado ↕</th>
+                        <th class="sortable" data-sort="status">Status ↕</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="followup-table-body">
+                    <tr>
+                        <td colspan="5" class="loading-row">Carregando lista de follow-up...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<script src="/admin/admin_followup.js"></script>

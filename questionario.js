@@ -4,6 +4,19 @@ var BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_UR
 
 document.addEventListener('DOMContentLoaded', () => {
 
+    // --- FORÇAR COR DA BARRA DO NAVEGADOR (MOBILE) ---
+    // Garante que a barra fique verde (#1B4332)
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', '#1B4332');
+    } else {
+        const meta = document.createElement('meta');
+        meta.name = "theme-color";
+        meta.content = "#1B4332";
+        document.head.appendChild(meta);
+    }
+    document.documentElement.style.backgroundColor = '#1B4332';
+
     let currentSearchId = null; // Guarda o ID do rascunho
 
     const questions = [
@@ -20,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'faixa_valor', question: "Qual faixa de valor você pode investir por sessão?", subtitle: "Isso garante que vamos te conectar com profissionais que cabem no seu orçamento.", type: 'choice', choices: ["Até R$ 50", "R$ 51 - R$ 90", "R$ 91 - R$ 150", "Acima de R$ 150"], required: true },
         { id: 'modalidade_atendimento', question: "Como você prefere ser atendido?", subtitle: "Isso nos ajuda a filtrar profissionais pela sua localização ou disponibilidade online.", type: 'choice', choices: ["Online", "Presencial", "Indiferente (Online ou Presencial)"], required: true },
         { id: 'cep', question: "Qual o seu CEP?", subtitle: "Isso nos ajuda a encontrar profissionais que atendem presencialmente perto de você.", type: 'text', placeholder: "00000-000", required: true, inputMode: 'numeric' },
-        { id: 'whatsapp', question: "Para finalizar, [NOME], qual seu número de WhatsApp?", subtitle: "Seu número será usado apenas para o contato inicial do profissional e mensagens de acompanhamento da Yelo.", type: 'tel', placeholder: "(XX) XXXXX-XXXX", required: true, inputMode: 'numeric' },
+        { id: 'whatsapp', question: "Para finalizar, [NOME], qual seu número de WhatsApp?", subtitle: "Nos importamos com a sua jornada. Ao avançar, enviaremos uma mensagem nos próximos dias para saber se o atendimento atendeu as suas expectativas.", type: 'tel', placeholder: "(XX) XXXXX-XXXX", required: true, inputMode: 'numeric' },
         { id: 'avaliacao_ux', question: "Como você avalia sua experiência ao preencher este questionário?", subtitle: "Seu feedback nos ajuda a melhorar!", type: 'rating', required: true },
         { id: 'agradecimento', type: 'thank-you', question: "Obrigado pelo seu feedback, [NOME]!", subtitle: "Sua jornada de cuidado está prestes a começar." },
         { id: 'final', type: 'final', question: "Tudo pronto, [NOME]!", subtitle: "Estamos cruzando suas respostas para encontrar as conexões mais significativas. Em instantes, você verá suas recomendações."},
@@ -44,7 +57,11 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'text': case 'tel':
                 const inputModeAttr = questionData.inputMode ? `inputmode="${questionData.inputMode}"` : '';
                 const autocompleteAttr = questionData.autocomplete ? `autocomplete="${questionData.autocomplete}"` : '';
-                contentHTML = `<input type="${questionData.type}" id="input-${questionData.id}" class="text-input" placeholder="${questionData.placeholder}" ${inputModeAttr} ${autocompleteAttr}>`; 
+                contentHTML = `<div class="input-wrapper"><input type="${questionData.type}" id="input-${questionData.id}" class="text-input" placeholder="${questionData.placeholder}" ${inputModeAttr} ${autocompleteAttr}>
+                <span class="enter-hint">Pressione <strong>Enter ↵</strong></span></div>`; 
+                if (questionData.footer) {
+                    contentHTML += `<p style="margin-top: 12px; font-size: 0.85rem; opacity: 0.8; text-align: center; line-height: 1.4;">${questionData.footer}</p>`;
+                }
                 break; 
             case 'choice': case 'multiple-choice': 
                 const choicesClass = questionData.scrollable ? 'choices-container scrollable' : 'choices-container'; 
@@ -141,6 +158,13 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // Separa dados para salvar
             const { nome, whatsapp, ...demandAnswers } = userAnswers;
+            
+            // [NOVO] Salva o telefone para usar no clique do WhatsApp (mesmo se não logar)
+            if (whatsapp) localStorage.setItem('yelo_guest_phone', whatsapp);
+            if (nome) localStorage.setItem('yelo_guest_name', nome);
+
+            // Normaliza o consentimento para booleano (para facilitar o filtro no Admin)
+            demandAnswers.contact_consent = true;
 
             // Adiciona o ID do rascunho para o backend saber qual atualizar
             if (currentSearchId) {
@@ -177,20 +201,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Salva resultados e redireciona
             sessionStorage.setItem('matchResults', JSON.stringify(matchData));
-            window.location.href = 'resultados.html';
+            window.location.href = '/resultados';
 
         } catch (error) {
             console.error("❌ Erro no finalize():", error);
             // Fallback de segurança: se der erro, vai para resultados mesmo assim
             setTimeout(() => {
                 sessionStorage.setItem('matchResults', JSON.stringify({ matchTier: 'none', results: [] }));
-                window.location.href = 'resultados.html';
+                window.location.href = '/resultados';
             }, 2000);
         }
     }
     
     // --- FUNÇÕES AUXILIARES ---
-    function updateProgressBar() { const questionIndex = questions.slice(0, currentStep + 1).filter(q => !['welcome', 'final', 'error', 'thank-you'].includes(q.type)).length; const progress = Math.max(0, (questionIndex / totalQuestions) * 100); progressBarFill.style.width = `${progress}%`; }
+    function updateProgressBar() { 
+        const validQuestions = questions.filter(q => !['welcome', 'final', 'error', 'thank-you'].includes(q.type));
+        const currentValidIndex = questions.slice(0, currentStep + 1).filter(q => !['welcome', 'final', 'error', 'thank-you'].includes(q.type)).length; 
+        
+        const progress = Math.max(0, (currentValidIndex / totalQuestions) * 100); 
+        progressBarFill.style.width = `${progress}%`; 
+
+        const counterEl = document.querySelector('.step-counter');
+        if(counterEl && currentValidIndex > 0 && currentValidIndex <= totalQuestions) {
+            counterEl.textContent = `Pergunta ${currentValidIndex} de ${totalQuestions}`;
+            counterEl.style.opacity = '1';
+        } else {
+            if(counterEl) counterEl.style.opacity = '0';
+        }
+    }
+
     function goToSlide(index) { 
         const currentSlide = document.querySelector('.slide.active'); 
         if (currentSlide) currentSlide.classList.remove('active'); 
@@ -200,6 +239,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (nextSlide) {
             nextSlide.classList.add('active'); 
+
+            // --- CORREÇÃO DE SCROLL ---
+            // Garante que a tela suba para o topo ao trocar de pergunta
+            window.scrollTo(0, 0);
+            const slideBody = nextSlide.querySelector('.slide-body');
+            if (slideBody) slideBody.scrollTop = 0;
         } else {
             console.error(`Slide com index ${index} não encontrado.`); 
         }
@@ -285,7 +330,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 starsContainer.classList.add('shake-error'); 
                 setTimeout(() => starsContainer.classList.remove('shake-error'), 500); 
                 isValid = false;
-                alert("Por favor, selecione uma nota de 1 a 5 estrelas.");
+                
+                // Exibe Modal Personalizado em vez de alert
+                const modal = document.getElementById('rating-validation-modal');
+                if (modal) {
+                    modal.style.display = 'flex';
+                } else {
+                    alert("Por favor, selecione uma nota de 1 a 5 estrelas.");
+                }
             }
         }
 
@@ -362,7 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // --- LÓGICA DE IDADE ---
                     if (currentQuestion.id === 'idade' && target.dataset.value === 'Menor de 18 anos') {
                         sessionStorage.setItem('Yelo_user_name', userAnswers.nome || ''); 
-                        window.location.href = 'menor_de_idade.html';
+                        window.location.href = '/menor_de_idade';
                     } else {
                         let proximoPasso = currentStep + 1;
                         if (currentQuestion.id === 'modalidade_atendimento') {
@@ -388,12 +440,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 validateAndAdvance(); 
             } 
         }); 
+
+        // [NOVO] Salva o WhatsApp em tempo real para garantir que não se perca
+        slidesContainer.addEventListener('input', (e) => {
+            if (e.target.id === 'input-whatsapp') {
+                localStorage.setItem('yelo_guest_phone', e.target.value);
+            }
+            if (e.target.id === 'input-nome') {
+                localStorage.setItem('yelo_guest_name', e.target.value);
+            }
+        });
         
         if (document.querySelector(`[data-index="0"]`)) { 
             goToSlide(0); 
         } else { 
             console.error("Erro: Slide inicial não encontrado."); 
         } 
+    }
+
+    // Listener para fechar o modal de avaliação
+    const btnCloseRating = document.getElementById('btn-close-rating-modal');
+    if (btnCloseRating) {
+        btnCloseRating.addEventListener('click', () => {
+            document.getElementById('rating-validation-modal').style.display = 'none';
+        });
     }
 
     initializeQuiz();

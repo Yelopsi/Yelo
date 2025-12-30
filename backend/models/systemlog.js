@@ -22,7 +22,12 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'SystemLog',
-    updatedAt: false // Logs são imutáveis
+    updatedAt: false, // Logs são imutáveis
+    indexes: [
+        { name: 'idx_systemlogs_level_created_at', fields: ['level', 'createdAt'] },
+        { name: 'idx_systemlogs_created_at', fields: ['createdAt'] },
+        { name: 'idx_systemlogs_meta', fields: ['meta'], using: 'gin' }
+    ]
   });
   return SystemLog;
 };

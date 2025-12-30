@@ -27,9 +27,14 @@ exports.getConversations = async (req, res) => {
 
 exports.getMessages = async (req, res) => {
   try {
-    // Pegamos o ID do psicólogo logado (vindo do token de autenticação)
-    // Se o seu req.user.id for diferente (ex: req.userId), ajuste aqui.
-    const psiId = req.user ? req.user.id : null; 
+    // --- CORREÇÃO DE ROBUSTEZ ---
+    const user = req.psychologist || req.patient;
+    if (!user) {
+        console.error('[DIAGNÓSTICO messagingCtrl] getMessages: Usuário não autenticado.');
+        return res.status(401).json({ error: 'Usuário não autenticado' });
+    }
+    const psiId = user.id;
+    // -------------------------
 
     if (!psiId) return res.status(401).json({ error: 'Usuário não autenticado' });
 
@@ -56,7 +61,15 @@ exports.getMessages = async (req, res) => {
 
 exports.sendMessage = async (req, res) => {
   try {
-    const psiId = req.user ? req.user.id : null;
+    // --- CORREÇÃO DE ROBUSTEZ ---
+    const user = req.psychologist || req.patient;
+    if (!user) {
+        console.error('[DIAGNÓSTICO messagingCtrl] sendMessage: Usuário não autenticado.');
+        return res.status(401).json({ error: 'Não autorizado' });
+    }
+    const psiId = user.id;
+    // -------------------------
+
     const { content } = req.body;
 
     if (!psiId) return res.status(401).json({ error: 'Não autorizado' });

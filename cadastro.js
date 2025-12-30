@@ -70,7 +70,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 5. Sucesso!
-            alert('Cadastro realizado com sucesso! Faça login para completar seu perfil.');
+            // Tenta login automático para já salvar o nome e token
+            try {
+                const loginRes = await fetch(`${BASE_URL}/api/psychologists/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, senha })
+                });
+
+                if (loginRes.ok) {
+                    const loginData = await loginRes.json();
+                    if (loginData.token) localStorage.setItem('Yelo_token', loginData.token);
+                    localStorage.setItem('Yelo_user_type', 'psychologist');
+                    
+                    // CORREÇÃO: Salva o nome imediatamente (da API ou do formulário)
+                    const nomeSalvo = (loginData.user && loginData.user.nome) ? loginData.user.nome : nome;
+                    localStorage.setItem('Yelo_user_name', nomeSalvo);
+
+                    alert('Cadastro realizado! Redirecionando para o painel...');
+                    window.location.href = '/psi/psi_dashboard.html';
+                    return;
+                }
+            } catch (e) { console.warn("Auto-login falhou", e); }
+
+            // Fallback se o auto-login falhar
+            alert('Cadastro realizado! Faça login para continuar.');
             window.location.href = '/login';
 
         } catch (error) {
@@ -83,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Funções Auxiliares
     function mostrarErro(texto) {
         msgErro.textContent = texto;
+        msgErro.className = 'mensagem-erro';
         msgErro.style.display = 'block';
     }
 

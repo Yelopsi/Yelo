@@ -4,7 +4,6 @@
     <title>Blog | Yelo</title>
     <meta name="description" content="Reflexões, psicoeducação e conteúdos sobre saúde mental.">
     <%- include('partials/head') %>
-    
     <style>
         /* --- ESTRUTURA GERAL --- */
         .pagina-blog {
@@ -27,13 +26,13 @@
             padding: 20px;
         }
         .blog-hero h1 {
-            font-family: 'Fraunces', serif;
+            font-family: var(--font-titulos);
             font-size: 3.5rem;
             color: #1B4332;
             margin: 0 0 15px 0;
         }
         .blog-hero p {
-            font-family: 'Lato', sans-serif;
+            font-family: var(--font-principal);
             font-size: 1.25rem;
             color: #555;
             max-width: 700px;
@@ -101,7 +100,7 @@
         }
 
         .destaque-conteudo h2 {
-            font-family: 'Fraunces', serif;
+            font-family: var(--font-titulos);
             font-size: 2rem; /* Tamanho controlado */
             color: #1B4332;
             margin: 0 0 15px 0;
@@ -115,7 +114,8 @@
         }
 
         .destaque-conteudo p {
-            font-size: 1rem;
+            font-family: var(--font-principal);
+            font-size: 1.15rem;
             color: #666;
             line-height: 1.6;
             margin-bottom: 25px;
@@ -145,8 +145,8 @@
         .post-card:hover { transform: translateY(-5px); }
         .post-card img { width: 100%; height: 200px; object-fit: cover; }
         .post-card-body { padding: 25px; flex: 1; display: flex; flex-direction: column; }
-        .post-card-body h3 { font-family: 'Fraunces', serif; font-size: 1.4rem; color: #1B4332; margin: 10px 0; line-height: 1.3; }
-        .post-card-body p { font-size: 0.95rem; color: #666; line-height: 1.5; margin-bottom: 20px; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .post-card-body h3 { font-family: var(--font-titulos); font-size: 1.4rem; color: #1B4332; margin: 10px 0; line-height: 1.3; }
+        .post-card-body p { font-family: var(--font-principal); font-size: 1.05rem; color: #666; line-height: 1.6; margin-bottom: 20px; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
         .post-card-footer { border-top: 1px solid #eee; padding-top: 15px; display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
 
         /* MOBILE */

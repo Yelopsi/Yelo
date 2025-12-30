@@ -1,9 +1,67 @@
 /* public/css/01-variables.css */
+
+/* 1. IMPORTAÇÃO CENTRALIZADA DE FONTES (Google Fonts) */
+/* Padronização: Apenas Inter para textos gerais */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* 2. FONTE CUSTOMIZADA (New Kansas) */
+@font-face {
+    font-family: 'New Kansas';
+    src: url('../assets/fonts/newkansas-regular.woff2') format('woff2'),
+         url('../assets/fonts/newkansas-regular.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'New Kansas';
+    src: url('../assets/fonts/newkansas-italic.woff2') format('woff2'),
+         url('../assets/fonts/newkansas-italic.woff') format('woff');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'New Kansas';
+    src: url('../assets/fonts/newkansas-medium.woff2') format('woff2'),
+         url('../assets/fonts/newkansas-medium.woff') format('woff');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'New Kansas';
+    src: url('../assets/fonts/newkansas-bold.woff2') format('woff2'),
+         url('../assets/fonts/newkansas-bold.woff') format('woff');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
 :root {
+    /* --- CORES --- */
     --verde-escuro: #1B4332;
     --cor-Yelo: #FFEE8C;
     --branco-puro: #FFFFFF;
     --off-white: #fdfaf6;
     --cinza-texto: #555;
     --cinza-borda: #e0e0e0;
+    --cinza-fundo: #f8f9fa;
+    --cinza-texto-claro: #adb5bd;
+    --coral-quente: #E63946;
+    --verde-sucesso: #28a745;
+
+    /* --- FONTES (Use estas variáveis nos outros arquivos) --- */
+    --font-principal: 'Inter', sans-serif;       /* Texto Geral / UI / Fórum */
+    --font-leitura: 'Inter', sans-serif;         /* Blog / Leitura (Padronizado) */
+    --font-titulos: 'New Kansas', serif;         /* Títulos / Destaques UI */
+    --font-brand: 'New Kansas', serif;           /* Marca/Destaque */
+    
+    /* Mapeamentos de Compatibilidade (Redirecionam para o novo padrão) */
+    --font-alternativa: 'Inter', sans-serif;
+    --font-montserrat: 'Inter', sans-serif;      /* Detalhes agora são Inter */
+    --font-admin: 'Inter', sans-serif;           /* Admin agora é Inter */
 }

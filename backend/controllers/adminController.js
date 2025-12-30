@@ -89,6 +89,55 @@ exports.moderatePsychologist = async (req, res) => {
     }
 };
 
+/**
+ * Rota: PATCH /api/admin/psychologists/:id/vip
+ * Descrição: Ativa ou desativa o status VIP (isento) de um psicólogo.
+ * CORREÇÃO: Agora permite definir um plano específico ou remover a isenção.
+ */
+exports.updateVipStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { plan } = req.body; // Recebe 'ESSENTIAL', 'CLINICAL', 'REFERENCE', ou null
+
+        const psychologist = await db.Psychologist.findByPk(id);
+
+        if (!psychologist) {
+            return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+        }
+
+        let message;
+        let newExemptStatus;
+        let newPlan;
+
+        if (plan) {
+            // Concedendo um plano VIP
+            newExemptStatus = true;
+            newPlan = plan;
+            message = `Isenção do plano ${plan} concedida com sucesso.`;
+        } else {
+            // Removendo a isenção
+            newExemptStatus = false;
+            newPlan = null;
+            message = 'Isenção removida com sucesso.';
+        }
+
+        await psychologist.update({
+            is_exempt: newExemptStatus,
+            plano: newPlan
+        });
+
+        res.status(200).json({
+            message,
+            is_exempt: newExemptStatus,
+            plano: newPlan
+        });
+
+    } catch (error) {
+        console.error('Erro ao atualizar status VIP:', error);
+        res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};
+
 // =====================================================================
 // (O RESTANTE DO SEU ARQUIVO PERMANECE IDÊNTICO)
 // =====================================================================
@@ -231,12 +280,31 @@ exports.getConversations = async (req, res) => {
  * Descrição: Busca os dados do administrador logado.
  */
 exports.getAdminData = async (req, res) => {
-    // ... (seu código existente)
-    if (req.psychologist) {
-        const { id, nome, email, telefone, fotoUrl } = req.psychologist;
-        res.status(200).json({ id, nome, email, telefone, fotoUrl });
-    } else {
+    try {
+        const userId = req.user.id;
+
+        // Tenta encontrar como Psicólogo-Admin
+        const psychologistAdmin = await db.Psychologist.findByPk(userId, {
+            attributes: ['id', 'nome', 'email', 'telefone', 'fotoUrl', 'isAdmin']
+        });
+
+        if (psychologistAdmin && psychologistAdmin.isAdmin) {
+            return res.status(200).json(psychologistAdmin);
+        } else {
+            // Fallback para tabela Admins
+            const [results] = await db.sequelize.query(
+                `SELECT id, nome, email, telefone, "fotoUrl" FROM "Admins" WHERE id = :id`,
+                { replacements: { id: userId } }
+            );
+            if (results.length > 0) {
+                return res.status(200).json(results[0]);
+            }
+        }
+
         res.status(404).json({ error: 'Administrador não encontrado.' });
+    } catch (error) {
+        console.error('Erro ao buscar dados do admin:', error);
+        res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };
 
@@ -245,22 +313,36 @@ exports.getAdminData = async (req, res) => {
  * Descrição: Atualiza os dados do administrador logado.
  */
 exports.updateAdminData = async (req, res) => {
-    // ... (seu código existente)
     try {
-        const adminUser = req.psychologist;
+        const userId = req.user.id;
         const { nome, email, telefone } = req.body;
 
         if (!nome || !email) {
             return res.status(400).json({ error: 'Nome e email são obrigatórios.' });
         }
-        if (email.toLowerCase() !== adminUser.email.toLowerCase()) {
-            const existingUser = await db.Psychologist.findOne({ where: { email } });
-            if (existingUser) {
-                return res.status(409).json({ error: 'Este email já está em uso por outra conta.' });
+
+        // Tenta encontrar como Psicólogo-Admin primeiro
+        const psychologistAdmin = await db.Psychologist.findByPk(userId);
+
+        if (psychologistAdmin && psychologistAdmin.isAdmin) {
+            // Lógica para Psicólogo-Admin
+            if (email.toLowerCase() !== psychologistAdmin.email.toLowerCase()) {
+                const existingUser = await db.Psychologist.findOne({ where: { email, id: { [Op.ne]: userId } } });
+                if (existingUser) return res.status(409).json({ error: 'Este email já está em uso.' });
             }
+            await psychologistAdmin.update({ nome, email, telefone });
+            return res.status(200).json({ message: 'Dados atualizados com sucesso!' });
+        } else {
+            // Lógica para Admin da tabela 'Admins'
+            const [existing] = await db.sequelize.query(`SELECT id FROM "Admins" WHERE email = :email AND id != :id LIMIT 1`, { replacements: { email, id: userId } });
+            if (existing.length > 0) return res.status(409).json({ error: 'Este email já está em uso.' });
+
+            await db.sequelize.query(
+                `UPDATE "Admins" SET nome = :nome, email = :email, telefone = :telefone, "updatedAt" = NOW() WHERE id = :id`,
+                { replacements: { nome, email, telefone, id: userId } }
+            );
+            return res.status(200).json({ message: 'Dados atualizados com sucesso!' });
         }
-        await adminUser.update({ nome, email, telefone });
-        res.status(200).json({ message: 'Dados atualizados com sucesso!' });
     } catch (error) {
         console.error('Erro ao atualizar dados do admin:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
@@ -272,20 +354,37 @@ exports.updateAdminData = async (req, res) => {
  * Descrição: Atualiza a senha do administrador logado.
  */
 exports.updateAdminPassword = async (req, res) => {
-    // ... (seu código existente)
     try {
         const { senha_atual, nova_senha } = req.body;
+        const userId = req.user.id;
+
         if (!senha_atual || !nova_senha) {
             return res.status(400).json({ error: 'Todos os campos de senha são obrigatórios.' });
         }
-        const adminUser = await db.Psychologist.findByPk(req.psychologist.id);
-        const isMatch = await bcrypt.compare(senha_atual, adminUser.senha);
-        if (!isMatch) {
-            return res.status(401).json({ error: 'A senha atual está incorreta.' });
+
+        // Tenta encontrar como Psicólogo-Admin
+        const psychologistAdmin = await db.Psychologist.findByPk(userId);
+
+        if (psychologistAdmin && psychologistAdmin.isAdmin) {
+            const isMatch = await bcrypt.compare(senha_atual, psychologistAdmin.senha);
+            if (!isMatch) return res.status(401).json({ error: 'A senha atual está incorreta.' });
+
+            psychologistAdmin.senha = await bcrypt.hash(nova_senha, 10);
+            await psychologistAdmin.save();
+            return res.status(200).json({ message: 'Senha alterada com sucesso!' });
+        } else {
+            // Lógica para Admin da tabela 'Admins'
+            const [rows] = await db.sequelize.query(`SELECT senha FROM "Admins" WHERE id = :id`, { replacements: { id: userId } });
+            if (rows.length === 0) return res.status(404).json({ error: 'Usuário não encontrado.' });
+
+            const userHash = rows[0].senha;
+            const isMatch = await bcrypt.compare(senha_atual, userHash);
+            if (!isMatch) return res.status(401).json({ error: 'A senha atual está incorreta.' });
+
+            const newHash = await bcrypt.hash(nova_senha, 10);
+            await db.sequelize.query(`UPDATE "Admins" SET senha = :senha, "updatedAt" = NOW() WHERE id = :id`, { replacements: { senha: newHash, id: userId } });
+            return res.status(200).json({ message: 'Senha alterada com sucesso!' });
         }
-        adminUser.senha = await bcrypt.hash(nova_senha, 10);
-        await adminUser.save();
-        res.status(200).json({ message: 'Senha alterada com sucesso!' });
     } catch (error) {
         console.error('Erro ao alterar senha do admin:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
@@ -297,18 +396,25 @@ exports.updateAdminPassword = async (req, res) => {
  * Descrição: Atualiza a foto de perfil do administrador logado.
  */
 exports.updateAdminPhoto = async (req, res) => {
-    // ... (seu código existente)
     try {
-        const adminUser = req.psychologist;
         if (!req.file) {
             return res.status(400).json({ error: 'Nenhum arquivo de imagem foi enviado.' });
         }
         const fotoUrl = `/uploads/profiles/${req.file.filename}`;
-        await adminUser.update({ fotoUrl });
-        res.status(200).json({
-            message: 'Foto de perfil atualizada com sucesso!',
-            fotoUrl: fotoUrl
-        });
+        
+        if (req.psychologist) {
+            await req.psychologist.update({ fotoUrl });
+            return res.status(200).json({ message: 'Foto atualizada!', fotoUrl });
+        }
+
+        if (req.user && (req.user.type === 'admin' || req.user.role === 'admin')) {
+            await db.sequelize.query(`UPDATE "Admins" SET "fotoUrl" = :fotoUrl, "updatedAt" = NOW() WHERE id = :id`, {
+                replacements: { fotoUrl, id: req.user.id }
+            });
+            return res.status(200).json({ message: 'Foto atualizada!', fotoUrl });
+        }
+
+        res.status(404).json({ error: 'Usuário não encontrado.' });
     } catch (error) {
         console.error('Erro ao atualizar foto do admin:', error);
         res.status(500).json({ error: 'Erro interno no servidor ao processar a imagem.' });
@@ -321,18 +427,13 @@ exports.updateAdminPhoto = async (req, res) => {
  */
 exports.getDashboardStats = async (req, res) => {
     try {
+        console.time('⏱️ Dashboard Stats Load');
         const now = new Date();
         
         // Definição de "30 dias atrás"
         const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
 
         // --- A. DADOS DE CRESCIMENTO ---
-        const newPatients30d = await db.Patient.count({ where: { createdAt: { [Op.gte]: thirtyDaysAgo } } });
-        // CORREÇÃO: Adicionamos paranoid: false para contar também quem se cadastrou e já saiu (Churn)
-        const newPsis30d = await db.Psychologist.count({ 
-            where: { createdAt: { [Op.gte]: thirtyDaysAgo } },
-            paranoid: false 
-        });
         
         // --- 1. Definição do "Hoje" (Universal: Funciona Local e Produção) ---
         // Objetivo: Encontrar o Timestamp exato da meia-noite brasileira (00:00 BRT)
@@ -352,96 +453,84 @@ exports.getDashboardStats = async (req, res) => {
         // Então somamos as 3 horas de volta.
         const startOfToday = new Date(tempoNoBrasil.getTime() + offsetBrasil);
 
-        // --- 2. Busca no Banco ---
-        // Agora o filtro funciona perfeitamente
-        const questToday = await db.DemandSearch.count({ 
-            where: { 
-                createdAt: { [Op.gte]: startOfToday },
-                status: 'completed' // <--- SÓ CONTA CONCLUÍDOS
-            } 
-        });
-
-        // --- B. DADOS GERAIS (Raio-X da Base - Lógica Exata) ---
-
-        // 1. PACIENTES
-        // Total histórico (inclui excluídos)
-        const totalPat = await db.Patient.count({ paranoid: false });
-        // Ativos agora (ignora excluídos)
-        const activePat = await db.Patient.count(); 
-        // Excluídos (conta explicitamente quem tem data de exclusão)
-        const deletedPat = await db.Patient.count({ 
-            where: { deletedAt: { [Op.not]: null } }, 
-            paranoid: false 
-        });
-
-        // 2. PSICÓLOGOS
-        const totalPsi = await db.Psychologist.count({ paranoid: false });
-        // Consideramos "Ativos" apenas quem está com status 'active' E não foi deletado
-        const activePsi = await db.Psychologist.count({ where: { status: 'active' } });
-        
-        // Excluídos Real (Quem foi deletado da base)
-        const deletedPsi = await db.Psychologist.count({ 
-            where: { deletedAt: { [Op.not]: null } }, 
-            paranoid: false 
-        });
-
-        // Contagem de Planos (Apenas de psis não-excluídos e ativos)
-        const psisByPlan = await db.Psychologist.findAll({
-            attributes: ['plano', [db.sequelize.fn('COUNT', 'plano'), 'count']],
-            where: { status: 'active', plano: { [Op.ne]: null } },
-            group: ['plano']
-        });
-        const plansCount = {};
-        psisByPlan.forEach(p => plansCount[p.dataValues.plano] = parseInt(p.dataValues.count, 10));
-
-        // 3. QUESTIONÁRIOS (Corrigido)
-        
-        // Total = Apenas os que foram concluídos com sucesso
-        const totalQuest = await db.DemandSearch.count({ 
-            where: { status: 'completed' }, 
-            paranoid: false 
-        });
-        
         // Lógica de Desistência (Abandono de Funil)
         // Conta quem está como 'started' há mais de 10 MINUTOS
         const tenMinutesAgo = new Date(new Date() - 10 * 60 * 1000); // 10 minutos em ms
         
-        const abandonedQuest = await db.DemandSearch.count({ 
-            where: { 
-                status: 'started',
-                updatedAt: { [Op.lt]: tenMinutesAgo } // Menor que 10 min atrás
-            },
-            paranoid: false 
-        });
+        // --- OTIMIZAÇÃO MASTER V2: Múltiplas Queries Otimizadas em Paralelo ---
+        const patientStatsQuery = `
+            SELECT
+                COUNT(*) AS total,
+                COUNT(*) FILTER (WHERE "deletedAt" IS NULL) as active,
+                COUNT(*) FILTER (WHERE "deletedAt" IS NOT NULL) as deleted,
+                COUNT(*) FILTER (WHERE "createdAt" >= :thirtyDaysAgo) as new30d
+            FROM "Patients"
+        `;
 
-        // --- C. FINANCEIRO (MRR) ---
-        // Calcula somando o valor dos planos dos ativos
-        const activePayingPsis = await db.Psychologist.findAll({ 
-            where: { status: 'active', plano: { [Op.ne]: null } } 
-        });
-        
-        const planPrices = { 'Semente': 59.90, 'Luz': 89.90, 'Sol': 129.90 };
+        const psychologistStatsQuery = `
+            SELECT
+                COUNT(*) AS total,
+                COUNT(*) FILTER (WHERE "deletedAt" IS NULL AND status = 'active') as active,
+                COUNT(*) FILTER (WHERE "deletedAt" IS NOT NULL) as deleted,
+                COUNT(*) FILTER (WHERE "createdAt" >= :thirtyDaysAgo AND "deletedAt" IS NULL) as new30d
+            FROM "Psychologists"
+        `;
+
+        const demandStatsQuery = `
+            SELECT
+                COUNT(*) FILTER (WHERE status = 'completed') as total,
+                COUNT(*) FILTER (WHERE "createdAt" >= :startOfToday AND status = 'completed') as today,
+                COUNT(*) FILTER (WHERE status = 'started' AND "updatedAt" < :tenMinutesAgo) as abandoned
+            FROM "DemandSearches"
+        `;
+
+        const [
+            [patientStats],
+            [psychologistStats],
+            [demandStats],
+            waitingListCount,
+            pendingReviewsCount,
+            psisByPlan
+        ] = await Promise.all([
+            db.sequelize.query(patientStatsQuery, { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }),
+            db.sequelize.query(psychologistStatsQuery, { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }),
+            db.sequelize.query(demandStatsQuery, { replacements: { startOfToday, tenMinutesAgo }, type: db.sequelize.QueryTypes.SELECT }),
+            db.WaitingList.count({ where: { status: 'pending' } }),
+            db.Review.count({ where: { status: 'pending' } }),
+            db.Psychologist.findAll({
+                attributes: ['plano', [db.sequelize.fn('COUNT', 'plano'), 'count']],
+                where: { status: 'active', plano: { [Op.ne]: null } },
+                group: ['plano']
+            })
+        ]);
+
+        // Processamento dos Planos e MRR (Sem query extra)
+        const plansCount = {};
+        const planPrices = { 'Essencial': 59.90, 'Clínico': 89.90, 'Sol': 129.90 };
         let mrr = 0;
         
-        activePayingPsis.forEach(psy => {
-            const price = planPrices[psy.plano];
-            if (price) mrr += price;
+        psisByPlan.forEach(p => {
+            const plano = p.dataValues.plano;
+            const count = parseInt(p.dataValues.count, 10);
+            plansCount[plano] = count;
+            
+            // Calcula MRR baseado na contagem agregada
+            if (planPrices[plano]) {
+                mrr += planPrices[plano] * count;
+            }
         });
 
-        // --- D. ALERTAS ---
-        const waitingListCount = await db.WaitingList.count({ where: { status: 'pending' } });
-        const pendingReviewsCount = await db.Review.count({ where: { status: 'pending' } });
-
+        console.timeEnd('⏱️ Dashboard Stats Load');
         res.status(200).json({
             mrr: mrr.toFixed(2),
-            newPatients30d,
-            newPsis30d,
-            questToday,
-            patients: { total: totalPat, active: activePat, deleted: deletedPat },
-            psychologists: { total: totalPsi, active: activePsi, deleted: deletedPsi, byPlan: plansCount },
-            questionnaires: { total: totalQuest, deleted: abandonedQuest },
-            waitingListCount,
-            pendingReviewsCount
+            newPatients30d: parseInt(patientStats.new30d, 10),
+            newPsis30d: parseInt(psychologistStats.new30d, 10),
+            questToday: parseInt(demandStats.today, 10),
+            patients: { total: parseInt(patientStats.total, 10), active: parseInt(patientStats.active, 10), deleted: parseInt(patientStats.deleted, 10) },
+            psychologists: { total: parseInt(psychologistStats.total, 10), active: parseInt(psychologistStats.active, 10), deleted: parseInt(psychologistStats.deleted, 10), byPlan: plansCount },
+            questionnaires: { total: parseInt(demandStats.total, 10), deleted: parseInt(demandStats.abandoned, 10) },
+            waitingListCount: waitingListCount,
+            pendingReviewsCount: pendingReviewsCount
         });
 
     } catch (error) {
@@ -501,6 +590,7 @@ exports.getAllPsychologists = async (req, res) => {
  */
 exports.getDetailedReports = async (req, res) => {
     try {
+        console.time('⏱️ Detailed Reports Load');
         const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date();
         const startDate = req.query.startDate ? new Date(req.query.startDate) : new Date();
         if (!req.query.startDate) startDate.setDate(startDate.getDate() - 30);
@@ -540,19 +630,9 @@ exports.getDetailedReports = async (req, res) => {
                 COUNT(*) as total
             FROM "DemandSearches"
             WHERE status = 'completed' -- Só conta os concluídos
+            AND "createdAt" BETWEEN :start AND :end -- CORREÇÃO: Filtra por data
             GROUP BY periodo;
         `;
-
-        // --- NOVO: 5. DADOS DA COMUNIDADE E BLOG (KPIs) ---
-        // Contagens simples para cards
-        const communityStats = {
-            questionsTotal: await db.Question.count(),
-            questionsAnswered: await db.Question.count({ where: { status: 'answered' } }),
-            answersTotal: await db.Answer.count(),
-            blogPosts: 0 // Placeholder se você ainda não tem tabela de Blog
-        };
-        // Se tiver tabela de Blog, descomente:
-        // communityStats.blogPosts = await db.BlogPost.count(); 
 
         // --- NOVO: 6. ACESSOS AO SITE (Page Views) ---
         const visitsQuery = `
@@ -565,19 +645,75 @@ exports.getDetailedReports = async (req, res) => {
             ORDER BY data ASC;
         `;
 
-        const [usersData] = await db.sequelize.query(usersQuery, { replacements: { start: startDate, end: endDate } });
-        const [demandData] = await db.sequelize.query(demandQuery, { replacements: { start: startDate, end: endDate } });
-        const [plansData] = await db.sequelize.query(plansQuery);
-        const [timeData] = await db.sequelize.query(timeOfDayQuery);
-        const [visitsData] = await db.sequelize.query(visitsQuery, { replacements: { start: startDate, end: endDate } });
+        // --- OTIMIZAÇÃO: EXECUÇÃO PARALELA ---
+        const [
+            [usersData],
+            [demandData],
+            [plansData],
+            [timeData],
+            visitsResult,
+            questionsTotal,
+            questionsAnswered,
+            answersTotal,
+            activePsychologists,
+            churnedCount
+        ] = await Promise.all([
+            db.sequelize.query(usersQuery, { replacements: { start: startDate, end: endDate } }),
+            db.sequelize.query(demandQuery, { replacements: { start: startDate, end: endDate } }),
+            db.sequelize.query(plansQuery),
+            db.sequelize.query(timeOfDayQuery, { replacements: { start: startDate, end: endDate } }),
+            db.sequelize.query(visitsQuery, { replacements: { start: startDate, end: endDate } }).catch(() => [[]]), // Fallback para visits
+            // Community Stats
+            db.Question.count({ where: { createdAt: { [Op.between]: [startDate, endDate] } } }),
+            db.Question.count({ where: { status: 'answered', updatedAt: { [Op.between]: [startDate, endDate] } } }),
+            db.Answer.count({ where: { createdAt: { [Op.between]: [startDate, endDate] } } }),
+            // Financial Stats
+            db.Psychologist.findAll({ where: { plano: { [Op.ne]: null }, status: 'active' }, attributes: ['plano'] }),
+            db.Psychologist.count({ where: { status: 'inactive', updatedAt: { [Op.between]: [startDate, endDate] } } })
+        ]);
 
+        const visitsData = visitsResult[0] || [];
+        const communityStats = { questionsTotal, questionsAnswered, answersTotal, blogPosts: 0 };
+
+        // --- CÁLCULO FINANCEIRO ---
+        let financialStats = { mrr: 0, churnRate: 0, ltv: 0 };
+        try {
+            // Normaliza para minúsculo para evitar erros (ex: 'Essencial' vs 'Essencial')
+            const planPrices = { 'Essencial': 59.90, 'Clínico': 89.90, 'sol': 129.90 };
+            const mrr = activePsychologists.reduce((acc, psy) => {
+                const planoKey = (psy.plano || '').toLowerCase();
+                return acc + (planPrices[planoKey] || 0);
+            }, 0);
+
+            const totalActive = activePsychologists.length;
+            const totalStart = totalActive + churnedCount; // Aproximação da base no início do período
+            const churnRate = totalStart > 0 ? (churnedCount / totalStart) * 100 : 0;
+
+            // LTV: ARPU / Churn Rate (decimal)
+            const arpu = totalActive > 0 ? mrr / totalActive : 0;
+            const ltv = churnRate > 0 ? arpu / (churnRate / 100) : 0;
+
+            // Log para debug no terminal
+            console.log(`[KPIs Financeiros] MRR: R$${mrr} | Ativos: ${totalActive} | Churn: ${churnedCount} (${churnRate.toFixed(1)}%)`);
+
+            financialStats = {
+                mrr: parseFloat(mrr.toFixed(2)),
+                churnRate: parseFloat(churnRate.toFixed(1)),
+                ltv: parseFloat(ltv.toFixed(2))
+            };
+        } catch (err) {
+            console.error("Erro KPIs Financeiros:", err);
+        }
+
+        console.timeEnd('⏱️ Detailed Reports Load');
         res.json({
             users: usersData,
             demand: demandData,
-            plans: plansData[0],
+            plans: plansData,
             timeOfDay: timeData, // Novo dado
             community: communityStats, // Novo dado
-            visits: visitsData // <--- Adicione aqui no retorno
+            visits: visitsData,
+            financials: financialStats // <--- KPIs Financeiros incluídos
         });
 
     } catch (error) {
@@ -771,11 +907,78 @@ exports.moderateReview = async (req, res) => {
 exports.getSystemLogs = async (req, res) => {
     // ... (seu código existente)
     try {
+        // 1. Busca os logs normais
         const logs = await db.SystemLog.findAll({
             limit: 100, // Limita aos 100 logs mais recentes
             order: [['createdAt', 'DESC']]
         });
-        res.status(200).json(logs);
+
+        // 2. CÁLCULO DE SAÚDE DO SISTEMA (Health Check)
+        const oneDayAgo = new Date(new Date() - 24 * 60 * 60 * 1000);
+        
+        // --- OTIMIZAÇÃO: PARALELISMO (Executa todas as contagens juntas) ---
+        const [
+            newPatients,
+            newPsis,
+            errorCount,
+            paymentErrors,
+            startedQuests,
+            completedQuests,
+            loginFailures,
+            sessionQueryRaw,
+            avgSessionResult
+        ] = await Promise.all([
+            db.Patient.count({ where: { createdAt: { [Op.gte]: oneDayAgo } } }),
+            db.Psychologist.count({ where: { createdAt: { [Op.gte]: oneDayAgo } } }),
+            db.SystemLog.count({ where: { level: 'error', createdAt: { [Op.gte]: oneDayAgo } } }),
+            db.SystemLog.count({ where: { level: 'error', message: { [Op.iLike]: '%stripe%' }, createdAt: { [Op.gte]: oneDayAgo } } }),
+            db.DemandSearch.count({ where: { status: 'started', createdAt: { [Op.gte]: oneDayAgo } } }),
+            db.DemandSearch.count({ where: { status: 'completed', createdAt: { [Op.gte]: oneDayAgo } } }),
+            db.SystemLog.count({ where: { message: { [Op.iLike]: '%Falha de login%' }, createdAt: { [Op.gte]: oneDayAgo } } }),
+            // Sessões Ativas (Raw Query retorna [results, metadata])
+            db.sequelize.query(`SELECT COUNT(*) FROM "ActiveSessions" WHERE "lastSeen" >= NOW() - INTERVAL '5 minutes'`),
+            // Tempo Médio (QueryType SELECT retorna array de rows)
+            db.sequelize.query(`SELECT AVG("durationInSeconds") as "avgDuration" FROM "AnonymousSessions" WHERE "endedAt" >= :date`, { replacements: { date: oneDayAgo }, type: db.sequelize.QueryTypes.SELECT })
+        ]);
+
+        // Processamento dos Resultados
+        const registrationStatus = (newPatients + newPsis) > 0 ? 'active' : 'idle'; // active = verde, idle = amarelo
+        const systemStatus = errorCount === 0 ? 'healthy' : 'warning'; // healthy = verde, warning = vermelho
+        const paymentStatus = paymentErrors === 0 ? 'healthy' : 'error';
+        const dbStatus = 'online';
+        const funnelStatus = (startedQuests > 5 && completedQuests === 0) ? 'critical' : 'healthy';
+        const securityStatus = loginFailures > 20 ? 'warning' : 'healthy'; // Mais de 20 erros = Alerta
+
+        // G. INFRAESTRUTURA (Memória e Uptime)
+        const memoryUsage = process.memoryUsage();
+        const memoryUsedMB = Math.round(memoryUsage.rss / 1024 / 1024); // Resident Set Size em MB
+        const infraStatus = memoryUsedMB > 500 ? 'warning' : 'healthy'; // Alerta se usar > 500MB (ajuste conforme seu servidor)
+
+        // H. DADOS DE SESSÃO
+        const sessionResults = sessionQueryRaw[0]; // Extrai resultados da Raw Query
+        const concurrentUsers = sessionResults[0] ? parseInt(sessionResults[0].count, 10) : 0;
+
+        // CÁLCULO REAL DO TEMPO MÉDIO DE SESSÃO (ANÔNIMOS)
+        let avgSessionTime = 0;
+        if (avgSessionResult && avgSessionResult[0] && avgSessionResult[0].avgDuration) {
+            avgSessionTime = Math.round(avgSessionResult[0].avgDuration / 60);
+        }
+        // --- FIM DO CÁLCULO ---
+        res.status(200).json({
+            logs,
+            health: {
+                registration: { status: registrationStatus, count: newPatients + newPsis },
+                system: { status: systemStatus, errors: errorCount },
+                payment: { status: paymentStatus, errors: paymentErrors },
+                database: { status: dbStatus },
+                funnel: { status: funnelStatus, started: startedQuests, completed: completedQuests },
+                security: { status: securityStatus, failures: loginFailures },
+                infrastructure: { status: infraStatus, memory: memoryUsedMB, uptime: process.uptime() },
+                // Adicionando os novos dados
+                concurrentUsers: concurrentUsers,
+                avgSessionTime: avgSessionTime
+            }
+        });
     } catch (error) {
         console.error('Erro ao buscar logs do sistema:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
@@ -1065,7 +1268,7 @@ exports.getFinancials = async (req, res) => {
             },
             attributes: ['nome', 'plano', 'updatedAt'] 
         });
-        const planPrices = { 'Semente': 59.90, 'Luz': 89.90, 'Sol': 129.90 };
+        const planPrices = { 'Essencial': 59.90, 'Clínico': 89.90, 'Sol': 129.90 };
         const mrr = activePsychologists.reduce((acc, psy) => acc + (planPrices[psy.plano] || 0), 0);
         const thirtyDaysAgo = new Date(new Date().setDate(new Date().getDate() - 30));
         const churnedCount = await db.Psychologist.count({
@@ -1129,6 +1332,28 @@ exports.updatePsychologistStatus = async (req, res) => {
 };
 
 /**
+ * Rota: PUT /api/admin/patients/:id/status
+ * Descrição: Atualiza o status de um paciente (ex: 'active', 'inactive').
+ */
+exports.updatePatientStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        if (!status || !['active', 'inactive'].includes(status)) {
+            return res.status(400).json({ error: 'Status inválido.' });
+        }
+        const patient = await db.Patient.findByPk(id);
+        if (!patient) return res.status(404).json({ error: 'Paciente não encontrado.' });
+        
+        await patient.update({ status });
+        res.status(200).json({ message: 'Status atualizado com sucesso.' });
+    } catch (error) {
+        console.error('Erro ao atualizar status do paciente:', error);
+        res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};
+
+/**
  * Rota: DELETE /api/admin/psychologists/:id
  * Descrição: Exclui permanentemente um psicólogo.
  */
@@ -1145,5 +1370,380 @@ exports.deletePsychologist = async (req, res) => {
     } catch (error) {
         console.error('Erro ao excluir psicólogo:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};
+
+/**
+ * Rota: GET /api/admin/questionnaire-analytics
+ * Descrição: Agrega e conta as respostas dos questionários de pacientes e psicólogos.
+ */
+exports.getQuestionnaireAnalytics = async (req, res) => {
+    try {
+        // --- 1. Análise do Questionário do Paciente (DemandSearch) ---
+        
+        // Helper para contar campos JSON (Simples ou Array)
+        const countJsonField = async (field, isArray = false) => {
+            let query;
+            if (isArray) {
+                // Verifica se é array antes de expandir para evitar erros em dados legados
+                query = `
+                    SELECT value, COUNT(*) as count
+                    FROM "DemandSearches",
+                    jsonb_array_elements_text("searchParams"->'${field}') as value
+                    WHERE status = 'completed' 
+                    AND "searchParams"->'${field}' IS NOT NULL
+                    AND jsonb_typeof("searchParams"->'${field}') = 'array'
+                    GROUP BY value
+                `;
+            } else {
+                query = `
+                    SELECT "searchParams"->>'${field}' as value, COUNT(*) as count
+                    FROM "DemandSearches"
+                    WHERE status = 'completed' AND "searchParams"->>'${field}' IS NOT NULL
+                    GROUP BY value
+                `;
+            }
+            const [results] = await db.sequelize.query(query);
+            const counts = {};
+            results.forEach(r => counts[r.value] = parseInt(r.count, 10));
+            return counts;
+        };
+
+        const totalPatients = await db.DemandSearch.count({ where: { status: 'completed' } });
+
+        // --- OTIMIZAÇÃO: Executa todas as contagens de JSON em paralelo ---
+        const [
+            idade,
+            identidade_genero,
+            pref_genero_prof,
+            motivacao,
+            temas,
+            terapia_anterior,
+            experiencia_desejada,
+            caracteristicas_prof,
+            faixa_valor,
+            modalidade_atendimento
+        ] = await Promise.all([
+            countJsonField('idade'),
+            countJsonField('identidade_genero'),
+            countJsonField('pref_genero_prof'),
+            countJsonField('motivacao', true),
+            countJsonField('temas', true),
+            countJsonField('terapia_anterior'),
+            countJsonField('experiencia_desejada', true),
+            countJsonField('caracteristicas_prof', true),
+            countJsonField('faixa_valor'),
+            countJsonField('modalidade_atendimento')
+        ]);
+
+        const patientAnalytics = {
+            total: totalPatients,
+            idade, identidade_genero, pref_genero_prof, motivacao, temas,
+            terapia_anterior, experiencia_desejada, caracteristicas_prof,
+            faixa_valor, modalidade_atendimento
+        };
+
+        // --- 2. Análise do Questionário do Psicólogo (Psychologist) ---
+        
+        const totalPsis = await db.Psychologist.count({ where: { status: 'active' } });
+
+        // Helper para campos de Array do Postgres (text[])
+        const countArrayField = async (field) => {
+            const query = `
+                SELECT unnest("${field}") as value, COUNT(*) as count
+                FROM "Psychologists"
+                WHERE status = 'active' AND "${field}" IS NOT NULL
+                GROUP BY value
+            `;
+            const [results] = await db.sequelize.query(query);
+            const counts = {};
+            results.forEach(r => counts[r.value] = parseInt(r.count, 10));
+            return counts;
+        };
+
+        // Helper para campos simples
+        const countSimpleField = async (field) => {
+            const query = `
+                SELECT "${field}" as value, COUNT(*) as count
+                FROM "Psychologists"
+                WHERE status = 'active' AND "${field}" IS NOT NULL
+                GROUP BY value
+            `;
+            const [results] = await db.sequelize.query(query);
+            const counts = {};
+            results.forEach(r => counts[r.value] = parseInt(r.count, 10));
+            return counts;
+        };
+
+        // Helper para Modalidade (JSONB)
+        const countModalidadePsi = async () => {
+             const query = `
+                SELECT value, COUNT(*) as count
+                FROM "Psychologists",
+                jsonb_array_elements_text("modalidade") as value
+                WHERE status = 'active' 
+                AND "modalidade" IS NOT NULL 
+                AND jsonb_typeof("modalidade") = 'array'
+                GROUP BY value
+            `;
+            const [results] = await db.sequelize.query(query);
+            const counts = {};
+            results.forEach(r => counts[r.value] = parseInt(r.count, 10));
+            return counts;
+        };
+
+        // Helper para Faixa de Valor (Bucketing)
+        const countValorPsi = async () => {
+            const query = `
+                SELECT
+                  CASE
+                    WHEN "valor_sessao_numero" <= 90 THEN 'Social (até R$ 90)'
+                    WHEN "valor_sessao_numero" <= 150 THEN 'R$ 91 - R$ 150'
+                    WHEN "valor_sessao_numero" <= 250 THEN 'R$ 151 - R$ 250'
+                    ELSE 'R$ 251+'
+                  END as value,
+                  COUNT(*) as count
+                FROM "Psychologists"
+                WHERE status = 'active' AND "valor_sessao_numero" IS NOT NULL
+                GROUP BY value
+            `;
+            const [results] = await db.sequelize.query(query);
+            const counts = {};
+            results.forEach(r => counts[r.value] = parseInt(r.count, 10));
+            return counts;
+        };
+
+        const [
+            modalidade,
+            genero_identidade_psi,
+            valor_sessao_faixa_psi,
+            temas_atuacao,
+            abordagens_tecnicas,
+            praticas_vivencias
+        ] = await Promise.all([
+            countModalidadePsi(),
+            countSimpleField('genero_identidade'),
+            countValorPsi(),
+            countArrayField('temas_atuacao'),
+            countArrayField('abordagens_tecnicas'),
+            countArrayField('praticas_vivencias')
+        ]);
+
+        const psiAnalytics = {
+            total: totalPsis,
+            modalidade, genero_identidade: genero_identidade_psi, valor_sessao_faixa: valor_sessao_faixa_psi,
+            temas_atuacao, abordagens_tecnicas, praticas_vivencias
+        };
+
+        // --- 3. Resumo dos últimos 30 dias (DemandSearch) ---
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        const total30d = await db.DemandSearch.count({
+            where: {
+                status: 'completed',
+                createdAt: { [Op.gte]: thirtyDaysAgo }
+            }
+        });
+
+        const summary30d = {
+            total: total30d,
+            stats: {}
+        };
+
+        if (total30d > 0) {
+            const getTopStat = async (field, isArray = false) => {
+                let query;
+                if (isArray) {
+                    query = `
+                        SELECT value, COUNT(*) as count
+                        FROM "DemandSearches",
+                        jsonb_array_elements_text("searchParams"->'${field}') as value
+                        WHERE status = 'completed' 
+                        AND "createdAt" >= :date
+                        AND "searchParams"->'${field}' IS NOT NULL
+                        AND jsonb_typeof("searchParams"->'${field}') = 'array'
+                        GROUP BY value
+                        ORDER BY count DESC
+                        LIMIT 1
+                    `;
+                } else {
+                    query = `
+                        SELECT "searchParams"->>'${field}' as value, COUNT(*) as count
+                        FROM "DemandSearches"
+                        WHERE status = 'completed' 
+                        AND "createdAt" >= :date
+                        AND "searchParams"->>'${field}' IS NOT NULL
+                        GROUP BY value
+                        ORDER BY count DESC
+                        LIMIT 1
+                    `;
+                }
+                const [results] = await db.sequelize.query(query, { replacements: { date: thirtyDaysAgo } });
+                if (results.length > 0) {
+                    return {
+                        label: results[0].value,
+                        percentage: Math.round((parseInt(results[0].count, 10) / total30d) * 100)
+                    };
+                }
+                return null;
+            };
+
+            const fields = [
+                { key: 'idade', isArray: false },
+                { key: 'identidade_genero', isArray: false },
+                { key: 'pref_genero_prof', isArray: false },
+                { key: 'motivacao', isArray: true },
+                { key: 'temas', isArray: true },
+                { key: 'terapia_anterior', isArray: false },
+                { key: 'experiencia_desejada', isArray: true },
+                { key: 'caracteristicas_prof', isArray: true },
+                { key: 'faixa_valor', isArray: false },
+                { key: 'modalidade_atendimento', isArray: false }
+            ];
+            
+            for (const f of fields) {
+                summary30d.stats[f.key] = await getTopStat(f.key, f.isArray);
+            }
+        }
+
+        res.json({ patientAnalytics, psiAnalytics, summary30d });
+
+    } catch (error) {
+        console.error("Erro ao gerar analytics de questionários:", error);
+        res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};
+
+/**
+ * Rota: GET /api/admin/export/patients
+ * Descrição: Exporta uma lista de todos os pacientes para marketing.
+ */
+exports.exportPatients = async (req, res) => {
+    try {
+        const patients = await db.Patient.findAll({
+            attributes: ['nome', 'telefone', 'email'],
+            order: [['nome', 'ASC']],
+            paranoid: false // Inclui pacientes que excluíram a conta
+        });
+        res.json(patients);
+    } catch (error) {
+        console.error("Erro ao exportar pacientes:", error);
+        res.status(500).json({ error: 'Erro ao gerar lista de pacientes.' });
+    }
+};
+
+/**
+ * Rota: GET /api/admin/export/psychologists
+ * Descrição: Exporta uma lista de todos os psicólogos para marketing.
+ */
+exports.exportPsychologists = async (req, res) => {
+    try {
+        const psychologists = await db.Psychologist.findAll({
+            attributes: ['nome', 'telefone', 'email'],
+            where: {
+                isAdmin: { [Op.ne]: true } // Exclui o próprio admin da lista
+            },
+            order: [['nome', 'ASC']],
+            paranoid: false // Inclui psicólogos que excluíram a conta
+        });
+        res.json(psychologists);
+    } catch (error) {
+        console.error("Erro ao exportar psicólogos:", error);
+        res.status(500).json({ error: 'Erro ao gerar lista de psicólogos.' });
+    }
+};
+
+/**
+ * Rota: GET /api/admin/followups
+ * Descrição: Busca a lista de cliques no WhatsApp para follow-up.
+ */
+exports.getFollowUps = async (req, res) => {
+    try {
+        // Busca os logs unindo com Pacientes e Psicólogos
+        const [results] = await db.sequelize.query(`
+            SELECT 
+                w.id, 
+                w."createdAt" as date, 
+                w.status, 
+                w."message_sent_at",
+                w."guestPhone",
+                w."guestName",
+                p.nome as "patientName", 
+                p.telefone as "patientPhone",
+                psi.nome as "psychologistName"
+            FROM "WhatsappClickLogs" w
+            LEFT JOIN "Patients" p ON w."patientId" = p.id
+            LEFT JOIN "Psychologists" psi ON w."psychologistId" = psi.id
+            WHERE COALESCE(w.status, 'pending') != 'deleted'
+            ORDER BY w."createdAt" DESC
+            LIMIT 100
+        `);
+
+        // Formata para o frontend
+        const formatted = results.map(item => ({
+            id: item.id,
+            date: item.date,
+            patientName: item.patientName || item.guestName || 'Visitante',
+            patientPhone: item.guestPhone || item.patientPhone || '', // Prioriza o telefone do questionário
+            psychologistName: item.psychologistName || 'Psicólogo',
+            status: item.status || 'pending',
+            message_sent_at: item.message_sent_at,
+            consent: true // Assumimos true pois clicou no botão
+        }));
+
+        res.json(formatted);
+    } catch (error) {
+        console.error("Erro ao buscar follow-ups:", error);
+        res.status(500).json({ error: "Erro interno ao buscar lista." });
+    }
+};
+
+/**
+ * Rota: PUT /api/admin/followups/:id
+ * Descrição: Atualiza o status de um follow-up.
+ */
+exports.updateFollowUpStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status, message_sent_at } = req.body;
+
+        let query = `UPDATE "WhatsappClickLogs" SET status = :status`;
+        const replacements = { id, status };
+
+        if (message_sent_at) {
+            query += `, "message_sent_at" = :message_sent_at`;
+            replacements.message_sent_at = message_sent_at;
+        }
+
+        query += ` WHERE id = :id`;
+
+        await db.sequelize.query(query, { replacements });
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Erro ao atualizar follow-up:", error);
+        res.status(500).json({ error: "Erro ao atualizar." });
+    }
+};
+
+/**
+ * Rota: DELETE /api/admin/followups/:id
+ * Descrição: Exclui (soft delete) um item de follow-up.
+ */
+exports.deleteFollowUp = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const [updated] = await db.sequelize.query(
+            `UPDATE "WhatsappClickLogs" SET status = 'deleted' WHERE id = :id`,
+            { replacements: { id } }
+        );
+
+        if (updated.rowCount === 0) return res.status(404).json({ error: "Follow-up não encontrado." });
+
+        res.json({ success: true, message: "Contato excluído." });
+    } catch (error) {
+        console.error("Erro ao excluir follow-up:", error);
+        res.status(500).json({ error: "Erro ao excluir." });
     }
 };

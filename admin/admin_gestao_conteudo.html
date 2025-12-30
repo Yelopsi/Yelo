@@ -1,60 +1,79 @@
-<div class="widgets-container">
+<style>
+    /* Estilos para os cards de gestão de conteúdo */
+    .content-management-container {
+        display: flex;
+        flex-direction: column;
+        gap: 30px; /* Espaço entre os cards */
+    }
 
+    .widget {
+        width: 100%; /* Ocupa a largura total */
+        background-color: #fff;
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+    }
+
+    .widget h3 {
+        margin-top: 0;
+        margin-bottom: 25px;
+        font-size: 22px;
+        border-bottom: 1px solid #e9ecef;
+        padding-bottom: 15px;
+    }
+    .loading-state, .empty-state {
+        text-align: center;
+        padding: 20px;
+        color: #888;
+    }
+</style>
+
+<div class="content-management-container">
+
+    <!-- Card 1: Moderação de Avaliações -->
     <div class="widget">
         <h3>Moderação de Avaliações Pendentes</h3>
-        <ul class="lista-moderacao" id="pending-reviews-list">
-            <!-- As avaliações pendentes serão carregadas aqui pelo JavaScript -->
-        </ul>
-        <div id="reviews-loading-state" style="padding: 20px; text-align: center;">Carregando...</div>
-        <div id="reviews-empty-state" style="display: none; padding: 20px; text-align: center;">Não há avaliações pendentes.</div>
+        <ul id="pending-reviews-list" class="lista-moderacao"></ul>
+        <div id="reviews-loading-state" style="display: block;">
+            <p class="loading-state">Carregando avaliações...</p>
+        </div>
+        <div id="reviews-empty-state" style="display: none;">
+            <p class="empty-state">Nenhuma avaliação pendente. 🎉</p>
+        </div>
     </div>
 
+    <!-- Card 2: Moderação de Perguntas (Q&A) -->
     <div class="widget">
         <h3>Moderação de Perguntas (Q&A)</h3>
-        <ul class="lista-moderacao" id="pending-questions-list">
-            <!-- As perguntas pendentes serão carregadas aqui -->
-        </ul>
-        <div id="questions-loading-state" class="loading-state" style="padding: 20px; text-align: center;">
-            Carregando perguntas...
+        <ul id="pending-questions-list" class="lista-moderacao"></ul>
+        <div id="questions-loading-state" style="display: block;">
+            <p class="loading-state">Carregando perguntas...</p>
         </div>
-        <div id="questions-empty-state" class="empty-state" style="display: none; padding: 20px; text-align: center;">Nenhuma pergunta pendente no momento.</div>
+        <div id="questions-empty-state" style="display: none;">
+            <p class="empty-state">Nenhuma pergunta pendente. 🎉</p>
+        </div>
     </div>
 
-    <div class="widget">
+    <!-- Card 3: Gestão de Páginas Estáticas -->
+    <div class="widget" id="static-pages-widget">
         <h3>Gestão de Páginas Estáticas</h3>
         <div class="tabela-wrapper">
             <table class="tabela-gerenciamento">
-                <thead>
-                    <tr>
-                        <th>Página</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Página</th><th>Ações</th></tr></thead>
                 <tbody>
-                    <tr>
-                        <td>/sobre-nos</td>
-                        <td><button class="btn-tabela">Editar Conteúdo</button></td>
-                    </tr>
-                    <tr>
-                        <td>/como-funciona</td>
-                        <td><button class="btn-tabela">Editar Conteúdo</button></td>
-                    </tr>
-                    <tr>
-                        <td>/faq</td>
-                        <td><button class="btn-tabela">Editar Conteúdo</button></td>
-                    </tr>
+                    <tr><td>termos-de-uso</td><td><button class="btn-tabela">Editar</button></td></tr>
+                    <tr><td>politica-de-privacidade</td><td><button class="btn-tabela">Editar</button></td></tr>
+                    <tr><td>sobre-nos</td><td><button class="btn-tabela">Editar</button></td></tr>
                 </tbody>
             </table>
         </div>
     </div>
-    
+
+    <!-- Card 4: Gestão da Comunidade -->
     <div class="widget">
         <h3>Gestão da Comunidade</h3>
-        <p class="subtitulo-secao">(Em breve...)</p>
-        <ul style="color: #888; padding-left: 20px;">
-            <li>Cadastro e gestão de Workshops</li>
-            <li>Gerenciamento de moderadores</li>
-        </ul>
+        <p>Edite o banner de eventos e os links de recursos que aparecem no dashboard dos psicólogos.</p>
+        <button id="btn-manage-community" class="btn-primario">Gerenciar Comunidade</button>
     </div>
 
 </div>

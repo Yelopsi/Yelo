@@ -10,6 +10,25 @@ window.initializePage = function() {
     const photoPreview = document.getElementById('admin-profile-photo-preview');
     const photoUploadInput = document.getElementById('admin-photo-upload');
 
+    // --- 1. CONFIGURAÇÃO INICIAL (ESTADO BLOQUEADO) ---
+    const inputsDados = [nomeInput, emailInput, telefoneInput, photoUploadInput];
+    const btnDados = formDados ? formDados.querySelector('button[type="submit"]') : null;
+    
+    const inputsSenha = [
+        document.getElementById('admin-senha-atual'),
+        document.getElementById('admin-nova-senha'),
+        document.getElementById('admin-confirmar-senha')
+    ];
+    const btnSenha = formSenha ? formSenha.querySelector('button[type="submit"]') : null;
+
+    // Desabilita campos de dados e ajusta botão
+    inputsDados.forEach(input => { if(input) input.disabled = true; });
+    if (btnDados) { btnDados.textContent = 'Alterar Dados'; }
+
+    // Desabilita campos de senha e ajusta botão
+    inputsSenha.forEach(input => { if(input) input.disabled = true; });
+    if (btnSenha) { btnSenha.textContent = 'Alterar Senha'; }
+    // --------------------------------------------------
 
     if (!formDados || !formSenha || !token) {
         console.error("Elementos do formulário ou token não encontrados.");
@@ -61,6 +80,14 @@ window.initializePage = function() {
     formDados.addEventListener('submit', async (e) => {
         e.preventDefault();
         const button = formDados.querySelector('button[type="submit"]');
+        
+        // LÓGICA DE ALTERNAR (HABILITAR EDIÇÃO)
+        if (nomeInput.disabled) {
+            inputsDados.forEach(input => { if(input) input.disabled = false; });
+            button.textContent = 'Salvar Alterações';
+            return; // Interrompe aqui para o usuário editar
+        }
+
         button.disabled = true;
         button.textContent = 'Salvando...';
 
@@ -80,18 +107,24 @@ window.initializePage = function() {
             if (!response.ok) throw new Error(result.error);
 
             showToast(result.message, 'success');
-            // Atualiza o nome no menu lateral
-            const adminNameEl = document.querySelector('.nome-admin');
-            if (adminNameEl) adminNameEl.textContent = payload.nome;
+
+            // SUCESSO: Bloqueia os campos e reverte o botão
+            inputsDados.forEach(input => { if(input) input.disabled = true; });
+            button.textContent = 'Alterar Dados';
+
+            // Recarrega os dados do servidor para confirmar visualmente que o valor foi salvo
+            await fetchAdminData();
 
             // Dispara um evento customizado para notificar outras partes da UI (como o header)
-            window.dispatchEvent(new CustomEvent('adminDataUpdated'));
+            // Enviando o novo nome para que o admin.js possa atualizar a sidebar.
+            window.dispatchEvent(new CustomEvent('adminDataUpdated', { detail: { nome: nomeInput.value } }));
 
         } catch (error) {
             showToast(error.message, 'error');
         } finally {
             button.disabled = false;
-            button.textContent = 'Salvar Alterações';
+            // Se ocorreu erro (campos ainda abertos), mantém texto de salvar
+            if (!nomeInput.disabled) button.textContent = 'Salvar Alterações';
         }
     });
 
@@ -99,6 +132,14 @@ window.initializePage = function() {
     formSenha.addEventListener('submit', async (e) => {
         e.preventDefault();
         const button = formSenha.querySelector('button[type="submit"]');
+
+        // LÓGICA DE ALTERNAR (HABILITAR EDIÇÃO)
+        if (inputsSenha[0].disabled) {
+            inputsSenha.forEach(input => { if(input) input.disabled = false; });
+            button.textContent = 'Salvar Nova Senha';
+            return;
+        }
+
         button.disabled = true;
         button.textContent = 'Alterando...';
 
@@ -109,7 +150,7 @@ window.initializePage = function() {
         if (novaSenha !== confirmarSenha) {
             showToast('A nova senha e a confirmação não coincidem.', 'error');
             button.disabled = false;
-            button.textContent = 'Alterar Senha';
+            button.textContent = 'Salvar Nova Senha';
             return;
         }
 
@@ -130,11 +171,15 @@ window.initializePage = function() {
             showToast(result.message, 'success');
             formSenha.reset();
 
+            // SUCESSO: Bloqueia novamente
+            inputsSenha.forEach(input => { if(input) input.disabled = true; });
+            button.textContent = 'Alterar Senha';
+
         } catch (error) {
             showToast(error.message, 'error');
         } finally {
             button.disabled = false;
-            button.textContent = 'Alterar Senha';
+            if (!inputsSenha[0].disabled) button.textContent = 'Salvar Nova Senha';
         }
     });
 

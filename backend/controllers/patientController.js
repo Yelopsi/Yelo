@@ -2,6 +2,7 @@ const db = require('../models');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const https = require('https'); // Módulo nativo para verificar token do Google
 const { sendPasswordResetEmail } = require('../services/emailService');
 
 // ----------------------------------------------------------------------
@@ -19,11 +20,16 @@ const generateToken = (id) => {
 // ----------------------------------------------------------------------
 exports.registerPatient = async (req, res) => {
     try {
-        const { nome, email, senha } = req.body;
+        const { nome, email, senha, termos, marketing } = req.body; // [AUDITORIA] Captura consentimentos
 
-        if (!nome || !email || !senha) {
-            return res.status(400).json({ error: 'Nome, email e senha são obrigatórios.' });
-        }
+        // --- 1. Validação de Campos Obrigatórios ---
+        if (!nome) return res.status(400).json({ error: 'O nome é obrigatório.' });
+        if (!email) return res.status(400).json({ error: 'O e-mail é obrigatório.' });
+        if (!senha) return res.status(400).json({ error: 'A senha é obrigatória.' });
+        // --- 2. Validação de Formato e Comprimento ---
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) return res.status(400).json({ error: 'Formato de e-mail inválido.' });
+        if (senha.length < 6) return res.status(400).json({ error: 'A senha deve ter no mínimo 6 caracteres.' });
 
         const existingPatient = await db.Patient.findOne({ where: { email } });
         if (existingPatient) {
@@ -32,10 +38,30 @@ exports.registerPatient = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(senha, 10);
 
+        // [AUDITORIA] Captura dados de segurança
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '0.0.0.0';
+        const userAgent = req.headers['user-agent'] || 'Unknown';
+
         const newPatient = await db.Patient.create({
             nome,
             email,
             senha: hashedPassword,
+            // Tenta salvar nas colunas se elas existirem (criadas pelo fix no server.js)
+            ip_registro: ip,
+            termos_aceitos: !!termos,
+            marketing_aceito: !!marketing
+        });
+
+        // [AUDITORIA] Log de Sucesso Estratégico
+        await db.SystemLog.create({
+            level: 'info',
+            message: `Novo Paciente Cadastrado: ${email}`,
+            meta: {
+                patientId: newPatient.id,
+                ip: ip,
+                userAgent: userAgent,
+                consents: { terms: !!termos, marketing: !!marketing }
+            }
         });
 
         res.status(201).json({
@@ -47,6 +73,10 @@ exports.registerPatient = async (req, res) => {
         });
     } catch (error) {
         console.error('Erro ao registrar paciente:', error);
+        await db.SystemLog.create({
+            level: 'error',
+            message: `Erro no registro de Paciente: ${error.message}`
+        });
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };
@@ -121,25 +151,20 @@ exports.resetPassword = async (req, res) => {
 exports.loginPatient = async (req, res) => {
     try {
         const { email, senha } = req.body;
-        console.log(`[LOGIN_PAT] 1. Tentativa de login recebida para o e-mail: ${email}`);
 
         if (!email || !senha) {
-            console.log(`[LOGIN_PAT] 2. Falha: E-mail ou senha não fornecidos na requisição.`);
             return res.status(400).json({ error: 'Email e senha são obrigatórios.' });
         }
 
         const patient = await db.Patient.findOne({ where: { email } });
 
         if (!patient) {
-            console.log(`[LOGIN_PAT] 2. Falha: Nenhum paciente encontrado com o e-mail ${email}.`);
             return res.status(401).json({ error: 'Email ou senha inválidos.' });
         }
 
-        console.log(`[LOGIN_PAT] 2. Sucesso: Paciente ${email} encontrado. Comparando senhas...`);
         const isPasswordMatch = await bcrypt.compare(senha, patient.senha);
 
         if (isPasswordMatch) {
-            console.log(`[LOGIN_PAT] 3. Sucesso: Senha correta para ${email}. Gerando token.`);
             res.status(200).json({
                 id: patient.id,
                 nome: patient.nome,
@@ -147,12 +172,79 @@ exports.loginPatient = async (req, res) => {
                 token: generateToken(patient.id),
             });
         } else {
-            console.log(`[LOGIN_PAT] 3. Falha: Senha incorreta para o e-mail ${email}.`);
+            await db.SystemLog.create({
+                level: 'warning',
+                message: `Falha de login Paciente (Credenciais inválidas): ${email}`
+            });
             res.status(401).json({ error: 'Email ou senha inválidos.' });
         }
     } catch (error) {
         console.error('Erro no login do paciente:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};
+
+// ----------------------------------------------------------------------
+// Rota: POST /api/patients/google
+// DESCRIÇÃO: Login ou Cadastro via Google
+// ----------------------------------------------------------------------
+exports.googleLogin = async (req, res) => {
+    try {
+        const { token } = req.body;
+        if (!token) return res.status(400).json({ error: 'Token do Google obrigatório.' });
+
+        // 1. Verifica o token diretamente com o Google (Segurança)
+        const googleUser = await new Promise((resolve, reject) => {
+            https.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`, (resp) => {
+                let data = '';
+                resp.on('data', (chunk) => data += chunk);
+                resp.on('end', () => {
+                    if (resp.statusCode === 200) resolve(JSON.parse(data));
+                    else reject(new Error('Token do Google inválido'));
+                });
+            }).on('error', (err) => reject(err));
+        });
+
+        const { email, name, sub: googleId } = googleUser;
+
+        // 2. Verifica se o usuário já existe
+        let patient = await db.Patient.findOne({ where: { email } });
+
+        if (!patient) {
+            // 3. Se não existe, CRIA um novo paciente
+            // Gera uma senha aleatória forte pois o usuário vai logar via Google
+            const randomPassword = crypto.randomBytes(16).toString('hex');
+            const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+            const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '0.0.0.0';
+
+            patient = await db.Patient.create({
+                nome: name,
+                email: email,
+                senha: hashedPassword,
+                ip_registro: ip,
+                termos_aceitos: true, // Assume aceite ao usar social login
+                marketing_aceito: false
+            });
+
+            await db.SystemLog.create({
+                level: 'info',
+                message: `Novo Paciente via Google: ${email}`,
+                meta: { patientId: patient.id, googleId }
+            });
+        }
+
+        // 4. Retorna o token da Yelo (JWT)
+        res.status(200).json({
+            id: patient.id,
+            nome: patient.nome,
+            email: patient.email,
+            token: generateToken(patient.id),
+        });
+
+    } catch (error) {
+        console.error('Erro no login Google:', error);
+        res.status(401).json({ error: 'Falha na autenticação com Google.' });
     }
 };
 

@@ -51,9 +51,14 @@ module.exports = {
     // --- ÁREA RESTRITA (DASHBOARD) ---
     listarMeusPosts: async (req, res) => {
         try {
+            const { page = 1, limit = 10 } = req.query;
+            const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+
             const posts = await Post.findAll({
                 where: { psychologist_id: req.userId },
-                order: [['created_at', 'DESC']]
+                order: [['created_at', 'DESC']],
+                limit: parseInt(limit, 10),
+                offset: offset
             });
             res.json(posts);
         } catch (error) {
@@ -111,7 +116,13 @@ module.exports = {
     // ÁREA PÚBLICA: Lista do Blog
     exibirBlogPublico: async (req, res) => {
         try {
-            let queryOptions = { order: [['created_at', 'DESC']] };
+            // Lógica Híbrida: Recentes no topo, mas "Virais" (Curtidas >= 5) furam a fila
+            let queryOptions = { 
+                order: [
+                    [db.Sequelize.literal('CASE WHEN curtidas >= 5 THEN 1 ELSE 0 END'), 'DESC'],
+                    ['created_at', 'DESC']
+                ] 
+            };
             if (Psychologist) {
                 queryOptions.include = [{ model: Psychologist, as: 'autor', attributes: ['nome', 'fotoUrl', 'slug'] }];
             }

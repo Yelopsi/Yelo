@@ -17,16 +17,32 @@ const protect = async (req, res, next) => {
             // 2. Verifica o token
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-            // 3. Encontra o usuário com base no tipo e ID do token
-            if (decoded.type === 'patient') {
-                req.patient = await db.Patient.findByPk(decoded.id, { attributes: { exclude: ['senha'] } });
-            } else if (decoded.type === 'psychologist' || decoded.type === 'admin') {
-                req.psychologist = await db.Psychologist.findByPk(decoded.id, { attributes: { exclude: ['senha'] } });
+            // 3. Lógica Unificada para encontrar o usuário
+            const userType = decoded.type || decoded.role; // Aceita 'type' (psi/paciente) ou 'role' (admin)
+            let user = null;
+
+            if (userType === 'patient') {
+                user = await db.Patient.findByPk(decoded.id, { attributes: { exclude: ['senha'] } });
+                if (user) req.patient = user;
+            } else if (userType === 'psychologist') {
+                user = await db.Psychologist.findByPk(decoded.id, { attributes: { exclude: ['senha'] } });
+                if (user) req.psychologist = user;
+            } else if (userType === 'admin') {
+                // Busca o admin na tabela correta ('Admins')
+                const [adminResults] = await db.sequelize.query('SELECT * FROM "Admins" WHERE id = :id', { replacements: { id: decoded.id } });
+                user = adminResults[0];
+                // Para compatibilidade, anexa como req.psychologist também
+                if (user) req.psychologist = { id: user.id, nome: user.nome, email: user.email, isAdmin: true };
             }
 
-            if (!req.patient && !req.psychologist) {
+            // 4. Validação Final
+            if (!user) {
                 return res.status(401).json({ error: 'Usuário não encontrado.' });
             }
+
+            // Anexa um objeto de usuário genérico para facilitar o uso nos controllers
+            req.user = user;
+            req.user.type = userType;
 
             next(); // Continua para a próxima rota/middleware
 

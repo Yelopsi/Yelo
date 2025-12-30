@@ -33,6 +33,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.ok) {
                 showMessage('Login bem-sucedido! Redirecionando...', false);
                 localStorage.setItem('Yelo_token', data.token);
+                // AJUSTE: Salva o tipo e nome do usuário para consistência do header
+                localStorage.setItem('Yelo_user_type', 'admin');
+                // Assumindo que a API retorna o nome do usuário em `data.user.nome`
+                localStorage.setItem('Yelo_user_name', data.user?.nome || 'Admin');
                 setTimeout(() => {
                     window.location.href = 'admin.html';
                 }, 500);

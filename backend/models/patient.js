@@ -72,12 +72,29 @@ module.exports = (sequelize, DataTypes) => {
     disponibilidade_periodo: {
       type: DataTypes.ARRAY(DataTypes.STRING),
       allowNull: true
+    },
+    
+    // --- CAMPOS DE AUDITORIA E LGPD (Adicionados) ---
+    ip_registro: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    termos_aceitos: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    marketing_aceito: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     }
   }, {
     sequelize,
     modelName: 'Patient',
     paranoid: true, // <--- ADICIONE ISTO (Cria a coluna deletedAt)
-    timestamps: true
+    timestamps: true,
+    indexes: [
+        { name: 'idx_patients_created_at', fields: ['createdAt'] }
+    ]
   });
   return Patient;
 };

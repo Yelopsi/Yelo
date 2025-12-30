@@ -47,7 +47,7 @@ async function seedTestData() {
             email: "ana.psicologa@Yelo.com",
             senha: psychologistPassword,
             slug: generateSlug("Dra. Ana Psicóloga"),
-            plano: 'Luz', // Plano atribuído
+            plano: 'Clínico', // Plano atribuído
             status: 'active', // Garante que o psicólogo esteja ativo para buscas
             valor_sessao_numero: 120.00, // Dentro da faixa do paciente
             temas_atuacao: ["Ansiedade", "Estresse", "Depressão", "Relacionamentos"], // Inclui temas do paciente
@@ -78,7 +78,7 @@ async function seedTestData() {
             email: "carlos.terapeuta@Yelo.com",
             senha: await bcrypt.hash('password123', 10),
             slug: generateSlug("Dr. Carlos Terapeuta"),
-            plano: 'Semente', // Plano atribuído
+            plano: 'Essencial', // Plano atribuído
             status: 'active',
             valor_sessao_numero: 70.00, // Fora da faixa principal do paciente, mas pode ser um "near match"
             temas_atuacao: ["Carreira", "Estresse"], // Apenas um tema em comum

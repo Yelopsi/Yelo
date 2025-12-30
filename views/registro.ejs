@@ -3,7 +3,28 @@
 <head>
     <title>Crie sua Conta - Yelo</title>
     <%- include('partials/head') %>
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Mulish:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --fonte-titulo: 'Lora', serif;
+            --fonte-corpo: 'Mulish', sans-serif;
+        }
+        body {
+            font-family: var(--fonte-corpo);
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--fonte-titulo);
+            font-weight: 600;
+        }
+        /* Aumenta o tamanho do checkbox */
+        .form-group-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body class="pagina-login">
 

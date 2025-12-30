@@ -1,179 +1,125 @@
+// Este arquivo é carregado dinamicamente por admin.js quando a página de Gestão de Psis é acessada.
+
 window.initializePage = function() {
-    console.log("Iniciando Gerenciador de Psicólogos..."); 
+    console.log("Página de Gestão de Psicólogos Inicializada.");
+
     const tableBody = document.getElementById('psychologists-table-body');
-    const rowTemplate = document.getElementById('psychologist-row-template');
-    const token = localStorage.getItem('Yelo_token');
-    
-    // Usa o endereço definido no config.js ou força o localhost:3001
-    const API_PREFIX = (typeof API_BASE_URL !== 'undefined') 
-        ? API_BASE_URL 
-        : 'http://localhost:3001';
-    if (!tableBody || !rowTemplate || !token) {
-        console.error("Elementos essenciais ou token não encontrados.");
-        if(tableBody) tableBody.innerHTML = '<tr><td colspan="7">Erro ao carregar tabela. Dê um F5.</td></tr>';
-        return;
-    }
+    const searchInput = document.getElementById('search-input');
+    const statusFilter = document.getElementById('status-filter');
+    const planoFilter = document.getElementById('plano-filter');
+    let searchTimeout;
 
-    const LIMIT = 10;
-    let currentPage = 1;
-    let currentFilters = { search: '', status: '', plano: '' };
+    // Função para buscar e renderizar os dados
+    async function fetchAndRenderPsychologists(page = 1) {
+        if (!tableBody) return;
+        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px;">Carregando...</td></tr>`;
 
-    // --- CORREÇÃO BLINDADA: Verifica se o Modal EXISTE VISUALMENTE ---
-    function confirmarAcao(titulo, mensagem, callback) {
-        const modalElement = document.getElementById('confirmation-modal'); // Procura o HTML
-        
-        // Só tenta abrir o modal se a função existir E o HTML estiver na página
-        if (typeof window.openConfirmationModal === 'function' && modalElement) {
-            window.openConfirmationModal(titulo, mensagem, callback);
-        } else {
-            // PLANO B: Se não achar o modal, usa o confirm nativo do navegador
-            // Remove tags HTML para o texto ficar limpo no alerta padrão
-            const msgTexto = mensagem.replace(/<[^>]*>/g, ''); 
-            if (confirm(`${titulo}\n\n${msgTexto}`)) {
-                callback();
-            }
-        }
-    }
-
-    async function fetchPsychologists(page = 1, filters = {}) {
-        tableBody.innerHTML = '<tr><td colspan="7" class="loading-row">Carregando dados...</td></tr>';
-        
-        const params = new URLSearchParams();
-        params.append('limit', LIMIT);
-        params.append('page', page);
-        if (filters.search) params.append('search', filters.search);
-        if (filters.status) params.append('status', filters.status);
-        if (filters.plano) params.append('plano', filters.plano);
+        const searchTerm = searchInput.value;
+        const status = statusFilter.value;
+        const plano = planoFilter.value;
 
         try {
-            const response = await fetch(`${API_PREFIX}/api/admin/psychologists?${params.toString()}`, {
+            const token = localStorage.getItem('Yelo_token');
+            const response = await fetch(`${API_BASE_URL}/api/admin/psychologists?page=${page}&search=${searchTerm}&status=${status}&plano=${plano}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            if (!response.ok) throw new Error('Erro na API.');
-            const result = await response.json();
-            renderTable(result.data);
+            if (!response.ok) throw new Error('Falha ao buscar dados.');
+
+            const { data, totalPages, currentPage } = await response.json();
+            renderTable(data);
+            renderPagination(totalPages, currentPage);
 
         } catch (error) {
-            console.error(error);
-            tableBody.innerHTML = `<tr><td colspan="7" class="error-row">${error.message}</td></tr>`;
+            console.error("Erro ao buscar psicólogos:", error);
+            tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: red;">Erro ao carregar dados.</td></tr>`;
         }
     }
 
+    // Função para renderizar a tabela
     function renderTable(psychologists) {
-        tableBody.innerHTML = ''; 
-
-        if (!psychologists || psychologists.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="7" class="empty-row">Nenhum profissional encontrado.</td></tr>';
+        tableBody.innerHTML = '';
+        if (psychologists.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px;">Nenhum psicólogo encontrado.</td></tr>`;
             return;
         }
 
         psychologists.forEach(psy => {
-            const row = rowTemplate.content.cloneNode(true).querySelector('tr');
-
-            row.querySelector('[data-label="Nome"]').textContent = psy.nome;
-            row.querySelector('[data-label="E-mail"]').textContent = psy.email;
-            row.querySelector('[data-label="CRP"]').textContent = psy.crp;
-            row.querySelector('[data-label="Plano"]').textContent = psy.plano || '-';
-            row.querySelector('[data-label="Cliques"]').textContent = '- / -';
-
-            const statusCell = row.querySelector('[data-label="Status"] .status');
-            statusCell.textContent = psy.status === 'active' ? 'Ativo' : (psy.status === 'inactive' ? 'Inativo' : psy.status);
-            statusCell.className = `status status-${psy.status}`;
-
-            const actionsCell = row.querySelector('[data-label="Ações"]');
-            const isSuspended = psy.status === 'inactive';
-
-            actionsCell.innerHTML = `
-                <button class="btn-tabela btn-details">Ver</button>
-                <button class="btn-tabela btn-suspend" style="margin: 0 5px;">${isSuspended ? 'Ativar' : 'Suspender'}</button>
-                <button class="btn-tabela btn-tabela-perigo btn-delete">Excluir</button>
+            const isVip = psy.is_exempt === true;
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td data-label="Nome">${psy.nome}</td>
+                <td data-label="Email">${psy.email}</td>
+                <td data-label="Status"><span class="status status-${psy.status || 'inactive'}">${psy.status || 'inativo'}</span></td>
+                <td data-label="Plano">${psy.plano || 'Nenhum'}</td>
+                <td data-label="Status VIP">
+                    <button class="btn-vip-toggle ${isVip ? 'active' : ''}" data-id="${psy.id}">
+                        ${isVip ? '💎 VIP' : 'Tornar VIP'}
+                    </button>
+                </td>
+                <td data-label="Ações">
+                    <button class="btn-tabela" onclick="alert('Editar ID: ${psy.id}')">Editar</button>
+                    <button class="btn-tabela btn-tabela-perigo" onclick="alert('Excluir ID: ${psy.id}')">Excluir</button>
+                </td>
             `;
-
-            actionsCell.querySelector('.btn-details').addEventListener('click', () => {
-                if (psy.slug) window.open(`/${psy.slug}`, '_blank');
-                else alert('Usuário sem link personalizado.');
-            });
-
-            actionsCell.querySelector('.btn-suspend').addEventListener('click', () => {
-                console.log("Cliquei em Suspender:", psy.nome);
-                const newStatus = isSuspended ? 'active' : 'inactive';
-                
-                confirmarAcao('Alterar Status', `Deseja mudar o status de <b>${psy.nome}</b>?`, async () => {
-                    try {
-                        const res = await fetch(`${API_PREFIX}/api/admin/psychologists/${psy.id}/status`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                            body: JSON.stringify({ status: newStatus })
-                        });
-                        if(res.ok) fetchPsychologists(currentPage, currentFilters);
-                        else alert("Erro ao alterar status");
-                    } catch (e) { alert(e.message); }
-                });
-            });
-
-            actionsCell.querySelector('.btn-delete').addEventListener('click', () => {
-                console.log("Cliquei em Excluir:", psy.nome);
-                
-                confirmarAcao('Excluir Profissional', `Tem certeza que deseja apagar <b>${psy.nome}</b>? Essa ação não tem volta.`, async () => {
-                    try {
-                        const res = await fetch(`${API_PREFIX}/api/admin/psychologists/${psy.id}`, {
-                            method: 'DELETE',
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        });
-                        
-                        if (res.ok) {
-                            row.remove(); 
-                        } else {
-                            const err = await res.json();
-                            alert("Erro: " + (err.error || "Falha ao excluir"));
-                        }
-                    } catch (e) { alert(e.message); }
-                });
-            });
-
             tableBody.appendChild(row);
         });
+
+        setupVipButtons();
     }
 
-    // --- LÓGICA DE FILTROS CORRIGIDA ---
-    
-    // 1. Seleção Robusta por IDs
-    const searchInput = document.querySelector('.campo-busca');
-    const statusSelect = document.getElementById('filtro-status'); // Pega pelo ID novo
-    const planoSelect = document.getElementById('filtro-plano');   // Pega pelo ID novo
-    
-    function applyFilters() {
-        // Verifica se o elemento existe antes de pegar o valor (evita erros se o HTML demorar)
-        currentFilters.search = searchInput ? searchInput.value : '';
-        currentFilters.status = statusSelect ? statusSelect.value : '';
-        currentFilters.plano = planoSelect ? planoSelect.value : '';
-        
-        console.log("Filtros aplicados:", currentFilters); // Debug: Veja no console o que está sendo enviado
-        fetchPsychologists(1, currentFilters);
-    }
+    // Função para configurar os botões VIP
+    function setupVipButtons() {
+        document.querySelectorAll('.btn-vip-toggle').forEach(button => {
+            // Remove listener antigo para evitar duplicação
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
 
-    // 2. Event Listeners (Gatilhos)
-    let debounceTimer;
-    if(searchInput) {
-        searchInput.addEventListener('input', () => {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(applyFilters, 500); 
+            newButton.addEventListener('click', function() {
+                const psychologistId = this.dataset.id;
+                const row = this.closest('tr');
+                const psychologistName = row.querySelector('td[data-label="Nome"]').textContent;
+                const isExempt = this.classList.contains('active');
+                const currentPlan = row.querySelector('td[data-label="Plano"]').textContent;
+                
+                window.openVipModal({
+                    id: psychologistId,
+                    nome: psychologistName,
+                    is_exempt: isExempt,
+                    plano: isExempt && currentPlan !== 'Nenhum' ? currentPlan : null
+                });
+            });
         });
     }
 
-    if(statusSelect) statusSelect.addEventListener('change', applyFilters);
-    if(planoSelect) planoSelect.addEventListener('change', applyFilters);
-
-    // --- NOVO: Botão Adicionar Psicólogo ---
-    const btnAdd = document.getElementById('btn-add-psi');
-    if (btnAdd) {
-        btnAdd.addEventListener('click', () => {
-            // Adicionamos o ?mode=admin para avisar a página de destino que somos nós
-            window.open('/psi_registro.html?mode=admin', '_blank');
-        });
+    // Função de paginação (simplificada)
+    function renderPagination(totalPages, currentPage) {
+        // Implementação da paginação pode ser adicionada aqui
     }
 
-    // Carregamento Inicial
-    fetchPsychologists(1);
+    // Listeners para os filtros
+    searchInput.addEventListener('keyup', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => fetchAndRenderPsychologists(1), 500);
+    });
+    statusFilter.addEventListener('change', () => fetchAndRenderPsychologists(1));
+    planoFilter.addEventListener('change', () => fetchAndRenderPsychologists(1));
+
+    // Carga inicial
+    fetchAndRenderPsychologists();
+
+    // Define a função de recarga que será usada pelo listener
+    const handleVipUpdate = () => {
+        console.log("Evento 'vipStatusUpdated' recebido. Recarregando a lista de psicólogos.");
+        fetchAndRenderPsychologists();
+    };
+
+    // Ouve o evento de atualização do status VIP para recarregar a lista
+    window.addEventListener('vipStatusUpdated', handleVipUpdate);
+
+    // Define a função de limpeza que será chamada ao navegar para outra página
+    window.cleanupPage = function() {
+        console.log("Limpando listener 'vipStatusUpdated' da página de gestão.");
+        window.removeEventListener('vipStatusUpdated', handleVipUpdate);
+    };
 };

@@ -2,6 +2,9 @@
 
 window.initializePage = function() {
     const token = localStorage.getItem('Yelo_token');
+    // Garante URL base correta
+    const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : 'http://localhost:3001';
+
     const reviewsList = document.getElementById('pending-reviews-list');
     const loadingState = document.getElementById('reviews-loading-state');
     const emptyState = document.getElementById('reviews-empty-state');
@@ -10,6 +13,9 @@ window.initializePage = function() {
     const questionsList = document.getElementById('pending-questions-list');
     const questionsLoadingState = document.getElementById('questions-loading-state');
     const questionsEmptyState = document.getElementById('questions-empty-state');
+
+    // Seletor para o novo botão de Gestão da Comunidade
+    const btnManageCommunity = document.getElementById('btn-manage-community');
 
     if (!token) {
         console.error("Elementos essenciais ou token não encontrados.");
@@ -26,9 +32,13 @@ window.initializePage = function() {
 
         const ratingStars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
 
+        // CORREÇÃO: Lida com casos onde o paciente ou psicólogo foram excluídos
+        const patientName = review.patient ? review.patient.nome : 'Usuário Excluído';
+        const psychologistName = review.psychologist ? review.psychologist.nome : 'Profissional Excluído';
+
         listItem.innerHTML = `
             <div class="avaliacao-info">
-                <span class="avaliacao-autor">${review.patient.nome} (para ${review.psychologist.nome})</span>
+                <span class="avaliacao-autor">${patientName} (para ${psychologistName})</span>
                 <span class="avaliacao-data">${new Date(review.createdAt).toLocaleDateString('pt-BR')}</span>
             </div>
             <p class="avaliacao-texto">"${review.comment}"</p>
@@ -50,7 +60,7 @@ window.initializePage = function() {
         reviewsList.innerHTML = '';
 
         try {
-            const response = await fetch('http://localhost:3001/api/admin/reviews/pending', {
+            const response = await fetch(`${API_BASE_URL}/api/admin/reviews/pending`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -81,7 +91,7 @@ window.initializePage = function() {
      */
     async function handleModeration(reviewId, action) {
         try {
-            const response = await fetch(`http://localhost:3001/api/admin/reviews/${reviewId}/moderate`, {
+            const response = await fetch(`${API_BASE_URL}/api/admin/reviews/${reviewId}/moderate`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -92,6 +102,9 @@ window.initializePage = function() {
 
             const result = await response.json();
             if (!response.ok) throw new Error(result.error);
+
+            // Feedback visual de sucesso
+            if (window.showToast) window.showToast(`Avaliação ${action === 'approved' ? 'aprovada' : 'rejeitada'} com sucesso!`);
 
             // Animação de remoção e atualização da UI
             const itemToRemove = reviewsList.querySelector(`[data-review-id="${reviewId}"]`);
@@ -108,7 +121,8 @@ window.initializePage = function() {
             }
 
         } catch (error) {
-            alert(`Erro ao moderar avaliação: ${error.message}`);
+            if (window.showToast) window.showToast(`Erro ao moderar avaliação: ${error.message}`, 'error');
+            else alert(`Erro: ${error.message}`);
         }
     }
 
@@ -118,7 +132,19 @@ window.initializePage = function() {
             const reviewItem = e.target.closest('li');
             const reviewId = reviewItem.dataset.reviewId;
             const action = e.target.dataset.action;
-            handleModeration(reviewId, action);
+            
+            const actionText = action === 'approved' ? 'aprovar' : 'rejeitar';
+            const title = action === 'approved' ? 'Aprovar Avaliação' : 'Rejeitar Avaliação';
+
+            if (window.openConfirmationModal) {
+                window.openConfirmationModal(
+                    title, 
+                    `Tem certeza que deseja <strong>${actionText}</strong> esta avaliação?`, 
+                    () => handleModeration(reviewId, action)
+                );
+            } else {
+                handleModeration(reviewId, action);
+            }
         }
     });
 
@@ -200,6 +226,8 @@ window.initializePage = function() {
             const result = await response.json();
             if (!response.ok) throw new Error(result.message);
 
+            if (window.showToast) window.showToast(`Pergunta ${action === 'approved' ? 'aprovada' : 'rejeitada'} com sucesso!`);
+
             const itemToRemove = questionsList.querySelector(`[data-question-id="${questionId}"]`);
             if (itemToRemove) {
                 itemToRemove.style.transition = 'opacity 0.5s, transform 0.5s';
@@ -214,7 +242,8 @@ window.initializePage = function() {
             }
 
         } catch (error) {
-            alert(`Erro ao moderar pergunta: ${error.message}`);
+            if (window.showToast) window.showToast(`Erro ao moderar pergunta: ${error.message}`, 'error');
+            else alert(`Erro: ${error.message}`);
         }
     }
 
@@ -224,28 +253,52 @@ window.initializePage = function() {
                 const questionItem = e.target.closest('li');
                 const questionId = questionItem.dataset.questionId;
                 const action = e.target.dataset.action;
-                handleQuestionModeration(questionId, action);
+                
+                const actionText = action === 'approved' ? 'aprovar' : 'rejeitar';
+                const title = action === 'approved' ? 'Aprovar Pergunta' : 'Rejeitar Pergunta';
+
+                if (window.openConfirmationModal) {
+                    window.openConfirmationModal(
+                        title,
+                        `Tem certeza que deseja <strong>${actionText}</strong> esta pergunta?`,
+                        () => handleQuestionModeration(questionId, action)
+                    );
+                } else {
+                    handleQuestionModeration(questionId, action);
+                }
             }
         });
     }
 
     // Inicia o carregamento dos dados
     function initializeStaticPageManagement() {
-        const editButtons = document.querySelectorAll('.widget .btn-tabela');
+        const staticPagesWidget = document.getElementById('static-pages-widget');
+        if (!staticPagesWidget) return;
 
-        editButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                const pageKey = e.target.closest('tr').querySelector('td').textContent;
-                
-                // Simula a navegação para a página de edição, passando a chave da página como parâmetro
-                // A função loadPage do seu admin.js precisaria ser ajustada para lidar com parâmetros.
-                // Por enquanto, vamos fazer um redirecionamento simples.
-                window.location.hash = `admin_editar_pagina.html?page=${pageKey}`;
-            });
+        // Usando delegação de eventos para mais robustez
+        staticPagesWidget.addEventListener('click', (e) => {
+            if (e.target.matches('.btn-tabela')) {
+                const pageKey = e.target.closest('tr')?.querySelector('td')?.textContent;
+                if (pageKey && typeof window.navigateToPage === 'function') {
+                    window.navigateToPage(`admin_editar_pagina.html?page=${pageKey.trim()}`);
+                } else {
+                    console.error("Não foi possível navegar ou encontrar a chave da página.");
+                }
+            }
         });
+    }
+
+    // Adiciona a lógica para o botão de Gerenciar Comunidade
+    function initializeCommunityManagementLink() {
+        if (btnManageCommunity && typeof window.navigateToPage === 'function') {
+            btnManageCommunity.addEventListener('click', () => {
+                window.navigateToPage('admin_comunidade_gestao.html');
+            });
+        }
     }
 
     fetchPendingReviews();
     fetchPendingQuestions();
     initializeStaticPageManagement(); // Adiciona a inicialização dos botões de edição
+    initializeCommunityManagementLink(); // Adiciona a inicialização do novo botão
 };

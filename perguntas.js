@@ -10,6 +10,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const textarea = document.getElementById('question-text');
     const charCounter = document.getElementById('char-counter');
     const errorMessage = document.getElementById('char-error-message');
+    const btnLoadMore = document.getElementById('btn-load-more');
+    const loadMoreContainer = document.getElementById('load-more-container');
+
+    // Variáveis de Paginação
+    let allQuestions = [];
+    let visibleCount = 5; // Quantas perguntas aparecem inicialmente
+    const INCREMENT = 5;  // Quantas aparecem ao clicar em "Ver mais"
 
     // 1. Carregar perguntas ao abrir
     loadQuestions();
@@ -19,11 +26,38 @@ document.addEventListener('DOMContentLoaded', () => {
             const timestamp = new Date().getTime(); 
             const res = await fetch(`${BASE_URL}/api/qna/public?v=${timestamp}`);
             if (!res.ok) throw new Error("Falha ao buscar");
-            const questions = await res.json();
-            renderQuestions(questions);
+            
+            allQuestions = await res.json();
+            
+            // Garante ordenação por data (mais recente primeiro)
+            allQuestions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            updateListDisplay();
         } catch (error) {
             console.error(error);
             if(container) container.innerHTML = `<p style="text-align:center; color:#777;">Ainda não há perguntas. Seja o primeiro!</p>`;
+        }
+    }
+
+    // Função que gerencia o "Ver Mais" e fatia a lista
+    function updateListDisplay() {
+        if (!allQuestions || allQuestions.length === 0) {
+            renderQuestions([]);
+            if(loadMoreContainer) loadMoreContainer.style.display = 'none';
+            return;
+        }
+
+        // Pega apenas a quantidade visível atual
+        const visibleQuestions = allQuestions.slice(0, visibleCount);
+        renderQuestions(visibleQuestions);
+
+        // Controla visibilidade do botão "Ver mais"
+        if (loadMoreContainer) {
+            if (visibleCount >= allQuestions.length) {
+                loadMoreContainer.style.display = 'none';
+            } else {
+                loadMoreContainer.style.display = 'block';
+            }
         }
     }
 
@@ -115,7 +149,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     textarea.value = '';
                     showToast("Sua pergunta foi enviada com sucesso!", "success");
                     
-                    await loadQuestions();
+                    // --- LÓGICA DE "APROVAÇÃO IMEDIATA" ---
+                    // Em vez de recarregar do servidor (que pode estar esperando aprovação),
+                    // adicionamos a pergunta manualmente na lista local para o usuário ver agora.
+                    const newQuestion = {
+                        title: 'Sua Pergunta (Recente)',
+                        content: conteudo,
+                        createdAt: new Date().toISOString(),
+                        answers: []
+                    };
+
+                    allQuestions.unshift(newQuestion); // Adiciona no topo
+                    visibleCount++; // Aumenta o contador para caber a nova pergunta
+                    updateListDisplay(); // Atualiza a tela
                     
                     // Scroll suave
                     setTimeout(() => {
@@ -139,6 +185,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(textarea.value.length < 50) submitBtn.disabled = true;
             }
         };
+    }
+
+    // Evento do Botão Ver Mais
+    if (btnLoadMore) {
+        btnLoadMore.addEventListener('click', () => {
+            visibleCount += INCREMENT;
+            updateListDisplay();
+        });
     }
 
     // Contador e Botão

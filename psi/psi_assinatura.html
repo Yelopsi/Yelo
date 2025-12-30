@@ -1,7 +1,21 @@
-<header class="main-header">
-    <h1>Gerencie sua Assinatura</h1>
-    <p class="subtitulo-header">Escolha o plano que melhor se alinha ao seu momento profissional.</p>
-</header>
+<div class="main-header">
+    <div class="header-content">
+        <h1>Gerencie sua Assinatura</h1>
+        <p>Escolha o plano que melhor se alinha ao seu momento profissional.</p>
+    </div>
+</div>
+
+<!-- BANNER VIP (Invisível por padrão) -->
+<div id="vip-banner" style="display: none; margin: 20px auto; max-width: 900px; background: linear-gradient(135deg, #dcfce7 0%, #f0fdf4 100%); border: 1px solid #86efac; border-radius: 16px; padding: 30px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+    <div style="font-size: 3rem; margin-bottom: 15px;">💎</div>
+    <h2 style="color: #166534; margin-bottom: 10px; font-size: 1.8rem;">Status VIP Ativo</h2>
+    <p style="color: #15803d; font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+        Sua isenção para o <strong id="vip-plan-name">Plano Essencial</strong> foi concedida pela administração da Yelo.
+    </p>
+    <p style="color: #16a34a; font-size: 0.9rem; margin-top: 15px;">
+        Aproveite todos os recursos premium sem custo. Obrigado por ser um parceiro essencial!
+    </p>
+</div>
 
             <section id="card-resumo-assinatura" class="plano-atual-moderno" style="display: none;">
                 <div class="info-lado-esquerdo">
@@ -20,19 +34,25 @@
             </section>
 
 <section class="planos-grid">
-    <div class="plano-card">
-        <div style="background: #eef; color: #333; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-bottom: 8px;">
-            1º Mês Grátis
+    <div class="plano-card promo-ativa" id="card-plano-essencial">
+        <div class="tag-oferta-topo" id="tag-oferta-essencial">
+            🔥 3 Meses com 50% OFF
         </div>
         <h2>Plano Essencial</h2>
-        <div class="preco" id="preco-essencial">R$ 99<span>/mês</span></div>
+        <div class="preco-desconto" id="preco-essencial">
+            <span class="preco-antigo">R$ 99</span>
+            <span class="preco-novo">R$ 49,50</span>
+            <span>/mês</span>
+        </div>
         <ul class="beneficios-lista">
             <li>✅ Participação no Match</li>
-            <li>✅ Perfil Básico (Foto + Bio)</li>
-            <li>✅ Métricas de Visualização</li>
+            <li>✅ Indicadores Simples (Views/Cliques)</li>
+            <li>✅ Página Pública de Divulgação</li>
+            <li>✅ Fórum de Discussões</li>
         </ul>
         <div class="plano-cta">
-            <button class="btn-mudar-plano" data-plano="ESSENTIAL">Começar Teste Grátis</button>
+            <button class="btn-mudar-plano" data-plano="ESSENTIAL">Garantir 50% de Desconto</button>
+            <p style="font-size: 0.75rem; color: #888; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 5px;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-lock" style="width: 12px; height: 12px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Pagamento seguro via Stripe</p>
         </div>
     </div>
 
@@ -41,12 +61,13 @@
             EM BREVE
         </div>
         <h2 style="color: #666;">Plano Clínico</h2>
-        <div class="preco" style="color: #666; font-family: 'New Kansas', serif;">R$ 159<span>/mês</span></div>
+        <div class="preco" style="color: #666;">R$ 159<span>/mês</span></div>
         <ul class="beneficios-lista" style="filter: grayscale(100%);">
             <li>✨ <strong>Tudo do Essencial, mais:</strong></li>
-            <li>✅ Link Personalizado (Yelo.com/voce)</li>
-            <li>✅ Acesso à Comunidade Yelo</li>
-            <li>✅ Selo de Verificação</li>
+            <li>✅ Intervisão e Workshops</li>
+            <li>✅ Perguntas e Respostas</li>
+            <li>✅ Indicadores (Conversão e Picos)</li>
+            <li>✅ URL Personalizada</li>
         </ul>
         <div class="plano-cta">
             <button class="btn-mudar-plano" disabled style="background-color: #e0e0e0; color: #888; border: none; cursor: not-allowed; width: 100%;">
@@ -55,17 +76,18 @@
         </div>
     </div>
 
-    <div class="plano-card" style="border-color: #eee; opacity: 0.7;">
-        <div style="background: #f0f0f0; color: #999; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-bottom: 8px;">
-            Expansão
+    <div class="plano-card" style="border: 2px solid #eee; opacity: 0.7; position: relative;">
+        <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #999; color: #fff; font-size: 0.75rem; font-weight: bold; padding: 2px 10px; border-radius: 12px;">
+            EM BREVE
         </div>
         <h2 style="color: #666;">Plano Referência</h2>
-        <div class="preco" style="color: #666; font-family: 'New Kansas', serif;">R$ 259<span>/mês</span></div>
+        <div class="preco" style="color: #666;">R$ 259<span>/mês</span></div>
         <ul class="beneficios-lista" style="filter: grayscale(100%);">
             <li>🚀 <strong>Tudo do Clínico, mais:</strong></li>
-            <li>✅ Destaque em Conteúdo/Blog</li>
-            <li>✅ Perfil Premium (Vídeo + Galeria)</li>
-            <li>✅ Acesso a Grupos de Estudo</li>
+            <li>✅ Supervisão Clínica</li>
+            <li>✅ Destaque nos Resultados</li>
+            <li>✅ Análise de Perfil com IA</li>
+            <li>✅ Insights Avançados (Competitividade)</li>
         </ul>
         <div class="plano-cta">
             <button class="btn-mudar-plano" disabled style="background-color: #e0e0e0; color: #888; border: none; cursor: not-allowed; width: 100%;">
@@ -100,3 +122,117 @@
         </div>
     </div>
 </div>
+
+<script>
+(async () => {
+    const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : 'http://localhost:3001';
+    const token = localStorage.getItem('Yelo_token');
+
+    if (!token) return; // Se não estiver logado, o comportamento padrão (mostrar planos) permanece ou redireciona
+
+    try {
+        // Busca dados atualizados do perfil
+        // Adiciona timestamp para evitar cache do navegador
+        const response = await fetch(`${BASE_URL}/api/psychologists/me?t=${new Date().getTime()}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            const user = await response.json();
+            console.log("Debug Assinatura - Dados do Usuário:", user);
+
+            // VERIFICAÇÃO VIP
+            // Verifica se é VIP pela flag OU pelo plano (fallback de segurança)
+            // Se o usuário tem plano REFERENCE ou CLINICAL, tratamos como VIP automaticamente
+            const isVip = user.is_exempt || (user.plano && ['REFERENCE', 'CLINICAL'].includes(user.plano));
+
+            if (isVip) {
+                aplicarModoVip(user.plano);
+            } else if (user.plano) {
+                // Usuário tem um plano ativo: REMOVE o badge de promoção
+                const promoBadge = document.getElementById('tag-oferta-essencial');
+                if (promoBadge) {
+                    promoBadge.remove();
+                }
+
+                // Remove o destaque visual (borda verde) do card promocional
+                const promoCard = document.getElementById('card-plano-essencial');
+                if (promoCard) {
+                    promoCard.classList.remove('promo-ativa');
+                }
+
+                // Se o plano atual for o Essencial, ajusta o botão para indicar isso
+                if (user.plano === 'ESSENTIAL') {
+                    const btnEssencial = document.querySelector('#card-plano-essencial .btn-mudar-plano');
+                    if (btnEssencial) {
+                        btnEssencial.textContent = 'Seu Plano Atual';
+                        btnEssencial.disabled = true;
+                        btnEssencial.style.backgroundColor = '#e0e0e0';
+                        btnEssencial.style.borderColor = '#e0e0e0';
+                        btnEssencial.style.color = '#888';
+                        btnEssencial.style.cursor = 'default';
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Erro ao verificar status VIP:", error);
+    }
+
+    function aplicarModoVip(planName) {
+        // Mapeamento de nomes dos planos para exibição amigável
+        const nomesPlanos = {
+            'ESSENTIAL': 'Essencial',
+            'CLINICAL': 'Clínico',
+            'REFERENCE': 'Referência'
+        };
+        const nomeExibicao = nomesPlanos[planName] || planName || 'Essencial';
+
+        const planNameEl = document.getElementById('vip-plan-name');
+        if (planNameEl) planNameEl.textContent = `Plano ${nomeExibicao}`;
+
+        // 1. Esconde a grid de planos (pagamento)
+        const planosGrid = document.querySelector('.planos-grid');
+        if (planosGrid) planosGrid.style.setProperty('display', 'none', 'important');
+
+        // 2. Esconde área de cancelamento (não faz sentido para isentos)
+        const areaCancel = document.getElementById('area-cancelamento');
+        if (areaCancel) areaCancel.style.setProperty('display', 'none', 'important');
+
+        // 3. MOSTRA o resumo de assinatura adaptado para VIP
+        const resumo = document.getElementById('card-resumo-assinatura');
+        if (resumo) {
+            resumo.style.display = 'flex'; // Mostra o card
+            
+            // Atualiza textos para refletir isenção
+            const nomePlano = document.getElementById('banner-nome-plano');
+            if(nomePlano) nomePlano.textContent = `Plano ${nomeExibicao}`;
+            
+            const preco = document.getElementById('banner-preco');
+            if(preco) preco.textContent = 'R$ 0,00 (Isento)';
+            
+            const renovacao = document.getElementById('banner-renovacao');
+            if(renovacao) renovacao.textContent = 'Status: Vitalício / Isento';
+
+            // Estiliza o badge de status
+            const badge = resumo.querySelector('.status-badge');
+            if(badge) {
+                badge.innerHTML = '💎 VIP Ativo';
+                badge.style.backgroundColor = '#e6fffa';
+                badge.style.color = '#1B4332';
+                badge.style.borderColor = '#1B4332';
+            }
+        }
+
+        // 4. Mostra o Banner VIP
+        const vipBanner = document.getElementById('vip-banner');
+        if (vipBanner) vipBanner.style.display = 'block';
+
+        // 5. Ajusta o texto do cabeçalho para refletir o status VIP
+        const headerTitle = document.querySelector('.main-header h1');
+        const headerDesc = document.querySelector('.main-header p');
+        if (headerTitle) headerTitle.textContent = 'Sua Assinatura VIP';
+        if (headerDesc) headerDesc.textContent = 'Você possui acesso especial concedido pela Yelo.';
+    }
+})();
+</script>

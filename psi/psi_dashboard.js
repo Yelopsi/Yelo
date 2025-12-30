@@ -13,6 +13,82 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const mainContent = document.getElementById('main-content');
     const toastContainer = document.getElementById('toast-container');
+    
+    // Estado global para contar conversas não lidas
+    window.psiUnreadConversations = new Set();
+
+    // --- BADGE DE NOTIFICAÇÃO (CSS INJETADO) ---
+    const badgeStyle = document.createElement('style');
+    badgeStyle.innerHTML = `
+        .sidebar-badge {
+            background-color: #FFEE8C; /* Amarelo Yelo */
+            color: #1B4332; /* Verde Yelo */
+            border-radius: 50%;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 4px;
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: none;
+            box-shadow: 0 0 0 1px #fff;
+            font-size: 11px;
+            font-weight: 800;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .sidebar-badge.visible { display: flex; }
+        .sidebar-nav li a { position: relative; }
+    `;
+    document.head.appendChild(badgeStyle);
+
+    // Função para controlar a badge no menu
+    function updateSidebarBadge(pageName, show) {
+        const link = document.querySelector(`.sidebar-nav a[data-page="${pageName}"]`);
+        if (!link) return;
+        
+        let badge = link.querySelector('.sidebar-badge');
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'sidebar-badge';
+            link.appendChild(badge);
+        }
+        
+        if (show) {
+            const count = window.psiUnreadConversations.size;
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.classList.add('visible');
+            } else {
+                badge.classList.remove('visible');
+            }
+        } else {
+            badge.classList.remove('visible');
+            badge.textContent = '';
+        }
+    }
+
+    // --- LÓGICA DO MENU MOBILE ---
+    const toggleBtn = document.getElementById('toggleSidebar');
+    const sidebar = document.querySelector('.dashboard-sidebar');
+    
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('is-open');
+        });
+        
+        // Fecha ao clicar fora
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 992 && 
+                sidebar.classList.contains('is-open') && 
+                !sidebar.contains(e.target) && 
+                !toggleBtn.contains(e.target)) {
+                sidebar.classList.remove('is-open');
+            }
+        });
+    }
 
     // --- LÓGICA DE UPLOAD NA SIDEBAR ---
     const sidebarTrigger = document.getElementById('sidebar-photo-trigger');
@@ -37,6 +113,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         if(psychologistData) psychologistData.fotoUrl = d.fotoUrl;
                         atualizarInterfaceLateral(); // Atualiza a imagem na hora
                         showToast('Foto atualizada!', 'success');
+                    } else {
+                        // Captura o erro retornado pelo backend
+                        const errData = await res.json().catch(() => ({}));
+                        throw new Error(errData.error || 'Erro ao enviar foto.');
                     }
                 } catch (err) {
                     console.error(err);
@@ -57,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.removeItem('Yelo_token');
             
             // 3. Redireciona imediatamente para o Login
-            window.location.href = '../login.html';
+            window.location.href = '/';
         };
     }
 
@@ -130,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const response = await fetch(url, { ...options, headers });
         if (response.status === 401) {
             localStorage.removeItem('Yelo_token');
-            window.location.href = '../login.html';
+            window.location.href = '/';
             throw new Error("Sessão expirada.");
         }
         return response;
@@ -138,17 +218,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function fetchPsychologistData() {
         const token = localStorage.getItem('Yelo_token');
-        if (!token) { window.location.href = '../login.html'; return false; }
+        if (!token) { window.location.href = '/'; return false; }
         try {
-            const response = await fetch(`${API_BASE_URL}/api/psychologists/me`, {
+            // Adicionado timestamp (?t=...) para evitar que o navegador use dados velhos do cache
+            const response = await fetch(`${API_BASE_URL}/api/psychologists/me?t=${new Date().getTime()}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.ok) {
                 psychologistData = await response.json();
-                
-                // --- MOCK ATUALIZADO: SIMULANDO PLANO ESSENCIAL ---
-                psychologistData.plano = 'ESSENTIAL'; 
-                // --------------------------------------------------
 
                 atualizarInterfaceLateral(); 
                 return true;
@@ -156,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
             throw new Error("Token inválido");
         } catch (error) {
             localStorage.removeItem('Yelo_token');
-            window.location.href = '../login.html';
+            window.location.href = '/';
             return false;
         }
     }
@@ -173,10 +250,45 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function loadPage(url) {
         if (!url) return;
-        mainContent.innerHTML = '<div style="padding:40px; text-align:center; color:#888;">Carregando...</div>';
+
+        // --- FIX CRÍTICO: Limpeza de recursos da página anterior ---
+        // Garante que o socket do chat seja morto ANTES de carregar qualquer outra coisa.
+        if (typeof window.cleanupPsiChat === 'function') {
+            console.log("Limpando chat anterior...");
+            window.cleanupPsiChat();
+            window.cleanupPsiChat = null; // Remove a referência para não chamar de novo
+        }
+
+        // Salva a página atual para persistir após o refresh
+        localStorage.setItem('yelo_last_psi_page', url);
+        // Spinner de carregamento entre páginas
+        mainContent.innerHTML = `
+            <div class="loader-wrapper" style="height: 100%; min-height: 400px; align-items: center;">
+                <div class="loader-spinner"></div>
+            </div>`;
         document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
         const activeLink = document.querySelector(`.sidebar-nav a[data-page="${url}"]`);
         if (activeLink) activeLink.closest('li').classList.add('active');
+
+        // --- OTIMIZAÇÃO: PRÉ-FETCH DE DADOS (Paralelismo) ---
+        // Dispara a busca de dados IMEDIATAMENTE, sem esperar o HTML carregar
+        let dataPromise = null;
+        if (url.includes('psi_blog.html')) { 
+             dataPromise = apiFetch(`${API_BASE_URL}/api/psychologists/me/posts?page=1&limit=3`).then(r => r.ok ? r.json() : null).catch(() => null);
+        } else if (url.includes('psi_comunidade.html')) {
+             dataPromise = apiFetch(`${API_BASE_URL}/api/qna?page=1&limit=15`).then(r => r.ok ? r.json() : null).catch(() => null);
+        } else if (url.includes('psi_forum.html')) {
+             // Busca 4 itens (3 para exibir + 1 para checar se tem mais)
+             dataPromise = apiFetch(`${API_BASE_URL}/api/forum/posts?filter=populares&search=&page=1&limit=4&pageSize=3`).then(r => r.ok ? r.json() : null).catch(() => null);
+        } else if (url.includes('psi_caixa_de_entrada.html')) {
+             dataPromise = apiFetch(`${API_BASE_URL}/api/messages?contactType=admin`).then(r => r.ok ? r.json() : null).catch(() => null);
+        }
+
+        // Se for a caixa de entrada, remove a badge
+        if (url.includes('caixa_de_entrada')) {
+            window.psiUnreadConversations.clear();
+            updateSidebarBadge('psi_caixa_de_entrada.html', false);
+        }
 
         fetch(url).then(r => r.ok ? r.text() : Promise.reject(url))
             .then(html => {
@@ -184,10 +296,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (url.includes('meu_perfil')) inicializarLogicaDoPerfil();
                 else if (url.includes('visao_geral')) inicializarVisaoGeral();
                 else if (url.includes('assinatura')) inicializarAssinatura();
-                else if (url.includes('comunidade')) inicializarComunidade(); // Mantém o antigo Q&A
-                else if (url.includes('caixa_de_entrada')) inicializarCaixaEntrada();
+                else if (url.includes('comunidade')) inicializarComunidade(dataPromise); // Passa a promessa
+                else if (url.includes('caixa_de_entrada')) inicializarCaixaEntrada(dataPromise); // Passa a promessa
                 else if (url.includes('psi_hub')) inicializarHubComunidade(); 
-                else if (url.includes('psi_blog')) inicializarBlog();
+                else if (url.includes('psi_blog')) inicializarBlog(dataPromise); // Passa a promessa
+                else if (url.includes('psi_forum')) inicializarForum(dataPromise); // Passa a promessa
+                // Adicione outras inicializações de página aqui
             })
             .catch(e => mainContent.innerHTML = `<p>Erro ao carregar: ${e}</p>`);
     }
@@ -300,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function() {
             'clinical': 'R$ 159,00', 
             'reference': 'R$ 259,00',
             // Mantendo compatibilidade legada temporária (caso tenha algum perdido no banco)
-            'semente': 'R$ 99,00', 'luz': 'R$ 149,00', 'sol': 'R$ 199,00'
+            'Essencial': 'R$ 99,00', 'Clínico': 'R$ 149,00', 'sol': 'R$ 199,00'
         };
 
         if (temPlano && cardResumo) {
@@ -398,7 +512,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 // É UM OUTRO PLANO (Upgrade ou Downgrade)
                 // Se o usuário não tem plano nenhum, mostramos "Testar Grátis"
-                btn.textContent = temPlano ? "Mudar para este" : "Testar 30 Dias Grátis";
+                btn.textContent = temPlano ? "Mudar para este" : "Garantir 50% OFF (3 Meses)";
                 btn.disabled = false;
                 btn.onclick = (e) => {
                     e.preventDefault();
@@ -491,58 +605,149 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     // --- RESTANTE DAS FUNÇÕES (PERFIL, EXCLUIR CONTA, ETC) ---
-    function inicializarVisaoGeral() {
+    async function inicializarVisaoGeral() {
         // 1. Saudação e Alerta de Perfil (Mantidos)
         if (document.getElementById('psi-welcome-name') && psychologistData) {
             document.getElementById('psi-welcome-name').textContent = `Olá, ${psychologistData.nome.split(' ')[0]}!`;
         }
-        const isProfileIncomplete = !psychologistData.abordagens || psychologistData.abordagens.length === 0; 
+
+        const abordagens = psychologistData.abordagens || psychologistData.abordagens_tecnicas || [];
+        const temas = psychologistData.temas || psychologistData.temas_atuacao || [];
+        const isProfileIncomplete = !psychologistData.nome || !psychologistData.crp || abordagens.length === 0 || temas.length === 0;
+
         const alertBox = document.getElementById('alert-complete-profile');
         if (alertBox) alertBox.style.display = isProfileIncomplete ? 'flex' : 'none';
 
-        // 2. Preenchimento de Métricas (Simulação MVP)
-        document.getElementById('kpi-cliques-contato').textContent = "12";
-        document.getElementById('kpi-recomendacoes').textContent = "84";
+        // --- CORREÇÃO: Lógica de bloqueio de recursos movida para fora do try/catch ---
+        // Isso garante que o blur seja aplicado mesmo que a busca de KPIs falhe.
+        const planoAtual = psychologistData.plano ? psychologistData.plano.toUpperCase() : '';
         
-        // Elementos Premium (Preenchidos caso estejam desbloqueados)
-        const elFavoritos = document.getElementById('kpi-favoritos');
-        if(elFavoritos) elFavoritos.textContent = "5";
-
-        // 3. LÓGICA DE FEATURE GATING (Atualizada conforme definição de Produto)
-        const planoAtual = psychologistData.plano ? psychologistData.plano.toUpperCase() : 'ESSENTIAL';
-        
-        // IDs dos cards
         const cardFavoritos = 'card-favoritos';
-        const cardDemandas = 'card-demandas'; // "Interesses do Público"
+        const cardDemandas = 'card-demandas';
         const cardBench = 'card-benchmarking';
 
-        if (planoAtual === 'ESSENTIAL') {
-            // PLANO 1 (Arroz com Feijão): Só vê métricas básicas
+        if (!planoAtual || planoAtual === 'ESSENTIAL') {
             bloquearCard(cardFavoritos, 'Veja quem salvou seu perfil no Plano Clínico');
             bloquearCard(cardDemandas, 'Saiba quais queixas chegam até você no Plano Clínico');
             bloquearCard(cardBench, 'Comparativo de mercado exclusivo Plano Referência');
         } 
         else if (planoAtual === 'CLINICAL') {
-            // PLANO 2 (Intermediário): Vê Favoritos e Demandas
             desbloquearCard(cardFavoritos);
             desbloquearCard(cardDemandas);
-            
-            // Mas o Benchmarking continua bloqueado (Gatilho para o Plano 3)
             bloquearCard(cardBench, 'Destrave o Comparativo de Mercado no Plano Referência');
         } 
         else if (planoAtual === 'REFERENCE') {
-            // PLANO 3 (Topo): Tudo liberado
             desbloquearCard(cardFavoritos);
             desbloquearCard(cardDemandas);
             desbloquearCard(cardBench);
-            
-            // Destaque visual
-            const benchCard = document.getElementById(cardBench);
-            if(benchCard) {
-                benchCard.style.border = "1px solid #FFC107";
-                benchCard.style.background = "linear-gradient(to right, #fff, #fffae6)";
+            const benchCardEl = document.getElementById(cardBench);
+            if(benchCardEl) {
+                benchCardEl.style.border = "1px solid #FFC107";
+                benchCardEl.style.background = "linear-gradient(to right, #fff, #fffae6)";
             }
         }
+        // --- FIM DA CORREÇÃO ---
+
+        // --- NOVA LÓGICA DE FILTRO E RENDERIZAÇÃO DE KPIs ---
+        const filterSelect = document.getElementById('kpi-date-filter');
+        const kpiGrid = document.querySelector('.kpi-grid');
+        const btnRefresh = document.getElementById('btn-refresh-kpis');
+
+        async function fetchAndRenderKPIs(period = 'last30days') {
+            const cards = document.querySelectorAll('.kpi-grid .kpi-card');
+            
+            console.time('Frontend KPI Render');
+            // Ativa o estado de carregamento com a animação de esqueleto
+            cards.forEach(card => {
+                card.classList.add('is-loading');
+                // Seleciona os elementos de texto para aplicar o esqueleto
+                card.querySelectorAll('.kpi-value, h3, .kpi-link, #lista-demandas div').forEach(el => {
+                    el.classList.add('skeleton-text');
+                });
+            });
+
+            try {
+                const statsUrl = `${API_BASE_URL}/api/psychologists/me/stats?period=${period}`;
+                const res = await apiFetch(statsUrl);
+
+                // --- CORREÇÃO: Verifica o tipo de conteúdo ANTES de tentar ler como JSON ---
+                const contentType = res.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    const responseText = await res.text();
+                    console.error("A API de estatísticas não retornou JSON. Resposta do servidor:", responseText);
+                    // Joga um erro claro que será pego pelo bloco catch
+                    throw new Error(`O servidor retornou uma resposta inesperada (tipo: ${contentType}).`);
+                }
+
+                const stats = await res.json();
+                
+                // Atualiza os cards com os novos dados
+                // CORREÇÃO: Verifica se os elementos existem antes de atualizar (evita erro ao trocar de página)
+                const elCliques = document.getElementById('kpi-cliques-contato');
+                if (elCliques) elCliques.textContent = stats.whatsappClicks || 0;
+
+                const elRecomendacoes = document.getElementById('kpi-recomendacoes');
+                if (elRecomendacoes) elRecomendacoes.textContent = stats.profileAppearances || 0;
+
+                const elFavoritos = document.getElementById('kpi-favoritos');
+                if (elFavoritos) elFavoritos.textContent = stats.favoritesCount || 0;
+
+                const elDemandas = document.getElementById('lista-demandas');
+                if (elDemandas) {
+                    if (stats.topDemands && stats.topDemands.length > 0) {
+                        elDemandas.innerHTML = stats.topDemands.map((demanda, index) => 
+                            `<div style="font-size: 0.9rem; margin-bottom: 5px; color: ${index > 1 ? '#666' : 'inherit'};">
+                                ${index + 1}. ${demanda.name} (${demanda.percentage}%)
+                            </div>`
+                        ).join('');
+                    } else {
+                        elDemandas.innerHTML = '<div style="font-size: 0.9rem; color: #999;">Ainda não há dados suficientes para este período.</div>';
+                    }
+                }
+            } catch (error) {
+                console.error("Erro ao buscar KPIs:", error);
+                showToast('Não foi possível atualizar as métricas.', 'error');
+            } finally {
+                // Desativa o estado de carregamento
+                cards.forEach(card => {
+                    card.classList.remove('is-loading');
+                    // Remove a classe de esqueleto de todos os elementos de texto
+                    card.querySelectorAll('.skeleton-text').forEach(el => {
+                        el.classList.remove('skeleton-text');
+                    });
+                });
+            }
+        }
+
+        // Adiciona o listener para o filtro
+        if (filterSelect) {
+            // Remove listener antigo para evitar duplicação ao recarregar a página
+            const newFilterSelect = filterSelect.cloneNode(true);
+            filterSelect.parentNode.replaceChild(newFilterSelect, filterSelect);
+            
+            newFilterSelect.addEventListener('change', (e) => {
+                fetchAndRenderKPIs(e.target.value);
+            });
+        }
+
+        // Listener do botão de atualizar
+        if (btnRefresh) {
+            btnRefresh.onclick = (e) => {
+                e.preventDefault();
+                // Animação simples de rotação no ícone
+                const icon = btnRefresh.querySelector('svg');
+                if(icon) {
+                    icon.style.transition = 'transform 0.5s ease';
+                    icon.style.transform = 'rotate(360deg)';
+                    setTimeout(() => { icon.style.transform = 'none'; }, 500);
+                }
+                const currentSelect = document.getElementById('kpi-date-filter');
+                fetchAndRenderKPIs(currentSelect ? currentSelect.value : 'last30days');
+            };
+        }
+
+        // Carga inicial dos KPIs
+        fetchAndRenderKPIs('last30days');
     }
 
     // --- FUNÇÕES AUXILIARES DE BLOQUEIO (FEATURE GATING) ---
@@ -567,12 +772,15 @@ document.addEventListener('DOMContentLoaded', function() {
         overlay.className = 'premium-lock-overlay';
         overlay.innerHTML = `
             <div class="lock-icon-circle">
-                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
                 </svg>
             </div>
-            <div class="premium-text">${mensagem}</div>
-            <button class="btn-unlock-feature">Liberar Acesso</button>
+            <div class="premium-text">
+                <span style="display:block; font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; color:#888; margin-bottom:5px;">Recurso Premium</span>
+                ${mensagem}
+            </div>
+            <button class="btn-unlock-feature">Desbloquear Agora</button>
         `;
     
         // Ação do Botão "Liberar" -> Leva para a página de Assinatura
@@ -602,7 +810,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const overlay = card.querySelector('.premium-lock-overlay');
         if (overlay) overlay.remove();
     }
-    // --- LÓGICA DO PERFIL (ATUALIZADA: Híbrido CPF/CNPJ) ---
+    // --- LÓGICA DO PERFIL (ATUALIZADA E CORRIGIDA) ---
 
     // Variável para guardar a instância da máscara do documento
     let documentMaskInstance = null;
@@ -617,47 +825,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Inicializa componentes
         setupMultiselects();
-        setupDocumentMask();
-        // 1. INICIALIZA O BUSCADOR DE CEP
+        setupMasks();
         setupCepSearch();
 
         if (psychologistData) {
-            // Preencher campos simples
-            // 2. ATUALIZAR LISTA DE CAMPOS PARA PREENCHER
+            // 1. Preencher campos de texto simples
             ['nome', 'email', 'crp', 'telefone', 'bio', 'valor_sessao_numero', 'slug', 'cep', 'cidade', 'estado'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = psychologistData[id] || '';
             });
 
-            // --- CORREÇÃO AQUI: LÓGICA DE PREENCHIMENTO DO DOCUMENTO ---
+            // 2. Preenchimento Inteligente do Documento (CPF/CNPJ)
             if (inputDoc) {
-                // 1. Tenta pegar de qualquer variavel possível que o backend retorne
                 const docSalvo = psychologistData.cpf || psychologistData.cnpj || psychologistData.document_number || '';
-                
-                // 2. Joga o valor no input da máscara
                 if (documentMaskInstance) {
-                    documentMaskInstance.value = docSalvo; // O IMask se encarrega de formatar
-                    
-                    // 3. Verifica o tamanho REAL (sem pontos/traços) para decidir se mostra Razão Social
-                    const unmasked = documentMaskInstance.unmaskedValue;
-                    
-                    if (unmasked.length > 11) {
-                        // É CNPJ -> Mostra Razão Social
+                    documentMaskInstance.value = docSalvo; 
+                    if (documentMaskInstance.unmaskedValue.length > 11) {
                         groupRazao.classList.remove('hidden');
                     } else {
-                        // É CPF -> Esconde Razão Social
                         groupRazao.classList.add('hidden');
                     }
                 } else {
-                    // Fallback caso a máscara tenha falhado (apenas joga o valor)
                     inputDoc.value = docSalvo;
                 }
             }
-            // -----------------------------------------------------------
 
             if (inputRazao) inputRazao.value = psychologistData.razao_social || '';
 
-            // Redes sociais
+            // 3. Preenchimento das Redes Sociais
             ['linkedin_url', 'instagram_url', 'facebook_url', 'tiktok_url', 'x_url'].forEach(key => {
                 const el = document.getElementById(key);
                 if (el && psychologistData[key]) {
@@ -666,97 +861,149 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            // --- CARREGAR DADOS DOS MULTISELECTS ---
-            updateMultiselect('temas_atuacao_multiselect', psychologistData.temas || []);
-            updateMultiselect('abordagens_tecnicas_multiselect', psychologistData.abordagens || []);
-
-            // --- CORREÇÃO DO "DADO ZUMBI" (Modalidade) ---
-            let modData = psychologistData.modalidade || [];
-            
-            // Se vier como string única, transforma em array
-            if (typeof modData === 'string') {
-                // Remove caracteres indesejados se for JSON mal formatado
-                try { modData = JSON.parse(modData); } catch(e) { modData = [modData]; }
-            }
-
-            // SE encontrar o texto antigo "Apenas Presencial", troca pelo novo "Presencial"
-            if (Array.isArray(modData)) {
-                modData = modData.map(item => item === 'Apenas Presencial' ? 'Presencial' : item);
-            }
-            
-            updateMultiselect('modalidade_atendimento_multiselect', modData);
-            // ----------------------------------------------
-
+            // 4. CARREGAR DADOS DOS MULTISELECTS (Lendo os nomes corretos do banco)
+            // Nota: O banco pode retornar 'temas_atuacao' ou 'temas', verificamos ambos
+            updateMultiselect('temas_atuacao_multiselect', psychologistData.temas_atuacao || psychologistData.temas || []);
+            updateMultiselect('abordagens_tecnicas_multiselect', psychologistData.abordagens_tecnicas || psychologistData.abordagens || []);
             updateMultiselect('genero_identidade_multiselect', psychologistData.genero ? [psychologistData.genero] : []);
+            // ADICIONADO: Carrega os dados dos novos campos
+            updateMultiselect('publico_alvo_multiselect', psychologistData.publico_alvo || []);
+            updateMultiselect('estilo_terapia_multiselect', psychologistData.estilo_terapia || []);
+            updateMultiselect('praticas_inclusivas_multiselect', psychologistData.praticas_inclusivas || []);
+
             updateMultiselect('disponibilidade_periodo_multiselect', psychologistData.disponibilidade || []);
 
-            // Controle de Edição (Habilitar/Desabilitar visualmente)
+            // 5. CORREÇÃO DA MODALIDADE (Online/Presencial)
+            let modData = psychologistData.modalidade || [];
+            if (typeof modData === 'string') {
+                try { modData = JSON.parse(modData); } catch(e) { modData = [modData]; }
+            }
+            // Traduz legado "Apenas X" para o formato novo
+            if (Array.isArray(modData)) {
+                modData = modData.map(item => {
+                    if (item.includes('Apenas Online')) return 'Online';
+                    if (item === 'Apenas Presencial') return 'Presencial';
+                    return item;
+                });
+            }
+            updateMultiselect('modalidade_atendimento_multiselect', modData);
+
+            // 6. Controle de Edição
             const btnAlterar = document.getElementById('btn-alterar');
             const multiselects = document.querySelectorAll('.multiselect-tag');
+            const modeIndicator = document.getElementById('form-mode-indicator');
+            const modeText = document.getElementById('form-mode-text');
+            const modeIcon = document.getElementById('form-mode-icon');
             
             if(btnAlterar) {
                 btnAlterar.onclick = (e) => {
                     e.preventDefault();
                     document.getElementById('form-fieldset').disabled = false;
-                    // Habilita visualmente os multiselects
                     multiselects.forEach(m => m.classList.remove('disabled'));
-                    
+
+                    // Muda para Modo de Edição
+                    if(modeIndicator) {
+                        modeIndicator.classList.remove('mode-indicator-view');
+                        modeIndicator.classList.add('mode-indicator-edit');
+                        modeText.textContent = "Modo de Edição";
+                        modeIcon.textContent = "✏️";
+                    }
+
                     btnAlterar.classList.add('hidden');
                     document.getElementById('btn-salvar').classList.remove('hidden');
                 };
             }
 
+            // --- AÇÃO DE SALVAR (CORRIGIDA: Agora ouve os erros do servidor) ---
             form.onsubmit = async (e) => {
                 e.preventDefault();
                 const btnSalvar = document.getElementById('btn-salvar');
                 const btnAlterar = document.getElementById('btn-alterar');
                 const fieldset = document.getElementById('form-fieldset');
+                
+                // Feedback visual de carregamento
                 btnSalvar.textContent = "Salvando...";
+                btnSalvar.disabled = true; 
                 
                 const fd = new FormData(form);
                 const data = Object.fromEntries(fd.entries());
 
-                // --- PEGAR OS DADOS DAS TAGS ---
-                data.temas = getMultiselectValues('temas_atuacao_multiselect');
-                data.abordagens = getMultiselectValues('abordagens_tecnicas_multiselect');
+                // --- MAPEAMENTO DE DADOS ---
+                data.temas_atuacao = getMultiselectValues('temas_atuacao_multiselect');
+                data.abordagens_tecnicas = getMultiselectValues('abordagens_tecnicas_multiselect');
                 data.modalidade = getMultiselectValues('modalidade_atendimento_multiselect');
+                data.disponibilidade = getMultiselectValues('disponibilidade_periodo_multiselect');
+                // ADICIONADO: Coleta os valores dos novos campos para salvar
+                data.publico_alvo = getMultiselectValues('publico_alvo_multiselect');
+                data.estilo_terapia = getMultiselectValues('estilo_terapia_multiselect');
+                data.praticas_inclusivas = getMultiselectValues('praticas_inclusivas_multiselect');
 
-                // Pega o primeiro item do array para campos únicos
-                // Pega o primeiro item do array para campos únicos
+
                 const generoArr = getMultiselectValues('genero_identidade_multiselect');
                 data.genero = generoArr.length > 0 ? generoArr[0] : '';
-                data.disponibilidade = getMultiselectValues('disponibilidade_periodo_multiselect');
-                // --------------------------------------------------
 
-                // Limpeza de dados para envio
-                if (data.cpf) data.cpf = data.cpf.replace(/\D/g, '');
-                if (data.telefone) data.telefone = data.telefone.replace(/\D/g, '');
-
-                // Se o usuário voltou para CPF (<=11 digitos), limpamos a razão social do payload
-                if (data.cpf && data.cpf.length <= 11) {
-                    data.razao_social = ''; 
+                if (data.valor_sessao_numero) {
+                    data.valor_sessao_numero = parseFloat(data.valor_sessao_numero.toString().replace(',', '.'));
                 }
 
-                try {
-                    await apiFetch(`${API_BASE_URL}/api/psychologists/me`, { method: 'PUT', body: JSON.stringify(data) });
-                    showToast('Perfil salvo com sucesso!', 'success');
-                    psychologistData = { ...psychologistData, ...data };
-                    atualizarInterfaceLateral();
+                if (data.cpf) data.cpf = data.cpf.replace(/\D/g, '');
+                if (data.telefone) data.telefone = data.telefone.replace(/\D/g, '');
+                if (data.cpf && data.cpf.length <= 11) data.razao_social = ''; 
 
-                    // --- CORREÇÃO: RE-BLOQUEIO DOS CAMPOS ---
-                    fieldset.disabled = true; // Bloqueia inputs nativos
+                try {
+                    console.log("Enviando atualização:", data);
                     
-                    // Bloqueia novamente os multiselects personalizados
+                    // 1. Envia ao servidor e AGUARDA a resposta completa
+                    const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me`, { 
+                        method: 'PUT', 
+                        body: JSON.stringify(data) 
+                    });
+                    
+                    // 2. VERIFICAÇÃO CRUCIAL: O servidor aceitou?
+                    if (!res.ok) {
+                        // Se não aceitou (ex: erro 400 de link duplicado), pegamos a mensagem
+                        const errData = await res.json();
+                        throw new Error(errData.error || 'Erro desconhecido ao salvar.');
+                    }
+
+                    // 3. Se passou daqui, foi SUCESSO REAL
+                    showToast('Perfil salvo com sucesso!', 'success');
+                    
+                    // Atualiza dados locais
+                    psychologistData = { ...psychologistData, ...data };
+                    // Se mudou o link, atualiza o objeto local para refletir na sidebar
+                    if(data.slug) psychologistData.slug = data.slug;
+                    
+                    // Trava o formulário novamente
+                    fieldset.disabled = true; 
                     const multiselects = document.querySelectorAll('.multiselect-tag');
                     multiselects.forEach(m => m.classList.add('disabled'));
-                    // ----------------------------------------
+
+                    // Volta para Modo de Visualização
+                    if(modeIndicator) {
+                        modeIndicator.classList.remove('mode-indicator-edit');
+                        modeIndicator.classList.add('mode-indicator-view');
+                        modeText.textContent = "Modo de Visualização";
+                        modeIcon.textContent = "●";
+                    }
 
                     btnSalvar.classList.add('hidden');
                     btnAlterar.classList.remove('hidden');
+                    
+                    atualizarInterfaceLateral();
+
                 } catch (err) {
-                    showToast(err.message, 'error');
+                    console.error("Erro ao salvar perfil:", err);
+                    // Se for um erro de rede, mostra uma mensagem genérica.
+                    // Se for um erro enviado pelo servidor (ex: "Link já em uso"), mostra a mensagem específica.
+                    let friendlyMessage = 'Não foi possível salvar. Verifique sua conexão e tente novamente.';
+                    if (err.message && !err.message.toLowerCase().includes('failed to fetch')) {
+                        friendlyMessage = err.message;
+                    }
+                    showToast(friendlyMessage, 'error');
                 } finally {
                     btnSalvar.textContent = "Salvar Alterações";
+                    btnSalvar.disabled = false;
                 }
             };
         }
@@ -768,9 +1015,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (e.target.files[0]) {
                     const fd = new FormData(); fd.append('foto', e.target.files[0]);
                     try {
-                        const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/foto`, { 
-                            method: 'POST', body: fd 
-                        });
+                        const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/foto`, { method: 'POST', body: fd });
                         if (res.ok) {
                             const d = await res.json();
                             psychologistData.fotoUrl = d.fotoUrl;
@@ -833,8 +1078,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- LÓGICA DA COMUNIDADE (Q&A) ---
-    function inicializarComunidade() {
+    function inicializarComunidade(preFetchedData = null) {
+        let currentPage = 1;
+        const limit = 15;
+        // Ajuste dinâmico do Banner (Título e Subtítulo)
+        const bannerTitle = document.querySelector('.main-header h1');
+        const bannerSub = document.querySelector('.subtitulo-header');
+        if(bannerTitle) bannerTitle.textContent = "Perguntas";
+        if(bannerSub) bannerSub.textContent = "Responda dúvidas da comunidade e ganhe visibilidade.";
+
         const container = document.getElementById('qna-list-container');
+        const loadMoreBtn = document.getElementById('btn-load-more-questions');
         const modal = document.getElementById('qna-answer-modal');
         const form = document.getElementById('qna-answer-form');
         const textarea = document.getElementById('qna-answer-textarea');
@@ -842,41 +1096,63 @@ document.addEventListener('DOMContentLoaded', function() {
         const btnSubmit = document.getElementById('qna-submit-answer');
         let currentQuestionId = null;
 
-        if (!container) return;
+        if (!container || !loadMoreBtn) return;
 
-        // 1. Buscar Perguntas
-        apiFetch(`${API_BASE_URL}/api/qna`) 
-            .then(async (res) => {
-                if (!res.ok) throw new Error('Erro ao carregar');
-                const questions = await res.json();
-                renderQuestions(questions);
-            })
-            .catch(err => {
+        async function fetchAndRender(page, append = false) {
+            if (!append) {
+                container.innerHTML = '<div class="loader-wrapper"><div class="loader-spinner"></div></div>';
+            }
+            loadMoreBtn.textContent = 'Carregando...';
+            loadMoreBtn.disabled = true;
+
+            try {
+                let questions;
+                if (page === 1 && preFetchedData) {
+                    questions = await preFetchedData;
+                    preFetchedData = null;
+                } else {
+                    const res = await apiFetch(`${API_BASE_URL}/api/qna?page=${page}&limit=${limit}`);
+                    if (!res.ok) throw new Error('Falha ao buscar perguntas');
+                    questions = await res.json();
+                }
+
+                if (!append) container.innerHTML = '';
+
+                if (questions.length > 0) {
+                    renderQuestions(questions);
+                }
+
+                if (questions.length < limit) {
+                    loadMoreBtn.classList.add('hidden');
+                } else {
+                    loadMoreBtn.classList.remove('hidden');
+                }
+
+                if (page === 1 && questions.length === 0) {
+                    showEmptyState();
+                }
+            } catch (err) {
                 console.error(err);
-                container.innerHTML = `<div style="text-align:center; padding:40px;">Erro ao carregar perguntas. Tente recarregar.</div>`;
-            });
+                if (!append) container.innerHTML = `<div style="text-align:center; padding:40px;">Erro ao carregar perguntas.</div>`;
+            } finally {
+                loadMoreBtn.textContent = 'Carregar Mais Perguntas';
+                loadMoreBtn.disabled = false;
+            }
+        }
 
         function renderQuestions(allQuestions) {
-            container.innerHTML = ''; 
             
             const pendingQuestions = allQuestions.filter(q => q.respondedByMe === false);
             
-            if (!pendingQuestions || pendingQuestions.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align:center; padding:60px 20px; color:#1B4332;">
-                        <div style="font-size: 3rem; margin-bottom: 10px;">🎉</div>
-                        <h3 style="font-family:'New Kansas', serif; margin-bottom: 10px;">Tudo limpo por aqui!</h3>
-                        <p style="color:#666; max-width: 400px; margin: 0 auto;">
-                            Você zerou as perguntas da comunidade.
-                        </p>
-                    </div>`;
+            const template = document.getElementById('qna-card-template-psi');
+            if (!template) {
+                console.error("CRITICAL: Template 'qna-card-template-psi' não encontrado no DOM.");
+                container.innerHTML = '<p style="color:red; text-align:center;">Erro de interface: Template de perguntas não encontrado.</p>';
                 return;
             }
-
-            const template = document.getElementById('qna-card-template-psi');
             
             pendingQuestions.forEach(q => {
-                const clone = template.content.cloneNode(true);
+                const clone = template.content.cloneNode(true); // Agora 'template' é garantido que existe
                 
                 // --- CORREÇÃO INFALÍVEL ---
                 // Em vez de procurar pelo nome '.qna-card', pegamos o primeiro elemento do template.
@@ -889,7 +1165,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 clone.querySelector('.qna-question-title').textContent = q.titulo || 'Dúvida da Comunidade';
-                clone.querySelector('.qna-question-content').textContent = q.conteudo;
+                clone.querySelector('.qna-question-content').textContent = q.conteudo || q.content;
                 
                 const dataEnvio = new Date(q.createdAt).toLocaleDateString('pt-BR');
                 clone.querySelector('.qna-question-author').textContent = `Enviada em ${dataEnvio} • Paciente Anônimo`;
@@ -1000,6 +1276,33 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
+        function showEmptyState() {
+            container.innerHTML = `
+                <div style="text-align:center; padding:60px 20px; color:#1B4332;">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🎉</div>
+                    <h3 style="font-family:'New Kansas', serif; margin-bottom: 10px;">Tudo limpo por aqui!</h3>
+                    <p style="color:#666; max-width: 400px; margin: 0 auto;">
+                        Você zerou as perguntas da comunidade.
+                    </p>
+                </div>`;
+        }
+
+        // 2. Lógica do Modal
+        function abrirModalResposta(id, titulo) {
+            currentQuestionId = id;
+            modal.querySelector('.modal-title').textContent = `Respondendo: ${titulo}`;
+            textarea.value = ''; // Limpa o campo
+            checkCharCount();    // Reseta o contador visualmente
+            
+            // Força display flex com !important por causa do CSS global
+            modal.style.setProperty('display', 'flex', 'important');
+        }
+
+        // Carga Inicial
+        fetchAndRender(1, false);
+
+        loadMoreBtn.onclick = () => fetchAndRender(++currentPage, true);
+
         // Fechar Modal
         const fecharModal = () => modal.style.setProperty('display', 'none', 'important');
         if(modal.querySelector('.modal-close')) modal.querySelector('.modal-close').onclick = fecharModal;
@@ -1043,205 +1346,426 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
-    // --- LÓGICA DA CAIXA DE ENTRADA (SUPORTE ADMIN) ---
-    function inicializarCaixaEntrada() {
-        const mainContainer = document.getElementById('inbox-container');
-        const listContainer = document.getElementById('inbox-message-list');
-        const contentContainer = document.getElementById('inbox-message-content');
+    // --- LÓGICA DA CAIXA DE ENTRADA (ATUALIZADA COM SOCKET.IO) ---
+    function inicializarCaixaEntrada(preFetchedData = null) {
+
+        const conversationList = document.getElementById('conversation-list');
+        const messagesThread = document.getElementById('messages-thread');
+        const replyInput = document.getElementById('psi-reply-input');
+        const sendBtn = document.getElementById('send-reply-btn');
+        const welcomeScreen = document.getElementById('chat-welcome-screen');
+        const activeChatScreen = document.getElementById('active-chat-screen');
+        const btnVoltarMobile = document.getElementById('btn-voltar-mobile');
         
-        // AGORA APONTA PARA A ROTA CERTA DE SUPORTE
-        const API_MESSAGING = `${API_BASE_URL}/api/support`; 
-    
-        if (!listContainer) return;
-    
-        // 1. Renderiza a lista lateral (Conversas)
-        function renderInboxList(conversations) {
-            listContainer.innerHTML = '';
-            if (!conversations || conversations.length === 0) {
-                listContainer.innerHTML = '<li style="padding:20px; text-align:center; color:#999;">Nenhuma mensagem.</li>';
+        // Elementos do Menu de Opções e Busca
+        const btnChatOptions = document.getElementById('btn-chat-options');
+        const chatOptionsMenu = document.getElementById('chat-options-menu');
+        const btnOptSearch = document.getElementById('btn-opt-search');
+        const btnOptClear = document.getElementById('btn-opt-clear');
+        const chatSearchBar = document.getElementById('chat-search-bar');
+        const chatSearchInput = document.getElementById('chat-search-input');
+        const btnCloseSearch = document.getElementById('btn-close-search');
+
+        if (!messagesThread || !replyInput || !sendBtn) {
+            console.error("Elementos essenciais do chat não encontrados.");
+            return;
+        }
+
+        let adminConversationId = null;
+        let psiSocket = null;
+        // Chave para o armazenamento local do status de leitura
+        const getReadStatusStorageKey = () => `yelo_read_msg_status_${adminConversationId}`;
+
+        // --- FUNÇÃO PARA CARREGAR SOCKET.IO DINAMICAMENTE ---
+        function loadSocketScript(callback) {
+            if (typeof io !== 'undefined') {
+                callback();
                 return;
             }
-    
-            conversations.forEach(conv => {
-                const li = document.createElement('li');
-                li.className = `message-item`;
+            const script = document.createElement('script');
+            // Tenta carregar do servidor da API ou CDN como fallback
+            script.src = `${API_BASE_URL}/socket.io/socket.io.js`; 
+            script.onload = () => {
+                callback();
+            };
+            script.onerror = () => console.error("Falha ao carregar Socket.IO. O chat em tempo real não funcionará.");
+            document.body.appendChild(script);
+        }
+
+        function getStatusIcon(status) {
+            const sentIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;" title="Enviado"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+            const deliveredIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;" title="Entregue"><path d="M18 6L7 17l-5-5"></path><path d="M22 10l-7.5 7.5L13 16"></path></svg>`;
+            const readIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34B7F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;" title="Lido"><path d="M18 6L7 17l-5-5"></path><path d="M22 10l-7.5 7.5L13 16"></path></svg>`;
+            
+            const s = status ? status.toLowerCase() : 'sent';
+            if (s === 'read') return readIcon;
+            if (s === 'delivered') return deliveredIcon;
+            return sentIcon;
+        }
+
+        // Helper para formatar a data do divisor
+        function getDateLabel(dateString) {
+            const date = new Date(dateString);
+            const today = new Date();
+            const yesterday = new Date();
+            yesterday.setDate(today.getDate() - 1);
+
+            if (date.toDateString() === today.toDateString()) return 'Hoje';
+            if (date.toDateString() === yesterday.toDateString()) return 'Ontem';
+            return date.toLocaleDateString('pt-BR');
+        }
+
+        // Função para carregar e renderizar a conversa com o admin
+        async function loadAdminConversation() {
+            try {
+                let messages;
+                if (preFetchedData) {
+                    messages = await preFetchedData;
+                } else {
+                    const token = localStorage.getItem('Yelo_token');
+                    const response = await fetch(`${API_BASE_URL}/api/messages?contactType=admin`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.ok) messages = await response.json();
+                }
                 
-                // Ícone Vermelho para Suporte (Visual Yelo)
-                const avatarLetra = conv.type === 'support' ? 'S' : (conv.participant.nome[0] || '?');
-                const bgAvatar = conv.type === 'support' ? '#E63946' : 'var(--verde-escuro)'; 
+                if (messages && messages.length > 0) {
+                    adminConversationId = messages[0].conversationId;
                 
-                li.innerHTML = `
-                    <div class="sender-avatar" style="background-color: ${bgAvatar};">${avatarLetra}</div>
-                    <div class="message-info">
-                        <div class="message-top">
-                            <span class="sender-name">${conv.participant.nome}</span>
-                            <span class="message-time">Hoje</span>
-                        </div>
-                        <div class="message-subject" style="font-size:0.8rem; color:#666;">
-                            ${conv.lastMessage || 'Clique para acessar'}
-                        </div>
-                    </div>
-                `;
-                
-                li.onclick = () => {
-                    document.querySelectorAll('.message-item').forEach(i => i.classList.remove('active'));
-                    li.classList.add('active');
+                // FILTRO DE LIMPEZA LOCAL: Verifica se o usuário limpou a conversa
+                const clearedTime = localStorage.getItem(`cleared_chat_${adminConversationId}`);
+                if (clearedTime) {
+                    const clearDate = new Date(clearedTime);
+                    messages = messages.filter(m => new Date(m.createdAt) > clearDate);
+                }
+                }
+
+                // Renderiza a lista lateral (apenas com o admin)
+                if (conversationList) {
+                    conversationList.innerHTML = `
+                        <li class="conversation-item active" id="btn-open-support-chat">
+                            <img src="/assets/logos/logo-escura.png" alt="Avatar" class="avatar" style="background:#f0f0f0; padding:5px; object-fit: contain;">
+                            <div class="conversation-details">
+                                <div class="details-header">
+                                    <span class="contact-name">Suporte Yelo</span>
+                                    <span class="timestamp">Agora</span>
+                                </div>
+                                <p class="last-message">Canal de suporte direto</p>
+                            </div>
+                        </li>
+                    `;
                     
-                    // Lógica Mobile: Mostra a tela de chat
-                    if(mainContainer) mainContainer.classList.add('chat-open');
-                    
-                    carregarChat(conv.id, conv.participant);
-                };
-                listContainer.appendChild(li);
+                    // Adiciona evento de clique para abrir e marcar como lido
+                    const btnOpen = document.getElementById('btn-open-support-chat');
+                    if (btnOpen) {
+                        btnOpen.addEventListener('click', () => {
+                            if (welcomeScreen) welcomeScreen.style.display = 'none';
+                            if (activeChatScreen) activeChatScreen.style.display = 'flex';
+                            
+                            // CORREÇÃO: Rola para o final assim que a conversa se torna visível
+                            if (messagesThread) messagesThread.scrollTop = messagesThread.scrollHeight;
+
+                            // Marca como lido apenas ao abrir
+                            if (psiSocket && psiSocket.connected && adminConversationId) {
+                                psiSocket.emit('messages_read', { conversationId: adminConversationId });
+                            }
+                        });
+                    }
+                }
+
+                // Renderiza as mensagens no painel principal
+                renderMessages(messages);
+            } catch (error) {
+                console.error(error);
+                messagesThread.innerHTML = `<p style="color:red; text-align:center;">Erro ao carregar chat.</p>`;
+            }
+        }
+
+        // Renderiza as mensagens na tela
+        function renderMessages(messages) {
+            // CORREÇÃO: Smart Update
+            if (messagesThread.children.length === 0) {
+                messagesThread.innerHTML = '';
+                let lastDate = null;
+                messages.forEach(msg => {
+                    const msgDate = new Date(msg.createdAt).toDateString();
+                    if (msgDate !== lastDate) {
+                        appendDateSeparator(msg.createdAt);
+                        lastDate = msgDate;
+                    }
+                    appendMessageToView(msg, false);
+                });
+                messagesThread.scrollTop = messagesThread.scrollHeight;
+                return;
+            }
+
+            const domMessages = {};
+            document.querySelectorAll('.message-bubble[data-message-id]').forEach(el => {
+                domMessages[el.dataset.messageId] = el;
+            });
+
+            messages.forEach(msg => {
+                const existingEl = domMessages[msg.id];
+                if (existingEl) {
+                    const isSentByMe = (msg.senderType && msg.senderType.toLowerCase() === 'psychologist');
+                    if (isSentByMe) {
+                        const statusContainer = existingEl.querySelector('.message-status');
+                        if (statusContainer) {
+                            const currentHtml = statusContainer.innerHTML;
+                            const newStatus = msg.status || 'sent';
+                            let shouldUpdate = true;
+                            if (currentHtml.includes('title="Lido"') && newStatus !== 'read') shouldUpdate = false;
+                            if (currentHtml.includes('title="Entregue"') && newStatus === 'sent') shouldUpdate = false;
+                            if (shouldUpdate) statusContainer.innerHTML = getStatusIcon(newStatus);
+                        }
+                    }
+                } else {
+                    const lastBubble = messagesThread.querySelector('.message-bubble:last-of-type');
+                    const lastDate = lastBubble ? lastBubble.dataset.date : null;
+                    const msgDate = new Date(msg.createdAt).toDateString();
+                    if (msgDate !== lastDate) appendDateSeparator(msg.createdAt);
+                    appendMessageToView(msg, true);
+                }
             });
         }
-    
-        // 2. Carrega o Chat
-        async function carregarChat(chatId, participant) {
-            // Renderiza estrutura do chat com botão Voltar (Mobile)
-            contentContainer.innerHTML = `
-                <div class="email-wrapper" style="height:100%; display:flex; flex-direction:column; padding:0;">
-                    
-                    <div style="padding: 15px; background: #fff; border-bottom: 1px solid #eee; display:flex; align-items:center; gap:15px;">
-                        <button id="btn-back-mobile" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--verde-escuro); display:none;">
-                            ←
-                        </button>
-                        <div style="flex:1;">
-                            <h3 style="margin:0; font-size:1.1rem; color:var(--verde-escuro);">${participant.nome}</h3>
-                            <span style="font-size:0.8rem; color:#666;">${participant.role || 'Suporte'}</span>
-                        </div>
-                        <button id="btn-refresh-chat" style="background:none; border:1px solid #ddd; padding:5px 10px; border-radius:4px; cursor:pointer;">↻</button>
-                    </div>
-    
-                    <div id="chat-scroller" style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:10px; background:#f8f9fa;">
-                        <div style="text-align:center; color:#999; margin-top:20px;">Carregando...</div>
-                    </div>
-    
-                    <div style="padding:15px; background:#fff; border-top:1px solid #eee;">
-                        <form id="form-chat" style="display:flex; gap:10px;">
-                            <input type="text" id="input-chat" placeholder="Digite sua mensagem..." autocomplete="off"
-                                style="flex:1; padding:12px; border:1px solid #ccc; border-radius:25px; outline:none;">
-                            <button type="submit" style="background:var(--verde-escuro); color:#fff; border:none; width:45px; height:45px; border-radius:50%; cursor:pointer;">
-                                ➤
-                            </button>
-                        </form>
-                    </div>
+
+        function appendDateSeparator(dateString) {
+            const div = document.createElement('div');
+            div.style.cssText = "text-align: center; margin: 15px 0; font-size: 0.75rem; color: #888; display: flex; justify-content: center;";
+            div.innerHTML = `<span style="background: rgba(0,0,0,0.05); padding: 4px 12px; border-radius: 12px;">${getDateLabel(dateString)}</span>`;
+            messagesThread.appendChild(div);
+        }
+
+        // Adiciona uma única mensagem na tela
+        function appendMessageToView(msg, scrollToBottom = true) {
+            // Verifica se precisa adicionar separador de data (para mensagens novas)
+            if (scrollToBottom && messagesThread.lastElementChild) {
+                const lastMsgDate = messagesThread.lastElementChild.dataset.date;
+                const currentMsgDate = new Date(msg.createdAt).toDateString();
+                if (lastMsgDate && lastMsgDate !== currentMsgDate) {
+                    appendDateSeparator(msg.createdAt);
+                }
+            }
+
+            const div = document.createElement('div');
+            if (msg.id) div.dataset.messageId = msg.id;
+            div.dataset.date = new Date(msg.createdAt).toDateString();
+            
+            const isSentByMe = (msg.senderType && msg.senderType.toLowerCase() === 'psychologist');
+            div.className = `message-bubble ${isSentByMe ? 'sent' : 'received'}`;
+            
+            const time = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const statusIcon = isSentByMe ? getStatusIcon(msg.status || 'sent') : '';
+
+            div.innerHTML = `
+                <p>${msg.content}</p>
+                <div class="message-meta">
+                    <span>${time}</span>
+                    <span class="message-status">${statusIcon}</span>
                 </div>
             `;
-    
-            // Ativa botão voltar no mobile
-            const btnBack = document.getElementById('btn-back-mobile');
-            if(window.innerWidth <= 992 && btnBack) {
-                btnBack.style.display = 'block';
-                btnBack.onclick = () => {
-                    mainContainer.classList.remove('chat-open');
-                };
+            messagesThread.appendChild(div);
+            if (scrollToBottom) {
+                messagesThread.scrollTop = messagesThread.scrollHeight;
             }
-    
-            const scroller = document.getElementById('chat-scroller');
-    
-            // Busca mensagens reais do Backend
+            return div;
+        }
+
+        // Envia uma resposta para o admin
+        async function sendReply() {
+            const content = replyInput.value.trim();
+            if (!content) return;
+
+            // --- CORREÇÃO: ATUALIZAÇÃO OTIMISTA (UI IMEDIATA) ---
+            const tempMessage = {
+                content: content,
+                senderType: 'psychologist',
+                createdAt: new Date().toISOString(),
+                status: 'sent'
+            };
+            const tempBubble = appendMessageToView(tempMessage); 
+            replyInput.value = ''; 
+            // ----------------------------------------------------
+
             try {
-                const res = await apiFetch(`${API_MESSAGING}/conversations/${chatId}`); 
-                if (res.ok) {
-                    const messages = await res.json();
-                    renderMessages(messages, scroller);
+                const token = localStorage.getItem('Yelo_token');
+                const response = await fetch(`${API_BASE_URL}/api/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ recipientType: 'admin', content })
+                });
+
+                if (response.ok) {
+                    const savedMessage = await response.json();
+                    
+                    // Atualiza o ID do balão na tela com o ID real do banco
+                    if (tempBubble) {
+                        tempBubble.dataset.messageId = savedMessage.id;
+                        const statusContainer = tempBubble.querySelector('.message-status');
+                        if (statusContainer) statusContainer.innerHTML = getStatusIcon(savedMessage.status || 'sent');
+                    }
                 } else {
-                    throw new Error('Erro ao buscar mensagens');
+                    throw new Error('Falha ao enviar');
                 }
             } catch (error) {
-                scroller.innerHTML = `<div style="padding:20px; color:red; text-align:center;">Erro: ${error.message}</div>`;
+                console.error(error);
+                showToast('Erro ao enviar mensagem.', 'error');
+                if (tempBubble) tempBubble.remove(); // Remove a mensagem se falhar
             }
-    
-            // Botão Atualizar
-            document.getElementById('btn-refresh-chat').onclick = () => carregarChat(chatId, participant);
-    
-            // Enviar Mensagem
-            const form = document.getElementById('form-chat');
-            form.onsubmit = async (e) => {
-                e.preventDefault();
-                const input = document.getElementById('input-chat');
-                const texto = input.value.trim();
-                
-                if(!texto) return;
-    
-                // Otimista: mostra na tela antes de confirmar
-                addMessageToScreen({ content: texto, senderType: 'psychologist', createdAt: new Date() }, scroller);
-                input.value = '';
-    
-                try {
-                    await apiFetch(`${API_MESSAGING}/messages`, {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            conversationId: chatId, // (Opcional dependendo do seu backend)
-                            content: texto
-                        })
-                    });
-                    // Sucesso silencioso
-                } catch (err) {
-                    alert('Erro ao enviar: ' + err.message);
-                }
-            };
         }
-    
-        function renderMessages(messages, container) {
-            container.innerHTML = '';
-            if (messages.length === 0) {
-                container.innerHTML = `<p style="text-align:center; color:#999; margin-top:20px;">Este é o início do seu canal direto com a administração.</p>`;
-            } else {
-                messages.forEach(msg => addMessageToScreen(msg, container));
-            }
-            container.scrollTop = container.scrollHeight;
-        }
-    
-        function addMessageToScreen(msg, container) {
-            const souEu = msg.senderType === 'psychologist';
-            const styleBox = souEu 
-                ? 'align-self: flex-end; background-color: #1B4332; color: #fff; border-bottom-right-radius: 2px;' 
-                : 'align-self: flex-start; background-color: #ffffff; color: #333; border: 1px solid #ddd; border-bottom-left-radius: 2px;';
-    
-            const time = new Date(msg.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    
-            const div = document.createElement('div');
-            div.style.cssText = `max-width:75%; padding:10px 15px; border-radius:12px; ${styleBox} position:relative; box-shadow: 0 1px 2px rgba(0,0,0,0.1);`;
-            
-            div.innerHTML = `
-                <p style="margin:0; font-size:0.95rem; line-height:1.5;">${msg.content}</p>
-                <span style="font-size:0.7rem; display:block; text-align:right; margin-top:4px; opacity:0.8;">${time}</span>
-            `;
-            container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
-        }
-    
-        // --- INICIALIZAÇÃO: Busca lista de conversas ---
-        apiFetch(`${API_MESSAGING}/conversations`)
-            .then(async (res) => {
-                if (res.ok) {
-                    const convs = await res.json();
-                    renderInboxList(convs);
-                } else {
-                    // Fallback de segurança se der erro
-                    throw new Error('Falha API');
-                }
-            })
-            .catch(err => {
-                console.warn("Usando Fallback Local:", err);
-                // Renderiza um item falso para você não ficar com a tela branca
-                renderInboxList([{
-                    id: 'suporte_admin',
-                    type: 'support',
-                    participant: { nome: 'Suporte Yelo', role: 'Administração' },
-                    lastMessage: 'Clique para conectar.'
-                }]);
+
+        function connectSocket() {
+            if (typeof io === 'undefined') return; // O loader dinâmico cuidará disso
+            const token = localStorage.getItem('Yelo_token');
+
+            psiSocket = io(API_BASE_URL, {
+                auth: { token: token },
+                transports: ['websocket', 'polling']
             });
-    } // Fim da inicializarCaixaEntrada
+
+            psiSocket.on('connect', () => {
+                if (adminConversationId) {
+                    psiSocket.emit('messages_read', { conversationId: adminConversationId });
+                }
+            });
+
+            psiSocket.on('receiveMessage', (msg) => {
+                
+                // 1. DEDUPLICAÇÃO: Se a mensagem já existe na tela, ignora
+                if (document.querySelector(`.message-bubble[data-message-id='${msg.id}']`)) {
+                    return;
+                }
+
+                if (msg.senderType && msg.senderType.toLowerCase() === 'admin') {
+                    // CORREÇÃO: Se for a primeira mensagem, captura o ID da conversa para poder marcar como lida
+                    if (!adminConversationId && msg.conversationId) {
+                        adminConversationId = msg.conversationId;
+                    }
+
+                    appendMessageToView(msg, true); // true = Rola para o final
+                    psiSocket.emit('message_delivered', { messageId: msg.id });
+                    
+                    // 2. STATUS LIDO: Só marca se o chat estiver VISÍVEL
+                    const chatScreen = document.getElementById('active-chat-screen');
+                    const isVisible = chatScreen && (chatScreen.style.display === 'flex' || chatScreen.style.display === 'block');
+                    
+                    if (adminConversationId && isVisible) {
+                        psiSocket.emit('messages_read', { conversationId: adminConversationId });
+                    }
+                }
+            });
+
+            psiSocket.on('message_status_updated', (data) => {
+                const { messageId, status } = data;
+                // CORREÇÃO: Só busca balões ENVIADOS (.sent) para atualizar o ícone
+                const messageBubble = document.querySelector(`.message-bubble.sent[data-message-id='${messageId}']`);
+                if (messageBubble) {
+                    const statusContainer = messageBubble.querySelector('.message-status');
+                    if (statusContainer) statusContainer.innerHTML = getStatusIcon(status);
+
+                    // SALVA O STATUS 'LIDO' NO LOCALSTORAGE
+                    if (status === 'read' && adminConversationId) {
+                        const readStatusKey = getReadStatusStorageKey();
+                        const readMessageIds = JSON.parse(localStorage.getItem(readStatusKey) || '{}');
+                        readMessageIds[messageId] = 'read';
+                        localStorage.setItem(readStatusKey, JSON.stringify(readMessageIds));
+                    }
+                }
+            });
+        }
+
+        // --- FECHAR COM ESC ---
+        const handleEscKey = (e) => {
+            if (e.key === 'Escape') {
+                if (activeChatScreen && activeChatScreen.style.display !== 'none') {
+                    activeChatScreen.style.display = 'none';
+                    if (welcomeScreen) welcomeScreen.style.display = 'flex';
+                }
+            }
+        };
+        document.addEventListener('keydown', handleEscKey);
+
+        // --- Eventos e Inicialização ---
+        replyInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendReply();
+            }
+        });
+        sendBtn.addEventListener('click', sendReply);
+
+        // Carrega mensagens e tenta conectar o socket (com fallback de carregamento do script)
+        loadAdminConversation();
+        loadSocketScript(() => {
+            connectSocket();
+        });
+
+        // Limpeza ao sair da página
+        window.cleanupPage = () => {
+            document.removeEventListener('keydown', handleEscKey);
+            document.removeEventListener('click', handleDocumentClickForMenu);
+            if (psiSocket) {
+                psiSocket.disconnect();
+                psiSocket = null;
+            }
+        };
+    }
+
+    // --- SOCKET GLOBAL (PARA NOTIFICAÇÕES FORA DO CHAT) ---
+    function connectGlobalPsiSocket() {
+        if (typeof io === 'undefined') return;
+        
+        const token = localStorage.getItem('Yelo_token');
+        if (!token) return;
+
+        // Evita duplicar conexão se já existir uma global
+        if (window.psiGlobalSocket && window.psiGlobalSocket.connected) return;
+
+        const socket = io(API_BASE_URL, {
+            auth: { token: token },
+            transports: ['websocket', 'polling']
+        });
+
+        socket.on('connect', () => {
+            // console.log('Socket Global Conectado');
+        });
+
+        socket.on('receiveMessage', (msg) => {
+            // Se receber mensagem do admin, mostra badge
+            if (msg.senderType && msg.senderType.toLowerCase() === 'admin') {
+                // Verifica se o usuário já está na caixa de entrada
+                const activePage = document.querySelector('.sidebar-nav li.active a')?.getAttribute('data-page');
+                const isInboxOpen = activePage && activePage.includes('caixa_de_entrada');
+
+                if (!isInboxOpen) {
+                    if (msg.conversationId) window.psiUnreadConversations.add(msg.conversationId);
+                    updateSidebarBadge('psi_caixa_de_entrada.html', true);
+                    showToast('Nova mensagem do Suporte Yelo', 'info');
+                }
+            }
+        });
+
+        window.psiGlobalSocket = socket;
+    }
+
+    // Carrega lib do socket globalmente se necessário
+    function loadGlobalSocketLib() {
+        if (typeof io !== 'undefined') {
+            connectGlobalPsiSocket();
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = `${API_BASE_URL}/socket.io/socket.io.js`;
+        script.onload = connectGlobalPsiSocket;
+        document.body.appendChild(script);
+    }
 
     function inicializarHubComunidade() {
         const containerHub = document.getElementById('hub-content-to-lock');
         if (!containerHub) return;
 
         // 1. Verifica plano
-        const planoAtual = psychologistData && psychologistData.plano ? psychologistData.plano.toUpperCase() : 'ESSENTIAL';
+        const planoAtual = psychologistData && psychologistData.plano ? psychologistData.plano.toUpperCase() : '';
 
         // 2. BUSCA DADOS (Agora vai funcionar pois liberamos a rota no Backend!)
         apiFetch(`${API_BASE_URL}/api/admin/community-resources`)
@@ -1261,7 +1785,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(err => console.error("Links:", err)); // Se der erro, mantém o href="#"
 
         // 3. Regra de Bloqueio
-        if (planoAtual === 'ESSENTIAL') {
+        if (!planoAtual || planoAtual === 'ESSENTIAL') {
             bloquearCard('hub-content-to-lock', 'Workshops e Biblioteca são exclusivos dos planos Clínico e Referência.');
             
             const lockBtn = containerHub.querySelector('.btn-unlock-feature');
@@ -1277,10 +1801,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // INIT
     fetchPsychologistData().then(ok => {
+        // Remove o loader global com fade-out
+        const loader = document.getElementById('global-loader');
+        if (loader) {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 500);
+        }
+
         if (ok) {
             document.getElementById('dashboard-container').style.display = 'flex';
             document.querySelectorAll('.sidebar-nav a').forEach(l => {
-                l.onclick = (e) => { e.preventDefault(); loadPage(l.getAttribute('data-page')); };
+                l.onclick = (e) => { 
+                    e.preventDefault(); 
+                    loadPage(l.getAttribute('data-page'));
+                    // FECHA O MENU NO MOBILE AO CLICAR
+                    if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains('is-open')) {
+                        sidebar.classList.remove('is-open');
+                    }
+                };
             });
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('status')) {
@@ -1290,8 +1828,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
             } else {
-                loadPage('psi_visao_geral.html');
+                // Carrega a última página visitada ou a visão geral como padrão
+                const lastPage = localStorage.getItem('yelo_last_psi_page');
+                loadPage(lastPage || 'psi_visao_geral.html');
             }
+            
+            // Inicia socket global para notificações
+            loadGlobalSocketLib();
         }
     });
 
@@ -1531,8 +2074,11 @@ function setupCepSearch() {
 }
 
 // --- LÓGICA DO BLOG (MEUS ARTIGOS) - VERSÃO ROBUSTA COM DEBUG ---
-function inicializarBlog() {
+function inicializarBlog(preFetchedData = null) {
     console.log("Iniciando lógica do Blog...");
+    let currentPage = 1;
+    const ARTICLES_LIMIT = 3; // Limite de artigos por página
+    const loadMoreBtn = document.getElementById('btn-load-more-articles');
 
     // Tenta achar os elementos cruciais
     const viewLista = document.getElementById('view-lista-artigos');
@@ -1601,60 +2147,99 @@ function inicializarBlog() {
         if(btn) btn.onclick = action;
     };
     setupBtn('btn-novo-artigo', () => {
-        limparFormulario(); // Limpa apenas ao iniciar um novo
+        // Só limpa se estiver vindo de uma EDIÇÃO (tem ID)
+        // Se não tiver ID, assume que é um rascunho de novo artigo e mantém o texto
+        const blogId = document.getElementById('blog-id').value;
+        if (blogId) {
+            limparFormulario();
+        }
         document.getElementById('form-titulo-acao').textContent = "Novo Artigo";
         toggleView(true);
     });
     setupBtn('btn-voltar-lista', () => toggleView(false));
 
     function limparFormulario() {
-        if(form) form.reset(); // Limpa título e conteúdo
-        document.getElementById('blog-id').value = ''; // Limpa o ID (modo edição)
-        // Se tiver o contador de caracteres, reseta ele também
+        // Busca o formulário atual no DOM (pois o original pode ter sido substituído)
+        const currentForm = document.getElementById('form-blog');
+        if(currentForm) currentForm.reset(); 
+        
+        document.getElementById('blog-id').value = ''; // Limpa o ID
+        
+        // Reseta contador
         const contador = document.getElementById('contador-titulo-blog');
         if(contador) {
             contador.textContent = "0/50 caracteres";
             contador.style.color = "#666";
+            contador.style.fontWeight = "normal";
         }
     }
 
 
     // --- 1. FUNÇÃO DE CARREGAR (GET) ---
-    async function carregarArtigos() {
-        console.log("Tentando carregar artigos do servidor...");
-        containerLista.innerHTML = '<div style="text-align:center; padding:40px; color:#666;"><span style="font-size:2rem;">⏳</span><br>Carregando seus artigos...</div>';
+    async function carregarArtigos(page = 1, append = false) {
+        if (!append) {
+            containerLista.innerHTML = '<div style="text-align:center; padding:40px; color:#666;"><span style="font-size:2rem;">⏳</span><br>Carregando seus artigos...</div>';
+        }
+        if (loadMoreBtn) {
+            loadMoreBtn.textContent = 'Carregando...';
+            loadMoreBtn.disabled = true;
+        }
         
         try {
             // Verifica se API_BASE_URL existe
             if (typeof API_BASE_URL === 'undefined') throw new Error("API_BASE_URL não está definida no JS global.");
-
-            const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/posts`);
-            console.log("Resposta do servidor (Carregar):", res.status);
-
-            if (res.ok) {
-                const posts = await res.json();
-                renderizarLista(posts);
-            } else if (res.status === 404) {
-                 // Se for 404, pode ser que a rota não exista ou o psi não tenha posts ainda.
-                console.warn("Rota 404 ou nenhum post encontrado.");
-                renderizarLista([]); 
+            
+            let posts;
+            if (page === 1 && preFetchedData) {
+                posts = await preFetchedData;
+                preFetchedData = null;
             } else {
-                throw new Error(`Erro no servidor: ${res.status}`);
+                // Lógica de paginação padrão (mais segura se o backend não suportar pageSize)
+                const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/posts?page=${page}&limit=${ARTICLES_LIMIT}`);
+                if (res.ok) {
+                    posts = await res.json();
+                } else {
+                    throw new Error(`Erro no servidor: ${res.status}`);
+                }
             }
+
+            if (!Array.isArray(posts)) {
+                throw new Error("Resposta da API não é um array válido.");
+            }
+
+            // Lógica de Paginação: Se vieram 3 posts, assumimos que pode haver mais
+            let hasMore = false;
+            if (posts.length === ARTICLES_LIMIT) {
+                hasMore = true;
+            }
+
+            renderizarLista(posts, append);
+
+            if (loadMoreBtn) {
+                if (hasMore) {
+                    loadMoreBtn.classList.remove('hidden');
+                } else {
+                    loadMoreBtn.style.display = 'none'; // Usa display none para garantir
+                }
+            }
+          
         } catch (error) {
             console.error("ERRO AO CARREGAR ARTIGOS:", error);
-            containerLista.innerHTML = `
-                <div style="text-align:center; padding:30px; color:#d32f2f; background:#fff0f0; border-radius:8px;">
-                    <p><strong>Não foi possível carregar seus artigos.</strong></p>
-                    <p style="font-size:0.9rem;">Verifique sua conexão ou se o servidor (Backend) está rodando.</p>
-                    <p style="font-size:0.8rem; color:#666;">Erro: ${error.message}</p>
-                </div>`;
+              if (!append) {
+                containerLista.innerHTML = `<div style="text-align:center; padding:30px; color:#d32f2f; background:#fff0f0; border-radius:8px;"><p><strong>Não foi possível carregar.</strong></p><p style="font-size:0.8rem;">${error.message}</p></div>`;
+            }
+        } finally {
+            if (loadMoreBtn) {
+                loadMoreBtn.textContent = 'Mostrar mais';
+                loadMoreBtn.disabled = false;
+            }
         }
     }
 
-    function renderizarLista(posts) {
-        containerLista.innerHTML = '';
-        if (!posts || posts.length === 0) {
+    function renderizarLista(posts, append = false) {
+        if (!append) containerLista.innerHTML = '';
+
+        if ((!posts || posts.length === 0) && !append) {
             containerLista.innerHTML = `
                 <div style="text-align:center; padding:50px 20px; color:#666; background:#f9f9f9; border-radius:12px;">
                     <p style="font-size:3rem; margin-bottom:10px;">📝</p>
@@ -1665,9 +2250,12 @@ function inicializarBlog() {
             return;
         }
 
+        if (!posts) return;
+
         posts.forEach(post => {
             const div = document.createElement('div');
             div.className = 'artigo-item';
+            div.title = "Clique para ver o artigo público";
             
             const dataStr = post.created_at || post.createdAt || new Date();
             const dataF = new Date(dataStr).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -1704,6 +2292,18 @@ function inicializarBlog() {
                     deletarArtigo(post.id);
                 }
             };
+
+            // Torna o card clicável para abrir o post público
+            div.style.cursor = 'pointer';
+            div.addEventListener('click', (e) => {
+                // Impede a navegação se o clique for nos botões de ação
+                if (e.target.closest('.btn-acao')) {
+                    return;
+                }
+                // Abre o post em uma nova aba
+                window.open(`/blog/post/${post.id}`, '_blank');
+            });
+
             containerLista.appendChild(div);
         });
     }
@@ -1803,6 +2403,851 @@ function inicializarBlog() {
     });
 
     // Inicializa carregando a lista assim que abre a tela
-    carregarArtigos();
+    carregarArtigos(1, false);
+
+    // Evento do botão Carregar Mais
+    if (loadMoreBtn) {
+        loadMoreBtn.onclick = () => carregarArtigos(++currentPage, true);
+    }
+}
+
+// --- LÓGICA DO FÓRUM ---
+async function inicializarForum(preFetchedData = null) {
+    // --- Elementos da UI ---
+    const feedView = document.getElementById('forum-feed-view');
+    const postView = document.getElementById('forum-post-view');
+    const postsContainer = document.getElementById('forum-posts-container');
+    const loadMoreBtn = document.getElementById('btn-load-more-posts');
+    const fab = document.getElementById('forum-fab');
+    const createModal = document.getElementById('forum-create-modal');
+    const createForm = document.getElementById('forum-create-form');
+    const closeModalBtn = document.getElementById('forum-modal-close-btn');
+
+    // --- Templates ---
+    const postCardTemplate = document.getElementById('forum-post-card-template');
+    const fullPostTemplate = document.getElementById('forum-full-post-template');
+    const commentTemplate = document.getElementById('forum-comment-template');
+
+    // --- Estado ---
+    let currentPostId = null;
+    let currentPage = 1;
+    const POSTS_LIMIT = 3; // Limite de posts por carga
+    
+    let currentCommentsPage = 1;
+    const COMMENTS_LIMIT = 3; // Limite de comentários por carga
+
+    let isLoadingMore = false;
+
+    const DELETE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
+    const EDIT_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-pencil"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path><path d="M15 5l4 4"></path><path d="M5 15l4 4"></path><path d="M3.5 16.5l4 4"></path></svg>`;
+
+    // --- Funções Auxiliares ---
+    const sanitizeHTML = (str) => {
+        const temp = document.createElement('div');
+        temp.textContent = str;
+        return temp.innerHTML;
+    };
+
+    const timeSince = (date) => {
+        const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+        let interval = seconds / 31536000;
+        if (interval > 1) return Math.floor(interval) + " anos";
+        interval = seconds / 2592000;
+        if (interval > 1) return Math.floor(interval) + " meses";
+        interval = seconds / 86400;
+        if (interval > 1) return Math.floor(interval) + " dias";
+        interval = seconds / 3600;
+        if (interval > 1) return Math.floor(interval) + " horas";
+        interval = seconds / 60;
+        if (interval > 1) return Math.floor(interval) + " minutos";
+        return Math.floor(seconds) + " segundos";
+    };
+
+    // --- Funções de Renderização ---
+
+    // Renderiza um card de post no feed
+    function renderPostCard(post) {
+        const card = postCardTemplate.content.cloneNode(true).firstElementChild;
+        card.dataset.postId = post.id;
+
+        card.querySelector('.post-category').textContent = post.category;
+        const mobileCat = card.querySelector('.post-category-mobile');
+        if(mobileCat) mobileCat.textContent = post.category;
+        // Lógica de anonimato
+        const authorName = post.isAnonymous ? 'Anônimo' : post.authorName;
+        
+        // Foto do autor
+        const authorImg = `<img src="${formatImageUrl(post.authorPhoto)}" class="forum-avatar-small" onerror="this.onerror=null;this.src='https://placehold.co/70x70/1B4332/FFFFFF?text=Psi';">`;
+        card.querySelector('.post-author').innerHTML = `${authorImg} por ${authorName}`;
+        if (post.isAnonymous) card.querySelector('.post-author').style.fontStyle = 'italic';
+
+        card.querySelector('.post-time').textContent = `há ${timeSince(post.createdAt)}`;
+        card.querySelector('.post-title').textContent = post.title;
+        card.querySelector('.post-snippet').textContent = post.content.substring(0, 120) + '...';
+        card.querySelector('.post-votes-count').textContent = post.votes || 0;
+        card.querySelector('.post-comments-count').textContent = `💬 ${post.commentCount || 0} Comentários`;
+
+        // Evento de clique para abrir o post completo
+        card.addEventListener('click', (e) => {
+            if (!e.target.closest('.support-btn') && !e.target.closest('.report-btn')) {
+                loadFullPost(post.id);
+            }
+        });
+
+        // Evento de clique para apoiar
+        const supportBtn = card.querySelector('.support-btn');
+        if (post.supportedByMe) supportBtn.classList.add('supported');
+        supportBtn.onclick = () => toggleSupport(post.id, supportBtn);
+
+        // Ocultar botão de denunciar se for meu post
+        if (post.isMine) {
+            card.querySelector('.report-btn').style.display = 'none';
+        }
+        
+        card.querySelector('.report-btn').onclick = () => reportContent('post', post.id);
+
+        // Botão de Editar (Se for dono do post)
+        if (post.isMine) {
+            const actionsDiv = card.querySelector('.post-actions-right');
+            const editBtn = document.createElement('button');
+            editBtn.className = 'action-icon-btn';
+            editBtn.style.cssText = "background:none; border:none; cursor:pointer; font-size:1.1rem; color: #999;";
+            editBtn.innerHTML = EDIT_ICON_SVG;
+            editBtn.title = 'Editar';
+            editBtn.onclick = (e) => { e.stopPropagation(); openEditPostModal(post); };
+            actionsDiv.prepend(editBtn);
+        }
+
+        // Botão de Excluir (Se for dono do post)
+        if (post.isMine) {
+            const deleteBtn = card.querySelector('.delete-btn');
+            if (deleteBtn) {
+                deleteBtn.style.color = "#999"; // Ícone cinza
+                deleteBtn.classList.remove('hidden');
+                deleteBtn.innerHTML = DELETE_ICON_SVG; // Atualiza ícone no Feed
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deletePost(post.id);
+                };
+            }
+        }
+
+        postsContainer.appendChild(card);
+    }
+
+    // Carrega e exibe o post completo
+    async function loadFullPost(postId) {
+        currentPostId = postId;
+        currentCommentsPage = 1; // Reseta a página de comentários
+        
+        feedView.classList.add('hidden');
+        if (fab) fab.style.display = 'none';
+        postView.innerHTML = '<div class="loader-wrapper"><div class="loader-spinner"></div></div>';
+        postView.classList.remove('hidden');
+
+        try {
+            const postRes = await apiFetch(`${API_BASE_URL}/api/forum/posts/${postId}`);
+            if (!postRes.ok) throw new Error('Erro ao carregar post');
+            const post = await postRes.json();
+            
+            const postEl = fullPostTemplate.content.cloneNode(true).firstElementChild;
+            postEl.querySelector('.full-post-title').textContent = post.title;
+            postEl.querySelector('.full-post-category').textContent = post.category;
+            
+            const authorImg = `<img src="${formatImageUrl(post.authorPhoto)}" class="forum-avatar-small" onerror="this.onerror=null;this.src='https://placehold.co/70x70/1B4332/FFFFFF?text=Psi';">`;
+            postEl.querySelector('.full-post-author').innerHTML = `${authorImg} ${post.isAnonymous ? 'Anônimo' : post.authorName}`;
+            
+            postEl.querySelector('.full-post-content').textContent = post.content; // O conteúdo já vem sanitizado do backend
+            postEl.querySelector('.post-votes-count').textContent = post.votes;
+
+            // Botão de voltar
+            postEl.querySelector('#forum-back-to-feed-btn').onclick = () => {
+                postView.classList.add('hidden');
+                feedView.classList.remove('hidden');
+                if (fab) fab.style.display = 'block';
+                currentPostId = null;
+            };
+
+            // Ações (Apoiar, Denunciar)
+            const supportBtn = postEl.querySelector('.support-btn');
+            if (post.supportedByMe) supportBtn.classList.add('supported');
+            supportBtn.onclick = () => toggleSupport(post.id, supportBtn);
+            
+            // Botão de Editar (Visualização Completa)
+            if (post.isMine) {
+                const actionsDiv = postEl.querySelector('.full-post-actions');
+                const editBtn = document.createElement('button');
+                editBtn.className = 'action-icon-btn';
+                editBtn.style.cssText = "background:none; border:none; cursor:pointer; font-size:1.2rem; color: #999;";
+                editBtn.innerHTML = EDIT_ICON_SVG;
+                editBtn.title = 'Editar Post';
+                editBtn.onclick = () => openEditPostModal(post);
+                
+                // Insere antes do botão de excluir (se existir) ou do reportar
+                const deleteBtnFull = postEl.querySelector('.delete-btn-full');
+                if (deleteBtnFull) {
+                    actionsDiv.insertBefore(editBtn, deleteBtnFull);
+                } else {
+                    actionsDiv.appendChild(editBtn);
+                }
+            }
+
+            // Botão de Excluir (Visualização Completa)
+            if (post.isMine) {
+                const deleteBtnFull = postEl.querySelector('.delete-btn-full');
+                if (deleteBtnFull) {
+                    deleteBtnFull.classList.remove('hidden');
+                    // Transforma em ícone conforme solicitado
+                    deleteBtnFull.innerHTML = DELETE_ICON_SVG;
+                    deleteBtnFull.style.color = "#999"; // Ícone cinza
+                    deleteBtnFull.title = 'Excluir Post';
+                    deleteBtnFull.style.border = 'none';
+                    deleteBtnFull.style.fontSize = '1.2rem';
+                    deleteBtnFull.style.padding = '0 10px';
+                    deleteBtnFull.onclick = () => deletePost(post.id, true);
+                }
+            }
+
+            const reportBtnFull = postEl.querySelector('.report-btn');
+            if (post.isMine) {
+                reportBtnFull.style.display = 'none';
+            }
+            reportBtnFull.onclick = () => reportContent('post', post.id);
+
+            // Formulário de comentário
+            postEl.querySelector('#comment-form').onsubmit = handleCommentSubmit;
+
+            // Renderizar comentários
+            // Configura o botão "Mostrar mais comentários"
+            const loadMoreCommentsBtn = postEl.querySelector('#btn-load-more-comments');
+            loadMoreCommentsBtn.onclick = () => fetchAndRenderComments(postId, ++currentCommentsPage, true);
+
+            postView.innerHTML = '';
+            postView.appendChild(postEl);
+
+            // Carrega os comentários iniciais
+            fetchAndRenderComments(postId, 1, false);
+
+            // Carregar Tópicos Populares na Sidebar
+            loadRelatedPosts(postEl.querySelector('#related-posts-container'), postId);
+
+        } catch (err) {
+            postView.innerHTML = '<p>Erro ao carregar a discussão.</p>';
+            console.error(err);
+        }
+    }
+
+    // Nova função para carregar comentários com paginação
+    async function fetchAndRenderComments(postId, page = 1, append = false) {
+        const commentThread = document.getElementById('comment-thread');
+        const loadMoreBtn = document.getElementById('btn-load-more-comments');
+        
+        if (!commentThread || !loadMoreBtn) return;
+
+        if (!append) {
+            commentThread.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">Carregando comentários...</div>';
+            loadMoreBtn.style.display = 'none';
+        } else {
+            loadMoreBtn.textContent = 'Carregando...';
+            loadMoreBtn.disabled = true;
+        }
+
+        try {
+            // Busca um item a mais para verificar se há próxima página
+            const fetchLimit = COMMENTS_LIMIT + 1;
+            const res = await apiFetch(`${API_BASE_URL}/api/forum/posts/${postId}/comments?page=${page}&limit=${fetchLimit}&pageSize=${COMMENTS_LIMIT}&_t=${Date.now()}`);
+            
+            if (!res.ok) throw new Error('Erro ao buscar comentários');
+            
+            const comments = await res.json();
+            
+            if (!append) commentThread.innerHTML = '';
+
+            // Lógica de Paginação
+            let hasMore = false;
+            if (comments.length > COMMENTS_LIMIT) {
+                hasMore = true;
+                comments.pop(); // Remove o item extra
+            }
+
+            if (comments.length === 0 && !append) {
+                commentThread.innerHTML = '<p style="color:#666; padding:20px; text-align:center; font-style:italic;">Seja o primeiro a comentar nesta discussão!</p>';
+            } else {
+                comments.forEach(comment => renderComment(comment, commentThread));
+            }
+
+            // Atualiza visibilidade do botão
+            if (hasMore) {
+                loadMoreBtn.style.display = 'inline-block';
+                loadMoreBtn.textContent = 'Mostrar mais comentários';
+                loadMoreBtn.disabled = false;
+                loadMoreBtn.classList.remove('hidden');
+            } else {
+                loadMoreBtn.style.display = 'none';
+            }
+
+        } catch (err) {
+            console.error(err);
+            if (!append) commentThread.innerHTML = '<p style="color:#d32f2f; padding:15px; text-align:center;">Erro ao carregar comentários.</p>';
+        }
+    }
+
+    // Carregar Posts Relacionados/Populares
+    async function loadRelatedPosts(container, currentPostId) {
+        if (!container) return;
+        container.innerHTML = '<div style="padding:20px; text-align:center; color:#999;">Carregando...</div>';
+
+        try {
+            // Busca posts populares (trazemos 6 para garantir que tenhamos 5 mesmo se o atual estiver na lista)
+            const res = await apiFetch(`${API_BASE_URL}/api/forum/posts?filter=populares&limit=6`);
+            if (!res.ok) return;
+            
+            const posts = await res.json();
+            
+            // Filtra para não mostrar o post que já estamos vendo
+            const related = posts.filter(p => p.id != currentPostId).slice(0, 5);
+            
+            container.innerHTML = '';
+            
+            if (related.length === 0) {
+                container.innerHTML = '<p style="color:#999; font-size:0.9rem; padding:10px;">Nenhum tópico popular no momento.</p>';
+                return;
+            }
+
+            const relatedTemplate = document.getElementById('forum-related-post-template');
+            
+            related.forEach(post => {
+                const item = relatedTemplate.content.cloneNode(true).firstElementChild;
+                
+                item.querySelector('.related-post-category').textContent = post.category;
+                item.querySelector('.related-post-title').textContent = post.title;
+                item.querySelector('.related-post-votes').textContent = `❤️ ${post.votes}`;
+                item.querySelector('.related-post-comments').textContent = `💬 ${post.commentCount}`;
+                
+                item.onclick = (e) => {
+                    e.preventDefault();
+                    loadFullPost(post.id);
+                };
+                
+                container.appendChild(item);
+            });
+        } catch (err) {
+            console.error(err);
+            container.innerHTML = '';
+        }
+    }
+
+    // Renderiza um comentário
+    function renderComment(comment, container) {
+        const commentEl = commentTemplate.content.cloneNode(true).firstElementChild;
+        commentEl.dataset.commentId = comment.id; // Adiciona ID para permitir respostas
+        const authorName = comment.isAnonymous ? 'Anônimo' : comment.authorName;
+        
+        const authorImg = `<img src="${formatImageUrl(comment.authorPhoto)}" class="forum-avatar-small" onerror="this.onerror=null;this.src='https://placehold.co/70x70/1B4332/FFFFFF?text=Psi';">`;
+        commentEl.querySelector('.comment-author').innerHTML = `${authorImg} ${authorName}`;
+        
+        if (comment.isAnonymous) commentEl.querySelector('.comment-author').style.fontStyle = 'italic';
+        commentEl.querySelector('.comment-time').textContent = `• há ${timeSince(comment.createdAt)}`;
+        commentEl.querySelector('.comment-body').textContent = comment.content;
+        
+        // Ações do comentário (Like, Responder)
+        const likeBtn = commentEl.querySelector('.comment-like-btn');
+        const likesCount = commentEl.querySelector('.comment-likes-count');
+        const replyBtn = commentEl.querySelector('.comment-reply-btn');
+
+        likesCount.textContent = comment.likes || 0;
+        if (comment.likedByMe) {
+            likeBtn.classList.add('liked');
+        }
+
+        likeBtn.onclick = () => toggleCommentLike(comment.id, likeBtn, likesCount);
+        replyBtn.onclick = () => showReplyForm(comment.id, commentEl);
+
+        const reportBtn = commentEl.querySelector('.report-btn');
+        if (comment.isMine) {
+            reportBtn.style.display = 'none';
+        }
+        reportBtn.onclick = () => reportContent('comment', comment.id);
+
+        // Ações do Dono (Editar e Excluir)
+        if (comment.isMine) {
+            const actionsDiv = commentEl.querySelector('.comment-actions');
+            const reportBtn = commentEl.querySelector('.report-btn');
+
+            // 1. Editar (Ícone)
+            const editBtn = document.createElement('button');
+            // margin-left: auto empurra o grupo para a direita
+            editBtn.style.cssText = "background:none; border:none; cursor:pointer; font-size:1rem; margin-left:auto; color: #999;";
+            editBtn.innerHTML = EDIT_ICON_SVG;
+            editBtn.title = 'Editar';
+            editBtn.onclick = () => enableCommentEditing(comment, commentEl);
+            
+            // 2. Excluir (Ícone)
+            const deleteBtn = document.createElement('button');
+            deleteBtn.style.cssText = "background:none; border:none; cursor:pointer; font-size:1rem; color: #999;";
+            deleteBtn.innerHTML = DELETE_ICON_SVG;
+            deleteBtn.title = 'Excluir';
+            deleteBtn.onclick = () => deleteComment(comment.id, commentEl);
+
+            // Adiciona botões de ação
+            actionsDiv.appendChild(editBtn);
+            actionsDiv.appendChild(deleteBtn);
+        }
+
+        // Renderiza respostas aninhadas, se houver
+        if (comment.replies && comment.replies.length > 0) {
+            const repliesContainer = commentEl.querySelector('.comment-replies-container');
+            
+            // Botão "Ver mais X respostas"
+            const toggleBtn = document.createElement('button');
+            toggleBtn.textContent = `Ver mais ${comment.replies.length} respostas`;
+            toggleBtn.style.cssText = "background:none; border:none; color:#1B4332; font-size:0.85rem; font-weight:600; cursor:pointer; margin-top:10px; padding:5px 0; text-decoration:underline; display:block;";
+            
+            repliesContainer.style.display = 'none'; // Recolhido por padrão
+
+            toggleBtn.onclick = () => {
+                if (repliesContainer.style.display === 'none') {
+                    repliesContainer.style.display = 'block';
+                    toggleBtn.textContent = 'Ocultar respostas';
+                } else {
+                    repliesContainer.style.display = 'none';
+                    toggleBtn.textContent = `Ver mais ${comment.replies.length} respostas`;
+                }
+            };
+
+            // Insere o botão antes do container de respostas
+            repliesContainer.parentNode.insertBefore(toggleBtn, repliesContainer);
+            
+            comment.replies.forEach(reply => renderComment(reply, repliesContainer));
+        }
+
+        container.appendChild(commentEl);
+    }
+
+    // Mostra o formulário de resposta a um comentário
+    function showReplyForm(parentId, parentElement) {
+        // Remove formulários de resposta abertos para não poluir
+        const existingForm = document.getElementById('reply-form-dynamic');
+        if (existingForm) existingForm.remove();
+
+        const formContainer = document.createElement('div');
+        formContainer.id = 'reply-form-dynamic';
+        formContainer.style.marginTop = '10px';
+        formContainer.innerHTML = `
+            <form>
+                <div class="form-group">
+                    <textarea rows="2" placeholder="Escreva sua resposta..." required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;"></textarea>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btn btn-secundario btn-sm">Cancelar</button>
+                    <button type="submit" class="btn btn-principal btn-sm">Responder</button>
+                </div>
+            </form>
+        `;
+        
+        parentElement.querySelector('.comment-replies-container').prepend(formContainer);
+        const textarea = formContainer.querySelector('textarea');
+        textarea.focus();
+
+        formContainer.querySelector('form').onsubmit = (e) => handleCommentSubmit(e, parentId);
+        formContainer.querySelector('.btn-secundario').onclick = () => formContainer.remove();
+    }
+
+    // --- Funções de Ação ---
+
+    // Carrega os posts do feed
+    async function fetchAndRenderPosts(page = 1, append = false) {
+        if (isLoadingMore) return;
+        if (append) isLoadingMore = true;
+
+        if (!append) {
+            postsContainer.innerHTML = '<div class="loader-wrapper"><div class="loader-spinner"></div></div>';
+            loadMoreBtn.style.display = 'none';
+        }
+        if (loadMoreBtn) {
+            loadMoreBtn.textContent = 'Carregando...';
+            loadMoreBtn.disabled = true;
+        }
+        try {
+            // Pega o filtro da aba ativa e o termo de busca
+            const activeFilter = document.querySelector('.forum-tabs .tab-item.active')?.dataset.filter || 'populares';
+            const searchTerm = document.getElementById('forum-search-input')?.value || '';
+            let posts;
+            
+            if (page === 1 && preFetchedData) {
+                posts = await preFetchedData;
+                preFetchedData = null;
+            } else {
+                // Busca um item a mais (POSTS_LIMIT + 1) para verificar se há próxima página
+                const fetchLimit = POSTS_LIMIT + 1;
+                const res = await apiFetch(`${API_BASE_URL}/api/forum/posts?filter=${activeFilter}&search=${encodeURIComponent(searchTerm)}&page=${page}&limit=${fetchLimit}&pageSize=${POSTS_LIMIT}&_t=${Date.now()}`);
+                if (!res.ok) throw new Error('Erro ao buscar posts');
+                posts = await res.json();
+            }
+
+            if (!append) postsContainer.innerHTML = '';
+            
+            if (!Array.isArray(posts) || posts.length === 0) {
+                if (!append) postsContainer.innerHTML = '<p style="text-align:center; color:#888;">Nenhuma discussão encontrada.</p>';
+                if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+                return;
+            }
+
+            // Lógica de Paginação: Se vieram mais posts que o limite, existe próxima página
+            let hasMore = false;
+            if (posts.length > POSTS_LIMIT) {
+                hasMore = true;
+                posts.pop(); // Remove o item extra da exibição atual
+            }
+
+            posts.forEach(renderPostCard);
+            
+            if (loadMoreBtn) {
+                if (hasMore) {
+                    loadMoreBtn.style.display = 'inline-block';
+                    loadMoreBtn.classList.remove('hidden');
+                } else {
+                    loadMoreBtn.style.display = 'none';
+                }
+            }
+
+        } catch (err) {
+           if (!append) postsContainer.innerHTML = '<p>Erro ao carregar discussões.</p>';
+            console.error(err);
+        } finally {
+            if (loadMoreBtn) { loadMoreBtn.textContent = 'Mostrar mais'; loadMoreBtn.disabled = false; }
+            if (append) isLoadingMore = false;
+        }
+    }
+
+    // Submete o formulário de novo post
+    async function handlePostSubmit(e) {
+        e.preventDefault();
+        const btn = document.getElementById('forum-submit-post-btn');
+        btn.disabled = true;
+        btn.textContent = 'Publicando...';
+
+        const formData = new FormData(createForm);
+        const data = {
+            title: sanitizeHTML(formData.get('title')),
+            content: sanitizeHTML(formData.get('content')),
+            category: formData.get('category'),
+            isAnonymous: formData.get('isAnonymous') === 'on'
+        };
+
+        try {
+            await apiFetch(`${API_BASE_URL}/api/forum/posts`, { method: 'POST', body: JSON.stringify(data) });
+            showToast('Discussão criada com sucesso!', 'success');
+            createModal.style.display = 'none';
+            createForm.reset();
+            fetchAndRenderPosts(); // Recarrega o feed
+        } catch (err) {
+            showToast('Erro ao criar discussão.', 'error');
+            console.error(err);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Publicar';
+        }
+    }
+
+    // Submete um novo comentário
+    async function handleCommentSubmit(e, parentId = null) {
+        e.preventDefault();
+        const form = e.target;
+        const textarea = form.querySelector('textarea');
+        const checkbox = form.querySelector('input[type="checkbox"]');
+        const btn = form.querySelector('button[type="submit"]');
+        const content = textarea.value.trim();
+        
+        if (!content) return;
+
+        btn.disabled = true;
+        const data = {
+            content: sanitizeHTML(content),
+            isAnonymous: checkbox ? checkbox.checked : false, // Checkbox pode não existir no form de resposta
+            parentId: parentId
+        };
+
+        try {
+            const res = await apiFetch(`${API_BASE_URL}/api/forum/posts/${currentPostId}/comments`, { method: 'POST', body: JSON.stringify(data) });
+            if (!res.ok) throw new Error('Erro ao salvar comentário');
+            const newComment = await res.json();
+            
+            // Decide onde renderizar: no container principal ou no de respostas
+            const container = parentId ? document.querySelector(`.comment-card[data-comment-id="${parentId}"] .comment-replies-container`) : document.getElementById('comment-thread');
+            
+            if (!container) throw new Error('Container não encontrado');
+            renderComment(newComment, container);
+            
+            form.reset();
+            if (parentId) form.parentElement.remove(); // Remove o form dinâmico de resposta
+        } catch (err) {
+            showToast('Erro ao enviar comentário.', 'error');
+            console.error(err);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    // Lógica de "Apoiar"
+    async function toggleSupport(postId, btnElement) {
+        const isSupported = btnElement.classList.toggle('supported');
+        const votesCountEl = btnElement.parentElement.querySelector('.post-votes-count');
+        let currentVotes = parseInt(votesCountEl.textContent);
+        votesCountEl.textContent = isSupported ? currentVotes + 1 : currentVotes - 1;
+
+        try {
+            await apiFetch(`${API_BASE_URL}/api/forum/posts/${postId}/vote`, { method: 'POST' });
+        } catch (err) {
+            // Reverte a ação em caso de erro
+            btnElement.classList.toggle('supported');
+            votesCountEl.textContent = currentVotes;
+            showToast('Erro ao registrar voto.', 'error');
+        }
+    }
+
+    // Lógica de "Like" em Comentário
+    async function toggleCommentLike(commentId, btnElement, countElement) {
+        const isLiked = btnElement.classList.toggle('liked');
+        let currentLikes = parseInt(countElement.textContent);
+        countElement.textContent = isLiked ? currentLikes + 1 : currentLikes - 1;
+
+        try {
+            // API real para registrar o voto no comentário
+            await apiFetch(`${API_BASE_URL}/api/forum/comments/${commentId}/vote`, { method: 'POST' });
+        } catch (err) {
+            // Reverte a ação em caso de erro
+            btnElement.classList.toggle('liked');
+            countElement.textContent = currentLikes;
+            showToast('Erro ao registrar voto no comentário.', 'error');
+        }
+    }
+
+    // Excluir Post
+    async function deletePost(id, isFullView = false) {
+        abrirModalConfirmacaoPersonalizado(
+            'Excluir Discussão',
+            'Tem certeza que deseja excluir esta discussão permanentemente? Esta ação não pode ser desfeita.',
+            async () => {
+                try {
+                    const res = await apiFetch(`${API_BASE_URL}/api/forum/posts/${id}`, { method: 'DELETE' });
+                    if (res.ok) {
+                        showToast('Discussão excluída.', 'success');
+                        if (isFullView) {
+                            // Volta para o feed
+                            postView.classList.add('hidden');
+                            feedView.classList.remove('hidden');
+                            if (fab) fab.style.display = 'block';
+                            currentPostId = null;
+                        }
+                        fetchAndRenderPosts();
+                    } else {
+                        showToast('Erro ao excluir discussão.', 'error');
+                    }
+                } catch (err) {
+                    showToast('Erro ao excluir discussão.', 'error');
+                }
+            }
+        );
+    }
+
+    // Excluir Comentário
+    async function deleteComment(id, element) {
+        abrirModalConfirmacaoPersonalizado(
+            'Excluir Comentário',
+            'Tem certeza que deseja excluir este comentário?',
+            async () => {
+                try {
+                    const res = await apiFetch(`${API_BASE_URL}/api/forum/comments/${id}`, { method: 'DELETE' });
+                    if (res.ok) {
+                        element.remove();
+                        showToast('Comentário excluído.', 'success');
+                    } else {
+                        showToast('Erro ao excluir comentário.', 'error');
+                    }
+                } catch (err) {
+                    showToast('Erro ao excluir comentário.', 'error');
+                }
+            }
+        );
+    }
+
+    // Lógica de "Denunciar"
+    function reportContent(type, id) {
+        abrirModalConfirmacaoPersonalizado(
+            'Denunciar Conteúdo',
+            'Você tem certeza que deseja denunciar este conteúdo como inadequado? Nossa equipe de moderação será notificada.',
+            async () => {
+                try {
+                    await apiFetch(`${API_BASE_URL}/api/forum/report`, { method: 'POST', body: JSON.stringify({ type, id }) });
+                    showToast('Denúncia enviada. Agradecemos sua colaboração!', 'info');
+                } catch (err) {
+                    showToast('Erro ao enviar denúncia.', 'error');
+                }
+            }
+        );
+    }
+
+    // --- FUNÇÕES DE EDIÇÃO ---
+
+    // Abrir Modal de Edição de Post
+    function openEditPostModal(post) {
+        // Popula o formulário com os dados atuais
+        createForm.querySelector('[name="title"]').value = post.title;
+        createForm.querySelector('[name="category"]').value = post.category;
+        createForm.querySelector('[name="content"]').value = post.content;
+        createForm.querySelector('[name="isAnonymous"]').checked = post.isAnonymous;
+
+        // Altera visualmente para modo de edição
+        createModal.querySelector('h3').textContent = 'Editar Discussão';
+        const submitBtn = document.getElementById('forum-submit-post-btn');
+        submitBtn.textContent = 'Salvar Alterações';
+
+        // Substitui o handler de submit
+        createForm.onsubmit = async (e) => {
+            e.preventDefault();
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Salvando...';
+
+            const formData = new FormData(createForm);
+            const data = {
+                title: sanitizeHTML(formData.get('title')),
+                content: sanitizeHTML(formData.get('content')),
+                category: formData.get('category'),
+                isAnonymous: formData.get('isAnonymous') === 'on'
+            };
+
+            try {
+                const res = await apiFetch(`${API_BASE_URL}/api/forum/posts/${post.id}`, { 
+                    method: 'PUT', 
+                    body: JSON.stringify(data) 
+                });
+                
+                if (res.ok) {
+                    showToast('Discussão atualizada!', 'success');
+                    createModal.style.display = 'none';
+                    createForm.reset();
+                    
+                    // Se estiver vendo o post completo, recarrega ele
+                    if (currentPostId === post.id) loadFullPost(post.id);
+                    // Recarrega o feed
+                    fetchAndRenderPosts();
+                } else {
+                    showToast('Erro ao atualizar discussão.', 'error');
+                }
+            } catch (err) {
+                showToast('Erro ao atualizar discussão.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Salvar Alterações';
+            }
+        };
+
+        createModal.style.display = 'flex';
+    }
+
+    // Habilitar Edição de Comentário Inline
+    function enableCommentEditing(comment, commentEl) {
+        const bodyEl = commentEl.querySelector('.comment-body');
+        const originalContent = comment.content;
+        
+        // Esconde o texto original
+        bodyEl.style.display = 'none';
+        
+        // Cria o formulário de edição se não existir
+        if (commentEl.querySelector('.edit-comment-form')) return;
+
+        const editForm = document.createElement('div');
+        editForm.className = 'edit-comment-form';
+        editForm.style.marginTop = '10px';
+        editForm.innerHTML = `
+            <textarea rows="3" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;">${originalContent}</textarea>
+            <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 8px;">
+                <button class="cancel-edit" style="background:none; border:none; text-decoration:underline; cursor:pointer; color:#666; font-size:0.9rem;">Cancelar</button>
+                <button class="save-edit" style="background:none; border:none; text-decoration:underline; cursor:pointer; color:#1B4332; font-weight:bold; font-size:0.9rem;">Salvar</button>
+            </div>
+        `;
+        
+        bodyEl.parentNode.insertBefore(editForm, bodyEl.nextSibling);
+        
+        const textarea = editForm.querySelector('textarea');
+        
+        // Ação Cancelar
+        editForm.querySelector('.cancel-edit').onclick = () => {
+            editForm.remove();
+            bodyEl.style.display = 'block';
+        };
+        
+        // Ação Salvar
+        editForm.querySelector('.save-edit').onclick = async () => {
+            const newContent = textarea.value.trim();
+            if (!newContent) return;
+            
+            try {
+                const res = await apiFetch(`${API_BASE_URL}/api/forum/comments/${comment.id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ content: newContent })
+                });
+                
+                if (res.ok) {
+                    const updatedComment = await res.json();
+                    comment.content = updatedComment.content; // Atualiza objeto local
+                    bodyEl.textContent = updatedComment.content; // Atualiza UI
+                    editForm.remove();
+                    bodyEl.style.display = 'block';
+                    showToast('Comentário atualizado.', 'success');
+                } else {
+                    showToast('Erro ao atualizar comentário.', 'error');
+                }
+            } catch (err) {
+                showToast('Erro ao atualizar comentário.', 'error');
+            }
+        };
+    }
+
+    // --- Inicialização e Event Listeners ---
+    fab.onclick = () => {
+        // Reseta o modal para o estado de "Criar"
+        createForm.reset();
+        createModal.querySelector('h3').textContent = 'Criar Nova Discussão';
+        document.getElementById('forum-submit-post-btn').textContent = 'Publicar';
+        createForm.onsubmit = handlePostSubmit;
+        createModal.style.display = 'flex';
+    };
+    closeModalBtn.onclick = () => createModal.style.display = 'none';
+    createModal.onclick = (e) => { if (e.target === createModal) createModal.style.display = 'none'; };
+    createForm.onsubmit = handlePostSubmit;
+    
+    // --- LÓGICA DE ABAS DE FILTRO ---
+    const tabs = document.querySelectorAll('.forum-tabs .tab-item');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            currentPage = 1;
+            fetchAndRenderPosts(1, false);
+        });
+    });
+
+    // --- LÓGICA DE BUSCA ---
+    const searchInput = document.getElementById('forum-search-input');
+    let searchDebounce;
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchDebounce);
+            searchDebounce = setTimeout(() => {
+                currentPage = 1;
+                fetchAndRenderPosts(1, false);
+            }, 500); // Espera 500ms após o usuário parar de digitar
+        });
+    }
+
+    if (loadMoreBtn) {
+        loadMoreBtn.onclick = () => fetchAndRenderPosts(++currentPage, true);
+    }
+
+    // Carga inicial com o filtro padrão
+    fetchAndRenderPosts(1, false);
 }
 });

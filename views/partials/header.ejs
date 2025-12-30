@@ -1,3 +1,10 @@
+<style>
+    /* Garante fonte Lato para elementos dinâmicos (Olá [nome], Botões) igual aos links */
+    header .botoes-acao, header .botoes-acao *, header .btn, header .user-welcome-text {
+        font-family: var(--font-principal) !important;
+        font-size: 18px !important;
+    }
+</style>
 <header>
     <a href="/" class="logo">
         <img src="/assets/logos/logo-branca.png" alt="Logo da Yelo" class="logo-branca">
@@ -6,9 +13,9 @@
     </a>
 
     <button class="menu-hamburguer" aria-label="Abrir menu">
-        <span class="barra"></span>
-        <span class="barra"></span>
-        <span class="barra"></span>
+        <div class="barra"></div>
+        <div class="barra"></div>
+        <div class="barra"></div>
     </button>
 
     <div class="container-navegacao">
@@ -27,3 +34,17 @@
         </div>
     </div>
 </header>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const menuBtn = document.querySelector('.menu-hamburguer');
+        const navContainer = document.querySelector('.container-navegacao');
+        
+        if(menuBtn && navContainer) {
+            menuBtn.addEventListener('click', () => {
+                navContainer.classList.toggle('ativo');
+                // Opcional: Alternar ícone ou animar as barras aqui
+            });
+        }
+    });
+</script>

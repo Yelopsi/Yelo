@@ -1,28 +1,345 @@
-<header class="main-header">
-    <div>
+<div class="main-header">
+    <div class="header-content">
         <h1>Caixa de Entrada</h1>
-        <p class="subtitulo-header">Gerencie seus contatos e mensagens de pacientes.</p>
+        <p>Gerencie suas mensagens e conversas.</p>
     </div>
-</header>
+</div>
 
-<div class="inbox-container">
-    <aside class="inbox-sidebar">
-        <div class="sidebar-search">
-            <input type="text" placeholder="Buscar mensagem..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+<style>
+    /* --- SCROLLBAR MODERNA --- */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: #aaa; }
+
+    /* --- Estrutura Principal --- */
+    .chat-layout {
+        display: flex;
+        height: calc(100vh - 260px); /* Altura ajustada para acomodar o header */
+        width: 100%;
+        background-color: #fff;
+        border-radius: 8px;
+        border: 1px solid #f0f0f0;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        overflow: hidden;
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* --- Painel Esquerdo: Lista de Conversas --- */
+    .chat-list-panel {
+        display: flex;
+        flex-direction: column;
+        width: 350px;
+        min-width: 300px;
+        border-right: 1px solid #f0f0f0;
+        background-color: #fff;
+    }
+
+    .search-and-filter-bar {
+        padding: 10px 16px;
+        background-color: #f0f2f5;
+        border-bottom: 1px solid #e9ecef;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .search-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+    }
+
+    .search-wrapper .search-icon {
+        position: absolute;
+        left: 15px;
+        color: #6c757d;
+    }
+
+    #chat-search {
+        width: 100%;
+        padding: 10px 15px 10px 40px;
+        border-radius: 20px;
+        border: 1px solid #dee2e6;
+        background-color: #fff;
+        font-size: 14px;
+    }
+
+    .conversations-list {
+        flex-grow: 1;
+        overflow-y: auto;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .conversation-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 15px;
+        margin: 4px 8px;
+        border-radius: 10px;
+        cursor: pointer;
+        border-bottom: none;
+    }
+    .conversation-item:hover { background-color: #f5f7f6; }
+    .conversation-item.active { background-color: #e9f5ff; }
+
+    .conversation-item .avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        margin-right: 12px;
+        object-fit: cover;
+    }
+
+    .conversation-details { flex-grow: 1; overflow: hidden; }
+    .details-header { display: flex; justify-content: space-between; align-items: center; }
+    .contact-name { font-weight: 600; color: #111; transition: color 0.2s; }
+    .conversation-item.active .contact-name { color: #1B4332; }
+    .timestamp { font-size: 12px; color: #6c757d; }
+    .last-message {
+        font-size: 14px;
+        color: #6c757d;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin: 0;
+    }
+
+    .last-message-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 2px;
+    }
+
+    .unread-badge {
+        background-color: #FFEE8C;
+        color: #1B4332;
+        min-width: 22px;
+        height: 22px;
+        padding: 0 4px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1;
+        margin-left: 10px;
+        flex-shrink: 0;
+    }
+    .unread-badge.hidden { display: none; }
+
+    /* --- Painel Direito: Conversa Ativa --- */
+    .chat-view-panel {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .chat-welcome-view {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        text-align: center;
+        background-color: #f0f2f5;
+        padding: 20px;
+    }
+    .chat-welcome-view img { max-width: 250px; opacity: 0.8; margin-bottom: 20px; }
+    .chat-welcome-view h3 { font-size: 22px; color: #1B4332; }
+    .chat-welcome-view p { color: #6c757d; }
+
+    .active-chat-wrapper {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .chat-panel-header {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        background-color: #fff;
+        border-bottom: 1px solid #e9ecef;
+        flex-shrink: 0;
+    }
+    .contact-info { flex-grow: 1; }
+    .contact-info h4 { margin: 0; font-size: 16px; }
+
+    .chat-panel-header .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin-right: 15px;
+        object-fit: cover;
+    }
+
+    .messages-thread {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 5%;
+        background-color: #f8f9fa;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .message-bubble {
+        padding: 6px 12px;
+        border-radius: 8px;
+        max-width: 65%;
+        width: fit-content;
+        line-height: 1.3;
+        word-break: break-word;
+        font-size: 0.9rem; /* Tamanho da fonte ajustado */
+        box-shadow: none;
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+    }
+
+    .message-bubble p {
+        margin: 0;
+        padding: 0;
+    }
+
+    .message-bubble.received { 
+        background-color: #fff; 
+        align-self: flex-start; 
+        border-bottom-left-radius: 4px;
+        border: 1px solid #f0f0f0;
+    }
+    .message-bubble.sent { 
+        background-color: #1B4332; 
+        color: #fff;
+        align-self: flex-end; 
+        border-bottom-right-radius: 4px;
+    }
+    .message-bubble.sent .message-meta { color: rgba(255,255,255,0.7); }
+    .message-bubble.sent .message-status svg { stroke: rgba(255,255,255,0.8) !important; }
+
+    .message-meta { 
+        flex-shrink: 0;
+        white-space: nowrap;
+        font-size: 11px; color: #6c757d; opacity: 0.7;
+        display: flex; /* Para alinhar o ícone */
+        align-items: center;
+        justify-content: flex-end; /* Alinha à direita */
+        gap: 4px; /* Espaço entre hora e ícone */
+    }
+
+    .message-status svg { width: 18px; height: 18px; }
+
+    .message-input-bar {
+        display: flex;
+        align-items: flex-end; /* Alinha na base para inputs de múltiplas linhas */
+        padding: 15px 20px;
+        gap: 10px;
+        background-color: #fff;
+        border-top: 1px solid #f0f0f0;
+        flex-shrink: 0;
+    }
+    #psi-reply-input {
+        flex: 1;
+        border: 1px solid transparent;
+        background-color: #f0f2f5;
+        border-radius: 24px;
+        padding: 12px 20px;
+        font-size: 15px;
+        resize: none;
+        transition: all 0.2s;
+    }
+    #psi-reply-input:focus { background-color: #fff; border-color: #1B4332; box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1); outline: none; }
+
+    .btn-send {
+        background-color: #1B4332;
+        color: white;
+        border: none;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Hover do menu de opções */
+    #chat-options-menu button:hover { background-color: #f5f5f5 !important; }
+</style>
+
+<div class="chat-layout">
+    <aside class="chat-list-panel">
+        <div class="search-and-filter-bar">
+            <div class="search-wrapper">
+                <span class="search-icon">🔍</span>
+                <input type="search" id="chat-search" placeholder="Buscar...">
+            </div>
         </div>
-        <ul class="message-list" id="inbox-message-list">
-            <li style="padding:20px; text-align:center; color:#999; font-size:0.9rem;">
-                Carregando conversas...
-            </li>
+        <ul id="conversation-list" class="conversations-list">
+            <li style="padding:20px; text-align:center; color:#999;">Carregando...</li>
         </ul>
     </aside>
 
-    <section class="inbox-content" id="inbox-message-content">
-        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:#999; text-align:center;">
-            <svg width="60" height="60" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="opacity:0.2; margin-bottom:15px;">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+    <main class="chat-view-panel">
+        <div class="chat-welcome-view" id="chat-welcome-screen">
+            <svg width="200" height="160" viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width: 200px; margin-bottom: 20px;">
+                <!-- Balão de Fundo (Amarelo) -->
+                <path d="M100 20H160C171.046 20 180 28.9543 180 40V100C180 111.046 171.046 120 160 120H130L100 140V120H100C88.9543 120 80 111.046 80 100V40C80 28.9543 88.9543 20 100 20Z" fill="#FFEE8C"/>
+                <!-- Balão da Frente (Verde Yelo) -->
+                <path d="M40 40H120C131.046 40 140 48.9543 140 60V120C140 131.046 131.046 140 120 140H70L40 160V140H40C28.9543 140 20 131.046 20 120V60C20 48.9543 28.9543 40 40 40Z" fill="#1B4332"/>
+                <!-- Linhas de Texto (Brancas) -->
+                <rect x="45" y="70" width="70" height="8" rx="4" fill="white" fill-opacity="0.9"/>
+                <rect x="45" y="90" width="40" height="8" rx="4" fill="white" fill-opacity="0.9"/>
+                <!-- Pontos de Digitação (Verdes no Amarelo) -->
+                <circle cx="115" cy="70" r="5" fill="#1B4332" fill-opacity="0.2"/>
+                <circle cx="135" cy="70" r="5" fill="#1B4332" fill-opacity="0.2"/>
+                <circle cx="155" cy="70" r="5" fill="#1B4332" fill-opacity="0.2"/>
             </svg>
-            <p>Selecione uma mensagem à esquerda para ler.</p>
+            <h3>Suporte Yelo</h3>
+            <p>Selecione a conversa ao lado para falar conosco.</p>
         </div>
-    </section>
+
+        <div class="active-chat-wrapper" id="active-chat-screen" style="display: none;">
+            <div class="chat-panel-header">
+                <button id="btn-voltar-mobile" style="display: none;" title="Voltar">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </button>
+                <img src="/assets/logos/logo-escura.png" alt="Avatar" class="avatar" style="background:#f0f0f0; padding:5px; object-fit: contain;">
+                <div class="contact-info">
+                    <h4 style="display: flex; align-items: center; gap: 4px;">Yelo Suporte 
+                        <img src="/assets/images/verified.png" alt="Verificado" width="18" height="18">
+                    </h4>
+                    <span>Canal Oficial</span>
+                </div>
+            </div>
+
+            <div class="messages-thread" id="messages-thread">
+            </div>
+
+            <footer class="message-input-bar">
+                <input type="text" id="psi-reply-input" placeholder="Digite sua mensagem...">
+                <button class="btn-send" id="send-reply-btn" title="Enviar Mensagem" type="button">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" style="color: white;"><path d="M1.101 21.757 23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"></path></svg>
+                </button>
+            </footer>
+        </div>
+    </main>
 </div>

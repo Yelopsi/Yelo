@@ -38,6 +38,9 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'Review',
+    indexes: [
+        { name: 'idx_reviews_status', fields: ['status'] }
+    ]
   });
   return Review;
 };

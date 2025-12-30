@@ -10,11 +10,11 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: true
     },
     // Precificação (Decimal para precisão financeira)
-    price_semente: {
+    price_Essencial: {
       type: DataTypes.DECIMAL(10, 2),
       defaultValue: 0.00
     },
-    price_luz: {
+    price_Clínico: {
       type: DataTypes.DECIMAL(10, 2),
       defaultValue: 0.00
     },

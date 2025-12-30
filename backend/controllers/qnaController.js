@@ -74,6 +74,8 @@ exports.getQuestions = async (req, res) => {
     try {
         const userObj = req.psychologist || req.user;
         const psychologistId = userObj ? userObj.id : null;
+        const { page = 1, limit = 15 } = req.query; // Adiciona paginação
+        const offset = (page - 1) * limit;
 
         // 1. Busca lista negra
         const ignoredList = await db.QuestionIgnore.findAll({
@@ -82,16 +84,31 @@ exports.getQuestions = async (req, res) => {
         });
         const ignoredIds = ignoredList.map(item => item.questionId);
 
-        // 2. Busca perguntas excluindo a lista negra (Op.notIn)
-        const questions = await db.Question.findAll({
+        // 2. Otimização: Busca em duas etapas para evitar subqueries complexas do Sequelize
+        // Etapa A: Encontra os IDs das perguntas corretas com paginação
+        const questionIds = await db.Question.findAll({
             where: { id: { [Op.notIn]: ignoredIds } },
+            attributes: ['id'],
+            order: [['createdAt', 'DESC']],
+            limit: parseInt(limit),
+            offset: offset
+        });
+
+        if (questionIds.length === 0) {
+            return res.json([]);
+        }
+        const idsToFetch = questionIds.map(q => q.id);
+
+        // Etapa B: Busca os dados completos apenas para os IDs selecionados
+        const questions = await db.Question.findAll({
+            where: { id: { [Op.in]: idsToFetch } },
             include: [
                 { model: db.Patient, required: false, attributes: ['nome'] },
                 { model: db.Answer, as: 'answers', required: false,
                   include: [{ model: db.Psychologist, as: 'psychologist', required: false, attributes: ['nome', 'fotoUrl'] }]
                 }
             ],
-            order: [['createdAt', 'DESC']]
+            order: [['createdAt', 'DESC']] // Reordena para garantir a consistência
         });
 
         // Formatação (mantém a lógica anterior)
