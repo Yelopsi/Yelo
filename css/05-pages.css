@@ -1691,3 +1691,234 @@
     transform: none;
     box-shadow: none;
 }
+
+/* ==========================================================================
+   PÁGINA SOBRE (ECOSSISTEMA)
+   ========================================================================== */
+
+.manifesto-hero {
+    position: relative;
+    background-color: var(--verde-escuro);
+    color: var(--branco-puro);
+    text-align: center;
+    padding: 160px 20px 140px 20px;
+    margin-top: -100px;
+}
+
+.container-manifesto {
+    max-width: 750px; /* Coluna de leitura estreita e elegante */
+    margin: 0 auto;
+}
+
+.manifesto-label {
+    display: inline-block;
+    font-family: var(--font-principal);
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    background-color: var(--cor-Yelo);
+    color: var(--verde-escuro);
+    padding: 6px 16px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+}
+
+.manifesto-hero h1 {
+    font-family: var(--font-titulos);
+    font-size: 3.5rem;
+    line-height: 1.1;
+    margin-bottom: 30px;
+    color: var(--branco-puro);
+}
+
+.manifesto-lead {
+    font-family: var(--font-titulos); /* Serifado para dar tom editorial */
+    font-size: 1.5rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 400;
+}
+
+/* Scroll Indicator */
+.scroll-indicator {
+    position: absolute;
+    bottom: 80px; /* Acima da onda */
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0.7;
+}
+
+.mouse {
+    width: 26px;
+    height: 42px;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+    display: block;
+    position: relative;
+}
+
+.wheel {
+    width: 4px;
+    height: 4px;
+    background: #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: scrollWheel 1.5s infinite;
+}
+
+/* Corpo do Manifesto */
+.manifesto-body-section {
+    background-color: var(--off-white);
+    padding: 80px 20px 120px 20px;
+    color: #333;
+}
+
+.manifesto-block {
+    margin-bottom: 80px;
+    text-align: center;
+    position: relative;
+    
+    /* Animação de Entrada */
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                transform 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: opacity, transform;
+}
+
+.block-number {
+    display: block;
+    font-family: var(--font-titulos);
+    font-size: 4rem;
+    font-weight: 700;
+    color: rgba(27, 67, 50, 0.1); /* Verde muito claro */
+    line-height: 1;
+    margin-bottom: -20px; /* Sobrepõe levemente o título */
+    position: relative;
+    z-index: 0;
+}
+
+.manifesto-block h2 {
+    font-family: var(--font-titulos);
+    font-size: 2.2rem;
+    color: var(--verde-escuro);
+    margin-bottom: 20px;
+    line-height: 1.2;
+    position: relative;
+    z-index: 1;
+}
+
+.manifesto-block p {
+    font-size: 1.2rem;
+    line-height: 1.8;
+    color: #555;
+    max-width: 650px;
+    margin: 0 auto;
+}
+
+/* Estado Visível (Ativado via JS) */
+.manifesto-block.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Conclusão e CTA */
+.manifesto-conclusion {
+    text-align: center;
+    margin-top: 100px;
+    padding-top: 60px;
+    border-top: 1px solid rgba(0,0,0,0.1);
+}
+
+.manifesto-conclusion h3 {
+    font-size: 2.5rem;
+    color: var(--verde-escuro);
+    margin-bottom: 30px;
+}
+
+.manifesto-conclusion p {
+    font-size: 1.25rem;
+    line-height: 1.8;
+    color: #444;
+    margin-bottom: 20px;
+}
+
+.manifesto-conclusion .highlight {
+    font-weight: 700;
+    color: var(--verde-escuro);
+    font-size: 1.4rem;
+    margin-top: 30px;
+    display: block;
+}
+
+/* Assinatura */
+.manifesto-signature {
+    margin-top: 40px;
+    font-family: var(--font-titulos);
+    color: #666;
+}
+.signature-text {
+    display: block;
+    font-style: italic;
+    font-size: 1.1rem;
+}
+.signature-name {
+    display: block;
+    font-weight: 700;
+    font-size: 1.3rem;
+    color: var(--verde-escuro);
+    margin-top: 5px;
+}
+
+.manifesto-cta-wrapper {
+    margin-top: 50px;
+}
+
+.btn-manifesto {
+    display: inline-block;
+    background-color: var(--cor-Yelo);
+    color: var(--verde-escuro);
+    font-family: var(--font-principal);
+    font-weight: 700;
+    font-size: 1.2rem;
+    padding: 18px 45px;
+    border-radius: 50px;
+    text-decoration: none;
+    box-shadow: 0 10px 30px rgba(27, 67, 50, 0.2);
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-manifesto:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(27, 67, 50, 0.3);
+    background-color: #fff7b3;
+}
+
+.btn-manifesto .arrow {
+    transition: transform 0.3s ease;
+}
+
+.btn-manifesto:hover .arrow {
+    transform: translateX(5px);
+}
+
+@keyframes scrollWheel {
+    0% { opacity: 1; top: 8px; }
+    100% { opacity: 0; top: 20px; }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .manifesto-hero h1 { font-size: 2.5rem; }
+    .manifesto-lead { font-size: 1.2rem; }
+    .manifesto-block h2 { font-size: 1.8rem; }
+    .manifesto-block p { font-size: 1.1rem; }
+    .manifesto-conclusion h3 { font-size: 2rem; }
+}

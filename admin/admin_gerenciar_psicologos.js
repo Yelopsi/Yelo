@@ -48,7 +48,11 @@ window.initializePage = function() {
             const isVip = psy.is_exempt === true;
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td data-label="Nome">${psy.nome}</td>
+                <td data-label="Nome">
+                    <a href="#" onclick="navigateToPage('admin_detalhes_psicologo.html?id=${psy.id}'); return false;" style="font-weight: 600; color: #1B4332; text-decoration: underline; cursor: pointer;">
+                        ${psy.nome}
+                    </a>
+                </td>
                 <td data-label="Email">${psy.email}</td>
                 <td data-label="Status"><span class="status status-${psy.status || 'inactive'}">${psy.status || 'inativo'}</span></td>
                 <td data-label="Plano">${psy.plano || 'Nenhum'}</td>
@@ -59,13 +63,14 @@ window.initializePage = function() {
                 </td>
                 <td data-label="Ações">
                     <button class="btn-tabela" onclick="alert('Editar ID: ${psy.id}')">Editar</button>
-                    <button class="btn-tabela btn-tabela-perigo" onclick="alert('Excluir ID: ${psy.id}')">Excluir</button>
+                    <button class="btn-tabela btn-tabela-perigo btn-delete-psy" data-id="${psy.id}" data-name="${psy.nome}">Excluir</button>
                 </td>
             `;
             tableBody.appendChild(row);
         });
 
         setupVipButtons();
+        setupDeleteButtons();
     }
 
     // Função para configurar os botões VIP
@@ -90,6 +95,48 @@ window.initializePage = function() {
                 });
             });
         });
+    }
+
+    // Função para configurar os botões de Excluir
+    function setupDeleteButtons() {
+        document.querySelectorAll('.btn-delete-psy').forEach(button => {
+            // Remove listener antigo para evitar duplicação
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
+
+            newButton.addEventListener('click', function() {
+                const id = this.dataset.id;
+                const name = this.dataset.name;
+
+                // Usa o modal global definido em admin.js
+                window.openConfirmationModal(
+                    'Excluir Profissional',
+                    `Tem certeza que deseja excluir o psicólogo <strong>${name}</strong>?<br><br>Esta ação removerá o perfil e todos os dados associados permanentemente.`,
+                    () => deletePsychologist(id)
+                );
+            });
+        });
+    }
+
+    // Função para chamar a API de exclusão
+    async function deletePsychologist(id) {
+        try {
+            const token = localStorage.getItem('Yelo_token');
+            const response = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                window.showToast('Psicólogo excluído com sucesso.', 'success');
+                fetchAndRenderPsychologists(); // Recarrega a tabela
+            } else {
+                const err = await response.json();
+                throw new Error(err.error || 'Erro ao excluir.');
+            }
+        } catch (error) {
+            window.showToast(error.message, 'error');
+        }
     }
 
     // Função de paginação (simplificada)

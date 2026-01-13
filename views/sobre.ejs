@@ -1,66 +1,108 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <title>Sobre Nós - Yelo</title>
+    <title>Manifesto Yelo | O Ecossistema para Psicólogos Clínicos</title>
+    <meta name="description" content="A Yelo é mais que um marketplace. Somos um ecossistema de sustentação da carreira clínica, oferecendo fluxo de pacientes, supervisão e uma comunidade segura.">
     <%- include('partials/head') %>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Mulish:wght@400;500;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --fonte-titulo: 'Lora', serif;
-            --fonte-corpo: 'Mulish', sans-serif;
-        }
-        body {
-            font-family: var(--fonte-corpo);
-        }
-        h1, h2, h3, h4, h5, h6 {
-            font-family: var(--fonte-titulo);
-            font-weight: 600;
-        }
-    </style>
 </head>
 <body class="pagina-com-conteudo-atras">
 
     <%- include('partials/header') %>
 
     <main>
-        <section class="sobre-hero ruido">
-            <div class="container-sobre">
-                <h1>Conectando pessoas através da empatia e tecnologia.</h1>
-                <p class="subtitulo-secao">A Yelo nasceu para tornar o acesso à saúde mental mais humano, assertivo e simples.</p>
+        <!-- HERO MANIFESTO -->
+        <section class="manifesto-hero">
+            <div class="container-manifesto">
+                <br>
+                <h1>Não somos apenas uma plataforma.<br>Somos um ecossistema.</h1>
+                <p class="manifesto-lead">O mercado promete "soluções completas" que, no fundo, são apenas listas de profissionais. A Yelo existe para sustentar a prática clínica real, não apenas para conectar pontas.</p>
+            </div>
+
+            <div class="scroll-indicator">
+                <span class="mouse">
+                    <span class="wheel"></span>
+                </span>
             </div>
             
-            <div class="wave-divider-bottom">
-                <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-                    <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z" class="shape-fill"></path>
+            <div class="wave-divider-bottom" style="position: absolute; bottom: -1px; left: 0; width: 100%; line-height: 0;">
+                <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" style="display: block; width: 100%; height: 60px; transform: scaleY(-1);">
+                    <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" style="fill:#fdfaf6;"></path>
                 </svg>
             </div>
         </section>
 
-        <section class="secao-conteudo-pagina">
-            <div class="container-sobre">
-                <div class="texto-missao">
-                    <h2>Nossa Missão</h2>
-                    <p>Acreditamos que a terapia é um direito, não um privilégio. Nossa missão é quebrar as barreiras que impedem as pessoas de encontrar ajuda: o custo, a dúvida sobre qual profissional escolher e a complexidade do agendamento.</p>
+        <!-- CONTEÚDO DO MANIFESTO -->
+        <section class="manifesto-body-section">
+            <div class="container-manifesto">
+                
+                <div class="manifesto-block">
+                    <span class="block-number">01</span>
+                    <h2>Fluxo não é promessa.<br>É infraestrutura.</h2>
+                    <p>Você não precisa ser especialista em marketing. Nós cuidamos da infraestrutura para que os pacientes cheguem até você. Oferecemos previsibilidade e segurança para sua agenda, permitindo que você foque no que importa: o atendimento.</p>
                 </div>
 
-                <div class="valores-grid">
-                    <div class="layout-2-colunas">
-                        <div class="coluna-item">
-                            <h3>Ética em Primeiro Lugar</h3>
-                            <p>Todos os profissionais da Yelo são verificados junto ao CRP. Temos um compromisso inegociável com a ética, a ciência e a excelência no cuidado.</p>
-                        </div>
-                        <div class="coluna-item">
-                            <h3>Tecnologia com Alma</h3>
-                            <p>Usamos um algoritmo inteligente e empático para facilitar conexões, mas nunca esquecemos que, do outro lado da tela, existem duas pessoas construindo um vínculo.</p>
-                        </div>
+                <div class="manifesto-block">
+                    <span class="block-number">02</span>
+                    <h2>Filtro não é barreira.<br>É qualidade.</h2>
+                    <p>Nosso match protege sua prática. Filtramos curiosos e conectamos você a pacientes com real intenção de tratamento. Isso significa menos rotatividade, menos desgaste administrativo e vínculos terapêuticos mais fortes.</p>
+                </div>
+
+                <div class="manifesto-block">
+                    <span class="block-number">03</span>
+                    <h2>Sustentação não é extra.<br>É o núcleo.</h2>
+                    <p>A prática clínica solitária é insustentável. Por isso, supervisão, intervisão e workshops não são "bônus", são o oxigênio. Aqui, você tem suporte constante e nunca precisará se reinventar sozinho para se manter relevante.</p>
+                </div>
+
+                <div class="manifesto-block">
+                    <span class="block-number">04</span>
+                    <h2>Pertencimento não é networking.<br>É identidade.</h2>
+                    <p>O antídoto para o isolamento do consultório. Um espaço seguro onde sua clínica é levada a sério. Aqui, você troca, aprende e cresce entre pares que compartilham seus valores, fortalecendo sua identidade profissional.</p>
+                </div>
+
+                <div class="manifesto-conclusion">
+                    <h3>Isso não é um pacote de serviços.</h3>
+                    <p>Num ecossistema, as partes se reforçam. Por isso, a Yelo não é apenas uma assinatura, é o espaço onde você se forma, trabalha e pertence.</p>
+                    <p class="highlight">Construímos isso porque acreditamos que cuidar de quem cuida é a única forma de garantir saúde mental de verdade.</p>
+                    
+                    <div class="manifesto-signature">
+                        <span class="signature-text">Com carinho,</span>
+                        <span class="signature-name">Equipe Yelo</span>
+                    </div>
+
+                    <div class="manifesto-cta-wrapper">
+                        <a href="/psi_questionario.html" class="btn-manifesto">
+                            Fazer parte do Ecossistema <span class="arrow">→</span>
+                        </a>
                     </div>
                 </div>
+
             </div>
         </section>
     </main>
 
     <%- include('partials/footer') %>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.2 // Dispara quando 20% do elemento estiver visível
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target); // Para de observar após animar
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.manifesto-block').forEach(block => {
+                observer.observe(block);
+            });
+        });
+    </script>
 </body>
 </html>

@@ -17,9 +17,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Estado global para contar conversas não lidas
     window.psiUnreadConversations = new Set();
 
-    // --- BADGE DE NOTIFICAÇÃO (CSS INJETADO) ---
-    const badgeStyle = document.createElement('style');
-    badgeStyle.innerHTML = `
+    // --- ESTILOS GLOBAIS (BADGE + BLOQUEIO) ---
+    const globalStyles = document.createElement('style');
+    globalStyles.innerHTML = `
+        /* BADGE DA SIDEBAR */
         .sidebar-badge {
             background-color: #FFEE8C; /* Amarelo Yelo */
             color: #1B4332; /* Verde Yelo */
@@ -41,8 +42,76 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         .sidebar-badge.visible { display: flex; }
         .sidebar-nav li a { position: relative; }
+
+        /* MODO RESTRITO (SEM PLANO) - Substitui o antigo Lock Overlay */
+        .dashboard-main.restricted-mode button, 
+        .dashboard-main.restricted-mode input, 
+        .dashboard-main.restricted-mode textarea, 
+        .dashboard-main.restricted-mode select, 
+        .dashboard-main.restricted-mode a {
+            pointer-events: none !important;
+            opacity: 0.5 !important;
+            cursor: not-allowed !important;
+            filter: grayscale(100%);
+        }
+
+        /* Banner Flutuante de Restrição */
+        .restriction-floating-banner {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1B4332;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-size: 1rem;
+            animation: fadeInUp 0.5s ease-out;
+            width: max-content;
+            max-width: 90%;
+            border: 1px solid #FFEE8C;
+        }
+        
+        .restriction-floating-banner button {
+            background: #FFEE8C;
+            color: #1B4332;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 800;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: transform 0.2s;
+            pointer-events: auto !important; /* Garante clique */
+            opacity: 1 !important;
+            filter: none !important;
+        }
+        
+        .restriction-floating-banner button:hover {
+            transform: scale(1.05);
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translate(-50%, 20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+
+        /* ANIMAÇÃO PULSE (BOTÃO DESTAQUE) */
+        @keyframes pulse-green {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(27, 67, 50, 0.7); }
+            70% { transform: scale(1.03); box-shadow: 0 0 0 10px rgba(27, 67, 50, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(27, 67, 50, 0); }
+        }
+        .btn-pulse-effect {
+            animation: pulse-green 2s infinite;
+        }
     `;
-    document.head.appendChild(badgeStyle);
+    document.head.appendChild(globalStyles);
 
     // Função para controlar a badge no menu
     function updateSidebarBadge(pageName, show) {
@@ -246,6 +315,196 @@ document.addEventListener('DOMContentLoaded', function() {
         if(imgEl) imgEl.src = formatImageUrl(psychologistData.fotoUrl);
         const btnLink = document.getElementById('btn-view-public-profile');
         if(btnLink && psychologistData.slug) btnLink.href = `/${psychologistData.slug}`;
+
+        // --- NOVO: Renderiza as badges ---
+        if (psychologistData.badges) {
+            renderSidebarBadges(psychologistData.badges);
+        }
+    }
+
+    function renderSidebarBadges(badgesData) {
+        const container = document.getElementById('sidebar-badges-container');
+        if (!container || !badgesData) return;
+    
+        let html = '';
+        const badgeInfo = {
+            autentico: { emoji: '🛡️', title: 'Autêntico: Perfil 100% completo e verificado.' },
+            semeador: { emoji: '🌱', title: 'Semeador: Produz conteúdo e educa a audiência.' },
+            voz_ativa: { emoji: '💬', title: 'Voz Ativa: Acolhe e responde dúvidas na Comunidade.' },
+            pioneiro: { emoji: '🏅', title: 'Pioneiro: Um dos primeiros membros da Yelo.' }
+        };
+    
+        // Ordem de exibição preferencial
+        const badgeOrder = ['autentico', 'semeador', 'voz_ativa', 'pioneiro'];
+    
+        badgeOrder.forEach(key => {
+            const badgeValue = badgesData[key];
+            if (badgeValue) {
+                const info = badgeInfo[key];
+                let finalTitle = info.title;
+                let cssClass = `badge-${key}`;
+    
+                // Se for badge com nível (string), usa a cor do nível
+                if (typeof badgeValue === 'string') {
+                    const nivel = badgeValue; // bronze, prata, ouro
+                    const label = nivel.charAt(0).toUpperCase() + nivel.slice(1);
+                    finalTitle = `${info.title} (Nível ${label})`;
+                    cssClass = `badge-${nivel}`; // Usa a cor do nível (ex: badge-bronze)
+                }
+    
+                html += `
+                    <div class="badge-item ${cssClass}" title="${finalTitle}">
+                        <span class="badge-icon">${info.emoji}</span>
+                    </div>
+                `;
+            }
+        });
+    
+        container.innerHTML = html;
+    }
+
+    function updateGamificationWidgets(user, isOverview = false) {
+        if (!user) return;
+
+        const level = user.authority_level || 'nivel_iniciante';
+        const badges = user.badges || {};
+        const currentXP = user.xp || 0;
+
+        const LEVELS = [
+            { slug: 'nivel_iniciante',    min: 0,      label: 'Iniciante' },
+            { slug: 'nivel_verificado',   min: 500,    label: 'Verificado' },
+            { slug: 'nivel_ativo',        min: 1500,   label: 'Ativo' },
+            { slug: 'nivel_especialista', min: 5000,   label: 'Especialista' },
+            { slug: 'nivel_mentor',       min: 15000,  label: 'Mentor' }
+        ];
+
+        const currentLevelObj = LEVELS.find(l => l.slug === level) || LEVELS[0];
+        const currentIdx = LEVELS.indexOf(currentLevelObj);
+        const nextLevelObj = LEVELS[currentIdx + 1];
+        
+        const levelDisplay = document.getElementById('current-level-display');
+        if(levelDisplay) levelDisplay.textContent = currentLevelObj.label;
+        
+        const xpBarFill = document.getElementById('xp-bar-fill');
+        const xpProgressText = document.getElementById('xp-progress-text');
+        const xpCurrentLabel = document.getElementById('xp-current-level-label');
+        const xpNextLabel = document.getElementById('xp-next-level-label');
+
+        if (nextLevelObj) {
+            const xpForLevel = currentXP - currentLevelObj.min;
+            const xpTotalForNext = nextLevelObj.min - currentLevelObj.min;
+            const progressPercent = Math.min(100, (xpForLevel / xpTotalForNext) * 100);
+            
+            if(xpBarFill) xpBarFill.style.width = `${progressPercent}%`;
+            if(xpProgressText) xpProgressText.textContent = `${currentXP} / ${nextLevelObj.min} XP`;
+            if(xpCurrentLabel) xpCurrentLabel.textContent = `Nível ${currentIdx + 1}`;
+            if(xpNextLabel) xpNextLabel.textContent = `Nível ${currentIdx + 2}`;
+        } else { // Nível Máximo
+            if(xpBarFill) xpBarFill.style.width = '100%';
+            if(xpProgressText) xpProgressText.textContent = `${currentXP} XP`;
+            if(xpCurrentLabel) xpCurrentLabel.textContent = `Nível ${currentIdx + 1}`;
+            if(xpNextLabel) xpNextLabel.textContent = 'Máximo';
+        }
+
+        const nextLevelInfo = document.getElementById('next-level-info');
+        const nextLevelText = document.getElementById('next-level-text');
+        
+        if (nextLevelInfo && nextLevelText) {
+            let msg = "";
+            if (nextLevelObj) {
+                const xpFaltante = nextLevelObj.min - currentXP;
+                
+                if (isOverview) {
+                    // Versão Resumida (Visão Geral)
+                    msg = `Faltam <strong>${xpFaltante} XP</strong> para ${nextLevelObj.label}`;
+                } else {
+                    // Versão Completa (Jornada)
+                    msg = `Faltam <strong>${xpFaltante} XP</strong> para o nível <strong>${nextLevelObj.label}</strong>.`;
+                    if (level === 'nivel_iniciante') {
+                        msg += "<br>Dica: Complete seu perfil para ganhar 500 XP de uma vez!";
+                    } else {
+                        msg += "<br>Dica: Escreva um artigo (+50 XP) ou responda dúvidas (+20 XP).";
+                    }
+                }
+            } else {
+                msg = "Parabéns! Você atingiu o nível máximo de autoridade na Yelo. Mantenha seu status com conteúdos de qualidade.";
+                nextLevelInfo.style.background = "#FFFDE7";
+                nextLevelInfo.style.borderColor = "#FDD835";
+                nextLevelInfo.style.color = "#F57F17";
+            }
+            nextLevelText.innerHTML = msg;
+        }
+
+        const updateBadgeCard = (elementId, level, progressData) => {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            const statusEl = el.querySelector('.badge-status');
+            const progressContainer = el.querySelector('.badge-progress-container');
+            const progressBar = el.querySelector('.badge-progress-bar');
+            const progressText = el.querySelector('.badge-progress-text');
+            el.classList.remove('unlocked', 'locked', 'bronze', 'prata', 'ouro', 'unico');
+            if (level) {
+                el.classList.add('unlocked', typeof level === 'string' ? level : 'unico');
+                if(statusEl) statusEl.textContent = typeof level === 'string' ? `${level.charAt(0).toUpperCase() + level.slice(1)}` : "Conquistado";
+            } else {
+                el.classList.add('locked');
+                if(statusEl) statusEl.textContent = "Bloqueado";
+            }
+            if (progressContainer && progressData) {
+                progressContainer.style.display = 'block';
+                const percent = Math.min(100, (progressData.current / progressData.next) * 100);
+                if(progressBar) progressBar.style.width = `${percent}%`;
+                if(progressText) progressText.textContent = progressData.tier === 'max' ? 'Nível Máximo!' : `${progressData.current}/${progressData.next} para ${progressData.tier}`;
+            } else if (progressContainer) {
+                progressContainer.style.display = 'none';
+            }
+        };
+
+        const semeadorProg = badges.semeador_progress || { current: 0, next: 1, tier: 'Bronze' };
+        updateBadgeCard('badge-semeador', badges.semeador, semeadorProg);
+        const vozProg = badges.voz_ativa_progress || { current: 0, next: 10, tier: 'Bronze' };
+        updateBadgeCard('badge-voz', badges.voz_ativa, vozProg);
+        const autenticoProg = badges.autentico ? { current: 1, next: 1, tier: 'max' } : { current: 0, next: 1, tier: 'Conquistar' };
+        updateBadgeCard('badge-autentico', badges.autentico, autenticoProg);
+        const pioneiroProg = badges.pioneiro ? { current: 1, next: 1, tier: 'max' } : { current: 0, next: 1, tier: 'Conquistar' };
+        updateBadgeCard('badge-pioneiro', badges.pioneiro, pioneiroProg);
+    }
+
+    // --- FUNÇÃO DE BLOQUEIO GERAL (NOVA) ---
+    function verificarBloqueioGeral(url) {
+        if (!psychologistData) return;
+
+        // Páginas permitidas mesmo sem plano (para o usuário poder pagar)
+        const paginasPermitidas = ['psi_assinatura.html']; 
+
+        // Verifica se tem plano válido (se plano for null/vazio, considera inativo)
+        const temPlano = psychologistData.plano && psychologistData.plano.trim().length > 0;
+        
+        const mainEl = document.querySelector('.dashboard-main');
+        if (!mainEl) return;
+        
+        // 1. Limpa bloqueios anteriores (para quando navegar para página permitida)
+        mainEl.classList.remove('blocked-view');
+        mainEl.classList.remove('restricted-mode');
+        
+        const existingOverlay = document.querySelector('.dashboard-lock-overlay');
+        if (existingOverlay) existingOverlay.remove();
+        
+        const existingBanner = document.querySelector('.restriction-floating-banner');
+        if (existingBanner) existingBanner.remove();
+
+        // 2. Aplica bloqueio se NÃO tem plano e NÃO está na página de assinatura
+        if (!temPlano && !paginasPermitidas.includes(url)) {
+            mainEl.classList.add('restricted-mode');
+            
+            const banner = document.createElement('div');
+            banner.className = 'restriction-floating-banner';
+            banner.innerHTML = `
+                <span>🔒 Modo de visualização. Ative seu plano para interagir.</span>
+                <button onclick="document.querySelector('a[data-page=\\'psi_assinatura.html\\']').click()">Ver Planos</button>
+            `;
+            document.body.appendChild(banner);
+        }
     }
 
     function loadPage(url) {
@@ -293,7 +552,14 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(url).then(r => r.ok ? r.text() : Promise.reject(url))
             .then(html => {
                 mainContent.innerHTML = html;
-                if (url.includes('meu_perfil')) inicializarLogicaDoPerfil();
+                
+                // --- VERIFICAÇÃO DE BLOQUEIO ---
+                verificarBloqueioGeral(url);
+                
+                if (url.includes('jornada')) {
+                    if (psychologistData) updateGamificationWidgets(psychologistData);
+                }
+                else if (url.includes('meu_perfil')) inicializarLogicaDoPerfil();
                 else if (url.includes('visao_geral')) inicializarVisaoGeral();
                 else if (url.includes('assinatura')) inicializarAssinatura();
                 else if (url.includes('comunidade')) inicializarComunidade(dataPromise); // Passa a promessa
@@ -512,7 +778,16 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 // É UM OUTRO PLANO (Upgrade ou Downgrade)
                 // Se o usuário não tem plano nenhum, mostramos "Testar Grátis"
-                btn.textContent = temPlano ? "Mudar para este" : "Garantir 50% OFF (3 Meses)";
+                if (!temPlano) {
+                    btn.innerHTML = "ASSINAR AGORA";
+                    btn.classList.add('btn-upgrade');
+                    btn.classList.add('btn-pulse-effect');
+                } else {
+                    btn.textContent = "Mudar para este";
+                    btn.classList.remove('btn-upgrade');
+                    btn.classList.remove('btn-pulse-effect');
+                }
+                
                 btn.disabled = false;
                 btn.onclick = (e) => {
                     e.preventDefault();
@@ -653,6 +928,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const kpiGrid = document.querySelector('.kpi-grid');
         const btnRefresh = document.getElementById('btn-refresh-kpis');
 
+        // Variável para guardar a instância do gráfico e não duplicar
+        let xpChartInstance = null;
+
         async function fetchAndRenderKPIs(period = 'last30days') {
             const cards = document.querySelectorAll('.kpi-grid .kpi-card');
             
@@ -704,6 +982,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         elDemandas.innerHTML = '<div style="font-size: 0.9rem; color: #999;">Ainda não há dados suficientes para este período.</div>';
                     }
                 }
+
+                // --- RENDERIZA GRÁFICO DE XP ---
+                if (stats.xpHistory) {
+                    renderXPChart(stats.xpHistory);
+                }
+
             } catch (error) {
                 console.error("Erro ao buscar KPIs:", error);
                 showToast('Não foi possível atualizar as métricas.', 'error');
@@ -717,6 +1001,76 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 });
             }
+        }
+
+        function renderXPChart(data) {
+            const ctx = document.getElementById('xpChart');
+            if (!ctx) return;
+            
+            if (xpChartInstance) {
+                xpChartInstance.destroy();
+            }
+
+            // Prepara dados (se vazio, mostra vazio)
+            const labels = data.map(d => {
+                const parts = d.date.split('-');
+                return `${parts[2]}/${parts[1]}`; // DD/MM
+            });
+            const points = data.map(d => parseInt(d.points));
+
+            xpChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'XP',
+                        data: points,
+                        borderColor: '#1B4332',
+                        backgroundColor: (context) => {
+                            const ctx = context.chart.ctx;
+                            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                            gradient.addColorStop(0, 'rgba(27, 67, 50, 0.2)');
+                            gradient.addColorStop(1, 'rgba(27, 67, 50, 0)');
+                            return gradient;
+                        },
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#1B4332',
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1B4332',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            callbacks: {
+                                label: function(context) {
+                                    return `+${context.parsed.y} XP`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { borderDash: [5, 5], color: '#f0f0f0' },
+                            ticks: { font: { family: 'Mulish' } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Mulish' } }
+                        }
+                    }
+                }
+            });
         }
 
         // Adiciona o listener para o filtro
@@ -748,6 +1102,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Carga inicial dos KPIs
         fetchAndRenderKPIs('last30days');
+
+        // NOVO: Renderiza o widget de gamificação
+        if (psychologistData) {
+            updateGamificationWidgets(psychologistData, true);
+        }
     }
 
     // --- FUNÇÕES AUXILIARES DE BLOQUEIO (FEATURE GATING) ---
@@ -865,13 +1224,13 @@ document.addEventListener('DOMContentLoaded', function() {
             // Nota: O banco pode retornar 'temas_atuacao' ou 'temas', verificamos ambos
             updateMultiselect('temas_atuacao_multiselect', psychologistData.temas_atuacao || psychologistData.temas || []);
             updateMultiselect('abordagens_tecnicas_multiselect', psychologistData.abordagens_tecnicas || psychologistData.abordagens || []);
-            updateMultiselect('genero_identidade_multiselect', psychologistData.genero ? [psychologistData.genero] : []);
+            updateMultiselect('genero_identidade_multiselect', psychologistData.genero_identidade ? [psychologistData.genero_identidade] : []);
             // ADICIONADO: Carrega os dados dos novos campos
             updateMultiselect('publico_alvo_multiselect', psychologistData.publico_alvo || []);
             updateMultiselect('estilo_terapia_multiselect', psychologistData.estilo_terapia || []);
             updateMultiselect('praticas_inclusivas_multiselect', psychologistData.praticas_inclusivas || []);
 
-            updateMultiselect('disponibilidade_periodo_multiselect', psychologistData.disponibilidade || []);
+            updateMultiselect('disponibilidade_periodo_multiselect', psychologistData.disponibilidade_periodo || []);
 
             // 5. CORREÇÃO DA MODALIDADE (Online/Presencial)
             let modData = psychologistData.modalidade || [];
@@ -931,8 +1290,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // --- MAPEAMENTO DE DADOS ---
                 data.temas_atuacao = getMultiselectValues('temas_atuacao_multiselect');
                 data.abordagens_tecnicas = getMultiselectValues('abordagens_tecnicas_multiselect');
-                data.modalidade = getMultiselectValues('modalidade_atendimento_multiselect');
-                data.disponibilidade = getMultiselectValues('disponibilidade_periodo_multiselect');
+                data.modalidade = getMultiselectValues('modalidade_atendimento_multiselect'); // Mantido
+                data.disponibilidade_periodo = getMultiselectValues('disponibilidade_periodo_multiselect'); // CORRIGIDO: Nome do campo padronizado
                 // ADICIONADO: Coleta os valores dos novos campos para salvar
                 data.publico_alvo = getMultiselectValues('publico_alvo_multiselect');
                 data.estilo_terapia = getMultiselectValues('estilo_terapia_multiselect');
@@ -940,7 +1299,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
                 const generoArr = getMultiselectValues('genero_identidade_multiselect');
-                data.genero = generoArr.length > 0 ? generoArr[0] : '';
+                data.genero_identidade = generoArr.length > 0 ? generoArr[0] : '';
 
                 if (data.valor_sessao_numero) {
                     data.valor_sessao_numero = parseFloat(data.valor_sessao_numero.toString().replace(',', '.'));
@@ -1799,6 +2158,162 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // --- TOUR GUIADO (ONBOARDING) ---
+    function carregarTourGuiado() {
+        // 1. Verifica Persistência: Se já viu, não carrega nada
+        if (localStorage.getItem('yelo_tour_v1_seen')) return;
+
+        // 2. Verifica Plano: Só mostra se tiver plano ativo
+        if (!psychologistData || !psychologistData.plano) return;
+
+        // Injeta CSS do Driver.js
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css';
+        document.head.appendChild(link);
+
+        // --- CSS PERSONALIZADO (TEMA YELO) ---
+        const customStyle = document.createElement('style');
+        customStyle.innerHTML = `
+            .driver-popover.yelo-theme {
+                background-color: #1B4332;
+                color: #ffffff;
+                border-radius: 16px;
+                padding: 20px;
+                box-shadow: 0 15px 40px rgba(27, 67, 50, 0.4);
+                border: 1px solid #FFEE8C;
+            }
+            .driver-popover.yelo-theme .driver-popover-title {
+                font-family: 'New Kansas', serif;
+                font-size: 1.4rem;
+                color: #FFEE8C;
+                margin-bottom: 10px;
+                font-weight: 600;
+            }
+            .driver-popover.yelo-theme .driver-popover-description {
+                color: #e0e0e0;
+                font-size: 1rem;
+                line-height: 1.6;
+                margin-bottom: 20px;
+            }
+            .driver-popover.yelo-theme button {
+                background-color: #FFEE8C;
+                color: #1B4332;
+                border-radius: 30px;
+                font-weight: 800;
+                border: none;
+                padding: 8px 18px;
+                font-size: 0.9rem;
+                transition: transform 0.2s, background-color 0.2s;
+                text-shadow: none;
+            }
+            .driver-popover.yelo-theme button:hover {
+                background-color: #fff;
+                transform: scale(1.05);
+            }
+            .driver-popover.yelo-theme .driver-popover-close-btn {
+                color: #FFEE8C;
+                opacity: 0.8;
+            }
+            .driver-popover.yelo-theme .driver-popover-close-btn:hover {
+                color: #fff;
+                opacity: 1;
+            }
+            .driver-popover.yelo-theme .driver-popover-footer {
+                margin-top: 0;
+            }
+            /* Destaque do elemento alvo */
+            .driver-active-element {
+                outline: 4px solid #FFEE8C !important;
+                outline-offset: 2px;
+            }
+        `;
+        document.head.appendChild(customStyle);
+
+        // Injeta JS do Driver.js
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js';
+        script.onload = () => iniciarTour();
+        document.body.appendChild(script);
+    }
+
+    function iniciarTour() {
+        const driver = window.driver.js.driver;
+        
+        const tour = driver({
+            showProgress: true,
+            animate: true,
+            allowClose: true, // Importante para Mobile
+            popoverClass: 'yelo-theme', // Aplica o tema personalizado
+            doneBtnText: 'Concluir',
+            nextBtnText: 'Próximo',
+            prevBtnText: 'Anterior',
+            progressText: '{{current}} de {{total}}',
+            steps: [
+                { 
+                    element: '.dashboard-sidebar', 
+                    popover: { 
+                        title: 'Menu de Navegação', 
+                        description: 'Aqui você acessa todas as ferramentas. Role o menu para ver mais opções disponíveis.', 
+                        side: 'right', 
+                        align: 'start' 
+                    },
+                    onHighlightStarted: (element) => {
+                        // Animação de scroll para mostrar que tem mais itens
+                        const nav = document.querySelector('.sidebar-nav');
+                        if(nav) {
+                            setTimeout(() => {
+                                nav.scrollTo({ top: 150, behavior: 'smooth' });
+                                setTimeout(() => {
+                                    nav.scrollTo({ top: 0, behavior: 'smooth' });
+                                }, 1000);
+                            }, 500);
+                        }
+                    }
+                },
+                {
+                    element: '#btn-view-public-profile',
+                    popover: {
+                        title: 'Seu Perfil Público',
+                        description: 'Este botão leva ao seu perfil visível para pacientes. Copie o link e divulgue nas suas redes sociais!',
+                        side: 'bottom'
+                    }
+                },
+                { 
+                    element: 'a[data-page="psi_meu_perfil.html"]', 
+                    popover: { 
+                        title: 'Edite seus Dados', 
+                        description: 'Mantenha sua foto, biografia e especialidades sempre atualizadas para melhorar seu ranqueamento.', 
+                        side: 'right' 
+                    } 
+                },
+                { 
+                    element: 'a[data-page="psi_comunidade.html"]', 
+                    popover: { 
+                        title: 'Comunidade', 
+                        description: 'Responda dúvidas de pacientes anonimamente para ganhar visibilidade e autoridade na plataforma.', 
+                        side: 'right' 
+                    } 
+                },
+                {
+                    element: '#btn-logout',
+                    popover: {
+                        title: 'Sair com Segurança',
+                        description: 'Quando terminar suas atividades, clique aqui para encerrar sua sessão.',
+                        side: 'top'
+                    }
+                }
+            ],
+            // Salva no LocalStorage ao terminar ou fechar
+            onDestroyStarted: () => {
+                localStorage.setItem('yelo_tour_v1_seen', 'true');
+                tour.destroy();
+            }
+        });
+
+        tour.drive();
+    }
+
     // INIT
     fetchPsychologistData().then(ok => {
         // Remove o loader global com fade-out
@@ -1835,8 +2350,71 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Inicia socket global para notificações
             loadGlobalSocketLib();
+
+            // Tenta iniciar o Tour (se cumprir os requisitos)
+            setTimeout(carregarTourGuiado, 1500); // Pequeno delay para garantir que a UI renderizou
+
+            // --- NOVO: INICIA A LÓGICA DE TOOLTIPS MOBILE ---
+            setupMobileBadgeTooltips();
         }
     });
+
+     // --- FUNÇÃO GLOBAL PARA TOOLTIPS DE BADGES NO MOBILE ---
+    function setupMobileBadgeTooltips() {
+        // Garante que o listener seja adicionado apenas uma vez
+        if (document.body.dataset.mobileTooltipsSetup) return;
+        document.body.dataset.mobileTooltipsSetup = 'true';
+
+        document.body.addEventListener('click', function(e) {
+            const existingTooltip = document.querySelector('.mobile-badge-tooltip');
+            
+            // Se clicou em um alvo de badge
+            const target = e.target.closest('.badge-card, .badge-item');
+
+            // Primeiro, remove qualquer tooltip existente para limpar a tela
+            if (existingTooltip) {
+                existingTooltip.remove();
+            }
+
+            // Se não clicou em um alvo de badge, ou se estamos no desktop, apenas saia
+            if (!target || window.innerWidth > 992) {
+                return;
+            }
+            
+            // Se clicou em um alvo, previne outras ações e mostra o novo tooltip
+            e.preventDefault();
+            e.stopPropagation();
+
+            const title = target.getAttribute('title');
+            if (!title) return;
+
+            // Cria o novo tooltip
+            const tooltip = document.createElement('div');
+            tooltip.className = 'mobile-badge-tooltip';
+            tooltip.textContent = title;
+            document.body.appendChild(tooltip);
+
+            // Posiciona o tooltip
+            const targetRect = target.getBoundingClientRect();
+            const tooltipRect = tooltip.getBoundingClientRect();
+
+            let top = targetRect.bottom + 10;
+            tooltip.classList.add('bottom');
+
+            if ((top + tooltipRect.height) > window.innerHeight - 20) {
+                top = targetRect.top - tooltipRect.height - 10;
+                tooltip.classList.remove('bottom');
+                tooltip.classList.add('top');
+            }
+            
+            let left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
+            if (left < 10) left = 10;
+            if (left + tooltipRect.width > window.innerWidth - 10) left = window.innerWidth - tooltipRect.width - 10;
+
+            tooltip.style.top = `${top}px`;
+            tooltip.style.left = `${left}px`;
+        });
+    }
 
 // --- FUNÇÕES DOS CAMPOS MULTISELECT (V3 - ESTILO BULLETS & TOGGLE) ---
 
@@ -2127,6 +2705,45 @@ function inicializarBlog(preFetchedData = null) {
         return;
     }
 
+    // --- NOVA FUNÇÃO: CARREGAR SUGESTÕES DE TEMAS ---
+    async function carregarSugestoes() {
+        const container = document.getElementById('lista-sugestoes-temas');
+        if (!container) return;
+
+        try {
+            // Usa o endpoint de stats, que já tem os topDemands
+            const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/stats?period=last90days`);
+            if (res.ok) {
+                const stats = await res.json();
+                if (stats.topDemands && stats.topDemands.length > 0) {
+                    container.innerHTML = ''; // Limpa os skeletons
+                    stats.topDemands.forEach(tema => {
+                        const div = document.createElement('div');
+                        div.className = 'sugestao-item';
+                        div.textContent = `✍️ ${tema.name}`;
+                        div.title = `Clique para usar "${tema.name}" como título do seu novo artigo`;
+                        
+                        // Ação de clique: preenche o formulário de novo artigo
+                        div.onclick = () => {
+                            limparFormulario();
+                            document.getElementById('blog-titulo').value = tema.name;
+                            document.getElementById('form-titulo-acao').textContent = "Novo Artigo";
+                            toggleView(true);
+                        };
+                        container.appendChild(div);
+                    });
+                } else {
+                    container.innerHTML = '<p style="font-size:0.9rem; color:#92400e; grid-column: 1 / -1; text-align: center;">Nenhuma tendência encontrada. Escreva sobre o que você domina!</p>';
+                }
+            } else {
+                throw new Error("Falha ao buscar dados de tendências.");
+            }
+        } catch (error) {
+            console.error("Erro ao buscar sugestões de temas:", error);
+            container.innerHTML = '<p style="font-size:0.9rem; color:#92400e; grid-column: 1 / -1; text-align: center;">Não foi possível carregar as sugestões.</p>';
+        }
+    }
+
     // --- Navegação ---
     const toggleView = (showForm) => {
         if (showForm) {
@@ -2404,6 +3021,7 @@ function inicializarBlog(preFetchedData = null) {
 
     // Inicializa carregando a lista assim que abre a tela
     carregarArtigos(1, false);
+    carregarSugestoes();
 
     // Evento do botão Carregar Mais
     if (loadMoreBtn) {
@@ -2442,6 +3060,68 @@ async function inicializarForum(preFetchedData = null) {
     const EDIT_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-pencil"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path><path d="M15 5l4 4"></path><path d="M5 15l4 4"></path><path d="M3.5 16.5l4 4"></path></svg>`;
 
     // --- Funções Auxiliares ---
+    function setupAutoResizeTextarea(textarea) {
+        if (!textarea) return;
+        
+        const autoResize = () => {
+            textarea.style.height = 'auto'; // Reseta a altura para calcular o novo scrollHeight
+            textarea.style.height = textarea.scrollHeight + 'px'; // Define a nova altura
+        };
+
+        textarea.addEventListener('input', autoResize);
+        autoResize(); // Ajusta o tamanho inicial caso haja texto pré-existente
+    }
+
+    function renderInlineAuthorBadges(badges, level) {
+        let badgesData = badges;
+        if (typeof badges === 'string') {
+            try { badgesData = JSON.parse(badges); } catch(e) { badgesData = {}; }
+        }
+
+        if (!badgesData && !level) return '';
+
+        let badgesHtml = '';
+        let levelHtml = '';
+        
+        // 1. NÍVEL DE AUTORIDADE (TEXTO)
+        const levelMap = {
+            'nivel_iniciante': 'Iniciante',
+            'nivel_verificado': 'Verificado',
+            'nivel_ativo': 'Ativo',
+            'nivel_especialista': 'Especialista',
+            'nivel_mentor': 'Mentor'
+        };
+
+        if (level && levelMap[level] && level !== 'nivel_iniciante') {
+            levelHtml = `<span class="author-level-badge">${levelMap[level]}</span>`;
+        }
+
+        // 2. BADGES DE CONQUISTA (ÍCONES)
+        const badgeIconMap = {
+            autentico: { icon: '🛡️', title: 'Autêntico' },
+            semeador:  { icon: '🌱', title: 'Semeador' },
+            voz_ativa: { icon: '💬', title: 'Voz Ativa' },
+            pioneiro:  { icon: '🏅', title: 'Pioneiro' }
+        };
+
+        const badgeOrder = ['autentico', 'semeador', 'voz_ativa', 'pioneiro'];
+
+        if (badgesData) {
+            badgeOrder.forEach(key => {
+                const badgeValue = badgesData[key];
+                if (badgeValue) {
+                    let title = badgeIconMap[key].title;
+                    if (typeof badgeValue === 'string') {
+                        title += ` (${badgeValue.charAt(0).toUpperCase() + badgeValue.slice(1)})`;
+                    }
+                    badgesHtml += `<span class="author-badge-icon" title="${title}">${badgeIconMap[key].icon}</span>`;
+                }
+            });
+        }
+        // Retorna os ícones das badges, e depois o texto do nível
+        return `${badgesHtml} ${levelHtml}`;
+    }
+
     const sanitizeHTML = (str) => {
         const temp = document.createElement('div');
         temp.textContent = str;
@@ -2477,9 +3157,16 @@ async function inicializarForum(preFetchedData = null) {
         const authorName = post.isAnonymous ? 'Anônimo' : post.authorName;
         
         // Foto do autor
-        const authorImg = `<img src="${formatImageUrl(post.authorPhoto)}" class="forum-avatar-small" onerror="this.onerror=null;this.src='https://placehold.co/70x70/1B4332/FFFFFF?text=Psi';">`;
-        card.querySelector('.post-author').innerHTML = `${authorImg} por ${authorName}`;
+        // CORREÇÃO: Define o avatar e o nome em elementos separados para evitar quebra
+        const authorAvatarEl = card.querySelector('.post-author-avatar');
+        if (authorAvatarEl) authorAvatarEl.src = formatImageUrl(post.authorPhoto);
+        card.querySelector('.post-author').textContent = `por ${authorName}`;
         if (post.isAnonymous) card.querySelector('.post-author').style.fontStyle = 'italic';
+
+        const badgesContainer = card.querySelector('.author-badges');
+        if (badgesContainer) {
+            badgesContainer.innerHTML = renderInlineAuthorBadges(post.authorBadges, post.authorLevel);
+        }
 
         card.querySelector('.post-time').textContent = `há ${timeSince(post.createdAt)}`;
         card.querySelector('.post-title').textContent = post.title;
@@ -2499,37 +3186,41 @@ async function inicializarForum(preFetchedData = null) {
         if (post.supportedByMe) supportBtn.classList.add('supported');
         supportBtn.onclick = () => toggleSupport(post.id, supportBtn);
 
-        // Ocultar botão de denunciar se for meu post
-        if (post.isMine) {
-            card.querySelector('.report-btn').style.display = 'none';
-        }
-        
-        card.querySelector('.report-btn').onclick = () => reportContent('post', post.id);
+        // Configuração de botões de ação (Editar/Excluir vs Denunciar)
+        const reportBtn = card.querySelector('.report-btn');
+        const editBtn = card.querySelector('.edit-btn');
+        const deleteBtn = card.querySelector('.delete-btn');
 
-        // Botão de Editar (Se for dono do post)
         if (post.isMine) {
-            const actionsDiv = card.querySelector('.post-actions-right');
-            const editBtn = document.createElement('button');
-            editBtn.className = 'action-icon-btn';
-            editBtn.style.cssText = "background:none; border:none; cursor:pointer; font-size:1.1rem; color: #999;";
-            editBtn.innerHTML = EDIT_ICON_SVG;
-            editBtn.title = 'Editar';
-            editBtn.onclick = (e) => { e.stopPropagation(); openEditPostModal(post); };
-            actionsDiv.prepend(editBtn);
-        }
-
-        // Botão de Excluir (Se for dono do post)
-        if (post.isMine) {
-            const deleteBtn = card.querySelector('.delete-btn');
+            // É dono: Mostra Editar/Excluir, Esconde Denunciar
+            if (reportBtn) reportBtn.style.display = 'none';
+            
+            if (editBtn) {
+                editBtn.classList.remove('hidden');
+                editBtn.onclick = (e) => { 
+                    e.stopPropagation(); 
+                    openEditPostModal(post); 
+                };
+            }
+            
             if (deleteBtn) {
-                deleteBtn.style.color = "#999"; // Ícone cinza
                 deleteBtn.classList.remove('hidden');
-                deleteBtn.innerHTML = DELETE_ICON_SVG; // Atualiza ícone no Feed
                 deleteBtn.onclick = (e) => {
                     e.stopPropagation();
                     deletePost(post.id);
                 };
             }
+        } else {
+            // Não é dono: Mostra Denunciar, Esconde Editar/Excluir
+            if (reportBtn) {
+                reportBtn.style.display = 'inline-block';
+                reportBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    reportContent('post', post.id);
+                };
+            }
+            if (editBtn) editBtn.classList.add('hidden');
+            if (deleteBtn) deleteBtn.classList.add('hidden');
         }
 
         postsContainer.appendChild(card);
@@ -2554,9 +3245,16 @@ async function inicializarForum(preFetchedData = null) {
             postEl.querySelector('.full-post-title').textContent = post.title;
             postEl.querySelector('.full-post-category').textContent = post.category;
             
-            const authorImg = `<img src="${formatImageUrl(post.authorPhoto)}" class="forum-avatar-small" onerror="this.onerror=null;this.src='https://placehold.co/70x70/1B4332/FFFFFF?text=Psi';">`;
-            postEl.querySelector('.full-post-author').innerHTML = `${authorImg} ${post.isAnonymous ? 'Anônimo' : post.authorName}`;
+            // CORREÇÃO: Define o avatar e o nome em elementos separados
+            const authorAvatarEl = postEl.querySelector('.full-post-avatar');
+            if (authorAvatarEl) authorAvatarEl.src = formatImageUrl(post.authorPhoto);
+            postEl.querySelector('.full-post-author').textContent = post.isAnonymous ? 'Anônimo' : post.authorName;
             
+            const badgesContainer = postEl.querySelector('.author-badges-full');
+            if (badgesContainer) {
+                badgesContainer.innerHTML = renderInlineAuthorBadges(post.authorBadges, post.authorLevel);
+            }
+
             postEl.querySelector('.full-post-content').textContent = post.content; // O conteúdo já vem sanitizado do backend
             postEl.querySelector('.post-votes-count').textContent = post.votes;
 
@@ -2573,49 +3271,40 @@ async function inicializarForum(preFetchedData = null) {
             if (post.supportedByMe) supportBtn.classList.add('supported');
             supportBtn.onclick = () => toggleSupport(post.id, supportBtn);
             
-            // Botão de Editar (Visualização Completa)
-            if (post.isMine) {
-                const actionsDiv = postEl.querySelector('.full-post-actions');
-                const editBtn = document.createElement('button');
-                editBtn.className = 'action-icon-btn';
-                editBtn.style.cssText = "background:none; border:none; cursor:pointer; font-size:1.2rem; color: #999;";
-                editBtn.innerHTML = EDIT_ICON_SVG;
-                editBtn.title = 'Editar Post';
-                editBtn.onclick = () => openEditPostModal(post);
-                
-                // Insere antes do botão de excluir (se existir) ou do reportar
-                const deleteBtnFull = postEl.querySelector('.delete-btn-full');
-                if (deleteBtnFull) {
-                    actionsDiv.insertBefore(editBtn, deleteBtnFull);
-                } else {
-                    actionsDiv.appendChild(editBtn);
-                }
-            }
+            // Configuração de botões de ação (Visualização Completa)
+            const reportBtnFull = postEl.querySelector('.report-btn');
+            const editBtnFull = postEl.querySelector('.edit-btn-full');
+            const deleteBtnFull = postEl.querySelector('.delete-btn-full');
 
-            // Botão de Excluir (Visualização Completa)
             if (post.isMine) {
-                const deleteBtnFull = postEl.querySelector('.delete-btn-full');
+                if (reportBtnFull) reportBtnFull.style.display = 'none';
+                
+                if (editBtnFull) {
+                    editBtnFull.classList.remove('hidden');
+                    editBtnFull.onclick = () => openEditPostModal(post);
+                }
+                
                 if (deleteBtnFull) {
                     deleteBtnFull.classList.remove('hidden');
-                    // Transforma em ícone conforme solicitado
-                    deleteBtnFull.innerHTML = DELETE_ICON_SVG;
-                    deleteBtnFull.style.color = "#999"; // Ícone cinza
-                    deleteBtnFull.title = 'Excluir Post';
-                    deleteBtnFull.style.border = 'none';
-                    deleteBtnFull.style.fontSize = '1.2rem';
-                    deleteBtnFull.style.padding = '0 10px';
                     deleteBtnFull.onclick = () => deletePost(post.id, true);
                 }
+            } else {
+                if (reportBtnFull) {
+                    reportBtnFull.style.display = 'inline-block';
+                    reportBtnFull.onclick = () => reportContent('post', post.id);
+                }
+                if (editBtnFull) editBtnFull.classList.add('hidden');
+                if (deleteBtnFull) deleteBtnFull.classList.add('hidden');
             }
-
-            const reportBtnFull = postEl.querySelector('.report-btn');
-            if (post.isMine) {
-                reportBtnFull.style.display = 'none';
-            }
-            reportBtnFull.onclick = () => reportContent('post', post.id);
 
             // Formulário de comentário
             postEl.querySelector('#comment-form').onsubmit = handleCommentSubmit;
+
+            // --- NOVO: Aplica auto-resize no textarea principal ---
+            const mainCommentTextarea = postEl.querySelector('#comment-content');
+            if (mainCommentTextarea) {
+                setupAutoResizeTextarea(mainCommentTextarea);
+            }
 
             // Renderizar comentários
             // Configura o botão "Mostrar mais comentários"
@@ -2743,10 +3432,18 @@ async function inicializarForum(preFetchedData = null) {
         commentEl.dataset.commentId = comment.id; // Adiciona ID para permitir respostas
         const authorName = comment.isAnonymous ? 'Anônimo' : comment.authorName;
         
-        const authorImg = `<img src="${formatImageUrl(comment.authorPhoto)}" class="forum-avatar-small" onerror="this.onerror=null;this.src='https://placehold.co/70x70/1B4332/FFFFFF?text=Psi';">`;
-        commentEl.querySelector('.comment-author').innerHTML = `${authorImg} ${authorName}`;
+        // CORREÇÃO: Define o avatar e o nome em elementos separados
+        const authorAvatarEl = commentEl.querySelector('.comment-avatar');
+        if (authorAvatarEl) authorAvatarEl.src = formatImageUrl(comment.authorPhoto);
+        commentEl.querySelector('.comment-author').textContent = authorName;
         
         if (comment.isAnonymous) commentEl.querySelector('.comment-author').style.fontStyle = 'italic';
+        
+        const badgesContainer = commentEl.querySelector('.author-badges');
+        if (badgesContainer) {
+            badgesContainer.innerHTML = renderInlineAuthorBadges(comment.authorBadges, comment.authorLevel);
+        }
+
         commentEl.querySelector('.comment-time').textContent = `• há ${timeSince(comment.createdAt)}`;
         commentEl.querySelector('.comment-body').textContent = comment.content;
         
@@ -2798,27 +3495,71 @@ async function inicializarForum(preFetchedData = null) {
         if (comment.replies && comment.replies.length > 0) {
             const repliesContainer = commentEl.querySelector('.comment-replies-container');
             
-            // Botão "Ver mais X respostas"
+            // --- NOVA LÓGICA: Paginação e Colapso ---
+            const allReplies = comment.replies;
+            let shownCount = 0;
+            const BATCH_SIZE = 3; // Mostra 3 por vez
+
+            // 1. Botão Toggle (Ver X respostas) - Inicial
             const toggleBtn = document.createElement('button');
             toggleBtn.textContent = `Ver mais ${comment.replies.length} respostas`;
             toggleBtn.style.cssText = "background:none; border:none; color:#1B4332; font-size:0.85rem; font-weight:600; cursor:pointer; margin-top:10px; padding:5px 0; text-decoration:underline; display:block;";
             
-            repliesContainer.style.display = 'none'; // Recolhido por padrão
+            // 2. Botão Carregar Mais (Aparece no final da lista)
+            const loadMoreBtn = document.createElement('button');
+            loadMoreBtn.textContent = "Mostrar mais respostas ⬇";
+            loadMoreBtn.style.cssText = "background:none; border:none; color:#666; font-size:0.8rem; font-weight:600; cursor:pointer; margin-top:5px; padding:5px 0; display:none; margin-left: 10px;";
 
-            toggleBtn.onclick = () => {
-                if (repliesContainer.style.display === 'none') {
-                    repliesContainer.style.display = 'block';
-                    toggleBtn.textContent = 'Ocultar respostas';
+            // Insere o botão de abrir antes do container
+            repliesContainer.parentNode.insertBefore(toggleBtn, repliesContainer);
+            
+            // Configuração inicial do container
+            repliesContainer.style.display = 'none';
+            repliesContainer.classList.add('thread-line-interactive'); // Classe para CSS (cursor pointer na linha)
+            repliesContainer.title = "Clique na linha à esquerda para colapsar";
+
+            // Função para renderizar o próximo lote
+            const renderNextBatch = () => {
+                const nextBatch = allReplies.slice(shownCount, shownCount + BATCH_SIZE);
+                nextBatch.forEach(reply => renderComment(reply, repliesContainer));
+                shownCount += nextBatch.length;
+
+                // Gerencia botão "Carregar mais"
+                if (shownCount < allReplies.length) {
+                    repliesContainer.appendChild(loadMoreBtn); // Move para o final
+                    loadMoreBtn.style.display = 'block';
                 } else {
-                    repliesContainer.style.display = 'none';
-                    toggleBtn.textContent = `Ver mais ${comment.replies.length} respostas`;
+                    loadMoreBtn.remove(); // Remove se acabou
                 }
             };
 
-            // Insere o botão antes do container de respostas
-            repliesContainer.parentNode.insertBefore(toggleBtn, repliesContainer);
-            
-            comment.replies.forEach(reply => renderComment(reply, repliesContainer));
+            // Ação do Toggle (Abrir Thread)
+            toggleBtn.onclick = () => {
+                repliesContainer.style.display = 'block';
+                toggleBtn.style.display = 'none';
+                // Se ainda não renderizou nada, renderiza o primeiro lote
+                if (shownCount === 0) renderNextBatch();
+            };
+
+            // Ação do Load More (Carregar mais 3)
+            loadMoreBtn.onclick = (e) => {
+                e.stopPropagation();
+                renderNextBatch();
+            };
+
+            // --- LÓGICA DE COLAPSAR (CLIQUE NA LINHA) ---
+            repliesContainer.addEventListener('click', (e) => {
+                const rect = repliesContainer.getBoundingClientRect();
+                // Área de clique: 15px da esquerda (cobre a borda e um pouco do padding)
+                if ((e.clientX - rect.left) <= 15) {
+                    e.stopPropagation(); // Não propaga para o pai
+                    
+                    // Colapsa
+                    repliesContainer.style.display = 'none';
+                    toggleBtn.style.display = 'block';
+                    toggleBtn.textContent = `Ver mais ${comment.replies.length} respostas (Thread colapsada)`;
+                }
+            });
         }
 
         container.appendChild(commentEl);
@@ -2832,25 +3573,28 @@ async function inicializarForum(preFetchedData = null) {
 
         const formContainer = document.createElement('div');
         formContainer.id = 'reply-form-dynamic';
-        formContainer.style.marginTop = '10px';
+        // Estilo movido para CSS para suportar mobile fixed position
         formContainer.innerHTML = `
             <form>
                 <div class="form-group">
-                    <textarea rows="2" placeholder="Escreva sua resposta..." required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;"></textarea>
+                    <textarea rows="1" placeholder="Escreva sua resposta..." required class="comment-input-capsule"></textarea>
                 </div>
-                <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                    <button type="button" class="btn btn-secundario btn-sm">Cancelar</button>
-                    <button type="submit" class="btn btn-principal btn-sm">Responder</button>
+                <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 8px;">
+                    <button type="button" class="btn-cancel-reply" style="background:none; border:none; text-decoration:underline; cursor:pointer; color:#666; font-size:0.9rem;">Cancelar</button>
+                    <button type="submit" class="btn-submit-reply" style="background:none; border:none; text-decoration:underline; cursor:pointer; color:#1B4332; font-weight:bold; font-size:0.9rem;">Responder</button>
                 </div>
             </form>
         `;
         
         parentElement.querySelector('.comment-replies-container').prepend(formContainer);
         const textarea = formContainer.querySelector('textarea');
+        
+        // Aplica o auto-resize no textarea de resposta
+        setupAutoResizeTextarea(textarea);
         textarea.focus();
 
         formContainer.querySelector('form').onsubmit = (e) => handleCommentSubmit(e, parentId);
-        formContainer.querySelector('.btn-secundario').onclick = () => formContainer.remove();
+        formContainer.querySelector('.btn-cancel-reply').onclick = () => formContainer.remove();
     }
 
     // --- Funções de Ação ---

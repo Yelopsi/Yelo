@@ -1,0 +1,74 @@
+<div class="main-header">
+    <div class="header-content">
+        <h1>Sua Jornada</h1>
+        <p>Acompanhe sua evolução, conquiste badges e aumente sua autoridade.</p>
+    </div>
+</div>
+
+<!-- --- INÍCIO DO WIDGET DE GAMIFICAÇÃO --- -->
+<div class="gamification-panel">
+    <div class="gami-header">
+        <h3 class="gami-title">Sua Evolução</h3>
+        <div style="text-align: right;">
+            <span id="current-level-display" class="gami-level-badge">Iniciante</span>
+        </div>
+    </div>
+
+    <!-- Barra de Progresso de XP -->
+    <div class="xp-progress-container">
+        <div class="xp-bar-wrapper">
+            <div id="xp-bar-fill" class="xp-bar-fill"></div>
+        </div>
+        <div class="xp-labels">
+            <span id="xp-current-level-label">Nível 1</span>
+            <span id="xp-progress-text">0 / 500 XP</span>
+            <span id="xp-next-level-label">Nível 2</span>
+        </div>
+    </div>
+
+    <!-- Painel de Próximo Objetivo -->
+    <div id="next-level-info" style="margin-top: 25px; background: #f0fdf4; padding: 15px 20px; border-radius: 12px; border: 1px solid #bbf7d0; color: #166534; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+        <div style="font-size: 1.8rem;">🚀</div>
+        <div>
+            <strong style="display: block; margin-bottom: 4px; font-size: 0.95rem;">Próximo Objetivo:</strong>
+            <span id="next-level-text" style="font-size: 0.9rem; line-height: 1.4;">Carregando progresso...</span>
+        </div>
+    </div>
+
+    <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+        <h4 style="font-size: 0.9rem; color: #666; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Como ganhar XP</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 0.85rem; color: #555;">
+            <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">📝 <strong>Completar Perfil:</strong> 500 pts (Único)</div>
+            <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">✍️ <strong>Artigo no Blog:</strong> 50 pts (1x/dia)</div>
+            <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">💡 <strong>Iniciar Discussão:</strong> 25 pts (2x/dia)</div>
+            <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">🗣️ <strong>Responder Dúvida:</strong> 20 pts (5x/dia)</div>
+            <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">📲 <strong>Clique WhatsApp:</strong> 10 pts</div>
+            <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">❤️ <strong>Receber Like:</strong> 5 pts</div>
+            <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">🔑 <strong>Login Diário:</strong> 1 pt (1x/dia)</div>
+        </div>
+    </div>
+
+    <h4 style="font-size: 0.9rem; color: #666; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Conquistas</h4>
+    <div class="badges-grid">
+        <!-- Semeador -->
+        <div id="badge-semeador" class="badge-card locked" title="Escreva artigos no Blog. Bronze: 1 | Prata: 5 | Ouro: 15">
+            <div class="badge-header"><div class="badge-icon-img">🌱</div><div class="badge-info"><span class="badge-name">Semeador</span><span class="badge-status">Bloqueado</span></div></div>
+            <div class="badge-progress-container"><div class="badge-progress-bar-wrapper"><div class="badge-progress-bar"></div></div><div class="badge-progress-text">0/1</div></div>
+        </div>
+        <!-- Voz Ativa -->
+        <div id="badge-voz" class="badge-card locked" title="Responda dúvidas na Comunidade. Bronze: 10 | Prata: 50 | Ouro: 200">
+            <div class="badge-header"><div class="badge-icon-img">💬</div><div class="badge-info"><span class="badge-name">Voz Ativa</span><span class="badge-status">Bloqueado</span></div></div>
+            <div class="badge-progress-container"><div class="badge-progress-bar-wrapper"><div class="badge-progress-bar"></div></div><div class="badge-progress-text">0/10</div></div>
+        </div>
+        <!-- Autêntico -->
+        <div id="badge-autentico" class="badge-card locked" title="Preencha todos os campos obrigatórios do seu perfil.">
+            <div class="badge-header"><div class="badge-icon-img">🛡️</div><div class="badge-info"><span class="badge-name">Autêntico</span><span class="badge-status">Bloqueado</span></div></div>
+            <div class="badge-progress-container"><div class="badge-progress-bar-wrapper"><div class="badge-progress-bar"></div></div><div class="badge-progress-text">0/1</div></div>
+        </div>
+        <!-- Pioneiro -->
+        <div id="badge-pioneiro" class="badge-card locked" title="Cadastre-se durante a fase de lançamento da plataforma.">
+            <div class="badge-header"><div class="badge-icon-img">🏅</div><div class="badge-info"><span class="badge-name">Pioneiro</span><span class="badge-status">Legado</span></div></div>
+            <div class="badge-progress-container"><div class="badge-progress-bar-wrapper"><div class="badge-progress-bar"></div></div><div class="badge-progress-text">0/1</div></div>
+        </div>
+    </div>
+</div>

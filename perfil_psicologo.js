@@ -457,6 +457,56 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
+    // E. Renderiza Badges de Gamificação (NOVO)
+    const renderBadges = (badgesData) => {
+        const container = document.getElementById('psi-badges-display');
+        if (!container || !badgesData) return;
+
+        let html = '';
+
+        // 1. Badge Autêntico (Segurança)
+        if (badgesData.autentico) {
+            html += `
+                <div class="badge-item badge-autentico" title="Autêntico: Este profissional mantém o perfil 100% completo e verificado.">
+                    <span class="badge-icon">🛡️</span>
+                </div>
+            `;
+        }
+
+        // 2. Badge Semeador (Conteúdo)
+        if (badgesData.semeador) {
+            const nivel = badgesData.semeador; // bronze, prata, ouro
+            const label = nivel.charAt(0).toUpperCase() + nivel.slice(1);
+            html += `
+                <div class="badge-item badge-${nivel}" title="Semeador (${label}): Produz conteúdo e educa a audiência na plataforma.">
+                    <span class="badge-icon">🌱</span>
+                </div>
+            `;
+        }
+
+        // 3. Badge Voz Ativa (Comunidade)
+        if (badgesData.voz_ativa) {
+            const nivel = badgesData.voz_ativa;
+            const label = nivel.charAt(0).toUpperCase() + nivel.slice(1);
+            html += `
+                <div class="badge-item badge-${nivel}" title="Voz Ativa (${label}): Acolhe e responde dúvidas de pacientes na Comunidade Yelo.">
+                    <span class="badge-icon">💬</span>
+                </div>
+            `;
+        }
+
+        // 4. Badge Pioneiro
+        if (badgesData.pioneiro) {
+            html += `
+                <div class="badge-item badge-pioneiro" title="Pioneiro: Membro Fundador, um dos primeiros profissionais da Yelo.">
+                    <span class="badge-icon">🏅</span>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+    };
+
     // --- 5. POPULAR PERFIL (BLINDADO) ---
     const populateProfile = (profile) => {
         // Garante que a mensagem de erro esteja oculta
@@ -630,6 +680,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             try { if(typeof renderSocialLinks === 'function') renderSocialLinks(profile); } catch(e) { console.warn('Social:', e); }
             try { if(typeof renderHeroRating === 'function') renderHeroRating(profile.reviews); } catch(e) { console.warn('Rating:', e); }
             try { if(typeof renderReviewsList === 'function') renderReviewsList(profile.reviews); } catch(e) { console.warn('ReviewsList:', e); }
+            try { if(typeof renderBadges === 'function') renderBadges(profile.badges); } catch(e) { console.warn('Badges:', e); }
             try { if(typeof setupReviewForm === 'function') setupReviewForm(profile.id); } catch(e) { console.warn('ReviewForm:', e); }
             try { if(typeof setupFavoriteButton === 'function') setupFavoriteButton(profile.id); } catch(e) { console.warn('Favorite:', e); }
 

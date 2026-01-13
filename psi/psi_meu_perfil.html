@@ -25,23 +25,23 @@
                 
                 <div class="form-row">
                     <div class="form-group" style="flex: 2;">
-                        <label for="nome">Nome de Exibição</label>
+                        <label for="nome">Nome de Exibição *</label>
                         <input type="text" id="nome" name="nome" required placeholder="Seu nome como aparecerá no perfil">
                     </div>
                     <div class="form-group" style="flex: 1;">
-                        <label for="crp">Número do CRP</label>
+                        <label for="crp">Número do CRP *</label>
                         <input type="text" id="crp" name="crp" required placeholder="00/00000">
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="email">E-mail de Acesso</label>
+                        <label for="email">E-mail de Acesso *</label>
                         <input type="email" id="email" name="email" required>
                     </div>
                     <div class="form-group">
-                        <label for="telefone">WhatsApp Profissional</label>
-                        <input type="tel" id="telefone" name="telefone" inputmode="numeric" placeholder="(00) 00000-0000">
+                        <label for="telefone">WhatsApp Profissional *</label>
+                        <input type="tel" id="telefone" name="telefone" inputmode="numeric" placeholder="(00) 00000-0000" required>
                     </div>
                 </div>
 
@@ -63,21 +63,21 @@
                 <h4 class="section-title">Localização</h4>
                 <div class="form-row">
                     <div class="form-group" style="flex: 1;">
-                        <label for="cep">CEP</label>
+                        <label for="cep">CEP *</label>
                         <div style="position: relative;">
-                            <input type="text" id="cep" name="cep" placeholder="00000-000" maxlength="9">
+                            <input type="text" id="cep" name="cep" placeholder="00000-000" maxlength="9" required>
                             <div id="cep-loading" style="display:none; position:absolute; right:10px; top:12px; color:#1B4332; font-size:0.8rem; font-weight:bold;">
                                 ⏳
                             </div>
                         </div>
                     </div>
                     <div class="form-group" style="flex: 2;">
-                        <label>Cidade</label>
-                        <input type="text" id="cidade" name="cidade" readonly style="background-color: #f0f2f5; cursor: not-allowed; border-color: transparent;">
+                        <label>Cidade *</label>
+                        <input type="text" id="cidade" name="cidade" readonly style="background-color: #f0f2f5; cursor: not-allowed; border-color: transparent;" required>
                     </div>
                     <div class="form-group" style="flex: 0.5;">
-                        <label>UF</label>
-                        <input type="text" id="estado" name="estado" readonly style="background-color: #f0f2f5; cursor: not-allowed; border-color: transparent;">
+                        <label>UF *</label>
+                        <input type="text" id="estado" name="estado" readonly style="background-color: #f0f2f5; cursor: not-allowed; border-color: transparent;" required>
                     </div>
                 </div>
             </div>
@@ -87,28 +87,28 @@
                 <h4 class="section-title">Detalhes Profissionais</h4>
                 
                 <div class="form-group highlight-box">
-                    <label for="slug" style="color: #1B4332;">🔗 Link do seu Perfil (Personalizável)</label>
+                    <label for="slug" style="color: #1B4332;">🔗 Link do seu Perfil (Personalizável) *</label>
                     <div class="input-prefix-group" style="background: #fff;">
                         <span class="prefix">yelopsi.com/</span>
-                        <input type="text" id="slug" name="slug" placeholder="seu-nome" pattern="[a-z0-9\-]+" title="Use apenas letras minúsculas, números e hífen" style="font-weight: bold; color: #1B4332;">
+                        <input type="text" id="slug" name="slug" placeholder="seu-nome" pattern="[a-z0-9\-]+" title="Use apenas letras minúsculas, números e hífen" style="font-weight: bold; color: #1B4332;" required>
                     </div>
                     <small style="color: #666; font-size: 0.8rem; margin-top: 5px; display: block;">Este é o link que você enviará para seus pacientes.</small>
                 </div>
 
                 <div class="form-group">
-                    <label for="bio">Biografia / Sobre Mim</label>
+                    <label for="bio">Biografia / Sobre Mim *</label>
                     <div style="background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 10px;">
                         <strong>💡 Dica:</strong> As primeiras linhas do seu texto aparecerão no card de resultados. Capriche no início para causar uma ótima primeira impressão!
                     </div>
-                    <textarea id="bio" name="bio" rows="6" placeholder="Escreva um texto acolhedor contando sua experiência, abordagem e como você pode ajudar o paciente..."></textarea>
+                    <textarea id="bio" name="bio" rows="6" placeholder="Escreva um texto acolhedor contando sua experiência, abordagem e como você pode ajudar o paciente..." required></textarea>
                     <div style="text-align: right; font-size: 0.8rem; color: #999; margin-top: 5px;">Recomendado: 300-500 caracteres</div>
                 </div>
 
                 <div class="form-group" style="max-width: 200px;">
-                    <label for="valor_sessao_numero">Valor da Sessão</label>
+                    <label for="valor_sessao_numero">Valor da Sessão *</label>
                     <div class="input-prefix-group">
                         <span class="prefix">R$</span>
-                        <input type="number" id="valor_sessao_numero" name="valor_sessao_numero" step="0.01" placeholder="0,00">
+                        <input type="number" id="valor_sessao_numero" name="valor_sessao_numero" step="0.01" placeholder="0,00" required>
                     </div>
                 </div>
             </div>
@@ -145,7 +145,7 @@
                 <h4 class="section-title">Especialidades e Atuação</h4>
                 
             <div class="form-group">
-                <label>Temas de Atuação</label>
+                <label>Temas de Atuação *</label>
                 <div class="multiselect-tag disabled" id="temas_atuacao_multiselect">
                     <div class="multiselect-display"></div>
                     <div class="multiselect-options">
@@ -164,7 +164,7 @@
 
             <!-- NOVOS CAMPOS PARA MELHORAR O MATCH -->
             <div class="form-group">
-                <label>Público-Alvo Principal</label>
+                <label>Público-Alvo Principal *</label>
                 <div class="multiselect-tag disabled" id="publico_alvo_multiselect">
                     <div class="multiselect-display"></div>
                     <div class="multiselect-options">
@@ -177,7 +177,7 @@
             </div>
 
             <div class="form-group">
-                <label>Estilo de Terapia (Como você se descreve para o paciente?)</label>
+                <label>Estilo de Terapia (Como você se descreve para o paciente?) *</label>
                 <div class="multiselect-tag disabled" id="estilo_terapia_multiselect">
                     <div class="multiselect-display"></div>
                     <div class="multiselect-options">
@@ -190,7 +190,7 @@
             </div>
 
             <div class="form-group">
-                <label>Identificadores e Práticas Inclusivas</label>
+                <label>Identificadores e Práticas Inclusivas *</label>
                 <div class="multiselect-tag disabled" id="praticas_inclusivas_multiselect">
                     <div class="multiselect-display"></div>
                     <div class="multiselect-options">
@@ -203,7 +203,7 @@
             </div>
 
             <div class="form-group">
-                <label>Abordagens e Técnicas</label>
+                <label>Abordagens e Técnicas *</label>
                 <div class="multiselect-tag disabled" id="abordagens_tecnicas_multiselect" data-single-select="true">
                     <div class="multiselect-display"></div>
                     <div class="multiselect-options">
@@ -218,7 +218,7 @@
             </div>
 
             <div class="form-group">
-                <label>Gênero de Identidade</label>
+                <label>Gênero de Identidade *</label>
                 <div class="multiselect-tag disabled" id="genero_identidade_multiselect" data-single-select="true">
                     <div class="multiselect-display"></div>
                     <div class="multiselect-options">
@@ -231,7 +231,7 @@
             </div>
 
             <div class="form-group">
-                <label>Modalidade de Atendimento</label>
+                <label>Modalidade de Atendimento *</label>
                 <div class="multiselect-tag disabled" id="modalidade_atendimento_multiselect" data-input-id="modalidade_input">
                     <div class="multiselect-display">Selecionar...</div>
                     <div class="multiselect-options">
@@ -243,7 +243,7 @@
             </div>
 
             <div class="form-group">
-                <label>Disponibilidade</label>
+                <label>Disponibilidade *</label>
                 <div class="multiselect-tag disabled" id="disponibilidade_periodo_multiselect">
                     <div class="multiselect-display"></div>
                     <div class="multiselect-options">

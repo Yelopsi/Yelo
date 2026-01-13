@@ -8,6 +8,7 @@ const { sendPasswordResetEmail } = require('../services/emailService');
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs').promises;
+const gamificationService = require('../services/gamificationService'); // Importa o serviço
 
 // ----------------------------------------------------------------------
 // Função Auxiliar: Gera o Token JWT para Psicólogo
@@ -174,6 +175,9 @@ exports.loginPsychologist = async (req, res) => {
         }
 
         const token = generateToken(psychologist.id);
+
+        // --- GAMIFICATION: LOGIN DIÁRIO (1 pt) ---
+        gamificationService.processAction(psychologist.id, 'login').catch(e => console.error(e));
 
         res.json({
             id: psychologist.id,
@@ -502,7 +506,7 @@ exports.updatePsychologistProfile = async (req, res) => {
             nome, telefone, bio, crp, cep, cidade, estado,
             temas_atuacao, abordagens_tecnicas, modalidade,
             publico_alvo, estilo_terapia, praticas_inclusivas, // NOVOS CAMPOS
-            valor_sessao_numero, disponibilidade, genero_identidade,
+            valor_sessao_numero, disponibilidade_periodo, genero_identidade, // CORRIGIDO
             linkedin_url, instagram_url, facebook_url, tiktok_url, x_url,
             slug // <--- AGORA ESTAMOS LENDO O CAMPO SLUG QUE VEM DO FORMULÁRIO
         } = req.body;
@@ -542,11 +546,16 @@ exports.updatePsychologistProfile = async (req, res) => {
             slug: finalSlug, // Salva o slug (personalizado ou mantido)
             nome, telefone, bio, crp, cep, cidade, estado,
             temas_atuacao, abordagens_tecnicas, modalidade,
-            publico_alvo, estilo_terapia, praticas_inclusivas, // SALVA NO BANCO
-            valor_sessao_numero, disponibilidade_periodo: disponibilidade,
+            publico_alvo, estilo_terapia, praticas_inclusivas,
+            valor_sessao_numero, disponibilidade_periodo, // CORRIGIDO
             genero_identidade,
             linkedin_url, instagram_url, facebook_url, tiktok_url, x_url
         });
+
+        // --- GAMIFICATION HOOK (BADGE AUTÊNTICO) ---
+        // Recarrega o objeto para garantir que a verificação use os dados mais recentes do banco
+        await psychologist.reload();
+        await checkProfileCompletionLocal(psychologist);
 
         res.json({
             id: psychologist.id,
@@ -716,6 +725,10 @@ exports.updateProfilePhoto = async (req, res) => {
         // 3. Atualiza o banco de dados com o novo caminho
         const newFotoUrl = `/uploads/profiles/${filename}`;
         await psychologistToUpdate.update({ fotoUrl: newFotoUrl });
+
+        // --- GAMIFICATION HOOK (BADGE AUTÊNTICO) ---
+        await psychologistToUpdate.reload();
+        await checkProfileCompletionLocal(psychologistToUpdate);
 
         // 4. Limpeza: Deleta o arquivo original que o multer salvou
         try {
@@ -1275,7 +1288,8 @@ exports.getStats = async (req, res) => {
             clicksResult,
             appearancesResult,
             favoritesResult,
-            demandsResult
+            demandsResult,
+            xpHistoryResult // <--- NOVO: Resultado do histórico de XP
         ] = await Promise.all([
             // 1. Cliques no WhatsApp (Tabela de Logs)
             db.sequelize.query(
@@ -1302,6 +1316,16 @@ exports.getStats = async (req, res) => {
             db.sequelize.query(
                 `SELECT "searchParams" FROM "DemandSearches" WHERE status = 'completed' ${dateCondition} ORDER BY "createdAt" DESC LIMIT 100`,
                 { type: db.sequelize.QueryTypes.SELECT }
+            ).catch(err => []),
+
+            // 5. Histórico de XP (Agrupado por dia)
+            db.sequelize.query(
+                `SELECT TO_CHAR("createdAt", 'YYYY-MM-DD') as date, SUM("points") as points
+                 FROM "GamificationLogs"
+                 WHERE "psychologistId" = :psiId ${dateCondition}
+                 GROUP BY TO_CHAR("createdAt", 'YYYY-MM-DD')
+                 ORDER BY date ASC`,
+                { replacements, type: db.sequelize.QueryTypes.SELECT }
             ).catch(err => [])
         ]);
 
@@ -1342,7 +1366,8 @@ exports.getStats = async (req, res) => {
             whatsappClicks: parseInt(clicksResult[0]?.count || 0, 10),
             profileAppearances: parseInt(appearancesResult[0]?.count || 0, 10),
             favoritesCount: parseInt(favoritesResult[0]?.count || 0, 10),
-            topDemands
+            topDemands,
+            xpHistory: xpHistoryResult // <--- NOVO: Envia para o frontend
         };
 
         console.timeEnd('⏱️ Psi Stats Load');
@@ -1361,8 +1386,15 @@ exports.getStats = async (req, res) => {
 exports.incrementWhatsappClick = async (req, res) => {
     try {
         const { slug } = req.params;
-        // Incrementa a coluna whatsapp_clicks onde o slug corresponde
-        await db.Psychologist.increment('whatsapp_clicks', { where: { slug } });
+        const psychologist = await db.Psychologist.findOne({ where: { slug } });
+
+        if (psychologist) {
+            // --- GAMIFICATION: CLIQUE WHATSAPP (10 pts) ---
+            gamificationService.processAction(psychologist.id, 'whatsapp_click').catch(e => console.error(e));
+        }
+
+        // A contagem de cliques agora é feita pela tabela de logs (WhatsappClickLogs),
+        // então o incremento direto na tabela de psicólogos não é mais necessário.
         res.status(200).json({ success: true });
     } catch (error) {
         console.error('Erro ao contabilizar clique WhatsApp:', error);
@@ -1370,6 +1402,70 @@ exports.incrementWhatsappClick = async (req, res) => {
         res.status(200).json({ success: false });
     }
 };
+
+// ----------------------------------------------------------------------
+// FUNÇÃO AUXILIAR: VERIFICAÇÃO DE PERFIL COMPLETO (BADGE AUTÊNTICO)
+// ----------------------------------------------------------------------
+async function checkProfileCompletionLocal(psychologist) {
+    try {
+        // Critérios: Todos os campos obrigatórios preenchidos
+        // EXCEÇÕES: Razão Social, Redes Sociais (LinkedIn, Instagram, etc)
+        const requiredFields = [
+            'nome', 'bio', 'crp', 'telefone', 'cep', 'cidade', 'estado', 
+            'fotoUrl', 'valor_sessao_numero', 'genero_identidade'
+        ];
+        const requiredArrays = [
+            'temas_atuacao', 'abordagens_tecnicas', 'modalidade', 
+            'publico_alvo', 'estilo_terapia', 'praticas_inclusivas', 
+            'disponibilidade_periodo'
+        ];
+
+        let isComplete = true;
+
+        // 1. Verifica campos de texto/número
+        for (const field of requiredFields) {
+            const value = psychologist[field];
+            // Rejeita null, undefined e strings vazias, mas permite o número 0.
+            if (value == null || (typeof value === 'string' && value.trim() === '')) {
+                isComplete = false;
+                // Log para depuração no servidor
+                console.log(`[VERIFICAÇÃO BADGE AUTÊNTICO] Falha no campo obrigatório: '${field}' está vazio.`);
+                break;
+            }
+        }
+
+        // 2. Verifica arrays (apenas se passou na fase 1)
+        if (isComplete) {
+            for (const field of requiredArrays) {
+                const val = psychologist[field];
+                if (!val || !Array.isArray(val) || val.length === 0) {
+                    isComplete = false;
+                    break;
+                }
+            }
+        }
+
+        // 3. Atualiza Badge e XP
+        // Clona o objeto de badges para garantir detecção de mudança pelo Sequelize
+        let currentBadges = psychologist.badges ? JSON.parse(JSON.stringify(psychologist.badges)) : {};
+        let changed = false;
+
+        if (isComplete && !currentBadges.autentico) {
+            currentBadges.autentico = true;
+            psychologist.xp = (psychologist.xp || 0) + 500; // +500 XP
+            changed = true;
+        } else if (!isComplete && currentBadges.autentico) {
+            delete currentBadges.autentico; // Remove se apagar info obrigatória
+            changed = true;
+        }
+
+        if (changed) {
+            await psychologist.update({ badges: currentBadges, xp: psychologist.xp });
+        }
+    } catch (error) {
+        console.error("Erro na verificação local de perfil:", error);
+    }
+}
 
 exports.incrementProfileAppearance = async (req, res) => {
     try {

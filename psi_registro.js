@@ -125,7 +125,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const termosAceite = document.getElementById('termos-aceite').checked;
 
         if (senha !== confirmarSenha) { mensagemRegistro.textContent = 'As senhas não conferem.'; mensagemRegistro.className = 'mensagem-erro'; return; }
-        if (senha.length < 6) { mensagemRegistro.textContent = 'A senha deve ter no mínimo 6 caracteres.'; mensagemRegistro.className = 'mensagem-erro'; return; }
+        
+        const senhaRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+        if (!senhaRegex.test(senha)) { mensagemRegistro.textContent = 'A senha deve ter no mínimo 8 caracteres, incluindo uma letra maiúscula, um número e um caractere especial.'; mensagemRegistro.className = 'mensagem-erro'; return; }
+        
         // Validação simples para CPF ou CNPJ
         if (cleanDoc.length !== 11 && cleanDoc.length !== 14) { mensagemRegistro.textContent = 'CPF ou CNPJ inválido.'; mensagemRegistro.className = 'mensagem-erro'; return; }
         if (!termosAceite) { mensagemRegistro.textContent = 'Você deve aceitar os termos.'; mensagemRegistro.className = 'mensagem-erro'; return; }

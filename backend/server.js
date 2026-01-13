@@ -13,6 +13,8 @@ const crypto = require('crypto'); // <-- ADICIONADO PARA GERAR IDs DE SESSÃO
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Op, DataTypes } = require('sequelize');
+const { protect } = require('./middleware/authMiddleware'); // Importe o middleware se não tiver
+const gamificationService = require('./services/gamificationService'); // Importa o serviço
 
 // Banco de Dados
 const db = require('./models');
@@ -506,6 +508,58 @@ app.get('/api/fix-add-post-index', async (req, res) => {
     }
 });
 
+// --- ROTA DE LIMPEZA DE CONTEÚDO (BLOG E FÓRUM) ---
+app.get('/api/fix-clear-content', async (req, res) => {
+    try {
+        // 1. Limpa Blog
+        await db.Post.destroy({ where: {} });
+
+        // 2. Limpa Fórum (Ordem: Votos -> Comentários -> Posts para evitar erro de chave estrangeira)
+        if (db.ForumVote) await db.ForumVote.destroy({ where: {} });
+        if (db.ForumCommentVote) await db.ForumCommentVote.destroy({ where: {} });
+        if (db.ForumComment) await db.ForumComment.destroy({ where: {} });
+        if (db.ForumPost) await db.ForumPost.destroy({ where: {} });
+
+        res.send("Limpeza concluída! Todos os posts do Blog e Fórum (e interações) foram removidos.");
+    } catch (error) {
+        console.error("Erro ao limpar conteúdo:", error);
+        res.status(500).send("Erro ao limpar: " + error.message);
+    }
+});
+
+// --- ROTA DE LIMPEZA DE PERGUNTAS DA COMUNIDADE (Q&A) ---
+app.get('/api/fix-clear-qna', async (req, res) => {
+    try {
+        // 1. Limpa Respostas (para não dar erro de chave estrangeira)
+        if (db.Answer) await db.Answer.destroy({ where: {} });
+        // 2. Limpa Perguntas
+        if (db.Question) await db.Question.destroy({ where: {} });
+        // 3. Limpa Lista de Ignorados (opcional)
+        if (db.QuestionIgnore) await db.QuestionIgnore.destroy({ where: {} });
+
+        res.send("Limpeza concluída! Todas as perguntas e respostas da comunidade foram removidas.");
+    } catch (error) {
+        console.error("Erro ao limpar Q&A:", error);
+        res.status(500).send("Erro ao limpar: " + error.message);
+    }
+});
+
+// --- ROTA DE RESET DE GAMIFICAÇÃO ---
+app.get('/api/fix-reset-gamification', async (req, res) => {
+    try {
+        // 1. Limpa logs de gamificação
+        await db.sequelize.query('DELETE FROM "GamificationLogs"');
+
+        // 2. Reseta XP, Nível e Badges de todos os psicólogos
+        await db.Psychologist.update({ xp: 0, authority_level: 'nivel_iniciante', badges: {} }, { where: {} });
+
+        res.send("Sucesso! Progresso de gamificação de todos os usuários foi reiniciado.");
+    } catch (error) {
+        console.error("Erro ao resetar gamificação:", error);
+        res.status(500).send("Erro ao resetar: " + error.message);
+    }
+});
+
 // =============================================================
 // ROTAS DA APLICAÇÃO
 // =============================================================
@@ -513,6 +567,7 @@ app.get('/api/fix-add-post-index', async (req, res) => {
 app.use('/api/newsletter', newsletterRoutes); // <-- MOVIDO PARA O TOPO
 
 // --- ROTA DE RESGATE DE IMAGENS (SOLUÇÃO DEFINITIVA) ---
+
 // Intercepta requisições de perfil e procura o arquivo onde quer que ele esteja
 app.get('/uploads/profiles/:filename', (req, res) => {
     const filename = req.params.filename;
@@ -540,6 +595,10 @@ app.get('/uploads/profiles/:filename', (req, res) => {
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use('/api/patients', patientRoutes);
+
+// MOVIDO PARA CIMA: Evita conflito com a rota genérica /api/psychologists
+app.use('/api/psychologists/me/posts', blogRoutes);
+
 app.use('/api/psychologists', psychologistRoutes);
 app.use('/api/messaging', messagingRoutes);
 app.use('/api/messages', messageRoutes);
@@ -577,6 +636,25 @@ app.put('/api/admin/messages/conversation/:id/status', async (req, res) => {
     }
 });
 
+// --- ROTA DE EXCLUSÃO DE PSICÓLOGO (ADMIN) ---
+app.delete('/api/admin/psychologists/:id', async (req, res) => {
+    try {
+        // Verificação básica de token (Admin)
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(401).json({ error: 'Não autorizado' });
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+        if (decoded.role !== 'admin' && decoded.type !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
+
+        const { id } = req.params;
+        const deleted = await db.Psychologist.destroy({ where: { id } });
+
+        if (!deleted) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+        res.json({ message: 'Psicólogo excluído com sucesso.' });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao excluir: ' + error.message });
+    }
+});
+
 // ROTAS DE ADMIN (ORDEM DE ESPECIFICIDADE IMPORTA)
 app.use('/api/admin/messages', adminMessageRoutes); // Rotas de mensagem do admin (mais específicas)
 app.use('/api/admin/support', adminSupportRoutes); // Rotas de suporte do admin (mais específicas)
@@ -608,6 +686,9 @@ app.post('/api/public/psychologists/:slug/whatsapp-click', async (req, res) => {
             { replacements: { id: psychologist.id, patId: patientId || null, phone: guestPhone || null, name: guestName || null } }
         );
 
+        // --- GAMIFICATION: CLIQUE WHATSAPP (10 pts) ---
+        gamificationService.processAction(psychologist.id, 'whatsapp_click').catch(e => console.error(e));
+
         res.status(200).send('Clique registrado com sucesso.');
     } catch (error) {
         console.error("Erro ao registrar clique no WhatsApp:", error);
@@ -635,10 +716,6 @@ app.post('/api/public/psychologists/:id/appearance', async (req, res) => {
         res.status(500).send('Erro interno do servidor.');
     }
 });
-
-// ADICIONE ESTA LINHA:
-// Nota: O frontend chama '/api/psychologists/me/posts', então montamos assim:
-app.use('/api/psychologists/me/posts', blogRoutes);
 
 // Rotas Específicas do Admin
 app.get('/api/admin/feedbacks', demandController.getRatings);
@@ -692,6 +769,7 @@ app.get('/api/admin/exit-surveys', async (req, res) => {
 // =============================================================
 // ROTA DE EMERGÊNCIA (Cria o Admin no Banco de Dados)
 // =============================================================
+/*
 app.get('/admin-setup-secreto', async (req, res) => {
     try {
         await seedTestData(); // Roda a função que cria o Admin e os testes
@@ -700,12 +778,14 @@ app.get('/admin-setup-secreto', async (req, res) => {
         res.status(500).send('Erro ao criar admin: ' + error.message);
     }
 });
+*/
 
 // =============================================================
 // ÁREA DO ADMINISTRADOR (ROBUSTA)
 // =============================================================
 
 // 1. ROTA DE INSTALAÇÃO (CRIA TABELA E USUÁRIO NA FORÇA BRUTA)
+/*
 app.get('/instalar-admin', async (req, res) => {
     try {
         // A) Cria a tabela 'Admins' se ela não existir (SQL Puro para garantir)
@@ -751,6 +831,7 @@ app.get('/instalar-admin', async (req, res) => {
         res.status(500).send('Erro fatal ao criar admin: ' + error.message);
     }
 });
+*/
 
 // 2. ROTA DE LOGIN DO ADMIN (VERIFICA NA TABELA 'Admins')
 app.post('/api/login-admin-check', async (req, res) => {
@@ -759,7 +840,7 @@ app.post('/api/login-admin-check', async (req, res) => {
 
         // A) Busca o usuário
         const [results] = await db.sequelize.query(
-            `SELECT * FROM "Admins" WHERE email = :email LIMIT 1`,
+            `SELECT * FROM "Admins" WHERE email ILIKE :email LIMIT 1`,
             { replacements: { email: email } }
         );
 
@@ -1052,6 +1133,8 @@ const startServer = async () => {
         // [CRITICAL FIX] Garante que a coluna status exista antes de criar índices
         try {
             await db.sequelize.query(`ALTER TABLE "ForumPosts" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
+            // ADICIONADO: Garante que a coluna de status também exista nos comentários do fórum
+            await db.sequelize.query(`ALTER TABLE "ForumComments" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
         } catch (e) { /* Ignora se a tabela não existir ainda */ }
 
         console.time('🗄️ Sequelize Sync');
@@ -1066,6 +1149,25 @@ const startServer = async () => {
             await db.sequelize.query(`ALTER TABLE "Messages" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'sent';`);
             await db.sequelize.query(`ALTER TABLE "Conversations" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
             await db.sequelize.query(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
+            
+            // --- FIX GAMIFICATION (ADICIONADO) ---
+            await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "authority_level" VARCHAR(255) DEFAULT 'nivel_iniciante';`);
+            await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "badges" JSONB DEFAULT '{}';`);
+            await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "xp" INTEGER DEFAULT 0;`);
+
+            // Cria tabela de Logs de Gamificação
+            await db.sequelize.query(`
+                CREATE TABLE IF NOT EXISTS "GamificationLogs" (
+                    "id" SERIAL PRIMARY KEY,
+                    "psychologistId" INTEGER REFERENCES "Psychologists"(id) ON DELETE CASCADE,
+                    "actionType" VARCHAR(255) NOT NULL,
+                    "points" INTEGER NOT NULL,
+                    "metadata" JSONB,
+                    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            `);
+
             // Cria a tabela de visitas se não existir
             await db.sequelize.query(`CREATE TABLE IF NOT EXISTS "SiteVisits" ("id" SERIAL PRIMARY KEY, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);`);
             // Garante colunas na tabela de Admins

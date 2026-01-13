@@ -2904,11 +2904,12 @@ body::after {
     top: 0; left: 0; width: 100%; height: 100%;
     
     /* Z-INDEX NEGATIVO: O segredo para os cards ficarem limpos */
-    z-index: -1; 
+    z-index: 9999; 
     
     opacity: 0.30; 
     mix-blend-mode: multiply;
     pointer-events: none;
+    background-attachment: fixed;
 }
 
 /* ==========================================================================
@@ -3239,14 +3240,14 @@ body.pagina-dashboard {
 }
 
 .mensagem-erro {
-    background-color: #FEF2F2; /* Vermelho claro */
-    color: #991B1B;            /* Vermelho escuro */
-    border: 1px solid #FECACA;
+    background-color: #f8d7da; /* Vermelho claro */
+    color: #721c24;            /* Vermelho escuro */
+    border: 1px solid #f5c6cb;
 }
 .mensagem-sucesso {
-    background-color: #ECFDF5; /* Verde claro */
-    color: #065F46;            /* Verde escuro */
-    border: 1px solid #A7F3D0;
+    background-color: #d4edda; /* Verde claro */
+    color: #155724;            /* Verde escuro */
+    border: 1px solid #c3e6cb;
 }
 
 /* Link inferior (Já tem uma conta?) */

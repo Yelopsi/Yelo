@@ -373,8 +373,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function setupGlobalEvents() {
-        const logoutButton = document.querySelector('.btn-sair');
-        if (logoutButton) logoutButton.onclick = (e) => { e.preventDefault(); logout(); };
+        const logoutButton = document.getElementById('btn-logout');
+        if (logoutButton) logoutButton.onclick = (e) => { logout(); };
 
         // Listener para quando os dados do admin forem atualizados em outra página (ex: Minha Conta)
         window.addEventListener('adminDataUpdated', (event) => {
