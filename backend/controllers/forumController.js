@@ -2,6 +2,7 @@ const db = require('../models');
 const { ForumPost, ForumComment, ForumCommentVote, ForumVote, ForumReport, Psychologist } = db;
 const { Op } = require('sequelize');
 
+const gamificationService = require('../services/gamificationService');
 exports.getAllPosts = async (req, res) => {
     try {
         const psychologistId = req.user.id;
@@ -53,8 +54,8 @@ exports.getAllPosts = async (req, res) => {
             },
             include: [
                 {
-                    model: Psychologist,
-                    attributes: ['nome', 'fotoUrl'],
+                    model: Psychologist, // Adiciona badges e nível para exibição
+                    attributes: ['nome', 'fotoUrl', 'badges', 'authority_level'],
                     required: false // Garante LEFT JOIN
                 },
                 {
@@ -76,6 +77,8 @@ exports.getAllPosts = async (req, res) => {
             isAnonymous: post.isAnonymous,
             createdAt: post.createdAt,
             votes: post.votes,
+            authorBadges: post.isAnonymous ? {} : post.Psychologist?.badges, // Passa as badges para o front
+            authorLevel: post.isAnonymous ? null : post.Psychologist?.authority_level, // Passa o nível
             authorName: post.isAnonymous ? 'Anônimo' : post.Psychologist?.nome,
             authorPhoto: post.isAnonymous ? null : post.Psychologist?.fotoUrl,
             commentCount: parseInt(post.dataValues.commentCount, 10) || 0,
@@ -98,6 +101,10 @@ exports.createPost = async (req, res) => {
             title, content, category, isAnonymous,
             PsychologistId: req.user.id
         });
+
+        // --- GAMIFICATION HOOK ---
+        gamificationService.processAction(req.user.id, 'forum_post').catch(err => console.error("Gamification hook error (createPost):", err));
+
         res.json(post);
     } catch (error) {
         res.status(500).json({ error: 'Erro ao criar post' });
@@ -107,7 +114,7 @@ exports.createPost = async (req, res) => {
 exports.getPostDetails = async (req, res) => {
     try {
         const post = await ForumPost.findByPk(req.params.id, {
-            include: [{ model: Psychologist, attributes: ['nome', 'fotoUrl'] }]
+            include: [{ model: Psychologist, attributes: ['nome', 'fotoUrl', 'badges', 'authority_level'] }]
         });
         
         if (!post) return res.status(404).json({ error: 'Post não encontrado' });
@@ -124,8 +131,10 @@ exports.getPostDetails = async (req, res) => {
             votes: post.votes,
             createdAt: post.createdAt,
             isAnonymous: post.isAnonymous,
-            authorName: post.isAnonymous ? 'Anônimo' : post.Psychologist.nome,
-            authorPhoto: post.isAnonymous ? null : post.Psychologist.fotoUrl,
+            authorName: post.isAnonymous ? 'Anônimo' : (post.Psychologist ? post.Psychologist.nome : 'Usuário'),
+            authorPhoto: post.isAnonymous ? null : (post.Psychologist ? post.Psychologist.fotoUrl : null),
+            authorBadges: post.isAnonymous ? {} : (post.Psychologist ? post.Psychologist.badges : {}),
+            authorLevel: post.isAnonymous ? null : (post.Psychologist ? post.Psychologist.authority_level : null),
             supportedByMe: !!supported,
             isMine: post.PsychologistId === req.user.id
         });
@@ -149,7 +158,7 @@ exports.getComments = async (req, res) => {
                 parentId: null 
             },
             include: [
-                { model: Psychologist, attributes: ['nome', 'fotoUrl'], required: false },
+                { model: Psychologist, attributes: ['nome', 'fotoUrl', 'badges', 'authority_level'], required: false },
                 // Inclui as respostas aninhadas
                 { 
                     model: ForumComment, 
@@ -193,6 +202,8 @@ exports.getComments = async (req, res) => {
         const data = comments.map(c => {
             const authorName = c.isAnonymous ? 'Anônimo' : (c.Psychologist ? c.Psychologist.nome : 'Usuário Desconhecido');
             const authorPhoto = c.isAnonymous ? null : (c.Psychologist ? c.Psychologist.fotoUrl : null);
+            const authorBadges = c.isAnonymous ? {} : c.Psychologist?.badges;
+            const authorLevel = c.isAnonymous ? null : c.Psychologist?.authority_level;
 
             // Processa as respostas (Replies) para incluir authorName e likedByMe
             let processedReplies = [];
@@ -200,6 +211,8 @@ exports.getComments = async (req, res) => {
                 processedReplies = c.Replies.map(r => {
                     const rAuthorName = r.isAnonymous ? 'Anônimo' : (r.Psychologist ? r.Psychologist.nome : 'Usuário Desconhecido');
                     const rAuthorPhoto = r.isAnonymous ? null : (r.Psychologist ? r.Psychologist.fotoUrl : null);
+                    const rAuthorBadges = r.isAnonymous ? {} : r.Psychologist?.badges;
+                    const rAuthorLevel = r.isAnonymous ? null : r.Psychologist?.authority_level;
                     return {
                         id: r.id,
                         content: r.content,
@@ -207,6 +220,8 @@ exports.getComments = async (req, res) => {
                         isAnonymous: r.isAnonymous,
                         authorName: rAuthorName,
                         authorPhoto: rAuthorPhoto,
+                        authorBadges: rAuthorBadges,
+                        authorLevel: rAuthorLevel,
                         likes: r.likes,
                         likedByMe: likedCommentIds.has(r.id), // Checagem O(1)
                         isMine: r.PsychologistId === userId, // Verifica autoria da resposta
@@ -224,6 +239,8 @@ exports.getComments = async (req, res) => {
                 isAnonymous: c.isAnonymous,
                 authorName: authorName,
                 authorPhoto: authorPhoto,
+                authorBadges: authorBadges,
+                authorLevel: authorLevel,
                 likes: c.likes,
                 likedByMe: likedCommentIds.has(c.id), // Checagem O(1)
                 isMine: c.PsychologistId === userId, // Verifica autoria do comentário
@@ -247,6 +264,10 @@ exports.createComment = async (req, res) => {
             PsychologistId: req.user.id
         });
         
+        // --- GAMIFICATION HOOK ---
+        // Responder Pergunta (20 pts, max 5/dia)
+        gamificationService.processAction(req.user.id, 'forum_reply').catch(err => console.error("Gamification hook error:", err));
+
         // Retorna dados formatados para o frontend adicionar na lista imediatamente
         const user = await Psychologist.findByPk(req.user.id);
         res.json({
@@ -279,6 +300,13 @@ exports.toggleVote = async (req, res) => {
             post.votes += 1;
         }
         await post.save();
+
+        // --- GAMIFICATION: RECEBER LIKE (5 pts) ---
+        // Se foi um like (não deslike) e não é auto-like
+        if (!existingVote && post.PsychologistId !== userId) {
+            gamificationService.processAction(post.PsychologistId, 'receive_like').catch(e => console.error(e));
+        }
+
         res.json({ votes: post.votes });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao votar' });
@@ -303,6 +331,12 @@ exports.toggleCommentVote = async (req, res) => {
             comment.likes += 1;
         }
         await comment.save();
+
+        // --- GAMIFICATION: RECEBER LIKE EM COMENTÁRIO (5 pts) ---
+        if (!existingVote && comment.PsychologistId !== userId) {
+            gamificationService.processAction(comment.PsychologistId, 'receive_like').catch(e => console.error(e));
+        }
+
         res.json({ likes: comment.likes });
     } catch (error) {
         console.error("Erro ao votar no comentário:", error);

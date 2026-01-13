@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const db = require('../models'); // Importa o banco de dados para operações diretas
 const adminController = require('../controllers/adminController');
 const reviewController = require('../controllers/reviewController');
 const qnaController = require('../controllers/qnaController'); // Importa o controlador de Q&A
@@ -35,14 +36,55 @@ router.put('/psychologists/:id/moderate', adminController.moderatePsychologist);
 router.get('/stats', adminController.getDashboardStats);
 
 // Rota para buscar e atualizar os dados do admin logado
-router.get('/me', adminController.getAdminData);
-router.put('/me', adminController.updateAdminData);
+// router.get('/me', adminController.getAdminData); // Substituído pela versão inline abaixo
+// router.put('/me', adminController.updateAdminData); // Substituído pela versão inline abaixo
+
+// --- ROTA DE PERFIL DO ADMIN (GET) - INLINE ---
+router.get('/me', async (req, res) => {
+    try {
+        const [results] = await db.sequelize.query(
+            `SELECT id, nome, email, telefone, "fotoUrl" FROM "Admins" WHERE id = :id`,
+            { replacements: { id: req.user.id } }
+        );
+        if (results.length === 0) return res.status(404).json({ error: 'Admin não encontrado' });
+        res.json(results[0]);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao buscar perfil: ' + error.message });
+    }
+});
+
+// --- ROTA DE ATUALIZAÇÃO DO PERFIL DO ADMIN (PUT) - INLINE ---
+router.put('/me', async (req, res) => {
+    try {
+        const { nome, email, telefone } = req.body;
+        const emailFinal = email ? email.toLowerCase() : email;
+
+        // Validação de e-mail único (se mudou)
+        if (emailFinal) {
+            const [existing] = await db.sequelize.query(
+                `SELECT id FROM "Admins" WHERE email = :email AND id != :id`,
+                { replacements: { email: emailFinal, id: req.user.id } }
+            );
+            if (existing.length > 0) return res.status(400).json({ error: 'Este e-mail já está em uso.' });
+        }
+
+        await db.sequelize.query(
+            `UPDATE "Admins" SET nome = :nome, email = :email, telefone = :telefone, "updatedAt" = NOW() WHERE id = :id`,
+            { replacements: { nome, email: emailFinal, telefone, id: req.user.id } }
+        );
+        res.json({ message: 'Perfil atualizado com sucesso!' });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao atualizar perfil: ' + error.message });
+    }
+});
+
 router.put('/me/password', adminController.updateAdminPassword);
 router.put('/me/photo', upload.single('profilePhoto'), adminController.updateAdminPhoto);
 
 // Rota para buscar todos os psicólogos para a página de gerenciamento
 router.get('/psychologists', adminController.getAllPsychologists);
 // Novas rotas para gerenciar psicólogos
+router.get('/psychologists/:id/full-details', adminController.getPsychologistFullDetails); // <--- NOVA ROTA
 router.put('/psychologists/:id/status', adminController.updatePsychologistStatus);
 // Rota para ativar/desativar isenção (VIP)
 router.patch('/psychologists/:id/vip', adminController.updateVipStatus);
@@ -118,6 +160,10 @@ router.get('/qna/pending', qnaController.getPendingQuestions);
 
 // Rota para moderar (aprova/rejeita) uma pergunta específica
 router.put('/qna/:questionId/moderate', qnaController.moderateQuestion);
+
+// --- ROTAS DE MODERAÇÃO DE DENÚNCIAS DO FÓRUM (NOVO) ---
+router.get('/forum/reports', adminController.getForumReports);
+router.put('/forum/moderate', adminController.moderateForumContent);
 
 // --- ROTAS DE EDIÇÃO DA COMUNIDADE (Apenas Admin pode alterar) ---
 router.put('/community-event', adminController.updateCommunityEvent);

@@ -110,7 +110,6 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
 /* Cabeçalho */
 .sidebar-header { text-align: center; margin-bottom: 10px; }
 .sidebar-logo { height: 35px; margin: 0 auto 20px auto; display: block; }
-
 /* Usuário (Foto e Nome) */
 .sidebar-user-block { text-align: center; margin-bottom: 15px; }
 #psi-sidebar-photo {
@@ -150,7 +149,6 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
 /* Navegação */
 .sidebar-nav { margin-top: 20px; flex-grow: 1; overflow-y: auto; }
 
-/* Força a direção da coluna para sobrepor o style.css global */
 /* AQUI: Altere o 'gap' para aumentar/diminuir a distância entre os itens */
 .sidebar-nav ul { list-style: none; padding: 0; margin: 0; display: flex !important; flex-direction: column !important; gap: 5px !important; align-items: stretch !important; width: 100%; }
 
@@ -167,20 +165,28 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
     text-decoration: none;
     text-align: left !important;
     font-weight: 500; font-size: 0.95rem;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     overflow: hidden; /* Impede que a cor de fundo vaze */
     margin: 0;
+    border-left: 4px solid transparent; /* Prepara para o estado ativo */
 }
 
 /* Estado Ativo e Hover */
-.sidebar-nav li.active a, 
-.sidebar-nav li a:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: var(--branco-puro);
+.sidebar-nav li.active a {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--cor-Yelo); /* Texto Amarelo */
+    border-left-color: var(--cor-Yelo); /* Borda lateral Amarela */
+    font-weight: 700;
 }
 
-.sidebar-nav li a svg { width: 20px; height: 20px; opacity: 0.8; }
-.sidebar-nav li.active a svg { opacity: 1; }
+.sidebar-nav li a:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    transform: translateX(5px); /* Efeito de deslize para a direita */
+    color: #fff;
+}
+
+.sidebar-nav li a svg { width: 20px; height: 20px; opacity: 0.7; transition: stroke 0.3s; }
+.sidebar-nav li.active a svg { opacity: 1; stroke: var(--cor-Yelo); }
 
 /* Badges (Notificação) */
 .notification-badge, .badge-em-breve {
@@ -190,8 +196,45 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
     margin-left: auto; flex-shrink: 0;
 }
 
+/* Rótulos de Seção do Menu */
+.sidebar-section-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 700;
+    margin-top: 15px !important;
+    margin-bottom: 5px !important;
+    padding-left: 10px;
+    letter-spacing: 0.05em;
+    pointer-events: none; /* Não clicável */
+}
+
 /* Rodapé Sidebar */
-.sidebar-footer { margin-top: auto; padding-top: 20px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); }
+.sidebar-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+/* Botão de Logout Estilizado */
+#btn-logout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    color: #ff8a80; /* Vermelho suave */
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+#btn-logout:hover {
+    background: rgba(211, 47, 47, 0.15);
+    border-color: #ff5252;
+    color: #ff5252;
+    transform: translateY(-2px);
+}
 
 /* --- BARRA DE ROLAGEM DA SIDEBAR (CUSTOMIZADA) --- */
 
@@ -213,13 +256,11 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
     overflow-y: auto; 
     overflow-x: hidden;
 }
-
 /* Ajuste fino para o container principal não criar barra dupla */
 .dashboard-sidebar {
     overflow: hidden; /* A rolagem fica só na lista (.sidebar-nav) */
 }
-/* ==========================================================================
-   4. FORMULÁRIOS E PERFIL (RESTAUROU SEU CÓDIGO AQUI)
+/* =================
    ========================================================================== */
 .form-secao {
     background-color: var(--branco-puro);
@@ -1574,11 +1615,301 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     box-shadow: 0 8px 25px rgba(27, 67, 50, 0.4);
 }
 
+/* ==========================================================================
+   11. BADGES DE GAMIFICAÇÃO (SIDEBAR)
+   ========================================================================== */
+
+#sidebar-badges-container {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.badge-item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px; /* Tamanho menor para a sidebar */
+    height: 28px;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: help; /* Muda o cursor para indicar que tem tooltip */
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Borda sutil no fundo escuro */
+}
+.badge-item:hover { 
+    transform: translateY(-2px); 
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+}
+
+/* Cores dos Níveis */
+.badge-bronze { background: linear-gradient(135deg, #d9a77a, #cd7f32); color: white; }
+.badge-prata { background: linear-gradient(135deg, #e0e0e0, #b0b0b0); color: #424242; }
+.badge-ouro {
+    background: linear-gradient(135deg, #ffeb3b, #fbc02d);
+    color: #424242;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+/* Badges Especiais (Booleanas) */
+.badge-autentico {
+    background: #ffffff;
+    color: var(--verde-escuro);
+}
+.badge-pioneiro {
+    background: linear-gradient(135deg, #ce93d8, #ab47bc);
+    color: white;
+}
+
+.badge-icon { font-size: 16px; line-height: 1; }
+
+/* ==========================================================================
+   12. BADGES DE AUTOR (FÓRUM)
+   ========================================================================== */
+
+.author-badges, .author-badges-full {
+    display: inline-flex;
+    gap: 4px;
+    vertical-align: middle;
+    margin-left: 6px; /* Espaço após o nome do autor */
+}
+.author-badge-icon {
+    font-size: 14px;
+    line-height: 1;
+    cursor: default;
+}
+.author-badges-full .author-badge-icon {
+    font-size: 16px;
+}
+
+/* Badge de Nível de Autoridade (Texto) */
+.author-level-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #555;
+    background-color: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    vertical-align: middle;
+}
+
+/* ==========================================================================
+   14. INPUT DE COMENTÁRIO (CÁPSULA AUTO-RESIZE)
+   ========================================================================== */
+
+.comment-input-capsule {
+    width: 100%;
+    padding: 12px 20px;
+    border-radius: 24px; /* Formato de cápsula */
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+    font-size: 0.95rem;
+    font-family: var(--font-principal);
+    line-height: 1.4;
+    resize: none; /* Desabilita o redimensionamento manual */
+    overflow-y: hidden; /* Esconde a barra de rolagem até ser necessário */
+    min-height: 48px; /* Altura inicial fina */
+    box-sizing: border-box;
+    transition: height 0.15s ease-out;
+}
+.comment-input-capsule:focus {
+    outline: none;
+    border-color: var(--verde-escuro);
+    box-shadow: 0 0 0 2px rgba(27, 67, 50, 0.1);
+}
+
+/* ==========================================================================
+   15. WIDGET DE SUGESTÕES DE TEMAS (BLOG)
+   ========================================================================== */
+
+.sugestoes-temas-widget {
+    background: #fffbeb; /* Amarelo bem claro */
+    border: 1px solid #fde68a; /* Borda amarela */
+    border-radius: 16px;
+    padding: 25px;
+    margin-bottom: 40px;
+}
+
+.sugestoes-temas-widget h3 {
+    margin-top: 0;
+    color: #b45309; /* Laranja escuro */
+    font-family: var(--font-titulos);
+}
+
+.sugestoes-temas-widget p {
+    color: #92400e; /* Laranja mais escuro */
+    font-size: 0.95rem;
+    margin-top: 5px;
+    margin-bottom: 0;
+}
+
+.sugestoes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.sugestao-item {
+    background: rgba(255, 255, 255, 0.6);
+    padding: 15px;
+    border-radius: 10px;
+    font-weight: 600;
+    color: #92400e;
+    border: 1px solid #fde68a;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sugestao-item:hover {
+    background: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    border-color: #f59e0b;
+}
+
+/* Skeleton loader for suggestions */
+.sugestao-item-skeleton {
+    background-color: #fef3c7;
+    border-radius: 10px;
+    height: 54px; /* Mesma altura do item preenchido */
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* ==========================================================================
+   13. GAMIFICATION (JORNADA & VISÃO GERAL)
+   ========================================================================== */
+
+.gamification-panel {
+    background: #f9fafb;
+    border-radius: 16px;
+    padding: 25px;
+    margin-bottom: 30px;
+    font-family: 'Mulish', sans-serif;
+}
+
+.gamification-panel-overview {
+    background: var(--branco-puro);
+    border-radius: 16px;
+    padding: 25px;
+    margin-bottom: 30px;
+    font-family: 'Mulish', sans-serif;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    border: 1px solid #f0f0f0;
+}
+
+.gami-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.gami-title { font-size: 1.2rem; font-weight: 700; color: #1f2937; margin: 0; }
+.gami-level-badge {
+    background: #e8f5e9;
+    color: #1B4332;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+/* Barra de Progresso de XP */
+.xp-bar-wrapper {
+    width: 100%; 
+    background-color: #e5e7eb; 
+    border-radius: 12px;
+    height: 16px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+.xp-bar-fill {
+    height: 100%; 
+    width: 0%; 
+    border-radius: 12px; 
+    transition: width 1s cubic-bezier(0.25, 1, 0.5, 1);
+    background-color: #1B4332;
+    background-image: repeating-linear-gradient( -45deg, transparent, transparent 10px, rgba(255, 255, 255, 0.15) 10px, rgba(255, 255, 255, 0.15) 20px );
+    background-size: 28.28px 28.28px;
+    animation: xp-bar-stripes 1s linear infinite;
+    box-shadow: 0 0 8px rgba(76, 175, 80, 0.4), 0 0 4px rgba(255,255,255,0.3) inset;
+}
+.xp-labels {
+    display: flex; justify-content: space-between; font-size: 0.8rem; color: #6b7280;
+    margin-top: 8px; font-weight: 600;
+}
+
+/* Grid de Badges (Página Jornada) */
+.badges-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+.badge-card { background: #ffffff; border-radius: 12px; padding: 20px; border: 1px solid #e5e7eb; transition: all 0.2s; cursor: help; }
+.badge-card.locked { opacity: 0.6; background-color: #f9fafb; }
+.badge-header { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
+.badge-icon-img { font-size: 2.2rem; line-height: 1; }
+.badge-info { flex-grow: 1; }
+.badge-name { font-size: 1rem; font-weight: 700; color: #1f2937; display: block; }
+.badge-status { font-size: 0.8rem; color: #6b7280; font-weight: 600; }
+.badge-progress-container { margin-top: 10px; }
+.badge-progress-bar-wrapper { height: 6px; background-color: #e5e7eb; border-radius: 6px; overflow: hidden; }
+.badge-progress-bar { height: 100%; width: 0%; border-radius: 6px; transition: width 0.5s ease-out; }
+.badge-progress-text { font-size: 0.75rem; color: #6b7280; margin-top: 5px; text-align: right; }
+.badge-bronze .badge-progress-bar { background-color: #cd7f32; }
+.badge-prata .badge-progress-bar { background-color: #c0c0c0; }
+.badge-ouro .badge-progress-bar { background-color: #ffd700; }
+.badge-card.unlocked.bronze { border-left: 4px solid #cd7f32; }
+.badge-card.unlocked.prata { border-left: 4px solid #c0c0c0; }
+.badge-card.unlocked.ouro { border-left: 4px solid #ffd700; }
+.badge-card.unlocked.unico { border-left: 4px solid #1B4332; }
+
+@keyframes xp-bar-stripes {
+    from { background-position: 28.28px 0; }
+    to { background-position: 0 0; }
+}
+
 /* --- CORREÇÃO: FONTE DO PREÇO NO BANNER DE ASSINATURA --- */
 #banner-preco {
     font-family: var(--font-titulos) !important;
     font-weight: 500; /* Ajuste fino para a fonte não ficar pesada demais */
     letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   16. MOBILE TOOLTIP (PARA BADGES)
+   ========================================================================== */
+
+.mobile-badge-tooltip {
+    position: fixed;
+    background-color: #1f2937; /* Cinza escuro, quase preto */
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    max-width: 250px;
+    z-index: 10001; /* Acima de tudo */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    animation: fadeIn 0.15s ease-out;
+    pointer-events: none; /* Para não interferir com outros cliques */
+    text-align: center;
+}
+
+/* Setinha do tooltip */
+.mobile-badge-tooltip::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; 
+    height: 0; 
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+}
+
+.mobile-badge-tooltip.bottom::after {
+    top: -6px; /* Aponta para cima */
+    border-bottom: 6px solid #1f2937;
+}
+
+.mobile-badge-tooltip.top::after {
+    bottom: -6px; /* Aponta para baixo */
+    border-top: 6px solid #1f2937;
+}
 }
 /* ==========================================================================
    CSS EXTRA: LAYOUT DO PERFIL PÚBLICO (Recuperação)
@@ -2742,4 +3073,148 @@ body.pagina-dashboard::after {
         background-color: #1B4332;
         flex-shrink: 0; /* Impede que o botão amasse */
     }
+}
+/* ==========================================================================
+   17. NESTED THREADING (REDDIT STYLE) & MOBILE INPUT
+   ========================================================================== */
+
+/* Remove estilo de card individual para criar fluxo contínuo */
+.comment-card {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important; /* Remove padding do container pai */
+    margin-bottom: 15px;
+    position: relative;
+}
+
+/* Linha Guia (Thread Line) */
+.comment-replies-container {
+    margin-left: 12px; /* Recuo do pai */
+    padding-left: 12px; /* Espaço entre linha e filho */
+    border-left: 2px solid #e5e7eb; /* Linha cinza contínua */
+    display: flex;
+    flex-direction: column;
+    margin-top: 10px;
+}
+
+/* Hover na linha guia para destaque visual */
+.comment-replies-container:hover {
+    border-left-color: #ccc;
+}
+
+/* Ajuste de espaçamento interno do conteúdo do comentário */
+.comment-header, .comment-body, .comment-actions {
+    margin-bottom: 6px;
+}
+
+/* Ajuste Mobile-First (Crítico) */
+@media (max-width: 768px) {
+    /* Hierarquia compacta no mobile */
+    .comment-replies-container {
+        margin-left: 8px !important; /* Mínimo possível */
+        padding-left: 8px !important;
+        border-left-width: 2px;
+    }
+}
+
+/* ==========================================================================
+   18. THREAD INTERATIVA (COLAPSAR)
+   ========================================================================== */
+
+.comment-replies-container.thread-line-interactive {
+    position: relative;
+}
+/* Pseudo-elemento para aumentar a área de clique da linha */
+.comment-replies-container.thread-line-interactive::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 15px; cursor: pointer; z-index: 5;
+}
+.comment-replies-container.thread-line-interactive:hover {
+    border-left-color: #1B4332; /* Verde destaque ao passar o mouse */
+}
+
+/* Estilo padrão para o formulário de resposta inline */
+#reply-form-dynamic {
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+/* ==========================================================================
+   BLOQUEIO DE CONTA (PAGAMENTO PENDENTE / PERFIL INATIVO)
+   ========================================================================== */
+
+/* Aplique a classe .blocked-view no container .dashboard-main quando o usuário não pagar */
+.dashboard-main.blocked-view {
+    position: relative;
+    overflow: hidden !important; /* Impede rolagem do conteúdo borrado */
+}
+
+/* Borra todo o conteúdo exceto o overlay */
+.dashboard-main.blocked-view > *:not(.dashboard-lock-overlay) {
+    filter: blur(8px);
+    pointer-events: none;
+    opacity: 0.4;
+    user-select: none;
+}
+
+/* O Overlay que fica por cima de tudo */
+.dashboard-lock-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000; /* Acima do conteúdo borrado */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.4); /* Fundo semi-transparente */
+    backdrop-filter: blur(2px); /* Blur extra no overlay */
+}
+
+/* O Card de Aviso */
+.lock-message-card {
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    text-align: center;
+    max-width: 450px;
+    width: 90%;
+    border: 1px solid rgba(0,0,0,0.05);
+    animation: slideUpFade 0.4s ease-out;
+}
+
+.lock-icon-large {
+    width: 70px;
+    height: 70px;
+    background-color: #fffbeb; /* Amarelo claro */
+    color: #f59e0b; /* Laranja/Amarelo */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin: 0 auto 20px auto;
+    box-shadow: 0 10px 20px rgba(245, 158, 11, 0.15);
+}
+
+.lock-message-card h2 {
+    font-family: var(--font-titulos);
+    color: var(--verde-escuro);
+    font-size: 1.6rem;
+    margin-bottom: 15px;
+}
+
+.lock-message-card p {
+    color: #666;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+@keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }

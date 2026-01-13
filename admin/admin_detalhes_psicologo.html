@@ -1,0 +1,104 @@
+<div class="page-header-actions">
+    <button onclick="navigateToPage('admin_gerenciar_psicologos.html')" class="btn-voltar">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        Voltar para Lista
+    </button>
+    <h1>Detalhes do Profissional</h1>
+</div>
+
+<div id="psy-details-loading" style="text-align: center; padding: 50px;">
+    <div class="loading-spinner" style="display: inline-block; position: static;"></div>
+    <p style="margin-top: 10px; color: #666;">Carregando dossiê completo...</p>
+</div>
+
+<div id="psy-details-content" style="display: none;">
+    <!-- Cabeçalho do Perfil -->
+    <div class="profile-header-card">
+        <div class="profile-cover"></div>
+        <div class="profile-main-info">
+            <img id="detail-foto" src="/assets/images/default-avatar.png" alt="Foto" class="profile-avatar-lg">
+            <div class="profile-text">
+                <h2 id="detail-nome">Carregando...</h2>
+                <p id="detail-crp" class="crp-badge">CRP: ...</p>
+                <div class="profile-tags" id="detail-tags">
+                    <!-- Tags de Abordagem/Especialidade -->
+                </div>
+            </div>
+            <div class="profile-actions-top">
+                <span id="detail-status" class="status-badge">...</span>
+                <span id="detail-plano" class="plan-badge">...</span>
+            </div>
+        </div>
+        <div class="profile-contact-grid">
+            <div class="contact-item">
+                <span class="label">Email</span>
+                <span class="value" id="detail-email">...</span>
+            </div>
+            <div class="contact-item">
+                <span class="label">Telefone</span>
+                <span class="value" id="detail-telefone">...</span>
+            </div>
+            <div class="contact-item">
+                <span class="label">Cidade/UF</span>
+                <span class="value" id="detail-local">...</span>
+            </div>
+            <div class="contact-item">
+                <span class="label">Cadastro</span>
+                <span class="value" id="detail-data">...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid de Estatísticas -->
+    <div class="stats-grid-details">
+        <div class="stat-box">
+            <h3>Matches</h3>
+            <span class="stat-number" id="stat-matches">0</span>
+        </div>
+        <div class="stat-box">
+            <h3>Cliques WhatsApp</h3>
+            <span class="stat-number" id="stat-whatsapp">0</span>
+        </div>
+        <div class="stat-box">
+            <h3>Posts Blog</h3>
+            <span class="stat-number" id="stat-blog">0</span>
+        </div>
+        <div class="stat-box">
+            <h3>Fórum (Posts/Res)</h3>
+            <span class="stat-number" id="stat-forum">0</span>
+        </div>
+    </div>
+
+    <!-- Abas de Conteúdo -->
+    <div class="details-tabs">
+        <button class="tab-btn active" onclick="switchDetailTab('timeline')">Linha do Tempo</button>
+        <button class="tab-btn" onclick="switchDetailTab('blog')">Blog & Artigos</button>
+        <button class="tab-btn" onclick="switchDetailTab('forum')">Atividade no Fórum</button>
+        <button class="tab-btn" onclick="switchDetailTab('reviews')">Avaliações & Feedback</button>
+    </div>
+
+    <div class="tab-content" id="tab-timeline">
+        <div class="timeline-container" id="timeline-list">
+            <!-- Itens da timeline injetados via JS -->
+        </div>
+    </div>
+
+    <div class="tab-content" id="tab-blog" style="display: none;">
+        <div class="content-list" id="blog-list">
+            <p class="empty-state">Nenhum artigo publicado.</p>
+        </div>
+    </div>
+
+    <div class="tab-content" id="tab-forum" style="display: none;">
+        <div class="content-list" id="forum-list">
+            <p class="empty-state">Nenhuma interação no fórum.</p>
+        </div>
+    </div>
+
+    <div class="tab-content" id="tab-reviews" style="display: none;">
+        <div class="content-list" id="reviews-list">
+            <p class="empty-state">Nenhuma avaliação registrada.</p>
+        </div>
+    </div>
+</div>
+<div style="height: 50px;"></div>

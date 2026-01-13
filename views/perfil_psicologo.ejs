@@ -232,7 +232,7 @@
                 text-align: left;
             }
             .conversion-card-modern h3, .conversion-card-modern .info-row, .conversion-card-modern #psi-localizacao-container {
-                display: none; /* Simplifica no mobile */
+                display: none !important; /* Simplifica no mobile */
             }
             .price-display {
                 font-size: 1.4rem;
@@ -451,6 +451,58 @@
             height: 16px;
             color: var(--verde-escuro);
         }
+
+        /* --- GAMIFICATION BADGES (CSS ARTS) --- */
+        .badges-wrapper {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .badge-item {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center; /* Centraliza o emoji */
+            width: 32px; /* Tamanho fixo */
+            height: 32px; /* Tamanho fixo */
+            border-radius: 50%; /* Círculo */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+            cursor: default;
+        }
+        .badge-item:hover { transform: translateY(-2px); }
+
+        /* Cores dos Níveis */
+        .badge-bronze {
+            background: linear-gradient(135deg, #FFF0E0, #FFE0B2);
+            border: 1px solid #FFCC80;
+            color: #8D6E63;
+        }
+        .badge-prata {
+            background: linear-gradient(135deg, #F5F5F5, #E0E0E0);
+            border: 1px solid #BDBDBD;
+            color: #616161;
+        }
+        .badge-ouro {
+            background: linear-gradient(135deg, #FFFDE7, #FFF59D);
+            border: 1px solid #FDD835;
+            color: #F57F17;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+        /* Badges Especiais */
+        .badge-autentico {
+            background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+            border: 1px solid #81C784;
+            color: #2E7D32;
+        }
+        .badge-pioneiro {
+            background: linear-gradient(135deg, #F3E5F5, #E1BEE7);
+            border: 1px solid #BA68C8;
+            color: #7B1FA2;
+        }
+        
+        .badge-icon { font-size: 18px; line-height: 1; } /* Tamanho do emoji */
     </style>
 </head>
 <body>
@@ -518,6 +570,9 @@
                                     <!-- Exemplo estático de como ficará -->
                                     <!-- <span class="tag-pill">Ansiedade</span> -->
                                 </div>
+
+                                <!-- LOCAL DAS BADGES -->
+                                <div id="psi-badges-display" class="badges-wrapper"></div>
                             </div>
                         </div>
 
@@ -577,7 +632,7 @@
                                     <input type="radio" id="star2" name="rating" value="2" /><label for="star2" title="Regular">★</label>
                                     <input type="radio" id="star1" name="rating" value="1" /><label for="star1" title="Ruim">★</label>
                                 </div>
-                                <textarea name="comentario" placeholder="Escreva aqui sua avaliação (Opcional)..." rows="3" style="width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
+                                <textarea name="comentario" class="comment-input-capsule" placeholder="Escreva aqui sua avaliação (Opcional)..." rows="1"></textarea>
                                 <button type="submit" class="btn btn-verde" style="margin-top: 15px;">Enviar Avaliação</button>
                             </form>
                         </div>
@@ -676,6 +731,56 @@
     <script src="/perfil_psicologo.js"></script> 
 
     <script>
+        // --- FUNÇÃO PARA RENDERIZAR BADGES (Injetada via Script Inline ou movida para perfil_psicologo.js) ---
+        function renderBadges(badgesData) {
+            const container = document.getElementById('psi-badges-display');
+            if (!container || !badgesData) return;
+
+            let html = '';
+
+            // 1. Badge Autêntico (Segurança)
+            if (badgesData.autentico) {
+                html += `
+                    <div class="badge-item badge-autentico" title="Autêntico: Este profissional mantém o perfil 100% completo e verificado.">
+                        <span class="badge-icon">🛡️</span>
+                    </div>
+                `;
+            }
+
+            // 2. Badge Semeador (Conteúdo)
+            if (badgesData.semeador) {
+                const nivel = badgesData.semeador; // bronze, prata, ouro
+                const label = nivel.charAt(0).toUpperCase() + nivel.slice(1);
+                html += `
+                    <div class="badge-item badge-${nivel}" title="Semeador (${label}): Produz conteúdo e educa a audiência na plataforma.">
+                        <span class="badge-icon">🌱</span>
+                    </div>
+                `;
+            }
+
+            // 3. Badge Voz Ativa (Comunidade)
+            if (badgesData.voz_ativa) {
+                const nivel = badgesData.voz_ativa;
+                const label = nivel.charAt(0).toUpperCase() + nivel.slice(1);
+                html += `
+                    <div class="badge-item badge-${nivel}" title="Voz Ativa (${label}): Acolhe e responde dúvidas de pacientes na Comunidade Yelo.">
+                        <span class="badge-icon">💬</span>
+                    </div>
+                `;
+            }
+
+            // 4. Badge Pioneiro
+            if (badgesData.pioneiro) {
+                html += `
+                    <div class="badge-item badge-pioneiro" title="Pioneiro: Membro Fundador, um dos primeiros profissionais da Yelo.">
+                        <span class="badge-icon">🏅</span>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             // Lógica para o botão de compartilhar
             const btnShare = document.getElementById('btn-share');
@@ -726,6 +831,76 @@
                     const reviewsSection = document.getElementById('tab-avaliacoes');
                     if(reviewsSection) reviewsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
+            }
+
+            // Hook para renderizar badges quando os dados chegarem (assumindo que perfil_psicologo.js preenche os dados)
+            // Vamos observar mudanças ou esperar que o script principal chame renderBadges
+            // Se você estiver usando fetch no perfil_psicologo.js, adicione:
+            // if (data.badges) renderBadges(data.badges);
+            // Como não tenho acesso ao perfil_psicologo.js aqui, deixo a função global disponível.
+
+            // --- LÓGICA DE TOOLTIP PARA BADGES NO MOBILE ---
+            function setupMobileBadgeTooltips() {
+                document.body.addEventListener('click', function(e) {
+                    const existingTooltip = document.querySelector('.mobile-badge-tooltip');
+                    
+                    // Se clicou em um alvo de badge
+                    const target = e.target.closest('.badge-card, .badge-item');
+
+                    // Primeiro, remove qualquer tooltip existente
+                    if (existingTooltip) {
+                        existingTooltip.remove();
+                    }
+
+                    // Se não clicou em um alvo de badge, ou se estamos no desktop, apenas saia
+                    if (!target || window.innerWidth > 992) {
+                        return;
+                    }
+                    
+                    // Se clicou em um alvo, previne outras ações e mostra o novo tooltip
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const title = target.getAttribute('title');
+                    if (!title) return;
+
+                    // Cria o novo tooltip
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'mobile-badge-tooltip';
+                    tooltip.textContent = title;
+                    document.body.appendChild(tooltip);
+
+                    // Posiciona o tooltip
+                    const targetRect = target.getBoundingClientRect();
+                    const tooltipRect = tooltip.getBoundingClientRect();
+
+                    let top = targetRect.bottom + 10;
+                    tooltip.classList.add('bottom');
+
+                    if ((top + tooltipRect.height) > window.innerHeight - 20) {
+                        top = targetRect.top - tooltipRect.height - 10;
+                        tooltip.classList.remove('bottom');
+                        tooltip.classList.add('top');
+                    }
+                    
+                    let left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
+                    if (left < 10) left = 10;
+                    if (left + tooltipRect.width > window.innerWidth - 10) left = window.innerWidth - tooltipRect.width - 10;
+
+                    tooltip.style.top = `${top}px`;
+                    tooltip.style.left = `${left}px`;
+                });
+            }
+            setupMobileBadgeTooltips();
+
+            // --- NOVO: LÓGICA DE AUTO-RESIZE PARA TEXTAREA DE AVALIAÇÃO ---
+            const reviewTextarea = document.querySelector('#form-nova-avaliacao textarea');
+            if (reviewTextarea) {
+                const autoResize = () => {
+                    reviewTextarea.style.height = 'auto';
+                    reviewTextarea.style.height = reviewTextarea.scrollHeight + 'px';
+                };
+                reviewTextarea.addEventListener('input', autoResize);
             }
         });
     </script>

@@ -66,8 +66,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (senha.length < 6) {
-            mostrarErro('A senha deve ter no mínimo 6 caracteres.');
+        // Validação de Senha Forte
+        const senhaRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+        if (!senhaRegex.test(senha)) {
+            mostrarErro('A senha deve ter no mínimo 8 caracteres, incluindo uma letra maiúscula, um número e um caractere especial.');
             restaurarBotao();
             return;
         }

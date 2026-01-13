@@ -112,9 +112,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Mensagem de sucesso
                     if (mensagemEl) {
-                        if (result.type === 'patient') mensagemEl.textContent = "Bem-vindo(a), Paciente";
-                        else if (result.type === 'psychologist') mensagemEl.textContent = "Bem-vindo(a), Psi";
-                        else if (result.type === 'admin') mensagemEl.textContent = "Bem-vindo(a), Admin";
+                        if (result.type === 'patient') mensagemEl.textContent = "Bem-vindo(a), Paciente!";
+                        else if (result.type === 'psychologist') mensagemEl.textContent = "Bem-vindo(a), Psi!";
+                        else if (result.type === 'admin') mensagemEl.textContent = "Bem-vindo(a), Admin!";
                         mensagemEl.className = 'mensagem-sucesso';
                         mensagemEl.style.display = 'block';
                     }

@@ -4,6 +4,7 @@ const Post = db.Post;
 // Precisamos do modelo Psychologist para saber quem escreveu
 // Tenta carregar com maiúscula ou minúscula para evitar erro no Linux/Render
 const Psychologist = db.Psychologist || db.psychologist || db.Sequelize.models.Psychologist;
+const gamificationService = require('../services/gamificationService');
 
 // --- BANCO DE IMAGENS (Estilo Flat/Yelo) ---
 const imagensPadrao = [
@@ -81,6 +82,11 @@ module.exports = {
                 titulo, conteudo, imagem_url,
                 psychologist_id: req.userId
             });
+
+            // --- GAMIFICATION HOOK ---
+            // Publicar Artigo (50 pts, max 1/dia)
+            gamificationService.processAction(req.userId, 'blog_post').catch(err => console.error("Gamification hook error:", err));
+
             res.status(201).json(novoPost);
         } catch (error) {
             console.error("Erro criarPost:", error);
@@ -129,24 +135,6 @@ module.exports = {
 
             let posts = await Post.findAll(queryOptions);
 
-            // Adiciona Mocks se tiver poucos posts
-            if (posts.length < 4) {
-                const mocks = [
-                    {
-                        id: 'mock-1', titulo: "Como a ansiedade afeta o sono", conteudo: "Dificuldade para dormir é um dos sintomas mais comuns...",
-                        imagem_url: null,
-                        created_at: new Date('2025-11-20'), autor: { nome: "Equipe Yelo", fotoUrl: null, slug: "#" },
-                        curtidas: 24
-                    },
-                    {
-                        id: 'mock-2', titulo: "Terapia Online funciona mesmo?", conteudo: "Estudos mostram que a eficácia é a mesma...",
-                        imagem_url: null,
-                        created_at: new Date('2025-11-15'), autor: { nome: "Equipe Yelo", fotoUrl: null, slug: "#" },
-                        curtidas: 56
-                    }
-                ];
-                posts = posts.concat(mocks);
-            }
             res.render('blog', { 
                 posts: posts, 
                 formatImageUrl: formatImageUrl,

@@ -230,6 +230,21 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         defaultValue: 0,
         allowNull: false
+    },
+    // --- XP (NOVO) ---
+    xp: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+    },
+    // --- GAMIFICATION (NOVO) ---
+    authority_level: {
+        type: DataTypes.STRING,
+        defaultValue: 'nivel_iniciante' // nivel_iniciante, nivel_verificado, nivel_ativo, nivel_especialista, nivel_mentor
+    },
+    badges: {
+        type: DataTypes.JSONB,
+        defaultValue: {} 
+        // Ex: { semeador: 'bronze', voz_ativa: 'ouro', autentico: true, pioneiro: true }
     }
   }, {
     sequelize,

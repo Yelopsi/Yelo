@@ -138,6 +138,167 @@ exports.updateVipStatus = async (req, res) => {
     }
 };
 
+/**
+ * Rota: GET /api/admin/psychologists/:id/full-details
+ * Descrição: Busca TODOS os dados relacionados a um psicólogo (Visão 360º).
+ * Agrega: Perfil, Blog, Fórum, Avaliações, Matches e Logs de WhatsApp.
+ */
+exports.getPsychologistFullDetails = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // 1. Dados do Psicólogo
+        const psychologist = await db.Psychologist.findByPk(id, {
+            attributes: { exclude: ['senha', 'resetPasswordToken', 'resetPasswordExpires'] }
+        });
+
+        if (!psychologist) {
+            return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+        }
+
+        // 2. Blog Posts (Se o model existir)
+        let blogPosts = [];
+        if (db.Post) {
+            blogPosts = await db.Post.findAll({
+                where: { psychologistId: id },
+                order: [['createdAt', 'DESC']]
+            }).catch(() => []);
+        }
+
+        // 3. Fórum (Posts e Comentários)
+        let forumPosts = [];
+        let forumComments = [];
+        
+        // Tenta buscar posts do fórum (considerando variações de FK)
+        if (db.ForumPost) {
+            try {
+                forumPosts = await db.ForumPost.findAll({ where: { PsychologistId: id }, order: [['createdAt', 'DESC']] });
+            } catch (e) {
+                // Fallback para camelCase se PascalCase falhar
+                forumPosts = await db.ForumPost.findAll({ where: { psychologistId: id }, order: [['createdAt', 'DESC']] }).catch(() => []);
+            }
+        }
+
+        // Tenta buscar comentários do fórum
+        if (db.ForumComment) {
+            try {
+                forumComments = await db.ForumComment.findAll({ 
+                    where: { PsychologistId: id },
+                    include: db.ForumPost ? [{ model: db.ForumPost, attributes: ['titulo'] }] : [],
+                    order: [['createdAt', 'DESC']] 
+                });
+            } catch (e) {
+                forumComments = await db.ForumComment.findAll({ where: { psychologistId: id }, order: [['createdAt', 'DESC']] }).catch(() => []);
+            }
+        }
+
+        // 4. Avaliações
+        const reviews = await db.Review.findAll({
+            where: { psychologistId: id },
+            order: [['createdAt', 'DESC']]
+        });
+
+        // 5. Matches (Tabela MatchEvents - Raw Query para robustez)
+        const [matches] = await db.sequelize.query(
+            `SELECT * FROM "MatchEvents" WHERE "psychologistId" = :id ORDER BY "createdAt" DESC`,
+            { replacements: { id } }
+        ).catch(() => [[], null]);
+
+        // 6. Stats (Whatsapp Clicks - Raw Query)
+        const [whatsappStats] = await db.sequelize.query(
+            `SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "psychologistId" = :id`,
+            { replacements: { id } }
+        ).catch(() => [[{ count: 0 }]]);
+
+        res.json({
+            psychologist,
+            stats: {
+                matches: matches ? matches.length : 0,
+                whatsappClicks: whatsappStats[0] ? parseInt(whatsappStats[0].count) : 0
+            },
+            blogPosts,
+            forumPosts,
+            forumComments: forumComments.map(c => c.toJSON ? { ...c.toJSON(), postTitle: c.ForumPost?.titulo } : c),
+            reviews,
+            matches: matches || []
+        });
+
+    } catch (error) {
+        console.error('Erro ao buscar detalhes completos do psicólogo:', error);
+        res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};
+
+/**
+ * Rota: GET /api/admin/forum/reports
+ * Descrição: Busca todos os conteúdos denunciados no fórum.
+ */
+exports.getForumReports = async (req, res) => {
+    try {
+        // Esta query agrupa as denúncias por conteúdo, conta quantas denúncias
+        // cada um tem, e retorna o status atual do conteúdo para a moderação.
+        const query = `
+            SELECT
+                FR."itemId" AS "contentId",
+                FR."type" AS "contentType",
+                COUNT(FR.id) AS "reportCount",
+                MIN(FR."createdAt") AS "firstReportDate",
+                MAX(COALESCE(FP.status, FC.status, 'active')) AS "contentStatus",
+                MAX(COALESCE(FP.title, FP.content, FC.content)) AS "contentText",
+                MAX(COALESCE(author_p.nome, 'Usuário Removido')) AS "authorName"
+            FROM "ForumReports" AS FR
+            LEFT JOIN "ForumPosts" AS FP ON FR."itemId" = FP.id AND FR."type" = 'post'
+            LEFT JOIN "ForumComments" AS FC ON FR."itemId" = FC.id AND FR."type" = 'comment'
+            LEFT JOIN "Psychologists" AS author_p ON (FP."PsychologistId" = author_p.id OR FC."PsychologistId" = author_p.id)
+            GROUP BY FR."itemId", FR."type"
+            ORDER BY 
+                CASE 
+                    WHEN MAX(COALESCE(FP.status, FC.status, 'active')) IN ('active', 'pending') THEN 1
+                    ELSE 2 
+                END, 
+                COUNT(FR.id) DESC, 
+                MIN(FR."createdAt") ASC;
+        `;
+
+        const [reports] = await db.sequelize.query(query);
+        res.json(reports);
+
+    } catch (error) {
+        if (error.message.includes('relation "ForumReports" does not exist')) {
+            console.warn("Tabela 'ForumReports' não encontrada. Retornando lista de denúncias vazia.");
+            return res.json([]);
+        }
+        console.error("Erro ao buscar denúncias do fórum:", error);
+        res.status(500).json({ error: "Erro interno ao buscar denúncias." });
+    }
+};
+
+/**
+ * Rota: PUT /api/admin/forum/moderate
+ * Descrição: Modera um conteúdo do fórum (mantém ou remove).
+ */
+exports.moderateForumContent = async (req, res) => {
+    const { contentType, contentId, action } = req.body; // action: 'approve' ou 'remove'
+
+    if (!['post', 'comment'].includes(contentType) || !contentId || !['approve', 'remove'].includes(action)) {
+        return res.status(400).json({ error: 'Parâmetros inválidos.' });
+    }
+
+    try {
+        const Model = contentType === 'post' ? db.ForumPost : db.ForumComment;
+        const newStatus = action === 'approve' ? 'approved_by_admin' : 'hidden_by_admin';
+        const message = action === 'approve' ? 'Conteúdo mantido com sucesso.' : 'Conteúdo removido com sucesso.';
+
+        await Model.update({ status: newStatus }, { where: { id: contentId } });
+        if (db.ForumReport) await db.ForumReport.update({ status: 'resolved' }, { where: { itemId: contentId, type: contentType } });
+
+        res.json({ message });
+    } catch (error) {
+        console.error("Erro ao moderar conteúdo do fórum:", error);
+        res.status(500).json({ error: error.message || "Erro interno ao moderar conteúdo." });
+    }
+};
+
 // =====================================================================
 // (O RESTANTE DO SEU ARQUIVO PERMANECE IDÊNTICO)
 // =====================================================================

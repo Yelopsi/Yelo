@@ -1,0 +1,53 @@
+<div class="main-header">
+    <div class="header-content">
+        <h1 id="psi-welcome-name">Olá!</h1>
+        <p>Este é o seu centro de controle. Acompanhe suas métricas e atividades.</p>
+    </div>
+    <div class="dashboard-header-actions">
+        <button id="btn-refresh-kpis" class="btn-outline-light">
+            <svg class="icon-refresh" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+            Atualizar
+        </button>
+    </div>
+</div>
+
+<div id="alert-complete-profile" class="alert-box-visao-geral" style="display: none;">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-text">
+        <strong>Seu perfil está incompleto!</strong>
+        <p>Complete seu perfil para aparecer nas buscas e começar a receber pacientes. Isso também te dará 500 XP!</p>
+    </div>
+    <a href="#" data-page="psi_meu_perfil.html" class="btn btn-principal btn-sm">Completar Agora</a>
+</div>
+
+<!-- NOVO WIDGET DE PROGRESSO -->
+<div class="gamification-panel-overview">
+    <div class="gami-header">
+        <h3 class="gami-title">Sua Evolução</h3>
+        <span id="current-level-display" class="gami-level-badge">Iniciante</span>
+    </div>
+
+    <!-- Barra de Progresso de XP -->
+    <div class="xp-progress-container">
+        <div class="xp-bar-wrapper">
+            <div id="xp-bar-fill" class="xp-bar-fill"></div>
+        </div>
+        <div class="xp-labels">
+            <span id="xp-current-level-label">Nível 1</span>
+            <span id="xp-progress-text">0 / 500 XP</span>
+            <span id="xp-next-level-label">Nível 2</span>
+        </div>
+    </div>
+
+    <!-- Painel de Próximo Objetivo -->
+    <div id="next-level-info" style="margin-top: 20px; background: #f0fdf4; padding: 15px; border-radius: 12px; border: 1px solid #bbf7d0; color: #166534; display: flex; align-items: center; gap: 15px;">
+        <div style="font-size: 1.5rem;">🚀</div>
+        <div>
+            <strong style="display: block; font-size: 0.9rem;">Próximo Objetivo:</strong>
+            <span id="next-level-text" style="font-size: 0.85rem; line-height: 1.4;">Carregando...</span>
+        </div>
+    </div>
+</div>
+
+<!-- O restante da sua página de Visão Geral (KPIs, etc.) continua aqui -->
+<div class="kpi-grid"></div>
