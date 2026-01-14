@@ -47,10 +47,20 @@ exports.createPreference = async (req, res) => {
         // Para robustez, buscamos primeiro.
         let customerIdAsaas = null;
         
-        const customerSearch = await fetch(`${ASAAS_API_URL}/customers?email=${psychologist.email}`, {
+        // --- DEBUG: LOG DA URL ---
+        console.log(`[ASAAS] Tentando conectar em: ${ASAAS_API_URL}/customers?email=${psychologist.email}`);
+        
+        const customerResponse = await fetch(`${ASAAS_API_URL}/customers?email=${psychologist.email}`, {
             headers: { 'access_token': ASAAS_API_KEY }
-        }).then(r => r.json());
+        });
 
+        if (!customerResponse.ok) {
+            const errorText = await customerResponse.text();
+            console.error(`[ASAAS ERROR] Falha ao buscar cliente. Status: ${customerResponse.status}. Resposta: ${errorText.substring(0, 200)}...`);
+            throw new Error(`Erro de conexão com Asaas (${customerResponse.status}). Verifique os logs.`);
+        }
+
+        const customerSearch = await customerResponse.json();
         if (customerSearch.data && customerSearch.data.length > 0) {
             customerIdAsaas = customerSearch.data[0].id;
         } else {
