@@ -612,9 +612,33 @@ document.addEventListener('DOMContentLoaded', function() {
             if (cupomInput) cupomInput.value = cupomPreenchido;
         }
 
+        // --- APLICA MÁSCARAS AOS CAMPOS DO CARTÃO ---
+        setTimeout(() => {
+            if (window.IMask) {
+                const cardExpiry = document.getElementById('card-expiry');
+                const cardNumber = document.getElementById('card-number');
+                const cardCcv = document.getElementById('card-ccv');
+                const cardCpf = document.getElementById('card-holder-cpf');
+
+                if (cardExpiry) {
+                    IMask(cardExpiry, {
+                        mask: 'MM/YYYY',
+                        blocks: {
+                            MM: { mask: IMask.MaskedRange, from: 1, to: 12 },
+                            YYYY: { mask: IMask.MaskedRange, from: 1900, to: 2999 }
+                        }
+                    });
+                }
+                if (cardNumber) IMask(cardNumber, { mask: '0000 0000 0000 0000' });
+                if (cardCcv) IMask(cardCcv, { mask: '0000' });
+                if (cardCpf) IMask(cardCpf, { mask: '000.000.000-00' });
+            }
+        }, 100);
+
         // Impede duplo submit
         form.onsubmit = async (e) => {
             e.preventDefault();
+            if(msgDiv) msgDiv.classList.add('hidden'); // Limpa erro anterior ao tentar de novo
             btnSubmit.disabled = true;
             btnSubmit.textContent = "Processando com Asaas...";
 
