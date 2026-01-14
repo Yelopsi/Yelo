@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/css/psi_dashboard.css"> 
     
-    <script src="https://js.stripe.com/v3/"></script>
     <script src="https://unpkg.com/imask"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- ADICIONADO: Biblioteca de Gráficos -->
     <link rel="icon" href="/images/favicon.png" type="image/png">
@@ -165,13 +164,33 @@
         <div class="custom-modal-box">
             <button id="btn-close-modal-x" style="float: right; background:none; border:none; font-size:1.2rem; cursor:pointer;">✕</button>
             <h3 style="margin-top:0;">Finalizar Assinatura</h3>
-            <div id="payment-element"></div>
-            <div style="margin-top: 15px; display: flex; gap: 10px;">
-                <input type="text" id="modal-cupom-input" placeholder="Cupom de desconto" style="flex:1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                <button id="btn-aplicar-cupom-modal" style="padding: 8px 15px; background: #eee; border: none; border-radius: 4px; cursor: pointer;">Aplicar</button>
-            </div>
+            
             <div id="payment-message" class="hidden" style="margin-top: 10px;"></div>
             <form id="payment-form">
+                <!-- FORMULÁRIO ASAAS CHECKOUT TRANSPARENTE -->
+                <div id="asaas-payment-form" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="card-holder-name" placeholder="Nome impresso no cartão" required style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                        <input type="text" id="card-holder-cpf" placeholder="CPF do titular" required style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                    </div>
+                    
+                    <input type="text" id="card-number" placeholder="Número do Cartão" required style="padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="card-expiry" placeholder="MM/AAAA" required style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                        <input type="text" id="card-ccv" placeholder="CCV" required style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                    </div>
+
+                    <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">
+                        <span style="color: #1B4332;">🔒</span> Ambiente seguro. Seus dados são processados diretamente pelo Asaas.
+                    </p>
+                </div>
+
+                <div style="margin-top: 15px; display: flex; gap: 10px; margin-bottom: 20px;">
+                    <input type="text" id="modal-cupom-input" placeholder="Cupom de desconto" style="flex:1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <button type="button" id="btn-aplicar-cupom-modal" style="padding: 8px 15px; background: #eee; border: none; border-radius: 4px; cursor: pointer;">Aplicar</button>
+                </div>
+
                 <button id="btn-confirmar-stripe" style="margin-top: 20px; width: 100%; background: #1B4332; color: #fff; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Pagar Agora</button>
             </form>
         </div>

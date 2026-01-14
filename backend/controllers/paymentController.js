@@ -1,13 +1,16 @@
 // backend/controllers/paymentController.js
 const db = require('../models');
-// Certifique-se que STRIPE_SECRET_KEY está no seu .env
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-// 1. CRIA A INTENÇÃO DE PAGAMENTO (PaymentIntent) - MANTIDO IGUAL
+// Configurações do Asaas
+const ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3'; // Use 'https://api.asaas.com/v3' para produção
+const ASAAS_API_KEY = process.env.ASAAS_API_KEY; // Seu token do Asaas
+
+// 1. CRIA A ASSINATURA NO ASAAS (Checkout Transparente)
 exports.createPreference = async (req, res) => {
     try {
-        const { planType, cupom } = req.body;
+        const { planType, cupom, creditCard } = req.body;
         const psychologistId = req.psychologist.id;
+        const psychologist = await db.Psychologist.findByPk(psychologistId);
 
         // Lógica do Cupom VIP
         if (cupom && cupom.toUpperCase() === 'SOLVIP') {
@@ -23,90 +26,148 @@ exports.createPreference = async (req, res) => {
             return res.json({ couponSuccess: true, message: 'Cupom VIP aplicado!' });
         }
 
-        let amount;
-        // Padronização dos Planos (Preços em Centavos: R$ 99,00 -> 9900)
-        // Aceita tanto maiúsculo quanto minúsculo para evitar erros de frontend
+        if (!creditCard || !creditCard.number || !creditCard.holderName) {
+            return res.status(400).json({ error: 'Dados do cartão incompletos.' });
+        }
+
+        let value;
         switch (planType.toUpperCase()) {
-            case 'ESSENTIAL': amount = 9900;  break; 
-            case 'CLINICAL':  amount = 15900; break; 
-            case 'REFERENCE': amount = 25900; break; 
+            case 'ESSENTIAL': value = 99.00; break;
+            case 'CLINICAL': value = 159.00; break;
+            case 'REFERENCE': value = 259.00; break;
             default: return res.status(400).json({ error: 'Plano inválido: ' + planType });
         }
 
-        const paymentIntent = await stripe.paymentIntents.create({
-            amount: amount,
-            currency: 'brl',
-            automatic_payment_methods: { enabled: true },
-            metadata: {
-                psychologistId: String(psychologistId),
-                planType: planType
+        // 1. Cria ou Recupera o Cliente no Asaas
+        // (Simplificação: Cria um novo ou busca por email se a API permitir, aqui vamos tentar criar direto e tratar erro se duplicado ou buscar antes)
+        // Para robustez, buscamos primeiro.
+        let customerIdAsaas = null;
+        
+        const customerSearch = await fetch(`${ASAAS_API_URL}/customers?email=${psychologist.email}`, {
+            headers: { 'access_token': ASAAS_API_KEY }
+        }).then(r => r.json());
+
+        if (customerSearch.data && customerSearch.data.length > 0) {
+            customerIdAsaas = customerSearch.data[0].id;
+        } else {
+            // Cria novo cliente
+            const newCustomer = await fetch(`${ASAAS_API_URL}/customers`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'access_token': ASAAS_API_KEY 
+                },
+                body: JSON.stringify({
+                    name: psychologist.nome,
+                    email: psychologist.email,
+                    cpfCnpj: creditCard.holderCpf || psychologist.cpf || psychologist.cnpj // Asaas exige documento
+                })
+            }).then(r => r.json());
+
+            if (newCustomer.errors) throw new Error(newCustomer.errors[0].description);
+            customerIdAsaas = newCustomer.id;
+        }
+
+        // 2. Cria a Assinatura com Cartão de Crédito
+        const [expiryMonth, expiryYear] = creditCard.expiry.split('/');
+        
+        const subscriptionPayload = {
+            customer: customerIdAsaas,
+            billingType: 'CREDIT_CARD',
+            value: value,
+            nextDueDate: new Date().toISOString().split('T')[0], // Cobra hoje
+            cycle: 'MONTHLY',
+            description: `Assinatura Yelo - Plano ${planType}`,
+            externalReference: String(psychologistId), // IMPORTANTE: Para identificar no webhook
+            creditCard: {
+                holderName: creditCard.holderName,
+                number: creditCard.number.replace(/\s/g, ''),
+                expiryMonth: expiryMonth,
+                expiryYear: expiryYear.length === 2 ? `20${expiryYear}` : expiryYear,
+                ccv: creditCard.ccv
+            },
+            creditCardHolderInfo: {
+                name: creditCard.holderName,
+                email: psychologist.email,
+                cpfCnpj: creditCard.holderCpf,
+                postalCode: psychologist.cep || '00000-000', // Fallback se não tiver
+                addressNumber: '0', // Asaas exige, mas pode ser genérico se não tivermos
+                phone: psychologist.telefone || '00000000000'
             }
+        };
+
+        const subscriptionRes = await fetch(`${ASAAS_API_URL}/subscriptions`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'access_token': ASAAS_API_KEY 
+            },
+            body: JSON.stringify(subscriptionPayload)
         });
 
-        res.json({ clientSecret: paymentIntent.client_secret });
+        const subscriptionData = await subscriptionRes.json();
+
+        if (subscriptionData.errors) {
+            throw new Error(subscriptionData.errors[0].description);
+        }
+
+        // Sucesso!
+        // Opcional: Já atualizar o banco localmente como "Pendente" ou "Ativo" dependendo da resposta
+        res.json({ success: true, subscriptionId: subscriptionData.id });
 
     } catch (error) {
-        console.error('Erro Stripe:', error);
+        console.error('Erro Asaas:', error);
         // GRAVA O ERRO NO SISTEMA PARA O DASHBOARD VER
         await db.SystemLog.create({
             level: 'error',
-            message: `Erro ao criar pagamento Stripe: ${error.message}`
+            message: `Erro ao criar pagamento Asaas: ${error.message}`
         });
-        res.status(500).json({ error: 'Erro ao criar pagamento' });
+        res.status(500).json({ error: error.message || 'Erro ao processar pagamento' });
     }
 };
 
-// 2. WEBHOOK COM SEGURANÇA (A CORREÇÃO)
+// 2. WEBHOOK ASAAS
 exports.handleWebhook = async (req, res) => {
-    const sig = req.headers['stripe-signature'];
-    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    // O Asaas envia o evento no corpo do request (JSON)
+    const event = req.body;
+    
+    // Validação básica de segurança (Opcional: verificar token no header se configurado no Asaas)
+    // const asaasToken = req.headers['asaas-access-token'];
+    // if (asaasToken !== process.env.ASAAS_WEBHOOK_TOKEN) return res.status(401).send();
 
-    let event;
+    if (event.event === 'PAYMENT_CONFIRMED' || event.event === 'PAYMENT_RECEIVED') {
+        const payment = event.payment;
+        // O Asaas retorna o externalReference que enviamos na criação (ID do Psicólogo)
+        const psychologistId = payment.externalReference;
+        
+        // Tenta extrair o plano da descrição (ex: "Assinatura Yelo - Plano CLINICAL")
+        const description = payment.description || "";
+        let planType = 'ESSENTIAL'; // Default
+        if (description.includes('CLINICAL')) planType = 'CLINICAL';
+        if (description.includes('REFERENCE')) planType = 'REFERENCE';
 
-    try {
-        // AQUI ESTÁ A MUDANÇA: Validamos se o evento veio mesmo da Stripe
-        // Nota: req.rawBody é necessário aqui (veja instrução abaixo sobre o server.js)
-        event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
-    } catch (err) {
-        console.error(`Webhook Error: ${err.message}`);
-        await db.SystemLog.create({
-            level: 'error',
-            message: `Erro Crítico Webhook Stripe: ${err.message}`
-        });
-        return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
-    if (event.type === 'payment_intent.succeeded') {
-        const paymentIntent = event.data.object;
-        const { psychologistId, planType } = paymentIntent.metadata;
-
-        console.log(`[STRIPE] Pagamento Aprovado e Verificado: Psi ${psychologistId}`);
+        console.log(`[ASAAS] Pagamento Confirmado: Psi ${psychologistId} - Plano ${planType}`);
 
         try {
             const psi = await db.Psychologist.findByPk(psychologistId);
             if (psi) {
                 const hoje = new Date();
-                // Adiciona 30 dias de acesso
                 const novaValidade = new Date(hoje.setDate(hoje.getDate() + 30));
-                
-                // Normaliza para o padrão do Banco (ESSENTIAL, CLINICAL, REFERENCE)
-                const planoNormalizado = planType.toUpperCase();
 
                 await psi.update({
                     status: 'active',
-                    // ATENÇÃO: Usando o nome correto do campo definido no Model
                     planExpiresAt: novaValidade, 
-                    plano: planoNormalizado
+                    plano: planType,
+                    // Salva o ID da assinatura do Asaas para cancelamentos futuros
+                    stripeSubscriptionId: payment.subscription // Reutilizando a coluna existente
                 });
-                console.log(`[STRIPE] Plano ${planoNormalizado} ativado para Psi ${psychologistId}`);
             }
         } catch (err) {
             console.error('Erro ao atualizar banco:', err);
             await db.SystemLog.create({
                 level: 'error',
-                message: `Falha ao ativar plano após pagamento (Psi ID: ${psychologistId}): ${err.message}`
+                message: `Falha ao ativar plano Asaas (Psi ID: ${psychologistId}): ${err.message}`
             });
-            // Retornamos 200 mesmo com erro no banco para a Stripe não ficar tentando reenviar infinitamente
             return res.json({received: true}); 
         }
     }

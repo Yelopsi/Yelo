@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Reinicia o pagamento com o cupom aplicado
             try {
                 // Fechamos o modal visualmente por 1s ou apenas recarregamos o elemento
-                await window.iniciarPagamento(currentPlanAttempt, { textContent: '' }, cupomVal);
+                await window.iniciarPagamento(currentPlanAttempt, { textContent: '', tagName: 'BUTTON' }, cupomVal);
                 // Nota: iniciarPagamento já cuida de remontar o Stripe Element
             } catch (err) {
                 console.error(err);
@@ -245,12 +245,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- CONFIGURAÇÃO STRIPE ---
-    let stripe;
-    let elements;
-    try {
-        stripe = Stripe('pk_test_51SWdGOR73Pott0IUw2asi2NZg0DpjAOdziPGvVr8SAmys1VASh2i3EAEpErccZLYHMEWfI9hIq68xL3piRCjsvIa00MkUDANOA');
-    } catch (e) { console.error("Erro Stripe:", e); }
 
     // --- HELPERS E FETCH ---
     function showToast(message, type = 'success') {
@@ -587,84 +581,87 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.disabled = true;
         }
 
-        try {
-            // Pega cupom ou do modal ou nulo
-            const cupomCodigo = cupomForce || '';
-
-            const res = await apiFetch(`${API_BASE_URL}/api/payments/create-preference`, {
-                method: 'POST', body: JSON.stringify({ planType, cupom: cupomCodigo })
-            });
-            const data = await res.json();
-
-            // Se for cupom 100% que ativa direto (Backend decide)
-            if (data.couponSuccess) {
-                showToast(data.message, 'success');
-                // Fecha modal se estiver aberto
-                document.getElementById('payment-modal').style.setProperty('display', 'none', 'important');
-                await fetchPsychologistData();
-                loadPage('psi_assinatura.html'); // Recarrega para mostrar plano ativo
-                return;
-            }
-
-            if (data.clientSecret) {
-                abrirModalStripe(data.clientSecret);
-                if(cupomForce) showToast('Cupom aplicado!', 'success');
-            } else {
-                throw new Error("Falha ao iniciar pagamento.");
-            }
-        } catch (error) {
-            console.error(error);
-            showToast('Erro: ' + error.message, 'error');
-        } finally {
-            if(btn.tagName) {
-                btn.textContent = originalText;
-                btn.disabled = false;
-            }
+        // Abre o modal imediatamente para o usuário preencher os dados
+        abrirModalAsaas(planType, cupomForce);
+        
+        // Restaura botão
+        if(btn.tagName) {
+            btn.textContent = originalText;
+            btn.disabled = false;
         }
     };
 
-    function abrirModalStripe(clientSecret) {
+    function abrirModalAsaas(planType, cupomPreenchido) {
         const modal = document.getElementById('payment-modal');
-        const container = document.getElementById('payment-element');
         const form = document.getElementById('payment-form');
         const btnSubmit = document.getElementById('btn-confirmar-stripe');
+        const msgDiv = document.getElementById('payment-message');
 
-        if (!modal || !container) return;
+        if (!modal) return;
 
         modal.style.display = 'flex';
         modal.style.opacity = 1;
         modal.style.visibility = 'visible';
-        container.innerHTML = '';
-
-        const appearance = { theme: 'stripe', labels: 'floating' };
-        elements = stripe.elements({ appearance, clientSecret });
-
-        const paymentElement = elements.create('payment', { layout: 'tabs' });
-        paymentElement.mount('#payment-element');
+        
+        // Limpa mensagens anteriores
+        if(msgDiv) msgDiv.classList.add('hidden');
+        
+        // Se tiver cupom vindo da tentativa anterior, preenche
+        if(cupomPreenchido) {
+            document.getElementById('modal-cupom-input').value = cupomPreenchido;
+        }
 
         // Impede duplo submit
         form.onsubmit = async (e) => {
             e.preventDefault();
             btnSubmit.disabled = true;
-            btnSubmit.textContent = "Processando...";
+            btnSubmit.textContent = "Processando com Asaas...";
 
-            const { error } = await stripe.confirmPayment({
-                elements,
-                confirmParams: {
-                    return_url: window.location.href.split('?')[0] + '?status=approved',
-                },
-            });
+            // Coleta dados do formulário
+            const cardData = {
+                holderName: document.getElementById('card-holder-name').value,
+                holderCpf: document.getElementById('card-holder-cpf').value,
+                number: document.getElementById('card-number').value,
+                expiry: document.getElementById('card-expiry').value, // Esperado MM/AAAA
+                ccv: document.getElementById('card-ccv').value
+            };
+            
+            const cupom = document.getElementById('modal-cupom-input').value;
 
-            if (error) {
-                const messageDiv = document.getElementById('payment-message');
-                messageDiv.classList.remove('hidden');
-                messageDiv.textContent = error.message;
-                messageDiv.style.color = "red";
+            try {
+                const res = await apiFetch(`${API_BASE_URL}/api/payments/create-preference`, {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        planType, 
+                        cupom,
+                        creditCard: cardData
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    showToast('Assinatura realizada com sucesso!', 'success');
+                    modal.style.setProperty('display', 'none', 'important');
+                    await fetchPsychologistData();
+                    loadPage('psi_assinatura.html');
+                } else {
+                    throw new Error(data.error || 'Erro ao processar pagamento.');
+                }
+            } catch (error) {
+                console.error(error);
+                if(msgDiv) {
+                    msgDiv.classList.remove('hidden');
+                    msgDiv.textContent = error.message;
+                    msgDiv.style.color = "red";
+                }
+            } finally {
                 btnSubmit.disabled = false;
                 btnSubmit.textContent = "Pagar Agora";
             }
         };
     }
+
 
     function inicializarAssinatura() {
         const cardResumo = document.getElementById('card-resumo-assinatura');

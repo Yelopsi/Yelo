@@ -4,10 +4,10 @@ const router = express.Router();
 const paymentController = require('../controllers/paymentController');
 const { protect } = require('../middleware/authMiddleware');
 
-// Rota protegida (só usuário logado gera boleto/pix)
+// Rota protegida: Cria assinatura no Asaas (Checkout Transparente)
 router.post('/create-preference', protect, paymentController.createPreference);
 
-// Rota pública (o Mercado Pago não faz login para te avisar)
+// Rota pública: Webhook para receber notificações do Asaas
 router.post('/webhook', paymentController.handleWebhook);
 
 module.exports = router;
