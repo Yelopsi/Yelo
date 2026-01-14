@@ -2,10 +2,12 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- CORREÇÃO DE ROTA ---
-    // Pega do config.js ou assume localhost:3001
+    // Pega do config.js ou detecta automaticamente o ambiente
     const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') 
         ? window.API_BASE_URL 
-        : 'http://localhost:3001';
+        : (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1'))
+            ? 'http://localhost:3001'
+            : window.location.origin;
 
     // --- FORÇAR COR DA BARRA DO NAVEGADOR (MOBILE) ---
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
@@ -32,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'genero_identidade', question: "Com qual gênero você se identifica?", type: 'choice', choices: ["Feminino", "Masculino", "Não-binário", "Outro"], required: true },
         { id: 'valor_sessao_faixa', question: "Em qual faixa de preço você pretende atender?", type: 'choice', choices: ["Até R$ 50", "R$ 51 - R$ 90", "R$ 91 - R$ 150", "Acima de R$ 150"], required: true },
         { id: 'temas_atuacao', question: "Quais são seus principais temas de atuação?", type: 'multiple-choice', scrollable: true, choices: ["Ansiedade", "Estresse", "Depressão", "Relacionamentos", "Carreira", "Autoestima", "Luto", "Traumas", "TDAH", "Sexualidade"], required: true },
-        { id: 'abordagem_teorica', question: "Qual a sua principal abordagem teórica?", type: 'choice', scrollable: true, choices: ["Psicanálise", "Terapia Cognitivo-Comportamental (TCC)", "Humanista / Centrada na Pessoa", "Gestalt-terapia", "Análise do Comportamento (ABA)", "Outra"], required: true },
+        { id: 'abordagens_tecnicas', question: "Qual a sua principal abordagem teórica?", type: 'choice', scrollable: true, choices: ["Psicanálise", "Terapia Cognitivo-Comportamental (TCC)", "Humanista / Centrada na Pessoa", "Gestalt-terapia", "Análise do Comportamento (ABA)", "Outra"], required: true },
         { id: 'praticas_afirmativas', question: "Sua prática é afirmativa para quais comunidades ou perspectivas?", type: 'multiple-choice', scrollable: true, choices: ["LGBTQIAPN+ friendly", "Antirracista", "Feminista", "Neurodiversidade", "Nenhuma específica"], required: true, buttonText: "Verificar Demanda" },
         // Telas de Resultado Dinâmico
         { id: 'loading', type: 'loading', question: "Analisando a demanda...", subtitle: "Estamos cruzando seus dados com as buscas de nossos pacientes. Só um instante." },
