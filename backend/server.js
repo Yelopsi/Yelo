@@ -81,7 +81,8 @@ app.use((req, res, next) => {
     const host = req.hostname;
     const target = 'www.yelopsi.com.br';
 
-    if (host === 'yelopsi.com' || host === 'www.yelopsi.com' || host === 'yelopsi.com.br') {
+    // CORREÇÃO: Só redireciona se o host for diferente do alvo
+    if (host !== target && (host === 'yelopsi.com' || host === 'www.yelopsi.com' || host === 'yelopsi.com.br')) {
         return res.redirect(301, `https://${target}${req.originalUrl}`);
     }
     next();
@@ -496,6 +497,21 @@ app.get('/api/fix-add-likes-column', async (req, res) => {
         res.send("Sucesso! Coluna 'curtidas' criada no banco de dados.");
     } catch (error) {
         res.status(500).send("Erro ao criar coluna: " + error.message);
+    }
+});
+
+// Rota de DEBUG para listar todas as colunas da tabela Psychologists
+app.get('/api/debug/check-schema', async (req, res) => {
+    try {
+        const [results] = await db.sequelize.query(`
+            SELECT column_name, data_type, is_nullable 
+            FROM information_schema.columns 
+            WHERE table_name = 'Psychologists'
+            ORDER BY column_name;
+        `);
+        res.json(results);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
