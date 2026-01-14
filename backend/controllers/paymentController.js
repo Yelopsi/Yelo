@@ -48,19 +48,26 @@ exports.createPreference = async (req, res) => {
         let customerIdAsaas = null;
         
         // --- DEBUG: LOG DA URL ---
-        console.log(`[ASAAS] Tentando conectar em: ${ASAAS_API_URL}/customers?email=${psychologist.email}`);
+        const urlCliente = `${ASAAS_API_URL}/customers?email=${psychologist.email}`;
+        console.log(`[ASAAS] Buscando cliente: ${urlCliente}`);
         
-        const customerResponse = await fetch(`${ASAAS_API_URL}/customers?email=${psychologist.email}`, {
+        const customerResponse = await fetch(urlCliente, {
             headers: { 'access_token': ASAAS_API_KEY }
         });
 
-        if (!customerResponse.ok) {
-            const errorText = await customerResponse.text();
-            console.error(`[ASAAS ERROR] Falha ao buscar cliente. Status: ${customerResponse.status}. Resposta: ${errorText.substring(0, 200)}...`);
-            throw new Error(`Erro de conexão com Asaas (${customerResponse.status}). Verifique os logs.`);
+        // VERIFICAÇÃO DE RESPOSTA (JSON vs HTML)
+        const contentType = customerResponse.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            const text = await customerResponse.text();
+            console.error(`[ASAAS FATAL] A API retornou algo que não é JSON (${customerResponse.status}).\nConteúdo: ${text.substring(0, 300)}...`);
+            throw new Error(`Erro de configuração: A URL do Asaas parece incorreta ou a API está fora do ar (${customerResponse.status}).`);
         }
 
         const customerSearch = await customerResponse.json();
+        
+        // Verifica se a resposta JSON contém erros lógicos da API
+        if (customerSearch.errors) throw new Error(customerSearch.errors[0].description);
+
         if (customerSearch.data && customerSearch.data.length > 0) {
             customerIdAsaas = customerSearch.data[0].id;
         } else {
