@@ -1149,185 +1149,43 @@ const PORT = process.env.PORT || 3001;
 const startServer = async () => {
     console.time('⏱️ Tempo Total de Inicialização');
 
-    // --- FIX CRÍTICO: GARANTIR COLUNAS EM PRODUÇÃO ---
-    // Executa sempre para evitar erro "column does not exist"
+    // --- BLOCO DE SINCRONIZAÇÃO E CORREÇÃO DE SCHEMA (RODA EM TODOS OS AMBIENTES) ---
     try {
+        console.log('🔧 [DB SYNC] Verificando e aplicando correções de schema...');
+
+        // Garante que as colunas críticas existam, usando ALTER TABLE que é seguro para produção.
+        // Adicione novas colunas aqui no futuro para evitar erros de "column does not exist".
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "is_exempt" BOOLEAN DEFAULT FALSE;`);
-        console.log("✅ [STARTUP] Coluna 'is_exempt' verificada/criada.");
+        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cnpj" VARCHAR(255) UNIQUE;`);
+        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "modalidade" JSONB DEFAULT '[]';`);
+        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "authority_level" VARCHAR(255) DEFAULT 'nivel_iniciante';`);
+        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "badges" JSONB DEFAULT '{}';`);
+        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "xp" INTEGER DEFAULT 0;`);
+        await db.sequelize.query(`ALTER TABLE "Messages" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'sent';`);
+        await db.sequelize.query(`ALTER TABLE "Conversations" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
+        await db.sequelize.query(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
+        await db.sequelize.query(`ALTER TABLE "ForumPosts" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
+        await db.sequelize.query(`ALTER TABLE "ForumComments" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
+
+        console.log('✅ [DB SYNC] Correções de schema aplicadas com sucesso.');
+
     } catch (e) {
-        console.error("⚠️ [STARTUP] Falha ao verificar coluna 'is_exempt':", e.message);
+        console.error('❌ [DB SYNC] Erro crítico durante a aplicação de correções de schema:', e.message);
+        // Em um cenário real, você poderia querer parar o servidor se o DB estiver inconsistente.
+        // process.exit(1); 
     }
 
     if (process.env.NODE_ENV !== 'production') {
         console.log('🔄 Iniciando sincronização do Banco de Dados (DEV)...');
-        
-        // [CRITICAL FIX] Garante que a coluna status exista antes de criar índices
-        try {
-            await db.sequelize.query(`ALTER TABLE "ForumPosts" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
-            // ADICIONADO: Garante que a coluna de status também exista nos comentários do fórum
-            await db.sequelize.query(`ALTER TABLE "ForumComments" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
-        } catch (e) { /* Ignora se a tabela não existir ainda */ }
-
         console.time('🗄️ Sequelize Sync');
-        await db.sequelize.sync();
+        await db.sequelize.sync({ alter: true }); // Usar { alter: true } em DEV é seguro e útil.
         console.timeEnd('🗄️ Sequelize Sync');
         console.log('✅ Banco de dados sincronizado (DEV).');
-
-        // --- FIX AUTOMÁTICO DE EMERGÊNCIA ---
-        // Garante que as colunas críticas existam, mesmo que o Model não as tenha definido
-        console.time('🔧 Auto-Fix Queries');
-        try {
-            await db.sequelize.query(`ALTER TABLE "Messages" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'sent';`);
-            await db.sequelize.query(`ALTER TABLE "Conversations" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
-            await db.sequelize.query(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
-            
-            // --- FIX GAMIFICATION (ADICIONADO) ---
-            await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "authority_level" VARCHAR(255) DEFAULT 'nivel_iniciante';`);
-            await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "badges" JSONB DEFAULT '{}';`);
-            await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "xp" INTEGER DEFAULT 0;`);
-            
-            // --- FIX VIP STATUS ---
-            await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "is_exempt" BOOLEAN DEFAULT FALSE;`);
-
-            // Cria tabela de Logs de Gamificação
-            await db.sequelize.query(`
-                CREATE TABLE IF NOT EXISTS "GamificationLogs" (
-                    "id" SERIAL PRIMARY KEY,
-                    "psychologistId" INTEGER REFERENCES "Psychologists"(id) ON DELETE CASCADE,
-                    "actionType" VARCHAR(255) NOT NULL,
-                    "points" INTEGER NOT NULL,
-                    "metadata" JSONB,
-                    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                );
-            `);
-
-            // Cria a tabela de visitas se não existir
-            await db.sequelize.query(`CREATE TABLE IF NOT EXISTS "SiteVisits" ("id" SERIAL PRIMARY KEY, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);`);
-            // Garante colunas na tabela de Admins
-            await db.sequelize.query(`CREATE TABLE IF NOT EXISTS "Admins" ("id" SERIAL PRIMARY KEY, "email" VARCHAR(255) UNIQUE NOT NULL, "senha" VARCHAR(255) NOT NULL, "nome" VARCHAR(255), "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);`);
-            await db.sequelize.query(`ALTER TABLE "Admins" ADD COLUMN IF NOT EXISTS "telefone" VARCHAR(255);`);
-            await db.sequelize.query(`ALTER TABLE "Admins" ADD COLUMN IF NOT EXISTS "fotoUrl" VARCHAR(255);`);
-
-            console.log("✅ [AUTO-FIX] Colunas 'status' verificadas no banco de dados.");
-            // CRIA TABELA DE SESSÕES ATIVAS (para "Acessos Simultâneos")
-            await db.sequelize.query(`
-                CREATE TABLE IF NOT EXISTS "ActiveSessions" (
-                    "id" SERIAL PRIMARY KEY,
-                    "sessionId" VARCHAR(255) UNIQUE NOT NULL,
-                    "lastSeen" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                );
-            `);
-            console.log("✅ [AUTO-FIX] Tabela 'ActiveSessions' verificada.");
-
-            // CRIA TABELA DE SESSÕES ANÔNIMAS
-            await db.sequelize.query(`
-                CREATE TABLE IF NOT EXISTS "AnonymousSessions" (
-                    "id" SERIAL PRIMARY KEY,
-                    "sessionId" VARCHAR(255) UNIQUE NOT NULL,
-                    "durationInSeconds" INTEGER NOT NULL,
-                    "endedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                );
-            `);
-            console.log("✅ [AUTO-FIX] Tabela 'AnonymousSessions' verificada.");
-
-            // LIMPEZA: Remove sessões inativas há mais de 1 dia para manter a tabela leve
-            await db.sequelize.query(`DELETE FROM "ActiveSessions" WHERE "lastSeen" < NOW() - INTERVAL '1 day';`);
-            console.log("✅ [AUTO-FIX] Sessões antigas limpas.");
-
-            // CRIA TABELAS DE LOGS PARA KPIs (se não existirem)
-            await db.sequelize.query(`
-                CREATE TABLE IF NOT EXISTS "WhatsappClickLogs" (
-                    "id" SERIAL PRIMARY KEY,
-                    "psychologistId" INTEGER REFERENCES "Psychologists"(id) ON DELETE SET NULL,
-                    "patientId" INTEGER REFERENCES "Patients"(id) ON DELETE SET NULL,
-                    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                );
-            `);
-            console.log("✅ [AUTO-FIX] Tabela 'WhatsappClickLogs' verificada.");
-            
-            // Garante colunas extras para o Follow-up
-            await db.sequelize.query(`ALTER TABLE "WhatsappClickLogs" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'pending';`);
-            await db.sequelize.query(`ALTER TABLE "WhatsappClickLogs" ADD COLUMN IF NOT EXISTS "message_sent_at" TIMESTAMP WITH TIME ZONE;`);
-            await db.sequelize.query(`ALTER TABLE "WhatsappClickLogs" ADD COLUMN IF NOT EXISTS "guestPhone" VARCHAR(255);`);
-            await db.sequelize.query(`ALTER TABLE "WhatsappClickLogs" ADD COLUMN IF NOT EXISTS "guestName" VARCHAR(255);`);
-
-            await db.sequelize.query(`
-                CREATE TABLE IF NOT EXISTS "ProfileAppearanceLogs" (
-                    "id" SERIAL PRIMARY KEY,
-                    "psychologistId" INTEGER REFERENCES "Psychologists"(id) ON DELETE SET NULL,
-                    "searchId" VARCHAR(255),
-                    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                );
-            `);
-            console.log("✅ [AUTO-FIX] Tabela 'ProfileAppearanceLogs' verificada.");
-
-            await db.sequelize.query(`
-                CREATE TABLE IF NOT EXISTS "MatchEvents" (
-                    "id" SERIAL PRIMARY KEY,
-                    "psychologistId" INTEGER REFERENCES "Psychologists"(id) ON DELETE SET NULL,
-                    "matchTags" TEXT[],
-                    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                );
-            `);
-            console.log("✅ [AUTO-FIX] Tabela 'MatchEvents' verificada.");
-
-            // --- FIX CRÍTICO: FAVORITOS (Erro 500) ---
-            // Corrige o erro de "valor nulo na coluna createdAt" ao favoritar
-            try {
-                await db.sequelize.query(`ALTER TABLE "PatientFavorites" ALTER COLUMN "createdAt" SET DEFAULT NOW();`);
-                await db.sequelize.query(`ALTER TABLE "PatientFavorites" ALTER COLUMN "updatedAt" SET DEFAULT NOW();`);
-                console.log("✅ [AUTO-FIX] Tabela 'PatientFavorites' corrigida (Timestamps).");
-            } catch (e) { 
-                console.log("[AUTO-FIX] Nota sobre Favoritos (pode ser ignorado se já corrigido):", e.message); 
-            }
-
-            // CRIA TABELA DE NEWSLETTER (Correção do Erro 500)
-            await db.sequelize.query(`
-                CREATE TABLE IF NOT EXISTS "NewsletterSubscriptions" (
-                    "id" SERIAL PRIMARY KEY,
-                    "email" VARCHAR(255) UNIQUE NOT NULL,
-                    "origin" VARCHAR(255),
-                    "ipAddress" VARCHAR(45),
-                    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                );
-            `);
-            console.log("✅ [AUTO-FIX] Tabela 'NewsletterSubscriptions' verificada.");
-
-            // --- OTIMIZAÇÃO DE PERFORMANCE (ÍNDICES) ---
-            console.log("⚡ [AUTO-FIX] Verificando índices de performance...");
-            // Blog
-            await db.sequelize.query('CREATE INDEX IF NOT EXISTS idx_posts_psychologist_id ON posts (psychologist_id);');
-            // Fórum
-            await db.sequelize.query('CREATE INDEX IF NOT EXISTS idx_forumposts_psychologist_id ON "ForumPosts" ("PsychologistId");');
-            await db.sequelize.query('CREATE INDEX IF NOT EXISTS idx_forumcomments_post_id ON "ForumComments" ("ForumPostId");');
-            await db.sequelize.query('CREATE INDEX IF NOT EXISTS idx_forumcomments_psychologist_id ON "ForumComments" ("PsychologistId");');
-            await db.sequelize.query('CREATE INDEX IF NOT EXISTS idx_forumvotes_post_id ON "ForumVotes" ("ForumPostId");');
-            await db.sequelize.query('CREATE INDEX IF NOT EXISTS idx_forumvotes_psychologist_id ON "ForumVotes" ("PsychologistId");');
-            // KPIs
-            await db.sequelize.query('CREATE INDEX IF NOT EXISTS idx_whatsappclicks_psychologist_id ON "WhatsappClickLogs" ("psychologistId");');
-            await db.sequelize.query('CREATE INDEX IF NOT EXISTS idx_profileappearances_psychologist_id ON "ProfileAppearanceLogs" ("psychologistId");');
-            await db.sequelize.query('CREATE INDEX IF NOT EXISTS idx_patientfavorites_psychologist_id ON "PatientFavorites" ("PsychologistId");');
-            console.log("✅ [AUTO-FIX] Índices de performance verificados.");
-
-        } catch (e) { console.log("[AUTO-FIX] Nota:", e.message); }
-        console.timeEnd('🔧 Auto-Fix Queries');
-        // -------------------------------------
-
-        // --- COMENTE A LINHA ABAIXO PARA PARAR DE RESETAR SEUS DADOS ---
-        // await seedTestData(); 
     } else {
-        await db.sequelize.sync();
-        console.log('Banco de dados sincronizado (PROD).');
+        // Em produção, não usamos sync() para evitar problemas. As correções manuais acima cuidam das alterações.
+        console.log('✅ [DB SYNC] Conexão com banco de dados estabelecida (Modo Produção).');
     }
+
     server.listen(PORT, () => {
         console.log(`Servidor rodando na porta ${PORT}.`);
         console.timeEnd('⏱️ Tempo Total de Inicialização');
