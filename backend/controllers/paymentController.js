@@ -29,6 +29,10 @@ exports.createPreference = async (req, res) => {
         if (!creditCard || !creditCard.number || !creditCard.holderName) {
             return res.status(400).json({ error: 'Dados do cartão incompletos.' });
         }
+        
+        if (!creditCard.expiry || !creditCard.expiry.includes('/')) {
+            return res.status(400).json({ error: 'Data de validade inválida. Use o formato MM/AAAA.' });
+        }
 
         let value;
         switch (planType.toUpperCase()) {
@@ -118,10 +122,15 @@ exports.createPreference = async (req, res) => {
     } catch (error) {
         console.error('Erro Asaas:', error);
         // GRAVA O ERRO NO SISTEMA PARA O DASHBOARD VER
-        await db.SystemLog.create({
-            level: 'error',
-            message: `Erro ao criar pagamento Asaas: ${error.message}`
-        });
+        try {
+            if (db.SystemLog) {
+                await db.SystemLog.create({
+                    level: 'error',
+                    message: `Erro ao criar pagamento Asaas: ${error.message}`
+                });
+            }
+        } catch (logErr) { console.error("Falha ao gravar log:", logErr.message); }
+        
         res.status(500).json({ error: error.message || 'Erro ao processar pagamento' });
     }
 };
