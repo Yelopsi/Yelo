@@ -1165,6 +1165,15 @@ const PORT = process.env.PORT || 3001;
 const startServer = async () => {
     console.time('⏱️ Tempo Total de Inicialização');
 
+    // --- DIAGNÓSTICO DE CONEXÃO ---
+    try {
+        await db.sequelize.authenticate();
+        console.log('✅ [DB CONNECTION] Conexão com o banco estabelecida com sucesso.');
+    } catch (error) {
+        console.error('❌ [DB CONNECTION] Falha fatal ao conectar ao banco:', error.message);
+        console.error('   Dica: Verifique se a variável DATABASE_URL no Render está correta e atualizada.');
+    }
+
     // --- BLOCO DE SINCRONIZAÇÃO E CORREÇÃO DE SCHEMA (RODA EM TODOS OS AMBIENTES) ---
     try {
         console.log('🔧 [DB SYNC] Verificando e aplicando correções de schema...');
@@ -1185,6 +1194,14 @@ const startServer = async () => {
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "genero_identidade" VARCHAR(255);`);
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "valor_sessao_numero" FLOAT;`);
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cpf" VARCHAR(255) UNIQUE;`);
+        // -----------------------------------------------------
+        
+        // --- FIX: COLUNAS DE KPI E PAGAMENTO (ADICIONADO) ---
+        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "whatsapp_clicks" INTEGER DEFAULT 0;`);
+        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "profile_appearances" INTEGER DEFAULT 0;`);
+        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "planExpiresAt" TIMESTAMP WITH TIME ZONE;`);
+        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "stripeSubscriptionId" VARCHAR(255);`);
+        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cancelAtPeriodEnd" BOOLEAN DEFAULT FALSE;`);
         // -----------------------------------------------------
 
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "authority_level" VARCHAR(255) DEFAULT 'nivel_iniciante';`);
