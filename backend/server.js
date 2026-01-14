@@ -75,6 +75,18 @@ const seedTestData = require('./controllers/seed_test_data');
 
 const app = express();
 
+// --- MIDDLEWARE DE REDIRECIONAMENTO DE DOMÍNIO (SEO) ---
+// Redireciona yelopsi.com, www.yelopsi.com e yelopsi.com.br para www.yelopsi.com.br
+app.use((req, res, next) => {
+    const host = req.hostname;
+    const target = 'www.yelopsi.com.br';
+
+    if (host === 'yelopsi.com' || host === 'www.yelopsi.com' || host === 'yelopsi.com.br') {
+        return res.redirect(301, `https://${target}${req.originalUrl}`);
+    }
+    next();
+});
+
 // EM VEZ DE MOVER AS PASTAS, LIBERE O ACESSO ONDE ELAS JÁ ESTÃO:
 // 1. Libera a pasta 'assets' (para imagens, logos, fontes)
 app.use('/assets', express.static(path.join(__dirname, '../assets')));
