@@ -1,5 +1,4 @@
 const db = require('../models');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); 
 const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -9,6 +8,10 @@ const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs').promises;
 const gamificationService = require('../services/gamificationService'); // Importa o serviço
+
+// Configurações do Asaas
+const ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
+const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
 
 // ----------------------------------------------------------------------
 // Função Auxiliar: Gera o Token JWT para Psicólogo
@@ -776,13 +779,16 @@ exports.deletePsychologistAccount = async (req, res) => {
             return res.status(403).json({ error: 'Senha incorreta. A conta não foi excluída.' });
         }
 
-        // --- PONTO CRÍTICO: CANCELAMENTO NO STRIPE ---
+        // --- PONTO CRÍTICO: CANCELAMENTO NO ASAAS ---
         if (psychologist.stripeSubscriptionId) {
             try {
-                console.log(`[EXIT] Cancelando assinatura Stripe: ${psychologist.stripeSubscriptionId}`);
-                await stripe.subscriptions.cancel(psychologist.stripeSubscriptionId);
-            } catch (stripeError) {
-                console.error("Erro ao cancelar no Stripe (prosseguindo com exclusão local):", stripeError);
+                console.log(`[EXIT] Cancelando assinatura Asaas: ${psychologist.stripeSubscriptionId}`);
+                await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.stripeSubscriptionId}`, {
+                    method: 'DELETE',
+                    headers: { 'access_token': ASAAS_API_KEY }
+                });
+            } catch (asaasError) {
+                console.error("Erro ao cancelar no Asaas (prosseguindo com exclusão local):", asaasError);
                 // Decisão de Produto: Não impedimos a exclusão se o Stripe falhar, 
                 // mas logamos o erro para auditoria manual se necessário.
             }
@@ -1199,14 +1205,15 @@ exports.cancelSubscription = async (req, res) => {
         
         if (!psychologist) return res.status(404).json({ error: 'Psi não encontrado' });
 
-        // 1. AVISA O STRIPE
+        // 1. AVISA O ASAAS (Deleta a assinatura para parar cobranças)
         if (psychologist.stripeSubscriptionId) {
             try {
-                await stripe.subscriptions.update(psychologist.stripeSubscriptionId, {
-                    cancel_at_period_end: true
+                await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.stripeSubscriptionId}`, {
+                    method: 'DELETE',
+                    headers: { 'access_token': ASAAS_API_KEY }
                 });
-            } catch (stripeErr) {
-                console.error("Erro Stripe:", stripeErr);
+            } catch (asaasErr) {
+                console.error("Erro Asaas:", asaasErr);
             }
         }
 
@@ -1236,27 +1243,13 @@ exports.reactivateSubscription = async (req, res) => {
 
         const psychologist = await db.Psychologist.findByPk(req.psychologist.id);
 
-        if (!psychologist || !psychologist.stripeSubscriptionId) {
-            return res.status(404).json({ error: 'Assinatura não encontrada para reativação.' });
-        }
-
-        // 2. Mágica do Stripe: "Não cancele mais no final do período"
-        await stripe.subscriptions.update(psychologist.stripeSubscriptionId, {
-            cancel_at_period_end: false,
-        });
-
-        // 3. Atualiza o banco local para o front saber que está tudo bem
-        // Nota: Ajustamos para garantir que o status fique ativo e flags de cancelamento sejam limpas
-        await psychologist.update({
-            cancelAtPeriodEnd: false, // Certifique-se que sua tabela tem essa coluna, ou ignore se não tiver
-            status: 'active'
-        });
-
-        res.status(200).json({ message: 'Assinatura reativada com sucesso! A renovação automática foi restaurada.' });
+        // Como o Asaas deleta a assinatura no cancelamento, não podemos reativar a mesma.
+        // O ideal é pedir para o usuário assinar novamente.
+        return res.status(400).json({ error: 'Assinatura cancelada. Por favor, realize uma nova assinatura na página de planos.' });
 
     } catch (error) {
         console.error('Erro ao reativar assinatura:', error);
-        res.status(500).json({ error: 'Erro ao processar reativação no Stripe.' });
+        res.status(500).json({ error: 'Erro ao processar reativação.' });
     }
 };
 
