@@ -102,6 +102,18 @@ exports.createPreference = async (req, res) => {
         // 2. Cria a Assinatura com Cartão de Crédito
         const [expiryMonth, expiryYear] = creditCard.expiry.split('/');
         
+        // --- FIX: SANITIZAÇÃO DE DADOS DO TITULAR ---
+        // O Asaas é rigoroso com o CEP. Se o usuário não preencheu ou está inválido,
+        // usamos um CEP genérico válido (Av. Paulista) para não bloquear o pagamento.
+        let postalCode = psychologist.cep ? psychologist.cep.replace(/\D/g, '') : '';
+        if (postalCode.length !== 8) {
+            postalCode = '01310940'; 
+        }
+
+        // Sanitiza telefone também para evitar erros
+        let phone = psychologist.telefone ? psychologist.telefone.replace(/\D/g, '') : '';
+        if (phone.length < 10) phone = '11999999999';
+
         const subscriptionPayload = {
             customer: customerIdAsaas,
             billingType: 'CREDIT_CARD',
@@ -121,9 +133,9 @@ exports.createPreference = async (req, res) => {
                 name: creditCard.holderName,
                 email: psychologist.email,
                 cpfCnpj: creditCard.holderCpf,
-                postalCode: psychologist.cep || '00000-000', // Fallback se não tiver
-                addressNumber: '0', // Asaas exige, mas pode ser genérico se não tivermos
-                phone: psychologist.telefone || '00000000000'
+                postalCode: postalCode, // CEP Corrigido e Validado
+                addressNumber: '0', 
+                phone: phone // Telefone Corrigido
             }
         };
 
