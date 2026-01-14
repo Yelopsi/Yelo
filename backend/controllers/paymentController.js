@@ -2,8 +2,10 @@
 const db = require('../models');
 
 // Configurações do Asaas
-const ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3'; // Use 'https://api.asaas.com/v3' para produção
-const ASAAS_API_KEY = process.env.ASAAS_API_KEY; // Seu token do Asaas
+// Limpeza robusta da URL (remove espaços e barras finais)
+let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
+ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, ''); 
+const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
 
 // 1. CRIA A ASSINATURA NO ASAAS (Checkout Transparente)
 exports.createPreference = async (req, res) => {
@@ -48,22 +50,23 @@ exports.createPreference = async (req, res) => {
         let customerIdAsaas = null;
         
         // --- DEBUG: LOG DA URL ---
-        const urlCliente = `${ASAAS_API_URL}/customers?email=${psychologist.email}`;
-        console.log(`[ASAAS] Buscando cliente: ${urlCliente}`);
+        const urlCliente = `${ASAAS_API_URL}/customers?email=${encodeURIComponent(psychologist.email)}`;
+        console.log(`[ASAAS] Conectando em: ${urlCliente}`);
         
         const customerResponse = await fetch(urlCliente, {
             headers: { 'access_token': ASAAS_API_KEY }
         });
 
-        // VERIFICAÇÃO DE RESPOSTA (JSON vs HTML)
-        const contentType = customerResponse.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-            const text = await customerResponse.text();
-            console.error(`[ASAAS FATAL] A API retornou algo que não é JSON (${customerResponse.status}).\nConteúdo: ${text.substring(0, 300)}...`);
-            throw new Error(`Erro de configuração: A URL do Asaas parece incorreta ou a API está fora do ar (${customerResponse.status}).`);
+        // Tenta ler o corpo como texto primeiro para poder logar se der erro no JSON
+        const responseText = await customerResponse.text();
+        let customerSearch;
+        
+        try {
+            customerSearch = JSON.parse(responseText);
+        } catch (e) {
+            console.error(`[ASAAS FATAL] Resposta inválida (${customerResponse.status}). Conteúdo recebido:\n${responseText.substring(0, 500)}`);
+            throw new Error(`Erro de comunicação com Asaas (Resposta não é JSON). Verifique os logs do servidor.`);
         }
-
-        const customerSearch = await customerResponse.json();
         
         // Verifica se a resposta JSON contém erros lógicos da API
         if (customerSearch.errors) throw new Error(customerSearch.errors[0].description);
@@ -117,6 +120,7 @@ exports.createPreference = async (req, res) => {
             }
         };
 
+        console.log(`[ASAAS] Criando assinatura em: ${ASAAS_API_URL}/subscriptions`);
         const subscriptionRes = await fetch(`${ASAAS_API_URL}/subscriptions`, {
             method: 'POST',
             headers: { 
@@ -126,7 +130,14 @@ exports.createPreference = async (req, res) => {
             body: JSON.stringify(subscriptionPayload)
         });
 
-        const subscriptionData = await subscriptionRes.json();
+        const subResponseText = await subscriptionRes.text();
+        let subscriptionData;
+        try {
+            subscriptionData = JSON.parse(subResponseText);
+        } catch (e) {
+            console.error(`[ASAAS FATAL] Erro ao criar assinatura. Conteúdo:\n${subResponseText}`);
+            throw new Error("Erro ao processar resposta da assinatura.");
+        }
 
         if (subscriptionData.errors) {
             throw new Error(subscriptionData.errors[0].description);
