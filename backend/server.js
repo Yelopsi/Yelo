@@ -395,6 +395,16 @@ app.get('/api/fix-add-modalidade-column', async (req, res) => {
     }
 });
 
+// Rota para criar a coluna IS_EXEMPT (VIP) na tabela Psychologists
+app.get('/api/fix-add-is-exempt-column', async (req, res) => {
+    try {
+        await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "is_exempt" BOOLEAN DEFAULT FALSE;');
+        res.send("Sucesso! Coluna 'is_exempt' criada no banco de dados.");
+    } catch (error) {
+        res.status(500).send("Erro ao criar coluna: " + error.message);
+    }
+});
+
 // Rota para criar a coluna STATUS na tabela Conversations (CORREÇÃO DO CHAT)
 app.get('/api/fix-add-conversation-status', async (req, res) => {
     try {
@@ -1166,6 +1176,9 @@ const startServer = async () => {
             await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "authority_level" VARCHAR(255) DEFAULT 'nivel_iniciante';`);
             await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "badges" JSONB DEFAULT '{}';`);
             await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "xp" INTEGER DEFAULT 0;`);
+            
+            // --- FIX VIP STATUS ---
+            await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "is_exempt" BOOLEAN DEFAULT FALSE;`);
 
             // Cria tabela de Logs de Gamificação
             await db.sequelize.query(`
