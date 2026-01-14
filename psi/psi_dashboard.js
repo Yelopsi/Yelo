@@ -608,7 +608,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Se tiver cupom vindo da tentativa anterior, preenche
         if(cupomPreenchido) {
-            document.getElementById('modal-cupom-input').value = cupomPreenchido;
+            const cupomInput = document.getElementById('modal-cupom-input');
+            if (cupomInput) cupomInput.value = cupomPreenchido;
         }
 
         // Impede duplo submit
@@ -626,7 +627,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 ccv: document.getElementById('card-ccv').value
             };
             
-            const cupom = document.getElementById('modal-cupom-input').value;
+            const cupomInput = document.getElementById('modal-cupom-input');
+            const cupom = cupomInput ? cupomInput.value : '';
 
             try {
                 const res = await apiFetch(`${API_BASE_URL}/api/payments/create-preference`, {
@@ -638,7 +640,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                 });
 
-                const data = await res.json();
+                let data;
+                const contentType = res.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    data = await res.json();
+                } else {
+                    // Se não for JSON (ex: erro 500 HTML), lê como texto para não quebrar
+                    const text = await res.text();
+                    throw new Error(`Erro no servidor (${res.status}). Tente novamente mais tarde.`);
+                }
 
                 if (res.ok) {
                     showToast('Assinatura realizada com sucesso!', 'success');

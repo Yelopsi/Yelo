@@ -1213,6 +1213,18 @@ const startServer = async () => {
         await db.sequelize.query(`ALTER TABLE "ForumPosts" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
         await db.sequelize.query(`ALTER TABLE "ForumComments" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
 
+        // --- FIX: TABELA DE LOGS DO SISTEMA (CRÍTICO PARA PAGAMENTOS) ---
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "SystemLogs" (
+                "id" SERIAL PRIMARY KEY,
+                "level" VARCHAR(255),
+                "message" TEXT,
+                "meta" JSONB,
+                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
         console.log('✅ [DB SYNC] Correções de schema aplicadas com sucesso.');
 
     } catch (e) {
