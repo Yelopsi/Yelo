@@ -1149,6 +1149,15 @@ const PORT = process.env.PORT || 3001;
 const startServer = async () => {
     console.time('⏱️ Tempo Total de Inicialização');
 
+    // --- FIX CRÍTICO: GARANTIR COLUNAS EM PRODUÇÃO ---
+    // Executa sempre para evitar erro "column does not exist"
+    try {
+        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "is_exempt" BOOLEAN DEFAULT FALSE;`);
+        console.log("✅ [STARTUP] Coluna 'is_exempt' verificada/criada.");
+    } catch (e) {
+        console.error("⚠️ [STARTUP] Falha ao verificar coluna 'is_exempt':", e.message);
+    }
+
     if (process.env.NODE_ENV !== 'production') {
         console.log('🔄 Iniciando sincronização do Banco de Dados (DEV)...');
         
