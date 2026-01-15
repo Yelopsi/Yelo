@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.removeItem('Yelo_token');
     localStorage.removeItem('Yelo_user_type');
     localStorage.removeItem('Yelo_user_name');
+    localStorage.removeItem('Yelo_token_admin'); // Garante limpeza total
 
     function showMessage(text, isError = false) {
         mensagemEl.textContent = text;
@@ -34,12 +35,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.ok) {
                 showMessage('Login bem-sucedido! Redirecionando...', false);
                 localStorage.setItem('Yelo_token', data.token);
+                localStorage.setItem('Yelo_token_admin', data.token); // Salva backup para compatibilidade
                 // AJUSTE: Salva o tipo e nome do usuário para consistência do header
                 localStorage.setItem('Yelo_user_type', 'admin');
                 // Assumindo que a API retorna o nome do usuário em `data.user.nome`
                 localStorage.setItem('Yelo_user_name', data.user?.nome || 'Admin');
                 setTimeout(() => {
-                    window.location.href = '/admin/';
+                    window.location.href = '/admin/admin.html'; // Redirecionamento explícito
                 }, 500);
             } else {
                 throw new Error(data.error || 'Credenciais inválidas.');
