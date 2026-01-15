@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const senha = senhaInput.value;
 
             // Função auxiliar de fetch
-            const attemptLogin = async (url, type) => {
+            const attemptLogin = async (url, fallbackType) => {
                 try {
                     const response = await fetch(`${BASE_URL}${url}`, {
                         method: 'POST',
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     const data = await response.json();
-                    return { success: true, data, type };
+                    return { success: true, data, fallbackType };
                 } catch (err) {
                     return { success: false };
                 }
@@ -100,11 +100,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // --- DECISÃO FINAL ---
                 if (result.success) {
-                    const { token, redirect, user } = result.data;
+                    const { token, redirect, user, type } = result.data;
                     
                     // Salva dados na sessão
                     if (token) localStorage.setItem('Yelo_token', token);
-                    localStorage.setItem('Yelo_user_type', result.type);
+                    
+                    const finalUserType = type || result.fallbackType;
+                    localStorage.setItem('Yelo_user_type', finalUserType);
                     
                     // CORREÇÃO: Pega o nome se estiver dentro de 'user' OU direto na raiz da resposta
                     const nomeSalvo = (user && user.nome) ? user.nome : result.data.nome;
@@ -112,9 +114,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Mensagem de sucesso
                     if (mensagemEl) {
-                        if (result.type === 'patient') mensagemEl.textContent = "Bem-vindo(a), Paciente!";
-                        else if (result.type === 'psychologist') mensagemEl.textContent = "Bem-vindo(a), Psi!";
-                        else if (result.type === 'admin') mensagemEl.textContent = "Bem-vindo(a), Admin!";
+                        if (finalUserType === 'patient') mensagemEl.textContent = "Bem-vindo(a), Paciente!";
+                        else if (finalUserType === 'psychologist') mensagemEl.textContent = "Bem-vindo(a), Psi!";
+                        else if (finalUserType === 'admin') mensagemEl.textContent = "Bem-vindo(a), Admin!";
                         mensagemEl.className = 'mensagem-sucesso';
                         mensagemEl.style.display = 'block';
                     }
@@ -127,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         } else if (redirectParam) {
                             // Se tiver um redirect na URL (ex: veio do perfil), volta pra lá
                             window.location.href = decodeURIComponent(redirectParam);
-                        } else if (result.type === 'psychologist') {
+                        } else if (finalUserType === 'psychologist') {
                             window.location.href = '/psi/psi_dashboard.html'; 
                         } else {
                             window.location.href = '/patient/patient_dashboard';

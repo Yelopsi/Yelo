@@ -16,14 +16,29 @@ const generateAdminToken = (id) => {
 exports.loginAdmin = async (req, res) => {
     try {
         const { email, senha } = req.body;
-        const adminUser = await db.Psychologist.findOne({ where: { email, isAdmin: true } });
+        
+        // 1. Tenta buscar na tabela de Psicólogos (Admins modernos)
+        let adminUser = await db.Psychologist.findOne({ where: { email, isAdmin: true } });
+        let isLegacy = false;
+
+        // 2. Fallback: Busca na tabela de Admins (Legado/Super Admin)
+        if (!adminUser) {
+            const results = await db.sequelize.query(
+                `SELECT * FROM "Admins" WHERE email = :email LIMIT 1`,
+                { replacements: { email }, type: db.sequelize.QueryTypes.SELECT }
+            );
+            if (results && results.length > 0) {
+                adminUser = results[0];
+                isLegacy = true;
+            }
+        }
 
         if (adminUser && (await bcrypt.compare(senha, adminUser.senha))) {
             // --- GERAÇÃO DE LOG REAL ---
             await db.SystemLog.create({
                 level: 'info',
                 message: `Login de administrador bem-sucedido: ${adminUser.email}`,
-                meta: { adminId: adminUser.id }
+                meta: { adminId: adminUser.id, isLegacy }
             });
 
             res.status(200).json({ 
