@@ -169,9 +169,22 @@
             <form id="payment-form">
                 <!-- FORMULÁRIO ASAAS CHECKOUT TRANSPARENTE -->
                 <div id="asaas-payment-form" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                    <input type="text" id="card-holder-name" placeholder="Nome impresso no cartão" required style="padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                    
                     <div style="display: flex; gap: 10px;">
-                        <input type="text" id="card-holder-name" placeholder="Nome impresso no cartão" required style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
-                        <input type="text" id="card-holder-cpf" placeholder="CPF do titular" required style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                        <input type="text" id="card-holder-cpf" placeholder="CPF do titular" required style="flex: 1.5; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                        <input type="text" id="card-holder-phone" placeholder="Celular (com DDD)" required style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="card-holder-cep" placeholder="CEP" required style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                        <input type="text" id="card-holder-number" placeholder="Número" required style="flex: 0.5; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                        <input type="text" id="card-holder-complement" placeholder="Comp." style="flex: 0.5; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                        <!-- Campos ocultos preenchidos pelo CEP -->
+                        <input type="hidden" id="card-holder-street">
+                        <input type="hidden" id="card-holder-neighborhood">
+                        <input type="hidden" id="card-holder-city">
+                        <input type="hidden" id="card-holder-state">
                     </div>
                     
                     <input type="text" id="card-number" placeholder="Número do Cartão" required style="padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
