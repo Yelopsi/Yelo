@@ -166,7 +166,8 @@ exports.createPreference = async (req, res) => {
             // Salva ID da assinatura (Pendente)
             await psychologist.update({
                 stripeSubscriptionId: subscriptionData.id,
-                plano: planType.toUpperCase()
+                plano: planType.toUpperCase(),
+                cancelAtPeriodEnd: false // <--- Reset do cancelamento
             });
 
             return res.json({ 
@@ -245,7 +246,8 @@ exports.createPreference = async (req, res) => {
             status: 'active',
             plano: planType.toUpperCase(),
             stripeSubscriptionId: subscriptionData.id, // Salva o ID do Asaas
-            planExpiresAt: validade
+            planExpiresAt: validade,
+            cancelAtPeriodEnd: false // <--- Reset do cancelamento
         });
 
         res.json({ success: true, subscriptionId: subscriptionData.id });
@@ -299,7 +301,8 @@ exports.handleWebhook = async (req, res) => {
                     planExpiresAt: novaValidade, 
                     plano: planType,
                     // Salva o ID da assinatura do Asaas para cancelamentos futuros
-                    stripeSubscriptionId: payment.subscription // Reutilizando a coluna existente
+                    stripeSubscriptionId: payment.subscription, // Reutilizando a coluna existente
+                    cancelAtPeriodEnd: false // <--- Reset do cancelamento
                 });
             }
         } catch (err) {
