@@ -160,8 +160,20 @@ exports.createPreference = async (req, res) => {
             throw new Error(subscriptionData.errors[0].description);
         }
 
-        // Sucesso!
-        // Opcional: Já atualizar o banco localmente como "Pendente" ou "Ativo" dependendo da resposta
+        // --- FIX: ATUALIZAÇÃO IMEDIATA DO BANCO ---
+        // Ativa o plano imediatamente após o sucesso no cartão, sem esperar o Webhook.
+        const hoje = new Date();
+        const validade = new Date();
+        validade.setDate(hoje.getDate() + 30); // Adiciona 30 dias
+
+        await psychologist.update({
+            status: 'active',
+            plano: planType.toUpperCase(),
+            stripeSubscriptionId: subscriptionData.id, // Salva o ID do Asaas
+            planExpiresAt: validade,
+            cancelAtPeriodEnd: false
+        });
+
         res.json({ success: true, subscriptionId: subscriptionData.id });
 
     } catch (error) {
