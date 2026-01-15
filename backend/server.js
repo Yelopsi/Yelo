@@ -71,6 +71,8 @@ const forumRoutes = require('./routes/forumRoutes'); // <--- ADICIONADO
 const demandController = require('./controllers/demandController');
 const blogController = require('./controllers/blogController');
 const psychologistController = require('./controllers/psychologistController'); // Importar o controller
+const adminController = require('./controllers/adminController'); // <--- ADICIONADO
+const qnaController = require('./controllers/qnaController'); // <--- ADICIONADO
 const seedTestData = require('./controllers/seed_test_data');
 
 const app = express();
@@ -82,11 +84,12 @@ app.set('trust proxy', 1);
 // --- MIDDLEWARE DE REDIRECIONAMENTO DE DOMÍNIO (SEO) ---
 // Redireciona yelopsi.com, www.yelopsi.com e yelopsi.com.br para www.yelopsi.com.br
 app.use((req, res, next) => {
-    const host = req.hostname;
+    // Usa o header 'host' para maior precisão atrás de proxies, removendo a porta se houver
+    const host = req.headers.host ? req.headers.host.split(':')[0] : req.hostname;
     const target = 'www.yelopsi.com.br';
 
     // Ignora localhost e domínios de desenvolvimento (Render)
-    if (host.includes('localhost') || host.includes('127.0.0.1') || host.includes('onrender.com')) {
+    if (host.includes('localhost') || host.includes('127.0.0.1') || host.includes('onrender.com') || host.includes('render.com')) {
         return next();
     }
 
@@ -706,6 +709,16 @@ app.delete('/api/admin/psychologists/:id', async (req, res) => {
 app.use('/api/admin/messages', adminMessageRoutes); // Rotas de mensagem do admin (mais específicas)
 app.use('/api/admin/support', adminSupportRoutes); // Rotas de suporte do admin (mais específicas)
 app.use('/api/admin', adminRoutes); // Rotas genéricas do admin (devem vir por último)
+
+// --- ROTAS DE GESTÃO DE CONTEÚDO (ADMIN) ---
+// Adicionadas aqui para garantir precedência e funcionamento sem depender de adminRoutes.js
+app.get('/api/admin/content/blog', adminController.getAllBlogPosts);
+app.delete('/api/admin/content/blog/:id', adminController.deleteBlogPost);
+app.get('/api/admin/content/forum', adminController.getAllForumPosts);
+app.delete('/api/admin/content/forum/:id', adminController.deleteForumPost);
+// Reutilizando controller de QnA existente
+app.get('/api/admin/content/qna', qnaController.getAllQuestions);
+app.delete('/api/admin/content/qna/:id', qnaController.deleteQuestion);
 
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/qna', qnaRoutes);

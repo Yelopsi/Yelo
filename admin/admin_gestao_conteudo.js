@@ -14,6 +14,10 @@ window.initializePage = function() {
     const questionsLoadingState = document.getElementById('questions-loading-state');
     const questionsEmptyState = document.getElementById('questions-empty-state');
 
+    // Seletores para a Central de Remoção
+    const contentTabs = document.querySelectorAll('.content-tab-btn');
+    const contentListContainer = document.getElementById('content-removal-list');
+
     // Seletor para o novo botão de Gestão da Comunidade
     const btnManageCommunity = document.getElementById('btn-manage-community');
 
@@ -270,6 +274,96 @@ window.initializePage = function() {
         });
     }
 
+    // --- LÓGICA DA CENTRAL DE REMOÇÃO (BLOG, FÓRUM, Q&A) ---
+
+    async function loadContentForRemoval(type) {
+        contentListContainer.innerHTML = '<p class="loading-state">Carregando...</p>';
+        
+        let endpoint = '';
+        if (type === 'blog') endpoint = '/api/admin/content/blog';
+        if (type === 'forum') endpoint = '/api/admin/content/forum';
+        if (type === 'qna') endpoint = '/api/admin/content/qna';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+
+            if (data.length === 0) {
+                contentListContainer.innerHTML = '<p class="empty-state">Nenhum conteúdo encontrado.</p>';
+                return;
+            }
+
+            let html = '<ul class="lista-moderacao">';
+            data.forEach(item => {
+                let title = item.titulo || item.title || 'Sem título';
+                let author = item.autor?.nome || item.Psychologist?.nome || item.Patient?.nome || 'Anônimo';
+                let date = new Date(item.createdAt || item.created_at).toLocaleDateString('pt-BR');
+                let id = item.id;
+
+                html += `
+                    <li style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>${title}</strong><br>
+                            <small style="color: #666;">Por: ${author} em ${date}</small>
+                        </div>
+                        <button class="btn-tabela btn-tabela-perigo btn-delete-content" data-type="${type}" data-id="${id}">
+                            Excluir
+                        </button>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            contentListContainer.innerHTML = html;
+
+        } catch (error) {
+            contentListContainer.innerHTML = `<p class="empty-state" style="color: red;">Erro: ${error.message}</p>`;
+        }
+    }
+
+    async function deleteContent(type, id) {
+        if (!confirm('Tem certeza que deseja excluir este item permanentemente?')) return;
+
+        let endpoint = '';
+        if (type === 'blog') endpoint = `/api/admin/content/blog/${id}`;
+        if (type === 'forum') endpoint = `/api/admin/content/forum/${id}`;
+        if (type === 'qna') endpoint = `/api/admin/content/qna/${id}`;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                if (window.showToast) window.showToast('Conteúdo excluído com sucesso!');
+                loadContentForRemoval(type); // Recarrega a lista
+            } else {
+                alert('Erro ao excluir.');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Erro de conexão.');
+        }
+    }
+
+    // Event Listeners para as Abas
+    contentTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            contentTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            loadContentForRemoval(tab.dataset.target);
+        });
+    });
+
+    // Event Listener para Botão de Excluir (Delegação)
+    contentListContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('btn-delete-content')) {
+            deleteContent(e.target.dataset.type, e.target.dataset.id);
+        }
+    });
+
     // Inicia o carregamento dos dados
     function initializeStaticPageManagement() {
         const staticPagesWidget = document.getElementById('static-pages-widget');
@@ -299,6 +393,10 @@ window.initializePage = function() {
 
     fetchPendingReviews();
     fetchPendingQuestions();
+    
+    // Carrega a aba inicial (Blog)
+    loadContentForRemoval('blog');
+
     initializeStaticPageManagement(); // Adiciona a inicialização dos botões de edição
     initializeCommunityManagementLink(); // Adiciona a inicialização do novo botão
 };
