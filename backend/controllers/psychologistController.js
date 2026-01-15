@@ -390,7 +390,15 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
             return res.status(404).json({ error: 'Perfil do psicólogo não encontrado.' });
         }
 
-        res.status(200).json(psychologist);
+        // --- FIX: PERMITIR REATIVAÇÃO DE PLANO ---
+        // Se o plano está cancelado (cancelAtPeriodEnd = true), mascaramos o campo 'plano'
+        // para que o frontend exiba os botões de "Assinar" novamente.
+        let profileData = psychologist.toJSON();
+        if (profileData.cancelAtPeriodEnd) {
+            profileData.plano = null;
+        }
+
+        res.status(200).json(profileData);
 
     } catch (error) {
         console.error('Erro ao buscar perfil do psicólogo autenticado (/me):', error);
