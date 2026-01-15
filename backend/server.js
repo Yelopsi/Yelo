@@ -75,14 +75,23 @@ const seedTestData = require('./controllers/seed_test_data');
 
 const app = express();
 
+// --- FIX: Confia no proxy (Render/Heroku/AWS) ---
+// Isso é essencial para que req.hostname e req.protocol funcionem corretamente atrás de um load balancer.
+app.set('trust proxy', 1);
+
 // --- MIDDLEWARE DE REDIRECIONAMENTO DE DOMÍNIO (SEO) ---
 // Redireciona yelopsi.com, www.yelopsi.com e yelopsi.com.br para www.yelopsi.com.br
 app.use((req, res, next) => {
     const host = req.hostname;
     const target = 'www.yelopsi.com.br';
 
+    // Ignora localhost e domínios de desenvolvimento (Render)
+    if (host.includes('localhost') || host.includes('127.0.0.1') || host.includes('onrender.com')) {
+        return next();
+    }
+
     // CORREÇÃO: Só redireciona se o host for diferente do alvo
-    if (host !== target && (host === 'yelopsi.com' || host === 'www.yelopsi.com' || host === 'yelopsi.com.br')) {
+    if (host !== target) {
         return res.redirect(301, `https://${target}${req.originalUrl}`);
     }
     next();
