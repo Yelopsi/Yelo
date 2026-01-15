@@ -596,12 +596,60 @@ document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('payment-form');
         const btnSubmit = document.getElementById('btn-confirmar-stripe');
         const msgDiv = document.getElementById('payment-message');
+        
+        // Elementos novos
+        const tabCredit = document.getElementById('tab-credit-card');
+        const tabPix = document.getElementById('tab-pix');
+        const creditSection = document.getElementById('credit-card-section');
+        const pixResult = document.getElementById('pix-result-container');
+        const customerSection = document.getElementById('customer-data-section');
+        const securityBadges = document.getElementById('security-badges');
+        
+        let currentMethod = 'CREDIT_CARD';
 
         if (!modal) return;
 
         modal.style.display = 'flex';
         modal.style.opacity = 1;
         modal.style.visibility = 'visible';
+        
+        // Reset UI
+        if(msgDiv) msgDiv.classList.add('hidden');
+        pixResult.style.display = 'none';
+        customerSection.style.display = 'flex';
+        creditSection.style.display = 'flex';
+        securityBadges.style.display = 'block';
+        btnSubmit.style.display = 'block';
+        
+        // Lógica de Abas
+        const setTab = (method) => {
+            currentMethod = method;
+            if (method === 'CREDIT_CARD') {
+                tabCredit.style.background = '#e8f5e9'; tabCredit.style.color = '#1B4332';
+                tabPix.style.background = '#f8f9fa'; tabPix.style.color = '#666';
+                creditSection.style.display = 'flex';
+                securityBadges.style.display = 'block';
+                btnSubmit.textContent = "Pagar com Cartão";
+                // Torna campos obrigatórios
+                document.getElementById('card-number').required = true;
+                document.getElementById('card-expiry').required = true;
+                document.getElementById('card-ccv').required = true;
+            } else {
+                tabPix.style.background = '#e8f5e9'; tabPix.style.color = '#1B4332';
+                tabCredit.style.background = '#f8f9fa'; tabCredit.style.color = '#666';
+                creditSection.style.display = 'none';
+                securityBadges.style.display = 'none';
+                btnSubmit.textContent = "Gerar PIX";
+                // Remove obrigatoriedade
+                document.getElementById('card-number').required = false;
+                document.getElementById('card-expiry').required = false;
+                document.getElementById('card-ccv').required = false;
+            }
+        };
+        
+        tabCredit.onclick = () => setTab('CREDIT_CARD');
+        tabPix.onclick = () => setTab('PIX');
+        setTab('CREDIT_CARD'); // Default
         
         // Limpa mensagens anteriores
         if(msgDiv) msgDiv.classList.add('hidden');
@@ -687,12 +735,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 addressComplement: document.getElementById('card-holder-complement').value,
                 // Dados enriquecidos pelo CEP (importante para antifraude)
                 addressStreet: document.getElementById('card-holder-street').value,
-                addressNeighborhood: document.getElementById('card-holder-neighborhood').value,
-                number: document.getElementById('card-number').value,
-                expiry: document.getElementById('card-expiry').value, // Esperado MM/AAAA
-                ccv: document.getElementById('card-ccv').value
+                addressNeighborhood: document.getElementById('card-holder-neighborhood').value
             };
             
+            // Dados específicos do cartão
+            if (currentMethod === 'CREDIT_CARD') {
+                cardData.number = document.getElementById('card-number').value;
+                cardData.expiry = document.getElementById('card-expiry').value;
+                cardData.ccv = document.getElementById('card-ccv').value;
+            }
+
             const cupomInput = document.getElementById('modal-cupom-input');
             const cupom = cupomInput ? cupomInput.value : '';
 
@@ -702,6 +754,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     body: JSON.stringify({ 
                         planType, 
                         cupom,
+                        billingType: currentMethod,
                         creditCard: cardData
                     })
                 });
@@ -717,10 +770,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 if (res.ok) {
-                    showToast('Assinatura realizada com sucesso!', 'success');
-                    modal.style.setProperty('display', 'none', 'important');
-                    await fetchPsychologistData();
-                    loadPage('psi_assinatura.html');
+                    if (currentMethod === 'PIX' && data.pix) {
+                        // Mostra QR Code
+                        customerSection.style.display = 'none';
+                        creditSection.style.display = 'none';
+                        securityBadges.style.display = 'none';
+                        btnSubmit.style.display = 'none';
+                        pixResult.style.display = 'block';
+                        
+                        document.getElementById('pix-qr-image').src = `data:image/png;base64,${data.pix.encodedImage}`;
+                        document.getElementById('pix-copy-paste').value = data.pix.payload;
+                        
+                        // Botão Copiar
+                        document.getElementById('btn-copy-pix').onclick = () => {
+                            const copyText = document.getElementById('pix-copy-paste');
+                            copyText.select();
+                            document.execCommand("copy");
+                            showToast('Código PIX copiado!', 'success');
+                        };
+                        
+                        // Botão Já Paguei
+                        document.getElementById('btn-pix-paid').onclick = () => window.location.reload();
+                        
+                    } else {
+                        // Cartão (Sucesso imediato)
+                        showToast('Assinatura realizada com sucesso!', 'success');
+                        modal.style.setProperty('display', 'none', 'important');
+                        await fetchPsychologistData();
+                        loadPage('psi_assinatura.html');
+                    }
                 } else {
                     throw new Error(data.error || 'Erro ao processar pagamento.');
                 }
@@ -733,7 +811,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } finally {
                 btnSubmit.disabled = false;
-                btnSubmit.textContent = "Pagar Agora";
+                btnSubmit.textContent = currentMethod === 'CREDIT_CARD' ? "Pagar Agora" : "Gerar PIX";
             }
         };
     }

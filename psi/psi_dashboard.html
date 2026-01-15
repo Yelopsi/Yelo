@@ -165,10 +165,34 @@
             <button id="btn-close-modal-x" style="float: right; background:none; border:none; font-size:1.2rem; cursor:pointer;">✕</button>
             <h3 style="margin-top:0;">Finalizar Assinatura</h3>
             
+            <!-- TABS DE PAGAMENTO -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                <button type="button" id="tab-credit-card" class="payment-tab active" style="flex: 1; padding: 10px; border: none; background: #e8f5e9; color: #1B4332; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s;">Cartão de Crédito</button>
+                <button type="button" id="tab-pix" class="payment-tab" style="flex: 1; padding: 10px; border: none; background: #f8f9fa; color: #666; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s;">PIX</button>
+            </div>
+
             <div id="payment-message" class="hidden" style="margin-top: 10px;"></div>
+
+            <!-- RESULTADO PIX (QR CODE) -->
+            <div id="pix-result-container" style="display: none; text-align: center; padding: 20px;">
+                <p style="color: #1B4332; font-weight: bold; margin-bottom: 15px;">Escaneie o QR Code para pagar:</p>
+                <img id="pix-qr-image" src="" style="width: 200px; height: 200px; display: block; margin: 0 auto 15px auto; border: 1px solid #eee; padding: 10px; border-radius: 8px;">
+                
+                <p style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">Ou copie e cole o código:</p>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <input type="text" id="pix-copy-paste" readonly style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 0.8rem; background: #f9f9f9;">
+                    <button type="button" id="btn-copy-pix" style="padding: 10px 15px; background: #1B4332; color: white; border: none; border-radius: 5px; cursor: pointer;">Copiar</button>
+                </div>
+                
+                <div style="font-size: 0.85rem; color: #856404; background: #fff3cd; padding: 10px; border-radius: 8px; border: 1px solid #ffeeba;">
+                    Após o pagamento, seu plano será ativado automaticamente em alguns instantes.
+                </div>
+                <button type="button" id="btn-pix-paid" style="margin-top: 15px; width: 100%; padding: 12px; background: #1B4332; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Já realizei o pagamento</button>
+            </div>
+
             <form id="payment-form">
-                <!-- FORMULÁRIO ASAAS CHECKOUT TRANSPARENTE -->
-                <div id="asaas-payment-form" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                <!-- DADOS DO TITULAR (COMUM) -->
+                <div id="customer-data-section" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
                     <input type="text" id="card-holder-name" placeholder="Nome impresso no cartão" required style="padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
                     
                     <div style="display: flex; gap: 10px;">
@@ -186,7 +210,10 @@
                         <input type="hidden" id="card-holder-city">
                         <input type="hidden" id="card-holder-state">
                     </div>
-                    
+                </div>
+
+                <!-- DADOS DO CARTÃO (ESPECÍFICO) -->
+                <div id="credit-card-section" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
                     <input type="text" id="card-number" placeholder="Número do Cartão" required style="padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
                     
                     <div style="display: flex; gap: 10px;">
@@ -196,7 +223,7 @@
                 </div>
 
                 <!-- SECURITY BADGES SECTION -->
-                <div style="background-color: #f8f9fa; border-radius: 8px; padding: 15px; margin-bottom: 20px; border: 1px solid #e9ecef;">
+                <div id="security-badges" style="background-color: #f8f9fa; border-radius: 8px; padding: 15px; margin-bottom: 20px; border: 1px solid #e9ecef;">
                     <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 15px; opacity: 0.8;">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" style="height: 24px;">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" style="height: 24px;">
