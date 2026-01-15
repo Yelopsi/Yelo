@@ -612,6 +612,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (cupomInput) cupomInput.value = cupomPreenchido;
         }
 
+        // Pré-preenche dados do titular se disponíveis no perfil
+        if (psychologistData) {
+            const elCpf = document.getElementById('card-holder-cpf');
+            const elCep = document.getElementById('card-holder-cep');
+            const elPhone = document.getElementById('card-holder-phone');
+            if (elCpf && psychologistData.cpf) elCpf.value = psychologistData.cpf;
+            if (elCep && psychologistData.cep) elCep.value = psychologistData.cep;
+            if (elPhone && psychologistData.telefone) elPhone.value = psychologistData.telefone;
+        }
+
         // --- APLICA MÁSCARAS AOS CAMPOS DO CARTÃO ---
         setTimeout(() => {
             if (window.IMask) {
@@ -619,6 +629,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const cardNumber = document.getElementById('card-number');
                 const cardCcv = document.getElementById('card-ccv');
                 const cardCpf = document.getElementById('card-holder-cpf');
+                const cardCep = document.getElementById('card-holder-cep');
+                const cardPhone = document.getElementById('card-holder-phone');
 
                 if (cardExpiry) {
                     IMask(cardExpiry, {
@@ -632,8 +644,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (cardNumber) IMask(cardNumber, { mask: '0000 0000 0000 0000' });
                 if (cardCcv) IMask(cardCcv, { mask: '0000' });
                 if (cardCpf) IMask(cardCpf, { mask: '000.000.000-00' });
+                if (cardCep) IMask(cardCep, { mask: '00000-000' });
+                if (cardPhone) IMask(cardPhone, { mask: '(00) 00000-0000' });
             }
         }, 100);
+
+        // --- BUSCA CEP AUTOMÁTICA (ANTIFRAUDE) ---
+        const cepInput = document.getElementById('card-holder-cep');
+        if (cepInput) {
+            cepInput.addEventListener('blur', async (e) => {
+                const cep = e.target.value.replace(/\D/g, '');
+                if (cep.length === 8) {
+                    try {
+                        const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                        const data = await res.json();
+                        if (!data.erro) {
+                            document.getElementById('card-holder-street').value = data.logradouro || '';
+                            document.getElementById('card-holder-neighborhood').value = data.bairro || '';
+                            document.getElementById('card-holder-city').value = data.localidade || '';
+                            document.getElementById('card-holder-state').value = data.uf || '';
+                            document.getElementById('card-holder-number').focus();
+                        }
+                    } catch (err) { console.error("Erro CEP:", err); }
+                }
+            });
+        }
 
         // Impede duplo submit
         form.onsubmit = async (e) => {
@@ -646,6 +681,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const cardData = {
                 holderName: document.getElementById('card-holder-name').value,
                 holderCpf: document.getElementById('card-holder-cpf').value,
+                holderPhone: document.getElementById('card-holder-phone').value,
+                postalCode: document.getElementById('card-holder-cep').value, // CEP enviado pelo usuário
+                addressNumber: document.getElementById('card-holder-number').value,
+                addressComplement: document.getElementById('card-holder-complement').value,
+                // Dados enriquecidos pelo CEP (importante para antifraude)
+                addressStreet: document.getElementById('card-holder-street').value,
+                addressNeighborhood: document.getElementById('card-holder-neighborhood').value,
                 number: document.getElementById('card-number').value,
                 expiry: document.getElementById('card-expiry').value, // Esperado MM/AAAA
                 ccv: document.getElementById('card-ccv').value

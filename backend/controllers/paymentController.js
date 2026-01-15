@@ -42,6 +42,10 @@ exports.createPreference = async (req, res) => {
         if (!creditCard.expiry || !creditCard.expiry.includes('/')) {
             return res.status(400).json({ error: 'Data de validade inválida. Use o formato MM/AAAA.' });
         }
+        
+        if (!creditCard.holderPhone || !creditCard.addressNumber) {
+            return res.status(400).json({ error: 'Telefone e Número do endereço são obrigatórios.' });
+        }
 
         let value;
         switch (planType.toUpperCase()) {
@@ -91,7 +95,8 @@ exports.createPreference = async (req, res) => {
                 body: JSON.stringify({
                     name: psychologist.nome,
                     email: psychologist.email,
-                    cpfCnpj: creditCard.holderCpf || psychologist.cpf || psychologist.cnpj // Asaas exige documento
+                    cpfCnpj: creditCard.holderCpf || psychologist.cpf || psychologist.cnpj,
+                    mobilePhone: creditCard.holderPhone.replace(/\D/g, '') // Asaas exige telefone no cadastro
                 })
             }).then(r => r.json());
 
@@ -103,16 +108,8 @@ exports.createPreference = async (req, res) => {
         const [expiryMonth, expiryYear] = creditCard.expiry.split('/');
         
         // --- FIX: SANITIZAÇÃO DE DADOS DO TITULAR ---
-        // O Asaas é rigoroso com o CEP. Se o usuário não preencheu ou está inválido,
-        // usamos um CEP genérico válido (Av. Paulista) para não bloquear o pagamento.
-        let postalCode = psychologist.cep ? psychologist.cep.replace(/\D/g, '') : '';
-        if (postalCode.length !== 8) {
-            postalCode = '01310940'; 
-        }
-
-        // Sanitiza telefone também para evitar erros
-        let phone = psychologist.telefone ? psychologist.telefone.replace(/\D/g, '') : '';
-        if (phone.length < 10) phone = '11999999999';
+        const postalCode = creditCard.postalCode.replace(/\D/g, '');
+        const phone = creditCard.holderPhone.replace(/\D/g, '');
 
         const subscriptionPayload = {
             customer: customerIdAsaas,
@@ -133,9 +130,10 @@ exports.createPreference = async (req, res) => {
                 name: creditCard.holderName,
                 email: psychologist.email,
                 cpfCnpj: creditCard.holderCpf,
-                postalCode: postalCode, // CEP Corrigido e Validado
-                addressNumber: '0', 
-                phone: phone // Telefone Corrigido
+                postalCode: postalCode,
+                addressNumber: creditCard.addressNumber,
+                addressComplement: creditCard.addressComplement || null,
+                phone: phone
             }
         };
 
