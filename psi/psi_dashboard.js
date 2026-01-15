@@ -1019,32 +1019,12 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             btnConfirmar.onclick = async function() {
-                const textoOriginalModal = this.textContent;
-                this.textContent = "Processando...";
-                this.disabled = true;
-
-                try {
-                    const response = await apiFetch(`${API_BASE_URL}/api/psychologists/me/reactivate-subscription`, {
-                        method: 'POST'
-                    });
-
-                    if (response.ok) {
-                        showToast('Assinatura reativada com sucesso! 🌻', 'success');
-                        psychologistData.cancel_at_period_end = false;
-                        psychologistData.cancelado_localmente = false;
-                        modal.style.display = 'none';
-                        inicializarAssinatura();
-                    } else {
-                        throw new Error("Falha na comunicação com o servidor.");
-                    }
-                } catch (error) {
-                    console.error(error);
-                    modal.style.display = 'none'; 
-                    showToast('Erro: Ainda não foi possível conectar ao servidor de pagamentos.', 'error');
-                } finally {
-                    this.textContent = textoOriginalModal;
-                    this.disabled = false;
-                }
+                // Em vez de chamar a API direta (que falha pois a assinatura foi deletada),
+                // abrimos o modal de pagamento para recriar a assinatura.
+                // O backend cuidará de não cobrar hoje se ainda houver prazo.
+                modal.style.display = 'none';
+                const planoAtual = psychologistData.plano || 'ESSENTIAL';
+                window.iniciarPagamento(planoAtual, btnReativacaoAtual);
             };
         }
     }
