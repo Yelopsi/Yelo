@@ -115,7 +115,7 @@ app.use('/admin', express.static(path.join(__dirname, '../admin')));
 
 // 2. ROTA DA PÁGINA INICIAL DO ADMIN
 // Quando acessar yelo.onrender.com/admin, entrega o arquivo HTML principal
-app.get('/admin', (req, res) => {
+app.get(['/admin', '/admin/'], (req, res) => {
     // IMPORTANTE: Verifique se o nome do seu arquivo principal na pasta admin é 'index.html' ou 'admin.html'
     // Estou assumindo que seja 'index.html' ou 'admin.html'. 
     // Se o seu arquivo principal se chamar "admin.html", use a linha abaixo:
