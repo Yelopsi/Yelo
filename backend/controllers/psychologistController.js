@@ -390,15 +390,7 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
             return res.status(404).json({ error: 'Perfil do psicólogo não encontrado.' });
         }
 
-        // --- FIX: PERMITIR REATIVAÇÃO DE PLANO ---
-        // Se o plano está cancelado (cancelAtPeriodEnd = true), mascaramos o campo 'plano'
-        // para que o frontend exiba os botões de "Assinar" novamente.
-        let profileData = psychologist.toJSON();
-        if (profileData.cancelAtPeriodEnd) {
-            profileData.plano = null;
-        }
-
-        res.status(200).json(profileData);
+        res.status(200).json(psychologist);
 
     } catch (error) {
         console.error('Erro ao buscar perfil do psicólogo autenticado (/me):', error);
@@ -1214,13 +1206,24 @@ exports.cancelSubscription = async (req, res) => {
         
         if (!psychologist) return res.status(404).json({ error: 'Psi não encontrado' });
 
-        // 1. AVISA O ASAAS (Deleta a assinatura para parar cobranças)
+        // 1. AVISA O ASAAS (Soft Cancel: Define data de fim para não renovar)
         if (psychologist.stripeSubscriptionId) {
             try {
-                await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.stripeSubscriptionId}`, {
-                    method: 'DELETE',
+                // Busca dados da assinatura para saber o vencimento
+                const subResponse = await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.stripeSubscriptionId}`, {
                     headers: { 'access_token': ASAAS_API_KEY }
                 });
+                const subData = await subResponse.json();
+
+                if (subData.id && subData.nextDueDate) {
+                    // Atualiza a assinatura definindo o fim para a próxima cobrança
+                    await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.stripeSubscriptionId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                        body: JSON.stringify({ endDate: subData.nextDueDate })
+                    });
+                }
+
             } catch (asaasErr) {
                 console.error("Erro Asaas:", asaasErr);
             }
@@ -1252,9 +1255,28 @@ exports.reactivateSubscription = async (req, res) => {
 
         const psychologist = await db.Psychologist.findByPk(req.psychologist.id);
 
-        // Como o Asaas deleta a assinatura no cancelamento, não podemos reativar a mesma.
-        // O ideal é pedir para o usuário assinar novamente.
-        return res.status(400).json({ error: 'Assinatura cancelada. Por favor, realize uma nova assinatura na página de planos.' });
+        if (!psychologist.stripeSubscriptionId) {
+             return res.status(400).json({ error: 'Nenhuma assinatura encontrada para reativar.' });
+        }
+
+        // 1. Tenta remover a data de fim no Asaas (Reativar recorrência)
+        const response = await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.stripeSubscriptionId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+            body: JSON.stringify({ endDate: null }) // null remove a data de encerramento
+        });
+
+        const data = await response.json();
+
+        // Se der erro (ex: assinatura já deletada), forçamos o usuário a assinar de novo
+        if (response.status !== 200 || data.errors) {
+            return res.status(400).json({ error: 'Não foi possível reativar automaticamente. Por favor, assine novamente.' });
+        }
+
+        // 2. Atualiza banco local
+        await psychologist.update({ cancelAtPeriodEnd: false });
+
+        res.json({ message: 'Assinatura reativada com sucesso! A cobrança automática voltará a ocorrer.' });
 
     } catch (error) {
         console.error('Erro ao reativar assinatura:', error);

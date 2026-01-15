@@ -165,12 +165,40 @@
                 if (user.plano === 'ESSENTIAL') {
                     const btnEssencial = document.querySelector('#card-plano-essencial .btn-mudar-plano');
                     if (btnEssencial) {
-                        btnEssencial.textContent = 'Seu Plano Atual';
-                        btnEssencial.disabled = true;
-                        btnEssencial.style.backgroundColor = '#e0e0e0';
-                        btnEssencial.style.borderColor = '#e0e0e0';
-                        btnEssencial.style.color = '#888';
-                        btnEssencial.style.cursor = 'default';
+                        // LÓGICA DE REATIVAÇÃO
+                        if (user.cancelAtPeriodEnd) {
+                            // Modo: Cancelamento Agendado -> Botão vira "Reativar"
+                            btnEssencial.textContent = 'Reativar Assinatura ↺';
+                            btnEssencial.disabled = false;
+                            btnEssencial.style.backgroundColor = '#F59E0B'; // Cor de alerta/ação
+                            btnEssencial.style.borderColor = '#F59E0B';
+                            btnEssencial.style.color = '#fff';
+                            btnEssencial.style.cursor = 'pointer';
+                            
+                            // Ação de Reativar
+                            btnEssencial.onclick = async (e) => {
+                                e.preventDefault();
+                                if(!confirm('Deseja reativar sua assinatura? A cobrança voltará a ocorrer na data prevista.')) return;
+                                
+                                try {
+                                    const res = await fetch(`${BASE_URL}/api/psychologists/me/reactivate-subscription`, {
+                                        method: 'POST',
+                                        headers: { 'Authorization': `Bearer ${token}` }
+                                    });
+                                    const d = await res.json();
+                                    if(res.ok) { alert(d.message); window.location.reload(); }
+                                    else { alert(d.error); window.location.reload(); } // Se der erro (ex: deletado), recarrega para mostrar form
+                                } catch(err) { alert('Erro ao reativar.'); }
+                            };
+                        } else {
+                            // Modo: Ativo Normal
+                            btnEssencial.textContent = 'Seu Plano Atual';
+                            btnEssencial.disabled = true;
+                            btnEssencial.style.backgroundColor = '#e0e0e0';
+                            btnEssencial.style.borderColor = '#e0e0e0';
+                            btnEssencial.style.color = '#888';
+                            btnEssencial.style.cursor = 'default';
+                        }
                     }
                 }
             }
