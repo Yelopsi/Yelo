@@ -17,8 +17,8 @@ const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim
 // ----------------------------------------------------------------------
 // Função Auxiliar: Gera o Token JWT para Psicólogo
 // ----------------------------------------------------------------------
-const generateToken = (id) => {
-    return jwt.sign({ id, type: 'psychologist' }, process.env.JWT_SECRET, {
+const generateToken = (id, type = 'psychologist') => {
+    return jwt.sign({ id, type }, process.env.JWT_SECRET, {
         expiresIn: '30d', // O token expira em 30 dias
     });
 };
@@ -146,15 +146,40 @@ exports.loginPsychologist = async (req, res) => {
             return res.status(400).json({ error: 'Por favor, preencha e-mail e senha.' });
         }
 
-        const psychologist = await db.Psychologist.findOne({ where: { email } });
+        // 1. Tenta buscar na tabela de Psicólogos
+        let psychologist = await db.Psychologist.findOne({ where: { email } });
+        let userType = 'psychologist';
+        let redirectUrl = '/psi/psi_dashboard.html'; // Padrão
+
+        // 2. Se não achou, tenta na tabela de Admins (Legado) para permitir login unificado
+        if (!psychologist) {
+            const results = await db.sequelize.query(
+                `SELECT * FROM "Admins" WHERE email = :email LIMIT 1`,
+                { replacements: { email }, type: db.sequelize.QueryTypes.SELECT }
+            );
+            
+            if (results && results.length > 0) {
+                const adminUser = results[0];
+                // Mapeia o Admin para parecer um objeto de usuário padrão
+                psychologist = {
+                    id: adminUser.id,
+                    nome: adminUser.nome,
+                    email: adminUser.email,
+                    senha: adminUser.senha,
+                    fotoUrl: adminUser.fotoUrl,
+                    slug: 'admin',
+                    is_exempt: true,
+                    status: 'active',
+                    isAdmin: true // Flag importante
+                };
+            }
+        }
 
         if (!psychologist) {
             return res.status(401).json({ error: 'E-mail não encontrado.' });
         }
 
-        // --- A CORREÇÃO ESTÁ AQUI ---
-        // O banco tem a coluna 'senha', não 'password'.
-        // O objeto retornado é 'psychologist.senha'.
+        // 3. Verifica a senha
         const isMatch = await bcrypt.compare(passwordInput, psychologist.senha);
         
         if (!isMatch) {
@@ -169,10 +194,18 @@ exports.loginPsychologist = async (req, res) => {
             return res.status(403).json({ error: 'Esta conta está inativa.' });
         }
 
-        const token = generateToken(psychologist.id);
+        // 4. Define o tipo de token e redirecionamento se for Admin
+        if (psychologist.isAdmin) {
+            userType = 'admin';
+            redirectUrl = '/admin/admin.html';
+        }
+
+        const token = generateToken(psychologist.id, userType);
 
         // --- GAMIFICATION: LOGIN DIÁRIO (1 pt) ---
-        gamificationService.processAction(psychologist.id, 'login').catch(e => console.error(e));
+        if (userType === 'psychologist') {
+            gamificationService.processAction(psychologist.id, 'login').catch(e => console.error(e));
+        }
 
         res.json({
             id: psychologist.id,
@@ -181,7 +214,9 @@ exports.loginPsychologist = async (req, res) => {
             slug: psychologist.slug,
             fotoUrl: psychologist.fotoUrl,
             is_exempt: psychologist.is_exempt, // Retorna flag VIP no login
-            token: token
+            token: token,
+            redirect: redirectUrl, // Frontend deve usar isso para navegar
+            type: userType
         });
 
     } catch (error) {

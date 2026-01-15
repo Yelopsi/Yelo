@@ -101,8 +101,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function logout() {
         localStorage.removeItem('Yelo_token');
-        // CORREÇÃO: Redireciona para a raiz (/login.html) e não para o login antigo
-        window.location.href = '/'; 
+        // CORREÇÃO: Redireciona para a tela de login do ADMIN
+        window.location.href = '/admin/login.html'; 
     }
 
     async function initializeAndProtect() {
