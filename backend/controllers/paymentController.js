@@ -111,15 +111,23 @@ exports.createPreference = async (req, res) => {
         const postalCode = creditCard.postalCode ? creditCard.postalCode.replace(/\D/g, '') : '';
         const phone = creditCard.holderPhone ? creditCard.holderPhone.replace(/\D/g, '') : '';
 
+        // --- LÓGICA INTELIGENTE DE DATA DE COBRANÇA ---
+        // Padrão: Cobra hoje (UTC-3)
+        let nextDueDate = new Date(Date.now() - 10800000).toISOString().split('T')[0];
+
+        // Se for reativação (usuário tem plano pago no futuro), agenda para o fim do ciclo
+        if (psychologist.planExpiresAt && new Date(psychologist.planExpiresAt) > new Date()) {
+            nextDueDate = new Date(psychologist.planExpiresAt).toISOString().split('T')[0];
+            console.log(`[ASAAS] Reativação: Cobrança agendada para ${nextDueDate} (Fim do período pago)`);
+        }
+
         // --- FLUXO PIX ---
         if (billingType === 'PIX') {
             const subscriptionPayload = {
                 customer: customerIdAsaas,
                 billingType: 'PIX',
                 value: value,
-                nextDueDate: new Date(Date.now() - 10800000).toISOString().split('T')[0], // Hoje (BRT)
-                cycle: 'MONTHLY',
-                description: `Assinatura Yelo - Plano ${planType}`,
+                nextDueDate: nessinatura Yelo - Plano ${planType}`,
                 externalReference: String(psychologistId)
             };
             
@@ -178,17 +186,9 @@ exports.createPreference = async (req, res) => {
             customer: customerIdAsaas,
             billingType: 'CREDIT_CARD',
             value: value,
-            // CORREÇÃO DE FUSO HORÁRIO (BRASIL UTC-3)
-            // Subtrai 3 horas (10800000 ms) para garantir que 22h ainda seja "hoje" e não "amanhã"
-            nextDueDate: new Date(Date.now() - 10800000).toISOString().split('T')[0],
-            cycle: 'MONTHLY',
-            description: `Assinatura Yelo - Plano ${planType}`,
-            externalReference: String(psychologistId), // IMPORTANTE: Para identificar no webhook
-            creditCard: {
-                holderName: creditCard.holderName,
-                number: creditCard.number.replace(/\s/g, ''),
-                expiryMonth: expiryMonth,
-                expiryYear: expiryYear.length === 2 ? `20${expiryYear}` : expiryYear,
+            nextDueDate: 
+        sn na`ternalRefer
+         :cCg  expiryMonth  expiryYar.length === 2 ? `20${expiryYear}` : expiryYear,
                 ccv: creditCard.ccv
             },
             creditCardHolderInfo: {
@@ -227,18 +227,14 @@ exports.createPreference = async (req, res) => {
 
         // --- FIX: ATUALIZAÇÃO IMEDIATA DO BANCO ---
         // Ativa o plano imediatamente após o sucesso no cartão, sem esperar o Webhook.
-        const hoje = new Date();
-        const validade = new Date();
-        validade.setDate(hoje.getDate() + 30); // Adiciona 30 dias
-
+        // Se for reativação, mantém a data antiga. Se for novo, soma 30 dias.
+        let validade = new Date();
+        if (psychologist.planExpiresAt && new Date(psychologist.planExpiresAt) > new Date()) {
+            validade = new Date(psychologist.planExpiresAt); // Mantém a data original        
         await psychologist.update({
             status: 'active',
             plano: planType.toUpperCase(),
             stripeSubscriptionId: subscriptionData.id, // Salva o ID do Asaas
-            planExpiresAt: validade,
-            cancelAtPeriodEnd: false
-        });
-
         res.json({ success: true, subscriptionId: subscriptionData.id });
 
     } catch (error) {

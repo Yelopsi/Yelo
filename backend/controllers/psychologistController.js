@@ -10,8 +10,9 @@ const fs = require('fs').promises;
 const gamificationService = require('../services/gamificationService'); // Importa o serviço
 
 // Configurações do Asaas
-const ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
-const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
+let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
+ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, ''); // Remove barra final e espaços
+const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
 
 // ----------------------------------------------------------------------
 // Função Auxiliar: Gera o Token JWT para Psicólogo
