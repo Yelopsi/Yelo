@@ -46,29 +46,23 @@ exports.registerPsychologist = async (req, res) => {
         const passwordInput = req.body.password || req.body.senha;
         const email = req.body.email;
         const crp = req.body.crp;
-        // Recebe o documento cru (pode vir como 'documento', 'cpf' ou 'cnpj')
-        const rawDoc = req.body.documento || req.body.cpf || req.body.cnpj;
+        // REVERTIDO: Volta a ler apenas o CPF
+        const cpf = req.body.cpf || req.body.documento;
 
         // --- 1. Validação de Campos Obrigatórios ---
         if (!nome) return res.status(400).json({ error: 'O nome é obrigatório.' });
         if (!email) return res.status(400).json({ error: 'O e-mail é obrigatório.' });
         if (!passwordInput || passwordInput.trim() === '') return res.status(400).json({ error: 'A senha é obrigatória.' });
         if (!crp) return res.status(400).json({ error: 'O CRP é obrigatório.' });
-        if (!rawDoc) return res.status(400).json({ error: 'O CPF ou CNPJ é obrigatório.' });
+        if (!cpf) return res.status(400).json({ error: 'O CPF é obrigatório.' });
 
         // --- 2. Validação de Formato e Comprimento ---
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) return res.status(400).json({ error: 'Formato de e-mail inválido.' });
         if (passwordInput.length < 6) return res.status(400).json({ error: 'A senha deve ter no mínimo 6 caracteres.' });
 
-        // --- 2. INTELIGÊNCIA: CPF vs CNPJ ---
-        // Limpa caracteres não numéricos para contar
-        const cleanDoc = rawDoc.replace(/\D/g, '');
-        const isCnpj = cleanDoc.length > 11; // Se tem mais de 11 números, é CNPJ
-
-        // Define dinamicamente qual coluna usar no banco
-        // Se for CNPJ, cria objeto { cnpj: 'valor' }. Se CPF, { cpf: 'valor' }
-        const docQuery = isCnpj ? { cnpj: cleanDoc } : { cpf: cleanDoc };
+        // REVERTIDO: Limpeza simples de CPF
+        const cleanCpf = cpf.replace(/\D/g, '');
 
         // --- 3. VERIFICAÇÃO DE DUPLICIDADE ---
         const existingUser = await db.Psychologist.findOne({
@@ -76,7 +70,7 @@ exports.registerPsychologist = async (req, res) => {
                 [Op.or]: [
                     { email: email },
                     { crp: crp },
-                    docQuery // Injeta a busca na coluna correta (cpf OU cnpj)
+                    { cpf: cleanCpf }
                 ]
             }
         });
@@ -84,10 +78,7 @@ exports.registerPsychologist = async (req, res) => {
         if (existingUser) {
             if (existingUser.email === email) return res.status(400).json({ error: 'E-mail já cadastrado.' });
             if (existingUser.crp === crp) return res.status(400).json({ error: 'CRP já cadastrado.' });
-            
-            // Verifica duplicidade específica de documento (usando cleanDoc)
-            if (isCnpj && existingUser.cnpj === cleanDoc) return res.status(400).json({ error: 'CNPJ já cadastrado.' });
-            if (!isCnpj && existingUser.cpf === cleanDoc) return res.status(400).json({ error: 'CPF já cadastrado.' });
+            if (existingUser.cpf === cleanCpf) return res.status(400).json({ error: 'CPF já cadastrado.' });
         }
 
         // --- 4. Geração de Slug ---
@@ -111,7 +102,7 @@ exports.registerPsychologist = async (req, res) => {
             crp,
             slug: generatedSlug,
             status: 'active',
-            ...docQuery // <--- O PULO DO GATO: Espalha {cnpj: ...} ou {cpf: ...} aqui dentro
+            cpf: cleanCpf // Salva na coluna CPF
         });
 
         // --- 7. Token ---
