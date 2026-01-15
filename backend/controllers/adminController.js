@@ -458,7 +458,12 @@ exports.getAdminData = async (req, res) => {
                 { replacements: { id: userId } }
             );
             if (results.length > 0) {
-                return res.status(200).json(results[0]);
+                return res.status(200).json({
+                    ...results[0],
+                    role: 'admin',
+                    type: 'admin',
+                    isAdmin: true
+                });
             }
         }
 
