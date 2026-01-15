@@ -165,10 +165,36 @@
             <button id="btn-close-modal-x" style="float: right; background:none; border:none; font-size:1.2rem; cursor:pointer;">✕</button>
             <h3 style="margin-top:0;">Finalizar Assinatura</h3>
             
-            <!-- TABS DE PAGAMENTO -->
-            <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
-                <button type="button" id="tab-credit-card" class="payment-tab active" style="flex: 1; padding: 10px; border: none; background: #e8f5e9; color: #1B4332; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s;">Cartão de Crédito</button>
-                <button type="button" id="tab-pix" class="payment-tab" style="flex: 1; padding: 10px; border: none; background: #f8f9fa; color: #666; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s;">PIX</button>
+            <!-- TELA 1: SELEÇÃO DE MÉTODO -->
+            <div id="step-payment-method" style="display: block;">
+                <p style="color: #666; margin-bottom: 20px;">Escolha como deseja pagar:</p>
+                
+                <button type="button" id="btn-select-card" style="width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 12px; background: #fff; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span style="font-size: 1.5rem;">💳</span>
+                        <div style="text-align: left;">
+                            <strong style="display: block; color: #333;">Cartão de Crédito</strong>
+                            <span style="font-size: 0.8rem; color: #888;">Aprovação imediata</span>
+                        </div>
+                    </div>
+                    <span style="color: #1B4332;">➔</span>
+                </button>
+
+                <button type="button" id="btn-select-pix" style="width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 12px; background: #fff; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span style="font-size: 1.5rem;">💠</span>
+                        <div style="text-align: left;">
+                            <strong style="display: block; color: #333;">PIX</strong>
+                            <span style="font-size: 0.8rem; color: #888;">QR Code instantâneo</span>
+                        </div>
+                    </div>
+                    <span style="color: #1B4332;">➔</span>
+                </button>
+
+                <div style="margin-top: 25px; text-align: center; font-size: 0.8rem; color: #888; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    Ambiente 100% Seguro e Criptografado
+                </div>
             </div>
 
             <div id="payment-message" class="hidden" style="margin-top: 10px;"></div>
@@ -190,9 +216,15 @@
                 <button type="button" id="btn-pix-paid" style="margin-top: 15px; width: 100%; padding: 12px; background: #1B4332; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Já realizei o pagamento</button>
             </div>
 
-            <form id="payment-form">
+            <!-- TELA 2: FORMULÁRIO (Escondido inicialmente) -->
+            <form id="payment-form" style="display: none;">
+                <button type="button" id="btn-back-method" style="background: none; border: none; color: #666; cursor: pointer; margin-bottom: 15px; display: flex; align-items: center; gap: 5px; font-size: 0.9rem;">
+                    ← Voltar para métodos
+                </button>
+
                 <!-- DADOS DO TITULAR (COMUM) -->
                 <div id="customer-data-section" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 5px 0; font-size: 0.9rem; color: #1B4332;">Dados do Titular</h4>
                     <input type="text" id="card-holder-name" placeholder="Nome impresso no cartão" required style="padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
                     
                     <div style="display: flex; gap: 10px;">
@@ -214,6 +246,7 @@
 
                 <!-- DADOS DO CARTÃO (ESPECÍFICO) -->
                 <div id="credit-card-section" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 5px 0; font-size: 0.9rem; color: #1B4332;">Dados do Cartão</h4>
                     <input type="text" id="card-number" placeholder="Número do Cartão" required style="padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
                     
                     <div style="display: flex; gap: 10px;">

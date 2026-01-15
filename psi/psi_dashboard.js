@@ -598,8 +598,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const msgDiv = document.getElementById('payment-message');
         
         // Elementos novos
-        const tabCredit = document.getElementById('tab-credit-card');
-        const tabPix = document.getElementById('tab-pix');
+        const stepMethod = document.getElementById('step-payment-method');
+        const btnSelectCard = document.getElementById('btn-select-card');
+        const btnSelectPix = document.getElementById('btn-select-pix');
+        const btnBackMethod = document.getElementById('btn-back-method');
+        
         const creditSection = document.getElementById('credit-card-section');
         const pixResult = document.getElementById('pix-result-container');
         const customerSection = document.getElementById('customer-data-section');
@@ -615,31 +618,31 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Reset UI
         if(msgDiv) msgDiv.classList.add('hidden');
+        stepMethod.style.display = 'block';
+        form.style.display = 'none';
         pixResult.style.display = 'none';
-        customerSection.style.display = 'flex';
-        creditSection.style.display = 'flex';
-        securityBadges.style.display = 'block';
-        btnSubmit.style.display = 'block';
         
         // Lógica de Abas
         const setTab = (method) => {
             currentMethod = method;
+            stepMethod.style.display = 'none';
+            form.style.display = 'block';
+            customerSection.style.display = 'flex';
+
             if (method === 'CREDIT_CARD') {
-                tabCredit.style.background = '#e8f5e9'; tabCredit.style.color = '#1B4332';
-                tabPix.style.background = '#f8f9fa'; tabPix.style.color = '#666';
                 creditSection.style.display = 'flex';
                 securityBadges.style.display = 'block';
                 btnSubmit.textContent = "Pagar com Cartão";
+                document.getElementById('card-holder-name').placeholder = "Nome impresso no cartão";
                 // Torna campos obrigatórios
                 document.getElementById('card-number').required = true;
                 document.getElementById('card-expiry').required = true;
                 document.getElementById('card-ccv').required = true;
             } else {
-                tabPix.style.background = '#e8f5e9'; tabPix.style.color = '#1B4332';
-                tabCredit.style.background = '#f8f9fa'; tabCredit.style.color = '#666';
                 creditSection.style.display = 'none';
                 securityBadges.style.display = 'none';
                 btnSubmit.textContent = "Gerar PIX";
+                document.getElementById('card-holder-name').placeholder = "Nome completo";
                 // Remove obrigatoriedade
                 document.getElementById('card-number').required = false;
                 document.getElementById('card-expiry').required = false;
@@ -647,9 +650,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
         
-        tabCredit.onclick = () => setTab('CREDIT_CARD');
-        tabPix.onclick = () => setTab('PIX');
-        setTab('CREDIT_CARD'); // Default
+        btnSelectCard.onclick = () => setTab('CREDIT_CARD');
+        btnSelectPix.onclick = () => setTab('PIX');
+        
+        btnBackMethod.onclick = () => {
+            form.style.display = 'none';
+            stepMethod.style.display = 'block';
+            if(msgDiv) msgDiv.classList.add('hidden');
+        };
         
         // Limpa mensagens anteriores
         if(msgDiv) msgDiv.classList.add('hidden');
@@ -691,7 +699,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 if (cardNumber) IMask(cardNumber, { mask: '0000 0000 0000 0000' });
                 if (cardCcv) IMask(cardCcv, { mask: '0000' });
-                if (cardCpf) IMask(cardCpf, { mask: '000.000.000-00' });
+                
+                // MÁSCARA HÍBRIDA CPF/CNPJ
+                if (cardCpf) {
+                    IMask(cardCpf, {
+                        mask: [
+                            { mask: '000.000.000-00' },
+                            { mask: '00.000.000/0000-00' }
+                        ]
+                    });
+                }
+                
                 if (cardCep) IMask(cardCep, { mask: '00000-000' });
                 if (cardPhone) IMask(cardPhone, { mask: '(00) 00000-0000' });
             }
