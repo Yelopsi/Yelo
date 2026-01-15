@@ -128,6 +128,7 @@ exports.createPreference = async (req, res) => {
                 billingType: 'PIX',
                 value: value,
                 nextDueDate: nextDueDate,
+                cycle: 'MONTHLY', // Adicionado: Ciclo mensal obrigatório
                 description: `Assinatura Yelo - Plano ${planType}`,
                 externalReference: String(psychologistId)
             };
@@ -189,6 +190,7 @@ exports.createPreference = async (req, res) => {
             billingType: 'CREDIT_CARD',
             value: value,
             nextDueDate: nextDueDate,
+            cycle: 'MONTHLY', // Adicionado: Ciclo mensal obrigatório
             description: `Assinatura Yelo - Plano ${planType}`,
             externalReference: String(psychologistId),
             creditCard: {
