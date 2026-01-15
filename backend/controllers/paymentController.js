@@ -316,6 +316,30 @@ exports.handleWebhook = async (req, res) => {
             return res.json({received: true}); 
         }
     }
+    
+    // --- LÓGICA DE ESTORNO / CANCELAMENTO IMEDIATO ---
+    // Captura eventos de reembolso ou chargeback para revogar o acesso
+    if (['PAYMENT_REFUNDED', 'PAYMENT_REVERSED', 'PAYMENT_CHARGEBACK_REQUESTED'].includes(event.event)) {
+        const payment = event.payment;
+        const psychologistId = payment.externalReference;
+
+        console.log(`[ASAAS] Estorno/Cancelamento detectado (${event.event}): Psi ${psychologistId}`);
+
+        try {
+            const psi = await db.Psychologist.findByPk(psychologistId);
+            if (psi) {
+                // Revoga o acesso imediatamente
+                await psi.update({
+                    status: 'pending', // Volta para pendente
+                    plano: null,       // Remove o plano
+                    planExpiresAt: new Date(0), // Expira imediatamente (define data no passado)
+                    cancelAtPeriodEnd: false
+                });
+            }
+        } catch (err) {
+            console.error('Erro ao processar estorno no banco:', err);
+        }
+    }
 
     res.json({received: true});
 };
