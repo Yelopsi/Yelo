@@ -127,7 +127,8 @@ exports.createPreference = async (req, res) => {
                 customer: customerIdAsaas,
                 billingType: 'PIX',
                 value: value,
-                nextDueDate: nessinatura Yelo - Plano ${planType}`,
+                nextDueDate: nextDueDate,
+                description: `Assinatura Yelo - Plano ${planType}`,
                 externalReference: String(psychologistId)
             };
             
@@ -186,9 +187,14 @@ exports.createPreference = async (req, res) => {
             customer: customerIdAsaas,
             billingType: 'CREDIT_CARD',
             value: value,
-            nextDueDate: 
-        sn na`ternalRefer
-         :cCg  expiryMonth  expiryYar.length === 2 ? `20${expiryYear}` : expiryYear,
+            nextDueDate: nextDueDate,
+            description: `Assinatura Yelo - Plano ${planType}`,
+            externalReference: String(psychologistId),
+            creditCard: {
+                holderName: creditCard.holderName,
+                number: creditCard.number,
+                expiryMonth: expiryMonth,
+                expiryYear: expiryYear.length === 2 ? `20${expiryYear}` : expiryYear,
                 ccv: creditCard.ccv
             },
             creditCardHolderInfo: {
@@ -230,11 +236,18 @@ exports.createPreference = async (req, res) => {
         // Se for reativação, mantém a data antiga. Se for novo, soma 30 dias.
         let validade = new Date();
         if (psychologist.planExpiresAt && new Date(psychologist.planExpiresAt) > new Date()) {
-            validade = new Date(psychologist.planExpiresAt); // Mantém a data original        
+            validade = new Date(psychologist.planExpiresAt); // Mantém a data original
+        } else {
+            validade.setDate(validade.getDate() + 30);
+        }
+
         await psychologist.update({
             status: 'active',
             plano: planType.toUpperCase(),
             stripeSubscriptionId: subscriptionData.id, // Salva o ID do Asaas
+            planExpiresAt: validade
+        });
+
         res.json({ success: true, subscriptionId: subscriptionData.id });
 
     } catch (error) {
