@@ -1534,6 +1534,67 @@ exports.deletePsychologist = async (req, res) => {
     }
 };
 
+// =====================================================================
+// GESTÃO DE CONTEÚDO (BLOG E FÓRUM)
+// =====================================================================
+
+/**
+ * Rota: GET /api/admin/content/blog
+ */
+exports.getAllBlogPosts = async (req, res) => {
+    try {
+        const posts = await db.Post.findAll({
+            include: [{ model: db.Psychologist, as: 'autor', attributes: ['nome', 'email'] }],
+            order: [['created_at', 'DESC']],
+            limit: 100 // Limite de segurança
+        });
+        res.json(posts);
+    } catch (error) {
+        console.error("Erro admin blog:", error);
+        res.status(500).json({ error: 'Erro ao buscar posts do blog' });
+    }
+};
+
+/**
+ * Rota: DELETE /api/admin/content/blog/:id
+ */
+exports.deleteBlogPost = async (req, res) => {
+    try {
+        await db.Post.destroy({ where: { id: req.params.id } });
+        res.json({ message: 'Post excluído com sucesso' });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao excluir post' });
+    }
+};
+
+/**
+ * Rota: GET /api/admin/content/forum
+ */
+exports.getAllForumPosts = async (req, res) => {
+    try {
+        const posts = await db.ForumPost.findAll({
+            include: [{ model: db.Psychologist, attributes: ['nome', 'email'] }],
+            order: [['createdAt', 'DESC']],
+            limit: 100
+        });
+        res.json(posts);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao buscar posts do fórum' });
+    }
+};
+
+/**
+ * Rota: DELETE /api/admin/content/forum/:id
+ */
+exports.deleteForumPost = async (req, res) => {
+    try {
+        await db.ForumPost.destroy({ where: { id: req.params.id } });
+        res.json({ message: 'Post do fórum excluído com sucesso' });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao excluir post do fórum' });
+    }
+};
+
 /**
  * Rota: GET /api/admin/questionnaire-analytics
  * Descrição: Agrega e conta as respostas dos questionários de pacientes e psicólogos.

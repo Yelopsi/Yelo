@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Assumindo que a API retorna o nome do usuário em `data.user.nome`
                 localStorage.setItem('Yelo_user_name', data.user?.nome || 'Admin');
                 setTimeout(() => {
-                    window.location.href = 'admin.html';
+                    window.location.href = '/admin';
                 }, 500);
             } else {
                 throw new Error(data.error || 'Credenciais inválidas.');
