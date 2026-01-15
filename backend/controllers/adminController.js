@@ -26,7 +26,14 @@ exports.loginAdmin = async (req, res) => {
                 meta: { adminId: adminUser.id }
             });
 
-            res.status(200).json({ token: generateAdminToken(adminUser.id) });
+            res.status(200).json({ 
+                token: generateAdminToken(adminUser.id),
+                user: {
+                    id: adminUser.id,
+                    nome: adminUser.nome,
+                    email: adminUser.email
+                }
+            });
         } else {
             res.status(401).json({ error: 'Credenciais de administrador inválidas.' });
         }

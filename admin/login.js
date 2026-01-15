@@ -4,10 +4,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const senhaInput = document.getElementById('senha-login');
     const mensagemEl = document.getElementById('mensagem-login');
 
-    // Se já existe um token, tenta redirecionar direto para o dashboard
-    if (localStorage.getItem('Yelo_token')) {
-        window.location.href = 'admin.html';
-    }
+    // --- FIX: LIMPEZA DE SESSÃO (PREVINE LOOP DE EXPULSÃO) ---
+    // Ao acessar a tela de login, limpamos qualquer token antigo para garantir um novo acesso limpo.
+    localStorage.removeItem('Yelo_token');
+    localStorage.removeItem('Yelo_user_type');
+    localStorage.removeItem('Yelo_user_name');
 
     function showMessage(text, isError = false) {
         mensagemEl.textContent = text;
