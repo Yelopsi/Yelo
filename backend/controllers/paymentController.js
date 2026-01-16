@@ -1,6 +1,6 @@
 // backend/controllers/paymentController.js
 const db = require('../models');
-const { sendPaymentConfirmationEmail } = require('../services/emailService');
+const { sendPaymentConfirmationEmail, sendSubscriptionCancelledEmail, sendPaymentFailedEmail } = require('../services/emailService');
 
 // Configurações do Asaas
 // Limpeza robusta da URL (remove espaços e barras finais)
@@ -395,11 +395,39 @@ exports.handleWebhook = async (req, res) => {
                     cancelAtPeriodEnd: false
                 });
                 console.log(`[ASAAS] Acesso revogado para Psi ${psi.id} devido a estorno.`);
+                
+                // --- ENVIA E-MAIL DE CANCELAMENTO ---
+                await sendSubscriptionCancelledEmail(psi);
             } else {
                 console.warn(`[ASAAS] FALHA NO ESTORNO: Psicólogo não encontrado. Ref: ${psychologistId}, Sub: ${payment.subscription}`);
             }
         } catch (err) {
             console.error('Erro ao processar estorno no banco:', err);
+        }
+    }
+
+    // --- LÓGICA DE FALHA NO PAGAMENTO (NOVO) ---
+    if (['PAYMENT_OVERDUE', 'PAYMENT_CREDIT_CARD_CAPTURE_REFUSED'].includes(event.event)) {
+        const payment = event.payment;
+        let psychologistId = payment.externalReference;
+        console.log(`[ASAAS] Falha de Pagamento (${event.event}). Ref: ${psychologistId}`);
+
+        try {
+            let psi = null;
+            if (psychologistId) {
+                psi = await db.Psychologist.findByPk(psychologistId);
+            }
+            if (!psi && payment.subscription) {
+                psi = await db.Psychologist.findOne({ where: { stripeSubscriptionId: payment.subscription } });
+            }
+
+            if (psi) {
+                // Envia e-mail de falha
+                // O Asaas geralmente manda invoiceUrl no objeto payment
+                await sendPaymentFailedEmail(psi, payment.invoiceUrl);
+            }
+        } catch (err) {
+            console.error('Erro ao processar falha de pagamento:', err);
         }
     }
 
