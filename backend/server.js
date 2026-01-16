@@ -520,19 +520,36 @@ app.get('/api/fix-reset-admin-password', async (req, res) => {
         const newPassword = 'admin123';
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-        // 1. Atualiza na tabela Admins (Legado)
-        await db.sequelize.query(
-            `UPDATE "Admins" SET senha = :senha WHERE email ILIKE :email`,
-            { replacements: { senha: hashedPassword, email: email } }
-        );
+        // 1. Garante que a tabela existe
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "Admins" (
+                id SERIAL PRIMARY KEY,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                senha VARCHAR(255) NOT NULL,
+                nome VARCHAR(255),
+                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
 
-        // 2. Atualiza na tabela Psychologists (Admin Moderno)
+        // 2. Insere ou Atualiza (UPSERT) para garantir que o usuário exista
+        await db.sequelize.query(`
+            INSERT INTO "Admins" (email, senha, nome, "createdAt", "updatedAt")
+            VALUES (:email, :senha, 'Admin Geral', NOW(), NOW())
+            ON CONFLICT (email) 
+            DO UPDATE SET senha = :senha;
+        `, {
+            replacements: { email: email, senha: hashedPassword }
+        });
+
+        // 3. Atualiza na tabela Psychologists (Admin Moderno) se existir
         if (db.Psychologist) {
             await db.Psychologist.update({ senha: hashedPassword }, { where: { email: email } });
         }
 
-        res.send(`Sucesso! Senha do admin (${email}) resetada para: <strong>${newPassword}</strong>`);
+        res.send(`Sucesso! Admin (${email}) recriado/atualizado com senha: <strong>${newPassword}</strong>. Tente logar agora.`);
     } catch (error) {
+        console.error(error);
         res.status(500).send("Erro ao resetar senha: " + error.message);
     }
 });
