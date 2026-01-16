@@ -131,6 +131,10 @@ exports.createPreference = async (req, res) => {
                 cycle: 'MONTHLY', // Adicionado: Ciclo mensal obrigatório
                 description: `Assinatura Yelo - Plano ${planType}`,
                 externalReference: String(psychologistId)
+                discount: {
+                    value: 50,
+                    type: 'PERCENTAGE'
+                },
             };
             
             console.log(`[ASAAS] Criando assinatura PIX em: ${ASAAS_API_URL}/subscriptions`);
@@ -168,7 +172,8 @@ exports.createPreference = async (req, res) => {
             await psychologist.update({
                 stripeSubscriptionId: subscriptionData.id,
                 plano: planType.toUpperCase(),
-                cancelAtPeriodEnd: false // <--- Reset do cancelamento
+                cancelAtPeriodEnd: false, // <--- Reset do cancelamento
+                subscription_payments_count: 0
             });
 
             return res.json({ 
@@ -193,6 +198,10 @@ exports.createPreference = async (req, res) => {
             cycle: 'MONTHLY', // Adicionado: Ciclo mensal obrigatório
             description: `Assinatura Yelo - Plano ${planType}`,
             externalReference: String(psychologistId),
+            discount: {
+                value: 50,
+                type: 'PERCENTAGE'
+            },
             creditCard: {
                 holderName: creditCard.holderName,
                 number: creditCard.number,
@@ -249,7 +258,8 @@ exports.createPreference = async (req, res) => {
             plano: planType.toUpperCase(),
             stripeSubscriptionId: subscriptionData.id, // Salva o ID do Asaas
             planExpiresAt: validade,
-            cancelAtPeriodEnd: false // <--- Reset do cancelamento
+            cancelAtPeriodEnd: false, // <--- Reset do cancelamento
+            subscription_payments_count: 0
         });
 
         res.json({ success: true, subscriptionId: subscriptionData.id });
@@ -295,6 +305,35 @@ exports.handleWebhook = async (req, res) => {
         try {
             const psi = await db.Psychologist.findByPk(psychologistId);
             if (psi) {
+                // --- LÓGICA DE DESCONTO ---
+                const currentPayments = (psi.subscription_payments_count || 0) + 1;
+
+                // Se for o 3º pagamento, remove o desconto para os próximos.
+                if (currentPayments === 3 && payment.subscription) {
+                    console.log(`[ASAAS] Terceiro pagamento para Psi ${psychologistId}. Removendo desconto da assinatura ${payment.subscription}.`);
+                    try {
+                        // A API do Asaas usa POST para atualizar uma assinatura existente
+                        await fetch(`${ASAAS_API_URL}/subscriptions/${payment.subscription}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                            body: JSON.stringify({
+                                discount: {
+                                    value: 0,
+                                    type: 'FIXED'
+                                }
+                            })
+                        });
+                    } catch (asaasError) {
+                        console.error(`[ASAAS FATAL] Falha ao remover desconto para assinatura ${payment.subscription}:`, asaasError);
+                        await db.SystemLog.create({
+                            level: 'error',
+                            message: `Falha ao remover desconto Asaas para Psi ${psychologistId}, Assinatura ${payment.subscription}.`,
+                            meta: { error: asaasError.message }
+                        });
+                    }
+                }
+                // --- FIM DA LÓGICA DE DESCONTO ---
+
                 const hoje = new Date();
                 const novaValidade = new Date(hoje.setDate(hoje.getDate() + 30));
 
@@ -303,8 +342,9 @@ exports.handleWebhook = async (req, res) => {
                     planExpiresAt: novaValidade, 
                     plano: planType,
                     // Salva o ID da assinatura do Asaas para cancelamentos futuros
-                    stripeSubscriptionId: payment.subscription, // Reutilizando a coluna existente
-                    cancelAtPeriodEnd: false // <--- Reset do cancelamento
+                    stripeSubscriptionId: payment.subscription,
+                    cancelAtPeriodEnd: false, // <--- Reset do cancelamento
+                    subscription_payments_count: currentPayments // Atualiza o contador de pagamentos
                 });
             }
         } catch (err) {
