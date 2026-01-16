@@ -193,7 +193,8 @@ exports.loginPsychologist = async (req, res) => {
             return res.status(401).json({ error: 'Senha incorreta.' });
         }
 
-        if (psychologist.status !== 'active') {
+        // --- FIX: Permite login de ativos E criadores de conteúdo ---
+        if (psychologist.status !== 'active' && psychologist.status !== 'content_creator') {
             return res.status(403).json({ error: 'Esta conta está inativa.' });
         }
 
@@ -989,6 +990,12 @@ exports.getProfileBySlug = async (req, res) => {
     if (!psychologist) {
       console.log(`❌ Perfil não existe no banco.`);
       return res.status(404).json({ error: 'Perfil não encontrado.' });
+    }
+
+    // --- BLOQUEIO DE CRIADORES DE CONTEÚDO ---
+    if (psychologist.status === 'content_creator') {
+        console.log(`🚫 [BLOQUEIO] Perfil de criador de conteúdo oculto.`);
+        return res.status(404).json({ error: 'Perfil não encontrado.' });
     }
 
     // --- LÓGICA DE TRAVAS (COMENTADA PARA VOCÊ CONSEGUIR TRABALHAR) ---

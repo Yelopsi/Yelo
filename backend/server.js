@@ -408,6 +408,21 @@ app.get('/api/fix-add-modalidade-column', async (req, res) => {
     }
 });
 
+// Rota para converter um psicólogo em Criador de Conteúdo (Invisível)
+app.get('/api/fix-make-content-creator', async (req, res) => {
+    try {
+        const email = req.query.email;
+        if (!email) return res.status(400).send("Informe o email na URL: ?email=exemplo@yelo.com");
+
+        const [updated] = await db.Psychologist.update({ status: 'content_creator' }, { where: { email } });
+        
+        if (updated) res.send(`Sucesso! O usuário ${email} agora é um Criador de Conteúdo (Invisível no match/perfil).`);
+        else res.status(404).send("Usuário não encontrado.");
+    } catch (error) {
+        res.status(500).send("Erro: " + error.message);
+    }
+});
+
 // Rota para criar a coluna IS_EXEMPT (VIP) na tabela Psychologists
 app.get('/api/fix-add-is-exempt-column', async (req, res) => {
     try {
