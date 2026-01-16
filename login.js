@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.removeItem('Yelo_token');
     localStorage.removeItem('Yelo_user_type');
     localStorage.removeItem('Yelo_user_name');
+    localStorage.removeItem('Yelo_token_admin');
 
     // --- CORREÇÃO DE LINKS (Remove .html para compatibilidade com rotas do servidor) ---
     // Isso impede que o clique leve para uma página 404 que redireciona para a Home
@@ -108,6 +109,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const finalUserType = type || result.fallbackType;
                     localStorage.setItem('Yelo_user_type', finalUserType);
                     
+                    // FIX: Se for admin, salva o token específico para compatibilidade com o painel
+                    if (finalUserType === 'admin' && token) {
+                        localStorage.setItem('Yelo_token_admin', token);
+                    }
+
                     // CORREÇÃO: Pega o nome se estiver dentro de 'user' OU direto na raiz da resposta
                     const nomeSalvo = (user && user.nome) ? user.nome : result.data.nome;
                     if (nomeSalvo) localStorage.setItem('Yelo_user_name', nomeSalvo);
@@ -131,6 +137,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             window.location.href = decodeURIComponent(redirectParam);
                         } else if (finalUserType === 'psychologist') {
                             window.location.href = '/psi/psi_dashboard.html'; 
+                        } else if (finalUserType === 'admin') {
+                            window.location.href = '/admin/admin.html';
                         } else {
                             window.location.href = '/patient/patient_dashboard';
                         }
