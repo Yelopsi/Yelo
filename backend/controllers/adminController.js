@@ -514,16 +514,16 @@ exports.getAdminData = async (req, res) => {
 exports.updateAdminData = async (req, res) => {
     try {
         const userId = req.user.id;
+        const userType = req.user.type; // 'admin' ou 'psychologist'
         const { nome, email, telefone } = req.body;
 
         if (!nome || !email) {
             return res.status(400).json({ error: 'Nome e email são obrigatórios.' });
         }
 
-        // Tenta encontrar como Psicólogo-Admin primeiro
-        const psychologistAdmin = await db.Psychologist.findByPk(userId);
-
-        if (psychologistAdmin && psychologistAdmin.isAdmin) {
+        // 1. Lógica para Psicólogo-Admin
+        if (userType === 'psychologist') {
+            const psychologistAdmin = await db.Psychologist.findByPk(userId);
             // Lógica para Psicólogo-Admin
             if (email.toLowerCase() !== psychologistAdmin.email.toLowerCase()) {
                 const existingUser = await db.Psychologist.findOne({ where: { email, id: { [Op.ne]: userId } } });
@@ -531,7 +531,9 @@ exports.updateAdminData = async (req, res) => {
             }
             await psychologistAdmin.update({ nome, email, telefone });
             return res.status(200).json({ message: 'Dados atualizados com sucesso!' });
-        } else {
+        } 
+        // 2. Lógica para Admin Legado (Tabela Admins)
+        else {
             // Lógica para Admin da tabela 'Admins'
             const [existing] = await db.sequelize.query(`SELECT id FROM "Admins" WHERE email = :email AND id != :id LIMIT 1`, { replacements: { email, id: userId } });
             if (existing.length > 0) return res.status(409).json({ error: 'Este email já está em uso.' });
@@ -556,22 +558,26 @@ exports.updateAdminPassword = async (req, res) => {
     try {
         const { senha_atual, nova_senha } = req.body;
         const userId = req.user.id;
+        const userType = req.user.type; // Identifica se é 'admin' ou 'psychologist'
+
+        console.log(`[UPDATE PASS] Tentativa de troca para User ID: ${userId}, Tipo: ${userType}`);
 
         if (!senha_atual || !nova_senha) {
             return res.status(400).json({ error: 'Todos os campos de senha são obrigatórios.' });
         }
 
-        // Tenta encontrar como Psicólogo-Admin
-        const psychologistAdmin = await db.Psychologist.findByPk(userId);
-
-        if (psychologistAdmin && psychologistAdmin.isAdmin) {
+        // 1. Se for Psicólogo Admin
+        if (userType === 'psychologist') {
+            const psychologistAdmin = await db.Psychologist.findByPk(userId);
             const isMatch = await bcrypt.compare(senha_atual, psychologistAdmin.senha);
             if (!isMatch) return res.status(401).json({ error: 'A senha atual está incorreta.' });
 
             psychologistAdmin.senha = await bcrypt.hash(nova_senha, 10);
             await psychologistAdmin.save();
             return res.status(200).json({ message: 'Senha alterada com sucesso!' });
-        } else {
+        } 
+        // 2. Se for Admin Legado (Seu caso)
+        else {
             // Lógica para Admin da tabela 'Admins'
             const [rows] = await db.sequelize.query(`SELECT senha FROM "Admins" WHERE id = :id`, { replacements: { id: userId } });
             if (rows.length === 0) return res.status(404).json({ error: 'Usuário não encontrado.' });
@@ -582,6 +588,7 @@ exports.updateAdminPassword = async (req, res) => {
 
             const newHash = await bcrypt.hash(nova_senha, 10);
             await db.sequelize.query(`UPDATE "Admins" SET senha = :senha, "updatedAt" = NOW() WHERE id = :id`, { replacements: { senha: newHash, id: userId } });
+            console.log(`[UPDATE PASS] Sucesso! Senha atualizada na tabela Admins para ID ${userId}`);
             return res.status(200).json({ message: 'Senha alterada com sucesso!' });
         }
     } catch (error) {
@@ -600,13 +607,14 @@ exports.updateAdminPhoto = async (req, res) => {
             return res.status(400).json({ error: 'Nenhum arquivo de imagem foi enviado.' });
         }
         const fotoUrl = `/uploads/profiles/${req.file.filename}`;
+        const userType = req.user.type;
         
-        if (req.psychologist) {
+        if (userType === 'psychologist' && req.psychologist) {
             await req.psychologist.update({ fotoUrl });
             return res.status(200).json({ message: 'Foto atualizada!', fotoUrl });
         }
 
-        if (req.user && (req.user.type === 'admin' || req.user.role === 'admin')) {
+        if (userType === 'admin') {
             await db.sequelize.query(`UPDATE "Admins" SET "fotoUrl" = :fotoUrl, "updatedAt" = NOW() WHERE id = :id`, {
                 replacements: { fotoUrl, id: req.user.id }
             });
