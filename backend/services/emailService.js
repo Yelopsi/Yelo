@@ -42,31 +42,42 @@ exports.sendPasswordResetEmail = async (user, resetLink) => {
         to: user.email,
         subject: 'Redefinição de Senha - Yelo',
         html: `
-            <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f9f9f9; padding: 40px 0;">
-                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
-                    <div style="background-color: #1B4332; padding: 30px; text-align: center;">
-                        <h1 style="color: #ffffff; margin: 0; font-family: 'Georgia', serif; font-weight: normal; letter-spacing: 1px;">Yelo</h1>
+            <!DOCTYPE html>
+            <html lang="pt-BR">
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+                </style>
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #fdfaf6; font-family: 'Inter', Helvetica, Arial, sans-serif; color: #555555;">
+            <div style="background-color: #fdfaf6; padding: 40px 0;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #e9ecef;">
+                    <div style="background-color: #1B4332; padding: 40px 30px; text-align: center;">
+                        <h1 style="color: #ffffff; margin: 0; font-family: 'New Kansas', Georgia, 'Times New Roman', serif; font-weight: 500; font-size: 32px; letter-spacing: 1px;">Yelo</h1>
                     </div>
-                    <div style="padding: 40px 30px; color: #333333; line-height: 1.6;">
-                        <h2 style="color: #1B4332; margin-top: 0;">Olá, ${user.nome.split(' ')[0]}!</h2>
-                        <p style="font-size: 16px;">Recebemos uma solicitação para redefinir a senha da sua conta na Yelo.</p>
-                        <p style="font-size: 16px;">Para criar uma nova senha e recuperar seu acesso, clique no botão abaixo:</p>
+                    <div style="padding: 40px 30px; line-height: 1.6;">
+                        <h2 style="color: #1B4332; margin-top: 0; font-family: 'New Kansas', Georgia, 'Times New Roman', serif; font-size: 24px; font-weight: 600; margin-bottom: 20px;">Olá, ${user.nome.split(' ')[0]}!</h2>
+                        <p style="font-size: 16px; margin-bottom: 20px;">Recebemos uma solicitação para redefinir a senha da sua conta na Yelo.</p>
+                        <p style="font-size: 16px; margin-bottom: 30px;">Para criar uma nova senha e recuperar seu acesso, clique no botão abaixo:</p>
                         
                         <div style="text-align: center; margin: 35px 0;">
-                            <a href="${resetLink}" style="background-color: #1B4332; color: #ffffff; padding: 14px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 6px rgba(27, 67, 50, 0.2);">Redefinir Minha Senha</a>
+                            <a href="${resetLink}" style="background-color: #1B4332; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 15px rgba(27, 67, 50, 0.2); font-family: 'Inter', Helvetica, Arial, sans-serif;">Redefinir Minha Senha</a>
                         </div>
                         
-                        <p style="font-size: 14px; color: #666;">Ou copie e cole o link abaixo no seu navegador:</p>
-                        <p style="font-size: 12px; color: #888; word-break: break-all; background: #f5f5f5; padding: 10px; border-radius: 8px;">${resetLink}</p>
+                        <p style="font-size: 14px; color: #666; margin-top: 30px;">Ou copie e cole o link abaixo no seu navegador:</p>
+                        <p style="font-size: 12px; color: #888; word-break: break-all; background: #f8f9fa; padding: 15px; border-radius: 8px; font-family: monospace; border: 1px solid #eee;">${resetLink}</p>
                         
                         <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;">
                         <p style="font-size: 12px; color: #999; text-align: center;">Se você não solicitou essa alteração, ignore este e-mail. Sua conta permanece segura.</p>
                     </div>
-                    <div style="background-color: #f0f0f0; padding: 20px; text-align: center; font-size: 12px; color: #888;">
+                    <div style="background-color: #f8f9fa; padding: 20px; text-align: center; font-size: 12px; color: #888; border-top: 1px solid #eee;">
                         <p style="margin: 0;">&copy; ${new Date().getFullYear()} Yelo. Todos os direitos reservados.</p>
                     </div>
                 </div>
             </div>
+            </body>
+            </html>
         `
     };
 
