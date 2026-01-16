@@ -361,20 +361,35 @@ exports.handleWebhook = async (req, res) => {
     // Captura eventos de reembolso ou chargeback para revogar o acesso
     if (['PAYMENT_REFUNDED', 'PAYMENT_REVERSED', 'PAYMENT_CHARGEBACK_REQUESTED'].includes(event.event)) {
         const payment = event.payment;
-        const psychologistId = payment.externalReference;
+        let psychologistId = payment.externalReference;
 
-        console.log(`[ASAAS] Estorno/Cancelamento detectado (${event.event}): Psi ${psychologistId}`);
+        console.log(`[ASAAS] Estorno/Cancelamento detectado (${event.event}). Ref: ${psychologistId}`);
 
         try {
-            const psi = await db.Psychologist.findByPk(psychologistId);
+            let psi = null;
+
+            // 1. Tenta buscar pelo ID direto (externalReference)
+            if (psychologistId) {
+                psi = await db.Psychologist.findByPk(psychologistId);
+            }
+
+            // 2. Fallback: Se não achou (ou não veio ref), tenta pelo ID da assinatura
+            if (!psi && payment.subscription) {
+                console.log(`[ASAAS] Buscando psicólogo pela assinatura: ${payment.subscription}`);
+                psi = await db.Psychologist.findOne({ where: { stripeSubscriptionId: payment.subscription } });
+            }
+
             if (psi) {
                 // Revoga o acesso imediatamente
                 await psi.update({
-                    status: 'pending', // Volta para pendente
+                    status: 'inactive', // Define como inativo para bloquear acesso
                     plano: null,       // Remove o plano
                     planExpiresAt: new Date(0), // Expira imediatamente (define data no passado)
                     cancelAtPeriodEnd: false
                 });
+                console.log(`[ASAAS] Acesso revogado para Psi ${psi.id} devido a estorno.`);
+            } else {
+                console.warn(`[ASAAS] Psicólogo não encontrado para estorno. Dados:`, payment);
             }
         } catch (err) {
             console.error('Erro ao processar estorno no banco:', err);
