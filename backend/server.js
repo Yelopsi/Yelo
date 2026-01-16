@@ -931,9 +931,14 @@ app.get('/instalar-admin', async (req, res) => {
 // 2. ROTA DE LOGIN DO ADMIN (VERIFICA NA TABELA 'Admins')
 app.post('/api/login-admin-check', async (req, res) => {
     try {
+        console.log("--- [LOGIN DEBUG] Iniciando login admin check ---");
+        console.log("[LOGIN DEBUG] Body recebido:", JSON.stringify(req.body));
+
         const email = req.body.email;
         // --- FIX: Aceita variações do nome do campo de senha ---
         const senha = req.body.senha || req.body.password || req.body['senha-login'];
+
+        console.log(`[LOGIN DEBUG] Email: ${email}, Senha presente: ${!!senha ? 'SIM' : 'NÃO'}`);
 
         if (!senha) {
             return res.status(400).json({ success: false, message: 'Senha não fornecida.' });
@@ -949,11 +954,15 @@ app.post('/api/login-admin-check', async (req, res) => {
 
         // B) Se não achou ninguém
         if (!adminUser) {
+            console.log("[LOGIN DEBUG] Usuário admin não encontrado no banco.");
             return res.status(401).json({ success: false }); 
         }
 
+        console.log(`[LOGIN DEBUG] Usuário encontrado: ID ${adminUser.id}. Hash senha: ${adminUser.senha ? 'Presente' : 'Ausente'}`);
+
         // C) Verifica a senha
         const senhaValida = await bcrypt.compare(senha, adminUser.senha);
+        console.log(`[LOGIN DEBUG] Senha válida? ${senhaValida}`);
 
         if (!senhaValida) {
             return res.status(401).json({ success: false, message: 'Senha de Admin incorreta' });
