@@ -9,15 +9,21 @@ const db = require('../models');
 const protect = async (req, res, next) => {
     let token;
 
+    // 1. Tenta pegar do Header (Padrão Bearer)
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        token = req.headers.authorization.split(' ')[1];
+    } 
+    // 2. Tenta pegar do Cookie (Fallback de segurança)
+    else if (req.cookies && req.cookies.token) {
+        token = req.cookies.token;
+    }
+
+    if (token) {
         try {
-            // 1. Extrai o token do cabeçalho
-            token = req.headers.authorization.split(' ')[1];
+            // 3. Verifica o token
+            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
 
-            // 2. Verifica o token
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-            // 3. Lógica Unificada para encontrar o usuário
+            // 4. Lógica Unificada para encontrar o usuário
             const userType = decoded.type || decoded.role; // Aceita 'type' (psi/paciente) ou 'role' (admin)
             let user = null;
 
@@ -35,7 +41,7 @@ const protect = async (req, res, next) => {
                 if (user) req.psychologist = { id: user.id, nome: user.nome, email: user.email, isAdmin: true };
             }
 
-            // 4. Validação Final
+            // 5. Validação Final
             if (!user) {
                 return res.status(401).json({ error: 'Usuário não encontrado.' });
             }
@@ -50,9 +56,7 @@ const protect = async (req, res, next) => {
             console.error('Erro de autenticação:', error.message);
             res.status(401).json({ error: 'Não autorizado, token inválido.' });
         }
-    }
-
-    if (!token) {
+    } else {
         res.status(401).json({ error: 'Não autorizado, nenhum token fornecido.' });
     }
 };
