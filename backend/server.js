@@ -513,6 +513,30 @@ app.get('/api/fix-admin-table', async (req, res) => {
     }
 });
 
+// Rota para resetar a senha do admin
+app.get('/api/fix-reset-admin-password', async (req, res) => {
+    try {
+        const email = 'admin@yelo.com';
+        const newPassword = 'admin123';
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // 1. Atualiza na tabela Admins (Legado)
+        await db.sequelize.query(
+            `UPDATE "Admins" SET senha = :senha WHERE email ILIKE :email`,
+            { replacements: { senha: hashedPassword, email: email } }
+        );
+
+        // 2. Atualiza na tabela Psychologists (Admin Moderno)
+        if (db.Psychologist) {
+            await db.Psychologist.update({ senha: hashedPassword }, { where: { email: email } });
+        }
+
+        res.send(`Sucesso! Senha do admin (${email}) resetada para: <strong>${newPassword}</strong>`);
+    } catch (error) {
+        res.status(500).send("Erro ao resetar senha: " + error.message);
+    }
+});
+
 // Rota para criar a coluna CURTIDAS na tabela posts
 app.get('/api/fix-add-likes-column', async (req, res) => {
     try {
