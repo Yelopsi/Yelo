@@ -33,6 +33,10 @@ transporter.verify(function (error, success) {
     }
 });
 
+// --- FIX GLOBAL: Define o remetente seguro ---
+// Usa EMAIL_FROM se existir, senão usa o usuário autenticado (SMTP_USER), senão um padrão.
+const getSender = () => process.env.EMAIL_FROM || process.env.SMTP_USER || 'nao-responda@yelopsi.com.br';
+
 /**
  * Envia e-mail de redefinição de senha
  */
@@ -41,7 +45,7 @@ exports.sendPasswordResetEmail = async (user, resetLink) => {
     const logoUrl = `${baseUrl}/assets/logos/logo-branca.png`;
 
     const mailOptions = {
-        from: process.env.EMAIL_FROM,
+        from: getSender(),
         to: user.email,
         subject: 'Redefinição de Senha - Yelo',
         html: `
@@ -105,7 +109,7 @@ exports.sendInvitationEmail = async (candidate, invitationLink) => {
     const logoUrl = `${baseUrl}/assets/logos/logo-branca.png`;
 
     const mailOptions = {
-        from: process.env.EMAIL_FROM,
+        from: getSender(),
         to: candidate.email,
         subject: 'Convite Exclusivo - Yelo',
         html: `
