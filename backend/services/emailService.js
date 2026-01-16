@@ -64,7 +64,7 @@ exports.sendPasswordResetEmail = async (user, resetLink) => {
                     </div>
 
                     <div style="padding: 40px 30px; line-height: 1.6;">
-                        <h2 style="color: #1B4332; margin-top: 0; font-family: 'New Kansas', Georgia, 'Times New Roman', serif; font-size: 24px; font-weight: 600; margin-bottom: 20px;">Olá, ${user.nome.split(' ')[0]}!</h2>
+                        <h2 style="color: #1B4332; margin-top: 0; font-family: 'New Kansas', 'Georgia', 'Times New Roman', serif; font-size: 24px; font-weight: 600; margin-bottom: 20px;">Olá, ${user.nome.split(' ')[0]}!</h2>
                         <p style="font-size: 16px; margin-bottom: 20px;">Recebemos uma solicitação para redefinir a senha da sua conta na Yelo.</p>
                         <p style="font-size: 16px; margin-bottom: 30px;">Para criar uma nova senha e recuperar seu acesso, clique no botão abaixo:</p>
                         
@@ -118,7 +118,7 @@ exports.sendInvitationEmail = async (candidate, invitationLink) => {
                         <img src="${logoUrl}" alt="Yelo" width="120" style="width: 120px; height: auto; display: block; margin: 0 auto; border: 0;">
                     </div>
                     <div style="padding: 40px 30px; line-height: 1.6;">
-                        <h2 style="color: #1B4332; margin-top: 0; font-family: 'New Kansas', Georgia, serif; font-size: 24px; font-weight: 600;">Parabéns, ${candidate.nome}!</h2>
+                        <h2 style="color: #1B4332; margin-top: 0; font-family: 'New Kansas', 'Georgia', 'Times New Roman', serif; font-size: 24px; font-weight: 600;">Parabéns, ${candidate.nome}!</h2>
                         <p style="font-size: 16px; margin-bottom: 20px;">Sua vaga na Yelo foi liberada. Estamos muito felizes em ter você conosco.</p>
                         <p style="font-size: 16px; margin-bottom: 30px;">Clique abaixo para completar seu cadastro e ativar seu perfil:</p>
                         <div style="text-align: center; margin: 35px 0;">
