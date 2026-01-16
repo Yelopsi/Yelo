@@ -129,16 +129,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Redireciona
                     setTimeout(() => {
-                        // Prioridade para o redirecionamento que vem do servidor (caso do Admin)
-                        if (redirect) {
+                        // FIX: Prioridade absoluta para Admin para evitar redirecionamentos quebrados (/admin -> /admin/login.html)
+                        if (finalUserType === 'admin') {
+                            window.location.href = '/admin';
+                        } 
+                        // Prioridade para o redirecionamento que vem do servidor (para outros usuários)
+                        else if (redirect) {
                             window.location.href = redirect;
                         } else if (redirectParam) {
                             // Se tiver um redirect na URL (ex: veio do perfil), volta pra lá
                             window.location.href = decodeURIComponent(redirectParam);
                         } else if (finalUserType === 'psychologist') {
                             window.location.href = '/psi/psi_dashboard.html'; 
-                        } else if (finalUserType === 'admin') {
-                            window.location.href = '/admin/admin.html';
                         } else {
                             window.location.href = '/patient/patient_dashboard';
                         }
