@@ -119,7 +119,7 @@ exports.findMatches = async (preferences) => {
     // Otimização: Em produção, faríamos filtros de banco SQL aqui. 
     // Como é MVP e base pequena (<1000), trazemos tudo e filtramos em memória pela complexidade do algoritmo.
     const allPsychologists = await db.Psychologist.findAll({
-        where: { 
+        where: {
             status: 'active',
             // fotoUrl: { [Op.ne]: null } // Opcional: só mostrar quem tem foto
         },
