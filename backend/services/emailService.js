@@ -214,7 +214,7 @@ exports.sendSubscriptionCancelledEmail = async (user) => {
     const logoUrl = `${baseUrl}/assets/logos/logo-branca.png`;
 
     const mailOptions = {
-        from: process.env.EMAIL_FROM,
+        from: getSender(),
         to: user.email,
         subject: 'Atualização sobre sua Assinatura - Yelo',
         html: `
@@ -271,7 +271,7 @@ exports.sendPaymentFailedEmail = async (user, invoiceUrl) => {
     const logoUrl = `${baseUrl}/assets/logos/logo-branca.png`;
 
     const mailOptions = {
-        from: process.env.EMAIL_FROM,
+        from: getSender(),
         to: user.email,
         subject: 'Falha no Pagamento - Yelo',
         html: `
