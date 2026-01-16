@@ -502,6 +502,17 @@ app.get('/api/fix-patient-audit', async (req, res) => {
     }
 });
 
+// Rota para corrigir tabela de Admins (Adicionar colunas faltantes)
+app.get('/api/fix-admin-table', async (req, res) => {
+    try {
+        await db.sequelize.query('ALTER TABLE "Admins" ADD COLUMN IF NOT EXISTS "telefone" VARCHAR(255);');
+        await db.sequelize.query('ALTER TABLE "Admins" ADD COLUMN IF NOT EXISTS "fotoUrl" VARCHAR(255);');
+        res.send("Sucesso! Colunas 'telefone' e 'fotoUrl' adicionadas à tabela Admins.");
+    } catch (error) {
+        res.status(500).send("Erro ao alterar tabela: " + error.message);
+    }
+});
+
 // Rota para criar a coluna CURTIDAS na tabela posts
 app.get('/api/fix-add-likes-column', async (req, res) => {
     try {
