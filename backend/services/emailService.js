@@ -2,6 +2,12 @@
 
 const nodemailer = require('nodemailer');
 
+// --- DIAGNÓSTICO DE CONFIGURAÇÃO ---
+if (!process.env.SMTP_HOST) {
+    console.error("❌ ERRO CRÍTICO: SMTP_HOST não definido. O sistema tentará conectar em localhost (127.0.0.1) e falhará no Render.");
+    console.error("👉 Adicione as variáveis de ambiente (SMTP_HOST, SMTP_USER, SMTP_PASS) no painel do Render.");
+}
+
 // Configuração do Transporter (O carteiro)
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
@@ -10,6 +16,10 @@ const transporter = nodemailer.createTransport({
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
+    },
+    // --- FIX: Melhora compatibilidade com provedores estritos (GoDaddy/Office365) ---
+    tls: {
+        rejectUnauthorized: false
     }
 });
 
