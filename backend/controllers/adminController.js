@@ -41,8 +41,17 @@ exports.loginAdmin = async (req, res) => {
                 meta: { adminId: adminUser.id, isLegacy }
             });
 
+            const token = generateAdminToken(adminUser.id);
+
+            // --- FIX: Define Cookie para evitar logout ---
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 8 * 60 * 60 * 1000 // 8 horas
+            });
+
             res.status(200).json({ 
-                token: generateAdminToken(adminUser.id),
+                token: token,
                 user: {
                     id: adminUser.id,
                     nome: adminUser.nome,

@@ -925,6 +925,13 @@ app.post('/api/login-admin-check', async (req, res) => {
             { expiresIn: '24h' }
         );
 
+        // --- FIX: Salva o token no cookie para persistência (Evita logout involuntário) ---
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 24 * 60 * 60 * 1000 // 24 horas
+        });
+
         // E) Sucesso! Envia o token junto
         return res.json({ 
             success: true, 
