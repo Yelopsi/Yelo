@@ -664,6 +664,24 @@ app.get('/api/fix-reset-gamification', async (req, res) => {
     }
 });
 
+// --- ROTA DE TESTE DE EMAIL (NOVO) ---
+app.get('/api/fix-test-email', async (req, res) => {
+    try {
+        const emailService = require('./services/emailService');
+        const emailDestino = req.query.email || 'admin@yelo.com'; // Use ?email=seu@email.com para testar
+        
+        await emailService.sendPasswordResetEmail(
+            { email: emailDestino, nome: 'Teste Admin' }, 
+            'https://www.yelopsi.com.br/teste-link'
+        );
+        
+        res.send(`✅ E-mail de teste enviado para: ${emailDestino}. Verifique a caixa de entrada e SPAM.`);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("❌ Erro ao enviar e-mail: " + error.message);
+    }
+});
+
 // =============================================================
 // ROTAS DA APLICAÇÃO
 // =============================================================

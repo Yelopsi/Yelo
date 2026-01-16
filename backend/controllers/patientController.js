@@ -101,7 +101,9 @@ exports.requestPasswordReset = async (req, res) => {
 
         await patient.save();
 
-        const resetLink = `http://127.0.0.1:5500/redefinir_senha.html?token=${resetToken}&type=patient`;
+        // --- FIX: URL Dinâmica para Produção ---
+        const frontendUrl = process.env.FRONTEND_URL || req.headers.origin || 'https://www.yelopsi.com.br';
+        const resetLink = `${frontendUrl}/redefinir_senha?token=${resetToken}&type=patient`;
         await sendPasswordResetEmail(patient, resetLink);
 
         res.status(200).json({ message: 'Se um usuário com este e-mail existir, um link de redefinição foi enviado.' });

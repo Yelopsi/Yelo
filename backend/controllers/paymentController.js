@@ -359,11 +359,13 @@ exports.handleWebhook = async (req, res) => {
     
     // --- LÓGICA DE ESTORNO / CANCELAMENTO IMEDIATO ---
     // Captura eventos de reembolso ou chargeback para revogar o acesso
-    if (['PAYMENT_REFUNDED', 'PAYMENT_REVERSED', 'PAYMENT_CHARGEBACK_REQUESTED'].includes(event.event)) {
+    // ADICIONADO: Verifica também PAYMENT_UPDATED com status REFUNDED
+    if (['PAYMENT_REFUNDED', 'PAYMENT_REVERSED', 'PAYMENT_CHARGEBACK_REQUESTED'].includes(event.event) || 
+       (event.event === 'PAYMENT_UPDATED' && event.payment && event.payment.status === 'REFUNDED')) {
         const payment = event.payment;
         let psychologistId = payment.externalReference;
 
-        console.log(`[ASAAS] Estorno/Cancelamento detectado (${event.event}). Ref: ${psychologistId}`);
+        console.log(`[ASAAS] Estorno detectado! Evento: ${event.event}, Status: ${payment.status}, Ref: ${psychologistId}, Sub: ${payment.subscription}`);
 
         try {
             let psi = null;
@@ -380,7 +382,7 @@ exports.handleWebhook = async (req, res) => {
             }
 
             if (psi) {
-                // Revoga o acesso imediatamente
+                // Revoga o acesso imediatamente e força status inactive
                 await psi.update({
                     status: 'inactive', // Define como inativo para bloquear acesso
                     plano: null,       // Remove o plano
@@ -389,7 +391,7 @@ exports.handleWebhook = async (req, res) => {
                 });
                 console.log(`[ASAAS] Acesso revogado para Psi ${psi.id} devido a estorno.`);
             } else {
-                console.warn(`[ASAAS] Psicólogo não encontrado para estorno. Dados:`, payment);
+                console.warn(`[ASAAS] FALHA NO ESTORNO: Psicólogo não encontrado. Ref: ${psychologistId}, Sub: ${payment.subscription}`);
             }
         } catch (err) {
             console.error('Erro ao processar estorno no banco:', err);
