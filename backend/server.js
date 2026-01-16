@@ -1249,6 +1249,7 @@ const startServer = async () => {
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "modalidade" JSONB DEFAULT '[]';`);
         
         // --- FIX: GARANTIR COLUNAS DA TABELA PATIENTS (EVITA ERRO NO LOGIN) ---
+        console.log('🔧 [DB FIX] Aplicando correção na tabela Patients (ip_registro, termos)...');
         await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "ip_registro" VARCHAR(45);');
         await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "termos_aceitos" BOOLEAN DEFAULT FALSE;');
         await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "marketing_aceito" BOOLEAN DEFAULT FALSE;');
