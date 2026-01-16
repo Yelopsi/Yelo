@@ -1,5 +1,6 @@
 // backend/controllers/paymentController.js
 const db = require('../models');
+const { sendPaymentConfirmationEmail } = require('../services/emailService');
 
 // Configurações do Asaas
 // Limpeza robusta da URL (remove espaços e barras finais)
@@ -99,7 +100,8 @@ exports.createPreference = async (req, res) => {
                     name: psychologist.nome,
                     email: psychologist.email,
                     cpfCnpj: creditCard.holderCpf || psychologist.cpf || psychologist.cnpj,
-                    mobilePhone: creditCard.holderPhone.replace(/\D/g, '') // Asaas exige telefone no cadastro
+                    mobilePhone: creditCard.holderPhone.replace(/\D/g, ''), // Asaas exige telefone no cadastro
+                    notificationDisabled: true // <--- DESATIVA E-MAILS DO ASAAS
                 })
             }).then(r => r.json());
 
@@ -346,6 +348,9 @@ exports.handleWebhook = async (req, res) => {
                     cancelAtPeriodEnd: false, // <--- Reset do cancelamento
                     subscription_payments_count: currentPayments // Atualiza o contador de pagamentos
                 });
+
+                // --- ENVIA E-MAIL PERSONALIZADO YELO ---
+                await sendPaymentConfirmationEmail(psi, planType, payment.value);
             }
         } catch (err) {
             console.error('Erro ao atualizar banco:', err);

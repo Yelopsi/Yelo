@@ -669,13 +669,24 @@ app.get('/api/fix-test-email', async (req, res) => {
     try {
         const emailService = require('./services/emailService');
         const emailDestino = req.query.email || 'admin@yelo.com'; // Use ?email=seu@email.com para testar
+        const type = req.query.type; // 'payment' ou vazio (padrão reset)
         
-        await emailService.sendPasswordResetEmail(
-            { email: emailDestino, nome: 'Teste Admin' }, 
-            'https://www.yelopsi.com.br/teste-link'
-        );
-        
-        res.send(`✅ E-mail de teste enviado para: ${emailDestino}. Verifique a caixa de entrada e SPAM.`);
+        if (type === 'payment') {
+            // Testa o e-mail de Pagamento Confirmado
+            await emailService.sendPaymentConfirmationEmail(
+                { email: emailDestino, nome: 'Usuário Teste' },
+                'CLINICAL', // Plano simulado
+                159.90      // Valor simulado
+            );
+            res.send(`✅ E-mail de PAGAMENTO enviado para: ${emailDestino}. Verifique a caixa de entrada.`);
+        } else {
+            // Testa o e-mail de Recuperação de Senha (Padrão)
+            await emailService.sendPasswordResetEmail(
+                { email: emailDestino, nome: 'Teste Admin' }, 
+                'https://www.yelopsi.com.br/teste-link'
+            );
+            res.send(`✅ E-mail de RECUPERAÇÃO enviado para: ${emailDestino}. <br>Dica: Adicione <code>&type=payment</code> na URL para testar o de pagamento.`);
+        }
     } catch (error) {
         console.error(error);
         res.status(500).send("❌ Erro ao enviar e-mail: " + error.message);
