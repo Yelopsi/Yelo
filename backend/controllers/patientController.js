@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const https = require('https'); // Módulo nativo para verificar token do Google
-const { sendPasswordResetEmail } = require('../services/emailService');
+const { sendPasswordResetEmail, sendWelcomeEmail } = require('../services/emailService');
 
 // ----------------------------------------------------------------------
 // Função Auxiliar: Gera o Token JWT para Paciente
@@ -63,6 +63,9 @@ exports.registerPatient = async (req, res) => {
                 consents: { terms: !!termos, marketing: !!marketing }
             }
         });
+
+        // [EMAIL] Envia boas-vindas
+        await sendWelcomeEmail(newPatient, 'patient');
 
         res.status(201).json({
             id: newPatient.id,
@@ -235,6 +238,9 @@ exports.googleLogin = async (req, res) => {
                 message: `Novo Paciente via Google: ${email}`,
                 meta: { patientId: patient.id, googleId }
             });
+
+            // [EMAIL] Envia boas-vindas (apenas se for novo usuário)
+            await sendWelcomeEmail(patient, 'patient');
         }
 
         // 4. Retorna o token da Yelo (JWT)

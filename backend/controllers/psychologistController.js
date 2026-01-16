@@ -3,7 +3,7 @@ const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const { sendPasswordResetEmail } = require('../services/emailService');
+const { sendPasswordResetEmail, sendWelcomeEmail } = require('../services/emailService');
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs').promises;
@@ -107,6 +107,9 @@ exports.registerPsychologist = async (req, res) => {
 
         // --- 7. Token ---
         const token = generateToken(newPsychologist.id);
+
+        // --- 8. E-mail de Boas-vindas ---
+        await sendWelcomeEmail(newPsychologist, 'psychologist');
 
         res.status(201).json({
             message: 'Cadastro realizado com sucesso!',
