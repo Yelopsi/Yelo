@@ -690,6 +690,11 @@ app.get('/api/fix-test-email', async (req, res) => {
                 'https://www.yelopsi.com.br/psi/psi_assinatura.html'
             );
             res.send(`✅ E-mail de FALHA enviado para: ${emailDestino}.`);
+        } else if (type === 'welcome') {
+             await emailService.sendWelcomeEmail(
+                { email: emailDestino, nome: 'Usuário Teste' }, 'psychologist'
+            );
+            res.send(`✅ E-mail de BOAS-VINDAS enviado para: ${emailDestino}.`);
         } else {
             // Testa o e-mail de Recuperação de Senha (Padrão)
             await emailService.sendPasswordResetEmail(

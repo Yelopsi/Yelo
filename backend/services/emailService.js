@@ -321,6 +321,65 @@ exports.sendPaymentFailedEmail = async (user, invoiceUrl) => {
 };
 
 /**
+ * Envia e-mail de Boas-vindas (Cadastro)
+ */
+exports.sendWelcomeEmail = async (user, type) => {
+    const baseUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
+    const logoUrl = `${baseUrl}/assets/logos/logo-branca.png`;
+    const dashboardLink = type === 'psychologist' ? `${baseUrl}/psi/psi_dashboard.html` : `${baseUrl}/patient/patient_dashboard`;
+    const welcomeText = type === 'psychologist' 
+        ? 'Estamos muito felizes em ter você como parceiro na Yelo. Complete seu perfil para começar a receber pacientes.'
+        : 'Seja bem-vindo(a) à Yelo! Estamos aqui para te ajudar a encontrar o profissional ideal para sua jornada.';
+
+    const mailOptions = {
+        from: getSender(),
+        to: user.email,
+        subject: 'Bem-vindo(a) à Yelo!',
+        html: `
+            <!DOCTYPE html>
+            <html lang="pt-BR">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+                    body, td, input, textarea, select { font-family: 'Inter', Helvetica, Arial, sans-serif; }
+                </style>
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #fdfaf6; color: #555555;">
+            <div style="background-color: #fdfaf6; padding: 40px 0; width: 100%;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #e9ecef;">
+                    <div style="background-color: #1B4332; padding: 40px 30px; text-align: center;">
+                        <img src="${logoUrl}" alt="Yelo" width="120" style="width: 120px; height: auto; display: block; margin: 0 auto; border: 0;">
+                    </div>
+                    <div style="padding: 40px 30px; line-height: 1.6;">
+                        <h2 style="color: #1B4332; margin-top: 0; font-family: 'New Kansas', 'Georgia', 'Times New Roman', serif; font-size: 24px; font-weight: 600; margin-bottom: 20px;">Olá, ${user.nome.split(' ')[0]}!</h2>
+                        <p style="font-size: 16px; margin-bottom: 30px;">${welcomeText}</p>
+                        
+                        <div style="text-align: center; margin: 35px 0;">
+                            <a href="${dashboardLink}" style="background-color: #FFEE8C; color: #1B4332; padding: 16px 32px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 15px rgba(255, 238, 140, 0.4);">Acessar Minha Conta</a>
+                        </div>
+                        
+                        <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;">
+                        <p style="font-size: 12px; color: #999; text-align: center;">Se tiver dúvidas, nossa equipe está à disposição.</p>
+                    </div>
+                </div>
+            </div>
+            </body>
+            </html>
+        `
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`📧 E-mail de boas-vindas enviado para: ${user.email}`);
+    } catch (error) {
+        console.error('Erro ao enviar e-mail de boas-vindas:', error);
+        // Não lançamos erro aqui para não bloquear o cadastro se o e-mail falhar
+    }
+};
+
+/**
  * Envia e-mail de Assinatura Cancelada / Estorno
  */
 exports.sendSubscriptionCancelledEmail = async (user) => {
