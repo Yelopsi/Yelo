@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') 
         ? window.API_BASE_URL 
-        : 'http://localhost:3001';
+        : window.location.origin;
 
     const form = document.getElementById('form-esqueci-senha');
     const emailInput = document.getElementById('email-recuperacao');

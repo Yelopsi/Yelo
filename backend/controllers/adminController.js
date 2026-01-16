@@ -560,8 +560,6 @@ exports.updateAdminPassword = async (req, res) => {
         const userId = req.user.id;
         const userType = req.user.type; // Identifica se é 'admin' ou 'psychologist'
 
-        console.log(`[UPDATE PASS] Tentativa de troca para User ID: ${userId}, Tipo: ${userType}`);
-
         if (!senha_atual || !nova_senha) {
             return res.status(400).json({ error: 'Todos os campos de senha são obrigatórios.' });
         }
@@ -588,7 +586,6 @@ exports.updateAdminPassword = async (req, res) => {
 
             const newHash = await bcrypt.hash(nova_senha, 10);
             await db.sequelize.query(`UPDATE "Admins" SET senha = :senha, "updatedAt" = NOW() WHERE id = :id`, { replacements: { senha: newHash, id: userId } });
-            console.log(`[UPDATE PASS] Sucesso! Senha atualizada na tabela Admins para ID ${userId}`);
             return res.status(200).json({ message: 'Senha alterada com sucesso!' });
         }
     } catch (error) {

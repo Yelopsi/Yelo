@@ -513,7 +513,8 @@ app.get('/api/fix-admin-table', async (req, res) => {
     }
 });
 
-// Rota para resetar a senha do admin
+// 🚨 ROTA DE EMERGÊNCIA (COMENTADA PARA SEGURANÇA) 🚨
+/*
 app.get('/api/fix-reset-admin-password', async (req, res) => {
     try {
         const email = 'admin@yelo.com';
@@ -553,6 +554,7 @@ app.get('/api/fix-reset-admin-password', async (req, res) => {
         res.status(500).send("Erro ao resetar senha: " + error.message);
     }
 });
+*/
 
 // Rota para criar a coluna CURTIDAS na tabela posts
 app.get('/api/fix-add-likes-column', async (req, res) => {
@@ -948,14 +950,9 @@ app.get('/instalar-admin', async (req, res) => {
 // 2. ROTA DE LOGIN DO ADMIN (VERIFICA NA TABELA 'Admins')
 app.post('/api/login-admin-check', async (req, res) => {
     try {
-        console.log("--- [LOGIN DEBUG] Iniciando login admin check ---");
-        console.log("[LOGIN DEBUG] Body recebido:", JSON.stringify(req.body));
-
         const email = req.body.email;
         // --- FIX: Aceita variações do nome do campo de senha ---
         const senha = req.body.senha || req.body.password || req.body['senha-login'];
-
-        console.log(`[LOGIN DEBUG] Email: ${email}, Senha presente: ${!!senha ? 'SIM' : 'NÃO'}`);
 
         if (!senha) {
             return res.status(400).json({ success: false, message: 'Senha não fornecida.' });
@@ -971,15 +968,11 @@ app.post('/api/login-admin-check', async (req, res) => {
 
         // B) Se não achou ninguém
         if (!adminUser) {
-            console.log("[LOGIN DEBUG] Usuário admin não encontrado no banco.");
             return res.status(401).json({ success: false }); 
         }
 
-        console.log(`[LOGIN DEBUG] Usuário encontrado: ID ${adminUser.id}. Hash senha: ${adminUser.senha ? 'Presente' : 'Ausente'}`);
-
         // C) Verifica a senha
         const senhaValida = await bcrypt.compare(senha, adminUser.senha);
-        console.log(`[LOGIN DEBUG] Senha válida? ${senhaValida}`);
 
         if (!senhaValida) {
             return res.status(401).json({ success: false, message: 'Senha de Admin incorreta' });
@@ -1305,6 +1298,7 @@ const startServer = async () => {
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "planExpiresAt" TIMESTAMP WITH TIME ZONE;`);
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "stripeSubscriptionId" VARCHAR(255);`);
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cancelAtPeriodEnd" BOOLEAN DEFAULT FALSE;`);
+        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "subscription_payments_count" INTEGER DEFAULT 0;`);
         // -----------------------------------------------------
 
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "authority_level" VARCHAR(255) DEFAULT 'nivel_iniciante';`);
