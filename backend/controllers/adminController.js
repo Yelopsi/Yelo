@@ -486,7 +486,7 @@ exports.getAdminData = async (req, res) => {
         } else {
             // Fallback para tabela Admins
             const [results] = await db.sequelize.query(
-                `SELECT id, nome, email, telefone, "fotoUrl" FROM "Admins" WHERE id = :id`,
+                `SELECT * FROM "Admins" WHERE id = :id`,
                 { replacements: { id: userId } }
             );
             if (results.length > 0) {

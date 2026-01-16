@@ -120,7 +120,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: headers
             });
 
-            if (!response.ok) throw new Error('Sessão inválida ou expirada');
+            if (response.status === 401 || response.status === 403) {
+                throw new Error('Sessão inválida ou expirada');
+            }
+            
+            if (!response.ok) {
+                console.error(`[Admin] Erro no servidor: ${response.status}`);
+                // Não faz logout em caso de erro 500, apenas para a execução
+                return;
+            }
 
             const admin = await response.json();
             window.adminId = admin.id;
