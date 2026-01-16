@@ -679,6 +679,17 @@ app.get('/api/fix-test-email', async (req, res) => {
                 159.90      // Valor simulado
             );
             res.send(`✅ E-mail de PAGAMENTO enviado para: ${emailDestino}. Verifique a caixa de entrada.`);
+        } else if (type === 'cancel') {
+             await emailService.sendSubscriptionCancelledEmail(
+                { email: emailDestino, nome: 'Usuário Teste' }
+            );
+            res.send(`✅ E-mail de CANCELAMENTO enviado para: ${emailDestino}.`);
+        } else if (type === 'failed') {
+             await emailService.sendPaymentFailedEmail(
+                { email: emailDestino, nome: 'Usuário Teste' },
+                'https://www.yelopsi.com.br/psi/psi_assinatura.html'
+            );
+            res.send(`✅ E-mail de FALHA enviado para: ${emailDestino}.`);
         } else {
             // Testa o e-mail de Recuperação de Senha (Padrão)
             await emailService.sendPasswordResetEmail(
