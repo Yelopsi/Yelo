@@ -931,7 +931,13 @@ app.get('/instalar-admin', async (req, res) => {
 // 2. ROTA DE LOGIN DO ADMIN (VERIFICA NA TABELA 'Admins')
 app.post('/api/login-admin-check', async (req, res) => {
     try {
-        const { email, senha } = req.body;
+        const email = req.body.email;
+        // --- FIX: Aceita variações do nome do campo de senha ---
+        const senha = req.body.senha || req.body.password || req.body['senha-login'];
+
+        if (!senha) {
+            return res.status(400).json({ success: false, message: 'Senha não fornecida.' });
+        }
 
         // A) Busca o usuário
         const [results] = await db.sequelize.query(

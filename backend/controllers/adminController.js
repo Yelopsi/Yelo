@@ -15,7 +15,8 @@ const generateAdminToken = (id) => {
  */
 exports.loginAdmin = async (req, res) => {
     try {
-        const { email, senha } = req.body;
+        const email = req.body.email;
+        const senha = req.body.senha || req.body.password || req.body['senha-login'];
         
         // 1. Tenta buscar na tabela de Psicólogos (Admins modernos)
         let adminUser = await db.Psychologist.findOne({ where: { email, isAdmin: true } });
