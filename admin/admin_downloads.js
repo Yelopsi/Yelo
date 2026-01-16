@@ -10,8 +10,8 @@ window.initializePage = function() {
     const btnDownloadFollowups = document.getElementById('btn-download-followups');
 
     if (!token) {
-        console.error("Token não encontrado.");
-        return;
+        console.warn("Token não encontrado no LocalStorage. Tentando autenticação via Cookie...");
+        // Não retorna mais, permite tentar o fetch
     }
 
     /**
@@ -86,8 +86,11 @@ window.initializePage = function() {
         button.textContent = 'Gerando...';
 
         try {
+            const headers = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
             const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: headers
             });
             if (!response.ok) throw new Error('Falha ao buscar dados.');
 

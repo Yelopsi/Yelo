@@ -101,23 +101,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function logout() {
         localStorage.removeItem('Yelo_token');
-        // CORREÇÃO: Redireciona para a tela de login do ADMIN
-        window.location.href = '/admin/login.html'; 
+        // CORREÇÃO: Redireciona para a tela de login unificada
+        window.location.href = '/login'; 
     }
 
     async function initializeAndProtect() {
         const token = localStorage.getItem('Yelo_token');
         
-        // Se não tiver token, manda pro login unificado imediatamente
-        if (!token) { 
-            logout(); 
-            return; 
-        }
+        // --- FIX: Não expulsa imediatamente se não tiver token no localStorage.
+        // Tenta validar via Cookie primeiro fazendo a requisição ao backend.
 
         try {
+            const headers = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
             // Verifica se o token é válido no backend
             const response = await fetch(`${API_BASE_URL}/api/admin/me`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: headers
             });
 
             if (!response.ok) throw new Error('Sessão inválida ou expirada');
@@ -292,9 +292,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
             try {
                 const token = localStorage.getItem('Yelo_token');
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+
                 const response = await fetch(`${API_BASE_URL}/api/admin/psychologists/${currentPsyId}/vip`, {
                     method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    headers: headers,
                     body: JSON.stringify({ plan: planValue === 'none' ? null : planValue })
                 });
     
@@ -423,7 +426,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const url = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : window.location.origin;
 
         const socket = io(url, {
-            auth: { token: token },
+            // Envia token se existir, senão vai vazio (o backend deve tratar ou usar cookie se suportado)
+            auth: token ? { token: token } : {},
             transports: ['websocket', 'polling']
         });
 
@@ -512,10 +516,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             const token = localStorage.getItem('Yelo_token');
+            const headers = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
             const query = `?startDate=${startInput.value}&endDate=${endInput.value}`;
             
             const response = await fetch(`${API_BASE_URL}/api/admin/reports/charts${query}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: headers
             });
             const data = await response.json();
 

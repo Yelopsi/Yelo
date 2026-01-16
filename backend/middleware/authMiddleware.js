@@ -9,6 +9,11 @@ const db = require('../models');
 const protect = async (req, res, next) => {
     let token;
 
+    // --- DEBUG AUTH ---
+    console.log(`[AUTH] Verificando acesso a: ${req.originalUrl}`);
+    console.log(`[AUTH] Headers Auth: ${req.headers.authorization ? 'SIM' : 'NÃO'}`);
+    console.log(`[AUTH] Cookies:`, req.cookies ? Object.keys(req.cookies) : 'Nenhum');
+
     // 1. Tenta pegar do Header (Padrão Bearer)
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         token = req.headers.authorization.split(' ')[1];
@@ -19,6 +24,7 @@ const protect = async (req, res, next) => {
     }
 
     if (token) {
+        console.log(`[AUTH] Token encontrado. Tentando verificar...`);
         try {
             // 3. Verifica o token
             const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
@@ -45,6 +51,7 @@ const protect = async (req, res, next) => {
             if (!user) {
                 return res.status(401).json({ error: 'Usuário não encontrado.' });
             }
+            console.log(`[AUTH] Sucesso! Usuário: ${user.email} (${userType})`);
 
             // Anexa um objeto de usuário genérico para facilitar o uso nos controllers
             req.user = user;
@@ -53,10 +60,11 @@ const protect = async (req, res, next) => {
             next(); // Continua para a próxima rota/middleware
 
         } catch (error) {
-            console.error('Erro de autenticação:', error.message);
+            console.error('[AUTH ERROR] Token inválido ou expirado:', error.message);
             res.status(401).json({ error: 'Não autorizado, token inválido.' });
         }
     } else {
+        console.log('[AUTH ERROR] Nenhum token fornecido (Header ou Cookie).');
         res.status(401).json({ error: 'Não autorizado, nenhum token fornecido.' });
     }
 };
