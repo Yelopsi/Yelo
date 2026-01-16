@@ -138,3 +138,70 @@ exports.sendInvitationEmail = async (candidate, invitationLink) => {
         console.error('Erro ao enviar convite:', error);
     }
 };
+
+/**
+ * Envia e-mail de confirmação de pagamento (Substitui o do Asaas)
+ */
+exports.sendPaymentConfirmationEmail = async (user, planType, amount) => {
+    const baseUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
+    const logoUrl = `${baseUrl}/assets/logos/logo-branca.png`;
+    
+    // Formata valor
+    const valorFormatado = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
+    
+    // Traduz plano
+    const nomesPlanos = { 'ESSENTIAL': 'Essencial', 'CLINICAL': 'Clínico', 'REFERENCE': 'Referência' };
+    const nomePlano = nomesPlanos[planType] || planType;
+
+    const mailOptions = {
+        from: process.env.EMAIL_FROM,
+        to: user.email,
+        subject: 'Pagamento Confirmado - Yelo',
+        html: `
+            <!DOCTYPE html>
+            <html lang="pt-BR">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+                    body, td, input, textarea, select { font-family: 'Inter', Helvetica, Arial, sans-serif; }
+                </style>
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #fdfaf6; color: #555555;">
+            <div style="background-color: #fdfaf6; padding: 40px 0; width: 100%;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #e9ecef;">
+                    <div style="background-color: #1B4332; padding: 40px 30px; text-align: center;">
+                        <img src="${logoUrl}" alt="Yelo" width="120" style="width: 120px; height: auto; display: block; margin: 0 auto; border: 0;">
+                    </div>
+                    <div style="padding: 40px 30px; line-height: 1.6;">
+                        <h2 style="color: #1B4332; margin-top: 0; font-family: 'New Kansas', 'Georgia', 'Times New Roman', serif; font-size: 24px; font-weight: 600; margin-bottom: 20px;">Pagamento Confirmado!</h2>
+                        <p style="font-size: 16px; margin-bottom: 20px;">Olá, ${user.nome.split(' ')[0]}!</p>
+                        <p style="font-size: 16px; margin-bottom: 30px;">Recebemos a confirmação do seu pagamento. Sua assinatura do <strong>Plano ${nomePlano}</strong> está ativa.</p>
+                        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #eee;">
+                            <p style="margin: 0 0 10px 0;"><strong>Valor:</strong> ${valorFormatado}</p>
+                            <p style="margin: 0;"><strong>Status:</strong> Pago</p>
+                        </div>
+                        <div style="text-align: center; margin: 35px 0;">
+                            <a href="${baseUrl}/psi/psi_dashboard.html" style="background-color: #FFEE8C; color: #1B4332; padding: 16px 32px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 15px rgba(255, 238, 140, 0.4);">Acessar Painel</a>
+                        </div>
+                        <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;">
+                        <p style="font-size: 12px; color: #999; text-align: center;">Se você tiver alguma dúvida, entre em contato com nosso suporte.</p>
+                    </div>
+                    <div style="background-color: #f8f9fa; padding: 20px; text-align: center; font-size: 12px; color: #888; border-top: 1px solid #eee;">
+                        <p style="margin: 0;">&copy; ${new Date().getFullYear()} Yelo. Todos os direitos reservados.</p>
+                    </div>
+                </div>
+            </div>
+            </body>
+            </html>
+        `
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`📧 E-mail de pagamento enviado para: ${user.email}`);
+    } catch (error) {
+        console.error('Erro ao enviar e-mail de pagamento:', error);
+    }
+};
