@@ -259,6 +259,120 @@ exports.sendSubscriptionCancelledEmail = async (user) => {
         console.log(`📧 E-mail de cancelamento enviado para: ${user.email}`);
     } catch (error) {
         console.error('Erro ao enviar e-mail de cancelamento:', error);
+        throw error; // Lança o erro para ser capturado pela rota de teste
+    }
+};
+
+/**
+ * Envia e-mail de Falha no Pagamento
+ */
+exports.sendPaymentFailedEmail = async (user, invoiceUrl) => {
+    const baseUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
+    const logoUrl = `${baseUrl}/assets/logos/logo-branca.png`;
+
+    const mailOptions = {
+        from: process.env.EMAIL_FROM,
+        to: user.email,
+        subject: 'Falha no Pagamento - Yelo',
+        html: `
+            <!DOCTYPE html>
+            <html lang="pt-BR">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+                    body, td, input, textarea, select { font-family: 'Inter', Helvetica, Arial, sans-serif; }
+                </style>
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #fdfaf6; color: #555555;">
+            <div style="background-color: #fdfaf6; padding: 40px 0; width: 100%;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #e9ecef;">
+                    <div style="background-color: #1B4332; padding: 40px 30px; text-align: center;">
+                        <img src="${logoUrl}" alt="Yelo" width="120" style="width: 120px; height: auto; display: block; margin: 0 auto; border: 0;">
+                    </div>
+                    <div style="padding: 40px 30px; line-height: 1.6;">
+                        <h2 style="color: #c53030; margin-top: 0; font-family: 'New Kansas', 'Georgia', 'Times New Roman', serif; font-size: 24px; font-weight: 600; margin-bottom: 20px;">Não conseguimos processar seu pagamento</h2>
+                        <p style="font-size: 16px; margin-bottom: 20px;">Olá, ${user.nome.split(' ')[0]}!</p>
+                        <p style="font-size: 16px; margin-bottom: 30px;">Houve um problema com a renovação da sua assinatura. Para evitar a interrupção do seu acesso, por favor, verifique seus dados de pagamento.</p>
+                        
+                        <div style="text-align: center; margin: 35px 0;">
+                            <a href="${invoiceUrl || baseUrl + '/psi/psi_assinatura.html'}" style="background-color: #E63946; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 15px rgba(230, 57, 70, 0.3);">Atualizar Pagamento</a>
+                        </div>
+                        
+                        <p style="font-size: 14px; color: #666; margin-top: 30px;">Se você já realizou o pagamento, desconsidere este e-mail.</p>
+                        <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;">
+                        <p style="font-size: 12px; color: #999; text-align: center;">Precisa de ajuda? Responda este e-mail.</p>
+                    </div>
+                </div>
+            </div>
+            </body>
+            </html>
+        `
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`📧 E-mail de falha de pagamento enviado para: ${user.email}`);
+    } catch (error) {
+        console.error('Erro ao enviar e-mail de falha:', error);
+        throw error;
+    }
+};
+
+/**
+ * Envia e-mail de Assinatura Cancelada / Estorno
+ */
+exports.sendSubscriptionCancelledEmail = async (user) => {
+    const baseUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
+    const logoUrl = `${baseUrl}/assets/logos/logo-branca.png`;
+
+    const mailOptions = {
+        from: process.env.EMAIL_FROM,
+        to: user.email,
+        subject: 'Atualização sobre sua Assinatura - Yelo',
+        html: `
+            <!DOCTYPE html>
+            <html lang="pt-BR">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+                    body, td, input, textarea, select { font-family: 'Inter', Helvetica, Arial, sans-serif; }
+                </style>
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #fdfaf6; color: #555555;">
+            <div style="background-color: #fdfaf6; padding: 40px 0; width: 100%;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #e9ecef;">
+                    <div style="background-color: #1B4332; padding: 40px 30px; text-align: center;">
+                        <img src="${logoUrl}" alt="Yelo" width="120" style="width: 120px; height: auto; display: block; margin: 0 auto; border: 0;">
+                    </div>
+                    <div style="padding: 40px 30px; line-height: 1.6;">
+                        <h2 style="color: #1B4332; margin-top: 0; font-family: 'New Kansas', 'Georgia', 'Times New Roman', serif; font-size: 24px; font-weight: 600; margin-bottom: 20px;">Assinatura Cancelada</h2>
+                        <p style="font-size: 16px; margin-bottom: 20px;">Olá, ${user.nome.split(' ')[0]}!</p>
+                        <p style="font-size: 16px; margin-bottom: 30px;">Confirmamos o cancelamento da sua assinatura ou o estorno do seu pagamento. Seu acesso aos recursos premium foi encerrado.</p>
+                        <div style="background-color: #fff5f5; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #fed7d7; color: #c53030;">
+                            <p style="margin: 0;">Esperamos ver você de volta em breve!</p>
+                        </div>
+                        <div style="text-align: center; margin: 35px 0;">
+                            <a href="${baseUrl}/psi/psi_assinatura.html" style="background-color: #1B4332; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 15px rgba(27, 67, 50, 0.2);">Reativar Plano</a>
+                        </div>
+                        <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;">
+                        <p style="font-size: 12px; color: #999; text-align: center;">Se isso foi um engano, entre em contato com nosso suporte.</p>
+                    </div>
+                </div>
+            </div>
+            </body>
+            </html>
+        `
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`📧 E-mail de cancelamento enviado para: ${user.email}`);
+    } catch (error) {
+        console.error('Erro ao enviar e-mail de cancelamento:', error);
     }
 };
 
