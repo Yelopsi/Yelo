@@ -139,8 +139,8 @@ exports.registerPsychologist = async (req, res) => {
 exports.loginPsychologist = async (req, res) => {
     try {
         const { email } = req.body;
-        // Aceita 'password' ou 'senha' vindo do front
-        const passwordInput = req.body.password || req.body.senha;
+        // --- FIX: Aceita 'password', 'senha' ou 'senha-login' vindo do front ---
+        const passwordInput = req.body.password || req.body.senha || req.body['senha-login'];
 
         if (!email || !passwordInput) {
             return res.status(400).json({ error: 'Por favor, preencha e-mail e senha.' });

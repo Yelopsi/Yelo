@@ -150,7 +150,8 @@ exports.resetPassword = async (req, res) => {
 // ----------------------------------------------------------------------
 exports.loginPatient = async (req, res) => {
     try {
-        const { email, senha } = req.body;
+        const email = req.body.email;
+        const senha = req.body.senha || req.body.password || req.body['senha-login'];
 
         if (!email || !senha) {
             return res.status(400).json({ error: 'Email e senha são obrigatórios.' });
