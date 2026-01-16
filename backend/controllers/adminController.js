@@ -34,6 +34,7 @@ exports.loginAdmin = async (req, res) => {
         }
 
         if (adminUser && (await bcrypt.compare(senha, adminUser.senha))) {
+            console.log(`[LOGIN ADMIN] Sucesso para: ${email}. Gerando token e cookie...`);
             // --- GERAÇÃO DE LOG REAL ---
             await db.SystemLog.create({
                 level: 'info',

@@ -14,6 +14,20 @@
     <link rel="stylesheet" href="/admin/admin.css?v=1.5">
     <link rel="icon" href="/assets/images/favicon.png" type="image/png">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- SCRIPT DE DEBUG (REMOVER EM PRODUÇÃO) -->
+    <script>
+        console.log("--- [DEBUG] INICIANDO ADMIN DASHBOARD ---");
+        const tokenLocal = localStorage.getItem('Yelo_token');
+        const cookies = document.cookie;
+        
+        console.log("1. Token no LocalStorage:", tokenLocal ? "PRESENTE (" + tokenLocal.substring(0, 10) + "...)" : "AUSENTE");
+        console.log("2. Cookies visíveis:", cookies);
+        
+        if (!tokenLocal && !cookies.includes('token=')) {
+            console.warn("⚠️ [ALERTA] Nenhum token encontrado! O redirecionamento provavelmente ocorrerá.");
+        }
+    </script>
 </head>
 <body class="pagina-dashboard">
 
