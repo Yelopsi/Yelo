@@ -1,287 +1,114 @@
-<div class="main-header" style="padding: 25px 40px;">
-    <div class="header-content">
-        <h1>Meu Perfil</h1>
-        <p>Gerencie suas informações pessoais e profissionais.</p>
-    </div>
-    <a href="#" id="btn-view-public-profile" class="btn btn-secundario" target="_blank" style="opacity: 0; pointer-events: none; transition: opacity 0.3s;">
-        Ver como Paciente
-    </a>
-</div>
-
-<div class="widget">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h3 style="margin:0;">Informações do Perfil</h3>
-        <span id="form-mode-indicator" class="mode-indicator-view">
-            <span id="form-mode-icon">●</span> <span id="form-mode-text">Modo de Visualização</span>
-        </span>
-    </div>
-
-    <form id="perfil-form">
-        <fieldset id="form-fieldset" disabled>
-            
-            <!-- SEÇÃO 1: DADOS BÁSICOS -->
-            <div class="profile-section">
-                <h4 class="section-title">Dados Pessoais</h4>
+<div class="page-content">
+    <div class="widgets-container widgets-container--vertical">
+        
+        <!-- Card de Perfil -->
+        <div class="widget">
+            <h3>Meu Perfil Profissional</h3>
+            <form id="form-perfil-psi">
                 
-                <div class="form-row">
-                    <div class="form-group" style="flex: 2;">
-                        <label for="nome">Nome de Exibição *</label>
-                        <input type="text" id="nome" name="nome" required placeholder="Seu nome como aparecerá no perfil">
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label for="crp">Número do CRP *</label>
-                        <input type="text" id="crp" name="crp" required placeholder="00/00000">
-                    </div>
+                <!-- Foto de Perfil -->
+                <div class="profile-photo-section">
+                    <label for="profilePhotoInput" class="profile-photo-label">
+                        <img src="https://placehold.co/120x120/1B4332/FFFFFF?text=Foto" alt="Foto de Perfil" id="psi-photo-preview" class="profile-photo-preview">
+                        <div class="photo-edit-overlay"><i class="fas fa-camera"></i> 📷</div>
+                    </label>
+                    <input type="file" id="profilePhotoInput" accept="image/*" style="display: none;">
                 </div>
 
-                <div class="form-row">
+                <div class="form-grid-2col">
                     <div class="form-group">
-                        <label for="email">E-mail de Acesso *</label>
-                        <input type="email" id="email" name="email" required>
+                        <label>Nome Completo</label>
+                        <input type="text" id="psi-nome" required>
                     </div>
                     <div class="form-group">
-                        <label for="telefone">WhatsApp Profissional *</label>
-                        <input type="tel" id="telefone" name="telefone" inputmode="numeric" placeholder="(00) 00000-0000" required>
+                        <label>E-mail (Login)</label>
+                        <input type="email" id="psi-email" required>
                     </div>
-                </div>
-
-                <div class="form-row">
                     <div class="form-group">
-                        <label for="cpf" id="label-documento">CPF / CNPJ *</label>
-                        <input type="text" id="cpf" name="cpf" required placeholder="Apenas números" inputmode="numeric">
-                        <small id="cpf-feedback" style="color: #e63946; display: none; margin-top: 5px;">Documento inválido</small>
+                        <label>Telefone / WhatsApp</label>
+                        <input type="text" id="psi-telefone">
                     </div>
-                    <div class="form-group hidden" id="group-razao-social">
-                        <label for="razao_social">Razão Social</label>
-                        <input type="text" id="razao_social" name="razao_social" placeholder="Nome da empresa">
-                    </div>
-                </div>
-            </div>
-
-            <!-- SEÇÃO 2: ENDEREÇO -->
-            <div class="profile-section">
-                <h4 class="section-title">Localização</h4>
-                <div class="form-row">
-                    <div class="form-group" style="flex: 1;">
-                        <label for="cep">CEP *</label>
-                        <div style="position: relative;">
-                            <input type="text" id="cep" name="cep" placeholder="00000-000" maxlength="9" required>
-                            <div id="cep-loading" style="display:none; position:absolute; right:10px; top:12px; color:#1B4332; font-size:0.8rem; font-weight:bold;">
-                                ⏳
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group" style="flex: 2;">
-                        <label>Cidade *</label>
-                        <input type="text" id="cidade" name="cidade" readonly style="background-color: #f0f2f5; cursor: not-allowed; border-color: transparent;" required>
-                    </div>
-                    <div class="form-group" style="flex: 0.5;">
-                        <label>UF *</label>
-                        <input type="text" id="estado" name="estado" readonly style="background-color: #f0f2f5; cursor: not-allowed; border-color: transparent;" required>
+                    <div class="form-group">
+                        <label>CRP</label>
+                        <input type="text" id="psi-crp" disabled style="background-color: #e9ecef; cursor: not-allowed;" title="Para alterar o CRP, entre em contato com o suporte.">
                     </div>
                 </div>
-            </div>
 
-            <!-- SEÇÃO 3: PERFIL PROFISSIONAL -->
-            <div class="profile-section">
-                <h4 class="section-title">Detalhes Profissionais</h4>
-                
-                <div class="form-group highlight-box">
-                    <label for="slug" style="color: #1B4332;">🔗 Link do seu Perfil (Personalizável) *</label>
-                    <div class="input-prefix-group" style="background: #fff;">
-                        <span class="prefix">yelopsi.com.br/</span>
-                        <input type="text" id="slug" name="slug" placeholder="seu-nome" pattern="[a-z0-9\-]+" title="Use apenas letras minúsculas, números e hífen" style="font-weight: bold; color: #1B4332;" required>
+                <div class="form-grid-2col">
+                    <div class="form-group">
+                        <label>Cidade</label>
+                        <input type="text" id="psi-cidade">
                     </div>
-                    <small style="color: #666; font-size: 0.8rem; margin-top: 5px; display: block;">Este é o link que você enviará para seus pacientes.</small>
+                    <div class="form-group">
+                        <label>Estado (UF)</label>
+                        <select id="psi-estado" class="filtro-select">
+                            <option value="">Selecione...</option>
+                            <option value="AC">Acre</option><option value="AL">Alagoas</option><option value="AP">Amapá</option><option value="AM">Amazonas</option><option value="BA">Bahia</option><option value="CE">Ceará</option><option value="DF">Distrito Federal</option><option value="ES">Espírito Santo</option><option value="GO">Goiás</option><option value="MA">Maranhão</option><option value="MT">Mato Grosso</option><option value="MS">Mato Grosso do Sul</option><option value="MG">Minas Gerais</option><option value="PA">Pará</option><option value="PB">Paraíba</option><option value="PR">Paraná</option><option value="PE">Pernambuco</option><option value="PI">Piauí</option><option value="RJ">Rio de Janeiro</option><option value="RN">Rio Grande do Norte</option><option value="RS">Rio Grande do Sul</option><option value="RO">Rondônia</option><option value="RR">Roraima</option><option value="SC">Santa Catarina</option><option value="SP">São Paulo</option><option value="SE">Sergipe</option><option value="TO">Tocantins</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="bio">Biografia / Sobre Mim *</label>
-                    <div style="background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 10px;">
-                        <strong>💡 Dica:</strong> As primeiras linhas do seu texto aparecerão no card de resultados. Capriche no início para causar uma ótima primeira impressão!
-                    </div>
-                    <textarea id="bio" name="bio" rows="6" placeholder="Escreva um texto acolhedor contando sua experiência, abordagem e como você pode ajudar o paciente..." required></textarea>
-                    <div style="text-align: right; font-size: 0.8rem; color: #999; margin-top: 5px;">Recomendado: 300-500 caracteres</div>
+                    <label>Resumo Profissional (Bio)</label>
+                    <textarea id="psi-bio" rows="4" placeholder="Conte um pouco sobre sua experiência e abordagem..."></textarea>
                 </div>
 
-                <div class="form-group" style="max-width: 200px;">
-                    <label for="valor_sessao_numero">Valor da Sessão *</label>
-                    <div class="input-prefix-group">
-                        <span class="prefix">R$</span>
-                        <input type="number" id="valor_sessao_numero" name="valor_sessao_numero" step="0.01" placeholder="0,00" required>
-                    </div>
+                <div class="form-acoes">
+                    <button type="submit" class="btn-primario">Salvar Alterações</button>
                 </div>
-            </div>
+            </form>
+        </div>
+
+        <!-- Card de Acesso Rápido (Google) - NOVO -->
+        <div class="widget">
+            <h3>Acesso Rápido</h3>
+            <p class="subtitulo-secao" style="margin-bottom: 20px;">Vincule sua conta Google para fazer login com um clique. O e-mail do Google deve ser o mesmo cadastrado acima.</p>
             
-            <!-- SEÇÃO 4: REDES SOCIAIS (GRID) -->
-            <div class="profile-section">
-                <h4 class="section-title">Redes Sociais</h4>
-                <div class="social-grid">
-                    <div class="form-group">
-                        <label>Instagram</label>
-                        <div class="input-prefix-group"><span class="prefix">@</span><input type="text" id="instagram_url" name="instagram_url" placeholder="usuario"></div>
-                    </div>
-                    <div class="form-group">
-                        <label>LinkedIn</label>
-                        <div class="input-prefix-group"><span class="prefix">in/</span><input type="text" id="linkedin_url" name="linkedin_url" placeholder="usuario"></div>
-                    </div>
-                    <div class="form-group">
-                        <label>TikTok</label>
-                        <div class="input-prefix-group"><span class="prefix">@</span><input type="text" id="tiktok_url" name="tiktok_url" placeholder="usuario"></div>
-                    </div>
-                    <div class="form-group">
-                        <label>Facebook</label>
-                        <div class="input-prefix-group"><span class="prefix">/</span><input type="text" id="facebook_url" name="facebook_url" placeholder="usuario"></div>
-                    </div>
-                    <div class="form-group">
-                        <label>X (Twitter)</label>
-                        <div class="input-prefix-group"><span class="prefix">@</span><input type="text" id="x_url" name="x_url" placeholder="usuario"></div>
-                    </div>
+            <div style="display: flex; align-items: center; gap: 15px; background: #f8f9fa; padding: 20px; border-radius: 12px; border: 1px solid #e9ecef;">
+                <div style="background: white; padding: 10px; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <svg viewBox="0 0 24 24" width="24" height="24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
                 </div>
-            </div>
-
-            <!-- SEÇÃO 5: ESPECIALIDADES (Multiselects) -->
-            <div class="profile-section">
-                <h4 class="section-title">Especialidades e Atuação</h4>
-                
-            <div class="form-group">
-                <label>Temas de Atuação *</label>
-                <div class="multiselect-tag disabled" id="temas_atuacao_multiselect">
-                    <div class="multiselect-display"></div>
-                    <div class="multiselect-options">
-                        <div class="option" data-value="Ansiedade">Ansiedade</div>
-                        <div class="option" data-value="Estresse">Estresse</div>
-                        <div class="option" data-value="Depressão">Depressão</div>
-                        <div class="option" data-value="Relacionamentos">Relacionamentos</div>
-                        <div class="option" data-value="Carreira">Carreira</div>
-                        <div class="option" data-value="Autoestima">Autoestima</div>
-                        <div class="option" data-value="Luto">Luto</div>
-                        <div class="option" data-value="Traumas">Traumas</div>
-                        <div class="option" data-value="TDAH">TDAH</div>
-                    </div>
+                <div style="flex-grow: 1;">
+                    <strong style="display: block; color: #333;">Conta Google</strong>
+                    <span style="font-size: 0.9rem; color: #666;">Use o botão ao lado para testar ou vincular.</span>
                 </div>
+                <a href="/api/auth/google" class="btn-secundario" style="text-decoration: none; font-size: 0.9rem;">
+                    Conectar / Testar
+                </a>
             </div>
-
-            <!-- NOVOS CAMPOS PARA MELHORAR O MATCH -->
-            <div class="form-group">
-                <label>Público-Alvo Principal *</label>
-                <div class="multiselect-tag disabled" id="publico_alvo_multiselect">
-                    <div class="multiselect-display"></div>
-                    <div class="multiselect-options">
-                        <div class="option" data-value="Adolescentes">Adolescentes (18+)</div>
-                        <div class="option" data-value="Adultos">Adultos</div>
-                        <div class="option" data-value="Idosos">Idosos</div>
-                        <div class="option" data-value="Casais">Casais</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Estilo de Terapia (Como você se descreve para o paciente?) *</label>
-                <div class="multiselect-tag disabled" id="estilo_terapia_multiselect">
-                    <div class="multiselect-display"></div>
-                    <div class="multiselect-options">
-                        <div class="option" data-value="Um espaço de escuta e acolhimento para me encontrar">Escuta e acolhimento</div>
-                        <div class="option" data-value="Ferramentas e tarefas práticas para aplicar no dia a dia">Foco em ferramentas práticas</div>
-                        <div class="option" data-value="Entender meu passado e a raiz das minhas emoções">Análise do passado e raízes</div>
-                        <div class="option" data-value="Focar em soluções para problemas específicos">Foco em soluções específicas</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Identificadores e Práticas Inclusivas *</label>
-                <div class="multiselect-tag disabled" id="praticas_inclusivas_multiselect">
-                    <div class="multiselect-display"></div>
-                    <div class="multiselect-options">
-                        <div class="option" data-value="Que faça parte da comunidade LGBTQIAPN+">Faço parte da comunidade LGBTQIAPN+</div>
-                        <div class="option" data-value="Que seja uma pessoa não-branca (racializada) / prática antirracista">Sou uma pessoa não-branca / Prática antirracista</div>
-                        <div class="option" data-value="Que tenha uma perspectiva feminista">Tenho uma perspectiva feminista</div>
-                        <div class="option" data-value="Que entenda de neurodiversidade (TDAH, Autismo, etc.)">Entendo de neurodiversidade (TDAH, Autismo, etc.)</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Abordagens e Técnicas *</label>
-                <div class="multiselect-tag disabled" id="abordagens_tecnicas_multiselect" data-single-select="true">
-                    <div class="multiselect-display"></div>
-                    <div class="multiselect-options">
-                        <div class="option" data-value="Psicanálise">Psicanálise</div>
-                        <div class="option" data-value="TCC">TCC</div>
-                        <div class="option" data-value="Humanista">Humanista</div>
-                        <div class="option" data-value="Gestalt-terapia">Gestalt-terapia</div>
-                        <div class="option" data-value="Sistêmica">Sistêmica</div>
-                        <div class="option" data-value="Jungiana">Jungiana</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Gênero de Identidade *</label>
-                <div class="multiselect-tag disabled" id="genero_identidade_multiselect" data-single-select="true">
-                    <div class="multiselect-display"></div>
-                    <div class="multiselect-options">
-                        <div class="option" data-value="Feminino">Feminino</div>
-                        <div class="option" data-value="Masculino">Masculino</div>
-                        <div class="option" data-value="Não-binário">Não-binário</div>
-                        <div class="option" data-value="Outro">Outro</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Modalidade de Atendimento *</label>
-                <div class="multiselect-tag disabled" id="modalidade_atendimento_multiselect" data-input-id="modalidade_input">
-                    <div class="multiselect-display">Selecionar...</div>
-                    <div class="multiselect-options">
-                        <div class="option" data-value="Online">Online</div>
-                        <div class="option" data-value="Presencial">Presencial</div>
-                    </div>
-                    <input type="hidden" id="modalidade_input" name="modalidade">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Disponibilidade *</label>
-                <div class="multiselect-tag disabled" id="disponibilidade_periodo_multiselect">
-                    <div class="multiselect-display"></div>
-                    <div class="multiselect-options">
-                        <div class="option" data-value="Manhã">Manhã</div>
-                        <div class="option" data-value="Tarde">Tarde</div>
-                        <div class="option" data-value="Noite">Noite</div>
-                    </div>
-                </div>
-            </div>
-            </div>
-
-        </fieldset>
-        <div class="form-actions">
-            <button type="button" id="btn-alterar" class="btn btn-principal">Alterar Dados</button>
-            <button type="submit" id="btn-salvar" class="btn btn-principal hidden">Salvar Alterações</button>
         </div>
-    </form>
+
+        <!-- Card de Senha -->
+        <div class="widget">
+            <h3>Alterar Senha</h3>
+            <form id="form-senha-psi">
+                <div class="form-grid-2col">
+                    <div class="form-group">
+                        <label>Nova Senha</label>
+                        <input type="password" id="nova-senha" required minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirmar Senha</label>
+                        <input type="password" id="confirmar-senha" required minlength="6">
+                    </div>
+                </div>
+                <div class="form-acoes">
+                    <button type="submit" class="btn-primario">Atualizar Senha</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Zona de Perigo -->
+        <div class="widget" style="border-left: 5px solid #E63946;">
+            <h3 style="color: #E63946;">Zona de Perigo</h3>
+            <p>A exclusão da conta é permanente e removerá todos os seus dados, histórico e acesso à plataforma.</p>
+            <div class="form-acoes" style="justify-content: flex-start;">
+                <button type="button" id="btn-excluir-conta" style="color: #E63946; background: none; border: 1px solid #E63946; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    Excluir minha conta
+                </button>
+            </div>
+        </div>
+
+    </div>
 </div>
-
-<div class="widget" style="margin-top: 20px;">
-    <h3>Alterar Senha</h3>
-    <form id="password-form">
-        <div class="form-group">
-            <label for="senha_atual">Senha Atual</label>
-            <input type="password" id="senha_atual" name="senha_atual" required autocomplete="current-password">
-        </div>
-        <div class="form-group">
-            <label for="nova_senha">Nova Senha</label>
-            <input type="password" id="nova_senha" name="nova_senha" required autocomplete="new-password">
-        </div>
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primario">Alterar Senha</button>
-        </div>
-    </form>
-</div>
-
-<div class="widget" style="margin-top: 20px;">
-    <h3>Excluir Conta</h3>
-    <p>Esta ação é irreversível e removerá todos os seus dados da plataforma.</p>
-    <a id="btn-excluir-conta" href="psi_excluir_conta.html">Excluir Minha Conta</a>
-</div>
+<script src="/psi/psi_meu_perfil.js"></script>

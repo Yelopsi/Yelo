@@ -1,226 +1,97 @@
-window.initializePage = function() {
+window.initializePage = async function() {
     const token = localStorage.getItem('Yelo_token');
+    const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001';
 
-    const formDados = document.getElementById('form-dados-admin');
-    const formSenha = document.getElementById('form-senha-admin');
-
+    // Elementos
     const nomeInput = document.getElementById('admin-nome');
     const emailInput = document.getElementById('admin-email');
     const telefoneInput = document.getElementById('admin-telefone');
-    const photoPreview = document.getElementById('admin-profile-photo-preview');
-    const photoUploadInput = document.getElementById('admin-photo-upload');
+    const photoPreview = document.getElementById('admin-photo-preview');
+    const photoInput = document.getElementById('profilePhoto');
 
-    // --- 1. CONFIGURAÇÃO INICIAL (ESTADO BLOQUEADO) ---
-    const inputsDados = [nomeInput, emailInput, telefoneInput, photoUploadInput];
-    const btnDados = formDados ? formDados.querySelector('button[type="submit"]') : null;
-    
-    const inputsSenha = [
-        document.getElementById('admin-senha-atual'),
-        document.getElementById('admin-nova-senha'),
-        document.getElementById('admin-confirmar-senha')
-    ];
-    const btnSenha = formSenha ? formSenha.querySelector('button[type="submit"]') : null;
-
-    // Desabilita campos de dados e ajusta botão
-    inputsDados.forEach(input => { if(input) input.disabled = true; });
-    if (btnDados) { btnDados.textContent = 'Alterar Dados'; }
-
-    // Desabilita campos de senha e ajusta botão
-    inputsSenha.forEach(input => { if(input) input.disabled = true; });
-    if (btnSenha) { btnSenha.textContent = 'Alterar Senha'; }
-    // --------------------------------------------------
-
-    if (!formDados || !formSenha || !token) {
-        console.error("Elementos do formulário ou token não encontrados.");
-        return;
-    }
-
-    // Aplica máscara de telefone
-    if (window.IMask && telefoneInput) {
-        IMask(telefoneInput, { mask: '(00) 00000-0000' });
-    }
-
-    // Função para mostrar notificações (toast)
-    function showToast(message, type = 'success') {
-        const container = document.getElementById('toast-container');
-        const template = document.getElementById('toast-template');
-        if (!container || !template) return;
-
-        const toast = template.content.cloneNode(true).querySelector('.toast');
-        toast.textContent = message;
-        toast.classList.add(`toast-${type}`);
-        container.appendChild(toast);
-
-        setTimeout(() => toast.remove(), 4500);
-    }
-
-    // Busca e preenche os dados do admin
-    async function fetchAdminData() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/me`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) throw new Error('Falha ao buscar dados do administrador.');
-
-            const admin = await response.json();
-            nomeInput.value = admin.nome || '';
-            emailInput.value = admin.email || '';
-            telefoneInput.value = admin.telefone || '';
-            if (admin.fotoUrl) {
-                // A URL da imagem agora é relativa à origem
-                photoPreview.src = `${API_BASE_URL}${admin.fotoUrl}`;
-            }
-
-        } catch (error) {
-            showToast(error.message, 'error');
-        }
-    }
-
-    // Evento para salvar dados pessoais
-    formDados.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const button = formDados.querySelector('button[type="submit"]');
+    // 1. Carregar Dados
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/admin/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
         
-        // LÓGICA DE ALTERNAR (HABILITAR EDIÇÃO)
-        if (nomeInput.disabled) {
-            inputsDados.forEach(input => { if(input) input.disabled = false; });
-            button.textContent = 'Salvar Alterações';
-            return; // Interrompe aqui para o usuário editar
+        if (response.ok) {
+            const data = await response.json();
+            nomeInput.value = data.nome || '';
+            emailInput.value = data.email || '';
+            telefoneInput.value = data.telefone || '';
+            if (data.fotoUrl) photoPreview.src = data.fotoUrl;
         }
+    } catch (error) {
+        console.error("Erro ao carregar perfil:", error);
+    }
 
-        button.disabled = true;
-        button.textContent = 'Salvando...';
-
-        const payload = {
-            nome: nomeInput.value,
-            email: emailInput.value,
-            telefone: telefoneInput.value
-        };
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/me`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify(payload)
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error);
-
-            showToast(result.message, 'success');
-
-            // SUCESSO: Bloqueia os campos e reverte o botão
-            inputsDados.forEach(input => { if(input) input.disabled = true; });
-            button.textContent = 'Alterar Dados';
-
-            // Recarrega os dados do servidor para confirmar visualmente que o valor foi salvo
-            await fetchAdminData();
-
-            // Dispara um evento customizado para notificar outras partes da UI (como o header)
-            // Enviando o novo nome para que o admin.js possa atualizar a sidebar.
-            window.dispatchEvent(new CustomEvent('adminDataUpdated', { detail: { nome: nomeInput.value } }));
-
-        } catch (error) {
-            showToast(error.message, 'error');
-        } finally {
-            button.disabled = false;
-            // Se ocorreu erro (campos ainda abertos), mantém texto de salvar
-            if (!nomeInput.disabled) button.textContent = 'Salvar Alterações';
-        }
-    });
-
-    // Evento para alterar senha
-    formSenha.addEventListener('submit', async (e) => {
+    // 2. Salvar Dados Básicos
+    document.getElementById('form-perfil-admin').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const button = formSenha.querySelector('button[type="submit"]');
-
-        // LÓGICA DE ALTERNAR (HABILITAR EDIÇÃO)
-        if (inputsSenha[0].disabled) {
-            inputsSenha.forEach(input => { if(input) input.disabled = false; });
-            button.textContent = 'Salvar Nova Senha';
-            return;
-        }
-
-        button.disabled = true;
-        button.textContent = 'Alterando...';
-
-        const senhaAtual = document.getElementById('admin-senha-atual').value;
-        const novaSenha = document.getElementById('admin-nova-senha').value;
-        const confirmarSenha = document.getElementById('admin-confirmar-senha').value;
-
-        if (novaSenha !== confirmarSenha) {
-            showToast('A nova senha e a confirmação não coincidem.', 'error');
-            button.disabled = false;
-            button.textContent = 'Salvar Nova Senha';
-            return;
-        }
-
-        const payload = {
-            senha_atual: senhaAtual,
-            nova_senha: novaSenha
-        };
+        const btn = e.target.querySelector('button');
+        const originalText = btn.textContent;
+        btn.textContent = 'Salvando...';
+        btn.disabled = true;
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/me/password`, {
+            const res = await fetch(`${API_BASE_URL}/api/admin/me`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify(payload)
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error);
-
-            showToast(result.message, 'success');
-            formSenha.reset();
-
-            // SUCESSO: Bloqueia novamente
-            inputsSenha.forEach(input => { if(input) input.disabled = true; });
-            button.textContent = 'Alterar Senha';
-
-        } catch (error) {
-            showToast(error.message, 'error');
-        } finally {
-            button.disabled = false;
-            if (!inputsSenha[0].disabled) button.textContent = 'Salvar Nova Senha';
-        }
-    });
-
-    // Evento para lidar com a seleção de nova foto
-    photoUploadInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        // Mostra um preview instantâneo da imagem selecionada
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            photoPreview.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-
-        // Envia a imagem para o backend
-        const formData = new FormData();
-        formData.append('profilePhoto', file);
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/me/photo`, {
-                method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}` },
-                body: formData // Não defina 'Content-Type', o browser faz isso automaticamente para FormData
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    nome: nomeInput.value,
+                    email: emailInput.value,
+                    telefone: telefoneInput.value
+                })
             });
 
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error);
-
-            showToast(result.message, 'success');
-            // Atualiza a foto no menu lateral também
-            const sidebarPhoto = document.querySelector('#admin-avatar');
-            if (sidebarPhoto) {
-                sidebarPhoto.src = `${API_BASE_URL}${result.fotoUrl}`;
+            if (res.ok) {
+                window.showToast('Perfil atualizado com sucesso!', 'success');
+                // Atualiza o nome no menu lateral globalmente
+                window.dispatchEvent(new CustomEvent('adminDataUpdated', { detail: { nome: nomeInput.value } }));
+            } else {
+                const err = await res.json();
+                window.showToast(err.error || 'Erro ao atualizar.', 'error');
             }
-
         } catch (error) {
-            showToast(error.message, 'error');
+            window.showToast('Erro de conexão.', 'error');
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
         }
     });
 
-    // Inicia a página buscando os dados
-    fetchAdminData();
+    // 3. Alterar Senha
+    document.getElementById('form-senha-admin').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nova = document.getElementById('nova-senha').value;
+        const confirm = document.getElementById('confirmar-senha').value;
+
+        if (nova !== confirm) {
+            return window.showToast('As senhas não coincidem.', 'error');
+        }
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/admin/me/password`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ senha: nova })
+            });
+
+            if (res.ok) {
+                window.showToast('Senha alterada com sucesso!', 'success');
+                e.target.reset();
+            } else {
+                window.showToast('Erro ao alterar senha.', 'error');
+            }
+        } catch (error) {
+            window.showToast('Erro de conexão.', 'error');
+        }
+    });
 };

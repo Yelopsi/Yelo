@@ -17,15 +17,19 @@
         document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             const token = params.get('token');
-            const dashboardPath = params.get('dashboard');
+            const type = params.get('type');
+            const name = params.get('name');
+            const redirectUrl = params.get('redirect'); // Backend envia 'redirect', não 'dashboard'
             
-            if (token && dashboardPath) {
-                // Salva o token seguro
+            if (token) {
+                // Salva o token e dados do usuário
                 localStorage.setItem('Yelo_token', token); 
+                if (type) localStorage.setItem('Yelo_user_type', type);
+                if (name) localStorage.setItem('Yelo_user_name', name);
                 
                 // Redireciona com pequeno delay para garantir gravação
                 setTimeout(() => {
-                    window.location.href = dashboardPath;
+                    window.location.href = redirectUrl || '/';
                 }, 200);
             } else {
                 // Se der erro, volta para o login
