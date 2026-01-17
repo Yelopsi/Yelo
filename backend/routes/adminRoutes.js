@@ -169,5 +169,24 @@ router.put('/forum/moderate', adminController.moderateForumContent);
 router.put('/community-event', adminController.updateCommunityEvent);
 router.put('/community-resources', adminController.updateCommunityResources);
 
+// --- ROTA DE ESTATÍSTICAS PWA (NOVO) ---
+router.get('/stats/pwa', async (req, res) => {
+    try {
+        // Busca total geral
+        const [totalResult] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "PwaInstallLogs"`);
+        
+        // Busca agrupado por plataforma
+        const [byPlatform] = await db.sequelize.query(`SELECT platform, COUNT(*) as count FROM "PwaInstallLogs" GROUP BY platform`);
+        
+        res.json({ 
+            total: parseInt(totalResult[0]?.count || 0, 10), 
+            byPlatform 
+        });
+    } catch (error) {
+        console.error("Erro ao buscar stats PWA:", error);
+        // Retorna zerado se a tabela não existir ou der erro, para não quebrar o front
+        res.json({ total: 0, byPlatform: [] });
+    }
+});
 
 module.exports = router;
