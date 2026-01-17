@@ -1381,6 +1381,9 @@ const startServer = async () => {
                 "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         `);
+        
+        // --- FIX: GARANTIR QUE A COLUNA updatedAt EXISTA (CASO A TABELA JÁ TENHA SIDO CRIADA SEM ELA) ---
+        await db.sequelize.query(`ALTER TABLE "SystemLogs" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;`);
 
         // --- FIX: TABELAS DE SESSÃO E ANALYTICS (CRÍTICO PARA DASHBOARD) ---
         await db.sequelize.query(`
