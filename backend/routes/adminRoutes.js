@@ -142,7 +142,49 @@ router.get('/reports/charts', protect, admin, adminController.getDetailedReports
 router.get('/financials', adminController.getFinancials);
 
 // Rota para indicadores dos questionários
-router.get('/questionnaire-analytics', adminController.getQuestionnaireAnalytics);
+// router.get('/questionnaire-analytics', adminController.getQuestionnaireAnalytics);
+
+// --- FIX: ROTA INLINE PARA INDICADORES (Evita erro 500 se controller falhar) ---
+router.get('/questionnaire-analytics', async (req, res) => {
+    try {
+        // 1. Total de Buscas
+        const [totalResult] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "DemandSearches"`);
+        const total = parseInt(totalResult[0]?.count || 0, 10);
+
+        // Helper para formatar
+        const format = (rows) => rows.map(r => ({ label: r.label || 'N/A', value: parseInt(r.value, 10) }));
+
+        // 2. Agregações (Gênero, Idade, Motivo, Estado)
+        const [gender] = await db.sequelize.query(`
+            SELECT "searchParams"->>'genero' as label, COUNT(*) as value 
+            FROM "DemandSearches" WHERE "searchParams"->>'genero' IS NOT NULL 
+            GROUP BY 1 ORDER BY value DESC
+        `);
+
+        const [age] = await db.sequelize.query(`
+            SELECT "searchParams"->>'faixa_etaria' as label, COUNT(*) as value 
+            FROM "DemandSearches" WHERE "searchParams"->>'faixa_etaria' IS NOT NULL 
+            GROUP BY 1 ORDER BY value DESC
+        `);
+
+        const [symptoms] = await db.sequelize.query(`
+            SELECT "searchParams"->>'motivo' as label, COUNT(*) as value 
+            FROM "DemandSearches" WHERE "searchParams"->>'motivo' IS NOT NULL 
+            GROUP BY 1 ORDER BY value DESC LIMIT 10
+        `);
+        
+        const [location] = await db.sequelize.query(`
+            SELECT "searchParams"->>'estado' as label, COUNT(*) as value 
+            FROM "DemandSearches" WHERE "searchParams"->>'estado' IS NOT NULL 
+            GROUP BY 1 ORDER BY value DESC LIMIT 10
+        `);
+
+        res.json({ total, gender: format(gender), age: format(age), symptoms: format(symptoms), location: format(location) });
+    } catch (error) {
+        console.error("Erro em questionnaire-analytics:", error);
+        res.json({ total: 0, gender: [], age: [], symptoms: [], location: [] });
+    }
+});
 
 // --- ROTAS DE FOLLOW-UP (NOVO) ---
 router.get('/followups', adminController.getFollowUps);
