@@ -151,32 +151,26 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateWelcomeMessage() {
-        const pageTitle = document.querySelector('.titulo-pagina h1');
-        const pageSubtitle = document.querySelector('.titulo-pagina p');
+        // CORREÇÃO: Seletores ajustados para a estrutura do admin.html (.welcome-header)
+        const pageTitle = document.querySelector('.welcome-header h1');
+        const pageSubtitle = document.querySelector('.welcome-header p');
         const adminName = document.querySelector('.nome-admin')?.textContent.split(' ')[0] || 'Admin';
         
         const activeLink = document.querySelector('.sidebar-nav li.active');
         
         if (pageTitle && activeLink) {
-            const menuText = activeLink.querySelector('span')?.textContent.trim();
             const dataPage = activeLink.getAttribute('data-page');
-            const target = activeLink.getAttribute('data-target');
-
-        const titleFromData = activeLink.getAttribute('data-title');
-        const subtitleFromData = activeLink.getAttribute('data-subtitle');
+            const titleFromData = activeLink.getAttribute('data-title');
+            const subtitleFromData = activeLink.getAttribute('data-subtitle');
 
             if (dataPage === 'admin_visao_geral.html') {
                 pageTitle.textContent = `Bem-vindo, ${adminName}!`;
-            } else if (target === 'relatorios') {
-                pageTitle.textContent = 'Relatórios';
-        } else if (titleFromData) {
-            pageTitle.textContent = titleFromData;
+                // Mantém o subtítulo padrão ou usa o do data-attribute se disponível
+                if (pageSubtitle) pageSubtitle.textContent = subtitleFromData || 'Acompanhe os principais indicadores e métricas da plataforma.';
             } else {
-                pageTitle.textContent = menuText;
-            }
-
-            if (pageSubtitle) {
-            pageSubtitle.textContent = subtitleFromData || '';
+                // Para outras páginas, usa o título e subtítulo definidos no link
+                pageTitle.textContent = titleFromData || activeLink.querySelector('span')?.textContent.trim();
+                if (pageSubtitle) pageSubtitle.textContent = subtitleFromData || '';
             }
         }
     }
