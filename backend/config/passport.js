@@ -17,7 +17,8 @@ passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     callbackURL: "/api/auth/google/callback",
-    passReqToCallback: true // Necessário para ler req.session.registerType
+    passReqToCallback: true, // Necessário para ler req.session.registerType
+    proxy: true // Importante para produção (Render) para garantir HTTPS no callback
 },
 async (req, accessToken, refreshToken, profile, done) => {
     try {
