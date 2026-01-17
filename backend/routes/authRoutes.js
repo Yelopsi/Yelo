@@ -4,42 +4,51 @@ const jwt = require('jsonwebtoken');
 
 // Função para gerar o token (similar às que você já tem)
 const generateToken = (id, type) => {
-    return jwt.sign({ id, type }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    return jwt.sign({ id, type }, process.env.JWT_SECRET || 'secreto_yelo_dev', { expiresIn: '30d' });
 };
 
 // Rota de entrada para autenticação com Google
-// Ex: GET /api/auth/google?userType=patient
-router.get('/google', (req, res, next) => {
-    // Salva o tipo de usuário na sessão para usar no callback
-    req.session.userType = req.query.userType;
-    passport.authenticate('google', {
-        scope: ['profile', 'email'] // Pede ao Google o perfil e o e-mail do usuário
-    })(req, res, next);
+router.get('/google', passport.authenticate('google', {
+    scope: ['profile', 'email']
+}));
+
+// Rota específica para cadastro de PSICÓLOGO via Google
+router.get('/google/psychologist', (req, res, next) => {
+    req.session.registerType = 'psychologist'; // Define intenção de cadastro
+    passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
 });
 
 // Rota de callback que o Google chama após o login
-router.get('/google/callback', passport.authenticate('google', {
-    failureRedirect: '/login.html?error=auth_failed', // Redireciona se o usuário cancelar
-    session: false // Não vamos usar sessões persistentes, apenas para o fluxo OAuth
-}), (req, res) => {
-    // Se a autenticação foi bem-sucedida, o usuário está em req.user
-    const user = req.user;
-    const userType = req.session.userType;
+router.get('/google/callback', 
+    passport.authenticate('google', { failureRedirect: '/login?error=google_auth_failed', session: false }),
+    (req, res) => {
+        // Se a autenticação foi bem-sucedida, o usuário está em req.user
+        const user = req.user;
+        
+        // O tipo vem do passport.js (admin, psychologist ou patient)
+        const userType = user.type || (user.dataValues && user.dataValues.type) || 'patient';
 
-    // Gera um token JWT para o usuário
-    const token = generateToken(user.id, userType);
+        // Gera um token JWT para o usuário
+        const token = generateToken(user.id, userType);
+        const userName = user.nome;
 
-    let dashboardPath = userType === 'patient' ? '/patient/patient_dashboard.html' : '/psi/psi_dashboard.html';
+        // Define o destino com base no tipo
+        let dashboardPath = '/patient/patient_dashboard'; // Padrão
+        
+        if (userType === 'admin') {
+            dashboardPath = '/admin';
+        } else if (userType === 'psychologist') {
+            dashboardPath = '/psi/psi_dashboard.html';
+            // Lógica de Onboarding para Psicólogos (se não tiver CRP)
+            if (!user.crp) {
+                dashboardPath = '/psi/completar-perfil'; 
+            }
+        }
 
-    // **NOVO**: Lógica de Onboarding para Psicólogos
-    // Se for um psicólogo e o campo CRP estiver nulo/vazio, redireciona para a página de completar perfil.
-    if (userType === 'psychologist' && !user.crp) {
-        dashboardPath = '/psi_completar_perfil.html';
+        // Redireciona para uma view intermediária que salva o token no localStorage
+        // Codificamos os parâmetros para passar na URL
+        res.redirect(`/auth-callback?token=${token}&type=${userType}&name=${encodeURIComponent(userName)}&redirect=${dashboardPath}`);
     }
-
-    // Redireciona o usuário para uma página intermediária no front-end
-    // que irá salvar o token e redirecionar para o dashboard correto.
-    res.redirect(`http://127.0.0.1:5500/auth_callback.html?token=${token}&dashboard=${dashboardPath}`);
-});
+);
 
 module.exports = router;

@@ -9,6 +9,8 @@ const { initSocket } = require('./config/socket');
 const { Server } = require('socket.io'); // Fallback para inicialização manual
 const cors = require('cors');
 const cookieParser = require('cookie-parser'); // <-- Adicionado para sessões
+const session = require('express-session'); // <-- ADICIONADO PARA OAUTH
+const passport = require('passport'); // <-- ADICIONADO PARA OAUTH
 const crypto = require('crypto'); // <-- ADICIONADO PARA GERAR IDs DE SESSÃO
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -18,6 +20,9 @@ const gamificationService = require('./services/gamificationService'); // Import
 
 // Banco de Dados
 const db = require('./models');
+
+// Configuração do Passport (Google Auth)
+require('./config/passport');
 
 // --- FIX: Patch Message Model to include 'status' if missing ---
 // Garante que o campo 'status' seja retornado nas consultas GET (API),
@@ -64,6 +69,7 @@ const supportRoutes = require('./routes/supportRoutes');
 const adminMessageRoutes = require('./routes/adminMessageRoutes');
 const adminSupportRoutes = require('./routes/adminSupportRoutes');
 const blogRoutes = require('./routes/blogRoutes');
+const authRoutes = require('./routes/authRoutes'); // <-- GARANTIR QUE ESTÁ AQUI
 const newsletterRoutes = require('./routes/newsletterRoutes'); // <-- ADICIONADO
 const forumRoutes = require('./routes/forumRoutes'); // <--- ADICIONADO
 
@@ -271,6 +277,14 @@ if (io) {
 // --- MIDDLEWARES ---
 app.use(cors());
 app.use(cookieParser()); // <-- Adicionado para ler cookies de sessão
+
+// --- SESSÃO (Necessária para o Passport) ---
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'yelo_secret_session_key',
+    resave: false,
+    saveUninitialized: true
+}));
+app.use(passport.initialize());
 
 // --- MIDDLEWARE DE SESSÃO ATIVA (NOVO) ---
 // Rastreia todos os visitantes (logados ou não) para o card "Acessos Simultâneos"
@@ -786,6 +800,7 @@ app.use('/api/messaging', messagingRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/demand', demandRoutes);
 app.use('/api/usuarios', usuarioRoutes);
+app.use('/api/auth', authRoutes); // <-- ROTA DE AUTENTICAÇÃO GOOGLE
 
 // --- CORREÇÃO: ROTA PARA ARQUIVAR/DESARQUIVAR CONVERSA ---
 // A rota foi movida para ANTES das rotas genéricas de admin (`/api/admin`)
@@ -1234,6 +1249,11 @@ app.get('/recuperar-senha', (req, res) => { res.render('esqueci_senha'); });
 app.get('/redefinir-senha', (req, res) => { res.render('redefinir_senha'); });
 
 // --- ROTA DE LOGOUT E CORREÇÕES DE REDIRECIONAMENTO ---
+// Rota intermediária para salvar token do Google e redirecionar
+app.get('/auth-callback', (req, res) => {
+    res.render('auth_callback');
+});
+
 app.get('/logout', (req, res) => {
     // Envia script para limpar localStorage e redirecionar para a Home
     res.send(`
