@@ -62,7 +62,7 @@
                     <label for="senha">Senha</label>
                     <div class="input-wrapper">
                         <input type="password" id="senha" name="senha" placeholder="Mínimo 6 caracteres" autocomplete="new-password" required minlength="6">
-                        <button type="button" class="btn-toggle-senha" onclick="toggleSenha('senha', this)" title="Mostrar senha">
+                        <button type="button" class="btn-toggle-senha" data-target="senha" title="Mostrar senha">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         </button>
                     </div>
@@ -72,7 +72,7 @@
                     <label for="confirmar-senha">Confirmar Senha</label>
                     <div class="input-wrapper">
                         <input type="password" id="confirmar-senha" name="confirmar-senha" placeholder="Repita a senha" autocomplete="new-password" required>
-                        <button type="button" class="btn-toggle-senha" onclick="toggleSenha('confirmar-senha', this)" title="Mostrar senha">
+                        <button type="button" class="btn-toggle-senha" data-target="confirmar-senha" title="Mostrar senha">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         </button>
                     </div>
@@ -106,6 +106,6 @@
     <%- include('partials/footer') %>
     
     <script src="/config.js"></script>
-    <script src="/registrar.js"></script>
+    <script src="/cadastro.js"></script>
 </body>
 </html>
