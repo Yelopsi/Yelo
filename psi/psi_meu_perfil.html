@@ -1,284 +1,114 @@
 <div class="page-content">
-    <div class="header-flex">
-        <div class="header-title-group">
-            <h1>Meu Perfil</h1>
-            <p>Gerencie suas informações pessoais e profissionais.</p>
-        </div>
-        <div id="form-mode-indicator" class="mode-indicator-view">
-            <span id="form-mode-icon">●</span> <span id="form-mode-text">Modo de Visualização</span>
-        </div>
-    </div>
-
-    <form id="perfil-form">
-        <fieldset id="form-fieldset" disabled style="border: none; padding: 0; margin: 0;">
-            
-            <!-- Foto -->
-            <div class="widget" style="text-align: center;">
+    <div class="widgets-container widgets-container--vertical">
+        
+        <!-- Card de Perfil -->
+        <div class="widget">
+            <h3>Meu Perfil Profissional</h3>
+            <form id="form-perfil-psi">
+                
+                <!-- Foto de Perfil -->
                 <div class="profile-photo-section">
-                    <label for="profile-photo-upload" class="profile-photo-label">
-                        <img id="psi-foto" src="https://placehold.co/150" class="profile-photo-preview" alt="Foto de Perfil">
+                    <label for="profilePhotoInput" class="profile-photo-label">
+                        <img src="https://placehold.co/120x120/1B4332/FFFFFF?text=Foto" alt="Foto de Perfil" id="psi-photo-preview" class="profile-photo-preview">
                         <div class="photo-edit-overlay"><i class="fas fa-camera"></i> 📷</div>
                     </label>
-                    <input type="file" id="profile-photo-upload" accept="image/*" style="display: none;">
+                    <input type="file" id="profilePhotoInput" accept="image/*" style="display: none;">
                 </div>
-                <p style="font-size: 0.9rem; color: #666;">Clique na foto para alterar</p>
-            </div>
 
-            <!-- Dados Básicos -->
-            <div class="widget">
-                <h3>Dados Pessoais</h3>
-                <div class="form-row">
-                    <div class="form-group" style="flex: 1;">
-                        <label for="nome">Nome Completo</label>
-                        <input type="text" id="nome" name="nome" required>
+                <div class="form-grid-2col">
+                    <div class="form-group">
+                        <label>Nome Completo</label>
+                        <input type="text" id="psi-nome" required>
                     </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label for="email">E-mail</label>
-                        <input type="email" id="email" name="email" required>
+                    <div class="form-group">
+                        <label>E-mail (Login)</label>
+                        <input type="email" id="psi-email" required>
                     </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group" style="flex: 1;">
+                    <div class="form-group">
                         <label>Telefone / WhatsApp</label>
-                        <input type="text" id="telefone" name="telefone">
+                        <input type="text" id="psi-telefone">
                     </div>
-                    <div class="form-group" style="flex: 1;">
+                    <div class="form-group">
                         <label>CRP</label>
-                        <input type="text" id="crp" name="crp">
+                        <input type="text" id="psi-crp" disabled style="background-color: #e9ecef; cursor: not-allowed;" title="Para alterar o CRP, entre em contato com o suporte.">
                     </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group" style="flex: 1;">
-                        <label for="cpf">CPF / Documento</label>
-                        <input type="text" id="cpf" name="cpf">
-                    </div>
-                    <div class="form-group hidden" id="group-razao-social" style="flex: 1;">
-                        <label for="razao_social">Razão Social</label>
-                        <input type="text" id="razao_social" name="razao_social">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Endereço -->
-            <div class="widget">
-                <h3>Localização</h3>
-                <div class="form-row">
-                    <div class="form-group" style="flex: 1;">
-                        <label for="cep">CEP</label>
-                        <div style="position: relative;">
-                            <input type="text" id="cep" name="cep">
-                            <span id="cep-loading" style="position: absolute; right: 10px; top: 12px; display: none;">⌛</span>
-                        </div>
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label for="cidade">Cidade</label>
-                        <input type="text" id="cidade" name="cidade">
-                    </div>
-                    <div class="form-group" style="width: 100px;">
-                        <label for="estado">UF</label>
-                        <input type="text" id="estado" name="estado">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Perfil Profissional (Multiselects) -->
-            <div class="widget">
-                <h3>Perfil Profissional</h3>
-                
-                <div class="form-group">
-                    <label>Modalidade de Atendimento</label>
-                    <div id="modalidade_atendimento_multiselect" class="multiselect-tag">
-                        <div class="multiselect-display"></div>
-                        <div class="multiselect-options">
-                            <div class="option" data-value="Online">Online</div>
-                            <div class="option" data-value="Presencial">Presencial</div>
-                            <div class="option" data-value="Híbrido">Híbrido</div>
-                        </div>
-                    </div>
-                    <input type="hidden" name="modalidade" id="modalidade_input">
                 </div>
 
-                <div class="form-group">
-                    <label>Abordagens Técnicas</label>
-                    <div id="abordagens_tecnicas_multiselect" class="multiselect-tag">
-                        <div class="multiselect-display"></div>
-                        <div class="multiselect-options">
-                            <div class="option" data-value="TCC">TCC</div>
-                            <div class="option" data-value="Psicanálise">Psicanálise</div>
-                            <div class="option" data-value="Humanista">Humanista</div>
-                            <div class="option" data-value="Gestalt">Gestalt</div>
-                            <div class="option" data-value="Comportamental">Comportamental</div>
-                            <div class="option" data-value="Sistêmica">Sistêmica</div>
-                            <div class="option" data-value="Jungiana">Jungiana</div>
-                            <div class="option" data-value="Fenomenológica">Fenomenológica</div>
-                            <div class="option" data-value="Outra">Outra</div>
-                        </div>
+                <div class="form-grid-2col">
+                    <div class="form-group">
+                        <label>Cidade</label>
+                        <input type="text" id="psi-cidade">
+                    </div>
+                    <div class="form-group">
+                        <label>Estado (UF)</label>
+                        <select id="psi-estado" class="filtro-select">
+                            <option value="">Selecione...</option>
+                            <option value="AC">Acre</option><option value="AL">Alagoas</option><option value="AP">Amapá</option><option value="AM">Amazonas</option><option value="BA">Bahia</option><option value="CE">Ceará</option><option value="DF">Distrito Federal</option><option value="ES">Espírito Santo</option><option value="GO">Goiás</option><option value="MA">Maranhão</option><option value="MT">Mato Grosso</option><option value="MS">Mato Grosso do Sul</option><option value="MG">Minas Gerais</option><option value="PA">Pará</option><option value="PB">Paraíba</option><option value="PR">Paraná</option><option value="PE">Pernambuco</option><option value="PI">Piauí</option><option value="RJ">Rio de Janeiro</option><option value="RN">Rio Grande do Norte</option><option value="RS">Rio Grande do Sul</option><option value="RO">Rondônia</option><option value="RR">Roraima</option><option value="SC">Santa Catarina</option><option value="SP">São Paulo</option><option value="SE">Sergipe</option><option value="TO">Tocantins</option>
+                        </select>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Temas de Atuação</label>
-                    <div id="temas_atuacao_multiselect" class="multiselect-tag">
-                        <div class="multiselect-display"></div>
-                        <div class="multiselect-options">
-                            <div class="option" data-value="Ansiedade">Ansiedade</div>
-                            <div class="option" data-value="Depressão">Depressão</div>
-                            <div class="option" data-value="Relacionamentos">Relacionamentos</div>
-                            <div class="option" data-value="Autoestima">Autoestima</div>
-                            <div class="option" data-value="Carreira">Carreira</div>
-                            <div class="option" data-value="Luto">Luto</div>
-                            <div class="option" data-value="Traumas">Traumas</div>
-                            <div class="option" data-value="Estresse">Estresse</div>
-                        </div>
-                    </div>
+                    <label>Resumo Profissional (Bio)</label>
+                    <textarea id="psi-bio" rows="4" placeholder="Conte um pouco sobre sua experiência e abordagem..."></textarea>
                 </div>
 
-                <div class="form-group">
-                    <label>Público Alvo</label>
-                    <div id="publico_alvo_multiselect" class="multiselect-tag">
-                        <div class="multiselect-display"></div>
-                        <div class="multiselect-options">
-                            <div class="option" data-value="Adultos">Adultos</div>
-                            <div class="option" data-value="Adolescentes">Adolescentes</div>
-                            <div class="option" data-value="Crianças">Crianças</div>
-                            <div class="option" data-value="Idosos">Idosos</div>
-                            <div class="option" data-value="Casais">Casais</div>
-                        </div>
-                    </div>
+                <div class="form-acoes">
+                    <button type="submit" class="btn-primario">Salvar Alterações</button>
                 </div>
-
-                <div class="form-group">
-                    <label>Estilo de Terapia</label>
-                    <div id="estilo_terapia_multiselect" class="multiselect-tag">
-                        <div class="multiselect-display"></div>
-                        <div class="multiselect-options">
-                            <div class="option" data-value="Acolhedor">Acolhedor</div>
-                            <div class="option" data-value="Direto">Direto</div>
-                            <div class="option" data-value="Analítico">Analítico</div>
-                            <div class="option" data-value="Prático">Prático</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Práticas Inclusivas</label>
-                    <div id="praticas_inclusivas_multiselect" class="multiselect-tag">
-                        <div class="multiselect-display"></div>
-                        <div class="multiselect-options">
-                            <div class="option" data-value="LGBTQIAPN+">LGBTQIAPN+</div>
-                            <div class="option" data-value="Antirracista">Antirracista</div>
-                            <div class="option" data-value="Feminista">Feminista</div>
-                            <div class="option" data-value="Neurodiversidade">Neurodiversidade</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Disponibilidade</label>
-                    <div id="disponibilidade_periodo_multiselect" class="multiselect-tag">
-                        <div class="multiselect-display"></div>
-                        <div class="multiselect-options">
-                            <div class="option" data-value="Manhã">Manhã</div>
-                            <div class="option" data-value="Tarde">Tarde</div>
-                            <div class="option" data-value="Noite">Noite</div>
-                            <div class="option" data-value="Finais de Semana">Finais de Semana</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group" style="flex: 1;">
-                        <label>Gênero de Identidade</label>
-                        <div id="genero_identidade_multiselect" class="multiselect-tag" data-single-select="true">
-                            <div class="multiselect-display"></div>
-                            <div class="multiselect-options">
-                                <div class="option" data-value="Feminino">Feminino</div>
-                                <div class="option" data-value="Masculino">Masculino</div>
-                                <div class="option" data-value="Não-binário">Não-binário</div>
-                                <div class="option" data-value="Outro">Outro</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label for="valor_sessao_numero">Valor da Sessão (R$)</label>
-                        <input type="number" id="valor_sessao_numero" name="valor_sessao_numero" step="0.01">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="bio">Biografia / Resumo</label>
-                    <textarea id="bio" name="bio" rows="5"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="slug">Link do Perfil (Slug)</label>
-                    <div class="input-prefix-group">
-                        <span class="prefix">yelopsi.com.br/</span>
-                        <input type="text" id="slug" name="slug">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Redes Sociais -->
-            <div class="widget">
-                <h3>Redes Sociais</h3>
-                <div class="form-row">
-                    <div class="form-group" style="flex: 1;">
-                        <label>Instagram</label>
-                        <div class="input-prefix-group">
-                            <span class="prefix">instagram.com/</span>
-                            <input type="text" id="instagram_url" name="instagram_url">
-                        </div>
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label>LinkedIn</label>
-                        <div class="input-prefix-group">
-                            <span class="prefix">linkedin.com/in/</span>
-                            <input type="text" id="linkedin_url" name="linkedin_url">
-                        </div>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group" style="flex: 1;">
-                        <label>TikTok</label>
-                        <div class="input-prefix-group">
-                            <span class="prefix">tiktok.com/@</span>
-                            <input type="text" id="tiktok_url" name="tiktok_url">
-                        </div>
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label>Facebook</label>
-                        <div class="input-prefix-group">
-                            <span class="prefix">facebook.com/</span>
-                            <input type="text" id="facebook_url" name="facebook_url">
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>X (Twitter)</label>
-                    <div class="input-prefix-group">
-                        <span class="prefix">x.com/</span>
-                        <input type="text" id="x_url" name="x_url">
-                    </div>
-                </div>
-            </div>
-
-        </fieldset>
-
-        <div class="form-actions">
-            <button type="button" id="btn-alterar" class="btn btn-primary">Editar Perfil</button>
-            <button type="submit" id="btn-salvar" class="btn btn-success hidden">Salvar Alterações</button>
+            </form>
         </div>
-    </form>
 
-    <!-- Zona de Perigo -->
-    <div class="widget" style="border-left: 5px solid #E63946; margin-top: 30px;">
-        <h3 style="color: #E63946;">Zona de Perigo</h3>
-        <p>A exclusão da conta é permanente e removerá todos os seus dados, histórico e acesso à plataforma.</p>
-        <div class="form-acoes" style="justify-content: flex-start;">
-            <button type="button" id="btn-excluir-conta" style="color: #E63946; background: none; border: 1px solid #E63946; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">
-                Excluir minha conta
-            </button>
+        <!-- Card de Acesso Rápido (Google) - NOVO -->
+        <div class="widget">
+            <h3>Acesso Rápido</h3>
+            <p class="subtitulo-secao" style="margin-bottom: 20px;">Vincule sua conta Google para fazer login com um clique. O e-mail do Google deve ser o mesmo cadastrado acima.</p>
+            
+            <div style="display: flex; align-items: center; gap: 15px; background: #f8f9fa; padding: 20px; border-radius: 12px; border: 1px solid #e9ecef;">
+                <div style="background: white; padding: 10px; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <svg viewBox="0 0 24 24" width="24" height="24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                </div>
+                <div style="flex-grow: 1;">
+                    <strong style="display: block; color: #333;">Conta Google</strong>
+                    <span style="font-size: 0.9rem; color: #666;">Use o botão ao lado para testar ou vincular.</span>
+                </div>
+                <a href="/api/auth/google" class="btn-secundario" style="text-decoration: none; font-size: 0.9rem;">
+                    Conectar / Testar
+                </a>
+            </div>
         </div>
+
+        <!-- Card de Senha -->
+        <div class="widget">
+            <h3>Alterar Senha</h3>
+            <form id="form-senha-psi">
+                <div class="form-grid-2col">
+                    <div class="form-group">
+                        <label>Nova Senha</label>
+                        <input type="password" id="nova-senha" required minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirmar Senha</label>
+                        <input type="password" id="confirmar-senha" required minlength="6">
+                    </div>
+                </div>
+                <div class="form-acoes">
+                    <button type="submit" class="btn-primario">Atualizar Senha</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Zona de Perigo -->
+        <div class="widget" style="border-left: 5px solid #E63946;">
+            <h3 style="color: #E63946;">Zona de Perigo</h3>
+            <p>A exclusão da conta é permanente e removerá todos os seus dados, histórico e acesso à plataforma.</p>
+            <div class="form-acoes" style="justify-content: flex-start;">
+                <button type="button" id="btn-excluir-conta" style="color: #E63946; background: none; border: 1px solid #E63946; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    Excluir minha conta
+                </button>
+            </div>
+        </div>
+
     </div>
 </div>
+<script src="/psi/psi_meu_perfil.js"></script>
