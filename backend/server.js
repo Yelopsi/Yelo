@@ -1382,6 +1382,35 @@ const startServer = async () => {
             );
         `);
 
+        // --- FIX: TABELAS DE SESSÃO E ANALYTICS (CRÍTICO PARA DASHBOARD) ---
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "ActiveSessions" (
+                "sessionId" VARCHAR(255) PRIMARY KEY,
+                "lastSeen" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "AnonymousSessions" (
+                "sessionId" VARCHAR(255) PRIMARY KEY,
+                "durationInSeconds" INTEGER,
+                "endedAt" TIMESTAMP WITH TIME ZONE,
+                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "SiteVisits" (
+                "id" SERIAL PRIMARY KEY,
+                "url" VARCHAR(255),
+                "userAgent" TEXT,
+                "referrer" TEXT,
+                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
         console.log('✅ [DB SYNC] Correções de schema aplicadas com sucesso.');
 
     } catch (e) {
