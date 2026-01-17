@@ -62,7 +62,7 @@ window.initializePage = function() {
                     </button>
                 </td>
                 <td data-label="Ações">
-                    <button class="btn-tabela" onclick="alert('Editar ID: ${psy.id}')">Editar</button>
+                    <button class="btn-tabela" onclick="navigateToPage('admin_detalhes_psicologo.html?id=${psy.id}')">Detalhes</button>
                     <button class="btn-tabela btn-tabela-perigo btn-delete-psy" data-id="${psy.id}" data-name="${psy.nome}">Excluir</button>
                 </td>
             `;
