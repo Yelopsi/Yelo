@@ -147,42 +147,116 @@ router.get('/financials', adminController.getFinancials);
 // --- FIX: ROTA INLINE PARA INDICADORES (Evita erro 500 se controller falhar) ---
 router.get('/questionnaire-analytics', async (req, res) => {
     try {
-        // 1. Total de Buscas
-        const [totalResult] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "DemandSearches"`);
-        const total = parseInt(totalResult[0]?.count || 0, 10);
+        // Helper para formatar array de DB para Objeto { "Label": 10, "Label2": 5 }
+        const formatObj = (rows) => {
+            const obj = {};
+            rows.forEach(r => {
+                if (r.label) obj[r.label] = parseInt(r.value, 10);
+            });
+            return obj;
+        };
 
-        // Helper para formatar
-        const format = (rows) => rows.map(r => ({ label: r.label || 'N/A', value: parseInt(r.value, 10) }));
-
-        // 2. Agregações (Gênero, Idade, Motivo, Estado)
-        const [gender] = await db.sequelize.query(`
-            SELECT "searchParams"->>'genero' as label, COUNT(*) as value 
-            FROM "DemandSearches" WHERE "searchParams"->>'genero' IS NOT NULL 
-            GROUP BY 1 ORDER BY value DESC
-        `);
-
-        const [age] = await db.sequelize.query(`
-            SELECT "searchParams"->>'faixa_etaria' as label, COUNT(*) as value 
-            FROM "DemandSearches" WHERE "searchParams"->>'faixa_etaria' IS NOT NULL 
-            GROUP BY 1 ORDER BY value DESC
-        `);
-
-        const [symptoms] = await db.sequelize.query(`
-            SELECT "searchParams"->>'motivo' as label, COUNT(*) as value 
-            FROM "DemandSearches" WHERE "searchParams"->>'motivo' IS NOT NULL 
-            GROUP BY 1 ORDER BY value DESC LIMIT 10
-        `);
+        // --- 1. PATIENT ANALYTICS (DemandSearches) ---
+        const [totalPatients] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "DemandSearches"`);
         
-        const [location] = await db.sequelize.query(`
-            SELECT "searchParams"->>'estado' as label, COUNT(*) as value 
-            FROM "DemandSearches" WHERE "searchParams"->>'estado' IS NOT NULL 
-            GROUP BY 1 ORDER BY value DESC LIMIT 10
-        `);
+        // Helper para buscar estatísticas de pacientes
+        const getPatientStat = async (key) => {
+            const [rows] = await db.sequelize.query(`
+                SELECT "searchParams"->>'${key}' as label, COUNT(*) as value 
+                FROM "DemandSearches" 
+                WHERE "searchParams"->>'${key}' IS NOT NULL 
+                GROUP BY 1 ORDER BY value DESC LIMIT 10
+            `);
+            return formatObj(rows);
+        };
 
-        res.json({ total, gender: format(gender), age: format(age), symptoms: format(symptoms), location: format(location) });
+        const patientAnalytics = {
+            total: parseInt(totalPatients[0]?.count || 0, 10),
+            idade: await getPatientStat('faixa_etaria'),
+            identidade_genero: await getPatientStat('genero'),
+            pref_genero_prof: await getPatientStat('preferencia_genero'),
+            motivacao: await getPatientStat('motivo'),
+            temas: await getPatientStat('temas'),
+            terapia_anterior: await getPatientStat('terapia_anterior'),
+            experiencia_desejada: await getPatientStat('experiencia_desejada'),
+            caracteristicas_prof: await getPatientStat('caracteristicas'),
+            faixa_valor: await getPatientStat('valor'),
+            modalidade_atendimento: await getPatientStat('modalidade')
+        };
+
+        // --- 2. PSI ANALYTICS (Psychologists) ---
+        const [totalPsis] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "Psychologists"`);
+        
+        const getPsiStat = async (col) => {
+            try {
+                // Tenta buscar, se a coluna não existir ou der erro, retorna vazio
+                const [rows] = await db.sequelize.query(`
+                    SELECT "${col}"::text as label, COUNT(*) as value 
+                    FROM "Psychologists" 
+                    WHERE "${col}" IS NOT NULL 
+                    GROUP BY 1 ORDER BY value DESC LIMIT 10
+                `);
+                return formatObj(rows);
+            } catch (e) { return {}; }
+        };
+
+        const psiAnalytics = {
+            total: parseInt(totalPsis[0]?.count || 0, 10),
+            modalidade: await getPsiStat('modalidade'),
+            genero_identidade: await getPsiStat('genero_identidade'),
+            valor_sessao_faixa: {}, // Complexo para calcular inline, deixando vazio por enquanto
+            temas_atuacao: await getPsiStat('temas_atuacao'),
+            abordagens_tecnicas: await getPsiStat('abordagens_tecnicas'),
+            praticas_vivencias: await getPsiStat('praticas_inclusivas')
+        };
+
+        // --- 3. SUMMARY 30 DAYS (O que estava faltando) ---
+        const [total30d] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "DemandSearches" WHERE "createdAt" >= NOW() - INTERVAL '30 days'`);
+        const total30 = parseInt(total30d[0]?.count || 0, 10);
+
+        const getTopStat30d = async (key) => {
+            if (total30 === 0) return null;
+            const [rows] = await db.sequelize.query(`
+                SELECT "searchParams"->>'${key}' as label, COUNT(*) as value 
+                FROM "DemandSearches" 
+                WHERE "createdAt" >= NOW() - INTERVAL '30 days' 
+                AND "searchParams"->>'${key}' IS NOT NULL 
+                GROUP BY 1 ORDER BY value DESC LIMIT 1
+            `);
+            if (rows.length > 0) {
+                const val = parseInt(rows[0].value, 10);
+                return {
+                    label: rows[0].label,
+                    percentage: Math.round((val / total30) * 100)
+                };
+            }
+            return null;
+        };
+
+        const summary30d = {
+            total: total30,
+            stats: {
+                idade: await getTopStat30d('faixa_etaria'),
+                identidade_genero: await getTopStat30d('genero'),
+                pref_genero_prof: await getTopStat30d('preferencia_genero'),
+                motivacao: await getTopStat30d('motivo'),
+                temas: await getTopStat30d('temas'),
+                terapia_anterior: await getTopStat30d('terapia_anterior'),
+                experiencia_desejada: await getTopStat30d('experiencia_desejada'),
+                caracteristicas_prof: await getTopStat30d('caracteristicas'),
+                faixa_valor: await getTopStat30d('valor'),
+                modalidade_atendimento: await getTopStat30d('modalidade')
+            }
+        };
+
+        res.json({ patientAnalytics, psiAnalytics, summary30d });
     } catch (error) {
         console.error("Erro em questionnaire-analytics:", error);
-        res.json({ total: 0, gender: [], age: [], symptoms: [], location: [] });
+        res.json({ 
+            patientAnalytics: { total: 0, idade: {} }, 
+            psiAnalytics: { total: 0, modalidade: {} }, 
+            summary30d: { total: 0, stats: {} } 
+        });
     }
 });
 
