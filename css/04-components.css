@@ -214,6 +214,20 @@
     display: none; /* Mostra apenas para iOS ou se falhar o nativo */
 }
 
+/* Container da Imagem Ilustrativa (iOS) */
+.pwa-screenshot-container {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.pwa-screenshot {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
 .pwa-actions { display: flex; gap: 10px; margin-top: 5px; }
 
 .btn-pwa-install {
