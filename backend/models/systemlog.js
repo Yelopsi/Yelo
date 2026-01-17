@@ -22,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'SystemLog',
-    updatedAt: false, // Logs são imutáveis
+    timestamps: true, // Habilita createdAt e updatedAt para alinhar com a tabela do banco
     indexes: [
         { name: 'idx_systemlogs_level_created_at', fields: ['level', 'createdAt'] },
         { name: 'idx_systemlogs_created_at', fields: ['createdAt'] },
