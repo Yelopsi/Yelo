@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apoio à Mulher | Yelo</title>
+    <link rel="stylesheet" href="/css/01-variables.css">
+    <link rel="stylesheet" href="/css/02-base.css">
+    <link rel="stylesheet" href="/css/03-layout.css">
+    <link rel="stylesheet" href="/css/04-components.css">
+    <link rel="stylesheet" href="/css/05-pages.css">
+    <link rel="stylesheet" href="/css/06-utilities.css">
+</head>
+<body>
+
+    <!-- Header (Incluso via partial ou estático conforme seu padrão) -->
+    <%- include('partials/header') %>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero-ajuda">
+            <div class="container">
+                <span class="badge-acolhimento">Você não está sozinha</span>
+                <h1>Espaço de Apoio e Orientação</h1>
+                <p>Identificar a violência é o primeiro passo para romper o ciclo. Aqui você encontra informação segura e canais de ajuda especializados.</p>
+            </div>
+            <div class="wave-divider">
+                <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                    <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" fill="#fdfaf6"></path>
+                </svg>
+            </div>
+        </section>
+
+        <!-- Termômetro da Violência -->
+        <section class="secao-termometro">
+            <div class="container">
+                <h2 class="titulo-secao">Termômetro da Violência</h2>
+                <p class="subtitulo-secao">A violência nem sempre deixa marcas visíveis. Ela pode começar de forma sutil e escalar com o tempo. Identifique os sinais:</p>
+
+                <div class="termometro-grid">
+                    <!-- Nível 1: Atenção -->
+                    <div class="nivel-card nivel-amarelo">
+                        <div class="nivel-header">
+                            <span class="nivel-icon">⚠️</span>
+                            <h3>Sinais de Alerta</h3>
+                        </div>
+                        <ul class="sinais-lista">
+                            <li>Ciúmes excessivo e controle de roupas/celular</li>
+                            <li>Chantagem emocional ("Se você me amasse...")</li>
+                            <li>Isolamento de amigos e familiares</li>
+                            <li>Desvalorização e críticas constantes</li>
+                        </ul>
+                        <div class="nivel-footer">
+                            <strong>Atenção:</strong> Isso não é amor, é controle.
+                        </div>
+                    </div>
+
+                    <!-- Nível 2: Perigo -->
+                    <div class="nivel-card nivel-laranja">
+                        <div class="nivel-header">
+                            <span class="nivel-icon">🚫</span>
+                            <h3>Violência Psicológica</h3>
+                        </div>
+                        <ul class="sinais-lista">
+                            <li>Humilhação em público ou privado</li>
+                            <li>Ameaças verbais ou gestuais</li>
+                            <li>Destruição de objetos pessoais</li>
+                            <li>Controle financeiro rigoroso</li>
+                        </ul>
+                        <div class="nivel-footer">
+                            <strong>Cuidado:</strong> O ciclo tende a piorar.
+                        </div>
+                    </div>
+
+                    <!-- Nível 3: Urgência -->
+                    <div class="nivel-card nivel-vermelho">
+                        <div class="nivel-header">
+                            <span class="nivel-icon">🆘</span>
+                            <h3>Risco Iminente</h3>
+                        </div>
+                        <ul class="sinais-lista">
+                            <li>Empurrões, tapas, chutes ou socos</li>
+                            <li>Relações sexuais forçadas</li>
+                            <li>Ameaça com armas ou objetos</li>
+                            <li>Ameaça de morte (contra você ou filhos)</li>
+                        </ul>
+                        <div class="nivel-footer">
+                            <strong>Urgente:</strong> Peça ajuda imediatamente.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Canais de Ajuda -->
+        <section class="secao-canais-apoio">
+            <div class="container">
+                <h2 class="titulo-secao">Canais de Acolhimento</h2>
+                <p class="subtitulo-secao">Você tem direitos e existe uma rede pronta para te apoiar. O contato é sigiloso.</p>
+
+                <div class="canais-grid">
+                    <!-- Card 180 -->
+                    <a href="https://api.whatsapp.com/send/?phone=556196100180&text=Ol%C3%A1&type=phone_number&app_absent=0" target="_blank" class="canal-card card-180">
+                        <div class="canal-icon-wrapper">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp">
+                        </div>
+                        <h3>Central 180</h3>
+                        <p>Atendimento oficial do governo para denúncias e orientações sobre violência contra a mulher.</p>
+                        <span class="btn-canal">Chamar no WhatsApp &rarr;</span>
+                    </a>
+
+                    <!-- Card Justiceiras -->
+                    <a href="https://docs.google.com/forms/d/e/1FAIpQLSft--ccomNpgfVaU0O9Xjpmg_vLmhHsKZ8SG5YiphdMRshpgg/viewform?pli=1" target="_blank" class="canal-card card-justiceiras">
+                        <div class="canal-icon-wrapper">
+                            <span class="justiceiras-icon">⚖️</span>
+                        </div>
+                        <h3>Projeto Justiceiras</h3>
+                        <p>Rede multidisciplinar de acolhimento, apoio jurídico, psicológico e socioassistencial.</p>
+                        <span class="btn-canal">Solicitar Apoio &rarr;</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Botão de Saída Rápida (Fixo) -->
+    <a href="https://www.google.com" class="btn-quick-exit" title="Sair deste site imediatamente">
+        <span class="icon-x">✕</span>
+        <span>Saída Rápida</span>
+    </a>
+
+    <script>
+        // Script de Saída Rápida
+        function triggerQuickExit() {
+            // Substitui a página atual pelo Google para não deixar rastro no botão "Voltar" imediato
+            window.location.replace("https://www.google.com");
+        }
+
+        document.querySelector('.btn-quick-exit').addEventListener('click', function(e) {
+            e.preventDefault();
+            triggerQuickExit();
+        });
+
+        // Atalho: Tecla ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === "Escape") {
+                triggerQuickExit();
+            }
+        });
+    </script>
+
+    <%- include('partials/footer') %>
+</body>
+</html>
