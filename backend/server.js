@@ -373,6 +373,24 @@ app.post('/api/analytics/session-end', async (req, res) => {
         res.status(204).send();
     }
 });
+
+// ROTA DE ANALYTICS (INSTALAÇÃO PWA)
+app.post('/api/analytics/pwa-install', async (req, res) => {
+    try {
+        const userAgent = req.headers['user-agent'] || 'Unknown';
+        const { platform } = req.body; // 'ios', 'android' ou 'desktop'
+        
+        await db.sequelize.query(
+            `INSERT INTO "PwaInstallLogs" ("userAgent", "platform", "createdAt") VALUES (:ua, :plat, NOW())`,
+            { replacements: { ua: userAgent, plat: platform || 'unknown' } }
+        );
+        res.status(200).send('OK');
+    } catch (error) {
+        console.error("Erro ao registrar PWA install:", error);
+        res.status(500).send('Erro');
+    }
+});
+
 // =============================================================
 // 🚨 ROTAS DE EMERGÊNCIA (DESATIVADAS PARA PRODUÇÃO) 🚨
 // =============================================================
@@ -1436,6 +1454,16 @@ const startServer = async () => {
                 "message_sent_at" TIMESTAMP WITH TIME ZONE,
                 "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        // --- FIX: TABELA DE LOGS DE INSTALAÇÃO PWA ---
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "PwaInstallLogs" (
+                "id" SERIAL PRIMARY KEY,
+                "userAgent" TEXT,
+                "platform" VARCHAR(50),
+                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         `);
 

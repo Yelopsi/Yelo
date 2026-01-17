@@ -175,3 +175,62 @@
 .form-group-password-wrapper input {
     padding-right: 45px; 
 }
+
+/* --- PWA INSTALL BANNER (Mobile) --- */
+.pwa-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #ffffff;
+    box-shadow: 0 -4px 25px rgba(0,0,0,0.15);
+    z-index: 10001; /* Acima do cookie banner e menu */
+    padding: 20px 20px 30px 20px;
+    border-radius: 24px 24px 0 0;
+    display: none; /* Controlado via JS */
+    flex-direction: column;
+    gap: 15px;
+    animation: slideUpPwa 0.4s ease-out;
+    border-top: 1px solid rgba(0,0,0,0.05);
+    font-family: var(--font-principal);
+}
+
+.pwa-banner.visible { display: flex; }
+
+.pwa-header { display: flex; justify-content: space-between; align-items: center; }
+.pwa-title {
+    font-family: var(--font-titulos);
+    font-size: 1.2rem;
+    color: var(--verde-escuro);
+    margin: 0;
+    display: flex; align-items: center; gap: 10px;
+}
+.pwa-close { background: none; border: none; font-size: 1.5rem; color: #999; cursor: pointer; padding: 5px; }
+
+.pwa-instructions {
+    font-size: 0.9rem; color: #555; line-height: 1.5;
+    background-color: #f8f9fa; padding: 15px; border-radius: 12px;
+    border-left: 4px solid var(--cor-Yelo);
+    display: none; /* Mostra apenas para iOS ou se falhar o nativo */
+}
+
+.pwa-actions { display: flex; gap: 10px; margin-top: 5px; }
+
+.btn-pwa-install {
+    flex: 1;
+    background-color: var(--verde-escuro); color: white;
+    border: none; padding: 12px; border-radius: 12px;
+    font-weight: bold; font-size: 1rem; cursor: pointer;
+    box-shadow: 0 4px 10px rgba(27, 67, 50, 0.2);
+}
+
+.btn-pwa-later {
+    background: none; border: none; color: #777;
+    font-weight: 600; padding: 12px; cursor: pointer;
+    font-size: 0.9rem;
+}
+
+@keyframes slideUpPwa {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}

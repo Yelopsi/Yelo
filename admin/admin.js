@@ -585,6 +585,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (ltvEl) ltvEl.innerText = formatCurrency(data.financials.ltv || 0);
             }
 
+            // --- DADOS PWA (NOVO) ---
+            try {
+                const pwaResponse = await fetch(`${API_BASE_URL}/api/admin/stats/pwa`, { headers });
+                if (pwaResponse.ok) {
+                    const pwaData = await pwaResponse.json();
+                    
+                    const pwaTotalEl = document.getElementById('kpi-pwa');
+                    if (pwaTotalEl) pwaTotalEl.innerText = pwaData.total || 0;
+
+                    let android = 0, ios = 0;
+                    if (pwaData.byPlatform) {
+                        pwaData.byPlatform.forEach(p => {
+                            if (p.platform === 'android') android = parseInt(p.count);
+                            if (p.platform === 'ios') ios = parseInt(p.count);
+                        });
+                    }
+                    const androidEl = document.getElementById('kpi-pwa-android');
+                    const iosEl = document.getElementById('kpi-pwa-ios');
+                    if (androidEl) androidEl.innerText = android;
+                    if (iosEl) iosEl.innerText = ios;
+                }
+            } catch (errPwa) {
+                console.error("Erro ao carregar dados PWA", errPwa);
+            }
+
             // --- ESCONDE SKELETONS E MOSTRA CONTEÚDO ---
             document.querySelectorAll('#relatorios .kpi-card').forEach(card => {
                 const skeleton = card.querySelector('.kpi-skeleton');
