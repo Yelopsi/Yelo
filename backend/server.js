@@ -1199,6 +1199,11 @@ app.get('/faq', (req, res) => {
     res.render('faq');
 });
 
+// Rota para a página de Apoio à Mulher
+app.get('/ajuda-mulher', (req, res) => {
+    res.render('ajuda_mulher');
+});
+
 // Rotas de Autenticação (opcional, mas recomendado para segurança)
 app.get('/login', (req, res) => { res.render('login'); });
 app.get('/cadastro', (req, res) => { res.render('cadastro'); });
