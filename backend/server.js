@@ -1222,6 +1222,11 @@ app.get('/ajuda-mulher', (req, res) => {
     res.render('ajuda_mulher');
 });
 
+// Rota para Banner LinkedIn (Ferramenta Interna)
+app.get('/banner-linkedin', (req, res) => {
+    res.render('banner_linkedin');
+});
+
 // Rotas de Autenticação (opcional, mas recomendado para segurança)
 app.get('/login', (req, res) => { res.render('login'); });
 app.get('/cadastro', (req, res) => { res.render('cadastro'); });
