@@ -8,44 +8,49 @@
 
     <%- include('partials/header') %>
 
-    <main style="padding-top: 120px; padding-bottom: 80px;">
+    <main class="pagina-contato-main">
         <div class="container">
             
-            <div class="titulo-secao" style="margin-bottom: 60px;">
+            <div class="titulo-secao">
                 <h1>Fale Conosco</h1>
                 <p class="subtitulo-secao">Tem alguma dúvida, sugestão ou feedback? Adoraríamos ouvir você.</p>
             </div>
 
-            <div class="contato-container">
-                <div class="info-contato">
+            <div class="contato-grid">
+                <!-- Coluna da Esquerda: Informações -->
+                <div class="info-contato-box">
                     <h3>Canais de Atendimento</h3>
                     <p>Estamos aqui para ajudar. Para dúvidas gerais, parcerias ou suporte técnico, utilize um dos canais abaixo.</p>
-                    <ul>
-                        <li>
-                            <div style="font-size: 1.5rem;">✉️</div>
-                            <div>
-                                <strong>Email:</strong>
+                    
+                    <ul class="lista-canais">
+                        <li class="canal-item">
+                            <div class="canal-icon">✉️</div>
+                            <div class="canal-info">
+                                <strong>E-mail</strong>
                                 <a href="mailto:Oi@yelopsi.com.br">oi@yelopsi.com.br</a>
                             </div>
                         </li>
-                        <li>
-                            <div style="font-size: 1.5rem;">⏰</div>
-                            <div>
-                                <strong>Horário de Atendimento:</strong>
-                                Segunda a Sexta, das 9h às 18h.
+                        <li class="canal-item">
+                            <div class="canal-icon">⏰</div>
+                            <div class="canal-info">
+                                <strong>Horário de Atendimento</strong>
+                                <span>Segunda a Sexta, das 9h às 18h.</span>
                             </div>
                         </li>
-                        <li>
-                            <div style="font-size: 1.5rem;">📍</div>
-                            <div>
-                                <strong>Localização:</strong>
-                                Atendemos 100% online em todo o Brasil.
+                        <li class="canal-item">
+                            <div class="canal-icon">📍</div>
+                            <div class="canal-info">
+                                <strong>Localização</strong>
+                                <span>Atendemos 100% online em todo o Brasil.</span>
                             </div>
                         </li>
                     </ul>
                 </div>
 
-                <form class="form-contato">
+                <!-- Coluna da Direita: Formulário -->
+                <div class="form-contato-card">
+                    <h3>Envie uma mensagem</h3>
+                    <form class="form-contato">
                     <div class="form-group">
                         <label for="nome">Seu Nome</label>
                         <input type="text" id="nome" name="nome" placeholder="Como gostaria de ser chamado?" required>
@@ -74,7 +79,8 @@
                     <div class="form-status" aria-live="polite" style="min-height:1.5em; margin-bottom: 15px; font-weight: bold;"></div>
                     
                     <button type="submit" class="btn-login" style="margin-top: 0;">Enviar Mensagem</button>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </main>

@@ -1270,77 +1270,125 @@
 }
 
 /* --- PÁGINA DE CONTATO --- */
+.pagina-contato-main {
+    padding-top: 120px;
+    padding-bottom: 80px;
+    background-color: #fcfcfc;
+}
 
-.contato-container {
+.contato-grid {
     display: grid;
     grid-template-columns: 1fr; /* Mobile: 1 coluna */
-    gap: 50px;
-    max-width: 1100px;
-    margin: 0 auto;
+    gap: 40px;
+    max-width: 1000px;
+    margin: 40px auto 0 auto;
     align-items: start;
 }
 
-/* No Desktop, divide em 2 colunas (1/3 para info, 2/3 para formulário) */
 @media (min-width: 992px) {
-    .contato-container {
-        grid-template-columns: 1fr 1.5fr;
+    .contato-grid {
+        grid-template-columns: 1fr 1.2fr; /* Desktop: Info menor, Form maior */
+        gap: 60px;
     }
 }
 
-/* Lado Esquerdo: Informações */
-.info-contato h3 {
+/* Lado Esquerdo: Informações (Box Limpo) */
+.info-contato-box h3 {
     font-family: var(--font-titulos);
     color: var(--verde-escuro);
-    font-size: 1.8rem;
+    font-size: 2rem;
     margin-top: 0;
     margin-bottom: 20px;
+    line-height: 1.2;
 }
 
-.info-contato p {
+.info-contato-box p {
     color: #555;
     line-height: 1.6;
     margin-bottom: 30px;
+    font-size: 1.05rem;
 }
 
-.info-contato ul {
+/* Lista de Canais (Estilo Cartões Pequenos) */
+.lista-canais {
     list-style: none;
     padding: 0;
     margin: 0;
-}
-
-.info-contato li {
-    margin-bottom: 25px;
-    font-size: 1.05rem;
-    color: #333;
     display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.canal-item {
+    display: flex;
+    align-items: center;
     gap: 15px;
-    align-items: flex-start;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #eee;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.info-contato li > div:first-child {
-    min-width: 30px; /* Garante alinhamento uniforme dos ícones */
-    text-align: center;
-    margin-top: -3px; /* Ajuste fino para alinhar o emoji com o texto */
+.canal-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    border-color: var(--verde-escuro);
 }
 
-.info-contato li strong {
+.canal-icon {
+    width: 45px;
+    height: 45px;
+    background-color: #f0fdf4; /* Verde bem claro */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.canal-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.canal-info strong {
     color: var(--verde-escuro);
-    display: block;
-    margin-bottom: 5px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
 }
 
-.info-contato a {
-    color: var(--verde-escuro);
+.canal-info span, 
+.canal-info a {
+    color: #333;
+    font-size: 1rem;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.canal-info a:hover {
+    color: var(--cor-Yelo); /* Amarelo no hover */
     text-decoration: underline;
 }
 
-/* Lado Direito: Formulário (Cartão) */
-.form-contato {
-    background-color: #f8f9fa; /* Fundo cinza suave */
+/* Lado Direito: Formulário (Cartão Flutuante) */
+.form-contato-card {
+    background-color: #ffffff;
     padding: 40px;
-    border-radius: 16px;
-    border: 1px solid #e9ecef;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    border-radius: 20px;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08); /* Sombra mais elegante */
+}
+
+.form-contato-card h3 {
+    font-family: var(--font-titulos);
+    color: var(--verde-escuro);
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 1.6rem;
 }
 
 .form-contato .form-group {
@@ -1359,16 +1407,23 @@
 .form-contato textarea {
     width: 100%;
     padding: 12px;
-    border: 1px solid #ccc;
+    border: 1px solid #ddd;
     border-radius: 8px;
     font-family: var(--font-principal);
     font-size: 1rem;
-    background-color: #fff;
+    background-color: #f9fafb; /* Fundo levemente cinza nos inputs */
+    transition: all 0.2s ease;
 }
 
-.form-contato textarea {
-    resize: vertical; /* Permite redimensionar só na altura */
+.form-contato input:focus,
+.form-contato select:focus,
+.form-contato textarea:focus {
+    background-color: #fff;
+    border-color: var(--verde-escuro);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
 }
+
 
 /* Seção 4: FAQ -> BRANCO */
 .faq-secao {
@@ -1708,7 +1763,7 @@
     background-color: var(--verde-escuro);
     color: var(--branco-puro);
     text-align: center;
-    padding: 160px 20px 140px 20px;
+    padding: 140px 20px 120px 20px;
     margin-top: -100px;
 }
 
@@ -1733,7 +1788,7 @@
 
 .manifesto-hero h1 {
     font-family: var(--font-titulos);
-    font-size: 3.5rem;
+    font-size: 3rem;
     line-height: 1.1;
     margin-bottom: 30px;
     color: var(--branco-puro);
@@ -1741,7 +1796,7 @@
 
 .manifesto-lead {
     font-family: var(--font-titulos); /* Serifado para dar tom editorial */
-    font-size: 1.5rem;
+    font-size: 2.2rem; /* Aumentado para ser o título de impacto */
     line-height: 1.6;
     color: rgba(255, 255, 255, 0.9);
     font-weight: 400;
@@ -1784,6 +1839,37 @@
     color: #333;
 }
 
+/* Novo Layout de Fluxo Contínuo */
+.manifesto-content-flow {
+    max-width: 700px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.manifesto-content-flow p {
+    font-size: 1.4rem; /* Tipografia aumentada */
+    line-height: 1.8;
+    color: #444;
+    margin-bottom: 30px;
+    font-family: var(--font-leitura);
+}
+
+.flow-divider {
+    width: 60px;
+    height: 2px;
+    background-color: var(--verde-escuro);
+    margin: 40px auto;
+    opacity: 0.3;
+}
+
+.highlight-text {
+    font-weight: 600;
+    color: var(--verde-escuro);
+    font-size: 1.5rem;
+    margin-top: 40px;
+}
+
+/* Estilos antigos removidos ou sobrescritos pelo novo fluxo */
 .manifesto-block {
     margin-bottom: 80px;
     text-align: center;
