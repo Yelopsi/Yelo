@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <title>Manifesto Yelo | O Ecossistema para Psicólogos Clínicos</title>
+    <title>Manifesto Yelo | Sua dor não precisa de mais ruído</title>
     <meta name="description" content="A Yelo é mais que um marketplace. Somos um ecossistema de sustentação da carreira clínica, oferecendo fluxo de pacientes, supervisão e uma comunidade segura.">
     <%- include('partials/head') %>
 </head>
@@ -14,8 +14,8 @@
         <section class="manifesto-hero">
             <div class="container-manifesto">
                 <br>
-                <h1>Não somos apenas uma plataforma.<br>Somos um ecossistema.</h1>
-                <p class="manifesto-lead">O mercado promete "soluções completas" que, no fundo, são apenas listas de profissionais. A Yelo existe para sustentar a prática clínica real, não apenas para conectar pontas.</p>
+                <h1>Manifesto da Yelo</h1>
+                <p class="manifesto-lead">Sua dor não precisa de mais ruído.</p>
             </div>
 
             <div class="scroll-indicator">
@@ -35,44 +35,26 @@
         <section class="manifesto-body-section">
             <div class="container-manifesto">
                 
-                <div class="manifesto-block">
-                    <span class="block-number">01</span>
-                    <h2>Fluxo não é promessa.<br>É infraestrutura.</h2>
-                    <p>Você não precisa ser especialista em marketing. Nós cuidamos da infraestrutura para que os pacientes cheguem até você. Oferecemos previsibilidade e segurança para sua agenda, permitindo que você foque no que importa: o atendimento.</p>
-                </div>
+                <div class="manifesto-content-flow">
+                    <p>O mundo lá fora já é barulhento demais. Cheio de pressões, julgamentos e telas que nunca desligam. Quando a mente pede socorro, a última coisa que você precisa é de um sistema complicado ou de uma busca fria e solitária.</p>
 
-                <div class="manifesto-block">
-                    <span class="block-number">02</span>
-                    <h2>Filtro não é barreira.<br>É qualidade.</h2>
-                    <p>Nosso match protege sua prática. Filtramos curiosos e conectamos você a pacientes com real intenção de tratamento. Isso significa menos rotatividade, menos desgaste administrativo e vínculos terapêuticos mais fortes.</p>
-                </div>
+                    <div class="flow-divider"></div>
 
-                <div class="manifesto-block">
-                    <span class="block-number">03</span>
-                    <h2>Sustentação não é extra.<br>É o núcleo.</h2>
-                    <p>A prática clínica solitária é insustentável. Por isso, supervisão, intervisão e workshops não são "bônus", são o oxigênio. Aqui, você tem suporte constante e nunca precisará se reinventar sozinho para se manter relevante.</p>
-                </div>
+                    <p>A Yelo nasceu para ser o silêncio no meio do caos. O primeiro passo seguro em direção a você mesmo.</p>
 
-                <div class="manifesto-block">
-                    <span class="block-number">04</span>
-                    <h2>Pertencimento não é networking.<br>É identidade.</h2>
-                    <p>O antídoto para o isolamento do consultório. Um espaço seguro onde sua clínica é levada a sério. Aqui, você troca, aprende e cresce entre pares que compartilham seus valores, fortalecendo sua identidade profissional.</p>
-                </div>
+                    <p>Nós não conectamos apenas "pacientes" a "doutores". Nós conectamos histórias que precisam ser contadas a ouvidos preparados para escutar.</p>
 
-                <div class="manifesto-conclusion">
-                    <h3>Isso não é um pacote de serviços.</h3>
-                    <p>Num ecossistema, as partes se reforçam. Por isso, a Yelo não é apenas uma assinatura, é o espaço onde você se forma, trabalha e pertence.</p>
-                    <p class="highlight">Construímos isso porque acreditamos que cuidar de quem cuida é a única forma de garantir saúde mental de verdade.</p>
+                    <div class="flow-divider"></div>
+
+                    <p>Criamos um espaço digital pensado na sua mão, no seu tempo e no seu ritmo. Sem burocracia. Sem tecnicês. Apenas conexão.</p>
+
+                    <p>Porque buscar ajuda é um ato de coragem. E a sua coragem merece ser recebida com gentileza.</p>
+
+                    <p class="highlight-text">Você não está quebrado. Você só precisa do lugar certo para se reconstruir.</p>
                     
                     <div class="manifesto-signature">
-                        <span class="signature-text">Com carinho,</span>
+                        <span class="signature-text">Com carinho 💚</span>
                         <span class="signature-name">Equipe Yelo</span>
-                    </div>
-
-                    <div class="manifesto-cta-wrapper">
-                        <a href="/psi_questionario.html" class="btn-manifesto">
-                            Fazer parte do Ecossistema <span class="arrow">→</span>
-                        </a>
                     </div>
                 </div>
 
@@ -83,26 +65,7 @@
     <%- include('partials/footer') %>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const observerOptions = {
-                root: null,
-                rootMargin: '0px',
-                threshold: 0.2 // Dispara quando 20% do elemento estiver visível
-            };
-
-            const observer = new IntersectionObserver((entries, observer) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('visible');
-                        observer.unobserve(entry.target); // Para de observar após animar
-                    }
-                });
-            }, observerOptions);
-
-            document.querySelectorAll('.manifesto-block').forEach(block => {
-                observer.observe(block);
-            });
-        });
+        // Script removido pois a animação de blocos não é mais necessária no layout contínuo
     </script>
 </body>
 </html>
