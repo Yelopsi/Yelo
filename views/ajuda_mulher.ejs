@@ -20,12 +20,12 @@
         <!-- Hero Section -->
         <section class="hero-ajuda">
             <div class="container">
-                <span class="badge-acolhimento">Você não está sozinha</span>
+                <span class="badge-acolhimento" style="font-size: 1.2rem; padding: 12px 30px; border: 2px solid rgba(255,255,255,0.3);">Você não está sozinha</span>
                 <h1>Espaço de Apoio e Orientação</h1>
                 <p>Identificar a violência é o primeiro passo para romper o ciclo. Aqui você encontra informação segura e canais de ajuda especializados.</p>
             </div>
             <div class="wave-divider">
-                <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <svg style="transform: scaleY(-1);" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
                     <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" fill="#fdfaf6"></path>
                 </svg>
             </div>
@@ -37,55 +37,59 @@
                 <h2 class="titulo-secao">Termômetro da Violência</h2>
                 <p class="subtitulo-secao">A violência nem sempre deixa marcas visíveis. Ela pode começar de forma sutil e escalar com o tempo. Identifique os sinais:</p>
 
-                <div class="termometro-grid">
-                    <!-- Nível 1: Atenção -->
-                    <div class="nivel-card nivel-amarelo">
-                        <div class="nivel-header">
-                            <span class="nivel-icon">⚠️</span>
-                            <h3>Sinais de Alerta</h3>
+                <div class="termometro-visual-container">
+                    <!-- Desenho do Termômetro -->
+                    <div class="termometro-desenho">
+                        <div class="tubo">
+                            <div class="liquido vermelho"></div>
+                            <div class="liquido laranja"></div>
+                            <div class="liquido amarelo"></div>
                         </div>
-                        <ul class="sinais-lista">
-                            <li>Ciúmes excessivo e controle de roupas/celular</li>
-                            <li>Chantagem emocional ("Se você me amasse...")</li>
-                            <li>Isolamento de amigos e familiares</li>
-                            <li>Desvalorização e críticas constantes</li>
-                        </ul>
-                        <div class="nivel-footer">
-                            <strong>Atenção:</strong> Isso não é amor, é controle.
-                        </div>
+                        <div class="bulbo"></div>
                     </div>
 
-                    <!-- Nível 2: Perigo -->
-                    <div class="nivel-card nivel-laranja">
-                        <div class="nivel-header">
-                            <span class="nivel-icon">🚫</span>
-                            <h3>Violência Psicológica</h3>
+                    <!-- Legendas Laterais -->
+                    <div class="termometro-legendas">
+                        <!-- Nível 3: Urgência (Topo) -->
+                        <div class="legenda-card card-vermelho">
+                            <div class="legenda-header">
+                                <span class="icon">🆘</span>
+                                <h3>Risco Iminente</h3>
+                            </div>
+                            <ul>
+                                <li>Agressões físicas (empurrões, tapas, chutes)</li>
+                                <li>Relações sexuais forçadas</li>
+                                <li>Ameaça com armas ou de morte</li>
+                            </ul>
+                            <div class="aviso-urgente">Peça ajuda imediatamente!</div>
                         </div>
-                        <ul class="sinais-lista">
-                            <li>Humilhação em público ou privado</li>
-                            <li>Ameaças verbais ou gestuais</li>
-                            <li>Destruição de objetos pessoais</li>
-                            <li>Controle financeiro rigoroso</li>
-                        </ul>
-                        <div class="nivel-footer">
-                            <strong>Cuidado:</strong> O ciclo tende a piorar.
-                        </div>
-                    </div>
 
-                    <!-- Nível 3: Urgência -->
-                    <div class="nivel-card nivel-vermelho">
-                        <div class="nivel-header">
-                            <span class="nivel-icon">🆘</span>
-                            <h3>Risco Iminente</h3>
+                        <!-- Nível 2: Perigo (Meio) -->
+                        <div class="legenda-card card-laranja">
+                            <div class="legenda-header">
+                                <span class="icon">🚫</span>
+                                <h3>Violência Psicológica</h3>
+                            </div>
+                            <ul>
+                                <li>Humilhação e xingamentos</li>
+                                <li>Ameaças verbais e controle financeiro</li>
+                                <li>Destruição de objetos pessoais</li>
+                            </ul>
+                            <div class="aviso-atencao">Cuidado: O ciclo tende a piorar.</div>
                         </div>
-                        <ul class="sinais-lista">
-                            <li>Empurrões, tapas, chutes ou socos</li>
-                            <li>Relações sexuais forçadas</li>
-                            <li>Ameaça com armas ou objetos</li>
-                            <li>Ameaça de morte (contra você ou filhos)</li>
-                        </ul>
-                        <div class="nivel-footer">
-                            <strong>Urgente:</strong> Peça ajuda imediatamente.
+
+                        <!-- Nível 1: Atenção (Base) -->
+                        <div class="legenda-card card-amarelo">
+                            <div class="legenda-header">
+                                <span class="icon">⚠️</span>
+                                <h3>Sinais de Alerta</h3>
+                            </div>
+                            <ul>
+                                <li>Ciúmes excessivo e possessividade</li>
+                                <li>Controle de roupas e celular</li>
+                                <li>Chantagem emocional e isolamento</li>
+                            </ul>
+                            <div class="aviso-info">Isso não é amor, é controle.</div>
                         </div>
                     </div>
                 </div>
@@ -106,7 +110,7 @@
                         </div>
                         <h3>Central 180</h3>
                         <p>Atendimento oficial do governo para denúncias e orientações sobre violência contra a mulher.</p>
-                        <span class="btn-canal">Chamar no WhatsApp &rarr;</span>
+                        <span class="btn-canal btn-180">Chamar no WhatsApp</span>
                     </a>
 
                     <!-- Card Justiceiras -->
@@ -116,7 +120,7 @@
                         </div>
                         <h3>Projeto Justiceiras</h3>
                         <p>Rede multidisciplinar de acolhimento, apoio jurídico, psicológico e socioassistencial.</p>
-                        <span class="btn-canal">Solicitar Apoio &rarr;</span>
+                        <span class="btn-canal btn-justiceiras">Solicitar Apoio</span>
                     </a>
                 </div>
             </div>

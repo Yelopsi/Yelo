@@ -2056,58 +2056,111 @@
     opacity: 0.9;
 }
 
-/* Termômetro da Violência */
+/* --- TERMÔMETRO VISUAL (CSS DRAWING) --- */
 .secao-termometro {
     background-color: #fdfaf6;
     padding: 60px 20px;
 }
 
-.termometro-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 25px;
-    margin-top: 40px;
+.termometro-visual-container {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    max-width: 900px;
+    margin: 50px auto 0 auto;
 }
 
-.nivel-card {
-    background: #fff;
-    border-radius: 16px;
-    padding: 30px;
-    border: 1px solid #eee;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    transition: transform 0.3s ease;
+.termometro-desenho {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    width: 80px;
+    flex-shrink: 0;
 }
 
-.nivel-card:hover { transform: translateY(-5px); }
-
-.nivel-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-.nivel-icon { font-size: 1.8rem; }
-.nivel-card h3 { margin: 0; font-family: var(--font-titulos); font-size: 1.4rem; }
-
-.sinais-lista { list-style: disc; padding-left: 20px; margin-bottom: 20px; flex-grow: 1; }
-.sinais-lista li { margin-bottom: 8px; color: #555; line-height: 1.5; }
-
-.nivel-footer {
-    margin-top: auto;
-    padding-top: 15px;
-    border-top: 1px solid rgba(0,0,0,0.05);
-    font-size: 0.9rem;
+.tubo {
+    width: 30px;
+    height: 450px; /* Altura total do tubo */
+    background: #e0e0e0;
+    border-radius: 20px 20px 0 0;
+    border: 3px solid #333;
+    border-bottom: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
 }
 
-/* Cores dos Níveis */
-.nivel-amarelo { border-top: 6px solid #FFC107; }
-.nivel-amarelo h3 { color: #b48903; }
-.nivel-amarelo .nivel-footer { color: #b48903; background-color: #fffbeb; padding: 15px; margin: 0 -30px -30px -30px; border-radius: 0 0 16px 16px; }
+.liquido { width: 100%; flex: 1; }
+.liquido.vermelho { background-color: var(--coral-quente); }
+.liquido.laranja { background-color: #F97316; }
+.liquido.amarelo { background-color: #FFC107; }
 
-.nivel-laranja { border-top: 6px solid #F97316; }
-.nivel-laranja h3 { color: #c2410c; }
-.nivel-laranja .nivel-footer { color: #c2410c; background-color: #fff7ed; padding: 15px; margin: 0 -30px -30px -30px; border-radius: 0 0 16px 16px; }
+.bulbo {
+    width: 60px;
+    height: 60px;
+    background-color: #FFC107; /* Cor da base (amarelo) */
+    border-radius: 50%;
+    border: 3px solid #333;
+    margin-top: -15px;
+    z-index: 2;
+    position: relative;
+}
 
-.nivel-vermelho { border-top: 6px solid var(--coral-quente); }
-.nivel-vermelho h3 { color: var(--coral-quente); }
-.nivel-vermelho .nivel-footer { color: #fff; background-color: var(--coral-quente); padding: 15px; margin: 0 -30px -30px -30px; border-radius: 0 0 16px 16px; font-weight: bold; }
+.termometro-legendas {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex: 1;
+    padding: 10px 0;
+}
+
+.legenda-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    position: relative;
+    border-left: 5px solid #ccc;
+}
+
+/* Setinha apontando para o termômetro */
+.legenda-card::before {
+    content: '';
+    position: absolute;
+    left: -43px; /* Alcança o termômetro */
+    top: 50%;
+    width: 38px;
+    height: 2px;
+    background-color: #333;
+    z-index: 0;
+}
+
+.card-vermelho { border-left-color: var(--coral-quente); }
+.card-laranja { border-left-color: #F97316; }
+.card-amarelo { border-left-color: #FFC107; }
+
+.legenda-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.legenda-header h3 { margin: 0; font-size: 1.2rem; font-family: var(--font-titulos); }
+.legenda-card ul { padding-left: 20px; margin: 0 0 10px 0; font-size: 0.9rem; color: #555; }
+.legenda-card ul li { margin-bottom: 5px; }
+
+.aviso-urgente { color: var(--coral-quente); font-weight: bold; font-size: 0.9rem; }
+.aviso-atencao { color: #c2410c; font-weight: bold; font-size: 0.9rem; }
+.aviso-info { color: #b48903; font-weight: bold; font-size: 0.9rem; }
+
+@media (max-width: 768px) {
+    .termometro-visual-container {
+        flex-direction: row; /* Mantém lado a lado no mobile se possível, ou ajuste para column */
+        gap: 10px;
+    }
+    .legenda-card { padding: 15px; font-size: 0.85rem; }
+    .legenda-card::before { width: 15px; left: -20px; } /* Encurta a linha */
+    .termometro-desenho { width: 40px; margin-right: 10px; }
+    .tubo { width: 15px; }
+    .bulbo { width: 30px; height: 30px; margin-top: -8px; }
+}
 
 /* Canais de Apoio */
 .secao-canais-apoio { padding: 60px 20px 100px 20px; background-color: #fff; }
@@ -2139,9 +2192,22 @@
 
 .canal-card h3 { font-family: var(--font-titulos); font-size: 1.8rem; margin: 0 0 10px 0; }
 .canal-card p { color: #555; margin-bottom: 25px; line-height: 1.5; }
-.btn-canal { font-weight: 700; font-size: 1rem; text-decoration: underline; }
-.card-180 .btn-canal { color: #166534; }
-.card-justiceiras .btn-canal { color: #9d174d; }
+
+/* Botões dos Canais */
+.btn-canal {
+    display: inline-block;
+    padding: 12px 25px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 1rem;
+    text-decoration: none;
+    color: #fff !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-canal:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.15); }
+
+.btn-180 { background-color: #166534; }
+.btn-justiceiras { background-color: #9d174d; }
 
 /* Botão de Saída Rápida (Quick Exit) */
 .btn-quick-exit {
