@@ -834,6 +834,11 @@ app.delete('/api/admin/content/forum/:id', adminController.deleteForumPost);
 app.get('/api/admin/content/qna', qnaController.getAllQuestions);
 app.delete('/api/admin/content/qna/:id', qnaController.deleteQuestion);
 
+// --- ROTAS DE FOLLOW-UP (ADMIN) ---
+app.get('/api/admin/followups', adminController.getFollowUps);
+app.put('/api/admin/followups/:id', adminController.updateFollowUpStatus);
+app.delete('/api/admin/followups/:id', adminController.deleteFollowUp);
+
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/qna', qnaRoutes);
 app.use('/api/payments', paymentRoutes);
@@ -1409,6 +1414,21 @@ const startServer = async () => {
                 "url" VARCHAR(255),
                 "userAgent" TEXT,
                 "referrer" TEXT,
+                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        // --- FIX: TABELA DE LOGS DE WHATSAPP (FOLLOW-UP) ---
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "WhatsappClickLogs" (
+                "id" SERIAL PRIMARY KEY,
+                "psychologistId" INTEGER,
+                "patientId" INTEGER,
+                "guestPhone" VARCHAR(255),
+                "guestName" VARCHAR(255),
+                "status" VARCHAR(255) DEFAULT 'pending',
+                "message_sent_at" TIMESTAMP WITH TIME ZONE,
                 "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );

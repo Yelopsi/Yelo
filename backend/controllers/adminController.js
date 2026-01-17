@@ -3,6 +3,14 @@ const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// Configurações do Asaas (Mesma lógica do paymentController)
+let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
+ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, '');
+if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
+    ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
+}
+const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
+
 const generateAdminToken = (id) => {
     return jwt.sign({ id, type: 'admin' }, process.env.JWT_SECRET, {
         expiresIn: '8h', // Token de admin dura 8 horas
@@ -1470,10 +1478,19 @@ exports.getFinancials = async (req, res) => {
                 plano: { [Op.ne]: null },
                 status: 'active'
             },
-            attributes: ['nome', 'plano', 'updatedAt'] 
+            attributes: ['id', 'nome', 'plano', 'updatedAt'] 
         });
-        const planPrices = { 'Essencial': 59.90, 'Clínico': 89.90, 'Sol': 129.90 };
-        const mrr = activePsychologists.reduce((acc, psy) => acc + (planPrices[psy.plano] || 0), 0);
+
+        // Preços Atualizados (Baseados na sua página de assinatura)
+        const planPrices = { 
+            'ESSENTIAL': 99.00, 
+            'CLINICAL': 159.00, 
+            'REFERENCE': 259.00,
+            // Compatibilidade com legado
+            'Essencial': 99.00, 'Clínico': 159.00, 'Sol': 259.00 
+        };
+
+        const mrr = activePsychologists.reduce((acc, psy) => acc + (planPrices[psy.plano ? psy.plano.toUpperCase() : ''] || 0), 0);
         const thirtyDaysAgo = new Date(new Date().setDate(new Date().getDate() - 30));
         const churnedCount = await db.Psychologist.count({
             where: {
@@ -1490,14 +1507,45 @@ exports.getFinancials = async (req, res) => {
             churnRate: churnRate.toFixed(1), 
             ltv: ltv,
         };
-        const recentInvoices = [
-            { psychologistName: 'Dra. Ana Psicóloga', date: new Date(), amount: 89.90, status: 'Paga' },
-            { psychologistName: 'Dr. Carlos Terapeuta', date: new Date(), amount: 59.90, status: 'Paga' },
-        ];
+
+        // --- BUSCA FATURAS REAIS DO ASAAS ---
+        let recentInvoices = [];
+        if (ASAAS_API_KEY) {
+            try {
+                const response = await fetch(`${ASAAS_API_URL}/payments?status=RECEIVED&limit=10&order=desc`, {
+                    headers: { 'access_token': ASAAS_API_KEY }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.data) {
+                        // Mapeia e tenta encontrar o nome do psicólogo
+                        recentInvoices = await Promise.all(data.data.map(async (payment) => {
+                            let psiName = 'Cliente Externo';
+                            
+                            if (payment.externalReference) {
+                                const psi = await db.Psychologist.findByPk(payment.externalReference, { attributes: ['nome'] });
+                                if (psi) psiName = psi.nome;
+                            }
+                            
+                            return {
+                                psychologistName: psiName,
+                                date: payment.paymentDate || payment.dateCreated,
+                                amount: payment.value,
+                                status: 'Paga'
+                            };
+                        }));
+                    }
+                }
+            } catch (err) {
+                console.error("Erro ao buscar faturas Asaas:", err.message);
+            }
+        }
+
         const activePlans = activePsychologists.map(psy => ({
             psychologistName: psy.nome,
             planName: psy.plano,
-            mrr: planPrices[psy.plano] || 0,
+            mrr: planPrices[psy.plano ? psy.plano.toUpperCase() : ''] || 0,
             nextBilling: new Date(new Date(psy.updatedAt).setMonth(new Date(psy.updatedAt).getMonth() + 1)) 
         }));
         res.status(200).json({

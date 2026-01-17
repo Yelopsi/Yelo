@@ -74,6 +74,25 @@ window.initializePage = function() {
                     faturasBody.innerHTML = '<tr><td colspan="5" class="empty-row">Nenhuma fatura recente encontrada.</td></tr>';
                 }
             }
+
+            // 3. Renderiza Planos Ativos
+            if (planosBody) {
+                planosBody.innerHTML = '';
+                if (data.activePlans && data.activePlans.length > 0) {
+                    data.activePlans.forEach(plan => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td data-label="Psicólogo"><strong>${plan.psychologistName}</strong></td>
+                            <td data-label="Plano">${plan.planName}</td>
+                            <td data-label="MRR">R$ ${plan.mrr.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                            <td data-label="Próxima Cobrança">${new Date(plan.nextBilling).toLocaleDateString('pt-BR')}</td>
+                        `;
+                        planosBody.appendChild(row);
+                    });
+                } else {
+                    planosBody.innerHTML = '<tr><td colspan="4" class="empty-row">Nenhum plano ativo no momento.</td></tr>';
+                }
+            }
         } catch (error) {
             console.error("Erro ao carregar dados financeiros:", error);
             if (faturasBody) faturasBody.innerHTML = `<tr><td colspan="5" class="error-row">${error.message}</td></tr>`;
