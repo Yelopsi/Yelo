@@ -22,6 +22,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'SystemLog',
+    tableName: 'SystemLogs', // Garante o mapeamento correto com a tabela criada manualmente
     timestamps: true, // Habilita createdAt e updatedAt para alinhar com a tabela do banco
     indexes: [
         { name: 'idx_systemlogs_level_created_at', fields: ['level', 'createdAt'] },
