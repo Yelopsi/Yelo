@@ -4,7 +4,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { sendPasswordResetEmail, sendWelcomeEmail } = require('../services/emailService');
-const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs').promises;
 const gamificationService = require('../services/gamificationService'); // Importa o serviço
@@ -14,6 +13,14 @@ const { verifyGoogleToken } = require('./authController');
 let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
 ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, ''); // Remove barra final e espaços
 const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
+
+// --- CONFIGURAÇÃO DO CLOUDINARY ---
+const cloudinary = require('cloudinary').v2;
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 // ----------------------------------------------------------------------
 // Função Auxiliar: Gera o Token JWT para Psicólogo
@@ -825,35 +832,35 @@ exports.updateProfilePhoto = async (req, res) => {
             return res.status(404).json({ error: 'Psicólogo não encontrado no banco de dados.' });
         }
 
-        // 2. Otimização da Imagem com Sharp
-        const originalPath = req.file.path;
-        const filename = `profile-${psychologistToUpdate.id}-${Date.now()}.webp`;
-        const outputPath = path.join(req.file.destination, filename);
+        // 2. Upload para o Cloudinary
+        // O arquivo está em req.file.path (salvo temporariamente pelo multer)
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: 'yelo/profiles', // Pasta no Cloudinary
+            public_id: `profile-${psychologistToUpdate.id}`, // ID fixo para substituir a foto antiga automaticamente
+            overwrite: true,
+            transformation: [
+                { width: 500, height: 500, crop: 'fill', gravity: 'face' }, // Foca no rosto e corta quadrado
+                { quality: 'auto' }, // Otimização automática de qualidade
+                { fetch_format: 'auto' } // Converte para WebP/AVIF se o navegador suportar
+            ]
+        });
 
-        await sharp(originalPath)
-            .resize(500, 500, { fit: 'cover', position: 'attention' })
-            .webp({ quality: 80 })
-            .toFile(outputPath);
-
-        // 3. Atualiza o banco de dados com o novo caminho
-        const newFotoUrl = `/uploads/profiles/${filename}`;
-        await psychologistToUpdate.update({ fotoUrl: newFotoUrl });
+        // 3. Atualiza o banco com a URL segura do Cloudinary
+        await psychologistToUpdate.update({ fotoUrl: result.secure_url });
 
         // --- GAMIFICATION HOOK (BADGE AUTÊNTICO) ---
         await psychologistToUpdate.reload();
         await checkProfileCompletionLocal(psychologistToUpdate);
 
-        // 4. Limpeza: Deleta o arquivo original que o multer salvou
+        // 4. Limpeza: Remove o arquivo local temporário
         try {
-            await fs.unlink(originalPath);
-        } catch (unlinkError) {
-            console.warn(`Aviso: Falha ao deletar arquivo original: ${originalPath}`, unlinkError);
-        }
+            await fs.unlink(req.file.path);
+        } catch (e) { console.warn("Erro ao deletar arquivo local:", e); }
 
-        // 5. Resposta de Sucesso
+        // 5. Resposta
         res.status(200).json({
-            message: 'Foto de perfil atualizada e otimizada com sucesso!',
-            fotoUrl: newFotoUrl
+            message: 'Foto atualizada com sucesso!',
+            fotoUrl: result.secure_url
         });
 
     } catch (error) {
