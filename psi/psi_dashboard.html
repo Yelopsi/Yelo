@@ -11,6 +11,8 @@
     
     <script src="https://unpkg.com/imask"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- ADICIONADO: Biblioteca de Gráficos -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <link rel="icon" href="/images/favicon.png" type="image/png">
     <style>
         /* Correção Visual: Toast sempre no topo */
@@ -286,6 +288,20 @@
             <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
                 <button id="btn-fechar-modal-reativacao" style="padding: 10px 20px; background: #fff; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">Pensar melhor</button>
                 <button id="btn-confirmar-reativacao" style="padding: 10px 20px; background: #F59E0B; color: #fff; border:none; border-radius: 6px; font-weight: bold; cursor: pointer;">Sim, manter meu plano</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE RECORTE DE FOTO (CROPPER) -->
+    <div id="crop-modal" class="custom-modal-overlay" style="display: none; z-index: 200000;">
+        <div class="custom-modal-box" style="max-width: 600px; width: 90%;">
+            <h3 style="margin-top: 0; color: #1B4332;">Ajustar Foto de Perfil</h3>
+            <div style="height: 400px; width: 100%; background: #f0f0f0; margin: 20px 0; overflow: hidden;">
+                <img id="image-to-crop" src="" style="max-width: 100%; display: block;">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button id="btn-cancel-crop" style="padding: 10px 20px; border: 1px solid #ccc; background: white; border-radius: 5px; cursor: pointer;">Cancelar</button>
+                <button id="btn-confirm-crop" style="padding: 10px 20px; background: #1B4332; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Recortar e Salvar</button>
             </div>
         </div>
     </div>

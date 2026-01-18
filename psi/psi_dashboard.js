@@ -189,7 +189,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 } catch (err) {
                     console.error(err);
-                    showToast('Erro ao enviar foto.', 'error');
+                    // Mostra a mensagem real do erro (ex: "Arquivo muito grande")
+                    showToast(err.message || 'Erro ao enviar foto.', 'error');
                 }
             }
         };
@@ -306,7 +307,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const nameEl = document.getElementById('psi-sidebar-name');
         const imgEl = document.getElementById('psi-sidebar-photo');
         if(nameEl) nameEl.textContent = psychologistData.nome;
-        if(imgEl) imgEl.src = formatImageUrl(psychologistData.fotoUrl);
+        if(imgEl) {
+            imgEl.src = formatImageUrl(psychologistData.fotoUrl);
+            // Correção para imagem quebrada (404)
+            imgEl.onerror = function() { this.src = 'https://placehold.co/70x70/1B4332/FFFFFF?text=Psi'; };
+        }
         const btnLink = document.getElementById('btn-view-public-profile');
         if(btnLink && psychologistData.slug) btnLink.href = `/${psychologistData.slug}`;
 
