@@ -381,6 +381,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (!formDados || !formSenha) return;
 
+        // --- REMOVE A OPÇÃO DE FOTO (SOLICITADO) ---
+        const photoSection = document.querySelector('.profile-photo-section');
+        if (photoSection) photoSection.style.display = 'none';
+        // -------------------------------------------
+
         // Preenche os campos com os dados atuais do paciente
         const nomeInput = document.getElementById('nome-paciente');
         const emailInput = document.getElementById('email-paciente');
@@ -622,19 +627,26 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- ADICIONA EVENTO DE CLIQUE PARA A NAVEGAÇÃO ---
         navLinks.forEach(link => {
             link.addEventListener('click', function(e) {
-                e.preventDefault();
                 
-                const page = this.getAttribute('data-page');
+                let page = this.getAttribute('data-page');
+                // Fallback: verifica se o atributo está no link <a> filho, caso o HTML tenha mudado
+                if (!page) {
+                    const childLink = this.querySelector('a');
+                    if (childLink) page = childLink.getAttribute('data-page');
+                }
 
                 // Se for um link externo (como o do questionário), navega para a URL do 'href'
                 if (!page) {
                     const externalLink = this.querySelector('a');
-                    if (externalLink && externalLink.href) {
-                        window.location.href = externalLink.href;
+                    // Se tiver href válido e diferente de #, deixa navegar nativamente
+                    if (externalLink && externalLink.getAttribute('href') && externalLink.getAttribute('href') !== '#') {
+                        return; 
                     }
+                    e.preventDefault();
                     return;
                 }
 
+                e.preventDefault(); // Previne navegação padrão apenas para links internos (SPA)
                 if (sidebar.classList.contains('is-open')) {
                     sidebar.classList.remove('is-open');
                 }
