@@ -6,6 +6,7 @@
     <%- include('../views/partials/head') %>
     <!-- FIX: Garante o carregamento do CSS com caminho absoluto para corrigir o layout -->
     <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/css/psi_dashboard.css"> <!-- Importa o estilo do dashboard -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Mulish:wght@400;500;600&display=swap" rel="stylesheet">
@@ -27,284 +28,140 @@
         body {
             background-color: #f8f9fa;
         }
-
-        /* FIX: Garante que o header fique sempre no topo e acima de tudo */
-        header {
-            position: fixed !important;
-            top: 0;
-            left: 0;
-            width: 100%;
-            z-index: 10000 !important;
-        }
-
-        .dashboard-container {
+        
+        #dashboard-container {
             display: flex;
             min-height: 100vh;
-            flex-direction: row;
-            /* CORREÇÃO DE SOBREPOSIÇÃO: 
-               Adiciona espaço no topo para o cabeçalho fixo não cobrir o conteúdo.
-               O header tem aprox 80px. Ajustamos para 80px para alinhar perfeitamente. */
-            padding-top: 80px; 
-        }
-
-        /* Sidebar Fixa à Esquerda */
-        .dashboard-sidebar {
-            width: 220px;
-            background-color: #1B4332; /* Verde Yelo */
-            color: #fff;
-            display: flex;
-            flex-direction: column;
-            padding: 80px 20px 20px 20px; /* Ajuste para começar abaixo do header */
-            flex-shrink: 0;
-            
-            /* Garante que a sidebar fique fixa ao rolar a página */
-            position: fixed;
-            top: 0; /* Vai até o topo da página */
-            bottom: 0;
-            left: 0;
-            overflow-y: auto;
-            z-index: 900; /* Abaixo do header (que é 10000), acima do conteúdo */
-        }
-
-        /* Ajuste do Menu Lateral */
-        .sidebar-nav ul {
-            list-style: none;
-            padding: 0;
-            margin: 20px 0;
-            display: flex;
-            flex-direction: column !important; /* Força vertical */
-            gap: 8px;
-            width: 100%;
-        }
-
-        .sidebar-nav li {
-            width: 100%;
-        }
-
-        .sidebar-nav li a {
-            color: rgba(255, 255, 255, 0.8);
-            text-decoration: none;
-            display: flex; /* Flex para alinhar ícone e texto */
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            border-radius: 8px;
-            text-align: left !important;
-            justify-content: flex-start !important;
-            width: 100%;
-            box-sizing: border-box;
-            transition: all 0.2s ease;
-            font-weight: 500;
-        }
-
-        .sidebar-nav li.active a,
-        .sidebar-nav li a:hover {
-            background-color: rgba(255, 255, 255, 0.15);
-            color: #FFFFFF;
-            transform: translateX(5px); /* Efeito de movimento suave */
-        }
-
-        .sidebar-nav svg {
-            flex-shrink: 0;
-        }
-
-        .sidebar-footer a {
-            color: #FFEE8C;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        /* Área Principal de Conteúdo */
-        .dashboard-main {
-            flex: 1;
-            padding: 30px;
-            margin-left: 220px; /* Empurra o conteúdo para a direita (largura da sidebar) */
-            width: calc(100% - 220px);
-        }
-
-        /* Ajuste Mobile */
-        @media (max-width: 992px) {
-            .dashboard-sidebar {
-                transform: translateX(-100%); /* Esconde sidebar */
-                top: 0; /* No mobile, ocupa altura total */
-                z-index: 10001; /* Acima do header */
-            }
-            .dashboard-sidebar.is-open {
-                transform: translateX(0);
-            }
-            .dashboard-main {
-                margin-left: 0;
-                width: 100%;
-            }
-        }
-
-        /* --- NOVOS ESTILOS DO DASHBOARD MODERNO (Visão Geral) --- */
-        .dashboard-home {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .welcome-section {
-            background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%);
-            color: white;
-            padding: 40px;
-            border-radius: 20px;
-            margin-bottom: 40px;
-            box-shadow: 0 10px 30px rgba(27, 67, 50, 0.15);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .welcome-section h1 {
-            font-family: var(--fonte-titulo);
-            font-size: 2.2rem;
-            margin: 0 0 10px 0;
-            color: #FFFFFF;
-        }
-        .welcome-section p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-            margin: 0;
-            max-width: 600px;
-        }
-
-        /* Grid de Cartões de Ação */
-        .quick-stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
-        }
-
-        .dash-card {
-            background: white;
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border: 1px solid #f0f0f0;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .action-card { cursor: pointer; }
-        .action-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            border-color: #FFEE8C;
-        }
-
-        .card-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-            font-size: 24px;
-        }
-        .match-icon { background-color: #E8F5E9; color: #1B4332; }
-        .fav-icon { background-color: #FFF3E0; color: #F59E0B; }
-        .account-icon { background-color: #F3F4F6; color: #4B5563; }
-
-        .dash-card h3 { margin: 0 0 5px 0; font-size: 1.2rem; color: #1B4332; }
-        .dash-card p { margin: 0; color: #666; font-size: 0.95rem; }
-        
-        .card-arrow {
-            align-self: flex-end;
-            margin-top: 15px;
-            color: #1B4332;
-            font-weight: bold;
-            font-size: 1.2rem;
         }
     </style>
 </head>
 <body class="pagina-dashboard">
 
-    <!-- HEADER (Inline com caminhos absolutos para corrigir o logo em subpastas) -->
-    <header>
-        <a href="/" class="logo">
-            <img src="../assets/logos/logo-branca.png" alt="Logo Yelo" class="logo-branca">
-            <img src="../assets/logos/logo-escura.png" alt="Logo Yelo" class="logo-escura">
-        </a>
-        <button class="menu-hamburguer" aria-label="Abrir menu">
-            <div class="barra"></div>
-            <div class="barra"></div>
-            <div class="barra"></div>
-        </button>
-        <div class="container-navegacao">
-            <nav>
-                <ul>
-                    <li><a href="/">Início</a></li>
-                    <li><a href="/comunidade">Para Comunidade</a></li>
-                    <li><a href="/profissionais">Para Profissionais</a></li>
-                    <li><a href="/faq">FAQ</a></li>
-                    <li><a href="/blog">Blog</a></li>
-                </ul>
-            </nav>
-            <div class="botoes-acao">
-                <a href="/login" class="btn btn-outline" style="display:none;">Entrar</a>
-                <a href="/cadastro" class="btn btn-solid" style="display:none;">Registrar</a>
-            </div>
-        </div>
-    </header>
+    <div id="toast-container"></div>
 
-    <div class="dashboard-container">
-        <aside class="dashboard-sidebar" id="sidebar">
+    <!-- GLOBAL LOADER -->
+    <div id="global-loader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8f9fa; z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s;">
+        <div class="loader-spinner" style="width: 50px; height: 50px; border-width: 5px;"></div>
+        <p style="margin-top: 15px; color: #1B4332; font-weight: 600; font-family: var(--font-principal);">Carregando...</p>
+    </div>
+
+    <div id="dashboard-container" style="display: none;">
+        
+        <div class="sidebar-backdrop"></div>
+        
+        <aside class="dashboard-sidebar">
+            <div class="sidebar-header">
+                <img src="/assets/logos/logo-branca.png" alt="Logo Yelo" class="sidebar-logo" style="max-width: 120px; display: block; margin: 0 auto;">
+            </div>
+            
+            <div class="sidebar-user-block">
+                <div style="position: relative; display: inline-block;">
+                    <img id="patient-sidebar-photo" src="https://placehold.co/70x70/1B4332/FFFFFF?text=Eu" alt="Foto Perfil" style="border-radius: 50%; border: 2px solid #FFEE8C; display: block; width: 70px; height: 70px; object-fit: cover;">
+                </div>
+                <div class="user-info">
+                    <p id="patient-sidebar-name">Carregando...</p>
+                    <span style="font-size: 0.8rem; color: #FFEE8C; opacity: 0.8;">Paciente</span>
+                </div>
+            </div>
+
             <nav class="sidebar-nav">
                 <ul>
-                    <li data-page="patient_visao_geral.html" class="active">
-                        <a href="#">
+                    <li class="active">
+                        <a href="#" data-page="patient_visao_geral.html">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                            Visão Geral
+                            <span>Visão Geral</span>
                         </a>
                     </li>
-                    <li data-page="patient_minha_conta.html">
-                        <a href="#">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                            Minha Conta
-                        </a>
-                    </li>
-                    <li data-page="patient_matches.html">
-                        <a href="#">
+                    <li>
+                        <a href="#" data-page="patient_matches.html">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                            Meus Matches
+                            <span>Meus Matches</span>
                         </a>
                     </li>
-                    <li data-page="patient_favoritos.html">
-                        <a href="#">
+                    <li>
+                        <a href="#" data-page="patient_favoritos.html">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                            Favoritos
+                            <span>Favoritos</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-page="patient_avaliacoes.html">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                            <span>Minhas Avaliações</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-page="patient_minha_conta.html">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            <span>Minha Conta</span>
                         </a>
                     </li>
                     <li>
                         <a href="/questionario.html">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
-                            Refazer Questionário
+                            <span>Refazer Questionário</span>
                         </a>
                     </li>
                 </ul>
             </nav>
+            
             <div class="sidebar-footer">
-                <a href="/index.html" onclick="localStorage.removeItem('Yelo_token'); localStorage.removeItem('Yelo_user_type'); localStorage.removeItem('Yelo_user_name');">Sair</a>
+                <button id="btn-logout">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    Encerrar Sessão
+                </button>
             </div>
         </aside>
 
-        <main class="dashboard-main" id="patient-main-content">
-            <!-- O conteúdo dinâmico (Visão Geral, Matches, etc) será carregado aqui pelo patient.js -->
+        <main class="dashboard-main">
+            <button class="menu-toggle" id="sidebar-toggle" aria-label="Abrir menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div id="patient-main-content"></div>
         </main>
     </div>
 
-    <!-- TOASTS -->
-    <div id="toast-container" class="toast-container"></div>
-
-    <!-- SCRIPTS -->
-    <!-- Usamos caminhos absolutos (/) para garantir que funcione em qualquer rota -->
     <script src="/config.js"></script>
-    <script src="/script.js"></script>
     <script src="/patient/patient.js"></script>
+    
+    <script>
+        // Script para controlar o menu mobile (Sanduíche)
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuToggle = document.getElementById('sidebar-toggle');
+            const sidebar = document.querySelector('.dashboard-sidebar');
+            const overlay = document.querySelector('.sidebar-backdrop');
 
+            if (menuToggle && sidebar) {
+                menuToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    this.classList.toggle('is-active');
+                    sidebar.classList.toggle('is-open');
+                    if (overlay) overlay.classList.toggle('is-visible');
+                });
+
+                if (overlay) {
+                    overlay.addEventListener('click', () => {
+                        menuToggle.classList.remove('is-active');
+                        sidebar.classList.remove('is-open');
+                        overlay.classList.remove('is-visible');
+                    });
+                }
+                
+                // Fecha o menu ao clicar em um link
+                const navLinks = document.querySelectorAll('.dashboard-sidebar .sidebar-nav a');
+                navLinks.forEach(link => {
+                    link.addEventListener('click', () => {
+                        if (sidebar.classList.contains('is-open')) {
+                            menuToggle.classList.remove('is-active');
+                            sidebar.classList.remove('is-open');
+                            if (overlay) overlay.classList.remove('is-visible');
+                        }
+                    });
+                });
+            }
+        });
+    </script>
 </body>
 </html>

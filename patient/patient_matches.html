@@ -11,25 +11,24 @@
         background: white;
         border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         display: flex;
         flex-direction: column;
-        border: 1px solid #f1f1f1;
+        border: 1px solid rgba(0,0,0,0.05);
         position: relative;
         height: 100%;
     }
     .match-card:hover { 
         transform: translateY(-4px); 
-        box-shadow: 0 12px 24px rgba(27, 67, 50, 0.08);
-        border-color: #e0e0e0;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1);
     }
 
     /* Botão de Favoritar (Coração) */
     .heart-icon {
         position: absolute;
-        top: 12px; 
-        right: 12px;
+        top: 15px; 
+        right: 15px;
         width: 36px; 
         height: 36px;
         background: rgba(255, 255, 255, 0.9);
@@ -42,26 +41,23 @@
         color: #d1d5db;
         cursor: pointer;
         z-index: 20;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: all 0.2s;
     }
-    .heart-icon:hover { transform: scale(1.1); background: white; }
+    .heart-icon:hover { transform: scale(1.1); color: #E63946; }
     .heart-icon.favorited { color: #E63946; fill: #E63946; }
 
     /* Foto do Profissional */
     .match-header-img {
         width: 100%;
-        height: 240px;
+        height: 220px;
         object-fit: cover;
         background-color: #f0f2f5;
-        object-position: top center;
-        border-bottom: 1px solid #f5f5f5;
     }
 
     /* Corpo do Card */
     .match-body {
-        padding: 18px;
+        padding: 20px;
         text-align: left;
         flex-grow: 1;
         display: flex;
@@ -69,55 +65,47 @@
     }
 
     .match-name { 
-        font-size: 1.15rem; 
+        font-size: 1.2rem; 
         color: #1B4332; 
-        margin: 0 0 4px 0; 
-        font-family: 'Lora', serif; 
+        margin: 0 0 5px 0; 
+        font-family: var(--font-titulos); 
         font-weight: 700;
-        line-height: 1.3;
     }
     
-    .match-crp { font-size: 0.75rem; color: #6B7280; margin-bottom: 12px; display: block; font-weight: 500; }
+    .match-crp { font-size: 0.8rem; color: #666; margin-bottom: 15px; display: block; }
     
-    .match-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .match-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
     .match-tag {
-        background: #E8F5E9; color: #1B4332; padding: 4px 10px; border-radius: 6px;
-        font-size: 0.75rem; font-weight: 700; letter-spacing: 0.3px;
+        background: #E8F5E9; color: #1B4332; padding: 4px 10px; border-radius: 20px;
+        font-size: 0.75rem; font-weight: 600;
     }
 
     .match-bio {
-        font-size: 0.85rem; color: #4B5563; line-height: 1.5; margin-bottom: 16px;
+        font-size: 0.9rem; color: #555; line-height: 1.5; margin-bottom: 20px;
         display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
     }
 
     /* Rodapé do Card */
     .match-footer {
-        margin-top: auto; padding-top: 16px; border-top: 1px solid #f3f4f6;
-        display: flex; justify-content: space-between; align-items: center; gap: 10px;
+        margin-top: auto; padding-top: 15px; border-top: 1px solid #f0f0f0;
+        display: flex; justify-content: space-between; align-items: center;
     }
 
     .match-price { display: flex; flex-direction: column; }
-    .match-price span { font-size: 0.7rem; color: #9CA3AF; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
-    .match-price strong { color: #1B4332; font-size: 1.1rem; font-weight: 800; }
+    .match-price span { font-size: 0.75rem; color: #888; text-transform: uppercase; }
+    .match-price strong { color: #1B4332; font-size: 1.1rem; font-weight: 700; }
 
     .btn-profile {
-        background-color: #1B4332; color: white; padding: 10px 20px; border-radius: 8px;
-        font-size: 0.85rem; font-weight: 600; text-decoration: none; transition: all 0.2s; text-align: center;
+        background-color: #1B4332; color: white; padding: 8px 20px; border-radius: 20px;
+        font-size: 0.9rem; font-weight: 600; text-decoration: none; transition: all 0.2s;
     }
-    .btn-profile:hover { background-color: #2D6A4F; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(27, 67, 50, 0.2); }
-
-    /* Empty State */
-    .empty-state-box {
-        text-align: center; padding: 60px 20px; background: white; border-radius: 20px;
-        border: 2px dashed #e0e0e0; grid-column: 1 / -1;
-    }
-    .empty-icon { font-size: 3rem; margin-bottom: 15px; display: block; opacity: 0.8; }
+    .btn-profile:hover { background-color: #143d2e; transform: translateY(-2px); }
 </style>
 
 <div class="dashboard-home">
-    <div class="welcome-section">
-        <h1>Suas Conexões</h1>
-        <p>Veja os profissionais compatíveis com o seu perfil.</p>
+    <div class="welcome-section" style="background: #fff; color: #333; border: 1px solid #eee; box-shadow: none; padding: 30px; margin-bottom: 30px;">
+        <h1 style="color: #1B4332; font-size: 2rem;">Suas Conexões</h1>
+        <p style="color: #666;">Veja os profissionais compatíveis com o seu perfil.</p>
     </div>
     
     <div id="matches-grid" class="matches-grid">
@@ -125,13 +113,11 @@
             <div class="loader-spinner" style="margin: 0 auto;"></div>
             <p style="margin-top: 15px; color: #666;">Buscando profissionais compatíveis...</p>
         </div>
-        <!-- O conteúdo de mocks foi removido daqui! 
-             O patient.js buscará os profissionais no backend e injetará os cards aqui dentro. -->
     </div>
     
-    <div id="favoritos-vazio" class="empty-state-box hidden">
-        <span class="empty-icon">🔍</span>
-        <h3 style="color: #1B4332; margin-top: 0; font-family: 'Lora', serif;">Nenhum Match encontrado</h3>
+    <div id="favoritos-vazio" class="empty-state-box hidden" style="text-align: center; padding: 60px 20px; background: white; border-radius: 16px; border: 2px dashed #e0e0e0;">
+        <span style="font-size: 3rem; display: block; margin-bottom: 15px; opacity: 0.5;">🔍</span>
+        <h3 style="color: #1B4332; margin-top: 0; font-family: var(--font-titulos);">Nenhum Match encontrado</h3>
         <p style="color: #666; margin-bottom: 25px;">Ainda não encontramos profissionais 100% compatíveis, mas você pode explorar todos.</p>
         <a href="/profissionais" class="btn btn-principal">Ver Todos os Profissionais</a>
     </div>
