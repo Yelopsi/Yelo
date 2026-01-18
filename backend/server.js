@@ -917,6 +917,21 @@ app.post('/api/public/psychologists/:id/appearance', async (req, res) => {
     }
 });
 
+// --- ROTA PÚBLICA: LISTA DE PSICÓLOGOS PARA A PÁGINA SOBRE ---
+app.get('/api/public/psychologists/list', async (req, res) => {
+    try {
+        const psis = await db.Psychologist.findAll({
+            where: { status: 'active', fotoUrl: { [Op.ne]: null } },
+            attributes: ['id', 'nome', 'fotoUrl'],
+            limit: 50,
+            order: db.sequelize.random()
+        });
+        res.json(psis);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao buscar psicólogos.' });
+    }
+});
+
 // Rotas Específicas do Admin
 app.get('/api/admin/feedbacks', demandController.getRatings);
 app.get('/api/admin/exit-surveys', async (req, res) => {
