@@ -1802,7 +1802,7 @@
     background-color: var(--verde-escuro);
     color: var(--branco-puro);
     text-align: center;
-    padding: 140px 20px 120px 20px;
+    padding: 100px 20px 60px 20px;
     margin-top: -100px;
 }
 
@@ -1874,7 +1874,7 @@
 /* Corpo do Manifesto */
 .manifesto-body-section {
     background-color: var(--off-white);
-    padding: 80px 20px 120px 20px;
+    padding: 60px 20px 80px 20px;
     color: #333;
 }
 
@@ -1889,7 +1889,7 @@
     font-size: 1.4rem; /* Tipografia aumentada */
     line-height: 1.8;
     color: #444;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     font-family: var(--font-leitura);
 }
 
@@ -1897,7 +1897,7 @@
     width: 60px;
     height: 2px;
     background-color: var(--verde-escuro);
-    margin: 40px auto;
+    margin: 30px auto;
     opacity: 0.3;
 }
 
@@ -1905,7 +1905,7 @@
     font-weight: 600;
     color: var(--verde-escuro);
     font-size: 1.5rem;
-    margin-top: 40px;
+    margin-top: 30px;
 }
 
 /* Estilos antigos removidos ou sobrescritos pelo novo fluxo */
@@ -1961,8 +1961,8 @@
 /* Conclusão e CTA */
 .manifesto-conclusion {
     text-align: center;
-    margin-top: 100px;
-    padding-top: 60px;
+    margin-top: 60px;
+    padding-top: 40px;
     border-top: 1px solid rgba(0,0,0,0.1);
 }
 
@@ -1989,7 +1989,7 @@
 
 /* Assinatura */
 .manifesto-signature {
-    margin-top: 40px;
+    margin-top: 30px;
     font-family: var(--font-titulos);
     color: #666;
 }
