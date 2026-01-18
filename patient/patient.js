@@ -663,7 +663,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 e.preventDefault(); // Previne navegação padrão (SPA)
 
-                if (sidebar.classList.contains('is-open')) {
+                if (sidebar && sidebar.classList.contains('is-open')) {
                     sidebar.classList.remove('is-open');
                 }
 
