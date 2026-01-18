@@ -8,6 +8,7 @@ const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs').promises;
 const gamificationService = require('../services/gamificationService'); // Importa o serviço
+const { verifyGoogleToken } = require('./authController');
 
 // Configurações do Asaas
 let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
@@ -42,12 +43,27 @@ exports.registerPsychologist = async (req, res) => {
     try {
         console.log("Dados recebidos no Registro:", req.body);
 
-        const nome = req.body.nome || req.body['nome-completo'];
-        const passwordInput = req.body.password || req.body.senha;
-        const email = req.body.email;
+        let nome = req.body.nome || req.body['nome-completo'];
+        let passwordInput = req.body.password || req.body.senha;
+        let email = req.body.email;
         const crp = req.body.crp;
         // REVERTIDO: Volta a ler apenas o CPF
         const cpf = req.body.cpf || req.body.documento;
+        const { googleToken } = req.body;
+
+        // --- Lógica de Registro via Google ---
+        if (googleToken) {
+            try {
+                const googleUser = await verifyGoogleToken(googleToken);
+                email = googleUser.email; // Confia no email do Google
+                // Gera senha aleatória segura se o usuário veio pelo Google
+                if (!passwordInput || passwordInput === 'GoogleAuth123!') {
+                    passwordInput = crypto.randomBytes(16).toString('hex');
+                }
+            } catch (e) {
+                return res.status(400).json({ error: 'Token do Google inválido ou expirado.' });
+            }
+        }
 
         // --- 1. Validação de Campos Obrigatórios ---
         if (!nome) return res.status(400).json({ error: 'O nome é obrigatório.' });

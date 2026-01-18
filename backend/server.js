@@ -66,6 +66,7 @@ const adminSupportRoutes = require('./routes/adminSupportRoutes');
 const blogRoutes = require('./routes/blogRoutes');
 const newsletterRoutes = require('./routes/newsletterRoutes'); // <-- ADICIONADO
 const forumRoutes = require('./routes/forumRoutes'); // <--- ADICIONADO
+const authRoutes = require('./routes/authRoutes');
 
 // Controllers
 const demandController = require('./controllers/demandController');
@@ -747,6 +748,7 @@ app.get('/api/fix-test-email', async (req, res) => {
 // ROTAS DA APLICAÇÃO
 // =============================================================
 
+app.use('/api/auth', authRoutes);
 app.use('/api/newsletter', newsletterRoutes); // <-- MOVIDO PARA O TOPO
 
 // --- ROTA DE RESGATE DE IMAGENS (SOLUÇÃO DEFINITIVA) ---

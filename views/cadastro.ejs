@@ -8,6 +8,7 @@
     <meta property="og:description" content="Junte-se à Yelo para cuidar da sua saúde mental. Cadastro rápido e gratuito.">
 
     <%- include('partials/head') %>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     
     <style>
         .login-container { max-width: 450px !important; margin-top: 60px; margin-bottom: 80px; }
@@ -90,6 +91,27 @@
                 </button>
             </form>
 
+            <div style="display: flex; align-items: center; margin: 20px 0;">
+                <hr style="flex-grow: 1; border: 0; border-top: 1px solid #eee;">
+                <span style="padding: 0 10px; color: #888; font-size: 0.9rem;">ou</span>
+                <hr style="flex-grow: 1; border: 0; border-top: 1px solid #eee;">
+            </div>
+
+            <!-- Botão do Google -->
+            <div id="g_id_onload"
+                 data-client_id="283886540808-qj13i35cfagnp9rc6qou1o66mdv3ppkl.apps.googleusercontent.com"
+                 data-callback="handleCredentialResponse">
+            </div>
+            <div class="g_id_signin"
+                 data-type="standard"
+                 data-size="large"
+                 data-theme="outline"
+                 data-text="signup_with"
+                 data-shape="rectangular"
+                 data-logo_alignment="left"
+                 data-width="100%">
+            </div>
+
             <div class="login-links" style="margin-top: 25px; text-align: center;">
                 <a href="/login">Já tem uma conta? <strong>Faça Login</strong></a>
             </div>
@@ -107,5 +129,38 @@
     
     <script src="/config.js"></script>
     <script src="/cadastro.js"></script>
+    <script>
+        // Callback do Google (Reutilizável)
+        async function handleCredentialResponse(response) {
+            try {
+                const res = await fetch('/api/auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: response.credential })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    localStorage.setItem('Yelo_token', data.token);
+                    localStorage.setItem('Yelo_user', JSON.stringify(data.user));
+                    window.location.href = data.redirect;
+                } else {
+                    // Se der erro, mostra mensagem (ex: conta inativa)
+                    const msgElement = document.getElementById('mensagem-registro');
+                    if(msgElement) {
+                        msgElement.textContent = data.error;
+                        msgElement.className = 'mensagem-erro';
+                        msgElement.style.display = 'block';
+                    } else {
+                        alert(data.error || 'Erro ao cadastrar com Google.');
+                    }
+                }
+            } catch (error) {
+                console.error('Erro Google Cadastro:', error);
+                alert('Erro de conexão.');
+            }
+        }
+    </script>
 </body>
 </html>

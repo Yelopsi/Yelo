@@ -11,6 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Mulish:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         :root {
             --fonte-titulo: 'Lora', serif;
@@ -70,6 +71,27 @@
                 <button type="submit" class="btn-login">Entrar</button>
             </form>
 
+            <div style="display: flex; align-items: center; margin: 20px 0;">
+                <hr style="flex-grow: 1; border: 0; border-top: 1px solid #eee;">
+                <span style="padding: 0 10px; color: #888; font-size: 0.9rem;">ou</span>
+                <hr style="flex-grow: 1; border: 0; border-top: 1px solid #eee;">
+            </div>
+
+            <!-- Botão do Google -->
+            <div id="g_id_onload"
+                 data-client_id="283886540808-qj13i35cfagnp9rc6qou1o66mdv3ppkl.apps.googleusercontent.com"
+                 data-callback="handleCredentialResponse">
+            </div>
+            <div class="g_id_signin"
+                 data-type="standard"
+                 data-size="large"
+                 data-theme="outline"
+                 data-text="sign_in_with"
+                 data-shape="rectangular"
+                 data-logo_alignment="left"
+                 data-width="100%">
+            </div>
+
             <div class="login-links">
                 <a href="/recuperar-senha">Esqueceu sua senha?</a>
                 <a href="/registro.html">Não tem uma conta? <strong>Cadastre-se</strong></a>
@@ -104,6 +126,31 @@
         }
       }
       setupPasswordToggle("toggleSenhaLogin", "senha-login");
+    </script>
+    <script>
+        // Callback do Google
+        async function handleCredentialResponse(response) {
+            try {
+                const res = await fetch('/api/auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: response.credential })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    localStorage.setItem('Yelo_token', data.token);
+                    localStorage.setItem('Yelo_user', JSON.stringify(data.user));
+                    window.location.href = data.redirect;
+                } else {
+                    alert(data.error || 'Erro ao entrar com Google.');
+                }
+            } catch (error) {
+                console.error('Erro Google Login:', error);
+                alert('Erro de conexão ao tentar login com Google.');
+            }
+        }
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
