@@ -1373,7 +1373,7 @@ const startServer = async () => {
         const arrayColumns = [
             'temas_atuacao', 'abordagens_tecnicas', 'modalidade', 
             'publico_alvo', 'estilo_terapia', 'praticas_inclusivas', 
-            'disponibilidade_periodo'
+            'disponibilidade_periodo', 'praticas_vivencias'
         ];
 
         for (const col of arrayColumns) {
