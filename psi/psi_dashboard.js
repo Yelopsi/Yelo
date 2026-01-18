@@ -314,7 +314,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function apiFetch(url, options = {}) {
         const token = localStorage.getItem('Yelo_token');
-        if (!token) throw new Error("Token não encontrado.");
+        
+        // --- FIX: Redireciona para login se o token não existir (Sessão expirada) ---
+        if (!token) {
+            window.location.href = '/login';
+            throw new Error("Sessão expirada. Redirecionando para login...");
+        }
+
         const headers = { 'Authorization': `Bearer ${token}`, ...options.headers };
         if (!(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
         const response = await fetch(url, { ...options, headers });
