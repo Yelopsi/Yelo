@@ -71,14 +71,16 @@
         }
 
         /* Garante a formatação correta do botão do Google */
-        .g_id_signin, .g_id_signin > div, .g_id_signin iframe {
-            width: 100% !important;
-            display: flex !important;
-            justify-content: center !important;
-        }
-        /* Aplica margem apenas ao container principal para evitar espaçamento duplicado */
         .g_id_signin {
+            display: flex;
+            justify-content: center;
+            width: 100%;
             margin-bottom: 20px;
+        }
+        /* Força o iframe a ocupar a largura total */
+        .g_id_signin > div, .g_id_signin iframe {
+            width: 100% !important;
+            margin: 0 auto !important;
         }
     </style>
 </head>
