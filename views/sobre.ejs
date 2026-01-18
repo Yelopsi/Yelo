@@ -9,11 +9,8 @@
     <style>
         /* Estilos Orgânicos para a página Sobre */
         .card-manifesto {
-            background: #F8F3ED; /* Creme */
+            background: transparent;
             padding: 60px 50px;
-            border-radius: 24px 60px 24px 60px;
-            box-shadow: 0 15px 40px rgba(27, 67, 50, 0.05);
-            border: 1px solid rgba(0,0,0,0.03);
             position: relative;
             z-index: 2;
         }
@@ -30,85 +27,72 @@
         .doodle-bg.top-right { top: 5%; right: -30px; width: 180px; transform: rotate(120deg); opacity: 0.3; }
         .doodle-bg.bottom-left { bottom: 5%; left: -40px; width: 220px; transform: rotate(-15deg); opacity: 0.3; }
 
-        /* --- MARQUEE GRID (CARROSSEL INFINITO) --- */
-        .marquee-section {
+        /* --- LIVING GRID (GRADE VIVA) --- */
+        .living-grid-section {
             padding: 80px 0;
             background-color: #fdfaf6;
-            overflow: hidden;
             position: relative;
         }
         
-        .marquee-container {
-            display: flex;
-            flex-direction: column;
+        .living-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
             margin-bottom: 60px;
-            opacity: 0; /* Começa invisível até carregar */
-            transition: opacity 0.5s ease;
+            padding: 0 20px;
         }
         
-        .marquee-row {
-            display: flex;
-            gap: 20px;
-            width: max-content;
-            will-change: transform; /* Otimização de performance */
-        }
-        
-        /* Animações */
-        @keyframes scroll-left {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-        
-        @keyframes scroll-right {
-            0% { transform: translateX(-50%); }
-            100% { transform: translateX(0); }
-        }
-        
-        .marquee-row.left {
-            animation: scroll-left 60s linear infinite;
-        }
-        
-        .marquee-row.right {
-            animation: scroll-right 60s linear infinite;
+        /* Ajuste para telas maiores para não ficar muito espaçado */
+        @media (min-width: 1200px) {
+             .living-grid { grid-template-columns: repeat(6, 1fr); }
         }
         
         /* Avatares */
-        .psy-avatar-card {
-            width: 120px;
-            height: 120px;
+        .grid-cell {
+            width: 100%;
+            aspect-ratio: 1;
             border-radius: 24px 40px 24px 40px; /* Borda orgânica */
             overflow: hidden;
-            flex-shrink: 0;
             position: relative;
             background-color: #e0e0e0;
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
         
-        .psy-avatar-card img {
+        .grid-cell img, .grid-cell .psy-avatar-placeholder {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: opacity 1.5s ease-in-out;
         }
         
         .psy-avatar-placeholder {
-            width: 100%;
-            height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
             color: rgba(255,255,255,0.8);
             font-size: 1.5rem;
+            background-color: #1B4332; /* Fallback color */
+        }
+
+        .fade-enter { opacity: 0; z-index: 2; }
+        .fade-enter-active { opacity: 1; }
+        .fade-exit { opacity: 1; z-index: 1; }
+        .fade-exit-active { opacity: 0; }
+
+        @media (max-width: 900px) {
+            .living-grid { grid-template-columns: repeat(4, 1fr); }
         }
 
         @media (max-width: 600px) {
-            .card-manifesto { padding: 40px 25px; border-radius: 20px 40px 20px 40px; }
-            .psy-avatar-card { width: 90px; height: 90px; border-radius: 16px 30px 16px 30px; }
-            .marquee-row { gap: 15px; }
-            /* Esconde a terceira linha no mobile para não pesar */
-            .marquee-row:nth-child(3) { display: none; }
+            .card-manifesto { padding: 40px 25px; }
+            .living-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+            .grid-cell { border-radius: 16px 30px 16px 30px; }
         }
     </style>
 
@@ -174,15 +158,15 @@
             </div>
         </section>
 
-        <!-- SEÇÃO ROSTOS DA YELO (MARQUEE) -->
-        <section class="marquee-section">
+        <!-- SEÇÃO ROSTOS DA YELO (LIVING GRID) -->
+        <section class="living-grid-section">
             <div class="container" style="text-align: center; margin-bottom: 40px;">
                 <h2 class="titulo-secao">Rostos de quem faz a Yelo</h2>
                 <p class="subtitulo-secao">Conheça alguns dos profissionais que estão prontos para te acolher.</p>
             </div>
 
-            <div class="marquee-container" id="marquee-container">
-                <!-- Linhas serão injetadas via JS -->
+            <div class="living-grid" id="living-grid">
+                <!-- Grid injetado via JS -->
             </div>
 
             <div style="text-align: center; margin-top: 40px;">
@@ -195,8 +179,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            const marqueeContainer = document.getElementById('marquee-container');
-            const MIN_ITEMS = 20; // Mínimo para o loop ficar bonito
+            const gridContainer = document.getElementById('living-grid');
+            const GRID_SIZE = 18; // Número de células no grid (ajustável)
             
             // Cores da marca para placeholders
             const brandColors = ['#1B4332', '#FFEE8C', '#2D6A4F', '#F4D35E'];
@@ -212,9 +196,10 @@
                 console.warn('Erro ao carregar psicólogos, usando mocks.', error);
             }
 
-            // 2. Lógica de Fallback / Preenchimento
-            // Se tiver menos que o mínimo, completa com mocks
-            while (professionals.length < MIN_ITEMS) {
+            // 2. Lógica de Fallback / Preenchimento (Mocks)
+            // "dando preferencia, mas não somente de pessoas pretas e pardas"
+            // Como não temos um gerador de imagens reais, usamos placeholders coloridos para simular.
+            while (professionals.length < 40) { // Garante um pool grande
                 const isColor = Math.random() > 0.5;
                 professionals.push({
                     id: 'mock-' + Math.random(),
@@ -227,56 +212,71 @@
             // Embaralha para dar dinamismo
             professionals.sort(() => Math.random() - 0.5);
 
-            // 3. Criação das Linhas (3 linhas)
-            // Dividimos os profissionais em 3 grupos
-            const chunkSize = Math.ceil(professionals.length / 3);
-            const rowsData = [
-                professionals.slice(0, chunkSize),
-                professionals.slice(chunkSize, chunkSize * 2),
-                professionals.slice(chunkSize * 2)
-            ];
+            // 3. Renderização Inicial do Grid
+            const displayedItems = professionals.slice(0, GRID_SIZE);
 
-            // Função para criar o HTML de um card
-            const createCard = (psi) => {
-                const div = document.createElement('div');
-                div.className = 'psy-avatar-card';
+            const createContent = (psi) => {
+                let element;
                 
                 if (psi.fotoUrl && !psi.isMock) {
-                    const img = document.createElement('img');
-                    img.src = psi.fotoUrl;
-                    img.alt = psi.nome || 'Psicólogo Yelo';
-                    img.loading = "lazy"; // Performance
-                    div.appendChild(img);
+                    element = document.createElement('img');
+                    element.src = psi.fotoUrl;
+                    element.alt = psi.nome || 'Psicólogo Yelo';
                 } else {
-                    const placeholder = document.createElement('div');
-                    placeholder.className = 'psy-avatar-placeholder';
-                    placeholder.style.backgroundColor = psi.color || '#1B4332';
-                    placeholder.textContent = psi.initial || 'Y';
-                    if(psi.color === '#FFEE8C' || psi.color === '#F4D35E') placeholder.style.color = '#1B4332';
-                    div.appendChild(placeholder);
+                    element = document.createElement('div');
+                    element.className = 'psy-avatar-placeholder';
+                    element.style.backgroundColor = psi.color || '#1B4332';
+                    element.textContent = psi.initial || 'Y';
+                    if(psi.color === '#FFEE8C' || psi.color === '#F4D35E') element.style.color = '#1B4332';
                 }
-                return div;
+                return element;
             };
 
-            // Renderiza as 3 linhas
-            rowsData.forEach((rowItems, index) => {
-                const row = document.createElement('div');
-                // Alterna direção: Esquerda, Direita, Esquerda
-                row.className = `marquee-row ${index % 2 === 0 ? 'left' : 'right'}`;
-                
-                // Duplica o conteúdo para criar o loop infinito perfeito (A + A)
-                // O CSS vai animar de 0 a -50%
-                const content = [...rowItems, ...rowItems]; 
-                
-                content.forEach(item => {
-                    row.appendChild(createCard(item));
-                });
-
-                marqueeContainer.appendChild(row);
+            displayedItems.forEach(item => {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.appendChild(createContent(item));
+                gridContainer.appendChild(cell);
             });
 
-            // Mostra o container (fade in)
-            marqueeContainer.style.opacity = '1';
+            // 4. Lógica de "Living Grid" (Troca aleatória)
+            setInterval(() => {
+                // Escolhe uma célula aleatória do grid
+                const cells = gridContainer.children;
+                if (cells.length === 0) return;
+                
+                const randomCellIndex = Math.floor(Math.random() * cells.length);
+                const cell = cells[randomCellIndex];
+
+                // Escolhe um item aleatório de TODOS os profissionais
+                const randomProIndex = Math.floor(Math.random() * professionals.length);
+                const newItem = professionals[randomProIndex];
+                
+                const newContent = createContent(newItem);
+                newContent.classList.add('fade-enter');
+                
+                // Adiciona o novo conteúdo
+                cell.appendChild(newContent);
+                
+                // Força reflow para ativar transição
+                void newContent.offsetWidth;
+                
+                newContent.classList.add('fade-enter-active');
+                newContent.classList.remove('fade-enter');
+
+                // Remove o conteúdo antigo
+                const oldContent = cell.firstElementChild;
+                if (oldContent) {
+                    oldContent.classList.add('fade-exit');
+                    // Espera a transição acabar para remover do DOM
+                    setTimeout(() => {
+                        if(oldContent.parentNode === cell) {
+                            cell.removeChild(oldContent);
+                        }
+                    }, 1500); // Mesmo tempo do CSS transition
+                }
+
+            }, 2000); // Troca uma imagem a cada 2 segundos
         });
     </script>
 </body>
