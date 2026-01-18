@@ -25,8 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Etapa 1: Boas-vindas e Dados Básicos
         { id: 'boas-vindas', type: 'welcome', question: "Boas-vindas à Yelo, colega.", subtitle: "Estamos felizes por ter você aqui. Este questionário inicial é a etapa mais importante: ele define seu perfil para que possamos conectá-lo(a) aos pacientes certos. Responda com calma." },        
         { id: 'nome', type: 'text', question: "Primeiro, qual o seu nome completo?", placeholder: "Nome Completo", required: true },
-        { id: 'email', type: 'email', question: "Qual o seu melhor e-mail profissional?", placeholder: "E-mail Profissional", required: true, inputMode: 'email' },
-        { id: 'crp', type: 'text', question: "E o seu número de registro no CRP?", placeholder: "Número do CRP (ex: 06/123456)", required: true, inputMode: 'numeric', footerLink: { text: "Não tenho CRP ativo", url: "sem_crp.html" } },
         // Etapa 2: Definição do Nicho
         { id: 'modalidade', type: 'choice', question: "Como você prefere atender?", choices: ["Apenas Online", "Apenas Presencial", "Híbrido (Online e Presencial)"], required: true },
         { id: 'cep', type: 'text', question: "Qual o CEP do seu local de atendimento?", placeholder: "CEP (ex: 12345-678)", required: true, inputMode: 'numeric' },

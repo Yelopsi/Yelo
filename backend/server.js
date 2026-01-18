@@ -1369,6 +1369,13 @@ const startServer = async () => {
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cnpj" VARCHAR(255) UNIQUE;`);
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "modalidade" JSONB DEFAULT '[]';`);
         
+        // --- FIX: PERMITIR CADASTRO LEAN (CRP OPCIONAL NO INÍCIO) ---
+        try {
+            await db.sequelize.query('ALTER TABLE "Psychologists" ALTER COLUMN "crp" DROP NOT NULL;');
+        } catch (e) {
+            // Ignora se já for nullable ou outro erro menor
+        }
+
         // --- FIX: CONVERSÃO EM MASSA DE ARRAYS PARA JSONB (CORREÇÃO ERRO 500) ---
         const arrayColumns = [
             'temas_atuacao', 'abordagens_tecnicas', 'modalidade', 
