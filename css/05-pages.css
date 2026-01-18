@@ -2253,3 +2253,102 @@
         border-width: 2px;
     }
 }
+/* ==========================================================================
+   PÁGINAS LEGAIS (Termos e Privacidade) - UX REFINADA
+   ========================================================================== */
+
+.pagina-legal {
+    background-color: #f4f7f6; /* Fundo levemente cinza/verde para descanso visual */
+    padding: 80px 20px;
+    min-height: 100vh;
+}
+
+.container-legal {
+    max-width: 800px; /* Largura ideal para leitura (aprox 75 caracteres por linha) */
+    margin: 0 auto;
+    background-color: #ffffff;
+    padding: 60px 80px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+    border: 1px solid rgba(0,0,0,0.02);
+}
+
+.header-legal {
+    text-align: center;
+    margin-bottom: 50px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid #eee;
+}
+
+.header-legal h1 {
+    font-family: 'Lora', serif; /* Fonte serifada passa credibilidade */
+    color: var(--verde-escuro);
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+}
+
+.badge-legal {
+    display: inline-block;
+    background-color: #e8f5e9;
+    color: var(--verde-escuro);
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    font-family: 'Mulish', sans-serif;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.conteudo-legal {
+    font-family: 'Mulish', sans-serif; /* Sans-serif para o corpo do texto (leitura fácil) */
+    color: #374151; /* Cinza escuro suave, menos cansativo que preto puro */
+    line-height: 1.8;
+    font-size: 1.05rem;
+}
+
+.conteudo-legal h2 {
+    font-family: 'Lora', serif;
+    color: var(--verde-escuro);
+    font-size: 1.8rem;
+    margin-top: 50px;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.conteudo-legal h3 {
+    font-family: 'Lora', serif;
+    color: #1f2937;
+    font-size: 1.3rem;
+    margin-top: 35px;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.conteudo-legal p { margin-bottom: 20px; text-align: justify; }
+.conteudo-legal ul, .conteudo-legal ol { margin-bottom: 25px; padding-left: 20px; }
+.conteudo-legal li { margin-bottom: 12px; padding-left: 5px; }
+
+.termo-destaque {
+    background-color: #fffbeb; /* Amarelo Yelo suave */
+    color: #92400e;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+}
+
+.box-contato-legal {
+    background-color: #f8f9fa;
+    border-left: 4px solid var(--verde-escuro);
+    padding: 25px;
+    margin-top: 50px;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+    .container-legal { padding: 40px 25px; }
+    .header-legal h1 { font-size: 2rem; }
+}
