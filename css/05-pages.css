@@ -1080,7 +1080,7 @@
 .step-img-frame {
     position: relative;
     z-index: 2;
-    border-radius: 24px; /* Bordas bem arredondadas */
+    border-radius: 24px 60px 24px 60px; /* Forma orgânica */
     overflow: hidden;
     box-shadow: 0 20px 40px rgba(27, 67, 50, 0.15); /* Sombra rica */
     width: 100%;
@@ -1107,13 +1107,18 @@
     top: 20px;
     left: 20px;
     background-color: var(--cor-Yelo);
-    border-radius: 24px;
+    border-radius: 24px 60px 24px 60px;
     z-index: 1; /* Atrás da imagem */
     opacity: 0.4;
 }
 
 .step-row.reverse .step-blob {
     left: -20px; /* Inverte a sombra decorativa */
+    border-radius: 60px 24px 60px 24px; /* Inverte a forma */
+}
+
+.step-row.reverse .step-img-frame {
+    border-radius: 60px 24px 60px 24px;
 }
 
 /* Responsividade para Mobile */
