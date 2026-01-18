@@ -12,11 +12,11 @@ exports.createQuestion = async (req, res) => {
             return res.status(400).json({ error: "Conteúdo muito curto." });
         }
 
-        let patient = await db.Patient.findOne({ where: { email: 'anonimo@Yelo.com' } });
+        let patient = await db.Patient.findOne({ where: { email: 'anonimo@yelopsi.com.br' } });
         if (!patient) {
             patient = await db.Patient.create({
                 nome: "Anônimo",
-                email: "anonimo@Yelo.com",
+                email: "anonimo@yelopsi.com.br",
                 senha: "123",
                 telefone: "00000000000"
             });

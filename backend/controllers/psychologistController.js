@@ -577,6 +577,7 @@ exports.updatePsychologistProfile = async (req, res) => {
         // --- CORREÇÃO ROBUSTA DE ARRAYS ---
         // Garante que qualquer campo que deva ser array, SEJA array, mesmo se vier como string JSON.
         const parseArrayField = (fieldValue) => {
+            if (fieldValue === undefined) return undefined; // IGNORA se não foi enviado (não apaga o banco)
             if (!fieldValue) return [];
             
             // Se já for array, verifica se os itens dentro não são strings JSON (ex: ['["Online"]'])
@@ -656,7 +657,7 @@ exports.updatePsychologistProfile = async (req, res) => {
         await psychologist.update({
             slug: finalSlug,
             nome, telefone, bio, crp, cep, cidade, estado,
-            valor_sessao_numero: valor_sessao_numero ? parseFloat(valor_sessao_numero) : null,
+            valor_sessao_numero: valor_sessao_numero !== undefined ? (valor_sessao_numero ? parseFloat(valor_sessao_numero) : null) : undefined,
             genero_identidade,
             linkedin_url, instagram_url, facebook_url, tiktok_url, x_url,
             
