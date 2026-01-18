@@ -1369,20 +1369,34 @@ const startServer = async () => {
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cnpj" VARCHAR(255) UNIQUE;`);
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "modalidade" JSONB DEFAULT '[]';`);
         
-        // --- FIX: CONVERSÃO DE TIPOS (CORREÇÃO ERRO 500) ---
-        try {
-            // Tenta converter modalidade de ARRAY para JSONB (Causa comum de erro)
-            await db.sequelize.query(`
-                ALTER TABLE "Psychologists" 
-                ALTER COLUMN "modalidade" TYPE JSONB 
-                USING to_json("modalidade");
-            `);
-        } catch (e) {
-            // Fallback: Tenta converter de Texto para JSONB se o anterior falhar
+        // --- FIX: CONVERSÃO EM MASSA DE ARRAYS PARA JSONB (CORREÇÃO ERRO 500) ---
+        const arrayColumns = [
+            'temas_atuacao', 'abordagens_tecnicas', 'modalidade', 
+            'publico_alvo', 'estilo_terapia', 'praticas_inclusivas', 
+            'disponibilidade_periodo'
+        ];
+
+        for (const col of arrayColumns) {
             try {
-                await db.sequelize.query(`ALTER TABLE "Psychologists" ALTER COLUMN "modalidade" TYPE JSONB USING "modalidade"::jsonb;`);
-            } catch (e2) { /* Ignora se já estiver correto */ }
+                // 1. Garante que a coluna existe
+                await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "${col}" JSONB DEFAULT '[]';`);
+                
+                // 2. Tenta converter de ARRAY/TEXT para JSONB (se necessário)
+                await db.sequelize.query(`
+                    ALTER TABLE "Psychologists" 
+                    ALTER COLUMN "${col}" TYPE JSONB 
+                    USING to_json("${col}"::text); 
+                `);
+            } catch (e) {
+                // Fallback: Se falhar (ex: já é JSONB ou erro de cast), tenta cast direto
+                try {
+                    await db.sequelize.query(`ALTER TABLE "Psychologists" ALTER COLUMN "${col}" TYPE JSONB USING "${col}"::jsonb;`);
+                } catch (e2) { 
+                    // Ignora erros silenciosamente se a coluna já estiver correta
+                }
+            }
         }
+        console.log('🔧 [DB FIX] Colunas de lista verificadas e convertidas para JSONB.');
 
         // --- FIX: GARANTIR COLUNAS DA TABELA PATIENTS (EVITA ERRO NO LOGIN) ---
         console.log('🔧 [DB FIX] Aplicando correção na tabela Patients (ip_registro, termos)...');
@@ -1507,6 +1521,23 @@ const startServer = async () => {
     } else {
         // Em produção, não usamos sync() para evitar problemas. As correções manuais acima cuidam das alterações.
         console.log('✅ [DB SYNC] Conexão com banco de dados estabelecida (Modo Produção).');
+    }
+
+    // --- FIX CRÍTICO: PATCH NO MODELO SEQUELIZE ---
+    // Isso impede que o Sequelize envie arrays como strings do Postgres "{item}" 
+    // e força o envio como JSON "[item]", resolvendo o erro "Expected :, but found }".
+    if (db.Psychologist) {
+        const jsonFields = ['temas_atuacao', 'abordagens_tecnicas', 'modalidade', 'publico_alvo', 'estilo_terapia', 'praticas_inclusivas', 'disponibilidade_periodo'];
+        
+        jsonFields.forEach(field => {
+            if (db.Psychologist.rawAttributes[field]) {
+                // Força o tipo para JSONB na memória do Sequelize
+                db.Psychologist.rawAttributes[field].type = DataTypes.JSONB;
+                // Remove flag de array se existir
+                if (db.Psychologist.rawAttributes[field]._modelAttribute) db.Psychologist.rawAttributes[field]._modelAttribute = true;
+            }
+        });
+        console.log('🔧 [MODEL PATCH] Modelo Psychologist ajustado para usar JSONB nas listas.');
     }
 
     server.listen(PORT, () => {
