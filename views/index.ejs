@@ -45,12 +45,93 @@
     </script>
 
     <style>
-        /* Estilos inline para as novas seções sugeridas (Vantagens e Depoimentos) */
-        .secao-vantagens { padding: 4rem 1.5rem; background-color: #fff; text-align: center; }
-        .grid-vantagens { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; max-width: 1000px; margin: 2rem auto 0; }
-        .card-vantagem { padding: 1rem; border-radius: 12px; background: #fdfaf6; border: 1px solid #eee; transition: transform 0.3s ease; }
-        .card-vantagem:hover { transform: translateY(-5px); }
-        .icone-vantagem { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+        /* --- SEÇÃO VANTAGENS (ORGÂNICA) --- */
+        .secao-vantagens {
+            padding: 100px 20px;
+            background-color: #ffffff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-vantagens {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 60px auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .grid-vantagens-organica {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .card-vantagem-organico {
+            background: #F8F3ED; /* Creme */
+            padding: 40px 30px;
+            border-radius: 24px 60px 24px 60px; /* Forma orgânica */
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0,0,0,0.03);
+            text-align: center;
+        }
+
+        .card-vantagem-organico:nth-child(2) {
+            background: #E6F4F1; /* Verde suave */
+            border-radius: 60px 24px 60px 24px; /* Invertido */
+        }
+        
+        .card-vantagem-organico:nth-child(3) {
+            background: #FFF8E1; /* Amarelo suave */
+            border-radius: 24px 60px 24px 60px;
+        }
+
+        .card-vantagem-organico:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(27, 67, 50, 0.08);
+        }
+
+        .icone-vantagem-organico {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .card-vantagem-organico h3 {
+            font-family: var(--font-titulos);
+            font-size: 1.5rem;
+            color: #1B4332;
+            margin-bottom: 15px;
+        }
+
+        .card-vantagem-organico p {
+            font-family: var(--font-principal);
+            font-size: 1rem;
+            color: #555;
+            line-height: 1.6;
+        }
+        
+        /* Doodles de Fundo */
+        .doodle-bg {
+            position: absolute;
+            opacity: 0.6;
+            pointer-events: none;
+            z-index: 1;
+            color: #f0f0f0;
+        }
+        .doodle-bg.left { top: 5%; left: -50px; width: 300px; transform: rotate(45deg); }
+        .doodle-bg.right { bottom: 5%; right: -50px; width: 250px; transform: rotate(-45deg); }
         
         /* --- SEÇÃO DEPOIMENTOS MODERNA --- */
         .secao-depoimentos { padding: 6rem 1.5rem; background-color: #fdfaf6; position: relative; }
@@ -266,22 +347,33 @@
 
         <!-- NOVA SEÇÃO: Vantagens (Por que Yelo?) -->
         <section class="secao-vantagens hidden">
-            <div class="container">
-                <h2 class="titulo-secao">Por que escolher a Yelo?</h2>
-                <p class="subtitulo-secao">Cuidar da mente não precisa ser complicado.</p>
-                <div class="grid-vantagens">
-                    <div class="card-vantagem">
-                        <span class="icone-vantagem">🎯</span>
+            <!-- Doodles de Fundo -->
+            <svg class="doodle-bg left" viewBox="0 0 200 200" fill="currentColor"><path d="M45.7,-76.3C58.9,-69.3,69.1,-55.6,76.3,-41.2C83.5,-26.8,87.7,-11.7,85.6,2.6C83.5,16.9,75.1,30.4,65.6,42.2C56.1,54,45.5,64.1,33.3,70.3C21.1,76.5,7.3,78.8,-5.3,76.9C-17.9,75,-34.7,68.9,-48.6,59.6C-62.5,50.3,-73.5,37.8,-79.6,23.3C-85.7,8.8,-86.9,-7.7,-80.7,-21.8C-74.5,-35.9,-60.9,-47.6,-46.8,-54.3C-32.7,-61,-18.1,-62.7,-2.9,-62.2C12.3,-61.7,24.6,-59,32.5,-83.3L45.7,-76.3Z" transform="translate(100 100)" /></svg>
+            <svg class="doodle-bg right" viewBox="0 0 200 200" fill="currentColor"><path d="M38.1,-63.8C49.3,-54.6,58.3,-43.3,65.5,-30.8C72.7,-18.3,78.1,-4.6,76.3,8.3C74.5,21.2,65.5,33.3,55.3,43.4C45.1,53.5,33.7,61.6,21.1,66.1C8.5,70.6,-5.3,71.5,-18.4,67.8C-31.5,64.1,-43.9,55.8,-53.4,45.2C-62.9,34.6,-69.5,21.7,-70.8,8.2C-72.1,-5.3,-68.1,-19.4,-59.6,-31.1C-51.1,-42.8,-38.1,-52.1,-25.3,-60.1C-12.5,-68.1,0.1,-74.8,12.7,-74.8C25.3,-74.8,38.1,-68.1,38.1,-63.8Z" transform="translate(100 100)" /></svg>
+
+            <div class="header-vantagens">
+                <h2 class="titulo-organico">Por que escolher a Yelo?</h2>
+                <p class="texto-organico" style="max-width: 600px; margin: 0 auto;">Cuidar da mente não precisa ser complicado. Criamos uma experiência fluida para você focar no que importa.</p>
+            </div>
+
+            <div class="grid-vantagens-organica">
+                <div class="card-vantagem-organico">
+                    <span class="icone-vantagem-organico">🎯</span>
+                    <div class="conteudo-card">
                         <h3>Match Inteligente</h3>
                         <p>Não perca tempo procurando. Nossa tecnologia conecta você aos especialistas ideais para sua necessidade específica.</p>
                     </div>
-                    <div class="card-vantagem">
-                        <span class="icone-vantagem">🔒</span>
+                </div>
+                <div class="card-vantagem-organico">
+                    <span class="icone-vantagem-organico">🔒</span>
+                    <div class="conteudo-card">
                         <h3>100% Sigiloso e Seguro</h3>
                         <p>Sua privacidade é nossa prioridade. Plataforma criptografada e profissionais éticos verificados pelo CRP.</p>
                     </div>
-                    <div class="card-vantagem">
-                        <span class="icone-vantagem">🔄</span>
+                </div>
+                <div class="card-vantagem-organico">
+                    <span class="icone-vantagem-organico">🔄</span>
+                    <div class="conteudo-card">
                         <h3>Troca Facilitada</h3>
                         <p>Não se adaptou? Acontece. Troque de profissional a qualquer momento sem burocracia ou custo extra.</p>
                     </div>
