@@ -6,6 +6,32 @@
     <%- include('partials/head') %>
 </head>
 <body class="pagina-com-conteudo-atras">
+    <style>
+        /* Estilos Orgânicos para a página Sobre */
+        .card-manifesto {
+            background: #F8F3ED; /* Creme */
+            padding: 60px 50px;
+            border-radius: 24px 60px 24px 60px;
+            box-shadow: 0 15px 40px rgba(27, 67, 50, 0.05);
+            border: 1px solid rgba(0,0,0,0.03);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .doodle-bg {
+            position: absolute;
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: 1;
+            color: #f0f0f0;
+        }
+        .doodle-bg.left { top: 10%; left: -50px; width: 300px; transform: rotate(45deg); }
+        .doodle-bg.right { bottom: 10%; right: -50px; width: 250px; transform: rotate(-45deg); }
+
+        @media (max-width: 600px) {
+            .card-manifesto { padding: 40px 25px; border-radius: 20px 40px 20px 40px; }
+        }
+    </style>
 
     <%- include('partials/header') %>
 
@@ -13,7 +39,6 @@
         <!-- HERO MANIFESTO -->
         <section class="manifesto-hero">
             <div class="container-manifesto">
-                <br>
                 <h1>Manifesto da Yelo</h1>
                 <p class="manifesto-lead">Sua dor não precisa de mais ruído.</p>
             </div>
@@ -26,14 +51,18 @@
             
             <div class="wave-divider-bottom" style="position: absolute; bottom: -1px; left: 0; width: 100%; line-height: 0;">
                 <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" style="display: block; width: 100%; height: 60px; transform: scaleY(-1);">
-                    <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" style="fill:#fdfaf6;"></path>
+                    <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" style="fill:#ffffff;"></path>
                 </svg>
             </div>
         </section>
 
         <!-- CONTEÚDO DO MANIFESTO -->
-        <section class="manifesto-body-section">
+        <section class="manifesto-body-section" style="background-color: #ffffff; position: relative; overflow: hidden;">
+            <svg class="doodle-bg left" viewBox="0 0 200 200" fill="currentColor"><path d="M45.7,-76.3C58.9,-69.3,69.1,-55.6,76.3,-41.2C83.5,-26.8,87.7,-11.7,85.6,2.6C83.5,16.9,75.1,30.4,65.6,42.2C56.1,54,45.5,64.1,33.3,70.3C21.1,76.5,7.3,78.8,-5.3,76.9C-17.9,75,-34.7,68.9,-48.6,59.6C-62.5,50.3,-73.5,37.8,-79.6,23.3C-85.7,8.8,-86.9,-7.7,-80.7,-21.8C-74.5,-35.9,-60.9,-47.6,-46.8,-54.3C-32.7,-61,-18.1,-62.7,-2.9,-62.2C12.3,-61.7,24.6,-59,32.5,-83.3L45.7,-76.3Z" transform="translate(100 100)" /></svg>
+            <svg class="doodle-bg right" viewBox="0 0 200 200" fill="currentColor"><path d="M38.1,-63.8C49.3,-54.6,58.3,-43.3,65.5,-30.8C72.7,-18.3,78.1,-4.6,76.3,8.3C74.5,21.2,65.5,33.3,55.3,43.4C45.1,53.5,33.7,61.6,21.1,66.1C8.5,70.6,-5.3,71.5,-18.4,67.8C-31.5,64.1,-43.9,55.8,-53.4,45.2C-62.9,34.6,-69.5,21.7,-70.8,8.2C-72.1,-5.3,-68.1,-19.4,-59.6,-31.1C-51.1,-42.8,-38.1,-52.1,-25.3,-60.1C-12.5,-68.1,0.1,-74.8,12.7,-74.8C25.3,-74.8,38.1,-68.1,38.1,-63.8Z" transform="translate(100 100)" /></svg>
+            
             <div class="container-manifesto">
+                <div class="card-manifesto">
                 
                 <div class="manifesto-content-flow">
                     <p>O mundo lá fora já é barulhento demais. Cheio de pressões, julgamentos e telas que nunca desligam. Quando a mente pede socorro, a última coisa que você precisa é de um sistema complicado ou de uma busca fria e solitária.</p>
@@ -56,6 +85,7 @@
                         <span class="signature-text">Com carinho 💚</span>
                         <span class="signature-name">Equipe Yelo</span>
                     </div>
+                </div>
                 </div>
 
             </div>
