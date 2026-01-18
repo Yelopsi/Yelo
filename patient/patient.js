@@ -102,8 +102,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const matchesGrid = document.getElementById('matches-grid');
         if (!matchesGrid) return;
         
-        matchesGrid.innerHTML = '<div style="text-align:center; padding:40px; grid-column: 1 / -1;"><div class="loader-spinner" style="margin: 0 auto;"></div><p style="margin-top: 15px; color: #666;">Buscando profissionais compatíveis...</p></div>';
-
         try {
             const token = localStorage.getItem('Yelo_token');
             
@@ -187,8 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const favoritosGrid = document.getElementById('favoritos-grid');
         const favoritosVazio = document.getElementById('favoritos-vazio');
         if (!favoritosGrid || !favoritosVazio) return;
-
-        favoritosGrid.innerHTML = '<div style="text-align:center; padding:40px; grid-column: 1 / -1;"><div class="loader-spinner" style="margin: 0 auto;"></div><p style="margin-top: 15px; color: #666;">Carregando seus favoritos...</p></div>';
 
         try {
             const token = localStorage.getItem('Yelo_token');
