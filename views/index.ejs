@@ -166,6 +166,71 @@
         .autor-depoimento { display: flex; align-items: center; gap: 15px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 20px; }
         .avatar-depoimento { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #1B4332; font-size: 1.1rem; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         
+        /* --- SEÇÃO FAQ ORGÂNICA --- */
+        .faq-secao { padding: 100px 20px; background-color: #fdfaf6; position: relative; }
+        
+        .acordeao-container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+        
+        .acordeao-item-organico {
+            background: #ffffff;
+            border-radius: 24px 40px 24px 40px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+        
+        .acordeao-item-organico:nth-child(even) {
+            border-radius: 40px 24px 40px 24px;
+        }
+        
+        .acordeao-titulo {
+            width: 100%;
+            padding: 25px 30px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            font-family: var(--font-titulos);
+            font-size: 1.2rem;
+            color: #1B4332;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: color 0.3s;
+        }
+        
+        .acordeao-titulo:hover {
+            color: #2D6A4F;
+        }
+        
+        .acordeao-titulo::after {
+            content: '+';
+            font-size: 1.5rem;
+            font-weight: 300;
+            transition: transform 0.3s;
+            color: #1B4332;
+        }
+        
+        .acordeao-titulo.ativo::after {
+            transform: rotate(45deg);
+        }
+        
+        .acordeao-conteudo {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out;
+        }
+        
+        .acordeao-conteudo p {
+            padding: 0 30px 30px 30px;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #555;
+            margin: 0;
+            font-family: var(--font-principal);
+        }
+
         @media (max-width: 600px) {
             .rating-badge {
                 flex-wrap: wrap;
@@ -464,6 +529,9 @@
             <div class="container">
                 <h2 class="titulo-secao">Como a Yelo funciona</h2>
                 <p class="subtitulo-secao">Uma jornada simples, transparente e focada no seu bem-estar.</p>
+                <div class="scroll-indicator-step">
+                    <span class="mouse dark"><span class="wheel"></span></span>
+                </div>
             </div>
             <div class="steps-wrapper">
                     <div class="step-row">
@@ -517,8 +585,8 @@
                     </div>
                 </div>
             <div class="container">
-                <div style="margin-top: 80px; text-align: center;">
-                    <a href="/questionario.html" class="btn-cta-principal">Começar agora</a>
+                <div style="margin-top: 40px; text-align: center;">
+                    <a href="/questionario.html" class="btn-cta-principal">Quero começar agora</a>
                 </div>
             </div>
             <div class="wave-divider">
@@ -565,28 +633,32 @@
         </section>
 
         <section class="faq-secao hidden">
-            <h2 class="titulo-secao">Perguntas Frequentes</h2>
+            <div class="container">
+                <h2 class="titulo-organico">Perguntas Frequentes</h2>
+            </div>
             <div class="acordeao-container">
-                <div class="acordeao-item">
+                <div class="acordeao-item-organico">
                     <button class="acordeao-titulo">Quem são os terapeutas da Yelo?</button>
                     <div class="acordeao-conteudo">
                         <p>Apenas aceitamos Psicólogos com registro ativo no CRP (Conselho Regional de Psicologia). Todos passam por um processo de verificação de credenciais para garantir que você seja atendido por profissionais qualificados e éticos.</p>
                     </div>
                 </div>
-                <div class="acordeao-item">
+                <div class="acordeao-item-organico">
                     <button class="acordeao-titulo">Como o "match" encontra o ideal para mim?</button>
                     <div class="acordeao-conteudo">
                         <p>Diferente de uma lista comum, nosso algoritmo analisa suas respostas sobre o que você está sentindo e suas preferências (como abordagem ou gênero do terapeuta) para conectar você aos 3 profissionais mais compatíveis com o seu momento.</p>
                     </div>
                 </div>
-                <div class="acordeao-item">
+                <div class="acordeao-item-organico">
                     <button class="acordeao-titulo">Qual o valor das sessões?</button>
                     <div class="acordeao-conteudo">
                         <p>Na Yelo, você tem liberdade de escolha. Nossos profissionais definem seus próprios honorários, criando uma variedade de faixas de preço para que você encontre alguém excelente que também caiba no seu orçamento.</p>
                     </div>
                 </div>
             </div>
-            <a href="/faq.html" class="faq-ver-mais">Ver todas as perguntas frequentes</a>
+            <div style="text-align: center; margin-top: 40px;">
+                <a href="/faq.html" class="faq-ver-mais">Ver todas as perguntas frequentes</a>
+            </div>
             <div class="wave-divider">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
                     <path fill="#fdfaf6" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
