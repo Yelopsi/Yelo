@@ -162,38 +162,84 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- LÓGICA DE UPLOAD NA SIDEBAR ---
     const sidebarTrigger = document.getElementById('sidebar-photo-trigger');
     const sidebarInput = document.getElementById('sidebar-photo-input');
+    
+    // Elementos do Cropper
+    const cropModal = document.getElementById('crop-modal');
+    const imageElement = document.getElementById('image-to-crop');
+    const btnCancelCrop = document.getElementById('btn-cancel-crop');
+    const btnConfirmCrop = document.getElementById('btn-confirm-crop');
+    let cropper = null;
 
     if (sidebarTrigger && sidebarInput) {
         sidebarTrigger.onclick = () => sidebarInput.click();
 
-        sidebarInput.onchange = async (e) => {
-            if (e.target.files[0]) {
-                const fd = new FormData();
-                fd.append('foto', e.target.files[0]);
-                
-                showToast('Atualizando foto...', 'info');
-
-                try {
-                    const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/foto`, { 
-                        method: 'POST', body: fd 
-                    });
-                    if (res.ok) {
-                        const d = await res.json();
-                        if(psychologistData) psychologistData.fotoUrl = d.fotoUrl;
-                        atualizarInterfaceLateral(); // Atualiza a imagem na hora
-                        showToast('Foto atualizada!', 'success');
-                    } else {
-                        // Captura o erro retornado pelo backend
-                        const errData = await res.json().catch(() => ({}));
-                        throw new Error(errData.error || 'Erro ao enviar foto.');
-                    }
-                } catch (err) {
-                    console.error(err);
-                    // Mostra a mensagem real do erro (ex: "Arquivo muito grande")
-                    showToast(err.message || 'Erro ao enviar foto.', 'error');
+        sidebarInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                // Validação prévia de tamanho (10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    showToast('Arquivo muito grande. Limite máximo: 10MB.', 'error');
+                    sidebarInput.value = '';
+                    return;
                 }
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    if (cropModal) cropModal.style.display = 'flex';
+                    if (imageElement) {
+                        imageElement.src = event.target.result;
+                        if (cropper) cropper.destroy();
+                        cropper = new Cropper(imageElement, {
+                            aspectRatio: 1, // Quadrado perfeito
+                            viewMode: 1,
+                            autoCropArea: 1,
+                        });
+                    }
+                };
+                reader.readAsDataURL(file);
             }
         };
+
+        if (btnCancelCrop) {
+            btnCancelCrop.onclick = () => {
+                if (cropModal) cropModal.style.display = 'none';
+                if (cropper) cropper.destroy();
+                sidebarInput.value = '';
+            };
+        }
+
+        if (btnConfirmCrop) {
+            btnConfirmCrop.onclick = () => {
+                if (!cropper) return;
+                
+                cropper.getCroppedCanvas({ width: 400, height: 400 }).toBlob(async (blob) => {
+                    if (!blob) return;
+                    if (cropModal) cropModal.style.display = 'none';
+                    
+                    const fd = new FormData();
+                    fd.append('foto', blob, 'profile.jpg');
+                    showToast('Enviando foto...', 'info');
+
+                    try {
+                        const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/foto`, { method: 'POST', body: fd });
+                        if (res.ok) {
+                            const d = await res.json();
+                            if(psychologistData) psychologistData.fotoUrl = d.fotoUrl;
+                            atualizarInterfaceLateral();
+                            showToast('Foto atualizada!', 'success');
+                        } else {
+                            const errData = await res.json().catch(() => ({}));
+                            throw new Error(errData.error || 'Erro ao enviar foto.');
+                        }
+                    } catch (err) {
+                        showToast(err.message || 'Erro ao enviar foto.', 'error');
+                    } finally {
+                        if (cropper) cropper.destroy();
+                        sidebarInput.value = '';
+                    }
+                }, 'image/jpeg', 0.9);
+            };
+        }
     }
 
     // --- LÓGICA DO BOTÃO SAIR (LOGOUT) ---

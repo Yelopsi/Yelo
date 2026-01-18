@@ -4,6 +4,7 @@
     <title>Registro de Psicólogo - Yelo</title>
     <%- include('partials/head') %>
     
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link rel="stylesheet" href="/css/style.css"> 
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
@@ -62,6 +63,29 @@
     <div class="login-container">
             <img src="/assets/logos/logo-escura.png" alt="Logo Yelo" class="logo-auth" style="max-width: 150px; margin-bottom: 20px;">
             <h2>Registro de Psicólogo</h2>
+            
+            <!-- Botão do Google -->
+            <div id="g_id_onload"
+                 data-client_id="283886540808-qj13i35cfagnp9rc6qou1o66mdv3ppkl.apps.googleusercontent.com"
+                 data-callback="handlePsiGoogleRegister">
+            </div>
+            <div class="g_id_signin"
+                 data-type="standard"
+                 data-size="large"
+                 data-theme="outline"
+                 data-text="signup_with"
+                 data-shape="rectangular"
+                 data-logo_alignment="left"
+                 data-width="100%"
+                 style="margin-bottom: 20px;">
+            </div>
+
+            <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                <hr style="flex-grow: 1; border: 0; border-top: 1px solid #eee;">
+                <span style="padding: 0 10px; color: #888; font-size: 0.8rem;">OU PREENCHA MANUALMENTE</span>
+                <hr style="flex-grow: 1; border: 0; border-top: 1px solid #eee;">
+            </div>
+
             <form id="form-registro-psi">
                 
                 <div class="form-group">
@@ -85,7 +109,7 @@
                     <input type="email" id="email" name="email" required autocapitalize="none" autocomplete="email" autocorrect="off">
                 </div>
                 
-                <div class="form-group">
+                <div class="form-group" id="container-senha">
                     <label for="senha">Senha</label>
                     <div class="input-wrapper-senha">
                         <input type="password" id="senha" name="senha" required autocapitalize="none" autocomplete="new-password" autocorrect="off">
@@ -96,7 +120,7 @@
                     <div class="dica-senha">Mínimo de 8 caracteres, com maiúscula, número e símbolo.</div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" id="container-confirmar-senha">
                     <label for="confirmar-senha">Confirmar Senha</label>
                     <div class="input-wrapper-senha">
                         <input type="password" id="confirmar-senha" name="confirmar-senha" required autocapitalize="none" autocomplete="new-password" autocorrect="off">
@@ -133,6 +157,75 @@
                 btn.style.color = "#666"; // Volta a cor original
             }
         }
+
+        // Variável para armazenar o token se o usuário usar o Google
+        let googleRegisterToken = null;
+
+        async function handlePsiGoogleRegister(response) {
+            try {
+                // 1. Verifica no backend se já existe ou se é novo
+                const res = await fetch('/api/auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        token: response.credential,
+                        targetRole: 'psychologist' // Flag importante
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    if (data.isNewUser) {
+                        // --- UX: Preenche o formulário e simplifica ---
+                        document.getElementById('nome-completo').value = data.googleData.name;
+                        const emailInput = document.getElementById('email');
+                        emailInput.value = data.googleData.email;
+                        emailInput.readOnly = true;
+                        emailInput.style.backgroundColor = "#f0f0f0";
+
+                        // Esconde campos de senha (autenticação delegada)
+                        document.getElementById('container-senha').style.display = 'none';
+                        document.getElementById('container-confirmar-senha').style.display = 'none';
+                        
+                        // Preenche com senha dummy para passar na validação do frontend (psi_registro.js)
+                        document.getElementById('senha').value = 'GoogleAuth123!';
+                        document.getElementById('confirmar-senha').value = 'GoogleAuth123!';
+
+                        // Salva o token para enviar no registro
+                        googleRegisterToken = response.credential;
+
+                        // Feedback visual
+                        const msg = document.getElementById('mensagem-registro-psi');
+                        msg.textContent = `Olá, ${data.googleData.name}! Complete seu cadastro com CRP e CPF abaixo.`;
+                        msg.className = 'mensagem-sucesso';
+                        msg.style.display = 'block';
+                    } else {
+                        // Se já existe, loga direto
+                        localStorage.setItem('Yelo_token', data.token);
+                        localStorage.setItem('Yelo_user', JSON.stringify(data.user));
+                        window.location.href = data.redirect;
+                    }
+                } else {
+                    alert(data.error || 'Erro ao conectar com Google.');
+                }
+            } catch (error) {
+                console.error('Erro Google Psi:', error);
+            }
+        }
+
+        // Intercepta o fetch global para injetar o token do Google no corpo da requisição de registro
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options) {
+            if (url && url.includes && (url.includes('/register') || url.includes('/psychologists')) && options && options.method === 'POST' && googleRegisterToken) {
+                try {
+                    const body = JSON.parse(options.body);
+                    body.googleToken = googleRegisterToken;
+                    options.body = JSON.stringify(body);
+                } catch(e) { /* Ignora se não for JSON */ }
+            }
+            return originalFetch(url, options);
+        };
     </script>
 </body>
 </html>
