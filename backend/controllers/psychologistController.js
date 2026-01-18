@@ -53,9 +53,9 @@ exports.registerPsychologist = async (req, res) => {
         let nome = req.body.nome || req.body['nome-completo'];
         let passwordInput = req.body.password || req.body.senha;
         let email = req.body.email;
-        const crp = req.body.crp;
+        const crp = req.body.crp || null; // Agora é opcional na entrada
         // REVERTIDO: Volta a ler apenas o CPF
-        const cpf = req.body.cpf || req.body.documento;
+        const cpf = req.body.cpf || req.body.documento || null; // Agora é opcional na entrada
         const { googleToken } = req.body;
 
         // --- Lógica de Registro via Google ---
@@ -76,8 +76,6 @@ exports.registerPsychologist = async (req, res) => {
         if (!nome) return res.status(400).json({ error: 'O nome é obrigatório.' });
         if (!email) return res.status(400).json({ error: 'O e-mail é obrigatório.' });
         if (!passwordInput || passwordInput.trim() === '') return res.status(400).json({ error: 'A senha é obrigatória.' });
-        if (!crp) return res.status(400).json({ error: 'O CRP é obrigatório.' });
-        if (!cpf) return res.status(400).json({ error: 'O CPF é obrigatório.' });
 
         // --- 2. Validação de Formato e Comprimento ---
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -85,23 +83,22 @@ exports.registerPsychologist = async (req, res) => {
         if (passwordInput.length < 6) return res.status(400).json({ error: 'A senha deve ter no mínimo 6 caracteres.' });
 
         // REVERTIDO: Limpeza simples de CPF
-        const cleanCpf = cpf.replace(/\D/g, '');
+        const cleanCpf = cpf ? cpf.replace(/\D/g, '') : null;
 
         // --- 3. VERIFICAÇÃO DE DUPLICIDADE ---
+        // Monta a query dinamicamente para não buscar por null
+        const whereConditions = [{ email: email }];
+        if (crp) whereConditions.push({ crp: crp });
+        if (cleanCpf) whereConditions.push({ cpf: cleanCpf });
+
         const existingUser = await db.Psychologist.findOne({
-            where: {
-                [Op.or]: [
-                    { email: email },
-                    { crp: crp },
-                    { cpf: cleanCpf }
-                ]
-            }
+            where: { [Op.or]: whereConditions }
         });
 
         if (existingUser) {
             if (existingUser.email === email) return res.status(400).json({ error: 'E-mail já cadastrado.' });
-            if (existingUser.crp === crp) return res.status(400).json({ error: 'CRP já cadastrado.' });
-            if (existingUser.cpf === cleanCpf) return res.status(400).json({ error: 'CPF já cadastrado.' });
+            if (crp && existingUser.crp === crp) return res.status(400).json({ error: 'CRP já cadastrado.' });
+            if (cleanCpf && existingUser.cpf === cleanCpf) return res.status(400).json({ error: 'CPF já cadastrado.' });
         }
 
         // [RESTRIÇÃO] Verifica se já existe como Paciente
@@ -130,7 +127,7 @@ exports.registerPsychologist = async (req, res) => {
             senha: hashedPassword,
             crp,
             slug: generatedSlug,
-            status: 'active',
+            status: 'pending', // Status inicial pendente até completar onboarding
             cpf: cleanCpf // Salva na coluna CPF
         });
 

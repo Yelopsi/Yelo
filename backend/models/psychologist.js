@@ -60,7 +60,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     crp: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       unique: true
     },
     email: {
