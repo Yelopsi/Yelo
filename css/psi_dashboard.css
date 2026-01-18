@@ -869,7 +869,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     min-width: 180px; /* Tamanho mínimo elegante */
     padding: 12px 30px;
     font-size: 1rem;
-    border-radius: 8px; /* Arredondamento padrão para botões de ação */
+    border-radius: 50px; /* Estilo Pílula */
 }
 
 /* 2. Botão de Excluir Conta */
@@ -2302,6 +2302,11 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 .profile-section:last-child {
     border-bottom: none;
     margin-bottom: 0;
+}
+
+/* Limite visual para o campo de valor (3 dígitos) */
+#valor_sessao_numero {
+    max-width: 150px;
 }
 
 .section-title {

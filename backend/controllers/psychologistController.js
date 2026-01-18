@@ -646,15 +646,23 @@ exports.updatePsychologistProfile = async (req, res) => {
             finalSlug = nome.toLowerCase().replace(/\s+/g, '-') + `-${Math.floor(Math.random()*1000)}`;
         }
 
-        // Atualiza no Banco
+        // --- ATUALIZAÇÃO VIA ORM (MODERNA E DEFINITIVA) ---
+        // Graças ao patch no server.js, o Sequelize agora trata esses campos como JSONB nativo.
         await psychologist.update({
-            slug: finalSlug, // Salva o slug (personalizado ou mantido)
+            slug: finalSlug,
             nome, telefone, bio, crp, cep, cidade, estado,
-            temas_atuacao, abordagens_tecnicas, modalidade,
-            publico_alvo, estilo_terapia, praticas_inclusivas,
-            valor_sessao_numero, disponibilidade_periodo, // CORRIGIDO
+            valor_sessao_numero: valor_sessao_numero ? parseFloat(valor_sessao_numero) : null,
             genero_identidade,
-            linkedin_url, instagram_url, facebook_url, tiktok_url, x_url
+            linkedin_url, instagram_url, facebook_url, tiktok_url, x_url,
+            
+            // Passamos os Arrays JS diretamente. O Sequelize fará a serialização correta para JSONB.
+            temas_atuacao, 
+            abordagens_tecnicas, 
+            modalidade, 
+            publico_alvo, 
+            estilo_terapia, 
+            praticas_inclusivas, 
+            disponibilidade_periodo
         });
 
         // --- GAMIFICATION HOOK (BADGE AUTÊNTICO) ---
@@ -674,9 +682,6 @@ exports.updatePsychologistProfile = async (req, res) => {
     } catch (error) {
         console.error('Erro ao atualizar perfil:', error);
         console.error('Detalhes do erro (Message):', error.message);
-        if (error.original) console.error('Detalhes do erro (Original):', error.original);
-        if (error.sql) console.error('SQL Gerado:', error.sql);
-        // Tratamento amigável se der erro de duplicidade que passou pelo check
         if (error.name === 'SequelizeUniqueConstraintError') {
              return res.status(400).json({ error: 'Dados duplicados (Link ou CRP já existem).' });
         }
