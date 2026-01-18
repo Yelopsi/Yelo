@@ -36,8 +36,8 @@
         
         .living-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            gap: 10px;
             max-width: 1200px;
             margin: 0 auto;
             margin-bottom: 60px;
@@ -46,18 +46,18 @@
         
         /* Ajuste para telas maiores para não ficar muito espaçado */
         @media (min-width: 1200px) {
-             .living-grid { grid-template-columns: repeat(6, 1fr); }
+             .living-grid { grid-template-columns: repeat(12, 1fr); }
         }
         
         /* Avatares */
         .grid-cell {
             width: 100%;
             aspect-ratio: 1;
-            border-radius: 24px 40px 24px 40px; /* Borda orgânica */
+            border-radius: 12px 20px 12px 20px; /* Borda orgânica reduzida */
             overflow: hidden;
             position: relative;
             background-color: #e0e0e0;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
         
         .grid-cell img, .grid-cell .psy-avatar-placeholder {
@@ -76,7 +76,7 @@
             justify-content: center;
             font-weight: bold;
             color: rgba(255,255,255,0.8);
-            font-size: 1.5rem;
+            font-size: 1rem;
             background-color: #1B4332; /* Fallback color */
         }
 
@@ -86,13 +86,15 @@
         .fade-exit-active { opacity: 0; }
 
         @media (max-width: 900px) {
-            .living-grid { grid-template-columns: repeat(4, 1fr); }
+            .living-grid { grid-template-columns: repeat(8, 1fr); }
         }
 
         @media (max-width: 600px) {
             .card-manifesto { padding: 40px 25px; }
-            .living-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
-            .grid-cell { border-radius: 16px 30px 16px 30px; }
+            .living-grid { grid-template-columns: repeat(6, 1fr); gap: 5px; }
+            .grid-cell { border-radius: 8px 15px 8px 15px; }
+            /* Limita a 4 linhas no mobile (6 colunas * 4 linhas = 24 itens) */
+            .grid-cell:nth-child(n+25) { display: none; }
         }
     </style>
 
@@ -180,10 +182,26 @@
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const gridContainer = document.getElementById('living-grid');
-            const GRID_SIZE = 18; // Número de células no grid (ajustável)
+            const GRID_SIZE = 60; // Aumentado para compensar o tamanho menor das células
             
             // Cores da marca para placeholders
             const brandColors = ['#1B4332', '#FFEE8C', '#2D6A4F', '#F4D35E'];
+            
+            // Banco de imagens para fallback (Diversidade)
+            const stockImages = [
+                "https://images.pexels.com/photos/1729931/pexels-photo-1729931.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/927022/pexels-photo-927022.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/1121796/pexels-photo-1121796.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/762020/pexels-photo-762020.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=200"
+            ];
 
             // 1. Buscar dados do Backend
             let professionals = [];
@@ -196,15 +214,21 @@
                 console.warn('Erro ao carregar psicólogos, usando mocks.', error);
             }
 
+            // Preenche fotos de profissionais sem imagem com fotos do banco
+            professionals.forEach(p => {
+                if (!p.fotoUrl) {
+                    p.fotoUrl = stockImages[Math.floor(Math.random() * stockImages.length)];
+                }
+            });
+
             // 2. Lógica de Fallback / Preenchimento (Mocks)
             // "dando preferencia, mas não somente de pessoas pretas e pardas"
-            // Como não temos um gerador de imagens reais, usamos placeholders coloridos para simular.
-            while (professionals.length < 40) { // Garante um pool grande
-                const isColor = Math.random() > 0.5;
+            // Usamos fotos do banco de imagens para simular.
+            while (professionals.length < 100) { // Garante um pool grande
                 professionals.push({
                     id: 'mock-' + Math.random(),
                     isMock: true,
-                    color: brandColors[Math.floor(Math.random() * brandColors.length)],
+                    fotoUrl: stockImages[Math.floor(Math.random() * stockImages.length)],
                     initial: 'Y'
                 });
             }
@@ -218,7 +242,7 @@
             const createContent = (psi) => {
                 let element;
                 
-                if (psi.fotoUrl && !psi.isMock) {
+                if (psi.fotoUrl) {
                     element = document.createElement('img');
                     element.src = psi.fotoUrl;
                     element.alt = psi.nome || 'Psicólogo Yelo';
