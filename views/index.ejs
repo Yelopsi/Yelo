@@ -99,6 +99,104 @@
         .trust-indicators { display: flex; justify-content: center; gap: 30px; margin-top: 60px; flex-wrap: wrap; }
         .trust-item { display: flex; align-items: center; gap: 10px; font-weight: 600; color: #555; background: #fff; padding: 10px 20px; border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #eee; }
         .trust-item .icon { font-size: 1.2rem; color: #1B4332; }
+
+        /* --- SEÇÃO ORGÂNICA (COLLAGE) --- */
+        .secao-organica {
+            background-color: #F8F3ED; /* Creme suave */
+            padding: 100px 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .container-organico {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .coluna-texto { z-index: 2; }
+
+        .tag-destaque-organica {
+            display: inline-block;
+            background-color: #E6F4F1;
+            color: #1B4332;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 8px 18px;
+            border-radius: 50px;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .titulo-organico {
+            font-family: var(--font-titulos);
+            font-size: 3.5rem;
+            color: #1B4332;
+            line-height: 1.1;
+            margin-bottom: 25px;
+        }
+
+        .texto-organico {
+            font-size: 1.15rem;
+            line-height: 1.7;
+            color: #555;
+            margin-bottom: 40px;
+            font-family: var(--font-principal);
+        }
+
+        /* Collage Wrapper */
+        .collage-wrapper {
+            position: relative;
+            width: 100%;
+            height: 600px; /* Altura fixa para a composição */
+        }
+
+        .collage-img {
+            position: absolute;
+            object-fit: cover;
+            box-shadow: 0 15px 35px rgba(27, 67, 50, 0.1);
+            transition: transform 0.4s ease;
+            background-color: #e0e0e0;
+        }
+
+        .collage-img:hover { transform: scale(1.05); z-index: 10; }
+
+        /* Imagem Central (Mulher Sorrindo) */
+        .img-central {
+            width: 55%; height: 65%;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 150px 150px 20px 20px; /* Forma orgânica */
+            z-index: 5;
+        }
+
+        /* Satélites */
+        .img-sat-1 { width: 25%; aspect-ratio: 1/1; top: 5%; left: 5%; border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; z-index: 4; }
+        .img-sat-2 { width: 22%; aspect-ratio: 1/1; top: 10%; right: 5%; border-radius: 50%; z-index: 3; }
+        .img-sat-3 { width: 18%; aspect-ratio: 1/1; top: 45%; right: 0%; border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; z-index: 6; }
+        .img-sat-4 { width: 28%; height: 35%; bottom: 0%; right: 10%; border-radius: 20px 80px 20px 80px; z-index: 6; }
+        .img-sat-5 { width: 24%; aspect-ratio: 1/1; bottom: 10%; left: 0%; border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; z-index: 6; }
+
+        /* Doodles (Rabiscos) */
+        .doodle { position: absolute; z-index: 1; pointer-events: none; }
+        .doodle-lines { top: 18%; left: 28%; width: 80px; z-index: 6; color: #E63946; }
+        .doodle-loop { bottom: -5%; right: 5%; width: 100px; color: #F4A261; transform: rotate(-15deg); }
+        .doodle-sparkle { top: 5%; right: 30%; width: 40px; color: #2A9D8F; }
+
+        /* Responsividade */
+        @media (max-width: 992px) {
+            .container-organico { grid-template-columns: 1fr; text-align: center; gap: 50px; }
+            .titulo-organico { font-size: 2.5rem; }
+            .collage-wrapper { height: 450px; max-width: 500px; margin: 0 auto; }
+        }
+        @media (max-width: 480px) {
+            .collage-wrapper { height: 350px; }
+            .titulo-organico { font-size: 2rem; }
+        }
     </style>
 </head>
 <body>
@@ -160,95 +258,53 @@
             </div>
         </section>
 
-        <section class="secao-terapeutas hidden">
-            <div class="container">
-                <div class="header-secao-moderno">
-                    <span class="badge-verde-suave">Segurança e Qualidade</span>
-                    <h2 class="titulo-secao" style="margin-bottom: 20px;">Profissionais verificados em quem você pode confiar</h2>
-                    <p class="subtitulo-secao" style="margin-bottom: 40px;">Nossa curadoria é rigorosa. Apenas psicólogos com CRP ativo e aprovados em nossa entrevista técnica entram na plataforma.</p>
+        <!-- SEÇÃO ORGÂNICA (COLLAGE) -->
+        <section class="secao-organica hidden">
+            <div class="container-organico">
+                <!-- Coluna Esquerda: Texto -->
+                <div class="coluna-texto">
+                    <span class="tag-destaque-organica">Segurança e Qualidade</span>
+                    <h2 class="titulo-organico">Profissionais verificados em quem você pode confiar.</h2>
+                    <p class="texto-organico">
+                        Nossa curadoria é rigorosa. Apenas psicólogos com CRP ativo e aprovados em nossa entrevista técnica entram na plataforma. 
+                        Aqui, você encontra especialistas em ansiedade, depressão, carreira, relacionamentos e muito mais.
+                    </p>
+                    
+                    <div class="trust-indicators" style="justify-content: flex-start; margin-top: 30px;">
+                        <div class="trust-item"><span class="icon">🆔</span> CRP Ativo</div>
+                        <div class="trust-item"><span class="icon">📹</span> Entrevista Técnica</div>
+                    </div>
+
+                    <div style="margin-top: 40px;">
+                        <a href="/questionario.html" class="btn-cta-principal">Encontrar meu terapeuta</a>
+                    </div>
                 </div>
 
-                <!-- Grid de Cards de Profissionais -->
-                <div class="grid-profissionais-moderno">
-                    <% 
-                        const mocks = [
-                            { src: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg", alt: "Psicóloga especialista", nome: "Dra. Camila", especialidade: "Ansiedade e Carreira" },
-                            { src: "https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg", alt: "Psicólogo clínico", nome: "Dr. André", especialidade: "Terapia Cognitiva" },
-                            { src: "https://images.pexels.com/photos/1043473/pexels-photo-1043473.jpeg", alt: "Terapeuta ocupacional", nome: "Dra. Juliana", especialidade: "Relacionamentos" },
-                            { src: "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg", alt: "Psicóloga comportamental", nome: "Dra. Beatriz", especialidade: "Autoestima" }
-                        ];
+                <!-- Coluna Direita: Collage de Imagens -->
+                <div class="coluna-collage">
+                    <div class="collage-wrapper">
+                        <!-- Doodles (Elementos Decorativos) -->
+                        <svg class="doodle doodle-lines" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3">
+                            <path d="M10 50 Q 50 10 90 50" />
+                            <path d="M10 60 Q 50 20 90 60" />
+                            <path d="M10 70 Q 50 30 90 70" />
+                        </svg>
+                        <svg class="doodle doodle-loop" viewBox="0 0 100 50" fill="none" stroke="currentColor" stroke-width="3">
+                            <path d="M10 25 C 30 50, 70 50, 90 25 C 70 0, 30 0, 10 25" />
+                        </svg>
+                        <svg class="doodle doodle-sparkle" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
+                        </svg>
 
-                        let listaExibicao = [];
-                        let dadosProfissionais = [];
+                        <!-- Imagens -->
+                        <img src="https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Psicóloga sorrindo" class="collage-img img-central">
                         
-                        if (typeof profissionais !== 'undefined' && profissionais) dadosProfissionais = profissionais;
-                        else if (typeof psicologos !== 'undefined' && psicologos) dadosProfissionais = psicologos;
-
-                        if (!Array.isArray(dadosProfissionais)) dadosProfissionais = [];
-
-                        if (dadosProfissionais.length > 0) {
-                            const reais = dadosProfissionais.map(p => {
-                                let img = p.fotoUrl || p.foto || p.fotoPerfil || '/assets/images/default-avatar.png';
-                                if (img && !img.startsWith('http') && !img.startsWith('/')) img = '/' + img;
-                                
-                                // Tenta extrair especialidade ou usa padrão
-                                let esp = 'Psicologia Clínica';
-                                if (p.temas_atuacao && Array.isArray(p.temas_atuacao) && p.temas_atuacao.length > 0) esp = p.temas_atuacao[0];
-                                else if (p.abordagens_tecnicas && Array.isArray(p.abordagens_tecnicas) && p.abordagens_tecnicas.length > 0) esp = p.abordagens_tecnicas[0];
-
-                                return { 
-                                    src: img, 
-                                    alt: p.nome || 'Profissional Yelo',
-                                    nome: p.nome ? p.nome.split(' ')[0] : 'Psicólogo(a)',
-                                    especialidade: esp
-                                };
-                            });
-                            listaExibicao = [...reais];
-                            listaExibicao.sort(() => 0.5 - Math.random());
-                        }
-
-                        // Completa com mocks se tiver menos de 4
-                        if (listaExibicao.length < 4) {
-                            const faltam = 4 - listaExibicao.length;
-                            for(let i = 0; i < faltam; i++) {
-                                listaExibicao.push(mocks[i % mocks.length]);
-                            }
-                        }
-                        listaExibicao = listaExibicao.slice(0, 4);
-                    %>
-
-                    <% listaExibicao.forEach(prof => { %>
-                        <div class="card-profissional-home">
-                            <div class="foto-wrapper">
-                                <img src="<%= prof.src %>" alt="<%= prof.alt %>" loading="lazy">
-                                <span class="badge-verificado" title="Profissional Verificado">✓</span>
-                            </div>
-                            <div class="info-prof">
-                                <h3><%= prof.nome %></h3>
-                                <p><%= prof.especialidade %></p>
-                            </div>
-                        </div>
-                    <% }); %>
-                </div>
-                
-                <!-- Indicadores de Confiança -->
-                <div class="trust-indicators">
-                    <div class="trust-item">
-                        <span class="icon">🆔</span>
-                        <span>CRP Ativo</span>
+                        <img src="https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Homem jovem" class="collage-img img-sat-1">
+                        <img src="https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Mulher pensativa" class="collage-img img-sat-2">
+                        <img src="https://images.pexels.com/photos/1121796/pexels-photo-1121796.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Homem sorrindo" class="collage-img img-sat-3">
+                        <img src="https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Mulher profissional" class="collage-img img-sat-4">
+                        <img src="https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Homem casual" class="collage-img img-sat-5">
                     </div>
-                    <div class="trust-item">
-                        <span class="icon">📹</span>
-                        <span>Entrevista Técnica</span>
-                    </div>
-                    <div class="trust-item">
-                        <span class="icon">⭐</span>
-                        <span>Avaliação Contínua</span>
-                    </div>
-                </div>
-
-                <div style="text-align: center; margin-top: 50px;">
-                    <a href="/questionario.html" class="btn-cta-principal">Encontrar meu terapeuta</a>
                 </div>
             </div>
             <div class="wave-divider">
