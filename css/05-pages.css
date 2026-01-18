@@ -1009,17 +1009,30 @@
 /* --- SEÇÃO COMO FUNCIONA (Estilo Rico/Humanizado) --- */
 
 .como-funciona {
-    padding: 100px 20px; /* Mais respiro vertical */
+    padding: 40px 20px; /* Mais respiro vertical */
     background-color: #fdfaf6; /* Fundo Off-white quente */
     overflow: hidden; /* Para conter decorações */
+}
+
+.como-funciona .container {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.como-funciona .titulo-secao {
+    margin-bottom: 15px;
+}
+
+.como-funciona .subtitulo-secao {
+    margin-bottom: 30px;
 }
 
 .steps-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 20px; /* Espaço ajustado para os indicadores */
+    gap: 10px; /* Espaço ajustado para os indicadores */
     max-width: 1280px;
-    margin: 60px auto 0 auto;
+    margin: 30px auto 0 auto;
     padding: 0 20px;
 }
 
@@ -1111,7 +1124,7 @@
 .scroll-indicator-step {
     display: flex;
     justify-content: center;
-    padding: 20px 0;
+    padding: 10px 0;
     opacity: 0.6;
 }
 .mouse.dark { border-color: rgba(27, 67, 50, 0.4); }
