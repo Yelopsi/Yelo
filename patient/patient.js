@@ -613,49 +613,67 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // --- NOVO: NAVEGAÇÃO INTERNA PELOS CARDS DO DASHBOARD ---
-        // Permite que qualquer elemento com 'data-page-target' funcione como link
         mainContent.addEventListener('click', (e) => {
             const targetCard = e.target.closest('[data-page-target]');
             if (targetCard) {
                 const page = targetCard.getAttribute('data-page-target');
-                // Encontra o link correspondente na sidebar para ativar o estado visual
-                const sidebarLink = document.querySelector(`.sidebar-nav li[data-page="${page}"]`);
-                if (sidebarLink) sidebarLink.click();
+                if (page) {
+                    // 1. Atualiza visualmente o menu lateral (se encontrar o link)
+                    const allLinks = document.querySelectorAll('.sidebar-nav li');
+                    allLinks.forEach(item => item.classList.remove('active'));
+                    
+                    // Tenta achar o LI pelo atributo no próprio LI ou no A filho
+                    let sidebarLink = document.querySelector(`.sidebar-nav li[data-page="${page}"]`);
+                    if (!sidebarLink) {
+                        const anchor = document.querySelector(`.sidebar-nav li a[data-page="${page}"]`);
+                        if (anchor) sidebarLink = anchor.closest('li');
+                    }
+                    
+                    if (sidebarLink) sidebarLink.classList.add('active');
+
+                    // 2. Carrega a página DIRETAMENTE (sem depender do click no menu)
+                    loadPage(page);
+                }
             }
         });
 
-        // --- ADICIONA EVENTO DE CLIQUE PARA A NAVEGAÇÃO ---
-        navLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
-                
-                let page = this.getAttribute('data-page');
-                // Fallback: verifica se o atributo está no link <a> filho, caso o HTML tenha mudado
-                if (!page) {
-                    const childLink = this.querySelector('a');
-                    if (childLink) page = childLink.getAttribute('data-page');
+        // --- ADICIONA EVENTO DE CLIQUE PARA A NAVEGAÇÃO (DELEGAÇÃO) ---
+        const sidebarNavList = document.querySelector('.sidebar-nav ul');
+        if (sidebarNavList) {
+            sidebarNavList.addEventListener('click', (e) => {
+                const li = e.target.closest('li');
+                if (!li) return;
+
+                let page = li.getAttribute('data-page');
+                const childLink = li.querySelector('a');
+
+                // Fallback: verifica se o atributo está no link <a> filho
+                if (!page && childLink) {
+                    page = childLink.getAttribute('data-page');
                 }
 
-                // Se for um link externo (como o do questionário), navega para a URL do 'href'
                 if (!page) {
-                    const externalLink = this.querySelector('a');
-                    // Se tiver href válido e diferente de #, deixa navegar nativamente
-                    if (externalLink && externalLink.getAttribute('href') && externalLink.getAttribute('href') !== '#') {
+                    // Se for link normal (href), deixa navegar
+                    if (childLink && childLink.getAttribute('href') && childLink.getAttribute('href') !== '#') {
                         return; 
                     }
                     e.preventDefault();
                     return;
                 }
 
-                e.preventDefault(); // Previne navegação padrão apenas para links internos (SPA)
+                e.preventDefault(); // Previne navegação padrão (SPA)
+
                 if (sidebar.classList.contains('is-open')) {
                     sidebar.classList.remove('is-open');
                 }
 
-                navLinks.forEach(item => item.classList.remove('active'));
-                this.classList.add('active');
+                const allLinks = sidebarNavList.querySelectorAll('li');
+                allLinks.forEach(item => item.classList.remove('active'));
+                li.classList.add('active');
+
                 loadPage(page);
             });
-        });
+        }
 
         // --- INICIALIZAÇÃO DE TELA (Carrega a Visão Geral) ---
         loadPage('./patient_visao_geral.html');
