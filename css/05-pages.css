@@ -1017,7 +1017,7 @@
 .steps-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 80px; /* Espaço generoso entre os passos */
+    gap: 20px; /* Espaço ajustado para os indicadores */
     max-width: 1100px;
     margin: 60px auto 0 auto;
 }
@@ -1080,18 +1080,13 @@
 .step-img-frame {
     position: relative;
     z-index: 2;
-    border-radius: 24px 60px 24px 60px; /* Forma orgânica */
-    overflow: hidden;
-    box-shadow: 0 20px 40px rgba(27, 67, 50, 0.15); /* Sombra rica */
     width: 100%;
     max-width: 450px;
-    height: 350px;
 }
 
 .step-img-frame img {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    height: auto;
     transition: transform 0.5s ease;
 }
 
@@ -1101,25 +1096,25 @@
 
 /* Decoração "Blob" atrás da imagem */
 .step-blob {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 20px;
-    left: 20px;
-    background-color: var(--cor-Yelo);
-    border-radius: 24px 60px 24px 60px;
-    z-index: 1; /* Atrás da imagem */
-    opacity: 0.4;
+    display: none;
 }
 
 .step-row.reverse .step-blob {
-    left: -20px; /* Inverte a sombra decorativa */
-    border-radius: 60px 24px 60px 24px; /* Inverte a forma */
+    display: none;
 }
 
 .step-row.reverse .step-img-frame {
-    border-radius: 60px 24px 60px 24px;
 }
+
+/* Indicador de Scroll entre passos (Versão Escura) */
+.scroll-indicator-step {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+    opacity: 0.6;
+}
+.mouse.dark { border-color: rgba(27, 67, 50, 0.4); }
+.mouse.dark .wheel { background-color: var(--verde-escuro); }
 
 /* Responsividade para Mobile */
 @media (max-width: 900px) {
