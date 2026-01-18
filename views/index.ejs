@@ -97,8 +97,9 @@
         .info-prof h3 { margin: 15px 0 5px 0; font-size: 1.2rem; color: #333; font-family: var(--font-titulos); }
         .info-prof p { font-size: 0.9rem; color: #666; margin: 0; }
         .trust-indicators { display: flex; justify-content: center; gap: 30px; margin-top: 60px; flex-wrap: wrap; }
-        .trust-item { display: flex; align-items: center; gap: 10px; font-weight: 600; color: #555; background: #fff; padding: 10px 20px; border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #eee; }
-        .trust-item .icon { font-size: 1.2rem; color: #1B4332; }
+        .trust-item { display: flex; align-items: center; gap: 12px; font-weight: 700; color: #2c3e35; background: #ffffff; padding: 12px 24px; border-radius: 12px; box-shadow: 0 4px 20px rgba(27, 67, 50, 0.08); border: 1px solid rgba(27, 67, 50, 0.1); font-size: 0.95rem; transition: transform 0.2s ease; }
+        .trust-item:hover { transform: translateY(-2px); border-color: #1B4332; }
+        .trust-item svg { width: 20px; height: 20px; color: #1B4332; flex-shrink: 0; }
 
         /* --- SEÇÃO ORGÂNICA (COLLAGE) --- */
         .secao-organica {
@@ -174,12 +175,19 @@
             z-index: 5;
         }
 
+        /* Animação de Flutuação */
+        @keyframes float {
+            0% { margin-top: 0px; }
+            50% { margin-top: -15px; }
+            100% { margin-top: 0px; }
+        }
+
         /* Satélites */
-        .img-sat-1 { width: 25%; aspect-ratio: 1/1; top: 5%; left: 5%; border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; z-index: 4; }
-        .img-sat-2 { width: 22%; aspect-ratio: 1/1; top: 10%; right: 5%; border-radius: 50%; z-index: 3; }
-        .img-sat-3 { width: 18%; aspect-ratio: 1/1; top: 45%; right: 0%; border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; z-index: 6; }
-        .img-sat-4 { width: 28%; height: 35%; bottom: 0%; right: 10%; border-radius: 20px 80px 20px 80px; z-index: 6; }
-        .img-sat-5 { width: 24%; aspect-ratio: 1/1; bottom: 10%; left: 0%; border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; z-index: 6; }
+        .img-sat-1 { width: 25%; aspect-ratio: 1/1; top: 5%; left: 5%; border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; z-index: 4; animation: float 6s ease-in-out infinite; }
+        .img-sat-2 { width: 22%; aspect-ratio: 1/1; top: 10%; right: 5%; border-radius: 50%; z-index: 3; animation: float 5s ease-in-out infinite 1s; }
+        .img-sat-3 { width: 18%; aspect-ratio: 1/1; top: 45%; right: 0%; border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; z-index: 6; animation: float 7s ease-in-out infinite 0.5s; }
+        .img-sat-4 { width: 28%; height: 35%; bottom: 0%; right: 10%; border-radius: 20px 80px 20px 80px; z-index: 6; animation: float 5.5s ease-in-out infinite 2s; }
+        .img-sat-5 { width: 24%; aspect-ratio: 1/1; bottom: 10%; left: 0%; border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; z-index: 6; animation: float 6.5s ease-in-out infinite 1.5s; }
 
         /* Doodles (Rabiscos) */
         .doodle { position: absolute; z-index: 1; pointer-events: none; }
@@ -271,8 +279,14 @@
                     </p>
                     
                     <div class="trust-indicators" style="justify-content: flex-start; margin-top: 30px;">
-                        <div class="trust-item"><span class="icon">🆔</span> CRP Ativo</div>
-                        <div class="trust-item"><span class="icon">📹</span> Entrevista Técnica</div>
+                        <div class="trust-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            CRP Ativo
+                        </div>
+                        <div class="trust-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M9 12l2 2 4-4"></path></svg>
+                            Profissionais Verificados
+                        </div>
                     </div>
 
                     <div style="margin-top: 40px;">
