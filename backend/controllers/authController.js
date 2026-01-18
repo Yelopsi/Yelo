@@ -66,7 +66,22 @@ exports.unifiedGoogleLogin = async (req, res) => {
             });
         }
 
-        // 2. Verifica Paciente
+        // 2. Se o objetivo é registrar como PSICÓLOGO e não existe conta (passou pelo check acima),
+        // retorna dados para o form, MESMO QUE já seja paciente.
+        if (targetRole === 'psychologist') {
+            // [RESTRIÇÃO] Verifica se já é paciente
+            const existingPatient = await db.Patient.findOne({ where: { email } });
+            if (existingPatient) {
+                return res.status(400).json({ error: 'Este e-mail já está cadastrado como Paciente. Use outro e-mail para sua conta profissional.' });
+            }
+
+            return res.status(200).json({
+                isNewUser: true,
+                googleData: { email, name, picture, googleId }
+            });
+        }
+
+        // 3. Verifica Paciente
         let patient = await db.Patient.findOne({ where: { email } });
 
         if (patient) {
@@ -75,14 +90,6 @@ exports.unifiedGoogleLogin = async (req, res) => {
                 user: { id: patient.id, nome: patient.nome, email: patient.email, type: 'patient' },
                 token: tokenJwt,
                 redirect: '/paciente/dashboard.html'
-            });
-        }
-
-        // 3. Se o objetivo é registrar como PSICÓLOGO e não existe conta, retorna dados para o form
-        if (targetRole === 'psychologist') {
-            return res.status(200).json({
-                isNewUser: true,
-                googleData: { email, name, picture, googleId }
             });
         }
 

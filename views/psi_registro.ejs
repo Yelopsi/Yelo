@@ -73,6 +73,11 @@
         /* Garante a formatação correta do botão do Google */
         .g_id_signin, .g_id_signin > div, .g_id_signin iframe {
             width: 100% !important;
+            display: flex !important;
+            justify-content: center !important;
+        }
+        /* Aplica margem apenas ao container principal para evitar espaçamento duplicado */
+        .g_id_signin {
             margin-bottom: 20px;
         }
     </style>
@@ -94,16 +99,12 @@
                  data-size="large"
                  data-theme="outline"
                  data-text="signup_with"
-                 data-shape="rectangular"
+                 data-shape="pill"
                  data-logo_alignment="left"
                  data-width="100%">
             </div>
 
-            <div style="display: flex; align-items: center; margin-bottom: 20px;">
-                <hr style="flex-grow: 1; border: 0; border-top: 1px solid #eee;">
-                <span style="padding: 0 10px; color: #888; font-size: 0.8rem;">OU PREENCHA MANUALMENTE</span>
-                <hr style="flex-grow: 1; border: 0; border-top: 1px solid #eee;">
-            </div>
+            <div class="divisor"><span>OU PREENCHA MANUALMENTE</span></div>
 
             <form id="form-registro-psi">
                 

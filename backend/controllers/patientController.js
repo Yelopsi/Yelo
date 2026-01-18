@@ -36,6 +36,12 @@ exports.registerPatient = async (req, res) => {
             return res.status(409).json({ error: 'Este email já está cadastrado.' });
         }
 
+        // [RESTRIÇÃO] Verifica se já existe como Psicólogo
+        const existingPsychologist = await db.Psychologist.findOne({ where: { email } });
+        if (existingPsychologist) {
+            return res.status(409).json({ error: 'Este email já está cadastrado como Profissional.' });
+        }
+
         const hashedPassword = await bcrypt.hash(senha, 10);
 
         // [AUDITORIA] Captura dados de segurança
@@ -212,6 +218,12 @@ exports.googleLogin = async (req, res) => {
         });
 
         const { email, name, sub: googleId } = googleUser;
+
+        // [RESTRIÇÃO] Verifica se é Psicólogo antes de criar paciente
+        const existingPsychologist = await db.Psychologist.findOne({ where: { email } });
+        if (existingPsychologist) {
+             return res.status(400).json({ error: 'Este e-mail pertence a um Psicólogo. Faça login na área de profissionais.' });
+        }
 
         // 2. Verifica se o usuário já existe
         let patient = await db.Patient.findOne({ where: { email } });

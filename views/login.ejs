@@ -42,6 +42,8 @@
         /* Ajuste do Botão Google */
         .g_id_signin, .g_id_signin > div, .g_id_signin iframe {
             width: 100% !important;
+            display: flex !important;
+            justify-content: center !important;
         }
     </style>
 </head>
@@ -76,11 +78,7 @@
                 <button type="submit" class="btn-login">Entrar</button>
             </form>
 
-            <div style="display: flex; align-items: center; margin: 20px 0;">
-                <hr style="flex-grow: 1; border: 0; border-top: 1px solid #eee;">
-                <span style="padding: 0 10px; color: #888; font-size: 0.9rem;">ou</span>
-                <hr style="flex-grow: 1; border: 0; border-top: 1px solid #eee;">
-            </div>
+            <div class="divisor"><span>OU</span></div>
 
             <!-- Botão do Google -->
             <div id="g_id_onload"
@@ -92,7 +90,7 @@
                  data-size="large"
                  data-theme="outline"
                  data-text="sign_in_with"
-                 data-shape="rectangular"
+                 data-shape="pill"
                  data-logo_alignment="left"
                  data-width="100%">
             </div>
