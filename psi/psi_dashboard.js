@@ -1428,8 +1428,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // 4. CARREGAR DADOS DOS MULTISELECTS (Lendo os nomes corretos do banco)
             // Nota: O banco pode retornar 'temas_atuacao' ou 'temas', verificamos ambos
-            updateMultiselect('temas_atuacao_multiselect', psychologistData.temas_atuacao || psychologistData.temas || []);
-            updateMultiselect('abordagens_tecnicas_multiselect', psychologistData.abordagens_tecnicas || psychologistData.abordagens || []);
+            
+            // --- CORREÇÃO: Carregamento Robusto de Especialidades/Temas ---
+            const temasData = psychologistData.temas_atuacao || psychologistData.temas || psychologistData.especialidades || [];
+            updateMultiselect('temas_atuacao_multiselect', temasData);
+            updateMultiselect('especialidades_multiselect', temasData); // Fallback para ID antigo
+
+            const abordagensData = psychologistData.abordagens_tecnicas || psychologistData.abordagens || [];
+            updateMultiselect('abordagens_tecnicas_multiselect', abordagensData);
+            
             updateMultiselect('genero_identidade_multiselect', psychologistData.genero_identidade ? [psychologistData.genero_identidade] : []);
             // ADICIONADO: Carrega os dados dos novos campos
             updateMultiselect('publico_alvo_multiselect', psychologistData.publico_alvo || []);
@@ -1498,12 +1505,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 const safeGetMultiselect = (key, id) => {
                     if (document.getElementById(id)) {
                         data[key] = getMultiselectValues(id);
-                    } else {
-                        delete data[key]; // Remove do payload para o backend ignorar
                     }
                 };
 
                 safeGetMultiselect('temas_atuacao', 'temas_atuacao_multiselect');
+                // Fallback: Se não achou o novo ID, tenta o antigo 'especialidades'
+                if (!data.temas_atuacao && document.getElementById('especialidades_multiselect')) {
+                    data.temas_atuacao = getMultiselectValues('especialidades_multiselect');
+                }
+
                 safeGetMultiselect('abordagens_tecnicas', 'abordagens_tecnicas_multiselect');
                 safeGetMultiselect('modalidade', 'modalidade_atendimento_multiselect');
                 safeGetMultiselect('disponibilidade_periodo', 'disponibilidade_periodo_multiselect');

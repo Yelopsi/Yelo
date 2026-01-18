@@ -574,6 +574,12 @@ exports.updatePsychologistProfile = async (req, res) => {
             slug // <--- AGORA ESTAMOS LENDO O CAMPO SLUG QUE VEM DO FORMULÁRIO
         } = req.body;
 
+        // --- FALLBACK PARA CAMPOS LEGADOS (Especialidades/Temas) ---
+        if (!temas_atuacao) {
+            if (req.body.temas) temas_atuacao = req.body.temas;
+            else if (req.body.especialidades) temas_atuacao = req.body.especialidades;
+        }
+
         // --- CORREÇÃO ROBUSTA DE ARRAYS ---
         // Garante que qualquer campo que deva ser array, SEJA array, mesmo se vier como string JSON.
         const parseArrayField = (fieldValue) => {
