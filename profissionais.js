@@ -23,12 +23,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const questions = [
         // Etapa 1: Boas-vindas e Dados Básicos
-        { id: 'boas-vindas', type: 'welcome', question: "Boas-vindas à Yelo, colega.", subtitle: "Estamos felizes por ter você aqui. Este questionário inicial é a etapa mais importante: ele define seu perfil para que possamos conectá-lo(a) aos pacientes certos. Responda com calma." },        
+        { id: 'boas-vindas', type: 'welcome', question: "Boas-vindas à Yelo, colega.", subtitle: "Que bom ter você aqui. Este questionário é uma etapa importante para entendermos melhor seu perfil e verificar se há demanda compatível. Responda com calma e atenção." },        
         { id: 'nome', type: 'text', question: "Primeiro, qual o seu nome completo?", placeholder: "Nome Completo", required: true },
         // Etapa 2: Definição do Nicho
-        { id: 'modalidade', type: 'choice', question: "Como você prefere atender?", choices: ["Apenas Online", "Apenas Presencial", "Híbrido (Online e Presencial)"], required: true },
+        { id: 'modalidade', type: 'choice', question: "Como você prefere atender, [NOME]?", choices: ["Apenas Online", "Apenas Presencial", "Híbrido (Online e Presencial)"], required: true },
         { id: 'cep', type: 'text', question: "Qual o CEP do seu local de atendimento?", placeholder: "CEP (ex: 12345-678)", required: true, inputMode: 'numeric' },
-        { id: 'nicho-intro', type: 'info', question: "Entendendo sua Prática e Especialidades", subtitle: "Suas respostas aqui são cruciais. Elas definem seu 'nicho de mercado' e nos permitem verificar se há uma demanda ativa de pacientes para o seu perfil." },
+        { id: 'nicho-intro', type: 'info', question: "Entendendo sua Prática e Especialidades", subtitle: "[NOME], suas respostas aqui são cruciais. Elas definem seu 'nicho de mercado' e nos permitem verificar se há uma demanda ativa de pacientes para o seu perfil." },
         { id: 'genero_identidade', question: "Com qual gênero você se identifica?", type: 'choice', choices: ["Feminino", "Masculino", "Não-binário", "Outro"], required: true },
         { id: 'valor_sessao_faixa', question: "Em qual faixa de preço você pretende atender?", type: 'choice', choices: ["Até R$ 50", "R$ 51 - R$ 90", "R$ 91 - R$ 150", "Acima de R$ 150"], required: true },
         { id: 'temas_atuacao', question: "Quais são seus principais temas de atuação?", type: 'multiple-choice', scrollable: true, choices: ["Ansiedade", "Estresse", "Depressão", "Relacionamentos", "Carreira", "Autoestima", "Luto", "Traumas", "TDAH", "Sexualidade"], required: true },
@@ -38,10 +38,10 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'loading', type: 'loading', question: "Analisando a demanda...", subtitle: "Estamos cruzando seus dados com as buscas de nossos pacientes. Só um instante." },
         
         { id: 'approved', type: 'approved', 
-          question: "Ótima notícia! Há uma grande procura por seu perfil."
+          question: "Ótima notícia, [NOME]!<br>Há uma grande procura por seu perfil."
         },
 
-        { id: 'waitlisted', type: 'waitlisted', question: "Agradecemos seu interesse na Yelo!", subtitle: "No momento, a busca por profissionais com seu perfil específico já está bem atendida. Para garantir que todos os nossos parceiros tenham sucesso, adicionamos seu perfil à nossa lista de espera. Deixe seu e-mail abaixo para ser notificado(a) assim que surgir uma nova oportunidade.", buttonText: "Confirmar E-mail e Finalizar" },
+        { id: 'waitlisted', type: 'waitlisted', question: "Agradecemos seu interesse na Yelo, [NOME]!", subtitle: "No momento, a busca por profissionais com seu perfil específico já está bem atendida. Para garantir que todos os nossos parceiros tenham sucesso, adicionamos seu perfil à nossa lista de espera. Deixe seu e-mail abaixo para ser notificado(a) assim que surgir uma nova oportunidade.", buttonText: "Confirmar E-mail e Finalizar" },
         { id: 'error', type: 'error', question: "Oops! Ocorreu um problema.", subtitle: "Não foi possível conectar ao servidor para verificar a demanda. Por favor, tente novamente em alguns instantes.", buttonText: "Tentar Novamente" }
     ];
 
@@ -224,6 +224,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- FUNÇÃO DE PERSONALIZAÇÃO (NOVO) ---
+    function updateNamePlaceholders(fullName) {
+        if (!fullName) return;
+        // Pega o primeiro nome e capitaliza
+        const firstName = fullName.trim().split(' ')[0];
+        const formattedName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+
+        const allSlides = document.querySelectorAll('.slide');
+        allSlides.forEach(slide => {
+            const title = slide.querySelector('h1');
+            const subtitle = slide.querySelector('p.subtitle');
+            
+            if (title && title.innerHTML.includes('[NOME]')) title.innerHTML = title.innerHTML.replace(/\[NOME\]/g, formattedName);
+            if (subtitle && subtitle.innerHTML.includes('[NOME]')) subtitle.innerHTML = subtitle.innerHTML.replace(/\[NOME\]/g, formattedName);
+        });
+    }
+
     function validateAndAdvance() {
         const currentQuestion = questions[currentStep];
         const currentSlideEl = document.querySelector('.slide.active');
@@ -271,6 +288,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (isValid) {
             collectAnswer();
+            // Se acabou de responder o nome, atualiza os próximos slides
+            if (currentQuestion.id === 'nome') {
+                updateNamePlaceholders(userAnswers.nome);
+            }
             goToSlide(currentStep + 1);
         } else if (elementToShake) {
             // Efeito visual de erro
