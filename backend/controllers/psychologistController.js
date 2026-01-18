@@ -569,22 +569,42 @@ exports.updatePsychologistProfile = async (req, res) => {
             slug // <--- AGORA ESTAMOS LENDO O CAMPO SLUG QUE VEM DO FORMULÁRIO
         } = req.body;
 
-        // --- CORREÇÃO DE DADOS (ARRAYS VINDOS COMO STRING) ---
-        // O Render/Postgres reclama se enviarmos '["Online"]' (string) para uma coluna ARRAY.
-        // Precisamos converter de volta para Array JavaScript real.
+        // --- CORREÇÃO ROBUSTA DE ARRAYS ---
+        // Garante que qualquer campo que deva ser array, SEJA array, mesmo se vier como string JSON.
         const parseArrayField = (fieldValue) => {
+            if (!fieldValue) return [];
+            
+            // Se já for array, verifica se os itens dentro não são strings JSON (ex: ['["Online"]'])
+            if (Array.isArray(fieldValue)) {
+                return fieldValue.map(item => {
+                    if (typeof item === 'string' && item.trim().startsWith('[')) {
+                        try { 
+                            const parsed = JSON.parse(item);
+                            return Array.isArray(parsed) ? parsed[0] : parsed; 
+                        } catch(e) { return item; }
+                    }
+                    return item;
+                });
+            }
+
+            // Se for string, tenta parsear
             if (typeof fieldValue === 'string') {
                 try {
                     if (fieldValue.trim().startsWith('[')) return JSON.parse(fieldValue);
                     return [fieldValue]; // Se for string solta, encapsula
                 } catch (e) { return []; }
             }
-            return fieldValue;
+            return [fieldValue];
         };
 
-        // Aplica a correção nos campos de array
+        // Aplica a correção em TODOS os campos de lista
         modalidade = parseArrayField(modalidade);
-        // (Opcional: garantir os outros também, caso o front mude o comportamento)
+        temas_atuacao = parseArrayField(temas_atuacao);
+        abordagens_tecnicas = parseArrayField(abordagens_tecnicas);
+        publico_alvo = parseArrayField(publico_alvo);
+        estilo_terapia = parseArrayField(estilo_terapia);
+        praticas_inclusivas = parseArrayField(praticas_inclusivas);
+        disponibilidade_periodo = parseArrayField(disponibilidade_periodo);
         
         // --- LÓGICA DE PERSONALIZAÇÃO DO LINK (SLUG) ---
         let finalSlug = psychologist.slug; // Padrão: Mantém o atual
