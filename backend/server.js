@@ -432,7 +432,7 @@ app.get('/api/fix-add-modalidade-column', async (req, res) => {
 app.get('/api/fix-make-content-creator', async (req, res) => {
     try {
         const email = req.query.email;
-        if (!email) return res.status(400).send("Informe o email na URL: ?email=exemplo@yelo.com");
+        if (!email) return res.status(400).send("Informe o email na URL: ?email=exemplo@yelopsi.com.br");
 
         const [updated] = await db.Psychologist.update({ status: 'content_creator' }, { where: { email } });
         
@@ -552,7 +552,7 @@ app.get('/api/fix-admin-table', async (req, res) => {
 /*
 app.get('/api/fix-reset-admin-password', async (req, res) => {
     try {
-        const email = 'admin@yelo.com';
+        const email = 'admin@yelopsi.com.br';
         const newPassword = 'admin123';
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
@@ -703,7 +703,7 @@ app.get('/api/fix-reset-gamification', async (req, res) => {
 app.get('/api/fix-test-email', async (req, res) => {
     try {
         const emailService = require('./services/emailService');
-        const emailDestino = req.query.email || 'admin@yelo.com'; // Use ?email=seu@email.com para testar
+        const emailDestino = req.query.email || 'admin@yelopsi.com.br'; // Use ?email=seu@email.com para testar
         const type = req.query.type; // 'payment' ou vazio (padrão reset)
         
         if (type === 'payment') {
@@ -973,7 +973,7 @@ app.get('/api/admin/exit-surveys', async (req, res) => {
 app.get('/admin-setup-secreto', async (req, res) => {
     try {
         await seedTestData(); // Roda a função que cria o Admin e os testes
-        res.send('<h1>Sucesso!</h1><p>O usuário Admin foi criado/atualizado.</p><p>Login: admin@Yelo.com</p><p>Senha: admin123</p><br><a href="/login">Ir para Login</a>');
+        res.send('<h1>Sucesso!</h1><p>O usuário Admin foi criado/atualizado.</p><p>Login: admin@yelopsi.com.br</p><p>Senha: admin123</p><br><a href="/login">Ir para Login</a>');
     } catch (error) {
         res.status(500).send('Erro ao criar admin: ' + error.message);
     }
@@ -1011,7 +1011,7 @@ app.get('/instalar-admin', async (req, res) => {
             ON CONFLICT (email) DO UPDATE 
             SET senha = :senha; -- Atualiza a senha se o admin já existir
         `, {
-            replacements: { email: 'admin@yelo.com', senha: senhaHash }
+            replacements: { email: 'admin@yelopsi.com.br', senha: senhaHash }
         });
 
         res.send(`
@@ -1019,7 +1019,7 @@ app.get('/instalar-admin', async (req, res) => {
                 <h1 style="color: #1B4332;">Admin Configurado com Sucesso!</h1>
                 <p>A tabela foi criada e o usuário registrado.</p>
                 <hr>
-                <p><strong>Login:</strong> admin@yelo.com</p>
+                <p><strong>Login:</strong> admin@yelopsi.com.br</p>
                 <p><strong>Senha:</strong> admin123</p>
                 <br>
                 <a href="/login" style="background: #1B4332; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Ir para Login</a>

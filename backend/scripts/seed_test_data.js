@@ -17,7 +17,7 @@ async function seedTestData() {
         const patientPassword = await bcrypt.hash('password123', 10);
         const patientData = {
             nome: "Paciente Teste",
-            email: "paciente.teste@Yelo.com",
+            email: "paciente.teste@yelopsi.com.br",
             senha: patientPassword,
             telefone: "(11) 98765-4321",
             valor_sessao_faixa: "R$ 91 - R$ 150", // Para match de preço
@@ -36,7 +36,7 @@ async function seedTestData() {
         const psychologistData = {
             nome: "Dra. Ana Psicóloga",
             crp: "06/123456",
-            email: "ana.psicologa@Yelo.com",
+            email: "ana.psicologa@yelopsi.com.br",
             senha: psychologistPassword,
             telefone: "11999998888", // CAMPO ADICIONADO
             slug: generateSlug("Dra. Ana Psicóloga"),
@@ -58,7 +58,7 @@ async function seedTestData() {
         const psychologist2Data = {
             nome: "Dr. Carlos Terapeuta",
             crp: "06/654321",
-            email: "carlos.terapeuta@Yelo.com",
+            email: "carlos.terapeuta@yelopsi.com.br",
             senha: await bcrypt.hash('password123', 10),
             telefone: "11977776666", // CAMPO ADICIONADO
             slug: generateSlug("Dr. Carlos Terapeuta"),

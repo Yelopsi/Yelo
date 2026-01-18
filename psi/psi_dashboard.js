@@ -1494,18 +1494,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = Object.fromEntries(fd.entries());
 
                 // --- MAPEAMENTO DE DADOS ---
-                data.temas_atuacao = getMultiselectValues('temas_atuacao_multiselect');
-                data.abordagens_tecnicas = getMultiselectValues('abordagens_tecnicas_multiselect');
-                data.modalidade = getMultiselectValues('modalidade_atendimento_multiselect'); // Mantido
-                data.disponibilidade_periodo = getMultiselectValues('disponibilidade_periodo_multiselect'); // CORRIGIDO: Nome do campo padronizado
-                // ADICIONADO: Coleta os valores dos novos campos para salvar
-                data.publico_alvo = getMultiselectValues('publico_alvo_multiselect');
-                data.estilo_terapia = getMultiselectValues('estilo_terapia_multiselect');
-                data.praticas_inclusivas = getMultiselectValues('praticas_inclusivas_multiselect');
+                // Helper para só enviar o que existe na tela (evita apagar dados se o HTML estiver desatualizado)
+                const safeGetMultiselect = (key, id) => {
+                    if (document.getElementById(id)) {
+                        data[key] = getMultiselectValues(id);
+                    } else {
+                        delete data[key]; // Remove do payload para o backend ignorar
+                    }
+                };
 
+                safeGetMultiselect('temas_atuacao', 'temas_atuacao_multiselect');
+                safeGetMultiselect('abordagens_tecnicas', 'abordagens_tecnicas_multiselect');
+                safeGetMultiselect('modalidade', 'modalidade_atendimento_multiselect');
+                safeGetMultiselect('disponibilidade_periodo', 'disponibilidade_periodo_multiselect');
+                safeGetMultiselect('publico_alvo', 'publico_alvo_multiselect');
+                safeGetMultiselect('estilo_terapia', 'estilo_terapia_multiselect');
+                safeGetMultiselect('praticas_inclusivas', 'praticas_inclusivas_multiselect');
 
-                const generoArr = getMultiselectValues('genero_identidade_multiselect');
-                data.genero_identidade = generoArr.length > 0 ? generoArr[0] : '';
+                const elGenero = document.getElementById('genero_identidade_multiselect');
+                if (elGenero) {
+                    const generoArr = getMultiselectValues('genero_identidade_multiselect');
+                    data.genero_identidade = generoArr.length > 0 ? generoArr[0] : '';
+                } else {
+                    delete data.genero_identidade;
+                }
 
                 if (data.valor_sessao_numero) {
                     data.valor_sessao_numero = parseFloat(data.valor_sessao_numero.toString().replace(',', '.'));

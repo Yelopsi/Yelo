@@ -132,13 +132,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // --- FUNÇÃO PARA GERENCIAR ESTADO DE LOGIN NO HEADER ---
-function checkLoginState() {
+async function checkLoginState() {
     // Evita duplicação se a função for executada múltiplas vezes
     if (document.querySelector('.user-logged-header')) return;
 
     const token = localStorage.getItem('Yelo_token');
-    const userName = localStorage.getItem('Yelo_user_name');
-    const userType = localStorage.getItem('Yelo_user_type');
+    let userName = localStorage.getItem('Yelo_user_name');
+    let userType = localStorage.getItem('Yelo_user_type');
 
     // Se não estiver logado, não faz nada (botões padrão aparecem)
     if (!token) return;
@@ -170,8 +170,46 @@ function checkLoginState() {
 
     if (!container) return;
 
+    // --- SELF-HEALING: Se faltar dados (Nome ou Tipo), busca na API ---
+    if (!userName || !userType || userName === 'undefined') {
+        try {
+            const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
+            
+            // Tenta identificar o usuário batendo nos endpoints
+            // 1. Tenta Paciente
+            let res = await fetch(`${BASE_URL}/api/patients/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+            if (res.ok) {
+                const data = await res.json();
+                userName = data.nome;
+                userType = 'patient';
+            } else {
+                // 2. Tenta Psicólogo
+                res = await fetch(`${BASE_URL}/api/psychologists/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    const data = await res.json();
+                    userName = data.nome;
+                    userType = 'psychologist';
+                } else {
+                    // 3. Tenta Admin
+                    res = await fetch(`${BASE_URL}/api/admin/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (res.ok) {
+                        const data = await res.json();
+                        userName = data.nome;
+                        userType = 'admin';
+                    }
+                }
+            }
+            // Salva para a próxima vez
+            if (userName) localStorage.setItem('Yelo_user_name', userName);
+            if (userType) localStorage.setItem('Yelo_user_type', userType);
+        } catch (e) { console.warn("Erro ao recuperar dados do usuário:", e); }
+    }
+
     // Prepara os dados
     let firstName = userName ? userName.split(' ')[0] : 'Usuário';
+    // Capitaliza (Primeira letra maiúscula)
+    firstName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+    
     let dashboardLink = '/'; // Rota padrão para a página inicial
 
     if (userType === 'patient') {

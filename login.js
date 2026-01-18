@@ -115,8 +115,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     // CORREÇÃO: Pega o nome se estiver dentro de 'user' OU direto na raiz da resposta
-                    const nomeSalvo = (user && user.nome) ? user.nome : result.data.nome;
-                    if (nomeSalvo) localStorage.setItem('Yelo_user_name', nomeSalvo);
+                    let nomeSalvo = result.data.nome;
+                    if (!nomeSalvo && user && user.nome) {
+                        nomeSalvo = user.nome;
+                    }
+                    
+                    if (nomeSalvo) {
+                        localStorage.setItem('Yelo_user_name', nomeSalvo);
+                    }
 
                     // Mensagem de sucesso
                     if (mensagemEl) {
