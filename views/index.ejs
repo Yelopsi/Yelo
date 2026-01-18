@@ -82,6 +82,23 @@
         .info-autor { display: flex; flex-direction: column; }
         .nome-autor { font-weight: 700; color: #1B4332; font-size: 1rem; }
         .status-autor { font-size: 0.8rem; color: #888; }
+
+        /* --- ESTILOS DA NOVA SEÇÃO DE TERAPEUTAS (MODERNA) --- */
+        .header-secao-moderno { text-align: center; max-width: 700px; margin: 0 auto 50px auto; }
+        .badge-verde-suave { background: #e8f5e9; color: #1B4332; padding: 5px 15px; border-radius: 20px; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-bottom: 15px; }
+        .grid-profissionais-moderno { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 30px; max-width: 1100px; margin: 0 auto; }
+        .card-profissional-home { background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: transform 0.3s ease; text-align: center; padding-bottom: 20px; border: 1px solid #f0f0f0; }
+        .card-profissional-home:hover { transform: translateY(-10px); box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
+        .foto-wrapper { position: relative; width: 100%; height: 250px; overflow: hidden; }
+        .foto-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+        .card-profissional-home:hover img { transform: scale(1.05); }
+        .badge-verificado { position: absolute; bottom: 10px; right: 10px; background: #1B4332; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .info-prof { padding: 15px; }
+        .info-prof h3 { margin: 15px 0 5px 0; font-size: 1.2rem; color: #333; font-family: var(--font-titulos); }
+        .info-prof p { font-size: 0.9rem; color: #666; margin: 0; }
+        .trust-indicators { display: flex; justify-content: center; gap: 30px; margin-top: 60px; flex-wrap: wrap; }
+        .trust-item { display: flex; align-items: center; gap: 10px; font-weight: 600; color: #555; background: #fff; padding: 10px 20px; border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #eee; }
+        .trust-item .icon { font-size: 1.2rem; color: #1B4332; }
     </style>
 </head>
 <body>
@@ -144,82 +161,94 @@
         </section>
 
         <section class="secao-terapeutas hidden">
-            <div class="secao-conteudo">
-                <div class="texto-terapeutas">
-                    <h2>Profissionais verificados em quem você pode confiar.</h2>
-                    <p>Todos os psicólogos da Yelo possuem registro ativo no CRP e passam por um rigoroso processo de verificação. Aqui, você encontra especialistas em ansiedade, depressão, carreira, relacionamentos e muito mais.</p>
-                    <a href="/questionario.html" class="btn-verde">Encontre seu terapeuta</a>
+            <div class="container">
+                <div class="header-secao-moderno">
+                    <span class="badge-verde-suave">Segurança e Qualidade</span>
+                    <h2 class="titulo-secao" style="margin-bottom: 20px;">Profissionais verificados em quem você pode confiar</h2>
+                    <p class="subtitulo-secao" style="margin-bottom: 40px;">Nossa curadoria é rigorosa. Apenas psicólogos com CRP ativo e aprovados em nossa entrevista técnica entram na plataforma.</p>
                 </div>
-                <div class="therapist-collage" aria-hidden="true">
-                     <%
+
+                <!-- Grid de Cards de Profissionais -->
+                <div class="grid-profissionais-moderno">
+                    <% 
                         const mocks = [
-                            { src: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg", alt: "Psicóloga especialista" },
-                            { src: "https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg", alt: "Psicólogo clínico" },
-                            { src: "https://images.pexels.com/photos/1043473/pexels-photo-1043473.jpeg", alt: "Terapeuta ocupacional" },
-                            { src: "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg", alt: "Psicóloga comportamental" },
-                            { src: "https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg", alt: "Psicólogo humanista" },
-                            { src: "https://images.pexels.com/photos/1024311/pexels-photo-1024311.jpeg", alt: "Psicanalista" },
-                            { src: "https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg", alt: "Terapeuta de casal" },
-                            { src: "https://images.pexels.com/photos/1587009/pexels-photo-1587009.jpeg", alt: "Psicóloga infantil" }
+                            { src: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg", alt: "Psicóloga especialista", nome: "Dra. Camila", especialidade: "Ansiedade e Carreira" },
+                            { src: "https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg", alt: "Psicólogo clínico", nome: "Dr. André", especialidade: "Terapia Cognitiva" },
+                            { src: "https://images.pexels.com/photos/1043473/pexels-photo-1043473.jpeg", alt: "Terapeuta ocupacional", nome: "Dra. Juliana", especialidade: "Relacionamentos" },
+                            { src: "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg", alt: "Psicóloga comportamental", nome: "Dra. Beatriz", especialidade: "Autoestima" }
                         ];
 
                         let listaExibicao = [];
-                        
-                        // Tenta encontrar a variável de profissionais (suporte a 'profissionais' ou 'psicologos')
-                        // IMPORTANTE: O Controller deve enviar: res.render('index', { profissionais: [...] })
                         let dadosProfissionais = [];
                         
-                        if (typeof profissionais !== 'undefined' && profissionais) {
-                            dadosProfissionais = profissionais;
-                        } else if (typeof psicologos !== 'undefined' && psicologos) {
-                            dadosProfissionais = psicologos;
-                        }
+                        if (typeof profissionais !== 'undefined' && profissionais) dadosProfissionais = profissionais;
+                        else if (typeof psicologos !== 'undefined' && psicologos) dadosProfissionais = psicologos;
 
-                        // Garante que é um array
                         if (!Array.isArray(dadosProfissionais)) dadosProfissionais = [];
 
                         if (dadosProfissionais.length > 0) {
                             const reais = dadosProfissionais.map(p => {
-                                // Tenta várias propriedades de foto
-                                let img = p.fotoUrl || p.foto || p.fotoPerfil || p.avatar || '/assets/images/default-avatar.png';
-                                // Correção: Se o caminho for relativo (ex: "uploads/foto.jpg") e não tiver barra, adiciona.
-                                if (img && !img.startsWith('http') && !img.startsWith('/')) {
-                                    img = '/' + img;
-                                }
+                                let img = p.fotoUrl || p.foto || p.fotoPerfil || '/assets/images/default-avatar.png';
+                                if (img && !img.startsWith('http') && !img.startsWith('/')) img = '/' + img;
+                                
+                                // Tenta extrair especialidade ou usa padrão
+                                let esp = 'Psicologia Clínica';
+                                if (p.temas_atuacao && Array.isArray(p.temas_atuacao) && p.temas_atuacao.length > 0) esp = p.temas_atuacao[0];
+                                else if (p.abordagens_tecnicas && Array.isArray(p.abordagens_tecnicas) && p.abordagens_tecnicas.length > 0) esp = p.abordagens_tecnicas[0];
+
                                 return { 
                                     src: img, 
-                                    alt: p.nome || 'Profissional Yelo'
+                                    alt: p.nome || 'Profissional Yelo',
+                                    nome: p.nome ? p.nome.split(' ')[0] : 'Psicólogo(a)',
+                                    especialidade: esp
                                 };
                             });
                             listaExibicao = [...reais];
-                            // Embaralha os reais
                             listaExibicao.sort(() => 0.5 - Math.random());
                         }
 
-                        // Completa com mocks até ter 6 itens
-                        if (listaExibicao.length < 6) {
-                            const faltam = 6 - listaExibicao.length;
-                            // Embaralha os mocks para variar
-                            const mocksEmbaralhados = mocks.sort(() => 0.5 - Math.random());
-                            
+                        // Completa com mocks se tiver menos de 4
+                        if (listaExibicao.length < 4) {
+                            const faltam = 4 - listaExibicao.length;
                             for(let i = 0; i < faltam; i++) {
-                                listaExibicao.push(mocksEmbaralhados[i % mocksEmbaralhados.length]);
+                                listaExibicao.push(mocks[i % mocks.length]);
                             }
                         }
-                        
-                        // Garante exatamente 6 itens para o layout
-                        listaExibicao = listaExibicao.slice(0, 6);
+                        listaExibicao = listaExibicao.slice(0, 4);
                     %>
-                    <!-- DEBUG: Profissionais encontrados no banco: <%= dadosProfissionais.length %> -->
-                    <!-- DEBUG: Total exibido (com mocks): <%= listaExibicao.length %> -->
-                    <div class="left-column">
-                        <% listaExibicao.slice(0, 3).forEach(prof => { %><img src="<%= prof.src %>" alt="<%= prof.alt %>" loading="lazy"><% }); %>
-                        <% listaExibicao.slice(0, 3).forEach(prof => { %><img src="<%= prof.src %>" alt="<%= prof.alt %>" loading="lazy"><% }); %>
+
+                    <% listaExibicao.forEach(prof => { %>
+                        <div class="card-profissional-home">
+                            <div class="foto-wrapper">
+                                <img src="<%= prof.src %>" alt="<%= prof.alt %>" loading="lazy">
+                                <span class="badge-verificado" title="Profissional Verificado">✓</span>
+                            </div>
+                            <div class="info-prof">
+                                <h3><%= prof.nome %></h3>
+                                <p><%= prof.especialidade %></p>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+                
+                <!-- Indicadores de Confiança -->
+                <div class="trust-indicators">
+                    <div class="trust-item">
+                        <span class="icon">🆔</span>
+                        <span>CRP Ativo</span>
                     </div>
-                    <div class="right-column">
-                        <% listaExibicao.slice(3, 6).forEach(prof => { %><img src="<%= prof.src %>" alt="<%= prof.alt %>" loading="lazy"><% }); %>
-                        <% listaExibicao.slice(3, 6).forEach(prof => { %><img src="<%= prof.src %>" alt="<%= prof.alt %>" loading="lazy"><% }); %>
+                    <div class="trust-item">
+                        <span class="icon">📹</span>
+                        <span>Entrevista Técnica</span>
                     </div>
+                    <div class="trust-item">
+                        <span class="icon">⭐</span>
+                        <span>Avaliação Contínua</span>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 50px;">
+                    <a href="/questionario.html" class="btn-cta-principal">Encontrar meu terapeuta</a>
                 </div>
             </div>
             <div class="wave-divider">
