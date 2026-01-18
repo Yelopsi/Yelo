@@ -45,14 +45,28 @@
             justify-content: center;
             width: 100%;
         }
+        
+        /* Doodles de Fundo */
+        .doodle-bg {
+            position: absolute;
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: 0;
+            color: #e0e0e0;
+        }
+        .doodle-bg.top-left { top: -50px; left: -50px; width: 300px; transform: rotate(45deg); }
+        .doodle-bg.bottom-right { bottom: -50px; right: -50px; width: 250px; transform: rotate(-45deg); }
     </style>
 </head>
 <body class="pagina-login">
 
     <%- include('partials/header') %>
 
-    <main class="login-main ruido">
-        <div class="login-container">
+    <main class="login-main ruido" style="position: relative; overflow: hidden;">
+        <svg class="doodle-bg top-left" viewBox="0 0 200 200" fill="currentColor"><path d="M45.7,-76.3C58.9,-69.3,69.1,-55.6,76.3,-41.2C83.5,-26.8,87.7,-11.7,85.6,2.6C83.5,16.9,75.1,30.4,65.6,42.2C56.1,54,45.5,64.1,33.3,70.3C21.1,76.5,7.3,78.8,-5.3,76.9C-17.9,75,-34.7,68.9,-48.6,59.6C-62.5,50.3,-73.5,37.8,-79.6,23.3C-85.7,8.8,-86.9,-7.7,-80.7,-21.8C-74.5,-35.9,-60.9,-47.6,-46.8,-54.3C-32.7,-61,-18.1,-62.7,-2.9,-62.2C12.3,-61.7,24.6,-59,32.5,-83.3L45.7,-76.3Z" transform="translate(100 100)" /></svg>
+        <svg class="doodle-bg bottom-right" viewBox="0 0 200 200" fill="currentColor"><path d="M38.1,-63.8C49.3,-54.6,58.3,-43.3,65.5,-30.8C72.7,-18.3,78.1,-4.6,76.3,8.3C74.5,21.2,65.5,33.3,55.3,43.4C45.1,53.5,33.7,61.6,21.1,66.1C8.5,70.6,-5.3,71.5,-18.4,67.8C-31.5,64.1,-43.9,55.8,-53.4,45.2C-62.9,34.6,-69.5,21.7,-70.8,8.2C-72.1,-5.3,-68.1,-19.4,-59.6,-31.1C-51.1,-42.8,-38.1,-52.1,-25.3,-60.1C-12.5,-68.1,0.1,-74.8,12.7,-74.8C25.3,-74.8,38.1,-68.1,38.1,-63.8Z" transform="translate(100 100)" /></svg>
+
+        <div class="login-container" style="position: relative; z-index: 2;">
             <h1 class="login-titulo">Acesse sua conta</h1>
             <form class="login-form" id="form-login">                
                 <p id="mensagem-login" class="mensagem-oculta"></p>
