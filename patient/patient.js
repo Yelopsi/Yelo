@@ -3,6 +3,11 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // -----------------------------------------------------
+    // 0. CONFIGURAÇÕES GLOBAIS
+    // -----------------------------------------------------
+    const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001';
+
+    // -----------------------------------------------------
     // 1. VARIÁVEIS DE ESTADO E INFORMAÇÃO
     // -----------------------------------------------------
     let patientData = null; 
@@ -59,8 +64,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         if (photoEl && data.fotoUrl) {
-            // Se tiver foto (futuro), usa. Senão mantém placeholder.
-            // photoEl.src = data.fotoUrl; 
+            let fotoUrl = data.fotoUrl;
+            if (fotoUrl && !fotoUrl.startsWith('http') && !fotoUrl.startsWith('data:')) {
+                fotoUrl = `${API_BASE_URL}/${fotoUrl.replace(/^backend\/public\//, '').replace(/^\//, '')}`;
+            }
+            photoEl.src = fotoUrl; 
         }
     }
 
@@ -565,7 +573,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initializeDashboard() {
-        
+        // --- REMOVE O LOADER GLOBAL ---
+        const loader = document.getElementById('global-loader');
+        if (loader) {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 500);
+        }
+        const dashboardContainer = document.getElementById('dashboard-container');
+        if (dashboardContainer) dashboardContainer.style.display = 'flex';
+
         // --- LÓGICA DO MENU MOBILE (ADAPTADA PARA O HEADER GLOBAL) ---
         const menuBtn = document.querySelector('.menu-hamburguer');
         if (menuBtn && sidebar) {
