@@ -461,10 +461,11 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
 // ----------------------------------------------------------------------
 exports.checkDemand = async (req, res) => {    
     try {
-        const { nome, email, crp, genero_identidade, valor_sessao_faixa, temas_atuacao, praticas_afirmativas, abordagens_tecnicas } = req.body;
+        // Removemos 'email' e 'crp' da validação pois eles ainda não foram coletados nesta etapa
+        const { genero_identidade, valor_sessao_faixa, temas_atuacao, praticas_afirmativas } = req.body;
 
         // Validação básica dos dados recebidos
-        if (!email || !crp || !genero_identidade || !valor_sessao_faixa || !temas_atuacao || !praticas_afirmativas) {
+        if (!genero_identidade || !valor_sessao_faixa || !temas_atuacao || !praticas_afirmativas) {
             return res.status(400).json({ error: 'Dados insuficientes para verificar a demanda.' });
         }
 

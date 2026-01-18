@@ -21,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             unique: true
         },
-        psychologist_id: {
+        psychologistId: {
             type: DataTypes.INTEGER,
             allowNull: false
         },
@@ -46,7 +46,7 @@ module.exports = (sequelize, DataTypes) => {
         // Correção de compatibilidade (Linux/Windows)
         const PsiModel = models.Psychologist || models.psychologist;
         if (PsiModel) {
-            Post.belongsTo(PsiModel, { foreignKey: 'psychologist_id', as: 'autor' });
+            Post.belongsTo(PsiModel, { foreignKey: 'psychologistId', as: 'autor' });
         }
     };
 
