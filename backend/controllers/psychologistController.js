@@ -606,6 +606,16 @@ exports.updatePsychologistProfile = async (req, res) => {
         praticas_inclusivas = parseArrayField(praticas_inclusivas);
         disponibilidade_periodo = parseArrayField(disponibilidade_periodo);
         
+        // --- DEBUG: LOG DOS DADOS TRATADOS ---
+        console.log("--- DEBUG UPDATE PERFIL ---");
+        console.log("ID:", psychologist.id);
+        console.log("Modalidade (Type):", typeof modalidade, "IsArray:", Array.isArray(modalidade));
+        console.log("Modalidade (Value):", JSON.stringify(modalidade));
+        console.log("Temas (Value):", JSON.stringify(temas_atuacao));
+        console.log("Abordagens (Value):", JSON.stringify(abordagens_tecnicas));
+        console.log("Público Alvo (Value):", JSON.stringify(publico_alvo));
+        // -------------------------------------
+
         // --- LÓGICA DE PERSONALIZAÇÃO DO LINK (SLUG) ---
         let finalSlug = psychologist.slug; // Padrão: Mantém o atual
 
@@ -663,7 +673,9 @@ exports.updatePsychologistProfile = async (req, res) => {
 
     } catch (error) {
         console.error('Erro ao atualizar perfil:', error);
-        console.error('Detalhes do erro:', error.original || error.message); // Log extra para debug
+        console.error('Detalhes do erro (Message):', error.message);
+        if (error.original) console.error('Detalhes do erro (Original):', error.original);
+        if (error.sql) console.error('SQL Gerado:', error.sql);
         // Tratamento amigável se der erro de duplicidade que passou pelo check
         if (error.name === 'SequelizeUniqueConstraintError') {
              return res.status(400).json({ error: 'Dados duplicados (Link ou CRP já existem).' });
