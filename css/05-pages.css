@@ -429,20 +429,33 @@
 .beneficios-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin: 40px auto;
+    gap: 40px;
+    margin: 60px auto;
     text-align: left;
 }
 .beneficio-card {
-    background-color: var(--branco-puro);
-    padding: 25px;
-    border-radius: 12px;
-    border: 1px solid #eee;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    background-color: #F8F3ED; /* Creme */
+    padding: 30px;
+    border-radius: 24px 60px 24px 60px;
+    border: 1px solid rgba(0,0,0,0.03);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease;
+}
+.beneficio-card:nth-child(2n) {
+    background-color: #E6F4F1; /* Verde suave */
+    border-radius: 60px 24px 60px 24px;
+}
+.beneficio-card:nth-child(3n) {
+    background-color: #FFF8E1; /* Amarelo suave */
+    border-radius: 24px 60px 24px 60px;
+}
+.beneficio-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.08);
 }
 .beneficio-card h3 {
     font-family: var(--font-titulos);
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     color: var(--verde-escuro);
     margin-top: 0;
     margin-bottom: 10px;
@@ -450,7 +463,7 @@
 .beneficio-card p {
     font-size: 0.9rem;
     color: #666;
-    line-height: 1.5;
+    line-height: 1.6;
     margin: 0;
 }
 
@@ -465,7 +478,7 @@
 .qa-search-container input {
     width: 100%;
     padding: 18px 25px 18px 50px; /* Espaço para ícone */
-    border-radius: 12px;
+    border-radius: 50px;
     border: 1px solid #e0e0e0;
     font-size: 1rem;
     font-family: var(--font-principal);
@@ -489,12 +502,12 @@
 
 /* 3. Caixa "Faça sua Pergunta" */
 .ask-box-container {
-    background-color: #f0f9f6; /* Verde bem clarinho */
-    border: 1px solid #d4e9e2;
-    border-radius: 16px;
-    padding: 30px;
+    background-color: #F8F3ED; /* Creme */
+    border: 1px solid rgba(0,0,0,0.03);
+    border-radius: 24px 60px 24px 60px;
+    padding: 40px;
     max-width: 900px;
-    margin: 50px auto;
+    margin: 60px auto;
     text-align: left;
     width: 100%; /* Garante que não ultrapasse a tela */
     box-sizing: border-box;
@@ -536,25 +549,26 @@
 .qa-card { margin-bottom: 40px; }
 
 .qa-card-question {
-    background-color: #f8f9fa;
-    border: 1px solid #e0e0e0;
-    border-radius: 12px;
-    padding: 25px;
+    background-color: #ffffff;
+    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: 24px 60px 24px 60px;
+    padding: 30px;
     position: relative;
     text-align: left;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.03);
 }
 .qa-card-question h2 {
     font-family: var(--font-titulos);
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     color: var(--verde-escuro);
     margin-top: 0;
 }
 
 .qa-card-answer {
-    background-color: var(--branco-puro);
-    border: 1px solid #e0e0e0;
-    border-radius: 12px;
-    margin-top: 15px;
+    background-color: #fdfaf6;
+    border: 1px solid rgba(0,0,0,0.03);
+    border-radius: 60px 24px 60px 24px;
+    margin-top: 20px;
     margin-left: 20px; /* Indentação visual */
     display: flex;
     flex-direction: column; /* Mobile first */
@@ -590,18 +604,24 @@
 .active-pro-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-    margin-top: 30px;
+    gap: 25px;
+    margin-top: 40px;
 }
 .active-pro-card {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 20px;
     background: white;
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid #eee;
+    padding: 25px;
+    border-radius: 24px;
+    border: 1px solid rgba(0,0,0,0.05);
     text-align: left;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+    transition: transform 0.3s ease;
+}
+.active-pro-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 .active-pro-card img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; }
 .pro-metric { margin-left: auto; text-align: center; }
