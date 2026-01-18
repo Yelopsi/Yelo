@@ -2,7 +2,7 @@
 
 /* --- BOTÕES --- */
 .btn {
-    padding: 8px 18px; border-radius: 25px; text-decoration: none;
+    padding: 8px 18px; border-radius: 50px; text-decoration: none;
     font-weight: bold; font-size: 15px; text-align: center;
     border: 2px solid transparent; transition: all 0.3s ease; display: inline-block; cursor: pointer; font-family: var(--font-principal);
 }
@@ -17,7 +17,7 @@
     background-color: var(--cor-Yelo);
     color: var(--verde-escuro);
     font-size: 18px; font-weight: bold;
-    padding: 15px 35px; border-radius: 30px;
+    padding: 15px 35px; border-radius: 50px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     text-decoration: none; margin-top: 30px;
@@ -26,7 +26,7 @@
 
 .btn-verde {
     display: inline-block; background-color: #5a8a6f; color: white;
-    padding: 10px 22px; border-radius: 25px; text-decoration: none; font-weight: bold;
+    padding: 10px 22px; border-radius: 50px; text-decoration: none; font-weight: bold;
     margin-top: 20px; transition: background-color 0.3s ease;
 }
 .btn-verde:hover { background-color: #4a755e; }
@@ -127,7 +127,7 @@
     background-color: var(--verde-escuro);
     color: var(--branco-puro);
     border: none;
-    border-radius: 8px;
+    border-radius: 50px;
     font-family: var(--font-principal); /* Fonte mais moderna */
     font-size: 16px;
     font-weight: bold;
@@ -233,7 +233,7 @@
 .btn-pwa-install {
     flex: 1;
     background-color: var(--verde-escuro); color: white;
-    border: none; padding: 12px; border-radius: 12px;
+    border: none; padding: 12px; border-radius: 50px;
     font-weight: bold; font-size: 1rem; cursor: pointer;
     box-shadow: 0 4px 10px rgba(27, 67, 50, 0.2);
 }
