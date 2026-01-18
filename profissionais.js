@@ -289,6 +289,9 @@ document.addEventListener('DOMContentLoaded', () => {
         collectAnswer();
         goToSlide(questions.findIndex(q => q.id === 'loading'));
 
+        // DEBUG: Verificar payload antes de enviar
+        console.log("📤 Enviando dados para verificação de demanda:", userAnswers);
+
         try {
             const response = await fetch(`${BASE_URL}/api/psychologists/check-demand`, {
                 method: 'POST',

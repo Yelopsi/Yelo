@@ -27,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
       // Usamos 'Post' (nome que demos no models/Post.js)
       if (models.Post) {
           this.hasMany(models.Post, { 
-              foreignKey: 'psychologist_id', 
+              foreignKey: 'psychologistId', 
               as: 'posts' 
           });
       }
