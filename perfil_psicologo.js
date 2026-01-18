@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const renderHeroRating = (reviews) => {
         const container = document.getElementById('hero-rating-display');
         if (!reviews || reviews.length === 0) {
-            container.innerHTML = '<span class="hero-rating-text">Novo na Yelo</span>';
+            container.innerHTML = '<span class="hero-rating-text">Novo(a) na Yelo</span>';
             return;
         }
 
