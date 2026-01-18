@@ -560,7 +560,7 @@ exports.updatePsychologistProfile = async (req, res) => {
         }
 
         // Extrai os dados enviados pelo Dashboard
-        const {
+        let {
             nome, telefone, bio, crp, cep, cidade, estado,
             temas_atuacao, abordagens_tecnicas, modalidade,
             publico_alvo, estilo_terapia, praticas_inclusivas, // NOVOS CAMPOS
@@ -569,6 +569,23 @@ exports.updatePsychologistProfile = async (req, res) => {
             slug // <--- AGORA ESTAMOS LENDO O CAMPO SLUG QUE VEM DO FORMULÁRIO
         } = req.body;
 
+        // --- CORREÇÃO DE DADOS (ARRAYS VINDOS COMO STRING) ---
+        // O Render/Postgres reclama se enviarmos '["Online"]' (string) para uma coluna ARRAY.
+        // Precisamos converter de volta para Array JavaScript real.
+        const parseArrayField = (fieldValue) => {
+            if (typeof fieldValue === 'string') {
+                try {
+                    if (fieldValue.trim().startsWith('[')) return JSON.parse(fieldValue);
+                    return [fieldValue]; // Se for string solta, encapsula
+                } catch (e) { return []; }
+            }
+            return fieldValue;
+        };
+
+        // Aplica a correção nos campos de array
+        modalidade = parseArrayField(modalidade);
+        // (Opcional: garantir os outros também, caso o front mude o comportamento)
+        
         // --- LÓGICA DE PERSONALIZAÇÃO DO LINK (SLUG) ---
         let finalSlug = psychologist.slug; // Padrão: Mantém o atual
 
