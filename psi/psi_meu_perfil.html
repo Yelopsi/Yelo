@@ -266,6 +266,9 @@
 <div class="widget" style="margin-top: 20px;">
     <h3>Alterar Senha</h3>
     <form id="password-form">
+        <!-- Campo oculto para acessibilidade e gerenciadores de senha -->
+        <input type="text" name="username" autocomplete="username" style="display:none;">
+
         <div class="form-group">
             <label for="senha_atual">Senha Atual</label>
             <input type="password" id="senha_atual" name="senha_atual" required autocomplete="current-password">
