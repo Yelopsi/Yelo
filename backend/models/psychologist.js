@@ -159,37 +159,44 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     },
     temas_atuacao: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-      allowNull: true
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: []
     },
     abordagens_tecnicas: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-      allowNull: true
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: []
     },
     genero_identidade: {
       type: DataTypes.STRING,
       allowNull: true
     },
     praticas_vivencias: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-      allowNull: true
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: []
     },
     disponibilidade_periodo: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-      allowNull: true
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: []
     },
     // --- NOVOS CAMPOS DE MATCH (AFINIDADE) ---
     publico_alvo: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-      allowNull: true
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: []
     },
     estilo_terapia: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-      allowNull: true
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: []
     },
     praticas_inclusivas: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-      allowNull: true
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: []
     },
 
     // --- INÍCIO DO NOVO CAMPO ---

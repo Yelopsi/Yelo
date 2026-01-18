@@ -1523,23 +1523,6 @@ const startServer = async () => {
         console.log('✅ [DB SYNC] Conexão com banco de dados estabelecida (Modo Produção).');
     }
 
-    // --- FIX CRÍTICO: PATCH NO MODELO SEQUELIZE ---
-    // Isso impede que o Sequelize envie arrays como strings do Postgres "{item}" 
-    // e força o envio como JSON "[item]", resolvendo o erro "Expected :, but found }".
-    if (db.Psychologist) {
-        const jsonFields = ['temas_atuacao', 'abordagens_tecnicas', 'modalidade', 'publico_alvo', 'estilo_terapia', 'praticas_inclusivas', 'disponibilidade_periodo'];
-        
-        jsonFields.forEach(field => {
-            if (db.Psychologist.rawAttributes[field]) {
-                // Força o tipo para JSONB na memória do Sequelize
-                db.Psychologist.rawAttributes[field].type = DataTypes.JSONB;
-                // Remove flag de array se existir
-                if (db.Psychologist.rawAttributes[field]._modelAttribute) db.Psychologist.rawAttributes[field]._modelAttribute = true;
-            }
-        });
-        console.log('🔧 [MODEL PATCH] Modelo Psychologist ajustado para usar JSONB nas listas.');
-    }
-
     server.listen(PORT, () => {
         console.log(`Servidor rodando na porta ${PORT}.`);
         console.timeEnd('⏱️ Tempo Total de Inicialização');
