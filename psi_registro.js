@@ -122,7 +122,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const cleanDoc = docMask ? docMask.unmaskedValue : docInput.value.replace(/\D/g, '');
         
         const docType = cleanDoc.length > 11 ? 'CNPJ' : 'CPF';
-        const termosAceite = document.getElementById('termos-aceite').checked;
 
         if (senha !== confirmarSenha) { mensagemRegistro.textContent = 'As senhas não conferem.'; mensagemRegistro.className = 'mensagem-erro'; return; }
         
@@ -131,7 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Validação simples para CPF ou CNPJ
         if (cleanDoc.length !== 11 && cleanDoc.length !== 14) { mensagemRegistro.textContent = 'CPF ou CNPJ inválido.'; mensagemRegistro.className = 'mensagem-erro'; return; }
-        if (!termosAceite) { mensagemRegistro.textContent = 'Você deve aceitar os termos.'; mensagemRegistro.className = 'mensagem-erro'; return; }
 
         // --- CORREÇÃO DO PERFIL (ADMIN vs NORMAL) ---
         let storedAnswers = {};
