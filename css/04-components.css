@@ -122,8 +122,10 @@
 
 /* 1. Botão Entrar (Largura Total) */
 .btn-login {
-    width: 100%; /* Ocupa todo o espaço */
-    padding: 12px;
+    width: auto;
+    min-width: 180px;
+    display: inline-block;
+    padding: 12px 40px;
     background-color: var(--verde-escuro);
     color: var(--branco-puro);
     border: none;

@@ -3765,17 +3765,18 @@ body.pagina-dashboard {
 
 /* Botão de Emergência */
 .btn-emergencia {
-    display: block;
-    width: 100%;
+    display: inline-block;
+    width: auto;
+    min-width: 200px;
     background-color: #E63946;
     color: var(--branco-puro);
     border-color: #E63946;
     font-size: 1.2rem;
     font-weight: bold;
-    padding: 12px;
+    padding: 12px 30px;
     text-align: center;
     border-radius: 50px;
-    margin-top: 15px;
+    margin: 15px auto 0 auto;
 }
 .btn-emergencia:hover {
     background-color: #c9303c;
