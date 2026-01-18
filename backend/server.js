@@ -334,6 +334,7 @@ app.use(async (req, res, next) => {
 
 // Isso permite que a gente pegue o 'rawBody' apenas na rota do webhook
 app.use(express.json({
+  limit: '10mb', // Limite ajustado para 10mb (suficiente para fotos)
   verify: (req, res, buf) => {
     req.rawBody = buf.toString();
   }
@@ -344,7 +345,7 @@ app.use((req, res, next) => {
     req.io = io;
     next();
 });
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // =============================================================
 // ROTA DE ANALYTICS (SESSÃO ANÔNIMA)
