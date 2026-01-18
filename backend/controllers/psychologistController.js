@@ -97,6 +97,12 @@ exports.registerPsychologist = async (req, res) => {
             if (existingUser.cpf === cleanCpf) return res.status(400).json({ error: 'CPF já cadastrado.' });
         }
 
+        // [RESTRIÇÃO] Verifica se já existe como Paciente
+        const existingPatient = await db.Patient.findOne({ where: { email } });
+        if (existingPatient) {
+            return res.status(400).json({ error: 'Este e-mail já está em uso por uma conta de Paciente.' });
+        }
+
         // --- 4. Geração de Slug ---
         let generatedSlug = nome
             .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
