@@ -1789,6 +1789,21 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     font-family: 'Mulish', sans-serif;
 }
 
+/* Aviso de Prioridade na Jornada */
+.gamification-panel::after {
+    content: "💡 Quanto mais alta a pontuação, maior a prioridade no momento do match.";
+    display: block;
+    margin-top: 20px;
+    padding: 12px;
+    background-color: #fffbeb;
+    color: #b45309;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid #fde68a;
+    font-weight: 600;
+}
+
 .gamification-panel-overview {
     background: var(--branco-puro);
     border-radius: 16px;
