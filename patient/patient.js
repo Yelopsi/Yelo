@@ -33,6 +33,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 patientData = await response.json();
+                
+                // --- ATUALIZAÇÃO: Preenche sidebar com dados do paciente ---
+                updateSidebarUserInfo(patientData);
+                
                 initializeDashboard();
             } else {
                 throw new Error("Sessão inválida.");
@@ -42,6 +46,21 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Falha na autenticação inicial:', error.message);
             localStorage.removeItem('Yelo_token');
             window.location.href = loginUrl;
+        }
+    }
+
+    // --- NOVO: Função para atualizar sidebar ---
+    function updateSidebarUserInfo(data) {
+        const nameEl = document.getElementById('patient-sidebar-name');
+        const photoEl = document.getElementById('patient-sidebar-photo');
+        
+        if (nameEl && data.nome) {
+            nameEl.textContent = data.nome.split(' ')[0];
+        }
+        
+        if (photoEl && data.fotoUrl) {
+            // Se tiver foto (futuro), usa. Senão mantém placeholder.
+            // photoEl.src = data.fotoUrl; 
         }
     }
 
@@ -75,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const matchesGrid = document.getElementById('matches-grid');
         if (!matchesGrid) return;
         
-        matchesGrid.innerHTML = '<p class="text-center">Buscando profissionais compatíveis...</p>';
+        matchesGrid.innerHTML = '<div style="text-align:center; padding:40px; grid-column: 1 / -1;"><div class="loader-spinner" style="margin: 0 auto;"></div><p style="margin-top: 15px; color: #666;">Buscando profissionais compatíveis...</p></div>';
 
         try {
             const token = localStorage.getItem('Yelo_token');
@@ -120,7 +139,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 return `
                 <div class="match-card">
-                    <div class="heart-icon" data-id="${pro.id}" title="Favoritar">♡</div>
+                    <div class="heart-icon" data-id="${pro.id}" title="Favoritar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                    </div>
                     
                     <img src="${fotoUrl}" alt="${pro.nome}" class="match-header-img">
                     
@@ -159,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const favoritosVazio = document.getElementById('favoritos-vazio');
         if (!favoritosGrid || !favoritosVazio) return;
 
-        favoritosGrid.innerHTML = '<p>Carregando seus favoritos...</p>';
+        favoritosGrid.innerHTML = '<div style="text-align:center; padding:40px; grid-column: 1 / -1;"><div class="loader-spinner" style="margin: 0 auto;"></div><p style="margin-top: 15px; color: #666;">Carregando seus favoritos...</p></div>';
 
         try {
             const token = localStorage.getItem('Yelo_token');
@@ -199,7 +220,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     return `
                     <div class="match-card">
-                        <div class="heart-icon favorited" data-id="${pro.id}" title="Desfavoritar">♥</div>
+                        <div class="heart-icon favorited" data-id="${pro.id}" title="Desfavoritar">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        </div>
                         
                         <img src="${fotoUrl}" alt="${pro.nome}" class="match-header-img">
                         
