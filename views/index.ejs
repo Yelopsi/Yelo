@@ -134,15 +134,38 @@
         .doodle-bg.right { bottom: 5%; right: -50px; width: 250px; transform: rotate(-45deg); }
         
         /* --- SEÇÃO DEPOIMENTOS MODERNA --- */
-        .secao-depoimentos { padding: 6rem 1.5rem; background-color: #fdfaf6; position: relative; }
+        .secao-depoimentos { padding: 100px 20px; background-color: #ffffff; position: relative; }
         .header-depoimentos { text-align: center; margin-bottom: 4rem; }
         
         /* Badge de Nota */
-        .rating-badge { display: inline-flex; align-items: center; gap: 12px; background: #fff; padding: 10px 25px; border-radius: 50px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-top: 20px; border: 1px solid rgba(0,0,0,0.03); }
+        .rating-badge { display: inline-flex; align-items: center; gap: 12px; background: #fdfaf6; padding: 10px 25px; border-radius: 50px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-top: 20px; border: 1px solid rgba(0,0,0,0.03); }
         .rating-score { font-weight: 800; color: #1B4332; font-size: 1.2rem; }
         .stars { color: #FFC107; letter-spacing: 2px; font-size: 1.1rem; }
         .rating-count { color: #666; font-size: 0.9rem; font-weight: 500; }
 
+        .grid-depoimentos { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; max-width: 1200px; margin: 0 auto; }
+        
+        .card-depoimento-organico { 
+            background: #F8F3ED; /* Creme */
+            padding: 2.5rem; 
+            border-radius: 24px 60px 24px 60px; /* Forma orgânica */
+            box-shadow: 0 10px 40px rgba(0,0,0,0.03); 
+            text-align: left; 
+            transition: transform 0.3s ease; 
+            border: 1px solid rgba(0,0,0,0.02); 
+            display: flex; 
+            flex-direction: column; 
+        }
+        .card-depoimento-organico:nth-child(2n) { background: #E6F4F1; border-radius: 60px 24px 60px 24px; } /* Verde suave */
+        .card-depoimento-organico:nth-child(3n) { background: #FFF8E1; border-radius: 24px 60px 24px 60px; } /* Amarelo suave */
+        .card-depoimento-organico:nth-child(4n) { background: #F0F4F8; border-radius: 60px 24px 60px 24px; } /* Azul suave */
+
+        .card-depoimento-organico:hover { transform: translateY(-8px); box-shadow: 0 20px 50px rgba(0,0,0,0.08); }
+        .card-depoimento-organico p { font-size: 1.05rem; line-height: 1.7; color: #444; font-style: italic; margin-bottom: 2rem; flex-grow: 1; }
+        
+        .autor-depoimento { display: flex; align-items: center; gap: 15px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 20px; }
+        .avatar-depoimento { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #1B4332; font-size: 1.1rem; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        
         @media (max-width: 600px) {
             .rating-badge {
                 flex-wrap: wrap;
@@ -152,17 +175,6 @@
             }
             .rating-count { width: 100%; margin-top: 5px; }
         }
-
-        .grid-depoimentos { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; max-width: 1200px; margin: 0 auto; }
-        .card-depoimento { background: #fff; padding: 2.5rem; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); text-align: left; transition: transform 0.3s ease; border: 1px solid rgba(0,0,0,0.02); display: flex; flex-direction: column; }
-        .card-depoimento:hover { transform: translateY(-8px); box-shadow: 0 20px 50px rgba(0,0,0,0.08); }
-        .card-depoimento p { font-size: 1.05rem; line-height: 1.7; color: #444; font-style: italic; margin-bottom: 2rem; flex-grow: 1; }
-        
-        .autor-depoimento { display: flex; align-items: center; gap: 15px; border-top: 1px solid #f0f0f0; padding-top: 20px; }
-        .avatar-depoimento { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #1B4332; font-size: 1.1rem; }
-        .info-autor { display: flex; flex-direction: column; }
-        .nome-autor { font-weight: 700; color: #1B4332; font-size: 1rem; }
-        .status-autor { font-size: 0.8rem; color: #888; }
 
         /* --- ESTILOS DA NOVA SEÇÃO DE TERAPEUTAS (MODERNA) --- */
         .header-secao-moderno { text-align: center; max-width: 700px; margin: 0 auto 50px auto; }
@@ -494,7 +506,7 @@
                         <div class="step-content">
                             <span class="step-tag">Passo 03</span>
                             <h3>Comece sua jornada de transformação</h3>
-                            <p>Realize suas sessões online no conforto da sua casa. Se não se adaptar, nosso sistema de <strong>Troca Facilitada</strong> permite que você encontre outro profissional rapidamente, sem custo adicional.</p>
+                            <p>Realize suas sessões online no conforto da sua casa. Se não se adaptar, nosso sistema de <strong>Troca Facilitada</strong> permite que você encontre outro profissional rapidamente.</p>
                         </div>
                         <div class="step-image-col">
                             <div class="step-blob"></div>
@@ -511,7 +523,7 @@
             </div>
             <div class="wave-divider">
                 <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-                    <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z" class="shape-fill" style="fill:#FFFFFF;"></path>
+                    <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z" class="shape-fill" style="fill:#ffffff;"></path>
                 </svg>
             </div>
         </section>
@@ -520,7 +532,7 @@
         <section class="secao-depoimentos hidden">
             <div class="container">
                 <div class="header-depoimentos">
-                    <h2 class="titulo-secao">Histórias de quem já começou</h2>
+                    <h2 class="titulo-organico">Histórias de quem já começou</h2>
                     <div class="rating-badge">
                         <span class="rating-score"><%= typeof mediaAvaliacao !== 'undefined' ? mediaAvaliacao : '4.9' %>/5</span>
                         <!-- Estrelas Dinâmicas (Preenchimento via CSS width) -->
@@ -534,13 +546,13 @@
 
                 <div class="grid-depoimentos">
                     <% 
-                        const colors = ['#FFD166', '#06D6A0', '#118AB2', '#EF476F'];
+                        // Cores removidas do avatar pois agora o card tem cor
                         (typeof depoimentos !== 'undefined' ? depoimentos : []).forEach((depo, index) => { 
                     %>
-                    <div class="card-depoimento">
+                    <div class="card-depoimento-organico">
                         <p>"<%= depo.texto %>"</p>
                         <div class="autor-depoimento">
-                            <div class="avatar-depoimento" style="background-color: <%= colors[index % colors.length] %>;"><%= depo.inicial %></div>
+                            <div class="avatar-depoimento"><%= depo.inicial %></div>
                             <div class="info-autor">
                                 <span class="nome-autor"><%= depo.nome %></span>
                                 <span class="status-autor">Paciente Verificada</span>
