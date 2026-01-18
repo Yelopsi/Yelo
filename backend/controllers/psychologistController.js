@@ -663,6 +663,7 @@ exports.updatePsychologistProfile = async (req, res) => {
 
     } catch (error) {
         console.error('Erro ao atualizar perfil:', error);
+        console.error('Detalhes do erro:', error.original || error.message); // Log extra para debug
         // Tratamento amigável se der erro de duplicidade que passou pelo check
         if (error.name === 'SequelizeUniqueConstraintError') {
              return res.status(400).json({ error: 'Dados duplicados (Link ou CRP já existem).' });

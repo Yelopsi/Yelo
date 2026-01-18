@@ -1369,6 +1369,21 @@ const startServer = async () => {
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cnpj" VARCHAR(255) UNIQUE;`);
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "modalidade" JSONB DEFAULT '[]';`);
         
+        // --- FIX: CONVERSÃO DE TIPOS (CORREÇÃO ERRO 500) ---
+        try {
+            // Tenta converter modalidade de ARRAY para JSONB (Causa comum de erro)
+            await db.sequelize.query(`
+                ALTER TABLE "Psychologists" 
+                ALTER COLUMN "modalidade" TYPE JSONB 
+                USING to_json("modalidade");
+            `);
+        } catch (e) {
+            // Fallback: Tenta converter de Texto para JSONB se o anterior falhar
+            try {
+                await db.sequelize.query(`ALTER TABLE "Psychologists" ALTER COLUMN "modalidade" TYPE JSONB USING "modalidade"::jsonb;`);
+            } catch (e2) { /* Ignora se já estiver correto */ }
+        }
+
         // --- FIX: GARANTIR COLUNAS DA TABELA PATIENTS (EVITA ERRO NO LOGIN) ---
         console.log('🔧 [DB FIX] Aplicando correção na tabela Patients (ip_registro, termos)...');
         await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "ip_registro" VARCHAR(45);');
