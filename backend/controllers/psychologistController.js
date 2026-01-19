@@ -1368,30 +1368,17 @@ exports.saveExitSurvey = async (req, res) => {
 // ----------------------------------------------------------------------
 exports.cancelSubscription = async (req, res) => {
     try {
-        console.log(`[DEBUG CANCELAMENTO] Solicitado por Psi ID: ${req.psychologist.id}`);
-
         const psychologist = await db.Psychologist.findByPk(req.psychologist.id);
         
         if (!psychologist) return res.status(404).json({ error: 'Psi não encontrado' });
-
-        console.log(`[DEBUG CANCELAMENTO] Estado do Usuário:`, {
-            id: psychologist.id,
-            plano: psychologist.plano,
-            status: psychologist.status,
-            stripeSubscriptionId: psychologist.stripeSubscriptionId,
-            subscriptionId: psychologist.subscriptionId
-        });
 
         // [CORREÇÃO] Verifica ambas as colunas possíveis para o ID da assinatura
         const subId = psychologist.stripeSubscriptionId || psychologist.subscriptionId;
 
         if (!subId) {
-             console.error(`[DEBUG CANCELAMENTO] ERRO: Nenhum ID de assinatura encontrado.`);
-             
              // [CORREÇÃO DEFINITIVA] FALLBACK DE SEGURANÇA:
              // Se chegou aqui, o usuário quer cancelar. Se não temos ID para o Asaas,
              // cancelamos localmente para não prender o usuário.
-             console.warn(`[DEBUG CANCELAMENTO] Forçando cancelamento local (Sem ID de assinatura).`);
              await psychologist.update({
                 status: 'inactive',
                 plano: null,
@@ -1403,18 +1390,13 @@ exports.cancelSubscription = async (req, res) => {
              return res.status(200).json({ message: 'Assinatura cancelada localmente (Vínculo de pagamento não encontrado).' });
         }
 
-        console.log(`[DEBUG CANCELAMENTO] ID Assinatura: ${subId}. Consultando Asaas...`);
-
         // 1. Busca dados da assinatura no Asaas para verificar data de criação
         const subResponse = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
             headers: { 'access_token': ASAAS_API_KEY }
         });
         const subData = await subResponse.json();
 
-        console.log(`[DEBUG CANCELAMENTO] Resposta Asaas:`, subData.id ? 'Encontrada' : 'Erro/Não encontrada', subData);
-
         if (!subData.id) {
-             console.warn(`[DEBUG CANCELAMENTO] Assinatura não existe no Asaas. Cancelando localmente.`);
              // Se não achou no Asaas, assume cancelamento manual local e limpa tudo
              await psychologist.update({ 
                  status: 'inactive',
@@ -1433,8 +1415,6 @@ exports.cancelSubscription = async (req, res) => {
         const utcCreated = Date.UTC(dateCreated.getFullYear(), dateCreated.getMonth(), dateCreated.getDate());
         const utcNow = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
         const diffDays = Math.floor((utcNow - utcCreated) / (1000 * 60 * 60 * 24));
-
-        console.log(`[CANCELAMENTO] Data Criação: ${subData.dateCreated} | Dias: ${diffDays}`);
 
         let isEligibleForRefund = diffDays <= 7;
 
@@ -1455,7 +1435,6 @@ exports.cancelSubscription = async (req, res) => {
                     const diffPaymentDays = Math.floor((utcNow - utcPayment) / (1000 * 60 * 60 * 24));
                     
                     if (diffPaymentDays <= 7) {
-                        console.log("[CANCELAMENTO] Elegível por data do pagamento único (Conta Restaurada).");
                         isEligibleForRefund = true;
                     }
                 }
@@ -1463,8 +1442,6 @@ exports.cancelSubscription = async (req, res) => {
         }
 
         if (isEligibleForRefund) {
-            console.log(`[CANCELAMENTO] Direito de arrependimento detectado (${diffDays} dias). Processando estorno para Psi ${psychologist.id}...`);
-
             // A. Busca pagamentos confirmados para estornar
             const paymentsRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subData.id}/payments`, {
                 headers: { 'access_token': ASAAS_API_KEY }
@@ -1480,7 +1457,6 @@ exports.cancelSubscription = async (req, res) => {
                             headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
                             body: JSON.stringify({ value: payment.value, description: "Cancelamento no prazo de 7 dias (Arrependimento)" })
                         });
-                        console.log(`[CANCELAMENTO] Pagamento ${payment.id} estornado.`);
                     }
                 }
             }
@@ -1500,7 +1476,6 @@ exports.cancelSubscription = async (req, res) => {
                 stripeSubscriptionId: null, // FIX: Limpa o ID para impedir que o webhook reative
                 subscriptionId: null // Limpa também a coluna legada se existir
             });
-            console.log(`[CANCELAMENTO] Sucesso. Psi ${psychologist.id} agora está INACTIVE.`);
 
             // D. Envia E-mail de Cancelamento
             // [OTIMIZAÇÃO] Não espera o envio do e-mail para responder ao usuário (ganha ~2s)
@@ -1510,8 +1485,6 @@ exports.cancelSubscription = async (req, res) => {
 
         } else {
             // --- CENÁRIO B: CANCELAMENTO AGENDADO (> 7 DIAS) ---
-            console.log(`[CANCELAMENTO] Cancelamento agendado para o fim do ciclo (Psi ${psychologist.id}).`);
-
             if (subData.nextDueDate) {
                 // Atualiza a assinatura definindo o fim para a próxima cobrança
                 await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
