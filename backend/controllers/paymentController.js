@@ -368,8 +368,8 @@ exports.handleWebhook = async (req, res) => {
     // --- LÓGICA DE ESTORNO / CANCELAMENTO IMEDIATO ---
     // Captura eventos de reembolso ou chargeback para revogar o acesso
     // ADICIONADO: Verifica também PAYMENT_UPDATED com status REFUNDED
-    if (['PAYMENT_REFUNDED', 'PAYMENT_REVERSED', 'PAYMENT_CHARGEBACK_REQUESTED', 'PAYMENT_DELETED'].includes(event.event) || 
-       (event.event === 'PAYMENT_UPDATED' && event.payment && event.payment.status === 'REFUNDED')) {
+    if (['PAYMENT_REFUNDED', 'PAYMENT_REVERSED', 'PAYMENT_CHARGEBACK_REQUESTED', 'PAYMENT_DELETED', 'PAYMENT_REFUND_IN_PROGRESS'].includes(event.event) || 
+       (event.event === 'PAYMENT_UPDATED' && event.payment && ['REFUNDED', 'REFUND_IN_PROGRESS'].includes(event.payment.status))) {
         const payment = event.payment;
         let psychologistId = payment.externalReference;
 
