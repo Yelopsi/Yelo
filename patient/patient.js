@@ -505,19 +505,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Lógica para Excluir Conta ---
         const btnExcluir = document.getElementById('btn-excluir-conta');
-        if (btnExcluir) {
-            btnExcluir.addEventListener('click', async (e) => {
-                e.preventDefault();
-                
-                if (!confirm("Tem certeza que deseja excluir sua conta? Essa ação é irreversível e apagará todos os seus dados.")) {
-                    return;
-                }
+        const modalExclusao = document.getElementById('modal-exclusao-conta');
+        const btnCancelar = document.getElementById('btn-cancelar-exclusao');
+        const btnConfirmar = document.getElementById('btn-confirmar-exclusao');
+        const inputSenhaExclusao = document.getElementById('senha-exclusao');
 
-                const senha = prompt("Por favor, digite sua senha para confirmar a exclusão:");
-                if (!senha) return;
+        if (btnExcluir && modalExclusao) {
+            // Abrir Modal
+            btnExcluir.addEventListener('click', (e) => {
+                e.preventDefault();
+                modalExclusao.style.display = 'flex';
+                inputSenhaExclusao.value = ''; 
+                setTimeout(() => inputSenhaExclusao.focus(), 100);
+            });
+
+            // Fechar Modal
+            const fecharModal = () => { modalExclusao.style.display = 'none'; };
+            if (btnCancelar) btnCancelar.addEventListener('click', (e) => { e.preventDefault(); fecharModal(); });
+            modalExclusao.addEventListener('click', (e) => { if (e.target === modalExclusao) fecharModal(); });
+
+            // Confirmar Exclusão
+            if (btnConfirmar) btnConfirmar.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const senha = inputSenhaExclusao.value;
+                if (!senha) return showToast("Por favor, digite sua senha.", 'error');
 
                 try {
                     const token = localStorage.getItem('Yelo_token');
+                    btnConfirmar.textContent = 'Excluindo...';
+                    btnConfirmar.disabled = true;
+
                     const response = await fetch(`${API_BASE_URL}/api/patients/me`, {
                         method: 'DELETE',
                         headers: {
@@ -530,14 +547,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     const result = await response.json();
 
                     if (response.ok) {
-                        alert(result.message);
-                        localStorage.removeItem('Yelo_token');
-                        window.location.href = '../index.html';
+                        showToast(result.message, 'success');
+                        setTimeout(() => {
+                            localStorage.removeItem('Yelo_token');
+                            window.location.href = '/login';
+                        }, 1500);
                     } else {
-                        alert(result.error || 'Ocorreu um erro ao excluir a conta.');
+                        showToast(result.error || 'Erro ao excluir conta.', 'error');
+                        btnConfirmar.textContent = 'Excluir Conta';
+                        btnConfirmar.disabled = false;
                     }
                 } catch (error) {
-                    alert('Erro de conexão ao tentar excluir a conta.');
+                    showToast('Erro de conexão.', 'error');
+                    btnConfirmar.textContent = 'Excluir Conta';
+                    btnConfirmar.disabled = false;
                 }
             });
         }
