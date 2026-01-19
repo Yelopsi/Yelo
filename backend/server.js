@@ -455,6 +455,42 @@ app.get('/api/fix-make-content-creator', async (req, res) => {
     }
 });
 
+// --- ROTA DE CORREÇÃO: CRIAR TABELAS DE KPI (DASHBOARD) ---
+app.get('/api/fix-create-kpi-tables', async (req, res) => {
+    try {
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "ProfileAppearanceLogs" (
+                "id" SERIAL PRIMARY KEY,
+                "psychologistId" INTEGER,
+                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "MatchEvents" (
+                "id" SERIAL PRIMARY KEY,
+                "psychologistId" INTEGER,
+                "matchTags" TEXT[], 
+                "matchScore" INTEGER,
+                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "PatientFavorites" (
+                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                "PatientId" INTEGER,
+                "PsychologistId" INTEGER,
+                PRIMARY KEY ("PatientId", "PsychologistId")
+            );
+        `);
+        res.send("✅ Sucesso! Tabelas de KPI (Dashboard) criadas.");
+    } catch (error) {
+        res.status(500).send("Erro ao criar tabelas: " + error.message);
+    }
+});
+
 // Rota para criar a coluna IS_EXEMPT (VIP) na tabela Psychologists
 app.get('/api/fix-add-is-exempt-column', async (req, res) => {
     try {
