@@ -36,17 +36,12 @@
         
         .living-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            grid-template-columns: repeat(5, 1fr);
             gap: 10px;
-            max-width: 1200px;
+            max-width: 650px;
             margin: 0 auto;
             margin-bottom: 40px;
             padding: 0 20px;
-        }
-        
-        /* Ajuste para telas maiores para não ficar muito espaçado */
-        @media (min-width: 1200px) {
-             .living-grid { grid-template-columns: repeat(10, 1fr); }
         }
         
         /* Avatares */
@@ -67,7 +62,7 @@
             position: absolute;
             top: 0;
             left: 0;
-            transition: opacity 1.5s ease-in-out, transform 1.5s ease-in-out;
+            transition: opacity 3s ease-in-out, transform 3s ease-in-out;
         }
         
         .psy-avatar-placeholder {
@@ -84,10 +79,6 @@
         .fade-enter-active { opacity: 1; transform: scale(1); }
         .fade-exit { opacity: 1; z-index: 1; transform: scale(1); }
         .fade-exit-active { opacity: 0; transform: scale(1.05); }
-
-        @media (max-width: 900px) {
-            .living-grid { grid-template-columns: repeat(8, 1fr); }
-        }
 
         @media (max-width: 600px) {
             .card-manifesto { padding: 40px 25px; }
@@ -182,7 +173,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const gridContainer = document.getElementById('living-grid');
-            const GRID_SIZE = 40; // 4 linhas x 10 colunas (Desktop)
+            const GRID_SIZE = 20; // 4 linhas x 5 colunas (Desktop)
             
             // Cores da marca para placeholders
             const brandColors = ['#1B4332', '#FFEE8C', '#2D6A4F', '#F4D35E'];
@@ -339,7 +330,7 @@
                         if(oldContent.parentNode === cell) {
                             cell.removeChild(oldContent);
                         }
-                    }, 1500); // Mesmo tempo do CSS transition
+                    }, 3000); // Mesmo tempo do CSS transition
                 }
 
             }, 2000); // Troca uma imagem a cada 2 segundos
