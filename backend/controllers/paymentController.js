@@ -66,7 +66,6 @@ exports.createPreference = async (req, res) => {
         
         // --- DEBUG: LOG DA URL ---
         const urlCliente = `${ASAAS_API_URL}/customers?email=${encodeURIComponent(psychologist.email)}`;
-        console.log(`[ASAAS] Conectando em: ${urlCliente}`);
         
         const customerResponse = await fetch(urlCliente, {
             headers: { 'access_token': ASAAS_API_KEY }
@@ -139,7 +138,6 @@ exports.createPreference = async (req, res) => {
                 },
             };
             
-            console.log(`[ASAAS] Criando assinatura PIX em: ${ASAAS_API_URL}/subscriptions`);
             const subscriptionRes = await fetch(`${ASAAS_API_URL}/subscriptions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
@@ -222,7 +220,6 @@ exports.createPreference = async (req, res) => {
             }
         };
 
-        console.log(`[ASAAS] Criando assinatura em: ${ASAAS_API_URL}/subscriptions`);
         const subscriptionRes = await fetch(`${ASAAS_API_URL}/subscriptions`, {
             method: 'POST',
             headers: { 
@@ -287,9 +284,6 @@ exports.handleWebhook = async (req, res) => {
     // O Asaas envia o evento no corpo do request (JSON)
     const event = req.body;
     
-    // [DEBUG] Log para confirmar que o Asaas bateu na sua porta
-    console.log(`🔔 [WEBHOOK ASAAS] Evento: ${event.event} | ID Pagamento: ${event.payment?.id}`);
-    
     // Validação básica de segurança (Opcional: verificar token no header se configurado no Asaas)
     // const asaasToken = req.headers['asaas-access-token'];
     // if (asaasToken !== process.env.ASAAS_WEBHOOK_TOKEN) return res.status(401).send();
@@ -305,8 +299,6 @@ exports.handleWebhook = async (req, res) => {
         if (description.includes('CLINICAL')) planType = 'CLINICAL';
         if (description.includes('REFERENCE')) planType = 'REFERENCE';
 
-        console.log(`[ASAAS] Pagamento Confirmado: Psi ${psychologistId} - Plano ${planType}`);
-
         try {
             const psi = await db.Psychologist.findByPk(psychologistId);
             if (psi) {
@@ -319,14 +311,12 @@ exports.handleWebhook = async (req, res) => {
                 // [CORREÇÃO] Só ignora se o usuário já estiver ATIVO. Se estiver inativo/pendente, 
                 // aceitamos o pagamento da assinatura antiga (pois o usuário pode ter pago um boleto gerado anteriormente).
                 if (psi.status === 'active' && payment.subscription && psi.stripeSubscriptionId && psi.stripeSubscriptionId !== payment.subscription) {
-                     console.warn(`🛑 [ASAAS] Ignorando webhook de assinatura antiga (${payment.subscription}). O usuário já possui a assinatura ativa ${psi.stripeSubscriptionId}.`);
                      return res.json({received: true});
                 }
                 
                 // 2. PROTEÇÃO CRÍTICA: Se o usuário cancelou (está inativo e sem ID), ignora webhooks de ativação atrasados.
                 // Isso impede que o plano volte a ficar ativo sozinho após o cancelamento.
                 if (psi.status === 'inactive' && !psi.stripeSubscriptionId) {
-                    console.warn(`🛑 [ASAAS] Ignorando webhook de ativação para usuário JÁ CANCELADO (Psi ${psi.id}).`);
                     return res.json({received: true});
                 }
 
@@ -335,27 +325,18 @@ exports.handleWebhook = async (req, res) => {
 
                 // Se for o 3º pagamento, remove o desconto para os próximos.
                 if (currentPayments === 3 && payment.subscription) {
-                    console.log(`[ASAAS] Terceiro pagamento para Psi ${psychologistId}. Removendo desconto da assinatura ${payment.subscription}.`);
-                    try {
-                        // A API do Asaas usa POST para atualizar uma assinatura existente
-                        await fetch(`${ASAAS_API_URL}/subscriptions/${payment.subscription}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
-                            body: JSON.stringify({
-                                discount: {
-                                    value: 0,
-                                    type: 'FIXED'
-                                }
-                            })
-                        });
-                    } catch (asaasError) {
-                        console.error(`[ASAAS FATAL] Falha ao remover desconto para assinatura ${payment.subscription}:`, asaasError);
-                        await db.SystemLog.create({
-                            level: 'error',
-                            message: `Falha ao remover desconto Asaas para Psi ${psychologistId}, Assinatura ${payment.subscription}.`,
-                            meta: { error: asaasError.message }
-                        });
-                    }
+                    // [OTIMIZAÇÃO] Não espera a resposta do Asaas para não travar o webhook (Fire & Forget)
+                    fetch(`${ASAAS_API_URL}/subscriptions/${payment.subscription}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                        body: JSON.stringify({
+                            discount: { value: 0, type: 'FIXED' }
+                        })
+                    }).catch(asaasError => {
+                        console.error(`[ASAAS BACKGROUND] Falha ao remover desconto:`, asaasError.message);
+                        // Tenta logar sem await para não bloquear
+                        if(db.SystemLog) db.SystemLog.create({ level: 'error', message: `Falha desconto Asaas: ${asaasError.message}` }).catch(() => {});
+                    });
                 }
                 // --- FIM DA LÓGICA DE DESCONTO ---
 
@@ -373,14 +354,16 @@ exports.handleWebhook = async (req, res) => {
                 });
 
                 // --- ENVIA E-MAIL PERSONALIZADO YELO ---
-                await sendPaymentConfirmationEmail(psi, planType, payment.value);
+                // [OTIMIZAÇÃO] Não espera o envio de e-mail (evita Timeout do Webhook)
+                sendPaymentConfirmationEmail(psi, planType, payment.value)
+                    .catch(err => console.error("Erro ao enviar email de confirmação (background):", err.message));
             }
         } catch (err) {
             console.error('Erro ao atualizar banco:', err);
-            await db.SystemLog.create({
-                level: 'error',
-                message: `Falha ao ativar plano Asaas (Psi ID: ${psychologistId}): ${err.message}`
-            });
+            // [CORREÇÃO] Log seguro: Se o banco estiver fora, não quebra o webhook com erro 500
+            if (db.SystemLog) {
+                db.SystemLog.create({ level: 'error', message: `Falha webhook Asaas (Psi ${psychologistId}): ${err.message}` }).catch(() => {});
+            }
             return res.json({received: true}); 
         }
     }
@@ -420,7 +403,8 @@ exports.handleWebhook = async (req, res) => {
                 console.log(`✅ [ASAAS] Acesso revogado para Psi ${psi.id} (${psi.email}) devido a estorno.`);
                 
                 // --- ENVIA E-MAIL DE CANCELAMENTO ---
-                await sendSubscriptionCancelledEmail(psi);
+                // [OTIMIZAÇÃO] Background
+                sendSubscriptionCancelledEmail(psi).catch(e => console.error("Erro email cancelamento:", e));
             } else {
                 console.warn(`⚠️ [ASAAS] FALHA NO ESTORNO: Psicólogo não encontrado. Ref: ${psychologistId}, Sub: ${payment.subscription}`);
             }
@@ -447,7 +431,8 @@ exports.handleWebhook = async (req, res) => {
             if (psi) {
                 // Envia e-mail de falha
                 // O Asaas geralmente manda invoiceUrl no objeto payment
-                await sendPaymentFailedEmail(psi, payment.invoiceUrl);
+                // [OTIMIZAÇÃO] Background
+                sendPaymentFailedEmail(psi, payment.invoiceUrl).catch(e => console.error("Erro email falha:", e));
             }
         } catch (err) {
             console.error('Erro ao processar falha de pagamento:', err);

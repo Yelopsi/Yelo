@@ -2767,6 +2767,23 @@ function inicializarBlog(preFetchedData = null) {
     const form = document.getElementById('form-blog');
     const btnSalvar = document.getElementById('btn-salvar-artigo');
     
+    // --- INICIALIZAÇÃO DO EDITOR QUILL ---
+    let quill;
+    if (document.getElementById('editor-container')) {
+        quill = new Quill('#editor-container', {
+            theme: 'snow',
+            placeholder: 'Escreva seu artigo aqui... Use títulos, listas e negrito para facilitar a leitura.',
+            modules: {
+                toolbar: [
+                    [{ 'header': [2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['clean']
+                ]
+            }
+        });
+    }
+
     // --- LIMITE DE CARACTERES DO TÍTULO (50) ---
     const inputTitulo = document.getElementById('blog-titulo');
     
@@ -2883,6 +2900,8 @@ function inicializarBlog(preFetchedData = null) {
         if(currentForm) currentForm.reset(); 
         
         document.getElementById('blog-id').value = ''; // Limpa o ID
+        
+        if (quill) quill.setText(''); // Limpa o editor
         
         // Reseta contador
         const contador = document.getElementById('contador-titulo-blog');
@@ -3047,7 +3066,10 @@ function inicializarBlog(preFetchedData = null) {
         document.getElementById('form-titulo-acao').textContent = "Editar Artigo";
         document.getElementById('blog-id').value = post.id;
         document.getElementById('blog-titulo').value = post.titulo;
-        document.getElementById('blog-conteudo').value = post.conteudo || '';
+        
+        // Carrega conteúdo no Quill
+        if (quill && post.conteudo) quill.root.innerHTML = post.conteudo;
+        
         document.getElementById('blog-imagem').value = post.imagem_url || '';
         toggleView(true);
     }
@@ -3089,7 +3111,7 @@ function inicializarBlog(preFetchedData = null) {
             
             const payload = {
                 titulo: document.getElementById('blog-titulo').value,
-                conteudo: document.getElementById('blog-conteudo').value,
+                conteudo: quill ? quill.root.innerHTML : '', // Pega HTML do Quill
                 imagem_url: document.getElementById('blog-imagem').value
             };
             
