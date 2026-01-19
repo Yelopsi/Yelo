@@ -258,15 +258,15 @@
                     alert(data.message || 'Assinatura cancelada com sucesso.');
                     window.location.reload();
                 } else {
-                    alert(data.error || 'Erro ao processar cancelamento.');
-                    btnConfirmCancel.disabled = false;
-                    btnConfirmCancel.textContent = 'Sim, Cancelar';
+                    // Mesmo com erro, pode ser que o estado tenha mudado.
+                    console.error("Erro cancelamento:", data);
+                    alert(data.error || 'Houve um problema, mas vamos atualizar a página para verificar o status.');
+                    window.location.reload();
                 }
             } catch (err) {
                 console.error(err);
-                alert('Erro de conexão ao tentar cancelar.');
-                btnConfirmCancel.disabled = false;
-                btnConfirmCancel.textContent = 'Sim, Cancelar';
+                alert('Erro de conexão. A página será recarregada.');
+                window.location.reload();
             }
         };
     }
