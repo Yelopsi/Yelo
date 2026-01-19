@@ -92,11 +92,13 @@ exports.registerPsychologist = async (req, res) => {
         if (cleanCpf) whereConditions.push({ cpf: cleanCpf });
 
         const existingUser = await db.Psychologist.findOne({
-            where: { [Op.or]: whereConditions }
+            where: { [Op.or]: whereConditions },
+            paranoid: false // FIX: Verifica até usuários deletados para permitir reativação
         });
 
         if (existingUser) {
-            if (existingUser.email === email) return res.status(400).json({ error: 'E-mail já cadastrado.' });
+            // Retorna 409 (Conflict) para o frontend saber que deve redirecionar
+            if (existingUser.email === email) return res.status(409).json({ error: 'E-mail já cadastrado. Redirecionando para login...', redirect: true });
             if (crp && existingUser.crp === crp) return res.status(400).json({ error: 'CRP já cadastrado.' });
             if (cleanCpf && existingUser.cpf === cleanCpf) return res.status(400).json({ error: 'CPF já cadastrado.' });
         }
@@ -177,7 +179,8 @@ exports.loginPsychologist = async (req, res) => {
         }
 
         // 1. Tenta buscar na tabela de Psicólogos
-        let psychologist = await db.Psychologist.findOne({ where: { email } });
+        // FIX: Busca inclusive usuários deletados (paranoid: false) para permitir restauração
+        let psychologist = await db.Psychologist.findOne({ where: { email }, paranoid: false });
         let userType = 'psychologist';
         let redirectUrl = '/psi/psi_dashboard.html'; // Padrão
 
@@ -220,9 +223,18 @@ exports.loginPsychologist = async (req, res) => {
             return res.status(401).json({ error: 'Senha incorreta.' });
         }
 
-        // --- FIX: Permite login de ativos, criadores de conteúdo E pendentes (onboarding) ---
-        if (psychologist.status !== 'active' && psychologist.status !== 'content_creator' && psychologist.status !== 'pending') {
-            return res.status(403).json({ error: 'Esta conta está inativa.' });
+        // --- LÓGICA DE RESTAURAÇÃO (RETOMADA) ---
+        if (psychologist.deletedAt) {
+            console.log(`[LOGIN] Restaurando conta deletada: ${email}`);
+            await psychologist.restore(); // Remove o deletedAt
+            // Opcional: Se quiser forçar status 'inactive' para obrigar pagamento, descomente abaixo:
+            // await psychologist.update({ status: 'inactive' });
+        }
+
+        // --- FIX: Permite login de TODOS (ativos, inativos, pendentes) para que possam ver o dashboard e pagar ---
+        // Removemos o bloqueio 403. O Dashboard cuidará de bloquear as funcionalidades se o status for 'inactive'.
+        if (false) { 
+            // Código morto intencional para documentar que removemos a trava
         }
 
         // 4. Define o tipo de token e redirecionamento se for Admin

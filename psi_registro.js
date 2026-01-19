@@ -225,6 +225,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.location.href = `/login?email=${encodeURIComponent(emailDigitado)}`;
                 }, 1500);
 
+            } else if (response.status === 409) {
+                // --- LÓGICA DE RETOMADA ---
+                const msg = "Que bom te ver de volta! Identificamos que você já possui cadastro. Redirecionando para o login...";
+                if (typeof showToast === 'function') showToast(msg, 'info');
+                else { mensagemRegistro.textContent = msg; mensagemRegistro.className = 'mensagem-sucesso'; }
+                
+                setTimeout(() => {
+                    window.location.href = `/login?email=${encodeURIComponent(emailInput.value.trim())}`;
+                }, 2000);
             } else {
                 console.warn("⚠️ [DEBUG REGISTRO] Erro retornado pela API:", result.error);
                 mensagemRegistro.textContent = result.error;
