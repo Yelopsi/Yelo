@@ -210,27 +210,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.removeItem('psi_questionario_respostas');
                 }
                 
-                // Não faz login automático se for admin criando conta pra outro
-                if (modeParam === 'admin') {
-                     mensagemRegistro.textContent = "Cadastro Administrativo realizado com sucesso!";
-                     mensagemRegistro.className = 'mensagem-sucesso';
-                     formRegistro.reset(); 
-                } else {
-                    // Pega o valor do e-mail que o usuário digitou no formulário (SANITIZADO)
-                    const emailDigitado = emailInput.value.trim().toLowerCase();
+                // Pega o valor do e-mail que o usuário digitou no formulário (SANITIZADO)
+                const emailDigitado = emailInput.value.trim().toLowerCase();
 
-                    if (typeof showToast === 'function') {
-                        showToast('Cadastro realizado!', 'success');
-                    } else {
-                        mensagemRegistro.textContent = 'Cadastro realizado!';
-                        mensagemRegistro.className = 'mensagem-sucesso';
-                    }
-    
-                    setTimeout(() => { 
-                        // MUDANÇA AQUI: Passamos o e-mail na URL
-                        window.location.href = `/login?email=${encodeURIComponent(emailDigitado)}`;
-                    }, 1500);
+                if (typeof showToast === 'function') {
+                    showToast('Cadastro realizado!', 'success');
+                } else {
+                    mensagemRegistro.textContent = 'Cadastro realizado!';
+                    mensagemRegistro.className = 'mensagem-sucesso';
                 }
+
+                setTimeout(() => { 
+                    // MUDANÇA AQUI: Passamos o e-mail na URL
+                    window.location.href = `/login?email=${encodeURIComponent(emailDigitado)}`;
+                }, 1500);
 
             } else {
                 console.warn("⚠️ [DEBUG REGISTRO] Erro retornado pela API:", result.error);
