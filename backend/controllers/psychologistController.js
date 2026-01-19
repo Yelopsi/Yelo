@@ -1372,12 +1372,15 @@ exports.cancelSubscription = async (req, res) => {
         
         if (!psychologist) return res.status(404).json({ error: 'Psi não encontrado' });
 
-        if (!psychologist.stripeSubscriptionId) {
+        // [CORREÇÃO] Verifica ambas as colunas possíveis para o ID da assinatura
+        const subId = psychologist.stripeSubscriptionId || psychologist.subscriptionId;
+
+        if (!subId) {
              return res.status(400).json({ error: 'Nenhuma assinatura ativa encontrada.' });
         }
 
         // 1. Busca dados da assinatura no Asaas para verificar data de criação
-        const subResponse = await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.stripeSubscriptionId}`, {
+        const subResponse = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
             headers: { 'access_token': ASAAS_API_KEY }
         });
         const subData = await subResponse.json();
@@ -1459,7 +1462,8 @@ exports.cancelSubscription = async (req, res) => {
                 plano: null,
                 planExpiresAt: new Date(0), // Expira já
                 cancelAtPeriodEnd: false,
-                stripeSubscriptionId: null // FIX: Limpa o ID para impedir que o webhook reative
+                stripeSubscriptionId: null, // FIX: Limpa o ID para impedir que o webhook reative
+                subscriptionId: null // Limpa também a coluna legada se existir
             });
             console.log(`[CANCELAMENTO] Sucesso. Psi ${psychologist.id} agora está INACTIVE.`);
 
@@ -1479,7 +1483,7 @@ exports.cancelSubscription = async (req, res) => {
 
             if (subData.nextDueDate) {
                 // Atualiza a assinatura definindo o fim para a próxima cobrança
-                await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.stripeSubscriptionId}`, {
+                await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
                     body: JSON.stringify({ endDate: subData.nextDueDate })
@@ -1513,12 +1517,15 @@ exports.reactivateSubscription = async (req, res) => {
 
         const psychologist = await db.Psychologist.findByPk(req.psychologist.id);
 
-        if (!psychologist.stripeSubscriptionId) {
+        // [CORREÇÃO] Verifica ambas as colunas
+        const subId = psychologist.stripeSubscriptionId || psychologist.subscriptionId;
+
+        if (!subId) {
              return res.status(400).json({ error: 'Nenhuma assinatura encontrada para reativar.' });
         }
 
         // 1. Tenta remover a data de fim no Asaas (Reativar recorrência)
-        const response = await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.stripeSubscriptionId}`, {
+        const response = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
             body: JSON.stringify({ endDate: null }) // null remove a data de encerramento
