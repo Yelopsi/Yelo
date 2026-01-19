@@ -43,6 +43,27 @@
         /* Estilo básico para não quebrar se faltar CSS */
         .hidden { display: none !important; }
 
+        /* --- ESTILOS DO MODAL DE BOAS-VINDAS (GARANTIA VISUAL) --- */
+        .custom-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); /* Escurecimento elegante */
+            display: flex; justify-content: center; align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(4px); /* Efeito de vidro fosco */
+        }
+        .custom-modal-box {
+            background: #fff;
+            padding: 40px 30px;
+            border-radius: 20px; /* Bordas mais arredondadas (Padrão Yelo) */
+            width: 90%;
+            max-width: 480px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); /* Animação fluida */
+            position: relative;
+        }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
     </style>
 </head>
 <body class="pagina-dashboard">
@@ -309,6 +330,19 @@
         </div>
     </div>
 
+    <!-- MODAL DE BOAS-VINDAS (REATIVAÇÃO DE CONTA) -->
+    <div id="modal-welcome-back" class="custom-modal-overlay" style="display: none;">
+        <div class="custom-modal-box" style="text-align: center;">
+            <div style="margin-bottom: 20px; color: #1B4332; font-size: 3rem;">🎉</div>
+            <h3 style="margin-top:0; color: #1B4332;">Bem-vindo(a) de volta!</h3>
+            <p style="color:#666; line-height: 1.6; margin-bottom: 15px;">Que alegria ter você conosco novamente. Sua conta foi reativada com sucesso.</p>
+            <p style="color:#1B4332; background-color: #e8f5e9; padding: 15px; border-radius: 8px; font-size: 0.95rem; line-height: 1.5;"><strong>Seus dados estão seguros:</strong><br>Todo o seu histórico, pacientes, anotações e configurações foram preservados exatamente como você os deixou.</p>
+            <div style="margin-top: 25px;">
+                <button id="btn-fechar-welcome-back" class="btn" style="background-color: #1B4332; color: white; padding: 12px 35px; border-radius: 50px; font-weight: bold; border: none; cursor: pointer; transition: transform 0.2s; font-size: 1rem;">Acessar meu Painel</button>
+            </div>
+        </div>
+    </div>
+
     <script src="../config.js"></script>
     <script src="psi_dashboard.js"></script>
     <script src="psi_caixa_de_entrada.js"></script>
@@ -348,6 +382,20 @@
                     }
                 });
             });
+            }
+
+            // --- LÓGICA DO MODAL DE REATIVAÇÃO ---
+            if (localStorage.getItem('Yelo_account_restored') === 'true') {
+                const modalWelcome = document.getElementById('modal-welcome-back');
+                if (modalWelcome) {
+                    modalWelcome.style.display = 'flex';
+                    
+                    const btnClose = document.getElementById('btn-fechar-welcome-back');
+                    if (btnClose) {
+                        btnClose.onclick = () => modalWelcome.style.display = 'none';
+                    }
+                }
+                localStorage.removeItem('Yelo_account_restored'); // Limpa para não mostrar novamente
             }
         });
     </script>

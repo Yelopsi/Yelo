@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // --- DECISÃO FINAL ---
                 if (result.success) {
-                    const { token, redirect, user, type } = result.data;
+                    const { token, redirect, user, type, accountRestored } = result.data;
                     
                     // Salva dados na sessão
                     if (token) localStorage.setItem('Yelo_token', token);
@@ -112,6 +112,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     // FIX: Se for admin, salva o token específico para compatibilidade com o painel
                     if (finalUserType === 'admin' && token) {
                         localStorage.setItem('Yelo_token_admin', token);
+                    }
+
+                    // Se a conta foi restaurada, salva flag para mostrar modal no dashboard
+                    if (accountRestored) {
+                        localStorage.setItem('Yelo_account_restored', 'true');
                     }
 
                     // CORREÇÃO: Pega o nome se estiver dentro de 'user' OU direto na raiz da resposta

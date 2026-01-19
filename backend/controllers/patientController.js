@@ -99,7 +99,11 @@ exports.registerPatient = async (req, res) => {
 exports.requestPasswordReset = async (req, res) => {
     try {
         const { email } = req.body;
-        const patient = await db.Patient.findOne({ where: { email: { [Op.iLike]: email.trim() } } });
+        // FIX: Adicionado paranoid: false
+        const patient = await db.Patient.findOne({ 
+            where: { email: { [Op.iLike]: email.trim() } },
+            paranoid: false 
+        });
 
         if (!patient) {
             // Resposta genérica para não confirmar se um e-mail existe ou não
@@ -116,6 +120,7 @@ exports.requestPasswordReset = async (req, res) => {
         const frontendUrl = process.env.FRONTEND_URL || req.headers.origin || 'https://www.yelopsi.com.br';
         const resetLink = `${frontendUrl}/redefinir-senha?token=${resetToken}&type=patient`;
         await sendPasswordResetEmail(patient, resetLink);
+        console.log(`📧 E-mail de recuperação enviado para: ${patient.email}`);
 
         res.status(200).json({ message: 'Se um usuário com este e-mail existir, um link de redefinição foi enviado.' });
 
@@ -137,7 +142,8 @@ exports.resetPassword = async (req, res) => {
             where: {
                 resetPasswordToken: hashedToken,
                 resetPasswordExpires: { [db.Sequelize.Op.gt]: Date.now() }
-            }
+            },
+            paranoid: false // FIX: Permite redefinir senha de conta deletada
         });
 
         if (!patient) {
@@ -170,7 +176,8 @@ exports.loginPatient = async (req, res) => {
             return res.status(400).json({ error: 'Email e senha são obrigatórios.' });
         }
 
-        const patient = await db.Patient.findOne({ where: { email } });
+        // FIX: Busca inclusive usuários deletados (paranoid: false) para permitir restauração
+        const patient = await db.Patient.findOne({ where: { email }, paranoid: false });
 
         if (!patient) {
             return res.status(401).json({ error: 'Email ou senha inválidos.' });
@@ -179,11 +186,18 @@ exports.loginPatient = async (req, res) => {
         const isPasswordMatch = await bcrypt.compare(senha, patient.senha);
 
         if (isPasswordMatch) {
+            let accountRestored = false;
+            if (patient.deletedAt) {
+                await patient.restore();
+                accountRestored = true;
+            }
+
             res.status(200).json({
                 id: patient.id,
                 nome: patient.nome,
                 email: patient.email,
                 token: generateToken(patient.id),
+                accountRestored: accountRestored // Flag para o frontend
             });
         } else {
             await db.SystemLog.create({
