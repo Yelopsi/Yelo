@@ -34,14 +34,19 @@ if (db.Message && !db.Message.rawAttributes.status) {
 }
 
 // --- FIX: Patch Psychologist Model (Garante leitura de planExpiresAt) ---
-if (db.Psychologist && !db.Psychologist.rawAttributes.planExpiresAt) {
-    console.log("[FIX] Patching Psychologist model to include 'planExpiresAt' field.");
-    db.Psychologist.rawAttributes.planExpiresAt = { type: DataTypes.DATE };
-    db.Psychologist.rawAttributes.stripeSubscriptionId = { type: DataTypes.STRING };
-    db.Psychologist.rawAttributes.cancelAtPeriodEnd = { type: DataTypes.BOOLEAN };
-    db.Psychologist.rawAttributes.subscription_payments_count = { type: DataTypes.INTEGER };
-    if (typeof db.Psychologist.refreshAttributes === 'function') {
-        db.Psychologist.refreshAttributes();
+if (db.Psychologist) {
+    const attrs = db.Psychologist.rawAttributes;
+    let patched = false;
+    
+    if (!attrs.planExpiresAt) { attrs.planExpiresAt = { type: DataTypes.DATE }; patched = true; }
+    if (!attrs.stripeSubscriptionId) { attrs.stripeSubscriptionId = { type: DataTypes.STRING }; patched = true; }
+    if (!attrs.subscriptionId) { attrs.subscriptionId = { type: DataTypes.STRING }; patched = true; } // [CORREÇÃO] Adicionado para ler assinaturas antigas
+    if (!attrs.cancelAtPeriodEnd) { attrs.cancelAtPeriodEnd = { type: DataTypes.BOOLEAN }; patched = true; }
+    if (!attrs.subscription_payments_count) { attrs.subscription_payments_count = { type: DataTypes.INTEGER }; patched = true; }
+    
+    if (patched && typeof db.Psychologist.refreshAttributes === 'function') {
+        console.log("[FIX] Modelo Psychologist atualizado com colunas faltantes.");
+        db.Psychologist.refreshAttributes(); 
     }
 }
 
@@ -331,11 +336,11 @@ app.use(async (req, res, next) => {
     }
 
     try {
-        // Insere ou atualiza o timestamp da sessão no banco. É uma operação muito rápida.
-        await db.sequelize.query(
+        // [OTIMIZAÇÃO] Removemos o 'await' para não travar o carregamento da página
+        db.sequelize.query(
             `INSERT INTO "ActiveSessions" ("sessionId", "lastSeen") VALUES (:sessionId, NOW()) ON CONFLICT ("sessionId") DO UPDATE SET "lastSeen" = NOW();`,
             { replacements: { sessionId }, type: db.sequelize.QueryTypes.INSERT }
-        );
+        ).catch(() => {}); // Falha silenciosa em background
     } catch (e) {
         // Falha silenciosa para não quebrar a navegação do usuário
     }

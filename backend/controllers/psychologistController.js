@@ -1468,12 +1468,8 @@ exports.cancelSubscription = async (req, res) => {
             console.log(`[CANCELAMENTO] Sucesso. Psi ${psychologist.id} agora está INACTIVE.`);
 
             // D. Envia E-mail de Cancelamento
-            try {
-                await sendSubscriptionCancelledEmail(psychologist);
-                console.log(`📧 E-mail de cancelamento (arrependimento) enviado para: ${psychologist.email}`);
-            } catch (e) { 
-                console.error("Erro ao enviar email de cancelamento:", e); 
-            }
+            // [OTIMIZAÇÃO] Não espera o envio do e-mail para responder ao usuário (ganha ~2s)
+            sendSubscriptionCancelledEmail(psychologist).catch(e => console.error("Erro email cancelamento:", e));
 
             return res.json({ message: 'Assinatura cancelada e valor estornado.' });
 
