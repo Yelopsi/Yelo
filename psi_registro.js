@@ -112,6 +112,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     formRegistro.addEventListener('submit', async (event) => {
         event.preventDefault();
+        
+        const btnSubmit = formRegistro.querySelector('button[type="submit"]');
+        if (btnSubmit) {
+            btnSubmit.disabled = true;
+            btnSubmit.textContent = 'Processando...';
+        }
+
         mensagemRegistro.textContent = '';
         mensagemRegistro.className = 'mensagem-oculta';
 
@@ -128,13 +135,28 @@ document.addEventListener('DOMContentLoaded', () => {
             docType = cleanDoc.length > 11 ? 'CNPJ' : 'CPF';
             
             // Validação simples para CPF ou CNPJ (apenas se o campo existir)
-            if (cleanDoc.length !== 11 && cleanDoc.length !== 14) { mensagemRegistro.textContent = 'CPF ou CNPJ inválido.'; mensagemRegistro.className = 'mensagem-erro'; return; }
+            if (cleanDoc.length !== 11 && cleanDoc.length !== 14) { 
+                mensagemRegistro.textContent = 'CPF ou CNPJ inválido.'; 
+                mensagemRegistro.className = 'mensagem-erro'; 
+                if(btnSubmit) { btnSubmit.disabled = false; btnSubmit.textContent = 'Registrar'; }
+                return; 
+            }
         }
 
-        if (senha !== confirmarSenha) { mensagemRegistro.textContent = 'As senhas não conferem.'; mensagemRegistro.className = 'mensagem-erro'; return; }
+        if (senha !== confirmarSenha) { 
+            mensagemRegistro.textContent = 'As senhas não conferem.'; 
+            mensagemRegistro.className = 'mensagem-erro'; 
+            if(btnSubmit) { btnSubmit.disabled = false; btnSubmit.textContent = 'Registrar'; }
+            return; 
+        }
         
         const senhaRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-        if (!senhaRegex.test(senha)) { mensagemRegistro.textContent = 'A senha deve ter no mínimo 8 caracteres, incluindo uma letra maiúscula, um número e um caractere especial.'; mensagemRegistro.className = 'mensagem-erro'; return; }
+        if (!senhaRegex.test(senha)) { 
+            mensagemRegistro.textContent = 'A senha deve ter no mínimo 8 caracteres, incluindo uma letra maiúscula, um número e um caractere especial.'; 
+            mensagemRegistro.className = 'mensagem-erro'; 
+            if(btnSubmit) { btnSubmit.disabled = false; btnSubmit.textContent = 'Registrar'; }
+            return; 
+        }
         
         // --- CORREÇÃO DO PERFIL (ADMIN vs NORMAL) ---
         let storedAnswers = {};
@@ -214,12 +236,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.warn("⚠️ [DEBUG REGISTRO] Erro retornado pela API:", result.error);
                 mensagemRegistro.textContent = result.error;
                 mensagemRegistro.className = 'mensagem-erro';
+                if(btnSubmit) { btnSubmit.disabled = false; btnSubmit.textContent = 'Registrar'; }
             }
         } catch (error) {
             console.error("❌ [DEBUG REGISTRO] Erro crítico no fetch:", error);
             console.error('Erro de conexão ou script:', error);
             mensagemRegistro.textContent = 'Erro ao conectar com o servidor.';
             mensagemRegistro.className = 'mensagem-erro';
+            if(btnSubmit) { btnSubmit.disabled = false; btnSubmit.textContent = 'Registrar'; }
         }
     });    
 

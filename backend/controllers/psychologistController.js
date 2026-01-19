@@ -219,8 +219,8 @@ exports.loginPsychologist = async (req, res) => {
             return res.status(401).json({ error: 'Senha incorreta.' });
         }
 
-        // --- FIX: Permite login de ativos E criadores de conteúdo ---
-        if (psychologist.status !== 'active' && psychologist.status !== 'content_creator') {
+        // --- FIX: Permite login de ativos, criadores de conteúdo E pendentes (onboarding) ---
+        if (psychologist.status !== 'active' && psychologist.status !== 'content_creator' && psychologist.status !== 'pending') {
             return res.status(403).json({ error: 'Esta conta está inativa.' });
         }
 
