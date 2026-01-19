@@ -284,6 +284,11 @@ exports.loginPsychologist = async (req, res) => {
 exports.requestPasswordReset = async (req, res) => {
     try {
         const { email } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ error: 'E-mail é obrigatório.' });
+        }
+
         // FIX: Adicionado paranoid: false para permitir recuperação de contas deletadas (retomada)
         const psychologist = await db.Psychologist.findOne({ 
             where: { email: { [Op.iLike]: email.trim() } },
@@ -325,7 +330,7 @@ exports.resetPassword = async (req, res) => {
         const psychologist = await db.Psychologist.findOne({
             where: {
                 resetPasswordToken: hashedToken,
-                resetPasswordExpires: { [db.Sequelize.Op.gt]: Date.now() }
+                resetPasswordExpires: { [Op.gt]: Date.now() } // FIX: Usa Op importado diretamente
             },
             paranoid: false // FIX: Permite redefinir senha de conta deletada
         });

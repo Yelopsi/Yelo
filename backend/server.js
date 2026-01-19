@@ -1529,6 +1529,7 @@ const startServer = async () => {
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;`);
         await db.sequelize.query(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255);`);
         await db.sequelize.query(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;`);
+        console.log('🔧 [DB FIX] Colunas de recuperação de senha verificadas.');
         // -----------------------------------------------------
 
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "authority_level" VARCHAR(255) DEFAULT 'nivel_iniciante';`);
