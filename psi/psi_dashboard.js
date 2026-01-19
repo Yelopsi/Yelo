@@ -340,16 +340,28 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch(`${API_BASE_URL}/api/psychologists/me?t=${new Date().getTime()}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            
             if (response.ok) {
                 psychologistData = await response.json();
 
                 atualizarInterfaceLateral(); 
                 return true;
+            } else if (response.status === 401) {
+                // Apenas 401 (Não autorizado) deve causar logout
+                throw new Error("Token inválido");
+            } else {
+                // Erros 500, 502, 503 (Servidor/Banco) não devem deslogar o usuário
+                console.warn(`Erro no servidor ao buscar perfil: ${response.status}`);
+                return false; // Retorna false para tratar na inicialização
             }
-            throw new Error("Token inválido");
         } catch (error) {
-            localStorage.removeItem('Yelo_token');
-            window.location.href = '/';
+            if (error.message === "Token inválido") {
+                localStorage.removeItem('Yelo_token');
+                window.location.href = '/';
+            } else {
+                console.error("Erro de conexão ou servidor:", error);
+                // Não desloga em erro de rede/fetch
+            }
             return false;
         }
     }
@@ -2425,6 +2437,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // --- NOVO: INICIA A LÓGICA DE TOOLTIPS MOBILE ---
             setupMobileBadgeTooltips();
+        } else {
+            // Se falhou mas não deslogou (ex: erro 500 do banco), mostra tela de erro amigável
+            // Isso evita que o usuário veja uma tela branca ou seja deslogado injustamente
+            if (localStorage.getItem('Yelo_token')) {
+                document.body.innerHTML = `
+                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:sans-serif; color:#1B4332; text-align:center; padding:20px;">
+                        <div style="font-size:3rem; margin-bottom:20px;">🛠️</div>
+                        <h2>Instabilidade Temporária</h2>
+                        <p style="color:#666; max-width:400px; margin:0 auto;">Estamos com uma breve instabilidade na conexão com o banco de dados. Seus dados estão seguros.</p>
+                        <button onclick="window.location.reload()" style="padding:12px 30px; background:#1B4332; color:white; border:none; border-radius:50px; cursor:pointer; margin-top:25px; font-weight:bold; font-size:1rem; transition: transform 0.2s;">Tentar Novamente</button>
+                    </div>
+                `;
+            }
         }
     });
 
