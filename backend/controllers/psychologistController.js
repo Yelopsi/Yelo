@@ -1363,10 +1363,17 @@ exports.cancelSubscription = async (req, res) => {
         }
 
         // 2. Verifica regra de 7 dias (Direito de Arrependimento)
-        const dateCreated = new Date(subData.dateCreated);
-        const today = new Date();
-        const diffTime = Math.abs(today - dateCreated);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        const dateCreatedStr = subData.dateCreated;
+        let diffDays = 0; // Default: 0 (Permite cancelamento imediato se data falhar)
+
+        if (dateCreatedStr) {
+            const dateCreated = new Date(dateCreatedStr);
+            const today = new Date();
+            const diffTime = Math.abs(today - dateCreated);
+            diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        }
+        
+        console.log(`[CANCELAMENTO] Data Criação: ${dateCreatedStr}, Dias: ${diffDays}`);
 
         // Se for menor ou igual a 7 dias, aplica estorno total e cancelamento imediato
         if (diffDays <= 7) {
@@ -1403,7 +1410,8 @@ exports.cancelSubscription = async (req, res) => {
                 status: 'inactive',
                 plano: null,
                 planExpiresAt: new Date(0), // Expira já
-                cancelAtPeriodEnd: false
+                cancelAtPeriodEnd: false,
+                stripeSubscriptionId: null // <--- FIX: Limpa o ID para evitar reativação por webhook atrasado
             });
 
             // D. Envia E-mail de Cancelamento

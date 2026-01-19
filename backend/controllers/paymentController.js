@@ -310,6 +310,18 @@ exports.handleWebhook = async (req, res) => {
         try {
             const psi = await db.Psychologist.findByPk(psychologistId);
             if (psi) {
+                // --- PROTEÇÃO CONTRA RACE CONDITION / WEBHOOKS ANTIGOS ---
+                // 1. Se já existe uma assinatura NOVA salva no banco, ignora webhooks da VELHA.
+                if (payment.subscription && psi.stripeSubscriptionId && psi.stripeSubscriptionId !== payment.subscription) {
+                     console.warn(`🛑 [ASAAS] Ignorando webhook de assinatura antiga (${payment.subscription}). O usuário já possui a assinatura ${psi.stripeSubscriptionId}.`);
+                     return res.json({received: true});
+                }
+                // 2. Se o usuário cancelou (está inativo e sem ID), ignora webhooks de ativação atrasados.
+                if (psi.status === 'inactive' && !psi.stripeSubscriptionId && payment.subscription) {
+                    console.warn(`🛑 [ASAAS] Ignorando webhook de assinatura cancelada (${payment.subscription}).`);
+                    return res.json({received: true});
+                }
+
                 // --- LÓGICA DE DESCONTO ---
                 const currentPayments = (psi.subscription_payments_count || 0) + 1;
 
