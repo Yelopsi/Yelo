@@ -1057,12 +1057,20 @@ document.addEventListener('DOMContentLoaded', function() {
             novoConfirmar.onclick = async function() {
                 this.textContent = "Processando...";
                 try {
-                    await apiFetch(`${API_BASE_URL}/api/psychologists/me/cancel-subscription`, { method: 'POST' });
-                    psychologistData.cancel_at_period_end = true; 
-                    psychologistData.cancelado_localmente = true; 
-                    modalCancel.style.display = 'none';
-                    showToast('Renovação cancelada.', 'info');
-                    inicializarAssinatura(); 
+                    const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/cancel-subscription`, { method: 'POST' });
+                    const data = await res.json();
+
+                    // Verifica se foi cancelamento imediato (Arrependimento)
+                    if (data.message && (data.message.includes('estornado') || data.message.includes('Arrependimento'))) {
+                        showToast('Assinatura cancelada e estornada.', 'success');
+                        setTimeout(() => window.location.reload(), 1500); // Recarrega para bloquear
+                    } else {
+                        // Cancelamento agendado (fim do ciclo)
+                        psychologistData.cancel_at_period_end = true; 
+                        modalCancel.style.display = 'none';
+                        showToast(data.message || 'Renovação cancelada.', 'info');
+                        inicializarAssinatura(); 
+                    }
                 } catch(e) {
                     showToast('Erro: ' + e.message, 'error');
                 } finally {

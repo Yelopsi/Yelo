@@ -316,9 +316,11 @@ exports.handleWebhook = async (req, res) => {
                      console.warn(`🛑 [ASAAS] Ignorando webhook de assinatura antiga (${payment.subscription}). O usuário já possui a assinatura ${psi.stripeSubscriptionId}.`);
                      return res.json({received: true});
                 }
-                // 2. Se o usuário cancelou (está inativo e sem ID), ignora webhooks de ativação atrasados.
-                if (psi.status === 'inactive' && !psi.stripeSubscriptionId && payment.subscription) {
-                    console.warn(`🛑 [ASAAS] Ignorando webhook de assinatura cancelada (${payment.subscription}).`);
+                
+                // 2. PROTEÇÃO CRÍTICA: Se o usuário cancelou (está inativo e sem ID), ignora webhooks de ativação atrasados.
+                // Isso impede que o plano volte a ficar ativo sozinho após o cancelamento.
+                if (psi.status === 'inactive' && !psi.stripeSubscriptionId) {
+                    console.warn(`🛑 [ASAAS] Ignorando webhook de ativação para usuário JÁ CANCELADO (Psi ${psi.id}).`);
                     return res.json({received: true});
                 }
 
