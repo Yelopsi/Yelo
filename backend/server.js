@@ -79,6 +79,16 @@ if (!db.SystemLog) {
     });
 }
 
+// --- FIX: Patch Post Model (Garante que o modelo exista para o Blog) ---
+if (!db.Post) {
+    console.log("[FIX] Defining Post model manually (Fallback).");
+    db.Post = db.sequelize.define('Post', {
+        titulo: DataTypes.STRING,
+        conteudo: DataTypes.TEXT,
+        imagem_url: DataTypes.STRING
+    });
+}
+
 // --- HOOK GLOBAL: DESARQUIVAMENTO AUTOMÁTICO ---
 // Se um psicólogo ou paciente enviar mensagem, a conversa é desarquivada (status = 'active')
 if (db.Message && db.Conversation) {
@@ -1467,8 +1477,8 @@ const startServer = async () => {
         await db.sequelize.authenticate();
         console.log('✅ [DB CONNECTION] Conexão com o banco estabelecida com sucesso.');
     } catch (error) {
-        console.error('❌ [DB CONNECTION] Falha fatal ao conectar ao banco:', error.message);
-        console.error('   Dica: Verifique se a variável DATABASE_URL no Render está correta e atualizada.');
+        console.error('⚠️ [DB CONNECTION] Banco instável ou em recuperação:', error.message);
+        // Não encerra o processo, permite que o Sequelize tente reconectar nas próximas requisições
     }
 
     // --- BLOCO DE SINCRONIZAÇÃO E CORREÇÃO DE SCHEMA (RODA EM TODOS OS AMBIENTES) ---

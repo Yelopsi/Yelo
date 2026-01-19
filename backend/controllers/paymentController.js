@@ -316,8 +316,10 @@ exports.handleWebhook = async (req, res) => {
 
                 // --- PROTEÇÃO CONTRA RACE CONDITION / WEBHOOKS ANTIGOS ---
                 // 1. Se já existe uma assinatura NOVA salva no banco, ignora webhooks da VELHA.
-                if (payment.subscription && psi.stripeSubscriptionId && psi.stripeSubscriptionId !== payment.subscription) {
-                     console.warn(`🛑 [ASAAS] Ignorando webhook de assinatura antiga (${payment.subscription}). O usuário já possui a assinatura ${psi.stripeSubscriptionId}.`);
+                // [CORREÇÃO] Só ignora se o usuário já estiver ATIVO. Se estiver inativo/pendente, 
+                // aceitamos o pagamento da assinatura antiga (pois o usuário pode ter pago um boleto gerado anteriormente).
+                if (psi.status === 'active' && payment.subscription && psi.stripeSubscriptionId && psi.stripeSubscriptionId !== payment.subscription) {
+                     console.warn(`🛑 [ASAAS] Ignorando webhook de assinatura antiga (${payment.subscription}). O usuário já possui a assinatura ativa ${psi.stripeSubscriptionId}.`);
                      return res.json({received: true});
                 }
                 
