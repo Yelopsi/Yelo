@@ -287,6 +287,9 @@ exports.handleWebhook = async (req, res) => {
     // O Asaas envia o evento no corpo do request (JSON)
     const event = req.body;
     
+    // [DEBUG] Log para confirmar que o Asaas bateu na sua porta
+    console.log(`🔔 [WEBHOOK ASAAS] Evento: ${event.event} | ID Pagamento: ${event.payment?.id}`);
+    
     // Validação básica de segurança (Opcional: verificar token no header se configurado no Asaas)
     // const asaasToken = req.headers['asaas-access-token'];
     // if (asaasToken !== process.env.ASAAS_WEBHOOK_TOKEN) return res.status(401).send();
@@ -365,12 +368,12 @@ exports.handleWebhook = async (req, res) => {
     // --- LÓGICA DE ESTORNO / CANCELAMENTO IMEDIATO ---
     // Captura eventos de reembolso ou chargeback para revogar o acesso
     // ADICIONADO: Verifica também PAYMENT_UPDATED com status REFUNDED
-    if (['PAYMENT_REFUNDED', 'PAYMENT_REVERSED', 'PAYMENT_CHARGEBACK_REQUESTED'].includes(event.event) || 
+    if (['PAYMENT_REFUNDED', 'PAYMENT_REVERSED', 'PAYMENT_CHARGEBACK_REQUESTED', 'PAYMENT_DELETED'].includes(event.event) || 
        (event.event === 'PAYMENT_UPDATED' && event.payment && event.payment.status === 'REFUNDED')) {
         const payment = event.payment;
         let psychologistId = payment.externalReference;
 
-        console.log(`[ASAAS] Estorno detectado! Evento: ${event.event}, Status: ${payment.status}, Ref: ${psychologistId}, Sub: ${payment.subscription}`);
+        console.log(`🛑 [ASAAS] Estorno/Cancelamento detectado! Evento: ${event.event}, Status: ${payment.status}, Ref: ${psychologistId}`);
 
         try {
             let psi = null;
@@ -382,7 +385,7 @@ exports.handleWebhook = async (req, res) => {
 
             // 2. Fallback: Se não achou (ou não veio ref), tenta pelo ID da assinatura
             if (!psi && payment.subscription) {
-                console.log(`[ASAAS] Buscando psicólogo pela assinatura: ${payment.subscription}`);
+                console.log(`🔍 [ASAAS] Buscando psicólogo pela assinatura: ${payment.subscription}`);
                 psi = await db.Psychologist.findOne({ where: { stripeSubscriptionId: payment.subscription } });
             }
 
@@ -394,15 +397,15 @@ exports.handleWebhook = async (req, res) => {
                     planExpiresAt: new Date(0), // Expira imediatamente (define data no passado)
                     cancelAtPeriodEnd: false
                 });
-                console.log(`[ASAAS] Acesso revogado para Psi ${psi.id} devido a estorno.`);
+                console.log(`✅ [ASAAS] Acesso revogado para Psi ${psi.id} (${psi.email}) devido a estorno.`);
                 
                 // --- ENVIA E-MAIL DE CANCELAMENTO ---
                 await sendSubscriptionCancelledEmail(psi);
             } else {
-                console.warn(`[ASAAS] FALHA NO ESTORNO: Psicólogo não encontrado. Ref: ${psychologistId}, Sub: ${payment.subscription}`);
+                console.warn(`⚠️ [ASAAS] FALHA NO ESTORNO: Psicólogo não encontrado. Ref: ${psychologistId}, Sub: ${payment.subscription}`);
             }
         } catch (err) {
-            console.error('Erro ao processar estorno no banco:', err);
+            console.error('❌ [ASAAS] Erro ao processar estorno no banco:', err);
         }
     }
 
