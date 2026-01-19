@@ -231,9 +231,11 @@ exports.loginPsychologist = async (req, res) => {
         }
 
         // --- LÓGICA DE RESTAURAÇÃO (RETOMADA) ---
+        let accountRestored = false;
         if (psychologist.deletedAt) {
             console.log(`[LOGIN] Restaurando conta deletada: ${email}`);
             await psychologist.restore(); // Remove o deletedAt
+            accountRestored = true;
             // Opcional: Se quiser forçar status 'inactive' para obrigar pagamento, descomente abaixo:
             // await psychologist.update({ status: 'inactive' });
         }
@@ -266,7 +268,8 @@ exports.loginPsychologist = async (req, res) => {
             is_exempt: psychologist.is_exempt, // Retorna flag VIP no login
             token: token,
             redirect: redirectUrl, // Frontend deve usar isso para navegar
-            type: userType
+            type: userType,
+            accountRestored: accountRestored // Flag para o frontend exibir modal
         });
 
     } catch (error) {
@@ -281,7 +284,11 @@ exports.loginPsychologist = async (req, res) => {
 exports.requestPasswordReset = async (req, res) => {
     try {
         const { email } = req.body;
-        const psychologist = await db.Psychologist.findOne({ where: { email: { [Op.iLike]: email.trim() } } });
+        // FIX: Adicionado paranoid: false para permitir recuperação de contas deletadas (retomada)
+        const psychologist = await db.Psychologist.findOne({ 
+            where: { email: { [Op.iLike]: email.trim() } },
+            paranoid: false 
+        });
 
         if (!psychologist) {
             return res.status(200).json({ message: 'Se um usuário com este e-mail existir, um link de redefinição foi enviado.' });
@@ -297,6 +304,7 @@ exports.requestPasswordReset = async (req, res) => {
         const frontendUrl = process.env.FRONTEND_URL || req.headers.origin || 'https://www.yelopsi.com.br';
         const resetLink = `${frontendUrl}/redefinir-senha?token=${resetToken}&type=psychologist`;
         await sendPasswordResetEmail(psychologist, resetLink);
+        console.log(`📧 E-mail de recuperação enviado para: ${psychologist.email}`);
 
         res.status(200).json({ message: 'Se um usuário com este e-mail existir, um link de redefinição foi enviado.' });
 
@@ -318,7 +326,8 @@ exports.resetPassword = async (req, res) => {
             where: {
                 resetPasswordToken: hashedToken,
                 resetPasswordExpires: { [db.Sequelize.Op.gt]: Date.now() }
-            }
+            },
+            paranoid: false // FIX: Permite redefinir senha de conta deletada
         });
 
         if (!psychologist) {
