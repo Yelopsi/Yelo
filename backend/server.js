@@ -45,6 +45,16 @@ if (db.Psychologist && !db.Psychologist.rawAttributes.planExpiresAt) {
     }
 }
 
+// --- FIX: Patch SystemLog Model (Garante que o modelo exista para logs) ---
+if (!db.SystemLog) {
+    console.log("[FIX] Defining SystemLog model manually.");
+    db.SystemLog = db.sequelize.define('SystemLog', {
+        level: DataTypes.STRING,
+        message: DataTypes.TEXT,
+        meta: DataTypes.JSONB
+    });
+}
+
 // --- HOOK GLOBAL: DESARQUIVAMENTO AUTOMÁTICO ---
 // Se um psicólogo ou paciente enviar mensagem, a conversa é desarquivada (status = 'active')
 if (db.Message && db.Conversation) {

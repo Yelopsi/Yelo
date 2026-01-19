@@ -98,7 +98,8 @@ exports.registerPsychologist = async (req, res) => {
 
         if (existingUser) {
             // Retorna 409 (Conflict) para o frontend saber que deve redirecionar
-            if (existingUser.email === email) return res.status(409).json({ error: 'E-mail já cadastrado. Redirecionando para login...', redirect: true });
+            // FIX: Comparação case-insensitive para garantir que pegue duplicatas
+            if (existingUser.email.toLowerCase() === email.toLowerCase()) return res.status(409).json({ error: 'E-mail já cadastrado. Redirecionando para login...', redirect: true });
             if (crp && existingUser.crp === crp) return res.status(400).json({ error: 'CRP já cadastrado.' });
             if (cleanCpf && existingUser.cpf === cleanCpf) return res.status(400).json({ error: 'CPF já cadastrado.' });
         }
@@ -154,12 +155,18 @@ exports.registerPsychologist = async (req, res) => {
     } catch (error) {
         console.error('Erro no registro:', error);
         // GRAVA O ERRO NO LOG
-        await db.SystemLog.create({
-            level: 'error',
-            message: `Erro no registro de Psicólogo: ${error.message}`
-        });
+        try {
+            if (db.SystemLog) {
+                await db.SystemLog.create({
+                    level: 'error',
+                    message: `Erro no registro de Psicólogo: ${error.message}`
+                });
+            }
+        } catch (logErr) { console.warn("Falha ao gravar log:", logErr.message); }
+
         if (error.name === 'SequelizeUniqueConstraintError') {
-            return res.status(400).json({ error: 'E-mail já utilizado.' });
+            // Se for erro de constraint, retorna 409 se for email, ou 400 para outros
+            return res.status(409).json({ error: 'Dados já cadastrados (E-mail, CPF ou CRP).', redirect: true });
         }
         res.status(500).json({ error: 'Erro interno ao criar conta: ' + error.message });
     }
