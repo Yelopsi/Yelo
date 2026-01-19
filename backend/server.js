@@ -45,6 +45,25 @@ if (db.Psychologist && !db.Psychologist.rawAttributes.planExpiresAt) {
     }
 }
 
+// --- FIX: Patch Password Reset Fields (Garante que o Sequelize saiba ler/gravar tokens) ---
+if (db.Psychologist && !db.Psychologist.rawAttributes.resetPasswordToken) {
+    console.log("[FIX] Patching Psychologist model for password reset.");
+    db.Psychologist.rawAttributes.resetPasswordToken = { type: DataTypes.STRING };
+    db.Psychologist.rawAttributes.resetPasswordExpires = { type: DataTypes.BIGINT };
+    if (typeof db.Psychologist.refreshAttributes === 'function') {
+        db.Psychologist.refreshAttributes();
+    }
+}
+
+if (db.Patient && !db.Patient.rawAttributes.resetPasswordToken) {
+    console.log("[FIX] Patching Patient model for password reset.");
+    db.Patient.rawAttributes.resetPasswordToken = { type: DataTypes.STRING };
+    db.Patient.rawAttributes.resetPasswordExpires = { type: DataTypes.BIGINT };
+    if (typeof db.Patient.refreshAttributes === 'function') {
+        db.Patient.refreshAttributes();
+    }
+}
+
 // --- FIX: Patch SystemLog Model (Garante que o modelo exista para logs) ---
 if (!db.SystemLog) {
     console.log("[FIX] Defining SystemLog model manually.");
@@ -1504,6 +1523,12 @@ const startServer = async () => {
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "stripeSubscriptionId" VARCHAR(255);`);
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cancelAtPeriodEnd" BOOLEAN DEFAULT FALSE;`);
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "subscription_payments_count" INTEGER DEFAULT 0;`);
+        
+        // --- FIX: COLUNAS DE RECUPERAÇÃO DE SENHA (CRÍTICO) ---
+        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255);`);
+        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;`);
+        await db.sequelize.query(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255);`);
+        await db.sequelize.query(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;`);
         // -----------------------------------------------------
 
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "authority_level" VARCHAR(255) DEFAULT 'nivel_iniciante';`);
