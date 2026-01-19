@@ -1,4 +1,5 @@
 const db = require('../models');
+const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -98,7 +99,7 @@ exports.registerPatient = async (req, res) => {
 exports.requestPasswordReset = async (req, res) => {
     try {
         const { email } = req.body;
-        const patient = await db.Patient.findOne({ where: { email } });
+        const patient = await db.Patient.findOne({ where: { email: { [Op.iLike]: email.trim() } } });
 
         if (!patient) {
             // Resposta genérica para não confirmar se um e-mail existe ou não
