@@ -33,6 +33,18 @@ if (db.Message && !db.Message.rawAttributes.status) {
     }
 }
 
+// --- FIX: Patch Psychologist Model (Garante leitura de planExpiresAt) ---
+if (db.Psychologist && !db.Psychologist.rawAttributes.planExpiresAt) {
+    console.log("[FIX] Patching Psychologist model to include 'planExpiresAt' field.");
+    db.Psychologist.rawAttributes.planExpiresAt = { type: DataTypes.DATE };
+    db.Psychologist.rawAttributes.stripeSubscriptionId = { type: DataTypes.STRING };
+    db.Psychologist.rawAttributes.cancelAtPeriodEnd = { type: DataTypes.BOOLEAN };
+    db.Psychologist.rawAttributes.subscription_payments_count = { type: DataTypes.INTEGER };
+    if (typeof db.Psychologist.refreshAttributes === 'function') {
+        db.Psychologist.refreshAttributes();
+    }
+}
+
 // --- HOOK GLOBAL: DESARQUIVAMENTO AUTOMÁTICO ---
 // Se um psicólogo ou paciente enviar mensagem, a conversa é desarquivada (status = 'active')
 if (db.Message && db.Conversation) {
