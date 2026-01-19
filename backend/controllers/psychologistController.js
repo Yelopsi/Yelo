@@ -281,7 +281,7 @@ exports.loginPsychologist = async (req, res) => {
 exports.requestPasswordReset = async (req, res) => {
     try {
         const { email } = req.body;
-        const psychologist = await db.Psychologist.findOne({ where: { email } });
+        const psychologist = await db.Psychologist.findOne({ where: { email: { [Op.iLike]: email.trim() } } });
 
         if (!psychologist) {
             return res.status(200).json({ message: 'Se um usuário com este e-mail existir, um link de redefinição foi enviado.' });

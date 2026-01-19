@@ -1334,11 +1334,11 @@ app.post('/api/auth/identify-user', async (req, res) => {
         if (!email) return res.status(400).json({ error: 'E-mail obrigatório' });
 
         // Verifica na tabela de Pacientes
-        const [patients] = await db.sequelize.query('SELECT 1 FROM "Patients" WHERE email = :email LIMIT 1', { replacements: { email } });
+        const [patients] = await db.sequelize.query('SELECT 1 FROM "Patients" WHERE email ILIKE :email LIMIT 1', { replacements: { email: email.trim() } });
         if (patients.length > 0) return res.json({ type: 'patient' });
 
         // Verifica na tabela de Psicólogos
-        const [psis] = await db.sequelize.query('SELECT 1 FROM "Psychologists" WHERE email = :email LIMIT 1', { replacements: { email } });
+        const [psis] = await db.sequelize.query('SELECT 1 FROM "Psychologists" WHERE email ILIKE :email LIMIT 1', { replacements: { email: email.trim() } });
         if (psis.length > 0) return res.json({ type: 'psychologist' });
 
         return res.status(404).json({ error: 'E-mail não encontrado em nossa base de dados.' });
