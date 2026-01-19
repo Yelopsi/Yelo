@@ -135,7 +135,8 @@ exports.registerPsychologist = async (req, res) => {
         const token = generateToken(newPsychologist.id);
 
         // --- 8. E-mail de Boas-vindas ---
-        await sendWelcomeEmail(newPsychologist, 'psychologist');
+        // FIX: Não aguarda o e-mail para evitar travamento no front se o SMTP estiver lento
+        sendWelcomeEmail(newPsychologist, 'psychologist').catch(err => console.error("Erro envio email boas-vindas (Psi):", err));
 
         res.status(201).json({
             message: 'Cadastro realizado com sucesso!',

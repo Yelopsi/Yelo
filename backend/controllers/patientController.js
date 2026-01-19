@@ -71,7 +71,8 @@ exports.registerPatient = async (req, res) => {
         });
 
         // [EMAIL] Envia boas-vindas
-        await sendWelcomeEmail(newPatient, 'patient');
+        // FIX: Envio assíncrono para não bloquear o cadastro
+        sendWelcomeEmail(newPatient, 'patient').catch(err => console.error("Erro envio email boas-vindas (Paciente):", err));
 
         res.status(201).json({
             id: newPatient.id,
