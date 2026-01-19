@@ -397,6 +397,12 @@
                 }
                 localStorage.removeItem('Yelo_account_restored'); // Limpa para não mostrar novamente
             }
+
+            // --- FIX: FORÇAR VISÃO GERAL COMO PÁGINA INICIAL ---
+            const linkVisaoGeral = document.querySelector('a[data-page="psi_visao_geral.html"]');
+            if (linkVisaoGeral) {
+                setTimeout(() => linkVisaoGeral.click(), 100);
+            }
         });
     </script>
 
