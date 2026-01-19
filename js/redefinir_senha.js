@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 mensagemEl.className = 'mensagem-sucesso';
                 setTimeout(() => {
                     window.location.href = '/login';
-                }, 3000);
+                }, 1500);
             } else {
                 mensagemEl.textContent = result.error || 'Ocorreu um erro.';
                 mensagemEl.className = 'mensagem-erro';
