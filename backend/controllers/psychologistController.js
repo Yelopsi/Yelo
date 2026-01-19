@@ -1445,6 +1445,7 @@ exports.cancelSubscription = async (req, res) => {
                 cancelAtPeriodEnd: false,
                 stripeSubscriptionId: null // FIX: Limpa o ID para impedir que o webhook reative
             });
+            console.log(`[CANCELAMENTO] Sucesso. Psi ${psychologist.id} agora está INACTIVE.`);
 
             // D. Envia E-mail de Cancelamento
             try {

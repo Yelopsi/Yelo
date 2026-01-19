@@ -310,6 +310,10 @@ exports.handleWebhook = async (req, res) => {
         try {
             const psi = await db.Psychologist.findByPk(psychologistId);
             if (psi) {
+                // --- FIX: RELOAD PARA EVITAR RACE CONDITION ---
+                // Garante que temos o status mais recente do banco (caso tenha sido cancelado milissegundos antes)
+                await psi.reload();
+
                 // --- PROTEÇÃO CONTRA RACE CONDITION / WEBHOOKS ANTIGOS ---
                 // 1. Se já existe uma assinatura NOVA salva no banco, ignora webhooks da VELHA.
                 if (payment.subscription && psi.stripeSubscriptionId && psi.stripeSubscriptionId !== payment.subscription) {
@@ -362,7 +366,7 @@ exports.handleWebhook = async (req, res) => {
                     plano: planType,
                     // Salva o ID da assinatura do Asaas para cancelamentos futuros
                     stripeSubscriptionId: payment.subscription,
-                    cancelAtPeriodEnd: false, // <--- Reset do cancelamento
+                    // cancelAtPeriodEnd: false, // REMOVIDO: Não sobrescreve decisão de cancelamento do usuário
                     subscription_payments_count: currentPayments // Atualiza o contador de pagamentos
                 });
 
