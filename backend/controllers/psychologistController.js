@@ -340,7 +340,12 @@ exports.resetPassword = async (req, res) => {
         }
 
         // Se o token for válido, atualiza a senha
-        psychologist.senha = await bcrypt.hash(req.body.nova_senha, 10);
+        const newPassword = req.body.senha || req.body.nova_senha;
+        if (!newPassword) {
+            return res.status(400).json({ error: 'A nova senha é obrigatória.' });
+        }
+
+        psychologist.senha = await bcrypt.hash(newPassword, 10);
         psychologist.resetPasswordToken = null;
         psychologist.resetPasswordExpires = null;
         await psychologist.save();
