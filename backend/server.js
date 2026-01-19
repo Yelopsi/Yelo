@@ -614,6 +614,21 @@ app.get('/api/fix-patient-audit', async (req, res) => {
     }
 });
 
+// --- FIX: ROTA MANUAL PARA CRIAR COLUNAS DE SENHA ---
+app.get('/api/fix-password-columns', async (req, res) => {
+    try {
+        console.log("Executando correção manual de colunas de senha...");
+        await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255);');
+        await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;');
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255);');
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;');
+        res.send("✅ Sucesso! Colunas de recuperação de senha criadas.");
+    } catch (error) {
+        console.error("Erro na correção manual:", error);
+        res.status(500).send("Erro ao criar colunas: " + error.message);
+    }
+});
+
 // Rota para corrigir tabela de Admins (Adicionar colunas faltantes)
 app.get('/api/fix-admin-table', async (req, res) => {
     try {
