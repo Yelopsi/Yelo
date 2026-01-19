@@ -3,7 +3,7 @@ const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const { sendPasswordResetEmail, sendWelcomeEmail } = require('../services/emailService');
+const { sendPasswordResetEmail, sendWelcomeEmail, sendSubscriptionCancelledEmail } = require('../services/emailService');
 const path = require('path');
 const fs = require('fs').promises;
 const gamificationService = require('../services/gamificationService'); // Importa o serviço
@@ -157,7 +157,7 @@ exports.registerPsychologist = async (req, res) => {
             message: `Erro no registro de Psicólogo: ${error.message}`
         });
         if (error.name === 'SequelizeUniqueConstraintError') {
-            return res.status(400).json({ error: 'Dados duplicados (E-mail, CRP ou Documento).' });
+            return res.status(400).json({ error: 'E-mail já utilizado.' });
         }
         res.status(500).json({ error: 'Erro interno ao criar conta: ' + error.message });
     }
@@ -1334,35 +1334,96 @@ exports.cancelSubscription = async (req, res) => {
         
         if (!psychologist) return res.status(404).json({ error: 'Psi não encontrado' });
 
-        // 1. AVISA O ASAAS (Soft Cancel: Define data de fim para não renovar)
-        if (psychologist.stripeSubscriptionId) {
-            try {
-                // Busca dados da assinatura para saber o vencimento
-                const subResponse = await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.stripeSubscriptionId}`, {
-                    headers: { 'access_token': ASAAS_API_KEY }
-                });
-                const subData = await subResponse.json();
-
-                if (subData.id && subData.nextDueDate) {
-                    // Atualiza a assinatura definindo o fim para a próxima cobrança
-                    await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.stripeSubscriptionId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
-                        body: JSON.stringify({ endDate: subData.nextDueDate })
-                    });
-                }
-
-            } catch (asaasErr) {
-                console.error("Erro Asaas:", asaasErr);
-            }
+        if (!psychologist.stripeSubscriptionId) {
+             return res.status(400).json({ error: 'Nenhuma assinatura ativa encontrada.' });
         }
 
-        // 2. ATUALIZA O BANCO LOCAL (Agora temos o campo certo!)
-        await psychologist.update({
-            cancelAtPeriodEnd: true // <--- Isso vai mudar o visual no Dashboard
+        // 1. Busca dados da assinatura no Asaas para verificar data de criação
+        const subResponse = await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.stripeSubscriptionId}`, {
+            headers: { 'access_token': ASAAS_API_KEY }
         });
+        const subData = await subResponse.json();
 
-        res.json({ message: 'Renovação cancelada. Acesso mantido até o fim do ciclo.' });
+        if (!subData.id) {
+             // Se não achou no Asaas, assume cancelamento manual local
+             await psychologist.update({ cancelAtPeriodEnd: true });
+             return res.json({ message: 'Assinatura marcada para cancelamento (Não encontrada no provedor).' });
+        }
+
+        // 2. Verifica regra de 7 dias (Direito de Arrependimento)
+        const dateCreated = new Date(subData.dateCreated);
+        const today = new Date();
+        const diffTime = Math.abs(today - dateCreated);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+        // Se for menor ou igual a 7 dias, aplica estorno total e cancelamento imediato
+        if (diffDays <= 7) {
+            console.log(`[CANCELAMENTO] Direito de arrependimento detectado (${diffDays} dias). Processando estorno para Psi ${psychologist.id}...`);
+
+            // A. Busca pagamentos confirmados para estornar
+            const paymentsRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subData.id}/payments`, {
+                headers: { 'access_token': ASAAS_API_KEY }
+            });
+            const paymentsData = await paymentsRes.json();
+            
+            if (paymentsData.data) {
+                for (const payment of paymentsData.data) {
+                    if (['CONFIRMED', 'RECEIVED'].includes(payment.status)) {
+                        // Estorna o pagamento
+                        await fetch(`${ASAAS_API_URL}/payments/${payment.id}/refund`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                            body: JSON.stringify({ value: payment.value, description: "Cancelamento no prazo de 7 dias (Arrependimento)" })
+                        });
+                        console.log(`[CANCELAMENTO] Pagamento ${payment.id} estornado.`);
+                    }
+                }
+            }
+
+            // B. Cancela a assinatura imediatamente (DELETE)
+            await fetch(`${ASAAS_API_URL}/subscriptions/${subData.id}`, {
+                method: 'DELETE',
+                headers: { 'access_token': ASAAS_API_KEY }
+            });
+
+            // C. Atualiza Banco Local (Revoga acesso imediatamente)
+            await psychologist.update({
+                status: 'inactive',
+                plano: null,
+                planExpiresAt: new Date(0), // Expira já
+                cancelAtPeriodEnd: false
+            });
+
+            // D. Envia E-mail de Cancelamento
+            try {
+                await sendSubscriptionCancelledEmail(psychologist);
+                console.log(`📧 E-mail de cancelamento (arrependimento) enviado para: ${psychologist.email}`);
+            } catch (e) { 
+                console.error("Erro ao enviar email de cancelamento:", e); 
+            }
+
+            return res.json({ message: 'Assinatura cancelada e valor estornado.' });
+
+        } else {
+            // --- CENÁRIO B: CANCELAMENTO AGENDADO (> 7 DIAS) ---
+            console.log(`[CANCELAMENTO] Cancelamento agendado para o fim do ciclo (Psi ${psychologist.id}).`);
+
+            if (subData.nextDueDate) {
+                // Atualiza a assinatura definindo o fim para a próxima cobrança
+                await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.stripeSubscriptionId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                    body: JSON.stringify({ endDate: subData.nextDueDate })
+                });
+            }
+
+            // 2. ATUALIZA O BANCO LOCAL
+            await psychologist.update({
+                cancelAtPeriodEnd: true 
+            });
+
+            res.json({ message: 'Renovação automática cancelada. Seu acesso continua até o fim do período.' });
+        }
 
     } catch (error) {
         console.error('Erro ao cancelar:', error);
