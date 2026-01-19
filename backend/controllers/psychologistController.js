@@ -1388,23 +1388,19 @@ exports.cancelSubscription = async (req, res) => {
         if (!subId) {
              console.error(`[DEBUG CANCELAMENTO] ERRO: Nenhum ID de assinatura encontrado.`);
              
-             // FALLBACK DE SEGURANÇA:
-             // Se o usuário tem status 'active' ou um plano, mas não tem ID de assinatura,
-             // permitimos o cancelamento LOCAL para destravar a conta.
-             if (psychologist.status === 'active' || psychologist.plano) {
-                 console.warn(`[DEBUG CANCELAMENTO] Aplicando cancelamento local forçado (Inconsistência de dados).`);
-                 await psychologist.update({
-                    status: 'inactive',
-                    plano: null,
-                    planExpiresAt: new Date(0),
-                    cancelAtPeriodEnd: false,
-                    stripeSubscriptionId: null,
-                    subscriptionId: null
-                 });
-                 return res.json({ message: 'Assinatura cancelada localmente (Vínculo de pagamento não encontrado).' });
-             }
-
-             return res.status(400).json({ error: 'Nenhuma assinatura ativa encontrada.' });
+             // [CORREÇÃO DEFINITIVA] FALLBACK DE SEGURANÇA:
+             // Se chegou aqui, o usuário quer cancelar. Se não temos ID para o Asaas,
+             // cancelamos localmente para não prender o usuário.
+             console.warn(`[DEBUG CANCELAMENTO] Forçando cancelamento local (Sem ID de assinatura).`);
+             await psychologist.update({
+                status: 'inactive',
+                plano: null,
+                planExpiresAt: new Date(0),
+                cancelAtPeriodEnd: false,
+                stripeSubscriptionId: null,
+                subscriptionId: null
+             });
+             return res.status(200).json({ message: 'Assinatura cancelada localmente (Vínculo de pagamento não encontrado).' });
         }
 
         console.log(`[DEBUG CANCELAMENTO] ID Assinatura: ${subId}. Consultando Asaas...`);
