@@ -30,7 +30,7 @@ exports.createPreference = async (req, res) => {
 
             await psi.update({
                 status: 'active',
-                subscription_expires_at: trintaDias,
+                planExpiresAt: trintaDias, // FIX: Nome da coluna padronizado
                 plano: 'Sol'
             });
             return res.json({ couponSuccess: true, message: 'Cupom VIP aplicado!' });
@@ -407,7 +407,7 @@ exports.handleWebhook = async (req, res) => {
     }
 
     // --- LÓGICA DE FALHA NO PAGAMENTO (NOVO) ---
-    if (['PAYMENT_OVERDUE', 'PAYMENT_CREDIT_CARD_CAPTURE_REFUSED'].includes(event.event)) {
+    if (['PAYMENT_OVERDUE', 'PAYMENT_CREDIT_CARD_CAPTURE_REFUSED', 'PAYMENT_REPROVED_BY_RISK_ANALYSIS'].includes(event.event)) {
         const payment = event.payment;
         let psychologistId = payment.externalReference;
         console.log(`[ASAAS] Falha de Pagamento (${event.event}). Ref: ${psychologistId}`);

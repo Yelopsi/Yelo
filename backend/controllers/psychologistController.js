@@ -1091,23 +1091,23 @@ exports.getProfileBySlug = async (req, res) => {
     // Em produção, você deve descomentar isso para bloquear inadimplentes.
     
     const hoje = new Date();
-    const validade = psychologist.subscription_expires_at ? new Date(psychologist.subscription_expires_at) : null;
+    // FIX: Usa a coluna correta 'planExpiresAt'
+    const validade = psychologist.planExpiresAt ? new Date(psychologist.planExpiresAt) : null;
     const status = psychologist.status;
 
     // Log para você saber a saúde do perfil
     console.log(`🔎 Status: ${status} | Validade: ${validade ? validade.toLocaleDateString() : 'NENHUMA'}`);
 
-    /* // --- BLOQUEIO ORIGINAL (Desativado temporariamente) ---
+    // --- BLOQUEIO ATIVO (Agora que o pagamento está funcionando) ---
     if (!validade || validade < hoje) {
-        console.log(`🚫 [BLOQUEIO IGNORADO] Pagamento vencido, mas liberado para DEV.`);
-        // return res.status(404).json({ error: 'Perfil indisponível (Assinatura inativa).' });
+        console.log(`🚫 [BLOQUEIO] Pagamento vencido ou inexistente.`);
+        return res.status(404).json({ error: 'Perfil indisponível (Assinatura inativa).' });
     }
 
     if (status !== 'active') {
-        console.log(`🚫 [BLOQUEIO IGNORADO] Status pendente, mas liberado para DEV.`);
-        // return res.status(404).json({ error: 'Perfil em análise.' });
+        console.log(`🚫 [BLOQUEIO] Status não é active (${status}).`);
+        return res.status(404).json({ error: 'Perfil em análise.' });
     }
-    */
    
     // ------------------------------------------------------------------
 
