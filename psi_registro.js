@@ -118,19 +118,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const senha = document.getElementById('senha').value;
         const confirmarSenha = document.getElementById('confirmar-senha').value;
         
-        // Pega o valor limpo da máscara OU o valor bruto se a máscara falhou/não existe
-        const cleanDoc = docMask ? docMask.unmaskedValue : docInput.value.replace(/\D/g, '');
+        // --- FIX: Verifica se os campos existem antes de acessar ---
+        let cleanDoc = '';
+        let docType = 'CPF';
         
-        const docType = cleanDoc.length > 11 ? 'CNPJ' : 'CPF';
+        if (docInput) {
+            // Pega o valor limpo da máscara OU o valor bruto se a máscara falhou/não existe
+            cleanDoc = docMask ? docMask.unmaskedValue : docInput.value.replace(/\D/g, '');
+            docType = cleanDoc.length > 11 ? 'CNPJ' : 'CPF';
+            
+            // Validação simples para CPF ou CNPJ (apenas se o campo existir)
+            if (cleanDoc.length !== 11 && cleanDoc.length !== 14) { mensagemRegistro.textContent = 'CPF ou CNPJ inválido.'; mensagemRegistro.className = 'mensagem-erro'; return; }
+        }
 
         if (senha !== confirmarSenha) { mensagemRegistro.textContent = 'As senhas não conferem.'; mensagemRegistro.className = 'mensagem-erro'; return; }
         
         const senhaRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
         if (!senhaRegex.test(senha)) { mensagemRegistro.textContent = 'A senha deve ter no mínimo 8 caracteres, incluindo uma letra maiúscula, um número e um caractere especial.'; mensagemRegistro.className = 'mensagem-erro'; return; }
         
-        // Validação simples para CPF ou CNPJ
-        if (cleanDoc.length !== 11 && cleanDoc.length !== 14) { mensagemRegistro.textContent = 'CPF ou CNPJ inválido.'; mensagemRegistro.className = 'mensagem-erro'; return; }
-
         // --- CORREÇÃO DO PERFIL (ADMIN vs NORMAL) ---
         let storedAnswers = {};
 
@@ -152,8 +157,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const registrationData = {
             nome: document.getElementById('nome-completo').value,
-            crp: crpInput.value,
-            documento: docInput.value, // Manda o valor com máscara, como solicitado
+            crp: crpInput ? crpInput.value : '',
+            documento: docInput ? docInput.value : '', // Manda o valor com máscara, como solicitado
             tipo_documento: docType, // Manda qual é o tipo
             email: emailInput.value.trim().toLowerCase(),
             senha: senha,
