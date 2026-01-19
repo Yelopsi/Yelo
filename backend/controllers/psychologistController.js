@@ -1389,26 +1389,42 @@ exports.cancelSubscription = async (req, res) => {
         }
 
         // 2. Verifica regra de 7 dias (Direito de Arrependimento)
-        const dateCreatedStr = subData.dateCreated;
-        let diffDays = 0; 
+        // [CORREÇÃO] Usa UTC para garantir precisão de dias e verifica pagamentos reais
+        const dateCreated = new Date(subData.dateCreated);
+        const now = new Date();
+        const utcCreated = Date.UTC(dateCreated.getFullYear(), dateCreated.getMonth(), dateCreated.getDate());
+        const utcNow = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+        const diffDays = Math.floor((utcNow - utcCreated) / (1000 * 60 * 60 * 24));
 
-        if (dateCreatedStr) {
-            // FIX: Cálculo de dias ignorando horas (Fuso Horário Brasil/UTC)
-            const dateCreated = new Date(dateCreatedStr); // Data do Asaas (YYYY-MM-DD)
-            const today = new Date();
-            
-            // Zera as horas para comparar apenas os dias
-            dateCreated.setHours(0,0,0,0);
-            today.setHours(0,0,0,0);
-            
-            const diffTime = Math.abs(today - dateCreated);
-            diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        console.log(`[CANCELAMENTO] Data Criação: ${subData.dateCreated} | Dias: ${diffDays}`);
+
+        let isEligibleForRefund = diffDays <= 7;
+
+        // [CORREÇÃO] Se a assinatura parecer antiga (ex: conta restaurada), verifica se o pagamento é recente
+        if (!isEligibleForRefund) {
+             try {
+                 const paymentsRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subData.id}/payments`, {
+                    headers: { 'access_token': ASAAS_API_KEY }
+                });
+                const paymentsData = await paymentsRes.json();
+                // Filtra apenas pagamentos confirmados
+                const confirmedPayments = (paymentsData.data || []).filter(p => ['CONFIRMED', 'RECEIVED'].includes(p.status));
+                
+                // Se tiver APENAS 1 pagamento confirmado e ele for recente (<= 7 dias), permite estorno
+                if (confirmedPayments.length === 1) {
+                    const paymentDate = new Date(confirmedPayments[0].paymentDate || confirmedPayments[0].dateCreated);
+                    const utcPayment = Date.UTC(paymentDate.getFullYear(), paymentDate.getMonth(), paymentDate.getDate());
+                    const diffPaymentDays = Math.floor((utcNow - utcPayment) / (1000 * 60 * 60 * 24));
+                    
+                    if (diffPaymentDays <= 7) {
+                        console.log("[CANCELAMENTO] Elegível por data do pagamento único (Conta Restaurada).");
+                        isEligibleForRefund = true;
+                    }
+                }
+             } catch(e) { console.error("Erro ao verificar pagamentos extras:", e); }
         }
-        
-        console.log(`[CANCELAMENTO] Data Criação: ${dateCreatedStr} | Dias decorridos: ${diffDays} | Limite: 7`);
 
-        // Se for menor ou igual a 7 dias, aplica estorno total e cancelamento imediato
-        if (diffDays <= 7) {
+        if (isEligibleForRefund) {
             console.log(`[CANCELAMENTO] Direito de arrependimento detectado (${diffDays} dias). Processando estorno para Psi ${psychologist.id}...`);
 
             // A. Busca pagamentos confirmados para estornar

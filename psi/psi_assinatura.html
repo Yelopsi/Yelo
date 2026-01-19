@@ -149,6 +149,26 @@
             if (isVip) {
                 aplicarModoVip(user.plano);
             } else if (user.plano) {
+                // [CORREÇÃO] Mostra área de cancelamento se tiver plano, não for VIP e NÃO estiver cancelado
+                const areaCancel = document.getElementById('area-cancelamento');
+                if (areaCancel) {
+                    if (user.cancelAtPeriodEnd) {
+                        // [CORREÇÃO] Se já estiver cancelado, esconde o botão de cancelar
+                        areaCancel.style.display = 'none';
+                        
+                        // E atualiza o badge de status para "Cancelamento Agendado"
+                        const statusBadge = document.querySelector('.status-badge');
+                        if(statusBadge) {
+                            statusBadge.innerHTML = '<span style="width: 8px; height: 8px; background: #F59E0B; border-radius: 50%;"></span> Cancelamento Agendado';
+                            statusBadge.style.backgroundColor = '#FFFBEB';
+                            statusBadge.style.color = '#B45309';
+                            statusBadge.style.borderColor = '#FCD34D';
+                        }
+                    } else {
+                        areaCancel.style.display = 'block';
+                    }
+                }
+
                 // Usuário tem um plano ativo: REMOVE o badge de promoção
                 const promoBadge = document.getElementById('tag-oferta-essencial');
                 if (promoBadge) {
@@ -205,6 +225,50 @@
         }
     } catch (error) {
         console.error("Erro ao verificar status VIP:", error);
+    }
+
+    // --- LÓGICA DE CANCELAMENTO (ADICIONADO) ---
+    const btnCancel = document.getElementById('btn-cancelar-assinatura');
+    const modalCancel = document.getElementById('modal-cancelamento');
+    const btnCloseModal = document.getElementById('btn-fechar-modal-cancel');
+    const btnConfirmCancel = document.getElementById('btn-confirmar-cancelamento');
+
+    // Abrir Modal
+    if (btnCancel && modalCancel) {
+        btnCancel.onclick = () => modalCancel.style.display = 'flex';
+    }
+    // Fechar Modal
+    if (btnCloseModal && modalCancel) {
+        btnCloseModal.onclick = () => modalCancel.style.display = 'none';
+    }
+    // Confirmar Cancelamento
+    if (btnConfirmCancel) {
+        btnConfirmCancel.onclick = async () => {
+            btnConfirmCancel.disabled = true;
+            btnConfirmCancel.textContent = 'Processando...';
+
+            try {
+                const res = await fetch(`${BASE_URL}/api/psychologists/me/cancel-subscription`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert(data.message || 'Assinatura cancelada com sucesso.');
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Erro ao processar cancelamento.');
+                    btnConfirmCancel.disabled = false;
+                    btnConfirmCancel.textContent = 'Sim, Cancelar';
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro de conexão ao tentar cancelar.');
+                btnConfirmCancel.disabled = false;
+                btnConfirmCancel.textContent = 'Sim, Cancelar';
+            }
+        };
     }
 
     function aplicarModoVip(planName) {
