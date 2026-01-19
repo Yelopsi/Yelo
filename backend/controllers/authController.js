@@ -107,7 +107,8 @@ exports.unifiedGoogleLogin = async (req, res) => {
             marketing_aceito: false
         });
 
-        await sendWelcomeEmail(newPatient, 'patient');
+        // FIX: Envio assíncrono
+        sendWelcomeEmail(newPatient, 'patient').catch(err => console.error("Erro envio email boas-vindas (Google):", err));
         const newToken = generateToken(newPatient.id, 'patient');
 
         return res.status(201).json({
