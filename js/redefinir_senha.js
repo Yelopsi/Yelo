@@ -23,18 +23,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // EM: redefinir_senha.js (Adicione no bloco principal document.addEventListener)
 
     // Lógica para o Ícone de Visualização de Senha
-    document.querySelectorAll('.password-toggle-icon').forEach(icon => {
-        icon.innerHTML = '👁️'; // Placeholder visual simples. Mude para seu SVG/código CSS se necessário.
-        
-        icon.addEventListener('click', () => {
-            const input = icon.previousElementSibling;
+    document.querySelectorAll('.btn-toggle-senha').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const eyeClosed = btn.querySelector('.eye-closed');
+            const eyeOpen = btn.querySelector('.eye-open');
             
             if (input.type === 'password') {
                 input.type = 'text';
-                icon.innerHTML = '👁️'; // Olho aberto
+                if (eyeClosed) eyeClosed.classList.remove('hidden');
+                if (eyeOpen) eyeOpen.classList.add('hidden');
+                btn.style.color = "#1B4332"; // Verde Yelo (Ativo)
             } else {
                 input.type = 'password';
-                icon.innerHTML = '🙈'; // Olho fechado (Use 👁️ ou o código CSS de olho riscado)
+                if (eyeClosed) eyeClosed.classList.add('hidden');
+                if (eyeOpen) eyeOpen.classList.remove('hidden');
+                btn.style.color = "#666"; // Cinza (Inativo)
             }
             input.focus();
         });
