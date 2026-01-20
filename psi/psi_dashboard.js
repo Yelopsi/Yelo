@@ -2772,7 +2772,7 @@ function inicializarBlog(preFetchedData = null) {
     if (document.getElementById('editor-container')) {
         quill = new Quill('#editor-container', {
             theme: 'snow',
-            placeholder: '',
+            placeholder: 'Escreva seu artigo aqui... Use títulos, listas e negrito para facilitar a leitura.',
             modules: {
                 toolbar: [
                     [{ 'header': [2, 3, false] }],
