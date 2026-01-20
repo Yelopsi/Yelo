@@ -215,17 +215,49 @@
                             // Ação de Reativar
                             btnEssencial.onclick = async (e) => {
                                 e.preventDefault();
-                                if(!confirm('Deseja reativar sua assinatura? A cobrança voltará a ocorrer na data prevista.')) return;
                                 
-                                try {
-                                    const res = await fetch(`${BASE_URL}/api/psychologists/me/reactivate-subscription`, {
-                                        method: 'POST',
-                                        headers: { 'Authorization': `Bearer ${token}` }
-                                    });
-                                    const d = await res.json();
-                                    if(res.ok) { alert(d.message); window.location.reload(); }
-                                    else { alert(d.error); window.location.reload(); } // Se der erro (ex: deletado), recarrega para mostrar form
-                                } catch(err) { alert('Erro ao reativar.'); }
+                                // 1. Abre o Modal Personalizado (Yelo Style)
+                                const modalReativacao = document.getElementById('modal-reativacao');
+                                const btnConfirmar = document.getElementById('btn-confirmar-reativacao');
+                                const btnFechar = document.getElementById('btn-fechar-modal-reativacao');
+
+                                if (modalReativacao) {
+                                    modalReativacao.style.display = 'flex';
+
+                                    // Configura o botão de fechar
+                                    btnFechar.onclick = () => modalReativacao.style.display = 'none';
+
+                                    // Configura o botão de confirmar (Clona para remover listeners antigos)
+                                    const novoBtnConfirmar = btnConfirmar.cloneNode(true);
+                                    btnConfirmar.parentNode.replaceChild(novoBtnConfirmar, btnConfirmar);
+
+                                    novoBtnConfirmar.onclick = async () => {
+                                        novoBtnConfirmar.textContent = 'Processando...';
+                                        novoBtnConfirmar.disabled = true;
+
+                                        try {
+                                            const res = await fetch(`${BASE_URL}/api/psychologists/me/reactivate-subscription`, {
+                                                method: 'POST',
+                                                headers: { 'Authorization': `Bearer ${token}` }
+                                            });
+                                            const d = await res.json();
+
+                                            if(res.ok) { 
+                                                showToast('Assinatura reativada com sucesso! 🚀', 'success');
+                                                setTimeout(() => window.location.reload(), 1500);
+                                            } else { 
+                                                // Tratamento do Erro 400 (Assinatura não encontrada/inválida)
+                                                console.error("Erro reativação:", d);
+                                                showToast(d.error || 'Não foi possível reativar. Por favor, assine novamente.', 'error');
+                                                // Fecha o modal e recarrega para atualizar o estado (talvez precise assinar do zero)
+                                                setTimeout(() => window.location.reload(), 2000);
+                                            }
+                                        } catch(err) { 
+                                            showToast('Erro de conexão ao reativar.', 'error');
+                                            modalReativacao.style.display = 'none';
+                                        }
+                                    };
+                                }
                             };
                         } else {
                             // Modo: Ativo Normal
@@ -357,6 +389,32 @@
         const headerDesc = document.querySelector('.main-header p');
         if (headerTitle) headerTitle.textContent = 'Sua Assinatura VIP';
         if (headerDesc) headerDesc.textContent = 'Você possui acesso especial concedido pela Yelo.';
+    }
+
+    // Helper para Toasts (Caso não exista globalmente)
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        if (!container) return alert(message); // Fallback
+
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        // Ícone baseado no tipo
+        const icon = type === 'success' ? '✅' : '❌';
+        toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+        
+        container.appendChild(toast);
+        
+        // Animação de entrada
+        requestAnimationFrame(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateX(0)';
+        });
+
+        // Remove após 3s
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
     }
 })();
 </script>
