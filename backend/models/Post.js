@@ -1,4 +1,4 @@
-// models/Post.js (CORRIGIDO PARA MAPEAMENTO DE DATA)
+// models/Post.js
 module.exports = (sequelize, DataTypes) => {
     const Post = sequelize.define('Post', {
         titulo: {
@@ -26,14 +26,10 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: false,
             field: 'psychologist_id' // Mapeia para a coluna correta no banco (snake_case)
         },
-        // --- ADICIONE ISTO AQUI: ---
         curtidas: {
             type: DataTypes.INTEGER,
             defaultValue: 0
         },
-        // --- CORREÇÃO DO ERRO 500 (ORDER BY) ---
-        // Definimos explicitamente os campos de data para garantir que o Sequelize
-        // saiba exatamente qual coluna do banco usar.
         createdAt: {
             type: DataTypes.DATE,
             field: 'created_at'
@@ -42,16 +38,11 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.DATE,
             field: 'updated_at'
         }
-        // ---------------------------
     }, {
         tableName: 'posts', 
         timestamps: true,
-        
-        // --- AQUI ESTÁ A CORREÇÃO MÁGICA ---
-        // Dizemos ao Sequelize: "Quando você quiser usar createdAt, use a coluna created_at do banco"
         createdAt: 'created_at',
         updatedAt: 'updated_at'
-        // -----------------------------------
     });
 
     Post.associate = (models) => {
