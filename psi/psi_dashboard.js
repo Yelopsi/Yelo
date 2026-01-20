@@ -8,15 +8,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Variável para guardar qual plano o usuário está tentando assinar no modal
     let currentPlanAttempt = '';
 
-    // --- APLICA ZOOM SALVO AO INICIAR (Lógica Senior de Escala) ---
+    // --- APLICA ZOOM SALVO AO INICIAR ---
     const savedZoom = localStorage.getItem('yelo_dashboard_zoom');
     if (savedZoom) {
-        const val = parseFloat(savedZoom);
-        // Aplica a escala e compensa a largura/altura para preencher a tela (Reflow)
-        document.body.style.transform = `scale(${val})`;
-        document.body.style.transformOrigin = "top left";
-        document.body.style.width = `${100 / val}%`;
-        document.body.style.height = `${100 / val}vh`;
+        document.body.style.zoom = savedZoom;
     }
 
     // Variável global temporária para saber qual botão disparou a ação
@@ -1344,27 +1339,17 @@ document.addEventListener('DOMContentLoaded', function() {
             // Inicializa display
             updateZoomUI();
 
-            // A FUNÇÃO MÁGICA: Aplica a escala e corrige a largura
             const setZoom = (val) => {
-                // 1. Limpa qualquer 'zoom' CSS antigo que possa causar conflito
-                document.body.style.zoom = ''; 
+                // Limpa propriedades de transform (caso existam de versões anteriores)
+                document.body.style.transform = '';
+                document.body.style.transformOrigin = '';
+                document.body.style.width = '';
+                document.body.style.height = '';
 
-                // 2. Aplica a redução/aumento visual
-                document.body.style.transform = `scale(${val})`;
-                document.body.style.transformOrigin = "top left"; // Fixo no topo esquerdo
-                
-                // 3. A REGRA DE OURO: Compensa a largura
-                // Se o zoom é 0.8 (pequeno), a largura vira 125% para preencher a tela branca
-                document.body.style.width = `${100 / val}%`;
-                
-                // 4. Ajusta altura para não cortar o rodapé em telas grandes
-                if (val < 1) {
-                   document.body.style.height = `${100 / val}vh`;
-                } else {
-                   document.body.style.height = 'auto';
-                }
+                // Aplica o zoom nativo (Chrome/Edge/Safari)
+                document.body.style.zoom = val;
 
-                // Salva no navegador para a próxima visita
+                // Salva no navegador
                 localStorage.setItem('yelo_dashboard_zoom', val);
                 updateZoomUI();
             };
