@@ -58,38 +58,16 @@ module.exports = {
             // [CORREÇÃO] Obtém o ID corretamente (suporta req.psychologist do middleware)
             const userId = req.psychologist?.id || req.user?.id || req.userId;
 
-            // Tenta buscar usando 'psychologistId' (Padrão Sequelize CamelCase)
-            try {
-                const posts = await Post.findAll({
-                    where: { psychologistId: userId },
-                    order: [['createdAt', 'DESC']],
-                    limit: parseInt(limit, 10),
-                    offset: offset
-                });
-                return res.json(posts);
-            } catch (e1) {
-                // Fallback 1: Tenta 'psychologist_id' (Snake Case - Banco legado)
-                try {
-                    const posts = await Post.findAll({
-                        where: { psychologist_id: userId },
-                        order: [['createdAt', 'DESC']],
-                        limit: parseInt(limit, 10),
-                        offset: offset
-                    });
-                    return res.json(posts);
-                } catch (e2) {
-                    // Fallback 2: Tenta 'PsychologistId' (Pascal Case) e 'created_at'
-                    const posts = await Post.findAll({
-                        where: { PsychologistId: userId },
-                        order: [['created_at', 'DESC']],
-                        limit: parseInt(limit, 10),
-                        offset: offset
-                    });
-                    return res.json(posts);
-                }
-            }
+            // Uso padrão do Sequelize (O modelo Post.js já mapeia created_at para createdAt)
+            const posts = await Post.findAll({
+                where: { psychologistId: userId },
+                order: [['createdAt', 'DESC']],
+                limit: parseInt(limit, 10),
+                offset: offset
+            });
+            return res.json(posts);
         } catch (error) {
-            console.error(error);
+            console.error("Erro ao listar posts:", error);
             res.status(500).json({ error: "Erro interno ao listar posts." });
         }
     },
@@ -107,28 +85,17 @@ module.exports = {
                 imagem_url = imagensPadrao[Math.floor(Math.random() * imagensPadrao.length)];
             }
 
-            let novoPost;
-            // Tenta criar com 'psychologistId'
-            try {
-                novoPost = await Post.create({
-                    titulo, conteudo, imagem_url,
-                    psychologistId: userId
-                });
-            } catch (e1) {
-                // Fallback: Tenta 'psychologist_id'
-                try {
-                    novoPost = await Post.create({ titulo, conteudo, imagem_url, psychologist_id: userId });
-                } catch (e2) {
-                    // Fallback: Tenta 'PsychologistId'
-                    novoPost = await Post.create({ titulo, conteudo, imagem_url, PsychologistId: userId });
-                }
-            }
+            const novoPost = await Post.create({
+                titulo,
+                conteudo,
+                imagem_url,
+                psychologistId: userId
+            });
 
             // --- GAMIFICATION HOOK ---
-            // Publicar Artigo (50 pts, max 1/dia)
             gamificationService.processAction(userId, 'blog_post').catch(err => console.error("Gamification hook error:", err));
 
-            res.status(201).json(novoPost);
+            return res.status(201).json(novoPost);
         } catch (error) {
             console.error("Erro criarPost:", error);
             res.status(500).json({ error: "Erro ao salvar." });
@@ -141,17 +108,10 @@ module.exports = {
             const { titulo, conteudo, imagem_url } = req.body;
             const userId = req.psychologist?.id || req.user?.id || req.userId;
             
-            // Tenta encontrar o post com as variações de ID
-            let post = await Post.findOne({ where: { id, psychologistId: userId } })
-                .catch(() => Post.findOne({ where: { id, psychologist_id: userId } }))
-                .catch(() => Post.findOne({ where: { id, PsychologistId: userId } }));
+            const post = await Post.findOne({ where: { id, psychologistId: userId } });
 
             if (!post) {
-                // Última tentativa: busca só pelo ID e verifica o dono manualmente (se o banco permitir leitura)
-                post = await Post.findByPk(id);
-                if (!post || (post.psychologistId !== userId && post.psychologist_id !== userId && post.PsychologistId !== userId)) {
-                    return res.status(404).json({ error: "Não encontrado ou sem permissão." });
-                }
+                return res.status(404).json({ error: "Não encontrado ou sem permissão." });
             }
 
             await post.update({ titulo, conteudo, imagem_url });
@@ -166,13 +126,7 @@ module.exports = {
             const { id } = req.params;
             const userId = req.psychologist?.id || req.user?.id || req.userId;
             
-            // Tenta deletar com as variações
-            let deleted = await Post.destroy({ where: { id, psychologistId: userId } })
-                .catch(() => 0);
-            
-            if (!deleted) deleted = await Post.destroy({ where: { id, psychologist_id: userId } }).catch(() => 0);
-            if (!deleted) deleted = await Post.destroy({ where: { id, PsychologistId: userId } }).catch(() => 0);
-
+            const deleted = await Post.destroy({ where: { id, psychologistId: userId } });
             if (!deleted) return res.status(404).json({ error: "Post não encontrado ou não excluído." });
             
             res.json({ message: "Excluído." });

@@ -79,16 +79,6 @@ if (!db.SystemLog) {
     });
 }
 
-// --- FIX: Patch Post Model (Garante que o modelo exista para o Blog) ---
-if (!db.Post) {
-    console.log("[FIX] Defining Post model manually (Fallback).");
-    db.Post = db.sequelize.define('Post', {
-        titulo: DataTypes.STRING,
-        conteudo: DataTypes.TEXT,
-        imagem_url: DataTypes.STRING
-    });
-}
-
 // --- HOOK GLOBAL: DESARQUIVAMENTO AUTOMÁTICO ---
 // Se um psicólogo ou paciente enviar mensagem, a conversa é desarquivada (status = 'active')
 if (db.Message && db.Conversation) {
@@ -1570,6 +1560,23 @@ const startServer = async () => {
         await db.sequelize.query(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
         await db.sequelize.query(`ALTER TABLE "ForumPosts" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
         await db.sequelize.query(`ALTER TABLE "ForumComments" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
+
+        // --- FIX: GARANTIR TABELA POSTS (BLOG) CORRETA ---
+        // Cria a tabela posts compatível com o modelo models/Post.js (created_at, updated_at, psychologistId)
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "posts" (
+                "id" SERIAL PRIMARY KEY,
+                "titulo" VARCHAR(255) NOT NULL,
+                "conteudo" TEXT NOT NULL,
+                "imagem_url" VARCHAR(500),
+                "tags" VARCHAR(255),
+                "slug" VARCHAR(255) UNIQUE,
+                "psychologistId" INTEGER NOT NULL,
+                "curtidas" INTEGER DEFAULT 0,
+                "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
 
         // --- FIX: TABELA DE LOGS DO SISTEMA (CRÍTICO PARA PAGAMENTOS) ---
         await db.sequelize.query(`
