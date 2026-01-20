@@ -579,6 +579,8 @@
                 const data = await res.json();
 
                 if(res.ok) {
+                    // Fecha o modal ANTES do confete para não obstruir a visão
+                    modal.style.display = 'none';
                     showToast('Pagamento aprovado! Bem-vindo(a) à Yelo! 🚀', 'success');
                     lancarConfetes();
                     setTimeout(() => window.location.reload(), 2000);
@@ -593,6 +595,23 @@
                 novoBtnPagar.disabled = false;
             }
         };
+
+        // --- MÁSCARAS DE INPUT (Formatação Automática) ---
+        if (typeof IMask !== 'undefined') {
+            const cardInput = document.getElementById('card-number');
+            const expiryInput = document.getElementById('card-expiry');
+            const ccvInput = document.getElementById('card-ccv');
+            const cpfInput = document.getElementById('card-holder-cpf');
+            const phoneInput = document.getElementById('card-holder-phone');
+            const cepInput = document.getElementById('card-holder-cep');
+
+            if(cardInput) IMask(cardInput, { mask: '0000 0000 0000 0000' });
+            if(expiryInput) IMask(expiryInput, { mask: '00/0000' }); // MM/AAAA
+            if(ccvInput) IMask(ccvInput, { mask: '0000' });
+            if(cpfInput) IMask(cpfInput, { mask: '000.000.000-00' });
+            if(phoneInput) IMask(phoneInput, { mask: '(00) 00000-0000' });
+            if(cepInput) IMask(cepInput, { mask: '00000-000' });
+        }
     }
 
     // Inicializa a lógica assim que a página carrega
