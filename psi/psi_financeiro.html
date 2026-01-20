@@ -129,15 +129,15 @@
 
 <!-- MODAL: EXPORTAR EXTRATO -->
 <div id="modal-export" class="custom-modal-overlay" style="display: none;">
-    <div class="custom-modal-box" style="max-width: 400px;">
+    <div class="custom-modal-box" style="max-width: 500px; padding: 40px;">
         <button class="modal-close-btn" id="close-export-modal"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
         <h3 style="margin-top: 0; color: #1B4332;">Exportar Extrato</h3>
         <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Selecione o mês de referência para o relatório.</p>
         
         <form id="form-export">
             <div class="form-group">
-                <label>Mês de Referência</label>
-                <input type="month" id="export-month" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc;">
+                <label style="font-size: 1rem; font-weight: 600; color: #1B4332; margin-bottom: 10px; display: block;">Mês de Referência</label>
+                <input type="month" id="export-month" required style="width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #e0e0e0; font-size: 1.1rem; background-color: #f9f9f9; color: #333; transition: border-color 0.3s;">
             </div>
             <div class="form-actions" style="justify-content: flex-end; margin-top: 20px; display: flex; gap: 10px;">
                 <button type="button" class="btn btn-secundario" id="cancel-export-modal">Cancelar</button>
@@ -267,12 +267,13 @@
             // Gera CSV
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
             csvContent += `Mês de referência: ${selectedMonth}\n`;
-            csvContent += "Data,Descrição,Valor,Tipo\n";
+            csvContent += "Data;Descrição;Valor;Tipo\n";
 
             transactions.forEach(t => {
                 const dateStr = new Date(t.date).toLocaleDateString('pt-BR');
                 const desc = t.desc ? t.desc.replace(/"/g, '""') : "";
-                const row = `${dateStr},"${desc}",${t.value.toFixed(2)},${t.type}`;
+                const valStr = t.value.toFixed(2).replace('.', ',');
+                const row = `${dateStr};"${desc}";"${valStr}";${t.type}`;
                 csvContent += row + "\n";
             });
 
