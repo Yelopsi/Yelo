@@ -11,7 +11,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- APLICA ZOOM SALVO AO INICIAR ---
     const savedZoom = localStorage.getItem('yelo_dashboard_zoom');
     if (savedZoom) {
-        document.body.style.zoom = savedZoom;
+        const val = parseFloat(savedZoom);
+        document.body.style.maxWidth = 'none'; // <--- O PULO DO GATO
+        document.body.style.transform = `scale(${val})`;
+        document.body.style.transformOrigin = "top left";
+        document.body.style.width = `${100 / val}%`;
+        document.body.style.height = val < 1 ? `${100 / val}vh` : 'auto';
     }
 
     // Variável global temporária para saber qual botão disparou a ação
@@ -1339,17 +1344,30 @@ document.addEventListener('DOMContentLoaded', function() {
             // Inicializa display
             updateZoomUI();
 
+            // Atualize a função setZoom dentro de inicializarVisaoGeral
             const setZoom = (val) => {
-                // Limpa propriedades de transform (caso existam de versões anteriores)
-                document.body.style.transform = '';
-                document.body.style.transformOrigin = '';
-                document.body.style.width = '';
-                document.body.style.height = '';
+                // 1. Limpa conflitos antigos
+                document.body.style.zoom = ''; 
 
-                // Aplica o zoom nativo (Chrome/Edge/Safari)
-                document.body.style.zoom = val;
+                // 2. Destrava o limite do CSS (ESSA É A CORREÇÃO DO FUNDO BRANCO)
+                document.body.style.maxWidth = 'none';
+                document.body.style.width = 'auto'; // Reseta antes de calcular
 
-                // Salva no navegador
+                // 3. Aplica a escala visual
+                document.body.style.transform = `scale(${val})`;
+                document.body.style.transformOrigin = "top left";
+                
+                // 4. Compensa a largura e altura
+                // Ex: Se zoom 0.8, largura vira 125%
+                document.body.style.width = `${100 / val}%`;
+                
+                // Ajusta altura para evitar corte no rodapé
+                if (val < 1) {
+                   document.body.style.height = `${100 / val}vh`;
+                } else {
+                   document.body.style.height = 'auto';
+                }
+
                 localStorage.setItem('yelo_dashboard_zoom', val);
                 updateZoomUI();
             };
