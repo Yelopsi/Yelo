@@ -36,10 +36,12 @@
         <div class="widget-header-row">
             <h3 style="margin: 0;">Agenda</h3>
             <div class="calendar-legend">
-                <span class="legend-item"><span class="dota style="background
+                <span class="legend-item"><span class="dot" style="background-color: #1B4332;"></span> Agendado</span>
+                <span class="legend-item"><span class="dot" style="background-color: #9e9e9e;"></span> Realizado</span>
+                <span class="legend-item"><span class="dot" style="background-color: #d32f2f;"></span> Falta</span>
+            </div>
         </div>
         <div id="calendar-wrapper"></div>
-    </div>
     </div>
 </div>
 
@@ -335,13 +337,15 @@
                 slotDuration: '01:00:00', // Slots de 1 hora para ficar mais limpo
                 height: isDesktop ? '100%' : 'auto', // Desktop: 100% para sticky header | Mobile: Auto
                 nowIndicator: true, // Indicador de hora atual
-                titleFormat: mobile ? { year: 'numeric', month: 'short', day: 'nu
+                titleFormat: mobile ? { year: 'numeric', month: 'short', day: 'numeric' } : undefined,
+                
                 // --- CONFIGURAÇÕES MOBILE ---
                 windowResize: function(arg) {
                     const width = window.innerWidth;
                     const isSmall = width < 768;
                     calendar.setOption('height', width >= 992 ? '100%' : 'auto');
 
+                    if (isSmall) {
                         calendar.changeView('timeGridDay');
                         calendar.setOption('headerToolbar', {
                             left: 'prev,next',
@@ -371,7 +375,8 @@
                     color: evt.status === 'scheduled' ? '#1B4332' : (evt.status === 'done' ? '#9e9e9e' : '#d32f2f')
                 })),
                 // Clique em um horário vazio
-                dateClick: 
+                dateClick: function(info) {
+                    const date = info.date;
                     // Ajusta fuso horário local para os inputs
                     const dateStr = date.toLocaleDateString('en-CA'); // YYYY-MM-DD
                     const timeStr = date.toTimeString().split(' ')[0].substring(0, 5); // HH:MM
