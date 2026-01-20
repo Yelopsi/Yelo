@@ -1930,27 +1930,17 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 /* ==========================================================================
    CORREÇÃO EDITOR QUILL (BLOG)
    ========================================================================== */
-/* FORÇA BRUTA: Garante que o placeholder suma quando houver texto digitado */
-.ql-editor:not(.ql-blank)::before { 
-    display: none !important; 
-    content: "" !important;
-    opacity: 0 !important;
+/* Garante que o placeholder suma quando houver texto */
+.ql-editor:not(.ql-blank)::before {
+    display: none !important;
+    content: none !important;
 }
 
-/* ==========================================================================
-   CORREÇÃO EDITOR QUILL (BLOG)
-   ========================================================================== */
-/* FORÇA BRUTA: Garante que o placeholder suma quando houver texto digitado */
-.ql-editor:not(.ql-blank)::before { 
-    display: none !important; 
-    content: "" !important;
-    opacity: 0 !important;
-}
-
-/* Ajuste de cor do placeholder para não confundir com texto real */
+/* Estilo do Placeholder */
 .ql-editor.ql-blank::before {
     color: #a0aec0 !important;
     font-style: italic;
+    pointer-events: none; /* Permite clicar através do placeholder */
 }
 /* ==========================================================================
    CSS EXTRA: LAYOUT DO PERFIL PÚBLICO (Recuperação)

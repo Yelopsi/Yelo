@@ -2782,6 +2782,16 @@ function inicializarBlog(preFetchedData = null) {
                 ]
             }
         });
+
+        // FIX: Força a atualização da classe ql-blank ao digitar
+        // Isso resolve o problema da máscara sobrescrevendo o texto
+        quill.on('text-change', function() {
+            if (quill.getText().trim().length > 0) {
+                quill.root.classList.remove('ql-blank');
+            } else {
+                quill.root.classList.add('ql-blank');
+            }
+        });
     }
 
     // --- LIMITE DE CARACTERES DO TÍTULO (50) ---
@@ -3033,9 +3043,11 @@ function inicializarBlog(preFetchedData = null) {
 
             div.querySelector('.btn-editar').onclick = () => carregarParaEdicao(post);
             div.querySelector('.btn-excluir').onclick = () => {
-                if(confirm(`Tem certeza que deseja apagar o artigo "${post.titulo}"? Essa ação não pode ser desfeita.`)) {
-                    deletarArtigo(post.id);
-                }
+                abrirModalConfirmacaoPersonalizado(
+                    'Excluir Artigo',
+                    `Tem certeza que deseja apagar o artigo "<strong>${post.titulo}</strong>"?<br>Essa ação não pode ser desfeita.`,
+                    () => deletarArtigo(post.id)
+                );
             };
 
             // Torna o card clicável para abrir o post público
