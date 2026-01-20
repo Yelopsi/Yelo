@@ -1926,28 +1926,6 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     border-top: 6px solid #1f2937;
 }
 }
-
-/* ==========================================================================
-   CORREÇÃO EDITOR QUILL (BLOG)
-   ========================================================================== */
-
-/* 1. GARANTIA: Se não tiver a classe .ql-blank, esconde o placeholder à força */
-.ql-editor:not(.ql-blank)::before {
-    display: none !important;
-    content: "" !important;
-}
-
-/* 2. Estilo do Placeholder (Só aparece quando tem .ql-blank) */
-.ql-editor.ql-blank::before {
-    color: #a0aec0 !important;
-    font-style: italic;
-    pointer-events: none; /* Garante que o clique passe para o editor */
-    position: absolute;
-    left: 15px;
-    right: 15px;
-    content: attr(data-placeholder); /* Garante que o texto venha do atributo */
-    display: block !important;
-}
 /* ==========================================================================
    CSS EXTRA: LAYOUT DO PERFIL PÚBLICO (Recuperação)
    Cole isso no final do arquivo css/psi_dashboard.css
