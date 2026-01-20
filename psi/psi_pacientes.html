@@ -1,21 +1,29 @@
 <div class="main-header">
     <div class="header-content">
-        <h1>Meus Pacientes</h1>
-        <p>Gerencie seus atendimentos e configure a Assistente Pessoal da Yelo.</p>
+        <h1>Gestão Clínica</h1>
+        <p>Organize seus pacientes, agenda e vida financeira em um só lugar.</p>
     </div>
     <div class="dashboard-header-actions">
-        <button id="btn-add-patient" class="btn" style="background-color: #fff; color: #1B4332; display: flex; align-items: center; gap: 8px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-            <span style="font-size: 1.2rem; line-height: 0;">+</span> Novo Paciente
+        <button id="btn-main-action" class="btn" style="background-color: #fff; color: #1B4332; display: flex; align-items: center; gap: 8px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <span style="font-size: 1.2rem; line-height: 0;">+</span> <span id="btn-action-text">Novo Paciente</span>
         </button>
     </div>
 </div>
 
-<div class="patients-layout-grid">
+<!-- NAVEGAÇÃO POR ABAS -->
+<div class="tabs-nav-simple">
+    <button class="tab-btn-simple active" data-tab="agenda">Agenda & Pacientes</button>
+    <button class="tab-btn-simple" data-tab="financeiro">Gestão Financeira</button>
+</div>
+
+<!-- === ABA 1: AGENDA & PACIENTES === -->
+<div id="view-agenda" class="tab-view">
+    <div class="patients-layout-grid">
     
     <!-- COLUNA 1: LISTA DE PACIENTES -->
     <div class="widget" style="display: flex; flex-direction: column; height: 100%;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h3 style="margin: 0;">Carteira de Pacientes</h3>
+        <div class="widget-header-row">
+            <h3 class="widget-title">Carteira de Pacientes</h3>
             <span class="badge-count" id="patient-count">0</span>
         </div>
 
@@ -33,21 +41,91 @@
 
     <!-- COLUNA 2: CALENDÁRIO -->
     <div class="widget">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div class="widget-header-row">
             <h3 style="margin: 0;">Agenda</h3>
             <div class="calendar-legend">
-                <span class="legend-item"><span class="dot available"></span> Livre</span>
-                <span class="legend-item"><span class="dot busy"></span> Ocupado</span>
+                <span class="legend-item"><span class="dot available"></span> Realizado</span>
+                <span class="legend-item"><span class="dot busy"></span> Agendado</span>
+                <span class="legend-item"><span class="dot" style="background:#e0e0e0;"></span> Falta</span>
             </div>
         </div>
         <div id="calendar-wrapper"></div>
+    </div>
+    </div>
+</div>
+
+<!-- === ABA 2: GESTÃO FINANCEIRA === -->
+<div id="view-financeiro" class="tab-view" style="display: none;">
+    
+    <!-- Filtro de Período -->
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 20px; align-items: center; gap: 10px;">
+        <label style="color: #666; font-size: 0.9rem;">Período:</label>
+        <select id="fin-period-filter" class="form-control" style="width: auto; padding: 8px 15px; border-radius: 8px;">
+            <option value="current">Este Mês</option>
+            <option value="last">Mês Passado</option>
+            <option value="year">Este Ano</option>
+        </select>
+    </div>
+
+    <!-- Cards de KPI -->
+    <div class="financial-grid">
+        <div class="fin-card">
+            <h4>Receita Realizada</h4>
+            <div class="fin-value positive" id="fin-income">R$ 0,00</div>
+            <small style="color: #888;">Sessões pagas/realizadas</small>
+        </div>
+        <div class="fin-card">
+            <h4>A Receber (Previsto)</h4>
+            <div class="fin-value neutral" id="fin-pending">R$ 0,00</div>
+            <small style="color: #888;">Agendamentos futuros</small>
+        </div>
+        <div class="fin-card">
+            <h4>Despesas</h4>
+            <div class="fin-value negative" id="fin-expenses">R$ 0,00</div>
+            <small style="color: #888;">Gastos do consultório</small>
+        </div>
+        <div class="fin-card" style="background: #f0fdf4; border-color: #bbf7d0;">
+            <h4>Saldo Líquido</h4>
+            <div class="fin-value positive" id="fin-balance">R$ 0,00</div>
+            <small style="color: #166534;">Lucro do período</small>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;" class="fin-charts-row">
+        <!-- Gráfico -->
+        <div class="widget">
+            <h3 class="widget-title">Fluxo de Caixa</h3>
+            <div style="height: 250px;">
+                <canvas id="financeChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Últimas Movimentações -->
+        <div class="fin-table-container">
+            <h3 class="widget-title" style="margin-bottom: 15px;">Extrato Recente</h3>
+            <div style="overflow-y: auto; max-height: 250px;">
+                <table class="fin-table">
+                    <thead>
+                        <tr>
+                            <th>Descrição</th>
+                            <th>Data</th>
+                            <th>Valor</th>
+                            <th>Tipo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fin-transactions-body">
+                        <!-- Injetado via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
 <!-- MODAL: ADICIONAR/EDITAR PACIENTE -->
 <div id="modal-patient" class="custom-modal-overlay" style="display: none;">
     <div class="custom-modal-box">
-        <button class="modal-close-btn" id="close-patient-modal">✕</button>
+        <button class="modal-close-btn" id="close-patient-modal"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
         <h3 id="modal-patient-title" style="margin-top: 0; color: #1B4332;">Novo Paciente</h3>
         
         <form id="form-patient">
@@ -66,14 +144,24 @@
                     <label>E-mail (Opcional)</label>
                     <input type="email" id="p-email" placeholder="joao@email.com">
                 </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Valor da Sessão (R$)</label>
+                    <input type="number" id="p-session-value" placeholder="0,00" step="0.01" required>
+                </div>
             </div>
 
-            <div class="form-group highlight-box" style="margin-top: 10px;">
-                <div style="display: flex; align-items: flex-start; gap: 10px;">
-                    <input type="checkbox" id="p-automated-msg" checked style="margin-top: 5px;">
+            <div class="form-group highlight-box assistant-card" style="margin-top: 15px;">
+                <div style="display: flex; align-items: flex-start; gap: 15px;">
+                    <div class="assistant-icon">🤖</div>
                     <div>
-                        <label for="p-automated-msg" style="font-weight: bold; color: #1B4332; cursor: pointer;">Ativar Assistente Pessoal Yelo</label>
-                        <p style="font-size: 0.85rem; color: #666; margin: 5px 0 0 0;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                            <label for="p-automated-msg" style="font-weight: bold; color: #1B4332; cursor: pointer; font-size: 1rem;">Ativar Assistente Pessoal</label>
+                            <label class="switch-toggle">
+                                <input type="checkbox" id="p-automated-msg" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <p style="font-size: 0.85rem; color: #555; margin: 8px 0 0 0; line-height: 1.4;">
                             Enviaremos lembretes automáticos de sessão e confirmação de horário via WhatsApp.
                         </p>
                     </div>
@@ -95,17 +183,163 @@
     </div>
 </div>
 
+<!-- MODAL: AGENDAMENTO (NOVO) -->
+<div id="modal-appointment" class="custom-modal-overlay" style="display: none;">
+    <div class="custom-modal-box">
+        <button class="modal-close-btn" id="close-appointment-modal"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        <h3 id="modal-appointment-title" style="margin-top: 0; color: #1B4332;">Novo Agendamento</h3>
+        
+        <form id="form-appointment">
+            <div class="form-group">
+                <label>Paciente</label>
+                <select id="appt-patient" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; background-color: #f9fafb;">
+                    <option value="">Selecione...</option>
+                    <!-- Preenchido via JS -->
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group" style="flex: 1;">
+                    <label>Data</label>
+                    <input type="date" id="appt-date" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box;">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Horário</label>
+                    <input type="time" id="appt-time" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box;">
+                </div>
+            </div>
+
+            <div class="form-group highlight-box assistant-card" style="margin-top: 15px;">
+                <div style="display: flex; align-items: flex-start; gap: 15px;">
+                    <div class="assistant-icon">🔁</div>
+                    <div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                            <label for="appt-recurrence" style="font-weight: bold; color: #1B4332; cursor: pointer; font-size: 1rem;">Repetir Semanalmente</label>
+                            <label class="switch-toggle">
+                                <input type="checkbox" id="appt-recurrence">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <p style="font-size: 0.85rem; color: #555; margin: 8px 0 0 0; line-height: 1.4;">
+                            O agendamento se repetirá automaticamente toda semana neste horário.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions" style="justify-content: flex-end; margin-top: 25px; display: flex; gap: 10px;">
+                <button type="button" class="btn btn-secundario" id="cancel-appointment-modal">Cancelar</button>
+                <button type="submit" class="btn btn-principal">Agendar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: DETALHES DA SESSÃO (Status e Ações) -->
+<div id="modal-event-details" class="custom-modal-overlay" style="display: none;">
+    <div class="custom-modal-box">
+        <button class="modal-close-btn" id="close-event-modal"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        <h3 style="margin-top: 0; color: #1B4332;">Detalhes da Sessão</h3>
+        
+        <div style="margin-bottom: 20px;">
+            <h2 id="evt-patient-name" style="margin: 0; font-size: 1.4rem; color: #333;">Nome do Paciente</h2>
+            <p id="evt-time-info" style="color: #666; margin: 5px 0;">Data e Hora</p>
+        </div>
+
+        <div style="background: #f9f9f9; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+            <label style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 8px;">Status do Atendimento:</label>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn-status" data-status="done" style="flex: 1; background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                    ✅ Realizado
+                </button>
+                <button class="btn-status" data-status="missed" style="flex: 1; background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                    ❌ Falta
+                </button>
+                <button class="btn-status" data-status="rescheduled" style="flex: 1; background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                    🗓️ Reagendar
+                </button>
+            </div>
+        </div>
+
+        <!-- Opções condicionais -->
+        <div id="evt-options-done" style="display: none; margin-bottom: 20px;">
+            <div class="form-group">
+                <label>Valor Cobrado (R$)</label>
+                <input type="number" id="evt-value" class="form-control" style="width: 100%; box-sizing: border-box;">
+            </div>
+        </div>
+
+        <div id="evt-options-missed" style="display: none; margin-bottom: 20px;">
+            <div class="form-group-checkbox" style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" id="evt-charge-missed">
+                <label for="evt-charge-missed" style="margin: 0;">Cobrar sessão mesmo com falta?</label>
+            </div>
+        </div>
+
+        <div class="form-actions" style="justify-content: flex-end; display: flex; gap: 10px;">
+            <button type="button" id="btn-save-event-status" class="btn btn-principal">Salvar Status</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: LANÇAR DESPESA -->
+<div id="modal-expense" class="custom-modal-overlay" style="display: none;">
+    <div class="custom-modal-box">
+        <button class="modal-close-btn" id="close-expense-modal"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        <h3 style="margin-top: 0; color: #d32f2f;">Nova Despesa</h3>
+        
+        <form id="form-expense">
+            <div class="form-group">
+                <label>Descrição</label>
+                <input type="text" id="exp-desc" required placeholder="Ex: Aluguel, Internet, Supervisão...">
+            </div>
+            <div class="form-row">
+                <div class="form-group" style="flex: 1;">
+                    <label>Valor (R$)</label>
+                    <input type="number" id="exp-value" required step="0.01" placeholder="0,00">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Data</label>
+                    <input type="date" id="exp-date" required>
+                </div>
+            </div>
+            <div class="form-actions" style="justify-content: flex-end; margin-top: 20px;">
+                <button type="submit" class="btn btn-principal" style="background-color: #d32f2f;">Registrar Saída</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     // --- LÓGICA DO FRONTEND (MOCK) ---
     (function() {
+        let currentTab = 'agenda';
+
         // Dados Mockados
         let patients = [
-            { id: 1, name: 'Ana Clara Souza', phone: '(11) 99999-1111', automated: true },
-            { id: 2, name: 'Bruno Mendes', phone: '(11) 98888-2222', automated: false },
-            { id: 3, name: 'Carla Dias', phone: '(21) 97777-3333', automated: true }
+            { id: 1, name: 'Ana Clara Souza', phone: '(11) 99999-1111', automated: true, sessionValue: 150 },
+            { id: 2, name: 'Bruno Mendes', phone: '(11) 98888-2222', automated: false, sessionValue: 200 },
+            { id: 3, name: 'Carla Dias', phone: '(21) 97777-3333', automated: true, sessionValue: 180 }
+        ];
+        
+        // Eventos com status: 'scheduled', 'done', 'missed'
+        let events = [
+            { id: 'e1', title: 'Ana Clara', start: '2026-01-20T10:00:00', end: '2026-01-20T11:00:00', patientId: 1, status: 'scheduled', value: 150 },
+            { id: 'e2', title: 'Bruno M.', start: '2026-01-19T14:00:00', end: '2026-01-19T15:00:00', patientId: 2, status: 'done', value: 200 },
+            { id: 'e3', title: 'Carla Dias', start: '2026-01-21T09:00:00', end: '2026-01-21T10:00:00', patientId: 3, status: 'scheduled', value: 180 }
+        ];
+        
+        let expenses = [
+            { id: 'ex1', desc: 'Supervisão', value: 250, date: '2026-01-15' },
+            { id: 'ex2', desc: 'Internet', value: 100, date: '2026-01-10' }
         ];
 
         // Elementos DOM
+        const btnMainAction = document.getElementById('btn-main-action');
+        const btnActionText = document.getElementById('btn-action-text');
+        const tabBtns = document.querySelectorAll('.tab-btn-simple');
+        const views = document.querySelectorAll('.tab-view');
+
         const listContainer = document.getElementById('patient-list');
         const countBadge = document.getElementById('patient-count');
         const searchInput = document.getElementById('search-patient');
@@ -113,6 +347,50 @@
         const form = document.getElementById('form-patient');
         const pIdInput = document.getElementById('p-id');
         const btnDelete = document.getElementById('btn-delete-patient');
+
+        // Elementos do Modal de Agendamento
+        const modalAppt = document.getElementById('modal-appointment');
+        const formAppt = document.getElementById('form-appointment');
+        const selectPatient = document.getElementById('appt-patient');
+
+        // Elementos Financeiros
+        const modalEvent = document.getElementById('modal-event-details');
+        const modalExpense = document.getElementById('modal-expense');
+
+        // --- 1. CONTROLE DE ABAS ---
+        tabBtns.forEach(btn => {
+            btn.onclick = () => {
+                const target = btn.dataset.tab;
+                currentTab = target;
+                
+                // Atualiza UI das abas
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Troca Views
+                views.forEach(v => v.style.display = 'none');
+                document.getElementById(`view-${target}`).style.display = 'block';
+
+                // Atualiza Botão Principal
+                if (target === 'agenda') {
+                    btnActionText.textContent = 'Novo Paciente';
+                    btnMainAction.onclick = openNewPatientModal;
+                    // Renderiza calendário se necessário (resize fix)
+                    if(window.calendarApi) window.calendarApi.updateSize();
+                } else {
+                    btnActionText.textContent = 'Lançar Despesa';
+                    btnMainAction.onclick = () => {
+                        document.getElementById('form-expense').reset();
+                        document.getElementById('exp-date').valueAsDate = new Date();
+                        modalExpense.style.display = 'flex';
+                    };
+                    updateFinancials();
+                }
+            };
+        });
+
+        // Inicializa botão principal
+        btnMainAction.onclick = openNewPatientModal;
         
         // 1. Renderizar Lista
         function renderList(filter = '') {
@@ -120,6 +398,15 @@
             const filtered = patients.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()));
             
             countBadge.textContent = filtered.length;
+
+            // Atualiza o select do modal de agendamento
+            selectPatient.innerHTML = '<option value="">Selecione...</option>';
+            patients.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.name; // Usando nome como ID simplificado
+                opt.textContent = p.name;
+                selectPatient.appendChild(opt);
+            });
 
             if (filtered.length === 0) {
                 listContainer.innerHTML = '<div class="empty-state-patients"><p>Nenhum paciente encontrado.</p></div>';
@@ -141,6 +428,7 @@
                     <div class="patient-status" title="${p.automated ? 'Assistente Ativa' : 'Assistente Inativa'}">
                         ${p.automated ? '🤖' : '🔕'}
                     </div>
+                    <div style="font-weight:bold; color:#1B4332; font-size:0.9rem; margin-left: 10px;">R$ ${p.sessionValue || 0}</div>
                 `;
                 
                 // Clique no card abre edição
@@ -160,6 +448,7 @@
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: isMobile ? 'timeGridDay' : 'timeGridWeek', // Mobile: Dia | Desktop: Semana
                 locale: 'pt-br',
+                selectable: true, // Permite seleção visual
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
@@ -174,18 +463,28 @@
                 slotMinTime: '07:00:00',
                 slotMaxTime: '22:00:00',
                 allDaySlot: false,
+                slotDuration: '01:00:00', // Slots de 1 hora para ficar mais limpo
                 height: 'auto',
-                events: [
-                    { title: 'Ana Clara', start: '2026-01-20T10:00:00', end: '2026-01-20T11:00:00', color: '#1B4332' },
-                    { title: 'Bruno M.', start: '2026-01-21T14:00:00', end: '2026-01-21T15:00:00', color: '#1B4332' },
-                    { title: 'Bloqueado', start: '2026-01-22T09:00:00', end: '2026-01-22T12:00:00', color: '#e0e0e0', textColor: '#555', display: 'background' }
-                ],
+                events: events.map(evt => ({
+                    ...evt,
+                    color: evt.status === 'done' ? '#1B4332' : (evt.status === 'missed' ? '#d32f2f' : '#3788d8')
+                })),
+                // Clique em um horário vazio
                 dateClick: function(info) {
-                    // Lógica futura: Adicionar evento ao clicar
-                    alert('Clicou em: ' + info.dateStr);
+                    const date = info.date;
+                    // Ajusta fuso horário local para os inputs
+                    const dateStr = date.toLocaleDateString('en-CA'); // YYYY-MM-DD
+                    const timeStr = date.toTimeString().split(' ')[0].substring(0, 5); // HH:MM
+                    
+                    openAppointmentModal(dateStr, timeStr);
+                },
+                // Clique em um evento existente
+                eventClick: function(info) {
+                    openEventDetails(info.event);
                 }
             });
             calendar.render();
+            window.calendarApi = calendar;
         }
 
         // 3. Funções do Modal
@@ -194,6 +493,7 @@
             pIdInput.value = patient.id;
             document.getElementById('p-name').value = patient.name;
             document.getElementById('p-phone').value = patient.phone;
+            document.getElementById('p-session-value').value = patient.sessionValue;
             document.getElementById('p-automated-msg').checked = patient.automated;
             
             document.getElementById('modal-patient-title').textContent = 'Editar Paciente';
@@ -201,17 +501,36 @@
             modal.style.display = 'flex';
         }
 
-        document.getElementById('btn-add-patient').onclick = () => {
+        function openNewPatientModal() {
             form.reset();
             pIdInput.value = ''; // Limpa ID para indicar novo
             document.getElementById('modal-patient-title').textContent = 'Novo Paciente';
             btnDelete.style.display = 'none'; // Esconde lixeira
             modal.style.display = 'flex';
-        };
+        }
+
+        function openAppointmentModal(dateStr, timeStr) {
+            formAppt.reset();
+            if(dateStr) document.getElementById('appt-date').value = dateStr;
+            if(timeStr) document.getElementById('appt-time').value = timeStr;
+            
+            document.getElementById('modal-appointment-title').textContent = 'Novo Agendamento';
+            modalAppt.style.display = 'flex';
+        }
+
         
         const closeModal = () => modal.style.display = 'none';
         document.getElementById('close-patient-modal').onclick = closeModal;
         document.getElementById('cancel-patient-modal').onclick = closeModal;
+
+        const closeApptModal = () => modalAppt.style.display = 'none';
+        document.getElementById('close-appointment-modal').onclick = closeApptModal;
+        document.getElementById('cancel-appointment-modal').onclick = closeApptModal;
+
+        // Fechar modais financeiros
+        document.querySelectorAll('.modal-close-btn').forEach(btn => {
+            btn.addEventListener('click', () => document.querySelectorAll('.custom-modal-overlay').forEach(m => m.style.display = 'none'));
+        });
 
         // Excluir Paciente
         btnDelete.onclick = () => {
@@ -229,13 +548,14 @@
             const name = document.getElementById('p-name').value;
             const phone = document.getElementById('p-phone').value;
             const automated = document.getElementById('p-automated-msg').checked;
+            const sessionValue = parseFloat(document.getElementById('p-session-value').value) || 0;
             const id = pIdInput.value;
 
             if (id) {
                 // Edição
                 const index = patients.findIndex(p => p.id == id);
                 if (index > -1) {
-                    patients[index] = { ...patients[index], name, phone, automated };
+                    patients[index] = { ...patients[index], name, phone, automated, sessionValue };
                     if(window.showToast) window.showToast('Dados atualizados!', 'success');
                 }
             } else {
@@ -244,13 +564,133 @@
                     id: Date.now(),
                     name,
                     phone,
-                    automated
+                    automated,
+                    sessionValue
                 });
                 if(window.showToast) window.showToast('Paciente adicionado com sucesso!', 'success');
             }
             
             renderList(searchInput.value);
             closeModal();
+        };
+
+        // Salvar Agendamento
+        formAppt.onsubmit = (e) => {
+            e.preventDefault();
+            if(window.showToast) window.showToast('Agendamento realizado!', 'success');
+            closeApptModal();
+            // Aqui você adicionaria o evento ao calendário via calendar.addEvent()
+        };
+
+        // --- LÓGICA DE DETALHES DO EVENTO ---
+        let currentEventId = null;
+        function openEventDetails(fcEvent) {
+            const evt = events.find(e => e.id == fcEvent.id);
+            if(!evt) return;
+            
+            currentEventId = evt.id;
+            document.getElementById('evt-patient-name').textContent = evt.title;
+            document.getElementById('evt-time-info').textContent = new Date(evt.start).toLocaleString('pt-BR');
+            document.getElementById('evt-value').value = evt.value;
+            
+            // Reset UI
+            document.querySelectorAll('.btn-status').forEach(b => {
+                b.style.background = '#fff'; b.style.color = '#333'; b.style.borderColor = '#ddd';
+            });
+            document.getElementById('evt-options-done').style.display = 'none';
+            document.getElementById('evt-options-missed').style.display = 'none';
+
+            // Seleciona status atual se houver
+            if(evt.status) {
+                const btn = document.querySelector(`.btn-status[data-status="${evt.status}"]`);
+                if(btn) highlightStatusBtn(btn, evt.status);
+                if(evt.status === 'done') document.getElementById('evt-options-done').style.display = 'block';
+                if(evt.status === 'missed') document.getElementById('evt-options-missed').style.display = 'block';
+            }
+
+            modalEvent.style.display = 'flex';
+        }
+
+        function highlightStatusBtn(btn, status) {
+            if(status === 'done') { btn.style.background = '#e8f5e9'; btn.style.borderColor = '#1B4332'; btn.style.color = '#1B4332'; }
+            if(status === 'missed') { btn.style.background = '#ffebee'; btn.style.borderColor = '#d32f2f'; btn.style.color = '#d32f2f'; }
+            if(status === 'rescheduled') { btn.style.background = '#fff3e0'; btn.style.borderColor = '#f57c00'; btn.style.color = '#f57c00'; }
+        }
+
+        document.querySelectorAll('.btn-status').forEach(btn => {
+            btn.onclick = () => {
+                const status = btn.dataset.status;
+                document.querySelectorAll('.btn-status').forEach(b => {
+                    b.style.background = '#fff'; b.style.color = '#333'; b.style.borderColor = '#ddd';
+                });
+                highlightStatusBtn(btn, status);
+                document.getElementById('evt-options-done').style.display = status === 'done' ? 'block' : 'none';
+                document.getElementById('evt-options-missed').style.display = status === 'missed' ? 'block' : 'none';
+            };
+        });
+
+        document.getElementById('btn-save-event-status').onclick = () => {
+            const activeBtn = document.querySelector('.btn-status[style*="background"]');
+            if(!activeBtn) return;
+            
+            const status = activeBtn.dataset.status;
+            const evtIdx = events.findIndex(e => e.id == currentEventId);
+            
+            if(evtIdx > -1) {
+                events[evtIdx].status = status;
+                if(status === 'done') {
+                    events[evtIdx].value = parseFloat(document.getElementById('evt-value').value);
+                }
+                const fcEvent = window.calendarApi.getEventById(currentEventId);
+                if(fcEvent) {
+                    fcEvent.setProp('color', status === 'done' ? '#1B4332' : (status === 'missed' ? '#d32f2f' : '#3788d8'));
+                }
+            }
+            modalEvent.style.display = 'none';
+            if(window.showToast) window.showToast('Status atualizado!', 'success');
+        };
+
+        // --- GESTÃO FINANCEIRA ---
+        function updateFinancials() {
+            const income = events.filter(e => e.status === 'done').reduce((acc, curr) => acc + (curr.value || 0), 0);
+            const pending = events.filter(e => e.status === 'scheduled').reduce((acc, curr) => acc + (curr.value || 0), 0);
+            const totalExpenses = expenses.reduce((acc, curr) => acc + curr.value, 0);
+
+            document.getElementById('fin-income').textContent = `R$ ${income.toFixed(2)}`;
+            document.getElementById('fin-pending').textContent = `R$ ${pending.toFixed(2)}`;
+            document.getElementById('fin-expenses').textContent = `R$ ${totalExpenses.toFixed(2)}`;
+            document.getElementById('fin-balance').textContent = `R$ ${(income - totalExpenses).toFixed(2)}`;
+
+            const transactions = [
+                ...events.filter(e => e.status === 'done').map(e => ({ desc: `Sessão: ${e.title}`, date: e.start, value: e.value, type: 'in' })),
+                ...expenses.map(e => ({ desc: e.desc, date: e.date, value: e.value, type: 'out' }))
+            ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            const tbody = document.getElementById('fin-transactions-body');
+            tbody.innerHTML = '';
+            transactions.forEach(t => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${t.desc}</td>
+                    <td class="fin-date">${new Date(t.date).toLocaleDateString('pt-BR')}</td>
+                    <td>R$ ${t.value.toFixed(2)}</td>
+                    <td><span class="${t.type === 'in' ? 'fin-type-in' : 'fin-type-out'}">${t.type === 'in' ? 'Entrada' : 'Saída'}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        document.getElementById('form-expense').onsubmit = (e) => {
+            e.preventDefault();
+            expenses.push({
+                id: Date.now(),
+                desc: document.getElementById('exp-desc').value,
+                value: parseFloat(document.getElementById('exp-value').value),
+                date: document.getElementById('exp-date').value
+            });
+            document.getElementById('modal-expense').style.display = 'none';
+            updateFinancials();
+            if(window.showToast) window.showToast('Despesa registrada.', 'success');
         };
 
         searchInput.oninput = (e) => renderList(e.target.value);
@@ -269,6 +709,10 @@
 
 <style>
     /* Estilos Locais Específicos (Complemento ao CSS Global) */
+    
+    /* Botões de Status */
+    .btn-status { transition: all 0.2s; font-weight: 600; font-size: 0.9rem; }
+    .btn-status:hover { transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     
     /* --- MOBILE FIRST (Padrão) --- */
     .patients-layout-grid {
@@ -308,6 +752,167 @@
     .custom-modal-box {
         max-height: 90vh;
         overflow-y: auto;
+    }
+
+    /* Header dos Widgets (Estilo Refinado) */
+    .widget-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .widget-title {
+        margin: 0;
+        font-size: 1.1rem;
+        color: #1B4332;
+        font-weight: 700;
+    }
+    .badge-count {
+        background-color: #e8f5e9;
+        color: #1B4332;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 800;
+    }
+
+    /* Botão Hoje do Calendário (Contraste e Estado) */
+    .fc .fc-today-button {
+        background-color: #1B4332 !important;
+        border-color: #1B4332 !important;
+        color: #fff !important;
+        font-weight: 700 !important;
+        opacity: 1 !important;
+        text-transform: capitalize;
+        transition: all 0.2s ease;
+    }
+    /* Quando desabilitado (Indica que já estamos no dia atual) */
+    .fc .fc-today-button:disabled {
+        background-color: #FFEE8C !important; /* Amarelo Yelo */
+        border-color: #FFEE8C !important;
+        color: #1B4332 !important; /* Texto Verde */
+        cursor: default;
+        box-shadow: none;
+    }
+
+    /* --- ESTILOS MODERNOS DO CALENDÁRIO --- */
+    .fc-theme-standard td, .fc-theme-standard th {
+        border-color: #f0f0f0;
+    }
+    .fc-timegrid-slot {
+        height: 3.5em !important; /* Slots mais altos para melhor clique */
+        border-bottom: 1px solid #f9f9f9 !important;
+    }
+    /* Feedback visual ao passar o mouse no horário */
+    .fc-timegrid-slot-lane:hover {
+        background-color: rgba(27, 67, 50, 0.04);
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .fc-col-header-cell {
+        background-color: #f9fafb;
+        padding: 12px 0;
+        border-bottom: none;
+    }
+    .fc-col-header-cell-cushion {
+        color: #555;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+    }
+    .fc-event {
+        border-radius: 6px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        border: none;
+        padding: 2px 4px;
+        font-weight: 600;
+    }
+
+    /* Estilo do Botão de Fechar */
+    .modal-close-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: #f5f5f5;
+        border: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #666;
+        transition: all 0.2s ease;
+    }
+    .modal-close-btn:hover {
+        background: #e0e0e0;
+        color: #333;
+        transform: rotate(90deg);
+    }
+
+    /* Estilo do Card Assistente */
+    .assistant-card {
+        background: linear-gradient(135deg, #f0fdf4 0%, #e6fffa 100%);
+        border: 1px solid #bbf7d0;
+        border-radius: 16px;
+        padding: 20px;
+        transition: transform 0.2s;
+    }
+    .assistant-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(27, 67, 50, 0.05);
+    }
+    .assistant-icon {
+        font-size: 1.8rem;
+        background: #fff;
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    /* Toggle Switch */
+    .switch-toggle {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+        margin-left: 10px;
+    }
+    .switch-toggle input { opacity: 0; width: 0; height: 0; }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 24px;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    input:checked + .slider { background-color: #1B4332; }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    /* Ajuste para gráficos no mobile */
+    @media (max-width: 768px) {
+        .fin-charts-row { grid-template-columns: 1fr !important; }
     }
 
     /* --- DESKTOP (Telas maiores que 992px) --- */
