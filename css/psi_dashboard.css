@@ -3245,12 +3245,12 @@ body.pagina-dashboard::after {
 .patient-card {
     display: flex;
     align-items: center;
-    gap: 15px;
-    padding: 18px;
+    gap: 12px;
+    padding: 15px; /* Reduzido para caber mais na tela */
     background: #fff;
     border: 1px solid #f0f0f0;
     border-radius: 20px; /* Mais orgânico */
-    margin-bottom: 12px;
+    margin-bottom: 10px; /* Reduzido */
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
@@ -3262,8 +3262,8 @@ body.pagina-dashboard::after {
 }
 
 .patient-avatar {
-    width: 48px;
-    height: 48px;
+    width: 42px; /* Levemente menor */
+    height: 42px;
     background-color: #f0fdf4; /* Verde bem claro e suave */
     color: var(--verde-escuro);
     border-radius: 50%;
@@ -3271,7 +3271,7 @@ body.pagina-dashboard::after {
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
 }
 
 .patient-info { flex-grow: 1; min-width: 0; /* Permite truncar texto (ellipsis) se necessário */ }
