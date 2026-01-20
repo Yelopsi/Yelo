@@ -268,14 +268,20 @@
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
             csvContent += `Mês de referência: ${selectedMonth}\n`;
             csvContent += "Data;Descrição;Valor;Tipo\n";
+            
+            let saldoFinal = 0;
 
             transactions.forEach(t => {
+                saldoFinal += t.value;
                 const dateStr = new Date(t.date).toLocaleDateString('pt-BR');
                 const desc = t.desc ? t.desc.replace(/"/g, '""') : "";
-                const valStr = t.value.toFixed(2).replace('.', ',');
+                const valStr = t.value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 const row = `${dateStr};"${desc}";"${valStr}";${t.type}`;
                 csvContent += row + "\n";
             });
+            
+            const saldoStr = saldoFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            csvContent += `;"SALDO FINAL";"${saldoStr}";\n`;
 
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");

@@ -8,10 +8,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Variável para guardar qual plano o usuário está tentando assinar no modal
     let currentPlanAttempt = '';
 
-    // --- APLICA ZOOM SALVO AO INICIAR ---
+    // --- APLICA ZOOM SALVO AO INICIAR (Lógica Senior de Escala) ---
     const savedZoom = localStorage.getItem('yelo_dashboard_zoom');
     if (savedZoom) {
-        document.body.style.zoom = savedZoom;
+        const val = parseFloat(savedZoom);
+        // Aplica a escala e compensa a largura/altura para preencher a tela (Reflow)
+        document.body.style.transform = `scale(${val})`;
+        document.body.style.transformOrigin = "top left";
+        document.body.style.width = `${100 / val}%`;
+        document.body.style.height = `${100 / val}vh`;
     }
 
     // Variável global temporária para saber qual botão disparou a ação
@@ -1316,35 +1321,69 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // --- CONTROLE DE ZOOM (VISÃO GERAL) ---
+        // --- CONTROLE DE ZOOM (VISÃO GERAL) - LÓGICA DE REFLOW (Sênior) ---
+        // Isso garante que ao diminuir o zoom, o conteúdo se expanda para as laterais
         const btnZoomIn = document.getElementById('btn-zoom-in');
         const btnZoomOut = document.getElementById('btn-zoom-out');
         const btnZoomReset = document.getElementById('btn-zoom-reset');
         const zoomDisplay = document.getElementById('zoom-level-display');
 
         if (btnZoomIn && btnZoomOut && btnZoomReset && zoomDisplay) {
+            
+            // Lê o zoom salvo ou define 1 (100%) como padrão
+            const getCurrentZoom = () => {
+                const saved = localStorage.getItem('yelo_dashboard_zoom');
+                return saved ? parseFloat(saved) : 1;
+            };
+
             const updateZoomUI = () => {
-                const current = parseFloat(document.body.style.zoom) || 1;
+                const current = getCurrentZoom();
                 zoomDisplay.textContent = Math.round(current * 100) + '%';
             };
             
             // Inicializa display
             updateZoomUI();
 
+            // A FUNÇÃO MÁGICA: Aplica a escala e corrige a largura
             const setZoom = (val) => {
-                document.body.style.zoom = val;
+                // 1. Limpa qualquer 'zoom' CSS antigo que possa causar conflito
+                document.body.style.zoom = ''; 
+
+                // 2. Aplica a redução/aumento visual
+                document.body.style.transform = `scale(${val})`;
+                document.body.style.transformOrigin = "top left"; // Fixo no topo esquerdo
+                
+                // 3. A REGRA DE OURO: Compensa a largura
+                // Se o zoom é 0.8 (pequeno), a largura vira 125% para preencher a tela branca
+                document.body.style.width = `${100 / val}%`;
+                
+                // 4. Ajusta altura para não cortar o rodapé em telas grandes
+                if (val < 1) {
+                   document.body.style.height = `${100 / val}vh`;
+                } else {
+                   document.body.style.height = 'auto';
+                }
+
+                // Salva no navegador para a próxima visita
                 localStorage.setItem('yelo_dashboard_zoom', val);
                 updateZoomUI();
             };
 
+            // Evento: Botão Aumentar (+)
             btnZoomIn.onclick = () => {
-                let val = parseFloat(document.body.style.zoom) || 1;
-                setZoom(Math.min(val + 0.1, 1.5)); // Max 150%
+                let val = getCurrentZoom();
+                // Aumenta de 0.1 em 0.1, travando em 1.5 (150%)
+                setZoom(Math.min(val + 0.1, 1.5)); 
             };
+            
+            // Evento: Botão Diminuir (-)
             btnZoomOut.onclick = () => {
-                let val = parseFloat(document.body.style.zoom) || 1;
-                setZoom(Math.max(val - 0.1, 0.7)); // Min 70%
+                let val = getCurrentZoom();
+                // Diminui de 0.1 em 0.1, travando em 0.5 (50%)
+                setZoom(Math.max(val - 0.1, 0.5)); 
             };
+            
+            // Evento: Botão Reset (Volta ao normal)
             btnZoomReset.onclick = () => {
                 setZoom(1);
             };
