@@ -1,3 +1,5 @@
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
 <div class="main-header">
     <div class="header-content">
         <h1>Gerencie sua Assinatura</h1>
@@ -244,13 +246,39 @@
 
                                             if(res.ok) { 
                                                 showToast('Assinatura reativada com sucesso! 🚀', 'success');
+                                                lancarConfetes();
                                                 setTimeout(() => window.location.reload(), 1500);
                                             } else { 
                                                 // Tratamento do Erro 400 (Assinatura não encontrada/inválida)
                                                 console.error("Erro reativação:", d);
-                                                showToast(d.error || 'Não foi possível reativar. Por favor, assine novamente.', 'error');
-                                                // Fecha o modal e recarrega para atualizar o estado (talvez precise assinar do zero)
-                                                setTimeout(() => window.location.reload(), 2000);
+                                                
+                                                // Se a assinatura não existe mais (400/404), libera para assinar do zero
+                                                if (res.status === 400 || res.status === 404 || (d.error && (d.error.includes('encontrada') || d.error.includes('disponível')))) {
+                                                    showToast('Assinatura anterior expirou. Por favor, realize uma nova assinatura.', 'info');
+                                                    modalReativacao.style.display = 'none';
+                                                    
+                                                    // Transforma o botão de "Reativar" em "Assinar Agora"
+                                                    btnEssencial.textContent = 'Assinar Agora 🚀';
+                                                    btnEssencial.style.backgroundColor = '#1B4332';
+                                                    btnEssencial.disabled = false;
+                                                    
+                                                    // Redireciona o clique para abrir o modal de pagamento
+                                                    btnEssencial.onclick = (evt) => {
+                                                        evt.preventDefault();
+                                                        const paymentModal = document.getElementById('payment-modal');
+                                                        if (paymentModal) {
+                                                            paymentModal.style.display = 'flex';
+                                                            // Reseta visualização do modal para o início
+                                                            const stepMethod = document.getElementById('step-payment-method');
+                                                            const stepForm = document.getElementById('payment-form');
+                                                            if(stepMethod) stepMethod.style.display = 'block';
+                                                            if(stepForm) stepForm.style.display = 'none';
+                                                        }
+                                                    };
+                                                } else {
+                                                    showToast(d.error || 'Não foi possível reativar. Tente novamente.', 'error');
+                                                    setTimeout(() => window.location.reload(), 2000);
+                                                }
                                             }
                                         } catch(err) { 
                                             showToast('Erro de conexão ao reativar.', 'error');
@@ -415,6 +443,30 @@
             toast.style.opacity = '0';
             setTimeout(() => toast.remove(), 300);
         }, 3000);
+    }
+
+    // Função para efeito de confete (Celebração Yelo)
+    function lancarConfetes() {
+        if (typeof confetti === 'function') {
+            // Dispara uma explosão de confetes com as cores da marca
+            const count = 200;
+            const defaults = {
+                origin: { y: 0.7 },
+                colors: ['#1B4332', '#FFEE8C', '#2D6A4F', '#F4D35E'] // Verde e Amarelo Yelo
+            };
+
+            function fire(particleRatio, opts) {
+                confetti(Object.assign({}, defaults, opts, {
+                    particleCount: Math.floor(count * particleRatio)
+                }));
+            }
+
+            fire(0.25, { spread: 26, startVelocity: 55 });
+            fire(0.2, { spread: 60 });
+            fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+            fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+            fire(0.1, { spread: 120, startVelocity: 45 });
+        }
     }
 })();
 </script>
