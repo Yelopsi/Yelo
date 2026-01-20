@@ -1932,9 +1932,9 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
    ========================================================================== */
 /* Estilo do Placeholder - A classe .ql-blank é gerenciada nativamente pelo Quill */
 .ql-editor.ql-blank::before {
-    color: #a0aec0;
+    color: #a0aec0 !important;
     font-style: italic;
-    pointer-events: none;
+    pointer-events: none; /* Garante que o clique passe para o editor */
     position: absolute;
     left: 15px;
     right: 15px;
