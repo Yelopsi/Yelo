@@ -2417,21 +2417,6 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 .mode-indicator-edit #form-mode-icon { color: #f59e0b; }
 }
 
-/* ==========================================================================
-   CORREÇÃO EDITOR QUILL (BLOG) - MÁSCARA/PLACEHOLDER
-   ========================================================================== */
-/* 1. Estilo do Placeholder (Só aparece quando tem a classe .ql-blank) */
-.ql-editor.ql-blank::before {
-    color: #a0aec0;
-    font-style: italic;
-    pointer-events: none; /* Permite clicar através do texto */
-}
-
-/* 2. GARANTIA: Se NÃO tiver a classe .ql-blank (tem texto), esconde a máscara à força */
-.ql-editor:not(.ql-blank)::before {
-    display: none !important;
-}
-
 /* Animação para o FAB */
 @keyframes pulse-fab {
     0% {
