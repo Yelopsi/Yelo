@@ -262,18 +262,10 @@
                                                     btnEssencial.style.backgroundColor = '#1B4332';
                                                     btnEssencial.disabled = false;
                                                     
-                                                    // Redireciona o clique para abrir o modal de pagamento
+                                                    // Redireciona o clique para abrir o modal de pagamento (Fluxo de Assinatura Expirada)
                                                     btnEssencial.onclick = (evt) => {
                                                         evt.preventDefault();
-                                                        const paymentModal = document.getElementById('payment-modal');
-                                                        if (paymentModal) {
-                                                            paymentModal.style.display = 'flex';
-                                                            // Reseta visualização do modal para o início
-                                                            const stepMethod = document.getElementById('step-payment-method');
-                                                            const stepForm = document.getElementById('payment-form');
-                                                            if(stepMethod) stepMethod.style.display = 'block';
-                                                            if(stepForm) stepForm.style.display = 'none';
-                                                        }
+                                                        abrirModalPagamento('ESSENTIAL');
                                                     };
                                                 } else {
                                                     showToast(d.error || 'Não foi possível reativar. Tente novamente.', 'error');
@@ -299,6 +291,14 @@
                     }
                 }
             }
+
+            // --- LÓGICA PARA PRIMEIRA ASSINATURA (Botões "Quero Começar Agora") ---
+            document.querySelectorAll('.btn-upgrade').forEach(btn => {
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    abrirModalPagamento(btn.getAttribute('data-plano') || 'ESSENTIAL');
+                };
+            });
         }
     } catch (error) {
         console.error("Erro ao verificar status VIP:", error);
@@ -468,5 +468,134 @@
             fire(0.1, { spread: 120, startVelocity: 45 });
         }
     }
+
+    // Função auxiliar para abrir o modal de pagamento
+    function abrirModalPagamento(plano) {
+        const modal = document.getElementById('payment-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.setAttribute('data-selected-plan', plano); // Salva o plano escolhido no modal
+            
+            initPaymentModalLogic(); // Garante que os botões funcionem
+            
+            // Reseta para a tela inicial do modal
+            const stepMethod = document.getElementById('step-payment-method');
+            const stepForm = document.getElementById('payment-form');
+            const pixResult = document.getElementById('pix-result-container');
+            if(stepMethod) stepMethod.style.display = 'block';
+            if(stepForm) stepForm.style.display = 'none';
+            if(pixResult) pixResult.style.display = 'none';
+        }
+    }
+
+    // --- LÓGICA DO MODAL DE PAGAMENTO (Correção do Bug) ---
+    function initPaymentModalLogic() {
+        const modal = document.getElementById('payment-modal');
+        if (!modal) return;
+
+        const btnCard = document.getElementById('btn-select-card');
+        const btnPix = document.getElementById('btn-select-pix');
+        const stepMethod = document.getElementById('step-payment-method');
+        const stepForm = document.getElementById('payment-form');
+        const pixResult = document.getElementById('pix-result-container');
+        const btnBack = document.getElementById('btn-back-method');
+        const btnClose = document.getElementById('btn-close-modal-x');
+        const btnPagar = document.getElementById('btn-confirmar-stripe'); // Botão de Pagar
+
+        // Função para resetar o modal ao estado inicial
+        const resetModal = () => {
+            if(stepMethod) stepMethod.style.display = 'block';
+            if(stepForm) stepForm.style.display = 'none';
+            if(pixResult) pixResult.style.display = 'none';
+        };
+
+        // 1. Fechar Modal
+        if(btnClose) btnClose.onclick = () => { 
+            modal.style.display = 'none'; 
+            resetModal(); 
+        };
+
+        // 2. Selecionar Cartão
+        if(btnCard) btnCard.onclick = () => {
+            if(stepMethod) stepMethod.style.display = 'none';
+            if(stepForm) stepForm.style.display = 'block';
+        };
+
+        // 3. Selecionar PIX
+        if(btnPix) btnPix.onclick = () => {
+            if(stepMethod) stepMethod.style.display = 'none';
+            if(pixResult) pixResult.style.display = 'block';
+            // Gera um QR Code de exemplo (ou real do backend)
+            const qrImg = document.getElementById('pix-qr-image');
+            if(qrImg && !qrImg.src) qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=YeloPagamentoPixExemplo';
+        };
+
+        // 4. Botão Voltar (dentro do form de cartão)
+        if(btnBack) btnBack.onclick = () => {
+            if(stepForm) stepForm.style.display = 'none';
+            if(stepMethod) stepMethod.style.display = 'block';
+        };
+
+        // 5. Processar Pagamento (Cartão)
+        // Removemos listeners antigos para evitar duplicação
+        const novoBtnPagar = btnPagar.cloneNode(true);
+        btnPagar.parentNode.replaceChild(novoBtnPagar, btnPagar);
+
+        novoBtnPagar.onclick = async (e) => {
+            e.preventDefault();
+            const plano = modal.getAttribute('data-selected-plan') || 'ESSENTIAL';
+            
+            // Coleta dados do formulário
+            const cardData = {
+                holderName: document.getElementById('card-holder-name').value,
+                holderCpf: document.getElementById('card-holder-cpf').value,
+                holderPhone: document.getElementById('card-holder-phone').value,
+                number: document.getElementById('card-number').value,
+                expiry: document.getElementById('card-expiry').value,
+                ccv: document.getElementById('card-ccv').value,
+                // Campos de endereço (opcionais ou obrigatórios dependendo da sua regra)
+                postalCode: document.getElementById('card-holder-cep').value,
+                addressNumber: document.getElementById('card-holder-number').value
+            };
+
+            // Validação simples
+            if(!cardData.number || !cardData.expiry || !cardData.ccv || !cardData.holderName) {
+                alert('Por favor, preencha todos os campos do cartão.');
+                return;
+            }
+
+            novoBtnPagar.textContent = 'Processando...';
+            novoBtnPagar.disabled = true;
+
+            try {
+                const res = await fetch(`${(typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : 'http://localhost:3001'}/api/payments/create-preference`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('Yelo_token')}` 
+                    },
+                    body: JSON.stringify({ planType: plano, billingType: 'CREDIT_CARD', creditCard: cardData })
+                });
+                const data = await res.json();
+
+                if(res.ok) {
+                    showToast('Pagamento aprovado! Bem-vindo(a) à Yelo! 🚀', 'success');
+                    lancarConfetes();
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    alert(data.error || 'Erro ao processar pagamento.');
+                    novoBtnPagar.textContent = 'Pagar Agora';
+                    novoBtnPagar.disabled = false;
+                }
+            } catch(err) {
+                alert('Erro de conexão.');
+                novoBtnPagar.textContent = 'Pagar Agora';
+                novoBtnPagar.disabled = false;
+            }
+        };
+    }
+
+    // Inicializa a lógica assim que a página carrega
+    initPaymentModalLogic();
 })();
 </script>
