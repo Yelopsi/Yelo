@@ -68,6 +68,14 @@
         }
         @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
+        /* FIX: Reset de Layout Mobile - Evita deslocamento horizontal */
+        @media (max-width: 992px) {
+            .dashboard-main {
+                margin-left: 0 !important;
+                width: 100% !important;
+                padding-top: 80px !important;
+            }
+        }
     </style>
 </head>
 <body class="pagina-dashboard">
@@ -184,6 +192,17 @@
                 </ul>
             </nav>
             
+            <!-- CONTROLE DE ZOOM (DESKTOP) -->
+            <div class="sidebar-zoom">
+                <p>Zoom da Tela</p>
+                <div class="zoom-controls-wrapper" data-tooltip="Salvo automaticamente">
+                    <button id="btn-zoom-out" class="btn-zoom" title="Diminuir">-</button>
+                    <span id="zoom-display">100%</span>
+                    <button id="btn-zoom-in" class="btn-zoom" title="Aumentar">+</button>
+                    <button id="btn-zoom-reset" class="btn-zoom-reset" title="Resetar">⟲</button>
+                </div>
+            </div>
+
             <div class="sidebar-footer">
                 <button id="btn-logout">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
@@ -418,6 +437,41 @@
             const linkVisaoGeral = document.querySelector('a[data-page="psi_visao_geral.html"]');
             if (linkVisaoGeral) {
                 setTimeout(() => linkVisaoGeral.click(), 100);
+            }
+        });
+    </script>
+
+    <!-- SCRIPT DE ZOOM PERSISTENTE -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const zoomInBtn = document.getElementById('btn-zoom-in');
+            const zoomOutBtn = document.getElementById('btn-zoom-out');
+            const zoomResetBtn = document.getElementById('btn-zoom-reset');
+            const zoomDisplay = document.getElementById('zoom-display');
+
+            if (zoomInBtn && zoomOutBtn && zoomDisplay) {
+                // Carrega zoom salvo ou padrão (1.0)
+                let currentZoom = parseFloat(localStorage.getItem('Yelo_dashboard_zoom')) || 1.0;
+                
+                const updateZoom = (zoom) => {
+                    // Limita entre 70% e 150%
+                    zoom = Math.min(Math.max(zoom, 0.7), 1.5);
+                    currentZoom = zoom;
+                    
+                    // Aplica o zoom (Funciona na maioria dos navegadores modernos)
+                    document.body.style.zoom = currentZoom;
+                    
+                    // Atualiza visual e salva
+                    zoomDisplay.textContent = Math.round(currentZoom * 100) + '%';
+                    localStorage.setItem('Yelo_dashboard_zoom', currentZoom);
+                };
+
+                // Aplica ao carregar
+                updateZoom(currentZoom);
+
+                zoomInBtn.addEventListener('click', () => updateZoom(currentZoom + 0.1));
+                zoomOutBtn.addEventListener('click', () => updateZoom(currentZoom - 0.1));
+                if (zoomResetBtn) zoomResetBtn.addEventListener('click', () => updateZoom(1.0));
             }
         });
     </script>
