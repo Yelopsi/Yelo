@@ -1,0 +1,289 @@
+<div class="main-header">
+    <div class="header-content">
+        <h1>Meus Pacientes</h1>
+        <p>Gerencie seus atendimentos e configure a Assistente Pessoal da Yelo.</p>
+    </div>
+    <div class="dashboard-header-actions">
+        <button id="btn-add-patient" class="btn btn-principal" style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.2rem; line-height: 0;">+</span> Novo Paciente
+        </button>
+    </div>
+</div>
+
+<div class="patients-layout-grid">
+    
+    <!-- COLUNA 1: LISTA DE PACIENTES -->
+    <div class="widget" style="display: flex; flex-direction: column; height: 100%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0;">Carteira de Pacientes</h3>
+            <span class="badge-count" id="patient-count">0</span>
+        </div>
+
+        <div class="search-wrapper" style="margin-bottom: 15px;">
+            <input type="text" id="search-patient" placeholder="Buscar por nome..." class="form-control" style="width: 100%; box-sizing: border-box;">
+        </div>
+
+        <div class="patient-list-container" id="patient-list">
+            <!-- Lista renderizada via JS -->
+            <div class="empty-state-patients">
+                <p>Nenhum paciente cadastrado.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- COLUNA 2: CALENDÁRIO -->
+    <div class="widget">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0;">Agenda</h3>
+            <div class="calendar-legend">
+                <span class="legend-item"><span class="dot available"></span> Livre</span>
+                <span class="legend-item"><span class="dot busy"></span> Ocupado</span>
+            </div>
+        </div>
+        <div id="calendar-wrapper"></div>
+    </div>
+</div>
+
+<!-- MODAL: ADICIONAR/EDITAR PACIENTE -->
+<div id="modal-patient" class="custom-modal-overlay" style="display: none;">
+    <div class="custom-modal-box">
+        <button class="modal-close-btn" id="close-patient-modal">✕</button>
+        <h3 id="modal-patient-title" style="margin-top: 0; color: #1B4332;">Novo Paciente</h3>
+        
+        <form id="form-patient">
+            <div class="form-group">
+                <label>Nome Completo *</label>
+                <input type="text" id="p-name" required placeholder="Ex: João Silva">
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group" style="flex: 1;">
+                    <label>WhatsApp *</label>
+                    <input type="tel" id="p-phone" required placeholder="(00) 00000-0000">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>E-mail (Opcional)</label>
+                    <input type="email" id="p-email" placeholder="joao@email.com">
+                </div>
+            </div>
+
+            <div class="form-group highlight-box" style="margin-top: 10px;">
+                <div style="display: flex; align-items: flex-start; gap: 10px;">
+                    <input type="checkbox" id="p-automated-msg" checked style="margin-top: 5px;">
+                    <div>
+                        <label for="p-automated-msg" style="font-weight: bold; color: #1B4332; cursor: pointer;">Ativar Assistente Pessoal Yelo</label>
+                        <p style="font-size: 0.85rem; color: #666; margin: 5px 0 0 0;">
+                            Enviaremos lembretes automáticos de sessão e confirmação de horário via WhatsApp.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions" style="justify-content: flex-end; margin-top: 20px;">
+                <button type="button" class="btn btn-secundario" id="cancel-patient-modal">Cancelar</button>
+                <button type="submit" class="btn btn-principal">Salvar Paciente</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // --- LÓGICA DO FRONTEND (MOCK) ---
+    (function() {
+        // Dados Mockados
+        let patients = [
+            { id: 1, name: 'Ana Clara Souza', phone: '(11) 99999-1111', automated: true },
+            { id: 2, name: 'Bruno Mendes', phone: '(11) 98888-2222', automated: false },
+            { id: 3, name: 'Carla Dias', phone: '(21) 97777-3333', automated: true }
+        ];
+
+        // Elementos DOM
+        const listContainer = document.getElementById('patient-list');
+        const countBadge = document.getElementById('patient-count');
+        const searchInput = document.getElementById('search-patient');
+        const modal = document.getElementById('modal-patient');
+        const form = document.getElementById('form-patient');
+        
+        // 1. Renderizar Lista
+        function renderList(filter = '') {
+            listContainer.innerHTML = '';
+            const filtered = patients.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()));
+            
+            countBadge.textContent = filtered.length;
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = '<div class="empty-state-patients"><p>Nenhum paciente encontrado.</p></div>';
+                return;
+            }
+
+            filtered.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'patient-card';
+                item.innerHTML = `
+                    <div class="patient-avatar">${p.name.charAt(0)}</div>
+                    <div class="patient-info">
+                        <h4>${p.name}</h4>
+                        <span>${p.phone}</span>
+                    </div>
+                    <div class="patient-status" title="${p.automated ? 'Assistente Ativa' : 'Assistente Inativa'}">
+                        ${p.automated ? '🤖' : '🔕'}
+                    </div>
+                    <div class="patient-actions">
+                        <button class="btn-icon-sm edit-btn" data-id="${p.id}">✏️</button>
+                        <button class="btn-icon-sm delete-btn" data-id="${p.id}" style="color: #d32f2f;">🗑️</button>
+                    </div>
+                `;
+                listContainer.appendChild(item);
+            });
+
+            // Re-attach events
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    if(confirm('Remover este paciente?')) {
+                        patients = patients.filter(p => p.id != btn.dataset.id);
+                        renderList(searchInput.value);
+                    }
+                };
+            });
+        }
+
+        // 2. Inicializar Calendário (FullCalendar)
+        function initCalendar() {
+            const calendarEl = document.getElementById('calendar-wrapper');
+            if (!calendarEl) return;
+
+            const isMobile = window.innerWidth < 768;
+
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: isMobile ? 'timeGridDay' : 'timeGridWeek', // Mobile: Dia | Desktop: Semana
+                locale: 'pt-br',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                buttonText: {
+                    today: 'Hoje',
+                    month: 'Mês',
+                    week: 'Semana',
+                    day: 'Dia'
+                },
+                slotMinTime: '07:00:00',
+                slotMaxTime: '22:00:00',
+                allDaySlot: false,
+                height: 'auto',
+                events: [
+                    { title: 'Ana Clara', start: '2026-01-20T10:00:00', end: '2026-01-20T11:00:00', color: '#1B4332' },
+                    { title: 'Bruno M.', start: '2026-01-21T14:00:00', end: '2026-01-21T15:00:00', color: '#1B4332' },
+                    { title: 'Bloqueado', start: '2026-01-22T09:00:00', end: '2026-01-22T12:00:00', color: '#e0e0e0', textColor: '#555', display: 'background' }
+                ],
+                dateClick: function(info) {
+                    // Lógica futura: Adicionar evento ao clicar
+                    alert('Clicou em: ' + info.dateStr);
+                }
+            });
+            calendar.render();
+        }
+
+        // 3. Eventos do Modal
+        document.getElementById('btn-add-patient').onclick = () => {
+            form.reset();
+            modal.style.display = 'flex';
+        };
+        
+        const closeModal = () => modal.style.display = 'none';
+        document.getElementById('close-patient-modal').onclick = closeModal;
+        document.getElementById('cancel-patient-modal').onclick = closeModal;
+
+        form.onsubmit = (e) => {
+            e.preventDefault();
+            const name = document.getElementById('p-name').value;
+            const phone = document.getElementById('p-phone').value;
+            const automated = document.getElementById('p-automated-msg').checked;
+
+            patients.push({
+                id: Date.now(),
+                name,
+                phone,
+                automated
+            });
+            
+            renderList();
+            closeModal();
+            
+            // Feedback visual (Toast simulado)
+            alert('Paciente adicionado com sucesso!');
+        };
+
+        searchInput.oninput = (e) => renderList(e.target.value);
+
+        // Inicialização
+        renderList();
+        // Pequeno delay para garantir que o DOM renderizou o container do calendário
+        setTimeout(initCalendar, 100);
+
+        // Máscara de telefone (se IMask estiver disponível)
+        if (typeof IMask !== 'undefined') {
+            IMask(document.getElementById('p-phone'), { mask: '(00) 00000-0000' });
+        }
+    })();
+</script>
+
+<style>
+    /* Estilos Locais Específicos (Complemento ao CSS Global) */
+    
+    /* --- MOBILE FIRST (Padrão) --- */
+    .patients-layout-grid {
+        display: grid;
+        grid-template-columns: 1fr; /* 1 Coluna empilhada */
+        gap: 20px;
+        height: auto; /* Altura cresce com conteúdo */
+        padding-bottom: 60px; /* Espaço extra no fundo para mobile */
+    }
+
+    .patient-list-container {
+        /* No mobile, limitamos a altura da lista para não empurrar o calendário para fora da tela */
+        max-height: 350px; 
+        overflow-y: auto;
+        padding-right: 5px;
+    }
+
+    .calendar-legend {
+        display: flex;
+        gap: 15px;
+        font-size: 0.85rem;
+        color: #666;
+        flex-wrap: wrap; /* Permite quebrar linha em telas pequenas */
+    }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .dot.available { background-color: #fff; border: 2px solid #1B4332; }
+    .dot.busy { background-color: #e0e0e0; }
+
+    /* --- DESKTOP (Telas maiores que 992px) --- */
+    @media (min-width: 992px) {
+        .patients-layout-grid { 
+            grid-template-columns: 320px 1fr; /* Lista fixa na esq, Calendário fluido */
+            gap: 25px;
+            height: calc(100vh - 160px); /* Altura fixa para scroll independente */
+            padding-bottom: 0;
+        }
+        
+        .widget { 
+            height: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; /* Contém o scroll dentro do widget */
+        }
+
+        .patient-list-container {
+            max-height: none; /* Remove limite de altura */
+            flex-grow: 1;     /* Ocupa todo espaço vertical disponível */
+        }
+        
+        #calendar-wrapper {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+    }
+</style>
