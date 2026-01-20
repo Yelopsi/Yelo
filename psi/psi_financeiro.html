@@ -3,24 +3,26 @@
         <h1>Gestão Financeira</h1>
         <p>Acompanhe o fluxo de caixa, receitas e despesas do seu consultório.</p>
     </div>
-    <div class="dashboard-header-actions">
-        <button id="btn-export-report" class="btn" style="background-color: #fff; color: #1B4332; display: flex; align-items: center; gap: 8px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-right: 10px;">
+</div>
+
+<!-- Ações e Filtros -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+    <div style="display: flex; gap: 10px;">
+        <button id="btn-export-report" class="btn" style="background-color: #fff; color: #1B4332; display: flex; align-items: center; gap: 8px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
             <span style="font-size: 1.2rem; line-height: 0;">⬇</span> Exportar
         </button>
         <button id="btn-add-expense" class="btn" style="background-color: #fff; color: #d32f2f; display: flex; align-items: center; gap: 8px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
             <span style="font-size: 1.2rem; line-height: 0;">-</span> Lançar Despesa
         </button>
     </div>
-</div>
-
-<!-- Filtro de Período -->
-<div style="display: flex; justify-content: flex-end; margin-bottom: 20px; align-items: center; gap: 10px;">
-    <label style="color: #666; font-size: 0.9rem;">Período:</label>
-    <select id="fin-period-filter" class="form-control" style="width: auto; padding: 8px 15px; border-radius: 8px;">
-        <option value="current">Este Mês</option>
-        <option value="last">Mês Passado</option>
-        <option value="year">Este Ano</option>
-    </select>
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <label style="color: #666; font-size: 0.9rem;">Período:</label>
+        <select id="fin-period-filter" class="form-control" style="width: auto; padding: 8px 15px; border-radius: 8px;">
+            <option value="current">Este Mês</option>
+            <option value="last">Mês Passado</option>
+            <option value="year">Este Ano</option>
+        </select>
+    </div>
 </div>
 
 <!-- Cards de KPI -->
@@ -28,7 +30,9 @@
     <div class="fin-card">
         <div class="card-header-row">
             <h4>Receita Realizada</h4>
-            <span class="info-tooltip" tabindex="0" data-tooltip="Soma das sessões marcadas como 'Realizado' na agenda.">ⓘ</span>
+            <span class="info-tooltip" tabindex="0" data-tooltip="Soma das sessões marcadas como 'Realizado' na agenda.">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            </span>
         </div>
         <div class="fin-value positive" id="fin-income">R$ 0,00</div>
         <small style="color: #888;">Sessões pagas/realizadas</small>
@@ -36,7 +40,9 @@
     <div class="fin-card">
         <div class="card-header-row">
             <h4>A Receber (Previsto)</h4>
-            <span class="info-tooltip" tabindex="0" data-tooltip="Soma das sessões agendadas que ainda não foram realizadas.">ⓘ</span>
+            <span class="info-tooltip" tabindex="0" data-tooltip="Soma das sessões agendadas que ainda não foram realizadas.">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            </span>
         </div>
         <div class="fin-value neutral" id="fin-pending">R$ 0,00</div>
         <small style="color: #888;">Agendamentos futuros</small>
@@ -44,7 +50,9 @@
     <div class="fin-card">
         <div class="card-header-row">
             <h4>Despesas</h4>
-            <span class="info-tooltip" tabindex="0" data-tooltip="Total de despesas lançadas manualmente no sistema.">ⓘ</span>
+            <span class="info-tooltip" tabindex="0" data-tooltip="Total de despesas lançadas manualmente no sistema.">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            </span>
         </div>
         <div class="fin-value negative" id="fin-expenses">R$ 0,00</div>
         <small style="color: #888;">Gastos do consultório</small>
@@ -52,7 +60,9 @@
     <div class="fin-card" style="background: #f0fdf4; border-color: #bbf7d0;">
         <div class="card-header-row">
             <h4>Saldo Líquido</h4>
-            <span class="info-tooltip" tabindex="0" data-tooltip="Resultado da Receita Realizada menos as Despesas.">ⓘ</span>
+            <span class="info-tooltip" tabindex="0" data-tooltip="Resultado da Receita Realizada menos as Despesas.">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            </span>
         </div>
         <div class="fin-value positive" id="fin-balance">R$ 0,00</div>
         <small style="color: #166534;">Lucro do período</small>
