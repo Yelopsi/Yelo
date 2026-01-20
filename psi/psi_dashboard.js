@@ -2782,6 +2782,17 @@ function inicializarBlog(preFetchedData = null) {
                 ]
             }
         });
+
+        // FIX DEFINITIVO: Sincronização de Estado do Placeholder
+        // Garante que a classe 'ql-blank' seja removida se houver texto,
+        // resolvendo o problema da máscara sobrescrevendo o conteúdo.
+        quill.on('text-change', function() {
+            if (quill.getText().trim().length > 0) {
+                quill.root.classList.remove('ql-blank');
+            } else {
+                quill.root.classList.add('ql-blank');
+            }
+        });
     }
 
     // --- LIMITE DE CARACTERES DO TÍTULO (50) ---
@@ -2903,7 +2914,6 @@ function inicializarBlog(preFetchedData = null) {
         
         if (quill) {
             quill.setText(''); // Limpa o texto
-            // quill.root.innerHTML = ''; // REMOVIDO: Isso causava conflito com o placeholder
         }
         
         // Reseta contador
@@ -3078,8 +3088,10 @@ function inicializarBlog(preFetchedData = null) {
         
         // Carrega conteúdo no Quill
         if (quill && post.conteudo) {
-            // Uso da API correta para inserir HTML sem quebrar o estado do editor
+            // Uso da API correta para inserir HTML e atualizar o estado
             quill.clipboard.dangerouslyPasteHTML(0, post.conteudo);
+            // Força a atualização da classe ql-blank após colar o HTML
+            quill.root.classList.remove('ql-blank');
         }
         
         document.getElementById('blog-imagem').value = post.imagem_url || '';
