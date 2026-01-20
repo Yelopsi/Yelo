@@ -8,6 +8,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Variável para guardar qual plano o usuário está tentando assinar no modal
     let currentPlanAttempt = '';
 
+    // --- APLICA ZOOM SALVO AO INICIAR ---
+    const savedZoom = localStorage.getItem('yelo_dashboard_zoom');
+    if (savedZoom) {
+        document.body.style.zoom = savedZoom;
+    }
+
     // Variável global temporária para saber qual botão disparou a ação
     let btnReativacaoAtual = null;
 
@@ -1310,19 +1316,37 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Listener do botão de atualizar
-        if (btnRefresh) {
-            btnRefresh.onclick = (e) => {
-                e.preventDefault();
-                // Animação simples de rotação no ícone
-                const icon = btnRefresh.querySelector('svg');
-                if(icon) {
-                    icon.style.transition = 'transform 0.5s ease';
-                    icon.style.transform = 'rotate(360deg)';
-                    setTimeout(() => { icon.style.transform = 'none'; }, 500);
-                }
-                const currentSelect = document.getElementById('kpi-date-filter');
-                fetchAndRenderKPIs(currentSelect ? currentSelect.value : 'last30days');
+        // --- CONTROLE DE ZOOM (VISÃO GERAL) ---
+        const btnZoomIn = document.getElementById('btn-zoom-in');
+        const btnZoomOut = document.getElementById('btn-zoom-out');
+        const btnZoomReset = document.getElementById('btn-zoom-reset');
+        const zoomDisplay = document.getElementById('zoom-level-display');
+
+        if (btnZoomIn && btnZoomOut && btnZoomReset && zoomDisplay) {
+            const updateZoomUI = () => {
+                const current = parseFloat(document.body.style.zoom) || 1;
+                zoomDisplay.textContent = Math.round(current * 100) + '%';
+            };
+            
+            // Inicializa display
+            updateZoomUI();
+
+            const setZoom = (val) => {
+                document.body.style.zoom = val;
+                localStorage.setItem('yelo_dashboard_zoom', val);
+                updateZoomUI();
+            };
+
+            btnZoomIn.onclick = () => {
+                let val = parseFloat(document.body.style.zoom) || 1;
+                setZoom(Math.min(val + 0.1, 1.5)); // Max 150%
+            };
+            btnZoomOut.onclick = () => {
+                let val = parseFloat(document.body.style.zoom) || 1;
+                setZoom(Math.max(val - 0.1, 0.7)); // Min 70%
+            };
+            btnZoomReset.onclick = () => {
+                setZoom(1);
             };
         }
 
