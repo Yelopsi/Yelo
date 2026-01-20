@@ -3245,32 +3245,33 @@ body.pagina-dashboard::after {
 .patient-card {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 15px;
+    gap: 15px;
+    padding: 18px;
     background: #fff;
-    border: 1px solid #eee;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    transition: all 0.2s ease;
+    border: 1px solid #f0f0f0;
+    border-radius: 20px; /* Mais orgânico */
+    margin-bottom: 12px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
 
 .patient-card:hover {
-    transform: translateX(3px);
-    border-color: var(--verde-escuro);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transform: translateY(-3px);
+    border-color: transparent;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
 
 .patient-avatar {
-    width: 40px;
-    height: 40px;
-    background-color: var(--cor-Yelo);
+    width: 48px;
+    height: 48px;
+    background-color: #f0fdf4; /* Verde bem claro e suave */
     color: var(--verde-escuro);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
 }
 
 .patient-info { flex-grow: 1; min-width: 0; /* Permite truncar texto (ellipsis) se necessário */ }
