@@ -3237,3 +3237,63 @@ body.pagina-dashboard::after {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* ==========================================================================
+   GESTÃO DE PACIENTES E AGENDA
+   ========================================================================== */
+
+.patient-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    transition: all 0.2s ease;
+}
+
+.patient-card:hover {
+    transform: translateX(3px);
+    border-color: var(--verde-escuro);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.patient-avatar {
+    width: 40px;
+    height: 40px;
+    background-color: var(--cor-Yelo);
+    color: var(--verde-escuro);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.patient-info { flex-grow: 1; min-width: 0; /* Permite truncar texto (ellipsis) se necessário */ }
+.patient-info h4 { margin: 0; font-size: 0.95rem; color: #333; }
+.patient-info span { font-size: 0.8rem; color: #888; }
+
+.patient-status { font-size: 1.2rem; cursor: help; }
+
+.btn-icon-sm {
+    background: none; border: none; cursor: pointer; font-size: 1rem; padding: 5px; opacity: 0.6; transition: opacity 0.2s;
+}
+.btn-icon-sm:hover { opacity: 1; }
+
+.empty-state-patients {
+    text-align: center; padding: 30px; color: #999; font-style: italic; background: #f9f9f9; border-radius: 8px;
+}
+
+/* OVERRIDES FULLCALENDAR (Yelo Theme) */
+.fc-button-primary {
+    background-color: var(--verde-escuro) !important;
+    border-color: var(--verde-escuro) !important;
+}
+.fc-button-primary:hover { background-color: #143d2e !important; }
+.fc-button-active { background-color: #0d2e21 !important; }
+.fc-daygrid-day.fc-day-today { background-color: #f0fdf4 !important; } /* Dia atual verde claro */
+.fc-event { border: none; border-radius: 4px; padding: 2px; font-size: 0.85rem; }
