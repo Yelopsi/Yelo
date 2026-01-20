@@ -3362,3 +3362,27 @@ body.pagina-dashboard::after {
 .fin-type-in { color: var(--verde-escuro); font-weight: 600; background: #e8f5e9; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; }
 .fin-type-out { color: #d32f2f; font-weight: 600; background: #ffebee; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; }
 .fin-date { color: #888; font-size: 0.85rem; }
+
+/* Estilo do Botão de Fechar Modal (Global) */
+.modal-close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: #f5f5f5;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+.modal-close-btn:hover {
+    background: #e0e0e0;
+    color: #333;
+    transform: rotate(90deg);
+}

@@ -524,6 +524,11 @@
 <style>
     /* Estilos Locais Específicos (Complemento ao CSS Global) */
     
+    /* Ajuste do Modal de Paciente (Mais largo para alinhar inputs) */
+    #modal-patient .custom-modal-box {
+        max-width: 800px;
+    }
+
     /* Botões de Status */
     .btn-status { transition: all 0.2s; font-weight: 600; font-size: 0.9rem; }
     .btn-status:hover { transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
@@ -643,29 +648,6 @@
         border: none;
         padding: 2px 4px;
         font-weight: 600;
-    }
-
-    /* Estilo do Botão de Fechar */
-    .modal-close-btn {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        background: #f5f5f5;
-        border: none;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        color: #666;
-        transition: all 0.2s ease;
-    }
-    .modal-close-btn:hover {
-        background: #e0e0e0;
-        color: #333;
-        transform: rotate(90deg);
     }
 
     /* Estilo do Card Assistente */
