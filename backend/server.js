@@ -480,7 +480,7 @@ app.get('/api/fix-make-content-creator', async (req, res) => {
         const email = req.query.email;
         if (!email) return res.status(400).send("Informe o email na URL: ?email=exemplo@yelopsi.com.br");
 
-        const [updated] = await db.Psychologist.update({ status: 'content_creator' }, { where: { email } });
+        const [updated] = await db.Psychologist.update({ status: 'creator' }, { where: { email } });
         
         if (updated) res.send(`Sucesso! O usuário ${email} agora é um Criador de Conteúdo (Invisível no match/perfil).`);
         else res.status(404).send("Usuário não encontrado.");

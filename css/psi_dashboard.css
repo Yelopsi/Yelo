@@ -3745,3 +3745,55 @@ input:checked + .slider:before { transform: translateX(20px); }
         font-size: 0.8rem !important;
     }
 }
+
+/* ==========================================================================
+   CONTROLES DE ZOOM (VISÃO GERAL)
+   ========================================================================== */
+.zoom-controls-minimal {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(4px);
+}
+
+.btn-zoom-min {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s;
+    padding: 0;
+    line-height: 1;
+}
+
+.btn-zoom-min:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+#zoom-level-display {
+    font-size: 0.85rem;
+    color: #fff;
+    min-width: 45px;
+    text-align: center;
+    font-weight: 600;
+    font-family: var(--font-principal);
+    user-select: none;
+}
+
+.btn-zoom-reset svg {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2.5;
+}
