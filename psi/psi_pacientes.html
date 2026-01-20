@@ -128,23 +128,22 @@
                 </div>
                 <div class="form-group" style="flex: 1;">
                     <label>Horário</label>
-                    <input type="time" id="appt-time" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box;">
+                    <input type="time" id="appt-time" required step="300" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box;">
                 </div>
             </div>
 
             <div class="form-group highlight-box assistant-card" style="margin-top: 15px;">
                 <div style="display: flex; align-items: flex-start; gap: 15px;">
                     <div class="assistant-icon">🔁</div>
-                    <div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                            <label for="appt-recurrence" style="font-weight: bold; color: #1B4332; cursor: pointer; font-size: 1rem;">Repetir Semanalmente</label>
-                            <label class="switch-toggle">
-                                <input type="checkbox" id="appt-recurrence">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
+                    <div style="flex-grow: 1;">
+                        <label for="appt-recurrence" style="font-weight: bold; color: #1B4332; display: block; margin-bottom: 8px;">Frequência</label>
+                        <select id="appt-recurrence" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; background-color: #fff;">
+                            <option value="none">Não repetir (Sessão Única)</option>
+                            <option value="weekly">Semanalmente</option>
+                            <option value="biweekly">Quinzenalmente</option>
+                        </select>
                         <p style="font-size: 0.85rem; color: #555; margin: 8px 0 0 0; line-height: 1.4;">
-                            O agendamento se repetirá automaticamente toda semana neste horário.
+                            Define se o agendamento se repetirá automaticamente.
                         </p>
                     </div>
                 </div>
@@ -331,8 +330,9 @@
                     week: 'Semana',
                     day: 'Dia'
                 },
-                slotMinTime: '07:00:00',
-                slotMaxTime: '22:00:00',
+                slotMinTime: '00:00:00',
+                slotMaxTime: '24:00:00',
+                scrollTime: '07:00:00',
                 allDaySlot: false,
                 slotDuration: '01:00:00', // Slots de 1 hora para ficar mais limpo
                 height: isDesktop ? '100%' : 'auto', // Desktop: 100% para sticky header | Mobile: Auto
