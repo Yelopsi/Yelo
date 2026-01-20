@@ -1571,7 +1571,7 @@ const startServer = async () => {
                 "imagem_url" VARCHAR(500),
                 "tags" VARCHAR(255),
                 "slug" VARCHAR(255) UNIQUE,
-                "psychologistId" INTEGER NOT NULL,
+                "psychologist_id" INTEGER NOT NULL, -- CORREÇÃO: Nome da coluna em snake_case
                 "curtidas" INTEGER DEFAULT 0,
                 "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
