@@ -2901,7 +2901,10 @@ function inicializarBlog(preFetchedData = null) {
         
         document.getElementById('blog-id').value = ''; // Limpa o ID
         
-        if (quill) quill.setText(''); // Limpa o editor
+        if (quill) {
+            quill.setText(''); // Limpa o texto
+            quill.root.innerHTML = ''; // Garante que o HTML fique vazio
+        }
         
         // Reseta contador
         const contador = document.getElementById('contador-titulo-blog');
@@ -2942,7 +2945,11 @@ function inicializarBlog(preFetchedData = null) {
             }
 
             if (!Array.isArray(posts)) {
-                throw new Error("Resposta da API não é um array válido.");
+                // Se a API retornou um objeto de erro (ex: 500), tenta ler a mensagem
+                if (posts.error) throw new Error(posts.error);
+                // Se não, lança erro genérico mas não quebra a aplicação
+                console.warn("Resposta inesperada da API de posts:", posts);
+                posts = []; // Assume vazio para não travar a tela
             }
 
             // Lógica de Paginação: Se vieram 3 posts, assumimos que pode haver mais
@@ -2964,7 +2971,7 @@ function inicializarBlog(preFetchedData = null) {
         } catch (error) {
             console.error("ERRO AO CARREGAR ARTIGOS:", error);
               if (!append) {
-                containerLista.innerHTML = `<div style="text-align:center; padding:30px; color:#d32f2f; background:#fff0f0; border-radius:8px;"><p><strong>Não foi possível carregar.</strong></p><p style="font-size:0.8rem;">${error.message}</p></div>`;
+                containerLista.innerHTML = `<div style="text-align:center; padding:30px; color:#d32f2f; background:#fff0f0; border-radius:8px;"><p><strong>Não foi possível carregar seus artigos.</strong></p><p style="font-size:0.8rem;">Tente recarregar a página.</p></div>`;
             }
         } finally {
             if (loadMoreBtn) {

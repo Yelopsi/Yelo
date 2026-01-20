@@ -1926,6 +1926,12 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     border-top: 6px solid #1f2937;
 }
 }
+
+/* ==========================================================================
+   CORREÇÃO EDITOR QUILL (BLOG)
+   ========================================================================== */
+/* Garante que o placeholder suma quando houver texto */
+.ql-editor:not(.ql-blank)::before { display: none !important; }
 /* ==========================================================================
    CSS EXTRA: LAYOUT DO PERFIL PÚBLICO (Recuperação)
    Cole isso no final do arquivo css/psi_dashboard.css
