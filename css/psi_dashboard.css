@@ -1530,17 +1530,16 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 /* Container relativo para posicionar o cadeado por cima */
 .premium-feature-container {
     position: relative;
-    overflow: hidden; /* Garante que o blur não vaze para fora do card */
-    /* Garante altura uniforme nos cards bloqueados (especialmente no mobile) */
-    height: 180px;
+    overflow: visible !important; /* MVP: Liberado - Permite conteúdo fluir */
+    height: auto !important;      /* MVP: Liberado - Altura automática */
 }
 
 /* O conteúdo que será borrado (Cards de métricas) */
 .premium-blur {
-    filter: blur(5px);
-    opacity: 0.6;
-    pointer-events: none; /* Impede clique nos botões borrados */
-    user-select: none;    /* Impede copiar texto */
+    filter: none !important;         /* MVP: Liberado - Remove o desfoque */
+    opacity: 1 !important;           /* MVP: Liberado - Opacidade total */
+    pointer-events: auto !important; /* MVP: Liberado - Permite cliques */
+    user-select: auto !important;    /* MVP: Liberado - Permite seleção */
     transition: all 0.3s ease;
 }
 
@@ -1551,7 +1550,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     left: 0;
     width: 100%;
     height: 100%;
-    display: flex;
+    display: none !important; /* MVP: Liberado - Esconde o cadeado */
     flex-direction: column;
     align-items: center;
     justify-content: center;
