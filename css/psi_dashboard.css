@@ -1930,7 +1930,14 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 /* ==========================================================================
    CORREÇÃO EDITOR QUILL (BLOG)
    ========================================================================== */
-/* Estilo do Placeholder - A classe .ql-blank é gerenciada nativamente pelo Quill */
+
+/* 1. GARANTIA: Se não tiver a classe .ql-blank, esconde o placeholder à força */
+.ql-editor:not(.ql-blank)::before {
+    display: none !important;
+    content: "" !important;
+}
+
+/* 2. Estilo do Placeholder (Só aparece quando tem .ql-blank) */
 .ql-editor.ql-blank::before {
     color: #a0aec0 !important;
     font-style: italic;
@@ -1939,6 +1946,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     left: 15px;
     right: 15px;
     content: attr(data-placeholder); /* Garante que o texto venha do atributo */
+    display: block !important;
 }
 /* ==========================================================================
    CSS EXTRA: LAYOUT DO PERFIL PÚBLICO (Recuperação)
