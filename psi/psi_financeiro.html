@@ -1,0 +1,203 @@
+<div class="main-header">
+    <div class="header-content">
+        <h1>Gestão Financeira</h1>
+        <p>Acompanhe o fluxo de caixa, receitas e despesas do seu consultório.</p>
+    </div>
+    <div class="dashboard-header-actions">
+        <button id="btn-add-expense" class="btn" style="background-color: #fff; color: #d32f2f; display: flex; align-items: center; gap: 8px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <span style="font-size: 1.2rem; line-height: 0;">-</span> Lançar Despesa
+        </button>
+    </div>
+</div>
+
+<!-- Filtro de Período -->
+<div style="display: flex; justify-content: flex-end; margin-bottom: 20px; align-items: center; gap: 10px;">
+    <label style="color: #666; font-size: 0.9rem;">Período:</label>
+    <select id="fin-period-filter" class="form-control" style="width: auto; padding: 8px 15px; border-radius: 8px;">
+        <option value="current">Este Mês</option>
+        <option value="last">Mês Passado</option>
+        <option value="year">Este Ano</option>
+    </select>
+</div>
+
+<!-- Cards de KPI -->
+<div class="financial-grid">
+    <div class="fin-card">
+        <h4>Receita Realizada</h4>
+        <div class="fin-value positive" id="fin-income">R$ 0,00</div>
+        <small style="color: #888;">Sessões pagas/realizadas</small>
+    </div>
+    <div class="fin-card">
+        <h4>A Receber (Previsto)</h4>
+        <div class="fin-value neutral" id="fin-pending">R$ 0,00</div>
+        <small style="color: #888;">Agendamentos futuros</small>
+    </div>
+    <div class="fin-card">
+        <h4>Despesas</h4>
+        <div class="fin-value negative" id="fin-expenses">R$ 0,00</div>
+        <small style="color: #888;">Gastos do consultório</small>
+    </div>
+    <div class="fin-card" style="background: #f0fdf4; border-color: #bbf7d0;">
+        <h4>Saldo Líquido</h4>
+        <div class="fin-value positive" id="fin-balance">R$ 0,00</div>
+        <small style="color: #166534;">Lucro do período</small>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;" class="fin-charts-row">
+    <!-- Gráfico -->
+    <div class="widget">
+        <h3 class="widget-title">Fluxo de Caixa</h3>
+        <div style="height: 250px;">
+            <canvas id="financeChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Últimas Movimentações -->
+    <div class="fin-table-container">
+        <h3 class="widget-title" style="margin-bottom: 15px;">Extrato Recente</h3>
+        <div style="overflow-y: auto; max-height: 250px;">
+            <table class="fin-table">
+                <thead>
+                    <tr>
+                        <th>Descrição</th>
+                        <th>Data</th>
+                        <th>Valor</th>
+                        <th>Tipo</th>
+                    </tr>
+                </thead>
+                <tbody id="fin-transactions-body">
+                    <!-- Injetado via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: LANÇAR DESPESA -->
+<div id="modal-expense" class="custom-modal-overlay" style="display: none;">
+    <div class="custom-modal-box">
+        <button class="modal-close-btn" id="close-expense-modal"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        <h3 style="margin-top: 0; color: #d32f2f;">Nova Despesa</h3>
+        
+        <form id="form-expense">
+            <div class="form-group">
+                <label>Descrição</label>
+                <input type="text" id="exp-desc" required placeholder="Ex: Aluguel, Internet, Supervisão...">
+            </div>
+            <div class="form-row">
+                <div class="form-group" style="flex: 1;">
+                    <label>Valor (R$)</label>
+                    <input type="number" id="exp-value" required step="0.01" placeholder="0,00">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Data</label>
+                    <input type="date" id="exp-date" required>
+                </div>
+            </div>
+            <div class="form-actions" style="justify-content: flex-end; margin-top: 20px;">
+                <button type="submit" class="btn btn-principal" style="background-color: #d32f2f;">Registrar Saída</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // Mock de Dados (Em produção viria do backend)
+        // Eventos com status: 'scheduled', 'done', 'missed'
+        let events = [
+            { id: 'e1', title: 'Ana Clara', start: '2026-01-20T10:00:00', end: '2026-01-20T11:00:00', status: 'scheduled', value: 150 },
+            { id: 'e2', title: 'Bruno M.', start: '2026-01-19T14:00:00', end: '2026-01-19T15:00:00', status: 'done', value: 200 },
+            { id: 'e3', title: 'Carla Dias', start: '2026-01-21T09:00:00', end: '2026-01-21T10:00:00', status: 'scheduled', value: 180 }
+        ];
+        
+        let expenses = [
+            { id: 'ex1', desc: 'Supervisão', value: 250, date: '2026-01-15' },
+            { id: 'ex2', desc: 'Internet', value: 100, date: '2026-01-10' }
+        ];
+
+        const modalExpense = document.getElementById('modal-expense');
+
+        // --- GESTÃO FINANCEIRA ---
+        function updateFinancials() {
+            const income = events.filter(e => e.status === 'done').reduce((acc, curr) => acc + (curr.value || 0), 0);
+            const pending = events.filter(e => e.status === 'scheduled').reduce((acc, curr) => acc + (curr.value || 0), 0);
+            const totalExpenses = expenses.reduce((acc, curr) => acc + curr.value, 0);
+
+            document.getElementById('fin-income').textContent = `R$ ${income.toFixed(2)}`;
+            document.getElementById('fin-pending').textContent = `R$ ${pending.toFixed(2)}`;
+            document.getElementById('fin-expenses').textContent = `R$ ${totalExpenses.toFixed(2)}`;
+            document.getElementById('fin-balance').textContent = `R$ ${(income - totalExpenses).toFixed(2)}`;
+
+            const transactions = [
+                ...events.filter(e => e.status === 'done').map(e => ({ desc: `Sessão: ${e.title}`, date: e.start, value: e.value, type: 'in' })),
+                ...expenses.map(e => ({ desc: e.desc, date: e.date, value: e.value, type: 'out' }))
+            ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            const tbody = document.getElementById('fin-transactions-body');
+            tbody.innerHTML = '';
+            transactions.forEach(t => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${t.desc}</td>
+                    <td class="fin-date">${new Date(t.date).toLocaleDateString('pt-BR')}</td>
+                    <td>R$ ${t.value.toFixed(2)}</td>
+                    <td><span class="${t.type === 'in' ? 'fin-type-in' : 'fin-type-out'}">${t.type === 'in' ? 'Entrada' : 'Saída'}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            renderChart(income, totalExpenses);
+        }
+
+        // Gráfico (Chart.js)
+        let chartInstance = null;
+        function renderChart(income, expense) {
+            const ctx = document.getElementById('financeChart').getContext('2d');
+            if(chartInstance) chartInstance.destroy();
+            
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Financeiro Atual'],
+                    datasets: [
+                        { label: 'Receitas', data: [income], backgroundColor: '#1B4332', borderRadius: 5 },
+                        { label: 'Despesas', data: [expense], backgroundColor: '#d32f2f', borderRadius: 5 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        // Eventos
+        document.getElementById('btn-add-expense').onclick = () => {
+            document.getElementById('form-expense').reset();
+            document.getElementById('exp-date').valueAsDate = new Date();
+            modalExpense.style.display = 'flex';
+        };
+
+        document.getElementById('close-expense-modal').onclick = () => modalExpense.style.display = 'none';
+
+        document.getElementById('form-expense').onsubmit = (e) => {
+            e.preventDefault();
+            expenses.push({
+                id: Date.now(),
+                desc: document.getElementById('exp-desc').value,
+                value: parseFloat(document.getElementById('exp-value').value),
+                date: document.getElementById('exp-date').value
+            });
+            modalExpense.style.display = 'none';
+            updateFinancials();
+            if(window.showToast) window.showToast('Despesa registrada.', 'success');
+        };
+
+        // Inicialização
+        updateFinancials();
+    })();
+</script>
