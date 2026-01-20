@@ -3298,3 +3298,67 @@ body.pagina-dashboard::after {
 .fc-button-active { background-color: #0d2e21 !important; }
 .fc-daygrid-day.fc-day-today { background-color: #f0fdf4 !important; } /* Dia atual verde claro */
 .fc-event { border: none; border-radius: 4px; padding: 2px; font-size: 0.85rem; }
+
+/* ==========================================================================
+   NOVOS ESTILOS: GESTÃO FINANCEIRA E ABAS
+   ========================================================================== */
+
+/* Navegação por Abas Simples */
+.tabs-nav-simple {
+    display: flex;
+    gap: 25px;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 25px;
+}
+.tab-btn-simple {
+    background: none;
+    border: none;
+    padding: 12px 5px;
+    font-size: 1rem;
+    color: #888;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    font-weight: 500;
+    transition: all 0.2s;
+    font-family: var(--font-titulos);
+}
+.tab-btn-simple:hover { color: var(--verde-escuro); }
+.tab-btn-simple.active {
+    color: var(--verde-escuro);
+    border-bottom-color: var(--verde-escuro);
+    font-weight: 700;
+}
+
+/* Cards Financeiros */
+.financial-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+.fin-card {
+    background: #fff;
+    padding: 25px;
+    border-radius: 20px;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    transition: transform 0.2s;
+}
+.fin-card:hover { transform: translateY(-3px); }
+.fin-card h4 { margin: 0 0 10px 0; font-size: 0.9rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+.fin-value { font-size: 1.8rem; font-weight: 700; color: #333; font-family: var(--font-titulos); }
+.fin-value.positive { color: var(--verde-escuro); }
+.fin-value.negative { color: #d32f2f; }
+.fin-value.neutral { color: #f59e0b; }
+
+/* Tabela de Transações */
+.fin-table-container {
+    background: #fff; border-radius: 16px; padding: 20px; border: 1px solid #f0f0f0;
+}
+.fin-table { width: 100%; border-collapse: collapse; }
+.fin-table th { text-align: left; padding: 15px; color: #666; font-size: 0.85rem; border-bottom: 1px solid #eee; font-weight: 600; }
+.fin-table td { padding: 15px; border-bottom: 1px solid #f9f9f9; font-size: 0.95rem; color: #444; }
+.fin-table tr:last-child td { border-bottom: none; }
+.fin-type-in { color: var(--verde-escuro); font-weight: 600; background: #e8f5e9; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; }
+.fin-type-out { color: #d32f2f; font-weight: 600; background: #ffebee; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; }
+.fin-date { color: #888; font-size: 0.85rem; }
