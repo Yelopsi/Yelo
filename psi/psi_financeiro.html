@@ -4,6 +4,9 @@
         <p>Acompanhe o fluxo de caixa, receitas e despesas do seu consultório.</p>
     </div>
     <div class="dashboard-header-actions">
+        <button id="btn-export-report" class="btn" style="background-color: #fff; color: #1B4332; display: flex; align-items: center; gap: 8px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-right: 10px;">
+            <span style="font-size: 1.2rem; line-height: 0;">⬇</span> Exportar
+        </button>
         <button id="btn-add-expense" class="btn" style="background-color: #fff; color: #d32f2f; display: flex; align-items: center; gap: 8px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
             <span style="font-size: 1.2rem; line-height: 0;">-</span> Lançar Despesa
         </button>
@@ -23,22 +26,34 @@
 <!-- Cards de KPI -->
 <div class="financial-grid">
     <div class="fin-card">
-        <h4>Receita Realizada</h4>
+        <div class="card-header-row">
+            <h4>Receita Realizada</h4>
+            <span class="info-tooltip" tabindex="0" data-tooltip="Soma das sessões marcadas como 'Realizado' na agenda.">ⓘ</span>
+        </div>
         <div class="fin-value positive" id="fin-income">R$ 0,00</div>
         <small style="color: #888;">Sessões pagas/realizadas</small>
     </div>
     <div class="fin-card">
-        <h4>A Receber (Previsto)</h4>
+        <div class="card-header-row">
+            <h4>A Receber (Previsto)</h4>
+            <span class="info-tooltip" tabindex="0" data-tooltip="Soma das sessões agendadas que ainda não foram realizadas.">ⓘ</span>
+        </div>
         <div class="fin-value neutral" id="fin-pending">R$ 0,00</div>
         <small style="color: #888;">Agendamentos futuros</small>
     </div>
     <div class="fin-card">
-        <h4>Despesas</h4>
+        <div class="card-header-row">
+            <h4>Despesas</h4>
+            <span class="info-tooltip" tabindex="0" data-tooltip="Total de despesas lançadas manualmente no sistema.">ⓘ</span>
+        </div>
         <div class="fin-value negative" id="fin-expenses">R$ 0,00</div>
         <small style="color: #888;">Gastos do consultório</small>
     </div>
     <div class="fin-card" style="background: #f0fdf4; border-color: #bbf7d0;">
-        <h4>Saldo Líquido</h4>
+        <div class="card-header-row">
+            <h4>Saldo Líquido</h4>
+            <span class="info-tooltip" tabindex="0" data-tooltip="Resultado da Receita Realizada menos as Despesas.">ⓘ</span>
+        </div>
         <div class="fin-value positive" id="fin-balance">R$ 0,00</div>
         <small style="color: #166534;">Lucro do período</small>
     </div>
@@ -183,6 +198,28 @@
         };
 
         document.getElementById('close-expense-modal').onclick = () => modalExpense.style.display = 'none';
+
+        // Exportar Relatório (CSV)
+        document.getElementById('btn-export-report').onclick = () => {
+            const transactions = [
+                ...events.filter(e => e.status === 'done').map(e => ({ date: e.start, desc: `Sessão: ${e.title}`, value: e.value, type: 'Entrada' })),
+                ...expenses.map(e => ({ date: e.date, desc: e.desc, value: e.value, type: 'Saída' }))
+            ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFFData,Descrição,Valor,Tipo\n";
+            transactions.forEach(t => {
+                const row = `${new Date(t.date).toLocaleDateString('pt-BR')},"${t.desc}",${t.value.toFixed(2)},${t.type}`;
+                csvContent += row + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "relatorio_financeiro.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
 
         document.getElementById('form-expense').onsubmit = (e) => {
             e.preventDefault();

@@ -335,7 +335,7 @@
                 scrollTime: '07:00:00',
                 allDaySlot: false,
                 slotDuration: '01:00:00', // Slots de 1 hora para ficar mais limpo
-                height: isDesktop ? '100%' : 'auto', // Desktop: 100% para sticky header | Mobile: Auto
+                height: isDesktop ? '100%' : '75vh', // Desktop: 100% | Mobile: 75vh para scroll interno
                 nowIndicator: true, // Indicador de hora atual
                 titleFormat: mobile ? { year: 'numeric', month: 'short', day: 'numeric' } : undefined,
                 
@@ -343,7 +343,7 @@
                 windowResize: function(arg) {
                     const width = window.innerWidth;
                     const isSmall = width < 768;
-                    calendar.setOption('height', width >= 992 ? '100%' : 'auto');
+                    calendar.setOption('height', width >= 992 ? '100%' : '75vh');
 
                     if (isSmall) {
                         calendar.changeView('timeGridDay');
