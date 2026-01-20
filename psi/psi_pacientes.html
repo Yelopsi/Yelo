@@ -588,5 +588,15 @@
         if (typeof IMask !== 'undefined') {
             IMask(document.getElementById('p-phone'), { mask: '(00) 00000-0000' });
         }
+
+        // Validação do campo Valor da Sessão (Impedir letras 'e', 'E', '+', '-')
+        const sessionInput = document.getElementById('p-session-value');
+        if (sessionInput) {
+            sessionInput.addEventListener('keydown', (e) => {
+                if (['e', 'E', '+', '-'].includes(e.key)) {
+                    e.preventDefault();
+                }
+            });
+        }
     })();
 </script>
