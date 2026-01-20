@@ -23,7 +23,8 @@ module.exports = (sequelize, DataTypes) => {
         },
         psychologistId: {
             type: DataTypes.INTEGER,
-            allowNull: false
+            allowNull: false,
+            field: 'psychologist_id' // Mapeia para a coluna correta no banco (snake_case)
         },
         // --- ADICIONE ISTO AQUI: ---
         curtidas: {
