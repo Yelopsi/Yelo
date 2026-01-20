@@ -2946,7 +2946,7 @@ function inicializarBlog(preFetchedData = null) {
 
             if (!Array.isArray(posts)) {
                 // Se a API retornou um objeto de erro (ex: 500), tenta ler a mensagem
-                if (posts.error) throw new Error(posts.error);
+                if (posts && posts.error) throw new Error(posts.error); // CORREÇÃO: Verifica se posts existe
                 // Se não, lança erro genérico mas não quebra a aplicação
                 console.warn("Resposta inesperada da API de posts:", posts);
                 posts = []; // Assume vazio para não travar a tela

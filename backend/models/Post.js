@@ -30,6 +30,17 @@ module.exports = (sequelize, DataTypes) => {
         curtidas: {
             type: DataTypes.INTEGER,
             defaultValue: 0
+        },
+        // --- CORREÇÃO DO ERRO 500 (ORDER BY) ---
+        // Definimos explicitamente os campos de data para garantir que o Sequelize
+        // saiba exatamente qual coluna do banco usar.
+        createdAt: {
+            type: DataTypes.DATE,
+            field: 'created_at'
+        },
+        updatedAt: {
+            type: DataTypes.DATE,
+            field: 'updated_at'
         }
         // ---------------------------
     }, {
