@@ -2782,17 +2782,6 @@ function inicializarBlog(preFetchedData = null) {
                 ]
             }
         });
-
-        // FIX: Força a atualização da classe ql-blank ao digitar
-        // Isso resolve o problema da máscara sobrescrevendo o texto
-        quill.on('text-change', function() {
-            // Verifica comprimento > 1 (pois 1 é apenas o \n padrão do editor vazio)
-            if (quill.getLength() > 1) {
-                quill.root.classList.remove('ql-blank');
-            } else {
-                quill.root.classList.add('ql-blank');
-            }
-        });
     }
 
     // --- LIMITE DE CARACTERES DO TÍTULO (50) ---
@@ -3089,9 +3078,8 @@ function inicializarBlog(preFetchedData = null) {
         
         // Carrega conteúdo no Quill
         if (quill && post.conteudo) {
-            quill.root.innerHTML = post.conteudo;
-            // Força remoção do placeholder se tiver conteúdo
-            quill.root.classList.remove('ql-blank');
+            // Uso da API correta para inserir HTML sem quebrar o estado do editor
+            quill.clipboard.dangerouslyPasteHTML(0, post.conteudo);
         }
         
         document.getElementById('blog-imagem').value = post.imagem_url || '';
