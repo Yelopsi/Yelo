@@ -1062,8 +1062,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // Verifica se foi cancelamento imediato (Arrependimento)
                     if (data.message && (data.message.includes('estornado') || data.message.includes('Arrependimento') || data.message.includes('cancelada'))) {
-                        showToast('Assinatura cancelada. Atualizando...', 'success');
-                        setTimeout(() => window.location.href = window.location.href, 1000); // Force Reload
+                        showToast('Assinatura cancelada.', 'success');
+                        window.location.reload(); // [OTIMIZAÇÃO] Recarrega imediatamente sem esperar
                     } else {
                         // Cancelamento agendado (fim do ciclo)
                         psychologistData.cancel_at_period_end = true; 
