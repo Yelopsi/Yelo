@@ -1941,6 +1941,9 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     color: #a0aec0 !important;
     font-style: italic;
     pointer-events: none; /* Permite clicar através do placeholder */
+    position: absolute; /* Garante que fique no lugar certo */
+    left: 15px;
+    right: 15px;
 }
 /* ==========================================================================
    CSS EXTRA: LAYOUT DO PERFIL PÚBLICO (Recuperação)

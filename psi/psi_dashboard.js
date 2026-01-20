@@ -2786,7 +2786,8 @@ function inicializarBlog(preFetchedData = null) {
         // FIX: Força a atualização da classe ql-blank ao digitar
         // Isso resolve o problema da máscara sobrescrevendo o texto
         quill.on('text-change', function() {
-            if (quill.getText().trim().length > 0) {
+            // Verifica comprimento > 1 (pois 1 é apenas o \n padrão do editor vazio)
+            if (quill.getLength() > 1) {
                 quill.root.classList.remove('ql-blank');
             } else {
                 quill.root.classList.add('ql-blank');
@@ -2913,7 +2914,7 @@ function inicializarBlog(preFetchedData = null) {
         
         if (quill) {
             quill.setText(''); // Limpa o texto
-            quill.root.innerHTML = ''; // Garante que o HTML fique vazio
+            // quill.root.innerHTML = ''; // REMOVIDO: Isso causava conflito com o placeholder
         }
         
         // Reseta contador
@@ -3087,7 +3088,11 @@ function inicializarBlog(preFetchedData = null) {
         document.getElementById('blog-titulo').value = post.titulo;
         
         // Carrega conteúdo no Quill
-        if (quill && post.conteudo) quill.root.innerHTML = post.conteudo;
+        if (quill && post.conteudo) {
+            quill.root.innerHTML = post.conteudo;
+            // Força remoção do placeholder se tiver conteúdo
+            quill.root.classList.remove('ql-blank');
+        }
         
         document.getElementById('blog-imagem').value = post.imagem_url || '';
         toggleView(true);
