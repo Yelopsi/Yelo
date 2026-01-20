@@ -36,10 +36,7 @@
         <div class="widget-header-row">
             <h3 style="margin: 0;">Agenda</h3>
             <div class="calendar-legend">
-                <span class="legend-item"><span class="dot available"></span> Realizado</span>
-                <span class="legend-item"><span class="dot busy"></span> Agendado</span>
-                <span class="legend-item"><span class="dot" style="background:#e0e0e0;"></span> Falta</span>
-            </div>
+                <span class="legend-item"><span class="dota style="background
         </div>
         <div id="calendar-wrapper"></div>
     </div>
@@ -292,13 +289,36 @@
             const calendarEl = document.getElementById('calendar-wrapper');
             if (!calendarEl) return;
 
-            const isMobile = window.innerWidth < 768;
+            const mobile = window.innerWidth < 768;
+            const isDesktop = window.innerWidth >= 992;
 
             const calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: isMobile ? 'timeGridDay' : 'timeGridWeek', // Mobile: Dia | Desktop: Semana
+                initialView: mobile ? 'timeGridDay' : 'timeGridWeek', // Mobile: Dia | Desktop: Semana
                 locale: 'pt-br',
                 selectable: true, // Permite seleção visual
-                headerToolbar: {
+                editable: true, // Habilita arrastar e soltar (Drag & Drop)
+                eventDrop: function(info) {
+                    // Atualiza o horário no array local (Mock)
+                    const evt = events.find(e => e.id == info.event.id);
+                    if (evt) {
+                        evt.start = info.event.start.toISOString();
+                        evt.end = info.event.end ? info.event.end.toISOString() : null;
+                        if(window.showToast) window.showToast('Sessão reagendada para ' + info.event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 'success');
+                    }
+                },
+                eventResize: function(info) {
+                    // Atualiza a duração no array local
+                    const evt = events.find(e => e.id == info.event.id);
+                    if (evt) {
+                        evt.end = info.event.end.toISOString();
+                        if(window.showToast) window.showToast('Duração da sessão atualizada.', 'success');
+                    }
+                },
+                headerToolbar: mobile ? {
+                    left: 'prev,next',
+                    center: 'title',
+                    right: 'today'
+                } : {
                     left: 'prev,next today',
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
@@ -313,14 +333,45 @@
                 slotMaxTime: '22:00:00',
                 allDaySlot: false,
                 slotDuration: '01:00:00', // Slots de 1 hora para ficar mais limpo
-                height: 'auto',
+                height: isDesktop ? '100%' : 'auto', // Desktop: 100% para sticky header | Mobile: Auto
+                nowIndicator: true, // Indicador de hora atual
+                titleFormat: mobile ? { year: 'numeric', month: 'short', day: 'nu
+                // --- CONFIGURAÇÕES MOBILE ---
+                windowResize: function(arg) {
+                    const width = window.innerWidth;
+                    const isSmall = width < 768;
+                    calendar.setOption('height', width >= 992 ? '100%' : 'auto');
+
+                        calendar.changeView('timeGridDay');
+                        calendar.setOption('headerToolbar', {
+                            left: 'prev,next',
+                            center: 'title',
+                            right: 'today'
+                        });
+                        calendar.setOption('titleFormat', { year: 'numeric', month: 'short', day: 'numeric' });
+                    } else {
+                        calendar.changeView('timeGridWeek');
+                        calendar.setOption('headerToolbar', {
+                            left: 'prev,next today',
+                            center: 'title',
+                            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                        });
+                        calendar.setOption('titleFormat', undefined);
+                    }
+                },
+                views: {
+                    timeGridDay: {
+                        titleFormat: { year: 'numeric', month: 'short', day: 'numeric' } // Título curto no mobile
+                    }
+                },
+
                 events: events.map(evt => ({
                     ...evt,
-                    color: evt.status === 'done' ? '#1B4332' : (evt.status === 'missed' ? '#d32f2f' : '#3788d8')
+                    // Cores: Agendado (Verde), Realizado (Cinza), Falta (Vermelho)
+                    color: evt.status === 'scheduled' ? '#1B4332' : (evt.status === 'done' ? '#9e9e9e' : '#d32f2f')
                 })),
                 // Clique em um horário vazio
-                dateClick: function(info) {
-                    const date = info.date;
+                dateClick: 
                     // Ajusta fuso horário local para os inputs
                     const dateStr = date.toLocaleDateString('en-CA'); // YYYY-MM-DD
                     const timeStr = date.toTimeString().split(' ')[0].substring(0, 5); // HH:MM
@@ -334,6 +385,20 @@
             });
             calendar.render();
             window.calendarApi = calendar;
+
+            // --- SWIPE NAVIGATION (MOBILE) ---
+            let touchStartX = 0;
+            let touchEndX = 0;
+            
+            calendarEl.addEventListener('touchstart', e => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, {passive: true});
+
+            calendarEl.addEventListener('touchend', e => {
+                touchEndX = e.changedTouches[0].screenX;
+                if (touchEndX < touchStartX - 50) calendar.next(); // Swipe Left -> Próximo
+                if (touchEndX > touchStartX + 50) calendar.prev(); // Swipe Right -> Anterior
+            }, {passive: true});
         }
 
         // 3. Funções do Modal
@@ -520,221 +585,3 @@
         }
     })();
 </script>
-
-<style>
-    /* Estilos Locais Específicos (Complemento ao CSS Global) */
-    
-    /* Ajuste do Modal de Paciente (Mais largo para alinhar inputs) */
-    #modal-patient .custom-modal-box {
-        max-width: 800px;
-    }
-
-    /* Botões de Status */
-    .btn-status { transition: all 0.2s; font-weight: 600; font-size: 0.9rem; }
-    .btn-status:hover { transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    
-    /* --- MOBILE FIRST (Padrão) --- */
-    .patients-layout-grid {
-        display: grid;
-        grid-template-columns: 1fr; /* 1 Coluna empilhada */
-        gap: 20px;
-        height: auto; /* Altura cresce com conteúdo */
-        padding-bottom: 60px; /* Espaço extra no fundo para mobile */
-    }
-
-    /* Ajuste do Card para Mobile e Clique */
-    .patient-card {
-        cursor: pointer; /* Indica que é clicável */
-        user-select: none;
-    }
-
-    .patient-list-container {
-        /* No mobile, limitamos a altura da lista para não empurrar o calendário para fora da tela */
-        max-height: 350px; 
-        overflow-y: auto;
-        padding-right: 5px;
-    }
-
-    .calendar-legend {
-        display: flex;
-        gap: 15px;
-        font-size: 0.85rem;
-        color: #666;
-        flex-wrap: wrap; /* Permite quebrar linha em telas pequenas */
-    }
-    .legend-item { display: flex; align-items: center; gap: 5px; }
-    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-    .dot.available { background-color: #fff; border: 2px solid #1B4332; }
-    .dot.busy { background-color: #e0e0e0; }
-
-    /* Ajuste do Modal no Mobile */
-    .custom-modal-box {
-        max-height: 90vh;
-        overflow-y: auto;
-    }
-
-    /* Header dos Widgets (Estilo Refinado) */
-    .widget-header-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid #f0f0f0;
-    }
-    .widget-title {
-        margin: 0;
-        font-size: 1.1rem;
-        color: #1B4332;
-        font-weight: 700;
-    }
-    .badge-count {
-        background-color: #e8f5e9;
-        color: #1B4332;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        font-weight: 800;
-    }
-
-    /* Botão Hoje do Calendário (Contraste e Estado) */
-    .fc .fc-today-button {
-        background-color: #1B4332 !important;
-        border-color: #1B4332 !important;
-        color: #fff !important;
-        font-weight: 700 !important;
-        opacity: 1 !important;
-        text-transform: capitalize;
-        transition: all 0.2s ease;
-    }
-    /* Quando desabilitado (Indica que já estamos no dia atual) */
-    .fc .fc-today-button:disabled {
-        background-color: #FFEE8C !important; /* Amarelo Yelo */
-        border-color: #FFEE8C !important;
-        color: #1B4332 !important; /* Texto Verde */
-        cursor: default;
-        box-shadow: none;
-    }
-
-    /* --- ESTILOS MODERNOS DO CALENDÁRIO --- */
-    .fc-theme-standard td, .fc-theme-standard th {
-        border-color: #f0f0f0;
-    }
-    .fc-timegrid-slot {
-        height: 3.5em !important; /* Slots mais altos para melhor clique */
-        border-bottom: 1px solid #f9f9f9 !important;
-    }
-    /* Feedback visual ao passar o mouse no horário */
-    .fc-timegrid-slot-lane:hover {
-        background-color: rgba(27, 67, 50, 0.04);
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-    .fc-col-header-cell {
-        background-color: #f9fafb;
-        padding: 12px 0;
-        border-bottom: none;
-    }
-    .fc-col-header-cell-cushion {
-        color: #555;
-        font-weight: 700;
-        text-transform: uppercase;
-        font-size: 0.8rem;
-        letter-spacing: 0.5px;
-    }
-    .fc-event {
-        border-radius: 6px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        border: none;
-        padding: 2px 4px;
-        font-weight: 600;
-    }
-
-    /* Estilo do Card Assistente */
-    .assistant-card {
-        background: linear-gradient(135deg, #f0fdf4 0%, #e6fffa 100%);
-        border: 1px solid #bbf7d0;
-        border-radius: 16px;
-        padding: 20px;
-        transition: transform 0.2s;
-    }
-    .assistant-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(27, 67, 50, 0.05);
-    }
-    .assistant-icon {
-        font-size: 1.8rem;
-        background: #fff;
-        width: 45px;
-        height: 45px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-
-    /* Toggle Switch */
-    .switch-toggle {
-        position: relative;
-        display: inline-block;
-        width: 44px;
-        height: 24px;
-        margin-left: 10px;
-    }
-    .switch-toggle input { opacity: 0; width: 0; height: 0; }
-    .slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background-color: #ccc;
-        transition: .4s;
-        border-radius: 24px;
-    }
-    .slider:before {
-        position: absolute;
-        content: "";
-        height: 18px;
-        width: 18px;
-        left: 3px;
-        bottom: 3px;
-        background-color: white;
-        transition: .4s;
-        border-radius: 50%;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-    input:checked + .slider { background-color: #1B4332; }
-    input:checked + .slider:before { transform: translateX(20px); }
-
-    /* Ajuste para gráficos no mobile */
-    @media (max-width: 768px) {
-        .fin-charts-row { grid-template-columns: 1fr !important; }
-    }
-
-    /* --- DESKTOP (Telas maiores que 992px) --- */
-    @media (min-width: 992px) {
-        .patients-layout-grid { 
-            grid-template-columns: 450px 1fr; /* Aumentado para 450px para evitar cards espremidos */
-            gap: 25px;
-            height: calc(100vh - 160px); /* Altura fixa para scroll independente */
-            padding-bottom: 0;
-        }
-        
-        .widget { 
-            height: 100%; 
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden; /* Contém o scroll dentro do widget */
-        }
-
-        .patient-list-container {
-            max-height: none; /* Remove limite de altura */
-            flex-grow: 1;     /* Ocupa todo espaço vertical disponível */
-        }
-        
-        #calendar-wrapper {
-            flex-grow: 1;
-            overflow-y: auto;
-        }
-    }
-</style>
