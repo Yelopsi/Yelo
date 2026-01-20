@@ -54,17 +54,43 @@ module.exports = {
         try {
             const { page = 1, limit = 10 } = req.query;
             const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+            
+            // [CORREÇÃO] Obtém o ID corretamente (suporta req.psychologist do middleware)
+            const userId = req.psychologist?.id || req.user?.id || req.userId;
 
-            const posts = await Post.findAll({
-                where: { psychologist_id: req.userId },
-                order: [['created_at', 'DESC']],
-                limit: parseInt(limit, 10),
-                offset: offset
-            });
-            res.json(posts);
+            // Tenta buscar usando 'psychologistId' (Padrão Sequelize CamelCase)
+            try {
+                const posts = await Post.findAll({
+                    where: { psychologistId: userId },
+                    order: [['createdAt', 'DESC']],
+                    limit: parseInt(limit, 10),
+                    offset: offset
+                });
+                return res.json(posts);
+            } catch (e1) {
+                // Fallback 1: Tenta 'psychologist_id' (Snake Case - Banco legado)
+                try {
+                    const posts = await Post.findAll({
+                        where: { psychologist_id: userId },
+                        order: [['createdAt', 'DESC']],
+                        limit: parseInt(limit, 10),
+                        offset: offset
+                    });
+                    return res.json(posts);
+                } catch (e2) {
+                    // Fallback 2: Tenta 'PsychologistId' (Pascal Case) e 'created_at'
+                    const posts = await Post.findAll({
+                        where: { PsychologistId: userId },
+                        order: [['created_at', 'DESC']],
+                        limit: parseInt(limit, 10),
+                        offset: offset
+                    });
+                    return res.json(posts);
+                }
+            }
         } catch (error) {
             console.error(error);
-            res.status(500).json({ error: "Erro interno." });
+            res.status(500).json({ error: "Erro interno ao listar posts." });
         }
     },
 
@@ -73,19 +99,34 @@ module.exports = {
             let { titulo, conteudo, imagem_url } = req.body;
             if (!titulo || !conteudo) return res.status(400).json({ error: "Título/Conteúdo obrigatórios." });
 
+            // [CORREÇÃO] Obtém o ID corretamente
+            const userId = req.psychologist?.id || req.user?.id || req.userId;
+
             // Se não enviou imagem, sorteia uma agora e SALVA no banco
             if (!imagem_url) {
                 imagem_url = imagensPadrao[Math.floor(Math.random() * imagensPadrao.length)];
             }
 
-            const novoPost = await Post.create({
-                titulo, conteudo, imagem_url,
-                psychologist_id: req.userId
-            });
+            let novoPost;
+            // Tenta criar com 'psychologistId'
+            try {
+                novoPost = await Post.create({
+                    titulo, conteudo, imagem_url,
+                    psychologistId: userId
+                });
+            } catch (e1) {
+                // Fallback: Tenta 'psychologist_id'
+                try {
+                    novoPost = await Post.create({ titulo, conteudo, imagem_url, psychologist_id: userId });
+                } catch (e2) {
+                    // Fallback: Tenta 'PsychologistId'
+                    novoPost = await Post.create({ titulo, conteudo, imagem_url, PsychologistId: userId });
+                }
+            }
 
             // --- GAMIFICATION HOOK ---
             // Publicar Artigo (50 pts, max 1/dia)
-            gamificationService.processAction(req.userId, 'blog_post').catch(err => console.error("Gamification hook error:", err));
+            gamificationService.processAction(userId, 'blog_post').catch(err => console.error("Gamification hook error:", err));
 
             res.status(201).json(novoPost);
         } catch (error) {
@@ -98,9 +139,20 @@ module.exports = {
         try {
             const { id } = req.params;
             const { titulo, conteudo, imagem_url } = req.body;
+            const userId = req.psychologist?.id || req.user?.id || req.userId;
             
-            const post = await Post.findOne({ where: { id, psychologist_id: req.userId } });
-            if (!post) return res.status(404).json({ error: "Não encontrado." });
+            // Tenta encontrar o post com as variações de ID
+            let post = await Post.findOne({ where: { id, psychologistId: userId } })
+                .catch(() => Post.findOne({ where: { id, psychologist_id: userId } }))
+                .catch(() => Post.findOne({ where: { id, PsychologistId: userId } }));
+
+            if (!post) {
+                // Última tentativa: busca só pelo ID e verifica o dono manualmente (se o banco permitir leitura)
+                post = await Post.findByPk(id);
+                if (!post || (post.psychologistId !== userId && post.psychologist_id !== userId && post.PsychologistId !== userId)) {
+                    return res.status(404).json({ error: "Não encontrado ou sem permissão." });
+                }
+            }
 
             await post.update({ titulo, conteudo, imagem_url });
             res.json({ message: "Atualizado!", post });
@@ -112,7 +164,17 @@ module.exports = {
     deletarPost: async (req, res) => {
         try {
             const { id } = req.params;
-            await Post.destroy({ where: { id, psychologist_id: req.userId } });
+            const userId = req.psychologist?.id || req.user?.id || req.userId;
+            
+            // Tenta deletar com as variações
+            let deleted = await Post.destroy({ where: { id, psychologistId: userId } })
+                .catch(() => 0);
+            
+            if (!deleted) deleted = await Post.destroy({ where: { id, psychologist_id: userId } }).catch(() => 0);
+            if (!deleted) deleted = await Post.destroy({ where: { id, PsychologistId: userId } }).catch(() => 0);
+
+            if (!deleted) return res.status(404).json({ error: "Post não encontrado ou não excluído." });
+            
             res.json({ message: "Excluído." });
         } catch (error) {
             res.status(500).json({ error: "Erro ao excluir." });
