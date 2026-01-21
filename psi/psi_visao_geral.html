@@ -13,19 +13,6 @@
     <a href="#" data-page="psi_meu_perfil.html" class="btn btn-sm" style="background-color: #f59e0b; color: white; text-decoration: none;">Completar Perfil</a>
 </div>
 
-<!-- CONTROLES DE ZOOM (Reposicionado) -->
-<div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 15px; gap: 12px;">
-    <span style="font-size: 0.85rem; color: #666; font-weight: 500;">Ajuste o zoom da tela:</span>
-    <div class="zoom-controls-minimal light-theme">
-        <button class="btn-zoom-min" id="btn-zoom-out" title="Diminuir">-</button>
-        <span id="zoom-level-display">100%</span>
-        <button class="btn-zoom-min" id="btn-zoom-in" title="Aumentar">+</button>
-        <button class="btn-zoom-min btn-zoom-reset" id="btn-zoom-reset" title="Restaurar Padrão">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-        </button>
-    </div>
-</div>
-
 <!-- WIDGET DE GAMIFICAÇÃO (PROGRESSO) -->
 <div class="gamification-panel-overview" style="margin-bottom: 30px; padding: 20px 25px; border: 1px solid #eee; box-shadow: none;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -205,23 +192,6 @@
         0% { opacity: 0.6; }
         50% { opacity: 1; }
         100% { opacity: 0.6; }
-    }
-
-    /* Zoom Controls Light Theme override */
-    .zoom-controls-minimal.light-theme {
-        background: #ffffff;
-        border: 1px solid #e0e0e0;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-    .zoom-controls-minimal.light-theme .btn-zoom-min {
-        color: #555;
-    }
-    .zoom-controls-minimal.light-theme .btn-zoom-min:hover {
-        background-color: #f0f0f0;
-        color: #1B4332;
-    }
-    .zoom-controls-minimal.light-theme #zoom-level-display {
-        color: #333;
     }
 </style>
 
