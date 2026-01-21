@@ -1,3 +1,70 @@
+<style>
+    /* --- FullCalendar Customization (Melhoria de UX/Leitura) --- */
+    .fc-header-toolbar {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        margin-bottom: 20px !important;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .fc-toolbar-title {
+        font-family: var(--font-titulos) !important;
+        font-size: 1.4rem !important;
+        color: var(--verde-escuro);
+        font-weight: 600;
+    }
+
+    .fc-button {
+        background-color: #fff !important;
+        border: 1px solid #e0e0e0 !important;
+        color: #555 !important;
+        font-weight: 500 !important;
+        border-radius: 8px !important;
+        padding: 8px 16px !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.02) !important;
+        transition: all 0.2s ease !important;
+        text-transform: capitalize !important;
+    }
+
+    .fc-button:hover {
+        background-color: #f9f9f9 !important;
+        border-color: #ccc !important;
+        color: #333 !important;
+        transform: translateY(-1px);
+    }
+
+    .fc-button-active {
+        background-color: var(--verde-escuro) !important;
+        border-color: var(--verde-escuro) !important;
+        color: #fff !important;
+    }
+    
+    .fc-button-group > .fc-button {
+        margin: 0 2px !important; /* Pequeno espaço entre botões agrupados */
+    }
+
+    /* Alinhamento do Header da Carteira de Pacientes */
+    .widget-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        min-height: 40px; /* Alinha altura visual com os botões do calendário */
+    }
+    
+    .badge-count {
+        background-color: #e8f5e9;
+        color: var(--verde-escuro);
+        font-weight: bold;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        border: 1px solid #cce5d4;
+    }
+</style>
+
 <div class="main-header">
     <div class="header-content">
         <h1>Meus Pacientes</h1>
@@ -316,13 +383,11 @@
                     }
                 },
                 headerToolbar: mobile ? {
-                    left: 'prev,next',
-                    center: 'title',
-                    right: 'today'
+                    left: 'title',
+                    right: 'prev,next'
                 } : {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                    left: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay today prev,next'
                 },
                 buttonText: {
                     today: 'Hoje',
