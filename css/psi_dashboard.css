@@ -3835,7 +3835,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 /* Botão Flutuante (FAB) - Padrão Mobile */
 .mobile-fab {
     position: fixed;
-    bottom: 25px;
+    bottom: 90px;
     right: 25px;
     width: 56px;
     height: 56px;

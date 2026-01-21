@@ -609,6 +609,7 @@ exports.updatePsychologistProfile = async (req, res) => {
             temas_atuacao, abordagens_tecnicas, modalidade,
             publico_alvo, estilo_terapia, praticas_inclusivas, // NOVOS CAMPOS
             valor_sessao_numero, disponibilidade_periodo, genero_identidade, // CORRIGIDO
+            dailySummaryTime, reminderHoursBefore, // NOVOS CAMPOS DE NOTIFICAÇÃO
             linkedin_url, instagram_url, facebook_url, tiktok_url, x_url,
             slug // <--- AGORA ESTAMOS LENDO O CAMPO SLUG QUE VEM DO FORMULÁRIO
         } = req.body;
@@ -704,6 +705,8 @@ exports.updatePsychologistProfile = async (req, res) => {
             nome, telefone, bio, crp, cep, cidade, estado,
             valor_sessao_numero: valor_sessao_numero !== undefined ? (valor_sessao_numero ? parseFloat(valor_sessao_numero) : null) : undefined,
             genero_identidade,
+            dailySummaryTime: dailySummaryTime || '08:00',
+            reminderHoursBefore: reminderHoursBefore ? parseInt(reminderHoursBefore) : 24,
             linkedin_url, instagram_url, facebook_url, tiktok_url, x_url,
             
             // Passamos os Arrays JS diretamente. O Sequelize fará a serialização correta para JSONB.

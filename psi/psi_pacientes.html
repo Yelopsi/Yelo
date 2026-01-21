@@ -250,7 +250,9 @@
         <div class="widget-header-row">
             <h3 class="widget-title">Agenda</h3>
             <div class="calendar-legend">
-                <span class="legend-item"><span class="dot" style="background-color: #1B4332;"></span> Agendado</span>
+                <span class="legend-item"><span class="dot" style="background-color: #3788d8;"></span> Agendado</span>
+                <span class="legend-item"><span class="dot" style="background-color: #1B4332;"></span> Confirmado</span>
+                <span class="legend-item"><span class="dot" style="background-color: #FFC107;"></span> Disponível</span>
                 <span class="legend-item"><span class="dot" style="background-color: #9e9e9e;"></span> Realizado</span>
                 <span class="legend-item"><span class="dot" style="background-color: #d32f2f;"></span> Falta</span>
             </div>
@@ -338,7 +340,15 @@
         
         <form id="form-appointment">
             <div class="form-group">
-                <label>Paciente</label>
+                <label>Tipo de Evento</label>
+                <select id="appt-type" class="form-control" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; background-color: #fff; margin-bottom: 15px;">
+                    <option value="session">Sessão com Paciente</option>
+                    <option value="available">Horário Disponível</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="group-patient-select">
+                <label>Paciente *</label>
                 <select id="appt-patient" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; background-color: #f9fafb;">
                     <option value="">Selecione...</option>
                     <!-- Preenchido via JS -->
@@ -395,11 +405,14 @@
         <div style="background: #f9f9f9; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
             <label style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 8px;">Status do Atendimento:</label>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn-status" data-status="confirmed" style="flex: 1; background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                    👍 Confirmar
+                </button>
                 <button class="btn-status" data-status="done" style="flex: 1; background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
                     ✅ Realizado
                 </button>
-                <button class="btn-status" data-status="missed" style="flex: 1; background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
-                    ❌ Falta
+                <button class="btn-status" data-status="cancelled" style="flex: 1; background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                    ❌ Cancelar
                 </button>
                 <button class="btn-status" data-status="rescheduled" style="flex: 1; background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
                     🗓️ Reagendar
@@ -429,21 +442,13 @@
 </div>
 
 <script>
-    // --- LÓGICA DO FRONTEND (MOCK) ---
-    (function() {
-        // Dados Mockados
-        let patients = [
-            { id: 1, name: 'Ana Clara Souza', phone: '(11) 99999-1111', automated: true, sessionValue: 150, status: 'ativo' },
-            { id: 2, name: 'Bruno Mendes', phone: '(11) 98888-2222', automated: false, sessionValue: 200, status: 'ativo' },
-            { id: 3, name: 'Carla Dias', phone: '(21) 97777-3333', automated: true, sessionValue: 180, status: 'inativo' }
-        ];
-        
-        // Eventos com status: 'scheduled', 'done', 'missed'
-        let events = [
-            { id: 'e1', title: 'Ana Clara', start: '2026-01-20T10:00:00', end: '2026-01-20T11:00:00', patientId: 1, status: 'scheduled', value: 150 },
-            { id: 'e2', title: 'Bruno M.', start: '2026-01-19T14:00:00', end: '2026-01-19T15:00:00', patientId: 2, status: 'done', value: 200 },
-            { id: 'e3', title: 'Carla Dias', start: '2026-01-21T09:00:00', end: '2026-01-21T10:00:00', patientId: 3, status: 'scheduled', value: 180 }
-        ];
+    // --- LÓGICA DO FRONTEND (INTEGRADA) ---
+    (async function() {
+        const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : 'http://localhost:3001';
+        const token = localStorage.getItem('Yelo_token');
+
+        let patients = [];
+        let events = [];
 
         // Elementos DOM
 
@@ -501,6 +506,31 @@
         // Elementos Financeiros
         const modalEvent = document.getElementById('modal-event-details');
         
+        // --- API FUNCTIONS ---
+        async function fetchData() {
+            try {
+                // 1. Buscar Pacientes
+                const resPatients = await fetch(`${BASE_URL}/api/my-patients`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (resPatients.ok) {
+                    const data = await resPatients.json();
+                    // Mapeia para o formato interno
+                    patients = data.map(p => ({
+                        id: p.id, name: p.nome, phone: p.telefone, automated: true, sessionValue: 150, status: 'ativo'
+                    }));
+                }
+
+                // 2. Buscar Agendamentos
+                const resAppts = await fetch(`${BASE_URL}/api/appointments`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (resAppts.ok) {
+                    events = await resAppts.json();
+                }
+
+                renderList('', 'ativo');
+                renderNextSessions();
+                initCalendar();
+            } catch (e) { console.error("Erro ao carregar dados:", e); }
+        }
+
         // --- RENDERIZAR PRÓXIMAS SESSÕES ---
         function renderNextSessions() {
             const container = document.getElementById('next-sessions-container');
@@ -606,13 +636,34 @@
                 locale: 'pt-br',
                 selectable: true, // Permite seleção visual
                 editable: true, // Habilita arrastar e soltar (Drag & Drop)
-                eventDrop: function(info) {
-                    // Atualiza o horário no array local (Mock)
-                    const evt = events.find(e => e.id == info.event.id);
-                    if (evt) {
-                        evt.start = info.event.start.toISOString();
-                        evt.end = info.event.end ? info.event.end.toISOString() : null;
-                        if(window.showToast) window.showToast('Sessão reagendada para ' + info.event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 'success');
+                eventDrop: async function(info) {
+                    // Reagendamento (Drag & Drop)
+                    const evtId = info.event.id;
+                    const newStart = info.event.start.toISOString();
+                    const newEnd = info.event.end ? info.event.end.toISOString() : null;
+                    
+                    // Busca telefone do paciente para notificar
+                    const evtData = events.find(e => e.id == evtId);
+                    const patient = patients.find(p => p.id == evtData.patientId);
+
+                    try {
+                        await fetch(`${BASE_URL}/api/appointments/${evtId}`, {
+                            method: 'PUT',
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}` 
+                            },
+                            body: JSON.stringify({ 
+                                start: newStart, 
+                                end: newEnd,
+                                phone: patient ? patient.phone : null,
+                                title: evtData.title
+                            })
+                        });
+                        if(window.showToast) window.showToast('Sessão reagendada e paciente notificado.', 'success');
+                    } catch (e) {
+                        info.revert(); // Desfaz se der erro
+                        alert('Erro ao reagendar.');
                     }
                 },
                 eventResize: function(info) {
@@ -677,8 +728,12 @@
 
                 events: events.map(evt => ({
                     ...evt,
-                    // Cores: Agendado (Verde), Realizado (Cinza), Falta (Vermelho)
-                    color: evt.status === 'scheduled' ? '#1B4332' : (evt.status === 'done' ? '#9e9e9e' : '#d32f2f')
+                    // Cores: Agendado (Azul), Confirmado (Verde), Realizado (Cinza), Cancelado/Falta (Vermelho)
+                    color: evt.status === 'confirmed' ? '#1B4332' : 
+                           evt.status === 'scheduled' ? '#3788d8' : 
+                           evt.status === 'done' ? '#9e9e9e' : 
+                           evt.status === 'available' ? '#FFC107' :
+                           (evt.status === 'cancelled' || evt.status === 'missed') ? '#d32f2f' : '#3788d8'
                 })),
                 // Clique em um horário vazio
                 dateClick: function(info) {
@@ -745,6 +800,16 @@
             modalAppt.style.display = 'flex';
         }
 
+        // Toggle de campos no modal de agendamento
+        document.getElementById('appt-type').addEventListener('change', (e) => {
+            const type = e.target.value;
+            const patientGroup = document.getElementById('group-patient-select');
+            const patientSelect = document.getElementById('appt-patient');
+            
+            patientGroup.style.display = type === 'available' ? 'none' : 'block';
+            patientSelect.required = type === 'session';
+        });
+
         // Função unificada para abrir modal de novo paciente
         const handleNewPatient = () => {
             form.reset();
@@ -782,45 +847,71 @@
         };
 
         // Salvar (Novo ou Edição)
-        form.onsubmit = (e) => {
+        form.onsubmit = async (e) => {
             e.preventDefault();
             const name = document.getElementById('p-name').value;
             const phone = document.getElementById('p-phone').value;
-            const automated = document.getElementById('p-automated-msg').checked;
-            const sessionValue = parseFloat(document.getElementById('p-session-value').value) || 0;
-            const status = pStatusInput.value;
-            const id = pIdInput.value;
-
-            if (id) {
-                // Edição
-                const index = patients.findIndex(p => p.id == id);
-                if (index > -1) {
-                    patients[index] = { ...patients[index], name, phone, automated, sessionValue, status };
-                    if(window.showToast) window.showToast('Dados atualizados!', 'success');
-                }
-            } else {
-                // Novo
-                patients.push({
-                    id: Date.now(),
-                    name,
-                    phone,
-                    automated,
-                    sessionValue,
-                    status
-                });
-                if(window.showToast) window.showToast('Paciente adicionado com sucesso!', 'success');
-            }
             
-            renderList(searchInput.value, statusFilter.value);
-            closeModal();
+            try {
+                const res = await fetch(`${BASE_URL}/api/my-patients`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({ name, phone })
+                });
+                
+                if (res.ok) {
+                    fetchData(); // Recarrega tudo
+                    closeModal();
+                    if(window.showToast) window.showToast('Paciente salvo.', 'success');
+                }
+            } catch (e) {
+                alert('Erro ao salvar paciente.');
+            }
         };
 
         // Salvar Agendamento
-        formAppt.onsubmit = (e) => {
+        formAppt.onsubmit = async (e) => {
             e.preventDefault();
-            if(window.showToast) window.showToast('Agendamento realizado!', 'success');
-            closeApptModal();
-            // Aqui você adicionaria o evento ao calendário via calendar.addEvent()
+            
+            const type = document.getElementById('appt-type').value;
+            const patientName = selectPatient.value;
+            const patient = patients.find(p => p.name === patientName);
+            const date = document.getElementById('appt-date').value;
+            const time = document.getElementById('appt-time').value;
+            
+            if ((type === 'session' && !patient) || !date || !time) return;
+
+            const start = new Date(`${date}T${time}`);
+            const end = new Date(start.getTime() + 60 * 60 * 1000); // +1 hora
+
+            try {
+                const res = await fetch(`${BASE_URL}/api/appointments`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({
+                        title: type === 'available' ? 'Horário Disponível' : patient.name,
+                        start: start.toISOString(),
+                        end: end.toISOString(),
+                        patientId: type === 'available' ? null : patient.id,
+                        phone: (type === 'session' && patient) ? patient.phone : null,
+                        status: type === 'available' ? 'available' : 'scheduled'
+                    })
+                });
+
+                if (res.ok) {
+                    fetchData(); // Recarrega calendário
+                    closeApptModal();
+                    if(window.showToast) window.showToast(type === 'available' ? 'Horário disponível criado.' : 'Agendado e notificado!', 'success');
+                }
+            } catch (e) {
+                alert('Erro ao agendar.');
+            }
         };
 
         // --- LÓGICA DE DETALHES DO EVENTO ---
@@ -846,6 +937,7 @@
                 const btn = document.querySelector(`.btn-status[data-status="${evt.status}"]`);
                 if(btn) highlightStatusBtn(btn, evt.status);
                 if(evt.status === 'done') document.getElementById('evt-options-done').style.display = 'block';
+                // Reutiliza opções de falta para cancelado se necessário, ou esconde
                 if(evt.status === 'missed') document.getElementById('evt-options-missed').style.display = 'block';
             }
 
@@ -853,9 +945,10 @@
         }
 
         function highlightStatusBtn(btn, status) {
-            if(status === 'done') { btn.style.background = '#e8f5e9'; btn.style.borderColor = '#1B4332'; btn.style.color = '#1B4332'; }
-            if(status === 'missed') { btn.style.background = '#ffebee'; btn.style.borderColor = '#d32f2f'; btn.style.color = '#d32f2f'; }
+            if(status === 'confirmed') { btn.style.background = '#e8f5e9'; btn.style.borderColor = '#1B4332'; btn.style.color = '#1B4332'; }
+            if(status === 'done') { btn.style.background = '#f0f0f0'; btn.style.borderColor = '#999'; btn.style.color = '#555'; }
             if(status === 'rescheduled') { btn.style.background = '#fff3e0'; btn.style.borderColor = '#f57c00'; btn.style.color = '#f57c00'; }
+            if(status === 'cancelled') { btn.style.background = '#ffebee'; btn.style.borderColor = '#d32f2f'; btn.style.color = '#d32f2f'; }
         }
 
         document.querySelectorAll('.btn-status').forEach(btn => {
@@ -866,40 +959,50 @@
                 });
                 highlightStatusBtn(btn, status);
                 document.getElementById('evt-options-done').style.display = status === 'done' ? 'block' : 'none';
-                document.getElementById('evt-options-missed').style.display = status === 'missed' ? 'block' : 'none';
+                document.getElementById('evt-options-missed').style.display = 'none'; // Esconde opções extras ao mudar
             };
         });
 
-        document.getElementById('btn-save-event-status').onclick = () => {
+        document.getElementById('btn-save-event-status').onclick = async () => {
             const activeBtn = document.querySelector('.btn-status[style*="background"]');
             if(!activeBtn) return;
             
             const status = activeBtn.dataset.status;
-            const evtIdx = events.findIndex(e => e.id == currentEventId);
+            const evt = events.find(e => e.id == currentEventId);
+            const patient = evt.patientId ? patients.find(p => p.id == evt.patientId) : null;
             
-            if(evtIdx > -1) {
-                events[evtIdx].status = status;
-                if(status === 'done') {
-                    events[evtIdx].value = parseFloat(document.getElementById('evt-value').value);
+            try {
+                await fetch(`${BASE_URL}/api/appointments/${currentEventId}`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({ 
+                        status, 
+                        value: parseFloat(document.getElementById('evt-value').value) || 0,
+                        phone: patient ? patient.phone : null,
+                        title: evt.title
+                    })
+                });
+                
+                fetchData(); // Atualiza UI e Financeiro
+                modalEvent.style.display = 'none';
+                if (status === 'rescheduled') {
+                    if(window.showToast) window.showToast('Opções de horário enviadas ao paciente.', 'success');
+                } else {
+                    if(window.showToast) window.showToast('Status atualizado!', 'success');
                 }
-                const fcEvent = window.calendarApi.getEventById(currentEventId);
-                if(fcEvent) {
-                    fcEvent.setProp('color', status === 'done' ? '#1B4332' : (status === 'missed' ? '#d32f2f' : '#3788d8'));
-                }
+            } catch (e) {
+                alert('Erro ao atualizar status.');
             }
-            modalEvent.style.display = 'none';
-            if(window.showToast) window.showToast('Status atualizado!', 'success');
-            renderNextSessions(); // Atualiza a lista rápida
         };
 
 
         searchInput.oninput = (e) => renderList(e.target.value, statusFilter.value);
 
         // Inicialização
-        renderList('', 'ativo');
-        renderNextSessions();
-        // Pequeno delay para garantir que o DOM renderizou o container do calendário
-        setTimeout(initCalendar, 100);
+        fetchData();
 
         // Máscara de telefone (se IMask estiver disponível)
         if (typeof IMask !== 'undefined') {
