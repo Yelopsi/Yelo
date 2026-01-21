@@ -231,27 +231,40 @@
 </div>
 
 <script>
-    (function() {
-        // Mock de Dados (Em produção viria do backend)
-        // Eventos com status: 'scheduled', 'done', 'missed'
-        let events = [
-            { id: 'e1', title: 'Ana Clara', start: '2026-01-20T10:00:00', end: '2026-01-20T11:00:00', status: 'scheduled', value: 150 },
-            { id: 'e2', title: 'Bruno M.', start: '2026-01-19T14:00:00', end: '2026-01-19T15:00:00', status: 'done', value: 200 },
-            { id: 'e3', title: 'Carla Dias', start: '2026-01-21T09:00:00', end: '2026-01-21T10:00:00', status: 'scheduled', value: 180 }
-        ];
-        
-        let expenses = [
-            { id: 'ex1', desc: 'Supervisão', value: 250, date: '2026-01-15' },
-            { id: 'ex2', desc: 'Internet', value: 100, date: '2026-01-10' }
-        ];
+    (async function() {
+        const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : 'http://localhost:3001';
+        const token = localStorage.getItem('Yelo_token');
+
+        let events = [];
+        let expenses = [];
 
         const modalExpense = document.getElementById('modal-expense');
 
         // --- GESTÃO FINANCEIRA ---
-        function updateFinancials() {
+        async function fetchFinancials(month = null) {
+            try {
+                let url = `${BASE_URL}/api/financials/dashboard`;
+                if (month) url += `?month=${month}`;
+
+                const res = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    events = data.appointments || [];
+                    expenses = data.expenses || [];
+                    updateUI();
+                }
+            } catch (error) {
+                console.error("Erro ao buscar financeiro:", error);
+            }
+        }
+
+        function updateUI() {
             const income = events.filter(e => e.status === 'done').reduce((acc, curr) => acc + (curr.value || 0), 0);
             const pending = events.filter(e => e.status === 'scheduled').reduce((acc, curr) => acc + (curr.value || 0), 0);
-            const totalExpenses = expenses.reduce((acc, curr) => acc + curr.value, 0);
+            const totalExpenses = expenses.reduce((acc, curr) => acc + (curr.value || 0), 0);
 
             document.getElementById('fin-income').textContent = `R$ ${income.toFixed(2)}`;
             document.getElementById('fin-pending').textContent = `R$ ${pending.toFixed(2)}`;
@@ -260,7 +273,7 @@
 
             const transactions = [
                 ...events.filter(e => e.status === 'done').map(e => ({ desc: `Sessão: ${e.title}`, date: e.start, value: e.value, type: 'in' })),
-                ...expenses.map(e => ({ desc: e.desc, date: e.date, value: e.value, type: 'out' }))
+                ...expenses.map(e => ({ desc: e.description, date: e.date, value: e.value, type: 'out' }))
             ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
             const tbody = document.getElementById('fin-transactions-body');
@@ -269,7 +282,7 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${t.desc}</td>
-                    <td class="fin-date">${new Date(t.date).toLocaleDateString('pt-BR')}</td>
+                    <td class="fin-date">${new Date(t.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
                     <td>R$ ${t.value.toFixed(2)}</td>
                     <td><span class="${t.type === 'in' ? 'fin-type-in' : 'fin-type-out'}">${t.type === 'in' ? 'Entrada' : 'Saída'}</span></td>
                 `;
@@ -447,20 +460,51 @@
             modalExport.style.display = 'none';
         };
 
-        document.getElementById('form-expense').onsubmit = (e) => {
+        document.getElementById('form-expense').onsubmit = async (e) => {
             e.preventDefault();
-            expenses.push({
-                id: Date.now(),
-                desc: document.getElementById('exp-desc').value,
+            const expenseData = {
+                description: document.getElementById('exp-desc').value,
                 value: parseFloat(document.getElementById('exp-value').value),
                 date: document.getElementById('exp-date').value
-            });
-            modalExpense.style.display = 'none';
-            updateFinancials();
-            if(window.showToast) window.showToast('Despesa registrada.', 'success');
+            };
+
+            try {
+                const res = await fetch(`${BASE_URL}/api/financials/expenses`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify(expenseData)
+                });
+
+                if (res.ok) {
+                    modalExpense.style.display = 'none';
+                    fetchFinancials(); // Recarrega dados
+                    if(window.showToast) window.showToast('Despesa registrada.', 'success');
+                }
+            } catch (err) {
+                alert('Erro ao salvar despesa.');
+            }
         };
 
         // Inicialização
-        updateFinancials();
+        fetchFinancials();
+
+        // Filtro de Período (Simples)
+        document.getElementById('fin-period-filter').addEventListener('change', (e) => {
+            const val = e.target.value;
+            const now = new Date();
+            let monthStr = null;
+
+            if (val === 'current') {
+                monthStr = now.toISOString().slice(0, 7);
+            } else if (val === 'last') {
+                now.setMonth(now.getMonth() - 1);
+                monthStr = now.toISOString().slice(0, 7);
+            }
+            // 'year' exigiria lógica extra no backend, por enquanto recarrega o padrão
+            fetchFinancials(monthStr);
+        });
     })();
 </script>
