@@ -880,14 +880,32 @@
             modalDelete.style.display = 'none';
         };
 
-        // Ação: Confirmar Exclusão (Mock/Visual por enquanto, idealmente chamaria API DELETE)
-        btnConfirmDelete.onclick = () => {
-            // Aqui você chamaria await fetch(DELETE...)
-            patients = patients.filter(p => p.id != pIdInput.value);
-            renderList(searchInput.value, statusFilter.value);
-            modalDelete.style.display = 'none';
-            closeModal();
-            if(window.showToast) window.showToast('Paciente removido.', 'success');
+        // Ação: Confirmar Exclusão (API REAL)
+        btnConfirmDelete.onclick = async () => {
+            const id = document.getElementById('p-id').value;
+            if (!id) return;
+
+            btnConfirmDelete.textContent = "Excluindo...";
+            
+            try {
+                const res = await fetch(`${BASE_URL}/api/my-patients/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    fetchData(); // Recarrega a lista do servidor
+                    modalDelete.style.display = 'none';
+                    closeModal();
+                    if(window.showToast) window.showToast('Paciente removido do banco de dados.', 'success');
+                } else {
+                    alert('Erro ao excluir paciente.');
+                }
+            } catch (e) {
+                alert('Erro de conexão ao excluir.');
+            } finally {
+                btnConfirmDelete.textContent = "Sim, Excluir";
+            }
         };
 
         // Ação: Simular Lembrete

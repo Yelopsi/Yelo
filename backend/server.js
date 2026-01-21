@@ -1056,6 +1056,23 @@ app.put('/api/my-patients/:id', async (req, res) => {
     }
 });
 
+app.delete('/api/my-patients/:id', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(401).json({ error: 'Não autorizado' });
+        
+        const { id } = req.params;
+        const patient = await db.Patient.findByPk(id);
+        
+        if (!patient) return res.status(404).json({ error: 'Paciente não encontrado' });
+        
+        await patient.destroy();
+        res.json({ success: true, message: 'Paciente excluído com sucesso.' });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao excluir paciente.' });
+    }
+});
+
 // --- ROTAS DE AGENDAMENTOS (COM WHATSAPP) ---
 app.get('/api/appointments', async (req, res) => {
     try {
@@ -1224,7 +1241,12 @@ app.get('/api/fix-financial-tables', async (req, res) => {
             );
         `);
         // --- FIX: GARANTIR COLUNA patientId ---
-        await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "patientId" INTEGER;');
+        try {
+            await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "patientId" INTEGER;');
+            console.log("✅ Coluna patientId verificada na rota de correção.");
+        } catch (e) {
+            console.error("⚠️ Erro ao adicionar patientId na rota de correção:", e.message);
+        }
 
         // 2. Garante que colunas críticas existam (caso a tabela tenha sido criada incompleta antes)
         await db.sequelize.query('ALTER TABLE "Expenses" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;');
@@ -2067,7 +2089,12 @@ const startServer = async () => {
             );
         `);
         // --- FIX: GARANTIR COLUNA patientId ---
-        await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "patientId" INTEGER;');
+        try {
+            await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "patientId" INTEGER;');
+            console.log('🔧 [DB FIX] Coluna patientId verificada/adicionada em Appointments.');
+        } catch (e) {
+            console.error('⚠️ [DB FIX] Erro ao adicionar coluna patientId:', e.message);
+        }
 
         // --- FIX: GARANTIR TABELA POSTS (BLOG) CORRETA ---
         // Cria a tabela posts compatível com o modelo models/Post.js (created_at, updated_at, psychologistId)
