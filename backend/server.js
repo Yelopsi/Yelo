@@ -1014,7 +1014,7 @@ app.post('/api/my-patients', async (req, res) => {
             nome: name,
             email: email || `patient_${Date.now()}@temp.com`,
             telefone: phone,
-            status: 'active'
+            status: 'active',
             senha: await bcrypt.hash('temp123', 8) // FIX: Senha obrigatória
         });
         res.json(patient);
