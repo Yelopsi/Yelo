@@ -482,9 +482,13 @@
                     modalExpense.style.display = 'none';
                     fetchFinancials(); // Recarrega dados
                     if(window.showToast) window.showToast('Despesa registrada.', 'success');
+                } else {
+                    const errData = await res.json();
+                    alert('Erro ao salvar: ' + (errData.error || 'Falha desconhecida'));
                 }
             } catch (err) {
-                alert('Erro ao salvar despesa.');
+                console.error(err);
+                alert('Erro de conexão ao salvar despesa.');
             }
         };
 
