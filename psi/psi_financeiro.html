@@ -69,7 +69,7 @@
     </div>
 </div>
 
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;" class="fin-charts-row">
+<div class="fin-charts-row">
     <!-- Gráfico -->
     <div class="widget">
         <h3 class="widget-title">Fluxo de Caixa</h3>
@@ -179,6 +179,24 @@
     }
     .month-option:hover { background-color: #f0fdf4; color: #1B4332; border-color: #bbf7d0; }
     .month-option.selected { background-color: #1B4332; color: white; font-weight: 600; border-color: #1B4332; }
+
+    /* --- Layout Responsivo (Correção Mobile) --- */
+    .fin-charts-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+    }
+
+    @media (max-width: 992px) {
+        .fin-charts-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .fin-table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+    }
 </style>
 
 <!-- MODAL: EXPORTAR EXTRATO -->
