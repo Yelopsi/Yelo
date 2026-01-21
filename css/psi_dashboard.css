@@ -3892,3 +3892,60 @@ input:checked + .slider:before { transform: translateX(20px); }
         grid-template-columns: 1fr !important;
     }
 }
+
+/* ==========================================================================
+   ESTILIZAÇÃO DE FORMULÁRIOS EM MODAIS (YELO AESTHETIC)
+   ========================================================================== */
+.custom-modal-box input[type="text"],
+.custom-modal-box input[type="number"],
+.custom-modal-box input[type="email"],
+.custom-modal-box input[type="tel"],
+.custom-modal-box input[type="date"],
+.custom-modal-box input[type="time"],
+.custom-modal-box select,
+.custom-modal-box textarea {
+    width: 100% !important;
+    padding: 12px 15px !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 12px !important;
+    background-color: #f9fafb !important;
+    font-family: var(--font-principal, sans-serif) !important;
+    font-size: 1rem !important;
+    color: #333 !important;
+    transition: all 0.3s ease !important;
+    outline: none !important;
+    box-sizing: border-box !important;
+    accent-color: var(--verde-escuro) !important; /* Cor do calendário nativo */
+}
+
+.custom-modal-box input:focus,
+.custom-modal-box select:focus,
+.custom-modal-box textarea:focus {
+    border-color: var(--verde-escuro) !important;
+    background-color: #fff !important;
+    box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1) !important;
+}
+
+/* Select Customizado (Remove seta padrão e adiciona SVG Yelo) */
+.custom-modal-box select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%231B4332' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 15px center !important;
+    padding-right: 40px !important;
+}
+
+/* Ícones de Data/Hora (Ajuste de cor para Verde Yelo) */
+.custom-modal-box input[type="date"]::-webkit-calendar-picker-indicator,
+.custom-modal-box input[type="time"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(21%) sepia(13%) saturate(2366%) hue-rotate(108deg) brightness(96%) contrast(93%);
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+.custom-modal-box input[type="date"]::-webkit-calendar-picker-indicator:hover,
+.custom-modal-box input[type="time"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}

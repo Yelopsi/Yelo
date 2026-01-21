@@ -59,6 +59,15 @@ if (db.Appointment && !db.Appointment.rawAttributes.patientId) {
     }
 }
 
+// --- FIX: Patch Patient Model (Garante leitura de sessionValue) ---
+if (db.Patient && !db.Patient.rawAttributes.sessionValue) {
+    console.log("[FIX] Patching Patient model to include 'sessionValue' field.");
+    db.Patient.rawAttributes.sessionValue = { type: DataTypes.FLOAT, defaultValue: 0 };
+    if (typeof db.Patient.refreshAttributes === 'function') {
+        db.Patient.refreshAttributes();
+    }
+}
+
 // --- FIX: Patch Password Reset Fields (Garante que o Sequelize saiba ler/gravar tokens) ---
 if (db.Psychologist && !db.Psychologist.rawAttributes.resetPasswordToken) {
     console.log("[FIX] Patching Psychologist model for password reset.");
@@ -1045,16 +1054,23 @@ app.put('/api/my-patients/:id', async (req, res) => {
         const patient = await db.Patient.findByPk(id);
         if (!patient) return res.status(404).json({ error: 'Paciente não encontrado' });
         
-        await patient.update({
+        const updateData = {
             nome: name,
             telefone: phone,
-            email: email,
             status: status,
             sessionValue: sessionValue
-        });
+        };
+
+        // Só atualiza email se for válido e não vazio (evita erro de validação)
+        if (email && email.trim() !== '' && email !== 'undefined') {
+            updateData.email = email;
+        }
+
+        await patient.update(updateData);
         res.json(patient);
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao atualizar paciente.' });
+        console.error("Erro ao atualizar paciente:", error);
+        res.status(500).json({ error: 'Erro ao atualizar paciente: ' + error.message });
     }
 });
 
