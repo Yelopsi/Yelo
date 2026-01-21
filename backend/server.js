@@ -50,6 +50,15 @@ if (db.Psychologist) {
     }
 }
 
+// --- FIX: Patch Appointment Model (Garante leitura de patientId) ---
+if (db.Appointment && !db.Appointment.rawAttributes.patientId) {
+    console.log("[FIX] Patching Appointment model to include 'patientId' field.");
+    db.Appointment.rawAttributes.patientId = { type: DataTypes.INTEGER };
+    if (typeof db.Appointment.refreshAttributes === 'function') {
+        db.Appointment.refreshAttributes();
+    }
+}
+
 // --- FIX: Patch Password Reset Fields (Garante que o Sequelize saiba ler/gravar tokens) ---
 if (db.Psychologist && !db.Psychologist.rawAttributes.resetPasswordToken) {
     console.log("[FIX] Patching Psychologist model for password reset.");
@@ -1021,6 +1030,29 @@ app.post('/api/my-patients', async (req, res) => {
     } catch (error) {
         console.error("Erro ao criar paciente:", error);
         res.status(500).json({ error: 'Erro ao criar paciente.' });
+    }
+});
+
+app.put('/api/my-patients/:id', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(401).json({ error: 'Não autorizado' });
+        
+        const { id } = req.params;
+        const { name, phone, email, status } = req.body;
+        
+        const patient = await db.Patient.findByPk(id);
+        if (!patient) return res.status(404).json({ error: 'Paciente não encontrado' });
+        
+        await patient.update({
+            nome: name,
+            telefone: phone,
+            email: email,
+            status: status
+        });
+        res.json(patient);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao atualizar paciente.' });
     }
 });
 

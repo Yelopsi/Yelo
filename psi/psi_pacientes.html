@@ -884,23 +884,31 @@
         // Salvar (Novo ou Edição)
         form.onsubmit = async (e) => {
             e.preventDefault();
+            const id = pIdInput.value; // Pega o ID (se houver)
             const name = document.getElementById('p-name').value;
             const phone = document.getElementById('p-phone').value;
+            const email = document.getElementById('p-email').value;
+            const status = pStatusInput.value;
+            
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `${BASE_URL}/api/my-patients/${id}` : `${BASE_URL}/api/my-patients`;
             
             try {
-                const res = await fetch(`${BASE_URL}/api/my-patients`, {
-                    method: 'POST',
+                const res = await fetch(url, {
+                    method: method,
                     headers: { 
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}` 
                     },
-                    body: JSON.stringify({ name, phone })
+                    body: JSON.stringify({ name, phone, email, status })
                 });
                 
                 if (res.ok) {
                     fetchData(); // Recarrega tudo
                     closeModal();
                     if(window.showToast) window.showToast('Paciente salvo.', 'success');
+                } else {
+                    alert('Erro ao salvar paciente.');
                 }
             } catch (e) {
                 alert('Erro ao salvar paciente.');
@@ -943,6 +951,8 @@
                     fetchData(); // Recarrega calendário
                     closeApptModal();
                     if(window.showToast) window.showToast(type === 'available' ? 'Horário disponível criado.' : 'Agendado e notificado!', 'success');
+                } else {
+                    alert('Erro ao criar agendamento. Verifique os dados.');
                 }
             } catch (e) {
                 alert('Erro ao agendar.');
