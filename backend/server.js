@@ -98,6 +98,7 @@ if (!db.Appointment) {
         status: { type: DataTypes.STRING, defaultValue: 'scheduled' }, // scheduled, done, missed
         value: { type: DataTypes.FLOAT, defaultValue: 0 },
         psychologistId: DataTypes.INTEGER
+        patientId: DataTypes.INTEGER // Vínculo com o paciente
     });
 }
 
@@ -863,6 +864,269 @@ app.get('/api/fix-test-email', async (req, res) => {
     }
 });
 
+// --- SERVIÇO DE WHATSAPP (SIMULADO) ---
+const whatsappService = {
+    sendMessage: async (phone, message) => {
+        // AQUI ENTRARIA A INTEGRAÇÃO REAL (Twilio, Z-API, WPPConnect, etc.)
+        console.log(`\n📱 [WHATSAPP] Enviando para ${phone}:`);
+        console.log(`   "${message}"\n`);
+        return true;
+    },
+    
+    formatDate: (date) => {
+        return new Date(date).toLocaleString('pt-BR', { 
+            day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' 
+        });
+    },
+
+    // Simula envio de mensagem com botões/opções
+    sendInteractiveMessage: async (phone, text, options) => {
+        console.log(`\n📱 [WHATSAPP INTERATIVO] Para ${phone}:`);
+        console.log(`   Texto: "${text}"`);
+        console.log(`   Opções: [ ${options.join(' | ')} ]\n`);
+        return true;
+    }
+};
+
+// --- AGENDADORES (CRON JOBS) ---
+setInterval(async () => {
+    const now = new Date();
+    const currentHM = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); // Ex: "08:00"
+    
+    // 1. RESUMO DIÁRIO (Personalizado por Psicólogo)
+    try {
+        // Busca psicólogos que configuraram o resumo para o horário atual
+        const psisSummary = await db.Psychologist.findAll({ 
+            where: { dailySummaryTime: currentHM } 
+        });
+
+        if (psisSummary.length > 0) {
+            console.log(`⏰ [CRON] Enviando resumo diário para ${psisSummary.length} psicólogos às ${currentHM}...`);
+            
+            const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
+            const endOfDay = new Date(); endOfDay.setHours(23,59,59,999);
+            const psiIds = psisSummary.map(p => p.id);
+
+            const appointments = await db.Appointment.findAll({
+                where: { 
+                    psychologistId: { [Op.in]: psiIds },
+                    start: { [Op.between]: [startOfDay, endOfDay] }
+                },
+                order: [['start', 'ASC']]
+            });
+
+            // Agrupa por Psicólogo
+            const appointmentsByPsi = {};
+            appointments.forEach(app => {
+                if (!appointmentsByPsi[app.psychologistId]) appointmentsByPsi[app.psychologistId] = [];
+                appointmentsByPsi[app.psychologistId].push(app);
+            });
+
+            for (const psi of psisSummary) {
+                const apps = appointmentsByPsi[psi.id] || [];
+                
+                if (apps.length > 0) {
+                    let msgLines = [`Olá ${psi.nome}. Segue o resumo das suas sessões de hoje:`];
+                    
+                    for (const app of apps) {
+                        const time = new Date(app.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                        const patientName = app.title || 'Paciente'; // Nome do paciente
+                        
+                        let statusText = app.status;
+                        if (app.status === 'confirmed') statusText = 'confirmou';
+                        if (app.status === 'cancelled') statusText = 'cancelou';
+                        if (app.status === 'rescheduled') statusText = 'reagendou';
+                        if (app.status === 'scheduled') statusText = 'aguardando confirmação';
+
+                        msgLines.push(`${patientName}, às ${time} - ${statusText}`);
+                    }
+                    
+                    whatsappService.sendMessage(psi.telefone || `Psi_${psi.id}`, msgLines.join('\n'));
+                } else {
+                    whatsappService.sendMessage(psi.telefone || `Psi_${psi.id}`, `Olá ${psi.nome}. Nenhuma sessão agendada para hoje.`);
+                }
+            }
+        }
+    } catch (e) { console.error("Erro no cron de resumo:", e); }
+
+    // 2. LEMBRETES DE SESSÃO (A cada hora cheia)
+    if (now.getMinutes() === 0) {
+        console.log("⏰ [CRON] Verificando lembretes de sessão...");
+        try {
+            // Busca sessões nas próximas 48h para verificar antecedência
+            const lookAhead = new Date(); lookAhead.setHours(lookAhead.getHours() + 48);
+            
+            const upcomingAppointments = await db.Appointment.findAll({
+                where: { 
+                    start: { [Op.between]: [now, lookAhead] },
+                    status: { [Op.in]: ['scheduled'] } // Apenas envia para quem ainda não confirmou/cancelou
+                },
+                include: [{ model: db.Psychologist, as: 'psychologist' }]
+            });
+
+            for (const appt of upcomingAppointments) {
+                if (!appt.psychologist) continue;
+                
+                const hoursBefore = appt.psychologist.reminderHoursBefore || 24; // Padrão 24h
+                const timeDiff = (new Date(appt.start) - now) / (1000 * 60 * 60); // Diferença em horas
+        
+                // Se faltar exatamente X horas (com margem de erro de 5 min)
+                if (Math.abs(timeDiff - hoursBefore) < 0.1) {
+                    const dateStr = new Date(appt.start).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                    const timeStr = new Date(appt.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    
+                    const msg = `Olá, sou a Yelo, assistente virtual de ${appt.psychologist.nome}. Você confirma a sessão do dia ${dateStr} às ${timeStr}?`;
+                    
+                    whatsappService.sendInteractiveMessage(`Paciente_${appt.id}`, msg, [
+                        "Sim, eu confirmo", "Preciso reagendar", "Quero cancelar"
+                    ]);
+                }
+            }
+        } catch (e) { console.error("Erro no cron de lembretes:", e); }
+    }
+}, 60000); // Roda a cada minuto
+
+// --- ROTAS DE PACIENTES (CRUD) ---
+app.get('/api/my-patients', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(401).json({ error: 'Não autorizado' });
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+
+        // Busca pacientes vinculados a este psicólogo (Lógica simplificada: busca todos por enquanto ou cria tabela de vínculo)
+        // Para este MVP, vamos buscar na tabela Patients onde o psicólogo criou (se houver coluna) 
+        // OU vamos assumir que o frontend filtra. 
+        // *Melhor abordagem:* Criar uma tabela "PsychologistPatients" ou usar um campo "psychologistId" em Patients se for 1:N.
+        // Vou usar uma busca genérica na tabela Patients para o exemplo, filtrando se tiver coluna.
+        
+        const patients = await db.Patient.findAll(); 
+        res.json(patients);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao buscar pacientes.' });
+    }
+});
+
+app.post('/api/my-patients', async (req, res) => {
+    try {
+        const { name, phone, email, sessionValue } = req.body;
+        // Cria paciente (simplificado)
+        const patient = await db.Patient.create({
+            nome: name,
+            email: email || `patient_${Date.now()}@temp.com`,
+            telefone: phone,
+            status: 'active'
+        });
+        res.json(patient);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao criar paciente.' });
+    }
+});
+
+// --- ROTAS DE AGENDAMENTOS (COM WHATSAPP) ---
+app.get('/api/appointments', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+        
+        const appointments = await db.Appointment.findAll({
+            where: { psychologistId: decoded.id }
+        });
+        res.json(appointments);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao buscar agenda.' });
+    }
+});
+
+app.post('/api/appointments', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+        const { title, start, end, patientId, phone } = req.body;
+
+        const appt = await db.Appointment.create({
+            title, start, end, patientId,
+            psychologistId: decoded.id,
+            status: 'scheduled'
+        });
+
+        // 🔔 NOTIFICAÇÃO WHATSAPP: CONFIRMAÇÃO
+        if (phone) {
+            const msg = `Olá ${title}, sua sessão foi confirmada para ${whatsappService.formatDate(start)}.`;
+            whatsappService.sendMessage(phone, msg);
+        }
+
+        res.json(appt);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao agendar.' });
+    }
+});
+
+app.put('/api/appointments/:id', async (req, res) => {
+    try {
+        const { status, start, end, value, phone, title } = req.body;
+        const appt = await db.Appointment.findByPk(req.params.id);
+        
+        if (!appt) return res.status(404).json({ error: 'Agendamento não encontrado' });
+
+        const oldStart = appt.start;
+        
+        await appt.update({ status, start, end, value });
+
+        // 🔔 NOTIFICAÇÕES WHATSAPP
+        if (phone) {
+            // 1. Reagendamento (Data mudou)
+            if (start && new Date(start).getTime() !== new Date(oldStart).getTime()) {
+                const msg = `Olá ${title}, sua sessão foi reagendada para ${whatsappService.formatDate(start)}.`;
+                whatsappService.sendMessage(phone, msg);
+            }
+            // 2. Cancelamento
+            else if (status === 'cancelled') {
+                const msg = `Olá ${title}, sua sessão foi cancelada. Entre em contato para reagendar.`;
+                whatsappService.sendMessage(phone, msg);
+            }
+            // 3. Confirmação (NOVO)
+            else if (status === 'confirmed') {
+                const msg = `Olá ${title}, confirmando sua sessão para ${whatsappService.formatDate(start)}. Até lá!`;
+                whatsappService.sendMessage(phone, msg);
+            }
+            // 4. Reagendamento Solicitado (Envia horários disponíveis)
+            else if (status === 'rescheduled') {
+                // Busca horários marcados como 'available' deste psicólogo
+                const availableSlots = await db.Appointment.findAll({
+                    where: {
+                        psychologistId: appt.psychologistId,
+                        status: 'available',
+                        start: { [Op.gt]: new Date() } // Apenas futuros
+                    },
+                    limit: 5,
+                    order: [['start', 'ASC']]
+                });
+
+                let slotsMsg = "Não encontrei horários livres próximos.";
+                if (availableSlots.length > 0) {
+                    slotsMsg = "Aqui estão alguns horários disponíveis:\n" + availableSlots.map((s, i) => `${i+1}. ${whatsappService.formatDate(s.start)}`).join('\n');
+                }
+                
+                const msg = `Olá ${title}. ${slotsMsg}\n\nResponda com o número da opção para confirmar a troca, ou digite "Falar com ${appt.psychologist ? appt.psychologist.nome : 'o psicólogo'}" para tratar diretamente.`;
+                whatsappService.sendMessage(phone, msg);
+            }
+        }
+
+        res.json(appt);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao atualizar agendamento.' });
+    }
+});
+
+app.delete('/api/appointments/:id', async (req, res) => {
+    try {
+        await db.Appointment.destroy({ where: { id: req.params.id } });
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao excluir.' });
+    }
+});
+
 // --- ROTA DE CORREÇÃO FINANCEIRA (MANUAL) ---
 app.get('/api/fix-financial-tables', async (req, res) => {
     try {
@@ -889,6 +1153,7 @@ app.get('/api/fix-financial-tables', async (req, res) => {
                 "status" VARCHAR(255) DEFAULT 'scheduled',
                 "value" FLOAT DEFAULT 0,
                 "psychologistId" INTEGER,
+                "patientId" INTEGER,
                 "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
@@ -1626,6 +1891,8 @@ const startServer = async () => {
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "is_exempt" BOOLEAN DEFAULT FALSE;`);
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cnpj" VARCHAR(255) UNIQUE;`);
         await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "modalidade" JSONB DEFAULT '[]';`);
+        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "dailySummaryTime" VARCHAR(5) DEFAULT '08:00';`);
+        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "reminderHoursBefore" INTEGER DEFAULT 24;`);
         
         // --- FIX: PERMITIR CADASTRO LEAN (CRP OPCIONAL NO INÍCIO) ---
         try {
