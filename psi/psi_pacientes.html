@@ -70,6 +70,19 @@
         font-size: 0.9rem;
         border: 1px solid #cce5d4;
     }
+
+    .patient-status-badge {
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: capitalize;
+        margin-left: auto; /* Empurra para a direita */
+        margin-right: 10px; /* Espaço antes do próximo ícone */
+    }
+    .status-ativo { background-color: #e8f5e9; color: #1B4332; }
+    .status-inativo { background-color: #f1f3f5; color: #6c757d; }
+
 </style>
 
 <div class="main-header">
@@ -93,8 +106,17 @@
             <span class="badge-count" id="patient-count">0</span>
         </div>
 
-        <div class="search-wrapper" style="margin-bottom: 15px;">
-            <input type="text" id="search-patient" placeholder="Buscar por nome..." class="form-control" style="width: 100%; box-sizing: border-box; border-radius: 20px; padding: 12px 20px; border: 1px solid #eee; background-color: #f9fafb;">
+        <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: center;">
+            <div class="search-wrapper" style="flex-grow: 1; margin-bottom: 0;">
+                <input type="text" id="search-patient" placeholder="Buscar por nome..." class="form-control" style="width: 100%; box-sizing: border-box; border-radius: 20px; padding: 12px 20px; border: 1px solid #eee; background-color: #f9fafb;">
+            </div>
+            <div class="form-group" style="margin-bottom: 0; flex-shrink: 0;">
+                <select id="filter-patient-status" class="form-control" style="padding: 12px 15px; border-radius: 20px; border: 1px solid #eee; background-color: #f9fafb; font-weight: 500;">
+                    <option value="ativo" selected>Ativos</option>
+                    <option value="inativo">Inativos</option>
+                    <option value="todos">Todos</option>
+                </select>
+            </div>
         </div>
 
         <div class="patient-list-container" id="patient-list">
@@ -144,6 +166,13 @@
                 <div class="form-group" style="flex: 1;">
                     <label>Valor da Sessão (R$)</label>
                     <input type="number" id="p-session-value" placeholder="0,00" step="0.01" required>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Status do Paciente</label>
+                    <select id="p-status" required class="form-control" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; background-color: #f9fafb;">
+                        <option value="ativo">Ativo</option>
+                        <option value="inativo">Inativo</option>
+                    </select>
                 </div>
             </div>
 
@@ -283,9 +312,9 @@
     (function() {
         // Dados Mockados
         let patients = [
-            { id: 1, name: 'Ana Clara Souza', phone: '(11) 99999-1111', automated: true, sessionValue: 150 },
-            { id: 2, name: 'Bruno Mendes', phone: '(11) 98888-2222', automated: false, sessionValue: 200 },
-            { id: 3, name: 'Carla Dias', phone: '(21) 97777-3333', automated: true, sessionValue: 180 }
+            { id: 1, name: 'Ana Clara Souza', phone: '(11) 99999-1111', automated: true, sessionValue: 150, status: 'ativo' },
+            { id: 2, name: 'Bruno Mendes', phone: '(11) 98888-2222', automated: false, sessionValue: 200, status: 'ativo' },
+            { id: 3, name: 'Carla Dias', phone: '(21) 97777-3333', automated: true, sessionValue: 180, status: 'inativo' }
         ];
         
         // Eventos com status: 'scheduled', 'done', 'missed'
@@ -300,6 +329,8 @@
         const listContainer = document.getElementById('patient-list');
         const countBadge = document.getElementById('patient-count');
         const searchInput = document.getElementById('search-patient');
+        const statusFilter = document.getElementById('filter-patient-status');
+        const pStatusInput = document.getElementById('p-status');
         const modal = document.getElementById('modal-patient');
         const form = document.getElementById('form-patient');
         const pIdInput = document.getElementById('p-id');
@@ -314,11 +345,17 @@
         const modalEvent = document.getElementById('modal-event-details');
         
         // 1. Renderizar Lista
-        function renderList(filter = '') {
+        function renderList(searchTerm = '', statusFilterValue = 'ativo') {
             listContainer.innerHTML = '';
-            const filtered = patients.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()));
+            const filteredByName = patients.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+            const finalFiltered = filteredByName.filter(p => {
+                if (statusFilterValue === 'todos') return true;
+                // Garante que pacientes sem status sejam tratados como ativos no filtro padrão
+                return (p.status || 'ativo') === statusFilterValue;
+            });
             
-            countBadge.textContent = filtered.length;
+            countBadge.textContent = finalFiltered.length;
 
             // Atualiza o select do modal de agendamento
             selectPatient.innerHTML = '<option value="">Selecione...</option>';
@@ -329,12 +366,12 @@
                 selectPatient.appendChild(opt);
             });
 
-            if (filtered.length === 0) {
+            if (finalFiltered.length === 0) {
                 listContainer.innerHTML = '<div class="empty-state-patients"><p>Nenhum paciente encontrado.</p></div>';
                 return;
             }
 
-            filtered.forEach(p => {
+            finalFiltered.forEach(p => {
                 // Gera iniciais para o avatar
                 const initials = p.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 
@@ -346,6 +383,7 @@
                         <h4>${p.name}</h4>
                         <span>${p.phone}</span>
                     </div>
+                    <span class="patient-status-badge status-${p.status || 'ativo'}">${p.status || 'ativo'}</span>
                     <div class="patient-status" title="${p.automated ? 'Assistente Ativa' : 'Assistente Inativa'}">
                         ${p.automated ? '🤖' : '🔕'}
                     </div>
@@ -485,6 +523,7 @@
             document.getElementById('p-name').value = patient.name;
             document.getElementById('p-phone').value = patient.phone;
             document.getElementById('p-session-value').value = patient.sessionValue;
+            pStatusInput.value = patient.status || 'ativo';
             document.getElementById('p-automated-msg').checked = patient.automated;
             
             document.getElementById('modal-patient-title').textContent = 'Editar Paciente';
@@ -496,6 +535,7 @@
             form.reset();
             pIdInput.value = ''; // Limpa ID para indicar novo
             document.getElementById('modal-patient-title').textContent = 'Novo Paciente';
+            pStatusInput.value = 'ativo';
             btnDelete.style.display = 'none'; // Esconde lixeira
             modal.style.display = 'flex';
         }
@@ -512,6 +552,7 @@
         document.getElementById('btn-add-patient').onclick = () => {
             form.reset();
             pIdInput.value = ''; // Limpa ID para indicar novo
+            pStatusInput.value = 'ativo';
             document.getElementById('modal-patient-title').textContent = 'Novo Paciente';
             btnDelete.style.display = 'none'; // Esconde lixeira
             modal.style.display = 'flex';
@@ -534,7 +575,7 @@
         btnDelete.onclick = () => {
             if(confirm('Tem certeza que deseja excluir este paciente?')) {
                 patients = patients.filter(p => p.id != pIdInput.value);
-                renderList(searchInput.value);
+                renderList(searchInput.value, statusFilter.value);
                 closeModal();
                 if(window.showToast) window.showToast('Paciente removido.', 'success');
             }
@@ -547,13 +588,14 @@
             const phone = document.getElementById('p-phone').value;
             const automated = document.getElementById('p-automated-msg').checked;
             const sessionValue = parseFloat(document.getElementById('p-session-value').value) || 0;
+            const status = pStatusInput.value;
             const id = pIdInput.value;
 
             if (id) {
                 // Edição
                 const index = patients.findIndex(p => p.id == id);
                 if (index > -1) {
-                    patients[index] = { ...patients[index], name, phone, automated, sessionValue };
+                    patients[index] = { ...patients[index], name, phone, automated, sessionValue, status };
                     if(window.showToast) window.showToast('Dados atualizados!', 'success');
                 }
             } else {
@@ -563,12 +605,13 @@
                     name,
                     phone,
                     automated,
-                    sessionValue
+                    sessionValue,
+                    status
                 });
                 if(window.showToast) window.showToast('Paciente adicionado com sucesso!', 'success');
             }
             
-            renderList(searchInput.value);
+            renderList(searchInput.value, statusFilter.value);
             closeModal();
         };
 
@@ -649,10 +692,11 @@
         };
 
 
-        searchInput.oninput = (e) => renderList(e.target.value);
+        searchInput.oninput = (e) => renderList(e.target.value, statusFilter.value);
+        statusFilter.onchange = (e) => renderList(searchInput.value, e.target.value);
 
         // Inicialização
-        renderList();
+        renderList('', 'ativo');
         // Pequeno delay para garantir que o DOM renderizou o container do calendário
         setTimeout(initCalendar, 100);
 
