@@ -36,45 +36,6 @@
                 </div>
             </div>
 
-            <!-- CONTROLES DE ZOOM -->
-            <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 15px; gap: 12px;">
-                <span style="font-size: 0.85rem; color: #666; font-weight: 500;">Ajuste o zoom da tela:</span>
-                <div class="zoom-controls-minimal light-theme">
-                    <button class="btn-zoom-min" id="btn-zoom-out" title="Diminuir">-</button>
-                    <span id="zoom-level-display">100%</span>
-                    <button class="btn-zoom-min" id="btn-zoom-in" title="Aumentar">+</button>
-                    <button class="btn-zoom-min btn-zoom-reset" id="btn-zoom-reset" title="Restaurar Padrão">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                    </button>
-                </div>
-            </div>
-
-            <div class="widget">
-                <h3>Sua Jornada na Yelo</h3>
-                <div class="exit-stats-grid">
-                    <div class="exit-stat-card">
-                        <div class="stat-icon">📅</div>
-                        <div class="stat-value" id="stat-dias">...</div>
-                        <div class="stat-label">Dias com a gente</div>
-                    </div>
-                    <div class="exit-stat-card">
-                        <div class="stat-icon">👁️</div>
-                        <div class="stat-value" id="stat-views">...</div>
-                        <div class="stat-label">Visualizações de Perfil</div>
-                    </div>
-                    <div class="exit-stat-card">
-                        <div class="stat-icon">💬</div>
-                        <div class="stat-value" id="stat-contatos">...</div>
-                        <div class="stat-label">Contatos Recebidos</div>
-                    </div>
-                    <div class="exit-stat-card">
-                        <div class="stat-icon">⭐</div>
-                        <div class="stat-value" id="stat-avaliacao">5.0</div>
-                        <div class="stat-label">Sua Reputação</div>
-                    </div>
-                </div>
-            </div>
-
             <div class="widget" style="margin-top: 30px;">
                 <h3>Por que você está nos deixando?</h3>
                 <p style="margin-bottom: 20px; color: #666;">Sua opinião é fundamental para melhorarmos.</p>
@@ -312,31 +273,6 @@
                 btnSubmitForm.textContent = originalText;
             }
         }
-
-        // ZOOM LOGIC (Standalone)
-        (function() {
-            let currentZoom = 100;
-            
-            function updateZoom(change) {
-                if (change === 0) currentZoom = 100;
-                else currentZoom += change;
-                
-                if (currentZoom < 50) currentZoom = 50;
-                if (currentZoom > 150) currentZoom = 150;
-                
-                document.body.style.zoom = currentZoom + "%";
-                const display = document.getElementById('zoom-level-display');
-                if (display) display.textContent = currentZoom + "%";
-            }
-
-            document.addEventListener('click', function(e) {
-                const btn = e.target.closest('button');
-                if (!btn) return;
-                if (btn.id === 'btn-zoom-in') updateZoom(10);
-                else if (btn.id === 'btn-zoom-out') updateZoom(-10);
-                else if (btn.id === 'btn-zoom-reset') updateZoom(0);
-            });
-        })();
     </script>
 
 <div id="modal-decisao-saida" class="custom-modal-overlay" style="display: none;">
@@ -347,34 +283,9 @@
         </div>
 
         <div class="option-card" id="btn-opt-cancelar-renovacao" style="border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;">
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <div style="background: #E0F2F1; color: #1B4332; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">1</div>
-                <div>
-                    <h4 style="margin: 0; color: #1B4332;">Cancelar Renovação e Manter Acesso</h4>
-                    <p style="margin: 5px 0 0 0; font-size: 0.8rem; color: #666;">Você não será cobrado novamente, mas continua usando o sistema até o fim do período já pago. Seu perfil continua no ar.</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="option-card" id="btn-opt-excluir-tudo" style="border: 1px solid #fee2e2; padding: 15px; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <div style="background: #fee2e2; color: #c53030; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">2</div>
-                <div>
-                    <h4 style="margin: 0; color: #c53030;">Excluir Conta e Assinatura Agora</h4>
-                    <p style="margin: 5px 0 0 0; font-size: 0.8rem; color: #666;">Seu perfil sai do ar imediatamente. A assinatura é cancelada e você perde o acesso agora. Nenhuma cobrança futura será feita.</p>
-                </div>
-            </div>
-        </div>
-
+            <div style="display: flex; gap: 10px; ali
         <button id="btn-cancelar-modal" style="margin-top: 20px; width: 100%; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">Voltar</button>
-    </div>
-</div>
-
-<style>
-    /* Efeito Hover nas opções */
-    .option-card:hover {
-        background-color: #f9f9f9;
-        border-color: #bbb;
+  br-color: #bbb;
     }
     #btn-opt-excluir-tudo:hover {
         background-color: #fff5f5;
