@@ -97,7 +97,7 @@ if (!db.Appointment) {
         end: DataTypes.DATE,
         status: { type: DataTypes.STRING, defaultValue: 'scheduled' }, // scheduled, done, missed
         value: { type: DataTypes.FLOAT, defaultValue: 0 },
-        psychologistId: DataTypes.INTEGER
+        psychologistId: DataTypes.INTEGER,
         patientId: DataTypes.INTEGER // Vínculo com o paciente
     });
 }
