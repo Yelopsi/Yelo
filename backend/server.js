@@ -1015,9 +1015,11 @@ app.post('/api/my-patients', async (req, res) => {
             email: email || `patient_${Date.now()}@temp.com`,
             telefone: phone,
             status: 'active'
+            senha: await bcrypt.hash('temp123', 8) // FIX: Senha obrigatória
         });
         res.json(patient);
     } catch (error) {
+        console.error("Erro ao criar paciente:", error);
         res.status(500).json({ error: 'Erro ao criar paciente.' });
     }
 });
@@ -1183,6 +1185,8 @@ app.get('/api/fix-financial-tables', async (req, res) => {
                 "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         `);
+        // --- FIX: GARANTIR COLUNA patientId ---
+        await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "patientId" INTEGER;');
 
         // 2. Garante que colunas críticas existam (caso a tabela tenha sido criada incompleta antes)
         await db.sequelize.query('ALTER TABLE "Expenses" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;');
@@ -2024,6 +2028,8 @@ const startServer = async () => {
                 "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         `);
+        // --- FIX: GARANTIR COLUNA patientId ---
+        await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "patientId" INTEGER;');
 
         // --- FIX: GARANTIR TABELA POSTS (BLOG) CORRETA ---
         // Cria a tabela posts compatível com o modelo models/Post.js (created_at, updated_at, psychologistId)
