@@ -1080,18 +1080,24 @@ app.post('/api/appointments', async (req, res) => {
         const appt = await db.Appointment.create({
             title, start, end, patientId,
             psychologistId: decoded.id,
-            status: 'scheduled'
+            status: 'scheduled',
+            value: 0
         });
 
         // 🔔 NOTIFICAÇÃO WHATSAPP: CONFIRMAÇÃO
         if (phone) {
-            const msg = `Olá ${title}, sua sessão foi confirmada para ${whatsappService.formatDate(start)}.`;
-            whatsappService.sendMessage(phone, msg);
+            try {
+                const msg = `Olá ${title}, sua sessão foi confirmada para ${whatsappService.formatDate(start)}.`;
+                whatsappService.sendMessage(phone, msg);
+            } catch (err) {
+                console.error("Erro ao enviar notificação WhatsApp:", err);
+            }
         }
 
         res.json(appt);
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao agendar.' });
+        console.error("Erro detalhado ao criar agendamento:", error);
+        res.status(500).json({ error: 'Erro ao agendar: ' + error.message });
     }
 });
 
