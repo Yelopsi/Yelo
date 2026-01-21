@@ -8,13 +8,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Variável para guardar qual plano o usuário está tentando assinar no modal
     let currentPlanAttempt = '';
 
-    // --- APLICA ZOOM SALVO AO INICIAR (V4 - Lógica no Container) ---
+    // --- APLICA ZOOM SALVO AO INICIAR (V5 - Correção de Altura dos Filhos) ---
     const savedZoom = localStorage.getItem('yelo_dashboard_zoom');
     if (savedZoom) {
         const val = parseFloat(savedZoom);
         const container = document.getElementById('dashboard-container');
         
-        // Trava o corpo para evitar barra dupla
+        // Trava o corpo para evitar barra dupla e garantir fundo
         document.documentElement.style.overflow = 'hidden';
         document.body.style.overflow = 'hidden';
         document.body.style.height = '100vh';
@@ -23,7 +23,14 @@ document.addEventListener('DOMContentLoaded', function() {
             container.style.transformOrigin = "top left";
             container.style.transform = `scale(${val})`;
             container.style.width = `${100 / val}%`;
-            container.style.height = `${100 / val}vh`; // Força altura exata da viewport compensada
+            container.style.height = `${100 / val}vh`; // Altura compensada
+
+            // CORREÇÃO DO ESPAÇO BRANCO:
+            // Força a Sidebar e o Main a ocuparem 100% da nova altura do container
+            Array.from(container.children).forEach(child => {
+                child.style.height = '100%';
+                child.style.minHeight = '100%';
+            });
         }
     }
 
@@ -1352,31 +1359,34 @@ document.addEventListener('DOMContentLoaded', function() {
             // Inicializa display
             updateZoomUI();
 
-            // --- FUNÇÃO SETZOOM V4 (CORREÇÃO DE BARRA DUPLA) ---
+            // --- FUNÇÃO SETZOOM V5 (CORREÇÃO FINAL DE LAYOUT) ---
             const setZoom = (val) => {
                 const container = document.getElementById('dashboard-container');
                 if (!container) return;
 
-                // 1. Limpa sujeira antiga do body (caso exista da versão anterior)
+                // 1. Limpeza e Travas Globais
                 document.body.style.zoom = ''; 
-                document.body.style.transform = '';
-                document.body.style.width = '100%';
-                
-                // 2. A REGRA DE OURO: Matar a rolagem externa
-                // Isso impede que o navegador crie a segunda barra de rolagem
                 document.documentElement.style.overflow = 'hidden';
                 document.body.style.overflow = 'hidden';
                 document.body.style.height = '100vh';
 
-                // 3. Aplica a mágica no CONTAINER interno
+                // 2. Aplica transformação no CONTAINER
                 container.style.transformOrigin = "top left";
+                // Adicionamos transição para ficar suave
                 container.style.transition = "transform 0.2s ease, width 0.2s ease, height 0.2s ease"; // Animação suave
                 container.style.transform = `scale(${val})`;
                 
-                // 4. Compensa Largura e Altura
-                // Ao definir a altura em VH compensado, o container preenche EXATAMENTE a tela
+                // 3. Compensa as dimensões (Reflow Matemático)
                 container.style.width = `${100 / val}%`;
                 container.style.height = `${100 / val}vh`;
+
+                // 4. O PULO DO GATO V5: Estica os filhos
+                // Como o container cresceu (ex: 125vh), forçamos a Sidebar e o Main
+                // a acompanharem esse crescimento usando 100% da altura do pai.
+                Array.from(container.children).forEach(child => {
+                    child.style.height = '100%';
+                    child.style.minHeight = '100%';
+                });
 
                 localStorage.setItem('yelo_dashboard_zoom', val);
                 updateZoomUI();
