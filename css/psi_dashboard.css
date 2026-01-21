@@ -3827,3 +3827,68 @@ input:checked + .slider:before { transform: translateX(20px); }
 .zoom-controls-minimal.light-theme #zoom-level-display {
     color: #333;
 }
+
+/* ==========================================================================
+   MOBILE FIRST UX IMPROVEMENTS (Pacientes & Financeiro)
+   ========================================================================== */
+
+/* Botão Flutuante (FAB) - Padrão Mobile */
+.mobile-fab {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: var(--verde-escuro);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(27, 67, 50, 0.4);
+    display: none; /* Oculto no Desktop */
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    z-index: 999;
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.2s;
+}
+.mobile-fab:active { transform: scale(0.95); }
+.mobile-fab:hover { background-color: #143d2e; }
+
+/* Ajustes Responsivos */
+@media (max-width: 768px) {
+    /* --- PACIENTES --- */
+    .patient-controls-row {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+    .patient-controls-row .search-wrapper,
+    .patient-controls-row .custom-select-wrapper {
+        width: 100% !important;
+    }
+    .patient-controls-row .custom-select-trigger {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    /* Esconde botão do header e mostra FAB */
+    .header-action-desktop { display: none !important; }
+    .mobile-fab { display: flex; }
+
+    /* --- FINANCEIRO --- */
+    .finance-controls-row {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 15px !important;
+    }
+    .finance-controls-row > div {
+        width: 100%;
+        display: flex;
+        gap: 10px;
+    }
+    .finance-controls-row button { flex: 1; justify-content: center; }
+    .finance-controls-row select { width: 100% !important; }
+    
+    .fin-charts-row {
+        grid-template-columns: 1fr !important;
+    }
+}
