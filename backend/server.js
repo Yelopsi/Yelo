@@ -1024,6 +1024,7 @@ app.post('/api/my-patients', async (req, res) => {
             email: email || `patient_${Date.now()}@temp.com`,
             telefone: phone,
             status: 'active',
+            sessionValue: sessionValue || 0,
             senha: await bcrypt.hash('temp123', 8) // FIX: Senha obrigatória
         });
         res.json(patient);
@@ -1039,7 +1040,7 @@ app.put('/api/my-patients/:id', async (req, res) => {
         if (!token) return res.status(401).json({ error: 'Não autorizado' });
         
         const { id } = req.params;
-        const { name, phone, email, status } = req.body;
+        const { name, phone, email, status, sessionValue } = req.body;
         
         const patient = await db.Patient.findByPk(id);
         if (!patient) return res.status(404).json({ error: 'Paciente não encontrado' });
@@ -1048,7 +1049,8 @@ app.put('/api/my-patients/:id', async (req, res) => {
             nome: name,
             telefone: phone,
             email: email,
-            status: status
+            status: status,
+            sessionValue: sessionValue
         });
         res.json(patient);
     } catch (error) {
@@ -2024,6 +2026,7 @@ const startServer = async () => {
         await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "ip_registro" VARCHAR(45);');
         await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "termos_aceitos" BOOLEAN DEFAULT FALSE;');
         await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "marketing_aceito" BOOLEAN DEFAULT FALSE;');
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "sessionValue" FLOAT DEFAULT 0;');
         // ---------------------------------------------------------------------
 
         // --- FIX: GARANTIR TODAS AS COLUNAS DO PERFIL NOVO ---
