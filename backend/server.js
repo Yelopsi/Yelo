@@ -59,10 +59,16 @@ if (db.Appointment && !db.Appointment.rawAttributes.patientId) {
     }
 }
 
-// --- FIX: Patch Patient Model (Garante leitura de sessionValue) ---
-if (db.Patient && !db.Patient.rawAttributes.sessionValue) {
-    console.log("[FIX] Patching Patient model to include 'sessionValue' field.");
-    db.Patient.rawAttributes.sessionValue = { type: DataTypes.FLOAT, defaultValue: 0 };
+// --- FIX: Patch Patient Model (Garante leitura de sessionValue e status) ---
+if (db.Patient) {
+    if (!db.Patient.rawAttributes.sessionValue) {
+        console.log("[FIX] Patching Patient model to include 'sessionValue' field.");
+        db.Patient.rawAttributes.sessionValue = { type: DataTypes.FLOAT, defaultValue: 0 };
+    }
+    if (!db.Patient.rawAttributes.status) {
+        console.log("[FIX] Patching Patient model to include 'status' field.");
+        db.Patient.rawAttributes.status = { type: DataTypes.STRING, defaultValue: 'active' };
+    }
     if (typeof db.Patient.refreshAttributes === 'function') {
         db.Patient.refreshAttributes();
     }
@@ -1039,7 +1045,8 @@ app.post('/api/my-patients', async (req, res) => {
         res.json(patient);
     } catch (error) {
         console.error("Erro ao criar paciente:", error);
-        res.status(500).json({ error: 'Erro ao criar paciente.' });
+        console.error("Erro original (SQL):", error.original); // Log detalhado no servidor
+        res.status(500).json({ error: 'Erro ao criar paciente: ' + (error.original?.message || error.message) });
     }
 });
 
@@ -1070,7 +1077,8 @@ app.put('/api/my-patients/:id', async (req, res) => {
         res.json(patient);
     } catch (error) {
         console.error("Erro ao atualizar paciente:", error);
-        res.status(500).json({ error: 'Erro ao atualizar paciente: ' + error.message });
+        console.error("Erro original (SQL):", error.original); // Log detalhado no servidor
+        res.status(500).json({ error: 'Erro ao atualizar paciente: ' + (error.original?.message || error.message) });
     }
 });
 
@@ -1274,6 +1282,25 @@ app.get('/api/fix-financial-tables', async (req, res) => {
     } catch (error) {
         console.error("Erro ao corrigir tabelas:", error);
         res.status(500).send("Erro ao criar tabelas: " + error.message);
+    }
+});
+
+// --- ROTA DE CORREÇÃO: TABELA DE PACIENTES ---
+app.get('/api/fix-patient-table', async (req, res) => {
+    try {
+        console.log("🔧 Corrigindo tabela de Pacientes...");
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT \'active\';');
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "sessionValue" FLOAT DEFAULT 0;');
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255);');
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;');
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "ip_registro" VARCHAR(45);');
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "termos_aceitos" BOOLEAN DEFAULT FALSE;');
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "marketing_aceito" BOOLEAN DEFAULT FALSE;');
+        
+        res.send("✅ Tabela de Pacientes verificada e corrigida.");
+    } catch (error) {
+        console.error("Erro ao corrigir tabela de pacientes:", error);
+        res.status(500).send("Erro: " + error.message);
     }
 });
 

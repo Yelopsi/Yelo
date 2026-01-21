@@ -983,11 +983,10 @@
                     closeModal();
                     if(window.showToast) window.showToast('Paciente salvo.', 'success');
                 } else {
-                    alert('Erro ao salvar paciente.');
+                    alert('Erro ao salvar paciente: ' + (err.error || 'Erro desconhecido'));
                 }
             } catch (e) {
-                alert('Erro ao salvar paciente.');
-            }
+                alert('Er
         };
 
         // Salvar Agendamento
