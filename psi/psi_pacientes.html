@@ -83,6 +83,51 @@
     .status-ativo { background-color: #e8f5e9; color: #1B4332; }
     .status-inativo { background-color: #f1f3f5; color: #6c757d; }
 
+    /* --- Custom Select (Yelo Aesthetic) --- */
+    .custom-select-wrapper {
+        position: relative;
+        width: 150px; /* Largura ajustável */
+    }
+
+    .custom-select-trigger {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 15px;
+        border-radius: 20px;
+        border: 1px solid #eee;
+        background-color: #f9fafb;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        user-select: none;
+    }
+
+    .custom-select-wrapper:hover .custom-select-trigger {
+        border-color: var(--verde-escuro);
+    }
+
+    .custom-select-arrow { transition: transform 0.3s ease; }
+    .custom-select-wrapper.open .custom-select-arrow { transform: rotate(180deg); }
+
+    .custom-select-options {
+        position: absolute;
+        top: calc(100% + 5px);
+        left: 0;
+        width: 100%;
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        z-index: 10;
+        overflow: hidden;
+        display: none;
+        animation: fadeIn 0.2s;
+    }
+    .custom-select-wrapper.open .custom-select-options { display: block; }
+    .custom-option { padding: 12px 15px; cursor: pointer; transition: background-color 0.2s; }
+    .custom-option:hover { background-color: #f0fdf4; color: var(--verde-escuro); }
+    .custom-option.selected { background-color: var(--verde-escuro); color: #fff; font-weight: 600; }
 </style>
 
 <div class="main-header">
@@ -110,12 +155,17 @@
             <div class="search-wrapper" style="flex-grow: 1; margin-bottom: 0;">
                 <input type="text" id="search-patient" placeholder="Buscar por nome..." class="form-control" style="width: 100%; box-sizing: border-box; border-radius: 20px; padding: 12px 20px; border: 1px solid #eee; background-color: #f9fafb;">
             </div>
-            <div class="form-group" style="margin-bottom: 0; flex-shrink: 0;">
-                <select id="filter-patient-status" class="form-control" style="padding: 12px 15px; border-radius: 20px; border: 1px solid #eee; background-color: #f9fafb; font-weight: 500;">
-                    <option value="ativo" selected>Ativos</option>
-                    <option value="inativo">Inativos</option>
-                    <option value="todos">Todos</option>
-                </select>
+            <div class="custom-select-wrapper" style="flex-shrink: 0;">
+                <div class="custom-select-trigger" id="status-filter-trigger">
+                    <span id="status-filter-selected-text">Ativos</span>
+                    <span class="custom-select-arrow">▼</span>
+                </div>
+                <div class="custom-select-options" id="status-filter-options">
+                    <div class="custom-option selected" data-value="ativo">Ativos</div>
+                    <div class="custom-option" data-value="inativo">Inativos</div>
+                    <div class="custom-option" data-value="todos">Todos</div>
+                </div>
+                <input type="hidden" id="filter-patient-status" value="ativo">
             </div>
         </div>
 
@@ -130,7 +180,7 @@
     <!-- COLUNA 2: CALENDÁRIO -->
     <div class="widget">
         <div class="widget-header-row">
-            <h3 style="margin: 0;">Agenda</h3>
+            <h3 class="widget-title">Agenda</h3>
             <div class="calendar-legend">
                 <span class="legend-item"><span class="dot" style="background-color: #1B4332;"></span> Agendado</span>
                 <span class="legend-item"><span class="dot" style="background-color: #9e9e9e;"></span> Realizado</span>
@@ -340,6 +390,42 @@
         const modalAppt = document.getElementById('modal-appointment');
         const formAppt = document.getElementById('form-appointment');
         const selectPatient = document.getElementById('appt-patient');
+
+        // --- CUSTOM SELECT (FILTRO DE STATUS) ---
+        const statusFilterWrapper = document.querySelector('.custom-select-wrapper');
+        const statusFilterTrigger = document.getElementById('status-filter-trigger');
+        const statusFilterOptions = document.getElementById('status-filter-options');
+        const statusFilterSelectedText = document.getElementById('status-filter-selected-text');
+
+        if (statusFilterTrigger) {
+            statusFilterTrigger.addEventListener('click', () => {
+                statusFilterWrapper.classList.toggle('open');
+            });
+
+            statusFilterOptions.addEventListener('click', (e) => {
+                if (e.target.classList.contains('custom-option')) {
+                    const oldSelected = statusFilterOptions.querySelector('.custom-option.selected');
+                    if (oldSelected) oldSelected.classList.remove('selected');
+                    
+                    e.target.classList.add('selected');
+                    
+                    const newValue = e.target.getAttribute('data-value');
+                    const newText = e.target.textContent;
+
+                    statusFilterSelectedText.textContent = newText;
+                    statusFilter.value = newValue; // Atualiza o input hidden
+
+                    statusFilterWrapper.classList.remove('open');
+                    renderList(searchInput.value, newValue);
+                }
+            });
+
+            window.addEventListener('click', (e) => {
+                if (statusFilterWrapper && !statusFilterWrapper.contains(e.target)) {
+                    statusFilterWrapper.classList.remove('open');
+                }
+            });
+        }
 
         // Elementos Financeiros
         const modalEvent = document.getElementById('modal-event-details');
@@ -693,7 +779,6 @@
 
 
         searchInput.oninput = (e) => renderList(e.target.value, statusFilter.value);
-        statusFilter.onchange = (e) => renderList(searchInput.value, e.target.value);
 
         // Inicialização
         renderList('', 'ativo');
