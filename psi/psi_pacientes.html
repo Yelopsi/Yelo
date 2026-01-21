@@ -170,7 +170,7 @@
         <h1>Meus Pacientes</h1>
         <p>Gerencie seus atendimentos e sua agenda.</p>
     </div>
-    <div class="dashboard-header-actions">
+    <div class="dashboard-header-actions header-action-desktop">
         <button id="btn-add-patient" class="btn" style="background-color: #fff; color: #1B4332; display: flex; align-items: center; gap: 8px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
             <span style="font-size: 1.2rem; line-height: 0;">+</span> Novo Paciente
         </button>
@@ -186,7 +186,7 @@
             <span class="badge-count" id="patient-count">0</span>
         </div>
 
-        <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: center;">
+        <div class="patient-controls-row" style="display: flex; gap: 15px; margin-bottom: 15px; align-items: center;">
             <div class="search-wrapper" style="flex-grow: 1; margin-bottom: 0;">
                 <input type="text" id="search-patient" placeholder="Buscar por nome..." class="form-control" style="width: 100%; box-sizing: border-box; border-radius: 20px; padding: 12px 20px; border: 1px solid #eee; background-color: #f9fafb;">
             </div>
@@ -233,6 +233,9 @@
         <div id="calendar-wrapper" style="flex-grow: 1;"></div>
     </div>
 </div>
+
+<!-- FAB MOBILE: NOVO PACIENTE -->
+<button id="btn-add-patient-mobile" class="mobile-fab" title="Novo Paciente">+</button>
 
 <!-- MODAL: ADICIONAR/EDITAR PACIENTE -->
 <div id="modal-patient" class="custom-modal-overlay" style="display: none;">
@@ -717,7 +720,8 @@
             modalAppt.style.display = 'flex';
         }
 
-        document.getElementById('btn-add-patient').onclick = () => {
+        // Função unificada para abrir modal de novo paciente
+        const handleNewPatient = () => {
             form.reset();
             pIdInput.value = ''; // Limpa ID para indicar novo
             pStatusInput.value = 'ativo';
@@ -725,6 +729,9 @@
             btnDelete.style.display = 'none'; // Esconde lixeira
             modal.style.display = 'flex';
         };
+
+        document.getElementById('btn-add-patient').onclick = handleNewPatient;
+        document.getElementById('btn-add-patient-mobile').onclick = handleNewPatient;
         
         const closeModal = () => modal.style.display = 'none';
         document.getElementById('close-patient-modal').onclick = closeModal;
