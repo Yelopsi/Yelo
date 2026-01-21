@@ -66,6 +66,13 @@ body.pagina-dashboard {
     height: 100vh; 
 }
 
+.dashboard-header-actions {
+    display: flex;
+    align-items: center; /* Alinha verticalmente com o título */
+    gap: 10px;
+    margin-bottom: 0; /* Remove a margem que estava desalinhando */
+}
+
 /* Área Principal de Conteúdo */
 .dashboard-main {
     flex-grow: 1;
@@ -645,6 +652,9 @@ textarea#bio {
     border-radius: 16px;
     margin-bottom: 40px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 .main-header h1 { 
     font-family: var(--font-titulos); /* Garante a fonte New Kansas */
@@ -3507,7 +3517,8 @@ body.pagina-dashboard::after {
     .patients-layout-grid { 
         grid-template-columns: 450px 1fr; 
         gap: 25px;
-        height: calc(100vh - 160px); 
+        height: calc(100vh - 100px);
+        min-height: 850px;
         padding-bottom: 0;
     }
     
@@ -3522,6 +3533,7 @@ body.pagina-dashboard::after {
     .patient-list-container {
         max-height: none; 
         flex-grow: 1;     
+        overflow-y: auto;
     }
     
     #calendar-wrapper {
@@ -3758,6 +3770,7 @@ input:checked + .slider:before { transform: translateX(20px); }
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(4px);
+    position: relative;
 }
 
 .btn-zoom-min {
