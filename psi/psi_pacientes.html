@@ -128,6 +128,41 @@
     .custom-option { padding: 12px 15px; cursor: pointer; transition: background-color 0.2s; }
     .custom-option:hover { background-color: #f0fdf4; color: var(--verde-escuro); }
     .custom-option.selected { background-color: var(--verde-escuro); color: #fff; font-weight: 600; }
+
+    /* --- Next Sessions Widget --- */
+    .next-session-card {
+        min-width: 220px;
+        background: #f9fafb;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        padding: 12px 15px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    .next-session-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--verde-escuro);
+        background: #fff;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    .ns-time {
+        background: #e8f5e9;
+        color: #1B4332;
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-weight: 800;
+        font-size: 0.9rem;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        line-height: 1.1;
+    }
+    .ns-info { flex-grow: 1; overflow: hidden; }
+    .ns-info h5 { margin: 0; font-size: 0.95rem; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ns-info span { font-size: 0.8rem; color: #666; }
 </style>
 
 <div class="main-header">
@@ -179,6 +214,14 @@
 
     <!-- COLUNA 2: CALENDÁRIO -->
     <div class="widget">
+        <!-- PRÓXIMAS SESSÕES -->
+        <div id="next-sessions-container" style="margin-bottom: 25px; display: none;">
+            <h4 style="margin: 0 0 15px 0; color: #1B4332; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                <span style="background:#e8f5e9; padding:4px; border-radius:50%;">⚡</span> Próximos Atendimentos
+            </h4>
+            <div id="next-sessions-list" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: thin;"></div>
+        </div>
+
         <div class="widget-header-row">
             <h3 class="widget-title">Agenda</h3>
             <div class="calendar-legend">
@@ -187,7 +230,7 @@
                 <span class="legend-item"><span class="dot" style="background-color: #d32f2f;"></span> Falta</span>
             </div>
         </div>
-        <div id="calendar-wrapper"></div>
+        <div id="calendar-wrapper" style="flex-grow: 1;"></div>
     </div>
 </div>
 
@@ -430,6 +473,45 @@
         // Elementos Financeiros
         const modalEvent = document.getElementById('modal-event-details');
         
+        // --- RENDERIZAR PRÓXIMAS SESSÕES ---
+        function renderNextSessions() {
+            const container = document.getElementById('next-sessions-container');
+            const list = document.getElementById('next-sessions-list');
+            list.innerHTML = '';
+
+            // Filtra eventos futuros e agendados
+            // Ajuste: Filtra eventos com status 'scheduled'
+            const upcoming = events
+                .filter(e => e.status === 'scheduled')
+                .sort((a, b) => new Date(a.start) - new Date(b.start))
+                .slice(0, 5); // Pega os 5 primeiros
+
+            if (upcoming.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+            upcoming.forEach(evt => {
+                const dateObj = new Date(evt.start);
+                const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const dateStr = dateObj.toLocaleDateString([], { day: '2-digit', month: 'short' });
+                
+                const el = document.createElement('div');
+                el.className = 'next-session-card';
+                el.innerHTML = `
+                    <div class="ns-time"><span>${timeStr}</span><span style="font-size:0.7rem; font-weight:normal;">${dateStr}</span></div>
+                    <div class="ns-info">
+                        <h5>${evt.title}</h5>
+                        <span>${evt.status === 'scheduled' ? 'Confirmado' : 'Pendente'}</span>
+                    </div>
+                    <div style="color:#ccc;">➔</div>
+                `;
+                el.onclick = () => openEventDetails(evt); // Reutiliza a função de abrir detalhes
+                list.appendChild(el);
+            });
+        }
+
         // 1. Renderizar Lista
         function renderList(searchTerm = '', statusFilterValue = 'ativo') {
             listContainer.innerHTML = '';
@@ -775,6 +857,7 @@
             }
             modalEvent.style.display = 'none';
             if(window.showToast) window.showToast('Status atualizado!', 'success');
+            renderNextSessions(); // Atualiza a lista rápida
         };
 
 
@@ -782,6 +865,7 @@
 
         // Inicialização
         renderList('', 'ativo');
+        renderNextSessions();
         // Pequeno delay para garantir que o DOM renderizou o container do calendário
         setTimeout(initCalendar, 100);
 

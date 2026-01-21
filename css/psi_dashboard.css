@@ -3797,3 +3797,20 @@ input:checked + .slider:before { transform: translateX(20px); }
     height: 14px;
     stroke-width: 2.5;
 }
+
+/* Zoom Controls Light Theme override (Global) */
+.zoom-controls-minimal.light-theme {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+.zoom-controls-minimal.light-theme .btn-zoom-min {
+    color: #555;
+}
+.zoom-controls-minimal.light-theme .btn-zoom-min:hover {
+    background-color: #f0f0f0;
+    color: #1B4332;
+}
+.zoom-controls-minimal.light-theme #zoom-level-display {
+    color: #333;
+}
