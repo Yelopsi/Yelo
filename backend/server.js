@@ -1118,6 +1118,31 @@ app.put('/api/appointments/:id', async (req, res) => {
     }
 });
 
+// --- ROTA: SIMULAR LEMBRETE (DISPARO MANUAL) ---
+app.post('/api/appointments/:id/remind', async (req, res) => {
+    try {
+        const appt = await db.Appointment.findByPk(req.params.id);
+        if (!appt) return res.status(404).json({ error: 'Agendamento não encontrado.' });
+
+        const patient = await db.Patient.findByPk(appt.patientId);
+        if (!patient) return res.status(404).json({ error: 'Paciente não encontrado.' });
+
+        const psychologist = await db.Psychologist.findByPk(appt.psychologistId);
+
+        const dateStr = new Date(appt.start).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        const timeStr = new Date(appt.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        
+        const msg = `Olá, sou a Yelo, assistente virtual de ${psychologist ? psychologist.nome : 'seu psicólogo'}. Você confirma a sessão do dia ${dateStr} às ${timeStr}?`;
+        
+        await whatsappService.sendInteractiveMessage(patient.telefone, msg, ["Sim, eu confirmo", "Preciso reagendar", "Quero cancelar"]);
+
+        res.json({ success: true, message: 'Lembrete enviado com sucesso!' });
+    } catch (error) {
+        console.error("Erro ao enviar lembrete manual:", error);
+        res.status(500).json({ error: 'Erro ao enviar lembrete.' });
+    }
+});
+
 app.delete('/api/appointments/:id', async (req, res) => {
     try {
         await db.Appointment.destroy({ where: { id: req.params.id } });
