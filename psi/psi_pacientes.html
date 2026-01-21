@@ -553,7 +553,12 @@
                 // 2. Buscar Agendamentos
                 const resAppts = await fetch(`${BASE_URL}/api/appointments`, { headers: { 'Authorization': `Bearer ${token}` } });
                 if (resAppts.ok) {
-                    events = await resAppts.json();
+                    const allEvents = await resAppts.json();
+                    // Filtra para não mostrar agendamentos órfãos (de pacientes excluídos)
+                    events = allEvents.filter(evt => {
+                        if (evt.status === 'available') return true; // Mantém horários livres
+                        return patients.some(p => p.id == evt.patientId); // Só mostra se o paciente existe
+                    });
                 }
 
                 renderList('', 'ativo');
@@ -983,10 +988,13 @@
                     closeModal();
                     if(window.showToast) window.showToast('Paciente salvo.', 'success');
                 } else {
+                    const err = await res.json();
                     alert('Erro ao salvar paciente: ' + (err.error || 'Erro desconhecido'));
                 }
             } catch (e) {
-                alert('Er
+                console.error(e);
+                alert('Erro de conexão ao salvar paciente.');
+            }
         };
 
         // Salvar Agendamento
