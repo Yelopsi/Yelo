@@ -396,6 +396,26 @@
     </div>
 </div>
 
+<!-- MODAL: CONFIRMAR EXCLUSÃO (YELO STYLE) -->
+<div id="modal-delete-confirmation" class="custom-modal-overlay" style="display: none;">
+    <div class="custom-modal-box" style="text-align: center; max-width: 400px;">
+        <div style="margin-bottom: 20px; color: #e63946;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+            </svg>
+        </div>
+        <h3 style="margin-bottom: 10px; color: #333;">Excluir Paciente?</h3>
+        <p style="color: #666; margin-bottom: 25px; line-height: 1.5;">
+            Tem certeza que deseja remover este paciente? Essa ação não pode ser desfeita.
+        </p>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="btn-cancel-delete" style="padding: 10px 20px; border: 1px solid #ddd; background: #fff; border-radius: 6px; cursor: pointer; color: #555; font-weight: 600;">Cancelar</button>
+            <button id="btn-confirm-delete" style="padding: 10px 20px; border: none; background: #e63946; border-radius: 6px; cursor: pointer; color: #fff; font-weight: bold;">Sim, Excluir</button>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL: DETALHES DA SESSÃO (Status e Ações) -->
 <div id="modal-event-details" class="custom-modal-overlay" style="display: none;">
     <div class="custom-modal-box">
@@ -467,6 +487,11 @@
         const pIdInput = document.getElementById('p-id');
         const btnDelete = document.getElementById('btn-delete-patient');
         const btnSimulate = document.getElementById('btn-simulate-reminder');
+        
+        // Elementos do Modal de Exclusão
+        const modalDelete = document.getElementById('modal-delete-confirmation');
+        const btnConfirmDelete = document.getElementById('btn-confirm-delete');
+        const btnCancelDelete = document.getElementById('btn-cancel-delete');
 
         // Elementos do Modal de Agendamento
         const modalAppt = document.getElementById('modal-appointment');
@@ -776,7 +801,7 @@
         // 3. Funções do Modal
         function openEditModal(patient) {
             form.reset();
-            pIdInput.value = patient.id;
+            pIdInput.value = String(patient.id); // Garante que seja string para o form
             document.getElementById('p-name').value = patient.name;
             document.getElementById('p-phone').value = patient.phone;
             document.getElementById('p-session-value').value = patient.sessionValue;
@@ -845,14 +870,24 @@
             btn.addEventListener('click', () => document.querySelectorAll('.custom-modal-overlay').forEach(m => m.style.display = 'none'));
         });
 
-        // Excluir Paciente
+        // Ação: Abrir Modal de Exclusão
         btnDelete.onclick = () => {
-            if(confirm('Tem certeza que deseja excluir este paciente?')) {
-                patients = patients.filter(p => p.id != pIdInput.value);
-                renderList(searchInput.value, statusFilter.value);
-                closeModal();
-                if(window.showToast) window.showToast('Paciente removido.', 'success');
-            }
+            modalDelete.style.display = 'flex';
+        };
+
+        // Ação: Cancelar Exclusão
+        btnCancelDelete.onclick = () => {
+            modalDelete.style.display = 'none';
+        };
+
+        // Ação: Confirmar Exclusão (Mock/Visual por enquanto, idealmente chamaria API DELETE)
+        btnConfirmDelete.onclick = () => {
+            // Aqui você chamaria await fetch(DELETE...)
+            patients = patients.filter(p => p.id != pIdInput.value);
+            renderList(searchInput.value, statusFilter.value);
+            modalDelete.style.display = 'none';
+            closeModal();
+            if(window.showToast) window.showToast('Paciente removido.', 'success');
         };
 
         // Ação: Simular Lembrete
@@ -884,7 +919,7 @@
         // Salvar (Novo ou Edição)
         form.onsubmit = async (e) => {
             e.preventDefault();
-            const id = pIdInput.value; // Pega o ID (se houver)
+            const id = document.getElementById('p-id').value; // Pega o ID diretamente do DOM para garantir
             const name = document.getElementById('p-name').value;
             const phone = document.getElementById('p-phone').value;
             const email = document.getElementById('p-email').value;
@@ -952,7 +987,8 @@
                     closeApptModal();
                     if(window.showToast) window.showToast(type === 'available' ? 'Horário disponível criado.' : 'Agendado e notificado!', 'success');
                 } else {
-                    alert('Erro ao criar agendamento. Verifique os dados.');
+                    const errData = await res.json();
+                    alert('Erro ao criar agendamento: ' + (errData.error || 'Verifique os dados.'));
                 }
             } catch (e) {
                 alert('Erro ao agendar.');
