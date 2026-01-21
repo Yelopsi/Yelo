@@ -863,6 +863,48 @@ app.get('/api/fix-test-email', async (req, res) => {
     }
 });
 
+// --- ROTA DE CORREÇÃO FINANCEIRA (MANUAL) ---
+app.get('/api/fix-financial-tables', async (req, res) => {
+    try {
+        console.log("🔧 Forçando criação/correção de tabelas financeiras...");
+        
+        // 1. Cria tabelas se não existirem
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "Expenses" (
+                "id" SERIAL PRIMARY KEY,
+                "description" VARCHAR(255),
+                "value" FLOAT,
+                "date" DATE,
+                "psychologistId" INTEGER,
+                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "Appointments" (
+                "id" SERIAL PRIMARY KEY,
+                "title" VARCHAR(255),
+                "start" TIMESTAMP WITH TIME ZONE,
+                "end" TIMESTAMP WITH TIME ZONE,
+                "status" VARCHAR(255) DEFAULT 'scheduled',
+                "value" FLOAT DEFAULT 0,
+                "psychologistId" INTEGER,
+                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        // 2. Garante que colunas críticas existam (caso a tabela tenha sido criada incompleta antes)
+        await db.sequelize.query('ALTER TABLE "Expenses" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;');
+        await db.sequelize.query('ALTER TABLE "Expenses" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;');
+        
+        res.send("✅ Tabelas Financeiras (Expenses/Appointments) verificadas e corrigidas com sucesso.");
+    } catch (error) {
+        console.error("Erro ao corrigir tabelas:", error);
+        res.status(500).send("Erro ao criar tabelas: " + error.message);
+    }
+});
+
 // --- ROTAS FINANCEIRAS (PRODUÇÃO) ---
 
 // 1. Obter Resumo Financeiro (Dashboard)
@@ -926,7 +968,8 @@ app.post('/api/financials/expenses', async (req, res) => {
 
         res.json(expense);
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao salvar despesa.' });
+        console.error("Erro detalhado ao salvar despesa:", error); // Log para debug
+        res.status(500).json({ error: 'Erro ao salvar despesa: ' + error.message });
     }
 });
 
