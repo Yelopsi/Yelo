@@ -463,6 +463,46 @@
             if (linkVisaoGeral) {
                 setTimeout(() => linkVisaoGeral.click(), 100);
             }
+
+            // --- FIX: LÓGICA DE ZOOM (GLOBAL) ---
+            // Garante que o zoom funcione corretamente mesmo após refresh na página de pacientes
+            const btnZoomIn = document.getElementById('btn-zoom-in');
+            const btnZoomOut = document.getElementById('btn-zoom-out');
+            const btnZoomReset = document.getElementById('btn-zoom-reset');
+            const zoomDisplay = document.getElementById('zoom-level-display');
+            const mainContent = document.getElementById('main-content');
+
+            if (btnZoomIn && btnZoomOut && btnZoomReset && mainContent) {
+                let currentZoom = 100;
+
+                const applyZoom = () => {
+                    mainContent.style.transform = `scale(${currentZoom / 100})`;
+                    mainContent.style.transformOrigin = 'top left';
+                    mainContent.style.width = `${100 * (100 / currentZoom)}%`;
+                    if (zoomDisplay) zoomDisplay.textContent = `${currentZoom}%`;
+                };
+
+                // Substitui os botões para remover listeners antigos e garantir funcionamento limpo
+                const replaceBtn = (btn) => {
+                    const newBtn = btn.cloneNode(true);
+                    btn.parentNode.replaceChild(newBtn, btn);
+                    return newBtn;
+                };
+
+                const newBtnIn = replaceBtn(btnZoomIn);
+                const newBtnOut = replaceBtn(btnZoomOut);
+                const newBtnReset = replaceBtn(btnZoomReset);
+
+                newBtnIn.addEventListener('click', () => {
+                    if (currentZoom < 150) { currentZoom += 10; applyZoom(); }
+                });
+
+                newBtnOut.addEventListener('click', () => {
+                    if (currentZoom > 50) { currentZoom -= 10; applyZoom(); }
+                });
+
+                newBtnReset.addEventListener('click', () => { currentZoom = 100; applyZoom(); });
+            }
         });
     </script>
 
