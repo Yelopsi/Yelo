@@ -546,7 +546,7 @@
                     const data = await resPatients.json();
                     // Mapeia para o formato interno
                     patients = data.map(p => ({
-                        id: p.id, name: p.nome, phone: p.telefone, automated: true, sessionValue: 150, status: 'ativo'
+                        id: p.id, name: p.nome, phone: p.telefone, automated: true, sessionValue: p.sessionValue || 0, status: p.status || 'ativo'
                     }));
                 }
 
@@ -571,7 +571,7 @@
             // Filtra eventos futuros e agendados
             // Ajuste: Filtra eventos com status 'scheduled'
             const upcoming = events
-                .filter(e => e.status === 'scheduled')
+                .filter(e => e.status === 'scheduled' || e.status === 'confirmed')
                 .sort((a, b) => new Date(a.start) - new Date(b.start))
                 .slice(0, 5); // Pega os 5 primeiros
 
@@ -586,13 +586,22 @@
                 const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 const dateStr = dateObj.toLocaleDateString([], { day: '2-digit', month: 'short' });
                 
+                // Define o texto e a cor do status
+                let statusText = 'Aguardando';
+                let statusColor = '#666';
+                
+                if (evt.status === 'confirmed') {
+                    statusText = 'Confirmado';
+                    statusColor = '#1B4332';
+                }
+
                 const el = document.createElement('div');
                 el.className = 'next-session-card';
                 el.innerHTML = `
                     <div class="ns-time"><span>${timeStr}</span><span style="font-size:0.7rem; font-weight:normal;">${dateStr}</span></div>
                     <div class="ns-info">
                         <h5>${evt.title}</h5>
-                        <span>${evt.status === 'scheduled' ? 'Confirmado' : 'Pendente'}</span>
+                        <span style="color: ${statusColor}; font-weight: 600; font-size: 0.8rem;">${statusText}</span>
                     </div>
                     <div style="color:#ccc;">➔</div>
                 `;
@@ -924,6 +933,12 @@
             }
 
             if(confirm(`Enviar lembrete agora para a sessão de ${new Date(nextAppt.start).toLocaleString()}?`)) {
+                // UX: Feedback visual de carregamento
+                const originalText = btnSimulate.textContent;
+                btnSimulate.disabled = true;
+                btnSimulate.textContent = "Enviando...";
+                btnSimulate.style.opacity = "0.7";
+
                 try {
                     const res = await fetch(`${BASE_URL}/api/appointments/${nextAppt.id}/remind`, { method: 'POST' });
                     if (res.ok) {
@@ -931,6 +946,11 @@
                         closeModal();
                     }
                 } catch (e) { alert('Erro ao enviar lembrete.'); }
+                finally {
+                    btnSimulate.disabled = false;
+                    btnSimulate.textContent = originalText;
+                    btnSimulate.style.opacity = "1";
+                }
             }
         };
 
@@ -942,6 +962,7 @@
             const phone = document.getElementById('p-phone').value;
             const email = document.getElementById('p-email').value;
             const status = pStatusInput.value;
+            const sessionValue = parseFloat(document.getElementById('p-session-value').value) || 0;
             
             const method = id ? 'PUT' : 'POST';
             const url = id ? `${BASE_URL}/api/my-patients/${id}` : `${BASE_URL}/api/my-patients`;
@@ -953,7 +974,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}` 
                     },
-                    body: JSON.stringify({ name, phone, email, status })
+                    body: JSON.stringify({ name, phone, email, status, sessionValue })
                 });
                 
                 if (res.ok) {
@@ -1057,6 +1078,20 @@
                     b.style.background = '#fff'; b.style.color = '#333'; b.style.borderColor = '#ddd';
                 });
                 highlightStatusBtn(btn, status);
+                
+                // --- FEATURE: Preencher valor ao marcar como realizado ---
+                if (status === 'done') {
+                    const evt = events.find(e => e.id == currentEventId);
+                    const valInput = document.getElementById('evt-value');
+                    // Só preenche se o campo estiver vazio ou zerado (para não sobrescrever edições manuais)
+                    if (evt && (!valInput.value || parseFloat(valInput.value) === 0)) {
+                        const patient = patients.find(p => p.id == evt.patientId);
+                        if (patient && patient.sessionValue) {
+                            valInput.value = patient.sessionValue;
+                        }
+                    }
+                }
+
                 document.getElementById('evt-options-done').style.display = status === 'done' ? 'block' : 'none';
                 document.getElementById('evt-options-missed').style.display = 'none'; // Esconde opções extras ao mudar
             };
