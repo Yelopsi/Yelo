@@ -127,6 +127,60 @@
     </div>
 </div>
 
+<style>
+    /* --- Custom Month Picker Styles (Yelo Aesthetic) --- */
+    .custom-month-trigger {
+        width: 100%;
+        padding: 15px;
+        border-radius: 12px;
+        border: 2px solid #e0e0e0;
+        font-size: 1.1rem;
+        background-color: #f9f9f9;
+        color: #333;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.3s;
+        box-sizing: border-box;
+    }
+    .custom-month-trigger:hover {
+        border-color: #1B4332;
+        background-color: #fff;
+    }
+    .custom-month-dropdown {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        z-index: 100;
+        padding: 20px;
+        margin-top: 8px;
+        box-sizing: border-box;
+        animation: fadeIn 0.2s ease-out;
+    }
+    .picker-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    .picker-btn { background: none; border: none; cursor: pointer; color: #1B4332; font-weight: bold; font-size: 1.2rem; padding: 5px 10px; border-radius: 50%; transition: background 0.2s; }
+    .picker-btn:hover { background-color: #f0fdf4; }
+    .picker-year { font-weight: 700; color: #1B4332; font-size: 1.1rem; }
+    .month-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .month-option {
+        padding: 10px; text-align: center; border-radius: 8px; cursor: pointer; font-size: 0.9rem; color: #555; transition: all 0.2s; border: 1px solid transparent;
+    }
+    .month-option:hover { background-color: #f0fdf4; color: #1B4332; border-color: #bbf7d0; }
+    .month-option.selected { background-color: #1B4332; color: white; font-weight: 600; border-color: #1B4332; }
+</style>
+
 <!-- MODAL: EXPORTAR EXTRATO -->
 <div id="modal-export" class="custom-modal-overlay" style="display: none;">
     <div class="custom-modal-box" style="max-width: 500px; padding: 40px;">
@@ -135,9 +189,20 @@
         <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Selecione o mês de referência para o relatório.</p>
         
         <form id="form-export">
-            <div class="form-group">
+            <div class="form-group" style="position: relative;">
                 <label style="font-size: 1rem; font-weight: 600; color: #1B4332; margin-bottom: 10px; display: block;">Mês de Referência</label>
-                <input type="month" id="export-month" required style="width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #e0e0e0; font-size: 1.1rem; background-color: #f9f9f9; color: #333; transition: border-color 0.3s;">
+                
+                <div id="custom-month-picker" class="custom-month-trigger">
+                    <span id="picker-display-text">Selecione...</span>
+                    <span style="color: #1B4332;">📅</span>
+                </div>
+                
+                <div id="picker-dropdown" class="custom-month-dropdown">
+                    <div class="picker-header"><button type="button" class="picker-btn" id="picker-prev-year">←</button><span id="picker-year-display" class="picker-year"></span><button type="button" class="picker-btn" id="picker-next-year">→</button></div>
+                    <div class="month-grid" id="picker-month-grid"></div>
+                </div>
+
+                <input type="hidden" id="export-month" required>
             </div>
             <div class="form-actions" style="justify-content: flex-end; margin-top: 20px; display: flex; gap: 10px;">
                 <button type="button" class="btn btn-secundario" id="cancel-export-modal">Cancelar</button>
@@ -232,10 +297,80 @@
         // --- EXPORTAÇÃO DE EXTRATO ---
         const modalExport = document.getElementById('modal-export');
         
+        // Lógica do Custom Month Picker
+        const pickerTrigger = document.getElementById('custom-month-picker');
+        const pickerDropdown = document.getElementById('picker-dropdown');
+        const pickerYearDisplay = document.getElementById('picker-year-display');
+        const pickerMonthGrid = document.getElementById('picker-month-grid');
+        const pickerDisplayText = document.getElementById('picker-display-text');
+        const exportMonthInput = document.getElementById('export-month');
+        
+        let pickerDate = new Date(); // Data interna do picker
+        const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+        function renderPicker() {
+            pickerYearDisplay.textContent = pickerDate.getFullYear();
+            pickerMonthGrid.innerHTML = '';
+            
+            monthNames.forEach((name, index) => {
+                const el = document.createElement('div');
+                el.className = 'month-option';
+                el.textContent = name;
+                
+                // Verifica se é o mês selecionado atualmente no input
+                const currentVal = exportMonthInput.value; // YYYY-MM
+                if (currentVal) {
+                    const [y, m] = currentVal.split('-').map(Number);
+                    if (y === pickerDate.getFullYear() && (m - 1) === index) {
+                        el.classList.add('selected');
+                    }
+                }
+
+                el.onclick = (e) => {
+                    e.stopPropagation();
+                    // Atualiza input
+                    const monthStr = String(index + 1).padStart(2, '0');
+                    const val = `${pickerDate.getFullYear()}-${monthStr}`;
+                    exportMonthInput.value = val;
+                    
+                    // Atualiza texto
+                    pickerDisplayText.textContent = `${name} de ${pickerDate.getFullYear()}`;
+                    
+                    // Fecha e re-renderiza para mostrar seleção
+                    pickerDropdown.style.display = 'none';
+                    renderPicker();
+                };
+                pickerMonthGrid.appendChild(el);
+            });
+        }
+
+        document.getElementById('picker-prev-year').onclick = (e) => { e.stopPropagation(); pickerDate.setFullYear(pickerDate.getFullYear() - 1); renderPicker(); };
+        document.getElementById('picker-next-year').onclick = (e) => { e.stopPropagation(); pickerDate.setFullYear(pickerDate.getFullYear() + 1); renderPicker(); };
+        
+        pickerTrigger.onclick = (e) => {
+            e.stopPropagation();
+            pickerDropdown.style.display = pickerDropdown.style.display === 'block' ? 'none' : 'block';
+            renderPicker();
+        };
+
+        // Fecha ao clicar fora
+        window.addEventListener('click', (e) => {
+            if (!pickerTrigger.contains(e.target) && !pickerDropdown.contains(e.target)) {
+                pickerDropdown.style.display = 'none';
+            }
+        });
+        
         document.getElementById('btn-export-report').onclick = () => {
             // Define o mês atual como padrão
             const now = new Date();
-            document.getElementById('export-month').value = now.toISOString().slice(0, 7);
+            const currentMonthVal = now.toISOString().slice(0, 7);
+            exportMonthInput.value = currentMonthVal;
+            
+            // Atualiza visual
+            pickerDate = new Date(now);
+            const mIndex = now.getMonth();
+            pickerDisplayText.textContent = `${monthNames[mIndex]} de ${now.getFullYear()}`;
+            
             modalExport.style.display = 'flex';
         };
 
