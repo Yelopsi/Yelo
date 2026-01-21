@@ -8,32 +8,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Variável para guardar qual plano o usuário está tentando assinar no modal
     let currentPlanAttempt = '';
 
-    // --- APLICA ZOOM SALVO AO INICIAR (V3) ---
+    // --- APLICA ZOOM SALVO AO INICIAR (V4 - Lógica no Container) ---
     const savedZoom = localStorage.getItem('yelo_dashboard_zoom');
     if (savedZoom) {
         const val = parseFloat(savedZoom);
-        const compensation = 100 / val;
-        const heightVal = val < 1 ? `${compensation}vh` : '100vh';
-
-        document.body.style.maxWidth = 'none';
-        document.body.style.transform = `scale(${val})`;
-        document.body.style.transformOrigin = "top left";
-        document.body.style.width = `${compensation}%`;
-        document.body.style.height = heightVal;
+        const container = document.getElementById('dashboard-container');
         
-        // Aplica correção nos filhos imediatamente
-        // (Use setTimeout zero para garantir que o DOM já montou os elementos se estiver no head)
-        setTimeout(() => {
-            const containers = document.querySelectorAll('.dashboard-container, .dashboard-sidebar, .dashboard-main');
-            containers.forEach(el => {
-                el.style.height = heightVal;
-                el.style.minHeight = heightVal;
-            });
-            
-            let styleFix = document.createElement('style');
-            styleFix.innerHTML = `body.pagina-dashboard::after { height: ${heightVal} !important; }`;
-            document.head.appendChild(styleFix);
-        }, 0);
+        // Trava o corpo para evitar barra dupla
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+        document.body.style.height = '100vh';
+
+        if (container) {
+            container.style.transformOrigin = "top left";
+            container.style.transform = `scale(${val})`;
+            container.style.width = `${100 / val}%`;
+            container.style.height = `${100 / val}vh`; // Força altura exata da viewport compensada
+        }
     }
 
     // Variável global temporária para saber qual botão disparou a ação
@@ -1361,54 +1352,32 @@ document.addEventListener('DOMContentLoaded', function() {
             // Inicializa display
             updateZoomUI();
 
-            // --- A FUNÇÃO MÁGICA V3: CORREÇÃO TOTAL DE ESPAÇOS BRANCOS ---
+            // --- FUNÇÃO SETZOOM V4 (CORREÇÃO DE BARRA DUPLA) ---
             const setZoom = (val) => {
-                // 1. Limpeza preventiva
+                const container = document.getElementById('dashboard-container');
+                if (!container) return;
+
+                // 1. Limpa sujeira antiga do body (caso exista da versão anterior)
                 document.body.style.zoom = ''; 
-                document.body.style.maxWidth = 'none';
-
-                // 2. Cálculo da Compensação (Se zoom 0.8, tamanho deve ser 125%)
-                const compensation = 100 / val;
+                document.body.style.transform = '';
+                document.body.style.width = '100%';
                 
-                // 3. Aplica no Body (Transform + Largura)
-                document.body.style.transform = `scale(${val})`;
-                document.body.style.transformOrigin = "top left";
-                document.body.style.width = `${compensation}%`;
+                // 2. A REGRA DE OURO: Matar a rolagem externa
+                // Isso impede que o navegador crie a segunda barra de rolagem
+                document.documentElement.style.overflow = 'hidden';
+                document.body.style.overflow = 'hidden';
+                document.body.style.height = '100vh';
 
-                // 4. O PULO DO GATO PARA A ALTURA (Corrige o espaço branco embaixo)
-                // Se o zoom for menor que 1, aumentamos a altura proporcionalmente
-                const heightVal = val < 1 ? `${compensation}vh` : '100vh'; // '100vh' restaura o original se for zoom 1
+                // 3. Aplica a mágica no CONTAINER interno
+                container.style.transformOrigin = "top left";
+                container.style.transition = "transform 0.2s ease, width 0.2s ease, height 0.2s ease"; // Animação suave
+                container.style.transform = `scale(${val})`;
                 
-                document.body.style.height = heightVal;
+                // 4. Compensa Largura e Altura
+                // Ao definir a altura em VH compensado, o container preenche EXATAMENTE a tela
+                container.style.width = `${100 / val}%`;
+                container.style.height = `${100 / val}vh`;
 
-                // 5. Força os containers internos a acompanharem a nova altura
-                // Isso impede que a sidebar ou o main fiquem curtos
-                const containers = document.querySelectorAll('.dashboard-container, .dashboard-sidebar, .dashboard-main');
-                containers.forEach(el => {
-                    el.style.height = heightVal;
-                    el.style.minHeight = heightVal; // Garante cobertura total
-                });
-
-                // 6. Correção do Fundo/Ruído (Pseudo-elemento ::after)
-                // Injetamos um CSS dinâmico porque não dá pra alterar pseudo-elemento via JS direto
-                let styleFix = document.getElementById('zoom-css-fix');
-                if (!styleFix) {
-                    styleFix = document.createElement('style');
-                    styleFix.id = 'zoom-css-fix';
-                    document.head.appendChild(styleFix);
-                }
-                styleFix.innerHTML = `
-                    body.pagina-dashboard::after {
-                        height: ${heightVal} !important;
-                        width: 100% !important;
-                    }
-                    /* Garante que o scroll aconteça no lugar certo se o conteúdo estourar */
-                    .dashboard-main {
-                        overflow-y: auto !important;
-                    }
-                `;
-
-                // Salva e atualiza UI
                 localStorage.setItem('yelo_dashboard_zoom', val);
                 updateZoomUI();
             };
