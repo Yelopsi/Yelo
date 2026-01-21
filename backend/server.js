@@ -79,6 +79,28 @@ if (!db.SystemLog) {
     });
 }
 
+// --- FIX: Definir Modelos Financeiros (Appointment e Expense) ---
+if (!db.Expense) {
+    console.log("[FIX] Defining Expense model manually.");
+    db.Expense = db.sequelize.define('Expense', {
+        description: DataTypes.STRING,
+        value: DataTypes.FLOAT,
+        date: DataTypes.DATEONLY,
+        psychologistId: DataTypes.INTEGER
+    });
+}
+if (!db.Appointment) {
+    console.log("[FIX] Defining Appointment model manually.");
+    db.Appointment = db.sequelize.define('Appointment', {
+        title: DataTypes.STRING, // Nome do paciente ou título
+        start: DataTypes.DATE,
+        end: DataTypes.DATE,
+        status: { type: DataTypes.STRING, defaultValue: 'scheduled' }, // scheduled, done, missed
+        value: { type: DataTypes.FLOAT, defaultValue: 0 },
+        psychologistId: DataTypes.INTEGER
+    });
+}
+
 // --- HOOK GLOBAL: DESARQUIVAMENTO AUTOMÁTICO ---
 // Se um psicólogo ou paciente enviar mensagem, a conversa é desarquivada (status = 'active')
 if (db.Message && db.Conversation) {
@@ -841,6 +863,87 @@ app.get('/api/fix-test-email', async (req, res) => {
     }
 });
 
+// --- ROTAS FINANCEIRAS (PRODUÇÃO) ---
+
+// 1. Obter Resumo Financeiro (Dashboard)
+app.get('/api/financials/dashboard', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(401).json({ error: 'Não autorizado' });
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+        
+        // Filtro de data (opcional, padrão mês atual)
+        const { month } = req.query; // Formato YYYY-MM
+        let startDate, endDate;
+        
+        if (month) {
+            startDate = new Date(`${month}-01`);
+            endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+        } else {
+            const now = new Date();
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        }
+
+        // Buscar Agendamentos (Receita)
+        const appointments = await db.Appointment.findAll({
+            where: {
+                psychologistId: decoded.id,
+                start: { [Op.between]: [startDate, endDate] }
+            }
+        });
+
+        // Buscar Despesas
+        const expenses = await db.Expense.findAll({
+            where: {
+                psychologistId: decoded.id,
+                date: { [Op.between]: [startDate, endDate] }
+            }
+        });
+
+        res.json({ appointments, expenses });
+    } catch (error) {
+        console.error("Erro financeiro:", error);
+        res.status(500).json({ error: 'Erro ao buscar dados financeiros.' });
+    }
+});
+
+// 2. Criar Despesa
+app.post('/api/financials/expenses', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(401).json({ error: 'Não autorizado' });
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+
+        const { description, value, date } = req.body;
+        
+        const expense = await db.Expense.create({
+            description,
+            value,
+            date,
+            psychologistId: decoded.id
+        });
+
+        res.json(expense);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao salvar despesa.' });
+    }
+});
+
+// 3. Excluir Despesa
+app.delete('/api/financials/expenses/:id', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(401).json({ error: 'Não autorizado' });
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+
+        await db.Expense.destroy({ where: { id: req.params.id, psychologistId: decoded.id } });
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao excluir despesa.' });
+    }
+});
+
 // =============================================================
 // ROTAS DA APLICAÇÃO
 // =============================================================
@@ -1560,6 +1663,32 @@ const startServer = async () => {
         await db.sequelize.query(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
         await db.sequelize.query(`ALTER TABLE "ForumPosts" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
         await db.sequelize.query(`ALTER TABLE "ForumComments" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
+
+        // --- FIX: TABELAS FINANCEIRAS ---
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "Expenses" (
+                "id" SERIAL PRIMARY KEY,
+                "description" VARCHAR(255),
+                "value" FLOAT,
+                "date" DATE,
+                "psychologistId" INTEGER,
+                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "Appointments" (
+                "id" SERIAL PRIMARY KEY,
+                "title" VARCHAR(255),
+                "start" TIMESTAMP WITH TIME ZONE,
+                "end" TIMESTAMP WITH TIME ZONE,
+                "status" VARCHAR(255) DEFAULT 'scheduled',
+                "value" FLOAT DEFAULT 0,
+                "psychologistId" INTEGER,
+                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
 
         // --- FIX: GARANTIR TABELA POSTS (BLOG) CORRETA ---
         // Cria a tabela posts compatível com o modelo models/Post.js (created_at, updated_at, psychologistId)
