@@ -460,6 +460,11 @@
             </div>
         </div>
 
+        <div id="evt-options-reschedule" style="display: none; margin-bottom: 20px;">
+            <label style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 8px;">Escolha um novo horário disponível:</label>
+            <div id="reschedule-slots-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto; border: 1px solid #eee; padding: 5px; border-radius: 8px;"></div>
+        </div>
+
         <div class="form-actions" style="justify-content: flex-end; display: flex; gap: 10px;">
             <button type="button" id="btn-save-event-status" class="btn btn-principal">Salvar Status</button>
         </div>
@@ -776,11 +781,12 @@
                 events: events.map(evt => ({
                     ...evt,
                     // Cores: Agendado (Azul), Confirmado (Verde), Realizado (Cinza), Cancelado/Falta (Vermelho)
+                    display: evt.status === 'cancelled' ? 'background' : 'auto', // LIBERA O HORÁRIO SE CANCELADO
                     color: evt.status === 'confirmed' ? '#1B4332' : 
                            evt.status === 'scheduled' ? '#3788d8' : 
                            evt.status === 'done' ? '#9e9e9e' : 
                            evt.status === 'available' ? '#FFC107' :
-                           (evt.status === 'cancelled' || evt.status === 'missed') ? '#d32f2f' : '#3788d8'
+                           (evt.status === 'cancelled' || evt.status === 'missed') ? '#ffebee' : '#3788d8' // Vermelho claro para background
                 })),
                 // Clique em um horário vazio
                 dateClick: function(info) {
@@ -1063,6 +1069,7 @@
             });
             document.getElementById('evt-options-done').style.display = 'none';
             document.getElementById('evt-options-missed').style.display = 'none';
+            document.getElementById('evt-options-reschedule').style.display = 'none';
 
             // Seleciona status atual se houver
             if(evt.status) {
@@ -1106,6 +1113,41 @@
 
                 document.getElementById('evt-options-done').style.display = status === 'done' ? 'block' : 'none';
                 document.getElementById('evt-options-missed').style.display = 'none'; // Esconde opções extras ao mudar
+                
+                // --- LÓGICA DE REAGENDAMENTO ---
+                const rescheduleContainer = document.getElementById('evt-options-reschedule');
+                if (status === 'rescheduled') {
+                    rescheduleContainer.style.display = 'block';
+                    const list = document.getElementById('reschedule-slots-list');
+                    list.innerHTML = '';
+
+                    // Busca horários disponíveis futuros
+                    const now = new Date();
+                    const availableSlots = events
+                        .filter(e => e.status === 'available' && new Date(e.start) > now)
+                        .sort((a, b) => new Date(a.start) - new Date(b.start))
+                        .slice(0, 5); // Top 5
+
+                    if (availableSlots.length === 0) {
+                        list.innerHTML = '<div style="padding:10px; color:#999; font-size:0.9rem;">Nenhum horário "Disponível" futuro encontrado na agenda.</div>';
+                    } else {
+                        availableSlots.forEach(slot => {
+                            const btn = document.createElement('button');
+                            const dateStr = new Date(slot.start).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
+                            const timeStr = new Date(slot.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                            
+                            btn.innerHTML = `📅 <strong>${dateStr}</strong> às <strong>${timeStr}</strong>`;
+                            btn.style.cssText = "padding: 10px; border: 1px solid #ddd; border-radius: 6px; background: #fff; cursor: pointer; text-align: left; transition: background 0.2s;";
+                            btn.onmouseover = () => btn.style.background = "#f0fdf4";
+                            btn.onmouseout = () => btn.style.background = "#fff";
+                            
+                            btn.onclick = () => realizarReagendamento(currentEventId, slot);
+                            list.appendChild(btn);
+                        });
+                    }
+                } else {
+                    rescheduleContainer.style.display = 'none';
+                }
             };
         });
 
@@ -1144,6 +1186,33 @@
             }
         };
 
+        // Função auxiliar para reagendar ao clicar no slot
+        async function realizarReagendamento(eventId, newSlot) {
+            if(!confirm("Confirmar reagendamento para este horário?")) return;
+            
+            const evt = events.find(e => e.id == eventId);
+            const patient = evt.patientId ? patients.find(p => p.id == evt.patientId) : null;
+
+            try {
+                await fetch(`${BASE_URL}/api/appointments/${eventId}`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({ 
+                        status: 'scheduled', // Volta para agendado na nova data
+                        start: newSlot.start,
+                        end: newSlot.end,
+                        phone: patient ? patient.phone : null,
+                        title: evt.title
+                    })
+                });
+                fetchData(); // Recarrega calendário
+                modalEvent.style.display = 'none';
+                if(window.showToast) window.showToast('Reagendado com sucesso!', 'success');
+            } catch (e) { alert('Erro ao reagendar.'); }
+        }
 
         searchInput.oninput = (e) => renderList(e.target.value, statusFilter.value);
 
