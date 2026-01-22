@@ -623,7 +623,9 @@
             const finalFiltered = filteredByName.filter(p => {
                 if (statusFilterValue === 'todos') return true;
                 // Garante que pacientes sem status sejam tratados como ativos no filtro padrão
-                return (p.status || 'ativo') === statusFilterValue;
+                const pStatus = (p.status || 'ativo').toLowerCase();
+                const normalizedStatus = pStatus === 'active' ? 'ativo' : pStatus;
+                return normalizedStatus === statusFilterValue;
             });
             
             countBadge.textContent = finalFiltered.length;
@@ -818,7 +820,7 @@
             pIdInput.value = String(patient.id); // Garante que seja string para o form
             document.getElementById('p-name').value = patient.name;
             document.getElementById('p-phone').value = patient.phone;
-            document.getElementById('p-email').value = patient.email || ''; // Preenche email ou vazio
+            document.getElementById('p-email').value = (patient.email && patient.email.includes('@temp.com')) ? '' : patient.email;
             document.getElementById('p-session-value').value = patient.sessionValue;
             pStatusInput.value = patient.status || 'ativo';
             document.getElementById('p-automated-msg').checked = patient.automated;
@@ -833,6 +835,7 @@
             form.reset();
             pIdInput.value = ''; // Limpa ID para indicar novo
             document.getElementById('modal-patient-title').textContent = 'Novo Paciente';
+            document.getElementById('p-email').value = '';
             pStatusInput.value = 'ativo';
             btnDelete.style.display = 'none'; // Esconde lixeira
             btnSimulate.style.display = 'none'; // Esconde botão de simular
@@ -968,7 +971,7 @@
             const phone = document.getElementById('p-phone').value;
             const email = document.getElementById('p-email').value;
             const status = pStatusInput.value;
-            // const sessionValue = parseFloat(document.getElementById('p-session-value').value) || 0;
+            const sessionValue = parseFloat(document.getElementById('p-session-value').value) || 0;
             
             const method = id ? 'PUT' : 'POST';
             const url = id ? `${BASE_URL}/api/my-patients/${id}` : `${BASE_URL}/api/my-patients`;
@@ -980,7 +983,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}` 
                     },
-                    body: JSON.stringify({ name, phone, email, status }) // sessionValue removido temporariamente para evitar erro de coluna inexistente
+                    body: JSON.stringify({ name, phone, email, status, sessionValue })
                 });
                 
                 if (res.ok) {
