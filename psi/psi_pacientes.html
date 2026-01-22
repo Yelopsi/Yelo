@@ -15,6 +15,14 @@
         min-height: 40px; /* Garante legibilidade mínima */
     }
 
+    /* [CORREÇÃO LARGURA] Força o calendário a ocupar 100% da largura sempre */
+    .fc, .fc-view-harness, .fc-view, .fc table, .fc-scrollgrid {
+        width: 100% !important;
+    }
+    .fc-col-header, .fc-timegrid-body, .fc-timegrid-slots table, .fc-timegrid-cols table {
+        width: 100% !important;
+    }
+
     /* Alinhamento do Header da Carteira de Pacientes */
     .widget-header-row {
         display: flex;
