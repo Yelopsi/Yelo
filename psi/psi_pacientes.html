@@ -539,6 +539,7 @@
                     patients = data.map(p => ({
                         id: p.id, name: p.nome, phone: p.telefone, email: p.email, automated: true, sessionValue: p.sessionValue || 0, status: p.status || 'ativo',
                         notes: p.notes
+                    }));
                 }
 
                 // 2. Buscar Agendamentos
@@ -970,7 +971,8 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}` 
                     },
-                    bo
+                    body: JSON.stringify({ name, phone, email, status, sessionValue, notes, observacoes: notes })
+                });
                 
                 if (res.ok) {
                     fetchData(); // Recarrega tudo
