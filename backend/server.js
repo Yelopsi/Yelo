@@ -2073,13 +2073,29 @@ const PORT = process.env.PORT || 3001;
 const startServer = async () => {
     console.time('⏱️ Tempo Total de Inicialização');
 
-    // --- DIAGNÓSTICO DE CONEXÃO ---
-    try {
-        await db.sequelize.authenticate();
-        console.log('✅ [DB CONNECTION] Conexão com o banco estabelecida com sucesso.');
-    } catch (error) {
-        console.error('⚠️ [DB CONNECTION] Banco instável ou em recuperação:', error.message);
-        // Não encerra o processo, permite que o Sequelize tente reconectar nas próximas requisições
+    // --- 1. AGUARDA O BANCO ESTAR PRONTO (RETRY LOOP) ---
+    // Garante que o banco aceita escrita antes de tentar alterar o schema
+    let dbReady = false;
+    const maxRetries = 20; // 20 tentativas * 3s = 60 segundos de tolerância
+    
+    for (let i = 1; i <= maxRetries; i++) {
+        try {
+            await db.sequelize.authenticate();
+            // Tenta uma operação de escrita leve para garantir que o banco não está em Recovery Mode
+            await db.sequelize.query('CREATE TEMP TABLE IF NOT EXISTS _startup_check (id serial);');
+            await db.sequelize.query('DROP TABLE IF EXISTS _startup_check;');
+            
+            console.log('✅ [DB CONNECTION] Conexão de escrita estabelecida com sucesso.');
+            dbReady = true;
+            break;
+        } catch (error) {
+            console.warn(`⏳ [DB WAIT] Banco indisponível ou em recuperação (Tentativa ${i}/${maxRetries}): ${error.message}`);
+            await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+    }
+
+    if (!dbReady) {
+        console.error('❌ [DB CRITICAL] O banco de dados não ficou pronto a tempo. As correções de schema podem falhar.');
     }
 
     // --- BLOCO DE SINCRONIZAÇÃO E CORREÇÃO DE SCHEMA (RODA EM TODOS OS AMBIENTES) ---
