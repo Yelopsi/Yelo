@@ -61,10 +61,10 @@ if (db.Appointment && !db.Appointment.rawAttributes.patientId) {
 
 // --- FIX: Patch Patient Model (Garante leitura de sessionValue e status) ---
 if (db.Patient) {
-    if (!db.Patient.rawAttributes.sessionValue) {
-        console.log("[FIX] Patching Patient model to include 'sessionValue' field.");
-        db.Patient.rawAttributes.sessionValue = { type: DataTypes.FLOAT, defaultValue: 0 };
-    }
+    // if (!db.Patient.rawAttributes.sessionValue) {
+    //     console.log("[FIX] Patching Patient model to include 'sessionValue' field.");
+    //     db.Patient.rawAttributes.sessionValue = { type: DataTypes.FLOAT, defaultValue: 0 };
+    // }
     if (!db.Patient.rawAttributes.status) {
         console.log("[FIX] Patching Patient model to include 'status' field.");
         db.Patient.rawAttributes.status = { type: DataTypes.STRING, defaultValue: 'active' };
@@ -1032,14 +1032,13 @@ app.get('/api/my-patients', async (req, res) => {
 
 app.post('/api/my-patients', async (req, res) => {
     try {
-        const { name, phone, email, sessionValue } = req.body;
+        const { name, phone, email } = req.body;
         // Cria paciente (simplificado)
         const patient = await db.Patient.create({
             nome: name,
             email: email || `patient_${Date.now()}@temp.com`,
             telefone: phone,
             status: 'active',
-            sessionValue: sessionValue || 0,
             senha: await bcrypt.hash('temp123', 8) // FIX: Senha obrigatória
         });
         res.json(patient);
@@ -1056,7 +1055,7 @@ app.put('/api/my-patients/:id', async (req, res) => {
         if (!token) return res.status(401).json({ error: 'Não autorizado' });
         
         const { id } = req.params;
-        const { name, phone, email, status, sessionValue } = req.body;
+        const { name, phone, email, status } = req.body;
         
         const patient = await db.Patient.findByPk(id);
         if (!patient) return res.status(404).json({ error: 'Paciente não encontrado' });
@@ -1064,8 +1063,7 @@ app.put('/api/my-patients/:id', async (req, res) => {
         const updateData = {
             nome: name,
             telefone: phone,
-            status: status,
-            sessionValue: sessionValue
+            status: status
         };
 
         // Só atualiza email se for válido e não vazio (evita erro de validação)

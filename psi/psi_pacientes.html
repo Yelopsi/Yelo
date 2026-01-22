@@ -968,7 +968,7 @@
             const phone = document.getElementById('p-phone').value;
             const email = document.getElementById('p-email').value;
             const status = pStatusInput.value;
-            const sessionValue = parseFloat(document.getElementById('p-session-value').value) || 0;
+            // const sessionValue = parseFloat(document.getElementById('p-session-value').value) || 0;
             
             const method = id ? 'PUT' : 'POST';
             const url = id ? `${BASE_URL}/api/my-patients/${id}` : `${BASE_URL}/api/my-patients`;
@@ -980,7 +980,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}` 
                     },
-                    body: JSON.stringify({ name, phone, email, status, sessionValue })
+                    body: JSON.stringify({ name, phone, email, status }) // sessionValue removido temporariamente para evitar erro de coluna inexistente
                 });
                 
                 if (res.ok) {
