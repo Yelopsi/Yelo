@@ -2129,255 +2129,95 @@ const startServer = async () => {
     try {
         console.log('🔧 [DB SYNC] Verificando e aplicando correções de schema...');
 
-        // Garante que as colunas críticas existam, usando ALTER TABLE que é seguro para produção.
-        // Adicione novas colunas aqui no futuro para evitar erros de "column does not exist".
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "is_exempt" BOOLEAN DEFAULT FALSE;`);
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cnpj" VARCHAR(255) UNIQUE;`);
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "modalidade" JSONB DEFAULT '[]';`);
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "dailySummaryTime" VARCHAR(5) DEFAULT '08:00';`);
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "reminderHoursBefore" INTEGER DEFAULT 24;`);
-        
-        // --- FIX: PERMITIR CADASTRO LEAN (CRP OPCIONAL NO INÍCIO) ---
-        try {
-            await db.sequelize.query('ALTER TABLE "Psychologists" ALTER COLUMN "crp" DROP NOT NULL;');
-        } catch (e) {
-            // Ignora se já for nullable ou outro erro menor
-        }
+        // --- OTIMIZAÇÃO: Agrupa todas as queries de schema para rodar em paralelo ---
+        const schemaQueries = [
+            // Psychologists
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "is_exempt" BOOLEAN DEFAULT FALSE;`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cnpj" VARCHAR(255) UNIQUE;`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "modalidade" JSONB DEFAULT '[]';`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "dailySummaryTime" VARCHAR(5) DEFAULT '08:00';`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "reminderHoursBefore" INTEGER DEFAULT 24;`,
+            `ALTER TABLE "Psychologists" ALTER COLUMN "crp" DROP NOT NULL;`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "publico_alvo" JSONB DEFAULT '[]';`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "estilo_terapia" JSONB DEFAULT '[]';`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "praticas_inclusivas" JSONB DEFAULT '[]';`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "disponibilidade_periodo" JSONB DEFAULT '[]';`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "temas_atuacao" JSONB DEFAULT '[]';`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "abordagens_tecnicas" JSONB DEFAULT '[]';`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "genero_identidade" VARCHAR(255);`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "valor_sessao_numero" FLOAT;`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cpf" VARCHAR(255) UNIQUE;`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "whatsapp_clicks" INTEGER DEFAULT 0;`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "profile_appearances" INTEGER DEFAULT 0;`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "planExpiresAt" TIMESTAMP WITH TIME ZONE;`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "stripeSubscriptionId" VARCHAR(255);`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cancelAtPeriodEnd" BOOLEAN DEFAULT FALSE;`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "subscription_payments_count" INTEGER DEFAULT 0;`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255);`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "authority_level" VARCHAR(255) DEFAULT 'nivel_iniciante';`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "badges" JSONB DEFAULT '{}';`,
+            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "xp" INTEGER DEFAULT 0;`,
+
+            // Patients
+            `ALTER TABLE "Patients" ALTER COLUMN "email" DROP NOT NULL;`,
+            `ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "ip_registro" VARCHAR(45);`,
+            `ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "termos_aceitos" BOOLEAN DEFAULT FALSE;`,
+            `ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "marketing_aceito" BOOLEAN DEFAULT FALSE;`,
+            `ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "sessionValue" FLOAT DEFAULT 0;`,
+            `ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`,
+            `ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255);`,
+            `ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;`,
+
+            // Other tables
+            `ALTER TABLE "Messages" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'sent';`,
+            `ALTER TABLE "Conversations" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`,
+            `ALTER TABLE "ForumPosts" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`,
+            `ALTER TABLE "ForumComments" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`,
+            `ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "patientId" INTEGER;`,
+            `ALTER TABLE "SystemLogs" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;`,
+
+            // Table Creations
+            `CREATE TABLE IF NOT EXISTS "Expenses" ( "id" SERIAL PRIMARY KEY, "description" VARCHAR(255), "value" FLOAT, "date" DATE, "psychologistId" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
+            `CREATE TABLE IF NOT EXISTS "Appointments" ( "id" SERIAL PRIMARY KEY, "title" VARCHAR(255), "start" TIMESTAMP WITH TIME ZONE, "end" TIMESTAMP WITH TIME ZONE, "status" VARCHAR(255) DEFAULT 'scheduled', "value" FLOAT DEFAULT 0, "psychologistId" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
+            `CREATE TABLE IF NOT EXISTS "posts" ( "id" SERIAL PRIMARY KEY, "titulo" VARCHAR(255) NOT NULL, "conteudo" TEXT NOT NULL, "imagem_url" VARCHAR(500), "tags" VARCHAR(255), "slug" VARCHAR(255) UNIQUE, "psychologist_id" INTEGER NOT NULL, "curtidas" INTEGER DEFAULT 0, "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
+            `CREATE TABLE IF NOT EXISTS "SystemLogs" ( "id" SERIAL PRIMARY KEY, "level" VARCHAR(255), "message" TEXT, "meta" JSONB, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
+            `CREATE TABLE IF NOT EXISTS "ActiveSessions" ( "sessionId" VARCHAR(255) PRIMARY KEY, "lastSeen" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
+            `CREATE TABLE IF NOT EXISTS "AnonymousSessions" ( "sessionId" VARCHAR(255) PRIMARY KEY, "durationInSeconds" INTEGER, "endedAt" TIMESTAMP WITH TIME ZONE, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
+            `CREATE TABLE IF NOT EXISTS "SiteVisits" ( "id" SERIAL PRIMARY KEY, "url" VARCHAR(255), "userAgent" TEXT, "referrer" TEXT, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
+            `CREATE TABLE IF NOT EXISTS "WhatsappClickLogs" ( "id" SERIAL PRIMARY KEY, "psychologistId" INTEGER, "patientId" INTEGER, "guestPhone" VARCHAR(255), "guestName" VARCHAR(255), "status" VARCHAR(255) DEFAULT 'pending', "message_sent_at" TIMESTAMP WITH TIME ZONE, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
+            `CREATE TABLE IF NOT EXISTS "PwaInstallLogs" ( "id" SERIAL PRIMARY KEY, "userAgent" TEXT, "platform" VARCHAR(50), "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
+            `CREATE TABLE IF NOT EXISTS "ProfileAppearanceLogs" ( "id" SERIAL PRIMARY KEY, "psychologistId" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
+            `CREATE TABLE IF NOT EXISTS "MatchEvents" ( "id" SERIAL PRIMARY KEY, "psychologistId" INTEGER, "matchTags" TEXT[], "matchScore" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
+            `CREATE TABLE IF NOT EXISTS "PatientFavorites" ( "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "PatientId" INTEGER, "PsychologistId" INTEGER, PRIMARY KEY ("PatientId", "PsychologistId") );`
+        ];
+
+        // Executa todas as queries de schema em paralelo para otimizar o tempo de boot
+        await Promise.all(schemaQueries.map(sql => runSchemaQuery(sql)));
 
         // --- FIX: CONVERSÃO EM MASSA DE ARRAYS PARA JSONB (CORREÇÃO ERRO 500) ---
+        // Este bloco permanece sequencial pois uma query pode depender da outra.
         const arrayColumns = [
             'temas_atuacao', 'abordagens_tecnicas', 'modalidade', 
             'publico_alvo', 'estilo_terapia', 'praticas_inclusivas', 
             'disponibilidade_periodo', 'praticas_vivencias'
         ];
-
         for (const col of arrayColumns) {
             try {
-                // 1. Garante que a coluna existe
                 await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "${col}" JSONB DEFAULT '[]';`);
-                
-                // 2. Tenta converter de ARRAY/TEXT para JSONB (se necessário)
                 await runSchemaQuery(`
                     ALTER TABLE "Psychologists" 
                     ALTER COLUMN "${col}" TYPE JSONB 
                     USING to_json("${col}"::text); 
                 `);
             } catch (e) {
-                // Fallback: Se falhar (ex: já é JSONB ou erro de cast), tenta cast direto
                 try {
                     await runSchemaQuery(`ALTER TABLE "Psychologists" ALTER COLUMN "${col}" TYPE JSONB USING "${col}"::jsonb;`);
                 } catch (e2) { 
-                    // Ignora erros silenciosamente se a coluna já estiver correta
                 }
             }
         }
         console.log('🔧 [DB FIX] Colunas de lista verificadas e convertidas para JSONB.');
-
-        // --- FIX: GARANTIR COLUNAS DA TABELA PATIENTS (EVITA ERRO NO LOGIN) ---
-        console.log('🔧 [DB FIX] Aplicando correção na tabela Patients (ip_registro, termos)...');
-        await runSchemaQuery('ALTER TABLE "Patients" ALTER COLUMN "email" DROP NOT NULL;', 'Restrição NOT NULL removida da coluna email.');
-
-        const patientCols = [
-            { name: 'ip_registro', def: 'VARCHAR(45)' },
-            { name: 'termos_aceitos', def: 'BOOLEAN DEFAULT FALSE' },
-            { name: 'marketing_aceito', def: 'BOOLEAN DEFAULT FALSE' },
-            { name: 'sessionValue', def: 'FLOAT DEFAULT 0' },
-            { name: 'status', def: "VARCHAR(255) DEFAULT 'active'" },
-            { name: 'resetPasswordToken', def: 'VARCHAR(255)' },
-            { name: 'resetPasswordExpires', def: 'BIGINT' }
-        ];
-
-        for (const col of patientCols) {
-            await runSchemaQuery(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "${col.name}" ${col.def};`, `Coluna "${col.name}" verificada em Patients.`);
-        }
-        // ---------------------------------------------------------------------
-
-        // --- FIX: GARANTIR TODAS AS COLUNAS DO PERFIL NOVO ---
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "publico_alvo" JSONB DEFAULT '[]';`);
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "estilo_terapia" JSONB DEFAULT '[]';`);
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "praticas_inclusivas" JSONB DEFAULT '[]';`);
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "disponibilidade_periodo" JSONB DEFAULT '[]';`);
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "temas_atuacao" JSONB DEFAULT '[]';`);
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "abordagens_tecnicas" JSONB DEFAULT '[]';`);
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "genero_identidade" VARCHAR(255);`);
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "valor_sessao_numero" FLOAT;`);
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cpf" VARCHAR(255) UNIQUE;`);
-        // -----------------------------------------------------
-        
-        // --- FIX: COLUNAS DE KPI E PAGAMENTO (ADICIONADO) ---
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "whatsapp_clicks" INTEGER DEFAULT 0;`);
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "profile_appearances" INTEGER DEFAULT 0;`);
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "planExpiresAt" TIMESTAMP WITH TIME ZONE;`);
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "stripeSubscriptionId" VARCHAR(255);`);
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cancelAtPeriodEnd" BOOLEAN DEFAULT FALSE;`);
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "subscription_payments_count" INTEGER DEFAULT 0;`);
-        
-        // --- FIX: COLUNAS DE RECUPERAÇÃO DE SENHA (CRÍTICO) ---
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255);`);
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;`);
-        await runSchemaQuery(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255);`);
-        await runSchemaQuery(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;`);
-        console.log('🔧 [DB FIX] Colunas de recuperação de senha verificadas.');
-        // -----------------------------------------------------
-
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "authority_level" VARCHAR(255) DEFAULT 'nivel_iniciante';`);
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "badges" JSONB DEFAULT '{}';`);
-        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "xp" INTEGER DEFAULT 0;`);
-        await runSchemaQuery(`ALTER TABLE "Messages" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'sent';`);
-        await runSchemaQuery(`ALTER TABLE "Conversations" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
-        await runSchemaQuery(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
-        await runSchemaQuery(`ALTER TABLE "ForumPosts" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
-        await runSchemaQuery(`ALTER TABLE "ForumComments" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
-
-        // --- FIX: TABELAS FINANCEIRAS ---
-        await runSchemaQuery(`
-            CREATE TABLE IF NOT EXISTS "Expenses" (
-                "id" SERIAL PRIMARY KEY,
-                "description" VARCHAR(255),
-                "value" FLOAT,
-                "date" DATE,
-                "psychologistId" INTEGER,
-                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-        await runSchemaQuery(`
-            CREATE TABLE IF NOT EXISTS "Appointments" (
-                "id" SERIAL PRIMARY KEY,
-                "title" VARCHAR(255),
-                "start" TIMESTAMP WITH TIME ZONE,
-                "end" TIMESTAMP WITH TIME ZONE,
-                "status" VARCHAR(255) DEFAULT 'scheduled',
-                "value" FLOAT DEFAULT 0,
-                "psychologistId" INTEGER,
-                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-        // --- FIX: GARANTIR COLUNA patientId ---
-        try {
-            await runSchemaQuery('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "patientId" INTEGER;');
-            console.log('🔧 [DB FIX] Coluna patientId verificada/adicionada em Appointments.');
-        } catch (e) {
-            console.error('⚠️ [DB FIX] Erro ao adicionar coluna patientId:', e.message);
-        }
-
-        // --- FIX: GARANTIR TABELA POSTS (BLOG) CORRETA ---
-        // Cria a tabela posts compatível com o modelo models/Post.js (created_at, updated_at, psychologistId)
-        await runSchemaQuery(`
-            CREATE TABLE IF NOT EXISTS "posts" (
-                "id" SERIAL PRIMARY KEY,
-                "titulo" VARCHAR(255) NOT NULL,
-                "conteudo" TEXT NOT NULL,
-                "imagem_url" VARCHAR(500),
-                "tags" VARCHAR(255),
-                "slug" VARCHAR(255) UNIQUE,
-                "psychologist_id" INTEGER NOT NULL, -- CORREÇÃO: Nome da coluna em snake_case
-                "curtidas" INTEGER DEFAULT 0,
-                "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-
-        // --- FIX: TABELA DE LOGS DO SISTEMA (CRÍTICO PARA PAGAMENTOS) ---
-        await runSchemaQuery(`
-            CREATE TABLE IF NOT EXISTS "SystemLogs" (
-                "id" SERIAL PRIMARY KEY,
-                "level" VARCHAR(255),
-                "message" TEXT,
-                "meta" JSONB,
-                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-        
-        // --- FIX: GARANTIR QUE A COLUNA updatedAt EXISTA (CASO A TABELA JÁ TENHA SIDO CRIADA SEM ELA) ---
-        await runSchemaQuery(`ALTER TABLE "SystemLogs" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;`);
-
-        // --- FIX: TABELAS DE SESSÃO E ANALYTICS (CRÍTICO PARA DASHBOARD) ---
-        await runSchemaQuery(`
-            CREATE TABLE IF NOT EXISTS "ActiveSessions" (
-                "sessionId" VARCHAR(255) PRIMARY KEY,
-                "lastSeen" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-        
-        await runSchemaQuery(`
-            CREATE TABLE IF NOT EXISTS "AnonymousSessions" (
-                "sessionId" VARCHAR(255) PRIMARY KEY,
-                "durationInSeconds" INTEGER,
-                "endedAt" TIMESTAMP WITH TIME ZONE,
-                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-
-        await runSchemaQuery(`
-            CREATE TABLE IF NOT EXISTS "SiteVisits" (
-                "id" SERIAL PRIMARY KEY,
-                "url" VARCHAR(255),
-                "userAgent" TEXT,
-                "referrer" TEXT,
-                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-
-        // --- FIX: TABELA DE LOGS DE WHATSAPP (FOLLOW-UP) ---
-        await runSchemaQuery(`
-            CREATE TABLE IF NOT EXISTS "WhatsappClickLogs" (
-                "id" SERIAL PRIMARY KEY,
-                "psychologistId" INTEGER,
-                "patientId" INTEGER,
-                "guestPhone" VARCHAR(255),
-                "guestName" VARCHAR(255),
-                "status" VARCHAR(255) DEFAULT 'pending',
-                "message_sent_at" TIMESTAMP WITH TIME ZONE,
-                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-
-        // --- FIX: TABELA DE LOGS DE INSTALAÇÃO PWA ---
-        await runSchemaQuery(`
-            CREATE TABLE IF NOT EXISTS "PwaInstallLogs" (
-                "id" SERIAL PRIMARY KEY,
-                "userAgent" TEXT,
-                "platform" VARCHAR(50),
-                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-
-        // --- FIX: TABELAS DE KPI FALTANTES (CRÍTICO PARA DASHBOARD) ---
-        await runSchemaQuery(`
-            CREATE TABLE IF NOT EXISTS "ProfileAppearanceLogs" (
-                "id" SERIAL PRIMARY KEY,
-                "psychologistId" INTEGER,
-                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-
-        await runSchemaQuery(`
-            CREATE TABLE IF NOT EXISTS "MatchEvents" (
-                "id" SERIAL PRIMARY KEY,
-                "psychologistId" INTEGER,
-                "matchTags" TEXT[], 
-                "matchScore" INTEGER,
-                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-
-        await runSchemaQuery(`
-            CREATE TABLE IF NOT EXISTS "PatientFavorites" (
-                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                "PatientId" INTEGER,
-                "PsychologistId" INTEGER,
-                PRIMARY KEY ("PatientId", "PsychologistId")
-            );
-        `);
 
         console.log('✅ [DB SYNC] Correções de schema aplicadas com sucesso.');
 
