@@ -659,9 +659,9 @@
                 // --- CONFIGURAÇÃO DE GEOMETRIA (O SEGREDO DO ALINHAMENTO) ---
                 height: '100%',           // Ocupa a altura do pai (#calendar-wrapper)
                 expandRows: false,        // [CORREÇÃO] Desativa esticamento para manter proporção exata
-                slotMinHeight: 40,        // [CORREÇÃO] Deve bater com o CSS (40px)
-                slotDuration: '00:30:00', // Slots de 30 min
-                slotLabelInterval: '01:00', // Rótulos de hora em hora
+                slotMinHeight: 60,        // [FIXO] Altura de 60px por hora.
+                slotDuration: '01:00:00', // [FIXO] Slots de 1 em 1 hora.
+                slotLabelInterval: '01:00', // Rótulos de 1 em 1 hora.
                 allDaySlot: false,        // Remove linha de dia inteiro
                 nowIndicator: true,       // Linha vermelha de hora atual
                 dayMaxEvents: true,
