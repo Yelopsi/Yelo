@@ -36,7 +36,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     email: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       unique: true
     },
     senha: {
@@ -86,6 +86,14 @@ module.exports = (sequelize, DataTypes) => {
     marketing_aceito: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
+    },
+    sessionValue: {
+      type: DataTypes.FLOAT,
+      defaultValue: 0
+    },
+    status: {
+      type: DataTypes.STRING,
+      defaultValue: 'ativo'
     }
   }, {
     sequelize,
