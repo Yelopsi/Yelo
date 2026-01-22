@@ -59,21 +59,6 @@ if (db.Appointment && !db.Appointment.rawAttributes.patientId) {
     }
 }
 
-// --- FIX: Patch Patient Model (Garante leitura de sessionValue e status) ---
-if (db.Patient) {
-    // if (!db.Patient.rawAttributes.sessionValue) {
-    //     console.log("[FIX] Patching Patient model to include 'sessionValue' field.");
-    //     db.Patient.rawAttributes.sessionValue = { type: DataTypes.FLOAT, defaultValue: 0 };
-    // }
-    if (!db.Patient.rawAttributes.status) {
-        console.log("[FIX] Patching Patient model to include 'status' field.");
-        db.Patient.rawAttributes.status = { type: DataTypes.STRING, defaultValue: 'active' };
-    }
-    if (typeof db.Patient.refreshAttributes === 'function') {
-        db.Patient.refreshAttributes();
-    }
-}
-
 // --- FIX: Patch Password Reset Fields (Garante que o Sequelize saiba ler/gravar tokens) ---
 if (db.Psychologist && !db.Psychologist.rawAttributes.resetPasswordToken) {
     console.log("[FIX] Patching Psychologist model for password reset.");
@@ -1036,7 +1021,7 @@ app.post('/api/my-patients', async (req, res) => {
         // Cria paciente (simplificado)
         const patient = await db.Patient.create({
             nome: name,
-            email: email || `patient_${Date.now()}@temp.com`,
+            email: email || null,
             telefone: phone,
             status: status || 'ativo',
             sessionValue: sessionValue || 0,
@@ -2067,6 +2052,7 @@ const startServer = async () => {
         // --- FIX: GARANTIR COLUNAS DA TABELA PATIENTS (EVITA ERRO NO LOGIN) ---
         console.log('🔧 [DB FIX] Aplicando correção na tabela Patients (ip_registro, termos)...');
         try {
+            await db.sequelize.query('ALTER TABLE "Patients" ALTER COLUMN "email" DROP NOT NULL;');
             await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "ip_registro" VARCHAR(45);');
             await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "termos_aceitos" BOOLEAN DEFAULT FALSE;');
             await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "marketing_aceito" BOOLEAN DEFAULT FALSE;');
