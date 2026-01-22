@@ -57,6 +57,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+    // --- HELPER: BUSCAR HORÁRIOS DISPONÍVEIS (Para Reagendamento) ---
+    window.fetchAvailableSlots = async function() {
+        const token = localStorage.getItem('Yelo_token');
+        if (!token) return [];
+        const res = await fetch(`${API_BASE_URL}/api/appointments/available`, {
+             headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return await res.json();
+    };
+
     // --- FUNÇÃO DE NAVEGAÇÃO GLOBAL (REFATORADA) ---
     function loadPage(pageUrlWithParams) {
         // Limpa o script da página anterior
