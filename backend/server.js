@@ -1032,13 +1032,14 @@ app.get('/api/my-patients', async (req, res) => {
 
 app.post('/api/my-patients', async (req, res) => {
     try {
-        const { name, phone, email } = req.body;
+        const { name, phone, email, status, sessionValue } = req.body;
         // Cria paciente (simplificado)
         const patient = await db.Patient.create({
             nome: name,
             email: email || `patient_${Date.now()}@temp.com`,
             telefone: phone,
-            status: 'active',
+            status: status || 'ativo',
+            sessionValue: sessionValue || 0,
             senha: await bcrypt.hash('temp123', 8) // FIX: Senha obrigatória
         });
         res.json(patient);
@@ -1055,7 +1056,7 @@ app.put('/api/my-patients/:id', async (req, res) => {
         if (!token) return res.status(401).json({ error: 'Não autorizado' });
         
         const { id } = req.params;
-        const { name, phone, email, status } = req.body;
+        const { name, phone, email, status, sessionValue } = req.body;
         
         const patient = await db.Patient.findByPk(id);
         if (!patient) return res.status(404).json({ error: 'Paciente não encontrado' });
@@ -1063,7 +1064,8 @@ app.put('/api/my-patients/:id', async (req, res) => {
         const updateData = {
             nome: name,
             telefone: phone,
-            status: status
+            status: status,
+            sessionValue: sessionValue
         };
 
         // Só atualiza email se for válido e não vazio (evita erro de validação)
