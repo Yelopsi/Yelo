@@ -667,6 +667,7 @@
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: mobile ? 'timeGridDay' : 'timeGridWeek', // Mobile: Dia | Desktop: Semana
                 locale: 'pt-br',
+                timeZone: 'UTC', // [CORREÇÃO] Força UTC para evitar o deslocamento de 3h (14h virando 11h)
                 selectable: true,
                 editable: true,
                 
@@ -763,9 +764,9 @@
                 // Clique em um horário vazio
                 dateClick: function(info) {
                     const date = info.date;
-                    // Ajusta fuso horário local para os inputs
-                    const dateStr = date.toLocaleDateString('en-CA'); // YYYY-MM-DD
-                    const timeStr = date.toTimeString().split(' ')[0].substring(0, 5); // HH:MM
+                    // [CORREÇÃO] Usa métodos UTC para preencher o modal com a hora exata do clique
+                    const dateStr = date.toISOString().substring(0, 10); // YYYY-MM-DD
+                    const timeStr = date.toISOString().substring(11, 16); // HH:MM
                     
                     openAppointmentModal(dateStr, timeStr);
                 },
@@ -991,7 +992,8 @@
             
             if ((type === 'session' && !patient) || !date || !time) return;
 
-            const start = new Date(`${date}T${time}`);
+            // [CORREÇÃO] Cria data em UTC (adicionando 'Z') para garantir que 14:00 seja salvo como 14:00
+            const start = new Date(`${date}T${time}Z`);
             const end = new Date(start.getTime() + 60 * 60 * 1000); // +1 hora
 
             try {
