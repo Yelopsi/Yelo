@@ -2801,9 +2801,26 @@ input:checked + .slider:before { transform: translateX(22px); }
 }
 
 /* 3. Força altura consistente em PIXELS (40px) para evitar erros de arredondamento (Drift) */
-.fc .fc-timegrid-slot {
+/* Aplica para slots de tempo E rótulos (labels) para garantir que a linha da tabela não expanda */
+.fc .fc-timegrid-slot,
+.fc .fc-timegrid-slot-label {
     height: 40px !important;
     border-bottom: 1px solid var(--cinza-borda) !important;
+}
+
+/* 4. Trava a altura do conteúdo interno dos labels para não esticar a linha */
+.fc .fc-timegrid-slot-label-cushion,
+.fc .fc-timegrid-slot-label-frame {
+    height: 40px !important;
+    line-height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* ==========================================================================
