@@ -9,6 +9,12 @@
         min-height: 600px; 
     }
 
+    /* [AJUSTE ZOOM] Reset das alturas fixas para permitir expandRows do FullCalendar */
+    .fc-timegrid-slot, .fc .fc-timegrid-slot-label-frame {
+        height: auto !important;
+        min-height: 40px; /* Garante legibilidade mínima */
+    }
+
     /* Alinhamento do Header da Carteira de Pacientes */
     .widget-header-row {
         display: flex;
@@ -658,8 +664,8 @@
                 
                 // --- CONFIGURAÇÃO DE GEOMETRIA (O SEGREDO DO ALINHAMENTO) ---
                 height: '100%',           // Ocupa a altura do pai (#calendar-wrapper)
-                expandRows: false,        // [CORREÇÃO] Desativa esticamento para manter proporção exata
-                slotMinHeight: 60,        // [FIXO] Altura de 60px por hora.
+                expandRows: true,         // [AJUSTE] Ativa esticamento para preencher a tela (Zoom)
+                // slotMinHeight: 60,     // [REMOVIDO] Deixa o FullCalendar calcular a altura
                 slotDuration: '01:00:00', // [FIXO] Slots de 1 em 1 hora.
                 slotLabelInterval: '01:00', // Rótulos de 1 em 1 hora.
                 allDaySlot: false,        // Remove linha de dia inteiro
