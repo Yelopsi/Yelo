@@ -1232,6 +1232,16 @@ app.get('/api/fix-patients-schema-manual', async (req, res) => {
     }
 });
 
+// --- ROTA DE EMERGÊNCIA: CORRIGIR E-MAIL NULO (PACIENTES) ---
+app.get('/api/fix-email-null', async (req, res) => {
+    try {
+        await db.sequelize.query('ALTER TABLE "Patients" ALTER COLUMN "email" DROP NOT NULL;');
+        res.send("✅ Sucesso! Coluna 'email' da tabela Patients agora aceita valores nulos (vazio). Tente cadastrar o paciente novamente.");
+    } catch (error) {
+        res.status(500).send("Erro ao alterar coluna: " + error.message);
+    }
+});
+
 // --- ROTA DE CORREÇÃO FINANCEIRA (MANUAL) ---
 app.get('/api/fix-financial-tables', async (req, res) => {
     try {
@@ -2065,8 +2075,9 @@ const startServer = async () => {
         console.log('🔧 [DB FIX] Aplicando correção na tabela Patients (ip_registro, termos)...');
         try {
             await db.sequelize.query('ALTER TABLE "Patients" ALTER COLUMN "email" DROP NOT NULL;');
+            console.log('✅ [DB FIX] Restrição NOT NULL removida da coluna email.');
         } catch (e) {
-            // Ignora erro se já for nullable
+            console.error('⚠️ [DB FIX] Erro ao alterar coluna email (pode já estar correta):', e.message);
         }
 
         const patientCols = [
