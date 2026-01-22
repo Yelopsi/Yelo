@@ -1,66 +1,13 @@
 <style>
-    /* --- FullCalendar Customization (Melhoria de UX/Leitura) --- */
-    .fc-header-toolbar {
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        margin-bottom: 20px !important;
-        flex-wrap: wrap;
-        gap: 10px;
+    /* Ajuste fino para o container do calendário preencher a tela */
+    #calendar-wrapper {
+        flex-grow: 1;
+        background: #fff;
+        border-radius: 12px;
+        padding: 10px;
+        /* Importante: Define altura mínima para o FullCalendar calcular */
+        min-height: 600px; 
     }
-
-    .fc-toolbar-title {
-        font-family: var(--font-titulos) !important;
-        font-size: 1.4rem !important;
-        color: var(--verde-escuro);
-        font-weight: 600;
-    }
-
-    .fc-button {
-        background-color: #fff !important;
-        border: 1px solid #e0e0e0 !important;
-        color: #555 !important;
-        font-weight: 500 !important;
-        border-radius: 8px !important;
-        padding: 8px 16px !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.02) !important;
-        transition: all 0.2s ease !important;
-        text-transform: capitalize !important;
-    }
-
-    .fc-button:hover {
-        background-color: #f9f9f9 !important;
-        border-color: #ccc !important;
-        color: #333 !important;
-        transform: translateY(-1px);
-    }
-
-    .fc-button-active {
-        background-color: var(--verde-escuro) !important;
-        border-color: var(--verde-escuro) !important;
-        color: #fff !important;
-    }
-    
-    .fc-button-group > .fc-button {
-        margin: 0 2px !important; /* Pequeno espaço entre botões agrupados */
-    }
-
-    /* 2. Ajuste para altura dinâmica controlada pelo JS (slotMinHeight) */
-    .fc-timegrid-slot {
-    height: auto !important; /* Deixe o JS decidir a altura */
-    border-bottom: 1px solid #e0e0e0 !important;
-}
-
-    .fc-timegrid-event-harness {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-}
-
-    .fc-timegrid-event {
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    border-radius: 4px;
-    margin: 1px 2px !important;
-}
 
     /* Alinhamento do Header da Carteira de Pacientes */
     .widget-header-row {
@@ -482,7 +429,10 @@
             <div id="reschedule-slots-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto; border: 1px solid #eee; padding: 5px; border-radius: 8px;"></div>
         </div>
 
-        <div class="form-actions" style="justify-content: flex-end; display: flex; gap: 10px;">
+        <div class="form-actions" style="justify-content: space-between; display: flex; align-items: center; gap: 10px;">
+            <button type="button" id="btn-delete-event" style="background: none; border: none; color: #d32f2f; cursor: pointer; padding: 8px; border-radius: 50%; transition: background 0.2s;" title="Excluir Agendamento">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+            </button>
             <button type="button" id="btn-save-event-status" class="btn btn-principal">Salvar Status</button>
         </div>
     </div>
@@ -703,8 +653,20 @@
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: mobile ? 'timeGridDay' : 'timeGridWeek', // Mobile: Dia | Desktop: Semana
                 locale: 'pt-br',
-                selectable: true, // Permite seleção visual
-                editable: true, // Habilita arrastar e soltar (Drag & Drop)
+                selectable: true,
+                editable: true,
+                
+                // --- CONFIGURAÇÃO DE GEOMETRIA (O SEGREDO DO ALINHAMENTO) ---
+                height: '100%',           // Ocupa a altura do pai (#calendar-wrapper)
+                expandRows: true,         // Estica as linhas para preencher o espaço
+                slotMinHeight: 40,        // Altura mínima em PX (controlado pelo JS, não CSS)
+                slotDuration: '00:30:00', // Slots de 30 min
+                slotLabelInterval: '01:00', // Rótulos de hora em hora
+                allDaySlot: false,        // Remove linha de dia inteiro
+                nowIndicator: true,       // Linha vermelha de hora atual
+                dayMaxEvents: true,
+                // -----------------------------------------------------------
+
                 eventDrop: async function(info) {
                     // Reagendamento (Drag & Drop)
                     const evtId = info.event.id;
@@ -743,12 +705,10 @@
                         if(window.showToast) window.showToast('Duração da sessão atualizada.', 'success');
                     }
                 },
-                headerToolbar: mobile ? {
-                    left: 'title',
-                    right: 'prev,next'
-                } : {
-                    left: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay today prev,next'
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
                 buttonText: {
                     today: 'Hoje',
@@ -756,39 +716,17 @@
                     week: 'Semana',
                     day: 'Dia'
                 },
-                slotMinTime: '00:00:00',
-                slotMaxTime: '24:00:00',
-                scrollTime: '07:00:00',
-                allDaySlot: false,
-                slotDuration: '00:30:00', // Recomendação anterior (mantém precisão de meia hora)
-                slotMinHeight: 50,        // AQUI ESTÁ O TRUQUE: Define altura mínima em PX via JS
-                expandRows: true,         // Garante que as linhas preencham a altura total disponível
-                slotLabelInterval: '01:00', // Mostra a hora de 1 em 1 (limpa o visual)
-                height: isDesktop ? '100%' : '75vh', // Desktop: 100% | Mobile: 75vh para scroll interno
-                nowIndicator: true, // Indicador de hora atual
-                titleFormat: mobile ? { year: 'numeric', month: 'short', day: 'numeric' } : undefined,
                 
                 // --- CONFIGURAÇÕES MOBILE ---
                 windowResize: function(arg) {
                     const width = window.innerWidth;
                     const isSmall = width < 768;
-                    calendar.setOption('height', width >= 992 ? '100%' : '75vh');
 
                     if (isSmall) {
                         calendar.changeView('timeGridDay');
-                        calendar.setOption('headerToolbar', {
-                            left: 'prev,next',
-                            center: 'title',
-                            right: 'today'
-                        });
                         calendar.setOption('titleFormat', { year: 'numeric', month: 'short', day: 'numeric' });
                     } else {
                         calendar.changeView('timeGridWeek');
-                        calendar.setOption('headerToolbar', {
-                            left: 'prev,next today',
-                            center: 'title',
-                            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                        });
                         calendar.setOption('titleFormat', undefined);
                     }
                 },
@@ -1205,6 +1143,32 @@
                 alert('Erro ao atualizar status.');
             }
         };
+
+        // Ação: Excluir Agendamento (Botão Lixeira no Modal de Detalhes)
+        const btnDeleteEvent = document.getElementById('btn-delete-event');
+        if (btnDeleteEvent) {
+            btnDeleteEvent.onclick = async () => {
+                if (!currentEventId) return;
+                if (!confirm('Tem certeza que deseja excluir este agendamento?')) return;
+
+                try {
+                    const res = await fetch(`${BASE_URL}/api/appointments/${currentEventId}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (res.ok) {
+                        fetchData(); // Recarrega calendário e listas
+                        modalEvent.style.display = 'none';
+                        if (window.showToast) window.showToast('Agendamento excluído.', 'success');
+                    } else {
+                        alert('Erro ao excluir agendamento.');
+                    }
+                } catch (e) {
+                    alert('Erro de conexão.');
+                }
+            };
+        }
 
         // Função auxiliar para reagendar ao clicar no slot
         async function realizarReagendamento(eventId, newSlot) {
