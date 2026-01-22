@@ -898,7 +898,9 @@ const whatsappService = {
 };
 
 // --- AGENDADORES (CRON JOBS) ---
-setInterval(async () => {
+const startCronJobs = () => {
+  console.log('⏰ [CRON] Inicializando agendadores de tarefas...');
+  setInterval(async () => {
     const now = new Date();
     const currentHM = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); // Ex: "08:00"
     
@@ -993,7 +995,8 @@ setInterval(async () => {
             }
         } catch (e) { console.error("Erro no cron de lembretes:", e); }
     }
-}, 60000); // Roda a cada minuto
+  }, 60000); // Roda a cada minuto
+};
 
 // --- ROTAS DE PACIENTES (CRUD) ---
 app.get('/api/my-patients', async (req, res) => {
@@ -2192,8 +2195,10 @@ const startServer = async () => {
             `CREATE TABLE IF NOT EXISTS "PatientFavorites" ( "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "PatientId" INTEGER, "PsychologistId" INTEGER, PRIMARY KEY ("PatientId", "PsychologistId") );`
         ];
 
-        // Executa todas as queries de schema em paralelo para otimizar o tempo de boot
-        await Promise.all(schemaQueries.map(sql => runSchemaQuery(sql)));
+        // OTIMIZAÇÃO: Executa sequencialmente para evitar sobrecarga de conexões (Connection terminated)
+        for (const sql of schemaQueries) {
+            await runSchemaQuery(sql);
+        }
 
         // --- FIX: CONVERSÃO EM MASSA DE ARRAYS PARA JSONB (CORREÇÃO ERRO 500) ---
         // Este bloco permanece sequencial pois uma query pode depender da outra.
@@ -2241,6 +2246,7 @@ const startServer = async () => {
     server.listen(PORT, () => {
         console.log(`Servidor rodando na porta ${PORT}.`);
         console.timeEnd('⏱️ Tempo Total de Inicialização');
+        startCronJobs(); // Inicia os jobs apenas após o servidor estar estável
     });
 };
 

@@ -658,8 +658,8 @@
                 
                 // --- CONFIGURAÇÃO DE GEOMETRIA (O SEGREDO DO ALINHAMENTO) ---
                 height: '100%',           // Ocupa a altura do pai (#calendar-wrapper)
-                expandRows: true,         // Estica as linhas para preencher o espaço
-                slotMinHeight: 40,        // Altura mínima em PX (controlado pelo JS, não CSS)
+                expandRows: false,        // [CORREÇÃO] Desativa esticamento para manter proporção exata
+                slotMinHeight: 40,        // [CORREÇÃO] Deve bater com o CSS (40px)
                 slotDuration: '00:30:00', // Slots de 30 min
                 slotLabelInterval: '01:00', // Rótulos de hora em hora
                 allDaySlot: false,        // Remove linha de dia inteiro

@@ -3621,8 +3621,11 @@ body.pagina-dashboard::after {
 
 /* 3. Estilo da Grade */
 .fc-theme-standard td, .fc-theme-standard th { border-color: #f0f0f0; }
-.fc-timegrid-slot { border-bottom: 1px solid #f0f0f0 !important; }
-.fc-timegrid-slot:empty:before { content: "\00a0"; } /* Garante altura mínima mesmo vazio */
+.fc-timegrid-slot { 
+    height: 40px !important; /* TRAVA A ALTURA: Garante sincronia com o JS */
+    border-bottom: 1px solid #f0f0f0 !important;
+}
+.fc-timegrid-slot:empty:before { content: "\00a0"; }
 
 /* 4. Estilo dos Eventos */
 .fc-event {
