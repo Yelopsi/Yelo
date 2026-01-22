@@ -574,8 +574,9 @@
             container.style.display = 'block';
             upcoming.forEach(evt => {
                 const dateObj = new Date(evt.start);
-                const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const dateStr = dateObj.toLocaleDateString([], { day: '2-digit', month: 'short' });
+                // [CORREÇÃO] Força exibição em UTC para alinhar com o calendário
+                const timeStr = dateObj.toLocaleTimeString('pt-BR', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
+                const dateStr = dateObj.toLocaleDateString('pt-BR', { timeZone: 'UTC', day: '2-digit', month: 'short' });
                 
                 // Define o texto e a cor do status
                 let statusText = 'Aguardando';
@@ -992,8 +993,10 @@
             
             if ((type === 'session' && !patient) || !date || !time) return;
 
-            // [CORREÇÃO] Cria data em UTC (adicionando 'Z') para garantir que 14:00 seja salvo como 14:00
-            const start = new Date(`${date}T${time}Z`);
+            // [CORREÇÃO DEFINITIVA] Constrói a data manualmente em UTC para ignorar fuso do navegador
+            const [year, month, day] = date.split('-').map(Number);
+            const [hours, minutes] = time.split(':').map(Number);
+            const start = new Date(Date.UTC(year, month - 1, day, hours, minutes));
             const end = new Date(start.getTime() + 60 * 60 * 1000); // +1 hora
 
             try {
@@ -1034,7 +1037,8 @@
             
             currentEventId = evt.id;
             document.getElementById('evt-patient-name').textContent = evt.title;
-            document.getElementById('evt-time-info').textContent = new Date(evt.start).toLocaleString('pt-BR');
+            // [CORREÇÃO] Exibe data/hora em UTC no modal de detalhes
+            document.getElementById('evt-time-info').textContent = new Date(evt.start).toLocaleString('pt-BR', { timeZone: 'UTC' });
             document.getElementById('evt-value').value = evt.value;
             
             // Reset UI
@@ -1107,8 +1111,9 @@
                     } else {
                         availableSlots.forEach(slot => {
                             const btn = document.createElement('button');
-                            const dateStr = new Date(slot.start).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
-                            const timeStr = new Date(slot.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                            // [CORREÇÃO] Exibe opções de reagendamento em UTC
+                            const dateStr = new Date(slot.start).toLocaleDateString('pt-BR', { timeZone: 'UTC', weekday: 'short', day: '2-digit', month: '2-digit' });
+                            const timeStr = new Date(slot.start).toLocaleTimeString('pt-BR', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
                             
                             btn.innerHTML = `📅 <strong>${dateStr}</strong> às <strong>${timeStr}</strong>`;
                             btn.style.cssText = "padding: 10px; border: 1px solid #ddd; border-radius: 6px; background: #fff; cursor: pointer; text-align: left; transition: background 0.2s;";
