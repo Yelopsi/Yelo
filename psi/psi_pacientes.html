@@ -277,6 +277,11 @@
                 </div>
             </div>
 
+            <div class="form-group" style="margin-top: 15px;">
+                <label>Observações</label>
+                <textarea id="p-notes" rows="3" placeholder="Histórico, queixas principais ou anotações gerais..." style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-family: var(--font-principal); resize: vertical; background-color: #fff;"></textarea>
+            </div>
+
             <div class="form-group highlight-box assistant-card" style="margin-top: 15px; display: none;">
                 <div style="display: flex; align-items: flex-start; gap: 15px;">
                     <div class="assistant-icon">🤖</div>
@@ -532,7 +537,8 @@
                     const data = await resPatients.json();
                     // Mapeia para o formato interno
                     patients = data.map(p => ({
-                        id: p.id, name: p.nome, phone: p.telefone, email: p.email, automated: true, sessionValue: p.sessionValue || 0, status: p.status || 'ativo'
+                        id: p.id, name: p.nome, phone: p.telefone, email: p.email, automated: true, sessionValue: p.sessionValue || 0, status: p.status || 'ativo',
+                        notes: p.notes
                     }));
                 }
 
@@ -803,6 +809,7 @@
             document.getElementById('p-email').value = (patient.email && patient.email.includes('@temp.com')) ? '' : patient.email;
             document.getElementById('p-session-value').value = patient.sessionValue;
             pStatusInput.value = patient.status || 'ativo';
+            document.getElementById('p-notes').value = patient.notes || '';
             document.getElementById('p-automated-msg').checked = patient.automated;
             
             document.getElementById('modal-patient-title').textContent = 'Editar Paciente';
@@ -952,6 +959,7 @@
             const email = document.getElementById('p-email').value;
             const status = pStatusInput.value;
             const sessionValue = parseFloat(document.getElementById('p-session-value').value) || 0;
+            const notes = document.getElementById('p-notes').value;
             
             const method = id ? 'PUT' : 'POST';
             const url = id ? `${BASE_URL}/api/my-patients/${id}` : `${BASE_URL}/api/my-patients`;
@@ -963,7 +971,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}` 
                     },
-                    body: JSON.stringify({ name, phone, email, status, sessionValue })
+                    body: JSON.stringify({ name, phone, email, status, sessionValue, notes })
                 });
                 
                 if (res.ok) {
