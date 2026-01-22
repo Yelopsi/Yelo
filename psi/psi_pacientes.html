@@ -960,7 +960,7 @@
             }
         };
 
-        // Salvar (Novo ou Edição)
+                // Salvar (Novo ou Edição)
         form.onsubmit = async (e) => {
             e.preventDefault();
             const id = document.getElementById('p-id').value; // Pega o ID diretamente do DOM para garantir
@@ -996,6 +996,7 @@
                 alert('Erro de conexão ao salvar paciente.');
             }
         };
+
 
         // Salvar Agendamento
         formAppt.onsubmit = async (e) => {

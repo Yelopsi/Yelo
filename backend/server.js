@@ -2066,10 +2066,16 @@ const startServer = async () => {
 
         // --- FIX: GARANTIR COLUNAS DA TABELA PATIENTS (EVITA ERRO NO LOGIN) ---
         console.log('🔧 [DB FIX] Aplicando correção na tabela Patients (ip_registro, termos)...');
-        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "ip_registro" VARCHAR(45);');
-        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "termos_aceitos" BOOLEAN DEFAULT FALSE;');
-        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "marketing_aceito" BOOLEAN DEFAULT FALSE;');
-        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "sessionValue" FLOAT DEFAULT 0;');
+        try {
+            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "ip_registro" VARCHAR(45);');
+            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "termos_aceitos" BOOLEAN DEFAULT FALSE;');
+            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "marketing_aceito" BOOLEAN DEFAULT FALSE;');
+            // FIX DEFINITIVO: Garante que sessionValue e status existam
+            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "sessionValue" FLOAT DEFAULT 0;');
+            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT \'active\';');
+        } catch (e) {
+            console.error('⚠️ [DB FIX] Erro não-crítico ao alterar tabela Patients:', e.message);
+        }
         // ---------------------------------------------------------------------
 
         // --- FIX: GARANTIR TODAS AS COLUNAS DO PERFIL NOVO ---

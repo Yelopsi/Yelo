@@ -514,10 +514,14 @@
                 mutation.addedNodes.forEach((node) => {
                     if (node.nodeType === 1) {
                         const executeScript = (script) => {
-                            const newScript = document.createElement('script');
-                            if (script.src) newScript.src = script.src;
-                            else newScript.textContent = script.textContent;
-                            document.body.appendChild(newScript);
+                            try {
+                                const newScript = document.createElement('script');
+                                if (script.src) newScript.src = script.src;
+                                else newScript.textContent = script.textContent;
+                                document.body.appendChild(newScript);
+                            } catch (err) {
+                                console.error("Erro ao executar script dinâmico:", err);
+                            }
                         };
 
                         if (node.tagName === 'SCRIPT') {
