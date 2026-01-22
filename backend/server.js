@@ -1220,6 +1220,18 @@ app.delete('/api/appointments/:id', async (req, res) => {
     }
 });
 
+// --- ROTA DE EMERGÊNCIA: CORRIGIR TABELA DE PACIENTES MANUALMENTE ---
+// Acesse esta rota no navegador se o erro persistir: https://sua-url.com/api/fix-patients-schema-manual
+app.get('/api/fix-patients-schema-manual', async (req, res) => {
+    try {
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "sessionValue" FLOAT DEFAULT 0;');
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT \'active\';');
+        res.send("✅ Colunas sessionValue e status criadas com sucesso na tabela Patients.");
+    } catch (error) {
+        res.status(500).send("Erro ao criar colunas: " + error.message);
+    }
+});
+
 // --- ROTA DE CORREÇÃO FINANCEIRA (MANUAL) ---
 app.get('/api/fix-financial-tables', async (req, res) => {
     try {
@@ -2053,14 +2065,27 @@ const startServer = async () => {
         console.log('🔧 [DB FIX] Aplicando correção na tabela Patients (ip_registro, termos)...');
         try {
             await db.sequelize.query('ALTER TABLE "Patients" ALTER COLUMN "email" DROP NOT NULL;');
-            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "ip_registro" VARCHAR(45);');
-            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "termos_aceitos" BOOLEAN DEFAULT FALSE;');
-            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "marketing_aceito" BOOLEAN DEFAULT FALSE;');
-            // FIX DEFINITIVO: Garante que sessionValue e status existam
-            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "sessionValue" FLOAT DEFAULT 0;');
-            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT \'active\';');
         } catch (e) {
-            console.error('⚠️ [DB FIX] Erro não-crítico ao alterar tabela Patients:', e.message);
+            // Ignora erro se já for nullable
+        }
+
+        const patientCols = [
+            { name: 'ip_registro', def: 'VARCHAR(45)' },
+            { name: 'termos_aceitos', def: 'BOOLEAN DEFAULT FALSE' },
+            { name: 'marketing_aceito', def: 'BOOLEAN DEFAULT FALSE' },
+            { name: 'sessionValue', def: 'FLOAT DEFAULT 0' },
+            { name: 'status', def: "VARCHAR(255) DEFAULT 'active'" },
+            { name: 'resetPasswordToken', def: 'VARCHAR(255)' },
+            { name: 'resetPasswordExpires', def: 'BIGINT' }
+        ];
+
+        for (const col of patientCols) {
+            try {
+                await db.sequelize.query(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "${col.name}" ${col.def};`);
+                console.log(`✅ [DB FIX] Coluna "${col.name}" verificada em Patients.`);
+            } catch (e) {
+                console.error(`⚠️ [DB FIX] Erro ao adicionar "${col.name}":`, e.message);
+            }
         }
         // ---------------------------------------------------------------------
 
