@@ -1138,12 +1138,12 @@ app.post('/api/appointments', async (req, res) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
-        const { title, start, end, patientId, phone } = req.body;
+        const { title, start, end, patientId, phone, status } = req.body;
 
         const appt = await db.Appointment.create({
             title, start, end, patientId,
             psychologistId: decoded.id,
-            status: 'scheduled',
+            status: status || 'scheduled', // [CORREÇÃO] Aceita 'available' se enviado
             value: 0
         });
 
