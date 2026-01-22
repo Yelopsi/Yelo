@@ -163,7 +163,17 @@ let isDbSynced = false;
 app.use((req, res, next) => {
     // Permite assets e health checks, bloqueia API/Páginas até o DB estar pronto
     if (!isDbSynced && !req.path.startsWith('/assets') && !req.path.startsWith('/css') && !req.path.startsWith('/js')) {
-        return res.status(503).send('O sistema está iniciando e sincronizando o banco de dados. Atualize em alguns segundos.');
+        // Retorna uma página HTML com auto-refresh em vez de texto puro
+        return res.status(503).send(`
+            <html>
+                <head><meta http-equiv="refresh" content="3"></head>
+                <body style="font-family:sans-serif; text-align:center; padding:50px; color:#1B4332; background-color:#f8f9fa;">
+                    <h1 style="margin-bottom:10px;">Iniciando Sistema...</h1>
+                    <p>Estamos finalizando a sincronização do banco de dados.</p>
+                    <p style="color:#666; font-size:0.9rem;">A página atualizará automaticamente em instantes.</p>
+                </body>
+            </html>
+        `);
     }
     next();
 });
@@ -2227,16 +2237,28 @@ const startServer = async () => {
         }
 
         // --- FIX: CONVERSÃO EM MASSA DE ARRAYS PARA JSONB (CORREÇÃO ERRO 500) ---
-        // Este bloco permanece sequencial pois uma query pode depender da outra.
+        // OTIMIZAÇÃO: Verifica metadados antes de tentar alterar.
+        // Isso evita travar o banco com comandos pesados se a coluna já estiver correta.
+        const [tableInfo] = await db.sequelize.query(`
+            SELECT column_name, data_type 
+            FROM information_schema.columns 
+            WHERE table_name = 'Psychologists';
+        `);
+
         const arrayColumns = [
             'temas_atuacao', 'abordagens_tecnicas', 'modalidade', 
             'publico_alvo', 'estilo_terapia', 'praticas_inclusivas', 
             'disponibilidade_periodo', 'praticas_vivencias'
         ];
+
         for (const col of arrayColumns) {
+            // Verifica se a coluna já existe e se já é do tipo jsonb
+            const colInfo = tableInfo.find(c => c.column_name === col);
+            if (colInfo && colInfo.data_type === 'jsonb') {
+                continue; // PULA esta iteração, economizando segundos preciosos
+            }
+
             try {
-                // OTIMIZAÇÃO: A coluna já foi criada no bloco agrupado acima.
-                // Apenas tentamos converter se ela já existia como TEXT.
                 await runSchemaQuery(`
                     ALTER TABLE "Psychologists" 
                     ALTER COLUMN "${col}" TYPE JSONB 
@@ -2253,7 +2275,7 @@ const startServer = async () => {
 
         console.log('✅ [DB SYNC] Correções de schema aplicadas com sucesso.');
         
-        // Libera o acesso total ao sistema
+        // [FIX] Libera o acesso APENAS quando tudo estiver pronto
         isDbSynced = true;
         console.log('✅ [SERVER] Sistema totalmente operacional.');
         startCronJobs();
