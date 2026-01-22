@@ -67,6 +67,29 @@ document.addEventListener('DOMContentLoaded', function() {
         return await res.json();
     };
 
+    // --- HELPER: EXCLUIR AGENDAMENTO (Botão Lixeira) ---
+    window.deleteAppointment = async function(id, callback) {
+        if (!confirm('Tem certeza que deseja excluir este agendamento?')) return;
+
+        try {
+            const token = localStorage.getItem('Yelo_token');
+            const res = await fetch(`${API_BASE_URL}/api/appointments/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (res.ok) {
+                window.showToast('Agendamento excluído.', 'success');
+                if (callback) callback(); // Atualiza o calendário
+            } else {
+                window.showToast('Erro ao excluir.', 'error');
+            }
+        } catch (error) {
+            console.error(error);
+            window.showToast('Erro de conexão.', 'error');
+        }
+    };
+
     // --- FUNÇÃO DE NAVEGAÇÃO GLOBAL (REFATORADA) ---
     function loadPage(pageUrlWithParams) {
         // Limpa o script da página anterior
