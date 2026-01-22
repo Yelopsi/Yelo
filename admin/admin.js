@@ -101,6 +101,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 script.onload = () => {
                     if (typeof window.initializePage === 'function') window.initializePage();
+                    // FIX: Força o recálculo de layout do calendário após carregar CSS
+                    setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
                 };
                 document.body.appendChild(script);
                 updateWelcomeMessage();
