@@ -156,6 +156,18 @@ const seedTestData = require('./controllers/seed_test_data');
 
 const app = express();
 
+// --- FIX: FLAG DE INICIALIZAÇÃO (EARLY BINDING) ---
+// Permite que o servidor inicie a porta imediatamente para passar no health check do Render,
+// mesmo que o banco de dados ainda esteja sincronizando.
+let isDbSynced = false;
+app.use((req, res, next) => {
+    // Permite assets e health checks, bloqueia API/Páginas até o DB estar pronto
+    if (!isDbSynced && !req.path.startsWith('/assets') && !req.path.startsWith('/css') && !req.path.startsWith('/js')) {
+        return res.status(503).send('O sistema está iniciando e sincronizando o banco de dados. Atualize em alguns segundos.');
+    }
+    next();
+});
+
 // --- FIX: Confia no proxy (Render/Heroku/AWS) ---
 // Isso é essencial para que req.hostname e req.protocol funcionem corretamente atrás de um load balancer.
 app.set('trust proxy', 1);
@@ -2132,45 +2144,59 @@ const startServer = async () => {
     try {
         console.log('🔧 [DB SYNC] Verificando e aplicando correções de schema...');
 
+        // --- FIX: INICIA O SERVIDOR AGORA (EARLY BINDING) ---
+        // Inicia a escuta da porta ANTES de rodar as queries pesadas.
+        // Isso evita o erro "Port scan timeout" do Render.
+        if (!server.listening) {
+            server.listen(PORT, () => {
+                console.log(`🚀 [EARLY START] Servidor ouvindo na porta ${PORT} (Aguardando DB Sync...)`);
+            });
+        }
+
         // --- OTIMIZAÇÃO: Agrupa todas as queries de schema para rodar em paralelo ---
         const schemaQueries = [
-            // Psychologists
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "is_exempt" BOOLEAN DEFAULT FALSE;`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cnpj" VARCHAR(255) UNIQUE;`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "modalidade" JSONB DEFAULT '[]';`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "dailySummaryTime" VARCHAR(5) DEFAULT '08:00';`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "reminderHoursBefore" INTEGER DEFAULT 24;`,
+            // 1. Psychologists Table - ATUALIZAÇÃO MACIÇA AGRUPADA (Reduz de 30 queries para 1)
+            `ALTER TABLE "Psychologists" 
+                ADD COLUMN IF NOT EXISTS "is_exempt" BOOLEAN DEFAULT FALSE,
+                ADD COLUMN IF NOT EXISTS "cnpj" VARCHAR(255) UNIQUE,
+                ADD COLUMN IF NOT EXISTS "modalidade" JSONB DEFAULT '[]',
+                ADD COLUMN IF NOT EXISTS "dailySummaryTime" VARCHAR(5) DEFAULT '08:00',
+                ADD COLUMN IF NOT EXISTS "reminderHoursBefore" INTEGER DEFAULT 24,
+                ADD COLUMN IF NOT EXISTS "publico_alvo" JSONB DEFAULT '[]',
+                ADD COLUMN IF NOT EXISTS "estilo_terapia" JSONB DEFAULT '[]',
+                ADD COLUMN IF NOT EXISTS "praticas_inclusivas" JSONB DEFAULT '[]',
+                ADD COLUMN IF NOT EXISTS "disponibilidade_periodo" JSONB DEFAULT '[]',
+                ADD COLUMN IF NOT EXISTS "temas_atuacao" JSONB DEFAULT '[]',
+                ADD COLUMN IF NOT EXISTS "abordagens_tecnicas" JSONB DEFAULT '[]',
+                ADD COLUMN IF NOT EXISTS "praticas_vivencias" JSONB DEFAULT '[]',
+                ADD COLUMN IF NOT EXISTS "genero_identidade" VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS "valor_sessao_numero" FLOAT,
+                ADD COLUMN IF NOT EXISTS "cpf" VARCHAR(255) UNIQUE,
+                ADD COLUMN IF NOT EXISTS "whatsapp_clicks" INTEGER DEFAULT 0,
+                ADD COLUMN IF NOT EXISTS "profile_appearances" INTEGER DEFAULT 0,
+                ADD COLUMN IF NOT EXISTS "planExpiresAt" TIMESTAMP WITH TIME ZONE,
+                ADD COLUMN IF NOT EXISTS "stripeSubscriptionId" VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS "cancelAtPeriodEnd" BOOLEAN DEFAULT FALSE,
+                ADD COLUMN IF NOT EXISTS "subscription_payments_count" INTEGER DEFAULT 0,
+                ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT,
+                ADD COLUMN IF NOT EXISTS "authority_level" VARCHAR(255) DEFAULT 'nivel_iniciante',
+                ADD COLUMN IF NOT EXISTS "badges" JSONB DEFAULT '{}',
+                ADD COLUMN IF NOT EXISTS "xp" INTEGER DEFAULT 0;`,
+            
             `ALTER TABLE "Psychologists" ALTER COLUMN "crp" DROP NOT NULL;`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "publico_alvo" JSONB DEFAULT '[]';`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "estilo_terapia" JSONB DEFAULT '[]';`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "praticas_inclusivas" JSONB DEFAULT '[]';`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "disponibilidade_periodo" JSONB DEFAULT '[]';`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "temas_atuacao" JSONB DEFAULT '[]';`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "abordagens_tecnicas" JSONB DEFAULT '[]';`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "genero_identidade" VARCHAR(255);`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "valor_sessao_numero" FLOAT;`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cpf" VARCHAR(255) UNIQUE;`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "whatsapp_clicks" INTEGER DEFAULT 0;`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "profile_appearances" INTEGER DEFAULT 0;`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "planExpiresAt" TIMESTAMP WITH TIME ZONE;`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "stripeSubscriptionId" VARCHAR(255);`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cancelAtPeriodEnd" BOOLEAN DEFAULT FALSE;`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "subscription_payments_count" INTEGER DEFAULT 0;`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255);`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "authority_level" VARCHAR(255) DEFAULT 'nivel_iniciante';`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "badges" JSONB DEFAULT '{}';`,
-            `ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "xp" INTEGER DEFAULT 0;`,
 
-            // Patients
+            // 2. Patients Table - Grouped
+            `ALTER TABLE "Patients" 
+                ADD COLUMN IF NOT EXISTS "ip_registro" VARCHAR(45),
+                ADD COLUMN IF NOT EXISTS "termos_aceitos" BOOLEAN DEFAULT FALSE,
+                ADD COLUMN IF NOT EXISTS "marketing_aceito" BOOLEAN DEFAULT FALSE,
+                ADD COLUMN IF NOT EXISTS "sessionValue" FLOAT DEFAULT 0,
+                ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active',
+                ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;`,
+            
             `ALTER TABLE "Patients" ALTER COLUMN "email" DROP NOT NULL;`,
-            `ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "ip_registro" VARCHAR(45);`,
-            `ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "termos_aceitos" BOOLEAN DEFAULT FALSE;`,
-            `ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "marketing_aceito" BOOLEAN DEFAULT FALSE;`,
-            `ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "sessionValue" FLOAT DEFAULT 0;`,
-            `ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`,
-            `ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255);`,
-            `ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;`,
 
             // Other tables
             `ALTER TABLE "Messages" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'sent';`,
@@ -2209,7 +2235,8 @@ const startServer = async () => {
         ];
         for (const col of arrayColumns) {
             try {
-                await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "${col}" JSONB DEFAULT '[]';`);
+                // OTIMIZAÇÃO: A coluna já foi criada no bloco agrupado acima.
+                // Apenas tentamos converter se ela já existia como TEXT.
                 await runSchemaQuery(`
                     ALTER TABLE "Psychologists" 
                     ALTER COLUMN "${col}" TYPE JSONB 
@@ -2225,6 +2252,11 @@ const startServer = async () => {
         console.log('🔧 [DB FIX] Colunas de lista verificadas e convertidas para JSONB.');
 
         console.log('✅ [DB SYNC] Correções de schema aplicadas com sucesso.');
+        
+        // Libera o acesso total ao sistema
+        isDbSynced = true;
+        console.log('✅ [SERVER] Sistema totalmente operacional.');
+        startCronJobs();
 
     } catch (e) {
         console.error('❌ [DB SYNC] Erro crítico durante a aplicação de correções de schema:', e.message);
@@ -2243,11 +2275,15 @@ const startServer = async () => {
         console.log('✅ [DB SYNC] Conexão com banco de dados estabelecida (Modo Produção).');
     }
 
-    server.listen(PORT, () => {
-        console.log(`Servidor rodando na porta ${PORT}.`);
+    // Se o servidor ainda não estiver ouvindo (caso o DB sync tenha sido muito rápido ou falhado)
+    if (!server.listening) {
+        server.listen(PORT, () => {
+            console.log(`Servidor rodando na porta ${PORT}.`);
+            console.timeEnd('⏱️ Tempo Total de Inicialização');
+        });
+    } else {
         console.timeEnd('⏱️ Tempo Total de Inicialização');
-        startCronJobs(); // Inicia os jobs apenas após o servidor estar estável
-    });
+    }
 };
 
 startServer().catch(err => console.error('Falha ao iniciar o servidor:', err));
