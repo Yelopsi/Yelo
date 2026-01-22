@@ -2794,20 +2794,43 @@ input:checked + .slider:before { transform: translateX(22px); }
     box-sizing: border-box;
 }
 
-/* 2. Reset agressivo para garantir alinhamento sem forçar altura fixa */
-.fc table, .fc tbody, .fc thead, .fc tr, .fc td, .fc th {
-    padding: 0 !important;
-    margin: 0 !important;
-    vertical-align: top !important;
-    line-height: 1 !important; /* Evita que fontes aumentem a altura da linha */
+/* 2. Força altura EXATA para alinhar grade e horários (48px = 2 slots de 30min ou 1 de 1h dependendo da config) */
+.fc .fc-timegrid-slot {
+    height: 48px !important;
+    border-bottom: 1px solid var(--cinza-borda) !important;
 }
 
-/* ==========================================================================
-   FIX: CORES DE STATUS DO CALENDÁRIO (CONTRASTE)
-   ========================================================================== */
-/* Garante que o texto fique legível no fundo amarelo (Disponível) */
-.fc-event[style*="background-color: #FFC107"],
-.fc-event[style*="rgb(255, 193, 7)"] {
+/* Garante que o rótulo da hora (esquerda) tenha a mesma altura */
+.fc .fc-timegrid-slot-label-frame {
+    min-height: 48px !important;
+    height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* 3. Ajuste de Cores e Contraste */
+.fc-event[style*="background-color: #FFC107"], .fc-event[style*="rgb(255, 193, 7)"] {
     color: #333 !important;
     font-weight: 600;
+}
+
+/* 4. Botão de Excluir Agendamento (Lixeira) */
+.btn-delete-appt {
+    background-color: #ffebee;
+    color: #d32f2f;
+    border: 1px solid #ffcdd2;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    margin-right: auto; /* Empurra outros botões para a direita se estiver num flex container */
+}
+.btn-delete-appt:hover {
+    background-color: #ef9a9a;
+    color: #b71c1c;
 }
