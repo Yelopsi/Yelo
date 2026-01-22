@@ -305,11 +305,6 @@
                 <button type="button" id="btn-delete-patient" style="display: none; background: none; border: none; color: #d32f2f; cursor: pointer; padding: 8px; border-radius: 50%; transition: background 0.2s;" title="Excluir Paciente">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                 </button>
-                
-                <!-- Botão Simular Lembrete -->
-                <button type="button" id="btn-simulate-reminder" style="display: none; background: #e3f2fd; color: #0277bd; border: 1px solid #b3e5fc; padding: 8px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer; margin-right: auto; margin-left: 10px;">
-                    🔔 Simular Lembrete
-                </button>
 
                 <div style="display: flex; gap: 10px; margin-left: auto;">
                     <button type="button" class="btn btn-secundario" id="cancel-patient-modal">Cancelar</button>
@@ -477,7 +472,6 @@
         const form = document.getElementById('form-patient');
         const pIdInput = document.getElementById('p-id');
         const btnDelete = document.getElementById('btn-delete-patient');
-        const btnSimulate = document.getElementById('btn-simulate-reminder');
         
         // Elementos do Modal de Exclusão
         const modalDelete = document.getElementById('modal-delete-confirmation');
@@ -538,7 +532,7 @@
                     // Mapeia para o formato interno
                     patients = data.map(p => ({
                         id: p.id, name: p.nome, phone: p.telefone, email: p.email, automated: true, sessionValue: p.sessionValue || 0, status: p.status || 'ativo',
-                        notes: p.notes
+                        notes: p.notes || p.observacoes
                     }));
                 }
 
@@ -814,7 +808,6 @@
             
             document.getElementById('modal-patient-title').textContent = 'Editar Paciente';
             btnDelete.style.display = 'block'; // Mostra lixeira
-            btnSimulate.style.display = 'block'; // Mostra botão de simular
             modal.style.display = 'flex';
         }
 
@@ -825,7 +818,6 @@
             document.getElementById('p-email').value = '';
             pStatusInput.value = 'ativo';
             btnDelete.style.display = 'none'; // Esconde lixeira
-            btnSimulate.style.display = 'none'; // Esconde botão de simular
             modal.style.display = 'flex';
         }
 
@@ -855,7 +847,6 @@
             pStatusInput.value = 'ativo';
             document.getElementById('modal-patient-title').textContent = 'Novo Paciente';
             btnDelete.style.display = 'none'; // Esconde lixeira
-            btnSimulate.style.display = 'none';
             modal.style.display = 'flex';
         };
 
@@ -910,43 +901,6 @@
                 alert('Erro de conexão ao excluir.');
             } finally {
                 btnConfirmDelete.textContent = "Sim, Excluir";
-            }
-        };
-
-        // Ação: Simular Lembrete
-        btnSimulate.onclick = async () => {
-            const patientId = pIdInput.value;
-            const now = new Date();
-            
-            // Encontra o próximo agendamento futuro deste paciente
-            const nextAppt = events
-                .filter(e => e.patientId == patientId && e.status === 'scheduled' && new Date(e.start) > now)
-                .sort((a, b) => new Date(a.start) - new Date(b.start))[0];
-
-            if (!nextAppt) {
-                alert('Este paciente não possui agendamentos futuros confirmados para enviar lembrete.');
-                return;
-            }
-
-            if(confirm(`Enviar lembrete agora para a sessão de ${new Date(nextAppt.start).toLocaleString()}?`)) {
-                // UX: Feedback visual de carregamento
-                const originalText = btnSimulate.textContent;
-                btnSimulate.disabled = true;
-                btnSimulate.textContent = "Enviando...";
-                btnSimulate.style.opacity = "0.7";
-
-                try {
-                    const res = await fetch(`${BASE_URL}/api/appointments/${nextAppt.id}/remind`, { method: 'POST' });
-                    if (res.ok) {
-                        if(window.showToast) window.showToast('Lembrete enviado (Simulado no Console do Servidor).', 'success');
-                        closeModal();
-                    }
-                } catch (e) { alert('Erro ao enviar lembrete.'); }
-                finally {
-                    btnSimulate.disabled = false;
-                    btnSimulate.textContent = originalText;
-                    btnSimulate.style.opacity = "1";
-                }
             }
         };
 
