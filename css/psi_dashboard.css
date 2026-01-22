@@ -3594,65 +3594,49 @@ body.pagina-dashboard::after {
     font-weight: 800;
 }
 
-/* FullCalendar Overrides */
-.fc .fc-today-button {
+/* ==========================================================================
+   FULLCALENDAR - IMPLEMENTAÇÃO LIMPA (V2)
+   ========================================================================== */
+
+/* 1. Botões do Calendário */
+.fc .fc-button-primary {
     background-color: #1B4332 !important;
     border-color: #1B4332 !important;
-    color: #fff !important;
-    font-weight: 700 !important;
-    opacity: 1 !important;
-    text-transform: capitalize;
-    transition: all 0.2s ease;
+    box-shadow: none !important;
 }
-.fc .fc-today-button:disabled {
-    background-color: #FFEE8C !important;
-    border-color: #FFEE8C !important;
-    color: #1B4332 !important;
-    cursor: default;
-    box-shadow: none;
+.fc .fc-button-primary:hover { background-color: #143d2e !important; }
+.fc .fc-button-active { background-color: #0d2e21 !important; }
+
+/* 2. Reset de Tabela (CRUCIAL PARA ALINHAMENTO) */
+/* Remove paddings globais que causam o desalinhamento entre horas e grade */
+.fc table {
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
+    font-size: 1em;
 }
-.fc-theme-standard td, .fc-theme-standard th {
-    border-color: #f0f0f0;
+.fc td, .fc th {
+    padding: 0 !important;
+    vertical-align: top !important;
 }
-.fc-timegrid-slot {
-    height: auto !important;
-    border-bottom: 1px solid #e0e0e0 !important;
-}
-.fc-timegrid-slot-lane:hover {
-    background-color: rgba(27, 67, 50, 0.04);
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-.fc-col-header-cell {
-    background-color: #f9fafb;
-    padding: 12px 0;
-    border-bottom: none;
-}
-.fc-col-header-cell-cushion {
-    color: #555;
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    letter-spacing: 0.5px;
-}
+
+/* 3. Estilo da Grade */
+.fc-theme-standard td, .fc-theme-standard th { border-color: #f0f0f0; }
+.fc-timegrid-slot { border-bottom: 1px solid #f0f0f0 !important; }
+.fc-timegrid-slot:empty:before { content: "\00a0"; } /* Garante altura mínima mesmo vazio */
+
+/* 4. Estilo dos Eventos */
 .fc-event {
-    border-radius: 6px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    border: none;
+    border: none !important;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
     padding: 2px 4px;
+    font-size: 0.85rem;
     font-weight: 600;
 }
 
-.fc-timegrid-event-harness {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-}
-
-.fc-timegrid-event {
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    border-radius: 4px;
-    margin: 1px 2px !important;
-}
+/* 5. Cabeçalho da Tabela */
+.fc-col-header-cell { background-color: #f9fafb; padding: 10px 0 !important; }
+.fc-col-header-cell-cushion { color: #555; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; }
 
 /* Estilo do Card Assistente */
 .assistant-card {
