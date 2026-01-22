@@ -3615,8 +3615,8 @@ body.pagina-dashboard::after {
     border-color: #f0f0f0;
 }
 .fc-timegrid-slot {
-    height: 3.5em !important;
-    border-bottom: 1px solid #f9f9f9 !important;
+    height: auto !important;
+    border-bottom: 1px solid #e0e0e0 !important;
 }
 .fc-timegrid-slot-lane:hover {
     background-color: rgba(27, 67, 50, 0.04);
@@ -3641,6 +3641,17 @@ body.pagina-dashboard::after {
     border: none;
     padding: 2px 4px;
     font-weight: 600;
+}
+
+.fc-timegrid-event-harness {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+.fc-timegrid-event {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border-radius: 4px;
+    margin: 1px 2px !important;
 }
 
 /* Estilo do Card Assistente */

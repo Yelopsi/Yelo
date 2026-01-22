@@ -45,6 +45,23 @@
         margin: 0 2px !important; /* Pequeno espaço entre botões agrupados */
     }
 
+    /* 2. Ajuste para altura dinâmica controlada pelo JS (slotMinHeight) */
+    .fc-timegrid-slot {
+    height: auto !important; /* Deixe o JS decidir a altura */
+    border-bottom: 1px solid #e0e0e0 !important;
+}
+
+    .fc-timegrid-event-harness {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+    .fc-timegrid-event {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border-radius: 4px;
+    margin: 1px 2px !important;
+}
+
     /* Alinhamento do Header da Carteira de Pacientes */
     .widget-header-row {
         display: flex;
@@ -743,7 +760,10 @@
                 slotMaxTime: '24:00:00',
                 scrollTime: '07:00:00',
                 allDaySlot: false,
-                slotDuration: '01:00:00', // Slots de 1 hora para ficar mais limpo
+                slotDuration: '00:30:00', // Recomendação anterior (mantém precisão de meia hora)
+                slotMinHeight: 50,        // AQUI ESTÁ O TRUQUE: Define altura mínima em PX via JS
+                expandRows: true,         // Garante que as linhas preencham a altura total disponível
+                slotLabelInterval: '01:00', // Mostra a hora de 1 em 1 (limpa o visual)
                 height: isDesktop ? '100%' : '75vh', // Desktop: 100% | Mobile: 75vh para scroll interno
                 nowIndicator: true, // Indicador de hora atual
                 titleFormat: mobile ? { year: 'numeric', month: 'short', day: 'numeric' } : undefined,

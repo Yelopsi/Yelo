@@ -2098,17 +2098,44 @@ const startServer = async () => {
         console.error('❌ [DB CRITICAL] O banco de dados não ficou pronto a tempo. As correções de schema podem falhar.');
     }
 
+    // --- HELPER: EXECUÇÃO SEGURA DE SCHEMA (RETRY) ---
+    // Adicionado para resolver o erro "database system is in recovery mode" durante o deploy
+    const runSchemaQuery = async (sql, successMsg) => {
+        const retries = 5;
+        for (let i = 0; i < retries; i++) {
+            try {
+                await db.sequelize.query(sql);
+                if (successMsg) console.log(`✅ [DB FIX] ${successMsg}`);
+                return;
+            } catch (e) {
+                const msg = e.message.toLowerCase();
+                if (msg.includes('recovery mode') || msg.includes('connection')) {
+                    if (i < retries - 1) {
+                        console.warn(`⏳ [DB RECOVERY] Banco instável. Retentando... (${i + 1}/${retries})`);
+                        await new Promise(r => setTimeout(r, 2000));
+                        continue;
+                    }
+                }
+                // Ignora erros de "já existe" ou "não nulo" que são esperados
+                if (!msg.includes('already exists') && !msg.includes('duplicate')) {
+                    console.warn(`⚠️ [DB FIX SKIP] ${e.message}`);
+                }
+                return;
+            }
+        }
+    };
+
     // --- BLOCO DE SINCRONIZAÇÃO E CORREÇÃO DE SCHEMA (RODA EM TODOS OS AMBIENTES) ---
     try {
         console.log('🔧 [DB SYNC] Verificando e aplicando correções de schema...');
 
         // Garante que as colunas críticas existam, usando ALTER TABLE que é seguro para produção.
         // Adicione novas colunas aqui no futuro para evitar erros de "column does not exist".
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "is_exempt" BOOLEAN DEFAULT FALSE;`);
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cnpj" VARCHAR(255) UNIQUE;`);
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "modalidade" JSONB DEFAULT '[]';`);
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "dailySummaryTime" VARCHAR(5) DEFAULT '08:00';`);
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "reminderHoursBefore" INTEGER DEFAULT 24;`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "is_exempt" BOOLEAN DEFAULT FALSE;`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cnpj" VARCHAR(255) UNIQUE;`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "modalidade" JSONB DEFAULT '[]';`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "dailySummaryTime" VARCHAR(5) DEFAULT '08:00';`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "reminderHoursBefore" INTEGER DEFAULT 24;`);
         
         // --- FIX: PERMITIR CADASTRO LEAN (CRP OPCIONAL NO INÍCIO) ---
         try {
@@ -2127,10 +2154,10 @@ const startServer = async () => {
         for (const col of arrayColumns) {
             try {
                 // 1. Garante que a coluna existe
-                await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "${col}" JSONB DEFAULT '[]';`);
+                await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "${col}" JSONB DEFAULT '[]';`);
                 
                 // 2. Tenta converter de ARRAY/TEXT para JSONB (se necessário)
-                await db.sequelize.query(`
+                await runSchemaQuery(`
                     ALTER TABLE "Psychologists" 
                     ALTER COLUMN "${col}" TYPE JSONB 
                     USING to_json("${col}"::text); 
@@ -2138,7 +2165,7 @@ const startServer = async () => {
             } catch (e) {
                 // Fallback: Se falhar (ex: já é JSONB ou erro de cast), tenta cast direto
                 try {
-                    await db.sequelize.query(`ALTER TABLE "Psychologists" ALTER COLUMN "${col}" TYPE JSONB USING "${col}"::jsonb;`);
+                    await runSchemaQuery(`ALTER TABLE "Psychologists" ALTER COLUMN "${col}" TYPE JSONB USING "${col}"::jsonb;`);
                 } catch (e2) { 
                     // Ignora erros silenciosamente se a coluna já estiver correta
                 }
@@ -2148,12 +2175,7 @@ const startServer = async () => {
 
         // --- FIX: GARANTIR COLUNAS DA TABELA PATIENTS (EVITA ERRO NO LOGIN) ---
         console.log('🔧 [DB FIX] Aplicando correção na tabela Patients (ip_registro, termos)...');
-        try {
-            await db.sequelize.query('ALTER TABLE "Patients" ALTER COLUMN "email" DROP NOT NULL;');
-            console.log('✅ [DB FIX] Restrição NOT NULL removida da coluna email.');
-        } catch (e) {
-            console.error('⚠️ [DB FIX] Erro ao alterar coluna email (pode já estar correta):', e.message);
-        }
+        await runSchemaQuery('ALTER TABLE "Patients" ALTER COLUMN "email" DROP NOT NULL;', 'Restrição NOT NULL removida da coluna email.');
 
         const patientCols = [
             { name: 'ip_registro', def: 'VARCHAR(45)' },
@@ -2166,54 +2188,49 @@ const startServer = async () => {
         ];
 
         for (const col of patientCols) {
-            try {
-                await db.sequelize.query(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "${col.name}" ${col.def};`);
-                console.log(`✅ [DB FIX] Coluna "${col.name}" verificada em Patients.`);
-            } catch (e) {
-                console.error(`⚠️ [DB FIX] Erro ao adicionar "${col.name}":`, e.message);
-            }
+            await runSchemaQuery(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "${col.name}" ${col.def};`, `Coluna "${col.name}" verificada em Patients.`);
         }
         // ---------------------------------------------------------------------
 
         // --- FIX: GARANTIR TODAS AS COLUNAS DO PERFIL NOVO ---
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "publico_alvo" JSONB DEFAULT '[]';`);
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "estilo_terapia" JSONB DEFAULT '[]';`);
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "praticas_inclusivas" JSONB DEFAULT '[]';`);
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "disponibilidade_periodo" JSONB DEFAULT '[]';`);
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "temas_atuacao" JSONB DEFAULT '[]';`);
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "abordagens_tecnicas" JSONB DEFAULT '[]';`);
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "genero_identidade" VARCHAR(255);`);
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "valor_sessao_numero" FLOAT;`);
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cpf" VARCHAR(255) UNIQUE;`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "publico_alvo" JSONB DEFAULT '[]';`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "estilo_terapia" JSONB DEFAULT '[]';`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "praticas_inclusivas" JSONB DEFAULT '[]';`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "disponibilidade_periodo" JSONB DEFAULT '[]';`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "temas_atuacao" JSONB DEFAULT '[]';`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "abordagens_tecnicas" JSONB DEFAULT '[]';`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "genero_identidade" VARCHAR(255);`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "valor_sessao_numero" FLOAT;`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cpf" VARCHAR(255) UNIQUE;`);
         // -----------------------------------------------------
         
         // --- FIX: COLUNAS DE KPI E PAGAMENTO (ADICIONADO) ---
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "whatsapp_clicks" INTEGER DEFAULT 0;`);
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "profile_appearances" INTEGER DEFAULT 0;`);
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "planExpiresAt" TIMESTAMP WITH TIME ZONE;`);
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "stripeSubscriptionId" VARCHAR(255);`);
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cancelAtPeriodEnd" BOOLEAN DEFAULT FALSE;`);
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "subscription_payments_count" INTEGER DEFAULT 0;`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "whatsapp_clicks" INTEGER DEFAULT 0;`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "profile_appearances" INTEGER DEFAULT 0;`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "planExpiresAt" TIMESTAMP WITH TIME ZONE;`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "stripeSubscriptionId" VARCHAR(255);`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cancelAtPeriodEnd" BOOLEAN DEFAULT FALSE;`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "subscription_payments_count" INTEGER DEFAULT 0;`);
         
         // --- FIX: COLUNAS DE RECUPERAÇÃO DE SENHA (CRÍTICO) ---
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255);`);
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;`);
-        await db.sequelize.query(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255);`);
-        await db.sequelize.query(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255);`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;`);
+        await runSchemaQuery(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255);`);
+        await runSchemaQuery(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;`);
         console.log('🔧 [DB FIX] Colunas de recuperação de senha verificadas.');
         // -----------------------------------------------------
 
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "authority_level" VARCHAR(255) DEFAULT 'nivel_iniciante';`);
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "badges" JSONB DEFAULT '{}';`);
-        await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "xp" INTEGER DEFAULT 0;`);
-        await db.sequelize.query(`ALTER TABLE "Messages" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'sent';`);
-        await db.sequelize.query(`ALTER TABLE "Conversations" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
-        await db.sequelize.query(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
-        await db.sequelize.query(`ALTER TABLE "ForumPosts" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
-        await db.sequelize.query(`ALTER TABLE "ForumComments" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "authority_level" VARCHAR(255) DEFAULT 'nivel_iniciante';`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "badges" JSONB DEFAULT '{}';`);
+        await runSchemaQuery(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "xp" INTEGER DEFAULT 0;`);
+        await runSchemaQuery(`ALTER TABLE "Messages" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'sent';`);
+        await runSchemaQuery(`ALTER TABLE "Conversations" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
+        await runSchemaQuery(`ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
+        await runSchemaQuery(`ALTER TABLE "ForumPosts" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
+        await runSchemaQuery(`ALTER TABLE "ForumComments" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`);
 
         // --- FIX: TABELAS FINANCEIRAS ---
-        await db.sequelize.query(`
+        await runSchemaQuery(`
             CREATE TABLE IF NOT EXISTS "Expenses" (
                 "id" SERIAL PRIMARY KEY,
                 "description" VARCHAR(255),
@@ -2224,7 +2241,7 @@ const startServer = async () => {
                 "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         `);
-        await db.sequelize.query(`
+        await runSchemaQuery(`
             CREATE TABLE IF NOT EXISTS "Appointments" (
                 "id" SERIAL PRIMARY KEY,
                 "title" VARCHAR(255),
@@ -2239,7 +2256,7 @@ const startServer = async () => {
         `);
         // --- FIX: GARANTIR COLUNA patientId ---
         try {
-            await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "patientId" INTEGER;');
+            await runSchemaQuery('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "patientId" INTEGER;');
             console.log('🔧 [DB FIX] Coluna patientId verificada/adicionada em Appointments.');
         } catch (e) {
             console.error('⚠️ [DB FIX] Erro ao adicionar coluna patientId:', e.message);
@@ -2247,7 +2264,7 @@ const startServer = async () => {
 
         // --- FIX: GARANTIR TABELA POSTS (BLOG) CORRETA ---
         // Cria a tabela posts compatível com o modelo models/Post.js (created_at, updated_at, psychologistId)
-        await db.sequelize.query(`
+        await runSchemaQuery(`
             CREATE TABLE IF NOT EXISTS "posts" (
                 "id" SERIAL PRIMARY KEY,
                 "titulo" VARCHAR(255) NOT NULL,
@@ -2263,7 +2280,7 @@ const startServer = async () => {
         `);
 
         // --- FIX: TABELA DE LOGS DO SISTEMA (CRÍTICO PARA PAGAMENTOS) ---
-        await db.sequelize.query(`
+        await runSchemaQuery(`
             CREATE TABLE IF NOT EXISTS "SystemLogs" (
                 "id" SERIAL PRIMARY KEY,
                 "level" VARCHAR(255),
@@ -2275,17 +2292,17 @@ const startServer = async () => {
         `);
         
         // --- FIX: GARANTIR QUE A COLUNA updatedAt EXISTA (CASO A TABELA JÁ TENHA SIDO CRIADA SEM ELA) ---
-        await db.sequelize.query(`ALTER TABLE "SystemLogs" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;`);
+        await runSchemaQuery(`ALTER TABLE "SystemLogs" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;`);
 
         // --- FIX: TABELAS DE SESSÃO E ANALYTICS (CRÍTICO PARA DASHBOARD) ---
-        await db.sequelize.query(`
+        await runSchemaQuery(`
             CREATE TABLE IF NOT EXISTS "ActiveSessions" (
                 "sessionId" VARCHAR(255) PRIMARY KEY,
                 "lastSeen" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         `);
         
-        await db.sequelize.query(`
+        await runSchemaQuery(`
             CREATE TABLE IF NOT EXISTS "AnonymousSessions" (
                 "sessionId" VARCHAR(255) PRIMARY KEY,
                 "durationInSeconds" INTEGER,
@@ -2295,7 +2312,7 @@ const startServer = async () => {
             );
         `);
 
-        await db.sequelize.query(`
+        await runSchemaQuery(`
             CREATE TABLE IF NOT EXISTS "SiteVisits" (
                 "id" SERIAL PRIMARY KEY,
                 "url" VARCHAR(255),
@@ -2307,7 +2324,7 @@ const startServer = async () => {
         `);
 
         // --- FIX: TABELA DE LOGS DE WHATSAPP (FOLLOW-UP) ---
-        await db.sequelize.query(`
+        await runSchemaQuery(`
             CREATE TABLE IF NOT EXISTS "WhatsappClickLogs" (
                 "id" SERIAL PRIMARY KEY,
                 "psychologistId" INTEGER,
@@ -2322,7 +2339,7 @@ const startServer = async () => {
         `);
 
         // --- FIX: TABELA DE LOGS DE INSTALAÇÃO PWA ---
-        await db.sequelize.query(`
+        await runSchemaQuery(`
             CREATE TABLE IF NOT EXISTS "PwaInstallLogs" (
                 "id" SERIAL PRIMARY KEY,
                 "userAgent" TEXT,
@@ -2332,7 +2349,7 @@ const startServer = async () => {
         `);
 
         // --- FIX: TABELAS DE KPI FALTANTES (CRÍTICO PARA DASHBOARD) ---
-        await db.sequelize.query(`
+        await runSchemaQuery(`
             CREATE TABLE IF NOT EXISTS "ProfileAppearanceLogs" (
                 "id" SERIAL PRIMARY KEY,
                 "psychologistId" INTEGER,
@@ -2341,7 +2358,7 @@ const startServer = async () => {
             );
         `);
 
-        await db.sequelize.query(`
+        await runSchemaQuery(`
             CREATE TABLE IF NOT EXISTS "MatchEvents" (
                 "id" SERIAL PRIMARY KEY,
                 "psychologistId" INTEGER,
@@ -2352,7 +2369,7 @@ const startServer = async () => {
             );
         `);
 
-        await db.sequelize.query(`
+        await runSchemaQuery(`
             CREATE TABLE IF NOT EXISTS "PatientFavorites" (
                 "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
