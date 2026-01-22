@@ -2785,3 +2785,28 @@ input:checked + .slider:before { transform: translateX(22px); }
     .profile-actions-top { width: 100%; justify-content: center; }
     .details-tabs { padding-bottom: 5px; }
 }
+
+/* ==========================================================================
+   FIX: FULLCALENDAR (AGENDA) - CORREÇÃO DE ALINHAMENTO
+   ========================================================================== */
+/* Remove padding global de tabelas que possa afetar o calendário */
+.fc td, .fc th {
+    padding: 0 !important;
+    vertical-align: top !important;
+}
+
+/* Força altura consistente nos slots de tempo para alinhar com os eventos */
+.fc .fc-timegrid-slot {
+    height: 3em !important;
+    border-bottom: 1px solid var(--cinza-borda) !important;
+}
+
+/* ==========================================================================
+   FIX: CORES DE STATUS DO CALENDÁRIO (CONTRASTE)
+   ========================================================================== */
+/* Garante que o texto fique legível no fundo amarelo (Disponível) */
+.fc-event[style*="background-color: #FFC107"],
+.fc-event[style*="rgb(255, 193, 7)"] {
+    color: #333 !important;
+    font-weight: 600;
+}

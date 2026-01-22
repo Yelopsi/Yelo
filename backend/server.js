@@ -1093,9 +1093,44 @@ app.get('/api/appointments', async (req, res) => {
         const appointments = await db.Appointment.findAll({
             where: { psychologistId: decoded.id }
         });
-        res.json(appointments);
+
+        // --- FIX: Mapeamento de Cores por Status (Legenda) ---
+        const events = appointments.map(a => {
+            const app = a.toJSON();
+            let color = '#3788d8'; // Agendado (Azul Padrão)
+
+            if (app.status === 'confirmed') color = '#1B4332'; // Confirmado (Verde Escuro)
+            else if (app.status === 'available') color = '#FFC107'; // Disponível (Amarelo)
+            else if (app.status === 'done' || app.status === 'completed') color = '#9e9e9e'; // Realizado (Cinza)
+            else if (app.status === 'missed' || app.status === 'absent') color = '#d32f2f'; // Falta (Vermelho)
+            
+            return { ...app, backgroundColor: color, borderColor: color };
+        });
+
+        res.json(events);
     } catch (error) {
         res.status(500).json({ error: 'Erro ao buscar agenda.' });
+    }
+});
+
+// --- ROTA: Buscar Horários Disponíveis (Para Reagendamento) ---
+app.get('/api/appointments/available', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(401).json({ error: 'Não autorizado' });
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+        
+        const slots = await db.Appointment.findAll({
+            where: {
+                psychologistId: decoded.id,
+                status: 'available',
+                start: { [Op.gt]: new Date() } // Apenas futuros
+            },
+            order: [['start', 'ASC']]
+        });
+        res.json(slots);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao buscar horários disponíveis.' });
     }
 });
 
@@ -1139,6 +1174,30 @@ app.put('/api/appointments/:id', async (req, res) => {
         const oldStart = appt.start;
         
         await appt.update({ status, start, end, value });
+
+        // --- LÓGICA: LIBERAR HORÁRIO AO CANCELAR ---
+        if (status === 'cancelled') {
+            // Verifica se já existe um slot disponível neste horário para evitar duplicidade
+            const exists = await db.Appointment.findOne({
+                where: {
+                    psychologistId: appt.psychologistId,
+                    start: appt.start,
+                    status: 'available'
+                }
+            });
+            
+            if (!exists) {
+                // Cria um novo slot disponível no lugar do cancelado
+                await db.Appointment.create({
+                    title: 'Disponível',
+                    start: appt.start,
+                    end: appt.end,
+                    psychologistId: appt.psychologistId,
+                    status: 'available',
+                    value: 0 // Valor zero para slot livre
+                });
+            }
+        }
 
         // 🔔 NOTIFICAÇÕES WHATSAPP
         if (phone) {
