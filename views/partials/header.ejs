@@ -4,6 +4,18 @@
         font-family: var(--font-principal) !important;
         font-size: 18px !important;
     }
+
+    /* Ajuste para área do usuário logado (Desktop) */
+    .user-logged-area {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-left: 20px;
+    }
+    
+    header.header-rolagem .user-welcome-text {
+        color: #333 !important;
+    }
 </style>
 <header>
     <a href="/" class="logo">
@@ -29,9 +41,17 @@
                 <li><a href="/blog">Blog</a></li>
             </ul>
         </nav>
-        <div class="botoes-acao">
+        
+        <!-- Botões para Visitantes -->
+        <div class="botoes-acao" id="guest-actions">
             <a href="/login" class="btn btn-outline">Entrar</a>
             <a href="/cadastro" class="btn btn-solid">Registrar</a>
+        </div>
+
+        <!-- Área do Usuário Logado (Oculto por padrão) -->
+        <div class="user-logged-area" id="user-logged-actions" style="display: none;">
+            <span class="user-welcome-text" style="color: inherit;">Olá, <span id="header-username">Visitante</span></span>
+            <a href="#" id="header-dashboard-btn" class="btn btn-solid">Meu Painel</a>
         </div>
     </div>
 </header>
@@ -46,6 +66,31 @@
                 navContainer.classList.toggle('ativo');
                 // Opcional: Alternar ícone ou animar as barras aqui
             });
+        }
+
+        // --- LÓGICA DE USUÁRIO LOGADO ---
+        const token = localStorage.getItem('Yelo_token');
+        const userName = localStorage.getItem('Yelo_user_name');
+        const userType = localStorage.getItem('Yelo_user_type'); // 'patient', 'psychologist', 'admin'
+
+        if (token && userName) {
+            // 1. Esconde botões de login/registro
+            const guestDiv = document.getElementById('guest-actions');
+            if (guestDiv) guestDiv.style.display = 'none';
+
+            // 2. Mostra área do usuário
+            const userDiv = document.getElementById('user-logged-actions');
+            const nameSpan = document.getElementById('header-username');
+            const dashBtn = document.getElementById('header-dashboard-btn');
+
+            if (userDiv) userDiv.style.display = 'flex';
+            if (nameSpan) nameSpan.textContent = userName.split(' ')[0]; // Apenas o primeiro nome
+            
+            if (dashBtn) {
+                if (userType === 'admin') dashBtn.href = '/admin';
+                else if (userType === 'psychologist') dashBtn.href = '/psi/psi_dashboard.html';
+                else dashBtn.href = '/patient/patient_dashboard'; // Default para paciente
+            }
         }
     });
 </script>
