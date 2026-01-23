@@ -529,11 +529,10 @@
                 const resPatients = await fetch(`${BASE_URL}/api/my-patients`, { headers: { 'Authorization': `Bearer ${token}` } });
                 if (resPatients.ok) {
                     const data = await resPatients.json();
-                    console.log("[DIAGNÓSTICO] Dados brutos da lista de pacientes:", data);
                     // Mapeia para o formato interno
                     patients = data.map(p => ({
                         id: p.id, name: p.nome, phone: p.telefone, email: p.email, automated: true, sessionValue: p.sessionValue || 0, status: p.status || 'ativo',
-                        notes: p.notes || p.observacoes || p.observacao || p.obs || p.description || p['observações'] || ''
+                        notes: p.observacoes || ''
                     }));
                 }
 
@@ -816,17 +815,15 @@
                 const res = await fetch(`${BASE_URL}/api/my-patients/${patient.id}`, { headers: { 'Authorization': `Bearer ${token}` } });
                 if (res.ok) {
                     const fullData = await res.json();
-                    console.log("[DIAGNÓSTICO] Detalhes completos do paciente:", fullData);
-                    const fullNotes = fullData.notes || fullData.observacoes || fullData.observacao || fullData.obs || fullData.description || fullData['observações'] || '';
+                    const fullNotes = fullData.observacoes || '';
                     
                     // Atualiza o campo apenas se estiver vazio ou igual ao da lista (evita sobrescrever se usuário já digitou)
                     const currentVal = document.getElementById('p-notes').value;
                     if (currentVal === (patient.notes || '')) {
-                        console.log("[DIAGNÓSTICO] Atualizando campo de observações com dados detalhados.");
                         document.getElementById('p-notes').value = fullNotes;
                     }
                 }
-            } catch (e) { console.log("Erro ao buscar detalhes do paciente:", e); }
+            } catch (e) { console.error("Erro ao buscar detalhes do paciente:", e); }
         }
 
         function openNewPatientModal() {
@@ -936,8 +933,7 @@
             const method = id ? 'PUT' : 'POST';
             const url = id ? `${BASE_URL}/api/my-patients/${id}` : `${BASE_URL}/api/my-patients`;
             
-            const payload = { name, phone, email, status, sessionValue, notes, observacoes: notes, observacao: notes, obs: notes, description: notes, 'observações': notes };
-            console.log("[DIAGNÓSTICO] Enviando payload:", payload);
+            const payload = { name, phone, email, status, sessionValue, observacoes: notes };
 
             try {
                 const res = await fetch(url, {

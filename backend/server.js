@@ -1040,9 +1040,26 @@ app.get('/api/my-patients', async (req, res) => {
     }
 });
 
+// --- ROTA: Buscar Detalhes do Paciente (CORREÇÃO DO ERRO 404) ---
+app.get('/api/my-patients/:id', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(401).json({ error: 'Não autorizado' });
+        
+        const { id } = req.params;
+        const patient = await db.Patient.findByPk(id);
+        
+        if (!patient) return res.status(404).json({ error: 'Paciente não encontrado' });
+        
+        res.json(patient);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao buscar detalhes do paciente.' });
+    }
+});
+
 app.post('/api/my-patients', async (req, res) => {
     try {
-        const { name, phone, email, status, sessionValue } = req.body;
+        const { name, phone, email, status, sessionValue, observacoes } = req.body;
         // Cria paciente (simplificado)
         const patient = await db.Patient.create({
             nome: name,
@@ -1050,6 +1067,7 @@ app.post('/api/my-patients', async (req, res) => {
             telefone: phone,
             status: status || 'ativo',
             sessionValue: sessionValue || 0,
+            observacoes: observacoes, // Salva observações na criação
             senha: await bcrypt.hash('temp123', 8) // FIX: Senha obrigatória
         });
         res.json(patient);
@@ -1066,7 +1084,7 @@ app.put('/api/my-patients/:id', async (req, res) => {
         if (!token) return res.status(401).json({ error: 'Não autorizado' });
         
         const { id } = req.params;
-        const { name, phone, email, status, sessionValue } = req.body;
+        const { name, phone, email, status, sessionValue, observacoes } = req.body;
         
         const patient = await db.Patient.findByPk(id);
         if (!patient) return res.status(404).json({ error: 'Paciente não encontrado' });
@@ -1075,7 +1093,8 @@ app.put('/api/my-patients/:id', async (req, res) => {
             nome: name,
             telefone: phone,
             status: status,
-            sessionValue: sessionValue
+            sessionValue: sessionValue,
+            observacoes: observacoes // Atualiza observações
         };
 
         // Só atualiza email se for válido e não vazio (evita erro de validação)
@@ -2203,6 +2222,7 @@ const startServer = async () => {
                 ADD COLUMN IF NOT EXISTS "marketing_aceito" BOOLEAN DEFAULT FALSE,
                 ADD COLUMN IF NOT EXISTS "sessionValue" FLOAT DEFAULT 0,
                 ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active',
+                ADD COLUMN IF NOT EXISTS "observacoes" TEXT,
                 ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255),
                 ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;`,
             
