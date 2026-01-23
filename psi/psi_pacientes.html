@@ -532,7 +532,7 @@
                     // Mapeia para o formato interno
                     patients = data.map(p => ({
                         id: p.id, name: p.nome, phone: p.telefone, email: p.email, automated: true, sessionValue: p.sessionValue || 0, status: p.status || 'ativo',
-                        notes: p.notes || p.observacoes
+                        notes: p.notes || p.observacoes || p.observacao || ''
                     }));
                 }
 
@@ -925,7 +925,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}` 
                     },
-                    body: JSON.stringify({ name, phone, email, status, sessionValue, notes, observacoes: notes })
+                    body: JSON.stringify({ name, phone, email, status, sessionValue, notes, observacoes: notes, observacao: notes })
                 });
                 
                 if (res.ok) {
