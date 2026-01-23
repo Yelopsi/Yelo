@@ -532,7 +532,7 @@
                     // Mapeia para o formato interno
                     patients = data.map(p => ({
                         id: p.id, name: p.nome, phone: p.telefone, email: p.email, automated: true, sessionValue: p.sessionValue || 0, status: p.status || 'ativo',
-                        notes: p.notes || p.observacoes || p.observacao || ''
+                        notes: p.notes || p.observacoes || p.observacao || p.obs || ''
                     }));
                 }
 
@@ -795,7 +795,7 @@
         }
 
         // 3. Funções do Modal
-        function openEditModal(patient) {
+        async function openEditModal(patient) {
             form.reset();
             pIdInput.value = String(patient.id); // Garante que seja string para o form
             document.getElementById('p-name').value = patient.name;
@@ -809,6 +809,20 @@
             document.getElementById('modal-patient-title').textContent = 'Editar Paciente';
             btnDelete.style.display = 'block'; // Mostra lixeira
             modal.style.display = 'flex';
+
+            // Tenta buscar detalhes completos (caso a lista não traga as observações)
+            try {
+                const res = await fetch(`${BASE_URL}/api/my-patients/${patient.id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    const fullData = await res.json();
+                    const fullNotes = fullData.notes || fullData.observacoes || fullData.observacao || fullData.obs || '';
+                    // Atualiza o campo apenas se estiver vazio ou igual ao da lista (evita sobrescrever se usuário já digitou)
+                    const currentVal = document.getElementById('p-notes').value;
+                    if (currentVal === (patient.notes || '')) {
+                        document.getElementById('p-notes').value = fullNotes;
+                    }
+                }
+            } catch (e) { console.log("Erro ao buscar detalhes do paciente:", e); }
         }
 
         function openNewPatientModal() {
@@ -925,7 +939,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}` 
                     },
-                    body: JSON.stringify({ name, phone, email, status, sessionValue, notes, observacoes: notes, observacao: notes })
+                    body: JSON.stringify({ name, phone, email, status, sessionValue, notes, observacoes: notes, observacao: notes, obs: notes })
                 });
                 
                 if (res.ok) {
