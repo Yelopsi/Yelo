@@ -69,15 +69,6 @@ if (db.Psychologist && !db.Psychologist.rawAttributes.resetPasswordToken) {
     }
 }
 
-if (db.Patient && !db.Patient.rawAttributes.resetPasswordToken) {
-    console.log("[FIX] Patching Patient model for password reset.");
-    db.Patient.rawAttributes.resetPasswordToken = { type: DataTypes.STRING };
-    db.Patient.rawAttributes.resetPasswordExpires = { type: DataTypes.BIGINT };
-    if (typeof db.Patient.refreshAttributes === 'function') {
-        db.Patient.refreshAttributes();
-    }
-}
-
 // --- FIX: Patch SystemLog Model (Garante que o modelo exista para logs) ---
 if (!db.SystemLog) {
     console.log("[FIX] Defining SystemLog model manually.");

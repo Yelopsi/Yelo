@@ -2391,3 +2391,35 @@
     .container-legal { padding: 40px 25px; }
     .header-legal h1 { font-size: 2rem; }
 }
+
+/* ==========================================================================
+   AJUSTE MENU MOBILE (HEADER PÚBLICO - LOGADO)
+   ========================================================================== */
+@media (max-width: 992px) {
+    /* Força o container principal do menu a empilhar os itens */
+    .nav-links, .nav-menu, .header-right-group {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 20px !important;
+    }
+
+    /* Área específica do usuário logado (Olá + Botão) */
+    .user-logged-area, .header-auth, .user-info-container {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 10px !important;
+        width: 100%;
+        margin-top: 10px; /* Separação dos links de cima */
+    }
+    
+    /* Garante que o texto de saudação e o botão fiquem centralizados */
+    .user-logged-area span, 
+    .user-logged-area a,
+    .user-greeting {
+        text-align: center !important;
+        display: block !important;
+        margin: 0 !important;
+    }
+}

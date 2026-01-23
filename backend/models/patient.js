@@ -98,6 +98,14 @@ module.exports = (sequelize, DataTypes) => {
     observacoes: {
       type: DataTypes.TEXT,
       allowNull: true
+    },
+    resetPasswordToken: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    resetPasswordExpires: {
+      type: DataTypes.BIGINT,
+      allowNull: true
     }
   }, {
     sequelize,
