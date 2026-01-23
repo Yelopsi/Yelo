@@ -94,6 +94,10 @@ module.exports = (sequelize, DataTypes) => {
     status: {
       type: DataTypes.STRING,
       defaultValue: 'ativo'
+    },
+    observacoes: {
+      type: DataTypes.TEXT,
+      allowNull: true
     }
   }, {
     sequelize,
