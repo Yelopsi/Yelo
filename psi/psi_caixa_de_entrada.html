@@ -23,14 +23,20 @@
     /* --- Estrutura Principal --- */
     .chat-layout {
         display: flex;
-        height: calc(100vh - 260px); /* Altura ajustada para acomodar o header */
-        width: 100%;
+        height: calc(100
         background-color: #fff;
         border-radius: 8px;
         border: 1px solid #f0f0f0;
         box-shadow: 0 10px 30px rgba(0,0,0,0.08);
         overflow: hidden;
         font-family: 'Inter', sans-serif;
+    }
+
+    @media (max-width: 992px) {
+        .chat-layout {
+            height: calc(100dvh - 160px) !important; /* Ocupa todo o espaço entre header e nav no mobile */
+            margin-bottom: 0;
+        }
     }
 
     /* --- Painel Esquerdo: Lista de Conversas --- */
