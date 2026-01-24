@@ -217,14 +217,41 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
 }
 
 /* Rodapé Sidebar */
-.sidebar-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+.sidebar-footer { 
+    margin-top: auto; 
+    padding-top: 20px; 
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    gap: 10px;
+}
+
+/* Botão Home (Novo) */
+.btn-sidebar-home {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    color: var(--branco-puro);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+.btn-sidebar-home:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
 /* Botão de Logout Estilizado */
 #btn-logout {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    width: 100%;
+    flex-grow: 1;
     padding: 12px;
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.05);
