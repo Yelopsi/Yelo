@@ -1347,7 +1347,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 /* Container Principal */
 .inbox-container {
     display: flex;
-    height: calc(100vh - 180px); /* Ajusta altura para caber na tela */
+    height: calc(100vh - 130px); /* Altura otimizada para Desktop App-like */
     min-height: 500px;
     background-color: var(--branco-puro);
     border-radius: 16px;
@@ -1376,6 +1376,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     padding: 0;
     margin: 0;
     overflow-y: auto;
+    scrollbar-width: thin;
 }
 
 .message-item {
@@ -1450,7 +1451,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     flex-grow: 1;
     padding: 0;
     background-color: var(--branco-puro);
-    overflow-y: auto;
+    overflow: hidden; /* Scroll movido para o wrapper interno */
     display: flex;
     flex-direction: column;
 }
@@ -1461,6 +1462,9 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     margin: 0 auto;
     width: 100%;
     box-sizing: border-box;
+    height: 100%;
+    overflow-y: auto;
+    scrollbar-width: thin;
 }
 
 .email-header {
