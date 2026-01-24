@@ -89,6 +89,7 @@
                         <th>Data</th>
                         <th>Valor</th>
                         <th>Tipo</th>
+                        <th style="width: 50px;"></th>
                     </tr>
                 </thead>
                 <tbody id="fin-transactions-body">
@@ -272,8 +273,22 @@
             document.getElementById('fin-balance').textContent = `R$ ${(income - totalExpenses).toFixed(2)}`;
 
             const transactions = [
-                ...events.filter(e => e.status === 'done').map(e => ({ desc: `Sessão: ${e.title}`, date: e.start, value: e.value, type: 'in' })),
-                ...expenses.map(e => ({ desc: e.description, date: e.date, value: e.value, type: 'out' }))
+                ...events.filter(e => e.status === 'done').map(e => ({ 
+                    id: e.id, 
+                    source: 'appointment', 
+                    desc: `Sessão: ${e.title}`, 
+                    date: e.start, 
+                    value: e.value, 
+                    type: 'in' 
+                })),
+                ...expenses.map(e => ({ 
+                    id: e.id, 
+                    source: 'expense', 
+                    desc: e.description, 
+                    date: e.date, 
+                    value: e.value, 
+                    type: 'out' 
+                }))
             ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
             const tbody = document.getElementById('fin-transactions-body');
@@ -285,11 +300,60 @@
                     <td class="fin-date">${new Date(t.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
                     <td>R$ ${t.value.toFixed(2)}</td>
                     <td><span class="${t.type === 'in' ? 'fin-type-in' : 'fin-type-out'}">${t.type === 'in' ? 'Entrada' : 'Saída'}</span></td>
+                    <td style="text-align: center;"></td>
                 `;
+                
+                const btnCell = row.querySelector('td:last-child');
+                const btn = document.createElement('button');
+                btn.className = 'btn-icon-sm';
+                btn.style.color = '#d32f2f';
+                btn.title = 'Excluir Lançamento';
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>';
+                
+                btn.onclick = () => deleteTransaction(t.id, t.source);
+                btnCell.appendChild(btn);
+
                 tbody.appendChild(row);
             });
 
             renderChart(income, totalExpenses);
+        }
+
+        async function deleteTransaction(id, source) {
+            if (!confirm('Tem certeza que deseja remover este lançamento?')) return;
+
+            try {
+                let url, method, body;
+                
+                if (source === 'expense') {
+                    url = `${BASE_URL}/api/financials/expenses/${id}`;
+                    method = 'DELETE';
+                } else {
+                    // Appointment: Revert to scheduled to remove from "Realized Income"
+                    url = `${BASE_URL}/api/appointments/${id}`;
+                    method = 'PUT';
+                    body = JSON.stringify({ status: 'scheduled' });
+                }
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: body
+                });
+
+                if (res.ok) {
+                    if(window.showToast) window.showToast('Lançamento removido.', 'success');
+                    fetchFinancials(); // Reload
+                } else {
+                    alert('Erro ao remover lançamento.');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Erro de conexão.');
+            }
         }
 
         // Gráfico (Chart.js)
