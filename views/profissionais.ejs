@@ -194,6 +194,104 @@
         .cta-section h2 { color: #fff; font-size: 2.5rem; margin-bottom: 20px; }
         .cta-section p { font-size: 1.2rem; opacity: 0.9; margin-bottom: 40px; }
 
+        /* --- NOVAS SEÇÕES (Jornada, Diferenciais, Match, FAQ) --- */
+        
+        /* Jornada (Storytelling) */
+        .jornada-section {
+            padding: 80px 20px;
+            background-color: #fff;
+            text-align: center;
+            position: relative;
+        }
+        .texto-leitura {
+            max-width: 800px;
+            margin: 0 auto;
+            font-size: 1.15rem;
+            line-height: 1.8; /* Leitura escaneável */
+            color: #555;
+            text-align: left;
+        }
+        .texto-leitura p { margin-bottom: 20px; }
+
+        /* Diferenciais (Grid 2x2) */
+        .diferenciais-section {
+            padding: 80px 20px;
+            background-color: #fdfaf6;
+            position: relative;
+        }
+        .diferenciais-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            margin: 40px auto 0;
+        }
+        .diferencial-card {
+            background: #fff;
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+            transition: transform 0.3s ease;
+        }
+        .diferencial-card:hover { transform: translateY(-5px); }
+        .diferencial-card h3 {
+            color: #1B4332;
+            font-family: var(--font-titulos);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        .diferencial-card p {
+            color: #666;
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+
+        /* Match Science */
+        .match-section {
+            padding: 80px 20px;
+            background-color: #fff;
+            text-align: center;
+            position: relative;
+        }
+
+        /* FAQ Section */
+        .faq-psi-section {
+            padding: 80px 20px;
+            background-color: #fdfaf6;
+            position: relative;
+        }
+        .acordeao-container { max-width: 800px; margin: 0 auto; text-align: left; }
+        .acordeao-item {
+            background: #fff;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #eee;
+            overflow: hidden;
+        }
+        .acordeao-titulo {
+            width: 100%;
+            padding: 20px;
+            background: none;
+            border: none;
+            text-align: left;
+            font-family: var(--font-titulos);
+            font-size: 1.1rem;
+            color: #1B4332;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .acordeao-titulo::after { content: '+'; font-size: 1.5rem; font-weight: 300; }
+        .acordeao-titulo.ativo::after { transform: rotate(45deg); }
+        .acordeao-conteudo {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .acordeao-conteudo p { padding: 0 20px 20px; color: #555; line-height: 1.6; margin: 0; }
+
         /* Wave Dividers */
         .wave-divider {
             position: absolute;
@@ -204,6 +302,10 @@
         }
         .wave-top { top: -1px; transform: rotate(180deg); }
         .wave-bottom { bottom: -1px; }
+
+        /* Mobile Scroll Hint & Floating CTA */
+        .mobile-scroll-hint { display: none; }
+        .floating-cta-mobile { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center; }
 
         /* Responsividade e Ajustes Desktop */
         @media (min-width: 992px) {
@@ -217,6 +319,43 @@
             .hero-psi h1 { font-size: 2.5rem; }
             .stats-grid { grid-template-columns: 1fr; gap: 20px; padding: 30px; }
             .plan-card.featured { transform: none; margin: 20px 0; }
+            .floating-cta-mobile { display: block; }
+            .cta-section { padding-bottom: 100px; } /* Espaço para o botão flutuante */
+
+            /* Scroll Snap Horizontal para Cards no Mobile */
+            .benefits-grid, .plans-grid, .diferenciais-grid {
+                display: flex;
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                gap: 15px;
+                padding-bottom: 20px;
+                grid-template-columns: none;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                justify-content: flex-start;
+            }
+            .benefits-grid::-webkit-scrollbar, .plans-grid::-webkit-scrollbar, .diferenciais-grid::-webkit-scrollbar { display: none; }
+            
+            .benefit-card, .plan-card, .diferencial-card {
+                flex: 0 0 85%;
+                scroll-snap-align: center;
+                min-width: 280px;
+            }
+
+            /* Dica de Scroll Mobile (Mouse) */
+            .mobile-scroll-hint {
+                display: flex; align-items: center; justify-content: center; margin-top: 15px;
+            }
+            .mobile-scroll-hint .mouse {
+                width: 26px; height: 42px; border: 2px solid #1B4332; border-radius: 20px; display: block; position: relative; transform: rotate(90deg);
+            }
+            .mobile-scroll-hint .wheel {
+                width: 4px; height: 4px; background: #1B4332; border-radius: 50%; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); animation: scrollWheel 1.5s infinite;
+            }
+            @keyframes scrollWheel {
+                0% { top: 8px; opacity: 1; }
+                100% { top: 25px; opacity: 0; }
+            }
         }
     </style>
 </head>
@@ -236,11 +375,6 @@
                 <a href="/psi_questionario.html" class="btn-cta-principal" style="background-color: #FFEE8C; color: #1B4332;">Cadastrar Consultório</a>
             </div>
 
-            <div class="wave-divider wave-bottom">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
-                    <path fill="#ffffff" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-                </svg>
-            </div>
         </section>
 
         <!-- STATS -->
@@ -258,6 +392,23 @@
                     <span class="stat-number">100%</span>
                     <span class="stat-label">Profissionais Verificados</span>
                 </div>
+            </div>
+        </section>
+
+        <!-- JORNADA DO PROFISSIONAL (Storytelling) -->
+        <section class="jornada-section">
+            <div class="container">
+                <h2 class="titulo-secao">Do consultório vazio à gestão de alta performance</h2>
+                <div class="texto-leitura">
+                    <p>Sabemos que a faculdade nos prepara para a clínica, mas não para o mercado. Muitos psicólogos iniciam sua jornada divididos entre o desejo de ajudar e a burocracia de captar pacientes, cobrar sessões e gerir faltas. A Yelo nasce para eliminar esse ruído.</p>
+                    <p>Imagine não precisar mais enviar mensagens de cobrança constrangedoras ou passar horas tentando configurar anúncios no Google. Nós cuidamos da infraestrutura digital para que sua única preocupação seja o acolhimento e o manejo clínico.</p>
+                </div>
+            </div>
+            
+            <div class="wave-divider wave-bottom">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#fdfaf6" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
             </div>
         </section>
 
@@ -284,12 +435,72 @@
                         <p>Sistema de lembretes automáticos via WhatsApp e reagendamento simplificado para reduzir faltas e manter a continuidade do tratamento.</p>
                     </div>
                 </div>
+                <div class="mobile-scroll-hint">
+                    <div class="scroll-indicator-step"><span class="mouse dark"><span class="wheel"></span></span></div>
+                </div>
             </div>
             
+        </section>
+
+        <!-- DIFERENCIAIS TÉCNICOS -->
+        <section class="diferenciais-section" style="background-color: #fff;">
+            <div class="container">
+                <h2 class="titulo-secao">Tecnologia de ponta com ética e segurança</h2>
+                <div class="diferenciais-grid">
+                    <div class="diferencial-card">
+                        <h3>Segurança de Dados (LGPD)</h3>
+                        <p>Seus dados e os de seus pacientes são protegidos por criptografia de ponta a ponta. Seguimos rigorosamente as normas do CFP e a Lei Geral de Proteção de Dados.</p>
+                    </div>
+                    <div class="diferencial-card">
+                        <h3>Visibilidade Regional e Nichada</h3>
+                        <p>Seja encontrado por quem busca sua especialidade. Seja ansiedade, depressão, luto ou terapia de casal, nosso algoritmo direciona o público certo.</p>
+                    </div>
+                    <div class="diferencial-card">
+                        <h3>Autonomia Total de Agenda</h3>
+                        <p>Você define seus horários, valores e disponibilidade. A plataforma trabalha para você, não o contrário. Sincronize sua vida pessoal com a profissional com um clique.</p>
+                    </div>
+                    <div class="diferencial-card">
+                        <h3>Relatórios de Desempenho</h3>
+                        <p>Entenda de onde vêm seus pacientes e qual sua taxa de retenção. Dados reais para você tomar decisões sobre sua carreira.</p>
+                    </div>
+                </div>
+                <div class="mobile-scroll-hint">
+                    <div class="scroll-indicator-step"><span class="mouse dark"><span class="wheel"></span></span></div>
+                </div>
+            </div>
             <div class="wave-divider wave-bottom">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
-                    <path fill="#ffffff" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                    <path fill="#fdfaf6" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
                 </svg>
+            </div>
+        </section>
+
+        <!-- MATCH SCIENCE -->
+        <section class="match-section" style="background-color: #fdfaf6;">
+            <div class="container">
+                <h2 class="titulo-secao">Por que o nosso 'Match' é diferente?</h2>
+                <div class="texto-leitura">
+                    <p>Não acreditamos em listas aleatórias de nomes. O algoritmo da Yelo utiliza variáveis psicométricas e preferências terapêuticas para cruzar a necessidade do paciente com a expertise do profissional.</p>
+                    <p>Isso resulta em uma Aliança Terapêutica muito mais forte desde a primeira sessão, reduzindo drasticamente o churn (desistência) e aumentando o sucesso do tratamento. É tecnologia servindo à empatia.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ -->
+        <section class="faq-psi-section" style="background-color: #fff;">
+            <div class="wave-divider wave-top">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#fdfaf6" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
+            <div class="container">
+                <h2 class="titulo-secao">Perguntas Frequentes</h2>
+                <div class="acordeao-container">
+                    <div class="acordeao-item"><button class="acordeao-titulo">Como recebo pelos meus atendimentos?</button><div class="acordeao-conteudo"><p>O repasse é feito diretamente na sua conta bancária cadastrada, de forma segura e transparente. Você acompanha todo o fluxo financeiro pelo seu painel exclusivo.</p></div></div>
+                    <div class="acordeao-item"><button class="acordeao-titulo">Posso usar a Yelo mesmo já tendo meu consultório físico?</button><div class="acordeao-conteudo"><p>Com certeza. A Yelo funciona como um braço digital de divulgação e gestão, ideal tanto para quem atende exclusivamente online quanto para quem deseja aumentar o fluxo do consultório presencial.</p></div></div>
+                    <div class="acordeao-item"><button class="acordeao-titulo">Existe período de carência ou fidelidade?</button><div class="acordeao-conteudo"><p>Não. Acreditamos na parceria pela qualidade. Você pode alterar seu plano ou cancelar a qualquer momento, sem letras miúdas.</p></div></div>
+                    <div class="acordeao-item"><button class="acordeao-titulo">A plataforma emite recibos para o paciente?</button><div class="acordeao-conteudo"><p>Sim, o sistema automatiza a geração de documentos, facilitando a vida do paciente para reembolsos e a sua organização contábil.</p></div></div>
+                </div>
             </div>
         </section>
 
@@ -345,6 +556,9 @@
                         <a href="/psi_questionario.html" class="btn btn-outline" style="color: #1B4332; border-color: #1B4332; width: 100%;">Começar</a>
                     </div>
                 </div>
+                <div class="mobile-scroll-hint">
+                    <div class="scroll-indicator-step"><span class="mouse dark"><span class="wheel"></span></span></div>
+                </div>
             </div>
 
             <!-- Wave Bottom para conectar com a seção verde abaixo -->
@@ -369,14 +583,27 @@
                 <a href="/psi_questionario.html" class="btn-cta-principal" style="background-color: #FFEE8C; color: #1B4332;">Criar Perfil Profissional</a>
             </div>
 
-            <div class="wave-divider wave-bottom">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
-                    <path fill="#ffffff" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-                </svg>
-            </div>
         </section>
+
+        <!-- Botão Flutuante Mobile -->
+        <a href="/psi_questionario.html" class="btn-cta-principal floating-cta-mobile">Cadastrar Agora</a>
     </main>
 
     <%- include('partials/footer') %>
+
+    <script>
+        // Script para o Acordeão do FAQ
+        document.querySelectorAll('.acordeao-titulo').forEach(button => {
+            button.addEventListener('click', () => {
+                const content = button.nextElementSibling;
+                button.classList.toggle('ativo');
+                if (button.classList.contains('ativo')) {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                } else {
+                    content.style.maxHeight = "0";
+                }
+            });
+        });
+    </script>
 </body>
 </html>
