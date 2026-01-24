@@ -95,6 +95,7 @@
             gap: 30px;
             max-width: 1100px;
             margin: 50px auto 0;
+            justify-content: center;
         }
 
         .benefit-card {
@@ -130,6 +131,7 @@
             max-width: 1000px;
             margin: 50px auto 0;
             align-items: center; /* Alinha verticalmente */
+            justify-content: center;
         }
 
         .plan-card {
@@ -139,7 +141,14 @@
             padding: 40px 30px;
             transition: transform 0.3s ease;
             position: relative;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
+        /* Estilo Orgânico para Planos */
+        .plan-card:nth-child(1) { border-radius: 24px 60px 24px 60px; }
+        .plan-card:nth-child(2) { border-radius: 60px 24px 60px 24px; }
+        .plan-card:nth-child(3) { border-radius: 24px 60px 24px 60px; }
 
         .plan-card.featured {
             border: 2px solid #1B4332;
@@ -164,10 +173,10 @@
         }
 
         .plan-name { font-family: var(--font-titulos); font-size: 1.5rem; color: #333; margin-bottom: 10px; }
-        .plan-price { font-size: 2.5rem; font-weight: 700; color: #1B4332; margin-bottom: 20px; }
+        .plan-price { font-size: 1.2rem; font-weight: 700; color: #1B4332; margin-bottom: 20px; opacity: 0.8; }
         .plan-price span { font-size: 1rem; color: #666; font-weight: 400; }
         
-        .plan-features { list-style: none; padding: 0; margin: 0 0 30px 0; text-align: left; }
+        .plan-features { list-style: none; padding: 0; margin: 0 0 30px 0; text-align: left; flex-grow: 1; }
         .plan-features li { padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05); color: #555; display: flex; gap: 10px; align-items: center; }
         .plan-features li::before { content: '✓'; color: #1B4332; font-weight: bold; }
 
@@ -196,8 +205,15 @@
         .wave-top { top: -1px; transform: rotate(180deg); }
         .wave-bottom { bottom: -1px; }
 
-        /* Responsividade */
-        @media (max-width: 768px) {
+        /* Responsividade e Ajustes Desktop */
+        @media (min-width: 992px) {
+            /* Força 3 colunas lado a lado no desktop */
+            .benefits-grid, .plans-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 991px) {
             .hero-psi h1 { font-size: 2.5rem; }
             .stats-grid { grid-template-columns: 1fr; gap: 20px; padding: 30px; }
             .plan-card.featured { transform: none; margin: 20px 0; }
@@ -258,12 +274,12 @@
                         <p>Nosso algoritmo conecta você a pacientes que realmente se beneficiam da sua abordagem, aumentando a adesão e reduzindo desistências.</p>
                     </div>
                     <div class="benefit-card">
-                        <span class="benefit-icon"></span>
+                        <span class="benefit-icon">📊</span>
                         <h3>Gestão Financeira</h3>
                         <p>Painel completo de faturamento. Visualize receitas, emita recibos automáticos e receba com segurança, sem cobrar o paciente diretamente.</p>
                     </div>
                     <div class="benefit-card">
-                        <span class="benefit-icon"></span>
+                        <span class="benefit-icon">🔄</span>
                         <h3>Retenção e Fidelização</h3>
                         <p>Sistema de lembretes automáticos via WhatsApp e reagendamento simplificado para reduzir faltas e manter a continuidade do tratamento.</p>
                     </div>
@@ -292,7 +308,7 @@
                     <!-- Plano Essencial -->
                     <div class="plan-card">
                         <h3 class="plan-name">Essencial</h3>
-                        <div class="plan-price">R$ 59<span>/mês</span></div>
+                        <div class="plan-price">Disponível na plataforma</div>
                         <ul class="plan-features">
                             <li>Perfil verificado</li>
                             <li>Match Inteligente</li>
@@ -306,7 +322,7 @@
                     <div class="plan-card featured">
                         <span class="plan-tag">Mais Popular</span>
                         <h3 class="plan-name">Clínico</h3>
-                        <div class="plan-price">R$ 99<span>/mês</span></div>
+                        <div class="plan-price">Disponível na plataforma</div>
                         <ul class="plan-features">
                             <li>Perfil destacado</li>
                             <li>Intervisão e Workshops</li>
@@ -319,7 +335,7 @@
                     <!-- Plano Referência -->
                     <div class="plan-card">
                         <h3 class="plan-name">Referência</h3>
-                        <div class="plan-price">R$ 149<span>/mês</span></div>
+                        <div class="plan-price">Disponível na plataforma</div>
                         <ul class="plan-features">
                             <li>Máxima visibilidade</li>
                             <li>Supervisão Clínica</li>
@@ -329,6 +345,13 @@
                         <a href="/psi_questionario.html" class="btn btn-outline" style="color: #1B4332; border-color: #1B4332; width: 100%;">Começar</a>
                     </div>
                 </div>
+            </div>
+
+            <!-- Wave Bottom para conectar com a seção verde abaixo -->
+            <div class="wave-divider wave-bottom" style="z-index: 2;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#1B4332" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
             </div>
         </section>
 
@@ -344,6 +367,12 @@
                 <h2>Pronto para transformar sua carreira?</h2>
                 <p>Junte-se a centenas de psicólogos que estão construindo o futuro da saúde mental no Brasil.</p>
                 <a href="/psi_questionario.html" class="btn-cta-principal" style="background-color: #FFEE8C; color: #1B4332;">Criar Perfil Profissional</a>
+            </div>
+
+            <div class="wave-divider wave-bottom">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#ffffff" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
             </div>
         </section>
     </main>
