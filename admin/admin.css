@@ -113,7 +113,7 @@ body.pagina-dashboard::after {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    width: 100%;
+    flex-grow: 1;
     padding: 12px;
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.05);
@@ -160,6 +160,33 @@ body.pagina-dashboard::after {
     padding-top: 20px;
     text-align: center;
 }
+
+.sidebar-btn-wrapper {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+/* Botão Home (Novo) */
+.btn-sidebar-home {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    color: var(--branco-puro);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+.btn-sidebar-home:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
 .sidebar-footer .nome-admin { 
     font-family: var(--font-titulos); /* Fonte de Destaque */
     font-size: 1.1rem; /* Tamanho maior para destaque */
