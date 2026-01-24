@@ -68,11 +68,14 @@
 
         .quality-card {
             background: #F8F3ED; /* Creme */
-            padding: 40px 30px;
+            padding: 30px;
             border-radius: 24px 60px 24px 60px; /* Forma orgânica */
             transition: transform 0.3s ease;
             border: 1px solid rgba(0,0,0,0.03);
-            text-align: center;
+            text-align: left; /* Melhor legibilidade */
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
         .quality-card:nth-child(2) {
             background: #E6F4F1; /* Verde suave */
@@ -88,24 +91,33 @@
             box-shadow: 0 15px 30px rgba(27, 67, 50, 0.08);
         }
 
+        /* Header do Card (Ícone + Título) */
+        .card-header-flex {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
         .quality-icon {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
+            font-size: 2rem;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 80px;
-            height: 80px;
+            width: 60px;
+            height: 60px;
             background: #fff;
             border-radius: 50%;
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            flex-shrink: 0;
         }
 
         .quality-card h3 {
             color: #1B4332;
-            margin-bottom: 15px;
+            margin: 0;
             font-family: var(--font-titulos);
-            font-size: 1.5rem;
+            font-size: 1.3rem;
+            line-height: 1.2;
         }
         
         .quality-card p {
@@ -113,6 +125,7 @@
             font-size: 1rem;
             color: #555;
             line-height: 1.6;
+            margin: 0;
         }
 
         /* --- SEÇÃO COLLAGE (Nova - Estilo Index) --- */
@@ -262,6 +275,26 @@
             .container-collage { grid-template-columns: 1fr; text-align: center; }
             .collage-wrapper { height: 350px; margin-top: 40px; }
             .hero-psis h1 { font-size: 2.5rem; }
+
+            /* Scroll Snap Horizontal para Cards no Mobile */
+            .quality-grid {
+                display: flex;
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                gap: 15px;
+                padding-bottom: 20px; /* Espaço para scroll */
+                /* Remove grid layout */
+                grid-template-columns: none;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none; /* Firefox */
+            }
+            .quality-grid::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+            
+            .quality-card {
+                flex: 0 0 85%; /* Mostra 85% do card para incentivar scroll */
+                scroll-snap-align: center;
+                min-width: 280px;
+            }
         }
     </style>
 </head>
@@ -277,8 +310,8 @@
             <svg class="doodle-bg right" viewBox="0 0 200 200" fill="currentColor"><path d="M38.1,-63.8C49.3,-54.6,58.3,-43.3,65.5,-30.8C72.7,-18.3,78.1,-4.6,76.3,8.3C74.5,21.2,65.5,33.3,55.3,43.4C45.1,53.5,33.7,61.6,21.1,66.1C8.5,70.6,-5.3,71.5,-18.4,67.8C-31.5,64.1,-43.9,55.8,-53.4,45.2C-62.9,34.6,-69.5,21.7,-70.8,8.2C-72.1,-5.3,-68.1,-19.4,-59.6,-31.1C-51.1,-42.8,-38.1,-52.1,-25.3,-60.1C-12.5,-68.1,0.1,-74.8,12.7,-74.8C25.3,-74.8,38.1,-68.1,38.1,-63.8Z" transform="translate(100 100)" /></svg>
 
             <div class="container">
-                <h1>Quem cuida de você na Yelo?</h1>
-                <p>Não somos apenas um algoritmo. Somos uma comunidade de profissionais reais, verificados e comprometidos com a ética e o acolhimento humano.</p>
+                <h1>Quem vai caminhar com você nessa jornada?</h1>
+                <p>"A tecnologia conecta, mas é o ser humano que acolhe. Nossa comunidade é formada por psicólogos reais, diversos e comprometidos em ouvir sua história sem julgamentos."</p>
             </div>
 
             <div class="wave-divider">
@@ -292,19 +325,25 @@
         <section class="quality-section">
             <div class="quality-grid">
                 <div class="quality-card">
-                    <span class="quality-icon">🛡️</span>
-                    <h3>Verificação Rigorosa</h3>
-                    <p>Todos os profissionais passam por uma checagem de CRP ativo e regularidade junto ao Conselho Federal de Psicologia antes de entrarem na plataforma.</p>
+                    <div class="card-header-flex">
+                        <span class="quality-icon">🛡️</span>
+                        <h3>Segurança Verificada</h3>
+                    </div>
+                    <p>"Sua tranquilidade vem primeiro. Todos os nossos profissionais têm registro ativo no Conselho Federal de Psicologia (CRP), validado rigorosamente por nossa equipe."</p>
                 </div>
                 <div class="quality-card">
-                    <span class="quality-icon">🌍</span>
-                    <h3>Diversidade Real</h3>
-                    <p>Acreditamos que a representatividade importa. Nossa rede valoriza profissionais de diferentes origens, raças, gêneros e vivências para que você se sinta compreendido.</p>
+                    <div class="card-header-flex">
+                        <span class="quality-icon">🌍</span>
+                        <h3>Sua Identidade Importa</h3>
+                    </div>
+                    <p>"Acreditamos na cura através da identificação. Valorizamos a pluralidade de raças, gêneros e vivências para que você encontre alguém que realmente entenda o seu mundo."</p>
                 </div>
                 <div class="quality-card">
-                    <span class="quality-icon">🤝</span>
-                    <h3>Compromisso Ético</h3>
-                    <p>Aqui, a terapia é levada a sério. Nossos psicólogos seguem o código de ética, garantindo sigilo, respeito e um espaço seguro para sua fala.</p>
+                    <div class="card-header-flex">
+                        <span class="quality-icon">🤝</span>
+                        <h3>Espaço Seguro</h3>
+                    </div>
+                    <p>"Aqui, sua fala é sagrada. Seguimos um código de ética rígido que garante sigilo absoluto, respeito e um ambiente livre de preconceitos."</p>
                 </div>
             </div>
         </section>
@@ -351,8 +390,8 @@
         <!-- LIVING GRID (MOVIDO) -->
         <section class="living-grid-section">
             <div class="container">
-                <h2 class="titulo-secao" style="margin-bottom: 10px; color: #1B4332;">Nossa Comunidade</h2>
-                <p class="subtitulo-secao" style="margin-bottom: 30px;">Conheça alguns dos profissionais que estão prontos para te acolher.</p>
+                <h2 class="titulo-secao" style="margin-bottom: 10px; color: #1B4332;">Conheça quem está pronto para te ouvir</h2>
+                <p class="subtitulo-secao" style="margin-bottom: 30px;">Pessoas reais, qualificadas e disponíveis para te acolher agora.</p>
             </div>
 
             <div class="living-grid" id="living-grid">
