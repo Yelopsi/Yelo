@@ -1,306 +1,325 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <title>Para Profissionais - Yelo</title>
+    <title>Para Psicólogos | Expanda seu consultório com a Yelo</title>
+    <meta name="description" content="A plataforma que valoriza sua carreira. Receba pacientes particulares, tenha visibilidade e faça parte de uma comunidade ética.">
     <%- include('partials/head') %>
     <style>
-        /* Doodles de Fundo */
-        .doodle-bg {
+        /* --- ESTILOS ESPECÍFICOS DA LANDING PAGE PSI --- */
+        
+        /* Hero Section */
+        .hero-psi {
+            padding: 100px 20px 140px;
+            background-color: #1B4332;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+            margin-top: -2px;
+            text-align: center;
+        }
+
+        .hero-psi h1 {
+            font-family: var(--font-titulos);
+            font-size: 3.5rem;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .hero-psi p {
+            font-size: 1.25rem;
+            max-width: 700px;
+            margin: 0 auto 40px;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        /* Doodles Hero */
+        .doodle-hero {
             position: absolute;
-            opacity: 0.4;
+            opacity: 0.15;
             pointer-events: none;
-            z-index: 0;
-            color: #e0e0e0;
         }
-        .doodle-bg.top-left { top: 50px; left: -50px; width: 300px; transform: rotate(45deg); }
-        .doodle-bg.bottom-right { bottom: 50px; right: -50px; width: 250px; transform: rotate(-45deg); }
-        
-        /* Organic Cards Override */
-        .coluna-item {
-            border-radius: 24px 60px 24px 60px !important;
-            background-color: #F8F3ED !important; /* Creme */
-            border: 1px solid rgba(0,0,0,0.03) !important;
-        }
-        .coluna-item:nth-child(2n) {
-            border-radius: 60px 24px 60px 24px !important;
-            background-color: #E6F4F1 !important; /* Verde suave */
-        }
-        
-        .pricing-card {
-            border-radius: 24px !important;
-            border: 1px solid rgba(0,0,0,0.05) !important;
+        .doodle-hero.left { top: 10%; left: -5%; width: 300px; transform: rotate(15deg); }
+        .doodle-hero.right { bottom: 20%; right: -5%; width: 250px; transform: rotate(-15deg); }
+
+        /* Seção de Números (Prova Social) */
+        .stats-section {
             background-color: #fff;
+            padding: 60px 20px;
+            position: relative;
+            z-index: 2;
+            margin-top: -60px; /* Sobrepõe a onda */
         }
-        .pricing-card:nth-child(2) {
-             transform: scale(1.05);
-             z-index: 2;
-             border-color: var(--verde-escuro) !important;
-             box-shadow: 0 15px 40px rgba(27, 67, 50, 0.1) !important;
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+            border: 1px solid rgba(0,0,0,0.05);
         }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            display: block;
+            font-family: var(--font-titulos);
+            font-size: 2.5rem;
+            color: #1B4332;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* Seção Benefícios (Grid Orgânico) */
+        .benefits-section {
+            padding: 100px 20px;
+            background-color: #fdfaf6;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1100px;
+            margin: 50px auto 0;
+        }
+
+        .benefit-card {
+            background: #fff;
+            padding: 40px 30px;
+            border-radius: 24px 60px 24px 60px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+        .benefit-card:nth-child(2) { border-radius: 60px 24px 60px 24px; background-color: #F0FDF4; }
+        .benefit-card:nth-child(3) { border-radius: 24px 60px 24px 60px; background-color: #FFFBEB; }
+
+        .benefit-card:hover { transform: translateY(-10px); }
+
+        .benefit-icon { font-size: 2.5rem; margin-bottom: 20px; display: block; }
+        .benefit-card h3 { font-family: var(--font-titulos); color: #1B4332; margin-bottom: 15px; font-size: 1.4rem; }
+        .benefit-card p { color: #555; line-height: 1.6; }
+
+        /* Seção Planos */
+        .plans-section {
+            padding: 100px 20px;
+            background-color: #fff;
+            text-align: center;
+        }
+
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            margin: 50px auto 0;
+            align-items: center; /* Alinha verticalmente */
+        }
+
+        .plan-card {
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 16px;
+            padding: 40px 30px;
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+
+        .plan-card.featured {
+            border: 2px solid #1B4332;
+            transform: scale(1.05);
+            box-shadow: 0 15px 40px rgba(27, 67, 50, 0.1);
+            z-index: 2;
+            background-color: #F0FDF4;
+        }
+
+        .plan-tag {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1B4332;
+            color: #fff;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .plan-name { font-family: var(--font-titulos); font-size: 1.5rem; color: #333; margin-bottom: 10px; }
+        .plan-price { font-size: 2.5rem; font-weight: 700; color: #1B4332; margin-bottom: 20px; }
+        .plan-price span { font-size: 1rem; color: #666; font-weight: 400; }
         
-        .card-ecossistema {
-            border-radius: 60px 24px 60px 24px !important;
-            background-color: #FFF8E1 !important; /* Amarelo suave */
-            border: 1px solid rgba(0,0,0,0.03) !important;
+        .plan-features { list-style: none; padding: 0; margin: 0 0 30px 0; text-align: left; }
+        .plan-features li { padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05); color: #555; display: flex; gap: 10px; }
+        .plan-features li::before { content: '✓'; color: #1B4332; font-weight: bold; }
+
+        /* CTA Final */
+        .cta-section {
+            padding: 100px 20px;
+            background-color: #1B4332;
+            text-align: center;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-content { position: relative; z-index: 2; max-width: 700px; margin: 0 auto; }
+        .cta-section h2 { color: #fff; font-size: 2.5rem; margin-bottom: 20px; }
+        .cta-section p { font-size: 1.2rem; opacity: 0.9; margin-bottom: 40px; }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .hero-psi h1 { font-size: 2.5rem; }
+            .stats-grid { grid-template-columns: 1fr; gap: 20px; padding: 30px; }
+            .plan-card.featured { transform: none; margin: 20px 0; }
         }
     </style>
 </head>
-<body class="pagina-com-conteudo-atras">
+<body>
 
     <%- include('partials/header') %>
 
     <main>
-        <section class="hero-profissionais hero-fundo-escuro secao-com-onda-inferior">
-            <div class="hero-texto container">
-                <h1>Mais que uma plataforma, um ecossistema para sua carreira de psicólogo.</h1>
-                <h2>Pare de disputar pacientes em classificados de massa. Na Yelo, os pacientes qualificados encontram você.</h2>
-                <p>A Yelo inverte a lógica da captação. Não somos uma lista aberta. Usamos um sistema de curadoria inteligente que só convida você para a plataforma quando identificamos uma demanda real de pacientes para o seu perfil.</p>
-                <a href="/psi_questionario.html" class="btn-cta-principal">Quero fazer parte</a>
+        <!-- HERO -->
+        <section class="hero-psi">
+            <svg class="doodle-hero left" viewBox="0 0 200 200" fill="currentColor"><path d="M45.7,-76.3C58.9,-69.3,69.1,-55.6,76.3,-41.2C83.5,-26.8,87.7,-11.7,85.6,2.6C83.5,16.9,75.1,30.4,65.6,42.2C56.1,54,45.5,64.1,33.3,70.3C21.1,76.5,7.3,78.8,-5.3,76.9C-17.9,75,-34.7,68.9,-48.6,59.6C-62.5,50.3,-73.5,37.8,-79.6,23.3C-85.7,8.8,-86.9,-7.7,-80.7,-21.8C-74.5,-35.9,-60.9,-47.6,-46.8,-54.3C-32.7,-61,-18.1,-62.7,-2.9,-62.2C12.3,-61.7,24.6,-59,32.5,-83.3L45.7,-76.3Z" transform="translate(100 100)" /></svg>
+            <svg class="doodle-hero right" viewBox="0 0 200 200" fill="currentColor"><path d="M38.1,-63.8C49.3,-54.6,58.3,-43.3,65.5,-30.8C72.7,-18.3,78.1,-4.6,76.3,8.3C74.5,21.2,65.5,33.3,55.3,43.4C45.1,53.5,33.7,61.6,21.1,66.1C8.5,70.6,-5.3,71.5,-18.4,67.8C-31.5,64.1,-43.9,55.8,-53.4,45.2C-62.9,34.6,-69.5,21.7,-70.8,8.2C-72.1,-5.3,-68.1,-19.4,-59.6,-31.1C-51.1,-42.8,-38.1,-52.1,-25.3,-60.1C-12.5,-68.1,0.1,-74.8,12.7,-74.8C25.3,-74.8,38.1,-68.1,38.1,-63.8Z" transform="translate(100 100)" /></svg>
+
+            <div class="container" style="padding-bottom: 0;">
+                <h1>Viva da Psicologia com autonomia e segurança</h1>
+                <p>A Yelo conecta você a pacientes que buscam exatamente a sua abordagem. Simplifique sua gestão, receba pagamentos garantidos e foque no que importa: o atendimento.</p>
+                <a href="/psi_questionario.html" class="btn-cta-principal" style="background-color: #FFEE8C; color: #1B4332;">Cadastrar Consultório</a>
             </div>
 
-            <div class="wave-divider-bottom" style="line-height: 0;">
-                <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" style="display: block; width: 100%; height: 80px; transform: scaleY(-1);">
-                    <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" style="fill:#FFFFFF;"></path>
+            <div class="wave-divider" style="bottom: -1px;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#ffffff" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
                 </svg>
             </div>
         </section>
 
-        <section class="secao-conteudo-pagina secao-com-onda-inferior" style="background-color: #FFFFFF; position: relative; overflow: hidden;">
-            <svg class="doodle-bg top-left" viewBox="0 0 200 200" fill="currentColor"><path d="M45.7,-76.3C58.9,-69.3,69.1,-55.6,76.3,-41.2C83.5,-26.8,87.7,-11.7,85.6,2.6C83.5,16.9,75.1,30.4,65.6,42.2C56.1,54,45.5,64.1,33.3,70.3C21.1,76.5,7.3,78.8,-5.3,76.9C-17.9,75,-34.7,68.9,-48.6,59.6C-62.5,50.3,-73.5,37.8,-79.6,23.3C-85.7,8.8,-86.9,-7.7,-80.7,-21.8C-74.5,-35.9,-60.9,-47.6,-46.8,-54.3C-32.7,-61,-18.1,-62.7,-2.9,-62.2C12.3,-61.7,24.6,-59,32.5,-83.3L45.7,-76.3Z" transform="translate(100 100)" /></svg>
-            <svg class="doodle-bg bottom-right" viewBox="0 0 200 200" fill="currentColor"><path d="M38.1,-63.8C49.3,-54.6,58.3,-43.3,65.5,-30.8C72.7,-18.3,78.1,-4.6,76.3,8.3C74.5,21.2,65.5,33.3,55.3,43.4C45.1,53.5,33.7,61.6,21.1,66.1C8.5,70.6,-5.3,71.5,-18.4,67.8C-31.5,64.1,-43.9,55.8,-53.4,45.2C-62.9,34.6,-69.5,21.7,-70.8,8.2C-72.1,-5.3,-68.1,-19.4,-59.6,-31.1C-51.1,-42.8,-38.1,-52.1,-25.3,-60.1C-12.5,-68.1,0.1,-74.8,12.7,-74.8C25.3,-74.8,38.1,-68.1,38.1,-63.8Z" transform="translate(100 100)" /></svg>
+        <!-- STATS -->
+        <section class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">+2.000</span>
+                    <span class="stat-label">Pacientes Atendidos</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">4.9/5</span>
+                    <span class="stat-label">Nota Média</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">100%</span>
+                    <span class="stat-label">Profissionais Verificados</span>
+                </div>
+            </div>
+        </section>
 
-            <div class="container" style="position: relative; z-index: 2;">
-                <h2 class="titulo-secao">O modelo atual de captação de pacientes não funciona.</h2>
-                <p class="subtitulo-secao">
-                    Nós entendemos a frustração. O mercado de terapia online força o profissional a escolher entre dois caminhos que limitam seu crescimento:
-                </p>
+        <!-- BENEFÍCIOS -->
+        <section class="benefits-section">
+            <div class="container">
+                <h2 class="titulo-secao">Por que ser um parceiro Yelo?</h2>
+                <p class="subtitulo-secao">Não somos apenas um marketplace. Somos um ecossistema pensado para sustentar e alavancar sua carreira clínica.</p>
                 
-                <div class="layout-2-colunas" style="text-align: left;">
-                    <div class="coluna-item">
-                        <h3>O Risco do Custo Fixo</h3>
-                        <p>Pagar assinaturas mensais elevadas apenas para ter seu perfil listado em um catálogo digital gigante. Você paga caro pela "visibilidade", mas assume todo o risco de não converter pacientes.</p>
+                <div class="benefits-grid">
+                    <div class="benefit-card">
+                        <span class="benefit-icon">🎯</span>
+                        <h3>Match Inteligente</h3>
+                        <p>Nosso algoritmo conecta você a pacientes que realmente se beneficiam da sua abordagem, aumentando a adesão e reduzindo desistências.</p>
                     </div>
-                    <div class="coluna-item">
-                        <h3>A Punição sobre o Sucesso</h3>
-                        <p>Entrar em plataformas que cobram altas comissões sobre cada sessão realizada. Quanto mais você trabalha e fideliza seus pacientes, mais você paga. Você é penalizado por construir uma agenda cheia.</p>
+                    <div class="benefit-card">
+                        <span class="benefit-icon">💸</span>
+                        <h3>Pagamento Garantido</h3>
+                        <p>Diga adeus à cobrança constrangedora. O paciente paga pela plataforma e nós repassamos a você com segurança e previsibilidade.</p>
+                    </div>
+                    <div class="benefit-card">
+                        <span class="benefit-icon">🚀</span>
+                        <h3>Visibilidade Ética</h3>
+                        <p>Seu perfil é otimizado para ser encontrado. Invista na sua marca pessoal dentro de um ambiente que respeita o código de ética.</p>
                     </div>
                 </div>
-                <p style="margin-top: 30px;">Em ambos os casos, o foco está na plataforma, não no sucesso sustentável do psicólogo.</p>
             </div>
+        </section>
 
-            <div class="wave-divider-bottom" style="line-height: 0;">
-                <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" style="display: block; width: 100%; height: 80px; transform: scaleY(-1);">
-                    <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" style="fill:#f8f9fa;"></path>
+        <!-- PLANOS -->
+        <section class="plans-section">
+            <div class="container">
+                <h2 class="titulo-secao">Planos transparentes</h2>
+                <p class="subtitulo-secao">Escolha a opção que melhor se adapta ao momento da sua carreira. Sem fidelidade, cancele quando quiser.</p>
+
+                <div class="plans-grid">
+                    <!-- Plano Essencial -->
+                    <div class="plan-card">
+                        <h3 class="plan-name">Essencial</h3>
+                        <div class="plan-price">R$ 59<span>/mês</span></div>
+                        <ul class="plan-features">
+                            <li>Perfil verificado</li>
+                            <li>Até 5 contatos/mês</li>
+                            <li>Agenda básica</li>
+                            <li>Suporte por e-mail</li>
+                        </ul>
+                        <a href="/psi_questionario.html" class="btn btn-outline" style="color: #1B4332; border-color: #1B4332; width: 100%;">Começar</a>
+                    </div>
+
+                    <!-- Plano Clínico (Destaque) -->
+                    <div class="plan-card featured">
+                        <span class="plan-tag">Mais Popular</span>
+                        <h3 class="plan-name">Clínico</h3>
+                        <div class="plan-price">R$ 99<span>/mês</span></div>
+                        <ul class="plan-features">
+                            <li>Perfil destacado</li>
+                            <li>Até 15 contatos/mês</li>
+                            <li>Acesso à Comunidade</li>
+                            <li>Workshops exclusivos</li>
+                        </ul>
+                        <a href="/psi_questionario.html" class="btn btn-principal" style="width: 100%;">Assinar Agora</a>
+                    </div>
+
+                    <!-- Plano Referência -->
+                    <div class="plan-card">
+                        <h3 class="plan-name">Referência</h3>
+                        <div class="plan-price">R$ 149<span>/mês</span></div>
+                        <ul class="plan-features">
+                            <li>Máxima visibilidade</li>
+                            <li>Até 30 contatos/mês</li>
+                            <li>Selo de Especialista</li>
+                            <li>Suporte prioritário</li>
+                        </ul>
+                        <a href="/psi_questionario.html" class="btn btn-outline" style="color: #1B4332; border-color: #1B4332; width: 100%;">Começar</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA FINAL -->
+        <section class="cta-section">
+            <div class="wave-top" style="top: -1px; transform: rotate(180deg); position: absolute; width: 100%; left: 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none" style="display: block; width: 100%; height: 80px;">
+                    <path fill="#ffffff" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
                 </svg>
-            </div>
-        </section>
-
-        <section class="comparativo-secao secao-com-onda-inferior">
-            <div class="container">
-                <h2 class="titulo-secao">Compare e veja a diferença</h2>
-                <p class="subtitulo-secao">O modelo tradicional vs. O Ecossistema Yelo</p>
-                
-                <div class="tabela-comparativa">
-                    
-                    <div class="coluna-tabela">
-                        <h3>Outros Marketplaces</h3>
-                        <ul>
-                            <li class="icone-x">Cobram 15% a 40% de comissão por sessão</li>
-                            <li class="icone-x">Leilão de pacientes (quem paga mais aparece)</li>
-                            <li class="icone-x">Você é apenas um perfil em um catálogo</li>
-                            <li class="icone-x">Solidão clínica (sem suporte)</li>
-                            <li class="icone-x">Foco em volume e preço baixo</li>
-                        </ul>
-                    </div>
-
-                    <div class="coluna-tabela destaque">
-                        <div class="tag-destaque">A Escolha Inteligente</div>
-                        <h3>Ecossistema Yelo</h3>
-                        <ul>
-                            <li class="icone-check"><strong>100% do valor da sessão é seu</strong></li>
-                            <li class="icone-check">Curadoria de Match (Demanda qualificada)</li>
-                            <li class="icone-check">Perfil Verificado e Otimizado</li>
-                            <li class="icone-check"><strong>Supervisão e Intervisão Inclusas</strong></li>
-                            <li class="icone-check">Foco em excelência e valorização</li>
-                        </ul>
-                    </div>
-
-                </div>
-            </div>
-
-            <div class="wave-divider-bottom" style="line-height: 0;"><svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" style="display: block; width: 100%; height: 80px; transform: scaleY(-1);"><path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" style="fill:#FFFFFF;"></path></svg></div>
-        </section>
-
-        <section class="secao-conteudo-pagina secao-com-onda-inferior" style="background-color: #f8f9fa;">
-            <div class="container">
-                <h2 class="titulo-secao">A Yelo foca em Demanda Real, não em Volume.</h2>
-                <p class="subtitulo-secao">
-                    Nossa filosofia é simples: seu sucesso é o nosso sucesso. Por isso, criamos um ecossistema que valoriza seu tempo e sua prática clínica.
-                </p>
-
-                <div class="layout-2-colunas">
-                    <div class="coluna-item">
-                        <h3>1. O Fim da Prospecção Fria</h3>
-                        <p><strong>Nosso Modelo de Curadoria Inteligente</strong></p>
-                        <p>Não temos um botão "Pague e Cadastre-se". Só convidamos psicólogos quando nosso sistema detecta uma demanda real de pacientes para seu perfil.</p>
-                        <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
-                        <p style="font-size: 0.9rem; color: #555;">✅ Você recebe 100% dos leads qualificados.<br>🚫 Sem comissão.<br>🚫 Sem leilão por cliques.</p>
-                    </div>
-
-                    <div class="coluna-item">
-                        <h3>2. Comunidade de Excelência</h3>
-                        <p><strong>Mais que Pacientes: Evolução Constante</strong></p>
-                        <p>A Yelo é a única plataforma que integra o desenvolvimento da sua prática na assinatura.</p>
-                        
-                        <ul class="lista-com-icones" style="margin-top: 15px;">
-                            <li><strong>Intervisão Inclusa:</strong> Grupos mediados para troca de casos.</li>
-                            <li><strong>Formação Contínua:</strong> Workshops mensais com experts.</li>
-                            <li><strong>Supervisão:</strong> Acesso a grupos de supervisão qualificada.</li>
-                        </ul>
-                    </div>
-                </div>
             </div>
             
-            <div class="wave-divider-bottom" style="line-height: 0;">
-                <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" style="display: block; width: 100%; height: 80px; transform: scaleY(-1);">
-                    <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" style="fill:#FFFFFF;"></path>
-                </svg>
-            </div>
-        </section>
-
-        <section class="secao-conteudo-pagina" style="background-color: #FFFFFF; position: relative; overflow: hidden;">
-            <svg class="doodle-bg top-left" viewBox="0 0 200 200" fill="currentColor"><path d="M41.3,-70.5C54.4,-63.9,66.4,-55.4,75.2,-44.3C84,-33.2,89.6,-19.6,88.6,-6.4C87.6,6.8,80,19.6,71.5,31.1C63,42.6,53.6,52.8,42.5,60.8C31.4,68.8,18.6,74.6,5.2,75.5C-8.2,76.4,-21.8,72.4,-34.3,65.6C-46.8,58.8,-58.2,49.2,-66.8,37.4C-75.4,25.6,-81.2,11.6,-80.6,-2.1C-80,-15.8,-73,-29.2,-63.6,-40.2C-54.2,-51.2,-42.4,-59.8,-30.1,-66.9C-17.8,-74,-5,-79.6,6.9,-78.4C18.8,-77.2,37.6,-69.2,41.3,-70.5Z" transform="translate(100 100)" /></svg>
-
-            <div class="container" style="max-width: 1100px; position: relative; z-index: 2;">
-                <h2 class="titulo-secao">Planos desenhados para cada etapa da sua carreira.</h2>
-                <p class="subtitulo-secao">
-                    Sem taxas escondidas e sem comissões. Apenas um investimento fixo no seu crescimento. Os valores são exibidos em sua dashboard pessoal após o registro na lista de espera.
-                </p>
-
-                <div class="pricing-grid">
-                    
-                    <div class="pricing-card">
-                        <div class="pricing-card-header">
-                            <h3>Plano Essencial</h3>
-                            <p class="price-subtitle">Para quem busca leads qualificados e uma comunidade de pares.</p>
-                        </div>
-                        <ul class="pricing-card-features">
-                            <li>Acesso ao Marketplace Curado</li>
-                            <li>Recebimento de 100% dos Leads Qualificados</li>
-                            <li>Dashboard com Indicadores Simples</li>
-                            <li>Acesso aos Grupos de Intervisão</li>
-                            <li class="disabled">Acesso Gratuito aos Workshops Mensais</li>
-                            <li class="disabled">Dashboard com Indicadores Elaborados</li>
-                            <li class="disabled">Selo de "Perfil Verificado"</li>
-                            <li class="disabled">Acesso aos Grupos de Supervisão</li>
-                            <li class="disabled">Prioridade na Busca</li>
-                            <li class="disabled">Análise de Perfil e Otimização</li>
-                        </ul>
-                    </div>
-
-                    <div class="pricing-card">
-                        <div class="pricing-card-header">
-                            <h3>Plano Formação</h3>
-                            <p class="price-subtitle">Para quem quer otimizar a prática e acelerar o desenvolvimento.</p>
-                        </div>
-                        <ul class="pricing-card-features">
-                            <li>Acesso ao Marketplace Curado</li>
-                            <li>Recebimento de 100% dos Leads Qualificados</li>
-                            <li>Acesso aos Grupos de Intervisão</li>
-                            <li>Acesso Gratuito aos Workshops Mensais</li>
-                            <li>Dashboard com Indicadores Elaborados</li>
-                            <li>Selo de "Perfil Verificado"</li>
-                            <li class="disabled">Acesso aos Grupos de Supervisão</li>
-                            <li class="disabled">Prioridade na Busca</li>
-                            <li class="disabled">Análise de Perfil e Otimização</li>
-                        </ul>
-                    </div>
-
-                    <div class="pricing-card">
-                        <div class="pricing-card-header">
-                            <h3>Plano Ecossistema</h3>
-                            <p class="price-subtitle">A solução completa para excelência clínica e máxima performance.</p>
-                        </div>
-                        <ul class="pricing-card-features">
-                            <li>Acesso ao Marketplace Curado</li>
-                            <li>Recebimento de 100% dos Leads Qualificados</li>
-                            <li>Acesso aos Grupos de Intervisão</li>
-                            <li>Acesso Gratuito aos Workshops Mensais</li>
-                            <li>Dashboard com Indicadores Elaborados</li>
-                            <li>Selo de "Perfil Verificado"</li>
-                            <li>Acesso aos Grupos de Supervisão</li>
-                            <li>Prioridade na Busca</li>
-                            <li>Análise de Perfil e Otimização</li>
-                        </ul>
-                    </div>
-
-                </div>
-
-                <div style="text-align: center; margin-top: 40px;">
-                    <a href="/psi_questionario.html" class="btn-cta-principal">Quero fazer parte</a>
-                </div>
-
-            </div>
-
-            <div class="wave-divider-bottom" style="line-height: 0;">
-                <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" style="display: block; width: 100%; height: 80px; transform: scaleY(-1);">
-                    <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" style="fill:var(--off-white);"></path>
-                </svg>
-            </div>
-        </section>
-
-        <section class="secao-conteudo-pagina secao-com-onda-inferior">
-            <div class="container">
-                <h2 class="titulo-secao">Por que pagar caro por um classificado, quando você pode investir em um Ecossistema?</h2>
-                <p class="subtitulo-secao">
-                    Pense no investimento que outras plataformas de agendamento exigem. Algumas cobram assinaturas de alto custo apenas para que você tenha seu perfil listado em um catálogo superlotado.
-                </p>
-                <div class="card card-ecossistema">
-                    <p class="texto-destaque-eco">
-                        O nosso <span class="highlight-verde">Plano Ecossistema</span> foi desenhado para entregar um valor incomparável. Pelo que você pagaria em outras plataformas apenas pela "visibilidade", na Yelo você recebe:
-                    </p>
-                    
-                    <ul class="lista-com-icones" style="text-align: left; max-width: 800px; margin: 0 auto;">
-                        <li>Leads qualificados e baseados em demanda real.</li>
-                        <li>Acesso a Grupos de <strong>Supervisão</strong> (economia de alto valor).</li>
-                        <li>Acesso a Grupos de <strong>Intervisão</strong> (troca rica entre pares).</li>
-                        <li>Acesso a <strong>Workshops</strong> mensais (formação continuada).</li>
-                        <li>Prioridade na busca e consultoria de perfil.</li>
-                    </ul>
-
-                    <p style="margin-top: 30px; font-size: 1.3rem; font-family: var(--font-titulos); color: var(--verde-escuro);">
-                        A escolha é simples: você quer pagar por um anúncio ou investir na sua carreira?
-                    </p>
-                </div>
-            </div>
-
-            <div class="wave-divider-bottom" style="line-height: 0;">
-                <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" style="display: block; width: 100%; height: 80px; transform: scaleY(-1);">
-                    <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" style="fill:#f8f9fa;"></path>
-                </svg>
-            </div>
-        </section>
-
-        <section class="secao-conteudo-pagina cta-final" id="lista-espera">
-            <div class="container">
-                <h2 class="titulo-secao">Você não precisa de mais um marketplace. Você precisa de um parceiro.</h2>
-                <p class="subtitulo-secao">
-                    A Yelo está construindo uma comunidade de psicólogos que valorizam a excelência, a colaboração e o crescimento. Não estamos abertos para todos. Estamos abertos para os profissionais certos, no momento certo.
-                </p>
-                <p>
-                    Devido ao nosso modelo de curadoria, o acesso é feito por convite e lista de espera. Registre seu interesse para ser notificado quando uma vaga alinhada ao seu perfil for aberta.
-                </p>
-                <a href="/psi_questionario.html" class="btn-cta-principal">Quero fazer parte e ver os planos</a>
-            </div>
-        </section>
-        
-        <section class="aviso-crise ruido">
-            <div class="aviso-conteudo">
-                <div class="aviso-texto">
-                    <p>
-                        Se você está em crise ou qualquer outra pessoa pode estar em perigo, <strong>não</strong> use este site. <a href="/recursos_crise.html">Estes recursos</a> podem fornecer ajuda imediata.
-                    </p>
-                </div>
+            <div class="cta-content">
+                <h2>Pronto para transformar sua carreira?</h2>
+                <p>Junte-se a centenas de psicólogos que estão construindo o futuro da saúde mental no Brasil.</p>
+                <a href="/psi_questionario.html" class="btn-cta-principal" style="background-color: #FFEE8C; color: #1B4332;">Criar Perfil Profissional</a>
             </div>
         </section>
     </main>
