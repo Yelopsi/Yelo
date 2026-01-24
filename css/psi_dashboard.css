@@ -587,6 +587,48 @@ textarea#bio {
 #qna-answer-modal .btn { width: 100%; justify-content: center; }
 
 /* ==========================================================================
+   BOTTOM NAVIGATION (MOBILE)
+   ========================================================================== */
+.mobile-bottom-nav {
+    display: none; /* Escondido no Desktop */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #ffffff;
+    border-top: 1px solid #e0e0e0;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    z-index: 9999;
+    justify-content: space-around;
+    padding: 10px 0;
+    padding-bottom: max(10px, env(safe-area-inset-bottom)); /* Ajuste iPhone X+ */
+}
+
+.bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #999;
+    font-size: 0.7rem;
+    gap: 4px;
+    transition: color 0.2s;
+    width: 25%; /* Área de toque grande */
+}
+
+.bottom-nav-item svg {
+    width: 24px;
+    height: 24px;
+    stroke-width: 2px;
+}
+
+.bottom-nav-item.active {
+    color: var(--verde-escuro);
+    font-weight: 600;
+}
+
+
+/* ==========================================================================
    8. RESPONSIVIDADE MOBILE
    ========================================================================== */
 @media (max-width: 992px) {
@@ -645,8 +687,15 @@ textarea#bio {
     .menu-toggle.is-active span:nth-child(2) { opacity: 0; }
     .menu-toggle.is-active span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
 
+    /* Esconde o botão hambúrguer do topo, pois agora temos o "Menu" embaixo */
+    .menu-toggle { display: none !important; }
+
+    /* Mostra a Bottom Nav */
+    .mobile-bottom-nav { display: flex; }
+
     /* --- CONTEÚDO PRINCIPAL --- */
-    .dashboard-main { width: 100%; padding: 80px 20px 40px 20px; }
+    /* Ajuste de padding para não ficar escondido atrás da bottom nav */
+    .dashboard-main { width: 100%; padding: 40px 20px 90px 20px; }
 
     /* Empilha os campos do formulário de perfil no mobile para melhor UX */
     .profile-section .form-row {

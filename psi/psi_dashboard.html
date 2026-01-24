@@ -406,6 +406,29 @@
         </div>
     </div>
 
+    <!-- BOTTOM NAVIGATION (MOBILE ONLY) -->
+    <nav class="mobile-bottom-nav">
+        <a href="#" class="bottom-nav-item active" data-target-page="psi_visao_geral.html">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            <span>Início</span>
+        </a>
+        
+        <a href="#" class="bottom-nav-item" data-target-page="psi_pacientes.html">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+            <span>Agenda</span>
+        </a>
+
+        <a href="#" class="bottom-nav-item" data-target-page="psi_caixa_de_entrada.html">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            <span>Chat</span>
+        </a>
+
+        <a href="#" class="bottom-nav-item" id="bottom-nav-menu-trigger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            <span>Menu</span>
+        </a>
+    </nav>
+
     <script src="../config.js"></script>
     <script src="psi_dashboard.js"></script>
     <script src="psi_caixa_de_entrada.js"></script>
@@ -432,6 +455,35 @@
                         overlay.classList.remove('is-visible');
                     });
                 }
+
+            // --- LÓGICA DA BOTTOM NAV (MOBILE) ---
+            const bottomNavItems = document.querySelectorAll('.bottom-nav-item[data-target-page]');
+            const bottomMenuTrigger = document.getElementById('bottom-nav-menu-trigger');
+
+            // 1. Navegação Direta (Simula clique na sidebar para manter compatibilidade com SPA)
+            bottomNavItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetPage = item.getAttribute('data-target-page');
+                    
+                    // Atualiza visual ativo
+                    document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+                    item.classList.add('active');
+
+                    // Encontra e clica no link correspondente da sidebar
+                    const sidebarLink = document.querySelector(`.sidebar-nav a[data-page="${targetPage}"]`);
+                    if (sidebarLink) sidebarLink.click();
+                });
+            });
+
+            // 2. Botão Menu (Abre a Sidebar)
+            if (bottomMenuTrigger) {
+                bottomMenuTrigger.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    sidebar.classList.add('is-open');
+                    overlay.classList.add('is-visible');
+                });
+            }
 
             // --- NOVO: Fecha o menu ao clicar em um link ---
             const navLinks = document.querySelectorAll('.dashboard-sidebar .sidebar-nav a');
