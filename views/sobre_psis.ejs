@@ -6,71 +6,183 @@
     <meta name="description" content="Conheça a rede de psicólogos da Yelo. Profissionais verificados, diversos e qualificados prontos para te acolher.">
     <%- include('partials/head') %>
     <style>
-        /* Estilos específicos para Sobre Psis */
+        /* --- ESTÉTICA ORGÂNICA (Baseada na Home) --- */
+        
+        /* Doodles de Fundo */
+        .doodle-bg {
+            position: absolute;
+            opacity: 0.6;
+            pointer-events: none;
+            z-index: 1;
+            color: #e0e0e0;
+        }
+        .doodle-bg.left { top: 5%; left: -50px; width: 300px; transform: rotate(45deg); }
+        .doodle-bg.right { bottom: 5%; right: -50px; width: 250px; transform: rotate(-45deg); }
+        .doodle-bg.top-right { top: 10%; right: -30px; width: 180px; transform: rotate(120deg); opacity: 0.4; }
+
+        /* Hero */
         .hero-psis {
-            padding: 80px 20px 60px;
+            padding: 100px 20px 140px; /* Mais espaço embaixo para a wave */
             text-align: center;
             background-color: #fdfaf6;
             position: relative;
             overflow: hidden;
+            margin-top: -2px;
         }
 
         .hero-psis h1 {
             color: #1B4332;
             margin-bottom: 20px;
             font-family: var(--font-titulos);
+            font-size: 3rem;
+            position: relative;
+            z-index: 2;
         }
 
         .hero-psis p {
             max-width: 700px;
             margin: 0 auto;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             color: #555;
             line-height: 1.6;
+            position: relative;
+            z-index: 2;
         }
 
-        /* Seção de Qualidade/Segurança */
+        /* Seção de Qualidade (Cards Orgânicos) */
         .quality-section {
-            padding: 60px 20px;
+            padding: 80px 20px;
             background: #fff;
+            position: relative;
         }
 
         .quality-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            max-width: 1000px;
+            gap: 40px;
+            max-width: 1100px;
             margin: 0 auto;
+            position: relative;
+            z-index: 2;
         }
 
         .quality-card {
-            padding: 30px;
-            border-radius: 16px;
-            background: #f9f9f9;
-            border: 1px solid #eee;
+            background: #F8F3ED; /* Creme */
+            padding: 40px 30px;
+            border-radius: 24px 60px 24px 60px; /* Forma orgânica */
             transition: transform 0.3s ease;
+            border: 1px solid rgba(0,0,0,0.03);
+            text-align: center;
         }
+        .quality-card:nth-child(2) {
+            background: #E6F4F1; /* Verde suave */
+            border-radius: 60px 24px 60px 24px;
+        }
+        .quality-card:nth-child(3) {
+            background: #FFF8E1; /* Amarelo suave */
+            border-radius: 24px 60px 24px 60px;
+        }
+
         .quality-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(27, 67, 50, 0.08);
         }
 
         .quality-icon {
-            font-size: 2rem;
-            margin-bottom: 15px;
-            display: block;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         }
 
         .quality-card h3 {
             color: #1B4332;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             font-family: var(--font-titulos);
+            font-size: 1.5rem;
+        }
+        
+        .quality-card p {
+            font-family: var(--font-principal);
+            font-size: 1rem;
+            color: #555;
+            line-height: 1.6;
         }
 
-        /* --- LIVING GRID (Trazido da página Sobre) --- */
+        /* --- SEÇÃO COLLAGE (Nova - Estilo Index) --- */
+        .collage-section {
+            padding: 100px 20px 120px;
+            background-color: #F8F3ED; /* Creme suave */
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container-collage {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .collage-text h2 {
+            font-family: var(--font-titulos);
+            font-size: 2.8rem;
+            color: #1B4332;
+            line-height: 1.1;
+            margin-bottom: 25px;
+        }
+        
+        .collage-text p {
+            font-size: 1.15rem;
+            line-height: 1.7;
+            color: #555;
+            margin-bottom: 30px;
+        }
+
+        .collage-wrapper {
+            position: relative;
+            width: 100%;
+            height: 500px;
+        }
+
+        .collage-img {
+            position: absolute;
+            object-fit: cover;
+            box-shadow: 0 15px 35px rgba(27, 67, 50, 0.1);
+            transition: transform 0.4s ease;
+            background-color: #e0e0e0;
+        }
+        .collage-img:hover { transform: scale(1.05); z-index: 10; }
+
+        /* Posicionamento das Imagens */
+        .img-main {
+            width: 60%; height: 70%;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 150px 150px 20px 20px; /* Forma orgânica */
+            z-index: 5;
+        }
+        .img-sat-1 { width: 28%; aspect-ratio: 1; top: 5%; left: 5%; border-radius: 40% 60% 70% 30%; z-index: 4; }
+        .img-sat-2 { width: 25%; aspect-ratio: 1; bottom: 10%; right: 5%; border-radius: 50%; z-index: 6; }
+        .img-sat-3 { width: 22%; aspect-ratio: 1; top: 15%; right: 0; border-radius: 30% 70% 70% 30%; z-index: 3; }
+        .img-sat-4 { width: 24%; aspect-ratio: 1; bottom: 5%; left: 0; border-radius: 60% 40% 30% 70%; z-index: 6; }
+
+        /* Doodles */
+        .doodle { position: absolute; z-index: 1; pointer-events: none; color: #E63946; }
+        .doodle-lines { top: 20%; left: 20%; width: 80px; }
+
+        /* --- LIVING GRID --- */
         .living-grid-section {
-            padding: 60px 0 80px;
-            background-color: #fdfaf6;
+            padding: 100px 0 80px;
+            background-color: #fff; /* Branco para contraste */
             position: relative;
             text-align: center;
         }
@@ -119,9 +231,30 @@
         .fade-exit { opacity: 1; z-index: 1; transform: scale(1); }
         .fade-exit-active { opacity: 0; transform: scale(1.05); }
 
+        /* Wave Dividers */
+        .wave-divider {
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            line-height: 0;
+            z-index: 2;
+        }
+        .wave-top {
+            position: absolute;
+            top: -1px;
+            left: 0;
+            width: 100%;
+            line-height: 0;
+            transform: rotate(180deg);
+        }
+
         @media (max-width: 768px) {
             .living-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
             .grid-cell:nth-child(n+17) { display: none; } /* Limita itens no mobile */
+            .container-collage { grid-template-columns: 1fr; text-align: center; }
+            .collage-wrapper { height: 350px; margin-top: 40px; }
+            .hero-psis h1 { font-size: 2.5rem; }
         }
     </style>
 </head>
@@ -132,9 +265,19 @@
     <main>
         <!-- HERO -->
         <section class="hero-psis">
+            <!-- Doodles -->
+            <svg class="doodle-bg left" viewBox="0 0 200 200" fill="currentColor"><path d="M45.7,-76.3C58.9,-69.3,69.1,-55.6,76.3,-41.2C83.5,-26.8,87.7,-11.7,85.6,2.6C83.5,16.9,75.1,30.4,65.6,42.2C56.1,54,45.5,64.1,33.3,70.3C21.1,76.5,7.3,78.8,-5.3,76.9C-17.9,75,-34.7,68.9,-48.6,59.6C-62.5,50.3,-73.5,37.8,-79.6,23.3C-85.7,8.8,-86.9,-7.7,-80.7,-21.8C-74.5,-35.9,-60.9,-47.6,-46.8,-54.3C-32.7,-61,-18.1,-62.7,-2.9,-62.2C12.3,-61.7,24.6,-59,32.5,-83.3L45.7,-76.3Z" transform="translate(100 100)" /></svg>
+            <svg class="doodle-bg right" viewBox="0 0 200 200" fill="currentColor"><path d="M38.1,-63.8C49.3,-54.6,58.3,-43.3,65.5,-30.8C72.7,-18.3,78.1,-4.6,76.3,8.3C74.5,21.2,65.5,33.3,55.3,43.4C45.1,53.5,33.7,61.6,21.1,66.1C8.5,70.6,-5.3,71.5,-18.4,67.8C-31.5,64.1,-43.9,55.8,-53.4,45.2C-62.9,34.6,-69.5,21.7,-70.8,8.2C-72.1,-5.3,-68.1,-19.4,-59.6,-31.1C-51.1,-42.8,-38.1,-52.1,-25.3,-60.1C-12.5,-68.1,0.1,-74.8,12.7,-74.8C25.3,-74.8,38.1,-68.1,38.1,-63.8Z" transform="translate(100 100)" /></svg>
+
             <div class="container">
                 <h1>Quem cuida de você na Yelo?</h1>
                 <p>Não somos apenas um algoritmo. Somos uma comunidade de profissionais reais, verificados e comprometidos com a ética e o acolhimento humano.</p>
+            </div>
+
+            <div class="wave-divider">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#ffffff" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
             </div>
         </section>
 
@@ -159,10 +302,46 @@
             </div>
         </section>
 
+        <!-- SEÇÃO COLLAGE (Humanidade) -->
+        <section class="collage-section">
+            <div class="wave-top">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#ffffff" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
+
+            <div class="container-collage">
+                <div class="collage-text">
+                    <h2>Humanidade acima da técnica</h2>
+                    <p>Acreditamos que a cura acontece no encontro. Por isso, nossa comunidade é formada por pessoas que amam o que fazem.</p>
+                    <p>Aqui você encontra especialistas em ansiedade, carreira, luto, relacionamentos e muito mais, prontos para te ouvir sem julgamentos.</p>
+                    <a href="/questionario.html" class="btn-cta-principal">Encontrar meu terapeuta</a>
+                </div>
+                
+                <div class="collage-wrapper">
+                    <!-- Doodles -->
+                    <svg class="doodle doodle-lines" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><path d="M10 50 Q 50 10 90 50" /><path d="M10 60 Q 50 20 90 60" /></svg>
+
+                    <!-- Imagens (Pessoas) -->
+                    <img src="https://images.pexels.com/photos/3778603/pexels-photo-3778603.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Psicóloga sorrindo" class="collage-img img-main">
+                    <img src="https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Psicóloga" class="collage-img img-sat-1">
+                    <img src="https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Psicólogo" class="collage-img img-sat-2">
+                    <img src="https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Psicóloga" class="collage-img img-sat-3">
+                    <img src="https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Psicólogo" class="collage-img img-sat-4">
+                </div>
+            </div>
+
+            <div class="wave-divider">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#ffffff" fill-opacity="1" d="M0,64L48,80C96,96,192,128,288,128C384,128,480,96,576,90.7C672,85,768,107,864,122.7C960,139,1056,149,1152,133.3C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
+        </section>
+
         <!-- LIVING GRID (MOVIDO) -->
         <section class="living-grid-section">
             <div class="container">
-                <h2 class="titulo-secao" style="margin-bottom: 10px; color: #1B4332;">Rostos de quem faz a Yelo</h2>
+                <h2 class="titulo-secao" style="margin-bottom: 10px; color: #1B4332;">Nossa Comunidade</h2>
                 <p class="subtitulo-secao" style="margin-bottom: 30px;">Conheça alguns dos profissionais que estão prontos para te acolher.</p>
             </div>
 
