@@ -242,6 +242,38 @@
             .rating-count { width: 100%; margin-top: 5px; }
         }
 
+        /* --- MOBILE SCROLL CARDS (INDEX) --- */
+        .mobile-scroll-indicator { display: none; }
+
+        @media (max-width: 768px) {
+            .grid-vantagens-organica, .grid-depoimentos {
+                display: flex;
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                gap: 15px;
+                padding-bottom: 20px;
+                grid-template-columns: none;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .grid-vantagens-organica::-webkit-scrollbar, .grid-depoimentos::-webkit-scrollbar { display: none; }
+            
+            .card-vantagem-organico, .card-depoimento-organico {
+                flex: 0 0 85%;
+                scroll-snap-align: center;
+                min-width: 280px;
+            }
+
+            .mobile-scroll-indicator {
+                display: flex;
+                justify-content: center;
+                margin-top: 10px;
+            }
+            /* Reutiliza estilos do mouse, apenas rotaciona */
+            .mobile-scroll-indicator .mouse { transform: rotate(90deg); border-color: #1B4332; }
+            .mobile-scroll-indicator .wheel { background-color: #1B4332; }
+        }
+
         /* --- ESTILOS DA NOVA SEÇÃO DE TERAPEUTAS (MODERNA) --- */
         .header-secao-moderno { text-align: center; max-width: 700px; margin: 0 auto 50px auto; }
         .badge-verde-suave { background: #e8f5e9; color: #1B4332; padding: 5px 15px; border-radius: 20px; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-bottom: 15px; }
@@ -457,6 +489,11 @@
                     </div>
                 </div>
             </div>
+            <div class="mobile-scroll-indicator">
+                <div class="scroll-indicator-step">
+                    <span class="mouse dark"><span class="wheel"></span></span>
+                </div>
+            </div>
         </section>
 
         <!-- SEÇÃO ORGÂNICA (COLLAGE) -->
@@ -629,6 +666,11 @@
                         </div>
                     </div>
                     <% }); %>
+                </div>
+                <div class="mobile-scroll-indicator">
+                    <div class="scroll-indicator-step">
+                        <span class="mouse dark"><span class="wheel"></span></span>
+                    </div>
                 </div>
             </div>
         </section>
