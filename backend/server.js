@@ -1966,6 +1966,11 @@ app.get('/profissionais', (req, res) => {
     res.render('profissionais');
 });
 
+// Rota para a página "Nossos Psis" (Sobre Psis)
+app.get('/sobre_psis', (req, res) => {
+    res.render('sobre_psis');
+});
+
 // --- ADICIONE ESTE BLOCO AQUI ---
 // Rota para a página de Registro do Psicólogo (Pós-Questionário)
 app.get('/psi-registro', (req, res) => {
