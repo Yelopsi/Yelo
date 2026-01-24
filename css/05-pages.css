@@ -13,7 +13,7 @@
 .wave-divider { position: absolute; bottom: -1px; left: 0; width: 100%; line-height: 0; border: none !important; }
 .wave-divider svg { display: block; width: 100%; height: 80px; }
 @media (max-width: 480px) {
-    .hero-texto h1 { font-size: 32px; }
+    .hero-texto h1 { font-size: 42px; }
     .hero-texto p { font-size: 16px; line-height: 1.4; }
 }
 
