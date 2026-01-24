@@ -22,7 +22,7 @@
 
         /* Hero */
         .hero-psis {
-            padding: 100px 20px 140px; /* Mais espaço embaixo para a wave */
+            padding: 80px 20px 120px; /* Mais espaço embaixo para a wave */
             text-align: center;
             background-color: #fdfaf6;
             position: relative;
@@ -51,7 +51,7 @@
 
         /* Seção de Qualidade (Cards Orgânicos) */
         .quality-section {
-            padding: 80px 20px;
+            padding: 50px 20px;
             background: #fff;
             position: relative;
         }
@@ -130,7 +130,7 @@
 
         /* --- SEÇÃO COLLAGE (Nova - Estilo Index) --- */
         .collage-section {
-            padding: 100px 20px 120px;
+            padding: 60px 20px 80px;
             background-color: #F8F3ED; /* Creme suave */
             position: relative;
             overflow: hidden;
@@ -200,7 +200,7 @@
 
         /* --- LIVING GRID --- */
         .living-grid-section {
-            padding: 100px 0 80px;
+            padding: 60px 0 60px;
             background-color: #fff; /* Branco para contraste */
             position: relative;
             text-align: center;
@@ -269,6 +269,10 @@
             z-index: 1;
         }
 
+        .mobile-scroll-hint {
+            display: none;
+        }
+
         @media (max-width: 768px) {
             .living-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
             .grid-cell:nth-child(n+17) { display: none; } /* Limita itens no mobile */
@@ -294,6 +298,24 @@
                 flex: 0 0 85%; /* Mostra 85% do card para incentivar scroll */
                 scroll-snap-align: center;
                 min-width: 280px;
+            }
+
+            /* Dica de Scroll Mobile */
+            .mobile-scroll-hint {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                margin-top: 15px;
+                color: #1B4332;
+                font-size: 0.9rem;
+                font-weight: 600;
+                opacity: 0.8;
+                animation: slideHint 1.5s infinite ease-in-out;
+            }
+            @keyframes slideHint {
+                0%, 100% { transform: translateX(0); }
+                50% { transform: translateX(5px); }
             }
         }
     </style>
@@ -345,6 +367,10 @@
                     </div>
                     <p>"Aqui, sua fala é sagrada. Seguimos um código de ética rígido que garante sigilo absoluto, respeito e um ambiente livre de preconceitos."</p>
                 </div>
+            </div>
+            <div class="mobile-scroll-hint">
+                <span>Deslize para ver mais</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </div>
         </section>
 
