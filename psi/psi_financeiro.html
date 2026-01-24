@@ -263,7 +263,7 @@
 
         function updateUI() {
             const income = events.filter(e => e.status === 'done').reduce((acc, curr) => acc + (curr.value || 0), 0);
-            const pending = events.filter(e => e.status === 'scheduled').reduce((acc, curr) => acc + (curr.value || 0), 0);
+            const pending = events.filter(e => e.status === 'scheduled' || e.status === 'confirmed').reduce((acc, curr) => acc + (curr.value || 0), 0);
             const totalExpenses = expenses.reduce((acc, curr) => acc + (curr.value || 0), 0);
 
             document.getElementById('fin-income').textContent = `R$ ${income.toFixed(2)}`;
