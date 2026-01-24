@@ -1057,6 +1057,10 @@
         }
 
         function highlightStatusBtn(btn, status) {
+            // Remove active class from all to ensure single selection
+            document.querySelectorAll('.btn-status').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
             if(status === 'confirmed') { btn.style.background = '#e8f5e9'; btn.style.borderColor = '#1B4332'; btn.style.color = '#1B4332'; }
             if(status === 'done') { btn.style.background = '#f0f0f0'; btn.style.borderColor = '#999'; btn.style.color = '#555'; }
             if(status === 'rescheduled') { btn.style.background = '#fff3e0'; btn.style.borderColor = '#f57c00'; btn.style.color = '#f57c00'; }
@@ -1126,7 +1130,7 @@
         });
 
         document.getElementById('btn-save-event-status').onclick = async () => {
-            const activeBtn = document.querySelector('.btn-status[style*="background"]');
+            const activeBtn = document.querySelector('.btn-status.active');
             if(!activeBtn) return;
             
             const status = activeBtn.dataset.status;
