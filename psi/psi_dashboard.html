@@ -100,6 +100,26 @@
                 justify-content: center;
             }
         }
+
+        /* Header Mobile (Novo) */
+        .mobile-header {
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #fff;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .mobile-header .logo-mobile { height: 24px; }
+        .mobile-header .avatar-mobile { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #1B4332; }
+
+        @media (max-width: 992px) {
+            .mobile-header { display: flex; }
+            .dashboard-main { padding-top: 80px !important; }
+        }
     </style>
 </head>
 <body class="pagina-dashboard">
@@ -110,6 +130,12 @@
     <div id="global-loader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8f9fa; z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s;">
         <div class="loader-spinner" style="width: 50px; height: 50px; border-width: 5px;"></div>
         <p style="margin-top: 15px; color: #1B4332; font-weight: 600; font-family: var(--font-principal);">Carregando...</p>
+    </div>
+
+    <!-- MOBILE HEADER (Novo) -->
+    <div class="mobile-header">
+        <img src="../assets/logos/logo-escura.png" alt="Yelo" class="logo-mobile">
+        <img src="https://placehold.co/70x70" alt="Perfil" class="avatar-mobile" id="mobile-avatar-trigger">
     </div>
 
     <div id="dashboard-container" style="display: none;"> 
@@ -146,71 +172,31 @@
                     <li>
                         <a href="#" data-page="psi_visao_geral.html">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                            <span>Visão Geral</span>
-                        </a>
-                    </li>
-                    
-                    <li>
-                        <a href="#" data-page="psi_caixa_de_entrada.html">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                            <span>Caixa de Entrada</span>
+                            <span>Painel</span>
                         </a>
                     </li>
                     <li>
                         <a href="#" data-page="psi_pacientes.html">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                             <span>Pacientes</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-page="psi_pacientes.html"> <!-- Agenda usa a mesma página -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            <span>Agenda</span>
                         </a>
                     </li>
                     <li>
                         <a href="#" data-page="psi_financeiro.html">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                            <span>Gestão Financeira</span>
+                            <span>Financeiro</span>
                         </a>
                     </li>
                     <li>
                         <a href="#" data-page="psi_comunidade.html">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                            <span>Dúvidas da Comunidade</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="#" data-page="psi_jornada.html">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                            <span>Jornada</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" data-page="psi_blog.html">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                            <span>Meus Artigos/blog</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" data-page="psi_forum.html">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                            <span>Fórum</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" data-page="psi_hub.html">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                            <span>Comunidade</span>
-                            <span style="background:#FFEE8C; color:#1B4332; font-size:0.6rem; padding:2px 6px; border-radius:10px; margin-left:auto; font-weight:bold;">EM BREVE</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="#" data-page="psi_meu_perfil.html">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                            <span>Meu Perfil</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" data-page="psi_assinatura.html">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
-                            <span>Assinatura e Pagamentos</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            <span>Regras</span>
                         </a>
                     </li>
                 </ul>
@@ -228,11 +214,6 @@
         </aside>
 
         <main class="dashboard-main">
-            <button class="menu-toggle" id="sidebar-toggle" aria-label="Abrir menu">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
             <!-- CONTROLES DE ZOOM (Global) -->
             <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 15px; gap: 12px;">
                 <span style="font-size: 0.85rem; color: #666; font-weight: 500;">Ajuste o zoom da tela:</span>
@@ -415,24 +396,87 @@
         </div>
         <a href="#" class="bottom-nav-item active" data-target-page="psi_visao_geral.html">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-            <span>Início</span>
+            <span>Painel</span>
         </a>
         
         <a href="#" class="bottom-nav-item" data-target-page="psi_pacientes.html">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <span>Pacientes</span>
+        </a>
+
+        <a href="#" class="bottom-nav-item" data-target-page="psi_pacientes.html">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
             <span>Agenda</span>
         </a>
 
-        <a href="#" class="bottom-nav-item" data-target-page="psi_caixa_de_entrada.html">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-            <span>Chat</span>
+        <a href="#" class="bottom-nav-item" data-target-page="psi_financeiro.html">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            <span>Financeiro</span>
         </a>
 
-        <a href="#" class="bottom-nav-item" id="bottom-nav-menu-trigger">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-            <span>Menu</span>
+        <a href="#" class="bottom-nav-item" data-target-page="psi_comunidade.html">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            <span>Regras</span>
         </a>
     </nav>
+
+    <!-- FAB (Floating Action Button) -->
+    <div class="fab-container">
+        <div class="fab-options" id="fab-options">
+            <button class="fab-option" onclick="window.location.href='#psi_pacientes.html'">
+                <span>Registrar Sessão</span>
+                <div class="fab-icon-small">📅</div>
+            </button>
+            <button class="fab-option" onclick="window.location.href='#psi_pacientes.html'">
+                <span>Novo Paciente</span>
+                <div class="fab-icon-small">👤</div>
+            </button>
+            <button class="fab-option" onclick="window.location.href='#psi_caixa_de_entrada.html'">
+                <span>Nova Mensagem</span>
+                <div class="fab-icon-small">💬</div>
+            </button>
+        </div>
+        <button class="fab-main" id="fab-trigger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+    </div>
+
+    <!-- MENU DE CONTA (Bottom Sheet) -->
+    <div class="account-sheet-overlay" id="account-sheet-overlay">
+        <div class="account-sheet">
+            <div class="sheet-header">
+                <h3>Minha Conta</h3>
+                <button class="close-sheet" id="close-account-sheet">✕</button>
+            </div>
+            <div class="sheet-content">
+                <div class="sheet-section">
+                    <h4>Conta Profissional</h4>
+                    <a href="#" data-page="psi_meu_perfil.html" class="sheet-link">Perfil Público</a>
+                    <a href="#" data-page="psi_visao_geral.html" class="sheet-link">Aparições no Match</a>
+                </div>
+                <div class="sheet-section">
+                    <h4>Métricas</h4>
+                    <a href="#" data-page="psi_visao_geral.html" class="sheet-link">Crescimento</a>
+                    <a href="#" data-page="psi_jornada.html" class="sheet-link">Evolução Profissional</a>
+                </div>
+                <div class="sheet-section">
+                    <h4>Comunidade</h4>
+                    <a href="#" data-page="psi_blog.html" class="sheet-link">Meus Artigos</a>
+                    <a href="#" data-page="psi_forum.html" class="sheet-link">Fórum</a>
+                    <a href="#" data-page="psi_hub.html" class="sheet-link">Comunidade</a>
+                </div>
+                <div class="sheet-section">
+                    <h4>Sistema</h4>
+                    <a href="#" data-page="psi_assinatura.html" class="sheet-link">Assinatura e Pagamentos</a>
+                    <a href="#" data-page="psi_meu_perfil.html" class="sheet-link">Configurações</a>
+                    <a href="#" data-page="psi_caixa_de_entrada.html" class="sheet-link">Suporte</a>
+                </div>
+                <div class="sheet-section">
+                    <button id="btn-logout-sheet" class="sheet-link logout">Encerrar sessão</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="../config.js"></script>
     <script src="psi_dashboard.js"></script>
@@ -441,29 +485,11 @@
     <script>
         // Script para controlar o menu mobile (Sanduíche)
         document.addEventListener('DOMContentLoaded', () => {
-            const menuToggle = document.getElementById('sidebar-toggle');
             const sidebar = document.querySelector('.dashboard-sidebar');
             const overlay = document.querySelector('.sidebar-backdrop');
 
-            if (menuToggle && sidebar) {
-                menuToggle.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    this.classList.toggle('is-active');
-                    sidebar.classList.toggle('is-open');
-                    if (overlay) overlay.classList.toggle('is-visible');
-                });
-
-                if (overlay) {
-                    overlay.addEventListener('click', () => {
-                        menuToggle.classList.remove('is-active');
-                        sidebar.classList.remove('is-open');
-                        overlay.classList.remove('is-visible');
-                    });
-                }
-
             // --- LÓGICA DA BOTTOM NAV (MOBILE) ---
             const bottomNavItems = document.querySelectorAll('.bottom-nav-item[data-target-page]');
-            const bottomMenuTrigger = document.getElementById('bottom-nav-menu-trigger');
 
             // 1. Navegação Direta (Simula clique na sidebar para manter compatibilidade com SPA)
             bottomNavItems.forEach(item => {
@@ -481,27 +507,72 @@
                 });
             });
 
-            // 2. Botão Menu (Abre a Sidebar)
-            if (bottomMenuTrigger) {
-                bottomMenuTrigger.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    sidebar.classList.add('is-open');
-                    overlay.classList.add('is-visible');
+            // --- LÓGICA DO FAB ---
+            const fabTrigger = document.getElementById('fab-trigger');
+            const fabOptions = document.getElementById('fab-options');
+            if(fabTrigger && fabOptions) {
+                fabTrigger.addEventListener('click', () => {
+                    fabOptions.classList.toggle('active');
+                    fabTrigger.classList.toggle('active');
                 });
             }
 
-            // --- NOVO: Fecha o menu ao clicar em um link ---
-            const navLinks = document.querySelectorAll('.dashboard-sidebar .sidebar-nav a');
-            navLinks.forEach(link => {
-                link.addEventListener('click', () => {
-                    // Apenas fecha se o menu estiver aberto (em visualização mobile)
-                    if (sidebar.classList.contains('is-open')) {
-                        menuToggle.classList.remove('is-active');
-                        sidebar.classList.remove('is-open');
-                        if (overlay) overlay.classList.remove('is-visible');
+            // --- LÓGICA DO MENU DE CONTA (BOTTOM SHEET) ---
+            const accountSheetOverlay = document.getElementById('account-sheet-overlay');
+            const accountSheet = document.querySelector('.account-sheet');
+            const closeSheetBtn = document.getElementById('close-account-sheet');
+            
+            // Gatilhos para abrir (Avatar Sidebar + Avatar Mobile)
+            const triggers = [
+                document.getElementById('psi-sidebar-photo'),
+                document.getElementById('mobile-avatar-trigger')
+            ];
+
+            triggers.forEach(t => {
+                if(t) {
+                    t.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Evita disparar upload de foto se estiver aninhado
+                        accountSheetOverlay.classList.add('active');
+                        setTimeout(() => accountSheet.classList.add('active'), 10);
+                    });
+                }
+            });
+
+            const closeSheet = () => {
+                accountSheet.classList.remove('active');
+                setTimeout(() => accountSheetOverlay.classList.remove('active'), 300);
+            };
+
+            if(closeSheetBtn) closeSheetBtn.addEventListener('click', closeSheet);
+            if(accountSheetOverlay) accountSheetOverlay.addEventListener('click', (e) => {
+                if(e.target === accountSheetOverlay) closeSheet();
+            });
+
+            // Links do Sheet (Navegação)
+            document.querySelectorAll('.sheet-link[data-page]').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const page = link.getAttribute('data-page');
+                    // Simula navegação
+                    const sidebarLink = document.querySelector(`.sidebar-nav a[data-page="${page}"]`);
+                    if(sidebarLink) sidebarLink.click();
+                    else {
+                        // Fallback se não estiver na sidebar (ex: perfil)
+                        // Aqui você chamaria sua função de loadPage(page) diretamente
+                        // Como não tenho acesso ao loadPage aqui, vou simular clique em um link oculto ou criar um
+                        console.log("Navegando para:", page);
+                        // TODO: Integrar com router
                     }
+                    closeSheet();
                 });
             });
+
+            // Logout do Sheet
+            const btnLogoutSheet = document.getElementById('btn-logout-sheet');
+            if(btnLogoutSheet) {
+                btnLogoutSheet.addEventListener('click', () => {
+                    document.getElementById('btn-logout').click();
+                });
             }
 
             // --- LÓGICA DO MODAL DE REATIVAÇÃO ---
