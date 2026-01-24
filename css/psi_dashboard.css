@@ -672,7 +672,8 @@ textarea#bio {
 
     /* --- SIDEBAR (MENU LATERAL) --- */
     .dashboard-sidebar {
-        position: fixed; top: 0; left: 0; height: 100%;
+        position: fixed; top: 0; left: 0; height: 100dvh;
+        padding-bottom: 100px; /* Garante que o rodapé não fique escondido */
         transform: translateX(-100%);
         transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         z-index: 100000; /* ACIMA de tudo (Chat e Backdrop) */
@@ -3106,7 +3107,7 @@ body.pagina-dashboard::after {
         top: 0;
         left: 0;
         right: 0;
-        bottom: 0;
+        bottom: 90px !important; /* Ajuste para input não ficar atrás da bottom nav */
         width: auto !important;
         height: auto !important;
         z-index: 99990; /* Alto, mas abaixo da Sidebar (100000) */
@@ -3945,7 +3946,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 /* Botão Flutuante (FAB) - Padrão Mobile */
 .mobile-fab {
     position: fixed;
-    bottom: 90px;
+    bottom: 120px; /* Ajuste para não ficar sobre a bottom nav */
     right: 25px;
     width: 56px;
     height: 56px;
