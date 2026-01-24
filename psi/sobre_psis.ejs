@@ -1,0 +1,293 @@
+<!-- c:\Users\Anderson\Desktop\Yelo\views\sobre_psis.ejs -->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title>Nossos Profissionais | Yelo</title>
+    <meta name="description" content="Conheça a rede de psicólogos da Yelo. Profissionais verificados, diversos e qualificados prontos para te acolher.">
+    <%- include('partials/head') %>
+    <style>
+        /* Estilos específicos para Sobre Psis */
+        .hero-psis {
+            padding: 80px 20px 60px;
+            text-align: center;
+            background-color: #fdfaf6;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-psis h1 {
+            color: #1B4332;
+            margin-bottom: 20px;
+            font-family: var(--font-titulos);
+        }
+
+        .hero-psis p {
+            max-width: 700px;
+            margin: 0 auto;
+            font-size: 1.1rem;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        /* Seção de Qualidade/Segurança */
+        .quality-section {
+            padding: 60px 20px;
+            background: #fff;
+        }
+
+        .quality-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .quality-card {
+            padding: 30px;
+            border-radius: 16px;
+            background: #f9f9f9;
+            border: 1px solid #eee;
+            transition: transform 0.3s ease;
+        }
+        .quality-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+
+        .quality-icon {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .quality-card h3 {
+            color: #1B4332;
+            margin-bottom: 10px;
+            font-family: var(--font-titulos);
+        }
+
+        /* --- LIVING GRID (Trazido da página Sobre) --- */
+        .living-grid-section {
+            padding: 60px 0 80px;
+            background-color: #fdfaf6;
+            position: relative;
+            text-align: center;
+        }
+        
+        .living-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            max-width: 900px;
+            margin: 0 auto 40px auto;
+            padding: 0 20px;
+        }
+        
+        .grid-cell {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 12px 20px 12px 20px;
+            overflow: hidden;
+            position: relative;
+            background-color: #e0e0e0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .grid-cell img, .grid-cell .psy-avatar-placeholder {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: opacity 3s ease-in-out, transform 3s ease-in-out;
+        }
+        
+        .psy-avatar-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: rgba(255,255,255,0.8);
+            font-size: 1rem;
+            background-color: #1B4332;
+        }
+
+        .fade-enter { opacity: 0; z-index: 2; transform: scale(0.9); }
+        .fade-enter-active { opacity: 1; transform: scale(1); }
+        .fade-exit { opacity: 1; z-index: 1; transform: scale(1); }
+        .fade-exit-active { opacity: 0; transform: scale(1.05); }
+
+        @media (max-width: 768px) {
+            .living-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+            .grid-cell:nth-child(n+17) { display: none; } /* Limita itens no mobile */
+        }
+    </style>
+</head>
+<body>
+
+    <%- include('partials/header') %>
+
+    <main>
+        <!-- HERO -->
+        <section class="hero-psis">
+            <div class="container">
+                <h1>Quem cuida de você na Yelo?</h1>
+                <p>Não somos apenas um algoritmo. Somos uma comunidade de profissionais reais, verificados e comprometidos com a ética e o acolhimento humano.</p>
+            </div>
+        </section>
+
+        <!-- SEÇÃO DE QUALIDADE (TEXTO PARA PACIENTES) -->
+        <section class="quality-section">
+            <div class="quality-grid">
+                <div class="quality-card">
+                    <span class="quality-icon">🛡️</span>
+                    <h3>Verificação Rigorosa</h3>
+                    <p>Todos os profissionais passam por uma checagem de CRP ativo e regularidade junto ao Conselho Federal de Psicologia antes de entrarem na plataforma.</p>
+                </div>
+                <div class="quality-card">
+                    <span class="quality-icon">🌍</span>
+                    <h3>Diversidade Real</h3>
+                    <p>Acreditamos que a representatividade importa. Nossa rede valoriza profissionais de diferentes origens, raças, gêneros e vivências para que você se sinta compreendido.</p>
+                </div>
+                <div class="quality-card">
+                    <span class="quality-icon">🤝</span>
+                    <h3>Compromisso Ético</h3>
+                    <p>Aqui, a terapia é levada a sério. Nossos psicólogos seguem o código de ética, garantindo sigilo, respeito e um espaço seguro para sua fala.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- LIVING GRID (MOVIDO) -->
+        <section class="living-grid-section">
+            <div class="container">
+                <h2 class="titulo-secao" style="margin-bottom: 10px; color: #1B4332;">Rostos de quem faz a Yelo</h2>
+                <p class="subtitulo-secao" style="margin-bottom: 30px;">Conheça alguns dos profissionais que estão prontos para te acolher.</p>
+            </div>
+
+            <div class="living-grid" id="living-grid">
+                <!-- Grid injetado via JS -->
+            </div>
+
+            <div style="text-align: center; margin-top: 40px;">
+                <p style="margin-bottom: 15px; color: #666;">Você é psicólogo(a)? Junte-se a nós.</p>
+                <a href="/psi_questionario.html" class="btn-cta-principal">Cadastrar como Profissional</a>
+            </div>
+        </section>
+    </main>
+
+    <%- include('partials/footer') %>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const gridContainer = document.getElementById('living-grid');
+            const GRID_SIZE = 18; // 3 linhas x 6 colunas (Desktop)
+            
+            // Banco de imagens para fallback (Diversidade)
+            const stockImages = [
+                "https://images.pexels.com/photos/1729931/pexels-photo-1729931.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/927022/pexels-photo-927022.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/1121796/pexels-photo-1121796.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/762020/pexels-photo-762020.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/1181424/pexels-photo-1181424.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/3778603/pexels-photo-3778603.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/712513/pexels-photo-712513.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/874158/pexels-photo-874158.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/1587009/pexels-photo-1587009.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=200",
+                "https://images.pexels.com/photos/1858175/pexels-photo-1858175.jpeg?auto=compress&cs=tinysrgb&w=200"
+            ];
+
+            let professionals = [];
+            try {
+                const response = await fetch('/api/public/psychologists/list');
+                if (response.ok) {
+                    professionals = await response.json();
+                }
+            } catch (error) {
+                console.warn('Erro ao carregar psicólogos, usando mocks.', error);
+            }
+
+            professionals.forEach(p => {
+                if (!p.fotoUrl) {
+                    p.fotoUrl = stockImages[Math.floor(Math.random() * stockImages.length)];
+                }
+            });
+
+            while (professionals.length < 50) {
+                professionals.push({
+                    id: 'mock-' + Math.random(),
+                    isMock: true,
+                    fotoUrl: stockImages[Math.floor(Math.random() * stockImages.length)],
+                    initial: 'Y'
+                });
+            }
+
+            professionals.sort(() => Math.random() - 0.5);
+
+            const displayedItems = professionals.slice(0, GRID_SIZE);
+
+            const createContent = (psi) => {
+                let element;
+                if (psi.fotoUrl) {
+                    element = document.createElement('img');
+                    element.src = psi.fotoUrl;
+                    element.alt = psi.nome || 'Psicólogo Yelo';
+                } else {
+                    element = document.createElement('div');
+                    element.className = 'psy-avatar-placeholder';
+                    element.style.backgroundColor = '#1B4332';
+                    element.textContent = psi.initial || 'Y';
+                }
+                return element;
+            };
+
+            displayedItems.forEach(item => {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.appendChild(createContent(item));
+                gridContainer.appendChild(cell);
+            });
+
+            setInterval(() => {
+                const cells = gridContainer.children;
+                if (cells.length === 0) return;
+                
+                const randomCellIndex = Math.floor(Math.random() * cells.length);
+                const cell = cells[randomCellIndex];
+                const randomProIndex = Math.floor(Math.random() * professionals.length);
+                const newItem = professionals[randomProIndex];
+                
+                const newContent = createContent(newItem);
+                newContent.classList.add('fade-enter');
+                
+                cell.appendChild(newContent);
+                void newContent.offsetWidth;
+                
+                newContent.classList.add('fade-enter-active');
+                newContent.classList.remove('fade-enter');
+
+                const oldContent = cell.firstElementChild;
+                if (oldContent) {
+                    oldContent.classList.add('fade-exit');
+                    setTimeout(() => {
+                        if(oldContent.parentNode === cell) {
+                            cell.removeChild(oldContent);
+                        }
+                    }, 3000);
+                }
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
