@@ -5,6 +5,25 @@
     <%- include('partials/head') %>
     <style>
         /* Doodles de Fundo */
+        /* Links Mobile Topo */
+        .mobile-top-links {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .mobile-top-links {
+                display: flex;
+                justify-content: center;
+                gap: 20px;
+                margin-bottom: 20px;
+            }
+            .mobile-top-links a {
+                color: var(--branco-puro, #fff);
+                text-decoration: none;
+                font-weight: 500;
+                opacity: 0.9;
+            }
+        }
+
         .doodle-bg {
             position: absolute;
             opacity: 0.4;
@@ -43,6 +62,24 @@
             color: var(--verde-escuro);
             font-weight: 600;
             padding: 20px 30px !important;
+            width: 100%;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: none;
+            cursor: pointer;
+        }
+
+        .acordeao-titulo::after {
+            content: '+';
+            font-size: 1.5rem;
+            font-weight: 400;
+            transition: transform 0.3s ease;
+        }
+
+        .acordeao-titulo.ativo::after {
+            transform: rotate(45deg);
         }
         
         .acordeao-conteudo p {
@@ -68,6 +105,12 @@
     <main>
         <section class="faq-hero ruido">
             <div class="container-sobre">
+                <!-- Links Mobile Topo -->
+                <div class="mobile-top-links">
+                    <a href="/sobre">Sobre</a>
+                    <a href="/faq">FAQ</a>
+                    <a href="/blog">Blog</a>
+                </div>
                 <h1>Perguntas Frequentes</h1>
                 <p class="subtitulo-secao">Encontre aqui as respostas para as suas principais dúvidas sobre a Yelo.</p>
                 <div class="faq-busca-container">
@@ -131,5 +174,19 @@
     </main>
 
     <%- include('partials/footer') %>
+
+    <script>
+        document.querySelectorAll('.acordeao-titulo').forEach(button => {
+            button.addEventListener('click', () => {
+                const content = button.nextElementSibling;
+                button.classList.toggle('ativo');
+                if (button.classList.contains('ativo')) {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                } else {
+                    content.style.maxHeight = "0";
+                }
+            });
+        });
+    </script>
 </body>
 </html>
