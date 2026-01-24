@@ -4215,4 +4215,74 @@ async function inicializarForum(preFetchedData = null) {
     // Carga inicial com o filtro padrão
     fetchAndRenderPosts(1, false);
 }
+
+// --- LÓGICA DO FAB MÓVEL (DRAGGABLE) ---
+const fabContainer = document.querySelector('.fab-container');
+if (fabContainer) {
+    let isDragging = false;
+    let startX, startY, startRight, startBottom;
+
+    // Restaura posição salva pelo usuário
+    const savedPos = localStorage.getItem('yelo_fab_pos');
+    if (savedPos) {
+        try {
+            const pos = JSON.parse(savedPos);
+            fabContainer.style.right = pos.right;
+            fabContainer.style.bottom = pos.bottom;
+        } catch(e) {}
+    }
+
+    fabContainer.addEventListener('touchstart', (e) => {
+        isDragging = false;
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        
+        const style = window.getComputedStyle(fabContainer);
+        startRight = parseInt(style.right, 10);
+        startBottom = parseInt(style.bottom, 10);
+        
+        fabContainer.style.transition = 'none'; // Remove animação para arrastar rápido
+    }, { passive: false });
+
+    fabContainer.addEventListener('touchmove', (e) => {
+        const touch = e.touches[0];
+        const deltaX = startX - touch.clientX; // Movimento p/ esquerda aumenta o right
+        const deltaY = startY - touch.clientY; // Movimento p/ cima aumenta o bottom
+
+        // Se mover mais que 5px, considera que está arrastando
+        if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+            isDragging = true;
+            if (e.cancelable) e.preventDefault(); // Evita rolar a tela junto
+        }
+
+        if (isDragging) {
+            fabContainer.style.right = `${startRight + deltaX}px`;
+            fabContainer.style.bottom = `${startBottom + deltaY}px`;
+        }
+    }, { passive: false });
+
+    fabContainer.addEventListener('touchend', (e) => {
+        fabContainer.style.transition = ''; // Restaura animação suave
+        if (isDragging) {
+            // Salva a nova posição
+            localStorage.setItem('yelo_fab_pos', JSON.stringify({
+                right: fabContainer.style.right,
+                bottom: fabContainer.style.bottom
+            }));
+            
+            // Bloqueia o clique imediato para não abrir o menu ao soltar
+            const captureClick = (ev) => {
+                ev.stopPropagation();
+                ev.preventDefault();
+                fabContainer.removeEventListener('click', captureClick, true);
+            };
+            fabContainer.addEventListener('click', captureClick, true);
+            
+            setTimeout(() => {
+                fabContainer.removeEventListener('click', captureClick, true);
+            }, 100);
+        }
+    });
+}
 });

@@ -63,7 +63,9 @@ body.pagina-dashboard {
 
 .dashboard-container { 
     display: flex; 
-    height: 100vh; 
+    height: 100dvh; /* Altura dinâmica para mobile */
+    width: 100%;
+    overflow: hidden; /* Impede rolagem dupla */
 }
 
 .dashboard-header-actions {
@@ -78,7 +80,8 @@ body.pagina-dashboard {
     flex-grow: 1;
     padding: 40px;
     overflow-y: auto; /* A rolagem acontece AQUI, não no body */
-    height: 100vh;
+    height: 100%; /* Ocupa exatamente o espaço disponível */
+    -webkit-overflow-scrolling: touch; /* Rolagem suave no iOS */
     position: relative; /* Necessário para o botão de menu mobile rolar junto */
     box-sizing: border-box;
     background-color: transparent !important; /* Permite ver o ruído de fundo */
@@ -659,6 +662,7 @@ textarea#bio {
     flex-direction: column;
     align-items: flex-end;
     gap: 10px;
+    touch-action: none; /* Melhora a resposta ao arrastar */
 }
 
 .fab-main {
