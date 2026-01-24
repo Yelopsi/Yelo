@@ -1178,6 +1178,12 @@
     .step-row.reverse .step-blob {
         left: 15px;
     }
+
+    /* Aumenta o tamanho das imagens no mobile */
+    .step-img-frame {
+        width: 120%;
+        margin-left: -10%;
+    }
 }
 
 /* --- TABELA COMPARATIVA (Profissionais) --- */
