@@ -590,7 +590,7 @@ textarea#bio {
    BOTTOM NAVIGATION (MOBILE)
    ========================================================================== */
 .mobile-bottom-nav {
-    display: none; /* Escondido no Desktop */
+    display: none;
     position: fixed;
     bottom: 0;
     left: 0;
@@ -633,7 +633,7 @@ textarea#bio {
     font-size: 0.7rem;
     gap: 4px;
     transition: color 0.2s;
-    width: 25%; /* Área de toque grande */
+    width: 20%; /* 5 itens = 20% cada */
 }
 
 .bottom-nav-item svg {
@@ -647,6 +647,116 @@ textarea#bio {
     font-weight: 600;
 }
 
+/* ==========================================================================
+   FAB (FLOATING ACTION BUTTON)
+   ========================================================================== */
+.fab-container {
+    position: fixed;
+    bottom: 90px; /* Acima da bottom nav */
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.fab-main {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: var(--verde-escuro);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(27, 67, 50, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.fab-main:active { transform: scale(0.95); }
+.fab-main.active { transform: rotate(45deg); background-color: #333; }
+
+.fab-options {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.fab-options.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.fab-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+.fab-option span {
+    background: white;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    color: #333;
+}
+.fab-icon-small {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    font-size: 1.2rem;
+}
+
+/* ==========================================================================
+   ACCOUNT MENU (BOTTOM SHEET)
+   ========================================================================== */
+.account-sheet-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 10001;
+    opacity: 0; visibility: hidden; transition: all 0.3s;
+}
+.account-sheet-overlay.active { opacity: 1; visibility: visible; }
+
+.account-sheet {
+    position: absolute; bottom: 0; left: 0; width: 100%;
+    background: #fff;
+    border-radius: 20px 20px 0 0;
+    padding: 20px;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 85vh;
+    overflow-y: auto;
+}
+.account-sheet.active { transform: translateY(0); }
+
+.sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.sheet-header h3 { margin: 0; font-family: var(--font-titulos); color: var(--verde-escuro); }
+.close-sheet { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
+
+.sheet-section { margin-bottom: 25px; }
+.sheet-section h4 { font-size: 0.8rem; text-transform: uppercase; color: #999; margin-bottom: 10px; letter-spacing: 1px; }
+.sheet-link {
+    display: block; padding: 12px 0;
+    color: #333; text-decoration: none; font-weight: 500;
+    border-bottom: 1px solid #f0f0f0;
+}
+.sheet-link.logout { color: #d32f2f; border: none; background: none; width: 100%; text-align: left; cursor: pointer; }
 
 /* ==========================================================================
    8. RESPONSIVIDADE MOBILE
@@ -672,13 +782,8 @@ textarea#bio {
 
     /* --- SIDEBAR (MENU LATERAL) --- */
     .dashboard-sidebar {
-        position: fixed; top: 0; left: 0; height: 100dvh;
-        padding-bottom: 100px; /* Garante que o rodapé não fique escondido */
-        transform: translateX(-100%);
-        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 100000; /* ACIMA de tudo (Chat e Backdrop) */
+        display: none !important; /* REMOVE SIDEBAR NO MOBILE */
     }
-    .dashboard-sidebar.is-open { transform: translateX(0); }
 
     /* --- BOTÃO HAMBÚRGUER (ANIMADO) --- */
     .menu-toggle {
@@ -3943,33 +4048,6 @@ input:checked + .slider:before { transform: translateX(20px); }
     color: #333;
 }
 
-/* ==========================================================================
-   MOBILE FIRST UX IMPROVEMENTS (Pacientes & Financeiro)
-   ========================================================================== */
-
-/* Botão Flutuante (FAB) - Padrão Mobile */
-.mobile-fab {
-    position: fixed;
-    bottom: 120px; /* Ajuste para não ficar sobre a bottom nav */
-    right: 25px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background-color: var(--verde-escuro);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 15px rgba(27, 67, 50, 0.4);
-    display: none; /* Oculto no Desktop */
-    align-items: center;
-    justify-content: center;
-    font-size: 28px;
-    z-index: 999;
-    cursor: pointer;
-    transition: transform 0.2s, background-color 0.2s;
-}
-.mobile-fab:active { transform: scale(0.95); }
-.mobile-fab:hover { background-color: #143d2e; }
-
 /* Ajustes Responsivos */
 @media (max-width: 768px) {
     /* --- PACIENTES --- */
@@ -3987,7 +4065,6 @@ input:checked + .slider:before { transform: translateX(20px); }
     }
     /* Esconde botão do header e mostra FAB */
     .header-action-desktop { display: none !important; }
-    .mobile-fab { display: flex; }
 
     /* --- FINANCEIRO --- */
     .finance-controls-row {
