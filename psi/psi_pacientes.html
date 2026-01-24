@@ -1006,7 +1006,8 @@
                         end: end.toISOString(),
                         patientId: type === 'available' ? null : patient.id,
                         phone: (type === 'session' && patient) ? patient.phone : null,
-                        status: type === 'available' ? 'available' : 'scheduled'
+                        status: type === 'available' ? 'available' : 'scheduled',
+                        value: (type === 'session' && patient) ? (patient.sessionValue || 0) : 0
                     })
                 });
 
