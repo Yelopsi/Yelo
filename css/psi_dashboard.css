@@ -855,7 +855,7 @@ textarea#bio {
 
     /* --- CONTEÚDO PRINCIPAL --- */
     /* Ajuste de padding para não ficar escondido atrás da bottom nav */
-    .dashboard-main { width: 100%; padding: 110px 20px 180px 20px; }
+    .dashboard-main { width: 100%; padding: 110px 20px 100px 20px; }
 
     /* Empilha os campos do formulário de perfil no mobile para melhor UX */
     .profile-section .form-row {
@@ -4122,6 +4122,113 @@ input:checked + .slider:before { transform: translateX(20px); }
     #btn-add-patient-mobile { display: none !important; }
 
     /* --- FINANCEIRO --- */
+
+/* ==========================================================================
+   CORREÇÃO: CARD DE CONVERSÃO MOBILE (PUBLIC PROFILE)
+   ========================================================================== */
+
+/* 1. Estilo do Card Moderno (Solicitado) */
+.conversion-card-modern {
+    background: #ffffff;
+    padding: 25px;
+    border-radius: 24px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+    border: 1px solid #f0f0f0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+}
+
+.conversion-card-modern:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 50px rgba(0,0,0,0.1);
+}
+
+.conversion-card-modern .price-display {
+    font-family: var(--font-titulos);
+    font-size: 2.8rem;
+    font-weight: 700;
+    color: var(--verde-escuro);
+    margin: 10px 0 0 0;
+    line-height: 1;
+}
+
+.conversion-card-modern .price-suffix {
+    font-size: 0.9rem;
+    color: #999;
+    font-weight: 500;
+}
+
+.conversion-card-modern .info-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #555;
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+}
+
+.conversion-card-modern .info-row:last-child { margin-bottom: 0; }
+
+.conversion-card-modern .info-row svg {
+    color: var(--verde-escuro);
+    opacity: 0.8;
+    flex-shrink: 0;
+}
+
+/* Badges de Confiança (Rodapé do Card) */
+.trust-badges-row {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px dashed #eee;
+}
+
+.trust-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.7rem;
+    color: #aaa;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+.trust-item svg { width: 18px; height: 18px; opacity: 0.5; }
+
+/* Botão Pulsante */
+.btn-pulse {
+    animation: pulse-shadow 2s infinite;
+}
+@keyframes pulse-shadow {
+    0% { box-shadow: 0 0 0 0 rgba(27, 67, 50, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(27, 67, 50, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(27, 67, 50, 0); }
+}
+
+/* 2. Ajuste de Layout Mobile (Padding Extra) */
+@media (max-width: 768px) {
+    /* Aumenta o padding inferior da página para o card não ficar escondido atrás da nav */
+    .profile-page-main {
+        padding-bottom: 140px !important;
+    }
+
+    /* Garante que o wrapper do card tenha espaço */
+    .conversion-card-wrapper {
+        margin-bottom: 20px;
+    }
+    
+    /* Ajuste fino para o card no mobile */
+    .conversion-card-modern {
+        padding: 20px;
+        border-radius: 20px;
+    }
+}
     .finance-controls-row {
         flex-direction: column;
         align-items: stretch !important;
