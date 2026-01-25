@@ -4019,10 +4019,10 @@ input:checked + .slider:before { transform: translateX(20px); }
 .zoom-controls-minimal {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 3px;
     background: rgba(255, 255, 255, 0.15);
-    padding: 4px 10px;
-    border-radius: 20px;
+    padding: 2px 6px;
+    border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(4px);
     position: relative;
@@ -4033,10 +4033,10 @@ input:checked + .slider:before { transform: translateX(20px); }
     border: none;
     color: #fff;
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 0.6rem;
     cursor: pointer;
-    width: 24px;
-    height: 24px;
+    width: 12px;
+    height: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -4051,9 +4051,9 @@ input:checked + .slider:before { transform: translateX(20px); }
 }
 
 #zoom-level-display {
-    font-size: 0.85rem;
+    font-size: 0.5rem;
     color: #fff;
-    min-width: 45px;
+    min-width: 24px;
     text-align: center;
     font-weight: 600;
     font-family: var(--font-principal);
@@ -4061,9 +4061,9 @@ input:checked + .slider:before { transform: translateX(20px); }
 }
 
 .btn-zoom-reset svg {
-    width: 14px;
-    height: 14px;
-    stroke-width: 2.5;
+    width: 7px;
+    height: 7px;
+    stroke-width: 2;
 }
 
 /* Zoom Controls Light Theme override (Global) */

@@ -13,7 +13,7 @@
     /* --- LAYOUT PRINCIPAL --- */
     .chat-layout {
         display: flex;
-        height: calc(100vh - 140px); /* Ajuste para o Dashboard do Psi */
+        height: calc(100vh - 250px); /* Ajuste para acomodar o Header Verde */
         background-color: #fff;
         border-radius: 12px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.08);
@@ -257,7 +257,7 @@
 
     /* Responsividade */
     @media (max-width: 992px) {
-        .chat-page-header { display: none !important; }
+        .main-header { display: none !important; }
 
         .chat-layout {
             height: calc(100vh - 85px) !important;
@@ -297,10 +297,10 @@
 </style>
 
 <!-- Cabeçalho (Apenas Desktop) -->
-<div class="chat-page-header">
+<div class="main-header">
     <div>
         <h1>Mensagens</h1>
-        <p>Fale com o suporte da Yelo.</p>
+        <p class="subtitulo-header">Fale com o suporte da Yelo.</p>
     </div>
 </div>
 
