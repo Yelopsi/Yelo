@@ -656,11 +656,12 @@ textarea#bio {
 .fab-container {
     position: fixed;
     bottom: 90px; /* Acima da bottom nav */
-    right: 20px;
+    left: 20px; /* Movido para a esquerda conforme solicitado */
+    right: auto;
     z-index: 10000;
     display: none !important; /* Oculto no Desktop */
     flex-direction: column;
-    align-items: flex-end;
+    align-items: flex-start; /* Alinha opções à esquerda */
     gap: 10px;
     pointer-events: none; /* Permite clicar através da área vazia */
 }
@@ -687,7 +688,7 @@ textarea#bio {
 .fab-options {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: flex-start; /* Alinha opções à esquerda */
     gap: 10px;
     opacity: 0;
     visibility: hidden;
@@ -4051,7 +4052,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 }
 
 #zoom-level-display {
-    font-size: 0.35rem; /* Reduzido */
+    font-size: 0.5rem; /* Reduzido */
     color: #fff;
     min-width: 24px;
     text-align: center;
