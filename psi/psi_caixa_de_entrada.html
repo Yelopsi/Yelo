@@ -2,91 +2,150 @@
 <!-- ESTRUTURA REFEITA DO ZERO PARA ISOLAMENTO DE LAYOUT -->
 
 <style>
-    /* --- CSS ESPECÍFICO E ISOLADO PARA O CHAT --- */
+    /* --- CSS IMPORTADO E ADAPTADO DO ADMIN (ESTILO WHATSAPP WEB) --- */
     
-    /* 1. Container Raiz (Desktop) */
-    #chat-root-container {
+    /* --- SCROLLBAR MODERNA --- */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #aaa; }
+
+    /* --- LAYOUT PRINCIPAL --- */
+    .chat-layout {
         display: flex;
-        flex-direction: column;
-        height: calc(100vh - 140px); /* Altura calculada para Desktop */
+        height: calc(100vh - 140px); /* Ajuste para o Dashboard do Psi */
         background-color: #fff;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        border: 1px solid #f0f0f0;
         overflow: hidden;
-        font-family: 'Inter', sans-serif;
+        font-family: var(--font-principal);
+        margin-top: 10px;
         position: relative;
+        z-index: 1;
     }
 
-    /* 2. Header da Página (Desktop) */
-    .chat-page-header {
-        padding: 20px 25px;
-        border-bottom: 1px solid #f0f0f0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: #fff;
-    }
-    .chat-page-header h1 { margin: 0; font-size: 1.5rem; color: #1B4332; font-family: 'New Kansas', sans-serif; }
-    .chat-page-header p { margin: 5px 0 0 0; color: #666; font-size: 0.9rem; }
-
-    /* 3. Layout Interno (Lista + Conversa) */
-    .chat-interface {
-        display: flex;
-        flex: 1; /* Ocupa o resto da altura */
-        overflow: hidden; /* Impede rolagem externa */
-    }
-
-    /* Painel Esquerdo (Lista) */
-    .chat-sidebar {
-        width: 320px;
+    /* --- Lado Esquerdo: Lista --- */
+    .chat-list-panel {
+        width: 360px;
         border-right: 1px solid #f0f0f0;
         display: flex;
         flex-direction: column;
-        background: #fcfcfc;
+        flex-shrink: 0;
+        background: #fff; 
+        position: relative; 
+        z-index: 5; 
     }
 
-    /* Painel Direito (Conversa) */
-    .chat-main-view {
+    .search-and-filter-bar {
+        padding: 15px;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+        gap: 10px; 
+    }
+
+    .search-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        width: 100%;
+    }
+
+    .search-wrapper i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+        font-size: 0.9rem;
+        pointer-events: none;
+        z-index: 10;
+    }
+
+    #chat-search {
+        width: 100%;
+        padding: 12px 10px 12px 35px;
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        outline: none;
+        font-size: 0.9rem;
+        color: #333;
+    }
+
+    .conversations-list {
+        flex: 1;
+        overflow-y: auto;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    /* Item da Lista */
+    .conversation-item {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        margin: 4px 8px;
+        border-radius: 10px;
+        cursor: pointer;
+        border-bottom: none;
+        transition: background 0.2s;
+    }
+    .conversation-item:hover { background: #f5f7f6; }
+    .conversation-item.active { background: #e8f5e9; }
+    
+    .conversation-item .avatar, .avatar-img {
+        width: 45px; height: 45px; border-radius: 50%; object-fit: cover; margin-right: 12px;
+        flex-shrink: 0;
+    }
+    .conversation-details {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+    }
+    .contact-name, .conv-name { font-weight: 600; color: #333; font-size: 0.95rem; transition: color 0.2s; display: block; }
+    .conversation-item.active .contact-name { color: #1B4332; }
+
+    .last-message, .conv-preview { font-size: 0.85rem; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+
+    /* --- Lado Direito: Chat Ativo --- */
+    .chat-view-panel {
         flex: 1;
         display: flex;
         flex-direction: column;
         background: #fff;
-        position: relative;
+        min-width: 0;
+        height: 100%;
     }
 
-    /* --- Componentes Internos --- */
-    
-    /* Lista de Conversas */
-    .conversation-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        overflow-y: auto;
-        flex: 1;
-    }
-    .conversation-item {
+    /* Header do Chat */
+    .chat-panel-header {
+        height: 70px;
+        flex-shrink: 0;
         display: flex;
         align-items: center;
-        padding: 15px 20px;
-        cursor: pointer;
-        border-bottom: 1px solid #f5f5f5;
-        transition: background 0.2s;
+        padding: 0 20px;
+        border-bottom: 1px solid #f0f0f0;
+        background: #fff;
     }
-    .conversation-item:hover { background-color: #f0fdf4; }
-    .conversation-item.active { background-color: #e8f5e9; border-left: 4px solid #1B4332; }
-    
-    .avatar-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; margin-right: 15px; border: 1px solid #eee; }
-    .avatar { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; margin-right: 15px; border: 1px solid #eee; flex-shrink: 0; }
-    .conv-info { flex: 1; overflow: hidden; }
-    .conv-name { font-weight: 600; color: #333; font-size: 0.95rem; display: block; }
-    .conv-preview { font-size: 0.85rem; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+    .chat-panel-header .avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 15px; }
+    .contact-info h4 { margin: 0; font-size: 1rem; color: #1B4332; font-weight: 700; }
+    .contact-info span { font-size: 0.8rem; color: #888; }
+
+    /* Wrapper da Conversa */
+    .active-chat-wrapper {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
 
     /* Área de Mensagens */
-    .messages-area {
+    .messages-thread, .messages-area {
         flex: 1;
         overflow-y: auto;
-        padding: 20px 5%;
+        padding: 20px;
         background-color: #e5ddd5;
         background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAICAYAAADR7oBbAAAAFUlEQVQYV2NkgID/Generalized/4wZTAwMjAIAwAAtgAt44yFNgAAAABJRU5ErkJggg==');
         display: flex;
@@ -94,8 +153,8 @@
         gap: 10px;
     }
 
-    /* Balões */
-    .msg-bubble {
+    /* Balões (Compatibilidade com classes antigas e novas) */
+    .message-bubble, .msg-bubble {
         max-width: 70%;
         width: fit-content;
         padding: 6px 12px;
@@ -108,24 +167,36 @@
         align-items: flex-end;
         gap: 10px;
     }
-    .msg-bubble p { margin: 0; padding: 0; word-break: break-word; }
 
-    .msg-received {
-        align-self: flex-start;
-        background: #fff;
-        border: 1px solid #f0f0f0;
-        border-bottom-left-radius: 4px;
-        color: #111;
+    .message-bubble p, .msg-bubble p {
+        margin: 0;
+        padding: 0;
+        word-break: break-word;
     }
-    .msg-sent {
+
+    .message-bubble.sent, .msg-sent {
         align-self: flex-end;
-        background: #1B4332;
+        background-color: #1B4332; /* Verde Yelo */
         color: #fff;
         border-bottom-right-radius: 4px;
     }
-    .msg-sent .msg-meta { color: rgba(255,255,255,0.7); }
 
-    .msg-meta {
+    .message-bubble.sent .message-meta, .msg-sent .msg-meta {
+        color: rgba(255,255,255,0.7);
+    }
+    .message-bubble.sent .message-status svg {
+        stroke: rgba(255,255,255,0.8) !important;
+    }
+
+    .message-bubble.received, .msg-received {
+        align-self: flex-start;
+        background-color: #fff;
+        color: #111;
+        border-bottom-left-radius: 4px;
+        border: 1px solid #f0f0f0;
+    }
+
+    .message-meta, .msg-meta {
         flex-shrink: 0;
         white-space: nowrap;
         font-size: 0.7rem;
@@ -133,27 +204,34 @@
         align-self: flex-end;
     }
 
-    /* Barra de Input */
-    .input-area {
+    /* Rodapé de Input */
+    .message-input-bar, .input-area {
         padding: 15px 20px;
         background: #fff;
         border-top: 1px solid #f0f0f0;
         display: flex;
         align-items: center;
         gap: 10px;
+        flex-shrink: 0;
     }
+
     #psi-reply-input {
-        flex: 1;
-        padding: 12px 15px;
+        background-color: #f0f2f5;
+        border: 1px solid transparent;
         border-radius: 24px;
-        border: 1px solid #ddd;
-        background: #f9f9f9;
-        font-size: 1rem;
+        padding: 12px 20px;
+        transition: all 0.2s;
+        flex-grow: 1;
         outline: none;
     }
-    #psi-reply-input:focus { border-color: #1B4332; background: #fff; }
-    
-    #send-reply-btn {
+
+    #psi-reply-input:focus {
+        background-color: #fff;
+        border-color: #1B4332;
+        box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
+    }
+
+    .btn-send, #send-reply-btn {
         width: 45px; height: 45px;
         border-radius: 50%;
         background: #1B4332;
@@ -161,161 +239,125 @@
         border: none;
         cursor: pointer;
         display: flex; align-items: center; justify-content: center;
-        transition: transform 0.2s;
     }
-    #send-reply-btn:hover { transform: scale(1.05); }
-
-    /* Header do Chat Ativo */
-    .active-chat-header {
-        padding: 10px 20px;
-        background: #fff;
-        border-bottom: 1px solid #f0f0f0;
-        display: flex;
-        align-items: center;
-        height: 60px;
-        flex-shrink: 0;
-    }
-    .btn-back-mobile { display: none; margin-right: 10px; background: none; border: none; cursor: pointer; color: #1B4332; }
+    .btn-send:hover, #send-reply-btn:hover { transform: scale(1.05); }
 
     /* Telas de Estado */
-    .welcome-screen {
+    .chat-welcome-view, .welcome-screen {
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         height: 100%; text-align: center; color: #888; padding: 20px;
     }
-    .welcome-screen svg { width: 80px; height: 80px; margin-bottom: 20px; opacity: 0.2; }
+    .chat-welcome-view svg, .welcome-screen svg { width: 80px; height: 80px; margin-bottom: 20px; opacity: 0.2; }
 
-    /* ==========================================================================
-       4. AJUSTES CRÍTICOS PARA MOBILE (FIXED VIEWPORT)
-       ========================================================================== */
+    /* Responsividade */
     @media (max-width: 992px) {
-        /* Esconde o cabeçalho da página para ganhar espaço */
         .chat-page-header { display: none !important; }
 
-        /* O Container Raiz vira uma camada FIXA sobre o dashboard */
-        #chat-root-container {
+        .chat-layout {
+            height: calc(100vh - 85px) !important;
+            margin-top: 10px;
+            border: none;
+            border-top: 1px solid #eee;
             position: fixed !important;
-            top: 75px !important;    /* Abaixo do Header Mobile (~60-75px) */
-            bottom: 90px !important; /* Acima da Bottom Nav (~80-90px) */
+            top: 75px !important;
+            bottom: 90px !important;
             left: 0 !important;
             right: 0 !important;
             width: 100% !important;
-            height: auto !important; /* Respeita top/bottom */
-            margin: 0 !important;
-            border-radius: 0 !important;
-            border: none !important;
-            z-index: 900; /* Acima do conteúdo, abaixo de modais/menus */
+            z-index: 900;
         }
 
-        /* Ajuste da Sidebar (Lista) */
-        .chat-sidebar {
-            width: 100%;
-            height: 100%;
-            display: flex; /* Mostra por padrão */
-        }
-
-        /* Ajuste do Chat Ativo (Escondido por padrão) */
-        .chat-main-view {
-            display: none; /* Esconde inicialmente */
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 10;
-        }
-
-        /* Classe para mostrar o chat ativo */
-        .chat-interface.mobile-chat-open .chat-sidebar { display: none; }
-        .chat-interface.mobile-chat-open .chat-main-view { display: flex; }
-
-        /* Botão Voltar */
-        .btn-back-mobile { display: block; }
+        .chat-list-panel { width: 100%; height: 100%; }
+        .chat-view-panel { display: none; }
         
-        /* Ajuste do Input para Mobile */
-        .input-area { padding: 10px; }
-        #psi-reply-input { font-size: 16px; } /* Evita zoom no iOS */
-    }
+        .chat-layout.mobile-chat-active .chat-list-panel { display: none; }
+        .chat-layout.mobile-chat-active .chat-view-panel { display: flex; width: 100%; height: 100%; }
 
-    /* --- CORREÇÃO DE IMAGENS/AVATARES --- */
-    .chat-avatar-fixed {
-        width: 40px !important;
-        height: 40px !important;
-        border-radius: 50%;
-        object-fit: contain; /* Garante que a logo não distorça */
-        background-color: #f9f9f9;
-        border: 1px solid #eee;
-        flex-shrink: 0;
+        .back-to-list-btn {
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            width: 34px; height: 34px;
+            background-color: #f0f2f5;
+            border-radius: 50%;
+            margin-right: 10px;
+            color: #555;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .message-input-bar { padding-bottom: max(10px, env(safe-area-inset-bottom)); }
     }
 </style>
 
-<div id="chat-root-container">
-    <!-- Cabeçalho (Apenas Desktop) -->
-    <div class="chat-page-header">
-        <div>
-            <h1>Mensagens</h1>
-            <p>Fale com o suporte da Yelo.</p>
+<!-- Cabeçalho (Apenas Desktop) -->
+<div class="chat-page-header">
+    <div>
+        <h1>Mensagens</h1>
+        <p>Fale com o suporte da Yelo.</p>
+    </div>
+</div>
+
+<div class="chat-layout" id="chat-interface-wrapper">
+    <!-- LADO ESQUERDO: LISTA -->
+    <div class="chat-list-panel">
+        <div class="search-and-filter-bar">
+            <div class="search-wrapper">
+                <i>🔍</i>
+                <input type="text" id="chat-search" placeholder="Buscar conversa...">
+            </div>
         </div>
+        
+        <ul id="conversation-list" class="conversations-list">
+            <!-- Injetado via JS -->
+            <li style="padding: 20px; text-align: center; color: #999;">Carregando...</li>
+        </ul>
     </div>
 
-    <div class="chat-interface" id="chat-interface-wrapper">
+    <!-- LADO DIREITO: CHAT -->
+    <div class="chat-view-panel">
         
-        <!-- LADO ESQUERDO: LISTA -->
-        <aside class="chat-sidebar">
-            <div style="padding: 15px; border-bottom: 1px solid #f0f0f0;">
-                <input type="text" placeholder="Buscar conversa..." style="width: 100%; padding: 10px; border: 1px solid #eee; border-radius: 8px; background: #f9f9f9;">
-            </div>
-            
-            <ul id="conversation-list" class="conversation-list">
-                <!-- Injetado via JS -->
-                <li style="padding: 20px; text-align: center; color: #999;">Carregando...</li>
-            </ul>
-        </aside>
+        <!-- Tela de Boas Vindas (Vazia) -->
+        <div id="chat-welcome-screen" class="chat-welcome-view">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+            <h3>Selecione uma conversa</h3>
+            <p>Escolha um contato à esquerda para iniciar o atendimento.</p>
+        </div>
 
-        <!-- LADO DIREITO: CHAT -->
-        <main class="chat-main-view">
+        <!-- Tela de Chat Ativo -->
+        <div id="active-chat-screen" class="active-chat-wrapper" style="display: none;">
             
-            <!-- Tela de Boas Vindas (Vazia) -->
-            <div id="chat-welcome-screen" class="welcome-screen">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-                <h3>Selecione uma conversa</h3>
-                <p>Escolha um contato à esquerda para iniciar o atendimento.</p>
-            </div>
-
-            <!-- Tela de Chat Ativo -->
-            <div id="active-chat-screen" style="display: none; flex-direction: column; height: 100%;">
-                
-                <div class="active-chat-header">
-                    <button id="btn-voltar-mobile" class="btn-back-mobile">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                    </button>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <img src="/assets/logos/logo-escura.png" alt="Avatar" class="chat-avatar-fixed">
-                        <div>
-                            <strong style="display: block; line-height: 1.2; color: #1B4332;">Suporte Yelo</strong>
-                            <span style="font-size: 0.75rem; color: #888;">Canal Oficial</span>
-                        </div>
+            <div class="chat-panel-header">
+                <button id="btn-voltar-mobile" class="back-to-list-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                </button>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="/assets/logos/logo-escura.png" alt="Avatar" class="avatar" style="border: 1px solid #eee;">
+                    <div class="contact-info">
+                        <h4>Suporte Yelo</h4>
+                        <span>Canal Oficial</span>
                     </div>
                 </div>
-
-                <div id="messages-thread" class="messages-area">
-                    <!-- Mensagens injetadas via JS -->
-                </div>
-
-                <div class="input-area">
-                    <input type="text" id="psi-reply-input" placeholder="Digite sua mensagem...">
-                    <button id="send-reply-btn">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-                    </button>
-                </div>
-
             </div>
 
-        </main>
+            <div id="messages-thread" class="messages-thread">
+                <!-- Mensagens injetadas via JS -->
+            </div>
+
+            <div class="message-input-bar">
+                <input type="text" id="psi-reply-input" placeholder="Digite sua mensagem...">
+                <button id="send-reply-btn" class="btn-send">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                </button>
+            </div>
+
+        </div>
+
     </div>
 </div>
 
 <script>
     // Script Inline para garantir funcionamento imediato da UI
-    // A lógica pesada (Socket.IO, Fetch) continua no arquivo psi_caixa_de_entrada.js
-    // Este script apenas gerencia a troca de telas no mobile para garantir a UX
-    
     (function() {
         const wrapper = document.getElementById('chat-interface-wrapper');
         const btnVoltar = document.getElementById('btn-voltar-mobile');
@@ -326,7 +368,7 @@
         // Função para abrir chat (Mobile)
         window.abrirChatMobile = function() {
             if (window.innerWidth <= 992) {
-                wrapper.classList.add('mobile-chat-open');
+                wrapper.classList.add('mobile-chat-active');
             }
             welcome.style.display = 'none';
             active.style.display = 'flex';
@@ -335,8 +377,7 @@
         // Função para fechar chat (Mobile)
         if (btnVoltar) {
             btnVoltar.addEventListener('click', function() {
-                wrapper.classList.remove('mobile-chat-open');
-                // Opcional: Limpar chat ativo ou manter estado
+                wrapper.classList.remove('mobile-chat-active');
             });
         }
 
