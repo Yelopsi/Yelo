@@ -1,4 +1,63 @@
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+<style>
+    /* --- AJUSTES DE UX MOBILE (ASSINATURA) --- */
+    @media (max-width: 768px) {
+        .main-header {
+            padding: 25px 20px !important;
+            text-align: center;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        #vip-banner {
+            padding: 20px !important;
+            margin: 15px 0 !important;
+        }
+        
+        /* Card de Resumo (Topo) */
+        #card-resumo-assinatura {
+            flex-direction: column;
+            align-items: center !important;
+            text-align: center !important;
+            padding: 25px 20px !important;
+            gap: 15px;
+            border-left: 1px solid #e0e0e0 !important; /* Remove destaque lateral no mobile */
+            border-top: 4px solid #1B4332 !important; /* Move destaque para o topo */
+        }
+        
+        #card-resumo-assinatura .info-lado-esquerdo,
+        #card-resumo-assinatura .info-lado-direito {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        #banner-renovacao {
+            text-align: center !important;
+        }
+
+        /* Grid de Planos */
+        .planos-grid {
+            grid-template-columns: 1fr !important;
+            padding: 0 !important;
+            gap: 25px !important;
+        }
+        
+        .plano-card {
+            max-width: 100% !important;
+        }
+
+        /* Botões Full Width */
+        .plano-cta button { width: 100% !important; }
+
+        /* Inputs do Modal de Pagamento (Evita Zoom iOS) */
+        #payment-form input {
+            font-size: 16px !important;
+        }
+    }
+</style>
 
 <div class="main-header">
     <div class="header-content">
