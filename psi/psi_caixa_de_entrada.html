@@ -224,6 +224,17 @@
         .input-area { padding: 10px; }
         #psi-reply-input { font-size: 16px; } /* Evita zoom no iOS */
     }
+
+    /* --- CORREÇÃO DE IMAGENS/AVATARES --- */
+    .chat-avatar-fixed {
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 50%;
+        object-fit: contain; /* Garante que a logo não distorça */
+        background-color: #f9f9f9;
+        border: 1px solid #eee;
+        flex-shrink: 0;
+    }
 </style>
 
 <div id="chat-root-container">
@@ -267,7 +278,7 @@
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                     </button>
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <img src="/assets/logos/logo-escura.png" alt="Avatar" style="width: 35px; height: 35px; border-radius: 50%; object-fit: contain; border: 1px solid #eee;">
+                        <img src="/assets/logos/logo-escura.png" alt="Avatar" class="chat-avatar-fixed">
                         <div>
                             <strong style="display: block; line-height: 1.2; color: #1B4332;">Suporte Yelo</strong>
                             <span style="font-size: 0.75rem; color: #888;">Canal Oficial</span>
