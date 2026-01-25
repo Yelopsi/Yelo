@@ -559,8 +559,9 @@
             }
 
             const closeSheet = () => {
-                }
-            });
+                accountSheet.classList.remove('active');
+                setTimeout(() => accountSheetOverlay.classList.remove('active'), 300);
+            };
 
             if(closeSheetBtn) closeSheetBtn.addEventListener('click', closeSheet);
             if(accountSheetOverlay) accountSheetOverlay.addEventListener('click', (e) => {
