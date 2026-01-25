@@ -658,7 +658,7 @@ textarea#bio {
     bottom: 90px; /* Acima da bottom nav */
     right: 20px;
     z-index: 10000;
-    display: none; /* Oculto no Desktop */
+    display: none !important; /* Oculto no Desktop */
     flex-direction: column;
     align-items: flex-end;
     gap: 10px;
@@ -839,7 +839,7 @@ textarea#bio {
     /* Mostra a Bottom Nav */
     .mobile-bottom-nav { display: flex; }
 
-    /* Novo Trigger de Menu (Texto) */
+    /* Trigger de Menu (Texto - Mobile) */
     .menu-text-trigger {
         font-family: var(--font-titulos);
         font-weight: 800;
@@ -850,7 +850,7 @@ textarea#bio {
     }
 
     /* Mostra o FAB no Mobile */
-    .fab-container { display: flex; }
+    .fab-container { display: flex !important; }
 
     /* --- CONTEÚDO PRINCIPAL --- */
     /* Ajuste de padding para não ficar escondido atrás da bottom nav */
