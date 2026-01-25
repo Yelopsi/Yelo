@@ -4121,6 +4121,22 @@ input:checked + .slider:before { transform: translateX(20px); }
     /* Remove o botão FAB antigo */
     #btn-add-patient-mobile { display: none !important; }
 
+    /* --- AUMENTAR CONTROLES DE ZOOM (MOBILE) --- */
+    .zoom-controls-minimal {
+        padding: 4px 10px; /* Mais área de toque */
+    }
+    .btn-zoom-min {
+        width: 22px; height: 22px; /* Aumentado de 12px */
+        font-size: 0.8rem;
+    }
+    #zoom-level-display {
+        font-size: 0.7rem;
+        min-width: 35px;
+    }
+    .btn-zoom-reset svg {
+        width: 12px; height: 12px;
+    }
+
     /* --- FINANCEIRO --- */
 
 /* ==========================================================================
