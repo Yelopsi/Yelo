@@ -431,15 +431,15 @@
     <!-- FAB (Floating Action Button) -->
     <div class="fab-container">
         <div class="fab-options" id="fab-options">
-            <button class="fab-option" onclick="window.location.href='#psi_pacientes.html'">
+            <button class="fab-option" onclick="window.loadPage('psi_pacientes.html')">
                 <span>Registrar Sessão</span>
                 <div class="fab-icon-small">📅</div>
             </button>
-            <button class="fab-option" onclick="window.location.href='#psi_pacientes.html'">
+            <button class="fab-option" onclick="window.loadPage('psi_pacientes.html')">
                 <span>Novo Paciente</span>
                 <div class="fab-icon-small">👤</div>
             </button>
-            <button class="fab-option" onclick="window.location.href='#psi_caixa_de_entrada.html'">
+            <button class="fab-option" onclick="window.loadPage('psi_caixa_de_entrada.html')">
                 <span>Nova Mensagem</span>
                 <div class="fab-icon-small">💬</div>
             </button>
@@ -555,16 +555,8 @@
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
                     const page = link.getAttribute('data-page');
-                    // Simula navegação
-                    const sidebarLink = document.querySelector(`.sidebar-nav a[data-page="${page}"]`);
-                    if(sidebarLink) sidebarLink.click();
-                    else {
-                        // Fallback se não estiver na sidebar (ex: perfil)
-                        // Aqui você chamaria sua função de loadPage(page) diretamente
-                        // Como não tenho acesso ao loadPage aqui, vou simular clique em um link oculto ou criar um
-                        console.log("Navegando para:", page);
-                        // TODO: Integrar com router
-                    }
+                    // Chama a função global de navegação
+                    if (window.loadPage) window.loadPage(page);
                     closeSheet();
                 });
             });

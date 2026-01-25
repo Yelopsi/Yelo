@@ -596,7 +596,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function loadPage(url) {
+    window.loadPage = function(url) {
         if (!url) return;
 
         // --- FIX CRÍTICO: Limpeza de recursos da página anterior ---
@@ -4218,7 +4218,9 @@ async function inicializarForum(preFetchedData = null) {
 
 // --- LÓGICA DO FAB MÓVEL (DRAGGABLE) ---
 const fabContainer = document.querySelector('.fab-container');
-if (fabContainer) {
+const fabDragTarget = document.querySelector('.fab-main'); // Alvo do toque restrito
+
+if (fabContainer && fabDragTarget) {
     let isDragging = false;
     let startX, startY, startRight, startBottom;
 
@@ -4232,7 +4234,7 @@ if (fabContainer) {
         } catch(e) {}
     }
 
-    fabContainer.addEventListener('touchstart', (e) => {
+    fabDragTarget.addEventListener('touchstart', (e) => {
         isDragging = false;
         const touch = e.touches[0];
         startX = touch.clientX;
@@ -4245,7 +4247,7 @@ if (fabContainer) {
         fabContainer.style.transition = 'none'; // Remove animação para arrastar rápido
     }, { passive: false });
 
-    fabContainer.addEventListener('touchmove', (e) => {
+    fabDragTarget.addEventListener('touchmove', (e) => {
         const touch = e.touches[0];
         const deltaX = startX - touch.clientX; // Movimento p/ esquerda aumenta o right
         const deltaY = startY - touch.clientY; // Movimento p/ cima aumenta o bottom
@@ -4262,7 +4264,7 @@ if (fabContainer) {
         }
     }, { passive: false });
 
-    fabContainer.addEventListener('touchend', (e) => {
+    fabDragTarget.addEventListener('touchend', (e) => {
         fabContainer.style.transition = ''; // Restaura animação suave
         if (isDragging) {
             // Salva a nova posição
