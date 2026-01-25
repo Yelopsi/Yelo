@@ -662,7 +662,7 @@ textarea#bio {
     flex-direction: column;
     align-items: flex-end;
     gap: 10px;
-    touch-action: none; /* Melhora a resposta ao arrastar */
+    pointer-events: none; /* Permite clicar através da área vazia */
 }
 
 .fab-main {
@@ -678,6 +678,8 @@ textarea#bio {
     justify-content: center;
     cursor: pointer;
     transition: transform 0.2s;
+    pointer-events: auto; /* Reativa cliques no botão */
+    touch-action: none; /* Impede scroll apenas ao arrastar o botão */
 }
 .fab-main:active { transform: scale(0.95); }
 .fab-main.active { transform: rotate(45deg); background-color: #333; }
@@ -691,6 +693,7 @@ textarea#bio {
     visibility: hidden;
     transform: translateY(20px);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: auto; /* Reativa cliques nas opções */
 }
 .fab-options.active {
     opacity: 1;
@@ -1358,6 +1361,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     display: flex;
     flex-direction: column;
     gap: 10px;
+    pointer-events: none; /* Permite clicar através do container */
 }
 
 .toast {
@@ -1372,6 +1376,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     gap: 10px;
     animation: slideInToast 0.3s ease-out forwards;
     opacity: 0;
+    pointer-events: auto; /* Reativa cliques no toast */
 }
 
 /* Cores por tipo */
