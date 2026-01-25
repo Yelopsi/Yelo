@@ -855,7 +855,7 @@ textarea#bio {
 
     /* --- CONTEÚDO PRINCIPAL --- */
     /* Ajuste de padding para não ficar escondido atrás da bottom nav */
-    .dashboard-main { width: 100%; padding: 110px 20px 100px 20px; }
+    .dashboard-main { width: 100%; padding: 110px 20px 85px 20px; }
 
     /* Empilha os campos do formulário de perfil no mobile para melhor UX */
     .profile-section .form-row {
@@ -4231,7 +4231,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 @media (max-width: 768px) {
     /* Aumenta o padding inferior da página para o card não ficar escondido atrás da nav */
     .profile-page-main {
-        padding-bottom: 140px !important;
+        padding-bottom: 100px !important;
     }
 
     /* Garante que o wrapper do card tenha espaço */
