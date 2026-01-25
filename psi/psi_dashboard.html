@@ -192,7 +192,7 @@
                     <li>
                         <a href="#" data-page="psi_caixa_de_entrada.html">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                            <span>Mensagens</span>
+                            <span>Suporte</span>
                         </a>
                     </li>
                     <li>
@@ -414,7 +414,7 @@
 
         <a href="#" class="bottom-nav-item" data-target-page="psi_caixa_de_entrada.html">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            <span>Mensagens</span>
+            <span>Suporte</span>
         </a>
 
         <a href="#" class="bottom-nav-item" data-target-page="psi_financeiro.html">
@@ -495,6 +495,18 @@
         // Script para controlar o menu mobile (Sanduíche)
         document.addEventListener('DOMContentLoaded', () => {
             const sidebar = document.querySelector('.dashboard-sidebar');
+            
+            // --- FIX: RESETAR POSIÇÃO DO FAB ---
+            // Garante que o botão volte para o lugar original se tiver sido arrastado para fora
+            const fabContainer = document.querySelector('.fab-container');
+            if (fabContainer) {
+                fabContainer.style.top = '';
+                fabContainer.style.left = '';
+                fabContainer.style.right = '';
+                fabContainer.style.bottom = '';
+                fabContainer.style.transform = '';
+            }
+
             const overlay = document.querySelector('.sidebar-backdrop');
 
             // --- LÓGICA DA BOTTOM NAV (MOBILE) ---
