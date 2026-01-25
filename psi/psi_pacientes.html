@@ -908,6 +908,15 @@
             modal.style.display = 'flex';
         };
 
+        // Expõe a função para o escopo global (para o botão inline funcionar)
+        window.handleNewPatient = handleNewPatient;
+
+        // Verifica se deve abrir o modal automaticamente (vindo do FAB)
+        if (sessionStorage.getItem('autoOpenNewPatient')) {
+            sessionStorage.removeItem('autoOpenNewPatient');
+            handleNewPatient();
+        }
+
         document.getElementById('btn-add-patient').onclick = handleNewPatient;
         document.getElementById('btn-add-patient-mobile').onclick = handleNewPatient;
         

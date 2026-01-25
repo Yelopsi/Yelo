@@ -431,17 +431,17 @@
     <!-- FAB (Floating Action Button) -->
     <div class="fab-container">
         <div class="fab-options" id="fab-options">
-            <button class="fab-option" onclick="window.loadPage('psi_pacientes.html')">
-                <span>Registrar Sessão</span>
-                <div class="fab-icon-small">📅</div>
+            <button class="fab-option" onclick="window.loadPage('psi_blog.html')">
+                <span>Meus Artigos</span>
+                <div class="fab-icon-small">✍️</div>
             </button>
-            <button class="fab-option" onclick="window.loadPage('psi_pacientes.html')">
+            <button class="fab-option" onclick="window.loadPage('psi_forum.html')">
+                <span>Fórum</span>
+                <div class="fab-icon-small">💬</div>
+            </button>
+            <button class="fab-option" onclick="window.openNewPatientFromGlobal()">
                 <span>Novo Paciente</span>
                 <div class="fab-icon-small">👤</div>
-            </button>
-            <button class="fab-option" onclick="window.loadPage('psi_caixa_de_entrada.html')">
-                <span>Nova Mensagem</span>
-                <div class="fab-icon-small">💬</div>
             </button>
         </div>
         <button class="fab-main" id="fab-trigger">
@@ -459,19 +459,19 @@
             <div class="sheet-content">
                 <div class="sheet-section">
                     <h4>Conta Profissional</h4>
-                    <a href="#" data-page="psi_meu_perfil.html" class="sheet-link">Perfil Público</a>
+                    <a href="#" id="mobile-public-profile-link" target="_blank" class="sheet-link">Perfil Público</a>
                 </div>
                 <div class="sheet-section">
                     <h4>Comunidade</h4>
                     <a href="#" data-page="psi_blog.html" class="sheet-link">Meus Artigos</a>
                     <a href="#" data-page="psi_forum.html" class="sheet-link">Fórum</a>
                     <a href="#" data-page="psi_hub.html" class="sheet-link">Comunidade</a>
+                    <a href="#" data-page="psi_jornada.html" class="sheet-link">Jornada</a>
                 </div>
                 <div class="sheet-section">
                     <h4>Sistema</h4>
                     <a href="#" data-page="psi_assinatura.html" class="sheet-link">Assinatura e Pagamentos</a>
-                    <a href="#" data-page="psi_meu_perfil.html" class="sheet-link">Configurações</a>
-                    <a href="#" data-page="psi_caixa_de_entrada.html" class="sheet-link">Suporte</a>
+                    <a href="#" data-page="psi_meu_perfil.html" class="sheet-link">Ajustes de perfil</a>
                 </div>
                 <div class="sheet-section">
                     <button id="btn-logout-sheet" class="sheet-link logout">Encerrar sessão</button>
@@ -485,6 +485,13 @@
     <script src="psi_caixa_de_entrada.js"></script>
     
     <script>
+        // Função Global para abrir modal de Novo Paciente (usada pelo FAB)
+        window.openNewPatientFromGlobal = function() {
+            // Define flag para abrir modal automaticamente ao carregar a página de pacientes
+            sessionStorage.setItem('autoOpenNewPatient', 'true');
+            window.loadPage('psi_pacientes.html');
+        };
+
         // Script para controlar o menu mobile (Sanduíche)
         document.addEventListener('DOMContentLoaded', () => {
             const sidebar = document.querySelector('.dashboard-sidebar');
@@ -540,10 +547,20 @@
                 }
             });
 
+            // Sincroniza o link do perfil público mobile com o da sidebar (para pegar a URL correta)
+            const sidebarProfileLink = document.getElementById('btn-view-public-profile');
+            const mobileProfileLink = document.getElementById('mobile-public-profile-link');
+            if (sidebarProfileLink && mobileProfileLink) {
+                mobileProfileLink.href = sidebarProfileLink.href;
+                // Observa mudanças no href da sidebar (caso seja carregado via API)
+                new MutationObserver(() => {
+                    mobileProfileLink.href = sidebarProfileLink.href;
+                }).observe(sidebarProfileLink, { attributes: true, attributeFilter: ['href'] });
+            }
+
             const closeSheet = () => {
-                accountSheet.classList.remove('active');
-                setTimeout(() => accountSheetOverlay.classList.remove('active'), 300);
-            };
+                }
+            });
 
             if(closeSheetBtn) closeSheetBtn.addEventListener('click', closeSheet);
             if(accountSheetOverlay) accountSheetOverlay.addEventListener('click', (e) => {
@@ -598,13 +615,15 @@
             const mainContent = document.getElementById('main-content');
 
             if (btnZoomIn && btnZoomOut && btnZoomReset && mainContent) {
-                let currentZoom = 100;
+                // Padrão 80% ou carrega do localStorage
+                let currentZoom = parseInt(localStorage.getItem('psi_zoom_level')) || 80;
 
                 const applyZoom = () => {
                     mainContent.style.transform = `scale(${currentZoom / 100})`;
                     mainContent.style.transformOrigin = 'top left';
                     mainContent.style.width = `${100 * (100 / currentZoom)}%`;
                     if (zoomDisplay) zoomDisplay.textContent = `${currentZoom}%`;
+                    localStorage.setItem('psi_zoom_level', currentZoom);
                 };
 
                 // Substitui os botões para remover listeners antigos e garantir funcionamento limpo
@@ -618,6 +637,9 @@
                 const newBtnOut = replaceBtn(btnZoomOut);
                 const newBtnReset = replaceBtn(btnZoomReset);
 
+                // Aplica zoom inicial
+                applyZoom();
+
                 newBtnIn.addEventListener('click', () => {
                     if (currentZoom < 150) { currentZoom += 10; applyZoom(); }
                 });
@@ -626,7 +648,7 @@
                     if (currentZoom > 50) { currentZoom -= 10; applyZoom(); }
                 });
 
-                newBtnReset.addEventListener('click', () => { currentZoom = 100; applyZoom(); });
+                newBtnReset.addEventListener('click', () => { currentZoom = 80; applyZoom(); });
             }
         });
     </script>
