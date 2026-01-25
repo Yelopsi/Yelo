@@ -173,13 +173,43 @@
         }
         
         .patient-controls-row {
-            flex-direction: column;
-            align-items: stretch !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            flex-wrap: wrap;
+        }
+        .search-wrapper {
+            flex: 1;
+            width: auto !important;
+            margin-bottom: 0 !important;
         }
         
         .custom-select-wrapper {
             width: 100%;
+            margin-top: 10px;
+            order: 3;
         }
+        .header-action-desktop { display: none !important; }
+    }
+
+    .btn-add-mobile-inline {
+        display: none;
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        background-color: #1B4332;
+        color: white;
+        border: none;
+        font-size: 1.5rem;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        margin-left: 10px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        line-height: 0;
+        padding-bottom: 4px;
+        flex-shrink: 0;
+    }
+    @media (max-width: 992px) {
+        .btn-add-mobile-inline { display: flex; }
     }
 </style>
 
@@ -208,6 +238,7 @@
             <div class="search-wrapper" style="flex-grow: 1; margin-bottom: 0;">
                 <input type="text" id="search-patient" placeholder="Buscar por nome..." class="form-control" style="width: 100%; box-sizing: border-box; border-radius: 20px; padding: 12px 20px; border: 1px solid #eee; background-color: #f9fafb;">
             </div>
+            <button class="btn-add-mobile-inline" onclick="handleNewPatient()">+</button>
             <div class="custom-select-wrapper" style="flex-shrink: 0;">
                 <div class="custom-select-trigger" id="status-filter-trigger">
                     <span id="status-filter-selected-text">Ativos</span>
@@ -253,9 +284,6 @@
         <div id="calendar-wrapper" style="flex-grow: 1;"></div>
     </div>
 </div>
-
-<!-- FAB MOBILE: NOVO PACIENTE -->
-<button id="btn-add-patient-mobile" class="mobile-fab" title="Novo Paciente">+</button>
 
 <!-- MODAL: ADICIONAR/EDITAR PACIENTE -->
 <div id="modal-patient" class="custom-modal-overlay" style="display: none;">
