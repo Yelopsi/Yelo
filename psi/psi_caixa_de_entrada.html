@@ -23,7 +23,7 @@
     /* --- Estrutura Principal --- */
     .chat-layout {
         display: flex;
-        height: calc(100
+        height: calc(100vh - 150px);
         background-color: #fff;
         border-radius: 8px;
         border: 1px solid #f0f0f0;
@@ -33,9 +33,20 @@
     }
 
     @media (max-width: 992px) {
+        .main-header { display: none !important; } /* Esconde título para ganhar espaço */
+
         .chat-layout {
-            height: calc(100dvh - 160px) !important; /* Ocupa todo o espaço entre header e nav no mobile */
-            margin-bottom: 0;
+            position: fixed !important;
+            top: 75px !important; /* Abaixo do Header Mobile */
+            bottom: 90px !important; /* Acima da Bottom Nav */
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            border: none !important;
+            z-index: 90;
         }
     }
 
