@@ -126,6 +126,13 @@
         @media (max-width: 992px) {
             .mobile-header { display: flex; }
         }
+
+        /* Animação de Bounce do FAB */
+        @keyframes bounceEntry {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-20px);}
+            60% {transform: translateY(-10px);}
+        }
     </style>
 </head>
 <body class="pagina-dashboard">
@@ -444,7 +451,7 @@
                 <div class="fab-icon-small">👤</div>
             </button>
         </div>
-        <button class="fab-main" id="fab-trigger">
+        <button class="fab-main" id="fab-trigger" style="animation: bounceEntry 1.5s ease 1s;">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         </button>
     </div>
@@ -505,6 +512,7 @@
                 fabContainer.style.right = '';
                 fabContainer.style.bottom = '';
                 fabContainer.style.transform = '';
+                fabContainer.style.position = 'fixed'; // Garante reset
             }
 
             const overlay = document.querySelector('.sidebar-backdrop');
@@ -531,10 +539,84 @@
             // --- LÓGICA DO FAB ---
             const fabTrigger = document.getElementById('fab-trigger');
             const fabOptions = document.getElementById('fab-options');
+            
             if(fabTrigger && fabOptions) {
-                fabTrigger.addEventListener('click', () => {
+                // 1. Toggle do Menu (respeitando se foi arrastado)
+                fabTrigger.addEventListener('click', (e) => {
+                    if (fabTrigger.getAttribute('data-dragged') === 'true') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
+                    }
                     fabOptions.classList.toggle('active');
                     fabTrigger.classList.toggle('active');
+                });
+
+                // 2. Fechar opções ao clicar em uma delas
+                document.querySelectorAll('.fab-option').forEach(opt => {
+                    opt.addEventListener('click', () => {
+                        fabOptions.classList.remove('active');
+                        fabTrigger.classList.remove('active');
+                    });
+                });
+
+                // 3. Lógica de Arrastar Livre (Free Drag)
+                let isDragging = false;
+                let startX, startY, initialLeft, initialTop;
+
+                const onDragStart = (e) => {
+                    const touch = e.touches ? e.touches[0] : e;
+                    startX = touch.clientX;
+                    startY = touch.clientY;
+                    
+                    // Converte posição atual para pixels fixos para permitir movimento livre
+                    const rect = fabContainer.getBoundingClientRect();
+                    fabContainer.style.bottom = 'auto';
+                    fabContainer.style.right = 'auto';
+                    fabContainer.style.left = rect.left + 'px';
+                    fabContainer.style.top = rect.top + 'px';
+                    
+                    initialLeft = rect.left;
+                    initialTop = rect.top;
+                    isDragging = false;
+
+                    document.addEventListener('mousemove', onDragMove);
+                    document.addEventListener('touchmove', onDragMove, { passive: false });
+                    document.addEventListener('mouseup', onDragEnd);
+                    document.addEventListener('touchend', onDragEnd);
+                };
+
+                const onDragMove = (e) => {
+                    const touch = e.touches ? e.touches[0] : e;
+                    const dx = touch.clientX - startX;
+                    const dy = touch.clientY - startY;
+
+                    // Só considera arrasto se mover mais que 5px (evita cliques acidentais)
+                    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                        isDragging = true;
+                        e.preventDefault(); // Evita scroll da página
+                        fabContainer.style.left = (initialLeft + dx) + 'px';
+                        fabContainer.style.top = (initialTop + dy) + 'px';
+                    }
+                };
+
+                const onDragEnd = () => {
+                    document.removeEventListener('mousemove', onDragMove);
+                    document.removeEventListener('touchmove', onDragMove);
+                    document.removeEventListener('mouseup', onDragEnd);
+                    document.removeEventListener('touchend', onDragEnd);
+
+                    if (isDragging) {
+                        fabTrigger.setAttribute('data-dragged', 'true');
+                        setTimeout(() => fabTrigger.removeAttribute('data-dragged'), 100);
+                    }
+                };
+
+                fabTrigger.addEventListener('mousedown', onDragStart);
+                fabTrigger.addEventListener('touchstart', onDragStart, { passive: false });
+            }
+
+            // --- LÓGICA DO MENU DE CONTA (BOTTOM SHEET) ---
                 });
             }
 
