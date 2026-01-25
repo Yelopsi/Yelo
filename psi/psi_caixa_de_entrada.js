@@ -219,7 +219,7 @@ function inicializarCaixaEntrada(preFetchedData = null) {
         if (!conversationList) return;
         conversationList.innerHTML = `
             <li class="conversation-item active" id="btn-open-support-chat">
-                <img src="/assets/logos/logo-escura.png" alt="Avatar" class="avatar" style="background:#f0f0f0; padding:5px; object-fit: contain;">
+                            <img src="/assets/logos/logo-escura.png" alt="Avatar" class="avatar" style="width: 45px; height: 45px; border-radius: 50%; background:#f0f0f0; padding:5px; object-fit: contain;">
                 <div class="conversation-details">
                     <div class="details-header">
                         <span class="contact-name">Suporte Yelo</span>

@@ -658,7 +658,7 @@ textarea#bio {
     bottom: 90px; /* Acima da bottom nav */
     right: 20px;
     z-index: 10000;
-    display: flex;
+    display: none; /* Oculto no Desktop */
     flex-direction: column;
     align-items: flex-end;
     gap: 10px;
@@ -848,6 +848,9 @@ textarea#bio {
         letter-spacing: 1px;
         cursor: pointer;
     }
+
+    /* Mostra o FAB no Mobile */
+    .fab-container { display: flex; }
 
     /* --- CONTEÚDO PRINCIPAL --- */
     /* Ajuste de padding para não ficar escondido atrás da bottom nav */
