@@ -257,94 +257,93 @@
 
     /* Responsividade */
     @media (max-width: 992px) {
-        /* 0. FIX: Remove transform do container pai para corrigir position:fixed */
-        #main-content {
-            transform: none !important;
-        }
-
-        /* 1. Esconde o Header geral do painel para ganhar espaço */
+        
+        /* 1. Oculta o título padrão "Mensagens" para limpar a tela */
         .main-header { display: none !important; }
 
-        /* 2. O Container Principal (Ocupa a tela toda) */
+        /* 2. O Container Principal (Travado entre o Header e o Menu) */
         .chat-layout {
+            position: fixed !important;
+            
+            /* Ajuste Fino: Altura do seu Header 'yelo + MENU' */
+            /* Se o seu header for maior/menor, ajuste os 60px abaixo */
+            top: 60px !important; 
+            
+            /* Ajuste Fino: Altura da sua Bottom Nav (ícones inferiores) */
+            /* Isso garante que o input fique EXATAMENTE acima do menu */
+            bottom: 80px !important; 
+            
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            height: auto !important; /* Deixa o top/bottom definirem a altura */
+            
+            margin: 0 !important;
             border: none;
             border-radius: 0;
-            margin-top: 0 !important;
             box-shadow: none;
-            position: fixed !important;
-            top: 0;
-            left: 0;
-            right: 0;
+            background: #e5ddd5; /* Fundo bege para evitar buracos brancos */
             z-index: 900;
-            background: #fff;
             
-            /* A MÁGICA: Altura dinâmica real do mobile */
-            height: 100dvh !important;
-            height: -webkit-fill-available; /* Fallback */
+            display: flex !important;
+            flex-direction: column !important;
         }
 
-        /* 3. Painel de Chat (Direita) - O "Sanduíche" Flexbox */
+        /* 3. Painel de Visualização (Preenche o container) */
         .chat-view-panel {
-            display: none; /* Oculto até clicar em alguém */
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            /* Altura total - Altura da Bottom Nav do seu App (aprox 75px) */
-            height: calc(100dvh - 75px) !important; 
-            z-index: 1000;
-            background: #e5ddd5;
-            flex-direction: column;
+            display: flex !important;
+            flex-direction: column !important;
+            width: 100% !important;
+            height: 100% !important;
+            position: static !important;
         }
 
-        /* Quando o chat está ativo, exibe ele com Flexbox */
-        .chat-layout.mobile-chat-active .chat-view-panel { 
-            display: flex !important; 
-        }
-        
-        /* Esconde a lista quando o chat abre */
-        .chat-layout.mobile-chat-active .chat-list-panel { 
-            display: none; 
-        }
+        /* Esconde a lista de contatos quando o chat está aberto */
+        .chat-layout.mobile-chat-active .chat-list-panel { display: none !important; }
+        /* Garante que o painel apareça */
+        .chat-layout.mobile-chat-active .chat-view-panel { display: flex !important; }
 
-        /* 4. Header do Chat (Fixo no topo) */
+        /* 4. Header INTERNO do Chat (Avatar, Nome, Voltar) */
         .chat-panel-header {
             flex-shrink: 0; /* Impede de ser esmagado */
             height: 60px;
-            padding-top: max(10px, env(safe-area-inset-top)); /* Protege do Notch do iPhone */
-            background: #fff;
+            background: #fff; /* Ou a cor que preferir */
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
             z-index: 10;
         }
 
-        /* 5. Área de Mensagens (Onde acontece o scroll) */
+        /* 5. Área de Mensagens (Onde ocorre o scroll) */
         .messages-thread {
-            flex-grow: 1; /* Ocupa todo o espaço livre no meio */
-            height: 0; /* Hack vital para o scroll funcionar dentro do flex */
-            min-height: 0;
-            overflow-y: auto; /* Scroll apenas aqui */
-            -webkit-overflow-scrolling: touch; /* Suavidade no iOS */
+            flex-grow: 1 !important; /* Estica para ocupar todo o espaço livre */
+            height: 0 !important; /* Hack vital para scroll flexbox */
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
+            padding: 15px;
             padding-bottom: 20px;
+            background-color: #e5ddd5; 
         }
 
-        /* 6. Barra de Input (Fixa na base do container) */
+        /* 6. Barra de Input (Rodapé do Chat) */
         .message-input-bar {
-            flex-shrink: 0; /* Impede de ser esmagado */
-            background: #f0f0f0;
+            flex-shrink: 0; /* Nunca encolhe */
             padding: 10px;
-            padding-bottom: 10px; /* Espaço extra se necessário */
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         
         /* Botão Voltar (aparece só no mobile) */
         #btn-voltar-mobile { 
-            display: inline-flex !important; 
-            margin-right: 10px; 
+            display: inline-flex !important;
+            margin-right: 5px; 
             border: none; 
-            background: #f5f5f5; 
-            border-radius: 50%; 
-            width: 32px; 
-            height: 32px; 
-            align-items: center; 
-            justify-content: center; 
+            background: transparent; 
+            padding: 5px;
+            color: #1B4332;
         }
     }
 </style>
