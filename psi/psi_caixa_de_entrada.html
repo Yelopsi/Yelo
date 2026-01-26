@@ -265,8 +265,8 @@
             border: none;
             border-top: 1px solid #eee;
             position: fixed !important;
-            top: 60px !important;
-            bottom: 80px !important;
+            top: var(--mobile-header-h, 60px) !important;
+            bottom: var(--mobile-bottom-h, 80px) !important;
             left: 0 !important;
             right: 0 !important;
             width: 100% !important;
@@ -346,6 +346,9 @@
         <div id="active-chat-screen" class="active-chat-wrapper" style="display: none;">
             
             <div class="chat-panel-header">
+                <button id="btn-voltar-mobile" class="back-to-list-btn" style="display: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </button>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <img src="/assets/logos/logo-escura.png" alt="Avatar" class="avatar" style="border: 1px solid #eee; object-fit: contain; padding: 5px; background-color: #f9f9f9;">
                     <div class="contact-info">

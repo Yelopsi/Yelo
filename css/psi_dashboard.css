@@ -9,6 +9,7 @@
    ========================================================================== */
 html {
     overflow-x: hidden; /* Impede que a página inteira role para os lados */
+    overscroll-behavior: none; /* Previne bounce scroll no iOS */
 }
 
 body.pagina-dashboard {
@@ -23,6 +24,7 @@ body.pagina-dashboard {
     max-width: 100vw; /* Garante que não exceda a viewport */
     overflow: hidden; /* Remove barra de rolagem dupla */
     position: relative;
+    -webkit-overflow-scrolling: touch; /* Rolagem suave no iOS */
 }
 
 /* Correção para Modais (Garante que fiquem escondidos e sobrepostos) */
@@ -63,7 +65,8 @@ body.pagina-dashboard {
 
 .dashboard-container { 
     display: flex; 
-    height: 100dvh; /* Altura dinâmica para mobile */
+    height: 100vh; /* Fallback */
+    height: 100dvh; /* Altura dinâmica para mobile (Safari fix) */
     width: 100%;
     overflow: hidden; /* Impede rolagem dupla */
 }
@@ -855,7 +858,11 @@ textarea#bio {
 
     /* --- CONTEÚDO PRINCIPAL --- */
     /* Ajuste de padding para não ficar escondido atrás da bottom nav */
-    .dashboard-main { width: 100%; padding: 110px 20px 85px 20px; }
+    .dashboard-main { 
+        width: 100%; 
+        /* Padding dinâmico baseado na altura real dos elementos fixos + respiro */
+        padding: calc(var(--mobile-header-h, 70px) + 20px) 20px calc(var(--mobile-bottom-h, 80px) + 20px) 20px;
+    }
 
     /* Empilha os campos do formulário de perfil no mobile para melhor UX */
     .profile-section .form-row {
