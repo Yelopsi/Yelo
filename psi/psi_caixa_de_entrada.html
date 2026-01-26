@@ -257,6 +257,11 @@
 
     /* Responsividade */
     @media (max-width: 992px) {
+        /* FIX: Remove transform do container pai para corrigir position:fixed */
+        #main-content {
+            transform: none !important;
+        }
+
         .main-header { display: none !important; }
 
         .chat-layout {
