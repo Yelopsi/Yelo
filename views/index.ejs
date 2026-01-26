@@ -721,5 +721,193 @@
     </main>
 
     <%- include('partials/footer') %>
+
+    <style>
+        /* --- PWA Modal Styles --- */
+        .app-install-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 10001;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .app-install-modal-overlay.visible {
+            display: flex;
+            opacity: 1;
+        }
+
+        .app-install-modal {
+            background: white;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 16px;
+            padding: 25px;
+            position: relative;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .modal-title {
+            font-family: var(--font-titulos, sans-serif);
+            color: var(--verde-escuro, #1B4332);
+            margin-bottom: 10px;
+            font-size: 1.25rem;
+        }
+
+        .modal-desc {
+            font-size: 0.95rem;
+            color: #555;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .ios-instructions {
+            display: none;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-pwa-install {
+            background-color: var(--verde-escuro, #1B4332);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 1rem;
+            transition: background-color 0.2s;
+        }
+
+        .btn-pwa-install:hover {
+            background-color: #143326;
+        }
+
+        .btn-pwa-later {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-decoration: underline;
+        }
+    </style>
+
+    <!-- APP INSTALL MODAL (Novo) -->
+    <div id="pwa-install-banner" class="app-install-modal-overlay">
+        <div class="app-install-modal">
+            <button id="btn-close-pwa" class="modal-close-btn">&times;</button>
+            
+            <div class="modal-icon-wrapper">
+                <img src="/assets/logos/logo-escura.png" alt="Yelo" style="height: 45px;">
+            </div>
+
+            <h3 class="modal-title">Instale o App Yelo</h3>
+            <p id="pwa-desc" class="modal-desc">Tenha acesso rápido, notificações e uma experiência muito mais fluida diretamente do seu celular.</p>
+
+            <div id="pwa-ios-instructions" class="ios-instructions">
+                <p><strong>Para instalar no iPhone/iPad:</strong></p>
+                <ol>
+                    <li>Toque no botão <strong>Compartilhar</strong> <span id="pwa-share-icon" style="display: inline-flex; vertical-align: middle; color: #007aff;"></span>.</li>
+                    <li>Role e selecione <strong>"Adicionar à Tela de Início"</strong>.</li>
+                </ol>
+            </div>
+
+            <div class="modal-actions">
+                <button id="btn-pwa-install" class="btn-pwa-install">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Baixar e Instalar
+                </button>
+                <button id="btn-pwa-later" class="btn-pwa-later">Agora não</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const pwaBanner = document.getElementById('pwa-install-banner');
+            const btnInstall = document.getElementById('btn-pwa-install');
+            const btnLater = document.getElementById('btn-pwa-later');
+            const btnClose = document.getElementById('btn-close-pwa');
+            const iosInstructions = document.getElementById('pwa-ios-instructions');
+            const pwaDesc = document.getElementById('pwa-desc');
+            
+            const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const isInStandaloneMode = ('standalone' in window.navigator) && (window.navigator.standalone);
+
+            // --- MODO DE TESTE: Força exibição sempre ---
+            setTimeout(() => {
+                pwaBanner.classList.add('visible');
+            }, 1000);
+
+            // Lógica para iOS (Manual) - MODO TESTE
+            if (isIos && !isInStandaloneMode) {
+                pwaBanner.classList.add('visible');
+                iosInstructions.style.display = 'block';
+                pwaDesc.style.display = 'none';
+                btnInstall.textContent = "Já fiz isso";
+                
+                const shareIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="20" width="20"><path fill="currentColor" d="M5.5 23c-0.4 0 -0.75 -0.15 -1.05 -0.45 -0.3 -0.3 -0.45 -0.65 -0.45 -1.05V8.775c0 -0.4 0.15 -0.75 0.45 -1.05 0.3 -0.3 0.65 -0.45 1.05 -0.45h4.225v1.5H5.5V21.5h13V8.775h-4.275v-1.5H18.5c0.4 0 0.75 0.15 1.05 0.45 0.3 0.3 0.45 0.65 0.45 1.05V21.5c0 0.4 -0.15 0.75 -0.45 1.05 -0.3 0.3 -0.65 0.45 -1.05 0.45H5.5Zm5.725 -7.675V3.9l-2.2 2.2 -1.075 -1.075L11.975 1 16 5.025l-1.075 1.075 -2.2 -2.2v11.425h-1.5Z" stroke-width="0.5"></path></svg>`;
+                const iconContainer = document.getElementById('pwa-share-icon');
+                if (iconContainer) iconContainer.innerHTML = shareIconSvg;
+            }
+
+            const dismissAction = () => {
+                pwaBanner.classList.remove('visible');
+            };
+            btnLater.addEventListener('click', dismissAction);
+            btnClose.addEventListener('click', dismissAction);
+            
+            btnInstall.addEventListener('click', async () => {
+                if (!isIos) {
+                    const link = document.createElement('a');
+                    link.href = '/assets/downloads/Yelo-App.apk';
+                    link.download = 'Yelo-App.apk';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            });
+        });
+    </script>
 </body>
 </html>

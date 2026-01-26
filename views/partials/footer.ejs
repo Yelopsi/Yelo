@@ -64,22 +64,22 @@
                     <svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141 4.439-1.38 9.959-.719 13.74 1.621.42.18.6.779.301 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
                 </a>
             </div>
-
-            <!-- App Download Links -->
-            <div style="margin-top: 25px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
-                <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin: 0;">Baixe o App</p>
-                <div style="display: flex; gap: 15px; align-items: center;">
-                    <a href="/assets/downloads/Yelo-App.apk" download="Yelo-App.apk" style="transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                        <img src="/assets/images/google_play.png" alt="Google Play" style="height: 48px;">
-                    </a>
-                    <div style="position: relative; cursor: not-allowed;" title="Em Breve">
-                        <img src="/assets/images/app_store.png" alt="App Store" style="height: 48px; opacity: 0.6; filter: grayscale(100%);">
-                        <div style="position: absolute; top: -8px; right: -10px; background-color: #FFEE8C; color: #1B4332; font-size: 0.6rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">EM BREVE</div>
-                    </div>
+        </div>
+        
+        <!-- App Download Links -->
+        <div style="margin-top: 0; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+            <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin: 0;">Baixe o App da Yelo</p>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <a href="/assets/downloads/Yelo-App.apk" download="Yelo-App.apk" style="transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <img src="/assets/images/google_play.svg" alt="Google Play" style="height: 48px;">
+                </a>
+                <div style="position: relative; cursor: not-allowed;" title="Em Breve">
+                    <img src="/assets/images/app_store.svg" alt="App Store" style="height: 48px; opacity: 0.6; filter: grayscale(100%);">
+                    <div style="position: absolute; top: -8px; right: -10px; background-color: #FFEE8C; color: #1B4332; font-size: 0.6rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">EM BREVE</div>
                 </div>
             </div>
         </div>
-        
+
         <hr class="rodape-divisor">
         
         <div class="rodape-base">
@@ -167,114 +167,6 @@
                 display: none;
         }
     }
-
-    /* --- PWA Modal Styles --- */
-    .app-install-modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 10001;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .app-install-modal-overlay.visible {
-        display: flex;
-        opacity: 1;
-    }
-
-    .app-install-modal {
-        background: white;
-        width: 90%;
-        max-width: 400px;
-        border-radius: 16px;
-        padding: 25px;
-        position: relative;
-        text-align: center;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        animation: slideUp 0.3s ease;
-    }
-
-    @keyframes slideUp {
-        from { transform: translateY(20px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-    }
-
-    .modal-close-btn {
-        position: absolute;
-        top: 10px;
-        right: 15px;
-        background: none;
-        border: none;
-        font-size: 24px;
-        cursor: pointer;
-        color: #666;
-    }
-
-    .modal-title {
-        font-family: var(--font-titulos, sans-serif);
-        color: var(--verde-escuro, #1B4332);
-        margin-bottom: 10px;
-        font-size: 1.25rem;
-    }
-
-    .modal-desc {
-        font-size: 0.95rem;
-        color: #555;
-        margin-bottom: 20px;
-        line-height: 1.5;
-    }
-
-    .ios-instructions {
-        display: none;
-        background: #f9f9f9;
-        padding: 15px;
-        border-radius: 8px;
-        text-align: left;
-        font-size: 0.9rem;
-        margin-bottom: 20px;
-    }
-
-    .modal-actions {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .btn-pwa-install {
-        background-color: var(--verde-escuro, #1B4332);
-        color: white;
-        border: none;
-        padding: 12px;
-        border-radius: 8px;
-        font-weight: bold;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        font-size: 1rem;
-        transition: background-color 0.2s;
-    }
-
-    .btn-pwa-install:hover {
-        background-color: #143326;
-    }
-
-    .btn-pwa-later {
-        background: none;
-        border: none;
-        color: #666;
-        cursor: pointer;
-        font-size: 0.9rem;
-        text-decoration: underline;
-    }
 </style>
 
 <div id="cookie-consent-banner" class="cookie-banner">
@@ -307,165 +199,6 @@
                 cookieBanner.style.display = 'none';
             });
         }
-    });
-</script>
-
-<!-- APP INSTALL MODAL (Novo) -->
-<div id="pwa-install-banner" class="app-install-modal-overlay">
-    <div class="app-install-modal">
-        <button id="btn-close-pwa" class="modal-close-btn">&times;</button>
-        
-        <div class="modal-icon-wrapper">
-            <img src="/assets/logos/logo-escura.png" alt="Yelo" style="height: 45px;">
-        </div>
-
-        <h3 class="modal-title">Instale o App Yelo</h3>
-        <p id="pwa-desc" class="modal-desc">Tenha acesso rápido, notificações e uma experiência muito mais fluida diretamente do seu celular.</p>
-
-        <div id="pwa-ios-instructions" class="ios-instructions">
-            <p><strong>Para instalar no iPhone/iPad:</strong></p>
-            <ol>
-                <li>Toque no botão <strong>Compartilhar</strong> <span id="pwa-share-icon" style="display: inline-flex; vertical-align: middle; color: #007aff;"></span>.</li>
-                <li>Role e selecione <strong>"Adicionar à Tela de Início"</strong>.</li>
-            </ol>
-        </div>
-
-        <div class="modal-actions">
-            <button id="btn-pwa-install" class="btn-pwa-install">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                Baixar e Instalar
-            </button>
-            <button id="btn-pwa-later" class="btn-pwa-later">Agora não</button>
-        </div>
-    </div>
-</div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Configurações
-        const pwaBanner = document.getElementById('pwa-install-banner');
-        const btnInstall = document.getElementById('btn-pwa-install');
-        const btnLater = document.getElementById('btn-pwa-later');
-        const btnClose = document.getElementById('btn-close-pwa');
-        const iosInstructions = document.getElementById('pwa-ios-instructions');
-        const pwaDesc = document.getElementById('pwa-desc');
-        
-        let deferredPrompt; // Para guardar o evento do Chrome/Android
-        const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        const isChromeIos = /CriOS/i.test(navigator.userAgent);
-        const isInStandaloneMode = ('standalone' in window.navigator) && (window.navigator.standalone);
-
-        // Função para registrar analytics
-        const trackInstall = (platform) => {
-            fetch('/api/analytics/pwa-install', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ platform })
-            }).catch(err => console.log('Erro tracking PWA', err));
-            
-            // Salva que já instalou/interagiu para não mostrar mais
-            localStorage.setItem('Yelo_pwa_installed', 'true');
-            pwaBanner.classList.remove('visible');
-        };
-
-        // Chave de controle de versão (Mude v3 para v4 se quiser forçar aparecer de novo no futuro)
-        const BANNER_KEY = 'yelo_app_banner_closed_v3';
-
-        // --- MODO DE TESTE: Força exibição sempre ---
-        setTimeout(() => {
-            pwaBanner.classList.add('visible');
-        }, 1000);
-
-        // 2. Lógica para iOS (Manual) - MODO TESTE: Removido verificação de localStorage
-        if (isIos && !isInStandaloneMode) {
-            pwaBanner.classList.add('visible');
-            iosInstructions.style.display = 'block'; // Mostra instruções manuais
-            pwaDesc.style.display = 'none'; // Esconde descrição genérica
-            btnInstall.textContent = "Já fiz isso"; // Muda texto do botão
-            
-            // Ícone SVG fornecido (sem círculo)
-            const shareIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="20" width="20"><path fill="currentColor" d="M5.5 23c-0.4 0 -0.75 -0.15 -1.05 -0.45 -0.3 -0.3 -0.45 -0.65 -0.45 -1.05V8.775c0 -0.4 0.15 -0.75 0.45 -1.05 0.3 -0.3 0.65 -0.45 1.05 -0.45h4.225v1.5H5.5V21.5h13V8.775h-4.275v-1.5H18.5c0.4 0 0.75 0.15 1.05 0.45 0.3 0.3 0.45 0.65 0.45 1.05V21.5c0 0.4 -0.15 0.75 -0.45 1.05 -0.3 0.3 -0.65 0.45 -1.05 0.45H5.5Zm5.725 -7.675V3.9l-2.2 2.2 -1.075 -1.075L11.975 1 16 5.025l-1.075 1.075 -2.2 -2.2v11.425h-1.5Z" stroke-width="0.5"></path></svg>`;
-            
-            const iconContainer = document.getElementById('pwa-share-icon');
-            if (iconContainer) iconContainer.innerHTML = shareIconSvg;
-
-            const locationSpan = document.getElementById('pwa-share-location');
-            if (locationSpan) {
-                // Chrome no iOS: Barra superior. Safari: Barra inferior.
-                locationSpan.textContent = isChromeIos ? "na barra de endereço (topo)" : "na barra inferior";
-            }
-        }
-
-        // 3. Clique no botão Instalar
-        btnInstall.addEventListener('click', async () => {
-            if (isIos) {
-                // No iOS é manual, então o botão serve para confirmar que o usuário fez
-                trackInstall('ios');
-            } else {
-                // No Android, baixa o APK direto
-                const link = document.createElement('a');
-                link.href = '/assets/downloads/Yelo-App.apk';
-                link.download = 'Yelo-App.apk';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                trackInstall('android_apk');
-            } else {
-                // Fallback raro
-                alert('Para instalar, use o menu do seu navegador e selecione "Adicionar à tela inicial".');
-            }
-        });
-
-        // 4. Botões de Fechar/Depois
-        const dismissAction = () => {
-            pwaBanner.classList.remove('visible');
-            // Salva para não mostrar por 7 dias (opcional, aqui salva pra sempre até limpar cache)
-            localStorage.setItem(BANNER_KEY, 'true');
-        };
-        btnLater.addEventListener('click', dismissAction);
-        btnClose.addEventListener('click', dismissAction);
-
-        // --- PWA: REGISTRO DO SERVICE WORKER & RECURSOS NATIVOS ---
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/service-worker.js')
-                .then(function(registration) {
-                    console.log('ServiceWorker registrado com sucesso: ', registration.scope);
-                }, function(err) {
-                    console.log('Falha no registro do ServiceWorker: ', err);
-                });
-            });
-        }
-
-        // Função Global: Solicitar Permissão de Notificação
-        // Você pode chamar window.enableNotifications() em um botão de "Ativar Notificações"
-        window.enableNotifications = function() {
-            if ('Notification' in window) {
-                Notification.requestPermission().then(permission => {
-                    if (permission === 'granted') {
-                        alert("Notificações ativadas! Você será avisado sobre novidades.");
-                        // Aqui futuramente você enviaria a inscrição para o backend
-                    }
-                });
-            }
-        };
-
-        // Função Global: Compartilhamento Nativo (Share Sheet do Celular)
-        // Use em botões: onclick="shareApp()"
-        window.shareApp = function() {
-            if (navigator.share) {
-                navigator.share({
-                    title: 'Yelo Saúde Mental',
-                    text: 'Encontre psicólogos qualificados na Yelo.',
-                    url: window.location.origin
-                }).catch(console.error);
-            } else {
-                // Fallback para copiar link
-                navigator.clipboard.writeText(window.location.origin);
-                alert('Link copiado para a área de transferência!');
-            }
-        };
     });
 </script>
 
