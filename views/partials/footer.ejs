@@ -221,6 +221,14 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ page: window.location.pathname })
         }).catch(err => console.log('Analytics offline'));
+
+        // Redirecionamento da Barra de XP (Dashboard Visão Geral -> Jornada)
+        const xpBar = document.querySelector('.gamification-panel-overview .xp-bar-wrapper');
+        if (xpBar) {
+            xpBar.addEventListener('click', () => {
+                window.location.href = '/jornada';
+            });
+        }
     });
 </script>
 
