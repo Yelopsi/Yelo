@@ -742,6 +742,25 @@
                 newBtnReset.addEventListener('click', () => { currentZoom = 80; applyZoom(); });
             }
         });
+
+        // --- FIX: CÁLCULO DINÂMICO DE ALTURA (SAFARI iOS) ---
+        function setMobileLayoutVars() {
+            // Apenas executa se estiver em resolução mobile/tablet
+            if (window.innerWidth > 992) return;
+
+            const header = document.querySelector('.mobile-header');
+            const bottomNav = document.querySelector('.mobile-bottom-nav');
+            
+            const headerHeight = header ? header.offsetHeight : 0;
+            const bottomHeight = bottomNav ? bottomNav.offsetHeight : 0;
+
+            document.documentElement.style.setProperty('--mobile-header-h', `${headerHeight}px`);
+            document.documentElement.style.setProperty('--mobile-bottom-h', `${bottomHeight}px`);
+        }
+
+        window.addEventListener('load', setMobileLayoutVars);
+        window.addEventListener('resize', setMobileLayoutVars);
+        document.addEventListener('DOMContentLoaded', setMobileLayoutVars);
     </script>
 
     <!-- CORREÇÃO: Executor de Scripts para Conteúdo Dinâmico -->
