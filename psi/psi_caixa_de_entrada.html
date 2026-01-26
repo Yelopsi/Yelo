@@ -258,97 +258,112 @@
     /* Responsividade */
     @media (max-width: 992px) {
         
-        /* 1. Esconde o título "Mensagens" da página para limpar a área */
+        /* --- ESTADO 1: LISTA DE CONVERSAS (INICIAL) --- */
+        
+        /* Oculta o título da página para ganhar espaço, mas mantém o Header Global "yelo" */
         .main-header { display: none !important; }
 
-        /* 2. O Container Principal (MODO TELA CHEIA / APP) */
         .chat-layout {
-            position: fixed !important;
-            top: 0 !important;
-            bottom: 0 !important; /* Vai até o fim, COBRINDO a nav */
-            left: 0 !important;
-            right: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
             
+            /* Ajuste para ficar abaixo do Header Global "yelo" */
+            position: fixed !important;
+            top: 60px !important; /* Altura do Header Global */
+            left: 0 !important;
             width: 100% !important;
-            height: 100dvh !important; /* Altura real da viewport */
+            
+            /* Altura vai até o final da tela, mas o padding interno protege o conteúdo da Bottom Nav */
+            height: calc(100dvh - 60px) !important;
             
             margin: 0 !important;
             border: none !important;
-            border-radius: 0 !important;
-            background: #fff; /* Fundo branco para a lista */
-            z-index: 99999 !important; /* FICA ACIMA DA BOTTOM NAV E TUDO MAIS */
-            
-            display: flex !important;
-            flex-direction: column !important;
+            background: #fff;
+            z-index: 50; /* Z-index médio: Fica abaixo de modais, mas visível */
         }
 
-        /* 3. Ajuste da Lista de Conversas (Esquerda) */
+        /* Lista de Contatos: Adiciona respiro no fundo para a Bottom Nav não tapar o último item */
         .chat-list-panel {
             width: 100% !important;
             height: 100% !important;
             display: flex !important;
             flex-direction: column !important;
-            padding-top: env(safe-area-inset-top); /* Respeito ao notch */
+            overflow-y: auto !important;
+            padding-bottom: 100px !important; /* CRÍTICO: Espaço para a Bottom Nav não cortar a lista */
         }
 
-        /* 4. Painel de Chat (Oculto por padrão, Flex quando ativo) */
+        /* O Chat em si começa escondido */
         .chat-view-panel {
-            display: none !important; /* Começa escondido */
-            flex-direction: column !important;
-            width: 100% !important;
-            height: 100% !important;
-            background: #e5ddd5;
-            position: absolute; /* Sobrepõe a lista */
-            top: 0;
-            left: 0;
-            z-index: 2; /* Fica acima da lista quando ativo */
+            display: none !important;
         }
 
-        /* LÓGICA DE TROCA: LISTA <-> CHAT */
-        /* Se tiver a classe .mobile-chat-active, esconde a lista e mostra o chat */
-        .chat-layout.mobile-chat-active .chat-list-panel { display: none !important; }
-        .chat-layout.mobile-chat-active .chat-view-panel { display: flex !important; }
 
-        /* 5. Header do Chat (Avatar + Voltar) */
+        /* --- ESTADO 2: CHAT ABERTO (MODO TELA CHEIA / OVERLAY) --- */
+        
+        /* Quando a classe .mobile-chat-active é ativada... */
+        
+        /* 1. O Painel de Chat vira um OVERLAY que cobre TUDO (inclusive a Bottom Nav e Header) */
+        .chat-layout.mobile-chat-active .chat-view-panel {
+            display: flex !important;
+            flex-direction: column !important;
+            
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100dvh !important; /* Altura Real do Celular */
+            
+            background-color: #e5ddd5; /* Fundo do Chat */
+            z-index: 99999 !important; /* MÁXIMO: Fica na frente da Bottom Nav e do Header Global */
+        }
+
+        /* 2. Esconde a lista de contatos lá de trás */
+        .chat-layout.mobile-chat-active .chat-list-panel {
+            display: none !important;
+        }
+
+        /* 3. Header Interno do Chat (Avatar, Voltar) */
         .chat-panel-header {
-            flex-shrink: 0; 
-            height: 60px;
+            flex: 0 0 60px; /* Altura fixa */
             background: #fff;
-            border-bottom: 1px solid #ddd;
             display: flex;
             align-items: center;
             padding: 0 10px;
-            padding-top: max(10px, env(safe-area-inset-top)); /* Espaço do Notch */
+            padding-top: max(5px, env(safe-area-inset-top)); /* Protege do Notch */
+            border-bottom: 1px solid #ddd;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
-        /* 6. Área de Mensagens (Scroll) */
+        /* 4. Área de Rolagem das Mensagens */
         .messages-thread {
-            flex-grow: 1 !important; 
-            height: 0 !important; /* Hack para scroll */
+            flex: 1 !important; /* Ocupa todo o meio */
+            height: 0 !important; /* Força o scroll funcionar */
             overflow-y: auto !important;
             -webkit-overflow-scrolling: touch;
             padding: 15px;
             padding-bottom: 20px;
+            width: 100%;
         }
 
-        /* 7. Input (Rodapé) */
+        /* 5. Input (Rodapé do Chat) */
         .message-input-bar {
-            flex-shrink: 0;
-            padding: 10px;
-            padding-bottom: max(15px, env(safe-area-inset-bottom)); /* Espaço para a barra home do iPhone */
+            flex: 0 0 auto;
             background: #f0f0f0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            padding: 10px;
+            /* Garante espaço seguro no iPhone X+ (Home Bar) */
+            padding-bottom: max(15px, env(safe-area-inset-bottom)); /* Espaço para a barra home do iPhone */
+            width: 100%;
+            box-sizing: border-box; /* Garante que o padding não estoure a largura */
         }
         
         /* Botão Voltar (aparece só no mobile) */
         #btn-voltar-mobile { 
             display: inline-flex !important;
-            margin-right: 5px; 
-            background: transparent; 
-            border: none; 
+            margin-right: 10px;
+            background: transparent;
+            border: none;
             padding: 5px;
+            color: #1B4332;
         }
     }
 </style>
@@ -437,42 +452,49 @@
         const btnVoltar = document.getElementById('btn-voltar-mobile');
         const list = document.getElementById('conversation-list');
         
-        // Função para abrir o chat
+        // --- FUNÇÃO PARA ABRIR O CHAT (MODO IMERSIVO) ---
         window.abrirChatMobile = function() {
-            // Adiciona a classe que o CSS usa para trocar as telas
-            wrapper.classList.add('mobile-chat-active');
-            
-            // Opcional: Adiciona classe no body se quiser esconder a nav via CSS global
-            document.body.classList.add('chat-fullscreen-mode');
-
-            // Scroll para o fim
-            const thread = document.getElementById('messages-thread');
-            if(thread) setTimeout(() => { thread.scrollTop = thread.scrollHeight; }, 100);
+            if (window.innerWidth <= 992) {
+                // Adiciona a classe que ativa o CSS de "Tela Cheia"
+                wrapper.classList.add('mobile-chat-active');
+                
+                // Rola para a última mensagem
+                const thread = document.getElementById('messages-thread');
+                if(thread) {
+                    setTimeout(() => { 
+                        thread.scrollTop = thread.scrollHeight; 
+                    }, 100);
+                }
+            }
         };
 
-        // Função para fechar
+        // --- FUNÇÃO PARA FECHAR ---
         if (btnVoltar) {
-            btnVoltar.addEventListener('click', function() {
+            btnVoltar.addEventListener('click', function(e) {
+                e.preventDefault(); // Evita recarregar se for form
                 wrapper.classList.remove('mobile-chat-active');
-                document.body.classList.remove('chat-fullscreen-mode');
             });
         }
 
-        // Clique na lista de conversas
+        // --- CLIQUE NA LISTA ---
         if (list) {
             list.addEventListener('click', function(e) {
                 const item = e.target.closest('.conversation-item');
                 if (item) {
+                    // Visual Ativo na Lista
                     document.querySelectorAll('.conversation-item').forEach(i => i.classList.remove('active'));
                     item.classList.add('active');
+                    
+                    // Dispara a abertura
                     window.abrirChatMobile();
                 }
             });
         }
         
-        // Se já carregar com um chat selecionado (ex: clicou em notificação)
+        // --- AUTO-OPEN (Opcional, se o usuário já estiver num chat) ---
+        // Se já tiver um item "active" ao carregar no mobile, abre o chat
         if (window.innerWidth <= 992 && document.querySelector('.conversation-item.active')) {
-             // window.abrirChatMobile(); // Descomente se quiser abrir automático
+             // window.abrirChatMobile(); 
         }
     })();
 </script>
