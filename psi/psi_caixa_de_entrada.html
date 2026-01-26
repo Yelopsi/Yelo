@@ -258,47 +258,138 @@
     /* Responsividade */
     @media (max-width: 992px) {
         
-        /* --- ESTADO 1: LISTA DE CONVERSAS (INICIAL) --- */
+        /* --- MODO LISTA (INICIAL) --- */
+        /* A lista convive com o layout do site */
         
-        /* Oculta o título da página para ganhar espaço, mas mantém o Header Global "yelo" */
         .main-header { display: none !important; }
 
         .chat-layout {
             display: flex !important;
             flex-direction: column !important;
-            
-            /* Ajuste para ficar abaixo do Header Global "yelo" */
             position: fixed !important;
-            top: 60px !important; /* Altura do Header Global */
-            left: 0 !important;
-            width: 100% !important;
             
-            /* Altura vai até o final da tela, mas o padding interno protege o conteúdo da Bottom Nav */
-            height: calc(100dvh - 60px) !important;
+            /* Encaixa abaixo do header global e acima da nav */
+            top: 60px !important; 
+            bottom: 80px !important; 
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            height: auto !important;
             
             margin: 0 !important;
-            border: none !important;
             background: #fff;
-            z-index: 50; /* Z-index médio: Fica abaixo de modais, mas visível */
+            z-index: 50;
+            border: none !important;
+            border-radius: 0 !important; /* Remove cantos arredondados na lista mobile */
         }
 
-        /* Lista de Contatos: Adiciona respiro no fundo para a Bottom Nav não tapar o último item */
         .chat-list-panel {
             width: 100% !important;
             height: 100% !important;
             display: flex !important;
             flex-direction: column !important;
             overflow-y: auto !important;
-            padding-bottom: 100px !important; /* CRÍTICO: Espaço para a Bottom Nav não cortar a lista */
         }
 
-        /* O Chat em si começa escondido */
-        .chat-view-panel {
-            display: none !important;
+        /* O chat começa oculto */
+        .chat-view-panel { display: none !important; }
+
+
+        /* --- MODO APP IMERSIVO (CHAT ABERTO) --- */
+        /* Aqui aplicamos as melhores práticas de UX */
+
+        .chat-layout.mobile-chat-active {
+            /* Z-Index nuclear: Fica acima de TUDO (Header, Nav, FAB, Modais) */
+            z-index: 2147483647 !important; 
+            
+            /* Ocupa 100% da viewport real */
+            top: 0 !important;
+            bottom: 0 !important;
+            height: 100dvh !important;
+            background-color: #e5ddd5; /* Fundo do Chat */
         }
 
+        .chat-layout.mobile-chat-active .chat-list-panel { display: none !important; }
 
-        /* --- ESTADO 2: CHAT ABERTO (MODO TELA CHEIA / OVERLAY) --- */
+        .chat-layout.mobile-chat-active .chat-view-panel {
+            display: flex !important;
+            flex-direction: column !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* 1. HEADER DO CHAT (NATIVO) */
+        .chat-panel-header {
+            flex: 0 0 auto; /* Altura automática baseada no conteúdo + padding */
+            height: 60px; /* Altura mínima visual */
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            
+            /* UX ESSENTIAL: Respeita o Notch do iPhone */
+            padding-top: env(safe-area-inset-top); 
+            box-sizing: content-box; /* Garante que o padding do notch some à altura */
+        }
+
+        /* 2. ÁREA DE MENSAGENS */
+        .messages-thread {
+            flex: 1 !important;
+            height: 0 !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch; /* Scroll nativo iOS */
+            
+            /* Removemos padding lateral excessivo para aproveitar a tela */
+            padding: 15px 10px; 
+            width: 100%;
+            box-sizing: border-box;
+            
+            /* Garante que o fundo cubra tudo */
+            background-color: #e5ddd5;
+        }
+
+        /* 3. INPUT (RODAPÉ) */
+        .message-input-bar {
+            flex: 0 0 auto;
+            background: #f0f0f0;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            
+            padding: 10px;
+            /* UX ESSENTIAL: Respeita a Home Bar do iPhone (o risco preto embaixo) */
+            padding-bottom: max(10px, env(safe-area-inset-bottom)); 
+            
+            border-top: 1px solid #ddd;
+        }
+
+        /* Ajuste visual do Input para parecer App */
+        #psi-reply-input {
+            background: #fff;
+            border-radius: 20px;
+            border: none;
+            padding: 10px 15px;
+            font-size: 16px; /* Evita zoom automático no iOS */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        /* Botão Voltar */
+        #btn-voltar-mobile {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            margin-right: 5px;
+            background: transparent;
+            border: none;
+            color: #1B4332;
+            cursor: pointer;
+        }
+    }
         
         /* Quando a classe .mobile-chat-active é ativada... */
         
