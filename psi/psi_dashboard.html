@@ -480,29 +480,6 @@
         </div>
     </div>
 
-    <!-- BANNER DOWNLOAD APP ANDROID (Novo) -->
-    <div id="android-app-banner" class="pwa-banner">
-        <div class="pwa-header">
-            <h3 class="pwa-title">
-                <img src="../assets/logos/logo-escura.png" alt="Yelo" style="height: 20px;">
-                App Yelo para Android
-            </h3>
-            <button class="pwa-close" id="close-app-banner">×</button>
-        </div>
-        
-        <p style="font-size: 0.9rem; color: #555; margin: 10px 0 15px 0; line-height: 1.4;">
-            Instale o aplicativo oficial para uma experiência mais rápida e fluida.
-        </p>
-
-        <div class="pwa-actions">
-            <button class="btn-pwa-later" id="btn-app-later">Agora não</button>
-            <!-- Link direto para o arquivo APK -->
-            <a href="/assets/downloads/Yelo-App.apk" download="Yelo-App.apk" class="btn-pwa-install" style="text-decoration: none; display: flex; align-items: center; justify-content: center;">
-                Baixar App
-            </a>
-        </div>
-    </div>
-
     <script src="../config.js"></script>
     <script src="psi_dashboard.js"></script>
     <script src="psi_caixa_de_entrada.js"></script>
@@ -758,33 +735,6 @@
 
                 newBtnReset.addEventListener('click', () => { currentZoom = 80; applyZoom(); });
             }
-
-            // --- LÓGICA DO BANNER APP ANDROID ---
-            const appBanner = document.getElementById('android-app-banner');
-            const closeAppBannerBtn = document.getElementById('close-app-banner');
-            const laterAppBannerBtn = document.getElementById('btn-app-later');
-            
-            // [AJUSTE] Detecção mais ampla para Tablets (Android Desktop Mode)
-            // Evita apenas iOS (iPhone/iPad) onde APK não funciona.
-            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-            
-            // Verifica se o usuário já fechou o banner antes (Chave V2 para forçar reaparecimento)
-            const isAppBannerClosed = localStorage.getItem('yelo_android_banner_closed_v2');
-
-            if (!isIOS && !isAppBannerClosed && appBanner) {
-                // Mostra o banner após 2 segundos para não ser intrusivo
-                setTimeout(() => {
-                    appBanner.classList.add('visible');
-                }, 2000);
-            }
-
-            const closeAppBanner = () => {
-                if(appBanner) appBanner.classList.remove('visible');
-                localStorage.setItem('yelo_android_banner_closed_v2', 'true');
-            };
-
-            if(closeAppBannerBtn) closeAppBannerBtn.addEventListener('click', closeAppBanner);
-            if(laterAppBannerBtn) laterAppBannerBtn.addEventListener('click', closeAppBanner);
         });
 
         // --- FIX: CÁLCULO DINÂMICO DE ALTURA (SAFARI iOS) ---
