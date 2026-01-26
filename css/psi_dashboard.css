@@ -4330,3 +4330,15 @@ input:checked + .slider:before { transform: translateX(20px); }
 .custom-modal-box input[type="time"]::-webkit-calendar-picker-indicator:hover {
     opacity: 1;
 }
+
+/* --- CORREÇÃO: REMOVER ESPAÇO VAZIO NO FINAL (RODAPÉ) --- */
+/* Oculta o rodapé e a onda decorativa no dashboard para evitar rolagem desnecessária */
+.pagina-dashboard .rodape-principal,
+.pagina-dashboard .wave-divider-footer {
+    display: none !important;
+}
+
+/* Ajuste fino do padding inferior do conteúdo principal */
+.dashboard-main {
+    padding-bottom: 20px !important;
+}
