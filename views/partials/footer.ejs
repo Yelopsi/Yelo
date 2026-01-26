@@ -68,12 +68,12 @@
             <!-- App Download Links -->
             <div style="margin-top: 25px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
                 <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin: 0;">Baixe o App</p>
-                <div style="display: flex; gap: 10px;">
+                <div style="display: flex; gap: 15px; align-items: center;">
                     <a href="/assets/downloads/Yelo-App.apk" download="Yelo-App.apk" style="transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                         <img src="/assets/images/google_play.png" alt="Google Play" style="height: 48px;">
                     </a>
-                    <div style="position: relative; opacity: 0.6; filter: grayscale(100%); cursor: not-allowed;" title="Em Breve">
-                        <img src="/assets/images/app_store.png" alt="App Store" style="height: 48px;">
+                    <div style="position: relative; cursor: not-allowed;" title="Em Breve">
+                        <img src="/assets/images/app_store.png" alt="App Store" style="height: 48px; opacity: 0.6; filter: grayscale(100%);">
                         <div style="position: absolute; top: -8px; right: -10px; background-color: #FFEE8C; color: #1B4332; font-size: 0.6rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">EM BREVE</div>
                     </div>
                 </div>
@@ -166,6 +166,114 @@
             .mobile-break {
                 display: none;
         }
+    }
+
+    /* --- PWA Modal Styles --- */
+    .app-install-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 10001;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .app-install-modal-overlay.visible {
+        display: flex;
+        opacity: 1;
+    }
+
+    .app-install-modal {
+        background: white;
+        width: 90%;
+        max-width: 400px;
+        border-radius: 16px;
+        padding: 25px;
+        position: relative;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-close-btn {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #666;
+    }
+
+    .modal-title {
+        font-family: var(--font-titulos, sans-serif);
+        color: var(--verde-escuro, #1B4332);
+        margin-bottom: 10px;
+        font-size: 1.25rem;
+    }
+
+    .modal-desc {
+        font-size: 0.95rem;
+        color: #555;
+        margin-bottom: 20px;
+        line-height: 1.5;
+    }
+
+    .ios-instructions {
+        display: none;
+        background: #f9f9f9;
+        padding: 15px;
+        border-radius: 8px;
+        text-align: left;
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+    }
+
+    .modal-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn-pwa-install {
+        background-color: var(--verde-escuro, #1B4332);
+        color: white;
+        border: none;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: 1rem;
+        transition: background-color 0.2s;
+    }
+
+    .btn-pwa-install:hover {
+        background-color: #143326;
+    }
+
+    .btn-pwa-later {
+        background: none;
+        border: none;
+        color: #666;
+        cursor: pointer;
+        font-size: 0.9rem;
+        text-decoration: underline;
     }
 </style>
 
@@ -264,14 +372,10 @@
         // Chave de controle de versão (Mude v3 para v4 se quiser forçar aparecer de novo no futuro)
         const BANNER_KEY = 'yelo_app_banner_closed_v3';
 
-        // 1. Lógica para Android/Tablet (APK Direto)
-        // Se não for iOS e não tiver fechado o banner v3
-        if (!isIos && !localStorage.getItem(BANNER_KEY) && !localStorage.getItem('Yelo_pwa_installed')) {
-            // Mostra o banner se for Android, independente do evento PWA
-            setTimeout(() => {
-                pwaBanner.classList.add('visible');
-            }, 2000);
-        }
+        // --- MODO DE TESTE: Força exibição sempre ---
+        setTimeout(() => {
+            pwaBanner.classList.add('visible');
+        }, 1000);
 
         // 2. Lógica para iOS (Manual)
         if (isIos && !isInStandaloneMode && !localStorage.getItem(BANNER_KEY) && !localStorage.getItem('Yelo_pwa_installed')) {
