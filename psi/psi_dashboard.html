@@ -764,12 +764,14 @@
             const closeAppBannerBtn = document.getElementById('close-app-banner');
             const laterAppBannerBtn = document.getElementById('btn-app-later');
             
-            // Verifica se é Android
-            const isAndroid = /Android/i.test(navigator.userAgent);
-            // Verifica se o usuário já fechou o banner antes
-            const isAppBannerClosed = localStorage.getItem('yelo_android_banner_closed');
+            // [AJUSTE] Detecção mais ampla para Tablets (Android Desktop Mode)
+            // Evita apenas iOS (iPhone/iPad) onde APK não funciona.
+            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            
+            // Verifica se o usuário já fechou o banner antes (Chave V2 para forçar reaparecimento)
+            const isAppBannerClosed = localStorage.getItem('yelo_android_banner_closed_v2');
 
-            if (isAndroid && !isAppBannerClosed && appBanner) {
+            if (!isIOS && !isAppBannerClosed && appBanner) {
                 // Mostra o banner após 2 segundos para não ser intrusivo
                 setTimeout(() => {
                     appBanner.classList.add('visible');
@@ -778,7 +780,7 @@
 
             const closeAppBanner = () => {
                 if(appBanner) appBanner.classList.remove('visible');
-                localStorage.setItem('yelo_android_banner_closed', 'true');
+                localStorage.setItem('yelo_android_banner_closed_v2', 'true');
             };
 
             if(closeAppBannerBtn) closeAppBannerBtn.addEventListener('click', closeAppBanner);
