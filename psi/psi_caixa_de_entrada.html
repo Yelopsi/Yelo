@@ -258,29 +258,25 @@
     /* Responsividade */
     @media (max-width: 992px) {
         
-        /* --- MODO LISTA (INICIAL) --- */
-        /* A lista convive com o layout do site */
-        
+        /* Oculta apenas o título da página para limpar a poluição visual */
         .main-header { display: none !important; }
 
+        /* --- ESTADO 1: LISTA DE CONVERSAS (Repouso) --- */
+        /* Aqui ele age como um elemento normal da página, evitando "sumir" */
         .chat-layout {
             display: flex !important;
             flex-direction: column !important;
-            position: fixed !important;
             
-            /* Encaixa abaixo do header global e acima da nav */
-            top: 60px !important; 
-            bottom: 80px !important; 
-            left: 0 !important;
-            right: 0 !important;
+            /* Removemos position: fixed daqui para evitar conflitos */
+            position: relative !important; 
             width: 100% !important;
-            height: auto !important;
+            height: calc(100vh - 160px) !important; /* Altura segura para rolar dentro do dashboard */
+            min-height: 500px; /* Garante que nunca fique zerado */
             
             margin: 0 !important;
             background: #fff;
-            z-index: 50;
             border: none !important;
-            border-radius: 0 !important; /* Remove cantos arredondados na lista mobile */
+            z-index: 1; /* Baixo nível, convive com o menu */
         }
 
         .chat-list-panel {
@@ -289,105 +285,103 @@
             display: flex !important;
             flex-direction: column !important;
             overflow-y: auto !important;
+            /* Padding no fundo para a Bottom Nav não tapar o último contato */
+            padding-bottom: 80px !important; 
         }
 
-        /* O chat começa oculto */
+        /* Oculta o chat enquanto estiver no modo lista */
         .chat-view-panel { display: none !important; }
 
 
-        /* --- MODO APP IMERSIVO (CHAT ABERTO) --- */
-        /* Aqui aplicamos as melhores práticas de UX */
-
+        /* --- ESTADO 2: CHAT ABERTO (IMERSÃO TOTAL) --- */
+        /* Ao adicionar a classe .mobile-chat-active, ele domina a tela */
+        
         .chat-layout.mobile-chat-active {
-            /* Z-Index nuclear: Fica acima de TUDO (Header, Nav, FAB, Modais) */
-            z-index: 2147483647 !important; 
-            
-            /* Ocupa 100% da viewport real */
+            position: fixed !important; /* Sai do fluxo da página */
             top: 0 !important;
-            bottom: 0 !important;
-            height: 100dvh !important;
-            background-color: #e5ddd5; /* Fundo do Chat */
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100dvh !important; /* Altura real do dispositivo */
+            
+            margin: 0 !important;
+            border-radius: 0 !important;
+            
+            /* Z-INDEX MÁXIMO: Cobre Header, Menu, Bottom Nav e tudo mais */
+            z-index: 2147483647 !important; 
+            background-color: #e5ddd5;
         }
 
+        /* Esconde a lista para focar no chat */
         .chat-layout.mobile-chat-active .chat-list-panel { display: none !important; }
-
-        .chat-layout.mobile-chat-active .chat-view-panel {
+        
+        /* Mostra o painel de mensagens */
+        .chat-layout.mobile-chat-active .chat-view-panel { 
             display: flex !important;
             flex-direction: column !important;
             width: 100% !important;
             height: 100% !important;
         }
 
-        /* 1. HEADER DO CHAT (NATIVO) */
+        /* --- UX DO CHAT (HEADER + MENSAGENS + INPUT) --- */
+        
+        /* Header Fixo no Topo */
         .chat-panel-header {
-            flex: 0 0 auto; /* Altura automática baseada no conteúdo + padding */
-            height: 60px; /* Altura mínima visual */
+            flex: 0 0 auto;
+            height: 60px;
             background: #fff;
-            border-bottom: 1px solid #e0e0e0;
-            
             display: flex;
             align-items: center;
             padding: 0 10px;
             
-            /* UX ESSENTIAL: Respeita o Notch do iPhone */
+            /* Respeita o Notch (Câmera) do iPhone */
             padding-top: env(safe-area-inset-top); 
-            box-sizing: content-box; /* Garante que o padding do notch some à altura */
+            border-bottom: 1px solid #e0e0e0;
         }
 
-        /* 2. ÁREA DE MENSAGENS */
+        /* Área de Mensagens (Onde rola) */
         .messages-thread {
             flex: 1 !important;
-            height: 0 !important;
+            height: 0 !important; /* Truque para scroll flexbox */
             overflow-y: auto !important;
-            -webkit-overflow-scrolling: touch; /* Scroll nativo iOS */
-            
-            /* Removemos padding lateral excessivo para aproveitar a tela */
+            -webkit-overflow-scrolling: touch;
             padding: 15px 10px; 
+            padding-bottom: 20px;
             width: 100%;
-            box-sizing: border-box;
-            
-            /* Garante que o fundo cubra tudo */
-            background-color: #e5ddd5;
         }
 
-        /* 3. INPUT (RODAPÉ) */
+        /* Input (Rodapé) */
         .message-input-bar {
             flex: 0 0 auto;
             background: #f0f0f0;
+            padding: 10px;
+            
+            /* Respeita a barra de gesto (Home Bar) do iPhone */
+            padding-bottom: max(15px, env(safe-area-inset-bottom)); 
+            
             width: 100%;
             display: flex;
             align-items: center;
             gap: 10px;
-            
-            padding: 10px;
-            /* UX ESSENTIAL: Respeita a Home Bar do iPhone (o risco preto embaixo) */
-            padding-bottom: max(10px, env(safe-area-inset-bottom)); 
-            
-            border-top: 1px solid #ddd;
+            box-sizing: border-box;
         }
 
-        /* Ajuste visual do Input para parecer App */
         #psi-reply-input {
             background: #fff;
             border-radius: 20px;
-            border: none;
+            font-size: 16px; /* Evita zoom no iOS */
             padding: 10px 15px;
-            font-size: 16px; /* Evita zoom automático no iOS */
+            border: none;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
-        /* Botão Voltar */
         #btn-voltar-mobile {
             display: flex !important;
             align-items: center;
             justify-content: center;
-            width: 40px;
-            height: 40px;
-            margin-right: 5px;
+            width: 40px; height: 40px;
             background: transparent;
             border: none;
             color: #1B4332;
-            cursor: pointer;
         }
     }
         
@@ -543,26 +537,23 @@
         const btnVoltar = document.getElementById('btn-voltar-mobile');
         const list = document.getElementById('conversation-list');
         
-        // --- FUNÇÃO PARA ABRIR O CHAT (MODO IMERSIVO) ---
+        // --- ABRIR CHAT ---
         window.abrirChatMobile = function() {
             if (window.innerWidth <= 992) {
-                // Adiciona a classe que ativa o CSS de "Tela Cheia"
+                console.log("Abrindo chat mobile (Modo Imersivo)");
                 wrapper.classList.add('mobile-chat-active');
                 
-                // Rola para a última mensagem
+                // Força o scroll para baixo
                 const thread = document.getElementById('messages-thread');
-                if(thread) {
-                    setTimeout(() => { 
-                        thread.scrollTop = thread.scrollHeight; 
-                    }, 100);
-                }
+                if(thread) setTimeout(() => { thread.scrollTop = thread.scrollHeight; }, 100);
             }
         };
 
-        // --- FUNÇÃO PARA FECHAR ---
+        // --- FECHAR CHAT ---
         if (btnVoltar) {
             btnVoltar.addEventListener('click', function(e) {
-                e.preventDefault(); // Evita recarregar se for form
+                e.preventDefault();
+                console.log("Fechando chat mobile");
                 wrapper.classList.remove('mobile-chat-active');
             });
         }
@@ -572,20 +563,14 @@
             list.addEventListener('click', function(e) {
                 const item = e.target.closest('.conversation-item');
                 if (item) {
-                    // Visual Ativo na Lista
+                    // Remove ativo dos outros
                     document.querySelectorAll('.conversation-item').forEach(i => i.classList.remove('active'));
+                    // Adiciona neste
                     item.classList.add('active');
-                    
-                    // Dispara a abertura
+                    // Abre a tela cheia
                     window.abrirChatMobile();
                 }
             });
-        }
-        
-        // --- AUTO-OPEN (Opcional, se o usuário já estiver num chat) ---
-        // Se já tiver um item "active" ao carregar no mobile, abre o chat
-        if (window.innerWidth <= 992 && document.querySelector('.conversation-item.active')) {
-             // window.abrirChatMobile(); 
         }
     })();
 </script>
