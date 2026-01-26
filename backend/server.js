@@ -484,6 +484,34 @@ app.post('/api/analytics/pwa-install', async (req, res) => {
     }
 });
 
+// ROTA DE ESTATÍSTICAS PWA (ADMIN) - Leitura para o Relatório
+app.get('/api/admin/stats/pwa', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(401).json({ error: 'Não autorizado' });
+        
+        // Total Geral
+        const [totalResult] = await db.sequelize.query(
+            `SELECT COUNT(*) as count FROM "PwaInstallLogs"`,
+            { type: db.sequelize.QueryTypes.SELECT }
+        );
+        
+        // Por Plataforma (Android/iOS)
+        const byPlatform = await db.sequelize.query(
+            `SELECT platform, COUNT(*) as count FROM "PwaInstallLogs" GROUP BY platform`,
+            { type: db.sequelize.QueryTypes.SELECT }
+        );
+
+        res.json({
+            total: parseInt(totalResult?.count || 0),
+            byPlatform: byPlatform
+        });
+    } catch (error) {
+        console.error("Erro ao buscar stats PWA:", error);
+        res.status(500).json({ error: 'Erro interno' });
+    }
+});
+
 // =============================================================
 // 🚨 ROTAS DE EMERGÊNCIA (DESATIVADAS PARA PRODUÇÃO) 🚨
 // =============================================================
