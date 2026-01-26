@@ -179,6 +179,9 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                         Ver página pública
                     </a>
+                    <div id="desktop-menu-trigger" style="margin-top: 15px; cursor: pointer; color: #FFEE8C; font-weight: 800; font-family: var(--font-titulos); letter-spacing: 1px; font-size: 0.9rem; display: inline-block; border: 1px solid #FFEE8C; padding: 5px 15px; border-radius: 20px;">
+                        + MENU
+                    </div>
                 </div>
             </div>
 
@@ -194,12 +197,6 @@
                         <a href="#" data-page="psi_pacientes.html">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                             <span>Pacientes</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" data-page="psi_caixa_de_entrada.html">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                            <span>Suporte</span>
                         </a>
                     </li>
                     <li>
@@ -419,11 +416,6 @@
             <span>Pacientes</span>
         </a>
 
-        <a href="#" class="bottom-nav-item" data-target-page="psi_caixa_de_entrada.html">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            <span>Suporte</span>
-        </a>
-
         <a href="#" class="bottom-nav-item" data-target-page="psi_financeiro.html">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
             <span>Financeiro</span>
@@ -479,6 +471,7 @@
                     <h4>Sistema</h4>
                     <a href="#" data-page="psi_assinatura.html" class="sheet-link">Assinatura e Pagamentos</a>
                     <a href="#" data-page="psi_meu_perfil.html" class="sheet-link">Ajustes de perfil</a>
+                    <a href="mailto:oi@yelopsi.com.br" class="sheet-link" style="color: #1B4332; font-weight: 700;">Fale com a Yelo (E-mail)</a>
                 </div>
                 <div class="sheet-section">
                     <button id="btn-logout-sheet" class="sheet-link logout">Encerrar sessão</button>
@@ -621,10 +614,11 @@
             const accountSheet = document.querySelector('.account-sheet');
             const closeSheetBtn = document.getElementById('close-account-sheet');
             
-            // Gatilhos para abrir (Avatar Sidebar + Avatar Mobile)
+            // Gatilhos para abrir (Avatar Sidebar + Avatar Mobile + Botão Desktop)
             const triggers = [
                 document.getElementById('psi-sidebar-photo'),
-                document.getElementById('mobile-avatar-trigger')
+                document.getElementById('mobile-avatar-trigger'),
+                document.getElementById('desktop-menu-trigger')
             ];
 
             triggers.forEach(t => {
