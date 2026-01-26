@@ -377,8 +377,8 @@
             pwaBanner.classList.add('visible');
         }, 1000);
 
-        // 2. Lógica para iOS (Manual)
-        if (isIos && !isInStandaloneMode && !localStorage.getItem(BANNER_KEY) && !localStorage.getItem('Yelo_pwa_installed')) {
+        // 2. Lógica para iOS (Manual) - MODO TESTE: Removido verificação de localStorage
+        if (isIos && !isInStandaloneMode) {
             pwaBanner.classList.add('visible');
             iosInstructions.style.display = 'block'; // Mostra instruções manuais
             pwaDesc.style.display = 'none'; // Esconde descrição genérica
