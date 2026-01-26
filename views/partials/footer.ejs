@@ -70,11 +70,11 @@
                 <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin: 0;">Baixe o App</p>
                 <div style="display: flex; gap: 10px;">
                     <a href="/assets/downloads/Yelo-App.apk" download="Yelo-App.apk" style="transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                        <img src="/assets/images/google_play.png" alt="Google Play" style="height: 35px;">
+                        <img src="/assets/images/google_play.png" alt="Google Play" style="height: 48px;">
                     </a>
                     <div style="position: relative; opacity: 0.6; filter: grayscale(100%); cursor: not-allowed;" title="Em Breve">
-                        <img src="/assets/images/app_store.png" alt="App Store" style="height: 35px;">
-                        <div style="position: absolute; top: -8px; right: -10px; background-color: #1B4332; color: #fff; font-size: 0.6rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">EM BREVE</div>
+                        <img src="/assets/images/app_store.png" alt="App Store" style="height: 48px;">
+                        <div style="position: absolute; top: -8px; right: -10px; background-color: #FFEE8C; color: #1B4332; font-size: 0.6rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">EM BREVE</div>
                     </div>
                 </div>
             </div>
@@ -202,30 +202,33 @@
     });
 </script>
 
-<!-- PWA Install Banner (Mobile Only) -->
-<div id="pwa-install-banner" class="pwa-banner">
-    <div class="pwa-header">
-        <h3 class="pwa-title">
-            <span style="font-size: 1.5rem;">📱</span> Instalar App Yelo
-        </h3>
-        <button id="btn-close-pwa" class="pwa-close">&times;</button>
-    </div>
-    
-    <div id="pwa-ios-instructions" class="pwa-instructions">
-        Para instalar no iPhone/iPad:<br>
-        1. Toque no botão <strong>Compartilhar</strong> <span id="pwa-share-icon" style="display: inline-flex; vertical-align: middle; color: #007aff;"></span> <span id="pwa-share-location">abaixo</span>.<br>
-        2. Clique em "Mais" e Selecione <strong>"Adicionar à Tela de Início"</strong>.
+<!-- APP INSTALL MODAL (Novo) -->
+<div id="pwa-install-banner" class="app-install-modal-overlay">
+    <div class="app-install-modal">
+        <button id="btn-close-pwa" class="modal-close-btn">&times;</button>
         
-        <div class="pwa-screenshot-container">
-            <img src="/assets/images/ios-install-guide.jpeg" alt="Exemplo de Instalação" class="pwa-screenshot">
+        <div class="modal-icon-wrapper">
+            <img src="/assets/logos/logo-escura.png" alt="Yelo" style="height: 45px;">
         </div>
-    </div>
 
-    <p id="pwa-desc" style="margin: 0; color: #666; font-size: 0.9rem;">Acesse a plataforma mais rápido direto da sua tela inicial.</p>
+        <h3 class="modal-title">Instale o App Yelo</h3>
+        <p id="pwa-desc" class="modal-desc">Tenha acesso rápido, notificações e uma experiência muito mais fluida diretamente do seu celular.</p>
 
-    <div class="pwa-actions">
-        <button id="btn-pwa-later" class="btn-pwa-later">Agora não</button>
-        <button id="btn-pwa-install" class="btn-pwa-install">Instalar Agora</button>
+        <div id="pwa-ios-instructions" class="ios-instructions">
+            <p><strong>Para instalar no iPhone/iPad:</strong></p>
+            <ol>
+                <li>Toque no botão <strong>Compartilhar</strong> <span id="pwa-share-icon" style="display: inline-flex; vertical-align: middle; color: #007aff;"></span>.</li>
+                <li>Role e selecione <strong>"Adicionar à Tela de Início"</strong>.</li>
+            </ol>
+        </div>
+
+        <div class="modal-actions">
+            <button id="btn-pwa-install" class="btn-pwa-install">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Baixar e Instalar
+            </button>
+            <button id="btn-pwa-later" class="btn-pwa-later">Agora não</button>
+        </div>
     </div>
 </div>
 
