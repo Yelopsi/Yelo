@@ -425,6 +425,47 @@
         };
         btnLater.addEventListener('click', dismissAction);
         btnClose.addEventListener('click', dismissAction);
+
+        // --- PWA: REGISTRO DO SERVICE WORKER & RECURSOS NATIVOS ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/service-worker.js')
+                .then(function(registration) {
+                    console.log('ServiceWorker registrado com sucesso: ', registration.scope);
+                }, function(err) {
+                    console.log('Falha no registro do ServiceWorker: ', err);
+                });
+            });
+        }
+
+        // Função Global: Solicitar Permissão de Notificação
+        // Você pode chamar window.enableNotifications() em um botão de "Ativar Notificações"
+        window.enableNotifications = function() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        alert("Notificações ativadas! Você será avisado sobre novidades.");
+                        // Aqui futuramente você enviaria a inscrição para o backend
+                    }
+                });
+            }
+        };
+
+        // Função Global: Compartilhamento Nativo (Share Sheet do Celular)
+        // Use em botões: onclick="shareApp()"
+        window.shareApp = function() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Yelo Saúde Mental',
+                    text: 'Encontre psicólogos qualificados na Yelo.',
+                    url: window.location.origin
+                }).catch(console.error);
+            } else {
+                // Fallback para copiar link
+                navigator.clipboard.writeText(window.location.origin);
+                alert('Link copiado para a área de transferência!');
+            }
+        };
     });
 </script>
 
