@@ -17,8 +17,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (errorElement) errorElement.style.display = 'none';
 
     // FIX: Esconde a navegação inferior mobile em páginas públicas
-    const mobileNav = document.querySelector('.mobile-bottom-nav');
-    if (mobileNav) mobileNav.style.display = 'none';
+    const mobileNavs = document.querySelectorAll('.mobile-bottom-nav, .bottom-nav');
+    mobileNavs.forEach(nav => nav.style.display = 'none');
 
     // --- 2. FUNÇÕES AUXILIARES DE UI ---
     const showToast = (message, type = 'success') => {
