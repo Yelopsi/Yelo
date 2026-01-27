@@ -16,6 +16,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // FIX IMEDIATO: Garante que o erro comece oculto (evita o "piscar" na tela)
     if (errorElement) errorElement.style.display = 'none';
 
+    // FIX: Esconde a navegação inferior mobile em páginas públicas
+    const mobileNav = document.querySelector('.mobile-bottom-nav');
+    if (mobileNav) mobileNav.style.display = 'none';
+
     // --- 2. FUNÇÕES AUXILIARES DE UI ---
     const showToast = (message, type = 'success') => {
         if (!toastContainer) return;

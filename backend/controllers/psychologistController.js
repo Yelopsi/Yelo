@@ -1498,9 +1498,11 @@ exports.cancelSubscription = async (req, res) => {
             }
 
             // 2. ATUALIZA O BANCO LOCAL
-            await psychologist.update({
-                cancelAtPeriodEnd: true 
-            });
+            const updateData = { cancelAtPeriodEnd: true };
+            if (subData.nextDueDate) {
+                updateData.planExpiresAt = subData.nextDueDate;
+            }
+            await psychologist.update(updateData);
 
             res.json({ message: 'Renovação automática cancelada. Seu acesso continua até o fim do período.' });
         }
