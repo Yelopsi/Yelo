@@ -2141,6 +2141,14 @@ const PORT = process.env.PORT || 3001;
 const startServer = async () => {
     console.time('⏱️ Tempo Total de Inicialização');
 
+    // [OTIMIZAÇÃO] Inicia o servidor IMEDIATAMENTE para o Render detectar a porta aberta
+    // Isso evita timeouts de deploy se o banco demorar alguns segundos para conectar.
+    if (!server.listening) {
+        server.listen(PORT, () => {
+            console.log(`🚀 [FAST BOOT] Servidor ouvindo na porta ${PORT} (Inicializando conexões...)`);
+        });
+    }
+
     // --- 1. AGUARDA O BANCO ESTAR PRONTO (RETRY LOOP) ---
     // Garante que o banco aceita escrita antes de tentar alterar o schema
     let dbReady = false;
@@ -2196,15 +2204,6 @@ const startServer = async () => {
     // --- BLOCO DE SINCRONIZAÇÃO E CORREÇÃO DE SCHEMA (RODA EM TODOS OS AMBIENTES) ---
     try {
         console.log('🔧 [DB SYNC] Verificando e aplicando correções de schema...');
-
-        // --- FIX: INICIA O SERVIDOR AGORA (EARLY BINDING) ---
-        // Inicia a escuta da porta ANTES de rodar as queries pesadas.
-        // Isso evita o erro "Port scan timeout" do Render.
-        if (!server.listening) {
-            server.listen(PORT, () => {
-                console.log(`🚀 [EARLY START] Servidor ouvindo na porta ${PORT} (Aguardando DB Sync...)`);
-            });
-        }
 
         // --- OTIMIZAÇÃO: Agrupa todas as queries de schema para rodar em paralelo ---
         const schemaQueries = [
