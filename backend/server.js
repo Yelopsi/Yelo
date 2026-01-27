@@ -143,7 +143,7 @@ const blogController = require('./controllers/blogController');
 const psychologistController = require('./controllers/psychologistController'); // Importar o controller
 const adminController = require('./controllers/adminController'); // <--- ADICIONADO
 const qnaController = require('./controllers/qnaController'); // <--- ADICIONADO
-const seedTestData = require('./controllers/seed_test_data');
+// const seedTestData = require('./controllers/seed_test_data'); // [OTIMIZAÇÃO] Desativado para economizar memória na inicialização
 
 const app = express();
 
@@ -2203,10 +2203,12 @@ const startServer = async () => {
 
     // --- BLOCO DE SINCRONIZAÇÃO E CORREÇÃO DE SCHEMA (RODA EM TODOS OS AMBIENTES) ---
     try {
-        console.log('🔧 [DB SYNC] Verificando e aplicando correções de schema...');
+        // [OTIMIZAÇÃO] Se a variável SKIP_SCHEMA_SYNC estiver definida, pula a verificação pesada
+        if (!process.env.SKIP_SCHEMA_SYNC) {
+            console.log('🔧 [DB SYNC] Verificando e aplicando correções de schema...');
 
-        // --- OTIMIZAÇÃO: Agrupa todas as queries de schema para rodar em paralelo ---
-        const schemaQueries = [
+            // --- OTIMIZAÇÃO: Agrupa todas as queries de schema para rodar em paralelo ---
+            const schemaQueries = [
             // 1. Psychologists Table - ATUALIZAÇÃO MACIÇA AGRUPADA (Reduz de 30 queries para 1)
             `ALTER TABLE "Psychologists" 
                 ADD COLUMN IF NOT EXISTS "is_exempt" BOOLEAN DEFAULT FALSE,
@@ -2272,51 +2274,53 @@ const startServer = async () => {
             `CREATE TABLE IF NOT EXISTS "ProfileAppearanceLogs" ( "id" SERIAL PRIMARY KEY, "psychologistId" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
             `CREATE TABLE IF NOT EXISTS "MatchEvents" ( "id" SERIAL PRIMARY KEY, "psychologistId" INTEGER, "matchTags" TEXT[], "matchScore" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
             `CREATE TABLE IF NOT EXISTS "PatientFavorites" ( "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "PatientId" INTEGER, "PsychologistId" INTEGER, PRIMARY KEY ("PatientId", "PsychologistId") );`
-        ];
+            ];
 
-        // OTIMIZAÇÃO: Executa sequencialmente para evitar sobrecarga de conexões (Connection terminated)
-        for (const sql of schemaQueries) {
-            await runSchemaQuery(sql);
-        }
-
-        // --- FIX: CONVERSÃO EM MASSA DE ARRAYS PARA JSONB (CORREÇÃO ERRO 500) ---
-        // OTIMIZAÇÃO: Verifica metadados antes de tentar alterar.
-        // Isso evita travar o banco com comandos pesados se a coluna já estiver correta.
-        const [tableInfo] = await db.sequelize.query(`
-            SELECT column_name, data_type 
-            FROM information_schema.columns 
-            WHERE table_name = 'Psychologists';
-        `);
-
-        const arrayColumns = [
-            'temas_atuacao', 'abordagens_tecnicas', 'modalidade', 
-            'publico_alvo', 'estilo_terapia', 'praticas_inclusivas', 
-            'disponibilidade_periodo', 'praticas_vivencias'
-        ];
-
-        for (const col of arrayColumns) {
-            // Verifica se a coluna já existe e se já é do tipo jsonb
-            const colInfo = tableInfo.find(c => c.column_name === col);
-            if (colInfo && colInfo.data_type === 'jsonb') {
-                continue; // PULA esta iteração, economizando segundos preciosos
+            // OTIMIZAÇÃO: Executa sequencialmente para evitar sobrecarga de conexões (Connection terminated)
+            for (const sql of schemaQueries) {
+                await runSchemaQuery(sql);
             }
 
-            try {
-                await runSchemaQuery(`
-                    ALTER TABLE "Psychologists" 
-                    ALTER COLUMN "${col}" TYPE JSONB 
-                    USING to_json("${col}"::text); 
-                `);
-            } catch (e) {
+            // --- FIX: CONVERSÃO EM MASSA DE ARRAYS PARA JSONB (CORREÇÃO ERRO 500) ---
+            // OTIMIZAÇÃO: Verifica metadados antes de tentar alterar.
+            // Isso evita travar o banco com comandos pesados se a coluna já estiver correta.
+            const [tableInfo] = await db.sequelize.query(`
+                SELECT column_name, data_type 
+                FROM information_schema.columns 
+                WHERE table_name = 'Psychologists';
+            `);
+
+            const arrayColumns = [
+                'temas_atuacao', 'abordagens_tecnicas', 'modalidade', 
+                'publico_alvo', 'estilo_terapia', 'praticas_inclusivas', 
+                'disponibilidade_periodo', 'praticas_vivencias'
+            ];
+
+            for (const col of arrayColumns) {
+                // Verifica se a coluna já existe e se já é do tipo jsonb
+                const colInfo = tableInfo.find(c => c.column_name === col);
+                if (colInfo && colInfo.data_type === 'jsonb') {
+                    continue; // PULA esta iteração, economizando segundos preciosos
+                }
+
                 try {
-                    await runSchemaQuery(`ALTER TABLE "Psychologists" ALTER COLUMN "${col}" TYPE JSONB USING "${col}"::jsonb;`);
-                } catch (e2) { 
+                    await runSchemaQuery(`
+                        ALTER TABLE "Psychologists" 
+                        ALTER COLUMN "${col}" TYPE JSONB 
+                        USING to_json("${col}"::text); 
+                    `);
+                } catch (e) {
+                    try {
+                        await runSchemaQuery(`ALTER TABLE "Psychologists" ALTER COLUMN "${col}" TYPE JSONB USING "${col}"::jsonb;`);
+                    } catch (e2) { 
+                    }
                 }
             }
+            console.log('🔧 [DB FIX] Colunas de lista verificadas e convertidas para JSONB.');
+            console.log('✅ [DB SYNC] Correções de schema aplicadas com sucesso.');
+        } else {
+            console.log('⏩ [DB SYNC] Verificação de schema pulada (SKIP_SCHEMA_SYNC ativado).');
         }
-        console.log('🔧 [DB FIX] Colunas de lista verificadas e convertidas para JSONB.');
-
-        console.log('✅ [DB SYNC] Correções de schema aplicadas com sucesso.');
         
         // [FIX] Libera o acesso APENAS quando tudo estiver pronto
         isDbSynced = true;
