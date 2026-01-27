@@ -772,7 +772,8 @@ exports.inviteFromWaitlist = async (req, res) => {
             invitationExpiresAt: expirationDate,
         });
 
-        const invitationLink = `http://127.0.0.1:5500/psi_registro.html?token=${invitationToken}&email=${candidate.email}`;
+        const frontendUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
+        const invitationLink = `${frontendUrl}/psi_registro.html?token=${invitationToken}&email=${candidate.email}`;
         await require('../services/emailService').sendInvitationEmail(candidate, invitationLink); // Placeholder
 
         res.status(200).json({ message: `Convite enviado com sucesso para ${candidate.email}.` });
