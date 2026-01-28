@@ -87,6 +87,7 @@ body.pagina-dashboard {
     box-sizing: border-box;
     background-color: transparent !important; /* Permite ver o ruído de fundo */
     overflow-x: hidden; /* CRÍTICO: Impede a "dança" lateral no mobile */
+    margin-left: 280px; /* Compensa a sidebar fixa no Desktop */
 }
 
 /* Ajuste para quando o chat mobile estiver aberto */
@@ -109,7 +110,8 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
     min-width: 280px;
     padding: 25px 20px;
     height: 100vh; 
-    position: sticky; /* Sidebar fixa ao rolar */
+    position: fixed; /* Sidebar fixa na tela (não rola com a página) */
+    left: 0;
     top: 0;
     box-sizing: border-box;
     z-index: 10;
@@ -862,6 +864,7 @@ textarea#bio {
         width: 100%; 
         /* Padding dinâmico baseado na altura real dos elementos fixos + respiro */
         padding: calc(var(--mobile-header-h, 70px) + 20px) 20px calc(var(--mobile-bottom-h, 80px) + 20px) 20px;
+        margin-left: 0 !important; /* Remove a margem no mobile */
     }
 
     /* Empilha os campos do formulário de perfil no mobile para melhor UX */
