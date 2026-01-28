@@ -1714,8 +1714,8 @@ async function checkProfileCompletionLocal(psychologist) {
             'fotoUrl', 'valor_sessao_numero', 'genero_identidade'
         ];
         const requiredArrays = [
-            'temas_atuacao', 'abordagens_tecnicas', 'modalidade', 
-            'publico_alvo', 'estilo_terapia', 'praticas_inclusivas', 
+            'temas_atuacao', 'abordagens_tecnicas', 'modalidade',
+            // 'publico_alvo', 'estilo_terapia', 'praticas_inclusivas', // [FIX] Removido: Não obrigar campos opcionais para a badge
             'disponibilidade_periodo'
         ];
 
