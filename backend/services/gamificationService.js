@@ -64,10 +64,11 @@ exports.calculateBadges = async (psychologistId) => {
         }
 
         // 3. 🛡️ AUTÊNTICO (Segurança)
-        const isProfileComplete = psi.bio && psi.fotoUrl &&
+        const isProfileComplete = psi.nome && psi.crp && psi.bio && psi.fotoUrl && 
+                                  psi.telefone && psi.cidade && psi.valor_sessao_numero &&
                                   psi.temas_atuacao && psi.temas_atuacao.length > 0 &&
                                   psi.abordagens_tecnicas && psi.abordagens_tecnicas.length > 0 &&
-                                  psi.crp;
+                                  psi.modalidade && psi.modalidade.length > 0;
         if (isProfileComplete) badges.autentico = true;
         else delete badges.autentico;
 
