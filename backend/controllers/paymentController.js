@@ -198,6 +198,7 @@ exports.createPreference = async (req, res) => {
             cycle: 'MONTHLY', // Adicionado: Ciclo mensal obrigatório
             description: `Assinatura Yelo - Plano ${planType}`,
             externalReference: String(psychologistId),
+            softDescriptor: 'Yelo Saúde Mental', // Texto na fatura (Max 13 chars)
             discount: {
                 value: 50,
                 type: 'PERCENTAGE'
