@@ -372,13 +372,32 @@
     const btnCloseModal = document.getElementById('btn-fechar-modal-cancel');
     const btnConfirmCancel = document.getElementById('btn-confirmar-cancelamento');
 
+    // [FIX] Limpeza preventiva: Remove modais órfãos no body para evitar duplicação ao navegar
+    document.querySelectorAll('body > #modal-cancelamento').forEach(el => el.remove());
+
+    // [FIX] Helper para travar scroll do dashboard
+    const toggleDashboardScroll = (lock) => {
+        const main = document.querySelector('.dashboard-main');
+        if (main) main.style.overflow = lock ? 'hidden' : '';
+    };
+
     // Abrir Modal
     if (btnCancel && modalCancel) {
-        btnCancel.onclick = () => modalCancel.style.display = 'flex';
+        btnCancel.onclick = () => {
+            // Move para o body para centralizar corretamente (fuga do contexto de zoom/transform)
+            if (modalCancel.parentNode !== document.body) {
+                document.body.appendChild(modalCancel);
+            }
+            modalCancel.style.display = 'flex';
+            toggleDashboardScroll(true); // Trava rolagem
+        };
     }
     // Fechar Modal
     if (btnCloseModal && modalCancel) {
-        btnCloseModal.onclick = () => modalCancel.style.display = 'none';
+        btnCloseModal.onclick = () => {
+            modalCancel.style.display = 'none';
+            toggleDashboardScroll(false); // Destrava rolagem
+        };
     }
     // Confirmar Cancelamento
     if (btnConfirmCancel) {
