@@ -139,7 +139,8 @@ exports.createPreference = async (req, res) => {
                 externalReference: String(psychologistId),
                 discount: {
                     value: 50,
-                    type: 'PERCENTAGE'
+                    type: 'PERCENTAGE',
+                    cyclesCount: 3 // Garante os 3 meses de desconto nativamente
                 },
             };
             
@@ -220,7 +221,8 @@ exports.createPreference = async (req, res) => {
             softDescriptor: 'Yelo Saúde Mental', // Texto na fatura (Max 13 chars)
             discount: {
                 value: 50,
-                type: 'PERCENTAGE'
+                type: 'PERCENTAGE',
+                cyclesCount: 3 // Garante os 3 meses de desconto nativamente
             },
             creditCard: {
                 holderName: creditCard.holderName,
@@ -343,22 +345,7 @@ exports.handleWebhook = async (req, res) => {
                 // --- LÓGICA DE DESCONTO ---
                 const currentPayments = (psi.subscription_payments_count || 0) + 1;
 
-                // Se for o 3º pagamento, remove o desconto para os próximos.
-                if (currentPayments === 3 && payment.subscription) {
-                    // [OTIMIZAÇÃO] Não espera a resposta do Asaas para não travar o webhook (Fire & Forget)
-                    fetch(`${ASAAS_API_URL}/subscriptions/${payment.subscription}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
-                        body: JSON.stringify({
-                            discount: { value: 0, type: 'FIXED' }
-                        })
-                    }).catch(asaasError => {
-                        console.error(`[ASAAS BACKGROUND] Falha ao remover desconto:`, asaasError.message);
-                        // Tenta logar sem await para não bloquear
-                        if(db.SystemLog) db.SystemLog.create({ level: 'error', message: `Falha desconto Asaas: ${asaasError.message}` }).catch(() => {});
-                    });
-                }
-                // --- FIM DA LÓGICA DE DESCONTO ---
+                // A lógica de remover desconto (3 meses) agora é nativa do Asaas via 'cyclesCount: 3' na criação.
 
                 const hoje = new Date();
                 const novaValidade = new Date(hoje.setDate(hoje.getDate() + 30));
