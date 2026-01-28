@@ -59,6 +59,15 @@ exports.createPreference = async (req, res) => {
             default: return res.status(400).json({ error: 'Plano inválido: ' + planType });
         }
 
+        // --- FIX: SANITIZAÇÃO DE DADOS DO TITULAR ---
+        const postalCode = creditCard.postalCode ? creditCard.postalCode.replace(/\D/g, '') : '';
+        let phone = creditCard.holderPhone ? creditCard.holderPhone.replace(/\D/g, '') : '';
+        // Se o telefone do titular for inválido/curto, tenta usar o do perfil do psicólogo
+        if (phone.length < 10) {
+             const psiPhone = psychologist.telefone ? psychologist.telefone.replace(/\D/g, '') : '';
+             if (psiPhone.length >= 10) phone = psiPhone;
+        }
+
         // 1. Cria ou Recupera o Cliente no Asaas
         // (Simplificação: Cria um novo ou busca por email se a API permitir, aqui vamos tentar criar direto e tratar erro se duplicado ou buscar antes)
         // Para robustez, buscamos primeiro.
@@ -99,7 +108,7 @@ exports.createPreference = async (req, res) => {
                     name: psychologist.nome,
                     email: psychologist.email,
                     cpfCnpj: creditCard.holderCpf || psychologist.cpf || psychologist.cnpj,
-                    mobilePhone: creditCard.holderPhone.replace(/\D/g, ''), // Asaas exige telefone no cadastro
+                    mobilePhone: phone, // Usa o telefone sanitizado
                     notificationDisabled: false // <--- ATIVA E-MAILS DO ASAAS (Para o cliente receber a cobrança mensal)
                 })
             }).then(r => r.json());
@@ -107,10 +116,6 @@ exports.createPreference = async (req, res) => {
             if (newCustomer.errors) throw new Error(newCustomer.errors[0].description);
             customerIdAsaas = newCustomer.id;
         }
-
-        // --- FIX: SANITIZAÇÃO DE DADOS DO TITULAR ---
-        const postalCode = creditCard.postalCode ? creditCard.postalCode.replace(/\D/g, '') : '';
-        const phone = creditCard.holderPhone ? creditCard.holderPhone.replace(/\D/g, '') : '';
 
         // --- LÓGICA INTELIGENTE DE DATA DE COBRANÇA ---
         // Padrão: Cobra hoje (UTC-3)
@@ -138,15 +143,29 @@ exports.createPreference = async (req, res) => {
                 },
             };
             
-            const subscriptionRes = await fetch(`${ASAAS_API_URL}/subscriptions`, {
+            let subscriptionRes = await fetch(`${ASAAS_API_URL}/subscriptions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
                 body: JSON.stringify(subscriptionPayload)
             });
             
-            const subResponseText = await subscriptionRes.text();
+            let subResponseText = await subscriptionRes.text();
             let subscriptionData;
             try { subscriptionData = JSON.parse(subResponseText); } catch(e) { throw new Error("Erro Asaas PIX: " + subResponseText); }
+            
+            // --- FALLBACK: Se PIX não for permitido para assinatura, tenta BOLETO (que tem PIX embutido) ---
+            if (subscriptionRes.status === 400 && subscriptionData.errors && subscriptionData.errors[0].description.includes('forma de pagamento')) {
+                console.warn("[ASAAS] PIX não permitido para assinatura. Tentando fallback para BOLETO.");
+                subscriptionPayload.billingType = 'BOLETO';
+                
+                subscriptionRes = await fetch(`${ASAAS_API_URL}/subscriptions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                    body: JSON.stringify(subscriptionPayload)
+                });
+                subResponseText = await subscriptionRes.text();
+                try { subscriptionData = JSON.parse(subResponseText); } catch(e) { throw new Error("Erro Asaas Fallback: " + subResponseText); }
+            }
             
             if (subscriptionData.errors) throw new Error(subscriptionData.errors[0].description);
             
