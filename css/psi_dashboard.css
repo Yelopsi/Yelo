@@ -9,7 +9,6 @@
    ========================================================================== */
 html {
     overflow-x: hidden; /* Impede que a página inteira role para os lados */
-    overscroll-behavior: none; /* Previne bounce scroll no iOS */
 }
 
 body.pagina-dashboard {
@@ -18,11 +17,10 @@ body.pagina-dashboard {
     color: var(--cinza-texto);
     margin: 0;
     padding: 0;
-    height: 100vh; /* Fallback */
-    height: 100dvh; /* Altura dinâmica para mobile (ignora barra de endereço) */
+    min-height: 100vh;
     width: 100%; /* Corrige a "dança" lateral (era 100vw) */
     max-width: 100vw; /* Garante que não exceda a viewport */
-    overflow: hidden; /* Remove barra de rolagem dupla */
+    overflow-y: auto; /* Restaura rolagem da página */
     position: relative;
     -webkit-overflow-scrolling: touch; /* Rolagem suave no iOS */
 }
@@ -65,10 +63,8 @@ body.pagina-dashboard {
 
 .dashboard-container { 
     display: flex; 
-    height: 100vh; /* Fallback */
-    height: 100dvh; /* Altura dinâmica para mobile (Safari fix) */
+    min-height: 100vh;
     width: 100%;
-    overflow: hidden; /* Impede rolagem dupla */
 }
 
 .dashboard-header-actions {
@@ -82,8 +78,8 @@ body.pagina-dashboard {
 .dashboard-main {
     flex-grow: 1;
     padding: 40px;
-    overflow-y: auto; /* A rolagem acontece AQUI, não no body */
-    height: 100%; /* Ocupa exatamente o espaço disponível */
+    overflow: visible; /* Conteúdo flui naturalmente */
+    height: auto;
     -webkit-overflow-scrolling: touch; /* Rolagem suave no iOS */
     position: relative; /* Necessário para o botão de menu mobile rolar junto */
     box-sizing: border-box;
@@ -111,8 +107,9 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
     min-width: 280px;
     padding: 25px 20px;
     height: 100vh; 
+    position: sticky; /* Sidebar fixa ao rolar */
+    top: 0;
     box-sizing: border-box;
-    position: relative;
     z-index: 10;
     box-shadow: 5px 0 15px rgba(0,0,0,0.05);
 }
