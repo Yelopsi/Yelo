@@ -1398,7 +1398,8 @@ exports.cancelSubscription = async (req, res) => {
         const subResponse = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
             headers: { 'access_token': ASAAS_API_KEY }
         });
-        const subData = await subResponse.json();
+        const subText = await subResponse.text();
+        const subData = subText ? JSON.parse(subText) : {};
 
         if (!subData.id) {
              // Se não achou no Asaas, assume cancelamento manual local e limpa tudo
@@ -1428,7 +1429,8 @@ exports.cancelSubscription = async (req, res) => {
                  const paymentsRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subData.id}/payments`, {
                     headers: { 'access_token': ASAAS_API_KEY }
                 });
-                const paymentsData = await paymentsRes.json();
+                const paymentsText = await paymentsRes.text();
+                const paymentsData = paymentsText ? JSON.parse(paymentsText) : {};
                 // Filtra apenas pagamentos confirmados
                 const confirmedPayments = (paymentsData.data || []).filter(p => ['CONFIRMED', 'RECEIVED'].includes(p.status));
                 
@@ -1450,7 +1452,8 @@ exports.cancelSubscription = async (req, res) => {
             const paymentsRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subData.id}/payments`, {
                 headers: { 'access_token': ASAAS_API_KEY }
             });
-            const paymentsData = await paymentsRes.json();
+            const paymentsText = await paymentsRes.text();
+            const paymentsData = paymentsText ? JSON.parse(paymentsText) : {};
             
             if (paymentsData.data) {
                 for (const payment of paymentsData.data) {
@@ -1541,7 +1544,8 @@ exports.reactivateSubscription = async (req, res) => {
             body: JSON.stringify({ endDate: null }) // null remove a data de encerramento
         });
 
-        const data = await response.json();
+        const responseText = await response.text();
+        const data = responseText ? JSON.parse(responseText) : {};
 
         // Se der erro (ex: assinatura já deletada), forçamos o usuário a assinar de novo
         if (response.status !== 200 || data.errors) {
