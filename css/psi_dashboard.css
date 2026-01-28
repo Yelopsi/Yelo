@@ -147,15 +147,7 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
 
 /* --- BOTÃO "VER COMO PACIENTE" (AMARELO) --- */
 #btn-view-public-profile {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 8px 20px; margin-top: 15px;
-    background-color: var(--cor-Yelo);
-    border: none; border-radius: 25px;
-    color: var(--verde-escuro);
-    text-decoration: none; font-size: 0.85rem; font-weight: 700;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: all 0.2s ease;
-    box-sizing: border-box;
+    display: none !important;
 }
 #btn-view-public-profile:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
 
