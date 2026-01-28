@@ -155,7 +155,7 @@ exports.createPreference = async (req, res) => {
             
             // --- FALLBACK: Se PIX não for permitido para assinatura, tenta BOLETO (que tem PIX embutido) ---
             if (subscriptionRes.status === 400 && subscriptionData.errors && subscriptionData.errors[0].description.includes('forma de pagamento')) {
-                console.warn("[ASAAS] PIX não permitido para assinatura. Tentando fallback para BOLETO.");
+                console.warn("[ASAAS] PIX direto recusado (Verifique se 'Pix' está ativo para assinaturas no painel Asaas). Tentando fallback para BOLETO.");
                 subscriptionPayload.billingType = 'BOLETO';
                 
                 subscriptionRes = await fetch(`${ASAAS_API_URL}/subscriptions`, {
