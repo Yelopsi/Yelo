@@ -1402,6 +1402,7 @@ exports.cancelSubscription = async (req, res) => {
         const subData = subText ? JSON.parse(subText) : {};
 
         if (!subData.id) {
+             console.warn(`[CANCELAMENTO LOCAL] Assinatura ${subId} não encontrada na API Asaas. Status: ${subResponse.status}. Resp: ${subText}`);
              // Se não achou no Asaas, assume cancelamento manual local e limpa tudo
              await psychologist.update({ 
                  status: 'inactive',
