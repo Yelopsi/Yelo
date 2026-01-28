@@ -1259,7 +1259,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 
 /* Container Limitador para Desktop (Melhor Leitura) */
 .assinatura-wrapper {
-    max-width: 1000px;
+    max-width: 100%;
     margin: 0 auto;
     padding-bottom: 60px;
 }
