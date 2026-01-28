@@ -6,7 +6,8 @@
         border-radius: 12px;
         padding: 10px;
         /* Importante: Define altura mínima para o FullCalendar calcular */
-        min-height: 600px; 
+        min-height: 600px;
+        height: 100%; /* Garante que ocupe o espaço disponível */
     }
 
     /* [CORREÇÃO ALINHAMENTO] Força altura fixa para alinhar grade e horários */
@@ -589,11 +590,14 @@
                         return patients.some(p => p.id == evt.patientId); // Só mostra se o paciente existe
                     });
                 }
-
+            } catch (e) { 
+                console.error("Erro ao carregar dados:", e); 
+            } finally {
+                // Garante que a UI renderize mesmo com erro (com dados vazios se necessário)
                 renderList('', 'ativo');
                 renderNextSessions();
                 initCalendar();
-            } catch (e) { console.error("Erro ao carregar dados:", e); }
+            }
         }
 
         // --- RENDERIZAR PRÓXIMAS SESSÕES ---

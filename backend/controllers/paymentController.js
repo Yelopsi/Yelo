@@ -100,7 +100,7 @@ exports.createPreference = async (req, res) => {
                     email: psychologist.email,
                     cpfCnpj: creditCard.holderCpf || psychologist.cpf || psychologist.cnpj,
                     mobilePhone: creditCard.holderPhone.replace(/\D/g, ''), // Asaas exige telefone no cadastro
-                    notificationDisabled: true // <--- DESATIVA E-MAILS DO ASAAS
+                    notificationDisabled: false // <--- ATIVA E-MAILS DO ASAAS (Para o cliente receber a cobrança mensal)
                 })
             }).then(r => r.json());
 

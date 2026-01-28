@@ -565,6 +565,7 @@
     function initPaymentModalLogic() {
         const modal = document.getElementById('payment-modal');
         if (!modal) return;
+        let currentMethod = 'CREDIT_CARD'; // Estado para controlar o método
 
         const btnCard = document.getElementById('btn-select-card');
         const btnPix = document.getElementById('btn-select-pix');
@@ -590,17 +591,20 @@
 
         // 2. Selecionar Cartão
         if(btnCard) btnCard.onclick = () => {
+            currentMethod = 'CREDIT_CARD';
             if(stepMethod) stepMethod.style.display = 'none';
             if(stepForm) stepForm.style.display = 'block';
+            document.getElementById('credit-card-section').style.display = 'flex'; // Mostra campos de cartão
+            btnPagar.textContent = 'Pagar Agora';
         };
 
         // 3. Selecionar PIX
         if(btnPix) btnPix.onclick = () => {
+            currentMethod = 'PIX';
             if(stepMethod) stepMethod.style.display = 'none';
-            if(pixResult) pixResult.style.display = 'block';
-            // Gera um QR Code de exemplo (ou real do backend)
-            const qrImg = document.getElementById('pix-qr-image');
-            if(qrImg && !qrImg.src) qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=YeloPagamentoPixExemplo';
+            if(stepForm) stepForm.style.display = 'block'; // Mostra formulário para dados do titular
+            document.getElementById('credit-card-section').style.display = 'none'; // Esconde campos de cartão
+            btnPagar.textContent = 'Gerar QR Code PIX';
         };
 
         // 4. Botão Voltar (dentro do form de cartão)
@@ -623,17 +627,26 @@
                 holderName: document.getElementById('card-holder-name').value,
                 holderCpf: document.getElementById('card-holder-cpf').value,
                 holderPhone: document.getElementById('card-holder-phone').value,
-                number: document.getElementById('card-number').value,
-                expiry: document.getElementById('card-expiry').value,
-                ccv: document.getElementById('card-ccv').value,
                 // Campos de endereço (opcionais ou obrigatórios dependendo da sua regra)
                 postalCode: document.getElementById('card-holder-cep').value,
                 addressNumber: document.getElementById('card-holder-number').value
             };
 
+            // Adiciona dados do cartão apenas se for cartão
+            if (currentMethod === 'CREDIT_CARD') {
+                cardData.number = document.getElementById('card-number').value;
+                cardData.expiry = document.getElementById('card-expiry').value;
+                cardData.ccv = document.getElementById('card-ccv').value;
+            }
+
             // Validação simples
-            if(!cardData.number || !cardData.expiry || !cardData.ccv || !cardData.holderName) {
-                alert('Por favor, preencha todos os campos do cartão.');
+            if(!cardData.holderName || !cardData.holderCpf || !cardData.holderPhone) {
+                alert('Por favor, preencha os dados do titular.');
+                return;
+            }
+
+            if (currentMethod === 'CREDIT_CARD' && (!cardData.number || !cardData.expiry || !cardData.ccv)) {
+                alert('Por favor, preencha os dados do cartão.');
                 return;
             }
 
@@ -647,24 +660,39 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${localStorage.getItem('Yelo_token')}` 
                     },
-                    body: JSON.stringify({ planType: plano, billingType: 'CREDIT_CARD', creditCard: cardData })
+                    body: JSON.stringify({ planType: plano, billingType: currentMethod, creditCard: cardData })
                 });
                 const data = await res.json();
 
                 if(res.ok) {
-                    // Fecha o modal ANTES do confete para não obstruir a visão
-                    modal.style.display = 'none';
-                    showToast('Pagamento aprovado! Bem-vindo(a) à Yelo! 🚀', 'success');
-                    lancarConfetes();
-                    setTimeout(() => window.location.reload(), 2000);
+                    if (currentMethod === 'PIX' && data.pix) {
+                        // Exibe o resultado do PIX
+                        stepForm.style.display = 'none';
+                        pixResult.style.display = 'block';
+                        
+                        const qrImg = document.getElementById('pix-qr-image');
+                        const copyInput = document.getElementById('pix-copy-paste');
+                        
+                        if(qrImg) qrImg.src = `data:image/png;base64,${data.pix.encodedImage}`;
+                        if(copyInput) copyInput.value = data.pix.payload;
+                        
+                        novoBtnPagar.textContent = 'Gerar QR Code PIX'; // Reseta botão
+                        novoBtnPagar.disabled = false;
+                    } else {
+                        // Sucesso Cartão
+                        modal.style.display = 'none';
+                        showToast('Pagamento aprovado! Bem-vindo(a) à Yelo! 🚀', 'success');
+                        lancarConfetes();
+                        setTimeout(() => window.location.reload(), 2000);
+                    }
                 } else {
                     alert(data.error || 'Erro ao processar pagamento.');
-                    novoBtnPagar.textContent = 'Pagar Agora';
+                    novoBtnPagar.textContent = currentMethod === 'PIX' ? 'Gerar QR Code PIX' : 'Pagar Agora';
                     novoBtnPagar.disabled = false;
                 }
             } catch(err) {
                 alert('Erro de conexão.');
-                novoBtnPagar.textContent = 'Pagar Agora';
+                novoBtnPagar.textContent = currentMethod === 'PIX' ? 'Gerar QR Code PIX' : 'Pagar Agora';
                 novoBtnPagar.disabled = false;
             }
         };
@@ -684,6 +712,19 @@
             if(cpfInput) IMask(cpfInput, { mask: '000.000.000-00' });
             if(phoneInput) IMask(phoneInput, { mask: '(00) 00000-0000' });
             if(cepInput) IMask(cepInput, { mask: '00000-000' });
+        }
+
+        // Lógica de Copiar PIX
+        const btnCopyPix = document.getElementById('btn-copy-pix');
+        if(btnCopyPix) {
+            btnCopyPix.onclick = () => {
+                const copyText = document.getElementById('pix-copy-paste');
+                copyText.select();
+                copyText.setSelectionRange(0, 99999); // Mobile
+                navigator.clipboard.writeText(copyText.value);
+                btnCopyPix.textContent = 'Copiado!';
+                setTimeout(() => btnCopyPix.textContent = 'Copiar', 2000);
+            };
         }
     }
 
