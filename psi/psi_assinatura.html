@@ -225,7 +225,7 @@
             // VERIFICAÇÃO VIP
             // Verifica se é VIP pela flag OU pelo plano (fallback de segurança)
             // Se o usuário tem plano REFERENCE ou CLINICAL, tratamos como VIP automaticamente
-            const isVip = user.is_exempt || (user.plano && ['REFERENCE', 'CLINICAL'].includes(user.plano));
+            const isVip = user.is_exempt;
 
             if (isVip) {
                 aplicarModoVip(user.plano);

@@ -54,6 +54,8 @@ body.pagina-dashboard {
     box-shadow: 0 10px 25px rgba(0,0,0,0.2);
     position: relative;
     animation: slideUp 0.3s ease;
+    max-height: 90vh; /* Garante que o modal nunca seja maior que a tela */
+    overflow-y: auto; /* Adiciona barra de rolagem interna automaticamente se necessário */
 }
 
 @keyframes slideUp {
@@ -1441,6 +1443,8 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     background: #fff; padding: 30px; border-radius: 16px;
     width: 90%; max-width: 600px; position: relative;
     box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    max-height: 90vh; /* Garante que o modal nunca seja maior que a tela */
+    overflow-y: auto; /* Adiciona barra de rolagem interna automaticamente se necessário */
 }
 .modal-close {
     position: absolute; top: 15px; right: 20px;
