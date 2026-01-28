@@ -147,7 +147,11 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
 
 /* --- BOTÃO "VER COMO PACIENTE" (AMARELO) --- */
 #btn-view-public-profile {
-    display: none !important;
+    /* FIX: Não usar display:none pois quebra o script de badges */
+    visibility: hidden;
+    height: 0;
+    margin: 0;
+    overflow: hidden;
 }
 #btn-view-public-profile:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
 
@@ -1253,6 +1257,13 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
    (Cole isso no final do arquivo psi_dashboard.css)
    ========================================================================== */
 
+/* Container Limitador para Desktop (Melhor Leitura) */
+.assinatura-wrapper {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding-bottom: 60px;
+}
+
 /* 1. O Banner do Plano Atual (Caixa Branca com Borda Verde) */
 #card-resumo-assinatura {
     background-color: #ffffff;
@@ -1268,7 +1279,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     align-items: center;
     
     /* Sombra elegante */
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
 /* Responsividade do Banner (Para celular) */
@@ -1289,10 +1300,12 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 
 /* 2. Área de Cancelamento (Zona de Perigo no rodapé) */
 #area-cancelamento {
-    margin-top: 50px;
-    padding-top: 20px;
-    border-top: 1px dashed #ccc; /* Linha pontilhada separadora */
+    margin-top: 60px;
+    padding: 30px;
+    background-color: #fff5f5; /* Fundo vermelho bem claro */
+    border-radius: 12px;
     width: 100%;
+    box-sizing: border-box;
 }
 
 #btn-cancelar-assinatura {
@@ -1341,11 +1354,8 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 
 /* 3. Centralizar Link de Cancelamento */
 #area-cancelamento {
-    text-align: center !important;        /* Centraliza o texto e o botão */
-    width: 100%;
-    margin-top: 40px;
-    padding-top: 20px;
-    border-top: 1px dashed #e0e0e0;
+    text-align: center !important;
+    border: 1px solid #fed7d7;
 }
 
 #btn-cancelar-assinatura {
