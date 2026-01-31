@@ -322,44 +322,45 @@ exports.handleWebhook = async (req, res) => {
 
     if (notificationEvents.includes(event.event)) {
         const payment = event.payment;
-        const psychologistId = payment.externalReference;
+        const externalId = payment.externalReference; // Pode ser ID de Psi ou Paciente
         
         try {
-            let psi = null;
-            if (psychologistId) {
-                psi = await db.Psychologist.findByPk(psychologistId);
+            let user = null;
+            
+            // 1. Tenta buscar Psicólogo
+            if (externalId) {
+                user = await db.Psychologist.findByPk(externalId);
             }
-            // Fallback: busca por assinatura se não tiver ID externo
-            if (!psi && payment.subscription) {
-                psi = await db.Psychologist.findOne({ where: { stripeSubscriptionId: payment.subscription } });
+            // Fallback: busca por assinatura (Psi)
+            if (!user && payment.subscription) {
+                user = await db.Psychologist.findOne({ where: { stripeSubscriptionId: payment.subscription } });
             }
 
-            if (psi) {
-                console.log(`📧 [YELO MAIL] Disparando notificação personalizada: ${event.event} para ${psi.email}`);
+            if (user) {
+                console.log(`📧 [YELO MAIL] Disparando notificação personalizada: ${event.event} para ${user.email}`);
                 
                 switch (event.event) {
                     case 'PAYMENT_CREATED':
-                        // Só envia se não for cartão de crédito (cartão cobra na hora, não precisa de aviso de boleto gerado)
                         if (payment.billingType !== 'CREDIT_CARD') {
-                            await emailService.sendBillCreatedEmail(psi, payment);
+                            await emailService.sendBillCreatedEmail(user, payment);
                         }
                         break;
                     case 'PAYMENT_DUEDATE_WARNING':
-                        await emailService.sendDueDateWarningEmail(psi, payment);
+                        await emailService.sendDueDateWarningEmail(user, payment);
                         break;
                     case 'SEND_LINHA_DIGITAVEL':
                         // Apenas se for boleto/pix
                         if (payment.billingType === 'BOLETO' || payment.billingType === 'PIX') {
-                            await emailService.sendDigitableLineEmail(psi, payment);
+                            await emailService.sendDigitableLineEmail(user, payment);
                         }
                         break;
                     case 'PAYMENT_OVERDUE':
-                        await emailService.sendOverdueEmail(psi, payment);
+                        await emailService.sendOverdueEmail(user, payment);
                         break;
                     case 'PAYMENT_UPDATED':
                         // Evita spam: só avisa se mudou valor ou vencimento e não está paga
                         if (payment.status === 'PENDING' || payment.status === 'OVERDUE') {
-                            await emailService.sendBillUpdatedEmail(psi, payment);
+                            await emailService.sendBillUpdatedEmail(user, payment);
                         }
                         break;
                 }
