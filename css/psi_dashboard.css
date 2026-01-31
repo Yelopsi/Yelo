@@ -4353,3 +4353,72 @@ input:checked + .slider:before { transform: translateX(20px); }
 .dashboard-main {
     padding-bottom: 20px !important;
 }
+
+/* ==========================================================================
+   BANNER FLUTUANTE DE RESTRIÇÃO (MODO VISUALIZAÇÃO)
+   ========================================================================== */
+.restriction-floating-banner {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #1f2937; /* Cinza escuro */
+    color: #fff;
+    padding: 15px 25px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+    z-index: 10000; /* Acima de tudo */
+    font-family: var(--font-principal);
+    animation: slideUpBanner 0.4s ease-out;
+    max-width: 90%;
+    width: fit-content;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.restriction-floating-banner span {
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.restriction-floating-banner button {
+    background-color: var(--cor-Yelo);
+    color: var(--verde-escuro);
+    border: none;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    transition: transform 0.2s;
+}
+
+@keyframes slideUpBanner {
+    from { transform: translate(-50%, 20px); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+/* Ajuste Mobile (Mais compacto e posicionado acima da nav) */
+@media (max-width: 768px) {
+    .restriction-floating-banner {
+        bottom: 90px; /* Acima da Bottom Nav */
+        padding: 10px 15px;
+        width: 90%; /* Ocupa largura para não quebrar texto */
+        border-radius: 12px; /* Menos arredondado */
+        justify-content: space-between;
+        font-size: 0.8rem;
+    }
+
+    .restriction-floating-banner span {
+        font-size: 0.8rem;
+        line-height: 1.3;
+    }
+
+    .restriction-floating-banner button {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+    }
+}
