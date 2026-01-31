@@ -1,4 +1,5 @@
 // backend/services/emailService.js
+const db = require('../models');
 const nodemailer = require('nodemailer');
 
 // Mapeamento de variáveis (Suporta tanto EMAIL_ quanto SMTP_)
@@ -102,15 +103,31 @@ const getHtmlTemplate = (titulo, nomeCliente, corpoMensagem, dadosExtras = {}) =
 
 // Função genérica de envio
 const sendEmail = async (to, subject, html) => {
-    // REMOVIDO try/catch para que o erro suba para o navegador/controller
-    await transporter.sendMail({
-        // Usa variável de ambiente ou fallback, garantindo que o remetente bata com a autenticação se necessário
-        from: process.env.EMAIL_FROM || '"Yelo Saúde Mental" <nao-responda@yelopsi.com.br>', 
-        to,
-        subject,
-        html
-    });
-    console.log(`📧 E-mail enviado para ${to}: ${subject}`);
+    try {
+        await transporter.sendMail({
+            // Usa variável de ambiente ou fallback, garantindo que o remetente bata com a autenticação se necessário
+            from: process.env.EMAIL_FROM || '"Yelo Saúde Mental" <nao-responda@yelopsi.com.br>', 
+            to,
+            subject,
+            html
+        });
+        console.log(`📧 E-mail enviado para ${to}: ${subject}`);
+    } catch (error) {
+        console.error(`❌ Erro ao enviar e-mail para ${to}:`, error.message);
+        
+        // Loga o erro no banco para o KPI do Dashboard
+        try {
+            if (db.SystemLog) {
+                await db.SystemLog.create({
+                    level: 'error',
+                    message: `[EMAIL_FAIL] Falha ao enviar para ${to}: ${error.message}`,
+                    meta: { subject, error: error.stack }
+                });
+            }
+        } catch (e) { console.error("Falha ao salvar log de email:", e.message); }
+
+        throw error; // Relança para que o controller saiba que falhou
+    }
 };
 
 // --- FUNÇÕES DE NOTIFICAÇÃO (Mapeadas do Asaas) ---
