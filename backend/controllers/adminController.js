@@ -1138,7 +1138,9 @@ exports.getSystemLogs = async (req, res) => {
             completedQuests,
             loginFailures,
             sessionQueryRaw,
-            avgSessionResultl([
+            avgSessionResult,
+            emailErrors
+        ] = await Promise.all([
             db.Patient.count({ where: { createdAt: { [Op.gte]: oneDayAgo } } }),
             db.Psychologist.count({ where: { createdAt: { [Op.gte]: oneDayAgo } } }),
             db.SystemLog.count({ where: { level: 'error', createdAt: { [Op.gte]: oneDayAgo } } }),
@@ -1148,8 +1150,12 @@ exports.getSystemLogs = async (req, res) => {
             db.SystemLog.count({ where: { message: { [Op.iLike]: '%Falha de login%' }, createdAt: { [Op.gte]: oneDayAgo } } }),
             // Sessões Ativas (Raw Query retorna [results, metadata])
             db.sequelize.query(`SELECT COUNT(*) FROM "ActiveSessions" WHERE "lastSeen" >= NOW() - INTERVAL '5 minutes'`),
-            // Tempo Médio[
-            db.SystemLog.count({ where: { message: { [Op.iLike]: '%[EMAIL_FAIL]%' }, createdAt: { [Op.gte]: oneDayAgo }
+            // Tempo Médio
+            db.sequelize.query(`SELECT AVG("durationInSeconds") as "avgDuration" FROM "AnonymousSessions" WHERE "endedAt" >= :date`, { replacements: { date: oneDayAgo }, type: db.sequelize.QueryTypes.SELECT }),
+            // KPI de E-mail (Erros nas últimas 24h com a tag [EMAIL_FAIL])
+            db.SystemLog.count({ where: { message: { [Op.iLike]: '%[EMAIL_FAIL]%' }, createdAt: { [Op.gte]: oneDayAgo } })
+        ]);
+
         // Processamento dos Resultados
         const registrationStatus = (newPatients + newPsis) > 0 ? 'active' : 'idle'; // active = verde, idle = amarelo
         const systemStatus = errorCount === 0 ? 'healthy' : 'warning'; // healthy = verde, warning = vermelho
