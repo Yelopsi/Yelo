@@ -1,6 +1,6 @@
 // backend/controllers/paymentController.js
 const db = require('../models');
-const { sendPaymentConfirmationEmail, sendSubscriptionCancelledEmail, sendPaymentFailedEmail } = require('../services/emailService');
+const emailService = require('../services/emailService');
 
 // Configurações do Asaas
 // Limpeza robusta da URL (remove espaços e barras finais)
@@ -109,7 +109,7 @@ exports.createPreference = async (req, res) => {
                     email: psychologist.email,
                     cpfCnpj: creditCard.holderCpf || psychologist.cpf || psychologist.cnpj,
                     mobilePhone: phone, // Usa o telefone sanitizado
-                    notificationDisabled: false // <--- ATIVA E-MAILS DO ASAAS (Para o cliente receber a cobrança mensal)
+                    notificationDisabled: true // <--- DESATIVA E-MAILS NATIVOS DO ASAAS (Usaremos os da Yelo)
                 })
             }).then(r => r.json());
 
@@ -310,6 +310,66 @@ exports.handleWebhook = async (req, res) => {
     // const asaasToken = req.headers['asaas-access-token'];
     // if (asaasToken !== process.env.ASAAS_WEBHOOK_TOKEN) return res.status(401).send();
 
+    // --- NOVOS EVENTOS DE NOTIFICAÇÃO PERSONALIZADA YELO ---
+    // Captura eventos de cobrança para enviar e-mail com estética Yelo
+    const notificationEvents = [
+        'PAYMENT_CREATED',          // Cobrança criada
+        'PAYMENT_DUEDATE_WARNING',  // Aviso de vencimento (e 10 dias antes)
+        'SEND_LINHA_DIGITAVEL',     // Linha digitável no dia
+        'PAYMENT_OVERDUE',          // Vencida (e a cada 7 dias)
+        'PAYMENT_UPDATED'           // Atualizada
+    ];
+
+    if (notificationEvents.includes(event.event)) {
+        const payment = event.payment;
+        const psychologistId = payment.externalReference;
+        
+        try {
+            let psi = null;
+            if (psychologistId) {
+                psi = await db.Psychologist.findByPk(psychologistId);
+            }
+            // Fallback: busca por assinatura se não tiver ID externo
+            if (!psi && payment.subscription) {
+                psi = await db.Psychologist.findOne({ where: { stripeSubscriptionId: payment.subscription } });
+            }
+
+            if (psi) {
+                console.log(`📧 [YELO MAIL] Disparando notificação personalizada: ${event.event} para ${psi.email}`);
+                
+                switch (event.event) {
+                    case 'PAYMENT_CREATED':
+                        // Só envia se não for cartão de crédito (cartão cobra na hora, não precisa de aviso de boleto gerado)
+                        if (payment.billingType !== 'CREDIT_CARD') {
+                            await emailService.sendBillCreatedEmail(psi, payment);
+                        }
+                        break;
+                    case 'PAYMENT_DUEDATE_WARNING':
+                        await emailService.sendDueDateWarningEmail(psi, payment);
+                        break;
+                    case 'SEND_LINHA_DIGITAVEL':
+                        // Apenas se for boleto/pix
+                        if (payment.billingType === 'BOLETO' || payment.billingType === 'PIX') {
+                            await emailService.sendDigitableLineEmail(psi, payment);
+                        }
+                        break;
+                    case 'PAYMENT_OVERDUE':
+                        await emailService.sendOverdueEmail(psi, payment);
+                        break;
+                    case 'PAYMENT_UPDATED':
+                        // Evita spam: só avisa se mudou valor ou vencimento e não está paga
+                        if (payment.status === 'PENDING' || payment.status === 'OVERDUE') {
+                            await emailService.sendBillUpdatedEmail(psi, payment);
+                        }
+                        break;
+                }
+            }
+        } catch (err) {
+            console.error(`❌ [YELO MAIL ERROR] Falha ao enviar notificação ${event.event}:`, err.message);
+        }
+    }
+    // -------------------------------------------------------
+
     if (event.event === 'PAYMENT_CONFIRMED' || event.event === 'PAYMENT_RECEIVED') {
         const payment = event.payment;
         // O Asaas retorna o externalReference que enviamos na criação (ID do Psicólogo)
@@ -362,7 +422,7 @@ exports.handleWebhook = async (req, res) => {
 
                 // --- ENVIA E-MAIL PERSONALIZADO YELO ---
                 // [OTIMIZAÇÃO] Não espera o envio de e-mail (evita Timeout do Webhook)
-                sendPaymentConfirmationEmail(psi, planType, payment.value)
+                emailService.sendPaymentConfirmationEmail(psi, planType, payment.value)
                     .catch(err => console.error("Erro ao enviar email de confirmação (background):", err.message));
             }
         } catch (err) {
@@ -411,7 +471,7 @@ exports.handleWebhook = async (req, res) => {
                 
                 // --- ENVIA E-MAIL DE CANCELAMENTO ---
                 // [OTIMIZAÇÃO] Background
-                sendSubscriptionCancelledEmail(psi).catch(e => console.error("Erro email cancelamento:", e));
+                emailService.sendSubscriptionCancelledEmail(psi).catch(e => console.error("Erro email cancelamento:", e));
             } else {
                 console.warn(`⚠️ [ASAAS] FALHA NO ESTORNO: Psicólogo não encontrado. Ref: ${psychologistId}, Sub: ${payment.subscription}`);
             }
@@ -439,7 +499,7 @@ exports.handleWebhook = async (req, res) => {
                 // Envia e-mail de falha
                 // O Asaas geralmente manda invoiceUrl no objeto payment
                 // [OTIMIZAÇÃO] Background
-                sendPaymentFailedEmail(psi, payment.invoiceUrl).catch(e => console.error("Erro email falha:", e));
+                emailService.sendPaymentFailedEmail(psi, payment.invoiceUrl).catch(e => console.error("Erro email falha:", e));
             }
         } catch (err) {
             console.error('Erro ao processar falha de pagamento:', err);

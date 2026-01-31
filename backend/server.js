@@ -900,6 +900,41 @@ app.get('/api/fix-test-email', async (req, res) => {
                 { email: emailDestino, nome: 'Usuário Teste' }, 'psychologist'
             );
             res.send(`✅ E-mail de BOAS-VINDAS enviado para: ${emailDestino}.`);
+        } else if (type === 'bill_created') {
+            await emailService.sendBillCreatedEmail(
+                { email: emailDestino, nome: 'Usuário Teste' },
+                { value: 159.90, dueDate: '2026-02-10', invoiceUrl: 'https://sandbox.asaas.com/i/teste', bankSlipUrl: null }
+            );
+            res.send(`✅ E-mail de COBRANÇA CRIADA enviado para: ${emailDestino}.`);
+        } else if (type === 'due_date') {
+            await emailService.sendDueDateWarningEmail(
+                { email: emailDestino, nome: 'Usuário Teste' },
+                { value: 159.90, dueDate: '2026-02-10', invoiceUrl: 'https://sandbox.asaas.com/i/teste' }
+            );
+            res.send(`✅ E-mail de AVISO DE VENCIMENTO enviado para: ${emailDestino}.`);
+        } else if (type === 'overdue') {
+            await emailService.sendOverdueEmail(
+                { email: emailDestino, nome: 'Usuário Teste' },
+                { value: 159.90, dueDate: '2026-02-01', invoiceUrl: 'https://sandbox.asaas.com/i/teste' }
+            );
+            res.send(`✅ E-mail de COBRANÇA VENCIDA enviado para: ${emailDestino}.`);
+        } else if (type === 'updated') {
+            await emailService.sendBillUpdatedEmail(
+                { email: emailDestino, nome: 'Usuário Teste' },
+                { value: 159.90, dueDate: '2026-02-15', invoiceUrl: 'https://sandbox.asaas.com/i/teste' }
+            );
+            res.send(`✅ E-mail de COBRANÇA ATUALIZADA enviado para: ${emailDestino}.`);
+        } else if (type === 'digitable') {
+            await emailService.sendDigitableLineEmail(
+                { email: emailDestino, nome: 'Usuário Teste' },
+                { 
+                    value: 159.90, 
+                    dueDate: '2026-02-10', 
+                    invoiceUrl: 'https://sandbox.asaas.com/i/teste', 
+                    nossoNumero: '34191.79001 01043.51004 7 9102012000' 
+                }
+            );
+            res.send(`✅ E-mail de LINHA DIGITÁVEL enviado para: ${emailDestino}.`);
         } else {
             // Testa o e-mail de Recuperação de Senha (Padrão)
             await emailService.sendPasswordResetEmail(
