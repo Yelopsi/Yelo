@@ -1138,8 +1138,7 @@ exports.getSystemLogs = async (req, res) => {
             completedQuests,
             loginFailures,
             sessionQueryRaw,
-            avgSessionResult
-        ] = await Promise.all([
+            avgSessionResultl([
             db.Patient.count({ where: { createdAt: { [Op.gte]: oneDayAgo } } }),
             db.Psychologist.count({ where: { createdAt: { [Op.gte]: oneDayAgo } } }),
             db.SystemLog.count({ where: { level: 'error', createdAt: { [Op.gte]: oneDayAgo } } }),
@@ -1149,14 +1148,13 @@ exports.getSystemLogs = async (req, res) => {
             db.SystemLog.count({ where: { message: { [Op.iLike]: '%Falha de login%' }, createdAt: { [Op.gte]: oneDayAgo } } }),
             // Sessões Ativas (Raw Query retorna [results, metadata])
             db.sequelize.query(`SELECT COUNT(*) FROM "ActiveSessions" WHERE "lastSeen" >= NOW() - INTERVAL '5 minutes'`),
-            // Tempo Médio (QueryType SELECT retorna array de rows)
-            db.sequelize.query(`SELECT AVG("durationInSeconds") as "avgDuration" FROM "AnonymousSessions" WHERE "endedAt" >= :date`, { replacements: { date: oneDayAgo }, type: db.sequelize.QueryTypes.SELECT })
-        ]);
-
+            // Tempo Médio[
+            db.SystemLog.count({ where: { message: { [Op.iLike]: '%[EMAIL_FAIL]%' }, createdAt: { [Op.gte]: oneDayAgo }
         // Processamento dos Resultados
         const registrationStatus = (newPatients + newPsis) > 0 ? 'active' : 'idle'; // active = verde, idle = amarelo
         const systemStatus = errorCount === 0 ? 'healthy' : 'warning'; // healthy = verde, warning = vermelho
         const paymentStatus = paymentErrors === 0 ? 'healthy' : 'error';
+        const emailStatus = emailErrors === 0 ? 'healthy' : (emailErrors > 5 ? 'critical' : 'warning'); // <--- Status do E-mail
         const dbStatus = 'online';
         const funnelStatus = (startedQuests > 5 && completedQuests === 0) ? 'critical' : 'healthy';
         const securityStatus = loginFailures > 20 ? 'warning' : 'healthy'; // Mais de 20 erros = Alerta
@@ -1182,6 +1180,7 @@ exports.getSystemLogs = async (req, res) => {
                 registration: { status: registrationStatus, count: newPatients + newPsis },
                 system: { status: systemStatus, errors: errorCount },
                 payment: { status: paymentStatus, errors: paymentErrors },
+                email: { status: emailStatus, errors: emailErrors }, // <--- Retorna para o front
                 database: { status: dbStatus },
                 funnel: { status: funnelStatus, started: startedQuests, completed: completedQuests },
                 security: { status: securityStatus, failures: loginFailures },
