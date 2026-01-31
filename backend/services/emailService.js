@@ -1,15 +1,27 @@
 // backend/services/emailService.js
 const nodemailer = require('nodemailer');
 
+// Mapeamento de variáveis (Suporta tanto EMAIL_ quanto SMTP_)
+const host = process.env.EMAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com';
+const port = process.env.EMAIL_PORT || process.env.SMTP_PORT || 587;
+const user = process.env.EMAIL_USER || process.env.SMTP_USER;
+const pass = process.env.EMAIL_PASS || process.env.SMTP_PASS;
+
+// --- DIAGNÓSTICO: Verifica se as variáveis existem ---
+if (!user || !pass) {
+    console.error("⚠️ [EMAIL] ATENÇÃO: Credenciais de e-mail (SMTP_USER/PASS) não estão definidas no .env");
+}
+
 // Configuração do Transporter (Use suas credenciais reais aqui)
 // Se usar Gmail, precisa de "Senha de App". Se usar Resend/SendGrid, use as credenciais SMTP deles.
 const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    port: process.env.EMAIL_PORT || 587,
+    host: host,
+    port: port,
     secure: false, // true para 465, false para outras portas
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+        // Usa string vazia como fallback para evitar o erro "Missing credentials for PLAIN"
+        user: user || '',
+        pass: pass || ''
     },
     debug: true, // Ativa logs detalhados do SMTP
     logger: true // Loga no console do servidor

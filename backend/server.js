@@ -945,7 +945,11 @@ app.get('/api/fix-test-email', async (req, res) => {
         }
     } catch (error) {
         console.error(error);
-        res.status(500).send("❌ Erro ao enviar e-mail: " + error.message);
+        let msg = "❌ Erro ao enviar e-mail: " + error.message;
+        if (error.message.includes('Missing credentials') || error.message.includes('Authentication') || error.message.includes('Username and Password')) {
+            msg += "<br><br><strong>Dica:</strong> Verifique se <code>SMTP_USER</code> e <code>SMTP_PASS</code> estão configurados corretamente no arquivo <code>.env</code>.";
+        }
+        res.status(500).send(msg);
     }
 });
 
