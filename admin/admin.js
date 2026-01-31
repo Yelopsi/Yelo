@@ -31,6 +31,19 @@ document.addEventListener('DOMContentLoaded', function() {
     `;
     document.head.appendChild(badgeStyle);
 
+    // --- ESTILOS KPI E-MAIL (Injetados) ---
+    const kpiStyle = document.createElement('style');
+    kpiStyle.innerHTML = `
+        .kpi-icon.success { background-color: #e8f5e9; color: #1B4332; }
+        .kpi-value.success { color: #1B4332; }
+        .kpi-icon.warning { background-color: #fff3e0; color: #f57c00; }
+        .kpi-value.warning { color: #f57c00; }
+        .kpi-icon.danger { background-color: #ffebee; color: #d32f2f; }
+        .kpi-value.danger { color: #d32f2f; }
+        .tiny-icon { font-size: 18px; vertical-align: middle; margin-right: 4px; }
+    `;
+    document.head.appendChild(kpiStyle);
+
     // Função para controlar a badge no menu
     window.updateSidebarBadge = function(pageName, show) {
         const link = document.querySelector(`.sidebar-nav a[data-page="${pageName}"]`);
@@ -660,6 +673,54 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     // Expõe para o HTML poder chamar no onclick="loadReports()"
     window.loadReports = loadReports;
+
+    // --- FUNÇÃO GLOBAL: RENDERIZAR KPI DE E-MAIL ---
+    // Chame esta função no seu script de dashboard (admin_visao_geral.js)
+    // Exemplo: window.renderEmailStatusCard(data.health.email, 'health-grid');
+    window.renderEmailStatusCard = function(emailHealth, containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        // Remove card existente se houver para evitar duplicatas
+        const oldCard = document.getElementById('kpi-email-card');
+        if (oldCard) oldCard.remove();
+
+        const status = emailHealth ? emailHealth.status : 'unknown';
+        const errors = emailHealth ? (emailHealth.errors || 0) : 0;
+
+        let colorClass = 'success';
+        let icon = 'check_circle';
+        let text = 'Operacional';
+
+        if (status === 'warning') {
+            colorClass = 'warning';
+            icon = 'warning';
+            text = `${errors} falhas (24h)`;
+        } else if (status === 'critical') {
+            colorClass = 'danger';
+            icon = 'error';
+            text = `${errors} erros críticos`;
+        }
+
+        const cardHtml = `
+            <div id="kpi-email-card" class="kpi-card">
+                <div class="kpi-icon ${colorClass}">
+                    <span class="material-icons">email</span>
+                </div>
+                <div class="kpi-info">
+                    <h3>Disparo de E-mails</h3>
+                    <p class="kpi-value ${colorClass}">
+                        <span class="material-icons tiny-icon">${icon}</span>
+                        ${text}
+                    </p>
+                    <span class="kpi-label">Notificações Yelo</span>
+                </div>
+            </div>
+        `;
+
+        // Insere o card no container especificado
+        container.insertAdjacentHTML('beforeend', cardHtml);
+    };
 
     // 1. Gráfico de Usuários (Linha)
     function renderUsersChart(data, visitsData) { // Recebe visitsData agora

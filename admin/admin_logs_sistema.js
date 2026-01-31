@@ -39,7 +39,8 @@ window.initializePage = async function() {
                     system: { status: errorCount === 0 ? 'healthy' : 'warning', errors: errorCount },
                     funnel: { status: 'healthy', started: 0, completed: 0 },
                     security: { status: 'healthy', failures: 0 },
-                    infrastructure: { status: 'healthy', memory: 0 }
+                    infrastructure: { status: 'healthy', memory: 0 },
+                    email: { status: 'healthy', errors: 0 } // Fallback para e-mail
                 };
             } else {
                 // Formato Novo
@@ -83,6 +84,11 @@ window.initializePage = async function() {
                 title: "Pagamentos",
                 value: health.payment.status === 'healthy' ? "Operando Normalmente" : `${health.payment.errors} Erros Detectados`,
                 status: health.payment.status === 'healthy' ? 'green' : 'red'
+            },
+            {
+                title: "Disparo de E-mails",
+                value: (health.email && health.email.status === 'healthy') ? "Operacional" : `${health.email ? health.email.errors : 0} Falhas (24h)`,
+                status: (health.email && health.email.status === 'healthy') ? 'green' : ((health.email && health.email.status === 'warning') ? 'yellow' : 'red')
             },
             {
                 title: "Erros do Sistema",

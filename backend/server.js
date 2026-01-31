@@ -2219,7 +2219,7 @@ const startServer = async () => {
         const retries = 5;
         for (let i = 0; i < retries; i++) {
             try {
-                await db.sequelize.query(sql);
+                await db.sequelize.query(sql, { logging: false }); // <--- OTIMIZAÇÃO: Desativa log para economizar memória
                 if (successMsg) console.log(`✅ [DB FIX] ${successMsg}`);
                 return;
             } catch (e) {
@@ -2350,7 +2350,7 @@ const startServer = async () => {
                     `);
                 } catch (e) {
                     try {
-                        await runSchemaQuery(`ALTER TABLE "Psychologists" ALTER COLUMN "${col}" TYPE JSONB USING "${col}"::jsonb;`);
+                        await runSchemaQuery(`ALTER TABLE "Psychologists" ALTER COLUMN "${col}" TYPE JSONB USING "${col}"::jsonb;`); 
                     } catch (e2) { 
                     }
                 }

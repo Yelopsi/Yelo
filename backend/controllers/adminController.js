@@ -644,6 +644,7 @@ exports.getDashboardStats = async (req, res) => {
         
         // Definição de "30 dias atrás"
         const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+        const oneDayAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // Para KPI de E-mail
 
         // --- A. DADOS DE CRESCIMENTO ---
         
@@ -702,7 +703,8 @@ exports.getDashboardStats = async (req, res) => {
             [demandStats],
             waitingListCount,
             pendingReviewsCount,
-            psisByPlan
+            psisByPlan,
+            emailErrors // <--- KPI de E-mail
         ] = await Promise.all([
             db.sequelize.query(patientStatsQuery, { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }),
             db.sequelize.query(psychologistStatsQuery, { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }),
@@ -713,7 +715,9 @@ exports.getDashboardStats = async (req, res) => {
                 attributes: ['plano', [db.sequelize.fn('COUNT', 'plano'), 'count']],
                 where: { status: 'active', plano: { [Op.ne]: null } },
                 group: ['plano']
-            })
+            }),
+            // Contagem de falhas de e-mail nas últimas 24h
+            db.SystemLog.count({ where: { message: { [Op.iLike]: '%[EMAIL_FAIL]%' }, createdAt: { [Op.gte]: oneDayAgo } } })
         ]);
 
         // Processamento dos Planos e MRR (Sem query extra)
@@ -732,6 +736,9 @@ exports.getDashboardStats = async (req, res) => {
             }
         });
 
+        // Status do E-mail
+        const emailStatus = emailErrors === 0 ? 'healthy' : (emailErrors > 5 ? 'critical' : 'warning');
+
         console.timeEnd('⏱️ Dashboard Stats Load');
         res.status(200).json({
             mrr: mrr.toFixed(2),
@@ -742,7 +749,8 @@ exports.getDashboardStats = async (req, res) => {
             psychologists: { total: parseInt(psychologistStats.total, 10), active: parseInt(psychologistStats.active, 10), deleted: parseInt(psychologistStats.deleted, 10), byPlan: plansCount },
             questionnaires: { total: parseInt(demandStats.total, 10), deleted: parseInt(demandStats.abandoned, 10) },
             waitingListCount: waitingListCount,
-            pendingReviewsCount: pendingReviewsCount
+            pendingReviewsCount: pendingReviewsCount,
+            emailHealth: { status: emailStatus, errors: emailErrors } // <--- Envia para o front
         });
 
     } catch (error) {
@@ -1128,42 +1136,48 @@ exports.getSystemLogs = async (req, res) => {
         // 2. CÁLCULO DE SAÚDE DO SISTEMA (Health Check)
         const oneDayAgo = new Date(new Date() - 24 * 60 * 60 * 1000);
         
-        // --- OTIMIZAÇÃO: PARALELISMO (Executa todas as contagens juntas) ---
-        const [
-            newPatients,
-            newPsis,
-            errorCount,
-            paymentErrors,
-            startedQuests,
-            completedQuests,
-            loginFailures,
-            sessionQueryRaw,
-            avgSessionResult,
-            emailErrors
-        ] = await Promise.all([
-            db.Patient.count({ where: { createdAt: { [Op.gte]: oneDayAgo } } }),
-            db.Psychologist.count({ where: { createdAt: { [Op.gte]: oneDayAgo } } }),
-            db.SystemLog.count({ where: { level: 'error', createdAt: { [Op.gte]: oneDayAgo } } }),
-            db.SystemLog.count({ where: { level: 'error', message: { [Op.iLike]: '%stripe%' }, createdAt: { [Op.gte]: oneDayAgo } } }),
-            db.DemandSearch.count({ where: { status: 'started', createdAt: { [Op.gte]: oneDayAgo } } }),
-            db.DemandSearch.count({ where: { status: 'completed', createdAt: { [Op.gte]: oneDayAgo } } }),
-            db.SystemLog.count({ where: { message: { [Op.iLike]: '%Falha de login%' }, createdAt: { [Op.gte]: oneDayAgo } } }),
-            // Sessões Ativas (Raw Query retorna [results, metadata])
-            db.sequelize.query(`SELECT COUNT(*) FROM "ActiveSessions" WHERE "lastSeen" >= NOW() - INTERVAL '5 minutes'`),
-            // Tempo Médio
-            db.sequelize.query(`SELECT AVG("durationInSeconds") as "avgDuration" FROM "AnonymousSessions" WHERE "endedAt" >= :date`, { replacements: { date: oneDayAgo }, type: db.sequelize.QueryTypes.SELECT }),
-            // KPI de E-mail (Erros nas últimas 24h com a tag [EMAIL_FAIL])
-            db.SystemLog.count({ where: { message: { [Op.iLike]: '%[EMAIL_FAIL]%' }, createdAt: { [Op.gte]: oneDayAgo } } })
-        ]);
+        let metrics = {
+            newPatients: 0, newPsis: 0, errorCount: 0, paymentErrors: 0,
+            startedQuests: 0, completedQuests: 0, loginFailures: 0,
+            sessionQueryRaw: [[{ count: 0 }]], avgSessionResult: [{ avgDuration: 0 }],
+            emailErrors: 0
+        };
+
+        try {
+            const results = await Promise.all([
+                db.Patient.count({ where: { createdAt: { [Op.gte]: oneDayAgo } } }),
+                db.Psychologist.count({ where: { createdAt: { [Op.gte]: oneDayAgo } } }),
+                db.SystemLog.count({ where: { level: 'error', createdAt: { [Op.gte]: oneDayAgo } } }),
+                db.SystemLog.count({ where: { level: 'error', message: { [Op.iLike]: '%stripe%' }, createdAt: { [Op.gte]: oneDayAgo } } }),
+                db.DemandSearch.count({ where: { status: 'started', createdAt: { [Op.gte]: oneDayAgo } } }),
+                db.DemandSearch.count({ where: { status: 'completed', createdAt: { [Op.gte]: oneDayAgo } } }),
+                db.SystemLog.count({ where: { message: { [Op.iLike]: '%Falha de login%' }, createdAt: { [Op.gte]: oneDayAgo } } }),
+                db.sequelize.query(`SELECT COUNT(*) FROM "ActiveSessions" WHERE "lastSeen" >= NOW() - INTERVAL '5 minutes'`),
+                db.sequelize.query(`SELECT AVG("durationInSeconds") as "avgDuration" FROM "AnonymousSessions" WHERE "endedAt" >= :date`, { replacements: { date: oneDayAgo }, type: db.sequelize.QueryTypes.SELECT }),
+                // KPI de E-mail (Erros nas últimas 24h com a tag [EMAIL_FAIL])
+                db.SystemLog.count({ where: { message: { [Op.iLike]: '%[EMAIL_FAIL]%' }, createdAt: { [Op.gte]: oneDayAgo } } })
+            ]);
+
+            // Desestrutura apenas se deu sucesso
+            [
+                metrics.newPatients, metrics.newPsis, metrics.errorCount, metrics.paymentErrors,
+                metrics.startedQuests, metrics.completedQuests, metrics.loginFailures,
+                metrics.sessionQueryRaw, metrics.avgSessionResult, metrics.emailErrors
+            ] = results;
+
+        } catch (metricErr) {
+            console.error("Erro ao calcular métricas do dashboard:", metricErr.message);
+            // Continua a execução para entregar pelo menos os logs, mesmo com métricas zeradas
+        }
 
         // Processamento dos Resultados
-        const registrationStatus = (newPatients + newPsis) > 0 ? 'active' : 'idle'; // active = verde, idle = amarelo
-        const systemStatus = errorCount === 0 ? 'healthy' : 'warning'; // healthy = verde, warning = vermelho
-        const paymentStatus = paymentErrors === 0 ? 'healthy' : 'error';
-        const emailStatus = emailErrors === 0 ? 'healthy' : (emailErrors > 5 ? 'critical' : 'warning'); // <--- Status do E-mail
+        const registrationStatus = (metrics.newPatients + metrics.newPsis) > 0 ? 'active' : 'idle';
+        const systemStatus = metrics.errorCount === 0 ? 'healthy' : 'warning';
+        const paymentStatus = metrics.paymentErrors === 0 ? 'healthy' : 'error';
+        const emailStatus = metrics.emailErrors === 0 ? 'healthy' : (metrics.emailErrors > 5 ? 'critical' : 'warning');
         const dbStatus = 'online';
-        const funnelStatus = (startedQuests > 5 && completedQuests === 0) ? 'critical' : 'healthy';
-        const securityStatus = loginFailures > 20 ? 'warning' : 'healthy'; // Mais de 20 erros = Alerta
+        const funnelStatus = (metrics.startedQuests > 5 && metrics.completedQuests === 0) ? 'critical' : 'healthy';
+        const securityStatus = metrics.loginFailures > 20 ? 'warning' : 'healthy';
 
         // G. INFRAESTRUTURA (Memória e Uptime)
         const memoryUsage = process.memoryUsage();
@@ -1171,25 +1185,25 @@ exports.getSystemLogs = async (req, res) => {
         const infraStatus = memoryUsedMB > 500 ? 'warning' : 'healthy'; // Alerta se usar > 500MB (ajuste conforme seu servidor)
 
         // H. DADOS DE SESSÃO
-        const sessionResults = sessionQueryRaw[0]; // Extrai resultados da Raw Query
+        const sessionResults = metrics.sessionQueryRaw[0]; // Extrai resultados da Raw Query
         const concurrentUsers = sessionResults[0] ? parseInt(sessionResults[0].count, 10) : 0;
 
         // CÁLCULO REAL DO TEMPO MÉDIO DE SESSÃO (ANÔNIMOS)
         let avgSessionTime = 0;
-        if (avgSessionResult && avgSessionResult[0] && avgSessionResult[0].avgDuration) {
-            avgSessionTime = Math.round(avgSessionResult[0].avgDuration / 60);
+        if (metrics.avgSessionResult && metrics.avgSessionResult[0] && metrics.avgSessionResult[0].avgDuration) {
+            avgSessionTime = Math.round(metrics.avgSessionResult[0].avgDuration / 60);
         }
         // --- FIM DO CÁLCULO ---
         res.status(200).json({
             logs,
             health: {
-                registration: { status: registrationStatus, count: newPatients + newPsis },
-                system: { status: systemStatus, errors: errorCount },
-                payment: { status: paymentStatus, errors: paymentErrors },
-                email: { status: emailStatus, errors: emailErrors }, // <--- Retorna para o front
+                registration: { status: registrationStatus, count: metrics.newPatients + metrics.newPsis },
+                system: { status: systemStatus, errors: metrics.errorCount },
+                payment: { status: paymentStatus, errors: metrics.paymentErrors },
+                email: { status: emailStatus, errors: metrics.emailErrors },
                 database: { status: dbStatus },
-                funnel: { status: funnelStatus, started: startedQuests, completed: completedQuests },
-                security: { status: securityStatus, failures: loginFailures },
+                funnel: { status: funnelStatus, started: metrics.startedQuests, completed: metrics.completedQuests },
+                security: { status: securityStatus, failures: metrics.loginFailures },
                 infrastructure: { status: infraStatus, memory: memoryUsedMB, uptime: process.uptime() },
                 // Adicionando os novos dados
                 concurrentUsers: concurrentUsers,
