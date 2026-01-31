@@ -10,7 +10,9 @@ const transporter = nodemailer.createTransport({
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
-    }
+    },
+    debug: true, // Ativa logs detalhados do SMTP
+    logger: true // Loga no console do servidor
 });
 
 /**
@@ -88,17 +90,15 @@ const getHtmlTemplate = (titulo, nomeCliente, corpoMensagem, dadosExtras = {}) =
 
 // Função genérica de envio
 const sendEmail = async (to, subject, html) => {
-    try {
-        await transporter.sendMail({
-            from: '"Yelo Saúde Mental" <nao-responda@yelopsi.com.br>', // Nome Fantasia Limpo
-            to,
-            subject,
-            html
-        });
-        console.log(`📧 E-mail enviado para ${to}: ${subject}`);
-    } catch (error) {
-        console.error(`❌ Erro ao enviar e-mail para ${to}:`, error.message);
-    }
+    // REMOVIDO try/catch para que o erro suba para o navegador/controller
+    await transporter.sendMail({
+        // Usa variável de ambiente ou fallback, garantindo que o remetente bata com a autenticação se necessário
+        from: process.env.EMAIL_FROM || '"Yelo Saúde Mental" <nao-responda@yelopsi.com.br>', 
+        to,
+        subject,
+        html
+    });
+    console.log(`📧 E-mail enviado para ${to}: ${subject}`);
 };
 
 // --- FUNÇÕES DE NOTIFICAÇÃO (Mapeadas do Asaas) ---
