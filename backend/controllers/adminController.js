@@ -1153,7 +1153,7 @@ exports.getSystemLogs = async (req, res) => {
             // Tempo Médio
             db.sequelize.query(`SELECT AVG("durationInSeconds") as "avgDuration" FROM "AnonymousSessions" WHERE "endedAt" >= :date`, { replacements: { date: oneDayAgo }, type: db.sequelize.QueryTypes.SELECT }),
             // KPI de E-mail (Erros nas últimas 24h com a tag [EMAIL_FAIL])
-            db.SystemLog.count({ where: { message: { [Op.iLike]: '%[EMAIL_FAIL]%' }, createdAt: { [Op.gte]: oneDayAgo } })
+            db.SystemLog.count({ where: { message: { [Op.iLike]: '%[EMAIL_FAIL]%' }, createdAt: { [Op.gte]: oneDayAgo } } })
         ]);
 
         // Processamento dos Resultados
