@@ -31,6 +31,9 @@
     .fc-col-header, .fc-timegrid-body, .fc-timegrid-slots table, .fc-timegrid-cols table {
         width: 100% !important;
     }
+    
+    /* [CORREÇÃO VISIBILIDADE] Garante que o corpo do calendário não colapse */
+    .fc-view-harness { min-height: 500px; }
 
     /* Ajuste do Card de Agendamento */
     .fc-event {
@@ -755,7 +758,7 @@
                 editable: true,
                 
                 // --- CONFIGURAÇÃO DE GEOMETRIA (O SEGREDO DO ALINHAMENTO) ---
-                height: '100%',           // Ocupa a altura do pai (#calendar-wrapper)
+                height: isDesktop ? '100%' : 'auto', // Mobile: Auto (Cresce) | Desktop: 100% (Scroll interno)
                 expandRows: false,        // [AJUSTE] Desativado para garantir alinhamento perfeito com altura fixa
                 // slotMinHeight: 60,     // [REMOVIDO] Deixa o FullCalendar calcular a altura
                 slotDuration: '01:00:00', // [FIXO] Slots de 1 em 1 hora.
@@ -872,7 +875,7 @@
                 } catch (renderError) {
                     console.error("initCalendar: Erro ao renderizar:", renderError);
                 }
-            }, 100);
+            }, 250);
             
             window.calendarApi = calendar;
 
