@@ -580,6 +580,7 @@
         
         // --- API FUNCTIONS ---
         async function fetchData() {
+            console.log("fetchData: Iniciando busca de dados...");
             try {
                 // 1. Buscar Pacientes
                 const resPatients = await fetch(`${BASE_URL}/api/my-patients`, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -605,6 +606,7 @@
             } catch (e) { 
                 console.error("Erro ao carregar dados:", e); 
             } finally {
+                console.log("fetchData: Finalizado. Chamando renderizadores.");
                 // Garante que a UI renderize mesmo com erro (com dados vazios se necessário)
                 renderList('', 'ativo');
                 renderNextSessions();
@@ -718,22 +720,33 @@
 
         // 2. Inicializar Calendário (FullCalendar)
         function initCalendar() {
+            console.log("initCalendar: Iniciando..."); 
             const calendarEl = document.getElementById('calendar-wrapper');
-            if (!calendarEl) return;
+            if (!calendarEl) {
+                console.error("initCalendar: Elemento #calendar-wrapper não encontrado.");
+                return;
+            }
             
             // Verificação de Segurança: FullCalendar carregado?
             if (typeof FullCalendar === 'undefined') {
                 console.warn("FullCalendar não encontrado. Tentando carregar dinamicamente...");
                 const script = document.createElement('script');
                 script.src = 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js';
-                script.onload = () => initCalendar(); // Tenta novamente após carregar
+                script.onload = () => {
+                    console.log("FullCalendar carregado dinamicamente.");
+                    initCalendar();
+                };
+                script.onerror = (e) => console.error("Erro ao carregar FullCalendar:", e);
                 document.head.appendChild(script);
                 return;
             }
 
+            console.log("initCalendar: FullCalendar disponível. Configurando...");
+
             const mobile = window.innerWidth < 768;
             const isDesktop = window.innerWidth >= 992;
 
+            try {
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: mobile ? 'timeGridDay' : 'timeGridWeek', // Mobile: Dia | Desktop: Semana
                 locale: 'pt-br',
@@ -848,13 +861,24 @@
             
             // Renderiza com um pequeno delay para garantir que o DOM esteja pronto e visível
             setTimeout(() => {
+                console.log("initCalendar: Renderizando calendário...");
                 const loader = document.getElementById('calendar-loading');
                 if(loader) loader.style.display = 'none';
-                calendar.render();
-                calendar.updateSize(); // Força recálculo de tamanho (Crítico para Mobile)
+                
+                try {
+                    calendar.render();
+                    calendar.updateSize(); // Força recálculo de tamanho (Crítico para Mobile)
+                    console.log("initCalendar: Calendário renderizado com sucesso.");
+                } catch (renderError) {
+                    console.error("initCalendar: Erro ao renderizar:", renderError);
+                }
             }, 100);
             
             window.calendarApi = calendar;
+
+            } catch (err) {
+                console.error("initCalendar: Erro na inicialização:", err);
+            }
 
             // --- SWIPE NAVIGATION (MOBILE) ---
             let touchStartX = 0;
@@ -951,8 +975,11 @@
             handleNewPatient();
         }
 
-        document.getElementById('btn-add-patient').onclick = handleNewPatient;
-        document.getElementById('btn-add-patient-mobile').onclick = handleNewPatient;
+        const btnAddPatient = document.getElementById('btn-add-patient');
+        if (btnAddPatient) btnAddPatient.onclick = handleNewPatient;
+
+        const btnAddPatientMobile = document.getElementById('btn-add-patient-mobile');
+        if (btnAddPatientMobile) btnAddPatientMobile.onclick = handleNewPatient;
         
         const closeModal = () => modal.style.display = 'none';
         document.getElementById('close-patient-modal').onclick = closeModal;
