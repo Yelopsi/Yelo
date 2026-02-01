@@ -3,6 +3,14 @@
 window.initializePage = async function() {
     console.log("Inicializando página de Indicadores de Questionários...");
     const token = localStorage.getItem('Yelo_token');
+    
+    // --- FIX: Carrega Chart.js dinamicamente se não existir ---
+    if (typeof Chart === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+        document.head.appendChild(script);
+    }
+
     const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001';
 
     const patientGrid = document.getElementById('patient-analytics-grid');
@@ -62,6 +70,11 @@ window.initializePage = async function() {
         setTimeout(() => {
             const canvas = document.getElementById(chartId);
             if (canvas) {
+                // Segurança: Se o Chart.js ainda não carregou, tenta novamente em 500ms
+                if (typeof Chart === 'undefined') {
+                    setTimeout(() => createAnalyticsCard(title, data), 500); // Retry
+                    return;
+                }
                 const ctx = canvas.getContext('2d');
 
                 // 1. Verifica se o Chart.js já tem um gráfico registrado neste canvas (Segurança Extra)

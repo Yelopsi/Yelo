@@ -1715,23 +1715,25 @@ exports.getQuestionnaireAnalytics = async (req, res) => {
         
         // Helper para contar campos JSON (Simples ou Array)
         const countJsonField = async (field, isArray = false) => {
+            // FIX: Cast explícito para JSONB para evitar erros de tipo no Postgres
+            const jsonCol = 'CAST("searchParams" AS JSONB)';
             let query;
             if (isArray) {
                 // Verifica se é array antes de expandir para evitar erros em dados legados
                 query = `
                     SELECT value, COUNT(*) as count
                     FROM "DemandSearches",
-                    jsonb_array_elements_text("searchParams"->'${field}') as value
+                    jsonb_array_elements_text(${jsonCol}->'${field}') as value
                     WHERE status = 'completed' 
-                    AND "searchParams"->'${field}' IS NOT NULL
-                    AND jsonb_typeof("searchParams"->'${field}') = 'array'
+                    AND ${jsonCol}->'${field}' IS NOT NULL
+                    AND jsonb_typeof(${jsonCol}->'${field}') = 'array'
                     GROUP BY value
                 `;
             } else {
                 query = `
-                    SELECT "searchParams"->>'${field}' as value, COUNT(*) as count
+                    SELECT ${jsonCol}->>'${field}' as value, COUNT(*) as count
                     FROM "DemandSearches"
-                    WHERE status = 'completed' AND "searchParams"->>'${field}' IS NOT NULL
+                    WHERE status = 'completed' AND ${jsonCol}->>'${field}' IS NOT NULL
                     GROUP BY value
                 `;
             }
@@ -1885,27 +1887,29 @@ exports.getQuestionnaireAnalytics = async (req, res) => {
 
         if (total30d > 0) {
             const getTopStat = async (field, isArray = false) => {
+                // FIX: Cast explícito para JSONB
+                const jsonCol = 'CAST("searchParams" AS JSONB)';
                 let query;
                 if (isArray) {
                     query = `
                         SELECT value, COUNT(*) as count
                         FROM "DemandSearches",
-                        jsonb_array_elements_text("searchParams"->'${field}') as value
+                        jsonb_array_elements_text(${jsonCol}->'${field}') as value
                         WHERE status = 'completed' 
                         AND "createdAt" >= :date
-                        AND "searchParams"->'${field}' IS NOT NULL
-                        AND jsonb_typeof("searchParams"->'${field}') = 'array'
+                        AND ${jsonCol}->'${field}' IS NOT NULL
+                        AND jsonb_typeof(${jsonCol}->'${field}') = 'array'
                         GROUP BY value
                         ORDER BY count DESC
                         LIMIT 1
                     `;
                 } else {
                     query = `
-                        SELECT "searchParams"->>'${field}' as value, COUNT(*) as count
+                        SELECT ${jsonCol}->>'${field}' as value, COUNT(*) as count
                         FROM "DemandSearches"
                         WHERE status = 'completed' 
                         AND "createdAt" >= :date
-                        AND "searchParams"->>'${field}' IS NOT NULL
+                        AND ${jsonCol}->>'${field}' IS NOT NULL
                         GROUP BY value
                         ORDER BY count DESC
                         LIMIT 1
