@@ -6,8 +6,10 @@
         border-radius: 12px;
         padding: 10px;
         /* Importante: Define altura mínima para o FullCalendar calcular */
-        min-height: 600px;
+        min-height: 650px; /* Aumentado para garantir visibilidade */
         height: 100%; /* Garante que ocupe o espaço disponível */
+        display: block; /* Garante display block */
+        position: relative; /* Contexto de posicionamento para o loader */
     }
 
     /* [CORREÇÃO ALINHAMENTO] Força altura fixa para alinhar grade e horários */
@@ -190,6 +192,14 @@
             order: 3;
         }
         .header-action-desktop { display: none !important; }
+        
+        /* Limita a altura da lista no mobile para o calendário não ficar inacessível */
+        .patient-list-container {
+            max-height: 350px;
+            overflow-y: auto;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
     }
 
     .btn-add-mobile-inline {
@@ -282,7 +292,9 @@
                 <span class="legend-item"><span class="dot" style="background-color: #d32f2f;"></span> Falta</span>
             </div>
         </div>
-        <div id="calendar-wrapper" style="flex-grow: 1;"></div>
+        <div id="calendar-wrapper" style="flex-grow: 1;">
+            <div id="calendar-loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #999; font-weight: 500; display: flex; align-items: center; gap: 10px;"><span class="loader-spinner-sm"></span> Carregando agenda...</div>
+        </div>
     </div>
 </div>
 
@@ -708,6 +720,16 @@
         function initCalendar() {
             const calendarEl = document.getElementById('calendar-wrapper');
             if (!calendarEl) return;
+            
+            // Verificação de Segurança: FullCalendar carregado?
+            if (typeof FullCalendar === 'undefined') {
+                console.warn("FullCalendar não encontrado. Tentando carregar dinamicamente...");
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js';
+                script.onload = () => initCalendar(); // Tenta novamente após carregar
+                document.head.appendChild(script);
+                return;
+            }
 
             const mobile = window.innerWidth < 768;
             const isDesktop = window.innerWidth >= 992;
@@ -799,7 +821,7 @@
                     }
                 },
 
-                events: events.map(evt => ({
+                events: (Array.isArray(events) ? events : []).map(evt => ({
                     ...evt,
                     // Cores: Agendado (Azul), Confirmado (Verde), Realizado (Cinza), Cancelado/Falta (Vermelho)
                     display: evt.status === 'cancelled' ? 'background' : 'auto', // LIBERA O HORÁRIO SE CANCELADO
@@ -823,7 +845,15 @@
                     openEventDetails(info.event);
                 }
             });
-            calendar.render();
+            
+            // Renderiza com um pequeno delay para garantir que o DOM esteja pronto e visível
+            setTimeout(() => {
+                const loader = document.getElementById('calendar-loading');
+                if(loader) loader.style.display = 'none';
+                calendar.render();
+                calendar.updateSize(); // Força recálculo de tamanho (Crítico para Mobile)
+            }, 100);
+            
             window.calendarApi = calendar;
 
             // --- SWIPE NAVIGATION (MOBILE) ---
