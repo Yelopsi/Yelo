@@ -2355,6 +2355,16 @@ const startServer = async () => {
                     }
                 }
             }
+
+            // --- FIX: Converter DemandSearches.searchParams para JSONB ---
+            try {
+                await runSchemaQuery(`
+                    ALTER TABLE "DemandSearches" 
+                    ALTER COLUMN "searchParams" TYPE JSONB 
+                    USING "searchParams"::text::jsonb;
+                `);
+            } catch (e) { /* Ignora se já for JSONB */ }
+
             console.log('🔧 [DB FIX] Colunas de lista verificadas e convertidas para JSONB.');
             console.log('✅ [DB SYNC] Correções de schema aplicadas com sucesso.');
         } else {
