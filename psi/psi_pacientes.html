@@ -6,22 +6,10 @@
         border-radius: 12px;
         padding: 10px;
         /* Importante: Define altura mínima para o FullCalendar calcular */
-        min-height: 650px; /* Aumentado para garantir visibilidade */
+        /* min-height: 650px; REMOVIDO para evitar espaço vazio e rolagem dupla */
         height: 100%; /* Garante que ocupe o espaço disponível */
         display: block; /* Garante display block */
         position: relative; /* Contexto de posicionamento para o loader */
-    }
-
-    /* [CORREÇÃO ALINHAMENTO] Força altura fixa para alinhar grade e horários */
-    .fc .fc-timegrid-slot {
-        height: 50px !important; /* Altura fixa para alinhar com o eixo de horas */
-        border-bottom: 1px solid #f0f0f0 !important;
-    }
-    .fc .fc-timegrid-slot-label-frame {
-        height: 50px !important; /* Mesma altura para o rótulo */
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
     }
 
     /* [CORREÇÃO LARGURA] Força o calendário a ocupar 100% da largura sempre */
@@ -33,7 +21,7 @@
     }
     
     /* [CORREÇÃO VISIBILIDADE] Garante que o corpo do calendário não colapse */
-    .fc-view-harness { min-height: 500px; }
+    /* .fc-view-harness { min-height: 500px; } REMOVIDO */
 
     /* Ajuste do Card de Agendamento */
     .fc-event {
@@ -168,7 +156,7 @@
         display: grid;
         grid-template-columns: 350px 1fr;
         gap: 25px;
-        height: calc(100vh - 180px);
+        height: calc(100vh - 140px); /* Ajuste de altura para desktop */
     }
 
     @media (max-width: 992px) {
@@ -638,9 +626,9 @@
             container.style.display = 'block';
             upcoming.forEach(evt => {
                 const dateObj = new Date(evt.start);
-                // [CORREÇÃO] Força exibição em UTC para alinhar com o calendário
-                const timeStr = dateObj.toLocaleTimeString('pt-BR', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
-                const dateStr = dateObj.toLocaleDateString('pt-BR', { timeZone: 'UTC', day: '2-digit', month: 'short' });
+                // [CORREÇÃO] Exibe em horário local
+                const timeStr = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                const dateStr = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
                 
                 // Define o texto e a cor do status
                 let statusText = 'Aguardando';
@@ -753,7 +741,7 @@
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: mobile ? 'timeGridDay' : 'timeGridWeek', // Mobile: Dia | Desktop: Semana
                 locale: 'pt-br',
-                timeZone: 'UTC', // [CORREÇÃO] Força UTC para evitar o deslocamento de 3h (14h virando 11h)
+                timeZone: 'local', // [CORREÇÃO] Usa horário local para alinhar com o sistema do usuário
                 selectable: true,
                 editable: true,
                 
@@ -849,10 +837,10 @@
                 })),
                 // Clique em um horário vazio
                 dateClick: function(info) {
-                    const date = info.date;
-                    // [CORREÇÃO] Usa métodos UTC para preencher o modal com a hora exata do clique
-                    const dateStr = date.toISOString().substring(0, 10); // YYYY-MM-DD
-                    const timeStr = date.toISOString().substring(11, 16); // HH:MM
+                    // Usa dateStr que já vem no formato correto do fuso configurado (local)
+                    // Ex: 2023-10-27T04:00:00-03:00 ou 2023-10-27T04:00:00
+                    const dateStr = info.dateStr.substring(0, 10); 
+                    const timeStr = info.dateStr.substring(11, 16);
                     
                     openAppointmentModal(dateStr, timeStr);
                 },
@@ -1091,7 +1079,7 @@
             // [CORREÇÃO DEFINITIVA] Constrói a data manualmente em UTC para ignorar fuso do navegador
             const [year, month, day] = date.split('-').map(Number);
             const [hours, minutes] = time.split(':').map(Number);
-            const start = new Date(Date.UTC(year, month - 1, day, hours, minutes));
+            const start = new Date(year, month - 1, day, hours, minutes); // Cria data local
             const end = new Date(start.getTime() + 60 * 60 * 1000); // +1 hora
 
             try {
@@ -1134,7 +1122,7 @@
             currentEventId = evt.id;
             document.getElementById('evt-patient-name').textContent = evt.title;
             // [CORREÇÃO] Exibe data/hora em UTC no modal de detalhes
-            document.getElementById('evt-time-info').textContent = new Date(evt.start).toLocaleString('pt-BR', { timeZone: 'UTC' });
+            document.getElementById('evt-time-info').textContent = new Date(evt.start).toLocaleString('pt-BR');
             document.getElementById('evt-value').value = evt.value;
             
             // Reset UI
@@ -1211,9 +1199,9 @@
                     } else {
                         availableSlots.forEach(slot => {
                             const btn = document.createElement('button');
-                            // [CORREÇÃO] Exibe opções de reagendamento em UTC
-                            const dateStr = new Date(slot.start).toLocaleDateString('pt-BR', { timeZone: 'UTC', weekday: 'short', day: '2-digit', month: '2-digit' });
-                            const timeStr = new Date(slot.start).toLocaleTimeString('pt-BR', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
+                            // [CORREÇÃO] Exibe opções de reagendamento locais
+                            const dateStr = new Date(slot.start).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
+                            const timeStr = new Date(slot.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                             
                             btn.innerHTML = `📅 <strong>${dateStr}</strong> às <strong>${timeStr}</strong>`;
                             btn.style.cssText = "padding: 10px; border: 1px solid #ddd; border-radius: 6px; background: #fff; cursor: pointer; text-align: left; transition: background 0.2s;";
