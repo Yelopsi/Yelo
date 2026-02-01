@@ -69,6 +69,21 @@ if (db.Psychologist && !db.Psychologist.rawAttributes.resetPasswordToken) {
     }
 }
 
+// --- FIX: Patch Patient Model (Garante leitura de campos novos) ---
+if (db.Patient) {
+    const attrs = db.Patient.rawAttributes;
+    let patched = false;
+    
+    if (!attrs.sessionValue) { attrs.sessionValue = { type: DataTypes.FLOAT }; patched = true; }
+    if (!attrs.status) { attrs.status = { type: DataTypes.STRING }; patched = true; }
+    if (!attrs.observacoes) { attrs.observacoes = { type: DataTypes.TEXT }; patched = true; }
+    
+    if (patched && typeof db.Patient.refreshAttributes === 'function') {
+        console.log("[FIX] Modelo Patient atualizado com colunas faltantes.");
+        db.Patient.refreshAttributes(); 
+    }
+}
+
 // --- FIX: Patch SystemLog Model (Garante que o modelo exista para logs) ---
 if (!db.SystemLog) {
     console.log("[FIX] Defining SystemLog model manually.");
