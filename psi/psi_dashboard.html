@@ -437,6 +437,10 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
             <span>Perguntas</span>
         </a>
+        <div class="bottom-nav-item" id="bottom-nav-menu-trigger" style="cursor: pointer;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            <span>Menu</span>
+        </div>
     </nav>
 
     <!-- FAB (Floating Action Button) -->
@@ -628,7 +632,8 @@
             const triggers = [
                 document.getElementById('psi-sidebar-photo'),
                 document.getElementById('mobile-avatar-trigger'),
-                document.getElementById('desktop-menu-trigger')
+                document.getElementById('desktop-menu-trigger'),
+                document.getElementById('bottom-nav-menu-trigger')
             ];
 
             triggers.forEach(t => {
