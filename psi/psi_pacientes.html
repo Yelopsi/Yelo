@@ -6,7 +6,7 @@
         border-radius: 12px;
         padding: 10px;
         /* Importante: Define altura mínima para o FullCalendar calcular */
-        /* min-height: 650px; REMOVIDO para evitar espaço vazio e rolagem dupla */
+        min-height: 0; /* [RESTAURADO] Garante visibilidade mínima */
         height: 100%; /* Garante que ocupe o espaço disponível */
         display: block; /* Garante display block */
         position: relative; /* Contexto de posicionamento para o loader */
@@ -157,6 +157,8 @@
         grid-template-columns: 350px 1fr;
         gap: 25px;
         height: calc(100vh - 140px); /* Ajuste de altura para desktop */
+        min-height: 600px; /* Reduzido para evitar rolagem dupla em laptops */
+        padding-bottom: 0;
     }
 
     @media (max-width: 992px) {
@@ -863,9 +865,16 @@
                 } catch (renderError) {
                     console.error("initCalendar: Erro ao renderizar:", renderError);
                 }
-            }, 250);
+            }, 300);
             
             window.calendarApi = calendar;
+            
+            // [NOVO] Atualiza altura dinamicamente ao redimensionar a janela
+            window.addEventListener('resize', () => {
+                const isDesktopNow = window.innerWidth >= 992;
+                calendar.setOption('height', isDesktopNow ? '100%' : 'auto');
+                calendar.updateSize();
+            });
 
             } catch (err) {
                 console.error("initCalendar: Erro na inicialização:", err);
