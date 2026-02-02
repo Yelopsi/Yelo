@@ -6,8 +6,8 @@
         border-radius: 12px;
         padding: 10px;
         /* Importante: Define altura mínima para o FullCalendar calcular */
-        min-height: 0; /* [RESTAURADO] Garante visibilidade mínima */
-        height: 100%; /* Garante que ocupe o espaço disponível */
+        min-height: 500px; /* Garante visibilidade no Mobile */
+        height: auto; /* Permite crescer no Mobile */
         display: block; /* Garante display block */
         position: relative; /* Contexto de posicionamento para o loader */
     }
@@ -157,8 +157,23 @@
         grid-template-columns: 350px 1fr;
         gap: 25px;
         height: calc(100vh - 140px); /* Ajuste de altura para desktop */
-        min-height: 600px; /* Reduzido para evitar rolagem dupla em laptops */
+        min-height: 500px; /* Reduzido para evitar espaço em branco excessivo */
         padding-bottom: 0;
+    }
+
+    /* [FIX DESKTOP] Garante que o calendário preencha a altura correta */
+    @media (min-width: 992px) {
+        .patients-layout-grid .widget {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        #calendar-wrapper {
+            height: 100% !important;
+            min-height: 0 !important;
+        }
     }
 
     @media (max-width: 992px) {
