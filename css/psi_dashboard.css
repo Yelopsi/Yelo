@@ -3810,6 +3810,11 @@ body.pagina-dashboard::after {
     #calendar-wrapper {
         flex-grow: 1;
         overflow: hidden; /* FullCalendar gerencia o scroll no desktop para sticky header */
+        height: 100% !important; /* FIX: Garante que o calendário ocupe a altura */
+        min-height: 0 !important; /* FIX: Evita que o flex item expanda infinitamente */
+        position: relative; /* FIX: Para posicionamento do loader */
+        display: flex; /* FIX: Garante comportamento de container flexível */
+        flex-direction: column;
     }
 }
 
