@@ -1739,7 +1739,9 @@ exports.getQuestionnaireAnalytics = async (req, res) => {
             }
             const [results] = await db.sequelize.query(query);
             const counts = {};
-            results.forEach(r => counts[r.value] = parseInt(r.count, 10));
+            if (results) {
+                results.forEach(r => counts[r.value] = parseInt(r.count, 10));
+            }
             return counts;
         };
 
@@ -1786,13 +1788,15 @@ exports.getQuestionnaireAnalytics = async (req, res) => {
             const query = `
                 SELECT value, COUNT(*) as count
                 FROM "Psychologists",
-                jsonb_array_elements_text("${field}") as value
-                WHERE status = 'active' AND "${field}" IS NOT NULL AND jsonb_typeof("${field}") = 'array'
+                jsonb_array_elements_text(CAST("${field}" AS JSONB)) as value
+                WHERE status = 'active' AND "${field}" IS NOT NULL AND jsonb_typeof(CAST("${field}" AS JSONB)) = 'array'
                 GROUP BY value
             `;
             const [results] = await db.sequelize.query(query);
             const counts = {};
-            results.forEach(r => counts[r.value] = parseInt(r.count, 10));
+            if (results) {
+                results.forEach(r => counts[r.value] = parseInt(r.count, 10));
+            }
             return counts;
         };
 
@@ -1806,7 +1810,9 @@ exports.getQuestionnaireAnalytics = async (req, res) => {
             `;
             const [results] = await db.sequelize.query(query);
             const counts = {};
-            results.forEach(r => counts[r.value] = parseInt(r.count, 10));
+            if (results) {
+                results.forEach(r => counts[r.value] = parseInt(r.count, 10));
+            }
             return counts;
         };
 
@@ -1815,15 +1821,17 @@ exports.getQuestionnaireAnalytics = async (req, res) => {
              const query = `
                 SELECT value, COUNT(*) as count
                 FROM "Psychologists",
-                jsonb_array_elements_text("modalidade") as value
+                jsonb_array_elements_text(CAST("modalidade" AS JSONB)) as value
                 WHERE status = 'active' 
                 AND "modalidade" IS NOT NULL 
-                AND jsonb_typeof("modalidade") = 'array'
+                AND jsonb_typeof(CAST("modalidade" AS JSONB)) = 'array'
                 GROUP BY value
             `;
             const [results] = await db.sequelize.query(query);
             const counts = {};
-            results.forEach(r => counts[r.value] = parseInt(r.count, 10));
+            if (results) {
+                results.forEach(r => counts[r.value] = parseInt(r.count, 10));
+            }
             return counts;
         };
 
@@ -1844,7 +1852,9 @@ exports.getQuestionnaireAnalytics = async (req, res) => {
             `;
             const [results] = await db.sequelize.query(query);
             const counts = {};
-            results.forEach(r => counts[r.value] = parseInt(r.count, 10));
+            if (results) {
+                results.forEach(r => counts[r.value] = parseInt(r.count, 10));
+            }
             return counts;
         };
 
@@ -1923,7 +1933,7 @@ exports.getQuestionnaireAnalytics = async (req, res) => {
                         percentage: Math.round((parseInt(results[0].count, 10) / total30d) * 100)
                     };
                 }
-                return null;
+                return { label: 'Sem dados', percentage: 0 };
             };
 
             const fields = [
