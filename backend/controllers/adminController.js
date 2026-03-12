@@ -1781,12 +1781,13 @@ exports.getQuestionnaireAnalytics = async (req, res) => {
         
         const totalPsis = await db.Psychologist.count({ where: { status: 'active' } });
 
-        // Helper para campos de Array do Postgres (text[])
+        // Helper para campos de Array (agora JSONB, devido à migração no server.js)
         const countArrayField = async (field) => {
             const query = `
-                SELECT unnest("${field}") as value, COUNT(*) as count
-                FROM "Psychologists"
-                WHERE status = 'active' AND "${field}" IS NOT NULL
+                SELECT value, COUNT(*) as count
+                FROM "Psychologists",
+                jsonb_array_elements_text("${field}") as value
+                WHERE status = 'active' AND "${field}" IS NOT NULL AND jsonb_typeof("${field}") = 'array'
                 GROUP BY value
             `;
             const [results] = await db.sequelize.query(query);
