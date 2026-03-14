@@ -544,22 +544,16 @@ app.get('/api/fix-reset-payment', async (req, res) => { /* ... */ });
 // --- ROTA DE LIMPEZA: APAGA PERMANENTEMENTE OS SOFT DELETES ---
 app.get('/api/fix-clean-soft-deleted', async (req, res) => {
     try {
-        // Busca todos os psicólogos que estão "soft deleted"
-        const deletedPsis = await db.Psychologist.findAll({
-            where: { deletedAt: { [Op.ne]: null } },
-            paranoid: false // Essencial para o Sequelize enxergar os já deletados
-        });
-
-        let count = 0;
-        for (const psi of deletedPsis) {
-            // O force: true faz o Hard Delete (apaga a linha do banco de verdade)
-            await psi.destroy({ force: true });
-            count++;
-        }
+        // Exclusão em massa direto no banco (evita erro de Connection Terminated e estouro de memória)
+        const [results] = await db.sequelize.query(`
+            DELETE FROM "Psychologists" 
+            WHERE "deletedAt" IS NOT NULL 
+            RETURNING id;
+        `);
 
         res.send(`<div style="font-family:sans-serif; padding:40px;">
                     <h2 style="color:#1B4332;">Limpeza Concluída! 🧹</h2>
-                    <p><strong>${count}</strong> profissionais que estavam na lixeira (Soft Delete) foram apagados permanentemente do banco de dados.</p>
+                    <p><strong>${results.length}</strong> profissionais que estavam na lixeira (Soft Delete) foram apagados permanentemente do banco de dados.</p>
                   </div>`);
     } catch (error) {
         console.error("Erro no hard delete:", error);

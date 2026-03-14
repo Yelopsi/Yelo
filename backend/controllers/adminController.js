@@ -779,7 +779,12 @@ exports.getAllPsychologists = async (req, res) => {
             ];
         }
         if (status) {
-            whereClause.status = status;
+            if (status === 'deleted') {
+                whereClause.deletedAt = { [Op.ne]: null };
+                isParanoid = false; // Força a busca na lixeira
+            } else {
+                whereClause.status = status;
+            }
         }
         if (plano) {
             whereClause.plano = plano;
@@ -789,7 +794,8 @@ exports.getAllPsychologists = async (req, res) => {
             limit,
             offset,
             attributes: { exclude: ['senha', 'resetPasswordToken', 'resetPasswordExpires'] },
-            order: [['createdAt', 'DESC']]
+            order: [['createdAt', 'DESC']],
+            paranoid: isParanoid
         });
         const totalPages = Math.ceil(count / limit);
         res.status(200).json({
