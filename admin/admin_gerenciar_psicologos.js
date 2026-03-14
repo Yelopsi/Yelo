@@ -49,6 +49,7 @@ window.initializePage = function() {
             const isDeleted = psy.deletedAt !== null && psy.deletedAt !== undefined;
             const statusLabel = isDeleted ? 'excluído' : (psy.status || 'inativo');
             const statusClass = isDeleted ? 'status-cancelada' : `status-${psy.status || 'inactive'}`;
+            const dataCadastro = new Date(psy.createdAt).toLocaleDateString('pt-BR');
             
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -59,6 +60,7 @@ window.initializePage = function() {
                 </td>
                 <td data-label="Email">${psy.email}</td>
                 <td data-label="Status"><span class="status ${statusClass}">${statusLabel}</span></td>
+                <td data-label="Cadastro">${dataCadastro}</td>
                 <td data-label="Plano">${psy.plano || 'Nenhum'}</td>
                 <td data-label="Status VIP">
                     <button class="btn-vip-toggle ${isVip ? 'active' : ''}" data-id="${psy.id}" ${isDeleted ? 'disabled' : ''}>
