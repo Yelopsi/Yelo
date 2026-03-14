@@ -374,6 +374,41 @@ body.pagina-dashboard::after {
     font-size: 14px;
 }
 
+/* --- CONTROLES DE PAGINAÇÃO (TABELAS) --- */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 25px;
+}
+
+.pagination-btn {
+    background-color: var(--branco-puro);
+    border: 1px solid var(--cinza-borda);
+    color: var(--verde-escuro);
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+.pagination-btn:hover:not(:disabled) {
+    background-color: #f0fdf4;
+    border-color: var(--verde-escuro);
+}
+.pagination-btn.active {
+    background-color: var(--verde-escuro);
+    color: var(--branco-puro);
+    border-color: var(--verde-escuro);
+}
+.pagination-btn:disabled {
+    background-color: #f1f3f5;
+    color: #adb5bd;
+    cursor: not-allowed;
+    border-color: #e9ecef;
+}
+
 .tabela-container {
     background-color: var(--branco-puro);
     padding: 30px;

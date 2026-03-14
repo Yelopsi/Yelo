@@ -139,9 +139,30 @@ window.initializePage = function() {
         }
     }
 
-    // Função de paginação (simplificada)
+    // Função de paginação
     function renderPagination(totalPages, currentPage) {
-        // Implementação da paginação pode ser adicionada aqui
+        const container = document.getElementById('pagination-container');
+        if (!container) return;
+
+        if (totalPages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+        html += `<button class="pagination-btn" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>&laquo;</button>`;
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+        }
+        html += `<button class="pagination-btn" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}>&raquo;</button>`;
+        container.innerHTML = html;
+
+        container.querySelectorAll('.pagination-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.disabled) return;
+                fetchAndRenderPsychologists(parseInt(btn.getAttribute('data-page'), 10));
+            });
+        });
     }
 
     // Listeners para os filtros
