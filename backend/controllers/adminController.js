@@ -963,7 +963,8 @@ exports.getDetailedReports = async (req, res) => {
             financialStats = {
                 mrr: parseFloat(mrr.toFixed(2)),
                 churnRate: parseFloat(churnRate.toFixed(1)),
-                ltv: parseFloat(ltv.toFixed(2))
+                ltv: parseFloat(ltv.toFixed(2)),
+                arpu: parseFloat(arpu.toFixed(2))
             };
         } catch (err) {
             console.error("Erro KPIs Financeiros:", err);
@@ -1575,6 +1576,7 @@ exports.getFinancials = async (req, res) => {
             mrr: mrr,
             churnRate: churnRate.toFixed(1), 
             ltv: ltv,
+            arpu: arpu
         };
 
         // --- BUSCA FATURAS REAIS DO ASAAS ---

@@ -5,6 +5,7 @@ window.initializePage = function() {
     const kpiMrr = document.getElementById('kpi-mrr');
     const kpiChurn = document.getElementById('kpi-churn');
     const kpiLtv = document.getElementById('kpi-ltv');
+    const kpiArpu = document.getElementById('kpi-arpu');
     const faturasBody = document.getElementById('faturas-recentes-body');
     const planosBody = document.getElementById('planos-ativos-body');
 
@@ -29,6 +30,7 @@ window.initializePage = function() {
             if (kpiMrr) kpiMrr.textContent = `R$ ${data.kpis.mrr.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             if (kpiChurn) kpiChurn.textContent = `${data.kpis.churnRate}%`;
             if (kpiLtv) kpiLtv.textContent = `R$ ${data.kpis.ltv.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            if (kpiArpu) kpiArpu.textContent = `R$ ${data.kpis.arpu.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
             // 2. Renderizar Faturas Recentes
             if (faturasBody) {
