@@ -876,7 +876,8 @@ exports.getDetailedReports = async (req, res) => {
             questionsAnswered,
             answersTotal,
             activePsychologists,
-            churnedCount
+            churnedCount,
+            whatsappClicksResult
         ] = await Promise.all([
             db.sequelize.query(usersQuery, { replacements: { start: startDate, end: endDate } }),
             db.sequelize.query(demandQuery, { replacements: { start: startDate, end: endDate } }),
@@ -889,7 +890,9 @@ exports.getDetailedReports = async (req, res) => {
             db.Answer.count({ where: { createdAt: { [Op.between]: [startDate, endDate] } } }),
             // Financial Stats
             db.Psychologist.findAll({ where: { plano: { [Op.ne]: null }, status: 'active' }, attributes: ['plano'] }),
-            db.Psychologist.count({ where: { status: 'inactive', updatedAt: { [Op.between]: [startDate, endDate] } } })
+            db.Psychologist.count({ where: { status: 'inactive', updatedAt: { [Op.between]: [startDate, endDate] } } }),
+            // Whatsapp Clicks Stats
+            db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: startDate, end: endDate }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }])
         ]);
 
         const visitsData = visitsResult[0] || [];
@@ -933,7 +936,8 @@ exports.getDetailedReports = async (req, res) => {
             timeOfDay: timeData, // Novo dado
             community: communityStats, // Novo dado
             visits: visitsData,
-            financials: financialStats // <--- KPIs Financeiros incluídos
+            financials: financialStats, // <--- KPIs Financeiros incluídos
+            whatsappClicks: parseInt(whatsappClicksResult[0]?.count || 0, 10)
         });
 
     } catch (error) {
