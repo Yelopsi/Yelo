@@ -190,10 +190,7 @@ exports.createPreference = async (req, res) => {
             
             // Salva ID da assinatura (Pendente)
             await psychologist.update({
-                stripeSubscriptionId: subscriptionData.id,
-                plano: planType.toUpperCase(),
-                cancelAtPeriodEnd: false, // <--- Reset do cancelamento
-                subscription_payments_count: 0
+                stripeSubscriptionId: subscriptionData.id // Salva apenas a referência (Aguardando Webhook)
             });
 
             return res.json({ 
@@ -264,23 +261,8 @@ exports.createPreference = async (req, res) => {
             throw new Error(subscriptionData.errors[0].description);
         }
 
-        // --- FIX: ATUALIZAÇÃO IMEDIATA DO BANCO ---
-        // Ativa o plano imediatamente após o sucesso no cartão, sem esperar o Webhook.
-        // Se for reativação, mantém a data antiga. Se for novo, soma 30 dias.
-        let validade = new Date();
-        if (psychologist.planExpiresAt && new Date(psychologist.planExpiresAt) > new Date()) {
-            validade = new Date(psychologist.planExpiresAt); // Mantém a data original
-        } else {
-            validade.setDate(validade.getDate() + 30);
-        }
-
         await psychologist.update({
-            status: 'active',
-            plano: planType.toUpperCase(),
-            stripeSubscriptionId: subscriptionData.id, // Salva o ID do Asaas
-            planExpiresAt: validade,
-            cancelAtPeriodEnd: false, // <--- Reset do cancelamento
-            subscription_payments_count: 0
+            stripeSubscriptionId: subscriptionData.id // Salva apenas a referência (Aguardando Webhook)
         });
 
         res.json({ success: true, subscriptionId: subscriptionData.id });

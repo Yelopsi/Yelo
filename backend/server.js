@@ -541,6 +541,52 @@ app.get('/api/fix-vip-all', async (req, res) => { /* ... */ });
 
 app.get('/api/fix-reset-payment', async (req, res) => { /* ... */ });
 
+// --- ROTA DE AUDITORIA: BLOQUEIA PERFIS QUE BURLARAM O PAGAMENTO ---
+app.get('/api/fix-inadimplentes', async (req, res) => {
+    try {
+        let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
+        ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, '');
+        if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
+            ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
+        }
+        const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
+
+        // Busca todos que estão com status ativo, mas não são isentos (VIPs)
+        const psis = await db.Psychologist.findAll({
+            where: { status: 'active', is_exempt: false }
+        });
+
+        const psisParaVerificar = psis.filter(psi => !psi.isAdmin); // Ignora admins com is_exempt falso
+        let bloqueados = [];
+
+        for (const psi of psisParaVerificar) {
+            const subId = psi.stripeSubscriptionId || psi.subscriptionId;
+            
+            if (!subId) {
+                await psi.update({ status: 'inactive', plano: null });
+                bloqueados.push(`${psi.email} (Sem ID de Assinatura)`);
+                continue;
+            }
+
+            // Consulta o Asaas para ver se existe algum pagamento REALMENTE recebido/confirmado
+            const asaasRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}/payments`, {
+                headers: { 'access_token': ASAAS_API_KEY }
+            });
+
+            if (asaasRes.ok) {
+                const paymentsData = await asaasRes.json();
+                const hasPaid = paymentsData.data && paymentsData.data.some(p => ['CONFIRMED', 'RECEIVED'].includes(p.status));
+                
+                if (!hasPaid) {
+                    await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0), stripeSubscriptionId: null });
+                    bloqueados.push(`${psi.email} (Falso Ativo: Assinatura sem pagamentos compensados)`);
+                }
+            }
+        }
+        res.send(`<div style="font-family:sans-serif; padding:40px;"><h2>Auditoria Concluída</h2><p>Analisados: ${psisParaVerificar.length}</p><p>Bloqueados (Fraude/Teste): ${bloqueados.length}</p><ul>${bloqueados.map(b => `<li style="color:#d32f2f; margin-bottom:5px;">${b}</li>`).join('')}</ul></div>`);
+    } catch (err) { res.status(500).send("Erro: " + err.message); }
+});
+
 // Rota para criar a coluna CNPJ se ela não existir
 app.get('/api/fix-add-cnpj-column', async (req, res) => {
     try {

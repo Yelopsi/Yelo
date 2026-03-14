@@ -652,6 +652,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error("Erro ao carregar dados PWA", errPwa);
             }
 
+            // --- CLIQUES WHATSAPP ---
+            const clicksEl = document.getElementById('kpi-whatsapp-clicks');
+            if (clicksEl) {
+                clicksEl.textContent = (data.whatsappClicks || 0).toLocaleString('pt-BR');
+            }
+
             // --- ESCONDE SKELETONS E MOSTRA CONTEÚDO ---
             document.querySelectorAll('#relatorios .kpi-card').forEach(card => {
                 const skeleton = card.querySelector('.kpi-skeleton');
