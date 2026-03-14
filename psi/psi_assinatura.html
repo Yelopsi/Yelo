@@ -622,19 +622,28 @@
             e.preventDefault();
             const plano = modal.getAttribute('data-selected-plan') || 'ESSENTIAL';
             
+            // 1. Limpa os caracteres especiais (pontos, traços, parênteses e espaços) para o Asaas não rejeitar
+            const rawCpf = document.getElementById('card-holder-cpf').value || '';
+            const rawPhone = document.getElementById('card-holder-phone').value || '';
+            const rawCep = document.getElementById('card-holder-cep').value || '';
+
+            const cleanCpf = rawCpf.replace(/\D/g, '');
+            const cleanPhone = rawPhone.replace(/\D/g, '');
+            const cleanCep = rawCep.replace(/\D/g, '');
+
             // Coleta dados do formulário
             const cardData = {
                 holderName: document.getElementById('card-holder-name').value,
-                holderCpf: document.getElementById('card-holder-cpf').value,
-                holderPhone: document.getElementById('card-holder-phone').value,
+                holderCpf: cleanCpf,
+                holderPhone: cleanPhone,
                 // Campos de endereço (opcionais ou obrigatórios dependendo da sua regra)
-                postalCode: document.getElementById('card-holder-cep').value,
+                postalCode: cleanCep,
                 addressNumber: document.getElementById('card-holder-number').value
             };
 
             // Adiciona dados do cartão apenas se for cartão
             if (currentMethod === 'CREDIT_CARD') {
-                cardData.number = document.getElementById('card-number').value;
+                cardData.number = document.getElementById('card-number').value.replace(/\D/g, ''); // Remove espaços do cartão
                 cardData.expiry = document.getElementById('card-expiry').value;
                 cardData.ccv = document.getElementById('card-ccv').value;
             }
@@ -642,6 +651,20 @@
             // Validação simples
             if(!cardData.holderName || !cardData.holderCpf || !cardData.holderPhone) {
                 alert('Por favor, preencha os dados do titular.');
+                return;
+            }
+            
+            // 2. Validação Estrita do Asaas (Bloqueia o envio se faltar número)
+            if (cardData.holderCpf.length !== 11 && cardData.holderCpf.length !== 14) {
+                alert('O CPF/CNPJ deve conter 11 ou 14 números.');
+                return;
+            }
+            if (cardData.holderPhone.length < 10) {
+                alert('O celular informado é inválido. Não se esqueça do DDD.');
+                return;
+            }
+            if (cardData.postalCode && cardData.postalCode.length !== 8) {
+                alert('O CEP deve conter 8 números.');
                 return;
             }
 
