@@ -1155,6 +1155,15 @@ const whatsappService = {
 // --- AGENDADORES (CRON JOBS) ---
 const startCronJobs = () => {
   console.log('⏰ [CRON] Inicializando agendadores de tarefas...');
+
+  // Inicializa o agendador externo (Remarketing, Demandas, etc)
+  try {
+      require('../scheduler.js');
+      console.log('✅ [CRON] Scheduler externo ativado (Remarketing rodará às 10h).');
+  } catch (err) {
+      console.warn('⚠️ [CRON] Aviso: Não foi possível carregar o scheduler.js.', err.message);
+  }
+
   setInterval(async () => {
     const now = new Date();
     const currentHM = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); // Ex: "08:00"
