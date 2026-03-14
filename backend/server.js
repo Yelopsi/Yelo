@@ -577,8 +577,8 @@ app.get('/api/fix-inadimplentes', async (req, res) => {
             let asaasInfo = '-';
             const subId = psi.stripeSubscriptionId || psi.subscriptionId;
             
-            // Só vamos "atacar" quem está como ACTIVE e não é VIP
-            if (psi.status === 'active' && psi.is_exempt !== true) {
+            // Vamos "atacar" quem está como ACTIVE OU que tem a coluna PLANO preenchida indevidamente, e não é VIP
+            if ((psi.status === 'active' || (psi.plano && psi.plano.trim() !== '')) && psi.is_exempt !== true) {
                 if (!subId) {
                     await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0) });
                     acao = '<span style="color:red; font-weight:bold;">Revogado (Sem ID de Assinatura)</span>';
@@ -603,7 +603,13 @@ app.get('/api/fix-inadimplentes', async (req, res) => {
                                 await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0), stripeSubscriptionId: null });
                                 acao = '<span style="color:red; font-weight:bold;">Revogado (Pagamento Pendente/Falho)</span>';
                             } else {
+                                // Se pagou mas estava pending (erro antigo de sincronia), já corrige pra active
+                                if (psi.status !== 'active') {
+                                    await psi.update({ status: 'active' });
+                                    acao = '<span style="color:green; font-weight:bold;">Regularizado (Ativado)</span>';
+                                } else {
                                 acao = '<span style="color:green; font-weight:bold;">Regular (Pago)</span>';
+                                }
                             }
                         } else {
                             asaasInfo = '<span style="color:orange;">Nenhuma cobrança gerada ainda</span>';
@@ -618,7 +624,7 @@ app.get('/api/fix-inadimplentes', async (req, res) => {
             } else {
                 // Se o cara já é inativo, só mostra que ignorou
                 if (psi.is_exempt === true) acao = 'Ignorado (É VIP)';
-                else acao = 'Ignorado (Já Inativo/Pendente)';
+                else acao = 'Ignorado (Sem plano e Inativo/Pendente)';
             }
 
             html += `<tr>
