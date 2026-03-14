@@ -771,6 +771,7 @@ exports.getAllPsychologists = async (req, res) => {
         const offset = (page - 1) * limit;
         const { search, status, plano } = req.query;
         const whereClause = {};
+        let isParanoid = true; // Padrão: esconde os excluídos
         if (search) {
             whereClause[Op.or] = [
                 { nome: { [Op.iLike]: `%${search}%` } },
