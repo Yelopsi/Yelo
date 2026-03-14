@@ -544,7 +544,41 @@ app.get('/api/fix-reset-payment', async (req, res) => { /* ... */ });
 // --- ROTA DE LIMPEZA: APAGA PERMANENTEMENTE OS SOFT DELETES ---
 app.get('/api/fix-clean-soft-deleted', async (req, res) => {
     try {
-        // Exclusão em massa direto no banco (evita erro de Connection Terminated e estouro de memória)
+        // 1. Busca os IDs dos psicólogos na lixeira
+        const psisNaLixeira = await db.sequelize.query(`
+            SELECT id FROM "Psychologists" WHERE "deletedAt" IS NOT NULL;
+        `, { type: db.sequelize.QueryTypes.SELECT });
+
+        const ids = psisNaLixeira.map(p => p.id);
+
+        if (ids.length > 0) {
+            // 2. Apaga os registros dependentes em massa (limpa rastros) para não quebrar a chave estrangeira
+            const tabelasComPsychologistId = [
+                '"GamificationLogs"', '"WhatsappClickLogs"', '"ProfileAppearanceLogs"',
+                '"MatchEvents"', '"Appointments"', '"Expenses"', '"ExitSurveys"',
+                '"Reviews"', '"Conversations"', '"Answers"', '"QuestionIgnores"'
+            ];
+
+            for (const tabela of tabelasComPsychologistId) {
+                try { await db.sequelize.query(`DELETE FROM ${tabela} WHERE "psychologistId" IN (:ids)`, { replacements: { ids } }); } catch(e) { }
+            }
+
+            // Tabelas com nome de coluna em Maiúsculo
+            const tabelasComPsychologistIdMaiusculo = [
+                '"PatientFavorites"', '"ForumVotes"', '"ForumCommentVotes"', '"ForumComments"', '"ForumPosts"'
+            ];
+            for (const tabela of tabelasComPsychologistIdMaiusculo) {
+                try { await db.sequelize.query(`DELETE FROM ${tabela} WHERE "PsychologistId" IN (:ids)`, { replacements: { ids } }); } catch(e) { }
+            }
+
+            // Casos com nomenclaturas específicas
+            try { await db.sequelize.query(`DELETE FROM posts WHERE psychologist_id IN (:ids)`, { replacements: { ids } }); } catch(e) {}
+            try { await db.sequelize.query(`DELETE FROM "ForumReports" WHERE "reporterId" IN (:ids)`, { replacements: { ids } }); } catch(e) {}
+            try { await db.sequelize.query(`DELETE FROM "Messages" WHERE "senderId" IN (:ids) AND "senderType" = 'psychologist'`, { replacements: { ids } }); } catch(e) {}
+            try { await db.sequelize.query(`DELETE FROM "Messages" WHERE "recipientId" IN (:ids) AND "recipientType" = 'psychologist'`, { replacements: { ids } }); } catch(e) {}
+        }
+
+        // 3. Finalmente, exclui os psicólogos
         const [results] = await db.sequelize.query(`
             DELETE FROM "Psychologists" 
             WHERE "deletedAt" IS NOT NULL 
@@ -553,7 +587,7 @@ app.get('/api/fix-clean-soft-deleted', async (req, res) => {
 
         res.send(`<div style="font-family:sans-serif; padding:40px;">
                     <h2 style="color:#1B4332;">Limpeza Concluída! 🧹</h2>
-                    <p><strong>${results.length}</strong> profissionais que estavam na lixeira (Soft Delete) foram apagados permanentemente do banco de dados.</p>
+                    <p><strong>${results.length}</strong> profissionais que estavam na lixeira (Soft Delete) e todos os seus registros associados foram apagados permanentemente.</p>
                   </div>`);
     } catch (error) {
         console.error("Erro no hard delete:", error);
