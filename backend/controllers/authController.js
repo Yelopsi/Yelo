@@ -43,9 +43,8 @@ exports.unifiedGoogleLogin = async (req, res) => {
         let psychologist = await db.Psychologist.findOne({ where: { email } });
         
         if (psychologist) {
-            if (psychologist.status !== 'active' && psychologist.status !== 'content_creator') {
-                return res.status(403).json({ error: 'Esta conta de psicólogo está inativa.' });
-            }
+            // FIX: Permite login de TODOS (ativos, inativos, pendentes) pelo Google.
+            // O frontend (Dashboard) cuidará de bloquear as abas e exigir o pagamento se necessário.
             if (!psychologist.fotoUrl && picture) {
                 await psychologist.update({ fotoUrl: picture });
             }
