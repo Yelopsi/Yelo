@@ -719,26 +719,44 @@ exports.getDashboardStats = async (req, res) => {
             db.WaitingList.count({ where: { status: 'pending' } }),
             db.Review.count({ where: { status: 'pending' } }),
             db.Psychologist.findAll({
-                attributes: ['plano', [db.sequelize.fn('COUNT', 'plano'), 'count']],
+                attributes: ['plano', 'is_exempt', [db.sequelize.fn('COUNT', 'plano'), 'count']],
                 where: { status: 'active', plano: { [Op.ne]: null } },
-                group: ['plano']
+                group: ['plano', 'is_exempt']
             }),
             // Contagem de falhas de e-mail nas últimas 24h
             db.SystemLog.count({ where: { message: { [Op.iLike]: '%[EMAIL_FAIL]%' }, createdAt: { [Op.gte]: oneDayAgo } } })
         ]);
 
         // Processamento dos Planos e MRR (Sem query extra)
-        const plansCount = {};
-        const planPrices = { 'Essencial': 59.90, 'Clínico': 89.90, 'Sol': 129.90 };
+        const plansCount = {
+            'Essencial': 0,
+            'Clínico': 0,
+            'Sol': 0
+        };
+        
+        // Preços atualizados suportando os nomes novos e legados
+        const planPrices = { 
+            'ESSENTIAL': 99.00, 'CLINICAL': 159.00, 'REFERENCE': 259.00,
+            'Essencial': 99.00, 'Clínico': 159.00, 'Sol': 259.00 
+        };
         let mrr = 0;
         
         psisByPlan.forEach(p => {
             const plano = p.dataValues.plano;
+            const isExempt = p.dataValues.is_exempt;
+            if (!plano) return;
             const count = parseInt(p.dataValues.count, 10);
-            plansCount[plano] = count;
+            
+            // Normaliza os nomes dos planos para o dashboard frontal poder exibir corretamente
+            let planKey = plano;
+            if (['ESSENTIAL', 'Essencial'].includes(plano)) planKey = 'Essencial';
+            if (['CLINICAL', 'Clínico'].includes(plano)) planKey = 'Clínico';
+            if (['REFERENCE', 'Sol', 'Reference'].includes(plano)) planKey = 'Sol';
+
+            plansCount[planKey] = (plansCount[planKey] || 0) + count;
             
             // Calcula MRR baseado na contagem agregada
-            if (planPrices[plano]) {
+            if (!isExempt && planPrices[plano]) {
                 mrr += planPrices[plano] * count;
             }
         });
@@ -903,7 +921,7 @@ exports.getDetailedReports = async (req, res) => {
             db.Question.count({ where: { status: 'answered', updatedAt: { [Op.between]: [startDate, endDate] } } }),
             db.Answer.count({ where: { createdAt: { [Op.between]: [startDate, endDate] } } }),
             // Financial Stats
-            db.Psychologist.findAll({ where: { plano: { [Op.ne]: null }, status: 'active' }, attributes: ['plano'] }),
+            db.Psychologist.findAll({ where: { plano: { [Op.ne]: null }, status: 'active' }, attributes: ['plano', 'is_exempt'] }),
             db.Psychologist.count({ where: { status: 'inactive', updatedAt: { [Op.between]: [startDate, endDate] } } }),
             // Whatsapp Clicks Stats
             db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: startDate, end: endDate }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }])
@@ -915,9 +933,17 @@ exports.getDetailedReports = async (req, res) => {
         // --- CÁLCULO FINANCEIRO ---
         let financialStats = { mrr: 0, churnRate: 0, ltv: 0 };
         try {
-            // Normaliza para minúsculo para evitar erros (ex: 'Essencial' vs 'Essencial')
-            const planPrices = { 'Essencial': 59.90, 'Clínico': 89.90, 'sol': 129.90 };
+            // Normaliza para minúsculo suportando ambos os padrões
+            const planPrices = { 
+                'essential': 99.00, 
+                'clinical': 159.00, 
+                'reference': 259.00,
+                'essencial': 99.00, 
+                'clínico': 159.00, 
+                'sol': 259.00 
+            };
             const mrr = activePsychologists.reduce((acc, psy) => {
+                if (psy.is_exempt) return acc;
                 const planoKey = (psy.plano || '').toLowerCase();
                 return acc + (planPrices[planoKey] || 0);
             }, 0);
@@ -1515,7 +1541,7 @@ exports.getFinancials = async (req, res) => {
                 plano: { [Op.ne]: null },
                 status: 'active'
             },
-            attributes: ['id', 'nome', 'plano', 'updatedAt'] 
+            attributes: ['id', 'nome', 'plano', 'updatedAt', 'is_exempt'] 
         });
 
         // Preços Atualizados (Baseados na sua página de assinatura)
@@ -1527,7 +1553,10 @@ exports.getFinancials = async (req, res) => {
             'Essencial': 99.00, 'Clínico': 159.00, 'Sol': 259.00 
         };
 
-        const mrr = activePsychologists.reduce((acc, psy) => acc + (planPrices[psy.plano ? psy.plano.toUpperCase() : ''] || 0), 0);
+        const mrr = activePsychologists.reduce((acc, psy) => {
+            if (psy.is_exempt) return acc;
+            return acc + (planPrices[psy.plano ? psy.plano.toUpperCase() : ''] || 0);
+        }, 0);
         const thirtyDaysAgo = new Date(new Date().setDate(new Date().getDate() - 30));
         const churnedCount = await db.Psychologist.count({
             where: {
@@ -1581,9 +1610,9 @@ exports.getFinancials = async (req, res) => {
 
         const activePlans = activePsychologists.map(psy => ({
             psychologistName: psy.nome,
-            planName: psy.plano,
-            mrr: planPrices[psy.plano ? psy.plano.toUpperCase() : ''] || 0,
-            nextBilling: new Date(new Date(psy.updatedAt).setMonth(new Date(psy.updatedAt).getMonth() + 1)) 
+            planName: psy.is_exempt ? `${psy.plano} (VIP)` : psy.plano,
+            mrr: psy.is_exempt ? 0 : (planPrices[psy.plano ? psy.plano.toUpperCase() : ''] || 0),
+            nextBilling: psy.is_exempt ? null : new Date(new Date(psy.updatedAt).setMonth(new Date(psy.updatedAt).getMonth() + 1)) 
         }));
         res.status(200).json({
             kpis,
