@@ -438,12 +438,12 @@
         <section class="stats-section">
             <div class="stats-grid">
                 <div class="stat-item">
-                    <span class="stat-number" data-count="2000" data-prefix="+">+0</span>
-                    <span class="stat-label">Pacientes Atendidos</span>
+                    <span class="stat-number" data-count="100" data-suffix="%">0%</span>
+                    <span class="stat-label">Sigilo e Privacidade Absoluta</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-number" data-count="4.9" data-suffix="/5" data-decimals="1">0,0/5</span>
-                    <span class="stat-label">Nota Média</span>
+                    <span class="stat-number" data-count="1" data-suffix="º">0º</span>
+                    <span class="stat-label">Seu Bem-Estar em 1º Lugar</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-number" data-count="100" data-suffix="%">0%</span>
@@ -651,59 +651,73 @@
     <%- include('partials/footer') %>
 
     <script>
-        // Script para o Acordeão do FAQ
-        document.querySelectorAll('.acordeao-titulo').forEach(button => {
-            button.addEventListener('click', () => {
-                const content = button.nextElementSibling;
-                button.classList.toggle('ativo');
-                if (button.classList.contains('ativo')) {
-                    content.style.maxHeight = content.scrollHeight + "px";
-                } else {
-                    content.style.maxHeight = "0";
-                }
-            });
-        });
+        document.addEventListener('DOMContentLoaded', function() {
+            // Script para o Acordeão do FAQ (versão aprimorada)
+            const accordionButtons = document.querySelectorAll('.acordeao-titulo');
+            accordionButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const content = button.nextElementSibling;
+                    const isCurrentlyActive = button.classList.contains('ativo');
 
-        // Animação dos Números (Stats)
-        const observerOptions = {
-            root: null,
-            rootMargin: '0px',
-            threshold: 0.5
-        };
-
-        const observer = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const el = entry.target;
-                    const target = parseFloat(el.getAttribute('data-count'));
-                    const prefix = el.getAttribute('data-prefix') || '';
-                    const suffix = el.getAttribute('data-suffix') || '';
-                    const decimals = parseInt(el.getAttribute('data-decimals') || '0');
-                    const duration = 2000; // 2 segundos
-                    const frameDuration = 1000 / 60;
-                    const totalFrames = Math.round(duration / frameDuration);
-                    const easeOutQuad = t => t * (2 - t);
-
-                    let frame = 0;
-                    const counter = setInterval(() => {
-                        frame++;
-                        const progress = easeOutQuad(frame / totalFrames);
-                        const current = target * progress;
-
-                        if (frame === totalFrames) {
-                            clearInterval(counter);
-                            el.textContent = prefix + target.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + suffix;
-                        } else {
-                            el.textContent = prefix + current.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + suffix;
+                    // Fecha todos os outros itens para evitar múltiplos abertos
+                    accordionButtons.forEach(otherButton => {
+                        if (otherButton !== button) {
+                            otherButton.classList.remove('ativo');
+                            otherButton.nextElementSibling.style.maxHeight = "0";
                         }
-                    }, frameDuration);
+                    });
 
-                    observer.unobserve(el);
-                }
+                    // Abre ou fecha o item clicado
+                    if (!isCurrentlyActive) {
+                        button.classList.add('ativo');
+                        content.style.maxHeight = content.scrollHeight + "px";
+                    } else {
+                        button.classList.remove('ativo');
+                        content.style.maxHeight = "0";
+                    }
+                });
             });
-        }, observerOptions);
 
-        document.querySelectorAll('.stat-number').forEach(el => observer.observe(el));
+            // Animação dos Números (Stats)
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.5
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const el = entry.target;
+                        const target = parseFloat(el.getAttribute('data-count'));
+                        const prefix = el.getAttribute('data-prefix') || '';
+                        const suffix = el.getAttribute('data-suffix') || '';
+                        const decimals = parseInt(el.getAttribute('data-decimals') || '0');
+                        const duration = 2000; // 2 segundos
+                        const frameDuration = 1000 / 60;
+                        const totalFrames = Math.round(duration / frameDuration);
+                        const easeOutQuad = t => t * (2 - t);
+
+                        let frame = 0;
+                        const counter = setInterval(() => {
+                            frame++;
+                            const progress = easeOutQuad(frame / totalFrames);
+                            const current = target * progress;
+
+                            el.textContent = prefix + current.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + suffix;
+
+                            if (frame === totalFrames) {
+                                clearInterval(counter);
+                            }
+                        }, frameDuration);
+
+                        observer.unobserve(el);
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.stat-number').forEach(el => observer.observe(el));
+        });
     </script>
 </body>
 </html>

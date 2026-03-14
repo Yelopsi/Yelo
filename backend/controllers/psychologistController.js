@@ -1137,12 +1137,13 @@ exports.getProfileBySlug = async (req, res) => {
     // FIX: Usa a coluna correta 'planExpiresAt'
     const validade = psychologist.planExpiresAt ? new Date(psychologist.planExpiresAt) : null;
     const status = psychologist.status;
+        const isVip = psychologist.is_exempt === true;
 
     // Log para você saber a saúde do perfil
-    console.log(`🔎 Status: ${status} | Validade: ${validade ? validade.toLocaleDateString() : 'NENHUMA'}`);
+        console.log(`🔎 Status: ${status} | VIP: ${isVip ? 'Sim' : 'Não'} | Validade: ${validade ? validade.toLocaleDateString() : 'NENHUMA'}`);
 
     // --- BLOQUEIO ATIVO (Agora que o pagamento está funcionando) ---
-    if (!validade || validade < hoje) {
+        if (!isVip && (!validade || validade < hoje)) {
         console.log(`🚫 [BLOQUEIO] Pagamento vencido ou inexistente.`);
         return res.status(404).json({ error: 'Perfil indisponível (Assinatura inativa).' });
     }
