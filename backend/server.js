@@ -551,13 +551,15 @@ app.get('/api/fix-inadimplentes', async (req, res) => {
         }
         const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
 
-        // Busca todos que estão com status ativo, mas não são isentos (VIPs)
+        // Busca todos que estão com status ativo
         const psis = await db.Psychologist.findAll({
-            where: { status: 'active', is_exempt: false }
+            where: { status: 'active' }
         });
 
-        const psisParaVerificar = psis.filter(psi => !psi.isAdmin); // Ignora admins com is_exempt falso
+        // Filtra manual: ignora admins e quem for VIP (trata is_exempt == true)
+        const psisParaVerificar = psis.filter(psi => !psi.isAdmin && psi.is_exempt !== true); 
         let bloqueados = [];
+        let errosAsaas = [];
 
         for (const psi of psisParaVerificar) {
             const subId = psi.stripeSubscriptionId || psi.subscriptionId;
@@ -579,11 +581,13 @@ app.get('/api/fix-inadimplentes', async (req, res) => {
                 
                 if (!hasPaid) {
                     await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0), stripeSubscriptionId: null });
-                    bloqueados.push(`${psi.email} (Falso Ativo: Assinatura sem pagamentos compensados)`);
+                    bloqueados.push(`${psi.email} (Bloqueado: Assinatura pendente no Asaas)`);
                 }
+            } else {
+                errosAsaas.push(`Erro ao checar ${psi.email} no Asaas (Status ${asaasRes.status})`);
             }
         }
-        res.send(`<div style="font-family:sans-serif; padding:40px;"><h2>Auditoria Concluída</h2><p>Analisados: ${psisParaVerificar.length}</p><p>Bloqueados (Fraude/Teste): ${bloqueados.length}</p><ul>${bloqueados.map(b => `<li style="color:#d32f2f; margin-bottom:5px;">${b}</li>`).join('')}</ul></div>`);
+        res.send(`<div style="font-family:sans-serif; padding:40px;"><h2>Auditoria Concluída</h2><p>Analisados: ${psisParaVerificar.length}</p><p>Bloqueados (Fraude/Teste): ${bloqueados.length}</p><ul>${bloqueados.map(b => `<li style="color:#d32f2f; margin-bottom:5px;">${b}</li>`).join('')}</ul><br><p>Erros na comunicação com Asaas: ${errosAsaas.length}</p><ul>${errosAsaas.map(e => `<li>${e}</li>`).join('')}</ul></div>`);
     } catch (err) { res.status(500).send("Erro: " + err.message); }
 });
 
