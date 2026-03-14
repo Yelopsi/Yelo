@@ -149,23 +149,30 @@ exports.updateVipStatus = async (req, res) => {
         let message;
         let newExemptStatus;
         let newPlan;
+        let updatePayload = {};
 
         if (plan) {
             // Concedendo um plano VIP
             newExemptStatus = true;
             newPlan = plan;
             message = `Isenção do plano ${plan} concedida com sucesso.`;
+            updatePayload.status = 'active'; // Garante que o perfil fique ativo ao virar VIP
         } else {
             // Removendo a isenção
             newExemptStatus = false;
             newPlan = null;
             message = 'Isenção removida com sucesso.';
+            
+            // Se perdeu o VIP e não tem assinatura Asaas rodando, volta para inativo
+            if (!psychologist.stripeSubscriptionId) {
+                updatePayload.status = 'inactive';
+            }
         }
 
-        await psychologist.update({
-            is_exempt: newExemptStatus,
-            plano: newPlan
-        });
+        updatePayload.is_exempt = newExemptStatus;
+        updatePayload.plano = newPlan;
+
+        await psychologist.update(updatePayload);
 
         res.status(200).json({
             message,
