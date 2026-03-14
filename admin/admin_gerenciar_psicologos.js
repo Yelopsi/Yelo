@@ -46,6 +46,10 @@ window.initializePage = function() {
 
         psychologists.forEach(psy => {
             const isVip = psy.is_exempt === true;
+            const isDeleted = psy.deletedAt !== null && psy.deletedAt !== undefined;
+            const statusLabel = isDeleted ? 'excluído' : (psy.status || 'inativo');
+            const statusClass = isDeleted ? 'status-cancelada' : `status-${psy.status || 'inactive'}`;
+            
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td data-label="Nome">
@@ -54,16 +58,16 @@ window.initializePage = function() {
                     </a>
                 </td>
                 <td data-label="Email">${psy.email}</td>
-                <td data-label="Status"><span class="status status-${psy.status || 'inactive'}">${psy.status || 'inativo'}</span></td>
+                <td data-label="Status"><span class="status ${statusClass}">${statusLabel}</span></td>
                 <td data-label="Plano">${psy.plano || 'Nenhum'}</td>
                 <td data-label="Status VIP">
-                    <button class="btn-vip-toggle ${isVip ? 'active' : ''}" data-id="${psy.id}">
-                        ${isVip ? '💎 VIP' : 'Tornar VIP'}
+                    <button class="btn-vip-toggle ${isVip ? 'active' : ''}" data-id="${psy.id}" ${isDeleted ? 'disabled' : ''}>
+                        ${isVip ? '💎 VIP' : (isDeleted ? 'Inativo' : 'Tornar VIP')}
                     </button>
                 </td>
                 <td data-label="Ações">
                     <button class="btn-tabela" onclick="navigateToPage('admin_detalhes_psicologo.html?id=${psy.id}')">Detalhes</button>
-                    <button class="btn-tabela btn-tabela-perigo btn-delete-psy" data-id="${psy.id}" data-name="${psy.nome}">Excluir</button>
+                    ${isDeleted ? `<span style="font-size:0.85rem; color:#999; margin-left:10px;">Na Lixeira</span>` : `<button class="btn-tabela btn-tabela-perigo btn-delete-psy" data-id="${psy.id}" data-name="${psy.nome}">Excluir</button>`}
                 </td>
             `;
             tableBody.appendChild(row);
