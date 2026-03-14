@@ -949,15 +949,16 @@ exports.getDetailedReports = async (req, res) => {
             }, 0);
 
             const totalActive = activePsychologists.length;
+            const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt).length;
             const totalStart = totalActive + churnedCount; // Aproximação da base no início do período
             const churnRate = totalStart > 0 ? (churnedCount / totalStart) * 100 : 0;
 
             // LTV: ARPU / Churn Rate (decimal)
-            const arpu = totalActive > 0 ? mrr / totalActive : 0;
-            const ltv = churnRate > 0 ? arpu / (churnRate / 100) : 0;
+            const arpu = payingActiveCount > 0 ? mrr / payingActiveCount : 0;
+            const ltv = churnRate > 0 ? arpu / (churnRate / 100) : (arpu * 24); // Estima LTV de 24 meses caso o churn seja zero
 
             // Log para debug no terminal
-            console.log(`[KPIs Financeiros] MRR: R$${mrr} | Ativos: ${totalActive} | Churn: ${churnedCount} (${churnRate.toFixed(1)}%)`);
+            console.log(`[KPIs Financeiros] MRR: R$${mrr} | Ativos: ${totalActive} (Pagantes: ${payingActiveCount}) | Churn: ${churnedCount} (${churnRate.toFixed(1)}%) | ARPU: R$${arpu.toFixed(2)} | LTV: R$${ltv.toFixed(2)}`);
 
             financialStats = {
                 mrr: parseFloat(mrr.toFixed(2)),
@@ -1565,9 +1566,11 @@ exports.getFinancials = async (req, res) => {
             }
         });
         const totalActiveCount = activePsychologists.length;
+        const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt).length;
         const totalUsersAtStartOfMonth = totalActiveCount + churnedCount;
         const churnRate = totalUsersAtStartOfMonth > 0 ? (churnedCount / totalUsersAtStartOfMonth) * 100 : 0;
-        const ltv = churnRate > 0 ? (mrr / totalActiveCount) / (churnRate / 100) : 0;
+        const arpu = payingActiveCount > 0 ? mrr / payingActiveCount : 0;
+        const ltv = churnRate > 0 ? arpu / (churnRate / 100) : (arpu * 24); // Trava divisão por zero estimando 24 meses
         const kpis = {
             mrr: mrr,
             churnRate: churnRate.toFixed(1), 
