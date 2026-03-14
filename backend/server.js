@@ -551,43 +551,88 @@ app.get('/api/fix-inadimplentes', async (req, res) => {
         }
         const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
 
-        // Busca todos que estão com status ativo
+        // Busca TODOS os psicólogos para gerar o relatório completo na tela
         const psis = await db.Psychologist.findAll({
-            where: { status: 'active' }
+            order: [['createdAt', 'DESC']]
         });
 
-        // Filtra manual: ignora admins e quem for VIP (trata is_exempt == true)
-        const psisParaVerificar = psis.filter(psi => !psi.isAdmin && psi.is_exempt !== true); 
-        let bloqueados = [];
-        let errosAsaas = [];
+        let html = `
+        <div style="font-family:sans-serif; padding:20px; max-width: 1200px; margin: 0 auto;">
+            <h2 style="color:#1B4332;">Relatório de Auditoria e Pagamentos</h2>
+            <p>Veja o diagnóstico completo de comunicação com o Asaas.</p>
+            <table border="1" cellpadding="10" style="border-collapse: collapse; width: 100%; text-align: left; font-size: 14px;">
+                <tr style="background:#f0fdf4; color:#1B4332;">
+                    <th>E-mail</th>
+                    <th>Status Local</th>
+                    <th>Isento?</th>
+                    <th>ID Assinatura</th>
+                    <th>Status no Asaas</th>
+                    <th>Ação Realizada Agora</th>
+                </tr>`;
 
-        for (const psi of psisParaVerificar) {
+        for (const psi of psis) {
+            if (psi.isAdmin) continue; // Pula a conta do Administrador
+
+            let acao = '-';
+            let asaasInfo = '-';
             const subId = psi.stripeSubscriptionId || psi.subscriptionId;
             
-            if (!subId) {
-                await psi.update({ status: 'inactive', plano: null });
-                bloqueados.push(`${psi.email} (Sem ID de Assinatura)`);
-                continue;
-            }
+            // Só vamos "atacar" quem está como ACTIVE e não é VIP
+            if (psi.status === 'active' && psi.is_exempt !== true) {
+                if (!subId) {
+                    await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0) });
+                    acao = '<span style="color:red; font-weight:bold;">Revogado (Sem ID de Assinatura)</span>';
+                } else {
+                    // Consulta a API do Asaas
+                    const asaasRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}/payments`, {
+                        headers: { 'access_token': ASAAS_API_KEY }
+                    });
 
-            // Consulta o Asaas para ver se existe algum pagamento REALMENTE recebido/confirmado
-            const asaasRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}/payments`, {
-                headers: { 'access_token': ASAAS_API_KEY }
-            });
+                    if (asaasRes.ok) {
+                        const paymentsData = await asaasRes.json();
+                        
+                        if (paymentsData.data && paymentsData.data.length > 0) {
+                            // Extrai o status de todos os pagamentos daquela assinatura
+                            const statuses = paymentsData.data.map(p => p.status).join(', ');
+                            asaasInfo = `Encontrados: <b>${statuses}</b>`;
 
-            if (asaasRes.ok) {
-                const paymentsData = await asaasRes.json();
-                const hasPaid = paymentsData.data && paymentsData.data.some(p => ['CONFIRMED', 'RECEIVED'].includes(p.status));
-                
-                if (!hasPaid) {
-                    await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0), stripeSubscriptionId: null });
-                    bloqueados.push(`${psi.email} (Bloqueado: Assinatura pendente no Asaas)`);
+                            // Tem que ter pelo menos 1 pago ou confirmado
+                            const hasPaid = paymentsData.data.some(p => ['CONFIRMED', 'RECEIVED'].includes(p.status));
+
+                            if (!hasPaid) {
+                                await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0), stripeSubscriptionId: null });
+                                acao = '<span style="color:red; font-weight:bold;">Revogado (Pagamento Pendente/Falho)</span>';
+                            } else {
+                                acao = '<span style="color:green; font-weight:bold;">Regular (Pago)</span>';
+                            }
+                        } else {
+                            asaasInfo = '<span style="color:orange;">Nenhuma cobrança gerada ainda</span>';
+                            await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0), stripeSubscriptionId: null });
+                            acao = '<span style="color:red; font-weight:bold;">Revogado (Sem Cobranças)</span>';
+                        }
+                    } else {
+                        asaasInfo = `<span style="color:red;">Erro API Asaas: ${asaasRes.status}</span>`;
+                        acao = 'Pulado (Falha de comunicação)';
+                    }
                 }
             } else {
-                errosAsaas.push(`Erro ao checar ${psi.email} no Asaas (Status ${asaasRes.status})`);
+                // Se o cara já é inativo, só mostra que ignorou
+                if (psi.is_exempt === true) acao = 'Ignorado (É VIP)';
+                else acao = 'Ignorado (Já Inativo/Pendente)';
             }
+
+            html += `<tr>
+                <td>${psi.email}</td>
+                <td>${psi.status}</td>
+                <td>${psi.is_exempt === true ? 'Sim' : 'Não'}</td>
+                <td>${subId || '<i style="color:#999">Nenhum</i>'}</td>
+                <td>${asaasInfo}</td>
+                <td>${acao}</td>
+            </tr>`;
         }
-        res.send(`<div style="font-family:sans-serif; padding:40px;"><h2>Auditoria Concluída</h2><p>Analisados: ${psisParaVerificar.length}</p><p>Bloqueados (Fraude/Teste): ${bloqueados.length}</p><ul>${bloqueados.map(b => `<li style="color:#d32f2f; margin-bottom:5px;">${b}</li>`).join('')}</ul><br><p>Erros na comunicação com Asaas: ${errosAsaas.length}</p><ul>${errosAsaas.map(e => `<li>${e}</li>`).join('')}</ul></div>`);
+
+        html += '</table></div>';
+        res.send(html);
     } catch (err) { res.status(500).send("Erro: " + err.message); }
 });
 
