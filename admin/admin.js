@@ -625,6 +625,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const ltvEl = document.getElementById('kpi-ltv');
                 if (ltvEl) ltvEl.innerText = formatCurrency(data.financials.ltv || 0);
+
+                const arpuEl = document.getElementById('kpi-arpu');
+                if (arpuEl) arpuEl.innerText = formatCurrency(data.financials.arpu || 0);
             }
 
             // --- DADOS PWA (NOVO) ---
