@@ -3,6 +3,7 @@
 const cron = require('node-cron');
 const { findDemandGaps } = require('../demandMonitor');
 const { manageExpiredInvitations } = require('../invitationManager');
+const { processRemarketing } = require('./remarketing');
 
 console.log('Scheduler iniciado. Aguardando tarefas agendadas...');
 
@@ -31,6 +32,18 @@ cron.schedule('0 2 * * *', () => {
     timezone: "America/Sao_Paulo"
 });
 
+/**
+ * Tarefa 3: Disparar e-mails de remarketing para psicólogos que não assinaram.
+ * Roda todos os dias às 10h da manhã.
+ */
+cron.schedule('0 10 * * *', () => {
+    console.log('Executando tarefa agendada: processRemarketing');
+    processRemarketing();
+}, {
+    scheduled: true,
+    timezone: "America/Sao_Paulo"
+});
+
 // --- LÓGICA PARA TESTE MANUAL (EXECUTAR SOB DEMANDA) ---
 
 // Esta função anônima auto-executável permite usar async/await
@@ -51,6 +64,9 @@ cron.schedule('0 2 * * *', () => {
     } else if (taskToRun === 'invitation-manager') {
         console.log('Executando manualmente: manageExpiredInvitations');
         await manageExpiredInvitations();
+    } else if (taskToRun === 'remarketing') {
+        console.log('Executando manualmente: processRemarketing');
+        await processRemarketing();
     }
 
     process.exit(0); // Encerra o processo após a execução da tarefa manual

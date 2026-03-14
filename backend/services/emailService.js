@@ -279,3 +279,28 @@ exports.sendPasswordResetEmail = async (user, resetLink) => {
     );
     await sendEmail(user.email, 'Redefinição de Senha - Yelo', html);
 };
+
+// --- E-MAILS DE REMARKETING (FUNIL DE CONVERSÃO) ---
+exports.sendRemarketingEmail = async (user, step) => {
+    let titulo = '';
+    let msg = '';
+    
+    if (step === 1) {
+        titulo = 'Seu perfil na Yelo está quase pronto!';
+        msg = 'Notamos que você se cadastrou, mas ainda não ativou sua assinatura. Finalize seu perfil agora para não perder pacientes que buscam exatamente por sua especialidade.';
+    } else if (step === 2) {
+        titulo = 'Por que escolher a Yelo? 💛';
+        msg = 'Com a Yelo, conectamos você a pacientes reais através da nossa inteligência de match. Investimos ativamente em anúncios para garantir que nossa comunidade de psicólogos tenha uma agenda saudável. Assine hoje e apareça nas buscas.';
+    } else if (step === 3) {
+        titulo = 'Último lembrete: Faça parte da Yelo';
+        msg = 'Esta é uma ótima oportunidade para expandir seus atendimentos com uma plataforma feita com cuidado e ética. Ative sua assinatura agora e desfrute de todos os recursos da nossa comunidade.';
+    }
+
+    const html = getHtmlTemplate(
+        titulo,
+        user.nome,
+        msg,
+        { linkAcao: 'https://www.yelopsi.com.br/login', textoBotao: 'Ativar Assinatura' }
+    );
+    await sendEmail(user.email, titulo, html);
+};

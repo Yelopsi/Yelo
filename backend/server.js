@@ -1105,6 +1105,11 @@ app.get('/api/fix-test-email', async (req, res) => {
                 }
             );
             res.send(`✅ E-mail de LINHA DIGITÁVEL enviado para: ${emailDestino}.`);
+        } else if (type === 'remarketing') {
+            await emailService.sendRemarketingEmail(
+                { email: emailDestino, nome: 'Usuário Teste' }, 1
+            );
+            res.send(`✅ E-mail de REMARKETING enviado para: ${emailDestino}.`);
         } else {
             // Testa o e-mail de Recuperação de Senha (Padrão)
             await emailService.sendPasswordResetEmail(
@@ -2445,6 +2450,8 @@ const startServer = async () => {
                 ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT,
                 ADD COLUMN IF NOT EXISTS "authority_level" VARCHAR(255) DEFAULT 'nivel_iniciante',
                 ADD COLUMN IF NOT EXISTS "badges" JSONB DEFAULT '{}',
+                ADD COLUMN IF NOT EXISTS "remarketing_step" INTEGER DEFAULT 0,
+                ADD COLUMN IF NOT EXISTS "last_remarketing_at" TIMESTAMP WITH TIME ZONE,
                 ADD COLUMN IF NOT EXISTS "xp" INTEGER DEFAULT 0;`,
             
             `ALTER TABLE "Psychologists" ALTER COLUMN "crp" DROP NOT NULL;`,
