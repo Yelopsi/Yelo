@@ -85,7 +85,7 @@ window.initializePage = function() {
                             <td data-label="Psicólogo"><strong>${plan.psychologistName}</strong></td>
                             <td data-label="Plano">${plan.planName}</td>
                             <td data-label="MRR">R$ ${plan.mrr.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                            <td data-label="Próxima Cobrança">${new Date(plan.nextBilling).toLocaleDateString('pt-BR')}</td>
+                            <td data-label="Próxima Cobrança">${plan.nextBilling ? new Date(plan.nextBilling).toLocaleDateString('pt-BR') : 'Isento'}</td>
                         `;
                         planosBody.appendChild(row);
                     });
