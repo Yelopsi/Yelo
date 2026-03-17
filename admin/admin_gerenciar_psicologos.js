@@ -8,6 +8,7 @@ window.initializePage = function() {
     const statusFilter = document.getElementById('status-filter');
     const planoFilter = document.getElementById('plano-filter');
     let searchTimeout;
+    let isVipFilterActive = false;
 
     // Função para buscar e renderizar os dados
     async function fetchAndRenderPsychologists(page = 1) {
@@ -20,16 +21,25 @@ window.initializePage = function() {
 
         try {
             const token = localStorage.getItem('Yelo_token');
-            const response = await fetch(`${API_BASE_URL}/api/admin/psychologists?page=${page}&search=${searchTerm}&status=${status}&plano=${plano}`, {
+            const response = await fetch(`${API_BASE_URL}/api/admin/psychologists?page=${page}&search=${searchTerm}&status=${status}&plano=${plano}&isVip=${isVipFilterActive}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
             if (!response.ok) throw new Error('Falha ao buscar dados.');
 
-            const { data, totalPages, currentPage } = await response.json();
+            const { data, totalPages, currentPage, kpis } = await response.json();
             renderTable(data);
             renderPagination(totalPages, currentPage);
 
+            // Atualiza os KPIs de Resumo se eles existirem na resposta
+            if (kpis) {
+                const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value || 0; };
+                setText('kpi-total-psis', kpis.total);
+                setText('kpi-ativos-psis', kpis.active);
+                setText('kpi-pendentes-psis', kpis.pending);
+                setText('kpi-inativos-psis', kpis.inactive);
+                setText('kpi-vip-psis', kpis.vip);
+            }
         } catch (error) {
             console.error("Erro ao buscar psicólogos:", error);
             tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: red;">Erro ao carregar dados.</td></tr>`;
@@ -173,11 +183,53 @@ window.initializePage = function() {
 
     // Listeners para os filtros
     searchInput.addEventListener('keyup', () => {
+        document.querySelectorAll('.kpi-card').forEach(c => c.classList.remove('active-filter'));
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => fetchAndRenderPsychologists(1), 500);
     });
-    statusFilter.addEventListener('change', () => fetchAndRenderPsychologists(1));
-    planoFilter.addEventListener('change', () => fetchAndRenderPsychologists(1));
+    
+    statusFilter.addEventListener('change', () => {
+        document.querySelectorAll('.kpi-card').forEach(c => c.classList.remove('active-filter'));
+        isVipFilterActive = false;
+        fetchAndRenderPsychologists(1);
+    });
+    
+    planoFilter.addEventListener('change', () => {
+        document.querySelectorAll('.kpi-card').forEach(c => c.classList.remove('active-filter'));
+        isVipFilterActive = false;
+        fetchAndRenderPsychologists(1);
+    });
+
+    // Configura os cards de KPI como botões de filtro rápido
+    const kpiCards = document.querySelectorAll('.kpi-card');
+    kpiCards.forEach(card => {
+        card.style.cursor = 'pointer';
+        card.title = "Clique para filtrar a lista";
+        card.addEventListener('click', () => {
+            const isActive = card.classList.contains('active-filter');
+            const kpiId = card.querySelector('.kpi-numero').id;
+            
+            // Reseta todos os filtros visuais
+            searchInput.value = '';
+            statusFilter.value = '';
+            planoFilter.value = '';
+            isVipFilterActive = false;
+            
+            // Limpa o estilo de todos os cards
+            kpiCards.forEach(c => c.classList.remove('active-filter'));
+
+            // Se não estava ativo, ativa o filtro selecionado
+            if (!isActive) {
+                card.classList.add('active-filter');
+                if (kpiId === 'kpi-ativos-psis') statusFilter.value = 'active';
+                else if (kpiId === 'kpi-pendentes-psis') statusFilter.value = 'pending';
+                else if (kpiId === 'kpi-inativos-psis') statusFilter.value = 'inactive';
+                else if (kpiId === 'kpi-vip-psis') isVipFilterActive = true;
+            }
+            
+            fetchAndRenderPsychologists(1);
+        });
+    });
 
     // Carga inicial
     fetchAndRenderPsychologists();

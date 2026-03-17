@@ -794,7 +794,7 @@ exports.getAllPsychologists = async (req, res) => {
         const page = parseInt(req.query.page, 10) || 1;
         const limit = parseInt(req.query.limit, 10) || 10;
         const offset = (page - 1) * limit;
-        const { search, status, plano } = req.query;
+        const { search, status, plano, isVip } = req.query;
         const whereClause = {};
         let isParanoid = true; // Padrão: esconde os excluídos
         if (search) {
@@ -815,6 +815,23 @@ exports.getAllPsychologists = async (req, res) => {
         if (plano) {
             whereClause.plano = plano;
         }
+        if (isVip === 'true') {
+            whereClause.is_exempt = true;
+        }
+
+        // --- NOVA QUERY PARA KPIs GERAIS ---
+        const kpisQuery = `
+            SELECT 
+                COUNT(*) as total,
+                COUNT(*) FILTER (WHERE status = 'active') as active,
+                COUNT(*) FILTER (WHERE status = 'pending') as pending,
+                COUNT(*) FILTER (WHERE status = 'inactive') as inactive,
+                COUNT(*) FILTER (WHERE is_exempt = true) as vip
+            FROM "Psychologists"
+            WHERE "deletedAt" IS NULL AND ("isAdmin" IS NULL OR "isAdmin" = false)
+        `;
+        const [kpiResults] = await db.sequelize.query(kpisQuery, { type: db.sequelize.QueryTypes.SELECT });
+
         const { count, rows } = await db.Psychologist.findAndCountAll({
             where: whereClause,
             limit,
@@ -828,7 +845,8 @@ exports.getAllPsychologists = async (req, res) => {
             data: rows,
             totalPages,
             currentPage: page,
-            totalCount: count
+            totalCount: count,
+            kpis: kpiResults || { total: 0, active: 0, pending: 0, inactive: 0, vip: 0 }
         });
     } catch (error) {
         console.error('Erro ao buscar lista de psicólogos:', error);
@@ -909,7 +927,8 @@ exports.getDetailedReports = async (req, res) => {
             answersTotal,
             activePsychologists,
             churnedCount,
-            whatsappClicksResult
+            whatsappClicksResult,
+            visits24hResult
         ] = await Promise.all([
             db.sequelize.query(usersQuery, { replacements: { start: startDate, end: endDate } }),
             db.sequelize.query(demandQuery, { replacements: { start: startDate, end: endDate } }),
@@ -924,7 +943,9 @@ exports.getDetailedReports = async (req, res) => {
             db.Psychologist.findAll({ where: { plano: { [Op.ne]: null }, status: 'active' }, attributes: ['plano', 'is_exempt'] }),
             db.Psychologist.count({ where: { status: 'inactive', updatedAt: { [Op.between]: [startDate, endDate] } } }),
             // Whatsapp Clicks Stats
-            db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: startDate, end: endDate }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }])
+            db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: startDate, end: endDate }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
+            // NOVO: Acessos 24h
+            db.sequelize.query(`SELECT COUNT(*) as count FROM "SiteVisits" WHERE "createdAt" >= NOW() - INTERVAL '24 hours'`, { type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }])
         ]);
 
         const visitsData = visitsResult[0] || [];
@@ -979,7 +1000,8 @@ exports.getDetailedReports = async (req, res) => {
             community: communityStats, // Novo dado
             visits: visitsData,
             financials: financialStats, // <--- KPIs Financeiros incluídos
-            whatsappClicks: parseInt(whatsappClicksResult[0]?.count || 0, 10)
+            whatsappClicks: parseInt(whatsappClicksResult[0]?.count || 0, 10),
+            visits24h: parseInt(visits24hResult[0]?.count || 0, 10)
         });
 
     } catch (error) {
