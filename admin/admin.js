@@ -598,6 +598,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const visitsEl = document.getElementById('kpi-visits');
             // Formata o número para ficar bonito (ex: 1.200)
             if (visitsEl) visitsEl.innerText = totalVisits.toLocaleString('pt-BR');
+            
+            const visits24hEl = document.getElementById('kpi-visits-24h');
+            if (visits24hEl) visits24hEl.innerText = (data.visits24h || 0).toLocaleString('pt-BR');
 
             // Outros KPIs
             if (data.community) {
