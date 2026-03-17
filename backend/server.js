@@ -1062,7 +1062,7 @@ app.get('/api/fix-test-email', async (req, res) => {
         } else if (type === 'failed') {
              await emailService.sendPaymentFailedEmail(
                 { email: emailDestino, nome: 'Usuário Teste' },
-                'https://www.yelopsi.com.br/psi/psi_assinatura.html'
+                'https://www.yelopsi.com.br/login'
             );
             res.send(`✅ E-mail de FALHA enviado para: ${emailDestino}.`);
         } else if (type === 'welcome') {
