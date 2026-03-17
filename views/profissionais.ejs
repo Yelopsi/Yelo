@@ -652,32 +652,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Script para o Acordeão do FAQ (versão aprimorada)
-            const accordionButtons = document.querySelectorAll('.acordeao-titulo');
-            accordionButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const content = button.nextElementSibling;
-                    const isCurrentlyActive = button.classList.contains('ativo');
-
-                    // Fecha todos os outros itens para evitar múltiplos abertos
-                    accordionButtons.forEach(otherButton => {
-                        if (otherButton !== button) {
-                            otherButton.classList.remove('ativo');
-                            otherButton.nextElementSibling.style.maxHeight = "0";
-                        }
-                    });
-
-                    // Abre ou fecha o item clicado
-                    if (!isCurrentlyActive) {
-                        button.classList.add('ativo');
-                        content.style.maxHeight = content.scrollHeight + "px";
-                    } else {
-                        button.classList.remove('ativo');
-                        content.style.maxHeight = "0";
-                    }
-                });
-            });
-
             // Animação dos Números (Stats)
             const observerOptions = {
                 root: null,

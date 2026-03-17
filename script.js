@@ -42,6 +42,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (acordeoes.length > 0) {
         acordeoes.forEach(acc => {
             acc.addEventListener('click', function() {
+                // Fecha os outros painéis para manter apenas um aberto por vez
+                acordeoes.forEach(other => {
+                    if (other !== this) {
+                        other.classList.remove('ativo');
+                        if (other.nextElementSibling) {
+                            other.nextElementSibling.style.maxHeight = null;
+                        }
+                    }
+                });
+
                 this.classList.toggle('ativo');
                 const painel = this.nextElementSibling;
                 if (painel.style.maxHeight) {

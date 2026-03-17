@@ -220,7 +220,7 @@ exports.sendPaymentConfirmationEmail = async (user, planType, value) => {
         `Recebemos o pagamento da sua assinatura do plano <strong>${planType}</strong>. Seu perfil está ativo e pronto para receber pacientes.`,
         {
             valor: value,
-            linkAcao: 'https://www.yelopsi.com.br/psi/dashboard',
+            linkAcao: 'https://www.yelopsi.com.br/login',
             textoBotao: 'Acessar Dashboard'
         }
     );
@@ -246,7 +246,7 @@ exports.sendSubscriptionCancelledEmail = async (user) => {
         user.nome,
         'Sua assinatura foi cancelada e seu perfil não aparecerá mais nas buscas. Esperamos te ver de volta em breve!',
         {
-            linkAcao: 'https://www.yelopsi.com.br/psi/assinatura',
+            linkAcao: 'https://www.yelopsi.com.br/login',
             textoBotao: 'Reativar Assinatura'
         }
     );
@@ -259,9 +259,7 @@ exports.sendWelcomeEmail = async (user, type) => {
         ? 'Estamos muito felizes em ter você conosco. Complete seu perfil para começar a aparecer nas buscas.'
         : 'Obrigado por se cadastrar. Encontre o profissional ideal para você agora mesmo.';
     
-    const link = type === 'psychologist' 
-        ? 'https://www.yelopsi.com.br/psi/login' 
-        : 'https://www.yelopsi.com.br/login';
+    const link = 'https://www.yelopsi.com.br/login';
 
     const html = getHtmlTemplate(titulo, user.nome, msg, { linkAcao: link, textoBotao: 'Acessar Minha Conta' });
     await sendEmail(user.email, titulo, html);
