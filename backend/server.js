@@ -2461,6 +2461,9 @@ const startServer = async () => {
                 ADD COLUMN IF NOT EXISTS "badges" JSONB DEFAULT '{}',
                 ADD COLUMN IF NOT EXISTS "remarketing_step" INTEGER DEFAULT 0,
                 ADD COLUMN IF NOT EXISTS "last_remarketing_at" TIMESTAMP WITH TIME ZONE,
+                ADD COLUMN IF NOT EXISTS "utm_source" VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS "utm_medium" VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS "utm_campaign" VARCHAR(255),
                 ADD COLUMN IF NOT EXISTS "xp" INTEGER DEFAULT 0;`,
             
             `ALTER TABLE "Psychologists" ALTER COLUMN "crp" DROP NOT NULL;`,
@@ -2474,6 +2477,9 @@ const startServer = async () => {
                 ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active',
                 ADD COLUMN IF NOT EXISTS "observacoes" TEXT,
                 ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS "utm_source" VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS "utm_medium" VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS "utm_campaign" VARCHAR(255),
                 ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;`,
             
             `ALTER TABLE "Patients" ALTER COLUMN "email" DROP NOT NULL;`,
@@ -2498,7 +2504,11 @@ const startServer = async () => {
             `CREATE TABLE IF NOT EXISTS "PwaInstallLogs" ( "id" SERIAL PRIMARY KEY, "userAgent" TEXT, "platform" VARCHAR(50), "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
             `CREATE TABLE IF NOT EXISTS "ProfileAppearanceLogs" ( "id" SERIAL PRIMARY KEY, "psychologistId" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
             `CREATE TABLE IF NOT EXISTS "MatchEvents" ( "id" SERIAL PRIMARY KEY, "psychologistId" INTEGER, "matchTags" TEXT[], "matchScore" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
-            `CREATE TABLE IF NOT EXISTS "PatientFavorites" ( "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "PatientId" INTEGER, "PsychologistId" INTEGER, PRIMARY KEY ("PatientId", "PsychologistId") );`
+            `CREATE TABLE IF NOT EXISTS "PatientFavorites" ( "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "PatientId" INTEGER, "PsychologistId" INTEGER, PRIMARY KEY ("PatientId", "PsychologistId") );`,
+            `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "telefone" VARCHAR(255);`,
+            `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "utm_source" VARCHAR(255);`,
+            `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "utm_medium" VARCHAR(255);`,
+            `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "utm_campaign" VARCHAR(255);`
             ];
 
             // OTIMIZAÇÃO: Executa sequencialmente para evitar sobrecarga de conexões (Connection terminated)

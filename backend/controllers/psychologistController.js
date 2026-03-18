@@ -8,6 +8,7 @@ const path = require('path');
 const fs = require('fs').promises;
 const gamificationService = require('../services/gamificationService'); // Importa o serviço
 const { verifyGoogleToken } = require('./authController');
+const metaService = require('../services/metaService'); // Importa o rastreador
 
 // Configurações do Asaas
 let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
@@ -56,7 +57,7 @@ exports.registerPsychologist = async (req, res) => {
         const crp = req.body.crp || null; // Agora é opcional na entrada
         // REVERTIDO: Volta a ler apenas o CPF
         const cpf = req.body.cpf || req.body.documento || null; // Agora é opcional na entrada
-        const { googleToken } = req.body;
+        const { googleToken, utm_source, utm_medium, utm_campaign } = req.body;
 
         // --- Lógica de Registro via Google ---
         if (googleToken) {
@@ -131,7 +132,10 @@ exports.registerPsychologist = async (req, res) => {
             crp,
             slug: generatedSlug,
             status: 'pending', // Status inicial pendente até completar onboarding
-            cpf: cleanCpf // Salva na coluna CPF
+            cpf: cleanCpf, // Salva na coluna CPF
+            utm_source,
+            utm_medium,
+            utm_campaign
         });
 
         // --- 7. Token ---
@@ -140,6 +144,9 @@ exports.registerPsychologist = async (req, res) => {
         // --- 8. E-mail de Boas-vindas ---
         // FIX: Não aguarda o e-mail para evitar travamento no front se o SMTP estiver lento
         sendWelcomeEmail(newPsychologist, 'psychologist').catch(err => console.error("Erro envio email boas-vindas (Psi):", err));
+
+        // [CAPI] Avisa o Facebook sobre o novo Lead (Psicólogo cadastrado)
+        metaService.sendCAPIEvent('Lead', newPsychologist, req, { user_type: 'psychologist' });
 
         res.status(201).json({
             message: 'Cadastro realizado com sucesso!',
@@ -544,28 +551,28 @@ exports.checkDemand = async (req, res) => {
 // ----------------------------------------------------------------------
 exports.addToWaitlist = async (req, res) => {
     try {
-        const { nome, email, crp, genero_identidade, valor_sessao_faixa, temas_atuacao, praticas_afirmativas, abordagens_tecnicas } = req.body;
+        const { nome, email, telefone, crp, genero_identidade, valor_sessao_faixa, temas_atuacao, praticas_afirmativas, abordagens_tecnicas, utm_source, utm_medium, utm_campaign } = req.body;
 
         if (!email) {
             return res.status(400).json({ error: 'O e-mail é obrigatório para entrar na lista de espera.' });
         }
 
-        const [waitlistEntry, created] = await db.WaitingList.findOrCreate({
-            where: { email },
-            defaults: {
-                nome,
-                email,
-                crp,
-                genero_identidade,
-                valor_sessao_faixa,
-                temas_atuacao,
-                praticas_afirmativas,
-                abordagens_tecnicas,
-                status: 'pending'
-            }
-        });
+        let waitlistEntry = await db.WaitingList.findOne({ where: { email } });
+        
+        const payload = {
+            nome, telefone, crp, genero_identidade, valor_sessao_faixa,
+            temas_atuacao, praticas_afirmativas, abordagens_tecnicas,
+            utm_source, utm_medium, utm_campaign, status: 'pending'
+        };
 
-        console.log(`[WAITLIST] E-mail ${email} ${created ? 'adicionado' : 'já estava'} na lista de espera.`);
+        if (waitlistEntry) {
+            // Se já tentou antes, atualiza com os dados mais recentes de UTM
+            await waitlistEntry.update(payload);
+        } else {
+            waitlistEntry = await db.WaitingList.create({ email, ...payload });
+        }
+
+        console.log(`[WAITLIST] Lead Parcial (Email: ${email}) capturado com sucesso.`);
         res.status(201).json({ message: 'E-mail adicionado à lista de espera com sucesso.' });
     } catch (error) {
         console.error('Erro ao adicionar à lista de espera:', error);

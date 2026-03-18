@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const https = require('https'); // Módulo nativo para verificar token do Google
 const { sendPasswordResetEmail, sendWelcomeEmail } = require('../services/emailService');
+const metaService = require('../services/metaService'); // Importa o rastreador
 
 // ----------------------------------------------------------------------
 // Função Auxiliar: Gera o Token JWT para Paciente
@@ -21,7 +22,7 @@ const generateToken = (id) => {
 // ----------------------------------------------------------------------
 exports.registerPatient = async (req, res) => {
     try {
-        const { nome, email, senha, termos, marketing } = req.body; // [AUDITORIA] Captura consentimentos
+        const { nome, email, senha, termos, marketing, utm_source, utm_medium, utm_campaign } = req.body;
 
         // --- 1. Validação de Campos Obrigatórios ---
         if (!nome) return res.status(400).json({ error: 'O nome é obrigatório.' });
@@ -56,7 +57,10 @@ exports.registerPatient = async (req, res) => {
             // Tenta salvar nas colunas se elas existirem (criadas pelo fix no server.js)
             ip_registro: ip,
             termos_aceitos: !!termos,
-            marketing_aceito: !!marketing
+            marketing_aceito: !!marketing,
+            utm_source,
+            utm_medium,
+            utm_campaign
         });
 
         // [AUDITORIA] Log de Sucesso Estratégico
@@ -74,6 +78,9 @@ exports.registerPatient = async (req, res) => {
         // [EMAIL] Envia boas-vindas
         // FIX: Envio assíncrono para não bloquear o cadastro
         sendWelcomeEmail(newPatient, 'patient').catch(err => console.error("Erro envio email boas-vindas (Paciente):", err));
+
+        // [CAPI] Avisa o Facebook sobre o novo cadastro de Paciente
+        metaService.sendCAPIEvent('CompleteRegistration', newPatient, req, { user_type: 'patient' });
 
         res.status(201).json({
             id: newPatient.id,

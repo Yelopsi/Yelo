@@ -205,6 +205,47 @@
         .cta-section h2 { color: #1B4332; font-size: 2.5rem; margin-bottom: 20px; }
         .cta-section p { font-size: 1.2rem; opacity: 0.9; margin-bottom: 40px; color: #666; }
 
+        /* --- DEPOIMENTOS (PROVA SOCIAL) --- */
+        .depoimentos-psi-section {
+            padding: 40px 20px 80px 20px;
+            background-color: #fdfaf6;
+            text-align: center;
+        }
+        .depoimentos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            margin: 40px auto 0;
+        }
+        .depoimento-card {
+            background: #fff;
+            padding: 40px 30px;
+            border-radius: 24px 60px 24px 60px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+            text-align: left;
+            border: 1px solid rgba(0,0,0,0.03);
+            position: relative;
+        }
+        .depoimento-card:nth-child(even) { border-radius: 60px 24px 60px 24px; }
+        .depoimento-card::before {
+            content: '“';
+            font-family: var(--font-titulos);
+            font-size: 5rem;
+            color: #FFEE8C;
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            opacity: 0.6;
+            line-height: 1;
+        }
+        .depoimento-texto { font-size: 1.05rem; line-height: 1.6; color: #555; margin-top: 15px; margin-bottom: 20px; position: relative; z-index: 1; font-style: italic; }
+        .depoimento-autor { display: flex; align-items: center; gap: 15px; }
+        .depoimento-autor img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #fdfaf6; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .depoimento-autor div { display: flex; flex-direction: column; }
+        .depoimento-autor strong { color: #1B4332; font-size: 1rem; }
+        .depoimento-autor span { color: #888; font-size: 0.85rem; }
+
         /* --- NOVAS SEÇÕES (Jornada, Diferenciais, Match, FAQ) --- */
         
         /* Jornada (Storytelling) */
@@ -424,7 +465,7 @@
             <div class="container" style="padding-bottom: 0;">
                 <h1>Viva da Psicologia com autonomia e segurança</h1>
                 <p>A Yelo conecta você a pacientes que buscam exatamente a sua abordagem. Simplifique sua gestão, receba pagamentos garantidos e foque no que importa: o atendimento.</p>
-                <a href="/psi_questionario.html" class="btn-cta-principal" style="background-color: #FFEE8C; color: #1B4332;">Cadastrar</a>
+                <a href="/psi_questionario.html" class="btn-cta-principal" style="background-color: #FFEE8C; color: #1B4332;">Criar meu perfil profissional</a>
             </div>
 
             <div class="wave-divider wave-bottom">
@@ -559,6 +600,35 @@
             </div>
         </section>
 
+    <!-- DEPOIMENTOS (PROVA SOCIAL) -->
+    <section class="depoimentos-psi-section">
+        <div class="container" style="padding-top: 20px; padding-bottom: 40px;">
+            <h2 class="titulo-secao" style="margin-bottom: 40px;">O que dizem nossos parceiros</h2>
+            <div class="depoimentos-grid">
+                <div class="depoimento-card">
+                    <p class="depoimento-texto">"Sempre tive receio de plataformas que parecem 'mercantilizar' a psicologia. A Yelo foi uma surpresa incrível. Sinto que meu trabalho é valorizado, a plataforma respeita totalmente a ética da profissão e os pacientes que chegam através do match já estão muito alinhados."</p>
+                    <div class="depoimento-autor">
+                        <img src="https://placehold.co/100x100/1B4332/FFEE8C?text=MS" alt="Psicóloga">
+                        <div>
+                            <strong>Marina S.</strong>
+                            <span>Psicóloga Clínica (TCC)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="depoimento-card">
+                    <p class="depoimento-texto">"A facilidade de uso é absurda. Antigamente eu perdia muito tempo cobrando pacientes e tentando organizar a agenda. Hoje, tudo fica centralizado na plataforma e eu tenho total autonomia sobre meus horários e valores. Recomendo muito!"</p>
+                    <div class="depoimento-autor">
+                        <img src="https://placehold.co/100x100/1B4332/FFEE8C?text=RM" alt="Psicólogo">
+                        <div>
+                            <strong>Ricardo M.</strong>
+                            <span>Psicanalista</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
         <!-- FAQ -->
         <section class="faq-psi-section">
             <div class="container">
@@ -600,7 +670,7 @@
                             <li>Página Pública de Divulgação</li>
                             <li>Acesso ao Fórum</li>
                         </ul>
-                        <a href="/psi_questionario.html" class="btn btn-outline" style="color: #1B4332; border-color: #1B4332; width: 100%;">Começar</a>
+                    <a href="/psi_questionario.html" class="btn btn-outline" style="color: #1B4332; border-color: #1B4332; width: 100%;">Começar na Yelo</a>
                     </div>
 
                     <!-- Plano Clínico (Destaque) -->
@@ -614,7 +684,7 @@
                             <li>Indicadores de Conversão</li>
                             <li>URL Personalizada</li>
                         </ul>
-                        <a href="/psi_questionario.html" class="btn-cta-principal" style="width: 100%; box-sizing: border-box; margin-top: 20px; font-size: 1.1rem;">Assinar Agora</a>
+                    <a href="/psi_questionario.html" class="btn-cta-principal" style="width: 100%; box-sizing: border-box; margin-top: 20px; font-size: 1.1rem;">Começar na Yelo</a>
                     </div>
 
                     <!-- Plano Referência -->
@@ -627,7 +697,7 @@
                             <li>Destaque nos Resultados</li>
                             <li>Análise de Perfil com IA</li>
                         </ul>
-                        <a href="/psi_questionario.html" class="btn btn-outline" style="color: #1B4332; border-color: #1B4332; width: 100%;">Começar</a>
+                    <a href="/psi_questionario.html" class="btn btn-outline" style="color: #1B4332; border-color: #1B4332; width: 100%;">Começar na Yelo</a>
                     </div>
                 </div>
                 <div class="mobile-scroll-hint">
@@ -642,7 +712,7 @@
             <div class="cta-content">
                 <h2>Pronto para transformar sua carreira?</h2>
                 <p>Junte-se a centenas de psicólogos que estão construindo o futuro da saúde mental no Brasil.</p>
-                <a href="/psi_questionario.html" class="btn-cta-principal" style="background-color: #FFEE8C; color: #1B4332;">Criar Perfil Profissional</a>
+            <a href="/psi_questionario.html" class="btn-cta-principal" style="background-color: #FFEE8C; color: #1B4332;">Criar meu perfil profissional</a>
             </div>
 
         </section>

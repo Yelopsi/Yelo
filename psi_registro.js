@@ -220,6 +220,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     mensagemRegistro.className = 'mensagem-sucesso';
                 }
 
+                // --- EVENTO DE CADASTRO DO META PIXEL ---
+                if (typeof fbq === 'function') {
+                    fbq('track', 'CompleteRegistration');
+                }
+
                 setTimeout(() => { 
                     // MUDANÇA AQUI: Passamos o e-mail na URL
                     window.location.href = `/login?email=${encodeURIComponent(emailDigitado)}`;

@@ -21,10 +21,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     document.documentElement.style.backgroundColor = '#1B4332';
 
+    // --- CAPTURA DE UTMS DA URL ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const utms = {
+        utm_source: urlParams.get('utm_source') || '',
+        utm_medium: urlParams.get('utm_medium') || '',
+        utm_campaign: urlParams.get('utm_campaign') || ''
+    };
+
     const questions = [
-        // Etapa 1: Boas-vindas e Dados Básicos
-        { id: 'boas-vindas', type: 'welcome', question: "Boas-vindas à Yelo, colega.", subtitle: "Que bom ter você aqui. Este questionário é uma etapa importante para entendermos melhor seu perfil e verificar se há demanda compatível. Responda com calma e atenção." },        
-        { id: 'nome', type: 'text', question: "Primeiro, qual o seu nome completo?", placeholder: "Nome Completo", required: true },
+        // Etapa 1: Boas-vindas e Captura de Lead (IMEDIATA)
+        { id: 'lead-capture', type: 'lead-capture', question: "Boas-vindas à Yelo, colega.", subtitle: "Para iniciarmos sua triagem de demanda e perfil, informe seus dados básicos de contato.", buttonText: "Avançar", required: true },
         // Etapa 2: Definição do Nicho
         { id: 'modalidade', type: 'choice', question: "Como você prefere atender, [NOME]?", choices: ["Apenas Online", "Apenas Presencial", "Híbrido (Online e Presencial)"], required: true },
         { id: 'cep', type: 'text', question: "Qual o CEP do seu local de atendimento?", placeholder: "CEP (ex: 12345-678)", required: true, inputMode: 'numeric' },
@@ -41,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
           question: "Ótima notícia, [NOME]!<br>Há uma grande procura por seu perfil."
         },
 
-        { id: 'waitlisted', type: 'waitlisted', question: "Agradecemos seu interesse na Yelo, [NOME]!", subtitle: "No momento, a busca por profissionais com seu perfil específico já está bem atendida. Para garantir que todos os nossos parceiros tenham sucesso, adicionamos seu perfil à nossa lista de espera. Deixe seu e-mail abaixo para ser notificado(a) assim que surgir uma nova oportunidade.", buttonText: "Confirmar E-mail e Finalizar" },
+        { id: 'waitlisted', type: 'waitlisted', question: "Agradecemos seu interesse na Yelo, [NOME]!", subtitle: "No momento, a busca por profissionais com seu perfil já está bem atendida. Para garantir que todos tenham sucesso, adicionamos seu perfil à lista de espera e te avisaremos no contato informado assim que surgir uma nova oportunidade.", buttonText: "Finalizar" },
         { id: 'error', type: 'error', question: "Oops! Ocorreu um problema.", subtitle: "Não foi possível conectar ao servidor para verificar a demanda. Por favor, tente novamente em alguns instantes.", buttonText: "Tentar Novamente" }
     ];
 
@@ -57,6 +64,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const isFirstInteractiveStep = questions.findIndex(q => !['welcome', 'info', 'error'].includes(q.type)) === index;
 
         switch (questionData.type) {
+            case 'lead-capture':
+                contentHTML = `
+                    <div class="form-group-questionario" style="margin-bottom: 20px;">
+                        <input type="text" id="input-nome" class="text-input" placeholder=" " required>
+                        <label for="input-nome" class="input-label">Nome Completo</label>
+                    </div>
+                    <div class="form-group-questionario" style="margin-bottom: 20px;">
+                        <input type="tel" id="input-telefone" class="text-input" placeholder=" " required inputmode="numeric">
+                        <label for="input-telefone" class="input-label">WhatsApp (com DDD)</label>
+                    </div>
+                    <div class="form-group-questionario" style="margin-bottom: 20px;">
+                        <input type="email" id="input-email" class="text-input" placeholder=" " required>
+                        <label for="input-email" class="input-label">Melhor E-mail</label>
+                    </div>`;
+                break;
             case 'text':
             case 'email':
                 const inputMode = questionData.inputMode ? `inputmode="${questionData.inputMode}"` : '';
@@ -84,11 +106,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 contentHTML = '<div class="loader-wrapper"><div class="loader-spinner"></div></div>';
                 break;
             case 'waitlisted':
-                contentHTML = `
-                    <div class="form-group-questionario">
-                        <input type="email" id="input-waitlist-email" class="text-input" placeholder=" " required>
-                        <label for="input-waitlist-email" class="input-label">Seu melhor e-mail</label>
-                    </div>`;
+                // Sem input de e-mail agora, pois já o capturamos na tela 1
+                contentHTML = ``;
                 break;
             case 'welcome': case 'info': case 'error':
                 break;
@@ -99,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const backButtonHTML = !isFirstInteractiveStep && !['welcome', 'info', 'loading', 'approved', 'waitlisted', 'error'].includes(questionData.type) ? `<button class="back-button">← Voltar</button>` : '';
 
         let nextButtonHTML = '';
-        if (['welcome', 'info', 'text', 'email', 'multiple-choice'].includes(questionData.type)) {
+        if (['welcome', 'info', 'text', 'email', 'multiple-choice', 'lead-capture'].includes(questionData.type)) {
             const buttonText = questionData.buttonText || "Avançar";
             const action = questionData.buttonText ? "check" : "next";
             nextButtonHTML = `<button class="cta-button" data-action="${action}">${buttonText}</button>`;
@@ -135,6 +154,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const nextButton = slide.querySelector('[data-action="next"], [data-action="check"]');
         if (!nextButton) return;
     
+        // Validação Múltipla para o slide de Captura
+        if (slide.querySelector('#input-nome') && slide.querySelector('#input-telefone') && slide.querySelector('#input-email')) {
+            const nomeVal = slide.querySelector('#input-nome').value.trim();
+            const telVal = slide.querySelector('#input-telefone').value.replace(/\D/g, '');
+            const emailVal = slide.querySelector('#input-email').value.trim();
+            
+            const isNomeValid = nomeVal.split(/\s+/).length >= 2;
+            const isTelValid = telVal.length >= 10;
+            const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal);
+            
+            nextButton.disabled = !(isNomeValid && isTelValid && isEmailValid);
+            return; // Sai da função para não conflitar com a lógica padrão
+        }
+
         const input = slide.querySelector('input[required]');
         if (input) {
             const value = input.value.trim();
@@ -177,6 +210,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Configurações de Máscara (IMask)
         if (currentQuestion) {
+            if (currentQuestion.id === 'lead-capture') {
+                const telInput = document.getElementById('input-telefone');
+                if (telInput && window.IMask) {
+                    IMask(telInput, {
+                        mask: [ { mask: '(00) 0000-0000' }, { mask: '(00) 00000-0000' } ]
+                    });
+                }
+            }
             if (currentQuestion.id === 'crp') {
                 const crpInput = document.getElementById(`input-${currentQuestion.id}`);
                 if (crpInput && window.IMask) {
@@ -188,12 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const cepInput = document.getElementById(`input-${currentQuestion.id}`);
                 if (cepInput && window.IMask) {
                     IMask(cepInput, { mask: '00000-000' }); // Corrigi a máscara de CEP que estava igual a de CRP no seu código original
-                }
-            }
-            if (currentQuestion.id === 'waitlisted') {
-                const waitlistEmailInput = document.getElementById('input-waitlist-email');
-                if (waitlistEmailInput && userAnswers.email) {
-                    waitlistEmailInput.value = userAnswers.email;
                 }
             }
         }
@@ -215,7 +250,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const question = questions[currentStep];
         if (!question || !question.id) return;
 
-        if (['text', 'email'].includes(question.type)) {
+        if (question.type === 'lead-capture') {
+            userAnswers.nome = document.getElementById('input-nome')?.value || '';
+            userAnswers.telefone = document.getElementById('input-telefone')?.value || '';
+            userAnswers.email = document.getElementById('input-email')?.value || '';
+        } else if (['text', 'email'].includes(question.type)) {
             userAnswers[question.id] = document.getElementById(`input-${question.id}`)?.value || '';
         }
         else if (['choice', 'multiple-choice'].includes(question.type)) {
@@ -261,7 +300,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const isCrpValid = (crp) => /^\d{2}\/\d{4,6}$/.test(crp);
         const isCepValid = (cep) => /^\d{5}-\d{3}$/.test(cep);
     
-        if (['text', 'email'].includes(currentQuestion.type)) {
+        if (currentQuestion.type === 'lead-capture') {
+            const nomeInput = document.getElementById('input-nome');
+            const telInput = document.getElementById('input-telefone');
+            const emailInput = document.getElementById('input-email');
+            
+            const nomeVal = nomeInput.value.trim();
+            const telVal = telInput.value.replace(/\D/g, '');
+            const emailVal = emailInput.value.trim();
+
+            if (nomeVal.split(/\s+/).length < 2) {
+                isValid = false; elementToShake = nomeInput.parentElement;
+            } else if (telVal.length < 10) {
+                isValid = false; elementToShake = telInput.parentElement;
+            } else if (!isEmailValid(emailVal)) {
+                isValid = false; elementToShake = emailInput.parentElement;
+            }
+        } else if (['text', 'email'].includes(currentQuestion.type)) {
             const input = document.getElementById(`input-${currentQuestion.id}`);
             elementToShake = input.parentElement; 
     
@@ -288,8 +343,28 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (isValid) {
             collectAnswer();
+
+            // --- CAPTURA OCULTA DO LEAD (Background) ---
+            if (currentQuestion.type === 'lead-capture') {
+                const partialLead = {
+                    nome: userAnswers.nome,
+                    email: userAnswers.email,
+                    telefone: userAnswers.telefone,
+                    utm_source: utms.utm_source,
+                    utm_medium: utms.utm_medium,
+                    utm_campaign: utms.utm_campaign
+                };
+                // Envia para o banco silenciosamente (lista de espera funciona como repositório de leads)
+                fetch(`${BASE_URL}/api/psychologists/add-to-waitlist`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(partialLead) }).catch(() => {});
+                
+                // --- EVENTO DE LEAD DO META PIXEL ---
+                if (typeof fbq === 'function') {
+                    fbq('track', 'Lead');
+                }
+            }
+
             // Se acabou de responder o nome, atualiza os próximos slides
-            if (currentQuestion.id === 'nome') {
+            if (currentQuestion.id === 'lead-capture' || currentQuestion.id === 'nome') {
                 updateNamePlaceholders(userAnswers.nome);
             }
             goToSlide(currentStep + 1);
@@ -338,16 +413,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function submitToWaitlist() {
-        const waitlistEmailInput = document.getElementById('input-waitlist-email');
-        const email = waitlistEmailInput.value;
-
-        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            waitlistEmailInput.parentElement.classList.add('shake-error');
-            setTimeout(() => waitlistEmailInput.parentElement.classList.remove('shake-error'), 500);
+        // O e-mail já foi validado na primeira tela (lead-capture)
+        if (!userAnswers.email) {
+            alert("Erro de captura. Por favor, reinicie o questionário.");
             return;
         }
-
-        userAnswers.email = email;
 
         try {
             await fetch(`${BASE_URL}/api/psychologists/add-to-waitlist`, {
@@ -383,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault(); // Impede o envio padrão do formulário
                 // Encontra o botão de avançar (data-action="next") no slide ativo
                 const ctaButton = document.querySelector('.slide.active .cta-button[data-action="next"]');
-                if (ctaButton) {
+                if (ctaButton && !ctaButton.disabled) {
                     ctaButton.click(); // Simula o clique no botão "Avançar"
                 }
             }
@@ -412,10 +482,22 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (restartBtn) {
                 goToSlide(0); 
             } else if (submitValidationBtn) {
+                // Adiciona UTMs capturadas no início às respostas finais
+                userAnswers.utm_source = utms.utm_source;
+                userAnswers.utm_medium = utms.utm_medium;
+                userAnswers.utm_campaign = utms.utm_campaign;
+
                 localStorage.setItem('psi_questionario_respostas', JSON.stringify(userAnswers));
                 sessionStorage.setItem('questionarioCompleto', 'true');
-                const { nome, email, crp } = userAnswers;
-                const params = new URLSearchParams({ nome: nome || '', email: email || '', crp: crp || '' });
+
+                // --- EVENTO CUSTOMIZADO DE APROVAÇÃO ---
+                // O evento 'Lead' padrão já foi disparado na Etapa 1.
+                if (typeof fbq === 'function') {
+                    fbq('trackCustom', 'QuestionarioAprovado');
+                }
+
+                const { nome, email, crp, telefone } = userAnswers;
+                const params = new URLSearchParams({ nome: nome || '', email: email || '', crp: crp || '', telefone: telefone || '' });
                 
                 // CORRETO: aponta para a rota que acabamos de criar no servidor
                 window.location.href = `/psi-registro?${params.toString()}`;
