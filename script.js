@@ -81,6 +81,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Pede ao observador para "vigiar" todos os elementos com a classe .hidden
     document.querySelectorAll('.hidden').forEach(el => observer.observe(el));
 
+    // --- CAPTURA GLOBAL DE UTMS ---
+    // Salva as UTMs no LocalStorage caso o usuário navegue por outras páginas antes de converter
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('utm_source') || urlParams.has('utm_campaign')) {
+        const utms = {
+            utm_source: urlParams.get('utm_source') || '',
+            utm_medium: urlParams.get('utm_medium') || '',
+            utm_campaign: urlParams.get('utm_campaign') || ''
+        };
+        localStorage.setItem('yelo_global_utms', JSON.stringify(utms));
+    }
+
     // --- LÓGICA DE SESSÃO ANÔNIMA (NOVO) ---
     const ANONYMOUS_SESSION_ID_KEY = 'yelo_anon_session_id';
     const SESSION_START_TIME_KEY = 'yelo_session_start_time';
