@@ -1,8 +1,8 @@
 // backend/cron/scheduler.js
 
 const cron = require('node-cron');
-const { findDemandGaps } = require('../demandMonitor');
-const { manageExpiredInvitations } = require('../invitationManager');
+const { findDemandGaps } = require('./demandMonitor');
+const { manageExpiredInvitations } = require('./invitationManager');
 const { processRemarketing } = require('./remarketing');
 
 console.log('Scheduler iniciado. Aguardando tarefas agendadas...');
