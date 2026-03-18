@@ -84,6 +84,14 @@ if (db.Patient) {
     }
 }
 
+// --- FIX: Patch WaitingList Model (Permite partial leads sem CRP) ---
+if (db.WaitingList && db.WaitingList.rawAttributes.crp) {
+    db.WaitingList.rawAttributes.crp.allowNull = true;
+    if (typeof db.WaitingList.refreshAttributes === 'function') {
+        db.WaitingList.refreshAttributes();
+    }
+}
+
 // --- FIX: Patch SystemLog Model (Garante que o modelo exista para logs) ---
 if (!db.SystemLog) {
     console.log("[FIX] Defining SystemLog model manually.");
@@ -2491,6 +2499,7 @@ const startServer = async () => {
             `ALTER TABLE "ForumComments" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`,
             `ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "patientId" INTEGER;`,
             `ALTER TABLE "SystemLogs" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;`,
+            `ALTER TABLE "WaitingLists" ALTER COLUMN "crp" DROP NOT NULL;`,
 
             // Table Creations
             `CREATE TABLE IF NOT EXISTS "Expenses" ( "id" SERIAL PRIMARY KEY, "description" VARCHAR(255), "value" FLOAT, "date" DATE, "psychologistId" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
