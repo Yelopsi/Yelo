@@ -4427,3 +4427,49 @@ input:checked + .slider:before { transform: translateX(20px); }
         font-size: 0.75rem;
     }
 }
+
+/* ==========================================================================
+   UPLOAD DE FOTO MOBILE (PÁGINA DE PERFIL)
+   ========================================================================== */
+.mobile-photo-upload-section {
+    display: none; /* Escondido por padrão no Desktop (onde tem a sidebar) */
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 30px;
+    text-align: center;
+    border-bottom: 1px dashed #e0e0e0;
+    padding-bottom: 25px;
+}
+
+.profile-photo-wrapper-mobile {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    cursor: pointer;
+    margin-bottom: 10px;
+    border: 3px solid var(--verde-escuro);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.profile-photo-wrapper-mobile:active { transform: scale(0.95); }
+
+.profile-photo-wrapper-mobile img {
+    width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background-color: var(--cinza-borda);
+}
+
+.profile-photo-wrapper-mobile .camera-icon-badge {
+    position: absolute; bottom: 0; right: -5px;
+    background-color: var(--cor-Yelo); color: var(--verde-escuro);
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.mobile-photo-upload-section p { font-size: 0.9rem; color: #666; margin: 0; font-weight: 500; }
+
+/* Exibe apenas em resoluções de tablet/celular */
+@media (max-width: 992px) {
+    .mobile-photo-upload-section { display: flex; }
+}

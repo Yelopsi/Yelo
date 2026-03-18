@@ -404,6 +404,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         const btnLink = document.getElementById('btn-view-public-profile');
         if(btnLink && psychologistData.slug) btnLink.href = `/${psychologistData.slug}`;
+        
+        // --- NOVO: Atualiza a foto na tela de Ajustes de Perfil (Modo Mobile) ---
+        const mobileImgEl = document.getElementById('mobile-profile-photo-preview');
+        if (mobileImgEl) {
+            mobileImgEl.src = formatImageUrl(psychologistData.fotoUrl);
+            mobileImgEl.onerror = function() { this.src = 'https://placehold.co/120x120/1B4332/FFFFFF?text=Psi'; };
+        }
 
         // --- NOVO: Renderiza as badges ---
         if (psychologistData.badges) {
@@ -1424,6 +1431,13 @@ document.addEventListener('DOMContentLoaded', function() {
         setupCepSearch();
 
         if (psychologistData) {
+            // Garante que a foto do mobile seja preenchida ao carregar a aba
+            const mobileImgEl = document.getElementById('mobile-profile-photo-preview');
+            if (mobileImgEl) {
+                mobileImgEl.src = formatImageUrl(psychologistData.fotoUrl);
+                mobileImgEl.onerror = function() { this.src = 'https://placehold.co/120x120/1B4332/FFFFFF?text=Psi'; };
+            }
+
             // 1. Preencher campos de texto simples
             ['nome', 'email', 'crp', 'telefone', 'bio', 'valor_sessao_numero', 'slug', 'cep', 'cidade', 'estado'].forEach(id => {
                 const el = document.getElementById(id);
