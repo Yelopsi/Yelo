@@ -145,8 +145,8 @@ exports.registerPsychologist = async (req, res) => {
         // FIX: Não aguarda o e-mail para evitar travamento no front se o SMTP estiver lento
         sendWelcomeEmail(newPsychologist, 'psychologist').catch(err => console.error("Erro envio email boas-vindas (Psi):", err));
 
-        // [CAPI] Avisa o Facebook sobre o novo Lead (Psicólogo cadastrado)
-        metaService.sendCAPIEvent('Lead', newPsychologist, req, { user_type: 'psychologist' });
+        // [CAPI] Avisa o Facebook sobre o novo cadastro (Registro Completo)
+        metaService.sendCAPIEvent('CompleteRegistration', newPsychologist, req, { user_type: 'psychologist' });
 
         res.status(201).json({
             message: 'Cadastro realizado com sucesso!',
