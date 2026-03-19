@@ -71,6 +71,17 @@ function renderDetails(data) {
     planEl.textContent = p.plano || 'Sem Plano';
     if(p.is_exempt) planEl.textContent += ' (VIP)';
 
+    // Botão de Ver Perfil Público
+    const btnVerPerfil = document.getElementById('btn-ver-perfil-publico');
+    if (btnVerPerfil) {
+        if (p.slug) {
+            btnVerPerfil.style.display = 'inline-flex';
+            btnVerPerfil.onclick = () => window.open(`/${p.slug}`, '_blank');
+        } else {
+            btnVerPerfil.style.display = 'none';
+        }
+    }
+
     // 2. Stats
     document.getElementById('stat-matches').textContent = stats.matches || 0;
     document.getElementById('stat-whatsapp').textContent = stats.whatsappClicks || 0;
