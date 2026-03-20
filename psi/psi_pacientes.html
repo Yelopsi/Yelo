@@ -994,13 +994,25 @@
         const btnAddPatientMobile = document.getElementById('btn-add-patient-mobile');
         if (btnAddPatientMobile) btnAddPatientMobile.onclick = handleNewPatient;
         
-        const closeModal = () => modal.style.display = 'none';
-        document.getElementById('close-patient-modal').onclick = closeModal;
-        document.getElementById('cancel-patient-modal').onclick = closeModal;
+        const closeModal = (e) => {
+            if (e) e.preventDefault();
+            if (modal) modal.style.setProperty('display', 'none', 'important');
+        };
+        
+        const btnCloseModal = document.getElementById('close-patient-modal');
+        if (btnCloseModal) btnCloseModal.addEventListener('click', closeModal);
+        
+        const btnCancelModal = document.getElementById('cancel-patient-modal');
+        if (btnCancelModal) btnCancelModal.addEventListener('click', closeModal);
 
-        const closeApptModal = () => modalAppt.style.display = 'none';
-        document.getElementById('close-appointment-modal').onclick = closeApptModal;
-        document.getElementById('cancel-appointment-modal').onclick = closeApptModal;
+        const closeApptModal = (e) => {
+            if (e) e.preventDefault();
+            if (modalAppt) modalAppt.style.setProperty('display', 'none', 'important');
+        };
+        const btnCloseAppt = document.getElementById('close-appointment-modal');
+        if (btnCloseAppt) btnCloseAppt.addEventListener('click', closeApptModal);
+        const btnCancelAppt = document.getElementById('cancel-appointment-modal');
+        if (btnCancelAppt) btnCancelAppt.addEventListener('click', closeApptModal);
 
         // Fechar modais financeiros
         document.querySelectorAll('.modal-close-btn').forEach(btn => {
@@ -1046,44 +1058,55 @@
         };
 
                 // Salvar (Novo ou Edição)
-        form.onsubmit = async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('p-id').value; // Pega o ID diretamente do DOM para garantir
-            const name = document.getElementById('p-name').value;
-            const phone = document.getElementById('p-phone').value;
-            const email = document.getElementById('p-email').value;
-            const status = pStatusInput.value;
-            const sessionValue = parseFloat(document.getElementById('p-session-value').value) || 0;
-            const notes = document.getElementById('p-notes').value;
-            
-            const method = id ? 'PUT' : 'POST';
-            const url = id ? `${BASE_URL}/api/my-patients/${id}` : `${BASE_URL}/api/my-patients`;
-            
-            const payload = { name, phone, email, status, sessionValue, observacoes: notes };
-
-            try {
-                const res = await fetch(url, {
-                    method: method,
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` 
-                    },
-                    body: JSON.stringify(payload)
-                });
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
                 
-                if (res.ok) {
-                    fetchData(); // Recarrega tudo
-                    closeModal();
-                    if(window.showToast) window.showToast('Paciente salvo.', 'success');
-                } else {
-                    const err = await res.json();
-                    alert('Erro ao salvar paciente: ' + (err.error || 'Erro desconhecido'));
+                const btnSubmit = form.querySelector('button[type="submit"]');
+                const originalText = btnSubmit.textContent;
+                btnSubmit.textContent = 'Salvando...';
+                btnSubmit.disabled = true;
+
+                const id = document.getElementById('p-id').value;
+                const name = document.getElementById('p-name').value;
+                const phone = document.getElementById('p-phone').value;
+                const email = document.getElementById('p-email').value;
+                const status = pStatusInput ? pStatusInput.value : 'ativo';
+                const sessionValue = parseFloat(document.getElementById('p-session-value').value) || 0;
+                const notes = document.getElementById('p-notes').value;
+                
+                const method = id ? 'PUT' : 'POST';
+                const url = id ? `${BASE_URL}/api/my-patients/${id}` : `${BASE_URL}/api/my-patients`;
+                
+                const payload = { name, phone, email, status, sessionValue, observacoes: notes };
+
+                try {
+                    const res = await fetch(url, {
+                        method: method,
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}` 
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (res.ok) {
+                        fetchData(); // Recarrega tudo
+                        closeModal();
+                        if(window.showToast) window.showToast('Paciente salvo.', 'success');
+                    } else {
+                        const err = await res.json();
+                        alert('Erro ao salvar paciente: ' + (err.error || 'Erro desconhecido'));
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Erro de conexão ao salvar paciente.');
+                } finally {
+                    btnSubmit.textContent = originalText;
+                    btnSubmit.disabled = false;
                 }
-            } catch (e) {
-                console.error(e);
-                alert('Erro de conexão ao salvar paciente.');
-            }
-        };
+            });
+        }
 
 
         // Salvar Agendamento
