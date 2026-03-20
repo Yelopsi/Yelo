@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title>Yelo | Terapia Online Especializada</title>
+    
+    <meta name="description" content="Encontre o psicólogo ideal para você. Conectamos pacientes a profissionais qualificados para terapia online ou presencial.">
+    <meta property="og:title" content="Yelo | Encontre seu Psicólogo Ideal">
+    <meta property="og:description" content="Terapia acessível e de qualidade. Conecte-se com profissionais verificados agora mesmo.">
+    <meta property="og:type" content="website">
+
+    <link rel="canonical" href="https://www.yelopsi.com.br/terapia-online" />
+    <meta name="theme-color" content="#1B4332">
+
+    <%- include('partials/head') %>
+
+    <style>
+        /* --- ESTILOS COMPARTILHADOS DA HOME --- */
+        .secao-vantagens { padding: 100px 20px; background-color: #ffffff; position: relative; overflow: hidden; }
+        .header-vantagens { text-align: center; max-width: 800px; margin: 0 auto 60px auto; position: relative; z-index: 2; }
+        .grid-vantagens-organica { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto; position: relative; z-index: 2; }
+        .card-vantagem-organico { background: #F8F3ED; padding: 40px 30px; border-radius: 24px 60px 24px 60px; transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.03); text-align: center; }
+        .card-vantagem-organico:nth-child(2) { background: #E6F4F1; border-radius: 60px 24px 60px 24px; }
+        .card-vantagem-organico:nth-child(3) { background: #FFF8E1; border-radius: 24px 60px 24px 60px; }
+        .card-vantagem-organico:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(27, 67, 50, 0.08); }
+        .icone-vantagem-organico { font-size: 2.5rem; margin-bottom: 20px; display: inline-flex; align-items: center; justify-content: center; width: 80px; height: 80px; background: #fff; border-radius: 50%; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .card-vantagem-organico h3 { font-family: var(--font-titulos); font-size: 1.5rem; color: #1B4332; margin-bottom: 15px; }
+        .card-vantagem-organico p { font-family: var(--font-principal); font-size: 1rem; color: #555; line-height: 1.6; }
+        
+        .doodle-bg { position: absolute; opacity: 0.6; pointer-events: none; z-index: 1; color: #f0f0f0; }
+        .doodle-bg.left { top: 5%; left: -50px; width: 300px; transform: rotate(45deg); }
+        .doodle-bg.right { bottom: 5%; right: -50px; width: 250px; transform: rotate(-45deg); }
+        
+        .secao-depoimentos { padding: 100px 20px 40px 20px; background-color: #ffffff; position: relative; }
+        .header-depoimentos { text-align: center; margin-bottom: 4rem; }
+        .rating-badge { display: inline-flex; align-items: center; gap: 12px; background: #fdfaf6; padding: 10px 25px; border-radius: 50px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-top: 20px; border: 1px solid rgba(0,0,0,0.03); }
+        .rating-score { font-weight: 800; color: #1B4332; font-size: 1.2rem; }
+        .rating-count { color: #666; font-size: 0.9rem; font-weight: 500; }
+        .grid-depoimentos { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; max-width: 1200px; margin: 0 auto; }
+        .card-depoimento-organico { background: #F8F3ED; padding: 2.5rem; border-radius: 24px 60px 24px 60px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); text-align: left; transition: transform 0.3s ease; border: 1px solid rgba(0,0,0,0.02); display: flex; flex-direction: column; }
+        .card-depoimento-organico:nth-child(2n) { background: #E6F4F1; border-radius: 60px 24px 60px 24px; }
+        .card-depoimento-organico:nth-child(3n) { background: #FFF8E1; border-radius: 24px 60px 24px 60px; }
+        .card-depoimento-organico:nth-child(4n) { background: #F0F4F8; border-radius: 60px 24px 60px 24px; }
+        .card-depoimento-organico:hover { transform: translateY(-8px); box-shadow: 0 20px 50px rgba(0,0,0,0.08); }
+        .card-depoimento-organico p { font-size: 1.05rem; line-height: 1.7; color: #444; font-style: italic; margin-bottom: 2rem; flex-grow: 1; }
+        .autor-depoimento { display: flex; align-items: center; gap: 15px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 20px; }
+        .avatar-depoimento { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #1B4332; font-size: 1.1rem; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        
+        .faq-secao { padding: 40px 20px 100px 20px; background-color: #fdfaf6; position: relative; }
+        .acordeao-container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+        .acordeao-item-organico { background: #ffffff; border-radius: 24px 40px 24px 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden; transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.02); }
+        .acordeao-item-organico:nth-child(even) { border-radius: 40px 24px 40px 24px; }
+        .acordeao-titulo { width: 100%; padding: 25px 30px; background: none; border: none; cursor: pointer; text-align: left; font-family: var(--font-titulos); font-size: 1.2rem; color: #1B4332; display: flex; justify-content: space-between; align-items: center; transition: color 0.3s; }
+        .acordeao-titulo:hover { color: #2D6A4F; }
+        .acordeao-titulo::after { content: '+'; font-size: 1.5rem; font-weight: 300; transition: transform 0.3s; color: #1B4332; display: block; }
+        .acordeao-titulo.ativo::after { transform: rotate(45deg); }
+        .acordeao-conteudo { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; }
+        .acordeao-conteudo p { padding: 0 30px 30px 30px; font-size: 1rem; line-height: 1.6; color: #555; margin: 0; font-family: var(--font-principal); }
+
+        @media (max-width: 600px) {
+            .rating-badge { flex-wrap: wrap; justify-content: center; border-radius: 24px; padding: 15px 20px; }
+            .rating-count { width: 100%; margin-top: 5px; }
+        }
+
+        @media (max-width: 768px) {
+            .grid-vantagens-organica, .grid-depoimentos {
+                display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 15px; padding-bottom: 20px; grid-template-columns: none; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+            }
+            .grid-vantagens-organica::-webkit-scrollbar, .grid-depoimentos::-webkit-scrollbar { display: none; }
+            .card-vantagem-organico, .card-depoimento-organico { flex: 0 0 85%; scroll-snap-align: center; min-width: 280px; }
+        }
+
+        .secao-organica { background-color: #F8F3ED; padding: 100px 20px; overflow: hidden; position: relative; }
+        .container-organico { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+        .coluna-texto { z-index: 2; }
+        .tag-destaque-organica { display: inline-block; background-color: #E6F4F1; color: #1B4332; font-weight: 700; font-size: 0.85rem; padding: 8px 18px; border-radius: 50px; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; }
+        .titulo-organico { font-family: var(--font-titulos); font-size: 3.5rem; color: #1B4332; line-height: 1.1; margin-bottom: 25px; }
+        .texto-organico { font-size: 1.15rem; line-height: 1.7; color: #555; margin-bottom: 40px; font-family: var(--font-principal); }
+        .trust-indicators { display: flex; justify-content: flex-start; gap: 30px; margin-top: 30px; flex-wrap: wrap; }
+        .trust-item { display: flex; align-items: center; gap: 12px; font-weight: 700; color: #2c3e35; background: #ffffff; padding: 12px 24px; border-radius: 12px; box-shadow: 0 4px 20px rgba(27, 67, 50, 0.08); border: 1px solid rgba(27, 67, 50, 0.1); font-size: 0.95rem; }
+        .trust-item svg { width: 20px; height: 20px; color: #1B4332; }
+
+        .collage-wrapper { position: relative; width: 100%; height: 600px; }
+        .collage-img { position: absolute; object-fit: cover; box-shadow: 0 15px 35px rgba(27, 67, 50, 0.1); }
+        .img-central { width: 55%; height: 65%; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 150px 150px 20px 20px; z-index: 5; }
+        @keyframes float { 0% { margin-top: 0px; } 50% { margin-top: -15px; } 100% { margin-top: 0px; } }
+        .img-sat-1 { width: 25%; aspect-ratio: 1/1; top: 5%; left: 5%; border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; z-index: 4; animation: float 6s ease-in-out infinite; }
+        .img-sat-2 { width: 22%; aspect-ratio: 1/1; top: 10%; right: 5%; border-radius: 50%; z-index: 3; animation: float 5s ease-in-out infinite 1s; }
+        .img-sat-3 { width: 18%; aspect-ratio: 1/1; top: 45%; right: 0%; border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; z-index: 6; animation: float 7s ease-in-out infinite 0.5s; }
+        .img-sat-4 { width: 28%; height: 35%; bottom: 0%; right: 10%; border-radius: 20px 80px 20px 80px; z-index: 6; animation: float 5.5s ease-in-out infinite 2s; }
+        .img-sat-5 { width: 24%; aspect-ratio: 1/1; bottom: 10%; left: 0%; border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; z-index: 6; animation: float 6.5s ease-in-out infinite 1.5s; }
+        .doodle { position: absolute; z-index: 1; pointer-events: none; }
+        .doodle-lines { top: 18%; left: 28%; width: 80px; z-index: 6; color: #E63946; }
+        .doodle-loop { bottom: -5%; right: 5%; width: 100px; color: #F4A261; transform: rotate(-15deg); }
+        .doodle-sparkle { top: 5%; right: 30%; width: 40px; color: #2A9D8F; }
+
+        @media (max-width: 992px) {
+            .container-organico { grid-template-columns: 1fr; text-align: center; gap: 50px; }
+            .titulo-organico { font-size: 2.5rem; }
+            .trust-indicators { justify-content: center; }
+            .collage-wrapper { height: 450px; max-width: 500px; margin: 0 auto; }
+        }
+        @media (max-width: 480px) {
+            .collage-wrapper { height: 350px; }
+            .titulo-organico { font-size: 2rem; }
+        }
+
+        /* Ajuste do Header Clean para Landing */
+        .header-landing {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #1B4332;
+            padding: 15px 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header-landing img {
+            height: 35px;
+        }
+        body {
+            padding-top: 65px; /* Compensa o header fixo */
+        }
+
+        /* Ajuste do Footer Clean para Landing */
+        .footer-landing {
+            background-color: var(--verde-escuro);
+            color: #adb5bd;
+            padding: 30px 20px;
+            text-align: center;
+            font-size: 12px;
+            font-family: var(--font-principal);
+        }
+        .footer-landing a {
+            color: #adb5bd;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .footer-landing a:hover {
+            text-decoration: underline;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER CLEAN EXCLUSIVO B2C -->
+    <header class="header-landing">
+        <a href="/" class="logo">
+            <img src="/assets/logos/logo-branca.png" alt="Yelo">
+        </a>
+    </header>
+
+    <main>
+        <section class="hero hero-fundo-escuro" style="margin-top: 0; padding-top: 80px;">
+            <div class="hero-texto">
+                <% 
+                    const frases = [
+                        "ficar bem.",
+                        "ser feliz.",
+                        "ter paz.",
+                        "viver leve.",
+                        "ser ouvido(a).",
+                        "se reencontrar.",
+                        "acolhimento.",
+                        "cuidar de si.",
+                        "ser sua prioridade.",
+                        "investir em você.",
+                        "uma vida plena."
+                    ];
+                    const fraseAleatoria = frases[Math.floor(Math.random() * frases.length)];
+                %>
+                <h1>Você merece <%= fraseAleatoria %></h1>
+                <p>Encontrar a pessoa certa para te acompanhar nessa jornada é o primeiro passo.</p>
+            </div>
+            <!-- CTAS APONTAM TODOS PARA O QUESTIONÁRIO -->
+            <a href="/questionario.html" class="btn-cta-principal">Começar</a>
+            
+            <div class="wave-divider">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#ffffff" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
+        </section>
+
+        <!-- SEÇÃO VANTAGENS -->
+        <section class="secao-vantagens hidden">
+            <svg class="doodle-bg left" viewBox="0 0 200 200" fill="currentColor"><path d="M45.7,-76.3C58.9,-69.3,69.1,-55.6,76.3,-41.2C83.5,-26.8,87.7,-11.7,85.6,2.6C83.5,16.9,75.1,30.4,65.6,42.2C56.1,54,45.5,64.1,33.3,70.3C21.1,76.5,7.3,78.8,-5.3,76.9C-17.9,75,-34.7,68.9,-48.6,59.6C-62.5,50.3,-73.5,37.8,-79.6,23.3C-85.7,8.8,-86.9,-7.7,-80.7,-21.8C-74.5,-35.9,-60.9,-47.6,-46.8,-54.3C-32.7,-61,-18.1,-62.7,-2.9,-62.2C12.3,-61.7,24.6,-59,32.5,-83.3L45.7,-76.3Z" transform="translate(100 100)" /></svg>
+            <svg class="doodle-bg right" viewBox="0 0 200 200" fill="currentColor"><path d="M38.1,-63.8C49.3,-54.6,58.3,-43.3,65.5,-30.8C72.7,-18.3,78.1,-4.6,76.3,8.3C74.5,21.2,65.5,33.3,55.3,43.4C45.1,53.5,33.7,61.6,21.1,66.1C8.5,70.6,-5.3,71.5,-18.4,67.8C-31.5,64.1,-43.9,55.8,-53.4,45.2C-62.9,34.6,-69.5,21.7,-70.8,8.2C-72.1,-5.3,-68.1,-19.4,-59.6,-31.1C-51.1,-42.8,-38.1,-52.1,-25.3,-60.1C-12.5,-68.1,0.1,-74.8,12.7,-74.8C25.3,-74.8,38.1,-68.1,38.1,-63.8Z" transform="translate(100 100)" /></svg>
+
+            <div class="header-vantagens">
+                <h2 class="titulo-organico">Por que escolher a Yelo?</h2>
+                <p class="texto-organico" style="max-width: 600px; margin: 0 auto;">Cuidar da mente não precisa ser complicado. Criamos uma experiência fluida para você focar no que importa.</p>
+            </div>
+
+            <div class="grid-vantagens-organica">
+                <div class="card-vantagem-organico">
+                    <span class="icone-vantagem-organico">🎯</span>
+                    <div class="conteudo-card">
+                        <h3>Match Inteligente</h3>
+                        <p>Não perca tempo procurando. Nossa tecnologia conecta você aos especialistas ideais para sua necessidade específica.</p>
+                    </div>
+                </div>
+                <div class="card-vantagem-organico">
+                    <span class="icone-vantagem-organico">🔒</span>
+                    <div class="conteudo-card">
+                        <h3>100% Sigiloso e Seguro</h3>
+                        <p>Sua privacidade é nossa prioridade. Plataforma criptografada e profissionais éticos verificados pelo CRP.</p>
+                    </div>
+                </div>
+                <div class="card-vantagem-organico">
+                    <span class="icone-vantagem-organico">🔄</span>
+                    <div class="conteudo-card">
+                        <h3>Troca Facilitada</h3>
+                        <p>Não se adaptou? Acontece. Troque de profissional a qualquer momento sem burocracia ou custo extra.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO ORGÂNICA (COLLAGE) -->
+        <section class="secao-organica hidden">
+            <div class="wave-top-organica" style="position: absolute; top: -1px; left: 0; width: 100%; overflow: hidden; line-height: 0; z-index: 1;">
+                <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" style="display: block; width: calc(100% + 1.3px); height: 50px;">
+                    <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill" fill="#ffffff"></path>
+                </svg>
+            </div>
+            <div class="container-organico">
+                <div class="coluna-texto">
+                    <span class="tag-destaque-organica">Segurança e Qualidade</span>
+                    <h2 class="titulo-organico">Profissionais verificados em quem você pode confiar.</h2>
+                    <p class="texto-organico">
+                        Nossa curadoria é rigorosa. Apenas psicólogos com CRP ativo e aprovados em nossa entrevista técnica entram na plataforma. 
+                        Aqui, você encontra especialistas em ansiedade, depressão, carreira, relacionamentos e muito mais.
+                    </p>
+                    
+                    <div class="trust-indicators">
+                        <div class="trust-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            CRP Ativo
+                        </div>
+                        <div class="trust-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M9 12l2 2 4-4"></path></svg>
+                            Profissionais Verificados
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 40px;">
+                        <!-- APONTA PARA QUESTIONÁRIO -->
+                        <a href="/questionario.html" class="btn-cta-principal">Encontrar meu terapeuta</a>
+                    </div>
+                </div>
+
+                <div class="coluna-collage">
+                    <div class="collage-wrapper">
+                        <svg class="doodle doodle-lines" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3">
+                            <path d="M10 50 Q 50 10 90 50" />
+                            <path d="M10 60 Q 50 20 90 60" />
+                            <path d="M10 70 Q 50 30 90 70" />
+                        </svg>
+                        <svg class="doodle doodle-loop" viewBox="0 0 100 50" fill="none" stroke="currentColor" stroke-width="3">
+                            <path d="M10 25 C 30 50, 70 50, 90 25 C 70 0, 30 0, 10 25" />
+                        </svg>
+                        <svg class="doodle doodle-sparkle" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
+                        </svg>
+                        <img src="https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Psicóloga" class="collage-img img-central">
+                        <img src="https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Paciente" class="collage-img img-sat-1">
+                        <img src="https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Paciente" class="collage-img img-sat-2">
+                        <img src="https://images.pexels.com/photos/1121796/pexels-photo-1121796.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Paciente" class="collage-img img-sat-3">
+                        <img src="https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Paciente" class="collage-img img-sat-4">
+                        <img src="https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Paciente" class="collage-img img-sat-5">
+                    </div>
+                </div>
+            </div>
+            <div class="wave-divider">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#fdfaf6" fill-opacity="1" d="M0,64L48,80C96,96,192,128,288,128C384,128,480,96,576,90.7C672,85,768,107,864,122.7C960,139,1056,149,1152,133.3C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
+        </section>
+
+        <!-- SEÇÃO COMO FUNCIONA -->
+        <section class="como-funciona hidden">
+            <div class="container">
+                <h2 class="titulo-secao">Como a Yelo funciona</h2>
+                <p class="subtitulo-secao">Uma jornada simples, transparente e focada no seu bem-estar.</p>
+            </div>
+            <div class="steps-wrapper">
+                    <div class="step-row">
+                        <div class="step-content">
+                            <span class="step-tag">Passo 01</span>
+                            <h3>Encontre o profissional ideal</h3>
+                            <p>Responda ao nosso questionário inteligente sobre suas necessidades e preferências. Nossa tecnologia fará a curadoria e te apresentará os psicólogos mais compatíveis com o seu perfil.</p>
+                        </div>
+                        <div class="step-image-col">
+                            <div class="step-img-frame">
+                                <img src="/assets/images/passo_1.svg" alt="Ilustração">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-row reverse">
+                        <div class="step-content">
+                            <span class="step-tag">Passo 02</span>
+                            <h3>Conheça e conecte-se com segurança</h3>
+                            <p>Veja o perfil detalhado, assista ao vídeo de apresentação e leia avaliações reais. Agende sua sessão diretamente pela plataforma, sem intermediários.</p>
+                        </div>
+                        <div class="step-image-col">
+                            <div class="step-img-frame">
+                                <img src="/assets/images/passo_2.svg" alt="Ilustração">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-row">
+                        <div class="step-content">
+                            <span class="step-tag">Passo 03</span>
+                            <h3>Comece sua jornada de transformação</h3>
+                            <p>Realize suas sessões online no conforto da sua casa. Se não se adaptar, nosso sistema de Troca Facilitada permite que você encontre outro profissional rapidamente.</p>
+                        </div>
+                        <div class="step-image-col">
+                            <div class="step-img-frame">
+                                <img src="/assets/images/passo_3.svg" alt="Ilustração">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <div class="container">
+                <div style="margin-top: 40px; margin-bottom: 60px; text-align: center; position: relative; z-index: 2;">
+                    <!-- APONTA PARA QUESTIONÁRIO -->
+                    <a href="/questionario.html" class="btn-cta-principal">Quero começar agora</a>
+                </div>
+            </div>
+            <div class="wave-divider">
+                <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                    <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z" class="shape-fill" style="fill:#ffffff;"></path>
+                </svg>
+            </div>
+        </section>
+
+        <!-- SEÇÃO DE DEPOIMENTOS -->
+        <section class="secao-depoimentos hidden">
+            <div class="container">
+                <div class="header-depoimentos">
+                    <h2 class="titulo-organico">Histórias de quem já começou</h2>
+                    <div class="rating-badge">
+                        <span class="rating-score"><%= typeof mediaAvaliacao !== 'undefined' ? mediaAvaliacao : '4.9' %>/5</span>
+                        <div class="stars-wrapper" style="position: relative; display: inline-block; color: #e0e0e0; font-size: 1.1rem; letter-spacing: 2px;">
+                            ★★★★★
+                            <div style="position: absolute; top: 0; left: 0; overflow: hidden; width: <%= (parseFloat(typeof mediaAvaliacao !== 'undefined' ? mediaAvaliacao : 4.9) / 5) * 100 %>%; color: #FFC107; white-space: nowrap;">★★★★★</div>
+                        </div>
+                        <span class="rating-count">Baseado em <%= typeof totalAvaliacoes !== 'undefined' ? totalAvaliacoes : '2.000+' %> avaliações</span>
+                    </div>
+                </div>
+
+                <div class="grid-depoimentos">
+                    <% (typeof depoimentos !== 'undefined' ? depoimentos : []).forEach((depo) => { %>
+                    <div class="card-depoimento-organico">
+                        <p>"<%= depo.texto %>"</p>
+                        <div class="autor-depoimento">
+                            <div class="avatar-depoimento"><%= depo.inicial %></div>
+                            <div class="info-autor">
+                                <span class="nome-autor"><%= depo.nome %></span>
+                                <span class="status-autor">Paciente Verificada</span>
+                            </div>
+                        </div>
+                    </div>
+                    <% }); %>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ (Sem link "ver mais") -->
+        <section class="faq-secao hidden">
+            <div class="container">
+                <h2 class="titulo-organico">Perguntas Frequentes</h2>
+            </div>
+            <div class="acordeao-container">
+                <div class="acordeao-item-organico">
+                    <button class="acordeao-titulo">Quem são os terapeutas da Yelo?</button>
+                    <div class="acordeao-conteudo">
+                        <p>Apenas aceitamos Psicólogos com registro ativo no CRP (Conselho Regional de Psicologia). Todos passam por um processo de verificação de credenciais para garantir que você seja atendido por profissionais qualificados e éticos.</p>
+                    </div>
+                </div>
+                <div class="acordeao-item-organico">
+                    <button class="acordeao-titulo">Como o "match" encontra o ideal para mim?</button>
+                    <div class="acordeao-conteudo">
+                        <p>Diferente de uma lista comum, nosso algoritmo analisa suas respostas sobre o que você está sentindo e suas preferências (como abordagem ou gênero do terapeuta) para conectar você aos 3 profissionais mais compatíveis com o seu momento.</p>
+                    </div>
+                </div>
+                <div class="acordeao-item-organico">
+                    <button class="acordeao-titulo">Qual o valor das sessões?</button>
+                    <div class="acordeao-conteudo">
+                        <p>Na Yelo, você tem liberdade de escolha. Nossos profissionais definem seus próprios honorários, criando uma variedade de faixas de preço para que você encontre alguém excelente que também caiba no seu orçamento.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="wave-divider">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#fdfaf6" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
+        </section>
+
+        <!-- AVISO DE CRISE (Importante manter) -->
+        <section class="aviso-crise hidden">
+            <div class="aviso-conteudo">
+                <div class="aviso-texto">
+                    <p>
+                        Se você está em crise ou qualquer outra pessoa pode estar em perigo, <strong>não</strong> use este site. <a href="/ajuda">Estes recursos</a> podem fornecer ajuda imediata.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER CLEAN EXCLUSIVO B2C -->
+    <footer class="footer-landing">
+        <div style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; align-items: center;">
+            <img src="/assets/logos/logo-branca.png" alt="Yelo" style="width: 100px; opacity: 0.5; margin-bottom: 10px;">
+            <p style="margin: 0; opacity: 0.8;">Yelo Terapia Online &copy; <%= new Date().getFullYear() %> | CNPJ: 54.512.449/0001-38</p>
+            <p style="margin: 0; opacity: 0.8;">Responsável Técnico: Anderson Costa - CRP 06/203403</p>
+            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 10px; flex-wrap: wrap;">
+                <a href="/termos-de-uso">Termos de Uso</a>
+                <span>|</span>
+                <a href="/politica-de-privacidade">Política de Privacidade</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Script básico para animação de scroll (Reaproveitado do index) -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visivel');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.hidden').forEach((el) => observer.observe(el));
+
+            // Acordeão FAQ
+            document.querySelectorAll('.acordeao-titulo').forEach(button => {
+                button.addEventListener('click', () => {
+                    const expanded = button.getAttribute('aria-expanded') === 'true' || false;
+                    button.setAttribute('aria-expanded', !expanded);
+                    button.classList.toggle('ativo');
+                    const content = button.nextElementSibling;
+                    if (button.classList.contains('ativo')) {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                    } else {
+                        content.style.maxHeight = null;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
