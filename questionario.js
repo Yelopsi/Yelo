@@ -196,6 +196,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const matchData = await matchResponse.json();
 
+        // --- DISPARO DE CONVERSÃO DO GOOGLE ADS ---
+        if (typeof gtag === 'function') {
+            gtag('event', 'conversion', {'send_to': 'AW-783735995/HeKSCMfQlIwcELu52_UC'});
+        }
+
             // Pequena pausa dramática (UX)
             await new Promise(r => setTimeout(r, 1500));
 
