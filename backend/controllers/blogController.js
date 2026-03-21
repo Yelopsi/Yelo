@@ -149,7 +149,9 @@ module.exports = {
                 queryOptions.include = [{ model: Psychologist, as: 'autor', attributes: ['nome', 'fotoUrl', 'slug'] }];
             }
 
-            let posts = await Post.findAll(queryOptions);
+            // CORREÇÃO: Usa .scope(null) para remover qualquer escopo padrão que possa estar
+            // ocultando o campo 'conteudo' da consulta.
+            let posts = await Post.scope(null).findAll(queryOptions);
 
             res.render('blog', { 
                 posts: posts, 
@@ -177,7 +179,9 @@ module.exports = {
                     attributes: ['nome', 'fotoUrl', 'slug']
                 }];
             }
-            const post = await Post.findByPk(id, queryOptions);
+            // CORREÇÃO: Usa .scope(null) para garantir que o campo 'conteudo' seja incluído,
+            // ignorando qualquer escopo padrão do modelo que possa o estar excluindo.
+            const post = await Post.scope(null).findByPk(id, queryOptions);
 
             if (!post) return res.redirect('/blog');
 
