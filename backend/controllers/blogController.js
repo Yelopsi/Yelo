@@ -153,6 +153,12 @@ module.exports = {
             // ocultando o campo 'conteudo' da consulta.
             let posts = await Post.scope(null).findAll(queryOptions);
 
+            // --- DEBUG PASSO 2: VERIFICAR DADOS VINDOS DO BANCO (LISTA) ---
+            if (posts && posts.length > 0) {
+                console.log('[DEBUG-LOAD-LIST] Conteúdo do primeiro post da lista:', posts[0].conteudo?.substring(0, 50) + '...');
+                console.log('[DEBUG-LOAD-LIST] Objeto completo do primeiro post:', posts[0].toJSON());
+            }
+
             res.render('blog', { 
                 posts: posts, 
                 formatImageUrl: formatImageUrl,
@@ -182,6 +188,12 @@ module.exports = {
             // CORREÇÃO: Usa .scope(null) para garantir que o campo 'conteudo' seja incluído,
             // ignorando qualquer escopo padrão do modelo que possa o estar excluindo.
             const post = await Post.scope(null).findByPk(id, queryOptions);
+
+            // --- DEBUG PASSO 2: VERIFICAR DADOS VINDOS DO BANCO (POST ÚNICO) ---
+            if (post) {
+                console.log(`[DEBUG-LOAD-SINGLE] Conteúdo do post ID ${id}:`, post.conteudo?.substring(0, 50) + '...');
+                console.log(`[DEBUG-LOAD-SINGLE] Objeto completo do post:`, post.toJSON());
+            }
 
             if (!post) return res.redirect('/blog');
 

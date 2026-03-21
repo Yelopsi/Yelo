@@ -668,6 +668,9 @@ exports.updatePsychologistProfile = async (req, res) => {
         // --- DEBUG: LOG DOS DADOS TRATADOS ---
         console.log("--- DEBUG UPDATE PERFIL ---");
         console.log("ID:", psychologist.id);
+            // Adicionado para depuração de um problema não relacionado, pode ser removido depois.
+            console.log("Conteúdo recebido para post:", req.body.conteudo); 
+
         console.log("Modalidade (Type):", typeof modalidade, "IsArray:", Array.isArray(modalidade));
         console.log("Modalidade (Value):", JSON.stringify(modalidade));
         console.log("Temas (Value):", JSON.stringify(temas_atuacao));
