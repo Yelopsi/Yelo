@@ -13,14 +13,17 @@ exports.getAllPosts = async (req, res) => {
         const offset = (page - 1) * parsedPageSize;
 
         // Define a ordem da busca baseada no filtro
+        const pinnedOrder = [['isPinned', 'DESC']]; // Posts fixados primeiro
         let order;
+
         if (filter === 'populares') {
             // Otimização: Usa COUNT agregado em vez de subquery para cada linha.
             // O DISTINCT é importante para não contar errado devido ao JOIN.
-            order = [[db.Sequelize.literal('"votes" + COUNT(DISTINCT "ForumComments"."id")'), 'DESC']];
+            order = [...pinnedOrder, [db.Sequelize.literal('"votes" + COUNT(DISTINCT "ForumComments"."id")'), 'DESC']];
         } else {
             // Lógica Híbrida: Recentes no topo, mas "Virais" (Interações >= 5) furam a fila
             order = [
+                ...pinnedOrder,
                 [db.Sequelize.literal('CASE WHEN "votes" + COUNT(DISTINCT "ForumComments"."id") >= 5 THEN 1 ELSE 0 END'), 'DESC'],
                 ['createdAt', 'DESC']
             ];
@@ -45,6 +48,7 @@ exports.getAllPosts = async (req, res) => {
             attributes: {
                 include: [
                     // Otimização: Conta comentários usando JOIN + GROUP BY em vez de subquery
+                    'isPinned',
                     [db.sequelize.fn('COUNT', db.sequelize.fn('DISTINCT', db.sequelize.col('ForumComments.id'))), 'commentCount'],
                     // Otimização: EXISTS é geralmente rápido, especialmente com índices. Mantido.
                     [db.Sequelize.literal(`EXISTS (SELECT 1 FROM "ForumVotes" WHERE "ForumVotes"."ForumPostId" = "ForumPost"."id" AND "ForumVotes"."PsychologistId" = ${psychologistId})`), 'supportedByMe'],
@@ -76,6 +80,7 @@ exports.getAllPosts = async (req, res) => {
             category: post.category,
             isAnonymous: post.isAnonymous,
             createdAt: post.createdAt,
+            isPinned: post.isPinned,
             votes: post.votes,
             authorBadges: post.isAnonymous ? {} : post.Psychologist?.badges, // Passa as badges para o front
             authorLevel: post.isAnonymous ? null : post.Psychologist?.authority_level, // Passa o nível
@@ -131,6 +136,7 @@ exports.getPostDetails = async (req, res) => {
             votes: post.votes,
             createdAt: post.createdAt,
             isAnonymous: post.isAnonymous,
+            isPinned: post.isPinned,
             authorName: post.isAnonymous ? 'Anônimo' : (post.Psychologist ? post.Psychologist.nome : 'Usuário'),
             authorPhoto: post.isAnonymous ? null : (post.Psychologist ? post.Psychologist.fotoUrl : null),
             authorBadges: post.isAnonymous ? {} : (post.Psychologist ? post.Psychologist.badges : {}),

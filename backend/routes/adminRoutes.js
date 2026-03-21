@@ -280,6 +280,8 @@ router.put('/qna/:questionId/moderate', qnaController.moderateQuestion);
 // --- ROTAS DE MODERAÇÃO DE DENÚNCIAS DO FÓRUM (NOVO) ---
 router.get('/forum/reports', adminController.getForumReports);
 router.put('/forum/moderate', adminController.moderateForumContent);
+// Rota para fixar/desfixar um post do fórum (NOVO)
+router.put('/forum/posts/:id/pin', adminController.pinForumPost);
 
 // --- ROTAS DE EDIÇÃO DA COMUNIDADE (Apenas Admin pode alterar) ---
 router.put('/community-event', adminController.updateCommunityEvent);
