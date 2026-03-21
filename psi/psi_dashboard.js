@@ -606,6 +606,13 @@ document.addEventListener('DOMContentLoaded', function() {
     window.loadPage = function(url) {
         if (!url) return;
 
+        // --- V6: Limpeza de listeners da página de Blog ---
+        if (typeof window.cleanupBlog === 'function') {
+            console.log("Limpando listeners do blog anterior...");
+            window.cleanupBlog();
+            window.cleanupBlog = null;
+        }
+
         // --- FIX CRÍTICO: Limpeza de recursos da página anterior ---
         // Garante que o socket do chat seja morto ANTES de carregar qualquer outra coisa.
         if (typeof window.cleanupPsiChat === 'function') {
@@ -2811,7 +2818,7 @@ function inicializarBlog(preFetchedData = null) {
         inputTitulo.parentNode.insertBefore(contador, inputTitulo.nextSibling);
 
         // 3. Ouve a digitação para atualizar o número
-        inputTitulo.addEventListener('input', function() {
+        blogTitleInputHandler = function() {
             const atual = this.value.length;
             contador.textContent = `${atual}/50 caracteres`;
 
@@ -2823,7 +2830,8 @@ function inicializarBlog(preFetchedData = null) {
                 contador.style.color = "#666";
                 contador.style.fontWeight = "normal";
             }
-        });
+        };
+        inputTitulo.addEventListener('input', blogTitleInputHandler);
     }
     // -------------------------------------------
 
@@ -2899,10 +2907,13 @@ function inicializarBlog(preFetchedData = null) {
         if (blogId) {
             limparFormulario();
         }
-        document.getElementById('form-titulo-acao').textContent = "Novo Artigo";
+        const formTitle = document.getElementById('form-titulo-acao');
+        if (formTitle) formTitle.textContent = "Novo Artigo";
         toggleView(true);
     });
-    setupBtn('btn-voltar-lista', () => toggleView(false));
+
+    // O botão de voltar/cancelar agora é gerenciado com os outros listeners
+    // setupBtn('btn-voltar-lista', () => toggleView(false));
 
     function limparFormulario() {
         // Busca o formulário atual no DOM (pois o original pode ter sido substituído)
@@ -3095,13 +3106,7 @@ function inicializarBlog(preFetchedData = null) {
         toggleView(true);
     }
 
-    // --- 2. FUNÇÃO DE SALVAR (IMPORTANTE: Corrigido o evento) ---
-    // Removemos qualquer listener anterior clonando o form
-    const novoForm = form.cloneNode(true);
-    form.parentNode.replaceChild(novoForm, form);
-    
-    // --- INICIALIZAÇÃO DO QUILL (APÓS O CLONE) ---
-    // Agora o Quill será instanciado no elemento correto que está no DOM.
+    // --- V6: INICIALIZAÇÃO DO QUILL (SEM CLONE) ---
     if (document.getElementById('editor-container')) {
         // LIMPEZA CRÍTICA: Remove a estrutura interna do Quill clonada antes de reinicializar.
         // Isso evita que o Quill se confunda com um editor "fantasma".
@@ -3122,18 +3127,17 @@ function inicializarBlog(preFetchedData = null) {
         });
     }
 
-    // --- CORREÇÃO DO CANCELAR (Aqui é o lugar certo!) ---
-    // Como clonamos o form, precisamos pegar o botão "novo" que acabou de nascer
-    const btnCancelarNovo = document.getElementById('btn-cancelar-artigo');
-    if (btnCancelarNovo) {
-        btnCancelarNovo.onclick = (e) => {
-            e.preventDefault(); // Impede recarregar
-            toggleView(false);  // Volta para a lista mantendo o rascunho
-        };
+    // --- V6: GERENCIAMENTO DE LISTENERS ---
+    const btnCancelar = document.getElementById('btn-cancelar-artigo');
+    blogCancelHandler = (e) => {
+        e.preventDefault();
+        toggleView(false);
+    };
+    if (btnCancelar) {
+        btnCancelar.addEventListener('click', blogCancelHandler);
     }
 
-    // Listener de Submit no NOVO form
-    novoForm.addEventListener('submit', async function(e) {
+    blogSubmitHandler = async function(e) {
         e.preventDefault(); // IMPEDE O RECARREGAMENTO DA PÁGINA
         console.log("Botão PUBLICAR clicado! Iniciando envio...");
 
@@ -3184,7 +3188,24 @@ function inicializarBlog(preFetchedData = null) {
             btn.innerHTML = originalText;
             btn.disabled = false;
         }
-    });
+    };
+    form.addEventListener('submit', blogSubmitHandler);
+
+    // --- V6: FUNÇÃO DE LIMPEZA ---
+    window.cleanupBlog = () => {
+        if (form && blogSubmitHandler) {
+            form.removeEventListener('submit', blogSubmitHandler);
+        }
+        if (btnCancelar && blogCancelHandler) {
+            btnCancelar.removeEventListener('click', blogCancelHandler);
+        }
+        if (inputTitulo && blogTitleInputHandler) {
+            inputTitulo.removeEventListener('input', blogTitleInputHandler);
+        }
+        blogSubmitHandler = null;
+        blogCancelHandler = null;
+        blogTitleInputHandler = null;
+    };
 
     // Inicializa carregando a lista assim que abre a tela
     carregarArtigos(1, false);
