@@ -725,6 +725,29 @@ app.get('/api/fix-add-modalidade-column', async (req, res) => {
     }
 });
 
+// --- ROTA DE EMERGÊNCIA: ESTENDER ASSINATURA ---
+app.get('/api/fix-extend-plan', async (req, res) => {
+    try {
+        const email = req.query.email;
+        const dias = parseInt(req.query.dias) || 30; // Padrão: 30 dias a partir de hoje
+
+        if (!email) return res.status(400).send("Informe o email na URL: ?email=psicologa@email.com&dias=30");
+
+        const psychologist = await db.Psychologist.findOne({ where: { email } });
+        
+        if (!psychologist) return res.status(404).send("Usuário não encontrado.");
+
+        const novaData = new Date();
+        novaData.setDate(novaData.getDate() + dias);
+
+        await psychologist.update({ planExpiresAt: novaData, status: 'active' });
+        
+        res.send(`✅ Sucesso! Assinatura de ${email} estendida para ${novaData.toLocaleDateString('pt-BR')}.`);
+    } catch (error) {
+        res.status(500).send("Erro: " + error.message);
+    }
+});
+
 // Rota para converter um psicólogo em Criador de Conteúdo (Invisível)
 app.get('/api/fix-make-content-creator', async (req, res) => {
     try {
