@@ -389,6 +389,18 @@ exports.handleWebhook = async (req, res) => {
                 const currentPayments = (psi.subscription_payments_count || 0) + 1;
 
                 // A lógica de remover desconto (3 meses) agora é nativa do Asaas via 'cyclesCount: 3' na criação.
+                // FIX: Trava de segurança para forçar a remoção do desconto após o 3º pagamento,
+                // pois o Asaas costuma ignorar o 'cyclesCount' para assinaturas recorrentes.
+                if (currentPayments === 3 && payment.subscription) {
+                    try {
+                        console.log(`[ASAAS] 3º pagamento recebido! Removendo desconto da assinatura: ${payment.subscription}`);
+                        fetch(`${ASAAS_API_URL}/subscriptions/${payment.subscription}`, {
+                            method: 'POST', // Asaas usa POST para atualizações de assinatura
+                            headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                            body: JSON.stringify({ discount: { value: 0, type: 'PERCENTAGE' } })
+                        }).catch(e => console.error("Erro API Asaas remoção desconto:", e));
+                    } catch (e) { console.error("Erro interno ao remover desconto:", e); }
+                }
 
                 const hoje = new Date();
                 const novaValidade = new Date(hoje.setDate(hoje.getDate() + 30));
