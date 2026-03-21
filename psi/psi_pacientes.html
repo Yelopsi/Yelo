@@ -524,16 +524,24 @@
         const modalsToMove = ['modal-patient', 'modal-appointment', 'modal-delete-confirmation', 'modal-event-details'];
         modalsToMove.forEach(modalId => {
             const modals = document.querySelectorAll(`#${modalId}`);
-            let newModal = null;
+            let modalInMain = null;
+            let modalsInBody = [];
+            
             modals.forEach(m => {
                 if (m.closest('#main-content') || m.closest('.dashboard-main')) {
-                    newModal = m;
+                    modalInMain = m;
                 } else if (m.parentNode === document.body) {
-                    m.remove(); // Limpa lixo de renderizações anteriores de forma blindada
+                    modalsInBody.push(m);
                 }
             });
-            if (newModal) {
-                document.body.appendChild(newModal);
+            
+            if (modalInMain) {
+                modalsInBody.forEach(m => m.remove());
+                document.body.appendChild(modalInMain);
+            } else if (modalsInBody.length > 1) {
+                for (let i = 0; i < modalsInBody.length - 1; i++) {
+                    modalsInBody[i].remove();
+                }
             }
         });
 
