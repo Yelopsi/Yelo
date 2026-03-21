@@ -43,12 +43,10 @@ exports.getAllPosts = async (req, res) => {
         const posts = await ForumPost.findAll({
             where,
             order,
-            limit: parsedLimit,
-            offset,
             attributes: {
                 include: [
                     // Otimização: Conta comentários usando JOIN + GROUP BY em vez de subquery
-                    'isPinned',
+                    ...(db.ForumPost.getAttributes().isPinned ? ['isPinned'] : []),
                     [db.sequelize.fn('COUNT', db.sequelize.fn('DISTINCT', db.sequelize.col('ForumComments.id'))), 'commentCount'],
                     // Otimização: EXISTS é geralmente rápido, especialmente com índices. Mantido.
                     [db.Sequelize.literal(`EXISTS (SELECT 1 FROM "ForumVotes" WHERE "ForumVotes"."ForumPostId" = "ForumPost"."id" AND "ForumVotes"."PsychologistId" = ${psychologistId})`), 'supportedByMe'],
@@ -69,7 +67,8 @@ exports.getAllPosts = async (req, res) => {
                 }
             ],
             group: ['ForumPost.id', 'Psychologist.id'], // Agrupa para a contagem funcionar
-            subQuery: false
+            limit: parsedLimit,
+            offset
         });
 
         // Formata a resposta para o frontend
