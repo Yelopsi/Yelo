@@ -3222,6 +3222,46 @@ body.pagina-dashboard {
     background-color: #295e4a;
 }
 
+/* =============================================================
+   FÓRUM: ESTILOS PARA POSTS FIXADOS
+   ============================================================= */
+
+.forum-post-card.pinned {
+    background-color: #fffbeb; /* Amarelo bem claro para destaque sutil */
+    border-left: 4px solid var(--cor-Yelo);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+/* Ícone de Alfinete antes do título do post fixado */
+.forum-post-card .pinned-icon {
+    display: inline-block;
+    margin-right: 8px;
+    transform: rotate(-15deg);
+    font-size: 1.1rem; /* Ajusta o tamanho do emoji */
+    vertical-align: middle;
+}
+
+
+/* =============================================================
+   FÓRUM: ESTILOS PARA POSTS FIXADOS
+   ============================================================= */
+
+.forum-post-card.pinned {
+    background-color: #fffbeb; /* Amarelo bem claro para destaque sutil */
+    border-left: 4px solid var(--cor-Yelo);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+/* Ícone de Alfinete antes do título do post fixado */
+.forum-post-card .pinned-icon {
+    display: inline-block;
+    margin-right: 8px;
+    transform: rotate(-15deg);
+    font-size: 1.1rem; /* Ajusta o tamanho do emoji */
+    vertical-align: middle;
+}
+
+
 /* Mensagens de erro/sucesso */
 .mensagem-oculta {
     display: none;

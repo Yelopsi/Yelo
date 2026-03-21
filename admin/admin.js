@@ -464,6 +464,48 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ==========================================
+    // NOVA FUNÇÃO: FIXAR POST NO FÓRUM
+    // ==========================================
+    window.togglePinPost = async function(postId, isCurrentlyPinned) {
+        const shouldPin = !isCurrentlyPinned;
+        const actionText = shouldPin ? 'fixar' : 'desafixar';
+
+        // Usa o modal de confirmação global que já existe
+        window.openConfirmationModal(
+            'Confirmar Ação',
+            `Você tem certeza que deseja <strong>${actionText}</strong> este post?`,
+            async () => {
+                const button = event.currentTarget;
+                if(button) button.disabled = true;
+
+                try {
+                    const token = localStorage.getItem('Yelo_token');
+                    const response = await fetch(`${API_BASE_URL}/api/admin/forum/posts/${postId}/pin`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ isPinned: shouldPin })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        window.showToast(result.message, 'success');
+                        if(typeof window.initializePage === 'function') window.initializePage(); // Recarrega a lista
+                    } else {
+                        throw new Error(result.error || 'Não foi possível completar a ação.');
+                    }
+                } catch (error) {
+                    window.showToast(`Erro: ${error.message}`, 'error');
+                    if(button) button.disabled = false;
+                }
+            }
+        );
+    }
+
+    // ==========================================
     // SOCKET.IO (TEMPO REAL)
     // ==========================================
     function connectAdminSocket(token) {

@@ -3338,6 +3338,18 @@ async function inicializarForum(preFetchedData = null) {
         const card = postCardTemplate.content.cloneNode(true).firstElementChild;
         card.dataset.postId = post.id;
 
+        // NOVO: Adiciona classe e ícone se o post for fixado
+        if (post.isPinned) {
+            card.classList.add('pinned');
+            const titleEl = card.querySelector('.post-title');
+            if (titleEl) {
+                // Adiciona o ícone antes do texto do título
+                titleEl.innerHTML = `<span class="pinned-icon" title="Fixado">📌</span> ${post.title}`;
+            }
+        } else {
+            card.querySelector('.post-title').textContent = post.title;
+        }
+
         card.querySelector('.post-category').textContent = post.category;
         const mobileCat = card.querySelector('.post-category-mobile');
         if(mobileCat) mobileCat.textContent = post.category;
@@ -3357,7 +3369,6 @@ async function inicializarForum(preFetchedData = null) {
         }
 
         card.querySelector('.post-time').textContent = `há ${timeSince(post.createdAt)}`;
-        card.querySelector('.post-title').textContent = post.title;
         card.querySelector('.post-snippet').textContent = post.content.substring(0, 120) + '...';
         card.querySelector('.post-votes-count').textContent = post.votes || 0;
         card.querySelector('.post-comments-count').textContent = `💬 ${post.commentCount || 0} Comentários`;

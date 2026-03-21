@@ -293,7 +293,8 @@ exports.getForumReports = async (req, res) => {
                 MIN(FR."createdAt") AS "firstReportDate",
                 MAX(COALESCE(FP.status, FC.status, 'active')) AS "contentStatus",
                 MAX(COALESCE(FP.title, FP.content, FC.content)) AS "contentText",
-                MAX(COALESCE(author_p.nome, 'Usuário Removido')) AS "authorName"
+                MAX(COALESCE(author_p.nome, 'Usuário Removido')) AS "authorName",
+                MAX(CAST(FP."isPinned" AS text))::boolean AS "isPinned"
             FROM "ForumReports" AS FR
             LEFT JOIN "ForumPosts" AS FP ON FR."itemId" = FP.id AND FR."type" = 'post'
             LEFT JOIN "ForumComments" AS FC ON FR."itemId" = FC.id AND FR."type" = 'comment'
@@ -344,6 +345,35 @@ exports.moderateForumContent = async (req, res) => {
     } catch (error) {
         console.error("Erro ao moderar conteúdo do fórum:", error);
         res.status(500).json({ error: error.message || "Erro interno ao moderar conteúdo." });
+    }
+};
+
+/**
+ * Rota: PUT /api/admin/forum/posts/:id/pin (NOVA)
+ * Descrição: Fixa ou desfixa um post no fórum.
+ */
+exports.pinForumPost = async (req, res) => {
+    const { id } = req.params;
+    const { isPinned } = req.body; // Espera um booleano: true para fixar, false para desfixar
+
+    if (typeof isPinned !== 'boolean') {
+        return res.status(400).json({ error: 'Parâmetro "isPinned" (booleano) é obrigatório.' });
+    }
+
+    try {
+        const post = await db.ForumPost.findByPk(id);
+
+        if (!post) {
+            return res.status(404).json({ error: 'Post não encontrado.' });
+        }
+
+        await post.update({ isPinned });
+
+        const message = isPinned ? 'Post fixado com sucesso!' : 'Post desfixado com sucesso!';
+        res.json({ message, isPinned: post.isPinned });
+    } catch (error) {
+        console.error("Erro ao fixar/desfixar post do fórum:", error);
+        res.status(500).json({ error: "Erro interno ao processar a solicitação." });
     }
 };
 
