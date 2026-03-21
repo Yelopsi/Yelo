@@ -3,7 +3,7 @@
 const cron = require('node-cron');
 const { findDemandGaps } = require('./demandMonitor');
 const { manageExpiredInvitations } = require('./invitationManager');
-const { processRemarketing } = require('./remarketing');
+const { sendPendingSubscriptionEmails } = require('./remarketingCron.js');
 
 console.log('Scheduler iniciado. Aguardando tarefas agendadas...');
 
@@ -37,8 +37,8 @@ cron.schedule('0 2 * * *', () => {
  * Roda todos os dias às 10h da manhã.
  */
 cron.schedule('0 10 * * *', () => {
-    console.log('Executando tarefa agendada: processRemarketing');
-    processRemarketing();
+    console.log('Executando tarefa agendada: sendPendingSubscriptionEmails');
+    sendPendingSubscriptionEmails();
 }, {
     scheduled: true,
     timezone: "America/Sao_Paulo"
@@ -65,8 +65,8 @@ cron.schedule('0 10 * * *', () => {
         console.log('Executando manualmente: manageExpiredInvitations');
         await manageExpiredInvitations();
     } else if (taskToRun === 'remarketing') {
-        console.log('Executando manualmente: processRemarketing');
-        await processRemarketing();
+        console.log('Executando manualmente: sendPendingSubscriptionEmails');
+        await sendPendingSubscriptionEmails();
     }
 
     process.exit(0); // Encerra o processo após a execução da tarefa manual
