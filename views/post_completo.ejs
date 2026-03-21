@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <title><%= post.titulo %> | Blog Yelo</title>
-    <meta name="description" content="<%= post.conteudo.substring(0, 160) %>">
+    <meta name="description" content="<%= post.conteudo.replace(/<[^>]*>/g, '').substring(0, 160) %>">
     <%- include('partials/head') %>
     
     <style>
@@ -182,11 +182,7 @@
             <img src="<%= post.imagem_url || getImagemFixa(post.id) %>" alt="<%= post.titulo %>" class="imagem-destaque-artigo">
 
             <div class="conteudo-texto">
-                <% post.conteudo.split('\n').forEach(paragrafo => { %>
-                    <% if (paragrafo.trim()) { %>
-                        <p><%= paragrafo %></p>
-                    <% } %>
-                <% }) %>
+                <%- post.conteudo %>
             </div>
 
             <div style="margin: 40px 0; padding: 20px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">

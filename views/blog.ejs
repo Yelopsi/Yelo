@@ -198,7 +198,7 @@
                 <div class="destaque-conteudo">
                     <span class="tag-destaque">MAIS RECENTE</span>
                     <h2><%= destaque.titulo %></h2>
-                    <p><%= destaque.conteudo.substring(0, 180) %>...</p>
+                    <p><%= destaque.conteudo.replace(/<[^>]*>/g, '').substring(0, 180) %>...</p>
                     
                     <div class="autor-destaque">
                         <img src="<%= destaque.autor && destaque.autor.fotoUrl ? formatImageUrl(destaque.autor.fotoUrl) : 'https://placehold.co/40x40' %>" alt="Autor">
@@ -219,7 +219,7 @@
                                         <%= new Date(post.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }) %>
                                     </span>
                                     <h3><%= post.titulo %></h3>
-                                    <p><%= post.conteudo.substring(0, 100) %>...</p>
+                                    <p><%= post.conteudo.replace(/<[^>]*>/g, '').substring(0, 100) %>...</p>
                                     
                                     <div class="post-card-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 15px; border-top: 1px solid #eee;">
                                         
