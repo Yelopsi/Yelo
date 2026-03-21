@@ -2791,22 +2791,8 @@ function inicializarBlog(preFetchedData = null) {
     const form = document.getElementById('form-blog');
     const btnSalvar = document.getElementById('btn-salvar-artigo');
     
-    // --- INICIALIZAÇÃO DO EDITOR QUILL ---
+    // --- INICIALIZAÇÃO DO EDITOR QUILL (Movido para depois do clone do form) ---
     let quill;
-    if (document.getElementById('editor-container')) {
-        quill = new Quill('#editor-container', {
-            theme: 'snow',
-            placeholder: '',
-            modules: {
-                toolbar: [
-                    [{ 'header': [2, 3, false] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                    ['clean']
-                ]
-            }
-        });
-    }
 
     // --- LIMITE DE CARACTERES DO TÍTULO (50) ---
     const inputTitulo = document.getElementById('blog-titulo');
@@ -3114,6 +3100,24 @@ function inicializarBlog(preFetchedData = null) {
     const novoForm = form.cloneNode(true);
     form.parentNode.replaceChild(novoForm, form);
     
+    // --- INICIALIZAÇÃO DO QUILL (APÓS O CLONE) ---
+    // Agora o Quill será instanciado no elemento correto que está no DOM.
+    if (document.getElementById('editor-container')) {
+        quill = new Quill('#editor-container', {
+            theme: 'snow',
+            placeholder: 'Comece a escrever seu artigo aqui...',
+            modules: {
+                toolbar: [
+                    [{ 'header': [2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['link'],
+                    ['clean']
+                ]
+            }
+        });
+    }
+
     // --- CORREÇÃO DO CANCELAR (Aqui é o lugar certo!) ---
     // Como clonamos o form, precisamos pegar o botão "novo" que acabou de nascer
     const btnCancelarNovo = document.getElementById('btn-cancelar-artigo');
