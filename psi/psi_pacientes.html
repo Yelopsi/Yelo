@@ -521,20 +521,19 @@
     // --- LÓGICA DO FRONTEND (INTEGRADA) ---
     (async function() {
         // --- 0. PREPARAÇÃO DO DOM (LIMPEZA E MOVER MODAIS) ---
-        // Essencial para evitar modais duplicados em SPAs e garantir "position: fixed" real
         const modalsToMove = ['modal-patient', 'modal-appointment', 'modal-delete-confirmation', 'modal-event-details'];
         modalsToMove.forEach(modalId => {
             const modals = document.querySelectorAll(`#${modalId}`);
-            // Se houver lixo de renderizações anteriores, removemos
-            if (modals.length > 1) {
-                for (let i = 0; i < modals.length - 1; i++) {
-                    modals[i].remove();
+            let newModal = null;
+            modals.forEach(m => {
+                if (m.closest('#main-content') || m.closest('.dashboard-main')) {
+                    newModal = m;
+                } else if (m.parentNode === document.body) {
+                    m.remove(); // Limpa lixo de renderizações anteriores de forma blindada
                 }
-            }
-            // O que sobrou é movido direto para a body
-            const finalModal = document.getElementById(modalId);
-            if (finalModal && finalModal.parentNode !== document.body) {
-                document.body.appendChild(finalModal);
+            });
+            if (newModal) {
+                document.body.appendChild(newModal);
             }
         });
 
@@ -972,12 +971,13 @@
         }
 
         function openAppointmentModal(dateStr, timeStr) {
-            formAppt.reset();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (formAppt) formAppt.reset();
             if(dateStr) document.getElementById('appt-date').value = dateStr;
             if(timeStr) document.getElementById('appt-time').value = timeStr;
             
             document.getElementById('modal-appointment-title').textContent = 'Novo Agendamento';
-            modalAppt.style.display = 'flex';
+            if (modalAppt) modalAppt.style.display = 'flex';
         }
 
         // Toggle de campos no modal de agendamento
@@ -991,43 +991,44 @@
         });
 
         // Função unificada para abrir modal de novo paciente
-        const handleNewPatient = () => {
-            form.reset();
-            pIdInput.value = ''; // Limpa ID para indicar novo
-            pStatusInput.value = 'ativo';
-            document.getElementById('modal-patient-title').textContent = 'Novo Paciente';
-            btnDelete.style.display = 'none'; // Esconde lixeira
-            modal.style.display = 'flex';
+        window.handleNewPatient = () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // Traz a tela para o modal
+            if (form) form.reset();
+            if (pIdInput) pIdInput.value = ''; // Limpa ID para indicar novo
+            if (pStatusInput) pStatusInput.value = 'ativo';
+            const titleEl = document.getElementById('modal-patient-title');
+            if (titleEl) titleEl.textContent = 'Novo Paciente';
+            if (btnDelete) btnDelete.style.display = 'none'; // Esconde lixeira
+            if (modal) modal.style.display = 'flex';
         };
-
-        // Expõe a função para o escopo global (para o botão inline funcionar)
-        window.handleNewPatient = handleNewPatient;
 
         // Verifica se deve abrir o modal automaticamente (vindo do FAB)
         if (sessionStorage.getItem('autoOpenNewPatient')) {
             sessionStorage.removeItem('autoOpenNewPatient');
-            handleNewPatient();
+            window.handleNewPatient();
         }
 
-        const btnAddPatient = document.getElementById('btn-add-patient');
-        if (btnAddPatient) btnAddPatient.onclick = handleNewPatient;
-
-        const btnAddPatientMobile = document.getElementById('btn-add-patient-mobile');
-        if (btnAddPatientMobile) btnAddPatientMobile.onclick = handleNewPatient;
-        
-        const btnAddMobileInline = document.getElementById('btn-add-mobile-inline');
-        if (btnAddMobileInline) btnAddMobileInline.onclick = handleNewPatient;
+        // Atrela eventos aos botões de forma segura (blinda contra falhas de DOM)
+        const addBtns = document.querySelectorAll('#btn-add-patient, #btn-add-patient-mobile, #btn-add-mobile-inline');
+        addBtns.forEach(btn => {
+            btn.onclick = (e) => {
+                e.preventDefault();
+                window.handleNewPatient();
+            };
+        });
         
         const closeModal = (e) => {
             if (e) e.preventDefault();
             if (modal) modal.style.display = 'none';
         };
         
-        const btnCloseModal = document.getElementById('close-patient-modal');
-        if (btnCloseModal) btnCloseModal.onclick = closeModal;
-        
-        const btnCancelModal = document.getElementById('cancel-patient-modal');
-        if (btnCancelModal) btnCancelModal.onclick = closeModal;
+        // Eventos de fechamento escopados ao modal atual
+        if (modal) {
+            const closeBtns = modal.querySelectorAll('#close-patient-modal, #cancel-patient-modal');
+            closeBtns.forEach(btn => {
+                btn.onclick = closeModal;
+            });
+        }
 
         const closeApptModal = (e) => {
             if (e) e.preventDefault();
@@ -1045,6 +1046,7 @@
 
         // Ação: Abrir Modal de Exclusão
         btnDelete.onclick = () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             modalDelete.style.display = 'flex';
         };
 
@@ -1084,20 +1086,24 @@
                 // Salvar (Novo ou Edição)
         if (form) {
             form.onsubmit = async (e) => {
-                e.preventDefault();
+                e.preventDefault(); // Impede o reload silencioso da página
                 
                 const btnSubmit = form.querySelector('button[type="submit"]');
                 const originalText = btnSubmit.textContent;
                 btnSubmit.textContent = 'Salvando...';
                 btnSubmit.disabled = true;
 
-                const id = document.getElementById('p-id').value;
-                const name = document.getElementById('p-name').value;
-                const phone = document.getElementById('p-phone').value;
-                const email = document.getElementById('p-email').value;
-                const status = pStatusInput ? pStatusInput.value : 'ativo';
-                const sessionValue = parseFloat(document.getElementById('p-session-value').value) || 0;
-                const notes = document.getElementById('p-notes').value;
+                // Buscando os valores escopados no form para evitar falha com IDs duplicados invisíveis
+                const id = form.querySelector('#p-id') ? form.querySelector('#p-id').value : '';
+                const name = form.querySelector('#p-name') ? form.querySelector('#p-name').value : '';
+                const phone = form.querySelector('#p-phone') ? form.querySelector('#p-phone').value : '';
+                const email = form.querySelector('#p-email') ? form.querySelector('#p-email').value : '';
+                const statusSel = form.querySelector('#p-status');
+                const status = statusSel ? statusSel.value : 'ativo';
+                const valInput = form.querySelector('#p-session-value');
+                const sessionValue = parseFloat(valInput ? valInput.value : 0) || 0;
+                const notesInput = form.querySelector('#p-notes');
+                const notes = notesInput ? notesInput.value : '';
                 
                 const method = id ? 'PUT' : 'POST';
                 const url = id ? `${BASE_URL}/api/my-patients/${id}` : `${BASE_URL}/api/my-patients`;
@@ -1115,7 +1121,7 @@
                     });
                     
                     if (res.ok) {
-                        fetchData(); // Recarrega tudo
+                        await fetchData(); // Aguarda os dados voltarem do banco para renderizar
                         closeModal();
                         if(window.showToast) window.showToast('Paciente salvo.', 'success');
                     } else {
@@ -1187,6 +1193,7 @@
         function openEventDetails(fcEvent) {
             const evt = events.find(e => e.id == fcEvent.id);
             if(!evt) return;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             
             currentEventId = evt.id;
             document.getElementById('evt-patient-name').textContent = evt.title;
