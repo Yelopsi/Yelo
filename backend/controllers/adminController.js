@@ -347,6 +347,35 @@ exports.moderateForumContent = async (req, res) => {
     }
 };
 
+/**
+ * Rota: PUT /api/admin/forum/posts/:id/pin (NOVA)
+ * Descrição: Fixa ou desfixa um post no fórum.
+ */
+exports.pinForumPost = async (req, res) => {
+    const { id } = req.params;
+    const { isPinned } = req.body; // Espera um booleano: true para fixar, false para desfixar
+
+    if (typeof isPinned !== 'boolean') {
+        return res.status(400).json({ error: 'Parâmetro "isPinned" (booleano) é obrigatório.' });
+    }
+
+    try {
+        const post = await db.ForumPost.findByPk(id);
+
+        if (!post) {
+            return res.status(404).json({ error: 'Post não encontrado.' });
+        }
+
+        await post.update({ isPinned });
+
+        const message = isPinned ? 'Post fixado com sucesso!' : 'Post desfixado com sucesso!';
+        res.json({ message, isPinned: post.isPinned });
+    } catch (error) {
+        console.error("Erro ao fixar/desfixar post do fórum:", error);
+        res.status(500).json({ error: "Erro interno ao processar a solicitação." });
+    }
+};
+
 // =====================================================================
 // (O RESTANTE DO SEU ARQUIVO PERMANECE IDÊNTICO)
 // =====================================================================

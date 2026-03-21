@@ -1035,6 +1035,22 @@ exports.getPatientMatches = async (req, res) => {
         // --- A MÁGICA ACONTECE AQUI ---
         const matchResult = await calculateMatches(patientPreferences);
 
+        // --- LOG DE EVENTO DE MATCH ---
+        if (matchResult && matchResult.results && matchResult.results.length > 0) {
+            const matchEvents = matchResult.results.map(psi => ({
+                psychologistId: psi.id,
+                patientId: patient.id, // Temos o ID do paciente logado
+                matchScore: psi.matchScore,
+                source: 'patient_dashboard'
+            }));
+            // Usamos bulkCreate para inserir todos os eventos de uma vez
+            if (db.MatchEvent) { // Verifica se o modelo existe
+                 db.MatchEvent.bulkCreate(matchEvents).catch(err => {
+                    console.error("Erro ao registrar MatchEvents (logado):", err);
+                });
+            }
+        }
+
         res.status(200).json({
             message: matchResult.matchTier === 'ideal' ? 'Psicólogos compatíveis encontrados!' : 'Psicólogos próximos encontrados!',
             matchTier: matchResult.matchTier,
@@ -1073,6 +1089,22 @@ exports.getAnonymousMatches = async (req, res) => {
 
         // Reutiliza a MESMA lógica do usuário logado
         const matchResult = await calculateMatches(patientPreferences);
+
+        // --- LOG DE EVENTO DE MATCH (ANÔNIMO) ---
+        if (matchResult && matchResult.results && matchResult.results.length > 0) {
+            const matchEvents = matchResult.results.map(psi => ({
+                psychologistId: psi.id,
+                patientId: null, // Usuário anônimo
+                matchScore: psi.matchScore,
+                source: 'questionnaire'
+            }));
+            // Usamos bulkCreate para inserir todos os eventos de uma vez
+            if (db.MatchEvent) { // Verifica se o modelo existe
+                db.MatchEvent.bulkCreate(matchEvents).catch(err => {
+                    console.error("Erro ao registrar MatchEvents (anônimo):", err);
+                });
+            }
+        }
 
         res.status(200).json(matchResult);
 
