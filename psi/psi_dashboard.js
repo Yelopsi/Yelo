@@ -3103,6 +3103,10 @@ function inicializarBlog(preFetchedData = null) {
     // --- INICIALIZAÇÃO DO QUILL (APÓS O CLONE) ---
     // Agora o Quill será instanciado no elemento correto que está no DOM.
     if (document.getElementById('editor-container')) {
+        // LIMPEZA CRÍTICA: Remove a estrutura interna do Quill clonada antes de reinicializar.
+        // Isso evita que o Quill se confunda com um editor "fantasma".
+        document.getElementById('editor-container').innerHTML = '';
+
         quill = new Quill('#editor-container', {
             theme: 'snow',
             placeholder: 'Comece a escrever seu artigo aqui...',
