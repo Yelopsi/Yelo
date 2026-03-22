@@ -838,9 +838,12 @@ exports.getDashboardStats = async (req, res) => {
                 attributes: ['plano', 'is_exempt', [db.sequelize.fn('COUNT', 'plano'), 'count']],
                 where: { status: 'active', plano: { [Op.ne]: null } },
                 group: ['plano', 'is_exempt']
-            }),
+            }).catch(() => []),
             // Contagem de falhas de e-mail nas últimas 24h
-            db.SystemLog.count({ where: { message: { [Op.iLike]: '%[EMAIL_FAIL]%' }, createdAt: { [Op.gte]: oneDayAgo } } })
+            db.SystemLog.count({ where: { message: { [Op.iLike]: '%[EMAIL_FAIL]%' }, createdAt: { [Op.gte]: oneDayAgo } } }).catch(() => 0),
+            // NOVAS QUERIES GERAIS
+            db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs"`, { type: db.sequelize.QueryTypes.SELECT }).catch(() => [[{ count: 0 }]]),
+            db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsappClickLogs"`, { type: db.sequelize.QueryTypes.SELECT }).catch(() => [[{ count: 0 }]])
         ]);
 
         // Processamento dos Planos e MRR (Sem query extra)
@@ -880,6 +883,11 @@ exports.getDashboardStats = async (req, res) => {
         // Status do E-mail
         const emailStatus = emailErrors === 0 ? 'healthy' : (emailErrors > 5 ? 'critical' : 'warning');
 
+        // --- NOVO: Cálculo da Conversão Geral ---
+        const totalMatches = parseInt(totalMatchesResult?.[0]?.count || 0, 10);
+        const totalClicks = parseInt(totalClicksResult?.[0]?.count || 0, 10);
+        const overallConversionRate = totalMatches > 0 ? ((totalClicks / totalMatches) * 100).toFixed(1) : 0;
+
         console.timeEnd('⏱️ Dashboard Stats Load');
         res.status(200).json({
             mrr: mrr.toFixed(2),
@@ -891,7 +899,11 @@ exports.getDashboardStats = async (req, res) => {
             questionnaires: { total: parseInt(demandStats.total, 10), deleted: parseInt(demandStats.abandoned, 10) },
             waitingListCount: waitingListCount,
             pendingReviewsCount: pendingReviewsCount,
-            emailHealth: { status: emailStatus, errors: emailErrors } // <--- Envia para o front
+            emailHealth: { status: emailStatus, errors: emailErrors }, // <--- Envia para o front
+            // --- NOVOS DADOS ---
+            overallConversionRate: parseFloat(overallConversionRate),
+            totalMatches: totalMatches,
+            totalClicks: totalClicks
         });
 
     } catch (error) {
