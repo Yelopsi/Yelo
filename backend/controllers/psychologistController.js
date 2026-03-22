@@ -1628,6 +1628,10 @@ exports.getStats = async (req, res) => {
         const psychologistId = req.psychologist.id;
         const { period } = req.query; 
 
+        // --- PERSONALIZAÇÃO: Busca os temas do psicólogo logado ---
+        const psychologist = await db.Psychologist.findByPk(psychologistId, { attributes: ['temas_atuacao'] });
+        const psiTemas = psychologist?.temas_atuacao || [];
+
         // Filtro de Data (Padrão: Últimos 30 dias)
         let dateCondition = "";
         const replacements = { psiId: psychologistId };
@@ -1640,6 +1644,12 @@ exports.getStats = async (req, res) => {
             dateCondition = `AND "createdAt" >= NOW() - INTERVAL '90 days'`;
         }
         // 'all_time' não adiciona filtro
+
+        // Adiciona os temas do psicólogo aos replacements para a query
+        // A query só será personalizada se o psicólogo tiver temas cadastrados
+        if (psiTemas.length > 0) {
+            replacements.psiTemas = psiTemas;
+        }
 
         // --- OTIMIZAÇÃO: PARALELISMO (Promise.all) ---
         // Executa todas as contagens ao mesmo tempo
@@ -1671,21 +1681,25 @@ exports.getStats = async (req, res) => {
                 { replacements, type: db.sequelize.QueryTypes.SELECT }
             ).catch(err => { console.error("KPI Error (Favorites):", err.message); return [{ count: 0 }]; }),
 
-            // 4. Top Demandas (Tendências) - Otimizado
+            // 4. Top Demandas (Tendências) - Otimizado E PERSONALIZADO
+            // A query agora filtra buscas que contenham pelo menos um dos temas de atuação do psicólogo.
             db.sequelize.query(
                 `SELECT value as name, COUNT(*) as count
                  FROM "DemandSearches", jsonb_array_elements_text("searchParams"->'temas') as value
-                 WHERE status = 'completed' ${dateCondition} AND jsonb_typeof("searchParams"->'temas') = 'array'
+                 WHERE status = 'completed' ${dateCondition} 
+                 AND jsonb_typeof("searchParams"->'temas') = 'array'
+                 ${psiTemas.length > 0 ? `AND "searchParams"->'temas' ?| array[:psiTemas]` : ''}
                  GROUP BY value ORDER BY count DESC LIMIT 3`,
-                { type: db.sequelize.QueryTypes.SELECT }
+                { replacements, type: db.sequelize.QueryTypes.SELECT }
             ).catch(err => []),
 
-            // 5. Total de Demandas com Temas (para cálculo de %)
+            // 5. Total de Demandas com Temas (para cálculo de %) - PERSONALIZADO
             db.sequelize.query(
                 `SELECT COUNT(*) as total
                  FROM "DemandSearches"
-                 WHERE status = 'completed' ${dateCondition} AND "searchParams"->'temas' IS NOT NULL AND jsonb_typeof("searchParams"->'temas') = 'array' AND jsonb_array_length("searchParams"->'temas') > 0`,
-                { type: db.sequelize.QueryTypes.SELECT }
+                 WHERE status = 'completed' ${dateCondition} AND "searchParams"->'temas' IS NOT NULL AND jsonb_typeof("searchParams"->'temas') = 'array' AND jsonb_array_length("searchParams"->'temas') > 0
+                 ${psiTemas.length > 0 ? `AND "searchParams"->'temas' ?| array[:psiTemas]` : ''}`,
+                { replacements, type: db.sequelize.QueryTypes.SELECT }
             ).catch(err => [{ total: 0 }]),
 
             // 6. Histórico de XP (Agrupado por dia)
@@ -1699,6 +1713,16 @@ exports.getStats = async (req, res) => {
             ).catch(err => [])
         ]);
 
+        // Processamento dos KPIs numéricos
+        const whatsappClicks = parseInt(clicksResult[0]?.count || 0, 10);
+        const profileAppearances = parseInt(appearancesResult[0]?.count || 0, 10);
+        const favoritesCount = parseInt(favoritesResult[0]?.count || 0, 10);
+
+        // --- NOVO: Cálculo da Taxa de Conversão ---
+        const conversionRate = profileAppearances > 0 
+            ? ((whatsappClicks / profileAppearances) * 100).toFixed(1) 
+            : 0;
+
         // Processamento das Demandas (Otimizado)
         const totalDemands = parseInt(totalDemandsResult[0]?.total || 0, 10);
         const topDemands = topDemandsResult.map(demanda => ({
@@ -1708,9 +1732,10 @@ exports.getStats = async (req, res) => {
         }));
 
         const stats = {
-            whatsappClicks: parseInt(clicksResult[0]?.count || 0, 10),
-            profileAppearances: parseInt(appearancesResult[0]?.count || 0, 10),
-            favoritesCount: parseInt(favoritesResult[0]?.count || 0, 10),
+            whatsappClicks,
+            profileAppearances,
+            favoritesCount,
+            conversionRate: parseFloat(conversionRate), // Envia como número para o frontend
             topDemands,
             xpHistory: xpHistoryResult // <--- NOVO: Envia para o frontend
         };

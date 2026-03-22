@@ -1250,6 +1250,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const elFavoritos = document.getElementById('kpi-favoritos');
                 if (elFavoritos) elFavoritos.textContent = stats.favoritesCount || 0;
 
+                const elConversao = document.getElementById('kpi-taxa-conversao');
+                if (elConversao) elConversao.textContent = `${stats.conversionRate || 0}%`;
+
                 const elDemandas = document.getElementById('lista-demandas');
                 if (elDemandas) {
                     if (stats.topDemands && stats.topDemands.length > 0) {
