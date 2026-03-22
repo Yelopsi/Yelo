@@ -48,13 +48,17 @@ window.initializePage = function() {
     }
 
     // Listas de IDs para animação de carregamento
-    const bigKpis = ['kpi-mrr', 'kpi-new-patients', 'kpi-new-psychologists', 'kpi-questionnaires-today'];
+    const bigKpis = [
+        'kpi-mrr', 'kpi-new-patients', 'kpi-new-psychologists', 'kpi-questionnaires-today',
+        'kpi-geral-conversao', 'kpi-total-matches', 'kpi-total-cliques'
+    ];
     const smallKpis = [
         'kpi-pat-total', 'kpi-pat-active', 'kpi-pat-deleted',
         'kpi-psi-total', 'kpi-psi-deleted',
         'kpi-plan-Essencial', 'kpi-plan-Clínico', 'kpi-plan-sol',
         'kpi-quest-total', 'kpi-quest-deleted',
-        'waiting-list-count', 'pending-reviews-count'
+        'waiting-list-count', 'pending-reviews-count',
+        'kpi-total-matches', 'kpi-total-cliques'
     ];
 
     /**
@@ -65,7 +69,7 @@ window.initializePage = function() {
 
     async function fetchAndRenderStats(showLoading = false) {
          const btnRefresh = document.getElementById('btn-refresh-dashboard');
-         
+
          if (showLoading) {
              // Anima o ícone do botão
              if(btnRefresh) {
@@ -74,7 +78,7 @@ window.initializePage = function() {
                  btnRefresh.disabled = true;
              }
 
-             // Mostra spinners nos cards
+             // Mostra spinners nos cards (agora incluindo os novos)
              bigKpis.forEach(id => {
                  const el = document.getElementById(id);
                  if(el) el.innerHTML = '<div class="loading-spinner" style="display:block"></div>';
@@ -90,7 +94,7 @@ window.initializePage = function() {
              const response = await fetch(`${BASE_URL}/api/admin/stats`, {
                  headers: { 'Authorization': `Bearer ${token}` }
              });
-             
+
              if (!response.ok) return; 
              const stats = await response.json();
  
@@ -125,6 +129,11 @@ window.initializePage = function() {
              // --- 3. WIDGETS LATERAIS ---
              updateSafe('waiting-list-count', stats.waitingListCount || 0);
              updateSafe('pending-reviews-count', stats.pendingReviewsCount || 0);
+
+             // --- 4. NOVOS KPIs DE CONVERSÃO GERAL ---
+             updateSafe('kpi-geral-conversao', `${stats.overallConversionRate || 0}%`);
+             updateSafe('kpi-total-matches', (stats.totalMatches || 0).toLocaleString('pt-BR'));
+             updateSafe('kpi-total-cliques', (stats.totalClicks || 0).toLocaleString('pt-BR'));
 
              // Log discreto para você saber que está atualizando
              // console.log(`[Dashboard] Atualizado às ${new Date().toLocaleTimeString()}`);
