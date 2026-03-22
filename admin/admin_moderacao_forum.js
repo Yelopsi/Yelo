@@ -19,7 +19,9 @@ window.initializePage = function() {
             }
 
             const result = await response.json();
-            renderPosts(result.data);
+            // CORREÇÃO: Garante que 'result.data' seja um array antes de passar para renderPosts.
+            // Se a API retornar um erro ou um formato inesperado, usa um array vazio como fallback.
+            renderPosts(result.data || []);
 
         } catch (error) {
             tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px; color: red;">${error.message}</td></tr>`;
