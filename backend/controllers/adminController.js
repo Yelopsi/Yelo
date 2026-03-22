@@ -2,6 +2,7 @@ const db = require('../models');
 const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const gamificationService = require('../services/gamificationService');
 
 // Configurações do Asaas (Mesma lógica do paymentController)
 let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
@@ -173,6 +174,12 @@ exports.updateVipStatus = async (req, res) => {
         updatePayload.plano = newPlan;
 
         await psychologist.update(updatePayload);
+
+        // --- GAMIFICATION: Tenta atribuir a badge de Pioneiro se virou VIP ---
+        // Apenas se está concedendo um plano, não removendo a isenção.
+        if (plan) {
+            gamificationService.assignPioneerBadge(psychologist.id).catch(e => console.error("Erro no hook de badge Pioneiro (VIP):", e));
+        }
 
         res.status(200).json({
             message,

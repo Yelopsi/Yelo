@@ -988,6 +988,14 @@ exports.deletePsychologistAccount = async (req, res) => {
             }
         }
 
+        // --- GAMIFICATION: Libera o slot da badge 'Pioneiro' se o usuário tiver ---
+        if (psychologist.badges && psychologist.badges.pioneiro) {
+            const currentBadges = { ...psychologist.badges };
+            delete currentBadges.pioneiro;
+            await psychologist.update({ badges: currentBadges });
+            console.log(`[GAMIFICATION] Slot de badge 'Pioneiro' liberado pelo usuário ${psychologist.email}.`);
+        }
+
         // 5. Exclusão da Conta (Soft Delete se o Model for Paranoid, ou Hard Delete)
         await psychologist.destroy();
 
@@ -1519,13 +1527,20 @@ exports.cancelSubscription = async (req, res) => {
             });
 
             // C. Atualiza Banco Local (Revoga acesso imediatamente)
+            const currentBadges = psychologist.badges || {};
+            if (currentBadges.pioneiro) {
+                delete currentBadges.pioneiro;
+                console.log(`[GAMIFICATION] Slot de badge 'Pioneiro' liberado (cancelamento < 7 dias) por ${psychologist.email}.`);
+            }
+
             await psychologist.update({
                 status: 'inactive',
                 plano: null,
                 planExpiresAt: new Date(0), // Expira já
                 cancelAtPeriodEnd: false,
                 stripeSubscriptionId: null, // FIX: Limpa o ID para impedir que o webhook reative
-                subscriptionId: null // Limpa também a coluna legada se existir
+                subscriptionId: null, // Limpa também a coluna legada se existir
+                badges: currentBadges // Atualiza as badges
             });
 
             // D. Envia E-mail de Cancelamento
