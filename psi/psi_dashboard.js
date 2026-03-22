@@ -1,6 +1,20 @@
 // Arquivo: psi_dashboard.js (VERSÃO FINAL 2.1)
 
 document.addEventListener('DOMContentLoaded', function() {
+    // --- FIX: Adiciona evento de clique para o card de Benchmarking ---
+    // Delegação de evento no body para garantir que funcione mesmo com conteúdo carregado dinamicamente.
+    document.body.addEventListener('click', function(e) {
+        // Procura pelo link dentro do card específico
+        const link = e.target.closest('#card-benchmarking a');
+        if (link) {
+            e.preventDefault(); // Impede a navegação padrão do link
+            // Usa a função global para carregar a página de análise
+            if (typeof window.loadPage === 'function') {
+                window.loadPage('psi_analytics.html');
+            }
+        }
+    });
+
     console.log("--- SISTEMA Yelo V2.1 INICIADO ---");
     
     let psychologistData = null; 

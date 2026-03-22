@@ -788,7 +788,8 @@
                                 const newScript = document.createElement('script');
                                 if (script.src) newScript.src = script.src;
                                 else newScript.textContent = script.textContent;
-                                document.body.appendChild(newScript);
+                                // Substitui o script antigo pelo novo para forçar a execução no local correto
+                                script.parentNode.replaceChild(newScript, script);
                             } catch (err) {
                                 console.error("Erro ao executar script dinâmico:", err);
                             }

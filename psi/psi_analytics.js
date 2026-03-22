@@ -1,41 +1,49 @@
-function initializeAnalyticsPage() {
+async function initializeAnalyticsPage() {
     console.log("Página de Métricas & Mercado inicializada.");
 
-    // Mock de dados, pois não temos os endpoints do backend.
-    // Em um cenário real, estes dados viriam de chamadas fetch().
-    const mockData = {
-        priceComparison: {
-            myPrice: 150,
-            cityAverage: 135,
-            platformAverage: 145,
-        },
-        topTopics: [
-            { topic: 'Ansiedade', count: 120 },
-            { topic: 'Relacionamentos', count: 95 },
-            { topic: 'Autoconhecimento', count: 80 },
-            { topic: 'Depressão', count: 75 },
-            { topic: 'Carreira', count: 60 },
-        ],
-        visibility: {
-            labels: ['D-6', 'D-5', 'D-4', 'D-3', 'D-2', 'Ontem', 'Hoje'],
-            appearances: [25, 30, 22, 40, 35, 50, 48],
-        },
-        profileStrength: {
-            myScores: [8, 9, 7, 8, 9], // Completude, Avaliações, Engajamento, Publicações, Tempo de Resposta
-            averageScores: [7, 6, 6, 5, 7],
+    const token = localStorage.getItem('Yelo_token');
+    const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001';
+
+    // Helper para mostrar mensagem de "sem dados"
+    const showEmptyState = (containerId, message) => {
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#888; font-style:italic; padding: 20px; text-align: center;">${message}</div>`;
         }
     };
 
-    // Renderiza todos os gráficos com os dados mockados
-    renderPriceChart(mockData.priceComparison);
-    renderTopTopicsChart(mockData.topTopics);
-    renderVisibilityChart(mockData.visibility);
-    renderProfileStrengthChart(mockData.profileStrength);
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/psychologists/me/analytics`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            throw new Error('Não foi possível carregar os dados de análise.');
+        }
+
+        const data = await response.json();
+
+        // Renderiza todos os gráficos com os dados reais
+        renderPriceChart(data.priceComparison);
+        renderTopTopicsChart(data.topTopics);
+        renderVisibilityChart(data.visibility);
+        renderProfileStrengthChart(data.profileStrength);
+
+    } catch (error) {
+        console.error("Erro ao buscar dados de analytics:", error);
+        showEmptyState('price-chart-container', 'Não há dados de preço suficientes.');
+        showEmptyState('topics-chart-container', 'Ainda não há temas em alta.');
+        showEmptyState('visibility-chart-container', 'Sem dados de visibilidade.');
+        showEmptyState('profile-strength-chart-container', 'Não há dados de comparação.');
+    }
 }
 
 function renderPriceChart(data) {
     const ctx = document.getElementById('priceComparisonChart')?.getContext('2d');
-    if (!ctx) return;
+    if (!ctx || !data || data.myPrice === undefined || !data.platformAverage) {
+        showEmptyState('price-chart-container', 'Não há dados de preço suficientes para comparação.');
+        return;
+    }
 
     new Chart(ctx, {
         type: 'bar',
@@ -79,7 +87,10 @@ function renderPriceChart(data) {
 
 function renderTopTopicsChart(data) {
     const ctx = document.getElementById('topTopicsChart')?.getContext('2d');
-    if (!ctx) return;
+    if (!ctx || !data || data.length === 0) {
+        showEmptyState('topics-chart-container', 'Ainda não há temas em alta na plataforma.');
+        return;
+    }
 
     new Chart(ctx, {
         type: 'doughnut',
@@ -103,7 +114,10 @@ function renderTopTopicsChart(data) {
 
 function renderVisibilityChart(data) {
     const ctx = document.getElementById('visibilityChart')?.getContext('2d');
-    if (!ctx) return;
+    if (!ctx || !data || !data.labels || data.labels.length === 0) {
+        showEmptyState('visibility-chart-container', 'Sem dados de visibilidade do seu perfil nos últimos 7 dias.');
+        return;
+    }
 
     new Chart(ctx, {
         type: 'line',
@@ -130,7 +144,10 @@ function renderVisibilityChart(data) {
 
 function renderProfileStrengthChart(data) {
     const ctx = document.getElementById('profileStrengthChart')?.getContext('2d');
-    if (!ctx) return;
+    if (!ctx || !data || !data.myScores || !data.averageScores) {
+        showEmptyState('profile-strength-chart-container', 'Não há dados suficientes para comparar a força do seu perfil.');
+        return;
+    }
 
     new Chart(ctx, {
         type: 'radar',
@@ -168,5 +185,5 @@ function renderProfileStrengthChart(data) {
     });
 }
 
-// A função de inicialização é chamada pelo psi_dashboard.js
-window.initializePage = initializeAnalyticsPage;
+// Inicializa a página assim que o script é carregado.
+initializeAnalyticsPage();
