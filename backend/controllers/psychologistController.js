@@ -1647,8 +1647,9 @@ exports.getStats = async (req, res) => {
             clicksResult,
             appearancesResult,
             favoritesResult,
-            demandsResult,
-            xpHistoryResult // <--- NOVO: Resultado do histórico de XP
+            topDemandsResult,
+            totalDemandsResult,
+            xpHistoryResult
         ] = await Promise.all([
             // 1. Cliques no WhatsApp (Tabela de Logs)
             db.sequelize.query(
@@ -1670,14 +1671,24 @@ exports.getStats = async (req, res) => {
                 { replacements, type: db.sequelize.QueryTypes.SELECT }
             ).catch(err => { console.error("KPI Error (Favorites):", err.message); return [{ count: 0 }]; }),
 
-            // 4. Demandas (Tendências Gerais)
-            // Busca as últimas 100 buscas concluídas para calcular tendências
+            // 4. Top Demandas (Tendências) - Otimizado
             db.sequelize.query(
-                `SELECT "searchParams" FROM "DemandSearches" WHERE status = 'completed' ${dateCondition} ORDER BY "createdAt" DESC LIMIT 100`,
+                `SELECT value as name, COUNT(*) as count
+                 FROM "DemandSearches", jsonb_array_elements_text("searchParams"->'temas') as value
+                 WHERE status = 'completed' ${dateCondition} AND jsonb_typeof("searchParams"->'temas') = 'array'
+                 GROUP BY value ORDER BY count DESC LIMIT 3`,
                 { type: db.sequelize.QueryTypes.SELECT }
             ).catch(err => []),
 
-            // 5. Histórico de XP (Agrupado por dia)
+            // 5. Total de Demandas com Temas (para cálculo de %)
+            db.sequelize.query(
+                `SELECT COUNT(*) as total
+                 FROM "DemandSearches"
+                 WHERE status = 'completed' ${dateCondition} AND "searchParams"->'temas' IS NOT NULL AND jsonb_typeof("searchParams"->'temas') = 'array' AND jsonb_array_length("searchParams"->'temas') > 0`,
+                { type: db.sequelize.QueryTypes.SELECT }
+            ).catch(err => [{ total: 0 }]),
+
+            // 6. Histórico de XP (Agrupado por dia)
             db.sequelize.query(
                 `SELECT TO_CHAR("createdAt", 'YYYY-MM-DD') as date, SUM("points") as points
                  FROM "GamificationLogs"
@@ -1688,38 +1699,13 @@ exports.getStats = async (req, res) => {
             ).catch(err => [])
         ]);
 
-        // Processamento das Demandas (Em memória, pois JSON é complexo de agregar no SQL puro de forma portável)
-        const demandCounts = {};
-        let totalDemands = 0;
-        
-        if (demandsResult) {
-            demandsResult.forEach(row => {
-                const params = row.searchParams || {};
-                let temas = params.temas;
-                
-                // Tratamento para string JSON
-                if (typeof temas === 'string') {
-                    try { temas = JSON.parse(temas); } catch(e) {}
-                }
-                
-                if (Array.isArray(temas)) {
-                    temas.forEach(t => {
-                        demandCounts[t] = (demandCounts[t] || 0) + 1;
-                        totalDemands++;
-                    });
-                }
-            });
-        }
-
-        // Top 3 Demandas
-        const topDemands = Object.entries(demandCounts)
-            .map(([name, count]) => ({ 
-                name, 
-                count, 
-                percentage: totalDemands > 0 ? Math.round((count / totalDemands) * 100) : 0 
-            }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 3);
+        // Processamento das Demandas (Otimizado)
+        const totalDemands = parseInt(totalDemandsResult[0]?.total || 0, 10);
+        const topDemands = topDemandsResult.map(demanda => ({
+            name: demanda.name,
+            count: parseInt(demanda.count, 10),
+            percentage: totalDemands > 0 ? Math.round((parseInt(demanda.count, 10) / totalDemands) * 100) : 0
+        }));
 
         const stats = {
             whatsappClicks: parseInt(clicksResult[0]?.count || 0, 10),
