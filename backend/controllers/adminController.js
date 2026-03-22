@@ -415,24 +415,46 @@ exports.getAllForumPosts = async (req, res) => {
         const { page = 1, limit = 20 } = req.query;
         const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
-        // Usando uma query direta (raw query) para mais robustez contra problemas de associação do Sequelize
-        const postsQuery = `
-            SELECT
-                fp.id, fp.title, fp.category, fp."createdAt", fp.status, fp."isPinned", fp."isAnonymous",
-                p.nome as "authorName"
-            FROM "ForumPosts" fp
-            LEFT JOIN "Psychologists" p ON fp."PsychologistId" = p.id
-            ORDER BY fp."isPinned" DESC, fp."createdAt" DESC
-            LIMIT :limit OFFSET :offset
-        `;
-        const countQuery = `SELECT COUNT(*) FROM "ForumPosts"`;
+        // Usando o ORM do Sequelize, que é mais seguro contra erros de digitação de colunas.
+        const { count, rows } = await db.ForumPost.findAndCountAll({
+            include: [{
+                model: db.Psychologist,
+                attributes: ['nome'], // Apenas o nome é necessário
+                required: false // LEFT JOIN para não excluir posts de autores deletados
+            }],
+            order: [
+                ['isPinned', 'DESC'],
+                ['createdAt', 'DESC']
+            ],
+            limit: parseInt(limit, 10),
+            offset: offset,
+            distinct: true // Necessário quando se usa include com limit
+        });
 
-        const [posts, [countResult]] = await Promise.all([
-            db.sequelize.query(postsQuery, {
-                replacements: { limit: parseInt(limit, 10), offset },
-                type: db.sequelize.QueryTypes.SELECT
-            }),
-            db.sequelize.query(countQuery, { type: db.sequelize.QueryTypes.SELECT })
+        const formattedPosts = rows.map(post => {
+            return {
+                id: post.id,
+                title: post.title,
+                // Se o post for anônimo, mostra 'Anônimo'. Se o autor foi deletado, o 'Psychologist' será null.
+                authorName: post.isAnonymous ? 'Anônimo' : (post.Psychologist?.nome || 'Usuário Removido'),
+                category: post.category,
+                createdAt: post.createdAt,
+                status: post.status || 'active',
+                isPinned: post.isPinned || false
+            };
+        });
+
+        res.json({ 
+            data: formattedPosts, 
+            totalPages: Math.ceil(count / parseInt(limit, 10)), 
+            currentPage: parseInt(page, 10) 
+        });
+
+    } catch (error) {
+        console.error("Erro ao buscar todos os posts do fórum para admin:", error);
+        res.status(500).json({ error: 'Erro ao carregar posts.' });
+    }
+};
         ]);
 
         const totalCount = parseInt(countResult.count, 10);

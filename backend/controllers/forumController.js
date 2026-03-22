@@ -19,12 +19,12 @@ exports.getAllPosts = async (req, res) => {
         if (filter === 'populares') {
             // Otimização: Usa COUNT agregado em vez de subquery para cada linha.
             // O DISTINCT é importante para não contar errado devido ao JOIN.
-            order = [...pinnedOrder, [db.Sequelize.literal('"votes" + COUNT(DISTINCT "ForumComments"."id")'), 'DESC']];
+            order = [...pinnedOrder, [db.Sequelize.literal('("ForumPost"."votes" + COUNT(DISTINCT "ForumComments"."id"))'), 'DESC']];
         } else {
             // Lógica Híbrida: Recentes no topo, mas "Virais" (Interações >= 5) furam a fila
             order = [
                 ...pinnedOrder,
-                [db.Sequelize.literal('CASE WHEN "votes" + COUNT(DISTINCT "ForumComments"."id") >= 5 THEN 1 ELSE 0 END'), 'DESC'],
+                [db.Sequelize.literal('CASE WHEN ("ForumPost"."votes" + COUNT(DISTINCT "ForumComments"."id")) >= 5 THEN 1 ELSE 0 END'), 'DESC'],
                 ['createdAt', 'DESC']
             ];
         }
@@ -46,7 +46,7 @@ exports.getAllPosts = async (req, res) => {
             attributes: {
                 include: [
                     // Otimização: Conta comentários usando JOIN + GROUP BY em vez de subquery
-                    ...(db.ForumPost.getAttributes().isPinned ? ['isPinned'] : []),
+                    'isPinned',
                     [db.sequelize.fn('COUNT', db.sequelize.fn('DISTINCT', db.sequelize.col('ForumComments.id'))), 'commentCount'],
                     // Otimização: EXISTS é geralmente rápido, especialmente com índices. Mantido.
                     [db.Sequelize.literal(`EXISTS (SELECT 1 FROM "ForumVotes" WHERE "ForumVotes"."ForumPostId" = "ForumPost"."id" AND "ForumVotes"."PsychologistId" = ${psychologistId})`), 'supportedByMe'],
@@ -66,9 +66,10 @@ exports.getAllPosts = async (req, res) => {
                     required: false // Garante LEFT JOIN
                 }
             ],
-            group: ['ForumPost.id', 'Psychologist.id'], // Agrupa para a contagem funcionar
+            group: ['ForumPost.id', 'Psychologist.id'],
             limit: parsedLimit,
-            offset
+            offset,
+            subQuery: false // Impede que o Sequelize crie uma subquery que quebra a ordenação com COUNT
         });
 
         // Formata a resposta para o frontend
