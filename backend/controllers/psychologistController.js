@@ -1786,6 +1786,60 @@ exports.incrementProfileAppearance = async (req, res) => {
 };
 
 // ----------------------------------------------------------------------
+// Rota: GET /api/psychologists/me/favorites-profile (NOVA)
+// Descrição: Busca um perfil agregado dos pacientes que favoritaram o psicólogo.
+// ----------------------------------------------------------------------
+exports.getFavoritesProfile = async (req, res) => {
+    try {
+        const psychologistId = req.psychologist.id;
+
+        // 1. Encontra os IDs dos pacientes que favoritaram este psicólogo
+        const favorites = await db.PatientFavorites.findAll({
+            where: { PsychologistId: psychologistId },
+            attributes: ['PatientId']
+        });
+
+        const patientIds = favorites.map(f => f.PatientId);
+
+        if (patientIds.length === 0) {
+            return res.json({ total: 0, faixaValor: {}, genero: {}, temas: {} });
+        }
+
+        // 2. Busca os perfis desses pacientes
+        const patients = await db.Patient.findAll({
+            where: { id: { [Op.in]: patientIds } },
+            attributes: ['valor_sessao_faixa', 'identidade_genero', 'temas_buscados']
+        });
+
+        // 3. Agrega os dados
+        const aggregated = {
+            total: patients.length,
+            faixaValor: {},
+            genero: {},
+            temas: {}
+        };
+
+        patients.forEach(p => {
+            const faixa = p.valor_sessao_faixa || 'Não informado';
+            aggregated.faixaValor[faixa] = (aggregated.faixaValor[faixa] || 0) + 1;
+
+            const genero = p.identidade_genero || 'Não informado';
+            aggregated.genero[genero] = (aggregated.genero[genero] || 0) + 1;
+
+            const temas = p.temas_buscados || [];
+            temas.forEach(tema => {
+                aggregated.temas[tema] = (aggregated.temas[tema] || 0) + 1;
+            });
+        });
+
+        res.json(aggregated);
+    } catch (error) {
+        console.error("Erro ao buscar perfil de favoritos:", error);
+        res.status(500).json({ error: 'Erro interno ao buscar dados.' });
+    }
+};
+
+// ----------------------------------------------------------------------
 // Rota: GET /api/psychologists/me/analytics (NOVA)
 // Descrição: Busca dados agregados para a página de Métricas & Mercado.
 // ----------------------------------------------------------------------
