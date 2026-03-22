@@ -280,9 +280,18 @@ window.initializePage = function() {
         contentListContainer.innerHTML = '<p class="loading-state">Carregando...</p>';
         
         let endpoint = '';
-        if (type === 'blog') endpoint = '/api/admin/content/blog';
-        if (type === 'forum') endpoint = '/api/admin/content/forum';
-        if (type === 'qna') endpoint = '/api/admin/content/qna';
+       let renderFn;
+
+        if (type === 'blog') {
+            endpoint = '/api/admin/content/blog';
+            renderFn = renderGenericContentItem;
+        } else if (type === 'forum') {
+            endpoint = '/api/admin/forum/reports';
+            renderFn = renderForumReportItem;
+        } else if (type === 'qna') {
+            endpoint = '/api/admin/content/qna';
+            renderFn = renderGenericContentItem;
+        }
 
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -296,24 +305,7 @@ window.initializePage = function() {
             }
 
             let html = '<ul class="lista-moderacao">';
-            data.forEach(item => {
-                let title = item.titulo || item.title || 'Sem título';
-                let author = item.autor?.nome || item.Psychologist?.nome || item.Patient?.nome || 'Anônimo';
-                let date = new Date(item.createdAt || item.created_at).toLocaleDateString('pt-BR');
-                let id = item.id;
-
-                html += `
-                    <li style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <strong>${title}</strong><br>
-                            <small style="color: #666;">Por: ${author} em ${date}</small>
-                        </div>
-                        <button class="btn-tabela btn-tabela-perigo btn-delete-content" data-type="${type}" data-id="${id}">
-                            Excluir
-                        </button>
-                    </li>
-                `;
-            });
+            data.forEach(item => html += renderFn(item, type));
             html += '</ul>';
             contentListContainer.innerHTML = html;
 
@@ -321,26 +313,77 @@ window.initializePage = function() {
             contentListContainer.innerHTML = `<p class="empty-state" style="color: red;">Erro: ${error.message}</p>`;
         }
     }
+    function renderForumReportItem(item, type) {
+        let title = item.contentText || 'Conteúdo inválido';
+        if (title.length > 100) title = title.substring(0, 100) + '...';
+        let author = item.authorName || 'Anônimo';
+        let date = new Date(item.firstReportDate).toLocaleDateString('pt-BR');
+
+        return `
+            <li style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>${title}</strong> <span class="badge-count">${item.reportCount}</span><br>
+                    <small style="color: #666;">Tipo: ${item.contentType} | Por: ${author} em ${date}</small>
+                </div>
+                <button class="btn-tabela btn-tabela-perigo btn-delete-content" data-type="${item.contentType}" data-id="${item.contentId}">
+                    Remover
+                </button>
+            </li>
+        `;
+    }
+
+    function renderGenericContentItem(item, type) {
+        let title = item.titulo || item.title || 'Sem título';
+        let author = item.autor?.nome || item.Psychologist?.nome || item.Patient?.nome || 'Anônimo';
+        let date = new Date(item.createdAt || item.created_at).toLocaleDateString('pt-BR');
+        let id = item.id;
+
+        return `
+            <li style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>${title}</strong><br>
+                    <small style="color: #666;">Por: ${author} em ${date}</small>
+                </div>
+                <button class="btn-tabela btn-tabela-perigo btn-delete-content" data-type="${type}" data-id="${id}">
+                    Excluir
+                </button>
+            </li>
+        `;
+    }
 
     async function deleteContent(type, id) {
         if (!confirm('Tem certeza que deseja excluir este item permanentemente?')) return;
 
         let endpoint = '';
-        if (type === 'blog') endpoint = `/api/admin/content/blog/${id}`;
-        if (type === 'forum') endpoint = `/api/admin/content/forum/${id}`;
-        if (type === 'qna') endpoint = `/api/admin/content/qna/${id}`;
+        let method = 'DELETE';
+        let body = null;
+        let activeTab = document.querySelector('.content-tab-btn.active').dataset.target;
+       
+       if (type === 'blog') {
+            endpoint = `/api/admin/content/blog/${id}`;
+        } else if (type === 'post' || type === 'comment') {
+            endpoint = `/api/admin/forum/moderate`;
+            method = 'PUT';
+            body = JSON.stringify({ contentType: type, contentId: id, action: 'remove' });
+        } else if (type === 'qna') {
+            endpoint = `/api/admin/content/qna/${id}`;
+        } else {
+            return alert('Tipo de conteúdo desconhecido.');
+        }
 
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+                method: method,
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: body
             });
             
             if (response.ok) {
                 if (window.showToast) window.showToast('Conteúdo excluído com sucesso!');
-                loadContentForRemoval(type); // Recarrega a lista
+                loadContentForRemoval(activeTab); // Recarrega a lista da aba ativa
             } else {
-                alert('Erro ao excluir.');
+                const err = await response.json();
+                alert('Erro ao remover: ' + (err.error || 'Erro desconhecido'));
             }
         } catch (e) {
             console.error(e);

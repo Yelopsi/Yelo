@@ -406,6 +406,49 @@ exports.pinForumPost = async (req, res) => {
     }
 };
 
+/**
+ * Rota: GET /api/admin/forum/posts (NOVA)
+ * Descrição: Busca todos os posts do fórum para moderação.
+ */
+exports.getAllForumPosts = async (req, res) => {
+    try {
+        const { page = 1, limit = 20 } = req.query;
+        const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+
+        const { count, rows } = await db.ForumPost.findAndCountAll({
+            include: [
+                {
+                    model: db.Psychologist,
+                    attributes: ['id', 'nome'],
+                    required: false // LEFT JOIN
+                }
+            ],
+            order: [['isPinned', 'DESC'], ['createdAt', 'DESC']],
+            limit: parseInt(limit, 10),
+            offset: offset
+        });
+
+        const formattedPosts = rows.map(post => {
+            const postJSON = post.toJSON();
+            return {
+                id: postJSON.id,
+                title: postJSON.title,
+                authorName: postJSON.isAnonymous ? 'Anônimo' : (postJSON.Psychologist?.nome || 'Usuário Removido'),
+                category: postJSON.category,
+                createdAt: postJSON.createdAt,
+                status: postJSON.status || 'active', // Garante um status
+                isPinned: postJSON.isPinned || false
+            };
+        });
+
+        res.json({ data: formattedPosts, totalPages: Math.ceil(count / parseInt(limit, 10)), currentPage: parseInt(page, 10) });
+
+    } catch (error) {
+        console.error("Erro ao buscar todos os posts do fórum para admin:", error);
+        res.status(500).json({ error: 'Erro ao carregar posts.' });
+    }
+};
+
 // =====================================================================
 // (O RESTANTE DO SEU ARQUIVO PERMANECE IDÊNTICO)
 // =====================================================================

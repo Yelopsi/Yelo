@@ -1,5 +1,5 @@
 <div class="dashboard-header-actions">
-    <button class="btn-primario btn-sm" onclick="carregarDenuncias()">
+    <button class="btn-primario btn-sm" onclick="carregarPostsDoForum()">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
         Atualizar
     </button>
@@ -10,22 +10,22 @@
         <table class="tabela-gerenciamento">
             <thead>
                 <tr>
+                    <th>Título</th>
+                    <th>Autor</th>
+                    <th>Categoria</th>
                     <th>Data</th>
-                    <th>Tipo</th>
-                    <th>Autor do Conteúdo</th>
-                    <th>Denúncias</th>
                     <th>Status</th>
                     <th style="width: 280px;">Ações</th>
                 </tr>
             </thead>
-            <tbody id="lista-denuncias">
+            <tbody id="lista-posts-forum">
                 <!-- Preenchido via JS -->
             </tbody>
         </table>
     </div>
-    <div id="empty-state-reports" style="text-align: center; padding: 40px; color: #888; display: none;">
-        <div style="font-size: 3rem; margin-bottom: 10px;">🌻</div>
-        <p>Nenhuma denúncia pendente. A comunidade está tranquila! 🌻</p>
+    <div id="empty-state-posts" style="text-align: center; padding: 40px; color: #888; display: none;">
+        <div style="font-size: 3rem; margin-bottom: 10px;">🧐</div>
+        <p>Nenhuma discussão encontrada no fórum.</p>
     </div>
 </div>
 

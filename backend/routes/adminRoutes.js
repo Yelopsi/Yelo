@@ -282,6 +282,8 @@ router.get('/forum/reports', adminController.getForumReports);
 router.put('/forum/moderate', adminController.moderateForumContent);
 // Rota para fixar/desfixar um post do fórum (NOVO)
 router.put('/forum/posts/:id/pin', adminController.pinForumPost);
+// Rota para listar todos os posts do fórum para o admin (NOVO)
+router.get('/forum/posts', adminController.getAllForumPosts);
 
 // --- ROTAS DE EDIÇÃO DA COMUNIDADE (Apenas Admin pode alterar) ---
 router.put('/community-event', adminController.updateCommunityEvent);
