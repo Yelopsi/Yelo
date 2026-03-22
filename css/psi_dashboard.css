@@ -4271,6 +4271,14 @@ input:checked + .slider:before { transform: translateX(20px); }
         padding: 20px;
         border-radius: 20px;
     }
+
+    /* AJUSTE: Reduz o espaçamento entre ícones sociais e tags no perfil público mobile */
+    .profile-action-icons {
+        padding-bottom: 10px; /* Reduzido de 15px */
+    }
+    .profile-tags-container {
+        margin-top: 10px; /* Reduzido de 25px */
+    }
 }
     .finance-controls-row {
         flex-direction: column;
