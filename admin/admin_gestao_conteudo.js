@@ -297,8 +297,15 @@ window.initializePage = function() {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            const data = await response.json();
+            let data = await response.json();
 
+            // CORREÇÃO: Garante que 'data' seja sempre um array.
+            // Se a API retornar um objeto de erro (ex: { error: '...' }), evita que o .length quebre.
+            if (!Array.isArray(data)) {
+                if (data && data.error) throw new Error(data.error);
+                data = []; // Trata como lista vazia se o formato for inesperado.
+            }
+            
             if (data.length === 0) {
                 contentListContainer.innerHTML = '<p class="empty-state">Nenhum conteúdo encontrado.</p>';
                 return;
