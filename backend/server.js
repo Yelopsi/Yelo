@@ -1866,6 +1866,8 @@ app.use('/api/psychologists/me/posts', blogRoutes);
 
 // ROTA DE ANALYTICS (NOVA)
 app.get('/api/psychologists/me/analytics', protect, psychologistController.getAnalyticsData);
+// ROTA DE FAVORITOS (NOVA)
+app.get('/api/psychologists/me/favorites-profile', protect, psychologistController.getFavoritesProfile);
 
 app.use('/api/psychologists', psychologistRoutes);
 app.use('/api/messaging', messagingRoutes);

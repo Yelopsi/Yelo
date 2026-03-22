@@ -1,0 +1,26 @@
+<!-- Container da Página de Análise de Favoritos -->
+<div id="favoritos-analytics-container">
+
+    <!-- 1. Cabeçalho da Página -->
+    <div class="main-header">
+        <div class="header-content">
+            <!-- O botão de voltar agora usa o sistema de navegação do dashboard -->
+            <a href="#" data-page="psi_visao_geral.html" class="btn-voltar" style="margin-bottom: 15px; background: rgba(255,255,255,0.1); color: white; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">&larr; Voltar</a>
+            <h1>Perfil de Quem te Favoritou</h1>
+            <p>Entenda as características dos pacientes que têm interesse no seu trabalho.</p>
+        </div>
+    </div>
+
+    <!-- Grid de Análises -->
+    <div class="analytics-grid" id="favoritos-grid">
+        <!-- Os cards serão inseridos aqui pelo JS -->
+        <div class="widget" id="loading-favoritos" style="grid-column: 1 / -1; text-align: center;">
+            <div class="loader-wrapper"><div class="loader-spinner"></div></div>
+            <p>Analisando perfis...</p>
+        </div>
+    </div>
+
+</div>
+
+<!-- Carrega o script que desenha os gráficos desta página -->
+<script src="psi_favoritos_analytics.js"></script>

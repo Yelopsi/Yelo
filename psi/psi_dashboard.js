@@ -4,13 +4,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- FIX: Adiciona evento de clique para o card de Benchmarking ---
     // Delegação de evento no body para garantir que funcione mesmo com conteúdo carregado dinamicamente.
     document.body.addEventListener('click', function(e) {
-        // Procura pelo link dentro do card específico
-        const link = e.target.closest('#card-benchmarking a');
+        // Procura por um link com data-page dentro dos cards de KPI
+        const link = e.target.closest('.kpi-card a[data-page]');
         if (link) {
             e.preventDefault(); // Impede a navegação padrão do link
             // Usa a função global para carregar a página de análise
-            if (typeof window.loadPage === 'function') {
-                window.loadPage('psi_analytics.html');
+            const pageToLoad = link.getAttribute('data-page');
+            if (pageToLoad && typeof window.loadPage === 'function') {
+                window.loadPage(pageToLoad);
             }
         }
     });
@@ -684,6 +685,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 else if (url.includes('psi_hub')) inicializarHubComunidade(); 
                 else if (url.includes('psi_blog')) inicializarBlog(dataPromise); // Passa a promessa
                 else if (url.includes('psi_forum')) inicializarForum(dataPromise); // Passa a promessa
+                else if (url.includes('psi_favoritos_analytics.html')) {
+                    // A página se auto-inicializa, mas garantimos que o cleanup de outras páginas rode.
+                }
                 // Adicione outras inicializações de página aqui
             })
             .catch(e => mainContent.innerHTML = `<p>Erro ao carregar: ${e}</p>`);
