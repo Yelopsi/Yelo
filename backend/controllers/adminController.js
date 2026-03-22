@@ -415,33 +415,36 @@ exports.getAllForumPosts = async (req, res) => {
         const { page = 1, limit = 20 } = req.query;
         const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
-        const { count, rows } = await db.ForumPost.findAndCountAll({
-            include: [
-                {
-                    model: db.Psychologist,
-                    attributes: ['id', 'nome'],
-                    required: false // LEFT JOIN
-                }
-            ],
-            order: [['isPinned', 'DESC'], ['createdAt', 'DESC']],
-            limit: parseInt(limit, 10),
-            offset: offset
-        });
+        // Usando uma query direta (raw query) para mais robustez contra problemas de associação do Sequelize
+        const postsQuery = `
+            SELECT
+                fp.id, fp.title, fp.category, fp."createdAt", fp.status, fp."isPinned", fp."isAnonymous",
+                p.nome as "authorName"
+            FROM "ForumPosts" fp
+            LEFT JOIN "Psychologists" p ON fp."PsychologistId" = p.id
+            ORDER BY fp."isPinned" DESC, fp."createdAt" DESC
+            LIMIT :limit OFFSET :offset
+        `;
+        const countQuery = `SELECT COUNT(*) FROM "ForumPosts"`;
 
-        const formattedPosts = rows.map(post => {
-            const postJSON = post.toJSON();
-            return {
-                id: postJSON.id,
-                title: postJSON.title,
-                authorName: postJSON.isAnonymous ? 'Anônimo' : (postJSON.Psychologist?.nome || 'Usuário Removido'),
-                category: postJSON.category,
-                createdAt: postJSON.createdAt,
-                status: postJSON.status || 'active', // Garante um status
-                isPinned: postJSON.isPinned || false
-            };
-        });
+        const [posts, [countResult]] = await Promise.all([
+            db.sequelize.query(postsQuery, {
+                replacements: { limit: parseInt(limit, 10), offset },
+                type: db.sequelize.QueryTypes.SELECT
+            }),
+            db.sequelize.query(countQuery, { type: db.sequelize.QueryTypes.SELECT })
+        ]);
 
-        res.json({ data: formattedPosts, totalPages: Math.ceil(count / parseInt(limit, 10)), currentPage: parseInt(page, 10) });
+        const totalCount = parseInt(countResult.count, 10);
+
+        const formattedPosts = posts.map(post => ({
+            ...post,
+            authorName: post.isAnonymous ? 'Anônimo' : (post.authorName || 'Usuário Removido'),
+            status: post.status || 'active',
+            isPinned: post.isPinned || false
+        }));
+
+        res.json({ data: formattedPosts, totalPages: Math.ceil(totalCount / parseInt(limit, 10)), currentPage: parseInt(page, 10) });
 
     } catch (error) {
         console.error("Erro ao buscar todos os posts do fórum para admin:", error);
