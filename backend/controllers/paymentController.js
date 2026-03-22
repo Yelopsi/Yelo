@@ -1,6 +1,7 @@
 // backend/controllers/paymentController.js
 const db = require('../models');
 const emailService = require('../services/emailService');
+const gamificationService = require('../services/gamificationService');
 
 // Configurações do Asaas
 // Limpeza robusta da URL (remove espaços e barras finais)
@@ -414,6 +415,9 @@ exports.handleWebhook = async (req, res) => {
                     // cancelAtPeriodEnd: false, // REMOVIDO: Não sobrescreve decisão de cancelamento do usuário
                     subscription_payments_count: currentPayments // Atualiza o contador de pagamentos
                 });
+
+                // --- GAMIFICATION: Tenta atribuir a badge de Pioneiro ---
+                gamificationService.assignPioneerBadge(psi.id).catch(e => console.error("Erro no hook de badge Pioneiro (Pagamento):", e));
 
                 // --- ENVIA E-MAIL PERSONALIZADO YELO ---
                 // [OTIMIZAÇÃO] Não espera o envio de e-mail (evita Timeout do Webhook)

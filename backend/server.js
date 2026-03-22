@@ -920,6 +920,61 @@ app.get('/api/fix-admin-table', async (req, res) => {
 });
 
 // 🚨 ROTA DE EMERGÊNCIA (COMENTADA PARA SEGURANÇA) 🚨
+
+// --- ROTA DE CORREÇÃO: ATRIBUI BADGES DE PIONEIRO RETROATIVAMENTE ---
+app.get('/api/fix-assign-pioneer-badges', async (req, res) => {
+    try {
+        const gamificationService = require('./services/gamificationService');
+        const PIONEER_BADGE_LIMIT = 100;
+
+        // 1. Conta quantos já têm a badge para saber quantos slots faltam
+        const currentPioneerCount = await db.Psychologist.count({
+            where: { 'badges.pioneiro': true }
+        });
+
+        const slotsAvailable = PIONEER_BADGE_LIMIT - currentPioneerCount;
+
+        if (slotsAvailable <= 0) {
+            return res.send('Todos os 100 badges de Pioneiro já foram distribuídos.');
+        }
+
+        // 2. Busca os candidatos elegíveis que AINDA NÃO têm a badge
+        const candidates = await db.Psychologist.findAll({
+            where: {
+                status: 'active',
+                [Op.or]: [
+                    { is_exempt: true },
+                    { planExpiresAt: { [Op.gt]: new Date() } }
+                ],
+                [Op.or]: [
+                    { badges: { [Op.is]: null } },
+                    { 'badges.pioneiro': { [Op.not]: true } }
+                ]
+            },
+            order: [['createdAt', 'ASC']],
+            limit: slotsAvailable // Busca apenas o número de candidatos necessários
+        });
+
+        if (candidates.length === 0) {
+            return res.send('Nenhum novo candidato elegível para a badge de Pioneiro encontrado.');
+        }
+
+        // 3. Atribui a badge para os candidatos encontrados
+        let assignedCount = 0;
+        for (const candidate of candidates) {
+            await gamificationService.assignPioneerBadge(candidate.id);
+            assignedCount++;
+        }
+
+        res.send(`<h2>Atribuição de Badges Concluída!</h2>
+                  <p><strong>${assignedCount}</strong> novos badges de "Pioneiro" foram atribuídos.</p>
+                  <p>Total de pioneiros agora: ${currentPioneerCount + assignedCount}/${PIONEER_BADGE_LIMIT}.</p>`);
+
+    } catch (error) {
+        console.error("Erro ao atribuir badges de pioneiro:", error);
+        res.status(500).send("Erro: " + error.message);
+    }
+});
 /*
 app.get('/api/fix-reset-admin-password', async (req, res) => {
     try {
@@ -2243,6 +2298,12 @@ app.get('/comunidade', (req, res) => {
     res.render('perguntas'); 
 });
 
+// [NOVO] Redireciona a antiga página /jornada para a home para evitar erro 404.
+app.get('/jornada', (req, res) => {
+    // O código 301 indica um redirecionamento permanente, o que é ideal para SEO.
+    res.redirect(301, '/');
+});
+
 // Garante que "Profissionais" abra o arquivo correto (se existir profissionais.ejs)
 app.get('/profissionais', (req, res) => {
     res.render('profissionais');
@@ -2297,6 +2358,19 @@ app.get('/logout', (req, res) => {
 // Captura tentativas de logout com links relativos quebrados (ex: /admin/login)
 app.get(['/admin/login', '/psi/login', '/patient/login'], (req, res) => {
     res.redirect('/logout');
+});
+
+// --- ROTA PARA ROBOTS.TXT (SEO) ---
+// Bloqueia o rastreamento de pastas de API e de usuários logados.
+app.get('/robots.txt', (req, res) => {
+    res.type('text/plain');
+    res.send(
+`User-agent: *
+Disallow: /api/
+Disallow: /admin/
+Disallow: /psi/
+Disallow: /patient/`
+    );
 });
 
 // --- ROTA AUXILIAR PARA IDENTIFICAR TIPO DE USUÁRIO (RECUPERAÇÃO DE SENHA) ---
