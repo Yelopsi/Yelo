@@ -4280,6 +4280,47 @@ input:checked + .slider:before { transform: translateX(20px); }
         margin-top: 10px; /* Reduzido de 25px */
     }
 }
+
+/* ==========================================================================
+   PÁGINA DE MÉTRICAS & MERCADO (psi_analytics.html)
+   ========================================================================== */
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* 1 coluna no mobile */
+    gap: 30px;
+    margin-top: 20px;
+}
+
+@media (min-width: 992px) {
+    .analytics-grid {
+        grid-template-columns: 1fr 1fr; /* 2 colunas no desktop */
+    }
+}
+
+.widget .widget-subtitle {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: -15px;
+    margin-bottom: 25px;
+}
+
+.chart-container {
+    position: relative;
+    height: 280px;
+    width: 100%;
+}
+
+.analysis-text {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #555;
+    border-left: 4px solid var(--cor-Yelo);
+}
+
     .finance-controls-row {
         flex-direction: column;
         align-items: stretch !important;
