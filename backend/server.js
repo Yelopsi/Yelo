@@ -1864,6 +1864,9 @@ app.use('/api/patients', patientRoutes);
 // MOVIDO PARA CIMA: Evita conflito com a rota genérica /api/psychologists
 app.use('/api/psychologists/me/posts', blogRoutes);
 
+// ROTA DE ANALYTICS (NOVA)
+app.get('/api/psychologists/me/analytics', protect, psychologistController.getAnalyticsData);
+
 app.use('/api/psychologists', psychologistRoutes);
 app.use('/api/messaging', messagingRoutes);
 app.use('/api/messages', messageRoutes);

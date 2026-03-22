@@ -1773,3 +1773,96 @@ exports.incrementProfileAppearance = async (req, res) => {
         res.status(200).json({ success: false });
     }
 };
+
+// ----------------------------------------------------------------------
+// Rota: GET /api/psychologists/me/analytics (NOVA)
+// Descrição: Busca dados agregados para a página de Métricas & Mercado.
+// ----------------------------------------------------------------------
+exports.getAnalyticsData = async (req, res) => {
+    try {
+        const psychologistId = req.psychologist.id;
+
+        // --- 1. Price Comparison ---
+        const psychologist = await db.Psychologist.findByPk(psychologistId);
+        if (!psychologist) {
+            return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+        }
+
+        const myPrice = psychologist.valor_sessao_numero || 0;
+
+        const [cityAvgResult] = await db.sequelize.query(
+            `SELECT AVG("valor_sessao_numero") as avg FROM "Psychologists" WHERE "cidade" = :city AND status = 'active' AND "valor_sessao_numero" > 0`,
+            { replacements: { city: psychologist.cidade }, type: db.sequelize.QueryTypes.SELECT }
+        );
+        const cityAverage = parseFloat(cityAvgResult?.avg || 0);
+
+        const [platformAvgResult] = await db.sequelize.query(
+            `SELECT AVG("valor_sessao_numero") as avg FROM "Psychologists" WHERE status = 'active' AND "valor_sessao_numero" > 0`,
+            { type: db.sequelize.QueryTypes.SELECT }
+        );
+        const platformAverage = parseFloat(platformAvgResult?.avg || 0);
+
+        // --- 2. Top Topics ---
+        const [topTopics] = await db.sequelize.query(`
+            SELECT value as topic, COUNT(*) as count
+            FROM "DemandSearches",
+            jsonb_array_elements_text("searchParams"->'temas') as value
+            WHERE "createdAt" >= NOW() - INTERVAL '30 days'
+            AND jsonb_typeof("searchParams"->'temas') = 'array'
+            GROUP BY value
+            ORDER BY count DESC
+            LIMIT 5;
+        `);
+
+        // --- 3. Visibility ---
+        const [visibilityRaw] = await db.sequelize.query(`
+            SELECT TO_CHAR(d.day, 'DD/MM') as label, COALESCE(COUNT(p.id), 0) as appearances
+            FROM (
+                SELECT generate_series(
+                    CURRENT_DATE - INTERVAL '6 days',
+                    CURRENT_DATE,
+                    '1 day'
+                )::date AS day
+            ) d
+            LEFT JOIN "ProfileAppearanceLogs" p ON p."createdAt"::date = d.day AND p."psychologistId" = :psychologistId
+            GROUP BY d.day
+            ORDER BY d.day ASC;
+        `, { replacements: { psychologistId } });
+        
+        const visibility = {
+            labels: visibilityRaw.map(v => v.label),
+            appearances: visibilityRaw.map(v => parseInt(v.appearances, 10))
+        };
+
+        // --- 4. Profile Strength (Simplified) ---
+        const myReviews = await db.Review.findAll({ where: { psychologistId }, attributes: [[db.sequelize.fn('AVG', db.sequelize.col('rating')), 'avgRating']] });
+        const myPostCount = await db.Post.count({ where: { psychologist_id: psychologistId } });
+        const myEngagement = psychologist.xp || 0;
+        const myCompletion = (psychologist.badges && psychologist.badges.autentico) ? 10 : 5;
+        const myAvgRating = parseFloat(myReviews[0]?.dataValues.avgRating || 0);
+
+        const [platformStrength] = await db.sequelize.query(`
+            SELECT
+                AVG(xp) as avgEngagement,
+                (SELECT AVG(rating) FROM "Reviews") as avgRating,
+                (SELECT CAST(COUNT(*) AS FLOAT) / (SELECT COUNT(*) FROM "Psychologists" WHERE status='active') FROM posts) as avgPosts
+            FROM "Psychologists" WHERE status = 'active'
+        `);
+        
+        const normalize = (value, avg, max) => Math.min(10, Math.max(0, (value / (avg * 1.5 || max)) * 10));
+
+        res.json({
+            priceComparison: { myPrice, cityAverage, platformAverage },
+            topTopics,
+            visibility,
+            profileStrength: {
+                myScores: [myCompletion, normalize(myAvgRating, parseFloat(platformStrength?.avgRating || 0), 5), normalize(myEngagement, parseFloat(platformStrength?.avgEngagement || 0), 5000), normalize(myPostCount, parseFloat(platformStrength?.avgPosts || 0), 10), 8],
+                averageScores: [7, normalize(parseFloat(platformStrength?.avgRating || 0), parseFloat(platformStrength?.avgRating || 0), 5), normalize(parseFloat(platformStrength?.avgEngagement || 0), parseFloat(platformStrength?.avgEngagement || 0), 5000), normalize(parseFloat(platformStrength?.avgPosts || 0), parseFloat(platformStrength?.avgPosts || 0), 10), 7]
+            }
+        });
+
+    } catch (error) {
+        console.error("Erro ao buscar dados de analytics:", error);
+        res.status(500).json({ error: 'Erro interno ao buscar dados de análise.' });
+    }
+};
