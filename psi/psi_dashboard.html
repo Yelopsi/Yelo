@@ -780,6 +780,9 @@
     <script>
         // Observa mudanças no #main-content para executar scripts inseridos via AJAX
         const mainContentObserver = new MutationObserver((mutations) => {
+            // Pausa o observador para evitar que ele reaja às suas próprias mudanças (loop infinito).
+            mainContentObserver.disconnect();
+
             mutations.forEach((mutation) => {
                 mutation.addedNodes.forEach((node) => {
                     if (node.nodeType === 1) {
@@ -803,6 +806,12 @@
                     }
                 });
             });
+
+            // Reconecta o observador para futuras mudanças.
+            const mainContainer = document.getElementById('main-content');
+            if (mainContainer) {
+                mainContentObserver.observe(mainContainer, { childList: true, subtree: true });
+            }
         });
         const mainContainer = document.getElementById('main-content');
         if(mainContainer) mainContentObserver.observe(mainContainer, { childList: true, subtree: true });
