@@ -455,24 +455,6 @@ exports.getAllForumPosts = async (req, res) => {
         res.status(500).json({ error: 'Erro ao carregar posts.' });
     }
 };
-        ]);
-
-        const totalCount = parseInt(countResult.count, 10);
-
-        const formattedPosts = posts.map(post => ({
-            ...post,
-            authorName: post.isAnonymous ? 'Anônimo' : (post.authorName || 'Usuário Removido'),
-            status: post.status || 'active',
-            isPinned: post.isPinned || false
-        }));
-
-        res.json({ data: formattedPosts, totalPages: Math.ceil(totalCount / parseInt(limit, 10)), currentPage: parseInt(page, 10) });
-
-    } catch (error) {
-        console.error("Erro ao buscar todos os posts do fórum para admin:", error);
-        res.status(500).json({ error: 'Erro ao carregar posts.' });
-    }
-};
 
 // =====================================================================
 // (O RESTANTE DO SEU ARQUIVO PERMANECE IDÊNTICO)
