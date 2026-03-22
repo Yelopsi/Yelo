@@ -1,0 +1,57 @@
+<!-- Container da Página de Métricas -->
+<div id="analytics-container">
+
+    <!-- 1. Cabeçalho da Página -->
+    <div class="main-header">
+        <div class="header-content">
+            <h1>Métricas & Mercado</h1>
+            <p>Entenda seu posicionamento na plataforma e as tendências de busca dos pacientes.</p>
+        </div>
+    </div>
+
+    <!-- Grid de Análises -->
+    <div class="analytics-grid">
+
+        <!-- Card 1: Análise de Preços -->
+        <div class="widget">
+            <h3>Análise de Preços</h3>
+            <p class="widget-subtitle">Compare o valor da sua sessão com a média do mercado na sua região.</p>
+            <div class="chart-container" id="price-chart-container">
+                <canvas id="priceComparisonChart"></canvas>
+            </div>
+            <div id="price-analysis-text" class="analysis-text"></div>
+        </div>
+
+        <!-- Card 2: Temas em Alta -->
+        <div class="widget">
+            <h3>Temas em Alta</h3>
+            <p class="widget-subtitle">Os 5 temas mais buscados por pacientes nos últimos 30 dias.</p>
+            <div class="chart-container" id="topics-chart-container">
+                <canvas id="topTopicsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Card 3: Visibilidade do Perfil -->
+        <div class="widget">
+            <h3>Visibilidade do Perfil</h3>
+            <p class="widget-subtitle">Aparições do seu perfil nos resultados de busca nos últimos 7 dias.</p>
+            <div class="chart-container" id="visibility-chart-container">
+                <canvas id="visibilityChart"></canvas>
+            </div>
+            <div id="visibility-analysis-text" class="analysis-text"></div>
+        </div>
+
+        <!-- Card 4: Força do Perfil -->
+        <div class="widget">
+            <h3>Força do Perfil</h3>
+            <p class="widget-subtitle">Sua pontuação em comparação com a média dos psicólogos da plataforma.</p>
+            <div class="chart-container" id="profile-strength-chart-container">
+                <canvas id="profileStrengthChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- O script psi_analytics.js será carregado dinamicamente pelo dashboard principal -->
