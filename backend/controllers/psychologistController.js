@@ -730,9 +730,7 @@ exports.updatePsychologistProfile = async (req, res) => {
         });
 
         // --- GAMIFICATION HOOK (BADGE AUTÊNTICO) ---
-        // Recarrega o objeto para garantir que a verificação use os dados mais recentes do banco
-        await psychologist.reload();
-        await checkProfileCompletionLocal(psychologist);
+        await gamificationService.checkProfileCompletion(psychologist.id);
 
         res.json({
             id: psychologist.id,
@@ -907,8 +905,7 @@ exports.updateProfilePhoto = async (req, res) => {
         await psychologistToUpdate.update({ fotoUrl: result.secure_url });
 
         // --- GAMIFICATION HOOK (BADGE AUTÊNTICO) ---
-        await psychologistToUpdate.reload();
-        await checkProfileCompletionLocal(psychologistToUpdate);
+        await gamificationService.checkProfileCompletion(psychologistToUpdate.id);
 
         // 4. Limpeza: Remove o arquivo local temporário
         try {
@@ -1764,70 +1761,6 @@ exports.incrementWhatsappClick = async (req, res) => {
         res.status(200).json({ success: false });
     }
 };
-
-// ----------------------------------------------------------------------
-// FUNÇÃO AUXILIAR: VERIFICAÇÃO DE PERFIL COMPLETO (BADGE AUTÊNTICO)
-// ----------------------------------------------------------------------
-async function checkProfileCompletionLocal(psychologist) {
-    try {
-        // Critérios: Todos os campos obrigatórios preenchidos
-        // EXCEÇÕES: Razão Social, Redes Sociais (LinkedIn, Instagram, etc)
-        const requiredFields = [
-            'nome', 'bio', 'crp', 'telefone', 'cep', 'cidade', 'estado', 
-            'fotoUrl', 'valor_sessao_numero', 'genero_identidade'
-        ];
-        const requiredArrays = [
-            'temas_atuacao', 'abordagens_tecnicas', 'modalidade',
-            // 'publico_alvo', 'estilo_terapia', 'praticas_inclusivas', // [FIX] Removido: Não obrigar campos opcionais para a badge
-            'disponibilidade_periodo'
-        ];
-
-        let isComplete = true;
-
-        // 1. Verifica campos de texto/número
-        for (const field of requiredFields) {
-            const value = psychologist[field];
-            // Rejeita null, undefined e strings vazias, mas permite o número 0.
-            if (value == null || (typeof value === 'string' && value.trim() === '')) {
-                isComplete = false;
-                // Log para depuração no servidor
-                console.log(`[VERIFICAÇÃO BADGE AUTÊNTICO] Falha no campo obrigatório: '${field}' está vazio.`);
-                break;
-            }
-        }
-
-        // 2. Verifica arrays (apenas se passou na fase 1)
-        if (isComplete) {
-            for (const field of requiredArrays) {
-                const val = psychologist[field];
-                if (!val || !Array.isArray(val) || val.length === 0) {
-                    isComplete = false;
-                    break;
-                }
-            }
-        }
-
-        // 3. Atualiza Badge e XP
-        // Clona o objeto de badges para garantir detecção de mudança pelo Sequelize
-        let currentBadges = psychologist.badges ? JSON.parse(JSON.stringify(psychologist.badges)) : {};
-        let changed = false;
-
-        if (isComplete && !currentBadges.autentico) {
-            currentBadges.autentico = true;
-            psychologist.xp = (psychologist.xp || 0) + 500; // +500 XP
-            changed = true;
-        } else if (!isComplete && currentBadges.autentico) {
-            delete currentBadges.autentico; // Remove se apagar info obrigatória
-            changed = true;
-        }
-
-        if (changed) {
-            await psychologist.update({ badges: currentBadges, xp: psychologist.xp });
-        }
-    } catch (error) {
-        console.error("Erro na verificação local de perfil:", error);
-    }
-}
 
 exports.incrementProfileAppearance = async (req, res) => {
     try {

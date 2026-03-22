@@ -1,6 +1,12 @@
 const db = require('../models');
 const { Op } = require('sequelize');
 
+const PIONEER_BADGE_LIMIT = 100;
+const PIONEER_PLATFORM_LIMIT = 500;
+
+// --- Helper para saber quanto falta para o próximo nível ---
+const getNextLevelXP = (currentXP) => { const next = LEVELS.find(l => l.min > currentXP); return next ? next.min : currentXP; };
+
 // --- TABELA DE PONTUAÇÃO ---
 const SCORING_RULES = {
     'profile_complete': { points: 500, limit: 1, type: 'unique' }, // Único
@@ -21,115 +27,119 @@ const LEVELS = [
     { slug: 'nivel_mentor',       min: 15000,  label: 'Mentor / Top Voice' }
 ];
 
-// --- FUNÇÃO DE CÁLCULO DE BADGES ---
-exports.calculateBadges = async (psychologistId) => {
+/**
+ * Tenta atribuir a badge 'Pioneiro' a um psicólogo.
+ */
+async function assignPioneerBadge(psychologistId) {
+    const transaction = await db.sequelize.transaction();
+    try {
+        const totalPsychologists = await db.Psychologist.count({ transaction });
+        if (totalPsychologists > PIONEER_PLATFORM_LIMIT) {
+            await transaction.commit();
+            return;
+        }
+
+        const pioneerCount = await db.Psychologist.count({
+            where: { 'badges.pioneiro': true },
+            transaction
+        });
+
+        if (pioneerCount >= PIONEER_BADGE_LIMIT) {
+            await transaction.commit();
+            return;
+        }
+
+        const psychologist = await db.Psychologist.findByPk(psychologistId, { transaction });
+
+        if (!psychologist || (psychologist.badges && psychologist.badges.pioneiro)) {
+            await transaction.commit();
+            return;
+        }
+
+        const isEligible = psychologist.status === 'active' &&
+                           (psychologist.is_exempt === true || (psychologist.planExpiresAt && new Date(psychologist.planExpiresAt) > new Date()));
+
+        if (!isEligible) {
+            await transaction.commit();
+            return;
+        }
+
+        const currentBadges = psychologist.badges || {};
+        const newBadges = { ...currentBadges, pioneiro: true };
+
+        await psychologist.update({ badges: newBadges }, { transaction });
+        console.log(`[GAMIFICATION] 🏆 Badge 'Pioneiro' atribuída a ${psychologist.email}.`);
+
+        await transaction.commit();
+    } catch (error) {
+        await transaction.rollback();
+        console.error(`[GAMIFICATION] Erro ao atribuir badge 'Pioneiro':`, error);
+    }
+}
+
+/**
+ * Calcula e atualiza as badges de um psicólogo.
+ */
+async function calculateBadges(psychologistId) {
     try {
         const psi = await db.Psychologist.findByPk(psychologistId);
         if (!psi) return;
 
-        let badges = psi.badges || {};
-        // Limpa o progresso antigo para recalcular
+        let badges = psi.badges ? JSON.parse(JSON.stringify(psi.badges)) : {};
         badges.progress = badges.progress || {};
 
-        // 1. 🌱 SEMEADOR (Blog)
         const postCount = await db.Post.count({ where: { psychologist_id: psychologistId } });
-        if (postCount >= 15) {
-            badges.semeador = 'ouro';
-            badges.semeador_progress = { current: postCount, next: 15, tier: 'max' };
-        } else if (postCount >= 5) {
-            badges.semeador = 'prata';
-            badges.semeador_progress = { current: postCount, next: 15, tier: 'ouro' };
-        } else if (postCount >= 1) {
-            badges.semeador = 'bronze';
-            badges.semeador_progress = { current: postCount, next: 5, tier: 'prata' };
-        } else {
-            delete badges.semeador;
-            badges.semeador_progress = { current: 0, next: 1, tier: 'bronze' };
-        }
+        if (postCount >= 15) badges.semeador = 'ouro';
+        else if (postCount >= 5) badges.semeador = 'prata';
+        else if (postCount >= 1) badges.semeador = 'bronze';
+        else delete badges.semeador;
 
-        // 2. 💬 VOZ ATIVA (Comunidade)
         const commentCount = await db.ForumComment.count({ where: { PsychologistId: psychologistId } });
-        if (commentCount >= 200) {
-            badges.voz_ativa = 'ouro';
-            badges.voz_ativa_progress = { current: commentCount, next: 200, tier: 'max' };
-        } else if (commentCount >= 50) {
-            badges.voz_ativa = 'prata';
-            badges.voz_ativa_progress = { current: commentCount, next: 200, tier: 'ouro' };
-        } else if (commentCount >= 10) {
-            badges.voz_ativa = 'bronze';
-            badges.voz_ativa_progress = { current: commentCount, next: 50, tier: 'prata' };
-        } else {
-            delete badges.voz_ativa;
-            badges.voz_ativa_progress = { current: commentCount, next: 10, tier: 'bronze' };
-        }
+        if (commentCount >= 200) badges.voz_ativa = 'ouro';
+        else if (commentCount >= 50) badges.voz_ativa = 'prata';
+        else if (commentCount >= 10) badges.voz_ativa = 'bronze';
+        else delete badges.voz_ativa;
 
-        // 3. 🛡️ AUTÊNTICO (Segurança)
-        const isProfileComplete = psi.nome && psi.crp && psi.bio && psi.fotoUrl && 
-                                  psi.telefone && psi.cidade && psi.valor_sessao_numero &&
-                                  psi.temas_atuacao && psi.temas_atuacao.length > 0 &&
-                                  psi.abordagens_tecnicas && psi.abordagens_tecnicas.length > 0 &&
-                                  psi.modalidade && psi.modalidade.length > 0;
-        if (isProfileComplete) badges.autentico = true;
+        const requiredFields = ['nome', 'bio', 'crp', 'telefone', 'cep', 'cidade', 'estado', 'fotoUrl', 'valor_sessao_numero', 'genero_identidade'];
+        const requiredArrays = ['temas_atuacao', 'abordagens_tecnicas', 'modalidade', 'disponibilidade_periodo'];
+        const isComplete = requiredFields.every(field => psi[field] != null && String(psi[field]).trim() !== '') &&
+                           requiredArrays.every(field => Array.isArray(psi[field]) && psi[field].length > 0);
+
+        if (isComplete) badges.autentico = true;
         else delete badges.autentico;
-
-        // 4. 🏅 PIONEIRO (Legado)
-        const launchDate = new Date('2024-01-01');
-        const cutoffDate = new Date(launchDate);
-        cutoffDate.setMonth(cutoffDate.getMonth() + 6);
-        if (psi.id <= 100 || psi.createdAt < cutoffDate) {
-            badges.pioneiro = true;
-        }
 
         await psi.update({ badges });
         return badges;
     } catch (error) {
         console.error("Erro em calculateBadges:", error);
     }
-};
+}
 
-exports.processAction = async (psychologistId, actionType) => {
+/**
+ * Processa uma ação de gamificação.
+ */
+async function processAction(psychologistId, actionType) {
     try {
         const rule = SCORING_RULES[actionType];
         if (!rule) return null;
 
         const now = new Date();
-        const startOfDay = new Date(now.setHours(0, 0, 0, 0));
-        const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-        // 1. VERIFICAÇÃO DE LIMITES
-        if (rule.type === 'unique') {
-            // Verifica se já ganhou alguma vez na vida
-            const exists = await db.GamificationLog.findOne({
-                where: { psychologistId, actionType }
-            });
-            if (exists) return null; // Já ganhou, ignora
-        } 
-        else if (rule.type === 'daily') {
-            // Conta quantos ganhou hoje
-            const countToday = await db.GamificationLog.count({
-                where: {
-                    psychologistId,
-                    actionType,
-                    createdAt: { [Op.between]: [startOfDay, endOfDay] }
-                }
-            });
-            if (countToday >= rule.limit) return null; // Atingiu limite diário
+        if (rule.limit > 0) {
+            const where = { psychologistId, actionType };
+            if (rule.type === 'daily') {
+                where.createdAt = { [Op.gte]: startOfDay };
+            }
+            const count = await db.GamificationLog.count({ where });
+            if (count >= rule.limit) return null;
         }
-        
-        // 2. REGISTRA A PONTUAÇÃO
-        await db.GamificationLog.create({
-            psychologistId,
-            actionType,
-            points: rule.points
-        });
 
-        // 3. ATUALIZA O PSICÓLOGO (XP e Nível)
+        await db.GamificationLog.create({ psychologistId, actionType, points: rule.points });
         const psi = await db.Psychologist.findByPk(psychologistId);
         const newXP = (psi.xp || 0) + rule.points;
-        
-        // Calcula novo nível baseado no XP total
+
         let newLevel = psi.authority_level;
-        // Encontra o maior nível possível para o XP atual
         for (let i = LEVELS.length - 1; i >= 0; i--) {
             if (newXP >= LEVELS[i].min) {
                 newLevel = LEVELS[i].slug;
@@ -137,53 +147,30 @@ exports.processAction = async (psychologistId, actionType) => {
             }
         }
 
-        // Atualiza Badges (Mantendo a lógica visual de badges)
-        let badges = psi.badges || {};
-        badges.progress = {
-            ...badges.progress,
-            xp: newXP,
-            nextLevelXP: getNextLevelXP(newXP)
-        };
-
-        await psi.update({ 
-            xp: newXP, 
-            authority_level: newLevel,
-            badges: badges
-        });
-
-        // Recalcula as badges baseadas em contagem (posts, comentários)
-        await exports.calculateBadges(psychologistId);
+        await psi.update({ xp: newXP, authority_level: newLevel });
+        await calculateBadges(psychologistId);
 
         return { xp: newXP, level: newLevel, pointsEarned: rule.points };
-
     } catch (error) {
         console.error(`Erro gamification (${actionType}):`, error);
         return null;
     }
-};
-
-// Função auxiliar para checar perfil completo (Chamada ao salvar perfil)
-exports.checkProfileCompletion = async (psychologistId) => {
-    try {
-        const psi = await db.Psychologist.findByPk(psychologistId);
-        // Critérios de 100%
-        const isComplete = psi.nome && psi.crp && psi.bio && psi.fotoUrl && 
-                           psi.temas_atuacao && psi.temas_atuacao.length > 0 &&
-                           psi.abordagens_tecnicas && psi.abordagens_tecnicas.length > 0 &&
-                           psi.valor_sessao_numero;
-
-        if (isComplete) {
-            // Tenta atribuir os 500 pontos (a função processAction já valida se é único)
-            await exports.processAction(psychologistId, 'profile_complete');
-        }
-        
-        // Verifica a badge "Autêntico" independentemente dos pontos
-        await exports.calculateBadges(psychologistId);
-    } catch (e) { console.error("Erro checkProfile:", e); }
-};
-
-// Helper para saber quanto falta para o próximo nível
-function getNextLevelXP(currentXP) {
-    const next = LEVELS.find(l => l.min > currentXP);
-    return next ? next.min : currentXP; // Se for max, retorna o próprio
 }
+
+/**
+ * Verifica se o perfil está 100% completo.
+ */
+async function checkProfileCompletion(psychologistId) {
+    await calculateBadges(psychologistId);
+    const psi = await db.Psychologist.findByPk(psychologistId, { attributes: ['badges'] });
+    if (psi && psi.badges && psi.badges.autentico) {
+        await processAction(psychologistId, 'profile_complete');
+    }
+}
+
+module.exports = {
+    assignPioneerBadge,
+    processAction,
+    calculateBadges,
+    checkProfileCompletion
+};
