@@ -52,7 +52,8 @@ window.inicializarPaginaJornada = async () => {
     }
 
     function updateBadgeCard(badgeId, currentCount, currentLevel) {
-        const card = document.getElementById(`badge-${badgeId}`);
+        // O ID no HTML usa traços (badge-voz-ativa), então substituímos o underscore
+        const card = document.getElementById(`badge-${badgeId.replace('_', '-')}`);
         if (!card) return;
 
         const requirements = BADGE_REQUIREMENTS[badgeId];
@@ -60,19 +61,19 @@ window.inicializarPaginaJornada = async () => {
 
         if (currentLevel === 'ouro') {
             target = requirements.ouro;
-            progressText = `${Math.min(currentCount, target)} / ${target}`;
+            progressText = `${Math.min(currentCount, target)}/${target} (Máximo)`;
             progressPercentage = 100;
         } else if (currentLevel === 'prata') {
             target = requirements.ouro;
-            progressText = `${currentCount} / ${target}`;
+            progressText = `${currentCount}/${target} para Ouro`;
             progressPercentage = (currentCount / target) * 100;
         } else if (currentLevel === 'bronze') {
             target = requirements.prata;
-            progressText = `${currentCount} / ${target}`;
+            progressText = `${currentCount}/${target} para Prata`;
             progressPercentage = (currentCount / target) * 100;
         } else { // Bloqueado
             target = requirements.bronze;
-            progressText = `${currentCount} / ${target}`;
+            progressText = `${currentCount}/${target} para Bronze`;
             progressPercentage = (currentCount / target) * 100;
         }
 

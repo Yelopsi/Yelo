@@ -301,6 +301,11 @@ exports.toggleVote = async (req, res) => {
         if (existingVote) {
             await existingVote.destroy();
             post.votes -= 1;
+            
+            // --- GAMIFICATION ROLLBACK: REMOVER LIKE ---
+            if (post.PsychologistId !== userId) {
+                gamificationService.rollbackAction(post.PsychologistId, 'receive_like').catch(e => console.error(e));
+            }
         } else {
             await ForumVote.create({ ForumPostId: postId, PsychologistId: userId });
             post.votes += 1;
@@ -332,6 +337,11 @@ exports.toggleCommentVote = async (req, res) => {
         if (existingVote) {
             await existingVote.destroy();
             comment.likes -= 1;
+
+            // --- GAMIFICATION ROLLBACK: REMOVER LIKE EM COMENTÁRIO ---
+            if (comment.PsychologistId !== userId) {
+                gamificationService.rollbackAction(comment.PsychologistId, 'receive_like').catch(e => console.error(e));
+            }
         } else {
             await ForumCommentVote.create({ ForumCommentId: commentId, PsychologistId: userId });
             comment.likes += 1;
@@ -375,6 +385,10 @@ exports.deletePost = async (req, res) => {
         }
         
         await post.destroy();
+
+        // --- GAMIFICATION ROLLBACK ---
+        gamificationService.rollbackAction(req.user.id, 'forum_post').catch(err => console.error(err));
+
         res.json({ message: 'Post excluído com sucesso.' });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao excluir post' });
@@ -391,6 +405,10 @@ exports.deleteComment = async (req, res) => {
         }
         
         await comment.destroy();
+
+        // --- GAMIFICATION ROLLBACK ---
+        gamificationService.rollbackAction(req.user.id, 'forum_reply').catch(err => console.error(err));
+
         res.json({ message: 'Comentário excluído com sucesso.' });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao excluir comentário' });
@@ -479,9 +497,21 @@ exports.resolveReport = async (req, res) => {
 
         if (action === 'delete_content') {
             if (report.type === 'post') {
-                await ForumPost.destroy({ where: { id: report.itemId } });
+                const post = await ForumPost.findByPk(report.itemId);
+                if (post) {
+                    const psiId = post.PsychologistId;
+                    await post.destroy();
+                    // --- GAMIFICATION ROLLBACK (Admin Deletou) ---
+                    gamificationService.rollbackAction(psiId, 'forum_post').catch(e => console.error(e));
+                }
             } else {
-                await ForumComment.destroy({ where: { id: report.itemId } });
+                const comment = await ForumComment.findByPk(report.itemId);
+                if (comment) {
+                    const psiId = comment.PsychologistId;
+                    await comment.destroy();
+                    // --- GAMIFICATION ROLLBACK (Admin Deletou) ---
+                    gamificationService.rollbackAction(psiId, 'forum_reply').catch(e => console.error(e));
+                }
             }
         }
 
