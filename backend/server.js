@@ -77,6 +77,11 @@ if (db.Patient) {
     if (!attrs.sessionValue) { attrs.sessionValue = { type: DataTypes.FLOAT }; patched = true; }
     if (!attrs.status) { attrs.status = { type: DataTypes.STRING }; patched = true; }
     if (!attrs.observacoes) { attrs.observacoes = { type: DataTypes.TEXT }; patched = true; }
+    // FIX: Adiciona colunas de analytics para evitar erro 500 na página de favoritos
+    if (!attrs.valor_sessao_faixa) { attrs.valor_sessao_faixa = { type: DataTypes.STRING }; patched = true; }
+    if (!attrs.temas_buscados) { attrs.temas_buscados = { type: DataTypes.JSONB }; patched = true; }
+    if (!attrs.identidade_genero) { attrs.identidade_genero = { type: DataTypes.STRING }; patched = true; }
+
     
     if (patched && typeof db.Patient.refreshAttributes === 'function') {
         console.log("[FIX] Modelo Patient atualizado com colunas faltantes.");
