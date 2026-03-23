@@ -130,6 +130,17 @@ if (!db.Appointment) {
     });
 }
 
+// --- FIX: Patch Answer Model (Garante contagem para gamificação) ---
+if (db.Answer && !db.Answer.rawAttributes.psychologistId) {
+    console.log("[FIX] Patching Answer model to include 'psychologistId' field.");
+    db.Answer.rawAttributes.psychologistId = {
+        type: DataTypes.INTEGER
+    };
+    if (typeof db.Answer.refreshAttributes === 'function') {
+        db.Answer.refreshAttributes();
+    }
+}
+
 // --- HOOK GLOBAL: DESARQUIVAMENTO AUTOMÁTICO ---
 // Se um psicólogo ou paciente enviar mensagem, a conversa é desarquivada (status = 'active')
 if (db.Message && db.Conversation) {
