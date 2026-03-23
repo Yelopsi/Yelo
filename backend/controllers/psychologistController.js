@@ -494,30 +494,16 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
             return res.status(404).json({ error: 'Perfil do psicólogo não encontrado.' });
         }
 
-        // --- CORREÇÃO: Busca contagens para Gamificação usando RAW SQL para evitar erros de ORM ---
-        const blogPostResult = await db.sequelize.query(
-            `SELECT COUNT(*) as count FROM posts WHERE psychologist_id = :id`,
-            { replacements: { id: psychologistId }, type: db.sequelize.QueryTypes.SELECT }
-        ).catch(() => [{ count: 0 }]);
-        const blogPostCount = parseInt(blogPostResult[0]?.count || 0, 10);
-
-        const forumPostResult = await db.sequelize.query(
-            `SELECT COUNT(*) as count FROM "ForumPosts" WHERE "PsychologistId" = :id`,
-            { replacements: { id: psychologistId }, type: db.sequelize.QueryTypes.SELECT }
-        ).catch(() => [{ count: 0 }]);
-        const forumPostCount = parseInt(forumPostResult[0]?.count || 0, 10);
-
-        const forumCommentResult = await db.sequelize.query(
-            `SELECT COUNT(*) as count FROM "ForumComments" WHERE "PsychologistId" = :id`,
-            { replacements: { id: psychologistId }, type: db.sequelize.QueryTypes.SELECT }
-        ).catch(() => [{ count: 0 }]);
-        const forumCommentCount = parseInt(forumCommentResult[0]?.count || 0, 10);
-
-        const answerResult = await db.sequelize.query(
-            `SELECT COUNT(*) as count FROM "Answers" WHERE "psychologistId" = :id`,
-            { replacements: { id: psychologistId }, type: db.sequelize.QueryTypes.SELECT }
-        ).catch(() => [{ count: 0 }]);
-        const answerCount = parseInt(answerResult[0]?.count || 0, 10);
+        // --- CORREÇÃO V2: Busca contagens com Fallback Duplo do ORM ---
+        let blogPostCount = 0, forumPostCount = 0, forumCommentCount = 0, answerCount = 0;
+        
+        if (db.Post) blogPostCount = await db.Post.count({ where: { psychologistId } }).catch(async () => await db.Post.count({ where: { psychologist_id: psychologistId } }).catch(() => 0));
+        
+        if (db.ForumPost) forumPostCount = await db.ForumPost.count({ where: { PsychologistId: psychologistId } }).catch(async () => await db.ForumPost.count({ where: { psychologistId } }).catch(() => 0));
+        
+        if (db.ForumComment) forumCommentCount = await db.ForumComment.count({ where: { PsychologistId: psychologistId } }).catch(async () => await db.ForumComment.count({ where: { psychologistId } }).catch(() => 0));
+        
+        if (db.Answer) answerCount = await db.Answer.count({ where: { psychologistId } }).catch(() => 0);
 
         // Monta o objeto de resposta
         const responseData = psychologist.toJSON();
@@ -530,6 +516,12 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
             vozAtiva: forumPostCount + forumCommentCount,
             conselheiro: answerCount
         };
+        
+        // Fallback direto na raiz (se o frontend ler solto)
+        responseData.blogPostCount = blogPostCount;
+        responseData.forumActivityCount = forumPostCount + forumCommentCount;
+        responseData.answerCount = answerCount;
+        
         res.status(200).json(responseData);
 
     } catch (error) {
@@ -1746,7 +1738,13 @@ exports.getStats = async (req, res) => {
                  GROUP BY TO_CHAR("createdAt", 'YYYY-MM-DD')
                  ORDER BY date ASC`,
                 { replacements, type: db.sequelize.QueryTypes.SELECT }
-            ).catch(err => [])
+            ).catch(err => []),
+            
+            // 7. Contagens do Game para a Rota de Stats
+            db.Post ? db.Post.count({ where: { psychologistId } }).catch(() => db.Post.count({ where: { psychologist_id: psychologistId } }).catch(() => 0)) : Promise.resolve(0),
+            db.ForumPost ? db.ForumPost.count({ where: { PsychologistId: psychologistId } }).catch(() => db.ForumPost.count({ where: { psychologistId } }).catch(() => 0)) : Promise.resolve(0),
+            db.ForumComment ? db.ForumComment.count({ where: { PsychologistId: psychologistId } }).catch(() => db.ForumComment.count({ where: { psychologistId } }).catch(() => 0)) : Promise.resolve(0),
+            db.Answer ? db.Answer.count({ where: { psychologistId } }).catch(() => 0) : Promise.resolve(0)
         ]);
 
         // Processamento dos KPIs numéricos
@@ -1773,7 +1771,18 @@ exports.getStats = async (req, res) => {
             favoritesCount,
             conversionRate: parseFloat(conversionRate), // Envia como número para o frontend
             topDemands,
-            xpHistory: xpHistoryResult // <--- NOVO: Envia para o frontend
+            xpHistory: xpHistoryResult, // <--- NOVO: Envia para o frontend
+            gamificationProgress: {
+                blogPostCount,
+                forumActivityCount: forumPostCount + forumCommentCount,
+                answerCount,
+                semeador: blogPostCount,
+                vozAtiva: forumPostCount + forumCommentCount,
+                conselheiro: answerCount
+            },
+            blogPostCount,
+            forumActivityCount: forumPostCount + forumCommentCount,
+            answerCount
         };
 
         console.timeEnd('⏱️ Psi Stats Load');
@@ -1884,11 +1893,10 @@ exports.getAnalyticsData = async (req, res) => {
         // --- 4. Profile Strength (Simplified) ---
         const myReviews = await db.Review.findAll({ where: { psychologistId }, attributes: [[db.sequelize.fn('AVG', db.sequelize.col('rating')), 'avgRating']] });
         
-        const postData = await db.sequelize.query(
-            `SELECT COUNT(*) as count FROM posts WHERE psychologist_id = :id`,
-            { replacements: { id: psychologistId }, type: db.sequelize.QueryTypes.SELECT }
-        ).catch(() => [{ count: 0 }]);
-        const myPostCount = parseInt(postData[0]?.count || 0, 10);
+        let myPostCount = 0;
+        if (db.Post) {
+            myPostCount = await db.Post.count({ where: { psychologistId } }).catch(async () => await db.Post.count({ where: { psychologist_id: psychologistId } }).catch(() => 0));
+        }
         
         const myEngagement = psychologist.xp || 0;
         const myCompletion = (psychologist.badges && psychologist.badges.autentico) ? 10 : 5;
