@@ -636,6 +636,11 @@ document.addEventListener('DOMContentLoaded', function() {
             window.cleanupPsiChat = null; // Remove a referência para não chamar de novo
         }
 
+        // --- Limpeza do estado da página Jornada ---
+        if (typeof window.cleanupPaginaJornada === 'function') {
+            window.cleanupPaginaJornada();
+        }
+
         // Salva a página atual para persistir após o refresh
         localStorage.setItem('yelo_last_psi_page', url);
         // Spinner de carregamento entre páginas
