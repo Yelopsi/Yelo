@@ -3105,7 +3105,12 @@ function inicializarBlog(preFetchedData = null) {
         try {
             const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/posts/${id}`, { method: 'DELETE' });
             if(res.ok) {
-                showToast('Artigo excluído com sucesso.', 'success');
+                const data = await res.json();
+                if (data.pointsDeducted) {
+                    showToast(`Artigo excluído. Você perdeu ${data.pointsDeducted} XP.`, 'info');
+                } else {
+                    showToast('Artigo excluído com sucesso.', 'success');
+                }
                 carregarArtigos();
             } else {
                 throw new Error("Falha ao excluir");
@@ -4001,7 +4006,12 @@ async function inicializarForum(preFetchedData = null) {
                 try {
                     const res = await apiFetch(`${API_BASE_URL}/api/forum/posts/${id}`, { method: 'DELETE' });
                     if (res.ok) {
-                        showToast('Discussão excluída.', 'success');
+                        const data = await res.json();
+                        if (data.pointsDeducted) {
+                            showToast(`Discussão excluída. Você perdeu ${data.pointsDeducted} XP.`, 'info');
+                        } else {
+                            showToast('Discussão excluída.', 'success');
+                        }
                         if (isFullView) {
                             // Volta para o feed
                             postView.classList.add('hidden');
@@ -4029,8 +4039,13 @@ async function inicializarForum(preFetchedData = null) {
                 try {
                     const res = await apiFetch(`${API_BASE_URL}/api/forum/comments/${id}`, { method: 'DELETE' });
                     if (res.ok) {
+                        const data = await res.json();
                         element.remove();
-                        showToast('Comentário excluído.', 'success');
+                        if (data.pointsDeducted) {
+                            showToast(`Comentário excluído. Você perdeu ${data.pointsDeducted} XP.`, 'info');
+                        } else {
+                            showToast('Comentário excluído.', 'success');
+                        }
                     } else {
                         showToast('Erro ao excluir comentário.', 'error');
                     }

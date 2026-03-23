@@ -123,43 +123,4 @@ window.inicializarPaginaJornada = async () => {
         const badges = data.badges || {};
         const progress = data.gamificationProgress || { blogPostCount: 0, forumActivityCount: 0, answerCount: 0 };
 
-        // --- DEBUG VISUAL ---
-        const debugPanel = document.getElementById('debug-panel');
-        const debugOutput = document.getElementById('debug-output');
-        if (debugPanel && debugOutput) {
-            console.log("psi_jornada.js: Painel de debug encontrado. Exibindo dados.");
-            debugPanel.style.display = 'block';
-            // Exibe o objeto 'data' completo recebido da API
-            debugOutput.textContent = JSON.stringify(data, null, 2);
-        } else {
-            console.error("psi_jornada.js: Elementos do painel de debug não encontrados no DOM.");
-        }
-        // --- FIM DEBUG ---
-
-        // 1. Atualiza a barra de XP
-        updateXpBar(data.xp || 0, data.authority_level || 'nivel_iniciante');
-
-        // 2. Atualiza os cards de badges de progresso
-        updateBadgeCard('semeador', progress.blogPostCount, badges.semeador);
-        updateBadgeCard('voz_ativa', progress.forumActivityCount, badges.voz_ativa);
-        updateBadgeCard('conselheiro', progress.answerCount, badges.conselheiro);
-
-        // 3. Atualiza os cards de badges booleanos
-        updateBooleanBadge('autentico', badges.autentico);
-        updateBooleanBadge('pioneiro', badges.pioneiro);
-
-    } catch (error) {
-        console.error("Erro ao inicializar página de Jornada:", error);
-        // Opcional: Mostrar mensagem de erro na tela
-        const debugPanel = document.getElementById('debug-panel');
-        if (debugPanel) {
-            debugPanel.style.display = 'block';
-            document.getElementById('debug-output').textContent = `ERRO: ${error.message}\n\nVerifique o console do navegador (F12) para mais detalhes.`;
-        }
-    }
-};
-
-window.cleanupPaginaJornada = () => {
-    isJornadaInitialized = false;
-    console.log("--- psi_jornada.js: Estado resetado (Cleanup) ---");
-};
+        // 
