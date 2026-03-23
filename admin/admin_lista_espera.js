@@ -90,10 +90,10 @@ window.initializePage = function() {
                 row.querySelector('[data-label="Data de Entrada"]').textContent = new Date(candidate.createdAt).toLocaleDateString('pt-BR');
 
                 const actionsCell = row.querySelector('[data-label="Ações"]');
-                if (candidate.status === 'pending') {
+                if (candidate.status === 'pending' || candidate.status === 'invited') {
                     const inviteButton = document.createElement('button');
                     inviteButton.className = 'btn btn-sm btn-principal';
-                    inviteButton.textContent = 'Convidar';
+                    inviteButton.textContent = candidate.status === 'invited' ? 'Reenviar' : 'Convidar';
                     inviteButton.onclick = () => sendInvitation(candidate.id, inviteButton);
                     actionsCell.appendChild(inviteButton);
                 } else {

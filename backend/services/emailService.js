@@ -211,6 +211,20 @@ exports.sendBillUpdatedEmail = async (user, payment) => {
     await sendEmail(user.email, 'Atualização na sua Fatura', html);
 };
 
+// --- ENVIO DE CONVITE (LISTA DE ESPERA) ---
+exports.sendInvitationEmail = async (candidate, invitationLink) => {
+    const html = getHtmlTemplate(
+        'Convite Exclusivo - Yelo',
+        candidate.nome,
+        'Temos uma ótima notícia! Surgiu uma vaga na nossa plataforma alinhada com o seu perfil. Clique no botão abaixo para concluir seu cadastro e começar a receber pacientes.',
+        {
+            linkAcao: invitationLink,
+            textoBotao: 'Concluir Cadastro'
+        }
+    );
+    await sendEmail(candidate.email, 'Seu convite para a Yelo chegou!', html);
+};
+
 // --- FUNÇÕES EXISTENTES (Mantidas e Atualizadas para o novo Template) ---
 
 exports.sendPaymentConfirmationEmail = async (user, planType, value) => {
