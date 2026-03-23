@@ -494,7 +494,17 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
             return res.status(404).json({ error: 'Perfil do psicólogo não encontrado.' });
         }
 
-        res.status(200).json(psychologist);
+        // --- NOVO: Busca contagens para Gamificação ---
+        const postCount = await db.Post.count({ where: { psychologist_id: psychologistId } });
+        const commentCount = await db.ForumComment.count({ where: { PsychologistId: psychologistId } });
+
+        // Monta o objeto de resposta
+        const responseData = psychologist.toJSON();
+        responseData.gamificationProgress = {
+            postCount,
+            commentCount
+        };
+        res.status(200).json(responseData);
 
     } catch (error) {
         console.error('Erro ao buscar perfil do psicólogo autenticado (/me):', error);
