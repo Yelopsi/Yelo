@@ -767,6 +767,7 @@ body.pagina-dashboard::after {
     .tabela-gerenciamento td {
         display: block;
         width: 100%;
+        box-sizing: border-box; /* Previne o vazamento horizontal (100% + padding) */
     }
 
     .tabela-gerenciamento tr {
@@ -780,11 +781,12 @@ body.pagina-dashboard::after {
     /* 4. Removemos a borda inferior das células */
     .tabela-gerenciamento td {
         border: none;
-        padding: 8px 0;
+        padding: 10px 0 10px 45%;
         text-align: right; /* Alinha o conteúdo à direita */
         white-space: normal; /* Permite que o texto quebre a linha */
+        word-break: break-word; /* Força quebra de palavras muito longas (ex: e-mails) */
+        overflow-wrap: break-word;
         position: relative;
-        padding-left: 50%; /* Cria espaço à esquerda para o rótulo */
     }
 
     /* 5. Criamos os "rótulos" (ex: "Nome:", "E-mail:") usando um pseudo-elemento */
@@ -792,7 +794,8 @@ body.pagina-dashboard::after {
         content: attr(data-label); /* Pega o texto do atributo 'data-label' */
         position: absolute;
         left: 0;
-        width: 45%;
+        top: 10px; /* Alinha ao topo caso o texto da direita quebre linha */
+        width: 40%; /* Reduzido levemente para o texto da direita ter mais espaço */
         padding-right: 10px;
         font-weight: bold;
         text-align: left; /* Alinha o rótulo à esquerda */
@@ -801,15 +804,23 @@ body.pagina-dashboard::after {
     
     /* 6. Estilo especial para a coluna de ações */
     .tabela-gerenciamento td:last-child {
-        padding-top: 15px;
-        text-align: center;
+    padding: 15px 0 0 0;
+    margin-top: 10px;
+    border-top: 1px solid var(--cinza-borda); /* Separador visual sutil pros botões */
+    text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
     }
     .tabela-gerenciamento td:last-child::before {
         display: none; /* Esconde o rótulo "Ações" */
     }
     .tabela-gerenciamento .btn-tabela {
-        width: calc(33.33% - 10px);
-        margin: 5px;
+    width: auto;
+    flex: 1 1 calc(50% - 8px); /* Deixa 2 botões alinhados por linha com folga */
+    margin: 0;
+    padding: 10px 8px;
     }
 }
 /* --- Overlay Mobile (Fundo escuro quando o menu está aberto) --- */
@@ -2573,6 +2584,17 @@ input:checked + .slider:before { transform: translateX(22px); }
         flex-direction: column;
         align-items: flex-start;
         gap: 15px;
+    }
+
+    /* Ajuste para os filtros não vazarem da tela no mobile */
+    .filtros-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .campo-busca, .filtro-select, .filtros-container .btn-primario {
+        width: 100%;
+        box-sizing: border-box;
     }
 
     /* Filtro de Data em Grid no Mobile */
