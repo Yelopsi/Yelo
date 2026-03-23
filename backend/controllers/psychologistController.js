@@ -494,18 +494,41 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
             return res.status(404).json({ error: 'Perfil do psicólogo não encontrado.' });
         }
 
-        // --- NOVO: Busca contagens para Gamificação ---
-        const blogPostCount = await db.Post.count({ where: { psychologist_id: psychologistId } });
-        const forumPostCount = await db.ForumPost.count({ where: { PsychologistId: psychologistId } });
-        const forumCommentCount = await db.ForumComment.count({ where: { PsychologistId: psychologistId } });
-        const answerCount = await db.Answer.count({ where: { psychologistId: psychologistId } });
+        // --- CORREÇÃO: Busca contagens para Gamificação usando RAW SQL para evitar erros de ORM ---
+        const blogPostResult = await db.sequelize.query(
+            `SELECT COUNT(*) as count FROM posts WHERE psychologist_id = :id`,
+            { replacements: { id: psychologistId }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => [{ count: 0 }]);
+        const blogPostCount = parseInt(blogPostResult[0]?.count || 0, 10);
+
+        const forumPostResult = await db.sequelize.query(
+            `SELECT COUNT(*) as count FROM "ForumPosts" WHERE "PsychologistId" = :id`,
+            { replacements: { id: psychologistId }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => [{ count: 0 }]);
+        const forumPostCount = parseInt(forumPostResult[0]?.count || 0, 10);
+
+        const forumCommentResult = await db.sequelize.query(
+            `SELECT COUNT(*) as count FROM "ForumComments" WHERE "PsychologistId" = :id`,
+            { replacements: { id: psychologistId }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => [{ count: 0 }]);
+        const forumCommentCount = parseInt(forumCommentResult[0]?.count || 0, 10);
+
+        const answerResult = await db.sequelize.query(
+            `SELECT COUNT(*) as count FROM "Answers" WHERE "psychologistId" = :id`,
+            { replacements: { id: psychologistId }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => [{ count: 0 }]);
+        const answerCount = parseInt(answerResult[0]?.count || 0, 10);
 
         // Monta o objeto de resposta
         const responseData = psychologist.toJSON();
         responseData.gamificationProgress = {
             blogPostCount, // Para Semeador
             forumActivityCount: forumPostCount + forumCommentCount, // Para Voz Ativa
-            answerCount // Para Conselheiro
+            answerCount, // Para Conselheiro
+            // Fallbacks de segurança para garantir que o front leia a chave certa
+            semeador: blogPostCount,
+            vozAtiva: forumPostCount + forumCommentCount,
+            conselheiro: answerCount
         };
         res.status(200).json(responseData);
 
@@ -1860,7 +1883,13 @@ exports.getAnalyticsData = async (req, res) => {
 
         // --- 4. Profile Strength (Simplified) ---
         const myReviews = await db.Review.findAll({ where: { psychologistId }, attributes: [[db.sequelize.fn('AVG', db.sequelize.col('rating')), 'avgRating']] });
-        const myPostCount = await db.Post.count({ where: { psychologist_id: psychologistId } });
+        
+        const postData = await db.sequelize.query(
+            `SELECT COUNT(*) as count FROM posts WHERE psychologist_id = :id`,
+            { replacements: { id: psychologistId }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => [{ count: 0 }]);
+        const myPostCount = parseInt(postData[0]?.count || 0, 10);
+        
         const myEngagement = psychologist.xp || 0;
         const myCompletion = (psychologist.badges && psychologist.badges.autentico) ? 10 : 5;
         const myAvgRating = parseFloat(myReviews[0]?.dataValues.avgRating || 0);
