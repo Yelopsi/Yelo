@@ -1805,19 +1805,27 @@ exports.getFavoritesProfile = async (req, res) => {
             return res.json({ total: 0, faixaValor: {}, genero: {}, temas: {} });
         }
 
-        // --- CORREÇÃO: Torna a busca de atributos dinâmica e segura ---
-        const patientAttributes = ['valor_sessao_faixa', 'temas_buscados'];
-        // Verifica se a coluna 'identidade_genero' existe no modelo do Sequelize antes de tentar buscá-la
-        if (db.Patient.rawAttributes.identidade_genero) {
-            patientAttributes.push('identidade_genero');
-        } else {
-            console.warn("[FAVORITES_PROFILE] A coluna 'identidade_genero' não existe no modelo Patient. O gráfico de gênero ficará vazio.");
+        // --- CORREÇÃO DE ROBUSTEZ V2: Verifica dinamicamente quais colunas de análise existem no modelo Patient ---
+        const patientAttributes = [];
+        const possibleAttributes = ['valor_sessao_faixa', 'temas_buscados', 'identidade_genero'];
+        
+        possibleAttributes.forEach(attr => {
+            if (db.Patient.rawAttributes[attr]) {
+                patientAttributes.push(attr);
+            } else {
+                console.warn(`[FAVORITES_PROFILE] A coluna '${attr}' não existe no modelo Patient. O gráfico correspondente ficará vazio.`);
+            }
+        });
+
+        // Se nenhuma das colunas de análise existir, não podemos fazer nada. Retorna o total para o front-end saber que há favoritos.
+        if (patientAttributes.length === 0) {
+            return res.json({ total: patientIds.length, faixaValor: {}, genero: {}, temas: {} });
         }
 
         // 2. Busca os perfis desses pacientes
         const patients = await db.Patient.findAll({
             where: { id: { [Op.in]: patientIds } },
-            attributes: patientAttributes
+            attributes: patientAttributes // Busca apenas as colunas que existem
         });
 
         // 3. Agrega os dados
@@ -1829,17 +1837,23 @@ exports.getFavoritesProfile = async (req, res) => {
         };
 
         patients.forEach(p => {
-            const faixa = p.valor_sessao_faixa || 'Não informado';
-            aggregated.faixaValor[faixa] = (aggregated.faixaValor[faixa] || 0) + 1;
+            // Verifica se a propriedade existe no objeto retornado antes de tentar acessá-la
+            if (p.valor_sessao_faixa) {
+                const faixa = p.valor_sessao_faixa || 'Não informado';
+                aggregated.faixaValor[faixa] = (aggregated.faixaValor[faixa] || 0) + 1;
+            }
 
-            // Usa a propriedade apenas se ela foi retornada na query
-            const genero = p.identidade_genero || 'Não informado';
-            aggregated.genero[genero] = (aggregated.genero[genero] || 0) + 1;
+            if (p.identidade_genero) {
+                const genero = p.identidade_genero || 'Não informado';
+                aggregated.genero[genero] = (aggregated.genero[genero] || 0) + 1;
+            }
 
-            const temas = p.temas_buscados || [];
-            temas.forEach(tema => {
-                aggregated.temas[tema] = (aggregated.temas[tema] || 0) + 1;
-            });
+            if (p.temas_buscados) {
+                const temas = p.temas_buscados || [];
+                temas.forEach(tema => {
+                    aggregated.temas[tema] = (aggregated.temas[tema] || 0) + 1;
+                });
+            }
         });
 
         res.json(aggregated);
