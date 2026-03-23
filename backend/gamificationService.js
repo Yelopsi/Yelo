@@ -127,7 +127,7 @@ async function calculateBadges(psychologistId) {
             delete badges.semeador;
         }
 
-        // 2. 💬 VOZ ATIVA (Comunidade)
+        // 2. 💬 VOZ ATIVA (Fórum)
         const commentCount = await db.ForumComment.count({ where: { PsychologistId: psychologistId } });
         if (commentCount >= 200) {
             badges.voz_ativa = 'ouro';
