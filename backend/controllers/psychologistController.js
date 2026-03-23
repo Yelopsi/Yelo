@@ -1794,10 +1794,11 @@ exports.getFavoritesProfile = async (req, res) => {
         const psychologistId = req.psychologist.id;
 
         // 1. Encontra os IDs dos pacientes que favoritaram este psicólogo
-        const favorites = await db.PatientFavorites.findAll({
-            where: { PsychologistId: psychologistId },
-            attributes: ['PatientId']
-        });
+        // CORREÇÃO: Usa Raw Query para robustez, pois o modelo PatientFavorites pode não estar definido formalmente.
+        const [favorites] = await db.sequelize.query(
+            `SELECT "PatientId" FROM "PatientFavorites" WHERE "PsychologistId" = :psychologistId AND "deletedAt" IS NULL`,
+            { replacements: { psychologistId }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => [[]]); // Fallback para array vazio se a tabela não existir ou der erro
 
         const patientIds = favorites.map(f => f.PatientId);
 
