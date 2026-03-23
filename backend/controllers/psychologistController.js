@@ -1793,11 +1793,11 @@ exports.getFavoritesProfile = async (req, res) => {
     try {
         const psychologistId = req.psychologist.id;
 
-        // 1. Encontra os IDs dos pacientes que favoritaram este psicólogo
-        // CORREÇÃO: Usa Raw Query para robustez, pois o modelo PatientFavorites pode não estar definido formalmente.
-        // CORREÇÃO 2: Remove a cláusula "deletedAt" que provavelmente não existe na tabela de junção e causa o erro 500.
+        // 1. Encontra os IDs dos pacientes que favoritaram este psicólogo (e não removeram o favorito)
+        // CORREÇÃO: Usa Raw Query para robustez e adiciona a cláusula "deletedAt" IS NULL
+        // para garantir que apenas os favoritos ativos sejam contados, alinhando com a lógica de soft-delete.
         const [favorites] = await db.sequelize.query(
-            `SELECT "PatientId" FROM "PatientFavorites" WHERE "PsychologistId" = :psychologistId`,
+            `SELECT "PatientId" FROM "PatientFavorites" WHERE "PsychologistId" = :psychologistId AND "deletedAt" IS NULL`,
             { replacements: { psychologistId }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => [[]]); // Fallback para array vazio se a tabela não existir ou der erro
 
