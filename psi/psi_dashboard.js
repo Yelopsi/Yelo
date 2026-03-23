@@ -1243,7 +1243,8 @@ document.addEventListener('DOMContentLoaded', function() {
         async function fetchAndRenderKPIs(period = 'last30days') {
             const cards = document.querySelectorAll('.kpi-grid .kpi-card');
             
-            console.time('Frontend KPI Render');
+            const timerLabel = `Frontend KPI Render ${Date.now()}`;
+            console.time(timerLabel);
             // Ativa o estado de carregamento com a animação de esqueleto
             cards.forEach(card => {
                 card.classList.add('is-loading');
@@ -1304,6 +1305,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error("Erro ao buscar KPIs:", error);
                 showToast('Não foi possível atualizar as métricas.', 'error');
             } finally {
+                console.timeEnd(timerLabel);
                 // Desativa o estado de carregamento
                 cards.forEach(card => {
                     card.classList.remove('is-loading');

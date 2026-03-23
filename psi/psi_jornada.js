@@ -1,12 +1,4 @@
-let isJornadaInitialized = false;
-
 window.inicializarPaginaJornada = async () => {
-    if (isJornadaInitialized) {
-        console.log("--- psi_jornada.js: Prevenindo execução múltipla ---");
-        return;
-    }
-    isJornadaInitialized = true;
-
     // Adiciona um log para confirmar que o script começou a ser executado
     console.log("--- psi_jornada.js: SCRIPT INICIADO ---");
 
