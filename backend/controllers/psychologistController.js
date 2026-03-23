@@ -1795,8 +1795,9 @@ exports.getFavoritesProfile = async (req, res) => {
 
         // 1. Encontra os IDs dos pacientes que favoritaram este psicólogo
         // CORREÇÃO: Usa Raw Query para robustez, pois o modelo PatientFavorites pode não estar definido formalmente.
+        // CORREÇÃO 2: Remove a cláusula "deletedAt" que provavelmente não existe na tabela de junção e causa o erro 500.
         const [favorites] = await db.sequelize.query(
-            `SELECT "PatientId" FROM "PatientFavorites" WHERE "PsychologistId" = :psychologistId AND "deletedAt" IS NULL`,
+            `SELECT "PatientId" FROM "PatientFavorites" WHERE "PsychologistId" = :psychologistId`,
             { replacements: { psychologistId }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => [[]]); // Fallback para array vazio se a tabela não existir ou der erro
 
@@ -1859,7 +1860,10 @@ exports.getFavoritesProfile = async (req, res) => {
 
         res.json(aggregated);
     } catch (error) {
-        console.error("Erro ao buscar perfil de favoritos:", error);
+        // DEBUG APROFUNDADO: Loga o erro completo no servidor para diagnóstico
+        console.error("===================================================");
+        console.error("ERRO CRÍTICO EM getFavoritesProfile:", error);
+        console.error("===================================================");
         res.status(500).json({ error: 'Erro interno ao buscar dados.' });
     }
 };
