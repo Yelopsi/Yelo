@@ -10,9 +10,10 @@ const PIONEER_PLATFORM_LIMIT = 500;
 const SCORING_RULES = {
     'profile_complete': { points: 500, limit: 1, type: 'unique' }, // Único
     'forum_post':       { points: 25,  limit: 2, type: 'daily' },  // Criar post no fórum
-    'blog_post':        { points: 50,  limit: 1, type: 'daily' },  // 1x por dia
-    'forum_reply':      { points: 20,  limit: 5, type: 'daily' },  // 5x por dia
+    'blog_post':        { points: 50,  limit: 1, type: 'daily' },  // Escrever artigo no Blog
+    'forum_reply':      { points: 20,  limit: 5, type: 'daily' },  // Comentar no Fórum
     'whatsapp_click':   { points: 10,  limit: 0, type: 'unlimited' },
+    'qna_answer':       { points: 15,  limit: 5, type: 'daily' },  // Responder Pergunta na Comunidade
     'receive_like':     { points: 5,   limit: 0, type: 'unlimited' },
     'login':            { points: 1,   limit: 1, type: 'daily' }
 };
@@ -111,9 +112,7 @@ async function calculateBadges(psychologistId) {
     try {
         const psi = await db.Psychologist.findByPk(psychologistId);
         if (!psi) return;
-
-        let badges = psi.badges ? JSON.parse(JSON.stringify(psi.badges)) : {};
-        badges.progress = badges.progress || {};
+        let badges = psi.badges || {};
 
         // 1. 🌱 SEMEADOR (Blog)
         const postCount = await db.Post.count({ where: { psychologist_id: psychologistId } });
@@ -127,19 +126,34 @@ async function calculateBadges(psychologistId) {
             delete badges.semeador;
         }
 
-        // 2. 💬 VOZ ATIVA (Fórum)
-        const commentCount = await db.ForumComment.count({ where: { PsychologistId: psychologistId } });
-        if (commentCount >= 200) {
+        // 2. 💬 VOZ ATIVA (Fórum) - CORRIGIDO: Conta posts e comentários
+        const forumPostCount = await db.ForumPost.count({ where: { PsychologistId: psychologistId } });
+        const forumCommentCount = await db.ForumComment.count({ where: { PsychologistId: psychologistId } });
+        const forumActivityCount = forumPostCount + forumCommentCount;
+
+        if (forumActivityCount >= 200) {
             badges.voz_ativa = 'ouro';
-        } else if (commentCount >= 50) {
+        } else if (forumActivityCount >= 50) {
             badges.voz_ativa = 'prata';
-        } else if (commentCount >= 10) {
+        } else if (forumActivityCount >= 10) {
             badges.voz_ativa = 'bronze';
         } else {
             delete badges.voz_ativa;
         }
 
-        // 3. 🛡️ AUTÊNTICO (Segurança) - Usa os critérios mais recentes
+        // 3. 💡 CONSELHEIRO (Q&A) - NOVO
+        const answerCount = await db.Answer.count({ where: { psychologistId: psychologistId } });
+        if (answerCount >= 150) {
+            badges.conselheiro = 'ouro';
+        } else if (answerCount >= 50) {
+            badges.conselheiro = 'prata';
+        } else if (answerCount >= 10) {
+            badges.conselheiro = 'bronze';
+        } else {
+            delete badges.conselheiro;
+        }
+
+        // 4. 🛡️ AUTÊNTICO (Segurança) - Usa os critérios mais recentes
         const requiredFields = ['nome', 'bio', 'crp', 'telefone', 'cep', 'cidade', 'estado', 'fotoUrl', 'valor_sessao_numero', 'genero_identidade'];
         const requiredArrays = ['temas_atuacao', 'abordagens_tecnicas', 'modalidade', 'disponibilidade_periodo'];
         

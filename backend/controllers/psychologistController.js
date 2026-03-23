@@ -495,14 +495,17 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
         }
 
         // --- NOVO: Busca contagens para Gamificação ---
-        const postCount = await db.Post.count({ where: { psychologist_id: psychologistId } });
-        const commentCount = await db.ForumComment.count({ where: { PsychologistId: psychologistId } });
+        const blogPostCount = await db.Post.count({ where: { psychologist_id: psychologistId } });
+        const forumPostCount = await db.ForumPost.count({ where: { PsychologistId: psychologistId } });
+        const forumCommentCount = await db.ForumComment.count({ where: { PsychologistId: psychologistId } });
+        const answerCount = await db.Answer.count({ where: { psychologistId: psychologistId } });
 
         // Monta o objeto de resposta
         const responseData = psychologist.toJSON();
         responseData.gamificationProgress = {
-            postCount,
-            commentCount
+            blogPostCount, // Para Semeador
+            forumActivityCount: forumPostCount + forumCommentCount, // Para Voz Ativa
+            answerCount // Para Conselheiro
         };
         res.status(200).json(responseData);
 

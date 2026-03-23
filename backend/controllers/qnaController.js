@@ -144,6 +144,10 @@ exports.answerQuestion = async (req, res) => {
             questionId: id,
             psychologistId: psychologistId
         });
+
+        // --- GAMIFICATION HOOK ---
+        const gamificationService = require('../services/gamificationService');
+        gamificationService.processAction(psychologistId, 'qna_answer').catch(err => console.error("Gamification hook error (answerQuestion):", err));
         
         if (question.status !== 'rejected') {
             question.status = 'answered';
