@@ -578,7 +578,7 @@ app.get('/api/fix-clean-soft-deleted', async (req, res) => {
 
             // Tabelas com nome de coluna em Maiúsculo
             const tabelasComPsychologistIdMaiusculo = [
-                '"PatientFavorites"', '"ForumVotes"', '"ForumCommentVotes"', '"ForumComments"', '"ForumPosts"'
+                '"ForumVotes"', '"ForumCommentVotes"', '"ForumComments"', '"ForumPosts"'
             ];
             for (const tabela of tabelasComPsychologistIdMaiusculo) {
                 try { await db.sequelize.query(`DELETE FROM ${tabela} WHERE "PsychologistId" IN (:ids)`, { replacements: { ids } }); } catch(e) { }
@@ -787,15 +787,6 @@ app.get('/api/fix-create-kpi-tables', async (req, res) => {
                 "matchScore" INTEGER,
                 "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-        await db.sequelize.query(`
-            CREATE TABLE IF NOT EXISTS "PatientFavorites" (
-                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                "PatientId" INTEGER,
-                "PsychologistId" INTEGER,
-                PRIMARY KEY ("PatientId", "PsychologistId")
             );
         `);
         res.send("✅ Sucesso! Tabelas de KPI (Dashboard) criadas.");
@@ -1872,8 +1863,6 @@ app.use('/api/psychologists/me/posts', blogRoutes);
 // ROTA DE ANALYTICS (NOVA)
 app.get('/api/psychologists/me/analytics', protect, psychologistController.getAnalyticsData);
 // ROTA DE FAVORITOS (NOVA)
-app.get('/api/psychologists/me/favorites-profile', protect, psychologistController.getFavoritesProfile);
-
 app.use('/api/psychologists', psychologistRoutes);
 app.use('/api/messaging', messagingRoutes);
 app.use('/api/messages', messageRoutes);
@@ -2677,7 +2666,6 @@ const startServer = async () => {
             `CREATE TABLE IF NOT EXISTS "PwaInstallLogs" ( "id" SERIAL PRIMARY KEY, "userAgent" TEXT, "platform" VARCHAR(50), "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
             `CREATE TABLE IF NOT EXISTS "ProfileAppearanceLogs" ( "id" SERIAL PRIMARY KEY, "psychologistId" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
             `CREATE TABLE IF NOT EXISTS "MatchEvents" ( "id" SERIAL PRIMARY KEY, "psychologistId" INTEGER, "matchTags" TEXT[], "matchScore" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
-            `CREATE TABLE IF NOT EXISTS "PatientFavorites" ( "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "PatientId" INTEGER, "PsychologistId" INTEGER, PRIMARY KEY ("PatientId", "PsychologistId") );`,
             `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "telefone" VARCHAR(255);`,
             `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "utm_source" VARCHAR(255);`,
             `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "utm_medium" VARCHAR(255);`,
