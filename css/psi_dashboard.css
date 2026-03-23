@@ -1370,51 +1370,6 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     display: inline-block;                /* Necessário para centralizar corretamente */
 }
 
-/* ==========================================================================
-   CORREÇÃO FINAL: NOTIFICAÇÕES (TOASTS)
-   ========================================================================== */
-#toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 2147483647; /* Valor máximo para ficar acima de tudo */
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    pointer-events: none; /* Permite clicar através do container */
-}
-
-.toast {
-    min-width: 250px;
-    padding: 16px 20px;
-    border-radius: 8px;
-    color: #fff;
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    animation: slideInToast 0.3s ease-out forwards;
-    opacity: 0;
-    pointer-events: auto; /* Reativa cliques no toast */
-}
-
-/* Cores por tipo */
-.toast-success {
-    background-color: #1B4332; /* Verde Yelo */
-    border-left: 5px solid #4ade80;
-}
-
-.toast-error {
-    background-color: #d32f2f; /* Vermelho Erro */
-    border-left: 5px solid #ff8a80;
-}
-
-.toast-info {
-    background-color: #0288d1; /* Azul Info */
-    border-left: 5px solid #81d4fa;
-}
-
 @keyframes slideInToast {
     from { transform: translateX(100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
