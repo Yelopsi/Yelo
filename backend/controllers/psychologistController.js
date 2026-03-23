@@ -776,11 +776,11 @@ exports.inviteFromWaitlist = async (req, res) => {
         }
 
         const candidate = await db.WaitingList.findOne({
-            where: { id: waitingListId, status: 'pending' }
+            where: { id: waitingListId, status: { [Op.in]: ['pending', 'invited'] } }
         });
 
         if (!candidate) {
-            return res.status(404).json({ error: 'Candidato não encontrado ou já convidado.' });
+            return res.status(404).json({ error: 'Candidato não encontrado.' });
         }
 
         const invitationToken = crypto.randomBytes(32).toString('hex');

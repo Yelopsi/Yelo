@@ -827,7 +827,9 @@ exports.getDashboardStats = async (req, res) => {
             waitingListCount,
             pendingReviewsCount,
             psisByPlan,
-            emailErrors // <--- KPI de E-mail
+            emailErrors, // <--- KPI de E-mail
+            totalMatchesResult,
+            totalClicksResult
         ] = await Promise.all([
             db.sequelize.query(patientStatsQuery, { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }),
             db.sequelize.query(psychologistStatsQuery, { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }),
@@ -891,12 +893,12 @@ exports.getDashboardStats = async (req, res) => {
         console.timeEnd('⏱️ Dashboard Stats Load');
         res.status(200).json({
             mrr: mrr.toFixed(2),
-            newPatients30d: parseInt(patientStats.new30d, 10),
-            newPsis30d: parseInt(psychologistStats.new30d, 10),
-            questToday: parseInt(demandStats.today, 10),
-            patients: { total: parseInt(patientStats.total, 10), active: parseInt(patientStats.active, 10), deleted: parseInt(patientStats.deleted, 10) },
-            psychologists: { total: parseInt(psychologistStats.total, 10), active: parseInt(psychologistStats.active, 10), deleted: parseInt(psychologistStats.deleted, 10), byPlan: plansCount },
-            questionnaires: { total: parseInt(demandStats.total, 10), deleted: parseInt(demandStats.abandoned, 10) },
+            newPatients30d: parseInt(patientStats?.new30d || 0, 10),
+            newPsis30d: parseInt(psychologistStats?.new30d || 0, 10),
+            questToday: parseInt(demandStats?.today || 0, 10),
+            patients: { total: parseInt(patientStats?.total || 0, 10), active: parseInt(patientStats?.active || 0, 10), deleted: parseInt(patientStats?.deleted || 0, 10) },
+            psychologists: { total: parseInt(psychologistStats?.total || 0, 10), active: parseInt(psychologistStats?.active || 0, 10), deleted: parseInt(psychologistStats?.deleted || 0, 10), byPlan: plansCount },
+            questionnaires: { total: parseInt(demandStats?.total || 0, 10), deleted: parseInt(demandStats?.abandoned || 0, 10) },
             waitingListCount: waitingListCount,
             pendingReviewsCount: pendingReviewsCount,
             emailHealth: { status: emailStatus, errors: emailErrors }, // <--- Envia para o front
