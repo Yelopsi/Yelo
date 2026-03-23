@@ -39,7 +39,7 @@ window.initializePage = function() {
     function updateSafe(id, value) {
         const el = document.getElementById(id);
         if (el) {
-            el.textContent = value;
+            el.textContent = (value !== undefined && value !== null) ? value : '--';
             // Efeito visual sutil de atualização
             el.style.transition = 'color 0.3s';
             el.style.color = '#155724'; // Verde escuro momentâneo
@@ -57,8 +57,7 @@ window.initializePage = function() {
         'kpi-psi-total', 'kpi-psi-deleted',
         'kpi-plan-Essencial', 'kpi-plan-Clínico', 'kpi-plan-sol',
         'kpi-quest-total', 'kpi-quest-deleted',
-        'waiting-list-count', 'pending-reviews-count',
-        'kpi-total-matches', 'kpi-total-cliques'
+        'waiting-list-count', 'pending-reviews-count'
     ];
 
     /**
@@ -95,8 +94,8 @@ window.initializePage = function() {
                  headers: { 'Authorization': `Bearer ${token}` }
              });
 
-             if (!response.ok) return; 
-             const stats = await response.json();
+             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const stats = await response.json();
  
              // --- 1. CARDS PRINCIPAIS (TOPO) ---
              updateSafe('kpi-mrr', formatCurrency(stats.mrr || 0));
@@ -140,6 +139,14 @@ window.initializePage = function() {
  
          } catch (error) {
              console.error("Erro no loop do Dashboard:", error);
+                         // Limpa os spinners e coloca um estado vazio se a API falhar
+            const allKpis = [...new Set([...bigKpis, ...smallKpis])];
+            allKpis.forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.innerHTML.includes('loading-spinner')) {
+                    el.textContent = '--';
+                }
+            });
          } finally {
              // Remove animação do botão
              if(btnRefresh) {
