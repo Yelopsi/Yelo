@@ -1805,10 +1805,19 @@ exports.getFavoritesProfile = async (req, res) => {
             return res.json({ total: 0, faixaValor: {}, genero: {}, temas: {} });
         }
 
+        // --- CORREÇÃO: Torna a busca de atributos dinâmica e segura ---
+        const patientAttributes = ['valor_sessao_faixa', 'temas_buscados'];
+        // Verifica se a coluna 'identidade_genero' existe no modelo do Sequelize antes de tentar buscá-la
+        if (db.Patient.rawAttributes.identidade_genero) {
+            patientAttributes.push('identidade_genero');
+        } else {
+            console.warn("[FAVORITES_PROFILE] A coluna 'identidade_genero' não existe no modelo Patient. O gráfico de gênero ficará vazio.");
+        }
+
         // 2. Busca os perfis desses pacientes
         const patients = await db.Patient.findAll({
             where: { id: { [Op.in]: patientIds } },
-            attributes: ['valor_sessao_faixa', 'identidade_genero', 'temas_buscados']
+            attributes: patientAttributes
         });
 
         // 3. Agrega os dados
@@ -1823,6 +1832,7 @@ exports.getFavoritesProfile = async (req, res) => {
             const faixa = p.valor_sessao_faixa || 'Não informado';
             aggregated.faixaValor[faixa] = (aggregated.faixaValor[faixa] || 0) + 1;
 
+            // Usa a propriedade apenas se ela foi retornada na query
             const genero = p.identidade_genero || 'Não informado';
             aggregated.genero[genero] = (aggregated.genero[genero] || 0) + 1;
 
