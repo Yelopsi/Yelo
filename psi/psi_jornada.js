@@ -1,4 +1,12 @@
-document.addEventListener('DOMContentLoaded', async () => {
+let isJornadaInitialized = false;
+
+window.inicializarPaginaJornada = async () => {
+    if (isJornadaInitialized) {
+        console.log("--- psi_jornada.js: Prevenindo execução múltipla ---");
+        return;
+    }
+    isJornadaInitialized = true;
+
     // Adiciona um log para confirmar que o script começou a ser executado
     console.log("--- psi_jornada.js: SCRIPT INICIADO ---");
 
@@ -148,4 +156,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('debug-output').textContent = `ERRO: ${error.message}\n\nVerifique o console do navegador (F12) para mais detalhes.`;
         }
     }
-});
+};
+
+window.cleanupPaginaJornada = () => {
+    isJornadaInitialized = false;
+    console.log("--- psi_jornada.js: Estado resetado (Cleanup) ---");
+};

@@ -789,8 +789,13 @@
                         const executeScript = (script) => {
                             try {
                                 const newScript = document.createElement('script');
-                                if (script.src) newScript.src = script.src;
-                                else newScript.textContent = script.textContent;
+                                if (script.src) {
+                                    newScript.src = script.src;
+                                    // Garante que os scripts executem estritamente na ordem que foram inseridos
+                                    newScript.async = false; 
+                                } else {
+                                    newScript.textContent = script.textContent;
+                                }
                                 // Substitui o script antigo pelo novo para forçar a execução no local correto
                                 script.parentNode.replaceChild(newScript, script);
                             } catch (err) {
