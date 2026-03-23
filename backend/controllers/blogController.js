@@ -129,6 +129,9 @@ module.exports = {
             const deleted = await Post.destroy({ where: { id, psychologistId: userId } });
             if (!deleted) return res.status(404).json({ error: "Post não encontrado ou não excluído." });
             
+            // --- GAMIFICATION ROLLBACK ---
+            gamificationService.rollbackAction(userId, 'blog_post').catch(err => console.error("Gamification rollback error:", err));
+
             res.json({ message: "Excluído." });
         } catch (error) {
             res.status(500).json({ error: "Erro ao excluir." });

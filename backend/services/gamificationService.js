@@ -168,9 +168,58 @@ async function checkProfileCompletion(psychologistId) {
     }
 }
 
+/**
+ * Desfaz uma ação de gamificação (remove XP) e recalcula as badges.
+ * @param {number} psychologistId O ID do psicólogo.
+ * @param {string} actionType O tipo de ação (ex: 'blog_post', 'forum_post').
+ */
+async function rollbackAction(psychologistId, actionType) {
+    try {
+        const rule = SCORING_RULES[actionType];
+        if (!rule) return null;
+
+        // Busca o último ganho de XP dessa ação para cancelar (evita XP negativo se já tinha estourado o limite)
+        const lastLog = await db.GamificationLog.findOne({
+            where: { psychologistId, actionType },
+            order: [['createdAt', 'DESC']]
+        });
+
+        const psi = await db.Psychologist.findByPk(psychologistId);
+        if (!psi) return null;
+
+        let pointsDeducted = 0;
+
+        if (lastLog) {
+            await lastLog.destroy();
+            pointsDeducted = rule.points;
+            
+            const newXP = Math.max(0, (psi.xp || 0) - pointsDeducted);
+            
+            let newLevel = LEVELS[0].slug;
+            for (let i = LEVELS.length - 1; i >= 0; i--) {
+                if (newXP >= LEVELS[i].min) {
+                    newLevel = LEVELS[i].slug;
+                    break;
+                }
+            }
+
+            await psi.update({ xp: newXP, authority_level: newLevel });
+        }
+
+        // O recálculo de badges deve ocorrer INDEPENDENTE de ter perdido XP
+        await calculateBadges(psychologistId);
+
+        return { success: true, pointsDeducted };
+    } catch (error) {
+        console.error(`Erro gamification rollback (${actionType}):`, error);
+        return null;
+    }
+}
+
 module.exports = {
     assignPioneerBadge,
     processAction,
+    rollbackAction,
     calculateBadges,
     checkProfileCompletion
 };
