@@ -130,9 +130,17 @@ module.exports = {
             if (!deleted) return res.status(404).json({ error: "Post não encontrado ou não excluído." });
             
             // --- GAMIFICATION ROLLBACK ---
-            gamificationService.rollbackAction(userId, 'blog_post').catch(err => console.error("Gamification rollback error:", err));
+            let pointsDeducted = 0;
+            try {
+                const rollbackResult = await gamificationService.rollbackAction(userId, 'blog_post');
+                if (rollbackResult && rollbackResult.pointsDeducted) {
+                    pointsDeducted = rollbackResult.pointsDeducted;
+                }
+            } catch (err) {
+                console.error("Gamification rollback error:", err);
+            }
 
-            res.json({ message: "Excluído." });
+            res.json({ message: "Excluído.", pointsDeducted });
         } catch (error) {
             res.status(500).json({ error: "Erro ao excluir." });
         }

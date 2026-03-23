@@ -387,9 +387,17 @@ exports.deletePost = async (req, res) => {
         await post.destroy();
 
         // --- GAMIFICATION ROLLBACK ---
-        gamificationService.rollbackAction(req.user.id, 'forum_post').catch(err => console.error(err));
+        let pointsDeducted = 0;
+        try {
+            const rollbackResult = await gamificationService.rollbackAction(req.user.id, 'forum_post');
+            if (rollbackResult && rollbackResult.pointsDeducted) {
+                pointsDeducted = rollbackResult.pointsDeducted;
+            }
+        } catch (err) {
+            console.error("Gamification rollback error:", err);
+        }
 
-        res.json({ message: 'Post excluído com sucesso.' });
+        res.json({ message: 'Post excluído com sucesso.', pointsDeducted });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao excluir post' });
     }
@@ -407,9 +415,17 @@ exports.deleteComment = async (req, res) => {
         await comment.destroy();
 
         // --- GAMIFICATION ROLLBACK ---
-        gamificationService.rollbackAction(req.user.id, 'forum_reply').catch(err => console.error(err));
+        let pointsDeducted = 0;
+        try {
+            const rollbackResult = await gamificationService.rollbackAction(req.user.id, 'forum_reply');
+            if (rollbackResult && rollbackResult.pointsDeducted) {
+                pointsDeducted = rollbackResult.pointsDeducted;
+            }
+        } catch (err) {
+            console.error("Gamification rollback error:", err);
+        }
 
-        res.json({ message: 'Comentário excluído com sucesso.' });
+        res.json({ message: 'Comentário excluído com sucesso.', pointsDeducted });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao excluir comentário' });
     }
