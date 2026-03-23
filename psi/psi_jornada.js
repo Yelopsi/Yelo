@@ -123,4 +123,22 @@ window.inicializarPaginaJornada = async () => {
         const badges = data.badges || {};
         const progress = data.gamificationProgress || { blogPostCount: 0, forumActivityCount: 0, answerCount: 0 };
 
-        // 
+        // --- 1. Atualizar Barra de XP ---
+        updateXpBar(data.xp || 0, data.authority_level || 'nivel_iniciante');
+
+        // --- 2. Atualizar Badges de Perfil/Status (Booleanas) ---
+        updateBooleanBadge('autentico', badges.autentico);
+        updateBooleanBadge('pioneiro', badges.pioneiro);
+
+        // --- 3. Atualizar Badges de Progressão (Busca contagens do backend) ---
+        updateBadgeCard('semeador', progress.semeador || progress.blogPostCount || 0, badges.semeador);
+        updateBadgeCard('voz_ativa', progress.vozAtiva || progress.forumActivityCount || 0, badges.voz_ativa);
+        updateBadgeCard('conselheiro', progress.conselheiro || progress.answerCount || 0, badges.conselheiro);
+
+        console.log("psi_jornada.js: Interface atualizada com sucesso!");
+
+    } catch (error) {
+        console.error("psi_jornada.js: Erro fatal ao carregar:", error);
+        document.getElementById('next-level-text').textContent = "Erro ao carregar progresso.";
+    }
+};
