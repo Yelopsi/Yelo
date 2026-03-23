@@ -3,11 +3,6 @@
 window.initializePage = function() {
     let refreshInterval; // Variável para armazenar o ID do intervalo
 
-    // Adiciona o script do Chart.js dinamicamente
-    const chartJsScript = document.createElement('script');
-    chartJsScript.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-    document.head.appendChild(chartJsScript);
-
     // --- CORREÇÃO DE ROTA ---
     // Pega do config.js ou assume localhost:3001
     const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') 
@@ -89,10 +84,16 @@ window.initializePage = function() {
          }
 
          try {
+             // Adiciona timeout de 15s para evitar carregamento infinito se a API travar
+             const controller = new AbortController();
+             const timeoutId = setTimeout(() => controller.abort(), 15000);
+
              // Usa a variável token que já está definida no escopo superior
              const response = await fetch(`${BASE_URL}/api/admin/stats`, {
-                 headers: { 'Authorization': `Bearer ${token}` }
+                 headers: { 'Authorization': `Bearer ${token}` },
+                 signal: controller.signal
              });
+             clearTimeout(timeoutId);
 
              if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const stats = await response.json();
@@ -108,6 +109,10 @@ window.initializePage = function() {
                  updateSafe('kpi-pat-total', stats.patients.total);
                  updateSafe('kpi-pat-active', stats.patients.active);
                  updateSafe('kpi-pat-deleted', stats.patients.deleted);
+             } else {
+                 updateSafe('kpi-pat-total', '--');
+                 updateSafe('kpi-pat-active', '--');
+                 updateSafe('kpi-pat-deleted', '--');
              }
  
              if(stats.psychologists) {
@@ -118,11 +123,20 @@ window.initializePage = function() {
                  updateSafe('kpi-plan-Essencial', plans['Essencial'] || 0);
                  updateSafe('kpi-plan-Clínico', plans['Clínico'] || 0);
                  updateSafe('kpi-plan-sol', plans['Sol'] || 0);
+             } else {
+                 updateSafe('kpi-psi-total', '--');
+                 updateSafe('kpi-psi-deleted', '--');
+                 updateSafe('kpi-plan-Essencial', '--');
+                 updateSafe('kpi-plan-Clínico', '--');
+                 updateSafe('kpi-plan-sol', '--');
              }
  
              if(stats.questionnaires) {
                  updateSafe('kpi-quest-total', stats.questionnaires.total);
                  updateSafe('kpi-quest-deleted', stats.questionnaires.deleted);
+             } else {
+                 updateSafe('kpi-quest-total', '--');
+                 updateSafe('kpi-quest-deleted', '--');
              }
  
              // --- 3. WIDGETS LATERAIS ---
@@ -143,7 +157,7 @@ window.initializePage = function() {
             const allKpis = [...new Set([...bigKpis, ...smallKpis])];
             allKpis.forEach(id => {
                 const el = document.getElementById(id);
-                if (el && el.innerHTML.includes('loading-spinner')) {
+                if (el && (el.innerHTML.includes('loading-spinner') || el.textContent.trim() === '')) {
                     el.textContent = '--';
                 }
             });
@@ -242,10 +256,17 @@ window.initializePage = function() {
         refreshInterval = setInterval(() => fetchAndRenderStats(false), 60000);
     }
 
-    // Inicia o processo ao carregar a página
-    chartJsScript.onload = () => {
+    // Carrega o Chart.js apenas se ainda não existir (previne travamento em navegação SPA)
+    if (typeof Chart === 'undefined') {
+        const chartJsScript = document.createElement('script');
+        chartJsScript.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+        chartJsScript.onload = () => {
+            startAutoRefresh();
+        };
+        document.head.appendChild(chartJsScript);
+    } else {
         startAutoRefresh();
-    };
+    }
 
     // Limpa o intervalo quando a página for "desmontada" (função chamada pelo admin.js)
     window.cleanupPage = () => clearInterval(refreshInterval);
