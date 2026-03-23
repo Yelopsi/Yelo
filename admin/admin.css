@@ -2818,6 +2818,9 @@ input:checked + .slider:before { transform: translateX(22px); }
     padding: 5px 15px;
     border-radius: 50px;
     width: fit-content;
+    max-width: 100%;
+    word-break: break-word;
+    white-space: normal;
 }
 .crp-badge { background: #eee; display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; color: #555; margin: 5px 0; }
 
@@ -2835,7 +2838,7 @@ input:checked + .slider:before { transform: translateX(22px); }
 }
 .contact-item { display: flex; flex-direction: column; }
 .contact-item .label { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: 600; }
-.contact-item .value { font-size: 0.95rem; color: #333; font-weight: 500; }
+.contact-item .value { font-size: 0.95rem; color: #333; font-weight: 500; word-break: break-word; overflow-wrap: break-word; }
 
 .stats-grid-details {
     display: grid;
@@ -2890,10 +2893,32 @@ input:checked + .slider:before { transform: translateX(22px); }
 .empty-state { text-align: center; color: #999; padding: 20px; font-style: italic; }
 
 @media (max-width: 768px) {
+        .page-header-actions {
+        flex-wrap: wrap; /* Evita que o botão voltar e o título fiquem esmagados */
+    }
+    .page-header-actions h1 {
+        font-size: 1.4rem;
+        width: 100%;
+        order: 3; /* Joga o título para a linha de baixo se faltar espaço */
+        margin-top: 10px;
+    }
+    #btn-ver-perfil-publico {
+        margin-left: 0 !important;
+    }
     .profile-main-info { flex-direction: column; align-items: center; text-align: center; margin-top: -50px; }
-    .profile-text { padding-bottom: 0; }
-    .profile-actions-top { width: 100%; justify-content: center; }
-    .details-tabs { padding-bottom: 5px; }
+    .profile-text { padding-bottom: 15px; display: flex; flex-direction: column; align-items: center; width: 100%; }
+    .profile-text h2 { margin: 0 auto; text-align: center; }
+    .profile-actions-top { width: 100%; justify-content: center; flex-wrap: wrap; }
+    .profile-contact-grid { 
+        grid-template-columns: 1fr; /* Força 1 coluna no celular para não esmagar e-mails longos */
+        text-align: center; 
+    }
+    .contact-item { align-items: center; }
+    .details-tabs { 
+        padding-bottom: 10px; 
+        scrollbar-width: none; /* Esconde barra de rolagem mas mantém função */
+    }
+    .details-tabs::-webkit-scrollbar { display: none; }
 }
 
 /* ==========================================================================
