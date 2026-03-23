@@ -1583,44 +1583,6 @@ body:not(.pagina-dashboard)::after {
     margin-top: 15px;
 }
 
-/* --- 3. TOAST (Mensagem Flutuante de Sucesso) --- */
-
-.toast {
-    visibility: hidden; /* O JS muda para visible/display block */
-    min-width: 300px;
-    background-color: #333;
-    color: #fff;
-    text-align: center;
-    border-radius: 50px; /* Arredondado estilo app */
-    padding: 16px;
-    position: fixed;
-    z-index: 9999;
-    left: 50%;
-    bottom: 30px;
-    transform: translateX(-50%);
-    font-size: 0.95rem;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    opacity: 0;
-    transition: opacity 0.4s ease, bottom 0.4s ease;
-}
-
-/* Variações de cor do Toast */
-.toast-success {
-    background-color: var(--verde-escuro, #1B4332);
-    border: 2px solid #52b788;
-}
-
-.toast-error {
-    background-color: #d90429;
-    border: 2px solid #ef233c;
-}
-
-/* Animação de entrada (Opcional, mas elegante) */
-.toast.show {
-    visibility: visible;
-    opacity: 1;
-    bottom: 50px; /* Sobe um pouquinho ao aparecer */
-}
 /* ==========================================================================
    ESTILOS DO WIZARD DE CADASTRO (cadastro.ejs)
    Cole isso no final de public/css/05-pages.css

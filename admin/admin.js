@@ -557,21 +557,31 @@ document.addEventListener('DOMContentLoaded', function() {
         window.showToast = showToast; // Expõe a função de toast globalmente
     }
 
-    function showToast(message) {
-        let container = document.getElementById('admin-toast-container');
+    function showToast(message, type = 'success') {
+        let container = document.getElementById('toast-container');
         if (!container) {
             container = document.createElement('div');
-            container.id = 'admin-toast-container';
-            container.style.cssText = "position: fixed; top: 20px; right: 20px; z-index: 2147483647; display: flex; flex-direction: column; gap: 10px;";
             document.body.appendChild(container);
         }
         
         const toast = document.createElement('div');
-        toast.textContent = message;
-        toast.style.cssText = "background: #1B4332; color: #fff; padding: 12px 20px; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); animation: fadeIn 0.3s; font-family: sans-serif; font-size: 0.9rem;";
+        toast.className = `toast toast-${type}`;
+        
+        let iconSvg = '';
+        if (type === 'success') iconSvg = `<svg width="20" height="20" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+        else if (type === 'error') iconSvg = `<svg width="20" height="20" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+        else iconSvg = `<svg width="20" height="20" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+
+        toast.innerHTML = `${iconSvg}<span>${message}</span>`;
         
         container.appendChild(toast);
-        setTimeout(() => toast.remove(), 4000);
+        
+        setTimeout(() => {
+            toast.style.transition = 'all 0.4s ease';
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-20px) scale(0.9)';
+            setTimeout(() => toast.remove(), 400);
+        }, 4000);
     }
 
     initializeAndProtect();
