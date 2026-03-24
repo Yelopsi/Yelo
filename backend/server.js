@@ -1741,6 +1741,9 @@ app.get('/api/fix-patient-table', async (req, res) => {
         await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "ip_registro" VARCHAR(45);');
         await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "termos_aceitos" BOOLEAN DEFAULT FALSE;');
         await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "marketing_aceito" BOOLEAN DEFAULT FALSE;');
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "valor_sessao_faixa" VARCHAR(255);');
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "temas_buscados" JSONB DEFAULT \'[]\';');
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "identidade_genero" VARCHAR(255);');
         
         res.send("✅ Tabela de Pacientes verificada e corrigida.");
     } catch (error) {
@@ -2652,6 +2655,9 @@ const startServer = async () => {
                 ADD COLUMN IF NOT EXISTS "utm_source" VARCHAR(255),
                 ADD COLUMN IF NOT EXISTS "utm_medium" VARCHAR(255),
                 ADD COLUMN IF NOT EXISTS "utm_campaign" VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS "valor_sessao_faixa" VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS "temas_buscados" JSONB DEFAULT '[]',
+                ADD COLUMN IF NOT EXISTS "identidade_genero" VARCHAR(255),
                 ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;`,
             
             `ALTER TABLE "Patients" ALTER COLUMN "email" DROP NOT NULL;`,
