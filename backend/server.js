@@ -163,6 +163,20 @@ if (db.Answer && !db.Answer.rawAttributes.psychologistId) {
     }
 }
 
+// --- FIX: Definir Modelo SystemSetting (Configurações) ---
+if (!db.SystemSetting) {
+    console.log("[FIX] Defining SystemSetting model manually.");
+    db.SystemSetting = db.sequelize.define('SystemSetting', {
+        maintenance_mode: { type: DataTypes.BOOLEAN, defaultValue: false },
+        allow_registrations: { type: DataTypes.BOOLEAN, defaultValue: true },
+        price_Essencial: DataTypes.FLOAT,
+        price_Clínico: DataTypes.FLOAT,
+        price_sol: DataTypes.FLOAT,
+        whatsapp_support: DataTypes.STRING,
+        email_support: DataTypes.STRING
+    });
+}
+
 // --- HOOK GLOBAL: DESARQUIVAMENTO AUTOMÁTICO ---
 // Se um psicólogo ou paciente enviar mensagem, a conversa é desarquivada (status = 'active')
 if (db.Message && db.Conversation) {
@@ -204,6 +218,7 @@ const blogController = require('./controllers/blogController');
 const psychologistController = require('./controllers/psychologistController'); // Importar o controller
 const adminController = require('./controllers/adminController'); // <--- ADICIONADO
 const qnaController = require('./controllers/qnaController'); // <--- ADICIONADO
+const settingsController = require('./controllers/settingsController');
 // const seedTestData = require('./controllers/seed_test_data'); // [OTIMIZAÇÃO] Desativado para economizar memória na inicialização
 
 const app = express();
@@ -1991,6 +2006,21 @@ app.post('/api/admin/push/subscribe', async (req, res) => {
     }
 });
 
+// --- ROTAS DE CONFIGURAÇÕES DO SISTEMA ---
+const checkAdminToken = (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'Não autorizado' });
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+        if (decoded.role !== 'admin' && decoded.type !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
+        next();
+    } catch (e) {
+        return res.status(403).json({ error: 'Token inválido' });
+    }
+};
+app.get('/api/admin/settings', checkAdminToken, settingsController.getSettings);
+app.post('/api/admin/settings', checkAdminToken, settingsController.updateSettings);
+
 // --- ROTAS DE FOLLOW-UP (ADMIN) ---
 app.get('/api/admin/followups', adminController.getFollowUps);
 app.put('/api/admin/followups/:id', adminController.updateFollowUpStatus);
@@ -2747,6 +2777,7 @@ const startServer = async () => {
             `CREATE TABLE IF NOT EXISTS "ProfileAppearanceLogs" ( "id" SERIAL PRIMARY KEY, "psychologistId" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
             `CREATE TABLE IF NOT EXISTS "MatchEvents" ( "id" SERIAL PRIMARY KEY, "psychologistId" INTEGER, "matchTags" TEXT[], "matchScore" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
             `CREATE TABLE IF NOT EXISTS "AdminPushSubscriptions" ( "id" SERIAL PRIMARY KEY, "endpoint" TEXT UNIQUE NOT NULL, "keys" JSONB NOT NULL, "adminId" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
+            `CREATE TABLE IF NOT EXISTS "SystemSettings" ( "id" SERIAL PRIMARY KEY, "maintenance_mode" BOOLEAN DEFAULT FALSE, "allow_registrations" BOOLEAN DEFAULT TRUE, "price_Essencial" FLOAT, "price_Clínico" FLOAT, "price_sol" FLOAT, "whatsapp_support" VARCHAR(255), "email_support" VARCHAR(255), "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
             `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "telefone" VARCHAR(255);`,
             `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "utm_source" VARCHAR(255);`,
             `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "utm_medium" VARCHAR(255);`,
