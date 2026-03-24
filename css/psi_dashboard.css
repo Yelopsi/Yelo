@@ -2755,19 +2755,118 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     }
 }
 
-/* Modal de Criação de Post */
+/* --- MODAL DE CRIAÇÃO DE POST (FÓRUM) - UX APRIMORADA --- */
 #forum-create-modal .custom-modal-box {
     max-width: 700px;
+    padding: 0; /* Remove o padding global para usarmos o layout rolável */
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh; /* Fallback */
+    max-height: 85dvh; /* Altura dinâmica real para lidar com teclado no mobile */
+    overflow: hidden; /* A barra de rolagem fica no formulário, não no container */
 }
+
+/* Cabeçalho Fixo do Modal */
+#forum-create-modal h3 {
+    margin: 0;
+    padding: 20px 25px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fff;
+    flex-shrink: 0; /* Mantém o título fixo no topo */
+    font-size: 1.4rem;
+    z-index: 2;
+}
+
 #forum-create-modal .modal-close {
     position: absolute;
-    top: 15px;
-    right: 20px;
+    top: 20px;
+    right: 25px;
     background: none;
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
     color: #999;
+    z-index: 10;
+}
+
+/* Corpo do Formulário Focado e Rolável */
+#forum-create-form {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 25px;
+    -webkit-overflow-scrolling: touch; /* Rolagem suave no iOS */
+}
+
+/* Ajuste de Inputs para UX Mobile Superior */
+#forum-create-form input[type="text"],
+#forum-create-form select,
+#forum-create-form textarea {
+    width: 100%;
+    padding: 14px 15px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-family: var(--font-principal);
+    font-size: 1rem;
+    background: #f9f9f9;
+    transition: all 0.3s ease;
+}
+
+#forum-create-form input[type="text"]:focus,
+#forum-create-form select:focus,
+#forum-create-form textarea:focus {
+    background: #fff;
+    border-color: var(--verde-escuro);
+    box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
+    outline: none;
+}
+
+#forum-create-form textarea {
+    resize: none; /* Impede quebrar o layout da janela */
+    min-height: 180px;
+}
+
+/* Checkbox de Anonimato Moderno */
+#forum-create-form input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--verde-escuro);
+    cursor: pointer;
+    vertical-align: middle;
+    margin-right: 8px;
+    margin-top: 0;
+}
+
+#forum-create-form input[type="checkbox"] + label {
+    font-weight: 500;
+    color: #555;
+    cursor: pointer;
+    display: inline-block;
+}
+
+/* Botão "Publicar" Fixo no Rodapé do Modal */
+#forum-submit-post-btn {
+    position: sticky;
+    bottom: -25px; /* Compensa exatamente o padding inferior do formulário */
+    margin-top: 25px; /* Empurra para o final e dá respiro aos campos */
+    margin-left: -25px;
+    width: calc(100% + 50px); /* Preenche toda a largura da janela modal */
+    margin-bottom: -25px;
+    padding: 18px;
+    background-color: var(--verde-escuro);
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.05); /* Sombra para cima indicando sobreposição */
+    transition: background 0.2s;
+    z-index: 10;
+}
+
+#forum-submit-post-btn:hover {
+    background-color: #143d2e;
 }
 
 /* Abas de Filtro do Fórum */
