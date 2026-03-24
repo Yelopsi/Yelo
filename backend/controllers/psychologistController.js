@@ -1693,13 +1693,19 @@ exports.getStats = async (req, res) => {
             db.sequelize.query(
                 `SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "psychologistId" = :psiId ${dateCondition}`,
                 { replacements, type: db.sequelize.QueryTypes.SELECT }
-            ).catch(err => [{ count: 0 }]),
+            ).catch(err => {
+                console.error("[DEBUG KPIs] Erro na query WhatsappClickLogs:", err.message);
+                return [{ count: 0 }];
+            }),
 
             // 2. Aparições no Perfil (Tabela de Logs)
             db.sequelize.query(
                 `SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :psiId ${dateCondition}`,
                 { replacements, type: db.sequelize.QueryTypes.SELECT }
-            ).catch(err => [{ count: 0 }]),
+            ).catch(err => {
+                console.error("[DEBUG KPIs] Erro na query ProfileAppearanceLogs:", err.message);
+                return [{ count: 0 }];
+            }),
 
             // 3. Favoritos (Tabela de Associação)
             // Nota: Verifica se a tabela existe para não quebrar
@@ -1744,18 +1750,39 @@ exports.getStats = async (req, res) => {
             db.Post ? db.Post.count({ where: { psychologistId } }).catch(() => db.Post.count({ where: { psychologist_id: psychologistId } }).catch(() => 0)) : Promise.resolve(0),
             db.ForumPost ? db.ForumPost.count({ where: { PsychologistId: psychologistId } }).catch(() => db.ForumPost.count({ where: { psychologistId } }).catch(() => 0)) : Promise.resolve(0),
             db.ForumComment ? db.ForumComment.count({ where: { PsychologistId: psychologistId } }).catch(() => db.ForumComment.count({ where: { psychologistId } }).catch(() => 0)) : Promise.resolve(0),
-            db.Answer ? db.Answer.count({ where: { psychologistId } }).catch(() => 0) : Promise.resolve(0)
+            db.Answer ? db.Answer.count({ where: { psychologistId } }).catch(() => 0) : Promise.resolve(0),
+            
+            // NOVO: Aparições no Match
+            db.sequelize.query(
+                `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :psiId ${dateCondition}`,
+                { replacements, type: db.sequelize.QueryTypes.SELECT }
+            ).catch(err => {
+                console.error("[DEBUG KPIs] Erro na query MatchEvents:", err.message);
+                return [{ count: 0 }];
+            })
         ]);
 
         // Processamento dos KPIs numéricos
         const whatsappClicks = parseInt(clicksResult[0]?.count || 0, 10);
-        const profileAppearances = parseInt(appearancesResult[0]?.count || 0, 10);
+        const profileViews = parseInt(appearancesResult[0]?.count || 0, 10);
+        const matchImpressions = parseInt(matchesResult[0]?.count || 0, 10);
         const favoritesCount = parseInt(favoritesResult[0]?.count || 0, 10);
 
-        // --- NOVO: Cálculo da Taxa de Conversão ---
-        const conversionRate = profileAppearances > 0 
-            ? ((whatsappClicks / profileAppearances) * 100).toFixed(1) 
-            : 0;
+        console.log(`[DEBUG KPIs] Psicólogo ID: ${psychologistId} | Período: ${period}`);
+        console.log(`[DEBUG KPIs] Match Impressions DB:`, matchesResult[0]);
+        console.log(`[DEBUG KPIs] Profile Views DB:`, appearancesResult[0]);
+        console.log(`[DEBUG KPIs] Whatsapp Clicks DB:`, clicksResult[0]);
+
+        const safeCalc = (numerator, denominator) => {
+            if (!denominator || denominator <= 0) return 'N/A';
+            return parseFloat(((numerator / denominator) * 100).toFixed(1));
+        };
+
+        const funnelRates = {
+            choiceRate: safeCalc(profileViews, matchImpressions),
+            profileConversion: safeCalc(whatsappClicks, profileViews),
+            finalConversion: safeCalc(whatsappClicks, matchImpressions)
+        };
 
         // Processamento das Demandas (Otimizado)
         const totalDemands = parseInt(totalDemandsResult[0]?.total || 0, 10);
@@ -1767,9 +1794,10 @@ exports.getStats = async (req, res) => {
 
         const stats = {
             whatsappClicks,
-            profileAppearances,
+            profileViews,
+            matchImpressions,
             favoritesCount,
-            conversionRate: parseFloat(conversionRate), // Envia como número para o frontend
+            funnelRates,
             topDemands,
             xpHistory: xpHistoryResult, // <--- NOVO: Envia para o frontend
             gamificationProgress: {
@@ -1791,7 +1819,7 @@ exports.getStats = async (req, res) => {
     } catch (error) {
         console.error("Erro ao buscar KPIs do psicólogo:", error);
         // Retorna zerado em vez de erro 500 para não quebrar o dashboard
-        res.json({ whatsappClicks: 0, profileAppearances: 0, favoritesCount: 0, topDemands: [] });
+        res.json({ whatsappClicks: 0, profileViews: 0, matchImpressions: 0, favoritesCount: 0, topDemands: [] });
     }
 };
 
@@ -1806,10 +1834,14 @@ exports.incrementWhatsappClick = async (req, res) => {
         if (psychologist) {
             // --- GAMIFICATION: CLIQUE WHATSAPP (10 pts) ---
             gamificationService.processAction(psychologist.id, 'whatsapp_click').catch(e => console.error(e));
+
+            // NOVO: Insere no Log para o Funil
+            await db.sequelize.query(
+                `INSERT INTO "WhatsappClickLogs" ("psychologistId", "createdAt", "updatedAt") VALUES (:id, NOW(), NOW())`,
+                { replacements: { id: psychologist.id }, type: db.sequelize.QueryTypes.INSERT }
+            ).catch(e => console.error("Erro ao inserir WhatsappClickLog:", e.message));
         }
 
-        // A contagem de cliques agora é feita pela tabela de logs (WhatsappClickLogs),
-        // então o incremento direto na tabela de psicólogos não é mais necessário.
         res.status(200).json({ success: true });
     } catch (error) {
         console.error('Erro ao contabilizar clique WhatsApp:', error);
@@ -1823,6 +1855,13 @@ exports.incrementProfileAppearance = async (req, res) => {
         const { id } = req.params;
         // Incrementa a coluna profile_appearances onde o ID corresponde
         await db.Psychologist.increment('profile_appearances', { where: { id } });
+        
+        // NOVO: Insere na tabela de logs para controle de período do dashboard
+        await db.sequelize.query(
+            `INSERT INTO "ProfileAppearanceLogs" ("psychologistId", "createdAt", "updatedAt") VALUES (:id, NOW(), NOW())`,
+            { replacements: { id }, type: db.sequelize.QueryTypes.INSERT }
+        ).catch(e => console.error("Erro ao inserir ProfileAppearanceLog:", e.message));
+
         res.status(200).json({ success: true });
     } catch (error) {
         console.error('Erro ao contabilizar aparição:', error);

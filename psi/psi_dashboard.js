@@ -1298,19 +1298,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const stats = await res.json();
                 
-                // Atualiza os cards com os novos dados
-                // CORREÇÃO: Verifica se os elementos existem antes de atualizar (evita erro ao trocar de página)
-                const elCliques = document.getElementById('kpi-cliques-contato');
-                if (elCliques) elCliques.textContent = stats.whatsappClicks || 0;
+                // --- VOLUMES DO FUNIL ---
+                const elMatchImpressions = document.getElementById('kpi-match-impressions');
+                if (elMatchImpressions) elMatchImpressions.textContent = stats.matchImpressions || 0;
 
-                const elRecomendacoes = document.getElementById('kpi-recomendacoes');
-                if (elRecomendacoes) elRecomendacoes.textContent = stats.profileAppearances || 0;
+                const elProfileViews = document.getElementById('kpi-profile-views');
+                if (elProfileViews) elProfileViews.textContent = stats.profileViews || 0;
 
-                const elFavoritos = document.getElementById('kpi-favoritos');
-                if (elFavoritos) elFavoritos.textContent = stats.favoritesCount || 0;
+                const elWhatsappClicks = document.getElementById('kpi-whatsapp-clicks');
+                if (elWhatsappClicks) elWhatsappClicks.textContent = stats.whatsappClicks || 0;
 
-                const elConversao = document.getElementById('kpi-taxa-conversao');
-                if (elConversao) elConversao.textContent = `${stats.conversionRate || 0}%`;
+                // --- TAXAS DE CONVERSÃO ---
+                const elTaxaEscolha = document.getElementById('kpi-taxa-escolha');
+                if (elTaxaEscolha) {
+                    elTaxaEscolha.textContent = stats.funnelRates?.choiceRate === 'N/A' ? 'N/A' : `${stats.funnelRates.choiceRate}%`;
+                }
+
+                const elConversaoPerfil = document.getElementById('kpi-conversao-perfil');
+                if (elConversaoPerfil) {
+                    elConversaoPerfil.textContent = stats.funnelRates?.profileConversion === 'N/A' ? 'N/A' : `${stats.funnelRates.profileConversion}%`;
+                }
+
+                const elConversaoFinal = document.getElementById('kpi-conversao-final');
+                if (elConversaoFinal) {
+                    elConversaoFinal.textContent = stats.funnelRates?.finalConversion === 'N/A' ? 'N/A' : `${stats.funnelRates.finalConversion}%`;
+                }
 
                 const elDemandas = document.getElementById('lista-demandas');
                 if (elDemandas) {

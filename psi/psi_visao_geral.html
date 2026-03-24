@@ -56,19 +56,40 @@
 <div class="kpi-grid">
     <div class="kpi-card">
         <h3>Aparições no Match</h3>
-        <div class="kpi-value" id="kpi-recomendacoes">0</div>
+        <div class="kpi-value" id="kpi-match-impressions">0</div>
         <p class="kpi-desc">Vezes que seu perfil apareceu no Top 3 de um paciente.</p>
     </div>
     <div class="kpi-card">
-        <h3>Cliques no WhatsApp</h3>
-        <div class="kpi-value" id="kpi-cliques-contato">0</div>
-        <p class="kpi-desc">Pacientes que iniciaram contato após ver seu perfil.</p>
+        <h3>Visualizações de Perfil</h3>
+        <div class="kpi-value" id="kpi-profile-views">0</div>
+        <p class="kpi-desc">Pacientes que clicaram para ver seu perfil completo.</p>
     </div>
     <div class="kpi-card">
-        <h3>Taxa de Conversão</h3>
-        <div class="kpi-value" id="kpi-taxa-conversao">0%</div>
-        <p class="kpi-desc">Cliques no WhatsApp / Aparições no Match.</p>
+        <h3>Cliques no WhatsApp</h3>
+        <div class="kpi-value" id="kpi-whatsapp-clicks">0</div>
+        <p class="kpi-desc">Pacientes que iniciaram contato após ver seu perfil.</p>
     </div>
+</div>
+
+<div class="kpi-grid" style="margin-top: 25px;">
+    <div class="kpi-card">
+        <h3 title="Cliques no Perfil ÷ Aparições no Match">Taxa de Escolha (CTR)</h3>
+        <div class="kpi-value" id="kpi-taxa-escolha">N/A</div>
+        <p class="kpi-desc">Avalia a atratividade inicial da sua "vitrine".</p>
+    </div>
+    <div class="kpi-card">
+        <h3 title="Cliques no WhatsApp ÷ Visualizações de Perfil">Conversão do Perfil</h3>
+        <div class="kpi-value" id="kpi-conversao-perfil">N/A</div>
+        <p class="kpi-desc">Avalia o poder de persuasão da sua biografia.</p>
+    </div>
+    <div class="kpi-card">
+        <h3 title="Cliques no WhatsApp ÷ Aparições no Match">Conversão Final</h3>
+        <div class="kpi-value" id="kpi-conversao-final">N/A</div>
+        <p class="kpi-desc">Eficiência ponta a ponta do seu funil.</p>
+    </div>
+</div>
+
+<div class="kpi-grid" style="margin-top: 25px;">
     <div id="card-demandas" class="kpi-card">
         <h3>Principais Queixas Buscadas</h3>
         <div id="lista-demandas" class="kpi-list">
@@ -80,7 +101,7 @@
     <div id="card-benchmarking" class="kpi-card">
         <h3>Benchmarking de Mercado</h3>
         <p class="kpi-desc">Compare sua performance com a média da plataforma.</p>
-        <a href="#" class="kpi-link">Ver análise completa &rarr;</a>
+        <a href="#" class="kpi-link" data-page="psi_analytics.html">Ver análise completa &rarr;</a>
     </div>
 </div>
 
