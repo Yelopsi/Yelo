@@ -205,6 +205,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const adminName = document.querySelector('.nome-admin')?.textContent.split(' ')[0] || 'Admin';
         
         const activeLink = document.querySelector('.sidebar-nav li.active');
+        const headerActions = document.getElementById('dynamic-header-actions');
+        if (headerActions) headerActions.innerHTML = ''; // Limpa botões antigos ao mudar de página
         
         if (pageTitle && activeLink) {
             const dataPage = activeLink.getAttribute('data-page');
@@ -219,6 +221,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Para outras páginas, usa o título e subtítulo definidos no link
                 pageTitle.textContent = titleFromData || activeLink.querySelector('span')?.textContent.trim();
                 if (pageSubtitle) pageSubtitle.textContent = subtitleFromData || '';
+            }
+
+            // Injeta o botão de exportação se estiver na tela de Lista de Espera
+            if (dataPage === 'admin_lista_espera.html' && headerActions) {
+                headerActions.innerHTML = `<button onclick="exportarListaDeEspera(this)" class="btn-export-csv"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: text-bottom;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Exportar CSV</button>`;
             }
         }
     }
@@ -583,6 +590,45 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => toast.remove(), 400);
         }, 4000);
     }
+
+    // --- FUNÇÃO GLOBAL: EXPORTAR LISTA DE ESPERA ---
+    window.exportarListaDeEspera = async function(btnElement) {
+        const originalText = btnElement ? btnElement.innerHTML : 'Exportar CSV';
+        if (btnElement) { btnElement.innerHTML = '⏳ Gerando...'; btnElement.disabled = true; }
+
+        try {
+            const token = localStorage.getItem('Yelo_token'); 
+            const res = await fetch('/api/admin/export/waitlist', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (!res.ok) throw new Error('Falha ao exportar.');
+            const data = await res.json();
+            
+            if(!data || data.length === 0) {
+                showToast('A lista de espera está vazia.', 'info');
+                return;
+            }
+
+            const header = "Nome;Telefone;Email;Status;Data de Cadastro\n";
+            const rows = data.map(item => `"${item.nome || ''}";"${item.telefone || ''}";"${item.email || ''}";"${item.status || ''}";"${new Date(item.createdAt).toLocaleDateString('pt-BR')}"`).join("\n");
+            const csvContent = "\uFEFF" + header + rows;
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "lista_de_espera_yelo.csv");
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch(e) {
+            console.error("Erro ao exportar:", e);
+            showToast("Erro ao exportar a lista.", 'error');
+        } finally {
+            if (btnElement) { btnElement.innerHTML = originalText; btnElement.disabled = false; }
+        }
+    };
 
     initializeAndProtect();
     setupConfirmationModal();

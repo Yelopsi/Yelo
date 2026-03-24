@@ -2206,6 +2206,23 @@ exports.exportPsychologists = async (req, res) => {
 };
 
 /**
+ * Rota: GET /api/admin/export/waitlist
+ * Descrição: Exporta a lista de espera para marketing.
+ */
+exports.exportWaitlist = async (req, res) => {
+    try {
+        const waitlist = await db.WaitingList.findAll({
+            attributes: ['nome', 'telefone', 'email', 'status', 'createdAt'],
+            order: [['createdAt', 'DESC']]
+        });
+        res.json(waitlist);
+    } catch (error) {
+        console.error("Erro ao exportar lista de espera:", error);
+        res.status(500).json({ error: 'Erro ao gerar lista de espera.' });
+    }
+};
+
+/**
  * Rota: GET /api/admin/followups
  * Descrição: Busca a lista de cliques no WhatsApp para follow-up.
  */

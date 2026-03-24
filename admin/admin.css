@@ -414,6 +414,23 @@ body.pagina-dashboard::after {
     border-color: #e9ecef;
 }
 
+/* Botão de Exportação Dinâmico (Header) */
+.btn-export-csv {
+    background-color: var(--cor-Yelo);
+    color: var(--verde-escuro);
+    border: 1px solid #e0c855;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-export-csv:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
 .tabela-container {
     background-color: var(--branco-puro);
     padding: 30px;

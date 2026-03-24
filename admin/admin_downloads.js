@@ -8,6 +8,7 @@ window.initializePage = function() {
     const btnDownloadPatients = document.getElementById('btn-download-patients');
     const btnDownloadPsychologists = document.getElementById('btn-download-psychologists');
     const btnDownloadFollowups = document.getElementById('btn-download-followups');
+    const btnDownloadWaitlist = document.getElementById('btn-download-waitlist');
 
     if (!token) {
         console.warn("Token não encontrado no LocalStorage. Tentando autenticação via Cookie...");
@@ -112,6 +113,10 @@ window.initializePage = function() {
 
     if (btnDownloadPsychologists) {
         btnDownloadPsychologists.addEventListener('click', () => handleDownload(btnDownloadPsychologists, '/api/admin/export/psychologists', 'psicologos_yelo.xls'));
+    }
+    
+    if (btnDownloadWaitlist) {
+        btnDownloadWaitlist.addEventListener('click', () => handleDownload(btnDownloadWaitlist, '/api/admin/export/waitlist', 'lista_de_espera_yelo.csv'));
     }
 
     // --- Lógica Específica para Follow-up (Camada 1 - Mock/Simulação) ---
