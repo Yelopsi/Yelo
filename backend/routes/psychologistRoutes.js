@@ -78,19 +78,21 @@ router.get('/me/stats', async (req, res) => {
         }
 
         // --- OTIMIZAÇÃO DE KPIs: Executa contagens em uma única query paralela ---
-        let kpiCounts = { whatsappClicks: 0, profileAppearances: 0, favoritesCount: 0 };
+        let kpiCounts = { whatsappClicks: 0, profileAppearances: 0, favoritesCount: 0, matchImpressions: 0 };
         try {
             const kpiQuery = `
                 SELECT
                     (SELECT COUNT(*) FROM "WhatsappClickLogs" WHERE "psychologistId" = :psychologistId ${rawDateQuery}) as "whatsappClicks",
                     (SELECT COUNT(*) FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :psychologistId ${rawDateQuery}) as "profileAppearances",
-                    (SELECT COUNT(*) FROM "PatientFavorites" WHERE "PsychologistId" = :psychologistId ${rawDateQuery}) as "favoritesCount"
+                    (SELECT COUNT(*) FROM "PatientFavorites" WHERE "PsychologistId" = :psychologistId) as "favoritesCount",
+                    (SELECT COUNT(*) FROM "MatchEvents" WHERE "psychologistId" = :psychologistId ${rawDateQuery}) as "matchImpressions"
             `;
             const [results] = await db.sequelize.query(kpiQuery, { replacements, type: db.sequelize.QueryTypes.SELECT });
             kpiCounts = {
                 whatsappClicks: parseInt(results.whatsappClicks, 10) || 0,
                 profileAppearances: parseInt(results.profileAppearances, 10) || 0,
                 favoritesCount: parseInt(results.favoritesCount, 10) || 0,
+                matchImpressions: parseInt(results.matchImpressions, 10) || 0,
             };
         } catch(e) {
             console.error("Erro ao buscar KPIs agregados:", e.message);
@@ -123,6 +125,7 @@ router.get('/me/stats', async (req, res) => {
         res.json({
             whatsappClicks: kpiCounts.whatsappClicks,
             profileAppearances: kpiCounts.profileAppearances,
+            matchImpressions: kpiCounts.matchImpressions,
             favoritesCount: kpiCounts.favoritesCount,
             topDemands: topDemands || []
         });
