@@ -1970,6 +1970,27 @@ app.delete('/api/admin/content/forum/:id', adminController.deleteForumPost);
 app.get('/api/admin/content/qna', qnaController.getAllQuestions);
 app.delete('/api/admin/content/qna/:id', qnaController.deleteQuestion);
 
+// --- ROTAS DE WEB PUSH (NOTIFICAÇÕES NATIVAS) ---
+app.get('/api/admin/push/vapid-public-key', (req, res) => {
+    res.send(process.env.VAPID_PUBLIC_KEY || '');
+});
+
+app.post('/api/admin/push/subscribe', async (req, res) => {
+    try {
+        const { endpoint, keys } = req.body;
+        await db.sequelize.query(
+            `INSERT INTO "AdminPushSubscriptions" (endpoint, keys, "createdAt", "updatedAt")
+             VALUES (:endpoint, :keys, NOW(), NOW())
+             ON CONFLICT (endpoint) DO UPDATE SET keys = :keys, "updatedAt" = NOW()`,
+            { replacements: { endpoint, keys: JSON.stringify(keys) } }
+        );
+        res.status(201).json({ success: true });
+    } catch (e) {
+        console.error("Erro Push Subscribe:", e);
+        res.status(500).json({ error: 'Erro ao assinar notificações' });
+    }
+});
+
 // --- ROTAS DE FOLLOW-UP (ADMIN) ---
 app.get('/api/admin/followups', adminController.getFollowUps);
 app.put('/api/admin/followups/:id', adminController.updateFollowUpStatus);
@@ -2725,6 +2746,7 @@ const startServer = async () => {
             `CREATE TABLE IF NOT EXISTS "PwaInstallLogs" ( "id" SERIAL PRIMARY KEY, "userAgent" TEXT, "platform" VARCHAR(50), "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
             `CREATE TABLE IF NOT EXISTS "ProfileAppearanceLogs" ( "id" SERIAL PRIMARY KEY, "psychologistId" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
             `CREATE TABLE IF NOT EXISTS "MatchEvents" ( "id" SERIAL PRIMARY KEY, "psychologistId" INTEGER, "matchTags" TEXT[], "matchScore" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
+            `CREATE TABLE IF NOT EXISTS "AdminPushSubscriptions" ( "id" SERIAL PRIMARY KEY, "endpoint" TEXT UNIQUE NOT NULL, "keys" JSONB NOT NULL, "adminId" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
             `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "telefone" VARCHAR(255);`,
             `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "utm_source" VARCHAR(255);`,
             `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "utm_medium" VARCHAR(255);`,
