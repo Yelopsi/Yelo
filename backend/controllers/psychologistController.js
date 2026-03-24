@@ -547,19 +547,32 @@ exports.checkDemand = async (req, res) => {
         const DEMAND_TARGET = 0; 
         const { min: psyMinPrice, max: psyMaxPrice } = parsePriceRange(valor_sessao_faixa);
 
-        // 2. Define a cláusula para buscar PACIENTES compatíveis
-        const whereClause = {
-            valor_sessao_faixa: { [Op.ne]: null }, 
-            temas_buscados: {
-                [Op.overlap]: temas_atuacao
-            },
-            genero_profissional: {
-                [Op.or]: [genero_identidade, 'Indiferente']
-            }
+        // 2. Define a query de busca por pacientes compatíveis em SQL Puro.
+        // Usamos SQL puro para contornar a incompatibilidade de Sequelize Op.overlap em campos JSONB nativos
+        const replacements = {
+            genero_identidade: genero_identidade
         };
+        
+        let temasQuery = "";
+        if (temas_atuacao && Array.isArray(temas_atuacao) && temas_atuacao.length > 0) {
+            temasQuery = `AND "temas_buscados" ?| array[:temas_atuacao]`; // O operador '?|' verifica intersecção de arrays/jsonb
+            replacements.temas_atuacao = temas_atuacao;
+        }
 
-        // 3. Conta quantos pacientes existem com essas preferências
-        const count = await db.Patient.count({ where: whereClause });
+        const query = `
+            SELECT COUNT(*) as count 
+            FROM "Patients" 
+            WHERE "valor_sessao_faixa" IS NOT NULL
+            AND ("genero_profissional" = :genero_identidade OR "genero_profissional" = 'Indiferente')
+            ${temasQuery}
+        `;
+
+        const [result] = await db.sequelize.query(query, {
+            replacements,
+            type: db.sequelize.QueryTypes.SELECT
+        });
+
+        const count = parseInt(result.count, 10) || 0;
 
         console.log(`[CHECK DEMAND] Nicho verificado. Pacientes encontrados: ${count}. Alvo: ${DEMAND_TARGET}.`);
 
