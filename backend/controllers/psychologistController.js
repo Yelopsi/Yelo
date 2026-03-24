@@ -1687,7 +1687,12 @@ exports.getStats = async (req, res) => {
             favoritesResult,
             topDemandsResult,
             totalDemandsResult,
-            xpHistoryResult
+            xpHistoryResult,
+            blogPostCount,
+            forumPostCount,
+            forumCommentCount,
+            answerCount,
+            matchesResult
         ] = await Promise.all([
             // 1. Cliques no WhatsApp (Tabela de Logs)
             db.sequelize.query(
@@ -1819,7 +1824,14 @@ exports.getStats = async (req, res) => {
     } catch (error) {
         console.error("Erro ao buscar KPIs do psicólogo:", error);
         // Retorna zerado em vez de erro 500 para não quebrar o dashboard
-        res.json({ whatsappClicks: 0, profileViews: 0, matchImpressions: 0, favoritesCount: 0, topDemands: [] });
+        res.json({ 
+            whatsappClicks: 0, 
+            profileViews: 0, 
+            matchImpressions: 0, 
+            favoritesCount: 0, 
+            topDemands: [],
+            funnelRates: { choiceRate: 'N/A', profileConversion: 'N/A', finalConversion: 'N/A' }
+        });
     }
 };
 
