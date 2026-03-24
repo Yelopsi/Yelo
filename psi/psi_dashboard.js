@@ -500,6 +500,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const level = user.authority_level || 'nivel_iniciante';
         const badges = user.badges || {};
         const currentXP = user.xp || 0;
+        const progress = user.gamificationProgress || { blogPostCount: 0, forumActivityCount: 0, answerCount: 0 };
 
         const LEVELS = [
             { slug: 'nivel_iniciante',    min: 0,      label: 'Iniciante' },
@@ -566,14 +567,38 @@ document.addEventListener('DOMContentLoaded', function() {
             nextLevelText.innerHTML = msg;
         }
 
-        const updateBadgeCard = (elementId, level, progressData) => {
+        const updateBadgeCard = (elementId, level, currentCount, thresholds) => {
             const el = document.getElementById(elementId);
             if (!el) return;
             const statusEl = el.querySelector('.badge-status');
             const progressContainer = el.querySelector('.badge-progress-container');
             const progressBar = el.querySelector('.badge-progress-bar');
             const progressText = el.querySelector('.badge-progress-text');
+            
             el.classList.remove('unlocked', 'locked', 'bronze', 'prata', 'ouro', 'unico');
+            
+            let target, progressTextStr, progressPercentage;
+
+            if (thresholds) {
+                if (level === 'ouro') {
+                    target = thresholds.ouro;
+                    progressTextStr = `${Math.min(currentCount, target)}/${target} (Máximo)`;
+                    progressPercentage = 100;
+                } else if (level === 'prata') {
+                    target = thresholds.ouro;
+                    progressTextStr = `${currentCount}/${target} para Ouro`;
+                    progressPercentage = (currentCount / target) * 100;
+                } else if (level === 'bronze') {
+                    target = thresholds.prata;
+                    progressTextStr = `${currentCount}/${target} para Prata`;
+                    progressPercentage = (currentCount / target) * 100;
+                } else { // Bloqueado
+                    target = thresholds.bronze;
+                    progressTextStr = `${currentCount}/${target} para Bronze`;
+                    progressPercentage = (currentCount / target) * 100;
+                }
+            }
+
             if (level) {
                 el.classList.add('unlocked', typeof level === 'string' ? level : 'unico');
                 if(statusEl) statusEl.textContent = typeof level === 'string' ? `${level.charAt(0).toUpperCase() + level.slice(1)}` : "Conquistado";
@@ -581,24 +606,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 el.classList.add('locked');
                 if(statusEl) statusEl.textContent = "Bloqueado";
             }
-            if (progressContainer && progressData) {
+
+            if (progressContainer && thresholds) {
                 progressContainer.style.display = 'block';
-                const percent = Math.min(100, (progressData.current / progressData.next) * 100);
-                if(progressBar) progressBar.style.width = `${percent}%`;
-                if(progressText) progressText.textContent = progressData.tier === 'max' ? 'Nível Máximo!' : `${progressData.current}/${progressData.next} para ${progressData.tier}`;
+                if(progressBar) progressBar.style.width = `${Math.min(100, progressPercentage)}%`;
+                if(progressText) progressText.textContent = progressTextStr;
             } else if (progressContainer) {
-                progressContainer.style.display = 'none';
+                progressContainer.style.display = 'block';
+                if(progressBar) progressBar.style.width = level ? '100%' : '0%';
+                if(progressText) progressText.textContent = level ? '1/1' : '0/1';
             }
         };
 
-        const semeadorProg = badges.semeador_progress || { current: 0, next: 1, tier: 'Bronze' };
-        updateBadgeCard('badge-semeador', badges.semeador, semeadorProg);
-        const vozProg = badges.voz_ativa_progress || { current: 0, next: 10, tier: 'Bronze' };
-        updateBadgeCard('badge-voz', badges.voz_ativa, vozProg);
-        const autenticoProg = badges.autentico ? { current: 1, next: 1, tier: 'max' } : { current: 0, next: 1, tier: 'Conquistar' };
-        updateBadgeCard('badge-autentico', badges.autentico, autenticoProg);
-        const pioneiroProg = badges.pioneiro ? { current: 1, next: 1, tier: 'max' } : { current: 0, next: 1, tier: 'Conquistar' };
-        updateBadgeCard('badge-pioneiro', badges.pioneiro, pioneiroProg);
+        const blogCount = progress.semeador || progress.blogPostCount || 0;
+        const forumCount = progress.vozAtiva || progress.forumActivityCount || 0;
+        const answersCount = progress.conselheiro || progress.answerCount || 0;
+
+        updateBadgeCard('badge-semeador', badges.semeador, blogCount, { bronze: 1, prata: 5, ouro: 15 });
+        updateBadgeCard('badge-voz-ativa', badges.voz_ativa, forumCount, { bronze: 10, prata: 50, ouro: 200 });
+        updateBadgeCard('badge-conselheiro', badges.conselheiro, answersCount, { bronze: 10, prata: 50, ouro: 150 });
+        
+        updateBadgeCard('badge-autentico', badges.autentico, null, null);
+        updateBadgeCard('badge-pioneiro', badges.pioneiro, null, null);
     }
 
     // --- FUNÇÃO DE BLOQUEIO GERAL (NOVA) ---
@@ -1299,6 +1328,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 // --- RENDERIZA GRÁFICO DE XP ---
                 if (stats.xpHistory) {
                     renderXPChart(stats.xpHistory);
+                }
+                
+                // --- ATUALIZA GAMIFICAÇÃO GERAL ---
+                if (stats.gamificationProgress && psychologistData) {
+                    psychologistData.gamificationProgress = stats.gamificationProgress;
+                    updateGamificationWidgets(psychologistData, true);
                 }
 
             } catch (error) {
@@ -2540,42 +2575,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-     // --- FUNÇÃO GLOBAL PARA TOOLTIPS DE BADGES NO MOBILE ---
+     // --- FUNÇÃO GLOBAL PARA TOOLTIPS DE BADGES NO MOBILE E DESKTOP ---
     function setupMobileBadgeTooltips() {
-        // Garante que o listener seja adicionado apenas uma vez
-        if (document.body.dataset.mobileTooltipsSetup) return;
-        document.body.dataset.mobileTooltipsSetup = 'true';
+        if (document.body.dataset.tooltipsSetup) return;
+        document.body.dataset.tooltipsSetup = 'true';
 
-        document.body.addEventListener('click', function(e) {
-            const existingTooltip = document.querySelector('.mobile-badge-tooltip');
-            
-            // Se clicou em um alvo de badge
-            const target = e.target.closest('.badge-card, .badge-item');
+        let activeTooltip = null;
 
-            // Primeiro, remove qualquer tooltip existente para limpar a tela
-            if (existingTooltip) {
-                existingTooltip.remove();
-            }
+        const createTooltip = (target) => {
+            const title = target.getAttribute('title') || target.dataset.originalTitle;
+            if (!title) return null;
 
-            // Se não clicou em um alvo de badge, ou se estamos no desktop, apenas saia
-            if (!target || window.innerWidth > 992) {
-                return;
+            // Transfere o title para data-original-title para evitar o tooltip nativo feio do navegador
+            if (target.getAttribute('title')) {
+                target.dataset.originalTitle = title;
+                target.removeAttribute('title');
             }
             
-            // Se clicou em um alvo, previne outras ações e mostra o novo tooltip
-            e.preventDefault();
-            e.stopPropagation();
+            if (activeTooltip) activeTooltip.remove();
 
-            const title = target.getAttribute('title');
-            if (!title) return;
-
-            // Cria o novo tooltip
             const tooltip = document.createElement('div');
-            tooltip.className = 'mobile-badge-tooltip';
+            tooltip.className = 'mobile-badge-tooltip'; 
             tooltip.textContent = title;
             document.body.appendChild(tooltip);
+            activeTooltip = tooltip;
 
-            // Posiciona o tooltip
             const targetRect = target.getBoundingClientRect();
             const tooltipRect = tooltip.getBoundingClientRect();
 
@@ -2594,6 +2618,46 @@ document.addEventListener('DOMContentLoaded', function() {
 
             tooltip.style.top = `${top}px`;
             tooltip.style.left = `${left}px`;
+            
+            return tooltip;
+        };
+
+        const removeTooltip = () => {
+            if (activeTooltip) {
+                activeTooltip.remove();
+                activeTooltip = null;
+            }
+        };
+
+        // Para Mobile (Click)
+        document.body.addEventListener('click', function(e) {
+            const target = e.target.closest('.badge-card, .badge-item');
+            if (!target) {
+                removeTooltip();
+                return;
+            }
+            if (window.innerWidth <= 992) {
+                e.preventDefault();
+                e.stopPropagation();
+                createTooltip(target);
+            }
+        });
+
+        // Para Desktop (Hover)
+        document.body.addEventListener('mouseover', function(e) {
+            if (window.innerWidth <= 992) return;
+            const target = e.target.closest('.badge-card, .badge-item');
+            if (target) {
+                createTooltip(target);
+            }
+        });
+
+        document.body.addEventListener('mouseout', function(e) {
+            if (window.innerWidth <= 992) return;
+            const target = e.target.closest('.badge-card, .badge-item');
+            if (target) {
+                removeTooltip();
+            }
         });
     }
 
