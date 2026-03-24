@@ -2824,7 +2824,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 
 #forum-create-form textarea {
     resize: none; /* Impede quebrar o layout da janela */
-    min-height: 180px;
+    min-height: 110px; /* Reduzido fortemente para caber na tela sem rolar */
 }
 
 /* Checkbox de Anonimato Moderno */
@@ -2845,22 +2845,22 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     display: inline-block;
 }
 
-/* Botão "Publicar" Fixo no Rodapé do Modal */
+/* Botão "Publicar" (Menor, Fixo e Visível sem rolar) */
 #forum-submit-post-btn {
     position: sticky;
-    bottom: -25px; /* Compensa exatamente o padding inferior do formulário */
-    margin-top: 25px; /* Empurra para o final e dá respiro aos campos */
-    margin-left: -25px;
-    width: calc(100% + 50px); /* Preenche toda a largura da janela modal */
-    margin-bottom: -25px;
-    padding: 18px;
+    bottom: -5px; /* Fica fixado na parte inferior de forma flutuante */
+    margin-top: 15px; 
+    align-self: flex-end; /* Alinha o botão elegantemente à direita */
+    width: auto; /* Remove a largura esticada */
+    padding: 12px 35px; /* Deixa o botão muito mais fino e compacto */
+    border-radius: 50px; /* Formato de pílula moderno */
     background-color: var(--verde-escuro);
     color: white;
-    font-size: 1.1rem;
+    font-size: 1rem; /* Fonte levemente menor */
     font-weight: 700;
     border: none;
     cursor: pointer;
-    box-shadow: 0 -4px 15px rgba(0,0,0,0.05); /* Sombra para cima indicando sobreposição */
+    box-shadow: 0 4px 15px rgba(27, 67, 50, 0.2); /* Sombra de flutuação elegante */
     transition: background 0.2s;
     z-index: 10;
 }
