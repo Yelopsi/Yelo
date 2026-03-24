@@ -2674,29 +2674,85 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 
 /* Botão Flutuante (FAB) */
 #forum-fab {
-    position: fixed;
-    bottom: 30px;
-    right: 40px;
-    width: 64px; /* Ligeiramente maior */
-    height: 64px;
-    background-color: var(--cor-Yelo); /* Amarelo para destaque */
-    color: var(--verde-escuro); /* Verde para contraste */
-    border: none;
-    border-radius: 50%;
-    font-size: 2.8rem; /* Símbolo '+' maior */
-    font-weight: 300; /* Símbolo '+' mais fino e elegante */
-    line-height: 60px; /* Ajuste para centralizar o '+' verticalmente */
-    text-align: center;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.25); /* Sombra mais forte para 'flutuar' */
-    cursor: pointer;
-    z-index: 1050;
-    transition: transform 0.2s ease, background-color 0.2s ease;
-    animation: pulse-fab 2.5s infinite ease-in-out; /* Animação de pulso para chamar atenção */
+    display: none !important; /* Oculto: Substituído pelo input moderno */
 }
-#forum-fab:hover {
-    transform: scale(1.1) !important; /* Garante que o hover sobreponha a animação */
-    background-color: #fde468; /* Amarelo um pouco mais claro no hover */
-    animation-play-state: paused; /* Pausa a animação ao passar o mouse */
+
+/* --- MODERN CREATE POST PROMPT (FÓRUM) --- */
+.modern-create-prompt {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #fff;
+    padding: 15px 20px;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    margin-bottom: 25px;
+    cursor: text;
+    transition: all 0.2s ease;
+}
+
+.modern-create-prompt:hover {
+    border-color: var(--verde-escuro);
+    box-shadow: 0 4px 15px rgba(27, 67, 50, 0.08);
+}
+
+.prompt-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: var(--cinza-fundo);
+}
+
+.prompt-fake-input {
+    flex-grow: 1;
+    color: #888;
+    font-size: 1rem;
+    background: #f8f9fa;
+    padding: 12px 20px;
+    border-radius: 25px;
+    transition: background 0.2s, color 0.2s;
+    user-select: none;
+}
+
+.modern-create-prompt:hover .prompt-fake-input {
+    background: #f0fdf4;
+    color: var(--verde-escuro);
+}
+
+.prompt-btn {
+    background-color: var(--verde-escuro);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-family: var(--font-principal);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.modern-create-prompt:hover .prompt-btn {
+    transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+    .modern-create-prompt {
+        padding: 12px 15px;
+        gap: 10px;
+    }
+    .prompt-avatar {
+        width: 35px;
+        height: 35px;
+    }
+    .prompt-fake-input {
+        font-size: 0.9rem;
+        padding: 10px 15px;
+    }
+    .prompt-btn {
+        display: none; /* Esconde o botão no mobile para dar mais espaço ao texto */
+    }
 }
 
 /* Modal de Criação de Post */

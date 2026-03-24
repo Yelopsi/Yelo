@@ -3578,7 +3578,7 @@ async function inicializarForum(preFetchedData = null) {
             postEl.querySelector('#forum-back-to-feed-btn').onclick = () => {
                 postView.classList.add('hidden');
                 feedView.classList.remove('hidden');
-                if (fab) fab.style.display = 'block';
+                // if (fab) fab.style.display = 'block'; // Oculto globalmente
                 currentPostId = null;
             };
 
@@ -4102,7 +4102,7 @@ async function inicializarForum(preFetchedData = null) {
                             // Volta para o feed
                             postView.classList.add('hidden');
                             feedView.classList.remove('hidden');
-                            if (fab) fab.style.display = 'block';
+                            // if (fab) fab.style.display = 'block'; // Oculto globalmente
                             currentPostId = null;
                         }
                         fetchAndRenderPosts();
@@ -4276,14 +4276,36 @@ async function inicializarForum(preFetchedData = null) {
     }
 
     // --- Inicialização e Event Listeners ---
-    fab.onclick = () => {
-        // Reseta o modal para o estado de "Criar"
-        createForm.reset();
-        createModal.querySelector('h3').textContent = 'Criar Nova Discussão';
-        document.getElementById('forum-submit-post-btn').textContent = 'Publicar';
-        createForm.onsubmit = handlePostSubmit;
-        createModal.style.display = 'flex';
-    };
+    if (fab) fab.style.display = 'none'; // Desativa o FAB antigo
+    
+    // --- NOVA UX: Criar Post Moderno (Estilo Feed) ---
+    let createPrompt = document.getElementById('modern-create-post-prompt');
+    if (!createPrompt && postsContainer) {
+        createPrompt = document.createElement('div');
+        createPrompt.id = 'modern-create-post-prompt';
+        createPrompt.className = 'modern-create-prompt';
+        
+        const userFirstName = psychologistData && psychologistData.nome ? psychologistData.nome.split(' ')[0] : 'Colega';
+        const userPhoto = (psychologistData && psychologistData.fotoUrl) ? formatImageUrl(psychologistData.fotoUrl) : 'https://placehold.co/70x70/1B4332/FFFFFF?text=Psi';
+
+        createPrompt.innerHTML = `
+            <img src="${userPhoto}" alt="Sua foto" class="prompt-avatar">
+            <div class="prompt-fake-input">Compartilhe um caso, dúvida ou insight, ${userFirstName}...</div>
+            <button class="prompt-btn">Criar Tópico</button>
+        `;
+        
+        // Insere logo antes do container de posts
+        postsContainer.parentNode.insertBefore(createPrompt, postsContainer);
+        
+        createPrompt.onclick = () => {
+            createForm.reset();
+            createModal.querySelector('h3').textContent = 'Criar Nova Discussão';
+            document.getElementById('forum-submit-post-btn').textContent = 'Publicar';
+            createForm.onsubmit = handlePostSubmit;
+            createModal.style.display = 'flex';
+        };
+    }
+
     closeModalBtn.onclick = () => createModal.style.display = 'none';
     createModal.onclick = (e) => { if (e.target === createModal) createModal.style.display = 'none'; };
     createForm.onsubmit = handlePostSubmit;
