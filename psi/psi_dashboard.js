@@ -1311,17 +1311,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 // --- TAXAS DE CONVERSÃO ---
                 const elTaxaEscolha = document.getElementById('kpi-taxa-escolha');
                 if (elTaxaEscolha) {
-                    elTaxaEscolha.textContent = stats.funnelRates?.choiceRate === 'N/A' ? 'N/A' : `${stats.funnelRates.choiceRate}%`;
+                    elTaxaEscolha.textContent = (!stats.funnelRates || stats.funnelRates.choiceRate === 'N/A') ? 'N/A' : `${stats.funnelRates.choiceRate}%`;
                 }
 
                 const elConversaoPerfil = document.getElementById('kpi-conversao-perfil');
                 if (elConversaoPerfil) {
-                    elConversaoPerfil.textContent = stats.funnelRates?.profileConversion === 'N/A' ? 'N/A' : `${stats.funnelRates.profileConversion}%`;
+                    elConversaoPerfil.textContent = (!stats.funnelRates || stats.funnelRates.profileConversion === 'N/A') ? 'N/A' : `${stats.funnelRates.profileConversion}%`;
                 }
 
                 const elConversaoFinal = document.getElementById('kpi-conversao-final');
                 if (elConversaoFinal) {
-                    elConversaoFinal.textContent = stats.funnelRates?.finalConversion === 'N/A' ? 'N/A' : `${stats.funnelRates.finalConversion}%`;
+                    elConversaoFinal.textContent = (!stats.funnelRates || stats.funnelRates.finalConversion === 'N/A') ? 'N/A' : `${stats.funnelRates.finalConversion}%`;
                 }
 
                 const elDemandas = document.getElementById('lista-demandas');
