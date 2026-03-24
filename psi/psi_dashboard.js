@@ -1299,29 +1299,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 const stats = await res.json();
                 
                 // --- VOLUMES DO FUNIL ---
+                const matchImpressions = stats.matchImpressions || 0;
+                const profileViews = stats.profileViews || stats.profileAppearances || 0;
+                const whatsappClicks = stats.whatsappClicks || 0;
+
                 const elMatchImpressions = document.getElementById('kpi-match-impressions');
-                if (elMatchImpressions) elMatchImpressions.textContent = stats.matchImpressions || 0;
+                if (elMatchImpressions) elMatchImpressions.textContent = matchImpressions;
 
                 const elProfileViews = document.getElementById('kpi-profile-views');
-                if (elProfileViews) elProfileViews.textContent = stats.profileViews || 0;
+                if (elProfileViews) elProfileViews.textContent = profileViews;
 
                 const elWhatsappClicks = document.getElementById('kpi-whatsapp-clicks');
-                if (elWhatsappClicks) elWhatsappClicks.textContent = stats.whatsappClicks || 0;
+                if (elWhatsappClicks) elWhatsappClicks.textContent = whatsappClicks;
 
-                // --- TAXAS DE CONVERSÃO ---
+                // --- TAXAS DE CONVERSÃO (Cálculo no Frontend como Garantia) ---
+                const safeCalc = (num, den) => (!den || den <= 0) ? 'N/A' : ((num / den) * 100).toFixed(1);
+                const funnelRates = stats.funnelRates || {
+                    choiceRate: safeCalc(profileViews, matchImpressions),
+                    profileConversion: safeCalc(whatsappClicks, profileViews),
+                    finalConversion: safeCalc(whatsappClicks, matchImpressions)
+                };
+
                 const elTaxaEscolha = document.getElementById('kpi-taxa-escolha');
                 if (elTaxaEscolha) {
-                    elTaxaEscolha.textContent = (!stats.funnelRates || stats.funnelRates.choiceRate === 'N/A') ? 'N/A' : `${stats.funnelRates.choiceRate}%`;
+                    elTaxaEscolha.textContent = (funnelRates.choiceRate === 'N/A') ? 'N/A' : `${funnelRates.choiceRate}%`;
                 }
 
                 const elConversaoPerfil = document.getElementById('kpi-conversao-perfil');
                 if (elConversaoPerfil) {
-                    elConversaoPerfil.textContent = (!stats.funnelRates || stats.funnelRates.profileConversion === 'N/A') ? 'N/A' : `${stats.funnelRates.profileConversion}%`;
+                    elConversaoPerfil.textContent = (funnelRates.profileConversion === 'N/A') ? 'N/A' : `${funnelRates.profileConversion}%`;
                 }
 
                 const elConversaoFinal = document.getElementById('kpi-conversao-final');
                 if (elConversaoFinal) {
-                    elConversaoFinal.textContent = (!stats.funnelRates || stats.funnelRates.finalConversion === 'N/A') ? 'N/A' : `${stats.funnelRates.finalConversion}%`;
+                    elConversaoFinal.textContent = (funnelRates.finalConversion === 'N/A') ? 'N/A' : `${funnelRates.finalConversion}%`;
                 }
 
                 const elDemandas = document.getElementById('lista-demandas');
