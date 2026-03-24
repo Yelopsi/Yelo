@@ -4305,32 +4305,6 @@ async function inicializarForum(preFetchedData = null) {
         setupAutoResizeTextarea(createTextarea);
     }
 
-    // --- ALINHAMENTO DO CHECKBOX E BOTÃO (FOOTER) ---
-    const formCheckbox = createForm.querySelector('input[name="isAnonymous"]');
-    const submitBtn = document.getElementById('forum-submit-post-btn');
-    
-    if (formCheckbox && submitBtn && !document.getElementById('forum-form-footer')) {
-        const footer = document.createElement('div');
-        footer.id = 'forum-form-footer';
-        footer.className = 'forum-form-footer';
-        
-        const checkboxContainer = formCheckbox.closest('.form-group-checkbox');
-        if (checkboxContainer) {
-            checkboxContainer.parentNode.insertBefore(footer, checkboxContainer);
-            checkboxContainer.style.marginBottom = '0';
-            footer.appendChild(checkboxContainer);
-        } else {
-            formCheckbox.parentNode.insertBefore(footer, formCheckbox);
-            const label = createForm.querySelector(`label[for="${formCheckbox.id}"]`) || formCheckbox.nextElementSibling;
-            const wrapper = document.createElement('div');
-            wrapper.className = 'forum-checkbox-wrapper';
-            wrapper.appendChild(formCheckbox);
-            if (label && label.tagName === 'LABEL') wrapper.appendChild(label);
-            footer.appendChild(wrapper);
-        }
-        footer.appendChild(submitBtn);
-    }
-
     // --- NOVA UX: Criar Post Moderno (Estilo Feed) ---
     let createPrompt = document.getElementById('modern-create-post-prompt');
     if (!createPrompt && postsContainer) {
@@ -4365,6 +4339,11 @@ async function inicializarForum(preFetchedData = null) {
     closeModalBtn.onclick = () => createModal.style.display = 'none';
     createModal.onclick = (e) => { if (e.target === createModal) createModal.style.display = 'none'; };
     createForm.onsubmit = handlePostSubmit;
+    
+    const cancelForumBtn = document.getElementById('cancel-forum-modal');
+    if (cancelForumBtn) {
+        cancelForumBtn.onclick = () => createModal.style.display = 'none';
+    }
     
     // --- LÓGICA DE ABAS DE FILTRO ---
     const tabs = document.querySelectorAll('.forum-tabs .tab-item');
