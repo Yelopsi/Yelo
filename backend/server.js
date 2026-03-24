@@ -38,11 +38,30 @@ if (db.Psychologist) {
     const attrs = db.Psychologist.rawAttributes;
     let patched = false;
     
-    if (!attrs.planExpiresAt) { attrs.planExpiresAt = { type: DataTypes.DATE }; patched = true; }
-    if (!attrs.stripeSubscriptionId) { attrs.stripeSubscriptionId = { type: DataTypes.STRING }; patched = true; }
-    if (!attrs.subscriptionId) { attrs.subscriptionId = { type: DataTypes.STRING }; patched = true; } // [CORREÇÃO] Adicionado para ler assinaturas antigas
-    if (!attrs.cancelAtPeriodEnd) { attrs.cancelAtPeriodEnd = { type: DataTypes.BOOLEAN }; patched = true; }
-    if (!attrs.subscription_payments_count) { attrs.subscription_payments_count = { type: DataTypes.INTEGER }; patched = true; }
+    const colsToAdd = {
+        planExpiresAt: DataTypes.DATE,
+        stripeSubscriptionId: DataTypes.STRING,
+        subscriptionId: DataTypes.STRING,
+        cancelAtPeriodEnd: DataTypes.BOOLEAN,
+        subscription_payments_count: DataTypes.INTEGER,
+        linkedin_url: DataTypes.STRING,
+        instagram_url: DataTypes.STRING,
+        facebook_url: DataTypes.STRING,
+        tiktok_url: DataTypes.STRING,
+        x_url: DataTypes.STRING,
+        cep: DataTypes.STRING,
+        cidade: DataTypes.STRING,
+        estado: DataTypes.STRING,
+        telefone: DataTypes.STRING,
+        bio: DataTypes.TEXT,
+        crpDocumentUrl: DataTypes.TEXT,
+        resetPasswordToken: DataTypes.STRING,
+        resetPasswordExpires: DataTypes.BIGINT
+    };
+
+    for (const [col, type] of Object.entries(colsToAdd)) {
+        if (!attrs[col]) { attrs[col] = { type }; patched = true; }
+    }
     
     if (patched && typeof db.Psychologist.refreshAttributes === 'function') {
         console.log("[FIX] Modelo Psychologist atualizado com colunas faltantes.");
@@ -59,28 +78,31 @@ if (db.Appointment && !db.Appointment.rawAttributes.patientId) {
     }
 }
 
-// --- FIX: Patch Password Reset Fields (Garante que o Sequelize saiba ler/gravar tokens) ---
-if (db.Psychologist && !db.Psychologist.rawAttributes.resetPasswordToken) {
-    console.log("[FIX] Patching Psychologist model for password reset.");
-    db.Psychologist.rawAttributes.resetPasswordToken = { type: DataTypes.STRING };
-    db.Psychologist.rawAttributes.resetPasswordExpires = { type: DataTypes.BIGINT };
-    if (typeof db.Psychologist.refreshAttributes === 'function') {
-        db.Psychologist.refreshAttributes();
-    }
-}
-
 // --- FIX: Patch Patient Model (Garante leitura de campos novos) ---
 if (db.Patient) {
     const attrs = db.Patient.rawAttributes;
     let patched = false;
     
-    if (!attrs.sessionValue) { attrs.sessionValue = { type: DataTypes.FLOAT }; patched = true; }
-    if (!attrs.status) { attrs.status = { type: DataTypes.STRING }; patched = true; }
-    if (!attrs.observacoes) { attrs.observacoes = { type: DataTypes.TEXT }; patched = true; }
-    // FIX: Adiciona colunas de analytics para evitar erro 500 na página de favoritos
-    if (!attrs.valor_sessao_faixa) { attrs.valor_sessao_faixa = { type: DataTypes.STRING }; patched = true; }
-    if (!attrs.temas_buscados) { attrs.temas_buscados = { type: DataTypes.JSONB }; patched = true; }
-    if (!attrs.identidade_genero) { attrs.identidade_genero = { type: DataTypes.STRING }; patched = true; }
+        const colsToAdd = {
+        sessionValue: DataTypes.FLOAT,
+        status: DataTypes.STRING,
+        observacoes: DataTypes.TEXT,
+        valor_sessao_faixa: DataTypes.STRING,
+        temas_buscados: DataTypes.JSONB,
+        identidade_genero: DataTypes.STRING,
+        faixa_etaria: DataTypes.STRING,
+        idade: DataTypes.STRING,
+        genero_profissional: DataTypes.STRING,
+        abordagem_desejada: DataTypes.JSONB,
+        praticas_afirmativas: DataTypes.JSONB,
+        telefone: DataTypes.STRING,
+        resetPasswordToken: DataTypes.STRING,
+        resetPasswordExpires: DataTypes.BIGINT
+    };
+
+    for (const [col, type] of Object.entries(colsToAdd)) {
+        if (!attrs[col]) { attrs[col] = { type }; patched = true; }
+    }
 
     
     if (patched && typeof db.Patient.refreshAttributes === 'function') {
@@ -2609,6 +2631,17 @@ const startServer = async () => {
             const schemaQueries = [
             // 1. Psychologists Table - ATUALIZAÇÃO MACIÇA AGRUPADA (Reduz de 30 queries para 1)
             `ALTER TABLE "Psychologists" 
+                ADD COLUMN IF NOT EXISTS "linkedin_url" VARCHAR(500),
+                ADD COLUMN IF NOT EXISTS "instagram_url" VARCHAR(500),
+                ADD COLUMN IF NOT EXISTS "facebook_url" VARCHAR(500),
+                ADD COLUMN IF NOT EXISTS "tiktok_url" VARCHAR(500),
+                ADD COLUMN IF NOT EXISTS "x_url" VARCHAR(500),
+                ADD COLUMN IF NOT EXISTS "cep" VARCHAR(20),
+                ADD COLUMN IF NOT EXISTS "cidade" VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS "estado" VARCHAR(50),
+                ADD COLUMN IF NOT EXISTS "telefone" VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS "bio" TEXT,
+                ADD COLUMN IF NOT EXISTS "crpDocumentUrl" TEXT,
                 ADD COLUMN IF NOT EXISTS "is_exempt" BOOLEAN DEFAULT FALSE,
                 ADD COLUMN IF NOT EXISTS "cnpj" VARCHAR(255) UNIQUE,
                 ADD COLUMN IF NOT EXISTS "modalidade" JSONB DEFAULT '[]',
@@ -2645,6 +2678,12 @@ const startServer = async () => {
 
             // 2. Patients Table - Grouped
             `ALTER TABLE "Patients" 
+                ADD COLUMN IF NOT EXISTS "faixa_etaria" VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS "idade" VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS "genero_profissional" VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS "abordagem_desejada" JSONB DEFAULT '[]',
+                ADD COLUMN IF NOT EXISTS "praticas_afirmativas" JSONB DEFAULT '[]',
+                ADD COLUMN IF NOT EXISTS "telefone" VARCHAR(255),
                 ADD COLUMN IF NOT EXISTS "ip_registro" VARCHAR(45),
                 ADD COLUMN IF NOT EXISTS "termos_aceitos" BOOLEAN DEFAULT FALSE,
                 ADD COLUMN IF NOT EXISTS "marketing_aceito" BOOLEAN DEFAULT FALSE,
