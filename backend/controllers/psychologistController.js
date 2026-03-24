@@ -555,11 +555,9 @@ exports.checkDemand = async (req, res) => {
         
         let temasQuery = "";
         if (temas_atuacao && Array.isArray(temas_atuacao) && temas_atuacao.length > 0) {
-            temasQuery = `AND "temas_buscados" IS NOT NULL AND EXISTS (
-                SELECT 1 
-                FROM jsonb_array_elements_text(CAST("temas_buscados" AS JSONB)) AS t(tema) 
-                WHERE t.tema = ANY(ARRAY[:temas_atuacao]::text[])
-            )`;
+            // A coluna temas_buscados já é um array nativo do Postgres (character varying[])
+            // O operador && (overlap) verifica de forma nativa se há algum tema em comum entre os arrays
+            temasQuery = `AND "temas_buscados" IS NOT NULL AND "temas_buscados" && ARRAY[:temas_atuacao]::varchar[]`;
             replacements.temas_atuacao = temas_atuacao;
         }
 
