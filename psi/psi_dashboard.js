@@ -4278,6 +4278,38 @@ async function inicializarForum(preFetchedData = null) {
     // --- Inicialização e Event Listeners ---
     if (fab) fab.style.display = 'none'; // Desativa o FAB antigo
     
+    // --- AUTO-RESIZE DO TEXTAREA ---
+    const createTextarea = createForm.querySelector('textarea[name="content"]');
+    if (createTextarea) {
+        setupAutoResizeTextarea(createTextarea);
+    }
+
+    // --- ALINHAMENTO DO CHECKBOX E BOTÃO (FOOTER) ---
+    const formCheckbox = createForm.querySelector('input[name="isAnonymous"]');
+    const submitBtn = document.getElementById('forum-submit-post-btn');
+    
+    if (formCheckbox && submitBtn && !document.getElementById('forum-form-footer')) {
+        const footer = document.createElement('div');
+        footer.id = 'forum-form-footer';
+        footer.className = 'forum-form-footer';
+        
+        const checkboxContainer = formCheckbox.closest('.form-group-checkbox');
+        if (checkboxContainer) {
+            checkboxContainer.parentNode.insertBefore(footer, checkboxContainer);
+            checkboxContainer.style.marginBottom = '0';
+            footer.appendChild(checkboxContainer);
+        } else {
+            formCheckbox.parentNode.insertBefore(footer, formCheckbox);
+            const label = createForm.querySelector(`label[for="${formCheckbox.id}"]`) || formCheckbox.nextElementSibling;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'forum-checkbox-wrapper';
+            wrapper.appendChild(formCheckbox);
+            if (label && label.tagName === 'LABEL') wrapper.appendChild(label);
+            footer.appendChild(wrapper);
+        }
+        footer.appendChild(submitBtn);
+    }
+
     // --- NOVA UX: Criar Post Moderno (Estilo Feed) ---
     let createPrompt = document.getElementById('modern-create-post-prompt');
     if (!createPrompt && postsContainer) {
