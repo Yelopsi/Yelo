@@ -1975,6 +1975,9 @@ app.get('/api/admin/followups', adminController.getFollowUps);
 app.put('/api/admin/followups/:id', adminController.updateFollowUpStatus);
 app.delete('/api/admin/followups/:id', adminController.deleteFollowUp);
 
+// --- ROTA DE EXPORTAÇÃO (LISTA DE ESPERA) ---
+app.get('/api/admin/export/waitlist', adminController.exportWaitlist);
+
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/qna', qnaRoutes);
 app.use('/api/payments', paymentRoutes);

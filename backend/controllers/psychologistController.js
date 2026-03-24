@@ -555,7 +555,11 @@ exports.checkDemand = async (req, res) => {
         
         let temasQuery = "";
         if (temas_atuacao && Array.isArray(temas_atuacao) && temas_atuacao.length > 0) {
-            temasQuery = `AND "temas_buscados" ?| array[:temas_atuacao]`; // O operador '?|' verifica intersecção de arrays/jsonb
+            temasQuery = `AND EXISTS (
+                SELECT 1 
+                FROM jsonb_array_elements_text("temas_buscados") AS t(tema) 
+                WHERE t.tema = ANY(ARRAY[:temas_atuacao]::text[])
+            )`;
             replacements.temas_atuacao = temas_atuacao;
         }
 
