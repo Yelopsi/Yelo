@@ -4000,6 +4000,9 @@ async function inicializarForum(preFetchedData = null) {
             showToast('Discussão criada com sucesso!', 'success');
             createModal.style.display = 'none';
             createForm.reset();
+            if (createTextarea) {
+                createTextarea.style.height = 'auto';
+            }
             fetchAndRenderPosts(); // Recarrega o feed
         } catch (err) {
             showToast('Erro ao criar discussão.', 'error');
@@ -4165,7 +4168,10 @@ async function inicializarForum(preFetchedData = null) {
         // Popula o formulário com os dados atuais
         createForm.querySelector('[name="title"]').value = post.title;
         createForm.querySelector('[name="category"]').value = post.category;
-        createForm.querySelector('[name="content"]').value = post.content;
+        const contentTextarea = createForm.querySelector('[name="content"]');
+        contentTextarea.value = post.content;
+        contentTextarea.style.height = 'auto';
+        contentTextarea.style.height = contentTextarea.scrollHeight + 'px';
         createForm.querySelector('[name="isAnonymous"]').checked = post.isAnonymous;
 
         // Altera visualmente para modo de edição
@@ -4197,6 +4203,9 @@ async function inicializarForum(preFetchedData = null) {
                     showToast('Discussão atualizada!', 'success');
                     createModal.style.display = 'none';
                     createForm.reset();
+                    if (createTextarea) {
+                        createTextarea.style.height = 'auto';
+                    }
                     
                     // Se estiver vendo o post completo, recarrega ele
                     if (currentPostId === post.id) loadFullPost(post.id);
@@ -4331,6 +4340,9 @@ async function inicializarForum(preFetchedData = null) {
         
         createPrompt.onclick = () => {
             createForm.reset();
+            if (createTextarea) {
+                createTextarea.style.height = 'auto';
+            }
             createModal.querySelector('h3').textContent = 'Criar Nova Discussão';
             document.getElementById('forum-submit-post-btn').textContent = 'Publicar';
             createForm.onsubmit = handlePostSubmit;
