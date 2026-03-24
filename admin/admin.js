@@ -781,50 +781,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // --- INJEÇÃO DO BOTÃO DE WEB PUSH ---
-        const pushBtnHtml = `
-            <button id="btn-push-subscribe" title="Ativar Notificações no Celular" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; color: var(--branco-puro); cursor: pointer; transition: all 0.2s ease; width: 48px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
-                🔔
-            </button>
-        `;
-        const sidebarWrapper = document.querySelector('.sidebar-btn-wrapper');
-        if (sidebarWrapper) {
-            sidebarWrapper.insertAdjacentHTML('afterbegin', pushBtnHtml);
-            const btnPush = document.getElementById('btn-push-subscribe');
-            if (btnPush) {
-                btnPush.addEventListener('click', async () => {
-                    try {
-                        const permission = await Notification.requestPermission();
-                        if (permission !== 'granted') {
-                            window.showToast('Permissão negada. Ative nas configurações do seu iPhone/Navegador.', 'error');
-                            return;
-                        }
-                        
-                        const res = await fetch('/api/admin/push/vapid-public-key');
-                        const vapidPublicKey = await res.text();
-                        if (!vapidPublicKey) { window.showToast('Chaves VAPID não configuradas no servidor.', 'warning'); return; }
-
-                        const reg = await navigator.serviceWorker.ready;
-                        const padding = '='.repeat((4 - vapidPublicKey.length % 4) % 4);
-                        const base64 = (vapidPublicKey + padding).replace(/\-/g, '+').replace(/_/g, '/');
-                        const rawData = window.atob(base64);
-                        const outputArray = new Uint8Array(rawData.length);
-                        for (let i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
-
-                        const sub = await reg.pushManager.subscribe({
-                            userVisibleOnly: true,
-                            applicationServerKey: outputArray
-                        });
-
-                        await fetch('/api/admin/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sub) });
-                        window.showToast('Notificações ativadas neste aparelho!', 'success');
-                    } catch (e) {
-                        console.error('Erro no Push:', e);
-                        window.showToast('Erro ao ativar notificações. (Requer HTTPS e PWA Instalado)', 'error');
-                    }
-                });
-            }
-        }
     }
     // Expõe para o HTML poder chamar no onclick="loadReports()"
     window.loadReports = loadReports;
