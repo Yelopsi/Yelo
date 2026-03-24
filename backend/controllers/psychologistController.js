@@ -148,6 +148,36 @@ exports.registerPsychologist = async (req, res) => {
         // [CAPI] Avisa o Facebook sobre o novo cadastro (Registro Completo)
         metaService.sendCAPIEvent('CompleteRegistration', newPsychologist, req, { user_type: 'psychologist' });
 
+        // --- [WEB PUSH] Notifica Admin no PWA do iOS/Android ---
+        try {
+            if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+                const webpush = require('web-push');
+                webpush.setVapidDetails(
+                    'mailto:admin@yelopsi.com.br',
+                    process.env.VAPID_PUBLIC_KEY,
+                    process.env.VAPID_PRIVATE_KEY
+                );
+                
+                const [subs] = await db.sequelize.query(`SELECT * FROM "AdminPushSubscriptions"`);
+                if (subs && subs.length > 0) {
+                    const payload = JSON.stringify({
+                        title: 'Novo Psicólogo! 🎉',
+                        body: `${newPsychologist.nome} acabou de se cadastrar na Yelo.`,
+                        url: '/admin/admin.html?page=admin_gerenciar_psicologos'
+                    });
+                    subs.forEach(async (sub) => {
+                        try {
+                            await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys }, payload);
+                        } catch (err) {
+                            if (err.statusCode === 410 || err.statusCode === 404) {
+                                await db.sequelize.query(`DELETE FROM "AdminPushSubscriptions" WHERE endpoint = :endpoint`, { replacements: { endpoint: sub.endpoint } });
+                            }
+                        }
+                    });
+                }
+            }
+        } catch (pushErr) { console.error("Erro ao notificar via Web Push:", pushErr); }
+
         res.status(201).json({
             message: 'Cadastro realizado com sucesso!',
             token,
