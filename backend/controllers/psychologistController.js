@@ -1664,17 +1664,12 @@ exports.getStats = async (req, res) => {
         let dateCondition = "";
         const replacements = { psiId: psychologistId };
 
-        const dateFilter = {};
-
         if (period === 'last30days') {
             dateCondition = `AND "createdAt" >= NOW() - INTERVAL '30 days'`;
-            dateFilter.createdAt = { [Op.gte]: db.sequelize.literal("NOW() - INTERVAL '30 days'") };
         } else if (period === 'last7days') {
             dateCondition = `AND "createdAt" >= NOW() - INTERVAL '7 days'`;
-            dateFilter.createdAt = { [Op.gte]: db.sequelize.literal("NOW() - INTERVAL '7 days'") };
         } else if (period === 'last90days') {
             dateCondition = `AND "createdAt" >= NOW() - INTERVAL '90 days'`;
-            dateFilter.createdAt = { [Op.gte]: db.sequelize.literal("NOW() - INTERVAL '90 days'") };
         }
         // 'all_time' não adiciona filtro
 
@@ -1787,35 +1782,18 @@ exports.getStats = async (req, res) => {
             db.Answer ? db.Answer.count({ where: { psychologistId } }).catch(() => 0) : Promise.resolve(0),
             
             // NOVO: Aparições no Match
-            (async () => {
-                if (db.MatchEvent) {
-                    try {
-                        const count = await db.MatchEvent.count({ where: { psychologistId: psychologistId, ...dateFilter } });
-                        return [{ count }];
-                    } catch(e) {
-                        try {
-                            const count = await db.MatchEvent.count({ where: { PsychologistId: psychologistId, ...dateFilter } });
-                            return [{ count }];
-                        } catch(e2) {
-                            try {
-                                const count = await db.MatchEvent.count({ where: { psychologist_id: psychologistId, ...dateFilter } });
-                                return [{ count }];
-                            } catch(e3) {
-                                console.error("[DEBUG KPIs] Erro db.MatchEvent.count:", e3.message);
-                                return [{ count: 0 }];
-                            }
-                        }
-                    }
-                } else {
-                    return db.sequelize.query(
-                        `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :psiId ${dateCondition}`,
-                        { replacements, type: db.sequelize.QueryTypes.SELECT }
-                    ).catch(() => db.sequelize.query(
-                        `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "PsychologistId" = :psiId ${dateCondition}`,
-                        { replacements, type: db.sequelize.QueryTypes.SELECT }
-                    )).catch(() => [{ count: 0 }]);
-                }
-            })()
+            db.sequelize.query(
+                `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :psiId ${dateCondition}`,
+                { replacements, type: db.sequelize.QueryTypes.SELECT }
+            ).catch(() => 
+                db.sequelize.query(
+                    `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "PsychologistId" = :psiId ${dateCondition}`,
+                    { replacements, type: db.sequelize.QueryTypes.SELECT }
+                )
+            ).catch(err => {
+                console.error("[DEBUG KPIs] Erro na query MatchEvents:", err.message);
+                return [{ count: 0 }];
+            })
         ]);
 
         // Processamento dos KPIs numéricos
