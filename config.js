@@ -8,3 +8,14 @@ window.API_BASE_URL = isLocalhost
     : window.location.origin;     // Em produção, usa a própria URL do site (ex: https://yelo.onrender.com)
 
 console.log('🌍 GPS do Frontend definido para:', window.API_BASE_URL);
+
+// --- GLOBAL FETCH INTERCEPTOR (Migração para Cookies) ---
+// Garante que todas as requisições para a API enviem os cookies automaticamente (HttpOnly)
+const originalFetch = window.fetch;
+window.fetch = function(resource, init) {
+    const url = typeof resource === 'string' ? resource : (resource && resource.url ? resource.url : '');
+    if (url.includes('/api/')) {
+        init = Object.assign({}, init, { credentials: 'include' });
+    }
+    return originalFetch(resource, init);
+};

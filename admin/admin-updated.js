@@ -38,9 +38,8 @@ document.addEventListener('DOMContentLoaded', function() {
     window.navigateToPage = loadPage; // Expõe a função globalmente
 
     function logout() {
-        localStorage.removeItem('Yelo_token');
-        // CORREÇÃO: Redireciona para a raiz (/login.html) e não para o login antigo
-        window.location.href = '/login.html'; 
+        // --- MIGRAÇÃO: Chama a rota do servidor para limpar o Cookie HttpOnly ---
+        window.location.href = '/logout'; 
     }
 
     async function initializeAndProtect() {
