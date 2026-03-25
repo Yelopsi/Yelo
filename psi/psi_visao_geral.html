@@ -1,218 +1,136 @@
-<div class="main-header">
-    <div class="header-content">
-        <h1 id="psi-welcome-name">Olá!</h1>
-        <p>Este é o seu centro de controle. Acompanhe suas métricas e atividades.</p>
+<!-- BLOCO 0: HERO (Funcional e Direto) -->
+<section class="dashboard-hero fade-in-up">
+    <div class="hero-content">
+        <h1 id="psi-welcome-name">👋 Olá!</h1>
+        <p class="hero-subtitle">Seu crescimento essa semana:</p>
+        <div class="hero-metrics">
+            <div class="h-metric">
+                <span class="h-val" id="hero-contacts">+0</span>
+                <span class="h-label">Contatos de pacientes</span>
+            </div>
+            <div class="h-metric">
+                <span class="h-val" id="hero-views">0</span>
+                <span class="h-label">Visualizações no perfil</span>
+            </div>
+        </div>
+        <p class="hero-benchmark" id="hero-benchmark-text">🔥 Seu perfil está melhor que <strong>0%</strong> dos psicólogos</p>
     </div>
-    <div class="dashboard-header-actions">
+    <div class="hero-action">
+        <button class="btn-cta-hero" onclick="window.loadPage('psi_meu_perfil.html')">Melhorar meu perfil</button>
     </div>
+</section>
+
+<!-- BLOCO 1: O QUE FAZER AGORA (Checklist) -->
+<section class="dashboard-block block-checklist fade-in-up delay-1">
+    <div class="widget">
+        <div class="widget-header-row" style="border-bottom: none; padding-bottom: 0;">
+            <h3 class="widget-title" style="font-size: 1.4rem;">🚀 Próximos passos para crescer</h3>
+        </div>
+        <ul class="action-checklist" style="margin-top: 15px;">
+            <li class="checklist-item" data-action="foto" onclick="window.loadPage('psi_meu_perfil.html')" style="cursor: pointer;">
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="check-foto" disabled>
+                    <span class="checkmark"></span>
+                </label>
+                <div class="checklist-content">
+                    <h4>Adicionar foto profissional</h4>
+                    <p>Aumenta a confiança e atrai <strong>+30% de cliques</strong>.</p>
+                </div>
+            </li>
+            <li class="checklist-item" data-action="bio" onclick="window.loadPage('psi_meu_perfil.html')" style="cursor: pointer;">
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="check-bio" disabled>
+                    <span class="checkmark"></span>
+                </label>
+                <div class="checklist-content">
+                    <h4>Escrever bio mais clara</h4>
+                    <p>Uma boa descrição converte visitantes em pacientes (<strong>+50% conversão</strong>).</p>
+                </div>
+            </li>
+            <li class="checklist-item" data-action="artigo" onclick="window.loadPage('psi_blog.html')" style="cursor: pointer;">
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="check-artigo" disabled>
+                    <span class="checkmark"></span>
+                </label>
+                <div class="checklist-content">
+                    <h4>Publicar primeiro artigo</h4>
+                    <p>Mostre sua autoridade e seja achado nas buscas (<strong>+visitas orgânicas</strong>).</p>
+                </div>
+            </li>
+        </ul>
+    </div>
+</section>
+
+<div class="layout-2-cols">
+    <!-- BLOCO 2: PACIENTES (Dinheiro) -->
+    <section class="dashboard-block fade-in-up delay-2">
+        <div class="widget h-100" style="display: flex; flex-direction: column;">
+            <h3 class="widget-title" style="font-size: 1.3rem;">💬 Pacientes</h3>
+            <p class="widget-desc">Resultados do seu perfil.</p>
+            
+            <div class="metrics-grouped" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; flex-grow: 1;">
+                <div class="metric-item highlight" style="display: flex; align-items: baseline; gap: 10px; padding: 15px; background: #f0fdf4; border-radius: 12px; border: 1px solid #bbf7d0;">
+                    <span class="m-val" id="kpi-whatsapp-clicks" style="font-size: 2.5rem; color: var(--verde-escuro); font-weight: 800; font-family: var(--font-titulos);">0</span>
+                    <span class="m-label" style="font-size: 1rem; color: #166534; font-weight: 600;">novos contatos</span>
+                </div>
+                <div style="display: flex; gap: 20px;">
+                    <div class="metric-item" style="flex: 1;">
+                        <span class="m-val" id="kpi-match-impressions" style="font-size: 1.5rem; color: #333; font-weight: bold; display: block;">0</span>
+                        <span class="m-label" style="font-size: 0.85rem; color: #666;">Aparições no match</span>
+                    </div>
+                    <div class="metric-item" style="flex: 1;">
+                        <span class="m-val" id="kpi-taxa-escolha" style="font-size: 1.5rem; color: #333; font-weight: bold; display: block;">0%</span>
+                        <span class="m-label" style="font-size: 0.85rem; color: #666;">Taxa de clique</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="widget-action-footer" style="margin-top: auto;">
+                <button class="btn btn-principal" style="width: 100%;" onclick="window.loadPage('psi_pacientes.html')">Ver conversas no WhatsApp</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- BLOCO 3: AUTORIDADE (Rede Social) -->
+    <section class="dashboard-block fade-in-up delay-3">
+        <div class="widget h-100" style="display: flex; flex-direction: column;">
+            <h3 class="widget-title" style="font-size: 1.3rem;">🧠 Sua presença na comunidade</h3>
+            <p class="widget-desc">Expanda sua autoridade.</p>
+            
+            <div class="metrics-grouped minimal" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; flex-grow: 1;">
+                <div class="metric-item" style="padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                    <span class="m-label" style="font-weight: 600; color: #555;">Artigos publicados</span>
+                    <span class="m-val" id="kpi-artigos" style="font-size: 1.5rem; color: var(--verde-escuro); font-weight: bold;">0</span>
+                </div>
+                <div class="metric-item" style="padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                    <span class="m-label" style="font-weight: 600; color: #555;">Interações no fórum</span>
+                    <span class="m-val" id="kpi-interacoes" style="font-size: 1.5rem; color: var(--verde-escuro); font-weight: bold;">0</span>
+                </div>
+            </div>
+            
+            <div class="widget-action-footer" style="display: flex; gap: 10px; margin-top: auto;">
+                <button class="btn btn-secundario" style="flex: 1; padding: 12px 10px;" onclick="window.loadPage('psi_blog.html')">Escrever artigo</button>
+                <button class="btn btn-secundario" style="flex: 1; padding: 12px 10px;" onclick="window.loadPage('psi_forum.html')">Participar do fórum</button>
+            </div>
+        </div>
+    </section>
 </div>
 
-<!-- Alerta para completar o perfil -->
-<div id="alert-complete-profile" class="alert-box warning" style="display: none; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-    <span><strong>Seu perfil está incompleto!</strong> Complete-o para aparecer nos resultados de busca dos pacientes.</span>
-    <a href="#" data-page="psi_meu_perfil.html" class="btn btn-sm" style="background-color: #f59e0b; color: white; text-decoration: none;">Completar Perfil</a>
-</div>
-
-<!-- WIDGET DE GAMIFICAÇÃO (PROGRESSO) -->
-<div class="gamification-panel-overview" onclick="window.loadPage('psi_jornada.html')" style="margin-bottom: 30px; padding: 20px 25px; border: 1px solid #eee; box-shadow: none; cursor: pointer;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <h3 class="gami-title" style="font-size: 1rem; margin: 0;">Sua Evolução</h3>
-        <span id="current-level-display" class="gami-level-badge" style="font-size: 0.75rem; padding: 3px 10px;">Iniciante</span>
-    </div>
-
-    <!-- Barra de Progresso de XP -->
-    <div class="xp-progress-container" style="margin-bottom: 8px;">
-        <div class="xp-bar-wrapper" style="height: 8px; border-radius: 4px;">
-            <div id="xp-bar-fill" class="xp-bar-fill" style="border-radius: 4px;"></div>
+<!-- BLOCO 4: GESTÃO (Secundário) -->
+<section class="dashboard-block fade-in-up delay-4">
+    <div class="widget" style="padding: 25px 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+            <div style="display: flex; gap: 40px; align-items: center; flex-wrap: wrap;">
+                <div>
+                    <h3 class="widget-title" style="margin-bottom: 8px; font-size: 1.1rem; color: #555;">📅 Agenda</h3>
+                    <span style="font-size: 1.2rem; color: var(--verde-escuro); font-weight: bold;" id="agenda-hoje">Hoje: 0 atendimentos</span>
+                </div>
+                <div>
+                    <h3 class="widget-title" style="margin-bottom: 8px; font-size: 1.1rem; color: #555;">💰 Financeiro</h3>
+                    <span style="font-size: 1.2rem; color: var(--verde-escuro); font-weight: bold;" id="faturamento-mes">R$ 0,00 esse mês</span>
+                </div>
+            </div>
+            <button class="btn btn-secundario" style="border: none; background: #f0f2f5;" onclick="window.loadPage('psi_financeiro.html')">Ir para gestão completa &rarr;</button>
         </div>
     </div>
-
-    <!-- Resumo de Texto (XP e Próximo Nível) -->
-    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #666;">
-        <span id="xp-progress-text" style="font-weight: 600; color: #333;">0 / 500 XP</span>
-        
-        <!-- Container para o texto do próximo nível (Reaproveitando IDs para o JS funcionar) -->
-        <div id="next-level-info" style="background: none; border: none; padding: 0; margin: 0; display: inline;">
-            <span id="next-level-text">Carregando...</span>
-        </div>
-    </div>
-    
-    <!-- Elementos ocultos necessários para o JS não quebrar -->
-    <span id="xp-current-level-label" style="display: none;"></span>
-    <span id="xp-next-level-label" style="display: none;"></span>
-</div>
-
-<!-- Controles de Filtro de KPI -->
-<div class="kpi-controls" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 20px;">
-    <select id="kpi-date-filter" class="form-control" style="max-width: 200px;">
-        <option value="last7days">Últimos 7 dias</option>
-        <option value="last30days" selected>Últimos 30 dias</option>
-        <option value="last90days">Últimos 90 dias</option>
-        <option value="all_time">Todo o período</option>
-    </select>
-</div>
-
-<!-- Grid de KPIs -->
-<div class="kpi-grid">
-    <div class="kpi-card">
-        <h3>Aparições no Match</h3>
-        <div class="kpi-value" id="kpi-match-impressions">0</div>
-        <p class="kpi-desc">Vezes que seu perfil apareceu no Top 3 de um paciente.</p>
-    </div>
-    <div class="kpi-card">
-        <h3>Visualizações de Perfil</h3>
-        <div class="kpi-value" id="kpi-profile-views">0</div>
-        <p class="kpi-desc">Pacientes que clicaram para ver seu perfil completo.</p>
-    </div>
-    <div class="kpi-card">
-        <h3>Cliques no WhatsApp</h3>
-        <div class="kpi-value" id="kpi-whatsapp-clicks">0</div>
-        <p class="kpi-desc">Pacientes que iniciaram contato após ver seu perfil.</p>
-    </div>
-</div>
-
-<div class="kpi-grid" style="margin-top: 25px;">
-    <div class="kpi-card">
-        <h3 title="Cliques no Perfil ÷ Aparições no Match">Taxa de Escolha (CTR)</h3>
-        <div class="kpi-value" id="kpi-taxa-escolha">N/A</div>
-        <p class="kpi-desc">Avalia a atratividade inicial da sua "vitrine".</p>
-    </div>
-    <div class="kpi-card">
-        <h3 title="Cliques no WhatsApp ÷ Visualizações de Perfil">Conversão do Perfil</h3>
-        <div class="kpi-value" id="kpi-conversao-perfil">N/A</div>
-        <p class="kpi-desc">Avalia o poder de persuasão da sua biografia.</p>
-    </div>
-    <div class="kpi-card">
-        <h3 title="Cliques no WhatsApp ÷ Aparições no Match">Conversão Final</h3>
-        <div class="kpi-value" id="kpi-conversao-final">N/A</div>
-        <p class="kpi-desc">Eficiência ponta a ponta do seu funil.</p>
-    </div>
-</div>
-
-<div class="kpi-grid" style="margin-top: 25px;">
-    <div id="card-demandas" class="kpi-card">
-        <h3>Principais Queixas Buscadas</h3>
-        <div id="lista-demandas" class="kpi-list">
-            <div class="skeleton-text" style="height: 1.2em; width: 80%; margin-bottom: 8px;"></div>
-            <div class="skeleton-text" style="height: 1.2em; width: 70%;"></div>
-        </div>
-        <p class="kpi-desc">Temas mais procurados por pacientes compatíveis com você.</p>
-    </div>
-    <div id="card-benchmarking" class="kpi-card">
-        <h3>Benchmarking de Mercado</h3>
-        <p class="kpi-desc">Compare sua performance com a média da plataforma.</p>
-        <a href="#" class="kpi-link" data-page="psi_analytics.html">Ver análise completa &rarr;</a>
-    </div>
-</div>
-
-<style>
-    /* Estilos Específicos da Visão Geral */
-    .kpi-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 25px;
-        margin-bottom: 30px;
-    }
-    
-    .kpi-card {
-        background: white;
-        padding: 25px;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        border: 1px solid rgba(0,0,0,0.05);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        display: flex;
-        flex-direction: column;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .kpi-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-    }
-
-    .kpi-card h3 {
-        font-size: 0.85rem;
-        color: #666;
-        margin: 0 0 15px 0;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .kpi-value {
-        font-size: 2.5rem;
-        font-weight: 800;
-        color: #1B4332; /* Verde Yelo */
-        margin-bottom: 10px;
-        line-height: 1;
-    }
-
-    .kpi-desc {
-        font-size: 0.9rem;
-        color: #888;
-        margin: 0;
-        line-height: 1.5;
-        flex-grow: 1;
-    }
-
-    .kpi-link {
-        display: inline-flex;
-        align-items: center;
-        margin-top: 20px;
-        color: #1B4332;
-        font-weight: 600;
-        text-decoration: none;
-        font-size: 0.9rem;
-        transition: color 0.2s;
-    }
-    .kpi-link:hover {
-        color: #2D6A4F;
-        text-decoration: underline;
-    }
-
-    /* Controles */
-    .form-control {
-        padding: 8px 12px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        font-family: inherit;
-        color: #333;
-        outline: none;
-        background-color: white;
-    }
-    
-    .btn-icon {
-        background: white;
-        border: 1px solid #ddd;
-        width: 36px;
-        height: 36px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        color: #555;
-        transition: all 0.2s;
-    }
-    .btn-icon:hover {
-        background: #f5f5f5;
-        color: #1B4332;
-        border-color: #1B4332;
-    }
-
-    /* Skeleton Loading */
-    .skeleton-text {
-        background-color: #f0f0f0;
-        border-radius: 4px;
-        animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse {
-        0% { opacity: 0.6; }
-        50% { opacity: 1; }
-        100% { opacity: 0.6; }
-    }
-</style>
-
-<!-- O script que popula esta página está no arquivo principal psi_dashboard.js, na função inicializarVisaoGeral() -->
+</section>

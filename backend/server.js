@@ -1297,7 +1297,7 @@ const startCronJobs = () => {
 
   // Inicializa o agendador externo (Remarketing, Demandas, etc)
   try {
-      require('../scheduler.js');
+      require('./cron/scheduler.js');
       console.log('✅ [CRON] Scheduler externo ativado (Remarketing rodará às 10h).');
   } catch (err) {
       console.warn('⚠️ [CRON] Aviso: Não foi possível carregar o scheduler.js.', err.message);
@@ -1308,6 +1308,7 @@ const startCronJobs = () => {
     const currentHM = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); // Ex: "08:00"
     
     // 1. RESUMO DIÁRIO (Personalizado por Psicólogo)
+    /* --- COMENTADO DEVIDO À REMOÇÃO DA COLUNA 'dailySummaryTime' ---
     try {
         // Busca psicólogos que configuraram o resumo para o horário atual
         const psisSummary = await db.Psychologist.findAll({ 
@@ -1362,6 +1363,7 @@ const startCronJobs = () => {
             }
         }
     } catch (e) { console.error("Erro no cron de resumo:", e); }
+    */
 
     // 2. LEMBRETES DE SESSÃO (A cada hora cheia)
     if (now.getMinutes() === 0) {
@@ -2711,7 +2713,6 @@ const startServer = async () => {
                 ADD COLUMN IF NOT EXISTS "is_exempt" BOOLEAN DEFAULT FALSE,
                 ADD COLUMN IF NOT EXISTS "cnpj" VARCHAR(255) UNIQUE,
                 ADD COLUMN IF NOT EXISTS "modalidade" JSONB DEFAULT '[]',
-                ADD COLUMN IF NOT EXISTS "dailySummaryTime" VARCHAR(5) DEFAULT '08:00',
                 ADD COLUMN IF NOT EXISTS "reminderHoursBefore" INTEGER DEFAULT 24,
                 ADD COLUMN IF NOT EXISTS "publico_alvo" JSONB DEFAULT '[]',
                 ADD COLUMN IF NOT EXISTS "estilo_terapia" JSONB DEFAULT '[]',
@@ -2866,7 +2867,7 @@ const startServer = async () => {
     if (process.env.NODE_ENV !== 'production') {
         console.log('🔄 Iniciando sincronização do Banco de Dados (DEV)...');
         console.time('🗄️ Sequelize Sync');
-        await db.sequelize.sync({ alter: true }); // Usar { alter: true } em DEV é seguro e útil.
+        await db.sequelize.sync(); // Removido o { alter: true } para evitar erros com índices GIN e colunas JSONB
         console.timeEnd('🗄️ Sequelize Sync');
         console.log('✅ Banco de dados sincronizado (DEV).');
     } else {
