@@ -51,6 +51,12 @@ exports.unifiedGoogleLogin = async (req, res) => {
 
             const tokenJwt = generateToken(psychologist.id, psychologist.isAdmin ? 'admin' : 'psychologist');
             
+            res.cookie('token', tokenJwt, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 30 * 24 * 60 * 60 * 1000
+            });
+
             return res.status(200).json({
                 user: {
                     id: psychologist.id,
@@ -85,6 +91,13 @@ exports.unifiedGoogleLogin = async (req, res) => {
 
         if (patient) {
             const tokenJwt = generateToken(patient.id, 'patient');
+            
+            res.cookie('token', tokenJwt, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 30 * 24 * 60 * 60 * 1000
+            });
+
             return res.status(200).json({
                 user: { id: patient.id, nome: patient.nome, email: patient.email, type: 'patient' },
                 token: tokenJwt,
@@ -109,6 +122,12 @@ exports.unifiedGoogleLogin = async (req, res) => {
         // FIX: Envio assíncrono
         sendWelcomeEmail(newPatient, 'patient').catch(err => console.error("Erro envio email boas-vindas (Google):", err));
         const newToken = generateToken(newPatient.id, 'patient');
+
+        res.cookie('token', newToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 30 * 24 * 60 * 60 * 1000
+        });
 
         return res.status(201).json({
             user: { id: newPatient.id, nome: newPatient.nome, email: newPatient.email, type: 'patient' },

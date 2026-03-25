@@ -141,6 +141,13 @@ exports.registerPsychologist = async (req, res) => {
         // --- 7. Token ---
         const token = generateToken(newPsychologist.id);
 
+        // --- MIGRAÇÃO GRADUAL: Definindo Cookie HttpOnly ---
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 dias
+        });
+
         // --- 8. E-mail de Boas-vindas ---
         // FIX: Não aguarda o e-mail para evitar travamento no front se o SMTP estiver lento
         sendWelcomeEmail(newPsychologist, 'psychologist').catch(err => console.error("Erro envio email boas-vindas (Psi):", err));
@@ -295,6 +302,13 @@ exports.loginPsychologist = async (req, res) => {
         if (userType === 'psychologist') {
             gamificationService.processAction(psychologist.id, 'login').catch(e => console.error(e));
         }
+
+        // --- MIGRAÇÃO GRADUAL: Definindo Cookie HttpOnly ---
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 dias
+        });
 
         res.json({
             id: psychologist.id,
