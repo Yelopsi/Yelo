@@ -43,6 +43,7 @@ body.pagina-dashboard {
 /* Garante que quando tiver a classe flex, ele apareça */
 .custom-modal-overlay[style*="display: flex"] {
     display: flex !important;
+    animation: modalFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .custom-modal-box {
@@ -51,18 +52,25 @@ body.pagina-dashboard {
     border-radius: 16px;
     width: 90%;
     max-width: 500px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
     position: relative;
-    animation: slideUp 0.3s ease;
     max-height: 90vh; /* Garante que o modal nunca seja maior que a tela */
     overflow-y: auto; /* Adiciona barra de rolagem interna automaticamente se necessário */
 }
 
-@keyframes slideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+.custom-modal-overlay[style*="display: flex"] .custom-modal-box {
+    animation: modalContentPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+@keyframes modalFadeIn {
+    from { opacity: 0; backdrop-filter: blur(0px); }
+    to { opacity: 1; backdrop-filter: blur(3px); }
+}
+
+@keyframes modalContentPop {
+    from { opacity: 0; transform: translateY(30px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
 .dashboard-container { 
     display: flex; 
     min-height: 100vh;
@@ -472,7 +480,8 @@ textarea#bio {
     border-radius: 12px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.1); /* Sombra flutuante elegante */
     padding: 5px; /* Espaço interno para as opções não colarem na borda */
-    animation: fadeIn 0.2s ease-out;
+    animation: popInDropdown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: top center;
 }
 
 .multiselect-tag.open .multiselect-options {
@@ -512,9 +521,9 @@ textarea#bio {
 }
 
 /* Animação suave de entrada */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
+@keyframes popInDropdown {
+    from { opacity: 0; transform: translateY(-10px) scaleY(0.95); }
+    to { opacity: 1; transform: translateY(0) scaleY(1); }
 }
 
 /* ==========================================================================
@@ -4447,8 +4456,8 @@ input:checked + .slider:before { transform: translateX(20px); }
 }
 
 @keyframes slideUpBanner {
-    from { transform: translate(-50%, 20px); opacity: 0; }
-    to { transform: translate(-50%, 0); opacity: 1; }
+    from { transform: translate(-50%, 40px) scale(0.95); opacity: 0; }
+    to { transform: translate(-50%, 0) scale(1); opacity: 1; }
 }
 
 /* Ajuste Mobile (Mais compacto e posicionado acima da nav) */

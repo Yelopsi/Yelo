@@ -197,11 +197,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Função para criar Modal de Bloqueio (Estilo Yelo)
     function createBlockingModal(title, message, redirectUrl) {
         const overlay = document.createElement('div');
-        overlay.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:99999; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(3px);";
-        
+        overlay.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:99999; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(3px); animation: modalOverlayFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;";
         const modal = document.createElement('div');
-        modal.style.cssText = "background:white; padding:30px; border-radius:16px; width:90%; max-width:400px; text-align:center; box-shadow:0 20px 40px rgba(0,0,0,0.2); font-family: 'Inter', sans-serif; animation: slideUp 0.3s ease-out;";
-        
+        modal.style.cssText = "background:white; padding:30px; border-radius:16px; width:90%; max-width:400px; text-align:center; box-shadow:0 20px 40px rgba(0,0,0,0.2); font-family: 'Inter', sans-serif; animation: modalContentPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;";
         modal.innerHTML = `
             <div style="font-size:3rem; margin-bottom:15px;">⚠️</div>
             <h3 style="color:#1B4332; margin:0 0 10px 0; font-size:1.5rem;">${title}</h3>
@@ -210,9 +208,8 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         
         const style = document.createElement('style');
-        style.innerHTML = `@keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }`;
+        style.innerHTML = `@keyframes modalOverlayFade { from { opacity: 0; backdrop-filter: blur(0px); } to { opacity: 1; backdrop-filter: blur(3px); } } @keyframes modalContentPop { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }`;
         document.head.appendChild(style);
-
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
         document.getElementById('btn-block-redirect').onclick = () => window.location.href = redirectUrl;

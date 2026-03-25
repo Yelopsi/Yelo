@@ -568,6 +568,8 @@ document.addEventListener('DOMContentLoaded', function() {
         let container = document.getElementById('toast-container');
         if (!container) {
             container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'toast-container';
             document.body.appendChild(container);
         }
         
