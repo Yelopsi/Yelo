@@ -1,10 +1,17 @@
 // c:\Users\Anderson\Desktop\Yelo\set-vip.js
 
+const path = require('path');
+// Força o carregamento do .env da pasta backend
+const envPath = path.resolve(__dirname, 'backend', '.env');
+const result = require('dotenv').config({ path: envPath });
+if (result.error) {
+    require('dotenv').config(); 
+}
 const db = require('./backend/models');
 
 // --- CONFIGURAÇÃO ---
 // Coloque o e-mail do psicólogo que você quer tornar VIP aqui
-const userEmail = 'chocolate@quente.com'; 
+const userEmail = 'yelo@psi.com'; 
 // --------------------
 
 async function setVipStatus() {

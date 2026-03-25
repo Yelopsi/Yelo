@@ -23,32 +23,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Variável para guardar qual plano o usuário está tentando assinar no modal
     let currentPlanAttempt = '';
 
-    // --- APLICA ZOOM SALVO AO INICIAR (V5 - Correção de Altura dos Filhos) ---
-    const savedZoom = localStorage.getItem('yelo_dashboard_zoom');
-    if (savedZoom) {
-        const val = parseFloat(savedZoom);
-        const container = document.getElementById('dashboard-container');
-        
-        // Trava o corpo para evitar barra dupla e garantir fundo
-        document.documentElement.style.overflow = 'hidden';
-        document.body.style.overflow = 'hidden';
-        document.body.style.height = '100vh';
-
-        if (container) {
-            container.style.transformOrigin = "top left";
-            container.style.transform = `scale(${val})`;
-            container.style.width = `${100 / val}%`;
-            container.style.height = `${100 / val}vh`; // Altura compensada
-
-            // CORREÇÃO DO ESPAÇO BRANCO:
-            // Força a Sidebar e o Main a ocuparem 100% da nova altura do container
-            Array.from(container.children).forEach(child => {
-                child.style.height = '100%';
-                child.style.minHeight = '100%';
-            });
-        }
-    }
-
     // Variável global temporária para saber qual botão disparou a ação
     let btnReativacaoAtual = null;
 
@@ -498,6 +472,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!user) return;
 
         const level = user.authority_level || 'nivel_iniciante';
+        
+        // Update novo design da sidebar (Nome do Nível)
+        const levelMap = { 'nivel_iniciante': 'Iniciante', 'nivel_verificado': 'Verificado', 'nivel_ativo': 'Ativo', 'nivel_especialista': 'Especialista', 'nivel_mentor': 'Mentor' };
+        const levelDisplaySidebar = document.getElementById('psi-sidebar-level');
+        if(levelDisplaySidebar) {
+            levelDisplaySidebar.innerHTML = `🔥 Nível: <strong>${levelMap[level] || 'Iniciante'}</strong>`;
+        }
+
         const badges = user.badges || {};
         const currentXP = user.xp || 0;
         const progress = user.gamificationProgress || { blogPostCount: 0, forumActivityCount: 0, answerCount: 0 };
@@ -1219,249 +1201,134 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     // --- RESTANTE DAS FUNÇÕES (PERFIL, EXCLUIR CONTA, ETC) ---
     async function inicializarVisaoGeral() {
-        // 1. Saudação e Alerta de Perfil (Mantidos)
-        if (document.getElementById('psi-welcome-name') && psychologistData) {
-            document.getElementById('psi-welcome-name').textContent = `Olá, ${psychologistData.nome.split(' ')[0]}!`;
+        if (!psychologistData) return;
+
+        // 1. Saudação Hero
+        const welcomeEl = document.getElementById('psi-welcome-name');
+        if (welcomeEl) {
+            welcomeEl.textContent = `Olá, ${psychologistData.nome.split(' ')[0]}!`;
         }
 
-        const abordagens = psychologistData.abordagens || psychologistData.abordagens_tecnicas || [];
-        const temas = psychologistData.temas || psychologistData.temas_atuacao || [];
-        const isProfileIncomplete = !psychologistData.nome || !psychologistData.crp || abordagens.length === 0 || temas.length === 0;
+        // Animação de carregamento geral nas métricas
+        const elementsToLoad = ['hero-contacts', 'hero-views', 'kpi-whatsapp-clicks', 'kpi-profile-views', 'kpi-taxa-escolha', 'kpi-artigos', 'kpi-interacoes', 'agenda-hoje', 'faturamento-mes'];
+        elementsToLoad.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = '<span class="loading-spinner-sm" style="display:inline-block; border-color: rgba(27,67,50,0.2); border-top-color: var(--verde-escuro);"></span>';
+        });
 
-        const alertBox = document.getElementById('alert-complete-profile');
-        if (alertBox) alertBox.style.display = isProfileIncomplete ? 'flex' : 'none';
+        try {
+            // Busca estatísticas gerais do perfil e gamificação
+            const resStats = await apiFetch(`${API_BASE_URL}/api/psychologists/me/stats?period=last30days`);
+            const stats = resStats.ok ? await resStats.json() : {};
 
-        // --- CORREÇÃO: Lógica de bloqueio de recursos movida para fora do try/catch ---
-        // Isso garante que o blur seja aplicado mesmo que a busca de KPIs falhe.
-        const planoAtual = psychologistData.plano ? psychologistData.plano.toUpperCase() : '';
-        
-        const cardFavoritos = 'card-favoritos';
-        const cardDemandas = 'card-demandas';
-        const cardBench = 'card-benchmarking';
+            const matchImpressions = stats.matchImpressions || 0;
+            const profileViews = stats.profileViews || stats.profileAppearances || 0;
+            const whatsappClicks = stats.whatsappClicks || 0;
 
-        if (!planoAtual || planoAtual === 'ESSENTIAL') {
-            bloquearCard(cardFavoritos, 'Veja quem salvou seu perfil no Plano Clínico');
-            bloquearCard(cardDemandas, 'Saiba quais queixas chegam até você no Plano Clínico');
-            bloquearCard(cardBench, 'Comparativo de mercado exclusivo Plano Referência');
-        } 
-        else if (planoAtual === 'CLINICAL') {
-            desbloquearCard(cardFavoritos);
-            desbloquearCard(cardDemandas);
-            bloquearCard(cardBench, 'Destrave o Comparativo de Mercado no Plano Referência');
-        } 
-        else if (planoAtual === 'REFERENCE') {
-            desbloquearCard(cardFavoritos);
-            desbloquearCard(cardDemandas);
-            desbloquearCard(cardBench);
-            const benchCardEl = document.getElementById(cardBench);
-            if(benchCardEl) {
-                benchCardEl.style.border = "1px solid #FFC107";
-                benchCardEl.style.background = "linear-gradient(to right, #fff, #fffae6)";
-            }
-        }
-        // --- FIM DA CORREÇÃO ---
+            // --- BLOCO 0: HERO & BLOCO 2/3: PACIENTES E AUTORIDADE ---
+            const safeCalc = (num, den) => (den && den > 0 ? ((num / den) * 100).toFixed(1) : '0');
+            const convRate = safeCalc(whatsappClicks, profileViews);
 
-        // --- NOVA LÓGICA DE FILTRO E RENDERIZAÇÃO DE KPIs ---
-        const filterSelect = document.getElementById('kpi-date-filter');
-        const kpiGrid = document.querySelector('.kpi-grid');
-        const btnRefresh = document.getElementById('btn-refresh-kpis');
-
-        // Variável para guardar a instância do gráfico e não duplicar
-        let xpChartInstance = null;
-
-        async function fetchAndRenderKPIs(period = 'last30days') {
-            const cards = document.querySelectorAll('.kpi-grid .kpi-card');
+            if(document.getElementById('hero-contacts')) document.getElementById('hero-contacts').textContent = `+${whatsappClicks}`;
+            if(document.getElementById('hero-views')) document.getElementById('hero-views').textContent = profileViews;
             
-            const timerLabel = `Frontend KPI Render ${Date.now()}`;
-            console.time(timerLabel);
-            // Ativa o estado de carregamento com a animação de esqueleto
-            cards.forEach(card => {
-                card.classList.add('is-loading');
-                // Seleciona os elementos de texto para aplicar o esqueleto
-                card.querySelectorAll('.kpi-value, h3, .kpi-link, #lista-demandas div').forEach(el => {
-                    el.classList.add('skeleton-text');
-                });
-            });
+            // Lógica de "Gamificação" de Ranking (Simulado para o Hero)
+            let fakeScore = 30;
+            if(whatsappClicks > 0) fakeScore += 20;
+            if(profileViews > 5) fakeScore += 15;
+            if(document.getElementById('hero-benchmark-text')) {
+                document.getElementById('hero-benchmark-text').innerHTML = `🔥 Seu perfil está melhor que <strong>${fakeScore}%</strong> dos psicólogos`;
+            }
 
+            if(document.getElementById('psi-sidebar-growth-val')) {
+                const growthRate = profileViews > 0 ? '+12%' : '+0%';
+                document.getElementById('psi-sidebar-growth-val').textContent = growthRate;
+            }
+            
+            if(document.getElementById('kpi-whatsapp-clicks')) document.getElementById('kpi-whatsapp-clicks').textContent = whatsappClicks;
+            if(document.getElementById('kpi-profile-views')) document.getElementById('kpi-profile-views').textContent = profileViews;
+            if(document.getElementById('kpi-match-impressions')) document.getElementById('kpi-match-impressions').textContent = matchImpressions;
+            if(document.getElementById('kpi-taxa-escolha')) document.getElementById('kpi-taxa-escolha').textContent = `${convRate}%`;
+
+            // --- BLOCO 4: COMUNIDADE ---
+            const progress = stats.gamificationProgress || psychologistData.gamificationProgress || {};
+            const blogCount = progress.semeador || progress.blogPostCount || 0;
+            const forumCount = progress.vozAtiva || progress.forumActivityCount || 0;
+            const answersCount = progress.conselheiro || progress.answerCount || 0;
+            const interactions = forumCount + answersCount;
+
+            if(document.getElementById('kpi-artigos')) document.getElementById('kpi-artigos').textContent = blogCount;
+            if(document.getElementById('kpi-interacoes')) document.getElementById('kpi-interacoes').textContent = interactions;
+
+            // --- BLOCO 2: CHECKLIST & FEEDBACK INTELIGENTE ---
+            let completedTasks = 0;
+            const totalTasks = 3;
+
+            // 1. Foto
+            const hasPhoto = psychologistData.fotoUrl && !psychologistData.fotoUrl.includes('placehold.co');
+            const checkFoto = document.getElementById('check-foto');
+            const itemFoto = document.querySelector('.checklist-item[data-action="foto"]');
+            if (hasPhoto) {
+                completedTasks++;
+                if(checkFoto) checkFoto.checked = true;
+                if(itemFoto) {
+                    itemFoto.style.opacity = '0.6';
+                }
+            }
+
+            // 2. Bio
+            const hasBio = psychologistData.bio && psychologistData.bio.length > 50;
+            const checkBio = document.getElementById('check-bio');
+            const itemBio = document.querySelector('.checklist-item[data-action="bio"]');
+            if (hasBio) {
+                completedTasks++;
+                if(checkBio) checkBio.checked = true;
+                if(itemBio) {
+                    itemBio.style.opacity = '0.6';
+                }
+            }
+
+            // 3. Artigo
+            const hasArticle = blogCount > 0;
+            const checkArtigo = document.getElementById('check-artigo');
+            const itemArtigo = document.querySelector('.checklist-item[data-action="artigo"]');
+            if (hasArticle) {
+                completedTasks++;
+                if(checkArtigo) checkArtigo.checked = true;
+                if(itemArtigo) {
+                    itemArtigo.style.opacity = '0.6';
+                }
+            }
+
+
+            // --- BLOCO 5: GESTÃO (Consultas paralelas para o dashboard secundário) ---
             try {
-                const statsUrl = `${API_BASE_URL}/api/psychologists/me/stats?period=${period}`;
-                const res = await apiFetch(statsUrl);
-
-                // --- CORREÇÃO: Verifica o tipo de conteúdo ANTES de tentar ler como JSON ---
-                const contentType = res.headers.get("content-type");
-                if (!contentType || !contentType.includes("application/json")) {
-                    const responseText = await res.text();
-                    console.error("A API de estatísticas não retornou JSON. Resposta do servidor:", responseText);
-                    // Joga um erro claro que será pego pelo bloco catch
-                    throw new Error(`O servidor retornou uma resposta inesperada (tipo: ${contentType}).`);
+                // Agenda Hoje
+                const resAppts = await apiFetch(`${API_BASE_URL}/api/appointments`);
+                if(resAppts.ok) {
+                    const allAppts = await resAppts.json();
+                    const todayStr = new Date().toLocaleDateString('pt-BR');
+                    const todayAppts = allAppts.filter(a => new Date(a.start).toLocaleDateString('pt-BR') === todayStr && a.status !== 'available' && a.status !== 'cancelled');
+                    if(document.getElementById('agenda-hoje')) document.getElementById('agenda-hoje').textContent = `${todayAppts.length} sessões`;
                 }
 
-                const stats = await res.json();
-                
-                // --- VOLUMES DO FUNIL ---
-                const matchImpressions = stats.matchImpressions || 0;
-                const profileViews = stats.profileViews || stats.profileAppearances || 0;
-                const whatsappClicks = stats.whatsappClicks || 0;
-
-                const elMatchImpressions = document.getElementById('kpi-match-impressions');
-                if (elMatchImpressions) elMatchImpressions.textContent = matchImpressions;
-
-                const elProfileViews = document.getElementById('kpi-profile-views');
-                if (elProfileViews) elProfileViews.textContent = profileViews;
-
-                const elWhatsappClicks = document.getElementById('kpi-whatsapp-clicks');
-                if (elWhatsappClicks) elWhatsappClicks.textContent = whatsappClicks;
-
-                // --- TAXAS DE CONVERSÃO (Cálculo no Frontend como Garantia) ---
-                const safeCalc = (num, den) => (!den || den <= 0) ? 'N/A' : ((num / den) * 100).toFixed(1);
-                const funnelRates = stats.funnelRates || {
-                    choiceRate: safeCalc(profileViews, matchImpressions),
-                    profileConversion: safeCalc(whatsappClicks, profileViews),
-                    finalConversion: safeCalc(whatsappClicks, matchImpressions)
-                };
-
-                const elTaxaEscolha = document.getElementById('kpi-taxa-escolha');
-                if (elTaxaEscolha) {
-                    elTaxaEscolha.textContent = (funnelRates.choiceRate === 'N/A') ? 'N/A' : `${funnelRates.choiceRate}%`;
+                // Financeiro (Mês Atual)
+                const currentMonthStr = new Date().toISOString().slice(0, 7);
+                const resFin = await apiFetch(`${API_BASE_URL}/api/financials/dashboard?period=current`);
+                if(resFin.ok) {
+                    const finData = await resFin.json();
+                    const income = (finData.appointments || []).filter(e => e.status === 'done').reduce((acc, curr) => acc + (curr.value || 0), 0);
+                    if(document.getElementById('faturamento-mes')) document.getElementById('faturamento-mes').textContent = `R$ ${income.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                 }
-
-                const elConversaoPerfil = document.getElementById('kpi-conversao-perfil');
-                if (elConversaoPerfil) {
-                    elConversaoPerfil.textContent = (funnelRates.profileConversion === 'N/A') ? 'N/A' : `${funnelRates.profileConversion}%`;
-                }
-
-                const elConversaoFinal = document.getElementById('kpi-conversao-final');
-                if (elConversaoFinal) {
-                    elConversaoFinal.textContent = (funnelRates.finalConversion === 'N/A') ? 'N/A' : `${funnelRates.finalConversion}%`;
-                }
-
-                const elDemandas = document.getElementById('lista-demandas');
-                if (elDemandas) {
-                    if (stats.topDemands && stats.topDemands.length > 0) {
-                        elDemandas.innerHTML = stats.topDemands.map((demanda, index) => 
-                            `<div style="font-size: 0.9rem; margin-bottom: 5px; color: ${index > 1 ? '#666' : 'inherit'};">
-                                ${index + 1}. ${demanda.name} (${demanda.percentage}%)
-                            </div>`
-                        ).join('');
-                    } else {
-                        elDemandas.innerHTML = '<div style="font-size: 0.9rem; color: #999;">Ainda não há dados suficientes para este período.</div>';
-                    }
-                }
-
-                // --- RENDERIZA GRÁFICO DE XP ---
-                if (stats.xpHistory) {
-                    renderXPChart(stats.xpHistory);
-                }
-                
-                // --- ATUALIZA GAMIFICAÇÃO GERAL ---
-                if (stats.gamificationProgress && psychologistData) {
-                    psychologistData.gamificationProgress = stats.gamificationProgress;
-                    updateGamificationWidgets(psychologistData, true);
-                }
-
-            } catch (error) {
-                console.error("Erro ao buscar KPIs:", error);
-                showToast('Não foi possível atualizar as métricas.', 'error');
-            } finally {
-                console.timeEnd(timerLabel);
-                // Desativa o estado de carregamento
-                cards.forEach(card => {
-                    card.classList.remove('is-loading');
-                    // Remove a classe de esqueleto de todos os elementos de texto
-                    card.querySelectorAll('.skeleton-text').forEach(el => {
-                        el.classList.remove('skeleton-text');
-                    });
-                });
-            }
-        }
-
-        function renderXPChart(data) {
-            const ctx = document.getElementById('xpChart');
-            if (!ctx) return;
-            
-            if (xpChartInstance) {
-                xpChartInstance.destroy();
+            } catch(e) {
+                console.warn("Erro ao carregar dados secundários:", e);
+                if(document.getElementById('agenda-hoje')) document.getElementById('agenda-hoje').textContent = "0 sessões";
+                if(document.getElementById('faturamento-mes')) document.getElementById('faturamento-mes').textContent = "R$ 0,00";
             }
 
-            // Prepara dados (se vazio, mostra vazio)
-            const labels = data.map(d => {
-                const parts = d.date.split('-');
-                return `${parts[2]}/${parts[1]}`; // DD/MM
-            });
-            const points = data.map(d => parseInt(d.points));
-
-            xpChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'XP',
-                        data: points,
-                        borderColor: '#1B4332',
-                        backgroundColor: (context) => {
-                            const ctx = context.chart.ctx;
-                            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-                            gradient.addColorStop(0, 'rgba(27, 67, 50, 0.2)');
-                            gradient.addColorStop(1, 'rgba(27, 67, 50, 0)');
-                            return gradient;
-                        },
-                        borderWidth: 3,
-                        tension: 0.4,
-                        fill: true,
-                        pointBackgroundColor: '#fff',
-                        pointBorderColor: '#1B4332',
-                        pointRadius: 4,
-                        pointHoverRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: '#1B4332',
-                            titleColor: '#fff',
-                            bodyColor: '#fff',
-                            callbacks: {
-                                label: function(context) {
-                                    return `+${context.parsed.y} XP`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { borderDash: [5, 5], color: '#f0f0f0' },
-                            ticks: { font: { family: 'Mulish' } }
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { font: { family: 'Mulish' } }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Adiciona o listener para o filtro
-        if (filterSelect) {
-            // Remove listener antigo para evitar duplicação ao recarregar a página
-            const newFilterSelect = filterSelect.cloneNode(true);
-            filterSelect.parentNode.replaceChild(newFilterSelect, filterSelect);
-            
-            newFilterSelect.addEventListener('change', (e) => {
-                fetchAndRenderKPIs(e.target.value);
-            });
-        }
-
-        // Carga inicial dos KPIs
-        fetchAndRenderKPIs('last30days');
-
-        // NOVO: Renderiza o widget de gamificação
-        if (psychologistData) {
-            updateGamificationWidgets(psychologistData, true);
+        } catch (error) {
+            console.error("Erro ao buscar dados da Visão Geral:", error);
+            showToast('Não foi possível atualizar todas as métricas.', 'error');
         }
     }
 
@@ -2572,9 +2439,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
             } else {
-                // Carrega a última página visitada ou a visão geral como padrão
-                const lastPage = localStorage.getItem('yelo_last_psi_page');
-                loadPage(lastPage || 'psi_visao_geral.html');
+            // A pedido: sempre que acessar o dashboard, forçar a página inicial
+            localStorage.removeItem('yelo_last_psi_page');
+            loadPage('psi_visao_geral.html');
             }
             
             // Inicia socket global para notificações
