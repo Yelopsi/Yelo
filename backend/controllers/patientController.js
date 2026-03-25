@@ -82,11 +82,20 @@ exports.registerPatient = async (req, res) => {
         // [CAPI] Avisa o Facebook sobre o novo cadastro de Paciente
         metaService.sendCAPIEvent('CompleteRegistration', newPatient, req, { user_type: 'patient' });
 
+        const token = generateToken(newPatient.id);
+        
+        // --- MIGRAÇÃO GRADUAL: Definindo Cookie HttpOnly ---
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 30 * 24 * 60 * 60 * 1000
+        });
+
         res.status(201).json({
             id: newPatient.id,
             nome: newPatient.nome,
             email: newPatient.email,
-            token: generateToken(newPatient.id),
+            token: token,
             message: 'Cadastro realizado com sucesso!',
         });
     } catch (error) {
@@ -204,11 +213,20 @@ exports.loginPatient = async (req, res) => {
                 accountRestored = true;
             }
 
+            const token = generateToken(patient.id);
+            
+            // --- MIGRAÇÃO GRADUAL: Definindo Cookie HttpOnly ---
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 30 * 24 * 60 * 60 * 1000
+            });
+
             res.status(200).json({
                 id: patient.id,
                 nome: patient.nome,
                 email: patient.email,
-                token: generateToken(patient.id),
+                token: token,
                 accountRestored: accountRestored // Flag para o frontend
             });
         } else {
