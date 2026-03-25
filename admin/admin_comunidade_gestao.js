@@ -2,20 +2,6 @@ window.initializePage = async function() {
     const BASE_URL = typeof window.API_BASE_URL !== 'undefined' ? window.API_BASE_URL : 'http://localhost:3001';
     const token = localStorage.getItem('Yelo_token');
 
-    // --- TOAST VISUAL ---
-    function showAdminToast(message, type = 'success') {
-        const container = document.getElementById('admin-toast-container');
-        if (!container) return;
-        const toast = document.createElement('div');
-        const bgColor = type === 'success' ? '#1B4332' : '#E63946';
-        const icon = type === 'success' ? '✅' : '⚠️';
-        toast.style.cssText = `background-color: ${bgColor}; color: #fff; padding: 12px 20px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); font-family: 'Inter', sans-serif; font-size: 0.95rem; display: flex; align-items: center; gap: 10px; opacity: 0; transform: translateX(20px); transition: all 0.3s ease; border-left: 4px solid #FFEE8C;`;
-        toast.innerHTML = `<strong>${icon}</strong> <span>${message}</span>`;
-        container.appendChild(toast);
-        requestAnimationFrame(() => { toast.style.opacity = '1'; toast.style.transform = 'translateX(0)'; });
-        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
-    }
-
     // --- CARREGAR DADOS ---
     async function loadData() {
         try {
@@ -77,12 +63,12 @@ window.initializePage = async function() {
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                showAdminToast('Banner atualizado!');
+            if(window.showToast) window.showToast('Banner atualizado!', 'success');
                 fieldsetBanner.setAttribute('disabled', 'true');
                 btnBanner.textContent = "Editar Banner";
                 btnBanner.style.backgroundColor = "#1B4332";
                 editBanner = false;
-            } catch (err) { showAdminToast('Erro ao salvar', 'error'); } 
+        } catch (err) { if(window.showToast) window.showToast('Erro ao salvar', 'error'); } 
             finally { btnBanner.disabled = false; }
         }
     };
@@ -113,12 +99,12 @@ window.initializePage = async function() {
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                showAdminToast('Links atualizados!');
+            if(window.showToast) window.showToast('Links atualizados!', 'success');
                 fieldsetLinks.setAttribute('disabled', 'true');
                 btnLinks.textContent = "Editar Links";
                 btnLinks.style.backgroundColor = "#1B4332";
                 editLinks = false;
-            } catch (err) { showAdminToast('Erro ao salvar', 'error'); }
+        } catch (err) { if(window.showToast) window.showToast('Erro ao salvar', 'error'); }
             finally { btnLinks.disabled = false; }
         }
     };

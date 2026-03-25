@@ -444,8 +444,23 @@
 </div>
 
 <style>
+    @keyframes modalOverlayFade {
+        from { opacity: 0; backdrop-filter: blur(0px); }
+        to { opacity: 1; backdrop-filter: blur(4px); }
+    }
+    @keyframes modalContentPop {
+        from { opacity: 0; transform: translateY(30px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
     #confirmation-modal[aria-hidden="false"] {
         display: flex !important;
+    }
+    /* Aplica a animação sempre que os modais forem exibidos (style="display: flex") */
+    div[id$="-modal"][style*="display: flex"] {
+        animation: modalOverlayFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    div[id$="-modal"][style*="display: flex"] > div {
+        animation: modalContentPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 </style>
 
