@@ -103,15 +103,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (result.success) {
                     const { token, redirect, user, type, accountRestored } = result.data;
                     
-                    // Salva dados na sessão
-                    if (token) localStorage.setItem('Yelo_token', token);
+                    // --- MIGRAÇÃO: Segurança XSS ---
+                    // Em vez de salvar o JWT real (que agora vive no Cookie HttpOnly),
+                    // salvamos apenas uma flag. Isso engana o código antigo do frontend
+                    // fazendo-o achar que o usuário está logado, sem expor o token!
+                    if (token) localStorage.setItem('Yelo_token', 'cookie_auth_active');
                     
                     const finalUserType = type || result.fallbackType;
                     localStorage.setItem('Yelo_user_type', finalUserType);
                     
-                    // FIX: Se for admin, salva o token específico para compatibilidade com o painel
                     if (finalUserType === 'admin' && token) {
-                        localStorage.setItem('Yelo_token_admin', token);
+                        localStorage.setItem('Yelo_token_admin', 'cookie_auth_active');
                     }
 
                     // Se a conta foi restaurada, salva flag para mostrar modal no dashboard

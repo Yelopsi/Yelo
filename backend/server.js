@@ -337,7 +337,15 @@ if (io) {
         // Tenta identificar quem é o usuário para filtrar atualizações
         let user = null;
         try {
-            const token = socket.handshake.auth.token;
+            let token = socket.handshake.auth.token;
+            // --- MIGRAÇÃO SEGURA: Fallback para ler o Cookie se o token do JS for a flag ---
+            if (!token || token === 'cookie_auth_active') {
+                if (socket.handshake.headers.cookie) {
+                    const cookies = socket.handshake.headers.cookie.split(';');
+                    const tokenCookie = cookies.find(c => c.trim().startsWith('token='));
+                    if (tokenCookie) token = tokenCookie.split('=')[1];
+                }
+            }
             if (token) {
                 user = jwt.verify(token, process.env.JWT_SECRET || '***REMOVED_JWT_SECRET***');
                 
@@ -437,7 +445,10 @@ if (io) {
 // -----------------------------------------------------------------
 
 // --- MIDDLEWARES ---
-app.use(cors());
+app.use(cors({
+    origin: (origin, callback) => callback(null, true), // Necessário para aceitar cookies
+    credentials: true
+}));
 app.use(cookieParser()); // <-- Adicionado para ler cookies de sessão
 
 // --- MIDDLEWARE DE SESSÃO ATIVA (NOVO) ---
@@ -468,8 +479,6 @@ app.use(async (req, res, next) => {
     next();
 });
 
-// --- MIDDLEWARES ---
-app.use(cors());
 
 // --- MIDDLEWARE DE VISITAS (NOVO) ---
 // Regex para ignorar arquivos estáticos comuns
@@ -2433,6 +2442,9 @@ app.get('/redefinir-senha', (req, res) => { res.render('redefinir_senha'); });
 
 // --- ROTA DE LOGOUT E CORREÇÕES DE REDIRECIONAMENTO ---
 app.get('/logout', (req, res) => {
+    // --- MIGRAÇÃO SEGURA: Limpa o Cookie HttpOnly ---
+    res.clearCookie('token');
+
     // Envia script para limpar localStorage e redirecionar para a Home
     res.send(`
         <html><body><script>

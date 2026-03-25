@@ -9,13 +9,13 @@ const db = require('../models');
 const protect = async (req, res, next) => {
     let token;
 
-    // 1. Tenta pegar do Header (Padrão Bearer)
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        token = req.headers.authorization.split(' ')[1];
-    } 
-    // 2. Tenta pegar do Cookie (Fallback de segurança)
-    else if (req.cookies && req.cookies.token) {
+    // 1. Prioriza pegar do Cookie (HttpOnly - Mais Seguro)
+    if (req.cookies && req.cookies.token) {
         token = req.cookies.token;
+    } 
+    // 2. Fallback para o Header (Padrão Bearer - Para não quebrar o frontend atual)
+    else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        token = req.headers.authorization.split(' ')[1];
     }
 
     if (token) {
