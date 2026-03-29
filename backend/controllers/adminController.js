@@ -385,35 +385,6 @@ exports.pinForumPost = async (req, res) => {
 };
 
 /**
- * Rota: PUT /api/admin/forum/posts/:id/pin (NOVA)
- * Descrição: Fixa ou desfixa um post no fórum.
- */
-exports.pinForumPost = async (req, res) => {
-    const { id } = req.params;
-    const { isPinned } = req.body; // Espera um booleano: true para fixar, false para desfixar
-
-    if (typeof isPinned !== 'boolean') {
-        return res.status(400).json({ error: 'Parâmetro "isPinned" (booleano) é obrigatório.' });
-    }
-
-    try {
-        const post = await db.ForumPost.findByPk(id);
-
-        if (!post) {
-            return res.status(404).json({ error: 'Post não encontrado.' });
-        }
-
-        await post.update({ isPinned });
-
-        const message = isPinned ? 'Post fixado com sucesso!' : 'Post desfixado com sucesso!';
-        res.json({ message, isPinned: post.isPinned });
-    } catch (error) {
-        console.error("Erro ao fixar/desfixar post do fórum:", error);
-        res.status(500).json({ error: "Erro interno ao processar a solicitação." });
-    }
-};
-
-/**
  * Rota: GET /api/admin/forum/posts (NOVA)
  * Descrição: Busca todos os posts do fórum para moderação.
  */
@@ -1878,22 +1849,6 @@ exports.deleteBlogPost = async (req, res) => {
         res.json({ message: 'Post excluído com sucesso' });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao excluir post' });
-    }
-};
-
-/**
- * Rota: GET /api/admin/content/forum
- */
-exports.getAllForumPosts = async (req, res) => {
-    try {
-        const posts = await db.ForumPost.findAll({
-            include: [{ model: db.Psychologist, attributes: ['nome', 'email'] }],
-            order: [['createdAt', 'DESC']],
-            limit: 100
-        });
-        res.json(posts);
-    } catch (error) {
-        res.status(500).json({ error: 'Erro ao buscar posts do fórum' });
     }
 };
 

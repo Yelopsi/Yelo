@@ -1,136 +1,174 @@
-<!-- BLOCO 0: HERO (Funcional e Direto) -->
-<section class="dashboard-hero fade-in-up">
-    <div class="hero-content">
-        <h1 id="psi-welcome-name">👋 Olá!</h1>
-        <p class="hero-subtitle">Seu crescimento essa semana:</p>
-        <div class="hero-metrics">
-            <div class="h-metric">
-                <span class="h-val" id="hero-contacts">+0</span>
-                <span class="h-label">Contatos de pacientes</span>
+<div class="modern-dashboard-layout">
+    <!-- BLOCO 0: HERO (Banner de Desempenho) -->
+    <div class="modern-hero-card fade-in-up">
+        <div class="modern-hero-header">
+            <div class="hero-content">
+                <h1 id="psi-welcome-name" class="modern-hero-title">👋 Olá!</h1>
+                <p class="modern-hero-subtitle">Seu crescimento essa semana:</p>
             </div>
-            <div class="h-metric">
-                <span class="h-val" id="hero-views">0</span>
-                <span class="h-label">Visualizações no perfil</span>
+            <button class="modern-hero-cta" onclick="window.loadPage('psi_meu_perfil.html')">
+                Melhorar meu perfil
+            </button>
+        </div>
+        
+        <div class="modern-hero-metrics">
+            <div class="hero-metric-item">
+                <span class="hero-metric-value" id="hero-contacts">+0</span>
+                <span class="hero-metric-label">Contatos de pacientes</span>
+            </div>
+            <div class="hero-metric-item">
+                <span class="hero-metric-value" id="hero-views">0</span>
+                <span class="hero-metric-label">Visualizações no perfil</span>
             </div>
         </div>
-        <p class="hero-benchmark" id="hero-benchmark-text">🔥 Seu perfil está melhor que <strong>0%</strong> dos psicólogos</p>
+        
+        <span class="hero-benchmark-tag" id="hero-benchmark-text">🔥 Seu perfil está melhor que <strong>0%</strong> dos psicólogos</span>
     </div>
-    <div class="hero-action">
-        <button class="btn-cta-hero" onclick="window.loadPage('psi_meu_perfil.html')">Melhorar meu perfil</button>
-    </div>
-</section>
 
-<!-- BLOCO 1: O QUE FAZER AGORA (Checklist) -->
-<section class="dashboard-block block-checklist fade-in-up delay-1">
-    <div class="widget">
-        <div class="widget-header-row" style="border-bottom: none; padding-bottom: 0;">
-            <h3 class="widget-title" style="font-size: 1.4rem;">🚀 Próximos passos para crescer</h3>
-        </div>
-        <ul class="action-checklist" style="margin-top: 15px;">
-            <li class="checklist-item" data-action="foto" onclick="window.loadPage('psi_meu_perfil.html')" style="cursor: pointer;">
-                <label class="custom-checkbox">
-                    <input type="checkbox" id="check-foto" disabled>
-                    <span class="checkmark"></span>
-                </label>
-                <div class="checklist-content">
-                    <h4>Adicionar foto profissional</h4>
-                    <p>Aumenta a confiança e atrai <strong>+30% de cliques</strong>.</p>
-                </div>
-            </li>
-            <li class="checklist-item" data-action="bio" onclick="window.loadPage('psi_meu_perfil.html')" style="cursor: pointer;">
-                <label class="custom-checkbox">
-                    <input type="checkbox" id="check-bio" disabled>
-                    <span class="checkmark"></span>
-                </label>
-                <div class="checklist-content">
-                    <h4>Escrever bio mais clara</h4>
-                    <p>Uma boa descrição converte visitantes em pacientes (<strong>+50% conversão</strong>).</p>
-                </div>
-            </li>
-            <li class="checklist-item" data-action="artigo" onclick="window.loadPage('psi_blog.html')" style="cursor: pointer;">
-                <label class="custom-checkbox">
-                    <input type="checkbox" id="check-artigo" disabled>
-                    <span class="checkmark"></span>
-                </label>
-                <div class="checklist-content">
-                    <h4>Publicar primeiro artigo</h4>
-                    <p>Mostre sua autoridade e seja achado nas buscas (<strong>+visitas orgânicas</strong>).</p>
-                </div>
-            </li>
-        </ul>
-    </div>
-</section>
-
-<div class="layout-2-cols">
-    <!-- BLOCO 2: PACIENTES (Dinheiro) -->
-    <section class="dashboard-block fade-in-up delay-2">
-        <div class="widget h-100" style="display: flex; flex-direction: column;">
-            <h3 class="widget-title" style="font-size: 1.3rem;">💬 Pacientes</h3>
-            <p class="widget-desc">Resultados do seu perfil.</p>
+    <!-- GRID DE CONTEÚDO (Dividido em duas colunas no Desktop) -->
+    <div class="modern-dashboard-grid">
+        
+        <!-- COLUNA PRINCIPAL (ESQUERDA) -->
+        <div class="dashboard-column-main">
             
-            <div class="metrics-grouped" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; flex-grow: 1;">
-                <div class="metric-item highlight" style="display: flex; align-items: baseline; gap: 10px; padding: 15px; background: #f0fdf4; border-radius: 12px; border: 1px solid #bbf7d0;">
-                    <span class="m-val" id="kpi-whatsapp-clicks" style="font-size: 2.5rem; color: var(--verde-escuro); font-weight: 800; font-family: var(--font-titulos);">0</span>
-                    <span class="m-label" style="font-size: 1rem; color: #166534; font-weight: 600;">novos contatos</span>
+            <!-- BLOCO 1: O QUE FAZER AGORA (Checklist) -->
+            <div class="modern-checklist-card fade-in-up delay-1">
+                <div class="checklist-header">
+                    <h3 class="checklist-title">🚀 Próximos passos para crescer</h3>
+                    <span class="checklist-progress-text">0/3</span>
                 </div>
-                <div style="display: flex; gap: 20px;">
-                    <div class="metric-item" style="flex: 1;">
-                        <span class="m-val" id="kpi-match-impressions" style="font-size: 1.5rem; color: #333; font-weight: bold; display: block;">0</span>
-                        <span class="m-label" style="font-size: 0.85rem; color: #666;">Aparições no match</span>
+                <div class="checklist-progress-track">
+                    <div class="checklist-progress-fill" style="width: 0%;"></div>
+                </div>
+                <div class="modern-action-list">
+                    <!-- O input hidden garante a compatibilidade com o JS existente -->
+                    <a href="#" class="modern-action-item" onclick="window.loadPage('psi_meu_perfil.html')">
+                        <div class="action-checkbox">
+                            <input type="checkbox" id="check-foto" style="display: none;" disabled>
+                            ✓
+                        </div>
+                        <div class="action-content">
+                            <h4 class="action-title">Adicionar foto profissional</h4>
+                            <span class="action-impact">+30% de cliques</span>
+                        </div>
+                    </a>
+                    <a href="#" class="modern-action-item" onclick="window.loadPage('psi_meu_perfil.html')">
+                        <div class="action-checkbox">
+                            <input type="checkbox" id="check-bio" style="display: none;" disabled>
+                            ✓
+                        </div>
+                        <div class="action-content">
+                            <h4 class="action-title">Escrever bio mais clara</h4>
+                            <span class="action-impact">+50% conversão</span>
+                        </div>
+                    </a>
+                    <a href="#" class="modern-action-item" onclick="window.loadPage('psi_blog.html')">
+                        <div class="action-checkbox">
+                            <input type="checkbox" id="check-artigo" style="display: none;" disabled>
+                            ✓
+                        </div>
+                        <div class="action-content">
+                            <h4 class="action-title">Publicar primeiro artigo</h4>
+                            <span class="action-impact">+Visitas orgânicas</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- BLOCO 2: PACIENTES (Indicadores de Retorno) -->
+            <div class="modern-patients-card fade-in-up delay-2">
+                <div class="card-header-modern">
+                    <h3 class="card-title-modern">💬 Pacientes</h3>
+                </div>
+                <div class="patients-metrics-group">
+                    <div class="p-metric">
+                        <div class="p-metric-val" id="kpi-whatsapp-clicks">0</div>
+                        <div class="p-metric-label">Novos contatos</div>
                     </div>
-                    <div class="metric-item" style="flex: 1;">
-                        <span class="m-val" id="kpi-taxa-escolha" style="font-size: 1.5rem; color: #333; font-weight: bold; display: block;">0%</span>
-                        <span class="m-label" style="font-size: 0.85rem; color: #666;">Taxa de clique</span>
+                    <div class="p-metric">
+                        <div class="p-metric-val" id="kpi-match-impressions">0</div>
+                        <div class="p-metric-label">Aparições no match</div>
+                    </div>
+                    <div class="p-metric">
+                        <div class="p-metric-val" id="kpi-taxa-escolha">0%</div>
+                        <div class="p-metric-label">Taxa de clique</div>
+                    </div>
+                </div>
+                <button class="btn-primary-action" onclick="window.loadPage('psi_pacientes.html')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    Ver conversas no WhatsApp
+                </button>
+            </div>
+        </div>
+
+        <!-- COLUNA SECUNDÁRIA (DIREITA) -->
+        <div class="dashboard-column-side">
+            
+            <!-- BLOCO 3: AUTORIDADE (Rede Social) -->
+            <div class="modern-community-card fade-in-up delay-3">
+                <div class="card-header-modern">
+                    <h3 class="card-title-modern">🧠 Presença na comunidade</h3>
+                </div>
+                <div class="community-stats">
+                    <div class="c-stat">
+                        <div class="c-stat-icon">✍️</div>
+                        <div class="c-stat-info">
+                            <span class="c-stat-val" id="kpi-artigos">0</span>
+                            <span class="c-stat-label">Artigos publicados</span>
+                        </div>
+                    </div>
+                    <div class="c-stat">
+                        <div class="c-stat-icon">💬</div>
+                        <div class="c-stat-info">
+                            <span class="c-stat-val" id="kpi-interacoes">0</span>
+                            <span class="c-stat-label">Interações no fórum</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-secondary-action" onclick="window.loadPage('psi_blog.html')">Escrever artigo</button>
+                    <button class="btn-secondary-action" onclick="window.loadPage('psi_forum.html')">Participar do fórum</button>
+                </div>
+            </div>
+
+            <!-- BLOCO 4: GESTÃO (Widgets Compactos) -->
+            <div class="modern-management-card fade-in-up delay-4">
+                <div class="management-header">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+                    Gestão Resumida
+                </div>
+                <div class="management-list">
+                    <a href="#" class="management-item" onclick="window.loadPage('psi_pacientes.html')">
+                        <div class="m-item-left">
+                            <span class="m-item-icon">📅</span>
+                            <span class="m-item-title">Agenda Hoje</span>
+                        </div>
+                        <span class="m-item-value" id="agenda-hoje">0 atends.</span>
+                    </a>
+                    <a href="#" class="management-item" onclick="window.loadPage('psi_financeiro.html')">
+                        <div class="m-item-left">
+                            <span class="m-item-icon">💰</span>
+                            <span class="m-item-title">Financeiro</span>
+                        </div>
+                        <span class="m-item-value" id="faturamento-mes">R$ 0,00</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- BLOCO 5: NOTIFICAÇÕES E LEMBRETES (NOVO) -->
+            <div class="modern-notifications-card fade-in-up delay-5">
+                <div class="card-header-modern" style="margin-bottom: 16px;">
+                    <h3 class="card-title-modern">🔔 Fique por dentro</h3>
+                </div>
+                <div class="notification-list" id="notification-feed">
+                    <!-- Notificações serão injetadas aqui pelo JS -->
+                    <div class="smart-empty-state" id="notifications-empty-state" style="margin-bottom: 0; padding: 15px;">
+                        <div class="empty-state-icon">✨</div>
+                        <p class="empty-state-text" style="font-size: 0.9rem;">Nenhuma novidade por enquanto. Tudo em dia!</p>
                     </div>
                 </div>
             </div>
-            
-            <div class="widget-action-footer" style="margin-top: auto;">
-                <button class="btn btn-principal" style="width: 100%;" onclick="window.loadPage('psi_pacientes.html')">Ver conversas no WhatsApp</button>
-            </div>
         </div>
-    </section>
-
-    <!-- BLOCO 3: AUTORIDADE (Rede Social) -->
-    <section class="dashboard-block fade-in-up delay-3">
-        <div class="widget h-100" style="display: flex; flex-direction: column;">
-            <h3 class="widget-title" style="font-size: 1.3rem;">🧠 Sua presença na comunidade</h3>
-            <p class="widget-desc">Expanda sua autoridade.</p>
-            
-            <div class="metrics-grouped minimal" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; flex-grow: 1;">
-                <div class="metric-item" style="padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-                    <span class="m-label" style="font-weight: 600; color: #555;">Artigos publicados</span>
-                    <span class="m-val" id="kpi-artigos" style="font-size: 1.5rem; color: var(--verde-escuro); font-weight: bold;">0</span>
-                </div>
-                <div class="metric-item" style="padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-                    <span class="m-label" style="font-weight: 600; color: #555;">Interações no fórum</span>
-                    <span class="m-val" id="kpi-interacoes" style="font-size: 1.5rem; color: var(--verde-escuro); font-weight: bold;">0</span>
-                </div>
-            </div>
-            
-            <div class="widget-action-footer" style="display: flex; gap: 10px; margin-top: auto;">
-                <button class="btn btn-secundario" style="flex: 1; padding: 12px 10px;" onclick="window.loadPage('psi_blog.html')">Escrever artigo</button>
-                <button class="btn btn-secundario" style="flex: 1; padding: 12px 10px;" onclick="window.loadPage('psi_forum.html')">Participar do fórum</button>
-            </div>
-        </div>
-    </section>
+        
+    </div>
 </div>
-
-<!-- BLOCO 4: GESTÃO (Secundário) -->
-<section class="dashboard-block fade-in-up delay-4">
-    <div class="widget" style="padding: 25px 30px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
-            <div style="display: flex; gap: 40px; align-items: center; flex-wrap: wrap;">
-                <div>
-                    <h3 class="widget-title" style="margin-bottom: 8px; font-size: 1.1rem; color: #555;">📅 Agenda</h3>
-                    <span style="font-size: 1.2rem; color: var(--verde-escuro); font-weight: bold;" id="agenda-hoje">Hoje: 0 atendimentos</span>
-                </div>
-                <div>
-                    <h3 class="widget-title" style="margin-bottom: 8px; font-size: 1.1rem; color: #555;">💰 Financeiro</h3>
-                    <span style="font-size: 1.2rem; color: var(--verde-escuro); font-weight: bold;" id="faturamento-mes">R$ 0,00 esse mês</span>
-                </div>
-            </div>
-            <button class="btn btn-secundario" style="border: none; background: #f0f2f5;" onclick="window.loadPage('psi_financeiro.html')">Ir para gestão completa &rarr;</button>
-        </div>
-    </div>
-</section>

@@ -110,6 +110,12 @@ router.put('/reviews/:id/moderate', adminController.moderateReview);
 // Rota para buscar os logs do sistema
 router.get('/logs', adminController.getSystemLogs);
 
+// ====================================================================================
+// AVISO DE REFATORAÇÃO: As rotas básicas de admin (/messages, /conversations) abaixo 
+// rodam no adminController. A arquitetura moderna principal agora está isolada 
+// em adminMessageRoutes.js. (Não remover até que 'Notas Internas' e 'Broadcast' sejam migrados)
+// ====================================================================================
+
 // Rota para buscar todas as mensagens
 router.get('/messages', adminController.getAllMessages);
 

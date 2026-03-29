@@ -110,11 +110,9 @@ body.chat-mobile-open {
 /* Centraliza o conteúdo (Banner e Widgets) horizontalmente */
 #main-content {
     width: 100%;
-    max-width: 1000px; /* Limite opcional para não espalhar demais em telas UltraWide */
+    max-width: 1200px; /* Alargado para suportar o novo layout moderno */
     margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+    display: block; /* Deixa o layout moderno gerenciar as colunas e espaçamentos */
 }
 
 /* Títulos Gerais */
@@ -156,7 +154,7 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
 .user-profile-nav { display: flex; align-items: center; gap: 15px; }
 #psi-sidebar-photo { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--cor-Yelo); object-fit: cover; }
 .user-nav-info { display: flex; flex-direction: column; }
-#psi-sidebar-name { font-weight: bold; font-size: 0.9rem; font-family: var(--font-titulos); line-height: 1; margin-bottom: 3px; color: #fff;}
+#psi-sidebar-name { font-weight: bold; font-size: 0.9rem; font-family: var(--verde-escuro); line-height: 1; margin-bottom: 3px; color: #14532d;}
 #psi-sidebar-level { font-size: 0.75rem; color: #a7f3d0; font-weight: bold; line-height: 1; }
 .nav-actions { display: flex; gap: 5px; margin-left: 10px; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 15px; }
 .nav-actions button { background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; color: white;}
@@ -464,17 +462,20 @@ textarea#bio {
 .mobile-bottom-nav {
     display: none;
     position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background-color: #ffffff;
-    border-top: 1px solid #e0e0e0;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-    filter: drop-shadow(0 -5px 15px rgba(0,0,0,0.08));
-    z-index: 9999;
+    /* Forçamos o formato com !important para ignorar o CSS antigo que pode estar em cache */
+    bottom: calc(20px + env(safe-area-inset-bottom)) !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: calc(100% - 40px) !important;
+    max-width: 400px !important;
+    background-color: rgba(255, 255, 255, 0.90) !important;
+    backdrop-filter: blur(12px) !important;
+    border-radius: 50px !important; /* Formato de Pílula */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+    z-index: 9999 !important; /* Garante que a pílula flutue sobre outros elementos fixos */
     justify-content: space-around;
-    padding: 10px 0;
-    padding-bottom: max(10px, env(safe-area-inset-bottom)); /* Ajuste iPhone X+ */
+    align-items: center;
+    padding: 8px 16px !important;
 }
 
 .bottom-nav-wave {
@@ -486,6 +487,7 @@ textarea#bio {
     overflow: hidden;
     line-height: 0;
     pointer-events: none;
+    display: none; /* Ocultamos a onda pois a barra agora é uma pílula flutuante */
 }
 
 .bottom-nav-wave svg {
@@ -503,20 +505,28 @@ textarea#bio {
     text-decoration: none;
     color: #999;
     font-size: 0.7rem;
-    gap: 4px;
-    transition: color 0.2s;
-    width: 20%; /* 5 itens = 20% cada */
+    gap: 2px;
+    transition: all 0.3s ease;
+    width: 25%; /* 4 itens = 25% cada */
+    padding: 6px 0;
+    border-radius: 20px;
 }
 
 .bottom-nav-item svg {
     width: 24px;
     height: 24px;
     stroke-width: 2px;
+    transition: transform 0.3s ease;
 }
 
 .bottom-nav-item.active {
     color: var(--verde-escuro);
     font-weight: 600;
+    background-color: #f0fdf4;
+}
+
+.bottom-nav-item.active svg {
+    transform: translateY(-2px);
 }
 
 /* ==========================================================================
@@ -524,7 +534,7 @@ textarea#bio {
    ========================================================================== */
 .fab-container {
     position: fixed;
-    bottom: 90px; /* Acima da bottom nav */
+    bottom: calc(100px + env(safe-area-inset-bottom)); /* Acima da nova bottom nav em pílula */
     left: 20px; /* Movido para a esquerda conforme solicitado */
     right: auto;
     z-index: 10000;
@@ -707,7 +717,9 @@ textarea#bio {
     .menu-toggle { display: none !important; }
 
     /* Mostra a Bottom Nav */
-    .mobile-bottom-nav { display: flex; }
+    body .mobile-bottom-nav { 
+        display: flex !important; 
+    }
 
     /* Trigger de Menu (Texto - Mobile) */
     .menu-text-trigger {
@@ -731,8 +743,8 @@ textarea#bio {
     /* Ajuste de padding para não ficar escondido atrás da bottom nav */
     .dashboard-main { 
         width: 100%; 
-        /* Padding dinâmico baseado na altura real dos elementos fixos + respiro */
-        padding: calc(var(--mobile-header-h, 70px) + 20px) 20px calc(var(--mobile-bottom-h, 80px) + 20px) 20px;
+        /* Padding de 110px embaixo para garantir que o conteúdo fique visível acima da pílula */
+        padding: calc(var(--mobile-header-h, 70px) + 20px) 20px calc(110px + env(safe-area-inset-bottom)) 20px;
         margin-left: 0 !important; /* Remove a margem no mobile */
     }
 
@@ -3141,7 +3153,7 @@ body.pagina-dashboard::after {
         top: 0;
         left: 0;
         right: 0;
-        bottom: 80px !important; /* Ajuste fino para alinhar com a bottom nav */
+        bottom: calc(90px + env(safe-area-inset-bottom)) !important; /* Ajuste para alinhar com a nova bottom nav em pílula */
         width: auto !important;
         height: auto !important;
         z-index: 99990; /* Alto, mas abaixo da Sidebar (100000) */
@@ -3610,6 +3622,16 @@ body.pagina-dashboard::after {
     transition: all 0.2s ease;
     z-index: 100;
     margin-bottom: -11px;
+}
+
+@keyframes fadeInUpCard {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in-up {
+    animation: fadeInUpCard 0.5s ease-out forwards;
+    opacity: 0;
 }
 
 .info-tooltip:hover::after, .info-tooltip:focus::after,
@@ -4325,7 +4347,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 /* Ajuste Mobile (Mais compacto e posicionado acima da nav) */
 @media (max-width: 768px) {
     .restriction-floating-banner {
-        bottom: 115px !important; /* Acima da Bottom Nav */
+        bottom: calc(115px + env(safe-area-inset-bottom)) !important; /* Acima da nova Bottom Nav em pílula */
         padding: 10px 15px;
         width: 90%; /* Ocupa largura para não quebrar texto */
         border-radius: 12px; /* Menos arredondado */
@@ -4412,6 +4434,29 @@ input:checked + .slider:before { transform: translateX(20px); }
     gap: 20px;
     position: relative;
     z-index: 2;
+}
+
+.hero-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 700px;
+    flex-grow: 1;
+}
+
+.hero-content h1, .hero-content h2 {
+    margin: 0;
+    font-family: var(--font-titulos);
+    font-size: clamp(1.8rem, 4vw, 2.2rem);
+    line-height: 1.2;
+    color: var(--branco-puro);
+}
+
+.hero-content p {
+    margin: 0;
+    font-size: 1.05rem;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.5;
 }
 
 .modern-hero-title {
@@ -4830,6 +4875,57 @@ input:checked + .slider:before { transform: translateX(20px); }
     background: #f0fdf4;
 }
 
+/* --- 6. BLOCO DE NOTIFICAÇÕES E LEMBRETES --- */
+.modern-notifications-card {
+    background: #f8f9fa;
+    border-radius: 24px;
+    padding: 22px;
+    border: 1px solid var(--cinza-borda);
+}
+
+.notification-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px;
+    border-radius: 12px;
+    background: var(--branco-puro);
+    border: 1px solid #e9ecef;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.notification-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.notification-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.2rem;
+}
+
+.notification-content p { margin: 0; font-size: 0.9rem; color: #555; line-height: 1.5; }
+.notification-content p strong { color: var(--verde-escuro); }
+.notification-time { font-size: 0.75rem; color: #999; margin-top: 4px; display: block; }
+
+/* Variações de Cor/Ícone */
+.notification-item.type-interaction .notification-icon { background: #e0f2f1; color: #00796b; }
+.notification-item.type-reminder .notification-icon { background: #fffbeb; color: #b45309; }
+
 /* --- 5. BLOCO DE GESTÃO (Visão Discreta) --- */
 .modern-management-card {
     background: #f8f9fa;
@@ -4900,9 +4996,9 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 /* --- SIDEBAR MODERNA (APP-LIKE) --- */
 .modern-sidebar-container {
-    width: 200px; /* Reduzido em 30% */
-    background: var(--branco-puro);
-    border-right: 1px solid var(--cinza-borda);
+    width: 280px; /* Aumentado para mais respiro */
+    background: #fcfcfc; /* Fundo mais claro, quase branco */
+    border-right: 1px solid #f0f0f0; /* Borda mais sutil */
     display: flex;
     flex-direction: column;
     height: 100vh;
@@ -4910,119 +5006,109 @@ input:checked + .slider:before { transform: translateX(20px); }
     top: 0;
     left: 0;
     z-index: 1000;
+    padding: 12px; /* Padding interno geral */
+    box-sizing: border-box;
+
 }
 
 .sidebar-profile-modern {
-    padding: 22px 16px 16px 16px;
-    border-bottom: 1px solid var(--cinza-borda);
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f0;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    align-items: center;
+    text-align: center;
+    gap: 8px; /* Espaço menor */
+    margin-bottom: 10px;
 }
 
 .sp-avatar-wrapper {
     position: relative;
-    width: 45px; /* Reduzido em 30% */
-    height: 45px;
+    width: 70px; /* Foto menor e mais discreta */
+    height: 70px;
+    margin-bottom: 5px;
 }
 
 .sp-avatar {
     width: 100%;
     height: 100%;
-    border-radius: 16px;
+    border-radius: 50%;
     object-fit: cover;
     border: 2px solid var(--cor-Yelo);
 }
 
-.sp-info h3 {
-    margin: 0 0 6px 0;
-    font-size: 1.2rem;
+.sidebar-profile-modern h3 {
+    margin: 0;
+    font-size: 1.05rem;
     color: var(--verde-escuro);
     font-family: var(--font-titulos);
+    font-weight: 600;
 }
 
-.sp-status-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.sp-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+.sp-level-indicator {
     font-size: 0.8rem;
-    font-weight: 700;
-    color: #10b981;
-    background: #d1fae5;
-    padding: 4px 10px;
-    border-radius: 12px;
+    color: #666;
+    font-weight: 500;
 }
 
 .modern-sidebar-nav {
     flex-grow: 1;
-    padding: 16px 10px;
     overflow-y: auto;
+    scrollbar-width: none;
     display: flex;
-    flex-direction: column;
-    gap: 4px;
 }
+.modern-sidebar-nav::-webkit-scrollbar { display: none; }
 
 .nav-item-modern {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: 12px;
-    color: #555;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    color: #444;
     text-decoration: none;
-    font-weight: 600;
-    font-size: 0.95rem;
-    transition: all 0.2s;
+    font-weight: 600; 
+    font-size: 0.9rem;
+    transition: background-color 0.2s, color 0.2s;
     position: relative;
 }
 
-.nav-item-modern svg {
-    width: 16px;
-    height: 16px;
-    opacity: 0.7;
-    transition: opacity 0.2s;
+.sidebar-nav a.nav-item-modern svg {
+    width: 20px; 
+    height: 20px;
+    flex-shrink: 0;
+    color: #777;
+    transition: color 0.2s;
 }
 
-.nav-item-modern:hover {
-    background: #f8f9fa;
+.sidebar-nav a.nav-item-modern:hover {
+    background: #f0f0f0;
+    color: #111;
+}
+
+.sidebar-nav a.nav-item-modern:hover svg {
+    color: #111;
+}
+
+.sidebar-nav li.active a.nav-item-modern {
+    background: #e8f5e9; /* Verde bem claro */
     color: var(--verde-escuro);
 }
 
-.nav-item-modern:hover svg {
-    opacity: 1;
-}
-
-.nav-item-modern.active, .sidebar-nav li.active .nav-item-modern {
-    background: #f0fdf4;
-    color: var(--verde-escuro);
-}
-
-.nav-item-modern.active svg, .sidebar-nav li.active .nav-item-modern svg {
+.sidebar-nav li.active a.nav-item-modern svg {
     opacity: 1;
     stroke: var(--verde-escuro);
 }
 
-.nav-item-modern.active::before, .sidebar-nav li.active .nav-item-modern::before {
-    content: '';
-    position: absolute;
-    left: 8px;
-    width: 4px;
-    height: 20px;
-    background: var(--verde-escuro);
-    border-radius: 4px;
+.sidebar-nav li.active a.nav-item-modern::before {
+    display: none;
 }
 
 /* Ajuste principal para comportar a nova sidebar */
 @media (min-width: 992px) {
     .dashboard-main {
-        margin-left: 200px !important; 
-        width: calc(100% - 200px) !important; 
+        margin-left: 280px !important; 
+        width: calc(100% - 280px) !important; 
     }
     /* Esconder top nav antiga se usar sidebar lateral */
     .dashboard-top-nav {
@@ -5145,4 +5231,63 @@ input:checked + .slider:before { transform: translateX(20px); }
 .btn-cta-hero:hover {
     transform: translateY(-2px);
     background-color: #f8f9fa;
+}
+
+/* --- ESTILOS DAS PÁGINAS HUB (AGRUPAMENTOS APPLE-STYLE) --- */
+.hub-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    padding-top: 10px;
+}
+
+.hub-card {
+    background-color: var(--branco-puro);
+    border: 1px solid var(--cinza-borda);
+    border-radius: 16px;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    text-decoration: none;
+    color: inherit;
+}
+
+.hub-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    border-color: var(--verde-escuro);
+}
+
+.hub-icon {
+    width: 55px;
+    height: 55px;
+    border-radius: 16px;
+    background-color: #f0fdf4;
+    color: var(--verde-escuro);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    flex-shrink: 0;
+}
+
+.hub-info h3 {
+    margin: 0 0 5px 0;
+    font-family: var(--font-titulos);
+    color: var(--verde-escuro);
+    font-size: 1.2rem;
+}
+
+.hub-info p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--cinza-texto);
+    line-height: 1.4;
+}
+
+.hub-card.logout-card:hover {
+    border-color: #e63946;
 }

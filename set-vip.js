@@ -8,6 +8,7 @@ if (result.error) {
     require('dotenv').config(); 
 }
 const db = require('./backend/models');
+const bcrypt = require('bcryptjs');
 
 // --- CONFIGURAÇÃO ---
 // Coloque o e-mail do psicólogo que você quer tornar VIP aqui
@@ -18,13 +19,24 @@ async function setVipStatus() {
     console.log(`🚀 Procurando psicólogo com o e-mail: ${userEmail}`);
 
     try {
-        const psychologist = await db.Psychologist.findOne({
+        let psychologist = await db.Psychologist.findOne({
             where: { email: userEmail }
         });
 
         if (!psychologist) {
-            console.error(`❌ Erro: Psicólogo com e-mail "${userEmail}" não encontrado.`);
-            return;
+            console.log(`- Psicólogo não encontrado. Criando uma conta de teste...`);
+            const senhaProvisoria = 'yelo123';
+            const hashedPassword = await bcrypt.hash(senhaProvisoria, 10);
+
+            psychologist = await db.Psychologist.create({
+                email: userEmail,
+                nome: 'Psi Yelo (VIP)',
+                senha: hashedPassword,
+                slug: 'psi-yelo-vip-test',
+                status: 'pending'
+            });
+            
+            console.log(`- Conta criada com sucesso! A senha provisória é: ${senhaProvisoria}`);
         }
 
         // Atualiza para VIP, define o melhor plano e ativa a conta
@@ -34,8 +46,8 @@ async function setVipStatus() {
             status: 'active'
         });
 
-        console.log(`✅ Sucesso! O psicólogo "${psychologist.nome}" (${psychologist.email}) agora é VIP.`);
-        console.log("Pode fazer login com esta conta para testar a isenção na página de assinatura.");
+        console.log(`\n✅ Sucesso! O psicólogo "${psychologist.nome}" (${psychologist.email}) agora é VIP e tem uma assinatura ativa.`);
+        console.log("   Pode fazer login com esta conta para testar todas as funcionalidades da plataforma.");
 
     } catch (error) {
         console.error("❌ Erro ao conectar ou atualizar o banco de dados:", error);

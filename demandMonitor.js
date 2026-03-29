@@ -1,8 +1,8 @@
 // backend/cron/demandMonitor.js
 
 const { Op } = require('sequelize');
-const db = require('../models');
-const { sendInvitationEmail } = require('../services/emailService');
+const db = require('./backend/models');
+const { sendInvitationEmail } = require('./backend/services/emailService');
 const crypto = require('crypto');
 
 const LIQUIDITY_TARGET = 8; // Número-alvo de profissionais por nicho
