@@ -1,7 +1,7 @@
 // backend/cron/invitationManager.js
 
 const { Op } = require('sequelize');
-const db = require('../models');
+const db = require('./backend/models');
 
 /**
  * Verifica convites expirados e atualiza o status.

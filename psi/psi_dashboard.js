@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
             transform: scale(1.05);
         }
 
-        @keyframes fadeInUp {
+        @keyframes fadeInUpBanner {
             from { opacity: 0; transform: translate(-50%, 20px); }
             to { opacity: 1; transform: translate(-50%, 0); }
         }
@@ -130,28 +130,45 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Função para controlar a badge no menu
     function updateSidebarBadge(pageName, show) {
-        const link = document.querySelector(`.sidebar-nav a[data-page="${pageName}"]`);
-        if (!link) return;
-        
-        let badge = link.querySelector('.sidebar-badge');
-        if (!badge) {
-            badge = document.createElement('span');
-            badge.className = 'sidebar-badge';
-            link.appendChild(badge);
+        let targetPage = pageName;
+        // Mapeia a caixa de entrada para o hub de ajustes para a badge aparecer no menu certo
+        if (pageName === 'psi_caixa_de_entrada.html') {
+            targetPage = 'psi_ajustes_hub.html';
         }
         
-        if (show) {
-            const count = window.psiUnreadConversations.size;
-            if (count > 0) {
-                badge.textContent = count > 99 ? '99+' : count;
-                badge.classList.add('visible');
+        const updateBadgeOnElement = (element, isBottomNav = false) => {
+            if (!element) return;
+            let badge = element.querySelector('.sidebar-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'sidebar-badge';
+                if (isBottomNav) {
+                    badge.style.top = '0';
+                    badge.style.right = '10px';
+                    badge.style.transform = 'none';
+                    element.style.position = 'relative';
+                }
+                element.appendChild(badge);
+            }
+            
+            if (show) {
+                const count = window.psiUnreadConversations.size;
+                if (count > 0) {
+                    badge.textContent = count > 99 ? '99+' : count;
+                    badge.classList.add('visible');
+                } else {
+                    badge.classList.remove('visible');
+                }
             } else {
                 badge.classList.remove('visible');
+                badge.textContent = '';
             }
-        } else {
-            badge.classList.remove('visible');
-            badge.textContent = '';
-        }
+        };
+        
+        // Atualiza na sidebar desktop
+        updateBadgeOnElement(document.querySelector(`.sidebar-nav a[data-page="${targetPage}"]`), false);
+        // Atualiza na bottom nav mobile
+        updateBadgeOnElement(document.querySelector(`.bottom-nav-item[data-target-page="${targetPage}"]`), true);
     }
 
     // --- LÓGICA DO MENU MOBILE ---
@@ -616,8 +633,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function verificarBloqueioGeral(url) {
         if (!psychologistData) return;
 
-        // Páginas permitidas mesmo sem plano (para o usuário poder pagar)
-        const paginasPermitidas = ['psi_assinatura.html']; 
+        // Páginas permitidas mesmo sem plano (para o usuário poder pagar ou acessar os ajustes gerais)
+        const paginasPermitidas = ['psi_assinatura.html', 'psi_ajustes_hub.html']; 
 
         // Verifica se tem plano válido (se plano for null/vazio, considera inativo)
         const temPlano = psychologistData.plano && psychologistData.plano.trim().length > 0;
@@ -643,7 +660,7 @@ document.addEventListener('DOMContentLoaded', function() {
             banner.className = 'restriction-floating-banner';
             banner.innerHTML = `
                 <span>🔒 Modo de visualização. Ative seu plano para interagir.</span>
-                <button onclick="document.querySelector('a[data-page=\\'psi_assinatura.html\\']').click()">Ver Planos</button>
+                <button onclick="window.loadPage('psi_assinatura.html')">Ver Planos</button>
             `;
             document.body.appendChild(banner);
         }
@@ -679,9 +696,31 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="loader-wrapper" style="height: 100%; min-height: 400px; align-items: center;">
                 <div class="loader-spinner"></div>
             </div>`;
+            
         document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
-        const activeLink = document.querySelector(`.sidebar-nav a[data-page="${url}"]`);
+        document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+
+        let activeLink = document.querySelector(`.sidebar-nav a[data-page="${url}"]`);
+        let activeBottomLink = document.querySelector(`.bottom-nav-item[data-target-page="${url}"]`);
+        
+        if (!activeLink || !activeBottomLink) {
+            let hubPage = '';
+            if (['psi_pacientes.html', 'psi_financeiro.html', 'psi_analytics.html', 'psi_favoritos_analytics.html'].includes(url)) {
+                hubPage = 'psi_clinica_hub.html';
+            } else if (['psi_jornada.html', 'psi_blog.html', 'psi_forum.html', 'psi_comunidade.html', 'psi_hub.html', 'psi_lista_espera.html'].includes(url)) {
+                hubPage = 'psi_evolucao_hub.html';
+            } else if (['psi_meu_perfil.html', 'psi_assinatura.html', 'psi_caixa_de_entrada.html', 'psi_excluir_conta.html'].includes(url)) {
+                hubPage = 'psi_ajustes_hub.html';
+            }
+
+            if (hubPage) {
+                if (!activeLink) activeLink = document.querySelector(`.sidebar-nav a[data-page="${hubPage}"]`);
+                if (!activeBottomLink) activeBottomLink = document.querySelector(`.bottom-nav-item[data-target-page="${hubPage}"]`);
+            }
+        }
+
         if (activeLink) activeLink.closest('li').classList.add('active');
+        if (activeBottomLink) activeBottomLink.classList.add('active');
 
         // --- OTIMIZAÇÃO: PRÉ-FETCH DE DADOS (Paralelismo) ---
         // Dispara a busca de dados IMEDIATAMENTE, sem esperar o HTML carregar
@@ -1266,40 +1305,80 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // 1. Foto
             const hasPhoto = psychologistData.fotoUrl && !psychologistData.fotoUrl.includes('placehold.co');
-            const checkFoto = document.getElementById('check-foto');
-            const itemFoto = document.querySelector('.checklist-item[data-action="foto"]');
-            if (hasPhoto) {
+            const fotoTask = document.querySelector('.modern-action-item[onclick*="psi_meu_perfil.html"]');
+            if (hasPhoto && fotoTask) {
                 completedTasks++;
-                if(checkFoto) checkFoto.checked = true;
-                if(itemFoto) {
-                    itemFoto.style.opacity = '0.6';
-                }
+                fotoTask.classList.add('completed');
             }
 
             // 2. Bio
             const hasBio = psychologistData.bio && psychologistData.bio.length > 50;
-            const checkBio = document.getElementById('check-bio');
-            const itemBio = document.querySelector('.checklist-item[data-action="bio"]');
-            if (hasBio) {
+            const bioTasks = document.querySelectorAll('.modern-action-item[onclick*="psi_meu_perfil.html"]');
+            const bioTask = bioTasks.length > 1 ? bioTasks[1] : null;
+            if (hasBio && bioTask) {
                 completedTasks++;
-                if(checkBio) checkBio.checked = true;
-                if(itemBio) {
-                    itemBio.style.opacity = '0.6';
-                }
+                bioTask.classList.add('completed');
             }
 
             // 3. Artigo
             const hasArticle = blogCount > 0;
-            const checkArtigo = document.getElementById('check-artigo');
-            const itemArtigo = document.querySelector('.checklist-item[data-action="artigo"]');
-            if (hasArticle) {
+            const artigoTask = document.querySelector('.modern-action-item[onclick*="psi_blog.html"]');
+            if (hasArticle && artigoTask) {
                 completedTasks++;
-                if(checkArtigo) checkArtigo.checked = true;
-                if(itemArtigo) {
-                    itemArtigo.style.opacity = '0.6';
-                }
+                artigoTask.classList.add('completed');
             }
 
+            // Atualiza barra de progresso visual do checklist
+            const progressText = document.querySelector('.checklist-progress-text');
+            const progressBar = document.querySelector('.checklist-progress-fill');
+            if (progressText) progressText.textContent = `${completedTasks}/${totalTasks}`;
+            if (progressBar) progressBar.style.width = `${(completedTasks / totalTasks) * 100}%`;
+
+            // --- BLOCO 6: NOTIFICAÇÕES E LEMBRETES ---
+            const feed = document.getElementById('notification-feed');
+            const emptyState = document.getElementById('notifications-empty-state');
+            
+            if (feed) {
+                const notifications = [];
+                const diasInativo = stats.diasDesdeUltimaInteracao || (forumCount === 0 && blogCount === 0 ? 8 : 0);
+                const novasInteracoes = stats.novasInteracoes || 0;
+
+                if (diasInativo > 7) {
+                    notifications.push({
+                        type: 'reminder', icon: '🤔',
+                        text: `Você não interage na comunidade há <strong>${diasInativo} dias</strong>. Que tal fortalecer sua presença?`,
+                        time: 'Agora mesmo', link: 'psi_forum.html'
+                    });
+                }
+
+                if (novasInteracoes > 0) {
+                    notifications.push({
+                        type: 'interaction', icon: '❤️',
+                        text: `Suas publicações receberam <strong>${novasInteracoes} novas interações</strong>! Veja quem curtiu e respondeu.`,
+                        time: 'Hoje', link: 'psi_forum.html?filter=meus_posts'
+                    });
+                }
+
+                if (notifications.length > 0) {
+                    if (emptyState) emptyState.style.display = 'none';
+                    notifications.forEach(notif => {
+                        const item = document.createElement('a');
+                        item.href = '#';
+                        item.className = `notification-item type-${notif.type}`;
+                        item.onclick = (e) => { e.preventDefault(); window.loadPage(notif.link); };
+                        item.innerHTML = `
+                            <div class="notification-icon">${notif.icon}</div>
+                            <div class="notification-content">
+                                <p>${notif.text}</p>
+                                <span class="notification-time">${notif.time}</span>
+                            </div>
+                        `;
+                        feed.appendChild(item);
+                    });
+                } else if (emptyState) {
+                    emptyState.style.display = 'flex';
+                }
+            }
 
             // --- BLOCO 5: GESTÃO (Consultas paralelas para o dashboard secundário) ---
             try {
@@ -1369,9 +1448,7 @@ document.addEventListener('DOMContentLoaded', function() {
         overlay.querySelector('button').onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
-            // Simula o clique no menu lateral para carregar a página de assinatura
-            const linkAssinatura = document.querySelector('[data-page="psi_assinatura.html"]');
-            if(linkAssinatura) linkAssinatura.click();
+            window.loadPage('psi_assinatura.html');
         };
     
         card.appendChild(overlay);
@@ -2439,9 +2516,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
             } else {
-            // A pedido: sempre que acessar o dashboard, forçar a página inicial
-            localStorage.removeItem('yelo_last_psi_page');
-            loadPage('psi_visao_geral.html');
+            // Carrega a última página visitada ou a visão geral como padrão.
+            const lastPage = localStorage.getItem('yelo_last_psi_page');
+            loadPage(lastPage || 'psi_visao_geral.html');
             }
             
             // Inicia socket global para notificações

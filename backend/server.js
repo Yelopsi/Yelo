@@ -44,6 +44,8 @@ if (db.Psychologist) {
         subscriptionId: DataTypes.STRING,
         cancelAtPeriodEnd: DataTypes.BOOLEAN,
         subscription_payments_count: DataTypes.INTEGER,
+        dailySummaryTime: DataTypes.STRING,
+        reminderHoursBefore: DataTypes.INTEGER,
         linkedin_url: DataTypes.STRING,
         instagram_url: DataTypes.STRING,
         facebook_url: DataTypes.STRING,
@@ -196,7 +198,6 @@ if (db.Message && db.Conversation) {
 // Importação de Rotas
 const patientRoutes = require('./routes/patientRoutes');
 const psychologistRoutes = require('./routes/psychologistRoutes');
-const messagingRoutes = require('./routes/messagingRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const demandRoutes = require('./routes/demandRoutes');
 const usuarioRoutes = require('./routes/usuarioRoutes');
@@ -204,9 +205,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const qnaRoutes = require('./routes/qnaRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
-const supportRoutes = require('./routes/supportRoutes');
 const adminMessageRoutes = require('./routes/adminMessageRoutes');
-const adminSupportRoutes = require('./routes/adminSupportRoutes');
 const blogRoutes = require('./routes/blogRoutes');
 const newsletterRoutes = require('./routes/newsletterRoutes'); // <-- ADICIONADO
 const forumRoutes = require('./routes/forumRoutes'); // <--- ADICIONADO
@@ -256,8 +255,11 @@ app.use((req, res, next) => {
     const host = req.headers.host ? req.headers.host.split(':')[0] : req.hostname;
     const target = 'www.yelopsi.com.br';
 
-    // Ignora localhost e domínios de desenvolvimento (Render)
-    if (host.includes('localhost') || host.includes('127.0.0.1') || host.includes('onrender.com') || host.includes('render.com')) {
+    // Ignora IPs na rede local (ex: 192.168.x.x) para permitir testes pelo celular
+    const isLocalIp = /^(\d{1,3}\.){3}\d{1,3}$/.test(host);
+
+    // Ignora localhost, IPs locais e domínios de desenvolvimento (Render)
+    if (host.includes('localhost') || host.includes('127.0.0.1') || host.includes('onrender.com') || host.includes('render.com') || isLocalIp) {
         return next();
     }
 
@@ -1297,7 +1299,7 @@ const startCronJobs = () => {
 
   // Inicializa o agendador externo (Remarketing, Demandas, etc)
   try {
-      require('./cron/scheduler.js');
+      require('../scheduler.js');
       console.log('✅ [CRON] Scheduler externo ativado (Remarketing rodará às 10h).');
   } catch (err) {
       console.warn('⚠️ [CRON] Aviso: Não foi possível carregar o scheduler.js.', err.message);
@@ -1308,7 +1310,6 @@ const startCronJobs = () => {
     const currentHM = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); // Ex: "08:00"
     
     // 1. RESUMO DIÁRIO (Personalizado por Psicólogo)
-    /* --- COMENTADO DEVIDO À REMOÇÃO DA COLUNA 'dailySummaryTime' ---
     try {
         // Busca psicólogos que configuraram o resumo para o horário atual
         const psisSummary = await db.Psychologist.findAll({ 
@@ -1363,7 +1364,6 @@ const startCronJobs = () => {
             }
         }
     } catch (e) { console.error("Erro no cron de resumo:", e); }
-    */
 
     // 2. LEMBRETES DE SESSÃO (A cada hora cheia)
     if (now.getMinutes() === 0) {
@@ -1926,7 +1926,9 @@ app.use('/api/psychologists/me/posts', blogRoutes);
 app.get('/api/psychologists/me/analytics', protect, psychologistController.getAnalyticsData);
 // ROTA DE FAVORITOS (NOVA)
 app.use('/api/psychologists', psychologistRoutes);
-app.use('/api/messaging', messagingRoutes);
+
+// Alias: Aponta a rota antiga para o controller moderno para evitar quebrar o Frontend
+app.use('/api/messaging', messageRoutes); 
 app.use('/api/messages', messageRoutes);
 app.use('/api/demand', demandRoutes);
 app.use('/api/usuarios', usuarioRoutes);
@@ -1983,7 +1985,6 @@ app.delete('/api/admin/psychologists/:id', async (req, res) => {
 
 // ROTAS DE ADMIN (ORDEM DE ESPECIFICIDADE IMPORTA)
 app.use('/api/admin/messages', adminMessageRoutes); // Rotas de mensagem do admin (mais específicas)
-app.use('/api/admin/support', adminSupportRoutes); // Rotas de suporte do admin (mais específicas)
 app.use('/api/admin', adminRoutes); // Rotas genéricas do admin (devem vir por último)
 
 // --- ROTAS DE GESTÃO DE CONTEÚDO (ADMIN) ---
@@ -2043,7 +2044,6 @@ app.get('/api/admin/export/waitlist', adminController.exportWaitlist);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/qna', qnaRoutes);
 app.use('/api/payments', paymentRoutes);
-app.use('/api/support', supportRoutes);
 // app.use('/api/newsletter', newsletterRoutes); // <-- REMOVIDO DAQUI
 app.use('/api/forum', forumRoutes); // <--- ROTAS DO FÓRUM
 
@@ -2713,6 +2713,7 @@ const startServer = async () => {
                 ADD COLUMN IF NOT EXISTS "is_exempt" BOOLEAN DEFAULT FALSE,
                 ADD COLUMN IF NOT EXISTS "cnpj" VARCHAR(255) UNIQUE,
                 ADD COLUMN IF NOT EXISTS "modalidade" JSONB DEFAULT '[]',
+                ADD COLUMN IF NOT EXISTS "dailySummaryTime" VARCHAR(5) DEFAULT '08:00',
                 ADD COLUMN IF NOT EXISTS "reminderHoursBefore" INTEGER DEFAULT 24,
                 ADD COLUMN IF NOT EXISTS "publico_alvo" JSONB DEFAULT '[]',
                 ADD COLUMN IF NOT EXISTS "estilo_terapia" JSONB DEFAULT '[]',
@@ -2867,7 +2868,7 @@ const startServer = async () => {
     if (process.env.NODE_ENV !== 'production') {
         console.log('🔄 Iniciando sincronização do Banco de Dados (DEV)...');
         console.time('🗄️ Sequelize Sync');
-        await db.sequelize.sync(); // Removido o { alter: true } para evitar erros com índices GIN e colunas JSONB
+        await db.sequelize.sync({ alter: true }); // Usar { alter: true } em DEV é seguro e útil.
         console.timeEnd('🗄️ Sequelize Sync');
         console.log('✅ Banco de dados sincronizado (DEV).');
     } else {
