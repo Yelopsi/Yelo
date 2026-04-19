@@ -145,7 +145,7 @@
         <div class="app-preview">
             
             <!-- ENVOLTÓRIO DO E-MAIL (O que será copiado) -->
-            <div id="email-output-wrapper" style="width: 100%; text-align: center; background-color: #f3f4f6; padding: 20px 0;">
+            <div id="email-output-wrapper">
                 
                 <!-- PREHEADER (Texto invisível que aparece na prévia do Gmail/Outlook) -->
                 <div id="preview-preheader" style="display: none; font-size: 1px; color: #fefefe; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
@@ -153,16 +153,16 @@
                 </div>
 
                 <!-- CONTAINER PRINCIPAL (Fundo Cinza/Off-white) -->
-                <table border="0" cellpadding="0" cellspacing="0" width="100%" align="center" style="background-color: #f3f4f6;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" align="center" bgcolor="#f3f4f6" style="background-color: #f3f4f6; margin: 0 auto;">
                     <tr>
-                        <td align="center" class="wrapper-padding" style="padding: 30px 10px;">
+                        <td align="center" valign="top" class="wrapper-padding" style="padding: 40px 10px;">
                             
                             <!-- CORPO DO E-MAIL (Cartão Branco Max 650px) -->
-                            <table border="0" cellpadding="0" cellspacing="0" width="650" align="center" class="email-container" style="width: 100%; max-width: 650px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); border: 1px solid #e5e7eb; margin: 0 auto; text-align: left;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="650" align="center" bgcolor="#ffffff" class="email-container" style="background-color: #ffffff; border-radius: 16px; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); border: 1px solid #e5e7eb; margin: 0 auto; text-align: left;">
                                 
                                 <!-- HEADER (Logo Yelo) -->
                                 <tr id="preview-header">
-                                    <td align="center" style="padding: 45px 0; background-color: #1B4332;">
+                                    <td align="center" bgcolor="#1B4332" style="padding: 45px 0; background-color: #1B4332;">
                                         <a href="https://www.yelopsi.com.br" target="_blank">
                                             <!-- Fundo escuro (Verde Yelo) puxando a logo branca -->
                                             <img src="https://www.yelopsi.com.br/assets/logos/logo-branca.png" alt="Yelo" width="120" style="display: block; font-family: Helvetica, Arial, sans-serif; color: #ffffff; font-size: 24px; font-weight: bold;">
@@ -203,11 +203,11 @@
                                         <table id="preview-cta-container" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px;">
                                             <tr>
                                                 <td align="center">
-                                                    <table border="0" cellpadding="0" cellspacing="0" align="center">
+                                                    <table border="0" cellpadding="0" cellspacing="0" align="center" style="margin: 0 auto;">
                                                         <tr>
-                                                            <td align="center" bgcolor="#FFEE8C" style="border-radius: 50px; background-color: #FFEE8C;">
-                                                                <a id="preview-btn" href="https://www.yelopsi.com.br" target="_blank" class="btn-cta" style="display: inline-block; padding: 15px 35px; font-family: Helvetica, Arial, sans-serif; font-size: 16px; color: #1B4332; text-decoration: none !important; font-weight: bold; border-radius: 50px; background-color: #FFEE8C; border: 1px solid #FFEE8C;">
-                                                                    <span style="color: #1B4332; text-decoration: none !important;">Acessar Plataforma</span>
+                                                            <td align="center" valign="middle" bgcolor="#FFEE8C" style="background-color: #FFEE8C; border-radius: 50px; padding: 15px 35px; border: 1px solid #FFEE8C;">
+                                                                <a id="preview-btn" href="https://www.yelopsi.com.br" target="_blank" class="btn-cta" style="font-family: Helvetica, Arial, sans-serif; font-size: 16px; color: #1B4332; text-decoration: none; font-weight: bold; display: inline-block;">
+                                                                    Acessar Plataforma
                                                                 </a>
                                                             </td>
                                                         </tr>
@@ -239,7 +239,7 @@
 
                                 <!-- FOOTER (Rodapé) -->
                                 <tr id="preview-footer">
-                                    <td align="center" style="padding: 30px 30px 40px 30px; font-family: Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.5; color: #9ca3af; background-color: #ffffff;">
+                                    <td align="center" bgcolor="#ffffff" style="padding: 30px 30px 40px 30px; font-family: Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.5; color: #9ca3af; background-color: #ffffff;">
                                         
                                         <!-- REDES SOCIAIS -->
                                         <table border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
@@ -326,7 +326,7 @@
             const btnLink = document.getElementById('input-btn-link').value;
             const btnPreview = document.getElementById('preview-btn');
             
-            btnPreview.innerHTML = `<span style="color: #1B4332; text-decoration: none !important;">${btnText}</span>`;
+            btnPreview.innerText = btnText;
             btnPreview.href = btnLink;
         }
 
