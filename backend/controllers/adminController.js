@@ -1779,7 +1779,7 @@ exports.getFinancials = async (req, res) => {
                 plano: { [Op.ne]: null },
                 status: 'active'
             },
-            attributes: ['id', 'nome', 'plano', 'updatedAt', 'is_exempt'] 
+            attributes: ['id', 'nome', 'plano', 'updatedAt', 'is_exempt', 'planExpiresAt'] 
         });
 
         // Preços Atualizados (Baseados na sua página de assinatura)
@@ -1853,7 +1853,7 @@ exports.getFinancials = async (req, res) => {
             psychologistName: psy.nome,
             planName: psy.is_exempt ? `${psy.plano} (VIP)` : psy.plano,
             mrr: psy.is_exempt ? 0 : (planPrices[psy.plano ? psy.plano.toUpperCase() : ''] || 0),
-            nextBilling: psy.is_exempt ? null : new Date(new Date(psy.updatedAt).setMonth(new Date(psy.updatedAt).getMonth() + 1)) 
+            nextBilling: psy.is_exempt ? null : (psy.planExpiresAt ? new Date(psy.planExpiresAt) : new Date(new Date(psy.updatedAt).setMonth(new Date(psy.updatedAt).getMonth() + 1))) 
         }));
         res.status(200).json({
             kpis,
