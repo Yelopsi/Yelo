@@ -1,0 +1,24 @@
+<div class="main-header" style="border-radius: 16px; margin-bottom: 20px;">
+    <div class="header-content">
+        <h1 style="margin: 0; font-family: var(--font-titulos); font-size: 2.2rem; color: white;">Avisos & Comunicados 🔔</h1>
+        <p style="margin: 5px 0 0 0; color: rgba(255,255,255,0.85); font-size: 1.1rem; max-width: 600px;">Fique por dentro das atualizações, avisos importantes e novidades da plataforma.</p>
+    </div>
+</div>
+
+<div class="widget avisos-feed-widget">
+    <div class="avisos-filters">
+        <button class="aviso-filter-btn active" data-filter="all">Todos</button>
+        <button class="aviso-filter-btn" data-filter="unread">Não lidos</button>
+    </div>
+    
+    <div class="avisos-feed-actions-top" style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
+        <button id="btn-marcar-todos-lidos" style="background: none; border: none; color: var(--verde-escuro); font-weight: 600; font-size: 0.9rem; cursor: pointer; text-decoration: underline;">
+            Marcar todos como lidos
+        </button>
+    </div>
+
+    <div id="avisos-feed-container" class="avisos-feed-list">
+        <!-- Loader inicial -->
+        <div class="loader-wrapper"><div class="loader-spinner"></div></div>
+    </div>
+</div>

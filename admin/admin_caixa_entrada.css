@@ -33,6 +33,9 @@ html, body {
     margin-top: 10px;
     position: relative;
     z-index: 1;
+    background-image: var(--ruido-global) !important;
+    background-attachment: fixed !important;
+    background-repeat: repeat !important;
 }
 
 /* --- Lado Esquerdo: Lista --- */

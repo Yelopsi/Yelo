@@ -1,19 +1,170 @@
 /* Adicione este bloco no topo do seu style.css */
 @import url('css/01-variables.css');
 
+/* ==========================================================================
+   SISTEMA DE RUÍDO GLOBAL E FUNDO
+   ========================================================================== */
+   
+:root {
+    --ui-scale: 1; /* Resetado para 1. O redimensionamento agora é feito pelo zoom no EJS */
+}
+
+html {
+    min-height: 100%;
+    overflow-x: clip;
+    width: 100%;
+}
+
+
 /* --- Reset Básico e Fontes Globais --- */
 body {
     margin: 0;
     font-family: var(--font-principal); /* Padronizado: Inter */
     font-weight: 500;
-    font-size: 15px;
-    background-color: #fdfaf6;
+    font-size: calc(15px * var(--ui-scale));
+    background-color: var(--off-white);
+    background-image: var(--ruido-global);
+    background-attachment: fixed;
+    background-repeat: repeat;
+    zoom: 0.88; /* Aplica o zoom out de 12% em todas as páginas públicas */
     color: #222;
+    overflow-x: clip;
+    width: 100%;
     box-sizing: border-box; /* Garante que padding não estoure a largura */
     -webkit-user-select: auto !important;
     -moz-user-select: auto !important;
     -ms-user-select: auto !important;
     user-select: auto !important;
+}
+
+/* Garante que os containers principais tenham hierarquia correta sobre o noise */
+main, section, .main-container, .container-navegacao, header, footer {
+    position: relative;
+    z-index: 1;
+}
+
+/* Garante que seções de fundo sólido apliquem o noise e não quebrem a padronização */
+header, .hero, .hero-profissionais, .hero-psi, .faq-hero, .manifesto-hero, .hero-ajuda, .rodape-principal, .plans-section, body.pagina-questionario, body.pagina-aviso, .ruido {
+    background-image: var(--ruido-claro) !important;
+    background-attachment: fixed !important;
+    background-repeat: repeat !important;
+}
+
+/* FIX: Unifica o ruído na barra de botões e evita a duplicação de textura no desktop */
+body.pagina-questionario .navigation-buttons {
+    background-color: var(--verde-escuro) !important;
+    background-image: var(--ruido-claro) !important;
+    background-attachment: fixed !important;
+    background-repeat: repeat !important;
+    border-top: none !important; /* Garante que nenhuma linha separe a textura */
+}
+
+@media (max-width: 991px) {
+    body.pagina-questionario .slide {
+        background-color: var(--verde-escuro) !important;
+        background-image: var(--ruido-claro) !important;
+        background-attachment: fixed !important;
+        background-repeat: repeat !important;
+    }
+}
+
+/* Remoção de qualquer overlay solto para evitar que contamine opacidade ou sobreponha (z-index bug) */
+.noise-overlay, #noise-overlay, .noise {
+    display: none !important;
+}
+
+body.pagina-dashboard {
+    background-color: var(--cinza-fundo) !important;
+}
+
+body.pagina-questionario,
+body.pagina-aviso {
+    background-color: var(--verde-escuro) !important;
+}
+
+/* ==========================================================================
+   RESTAURAÇÃO DO RITMO VISUAL (BRANCO / OFF-WHITE) COM RUÍDO
+   ========================================================================== */
+
+/* 1. Seções Brancas */
+.secao-vantagens,
+.como-funciona,
+.faq-secao,
+.stats-section,
+.benefits-section,
+.match-section,
+.faq-psi-section,
+.secao-terapeutas,
+.comparativo-secao {
+    background-color: #ffffff !important;
+    background-image: var(--ruido-global) !important;
+    background-attachment: fixed !important;
+    background-repeat: repeat !important;
+}
+
+/* 2. Seções Off-White */
+.secao-organica,
+.secao-depoimentos,
+.aviso-crise,
+.jornada-section,
+.diferenciais-section,
+.depoimentos-psi-section,
+.secao-conteudo-pagina,
+.cta-section {
+    background-color: var(--off-white) !important;
+    background-image: var(--ruido-global) !important;
+    background-attachment: fixed !important;
+    background-repeat: repeat !important;
+}
+
+/* 3. Páginas de Fundo Único Off-White */
+.pagina-blog,
+.pagina-contato-main,
+.pagina-legal,
+body.pagina-registro,
+body.pagina-login,
+.login-main {
+    background-color: var(--off-white) !important;
+    background-image: var(--ruido-global) !important;
+    background-attachment: fixed !important;
+    background-repeat: repeat !important;
+}
+
+/* 4. Dashboards e Painéis Logados (Fundo Cinza com Ruído) */
+body.pagina-dashboard,
+.chat-layout,
+.inbox-container {
+    background-image: var(--ruido-global) !important;
+    background-attachment: fixed !important;
+    background-repeat: repeat !important;
+}
+
+/* ==========================================================================
+   NOISE NAS WAVES (Divisórias)
+   ========================================================================== */
+
+/* 1. Waves Claras (Brancas/Off-white) sobre fundo escuro */
+.wave-divider::after, .faq-wave-bottom::after, .wave-top-organica::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: var(--ruido-global);
+    background-attachment: fixed;
+    background-repeat: repeat;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* 2. Waves Escuras (Verdes) sobre fundo claro */
+.wave-divider-footer::after, .faq-psi-section .wave-divider::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: var(--ruido-claro);
+    background-attachment: fixed;
+    background-repeat: repeat;
+    pointer-events: none;
+    z-index: 10;
 }
 
 /* FORÇA BRUTA: Habilita seleção de texto em TODOS os elementos */
@@ -53,7 +204,7 @@ header {
     color: white;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 30px;
+    padding: calc(12px * var(--ui-scale)) calc(30px * var(--ui-scale));
     position: fixed;
     top: 0; 
     left: 0;
@@ -80,8 +231,6 @@ header {
 .logo {
     position: relative;
     display: block;
-    width: 150px;
-    height: 40px;
 }
 .logo img {
     height: 100%;
@@ -156,7 +305,7 @@ nav a {
     text-decoration: none;
     color: white;
     font-family: var(--font-principal); /* PADRONIZAÇÃO: Garante a fonte correta no menu */
-    font-size: 18px; /* Fonte do menu reduzida */
+    font-size: calc(18px * var(--ui-scale));
 }
 nav a:hover {
     opacity: 0.8;
@@ -169,11 +318,11 @@ nav a:hover {
     width: 80%;
 }
 .btn {
-    padding: 8px 18px; /* Botões mais compactos */
+    padding: calc(8px * var(--ui-scale)) calc(18px * var(--ui-scale));
     border-radius: 50px;
     text-decoration: none;
     font-weight: bold;
-    font-size: 15px; /* Fonte do botão reduzida */
+    font-size: calc(15px * var(--ui-scale));
     text-align: center;
     border: 2px solid transparent;
     transition: all 0.3s ease;
@@ -220,32 +369,32 @@ header.header-rolagem nav a:hover {
 
 /* --- Seções --- */
 .hero {
-    padding: 80px 20px 100px 20px; /* Padding lateral reduzido para mobile (50px é muito) */
+    padding: calc(80px * var(--ui-scale)) calc(20px * var(--ui-scale)) calc(100px * var(--ui-scale)) calc(20px * var(--ui-scale));
     text-align: center;
     background-color: #1B4332;
     position: relative;
     margin-top: -2px;
 }
 .hero-texto h1 {
-    font-size: clamp(32px, 8vw, 48px); /* Fonte responsiva: min 32px, max 48px */
+    font-size: clamp(calc(32px * var(--ui-scale)), 8vw, calc(48px * var(--ui-scale)));
     color: white;
-    margin-bottom: 10px;
+    margin-bottom: calc(10px * var(--ui-scale));
 }
 .hero-texto p {
-    font-size: 19px; /* Subtítulo reduzido */
+    font-size: calc(19px * var(--ui-scale));
     color: white;
-    margin-bottom: 40px;
+    margin-bottom: calc(40px * var(--ui-scale));
 }
 .btn-cta-principal {
     display: inline-block;
     background-color: var(--cor-Yelo);
     color: var(--verde-escuro);
-    font-size: 18px; /* Fonte do CTA reduzida */
+    font-size: calc(18px * var(--ui-scale));
     font-weight: bold;
-    padding: 15px 35px; /* Padding do CTA reduzido */
+    padding: calc(15px * var(--ui-scale)) calc(35px * var(--ui-scale));
     border-radius: 50px;
     text-decoration: none;
-    margin-top: 30px;
+    margin-top: calc(30px * var(--ui-scale));
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -260,9 +409,9 @@ header.header-rolagem nav a:hover {
     background-color: transparent;
     color: var(--verde-escuro);
     border: 2px solid var(--verde-escuro);
-    font-size: 16px;
+    font-size: calc(16px * var(--ui-scale));
     font-weight: bold;
-    padding: 12px 30px;
+    padding: calc(12px * var(--ui-scale)) calc(30px * var(--ui-scale));
     border-radius: 50px;
     text-decoration: none;
     margin-top: 20px;
@@ -280,15 +429,15 @@ header.header-rolagem nav a:hover {
     position: relative;
     display: block;
     width: 100%;
-    height: 80px;
+    height: calc(80px * var(--ui-scale));
     top: -1px;
 }
 .secao-terapeutas {
-    padding: 70px 20px 100px 20px; /* Padding reduzido */
+    padding: calc(70px * var(--ui-scale)) calc(20px * var(--ui-scale)) calc(100px * var(--ui-scale)) calc(20px * var(--ui-scale));
     overflow: hidden;
     transition: opacity 1s ease-out, transform 0.8s ease-out;
     position: relative;
-    background-color: #fdfaf6;
+    background-color: transparent;
 }
 .secao-conteudo {
     display: grid;
@@ -299,13 +448,13 @@ header.header-rolagem nav a:hover {
     align-items: center;
 }
 .texto-terapeutas h2 {
-    font-size: 32px; /* Título reduzido */
+    font-size: calc(32px * var(--ui-scale));
     color: #1B4332;
     margin-top: 0;
     line-height: 1.2;
 }
 .texto-terapeutas p {
-    font-size: 16px; /* Texto reduzido */
+    font-size: calc(16px * var(--ui-scale));
     line-height: 1.6;
     color: #333;
 }
@@ -313,7 +462,7 @@ header.header-rolagem nav a:hover {
     display: inline-block;
     background-color: #5a8a6f;
     color: white;
-    padding: 10px 22px; /* Padding reduzido */
+    padding: calc(10px * var(--ui-scale)) calc(22px * var(--ui-scale));
     border-radius: 50px;
     text-decoration: none;
     font-weight: bold;
@@ -354,37 +503,37 @@ header.header-rolagem nav a:hover {
     right: 15%;
 }
 .como-funciona {
-    padding: 70px 20px; /* Padding reduzido */
-    background-color: white;    
+    padding: calc(70px * var(--ui-scale)) calc(20px * var(--ui-scale));
+    background-color: transparent;    
     position: relative;
     overflow: hidden; /* Impede que os elementos decorativos causem rolagem horizontal */
 }
 .titulo-secao {
     text-align: center;
-    font-size: 36px; /* Título reduzido */
+    font-size: calc(36px * var(--ui-scale));
     color: #333;
-    margin-bottom: 60px;
+    margin-bottom: calc(60px * var(--ui-scale));
 }
 .subtitulo-secao {
     text-align: center;
-    font-size: 16px; /* Subtítulo reduzido */
+    font-size: calc(16px * var(--ui-scale));
     line-height: 1.7;
     color: #555;
-    max-width: 700px;
-    margin: 0 auto 50px auto;
+    max-width: calc(700px * var(--ui-scale));
+    margin: 0 auto calc(50px * var(--ui-scale)) auto;
 }
 /* --- NOVOS ESTILOS PARA STEPS (COMO FUNCIONA) --- */
 .steps-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 60px;
-    margin-top: 40px;
+    gap: calc(60px * var(--ui-scale));
+    margin-top: calc(40px * var(--ui-scale));
 }
 
 .step-row {
     display: flex;
     flex-direction: column;
-    gap: 40px;
+    gap: calc(40px * var(--ui-scale));
     align-items: center;
 }
 
@@ -409,13 +558,13 @@ header.header-rolagem nav a:hover {
 .step-content h3 {
     font-family: var(--font-titulos);
     color: var(--verde-escuro);
-    font-size: 1.8rem;
-    margin-bottom: 15px;
+    font-size: calc(1.8rem * var(--ui-scale));
+    margin-bottom: calc(15px * var(--ui-scale));
     line-height: 1.2;
 }
 
 .step-content p {
-    font-size: 1.05rem;
+    font-size: calc(1.05rem * var(--ui-scale));
     line-height: 1.6;
     color: #555;
 }
@@ -481,8 +630,8 @@ header.header-rolagem nav a:hover {
 }
 
 .faq-secao {
-    padding: 70px 20px 100px 20px; /* Padding reduzido */
-    background-color: #fdfaf6;
+    padding: calc(70px * var(--ui-scale)) calc(20px * var(--ui-scale)) calc(100px * var(--ui-scale)) calc(20px * var(--ui-scale));
+    background-color: transparent;
     transition: opacity 1s ease-out, transform 0.8s ease-out;
     position: relative;
 }
@@ -503,7 +652,7 @@ header.header-rolagem nav a:hover {
     border: none;
     cursor: pointer;
     text-align: center; /* Mude de 'left' para 'center' */
-    font-size: 18px; /* Fonte reduzida */
+    font-size: calc(18px * var(--ui-scale));
     font-weight: 500;
     color: #333;
 }
@@ -523,15 +672,15 @@ header.header-rolagem nav a:hover {
 .acordeao-conteudo p {
     padding: 0 10px 20px 10px;
     margin: 0;
-    font-size: 14px; /* Texto reduzido */
+    font-size: calc(14px * var(--ui-scale));
     line-height: 1.6;
     color: #555;
     text-align: justify;
 }
 .aviso-crise {
     padding: 40px 20px 120px 20px;
-    background-color: #fdfaf6;
-    border-top: 1px solid #e9ecef;
+    background-color: transparent;
+    border-top: none !important; /* CORREÇÃO: Remove a linha reta que quebra a transição da wave */
     transition: opacity 1s ease-out, transform 0.8s ease-out;
     position: relative;
 }
@@ -555,162 +704,6 @@ header.header-rolagem nav a:hover {
     gap: 8px;
     font-size: 14px;
     color: #6c757d;
-}
-
-/* ==========================================================================
-   ESTILOS DEFINITIVOS DO RODAPÉ (DESKTOP E MOBILE)
-   ========================================================================== */
-
-/* --- 1. ESTILOS PADRÃO (PENSADO PARA DESKTOP) --- */
-
-.rodape-principal {
-    background-color: var(--verde-escuro);
-    color: #adb5bd;
-    padding: 60px 20px; /* Mobile: Mais espaço para o conteúdo */
-    position: relative;
-}
-
-.rodape-container {
-    max-width: 1100px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column; /* Blocos principais empilhados por padrão */
-    gap: 30px;
-}
-
-.rodape-bloco-superior,
-.rodape-base {
-    display: flex;
-    flex-direction: column; /* Mobile: Empilhado para evitar cortes */
-    gap: 30px;
-    align-items: center;
-    width: 100%;
-}
-
-.rodape-nav ul,
-.rodape-links-legais {
-    display: flex;
-    flex-direction: row; /* Em linha por padrão */
-    flex-wrap: wrap;
-    gap: 25px;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.rodape-social {
-    display: flex;
-    gap: 25px;
-}
-
-.rodape-social img {
-    width: 28px; /* Tamanho para Desktop */
-    height: auto;
-    transition: transform 0.2s ease;
-}
-.rodape-social img:hover {
-    transform: scale(1.1);
-}
-
-.rodape-bloco-rt { text-align: left; }
-
-.rodape-bloco-rt p,
-.rodape-copyright p {
-    font-size: 14px;
-    margin: 0;
-}
-
-.rodape-nav a,
-.rodape-links-legais a {
-    color: #e9ecef;
-    text-decoration: none;
-    font-size: 16px;
-    transition: color 0.3s ease;
-}
-
-.rodape-nav a:hover, 
-.rodape-links-legais a:hover {
-    color: var(--cor-Yelo);
-}
-
-.rodape-divisor {
-    border: none;
-    height: 1px;
-    background-color: #495057;
-    width: 100%;
-    margin: 0;
-    display: block; /* Visível por padrão */
-}
-
-/* --- CORREÇÃO NEWSLETTER RODAPÉ (MOBILE FIRST) --- */
-
-/* O form da newsletter continua empilhando seus filhos (o grupo de input e o consentimento) */
-.rodape-principal form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-}
-
-/* 1. Remove o estilo de "pílula única" do container no mobile */
-.newsletter-input-group {
-    display: flex;
-    flex-direction: column; /* Empilha o input e o botão */
-    gap: 10px; /* Espaço entre eles */
-    width: 100%;
-    max-width: 350px; /* Uma boa largura para mobile */
-    
-    /* Remove os estilos que causam o problema */
-    border-radius: 0;
-    overflow: visible;
-    border: none;
-    background-color: transparent;
-}
-
-/* 2. Estiliza o input como um campo individual e arredondado */
-#newsletter-email {
-    width: 100%;
-    border-radius: 30px !important; /* Força o arredondamento completo */
-    padding: 15px 20px !important;
-    background: rgba(255, 255, 255, 0.05) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    box-sizing: border-box;
-    flex-grow: 0 !important; /* Impede que cresça descontroladamente */
-}
-
-/* 3. Estiliza o botão como um botão individual e arredondado */
-#newsletter-submit-btn {
-    width: 100%;
-    border-radius: 30px !important; /* Força o arredondamento completo */
-    padding: 15px 30px !important; /* Padding vertical e horizontal */
-    background-color: var(--cor-Yelo) !important;
-    color: var(--verde-escuro) !important;
-    border: none !important;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-@media (min-width: 992px) {
-    /* Restaura o layout de pílula única no desktop */
-    .newsletter-input-group {
-        flex-direction: row !important; /* Volta a ser lado a lado */
-        gap: 0 !important;
-        border-radius: 30px !important;
-        overflow: hidden !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        background-color: rgba(255, 255, 255, 0.05) !important;
-    }
-    #newsletter-email {
-        flex-grow: 1 !important; /* Permite que o input cresça novamente */
-        border-radius: 0 !important;
-        border: none !important;
-        background: transparent !important;
-    }
-    #newsletter-submit-btn {
-        border-radius: 0 !important;
-        width: auto !important; /* Largura automática baseada no conteúdo */
-        padding: 0 25px !important; /* Padding original do desktop */
-    }
 }
 
 /* --- ESTILOS DAS PÁGINAS DE LOGIN E REGISTRO --- */
@@ -756,6 +749,7 @@ header.header-rolagem nav a:hover {
 .form-group input {
     width: 100%;
     padding: 11px; /* Padding reduzido */
+    background-color: var(--branco-puro, #ffffff); /* Evita vazamento de noise */
     border: 1px solid #ccc;
     border-radius: 8px;
     box-sizing: border-box;
@@ -2199,8 +2193,7 @@ header.header-rolagem nav a:hover {
         margin-top: auto; /* Empurra para baixo se sobrar espaço */
         flex-shrink: 0;
         z-index: 10;
-        /* Borda superior sutil para separar */
-        border-top: 1px solid rgba(255,255,255,0.1);
+        border-top: none;
     }
 }
 
@@ -2253,14 +2246,9 @@ header.header-rolagem nav a:hover {
     position: relative; /* Necessário para o pseudo-elemento */
 }
 .slide-body.scrollable::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 40px; /* Altura do gradiente */
-    background: linear-gradient(to top, var(--verde-escuro), transparent);
-    pointer-events: none; /* Garante que o gradiente não bloqueie cliques */
+    /* FIX: Removido o gradiente sólido que apagava a textura do ruído
+       e quebrava a continuidade do design com os botões inferiores */
+    display: none !important;
 }
 
 .form-group-questionario {
@@ -2422,8 +2410,7 @@ header.header-rolagem nav a:hover {
    ========================================================================== */
 
 .pagina-resultados main.container {
-    padding-top: 60px; /* Reduz o padding-top padrão do body para esta página */
-    padding-bottom: 80px;
+    padding-top: 120px !important; /* Empurra o conteúdo para baixo */
 }
 
 /* --- Estado de Carregamento --- */
@@ -2870,65 +2857,6 @@ header.header-rolagem nav a:hover {
     color: var(--verde-escuro) !important;
     border-color: white !important;
 }
-/* ==========================================================================
-   NOVO SISTEMA DE RUÍDO (FUNDO APENAS)
-   Config: Freq 1 | Densidade -0.5 | Opacidade 0.30
-   Nota: O ruído fica no z-index -1 para não sujar os cards/imagens.
-   ========================================================================== */
-
-/* 1. Movemos a cor de fundo para o HTML para o ruído ficar entre HTML e Body */
-html {
-    background-color: #fdfaf6; /* Mesma cor off-white do design */
-    min-height: 100%;
-}
-
-/* FIX: Garante que o fundo seja verde nas páginas de questionário e aviso (App-like) */
-html:has(.pagina-questionario),
-html:has(.pagina-aviso) {
-    background-color: var(--verde-escuro);
-}
-
-body {
-    /* Deixa o body transparente para que o ruído (que está atrás) apareça */
-    background-color: transparent !important; 
-    position: relative;
-}
-
-/* 2. O Ruído (Camada de Fundo) */
-body::after {
-    content: "";
-    /* Textura Aprovada: Pontos Pretos Espaçados */
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 500 500' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1 0 0 0 -0.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
-    
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    
-    /* Z-INDEX NEGATIVO: O segredo para os cards ficarem limpos */
-    z-index: 9999; 
-    
-    opacity: 0.30; 
-    mix-blend-mode: multiply;
-    pointer-events: none;
-    background-attachment: fixed;
-}
-
-/* ==========================================================================
-   CLASSE UTILITÁRIA DE RUÍDO (Para seções com fundo sólido)
-   ========================================================================== */
-.ruido {
-    position: relative;
-    z-index: 0; /* Cria contexto de empilhamento para o z-index -1 funcionar */
-}
-
-.ruido::before {
-    content: "";
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 500 500' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1 0 0 0 -0.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    z-index: -1; /* Fica atrás do conteúdo, mas sobre o fundo */
-    opacity: 0.30;
-    mix-blend-mode: multiply;
-    pointer-events: none;
 /* =============================================================
    SOLUÇÃO ARQUITETURAL: ESPAÇAMENTO DO CABEÇALHO FIXO
    ============================================================= */
@@ -3111,7 +3039,7 @@ body.pagina-dashboard {
 
 /* Define o fundo da página (cinza claro) */
 .pagina-registro {
-    background-color: #f9fafb;
+    background-color: transparent;
     font-family: var(--font-principal);
     display: flex;
     align-items: center;
@@ -3891,7 +3819,18 @@ body.pagina-dashboard {
 .profile-page-main {
     padding-top: 60px;
     padding-bottom: 80px;
-    background-color: #f8f9fa; /* Fundo cinza claro */
+    background-color: transparent; /* Fundo cinza claro */
+    width: 100%;
+    margin: 0 auto;
+}
+
+.profile-page-main .container {
+    max-width: 1200px !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 20px !important;
+    box-sizing: border-box !important;
+    text-align: left !important;
 }
 
 /* Grid Principal (Info + Card) */
@@ -3900,17 +3839,26 @@ body.pagina-dashboard {
     grid-template-columns: 1fr; /* 1 coluna no mobile */
     gap: 30px;
     margin-bottom: 40px;
+    width: 100%;
 }
 @media (min-width: 992px) {
     .profile-header-grid {
         /* 2 colunas no desktop: 2/3 para info, 1/3 para card */
-        grid-template-columns: 2fr 1fr; 
+        grid-template-columns: 2fr 1fr !important; 
     }
 }
 
 /* Coluna 1: Infos */
 .profile-info {
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid #e9ecef;
     text-align: center;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
 }
 .profile-photo-wrapper {
     width: 180px;
@@ -4803,7 +4751,6 @@ header .logo .logo-escura { opacity: 0 !important; }
 .pagina-resultados main.container {
     padding-top: 120px !important; /* Empurra o conteúdo para baixo */
 }
-}
 
 @keyframes pulse {
     0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
@@ -4889,7 +4836,7 @@ header .logo .logo-escura { opacity: 0 !important; }
 }
 /* --- ESTILOS JURÍDICOS (Versão Completa) --- */
 .pagina-legal {
-    background-color: #ffffff;
+    background-color: transparent;
     padding-bottom: 80px;
 }
 
@@ -4993,192 +4940,4 @@ header .logo .logo-escura { opacity: 0 !important; }
 .termo-destaque {
     font-weight: bold;
     color: #000;
-}
-
-/* --- CSS ESPECÍFICO PARA PÁGINA DE PERGUNTAS (FIX MOBILE) --- */
-.qa-search-container {
-    display: flex;
-    align-items: center;
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 50px;
-    padding: 10px 20px;
-    margin: 30px auto;
-    max-width: 600px;
-    width: 100%; /* Garante que não vaze no mobile */
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    box-sizing: border-box;
-}
-
-.qa-search-icon {
-    width: 24px;
-    height: 24px;
-    color: #888;
-    margin-right: 10px;
-    flex-shrink: 0;
-}
-
-#qa-search-input {
-    border: none;
-    background: transparent;
-    font-size: 16px;
-    width: auto;
-    flex: 1; /* Ocupa o espaço restante sem forçar largura */
-    min-width: 0; /* Permite encolher se necessário */
-    outline: none;
-    color: #333;
-}
-
-.ask-box-container {
-    background-color: #fff;
-    padding: 30px;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-    max-width: 600px;
-    margin: 0 auto 60px auto;
-    width: 100%; /* Garante que não vaze */
-    box-sizing: border-box;
-}
-
-.ask-box-container h3 {
-    margin-top: 0;
-    color: var(--verde-escuro);
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-#question-text {
-    width: 100%;
-    min-height: 120px;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 12px;
-    font-family: var(--font-leitura);
-    font-size: 16px;
-    resize: vertical;
-    box-sizing: border-box; /* Essencial para não vazar */
-}
-
-.beneficios-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin-bottom: 40px;
-}
-
-.beneficio-card {
-    background: #fdfaf6;
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid #eee;
-    text-align: center;
-}
-
-.beneficio-card h3 {
-    color: var(--verde-escuro);
-    font-size: 1.1rem;
-    margin-bottom: 10px;
-}
-
-.beneficio-card p {
-    font-size: 0.9rem;
-    color: #555;
-    margin: 0;
-}
-
-/* --- ESTILOS DOS CARDS DE PERGUNTA (NOVO) --- */
-.qa-card {
-    background: #fff;
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    border: 1px solid #eee;
-    /* Impede que textos longos estourem a largura */
-    word-wrap: break-word;
-    overflow-wrap: anywhere;
-    box-sizing: border-box;
-}
-
-.qa-card-question h2 {
-    font-size: 1.2rem;
-    color: var(--verde-escuro);
-    margin-top: 0;
-    margin-bottom: 10px;
-    line-height: 1.4;
-}
-
-.qa-card-question p {
-    line-height: 1.6;
-    color: #333;
-    white-space: pre-wrap; /* Mantém parágrafos do texto */
-}
-
-/* Estilo da Resposta dentro do Card */
-.qa-card-answer {
-    display: flex;
-    gap: 15px;
-    background-color: #f9f9f9;
-    padding: 15px;
-    border-radius: 12px;
-    margin-top: 15px;
-    flex-direction: column; /* Mobile First: empilhado */
-    border-left: 4px solid var(--cor-Yelo);
-}
-
-.answer-psy-sidebar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding-top: 10px;
-    border-top: 1px solid #eee;
-    margin-top: 10px;
-}
-
-.answer-psy-sidebar img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.answer-psy-sidebar h4 {
-    margin: 0;
-    font-size: 0.9rem;
-    color: var(--verde-escuro);
-}
-
-/* --- AJUSTES RESPONSIVOS FINAIS --- */
-@media (min-width: 768px) {
-    .qa-card-answer {
-        flex-direction: row; /* Lado a lado no desktop */
-    }
-    .answer-psy-sidebar {
-        flex-direction: column;
-        border-top: none;
-        border-left: 1px solid #eee;
-        padding-top: 0;
-        padding-left: 15px;
-        margin-top: 0;
-        min-width: 120px;
-        text-align: center;
-    }
-}
-
-@media (max-width: 768px) {
-    /* Reduz padding do header para dar mais espaço ao menu */
-    header {
-        padding: 12px 15px;
-    }
-    
-    /* Força 1 coluna nos benefícios em telas pequenas */
-    .beneficios-grid {
-        grid-template-columns: 1fr;
-    }
-
-    /* Ajuste de padding da página principal */
-    .main-perguntas {
-        padding-top: 100px !important; /* Menos espaço no topo */
-        padding-bottom: 40px !important;
-    }
 }

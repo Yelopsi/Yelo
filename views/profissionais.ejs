@@ -25,7 +25,7 @@
         
         /* Hero Section */
         .hero-psi {
-            padding: 100px 20px 140px;
+            padding: 100px 20px 100px;
             background-color: #1B4332;
             color: #fff;
             position: relative;
@@ -61,19 +61,17 @@
 
         /* Seção de Números (Prova Social) */
         .stats-section {
-            background-color: #fff;
-            padding: 60px 20px;
-            position: relative;
+            background-color: #ffffff;
             z-index: 2;
             margin-top: 0; /* Ajuste para não cobrir a wave */
         }
 
         /* Ajuste de cores alternadas para o fluxo das ondas */
-        .jornada-section { background-color: #fdfaf6 !important; }
-        .benefits-section { background-color: #fff !important; }
-        .diferenciais-section { background-color: #fdfaf6 !important; }
-        .match-section { background-color: #fff !important; }
-        .faq-psi-section { background-color: #fdfaf6 !important; }
+        .jornada-section { background-color: var(--off-white) !important; }
+        .benefits-section { background-color: #ffffff !important; }
+        .diferenciais-section { background-color: var(--off-white) !important; }
+        .match-section { background-color: #ffffff !important; }
+        .faq-psi-section { background-color: #ffffff !important; }
         .plans-section { background-color: #1B4332 !important; color: #fff; }
 
 
@@ -82,12 +80,14 @@
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 30px;
             max-width: 1000px;
-            margin: -100px auto 0; /* Card flutuando sobre a hero */
+            margin: 40px auto 0; /* Desce o card para revelar a onda do Hero */
             background: #fff;
             padding: 40px;
             border-radius: 20px;
             box-shadow: 0 15px 40px rgba(0,0,0,0.08);
             border: 1px solid rgba(0,0,0,0.05);
+            position: relative;
+            z-index: 2;
         }
 
         .stat-item {
@@ -110,8 +110,8 @@
 
         /* Seção Benefícios (Grid Orgânico) */
         .benefits-section {
-            padding: 100px 20px;
-            background-color: #fdfaf6;
+            padding: 60px 20px;
+            background-color: transparent;
         }
 
         .benefits-grid {
@@ -143,11 +143,15 @@
 
         /* Seção Planos */
         .plans-section {
-            padding: 100px 20px;
+            padding: 80px 20px 100px 20px;
             background-color: #1B4332;
             color: #fff;
             text-align: center;
             position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .plans-grid {
@@ -162,40 +166,43 @@
 
         .plan-card {
             background: #fff;
-            border: 1px solid #eee;
-            border-radius: 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 24px;
             padding: 40px 30px;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             position: relative;
             height: 100%;
             display: flex;
             flex-direction: column;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.04);
         }
-        /* Estilo Orgânico para Planos */
-        .plan-card:nth-child(1) { border-radius: 24px 60px 24px 60px; }
-        .plan-card:nth-child(2) { border-radius: 60px 24px 60px 24px; }
-        .plan-card:nth-child(3) { border-radius: 24px 60px 24px 60px; }
+        .plan-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.1);
+        }
 
         .plan-card.featured {
-            border: 2px solid #1B4332;
+            border: 3px solid var(--cor-Yelo);
             transform: scale(1.05);
-            box-shadow: 0 15px 40px rgba(27, 67, 50, 0.1);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
             z-index: 2;
-            background-color: #F0FDF4;
+            background-color: #fff;
         }
+        .plan-card.featured:hover { transform: scale(1.05) translateY(-8px); }
 
         .plan-tag {
             position: absolute;
             top: -15px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: #1B4332;
-            color: #fff;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
+            background-color: var(--cor-Yelo);
+            color: var(--verde-escuro);
+            padding: 6px 20px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 800;
             text-transform: uppercase;
+            box-shadow: 0 4px 10px rgba(255, 238, 140, 0.4);
         }
 
         .plan-name { font-family: var(--font-titulos); font-size: 1.5rem; color: #333; margin-bottom: 10px; }
@@ -206,10 +213,37 @@
         .plan-features li { padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05); color: #555; display: flex; gap: 10px; align-items: center; }
         .plan-features li::before { content: '✓'; color: #1B4332; font-weight: bold; }
 
+        /* Botões dos Planos */
+        .plan-card .btn {
+            margin-top: auto;
+            border-radius: 50px;
+            padding: 14px 20px;
+            font-weight: 700;
+            font-size: 1.05rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+        }
+        .plan-card .btn-outline {
+            color: #1B4332;
+            border: 2px solid #1B4332;
+            background: transparent;
+        }
+        .plan-card .btn-outline:hover { background: #1B4332; color: #fff; }
+        
+        .plan-card .btn-cta-principal {
+            background-color: #1B4332;
+            color: #fff;
+            border: none;
+            box-shadow: 0 4px 15px rgba(27,67,50,0.2);
+        }
+        .plan-card .btn-cta-principal:hover { background-color: #143d2e; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(27,67,50,0.3); }
+
         /* CTA Final */
         .cta-section {
-            padding: 100px 20px;
-            background-color: #ffffff;
+            padding: 80px 20px;
+            background-color: var(--off-white);
             text-align: center;
             color: #333;
             position: relative;
@@ -222,8 +256,8 @@
 
         /* --- DEPOIMENTOS (PROVA SOCIAL) --- */
         .depoimentos-psi-section {
-            padding: 40px 20px 80px 20px;
-            background-color: #fdfaf6;
+            padding: 40px 20px 60px 20px;
+            background-color: var(--off-white);
             text-align: center;
         }
         .depoimentos-grid {
@@ -265,8 +299,8 @@
         
         /* Jornada (Storytelling) */
         .jornada-section {
-            padding: 80px 20px;
-            background-color: #fff;
+            padding: 60px 20px;
+            background-color: transparent;
             text-align: center;
             position: relative;
         }
@@ -282,8 +316,8 @@
 
         /* Diferenciais (Grid 2x2) */
         .diferenciais-section {
-            padding: 80px 20px;
-            background-color: #fdfaf6;
+            padding: 60px 20px;
+            background-color: transparent;
             position: relative;
         }
         .diferenciais-grid {
@@ -322,7 +356,8 @@
 
         /* Match Science */
         .match-section {
-            padding: 100px 20px;
+            padding: 60px 20px;
+            background-color: transparent;
             position: relative;
             overflow: hidden;
         }
@@ -357,21 +392,21 @@
 
         /* FAQ Section */
         .faq-psi-section {
-            padding: 100px 20px;
+            padding: 60px 20px;
+            background-color: var(--off-white) !important;
             position: relative;
         }
         .acordeao-container { max-width: 800px; margin: 0 auto; text-align: left; }
         .acordeao-item {
             background-color: #fff;
-            border-radius: 24px 40px 24px 40px;
+            border-radius: 16px;
             margin-bottom: 15px;
-            border: 1px solid rgba(0,0,0,0.03);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
             overflow: hidden;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .acordeao-item:nth-child(even) { border-radius: 40px 24px 40px 24px; }
-        .acordeao-item:hover { transform: translateY(-2px); }
+        .acordeao-item:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
 
         .acordeao-titulo {
             width: 100%;
@@ -426,9 +461,9 @@
 
         @media (max-width: 991px) {
             .hero-psi h1 { font-size: 2.5rem; }
-            .stats-grid { grid-template-columns: 1fr; gap: 20px; padding: 30px; }
+            .stats-grid { grid-template-columns: 1fr; gap: 20px; padding: 30px; margin-top: 20px; }
             .plan-card.featured { transform: none; margin: 20px 0; }
-            .cta-section { padding-bottom: 100px; } /* Espaço para o botão flutuante */
+            .cta-section { padding-bottom: 60px; } 
 
             /* Scroll Snap Horizontal para Cards no Mobile */
             .benefits-grid, .plans-grid, .diferenciais-grid {
@@ -477,7 +512,7 @@
             <svg class="doodle-hero left" viewBox="0 0 200 200" fill="currentColor"><path d="M45.7,-76.3C58.9,-69.3,69.1,-55.6,76.3,-41.2C83.5,-26.8,87.7,-11.7,85.6,2.6C83.5,16.9,75.1,30.4,65.6,42.2C56.1,54,45.5,64.1,33.3,70.3C21.1,76.5,7.3,78.8,-5.3,76.9C-17.9,75,-34.7,68.9,-48.6,59.6C-62.5,50.3,-73.5,37.8,-79.6,23.3C-85.7,8.8,-86.9,-7.7,-80.7,-21.8C-74.5,-35.9,-60.9,-47.6,-46.8,-54.3C-32.7,-61,-18.1,-62.7,-2.9,-62.2C12.3,-61.7,24.6,-59,32.5,-83.3L45.7,-76.3Z" transform="translate(100 100)" /></svg>
             <svg class="doodle-hero right" viewBox="0 0 200 200" fill="currentColor"><path d="M38.1,-63.8C49.3,-54.6,58.3,-43.3,65.5,-30.8C72.7,-18.3,78.1,-4.6,76.3,8.3C74.5,21.2,65.5,33.3,55.3,43.4C45.1,53.5,33.7,61.6,21.1,66.1C8.5,70.6,-5.3,71.5,-18.4,67.8C-31.5,64.1,-43.9,55.8,-53.4,45.2C-62.9,34.6,-69.5,21.7,-70.8,8.2C-72.1,-5.3,-68.1,-19.4,-59.6,-31.1C-51.1,-42.8,-38.1,-52.1,-25.3,-60.1C-12.5,-68.1,0.1,-74.8,12.7,-74.8C25.3,-74.8,38.1,-68.1,38.1,-63.8Z" transform="translate(100 100)" /></svg>
 
-            <div class="container" style="padding-bottom: 0;">
+            <div class="container" style="padding-bottom: 0; position: relative; z-index: 2;">
                 <h1>Viva da Psicologia com autonomia e segurança</h1>
                 <p>A Yelo conecta você a pacientes que buscam exatamente a sua abordagem. Simplifique sua gestão, receba pagamentos garantidos e foque no que importa: o atendimento.</p>
                 <a href="/psi_questionario.html" class="btn-cta-principal" style="background-color: #FFEE8C; color: #1B4332;">Criar meu perfil profissional</a>
@@ -516,7 +551,7 @@
 
         <!-- JORNADA DO PROFISSIONAL (Storytelling) -->
         <section class="jornada-section">
-            <div class="container">
+            <div class="container" style="position: relative; z-index: 2;">
                 <h2 class="titulo-secao">Do consultório vazio à gestão de alta performance</h2>
                 <div class="texto-leitura">
                     <p>Sabemos que a faculdade nos prepara para a clínica, mas não para o mercado. Muitos psicólogos iniciam sua jornada divididos entre o desejo de ajudar e a burocracia de captar pacientes, cobrar sessões e gerir faltas. A Yelo nasce para eliminar esse ruído.</p>
@@ -532,11 +567,10 @@
         </section>
 
         <!-- BENEFÍCIOS -->
-        <section class="benefits-section" style="background-color: #fff;">
-            <div class="container">
-                <h2 class="titulo-secao">Muito mais que um marketplace</h2>
+        <section class="benefits-section">
+            <div class="container" style="position: relative; z-index: 2;">
+                <h2 class="titulo-secao">Por que escolher a Yelo?</h2>
                 <p class="subtitulo-secao">Não somos apenas um marketplace. Somos um ecossistema pensado para sustentar e alavancar sua carreira clínica.</p>
-                
                 <div class="benefits-grid">
                     <div class="benefit-card">
                         <span class="benefit-icon">🎯</span>
@@ -558,12 +592,16 @@
                     <div class="scroll-indicator-step"><span class="mouse dark"><span class="wheel"></span></span></div>
                 </div>
             </div>
-            
+            <div class="wave-divider wave-bottom">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#fdfaf6" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
         </section>
 
         <!-- DIFERENCIAIS TÉCNICOS -->
-        <section class="diferenciais-section" style="background-color: #fff;">
-            <div class="container">
+        <section class="diferenciais-section">
+            <div class="container" style="position: relative; z-index: 2;">
                 <h2 class="titulo-secao">Tecnologia de ponta com ética e segurança</h2>
                 <div class="diferenciais-grid">
                     <div class="diferencial-card">
@@ -596,11 +634,12 @@
 
         <!-- MATCH SCIENCE -->
         <section class="match-section">
-            <div class="match-container">
+            <div class="match-container" style="position: relative; z-index: 2;">
                 <div class="match-text">
-                    <h2 class="titulo-secao" style="text-align: left;">Por que o nosso 'Match' é diferente?</h2>
-                    <p>Não acreditamos em listas aleatórias de nomes. O algoritmo da Yelo utiliza variáveis psicométricas e preferências terapêuticas para cruzar a necessidade do paciente com a expertise do profissional.</p>
-                    <p>Isso resulta em uma Aliança Terapêutica muito mais forte desde a primeira sessão, reduzindo drasticamente o churn (desistência) e aumentando o sucesso do tratamento. É tecnologia servindo à empatia.</p>
+                    <h2 class="titulo-secao" style="text-align: left; line-height: 1.2;">Chega de ser apenas mais um em catálogos infinitos.</h2>
+                    <p>Em outras plataformas, seu perfil fica perdido numa vitrine interminável. O paciente se sente sobrecarregado com tantas opções, compara apenas preços e frequentemente desiste sem agendar. <strong>Nós invertemos esse jogo.</strong></p>
+                    <p>Através do nosso <strong>Questionário de Match Inteligente</strong>, mapeamos a dor exata, as preferências e o perfil clínico de quem busca ajuda. Em vez de uma lista solta de nomes, entregamos recomendações cirúrgicas. Quando seu perfil aparece, o paciente já sente que você é a escolha certa.</p>
+                    <p style="border-left: 4px solid var(--cor-Yelo); padding-left: 15px; margin-top: 20px; font-weight: 500; color: #333;"><strong>O resultado?</strong> Pacientes pré-qualificados, muito mais engajados e prontos para criar vínculo. Menos abandono após a primeira sessão e uma taxa de conversão imbatível para o seu consultório.</p>
                 </div>
                 <div class="match-collage-wrapper">
                     <img src="https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=600" class="match-img main" alt="Conexão humana">
@@ -617,7 +656,7 @@
 
     <!-- DEPOIMENTOS (PROVA SOCIAL) -->
     <section class="depoimentos-psi-section">
-        <div class="container" style="padding-top: 20px; padding-bottom: 40px;">
+        <div class="container" style="padding-top: 20px; padding-bottom: 40px; position: relative; z-index: 2;">
             <h2 class="titulo-secao" style="margin-bottom: 40px;">O que dizem nossos parceiros</h2>
             <div class="depoimentos-grid">
                 <div class="depoimento-card">
@@ -642,11 +681,16 @@
                 </div>
             </div>
         </div>
+        <div class="wave-divider wave-bottom">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                <path fill="#ffffff" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+            </svg>
+        </div>
     </section>
 
         <!-- FAQ -->
         <section class="faq-psi-section">
-            <div class="container">
+            <div class="container" style="position: relative; z-index: 2;">
                 <h2 class="titulo-secao">Perguntas Frequentes</h2>
                 <div class="acordeao-container">
                     <div class="acordeao-item"><button class="acordeao-titulo">Como recebo pelos meus atendimentos?</button><div class="acordeao-conteudo"><p>O repasse é feito diretamente na sua conta bancária cadastrada, de forma segura e transparente. Você acompanha todo o fluxo financeiro pelo seu painel exclusivo.</p></div></div>
@@ -664,13 +708,12 @@
 
         <!-- PLANOS -->
         <section class="plans-section">
-            <!-- Wave Top removida pois a seção anterior já tem wave bottom branca -->
-            <div class="wave-divider wave-bottom" style="z-index: 2;">
+            <div class="wave-divider wave-bottom" style="z-index: 1;">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
-                    <path fill="#ffffff" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                    <path fill="#fdfaf6" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
                 </svg>
             </div>
-            <div class="container">
+            <div class="container" style="position: relative; z-index: 2;">
                 <h2 class="titulo-secao" style="color: #fff;">Planos transparentes</h2>
                 <p class="subtitulo-secao" style="color: rgba(255,255,255,0.9);">Escolha a opção que melhor se adapta ao momento da sua carreira. Sem fidelidade, cancele quando quiser.</p>
 
@@ -685,7 +728,7 @@
                             <li>Página Pública de Divulgação</li>
                             <li>Acesso ao Fórum</li>
                         </ul>
-                    <a href="/psi_questionario.html" class="btn btn-outline" style="color: #1B4332; border-color: #1B4332; width: 100%;">Começar na Yelo</a>
+                    <a href="/psi_questionario.html" class="btn btn-outline">Começar na Yelo</a>
                     </div>
 
                     <!-- Plano Clínico (Destaque) -->
@@ -699,7 +742,7 @@
                             <li>Indicadores de Conversão</li>
                             <li>URL Personalizada</li>
                         </ul>
-                    <a href="/psi_questionario.html" class="btn-cta-principal" style="width: 100%; box-sizing: border-box; margin-top: 20px; font-size: 1.1rem;">Começar na Yelo</a>
+                    <a href="/psi_questionario.html" class="btn btn-cta-principal">Começar na Yelo</a>
                     </div>
 
                     <!-- Plano Referência -->
@@ -712,7 +755,7 @@
                             <li>Destaque nos Resultados</li>
                             <li>Análise de Perfil com IA</li>
                         </ul>
-                    <a href="/psi_questionario.html" class="btn btn-outline" style="color: #1B4332; border-color: #1B4332; width: 100%;">Começar na Yelo</a>
+                    <a href="/psi_questionario.html" class="btn btn-outline">Começar na Yelo</a>
                     </div>
                 </div>
                 <div class="mobile-scroll-hint">

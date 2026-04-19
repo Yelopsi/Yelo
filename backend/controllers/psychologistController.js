@@ -579,16 +579,14 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
 // ----------------------------------------------------------------------
 exports.checkDemand = async (req, res) => {    
     try {
-        // Removemos 'email' e 'crp' da validação pois eles ainda não foram coletados nesta etapa
-        const { genero_identidade, valor_sessao_faixa, temas_atuacao, praticas_afirmativas } = req.body;
-
-        // Validação básica dos dados recebidos
-        if (!genero_identidade || !valor_sessao_faixa || !temas_atuacao || !praticas_afirmativas) {
-            return res.status(400).json({ error: 'Dados insuficientes para verificar a demanda.' });
-        }
-
         // --- LÓGICA DE VERIFICAÇÃO DE DEMANDA (CORRIGIDA) ---
         const DEMAND_TARGET = 0; 
+        // REGRA DE NEGÓCIO: Aprovar todos os cadastros no momento atual.
+        // "nenhum psicólogo em hipótese nenhuma deve ser privado de se cadastrar na plataforma."
+        return res.status(200).json({ status: 'approved', message: 'Há demanda para este perfil.' });
+
+        /* --- Lógica original (Desativada temporariamente para aprovar todos) ---
+        const DEMAND_TARGET = 0;
         const { min: psyMinPrice, max: psyMaxPrice } = parsePriceRange(valor_sessao_faixa);
 
         // 2. Define a query de busca por pacientes compatíveis em SQL Puro.
@@ -627,6 +625,7 @@ exports.checkDemand = async (req, res) => {
         } else {
             res.status(200).json({ status: 'waitlisted', message: 'Perfil adicionado à lista de espera.' });
         }
+        */
     } catch (error) {
         console.error('Erro ao verificar demanda:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
@@ -705,7 +704,9 @@ exports.updatePsychologistProfile = async (req, res) => {
             valor_sessao_numero, disponibilidade_periodo, genero_identidade, // CORRIGIDO
             dailySummaryTime, reminderHoursBefore, // NOVOS CAMPOS DE NOTIFICAÇÃO
             linkedin_url, instagram_url, facebook_url, tiktok_url, x_url,
-            slug // <--- AGORA ESTAMOS LENDO O CAMPO SLUG QUE VEM DO FORMULÁRIO
+            slug, // <--- AGORA ESTAMOS LENDO O CAMPO SLUG QUE VEM DO FORMULÁRIO
+        cpf, // <--- ADICIONADO: Extraindo o CPF enviado pelo frontend
+        formacao_nivel, formacao_desc
         } = req.body;
 
         // --- FALLBACK PARA CAMPOS LEGADOS (Especialidades/Temas) ---
@@ -800,8 +801,10 @@ exports.updatePsychologistProfile = async (req, res) => {
         await psychologist.update({
             slug: finalSlug,
             nome, telefone, bio, crp, cep, cidade, estado,
+        formacao_nivel, formacao_desc,
             valor_sessao_numero: valor_sessao_numero !== undefined ? (valor_sessao_numero ? parseFloat(valor_sessao_numero) : null) : undefined,
             genero_identidade,
+            cpf, // <--- ADICIONADO: Salvando o CPF no banco de dados
             dailySummaryTime: dailySummaryTime || '08:00',
             reminderHoursBefore: reminderHoursBefore ? parseInt(reminderHoursBefore) : 24,
             linkedin_url, instagram_url, facebook_url, tiktok_url, x_url,
@@ -868,7 +871,7 @@ exports.inviteFromWaitlist = async (req, res) => {
         });
 
         const frontendUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
-        const invitationLink = `${frontendUrl}/psi_registro.html?token=${invitationToken}&email=${candidate.email}`;
+        const invitationLink = `${frontendUrl}/psi-registro?token=${invitationToken}&email=${encodeURIComponent(candidate.email)}`;
         await require('../services/emailService').sendInvitationEmail(candidate, invitationLink); // Placeholder
 
         res.status(200).json({ message: `Convite enviado com sucesso para ${candidate.email}.` });
@@ -1137,9 +1140,14 @@ exports.getPatientMatches = async (req, res) => {
             }));
             // Usamos bulkCreate para inserir todos os eventos de uma vez
             if (db.MatchEvent) { // Verifica se o modelo existe
-                 db.MatchEvent.bulkCreate(matchEvents).catch(err => {
+                try {
+                    await db.MatchEvent.bulkCreate(matchEvents);
+                    console.log(`[MATCH DEBUG] Patient Match: Created ${matchEvents.length} MatchEvents for Patient ID ${patient.id}.`);
+                } catch (err) {
                     console.error("Erro ao registrar MatchEvents (logado):", err);
-                });
+                }
+            } else {
+                console.warn("[MATCH DEBUG] Model db.MatchEvent não encontrado. Pulando registro de eventos.");
             }
         }
 
@@ -1182,19 +1190,33 @@ exports.getAnonymousMatches = async (req, res) => {
         // Reutiliza a MESMA lógica do usuário logado
         const matchResult = await calculateMatches(patientPreferences);
 
+        // --- SUPER DEBUG ---
+        console.log('[MATCH SUPER DEBUG] Reached getAnonymousMatches after calculateMatches.');
+        if (matchResult && matchResult.results) {
+            console.log('[MATCH SUPER DEBUG] matchResult.results.length:', matchResult.results.length);
+        } else {
+            console.log('[MATCH SUPER DEBUG] matchResult or matchResult.results is undefined.');
+        }
+        // --- FIM SUPER DEBUG ---
+
         // --- LOG DE EVENTO DE MATCH (ANÔNIMO) ---
         if (matchResult && matchResult.results && matchResult.results.length > 0) {
+            console.log('[MATCH SUPER DEBUG] Entering the if block to create MatchEvents.');
             const matchEvents = matchResult.results.map(psi => ({
                 psychologistId: psi.id,
                 patientId: null, // Usuário anônimo
                 matchScore: psi.matchScore,
                 source: 'questionnaire'
             }));
-            // Usamos bulkCreate para inserir todos os eventos de uma vez
-            if (db.MatchEvent) { // Verifica se o modelo existe
-                db.MatchEvent.bulkCreate(matchEvents).catch(err => {
+            if (db.MatchEvent) {
+                try {
+                    await db.MatchEvent.bulkCreate(matchEvents);
+                    console.log(`[MATCH DEBUG] Anonymous Match: Created ${matchEvents.length} MatchEvents.`);
+                } catch (err) {
                     console.error("Erro ao registrar MatchEvents (anônimo):", err);
-                });
+                }
+            } else {
+                console.warn("[MATCH DEBUG] Model db.MatchEvent não encontrado. Pulando registro de eventos.");
             }
         }
 
@@ -1271,21 +1293,21 @@ exports.getProfileBySlug = async (req, res) => {
     // FIX: Usa a coluna correta 'planExpiresAt'
     const validade = psychologist.planExpiresAt ? new Date(psychologist.planExpiresAt) : null;
     const status = psychologist.status;
-        const isVip = psychologist.is_exempt === true;
+        const isVip = Boolean(psychologist.is_exempt);
 
     // Log para você saber a saúde do perfil
         console.log(`🔎 Status: ${status} | VIP: ${isVip ? 'Sim' : 'Não'} | Validade: ${validade ? validade.toLocaleDateString() : 'NENHUMA'}`);
 
-    // --- BLOQUEIO ATIVO (Agora que o pagamento está funcionando) ---
-        if (!isVip && (!validade || validade < hoje)) {
-        console.log(`🚫 [BLOQUEIO] Pagamento vencido ou inexistente.`);
-        return res.status(404).json({ error: 'Perfil indisponível (Assinatura inativa).' });
-    }
-
-    if (status !== 'active') {
-        console.log(`🚫 [BLOQUEIO] Status não é active (${status}).`);
-        return res.status(404).json({ error: 'Perfil em análise.' });
-    }
+    // [DESATIVADO PARA TESTES] Descomente isso em Produção para bloquear inadimplentes
+    // if (!isVip && (!validade || validade < hoje)) {
+    //    console.log(`🚫 [BLOQUEIO] Pagamento vencido ou inexistente.`);
+    //    return res.status(404).json({ error: 'Perfil indisponível (Assinatura inativa).' });
+    // }
+    //
+    // if (status !== 'active') {
+    //    console.log(`🚫 [BLOQUEIO] Status não é active (${status}).`);
+    //    return res.status(404).json({ error: 'Perfil em análise.' });
+    // }
    
     // ------------------------------------------------------------------
 
@@ -1713,6 +1735,7 @@ exports.getStats = async (req, res) => {
     try {
         console.time('⏱️ Psi Stats Load');
         const psychologistId = req.psychologist.id;
+        console.log(`[STATS DEBUG] Iniciando getStats para Psychologist ID: ${psychologistId}`);
         const { period } = req.query; 
 
         // --- PERSONALIZAÇÃO: Busca os temas do psicólogo logado ---
@@ -1751,7 +1774,8 @@ exports.getStats = async (req, res) => {
             forumPostCount,
             forumCommentCount,
             answerCount,
-            matchesResult
+            matchesResult,
+            blogLikesResult
         ] = await Promise.all([
             // 1. Cliques no WhatsApp (Tabela de Logs)
             db.sequelize.query(
@@ -1842,26 +1866,41 @@ exports.getStats = async (req, res) => {
             
             // NOVO: Aparições no Match
             db.sequelize.query(
-                `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :psiId ${dateCondition}`,
+                `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :psiId`,
                 { replacements, type: db.sequelize.QueryTypes.SELECT }
             ).catch(() => 
                 db.sequelize.query(
-                    `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "PsychologistId" = :psiId ${dateCondition}`,
+                    `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "PsychologistId" = :psiId`,
                     { replacements, type: db.sequelize.QueryTypes.SELECT }
                 )
             ).catch(err => {
                 console.error("[DEBUG KPIs] Erro na query MatchEvents:", err.message);
                 return [{ count: 0 }];
-            })
+            }),
+
+            // NOVO: Curtidas no Blog
+            db.sequelize.query(
+                `SELECT SUM(curtidas) as sum FROM "posts" WHERE "psychologist_id" = :psiId`,
+                { replacements, type: db.sequelize.QueryTypes.SELECT }
+            ).catch(() => 
+                db.sequelize.query(
+                    `SELECT SUM(curtidas) as sum FROM "posts" WHERE "psychologistId" = :psiId`,
+                    { replacements, type: db.sequelize.QueryTypes.SELECT }
+                )
+            ).catch(() => [{ sum: 0 }])
         ]);
+
+        console.log(`[STATS DEBUG] Raw result from MatchEvents query:`, matchesResult);
 
         // Processamento dos KPIs numéricos
         const whatsappClicks = parseInt(clicksResult[0]?.count || 0, 10);
         const profileViews = parseInt(appearancesResult[0]?.count || 0, 10);
         const matchImpressions = parseInt(matchesResult[0]?.count || 0, 10);
         const favoritesCount = parseInt(favoritesResult[0]?.count || 0, 10);
+        const blogLikes = parseInt(blogLikesResult[0]?.sum || 0, 10);
 
         console.log(`[DEBUG KPIs] Psicólogo ID: ${psychologistId} | Período: ${period}`);
+        console.log(`[STATS DEBUG] Parsed matchImpressions: ${matchImpressions}`);
         console.log(`[DEBUG KPIs] Match Impressions DB:`, matchesResult[0]);
         console.log(`[DEBUG KPIs] Profile Views DB:`, appearancesResult[0]);
         console.log(`[DEBUG KPIs] Whatsapp Clicks DB:`, clicksResult[0]);
@@ -1885,6 +1924,13 @@ exports.getStats = async (req, res) => {
             percentage: totalDemands > 0 ? Math.round((parseInt(demanda.count, 10) / totalDemands) * 100) : 0
         }));
 
+        const myEngagement = psychologist.xp || 0;
+        const [betterThanResult] = await db.sequelize.query(`
+            SELECT COALESCE(COUNT(*) * 100.0 / NULLIF((SELECT COUNT(*) FROM "Psychologists" WHERE status = 'active'), 0), 0) as percentage
+            FROM "Psychologists" WHERE status = 'active' AND xp < :myEngagement
+        `, { replacements: { myEngagement }, type: db.sequelize.QueryTypes.SELECT });
+        const betterThanPercentage = Math.round(parseFloat(betterThanResult?.percentage || 0));
+
         const stats = {
             whatsappClicks,
             profileViews,
@@ -1892,6 +1938,7 @@ exports.getStats = async (req, res) => {
             favoritesCount,
             funnelRates,
             topDemands,
+            betterThanPercentage,
             xpHistory: xpHistoryResult, // <--- NOVO: Envia para o frontend
             gamificationProgress: {
                 blogPostCount,
@@ -1903,7 +1950,10 @@ exports.getStats = async (req, res) => {
             },
             blogPostCount,
             forumActivityCount: forumPostCount + forumCommentCount,
-            answerCount
+            answerCount,
+            blogLikes,
+            forumPosts: forumPostCount,
+            forumComments: forumCommentCount
         };
 
         console.timeEnd('⏱️ Psi Stats Load');
@@ -2049,12 +2099,23 @@ exports.getAnalyticsData = async (req, res) => {
             FROM "Psychologists" WHERE status = 'active'
         `);
         
+        // --- NOVA LÓGICA: Calcular "Seu perfil está melhor que X% dos psicólogos" ---
+        const [betterThanResult] = await db.sequelize.query(`
+            SELECT 
+                COALESCE(COUNT(*) * 100.0 / NULLIF((SELECT COUNT(*) FROM "Psychologists" WHERE status = 'active'), 0), 0) as percentage
+            FROM "Psychologists" 
+            WHERE status = 'active' AND xp < :myEngagement
+        `, { replacements: { myEngagement }, type: db.sequelize.QueryTypes.SELECT });
+        
+        const betterThanPercentage = Math.round(parseFloat(betterThanResult?.percentage || 0));
+
         const normalize = (value, avg, max) => Math.min(10, Math.max(0, (value / (avg * 1.5 || max)) * 10));
 
         res.json({
             priceComparison: { myPrice, cityAverage, platformAverage },
             topTopics,
             visibility,
+            betterThanPercentage,
             profileStrength: {
                 myScores: [myCompletion, normalize(myAvgRating, parseFloat(platformStrength?.avgRating || 0), 5), normalize(myEngagement, parseFloat(platformStrength?.avgEngagement || 0), 5000), normalize(myPostCount, parseFloat(platformStrength?.avgPosts || 0), 10), 8],
                 averageScores: [7, normalize(parseFloat(platformStrength?.avgRating || 0), parseFloat(platformStrength?.avgRating || 0), 5), normalize(parseFloat(platformStrength?.avgEngagement || 0), parseFloat(platformStrength?.avgEngagement || 0), 5000), normalize(parseFloat(platformStrength?.avgPosts || 0), parseFloat(platformStrength?.avgPosts || 0), 10), 7]

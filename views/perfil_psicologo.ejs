@@ -34,11 +34,26 @@
         /* Estilos Específicos Modernos para o Perfil Público */
         body {
             background-color: #FFFDF5; /* Fundo creme suave da marca */
-            overflow-x: hidden; /* IMPEDE ROLAGEM HORIZONTAL INDESEJADA */
-            width: 100%;
-            max-width: 100vw;
+            overflow-x: clip !important; /* IMPEDE ROLAGEM HORIZONTAL E PERMITE O STICKY FUNCIONAR */
+            width: calc(100vw / 0.88) !important; /* Compensa o espaço lateral causado pelo zoom */
+            max-width: none !important; /* Remove a trava que espremia a página */
+            zoom: 0.88 !important; /* Mantém o zoom padrão da plataforma para o cabeçalho não ficar gigante */
         }
-        html { overflow-x: hidden; }
+        html { overflow-x: clip !important; }
+
+    /* --- CORREÇÃO DO RODAPÉ --- */
+    /* O CSS do dashboard reduz a fonte base (rem) para 70%.
+       Forçamos os textos do rodapé em pixels para igualar ao tamanho da Home (index). */
+    .rodape-principal p,
+    .rodape-principal a,
+    .rodape-principal li,
+    .rodape-principal span {
+        font-size: 15px !important;
+    }
+    .rodape-principal h3,
+    .rodape-principal h4 {
+        font-size: 18px !important;
+    }
 
         .profile-layout-grid {
             display: grid;
@@ -91,11 +106,11 @@
 
         .crp-badge {
             display: inline-block;
-            background: #f0fdf4;
-            color: #166534;
+            background: #e8f5e9; /* Fundo um pouco mais forte */
+            color: #1B4332; /* Texto verde escuro da marca para contraste */
             padding: 4px 12px;
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 0.9rem; /* Levemente maior */
             font-weight: 600;
             margin-bottom: 10px;
         }
@@ -113,6 +128,122 @@
             padding: 6px 14px;
             border-radius: 8px;
             font-size: 0.9rem;
+        }
+
+        /* --- DETALHES PROFISSIONAIS: APP-LIKE & PÍLULAS --- */
+        #psi-tags-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        /* Cada bloco de categoria (Estilo Card de App) */
+        #psi-tags-container > div {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 24px;
+            border: 1px solid #f3f4f6;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        }
+
+        /* Títulos de seção estilo App (iOS/Android labels) */
+        #psi-tags-container h4, 
+        #psi-tags-container strong {
+            font-family: var(--fonte-corpo);
+            font-size: 0.9rem; /* Levemente maior */
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #4b5563; /* Cinza mais escuro para contraste */
+            margin-top: 0;
+            margin-bottom: 16px;
+            font-weight: 700;
+            width: 100%;
+            display: block;
+        }
+
+        /* Container das Pílulas */
+        #psi-tags-container .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 0;
+            width: 100%;
+        }
+
+        /* Pílula Base Tátil */
+        #psi-tags-container .tag-pill {
+            background: #f3f4f6;
+            color: #374151;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 50px; /* Pílula perfeita */
+            font-size: 0.95rem;
+            border: 1px solid transparent;
+            transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--fonte-corpo);
+        }
+
+        #psi-tags-container .tag-pill:hover {
+            transform: scale(1.04);
+        }
+
+        /* --- VARIAÇÕES POR CATEGORIA --- */
+        
+        /* 1. Abordagem (Destaque Yelo) */
+        #psi-tags-container > div:nth-child(1) .tag-pill {
+            background-color: #1B4332;
+            color: #FFEE8C;
+        }
+
+        /* 2. Temas de Atuação (Pílulas Outline/Claras) */
+        #psi-tags-container > div:nth-child(2) .tag-pill {
+            background-color: #ffffff;
+            color: #1B4332;
+            border: 1px solid #d1d5db;
+        }
+        #psi-tags-container > div:nth-child(2) .tag-pill:hover {
+            border-color: #1B4332;
+            background-color: #f0fdf4;
+        }
+
+        /* 3. Público-Alvo */
+        #psi-tags-container > div:nth-child(3) .tag-pill {
+            background-color: #e8f5e9;
+            color: #166534;
+        }
+
+        /* 4. Práticas Inclusivas (Card de Acolhimento) */
+        #psi-tags-container > div:nth-child(4) {
+            background-color: #fffbeb;
+            border: 1px solid #fde68a;
+        }
+        #psi-tags-container > div:nth-child(4) h4,
+        #psi-tags-container > div:nth-child(4) strong {
+            color: #b45309;
+        }
+        #psi-tags-container > div:nth-child(4) .tag-pill {
+            background-color: #FFEE8C;
+            color: #92400e;
+        }
+
+        /* Adaptação para Desktop (Mantendo o App-feel) */
+        @media (min-width: 768px) {
+            #psi-tags-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr; /* 2 colunas uniformes */
+                align-items: start;
+            }
+            /* Temas de Atuação (geralmente o 2º card) ocupa largura total para melhor leitura */
+            #psi-tags-container > div:nth-child(2) {
+                grid-column: 1 / -1;
+            }
         }
 
         /* Botão de Favorito (Coração) */
@@ -138,6 +269,44 @@
         }
         .btn-favorite svg { width: 24px; height: 24px; fill: currentColor; }
 
+        /* --- Ajuste Global de Espaçamento: Redes Sociais e Badges --- */
+        .social-links-profile { margin-bottom: 5px !important; }
+        #psi-tags-display:empty { display: none !important; }
+        
+        /* Controle de Exibição do Badge de Horário */
+        .badge-proximo-horario { 
+            display: none; align-items: center; justify-content: center; gap: 8px; 
+            background: #f0fdf4; color: #16a34a; font-weight: 700; 
+        }
+        .badge-proximo-horario.has-slot { display: flex !important; }
+        
+        /* Oculta texto longo (Bio) */
+        .bio-collapsed { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        /* --- BIO EXPANDÍVEL APP-LIKE --- */
+        .bio-wrapper-modern { position: relative; display: flex; flex-direction: column; }
+        .bio-fade-overlay {
+            position: absolute;
+            bottom: 45px; /* Altura do botão + espaço */
+            left: 0; width: 100%; height: 60px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%);
+            pointer-events: none; opacity: 0; transition: opacity 0.3s ease;
+        }
+        .bio-wrapper-modern.is-collapsed .bio-fade-overlay { opacity: 1; }
+        
+        .btn-ler-mais-app {
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            background: #e8f5e9; color: #1B4332; border: 1px solid #bbf7d0;
+            border-radius: 50px; padding: 8px 20px; font-size: 0.95rem; font-weight: 700;
+            cursor: pointer; margin: 10px auto 0 auto; transition: all 0.2s ease;
+            width: fit-content; font-family: var(--fonte-corpo); box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .btn-ler-mais-app:hover {
+            background: #dcfce7; transform: translateY(-2px);
+        }
+        .btn-ler-mais-app svg { width: 16px; height: 16px; transition: transform 0.3s ease; }
+        .btn-ler-mais-app.expanded svg { transform: rotate(180deg); }
+
         /* NOVO: Estilo padrão para a linha do cabeçalho (Desktop) */
         .name-header-row {
             display: flex;
@@ -154,8 +323,12 @@
 
         /* Coluna Direita (Sticky) */
         .sticky-sidebar {
-            position: sticky;
-            top: 100px; /* Ajuste conforme a altura do seu header fixo */
+            position: -webkit-sticky !important;
+            position: sticky !important;
+            top: 120px !important;
+            align-self: flex-start !important;
+            z-index: 90;
+            height: max-content;
         }
 
         .conversion-card-modern {
@@ -165,6 +338,7 @@
             box-shadow: 0 10px 30px rgba(27, 67, 50, 0.08);
             border: 1px solid rgba(27, 67, 50, 0.1);
             text-align: center;
+            overflow: visible !important; /* CRÍTICO: Permite que o badge vazado apareça no mobile */
         }
 
         .price-display {
@@ -181,8 +355,8 @@
             font-weight: 400;
         }
         .price-suffix {
-            font-size: 0.9rem;
-            color: #888;
+            font-size: 1rem; /* Aumentado para leitura */
+            color: #666; /* Escurecido para contraste */
             display: block;
             line-height: 1;
         }
@@ -221,47 +395,78 @@
                 position: static;
                 order: -1; /* No mobile, o card de agendamento pode vir antes ou logo depois do hero */
             }
+            
+            /* --- CONVERSION CARD APP-LIKE (RODAPÉ MOBILE) --- */
             .conversion-card-modern {
                 position: fixed;
                 bottom: 0;
-                left: 0;
-                right: 0;
-                width: 100%;
-                max-width: 100vw;
+                width: calc(100vw / 0.88); /* CORREÇÃO: Compensa o zoom out do body */
+                left: 50%;
+                transform: translateX(-50%);
                 box-sizing: border-box;
-                border-radius: 20px 20px 0 0;
-                z-index: 100;
-                padding: 15px 20px;
-                box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+                border-radius: 24px 24px 0 0;
+                z-index: 9999; /* Acima de tudo */
+                padding: 16px 20px calc(16px + env(safe-area-inset-bottom)) 20px !important;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 text-align: left;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border: 1px solid rgba(0,0,0,0.08); /* Borda em todos os lados */
+                box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.15); /* Sombra mais forte */
+                gap: 15px;
+                overflow: visible !important; /* CRÍTICO: Permite que o badge de horário flutue acima da barra */
             }
-            .conversion-card-modern h3, .conversion-card-modern .info-row, .conversion-card-modern #psi-localizacao-container {
-                display: none !important; /* Simplifica no mobile */
+            
+            .conversion-card-modern .info-rows-container, 
+            .conversion-card-modern .trust-badges-row {
+                display: none !important; /* Oculta detalhes secundários */
             }
+
+            .conversion-card-modern .price-section {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+
+            .conversion-card-modern .price-title {
+                display: block !important; /* Força exibir o título */
+                font-size: 0.75rem !important;
+                margin-bottom: 2px !important;
+                color: #888 !important;
+                font-weight: 700 !important;
+                letter-spacing: 0.5px !important;
+                text-transform: uppercase;
+            }
+
+            .conversion-card-modern .price-wrapper {
+                display: flex;
+                align-items: baseline;
+                gap: 4px;
+                flex-wrap: wrap;
+            }
+
             .conversion-card-modern .price-display {
-                font-size: 2rem !important;
-                margin: 0;
+                font-size: clamp(1.3rem, 5vw, 1.65rem) !important;
+                margin: 0 !important;
                 text-align: left;
-            }
-            .price-display span {
-                font-size: 0.8rem;
-                display: block; /* Coloca "por sessão" embaixo do preço */
                 line-height: 1;
+                color: #1B4332 !important;
+                font-weight: 800 !important;
+                letter-spacing: -0.5px;
             }
-            .price-suffix {
-                font-size: 0.75rem;
+
+            .conversion-card-modern .price-suffix {
+                font-size: 0.8rem;
+                color: #666; /* Escurecido para contraste */
+                font-weight: 500;
                 margin-top: 0;
             }
-            .btn-principal {
-                width: auto !important;
-                padding: 7px 7px;
-                font-size: 0.8rem;
-            }
+
             /* Ajuste para o conteúdo não ficar escondido atrás do card fixo no mobile */
-            body { padding-bottom: 100px; }
+            body { padding-bottom: 120px; }
             /* Mostra o bloco de info mobile */
             .mobile-service-info { display: block !important; }
             
@@ -313,7 +518,7 @@
             /* Nome e CRP */
             .name-info-wrapper {
                 display: flex;
-                flex-direction: column-reverse; /* Nome em cima, CRP embaixo */
+                flex-direction: column; /* Hierarquia direta: Nome -> Especialidade -> Estrelas */
                 align-items: center;
                 text-align: center;
                 margin-bottom: 10px;
@@ -340,29 +545,92 @@
             }
             .header-actions .btn-favorite svg { width: 18px; height: 18px; }
 
-            /* Redes Sociais e Tags */
-            #psi-social-links { justify-content: center !important; }
-            #psi-tags-display { justify-content: center; }
-
             /* Esconde o texto de verificado do rodapé */
             .footer-verified-text { display: none !important; }
             
-            /* Oculta ícone do botão no mobile para economizar espaço */
-            #btn-agendar-whatsapp svg { display: none; }
-            
-            /* Ajuste do Botão Agendar no Rodapé */
-            .conversion-card-modern {
-                padding: 10px;
-                gap: 8px;
-            }
-            .btn-principal {
-                flex-grow: 1; /* Ocupa o espaço disponível */
+            /* Botão de Alta Conversão App-Like */
+            #btn-agendar-whatsapp {
+                flex-grow: 0 !important;
+                width: 65% !important; /* Ocupa 65% no mobile para dar espaço ao preço */
+                padding: 14px 24px !important;
+                font-size: 1.05rem !important;
+                border-radius: 50px !important;
                 margin: 0;
                 white-space: nowrap;
+                background: var(--verde-escuro) !important;
+                color: white !important;
+                box-shadow: 0 8px 25px rgba(27, 67, 50, 0.3) !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+                font-weight: 700 !important;
+                transition: transform 0.2s, box-shadow 0.2s;
+            }
+
+            #btn-agendar-whatsapp:active {
+                transform: scale(0.95) !important;
+                box-shadow: 0 4px 10px rgba(27, 67, 50, 0.2) !important;
+            }
+
+            /* Estado: Bloqueado (Trial Excedido) */
+            #btn-agendar-whatsapp.bloqueado {
+                background-color: #e0e0e0 !important;
+                color: #888 !important;
+                cursor: not-allowed !important;
+                pointer-events: none !important;
+                box-shadow: none !important;
+            }
+
+            /* Restaura o ícone do WhatsApp para passar confiança (App-like) */
+            #btn-agendar-whatsapp svg { 
+                display: block !important; 
+                width: 20px !important; 
+                height: 20px !important;
             }
 
             /* Remove a Bottom Nav desta página no mobile */
             .mobile-bottom-nav, .bottom-nav { display: none !important; }
+
+            /* --- BOTTOM SHEETS: Transforma Modais em Gavetas no Mobile --- */
+            .custom-modal-overlay {
+                align-items: flex-end !important; /* Joga a caixa para o rodapé */
+                padding: 0 !important;
+            }
+            .custom-modal-box {
+                width: 100% !important;
+                max-width: 100vw !important;
+                border-radius: 24px 24px 0 0 !important; /* Arredonda apenas em cima */
+                margin: 0 !important;
+                padding: 35px 25px 40px 25px !important;
+                animation: slideUpSheet 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+                position: relative;
+            }
+            /* "Alcinha" indicativa de gaveta do iOS */
+            .custom-modal-box::before {
+                content: '';
+                position: absolute;
+                top: 12px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 40px;
+                height: 5px;
+                background: #e0e0e0;
+                border-radius: 5px;
+            }
+            
+            .badge-proximo-horario {
+                position: absolute !important;
+                top: -38px !important; /* Levanta a tag para flutuar acima da bottom nav */
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                padding: 6px 18px !important;
+                border-radius: 20px !important;
+                border: 1px solid #bbf7d0 !important;
+                box-shadow: 0 -4px 15px rgba(22, 163, 74, 0.15) !important;
+                font-size: 0.8rem !important;
+                white-space: nowrap !important;
+                z-index: 100 !important;
+            }
         }
 
         /* --- ANIMAÇÃO DE PULSO (CONVERSÃO) --- */
@@ -423,7 +691,7 @@
         .review-avatar svg { width: 100%; height: 100%; display: block; }
         
         .review-author-name { font-weight: 600; color: #333; }
-        .review-date { font-size: 0.8rem; color: #888; display: block; }
+        .review-date { font-size: 0.8rem; color: #666; display: block; }
         .review-rating { color: #FFC107; font-size: 0.9rem; margin-bottom: 10px; }
         .review-comment { color: #555; font-size: 0.95rem; line-height: 1.6; margin: 0; }
 
@@ -465,66 +733,141 @@
             color: var(--verde-escuro);
         }
 
-        /* --- GAMIFICATION BADGES (CSS ARTS) --- */
-        .badges-wrapper {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-            flex-wrap: wrap;
+        /* --- SKELETON LOADER (Animação de Carregamento App-like) --- */
+        .skeleton-pulse {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-shimmer 1.5s infinite linear;
+            border-radius: 8px;
+        }
+        @keyframes skeleton-shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        @keyframes slideUpSheet {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
         }
         
-        .badge-item {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center; /* Centraliza o emoji */
-            width: 32px; /* Tamanho fixo */
-            height: 32px; /* Tamanho fixo */
-            border-radius: 50%; /* Círculo */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            transition: transform 0.2s;
-            cursor: default;
+        /* --- SEGMENTED CONTROLS (Abas App-like) --- */
+        @media (max-width: 992px) {
+            .tabs-nav-app {
+                display: flex;
+                background: rgba(248, 249, 250, 0.95);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border-radius: 50px;
+                padding: 6px;
+                margin-top: 10px;
+                margin-bottom: 35px;
+                border: 1px solid #e9ecef;
+                position: -webkit-sticky;
+                position: sticky;
+                top: 80px; /* Fica logo abaixo do header */
+                z-index: 90;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            }
+            .tabs-nav-app .tab-link {
+                flex: 1;
+                background: transparent;
+                border: none;
+                border-radius: 50px;
+                font-size: 1rem;
+                font-weight: 600;
+                font-family: var(--fonte-corpo);
+                padding: 14px 15px;
+                color: #4b5563;;
+                cursor: pointer;
+                transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+                margin: 0;
+            }
+            .tabs-nav-app .tab-link:hover {
+                color: #1B4332;
+            }
+            .tabs-nav-app .tab-link.active {
+                background: #1B4332;
+                color: #ffffff;
+                box-shadow: 0 4px 15px rgba(27, 67, 50, 0.2);
+                transform: scale(1.02);
+            }
+            .tab-content { display: none; animation: fadeInTab 0.3s ease; }
+            .tab-content.active { display: block; }
+            .desktop-section-title { display: none !important; }
         }
-        .badge-item:hover { transform: translateY(-2px); }
+        @media (min-width: 993px) {
+            /* Comportamento Clássico no Desktop */
+            .tabs-nav-app { display: none !important; }
+            .tab-content { display: block !important; margin-bottom: 0px !important; } /* Zera gap inferior */
+            .desktop-section-title {
+                font-family: var(--fonte-titulo);
+                color: #1B4332;
+                font-size: 1.5rem;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 12px;
+                margin-bottom: 20px;
+                margin-top: 10px;
+                display: block;
+            }
+            .badge-proximo-horario {
+                width: 100% !important;
+                box-sizing: border-box !important;
+                padding: 12px !important;
+                border-radius: 12px !important;
+                border: 1px dashed #bbf7d0 !important;
+                margin-bottom: 15px !important;
+                font-size: 0.95rem !important;
+            }
+        }
+        @keyframes fadeInTab { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Cores dos Níveis */
-        .badge-bronze {
-            background: linear-gradient(135deg, #FFF0E0, #FFE0B2);
-            border: 1px solid #FFCC80;
-            color: #8D6E63;
+        /* Foco na textarea moderna de avaliação */
+        .review-form-box textarea:focus {
+            background-color: #fff !important;
+            border-color: var(--verde-escuro) !important;
+            box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1) !important;
+            outline: none !important;
         }
-        .badge-prata {
-            background: linear-gradient(135deg, #F5F5F5, #E0E0E0);
-            border: 1px solid #BDBDBD;
-            color: #616161;
+
+        @media (max-width: 768px) {
+            /* Remove bordas do card principal no mobile para fundir com o fundo (Estilo Nativo iOS/Android) */
+            .profile-hero-card { border: none !important; box-shadow: none !important; padding: 10px 0 !important; background: transparent !important; }
+            .mobile-service-info { border: none !important; box-shadow: none !important; background: transparent !important; border-top: 1px solid #eee !important; border-radius: 0 !important; padding: 20px 0 !important; }
+
+            /* --- AJUSTES MOBILE: Formulário de Avaliação App-like --- */
+            .review-form-box { padding: 25px 20px !important; border-radius: 20px !important; }
+            .review-form-box > div:first-child h4 { font-size: 1.2rem !important; }
+            .review-form-box > div:first-child p { font-size: 0.85rem !important; }
+            
+            #form-nova-avaliacao > div:first-child { padding: 20px 15px !important; gap: 8px !important; }
+            #form-nova-avaliacao > div:first-child label { font-size: 1rem !important; }
+            .star-rating-input label { font-size: 2.2rem !important; } /* Reduz a estrela para caber sem espremer */
+            #form-nova-avaliacao .btn-principal { width: 100% !important; padding: 15px !important; font-size: 1rem !important; border-radius: 50px !important; }
         }
-        .badge-ouro {
-            background: linear-gradient(135deg, #FFFDE7, #FFF59D);
-            border: 1px solid #FDD835;
-            color: #F57F17;
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-        }
-        /* Badges Especiais */
-        .badge-autentico {
-            background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
-            border: 1px solid #81C784;
-            color: #2E7D32;
-        }
-        .badge-pioneiro {
-            background: linear-gradient(135deg, #F3E5F5, #E1BEE7);
-            border: 1px solid #BA68C8;
-            color: #7B1FA2;
-        }
-        
-        .badge-icon { font-size: 18px; line-height: 1; } /* Tamanho do emoji */
     </style>
 </head>
 <body>
 
     <%- include('partials/header') %>
 
-    <div id="loading-state" class="container" style="text-align: center; padding: 5rem 1rem;">
-        <h2>Carregando...</h2>
-        <p>Buscando as informações do profissional.</p>
+    <!-- Estado de Carregamento Premium (Skeleton) -->
+    <div id="loading-state" class="container profile-page-main" style="padding-top: 20px;">
+        <div class="skeleton-pulse" style="width: 80px; height: 20px; margin-bottom: 20px; border-radius: 4px;"></div>
+        <div class="profile-layout-grid" style="margin-top: 0;">
+            <div class="left-column">
+                <div class="profile-hero-card" style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div class="skeleton-pulse" style="width: 140px; height: 140px; border-radius: 50%; flex-shrink: 0;"></div>
+                    <div style="flex: 1; min-width: 200px; padding-top: 10px;">
+                        <div class="skeleton-pulse" style="width: 30%; height: 25px; border-radius: 20px; margin-bottom: 15px;"></div>
+                        <div class="skeleton-pulse" style="width: 75%; height: 40px; margin-bottom: 15px;"></div>
+                        <div class="skeleton-pulse" style="width: 50%; height: 20px; margin-bottom: 30px;"></div>
+                        <div class="skeleton-pulse" style="width: 100%; height: 120px;"></div>
+                    </div>
+                </div>
+            </div>
+            <aside class="sticky-sidebar">
+                <div class="skeleton-pulse" style="width: 100%; height: 350px; border-radius: 20px;"></div>
+            </aside>
+        </div>
     </div>
 
     <div id="error-state" class="container hidden" style="text-align: center; padding: 5rem 1rem;">
@@ -561,9 +904,12 @@
                             <div class="profile-name-block" style="flex-grow: 1;">
                                 <div class="name-header-row">
                                     <div class="name-info-wrapper">
-                                        <span id="psi-crp" class="crp-badge">CRP: --/------</span>
                                         <h1 id="psi-nome">Carregando...</h1>
+                                        <p id="psi-especialidade-principal" style="color: var(--verde-escuro); font-size: 1.1rem; font-weight: 700; margin: 5px 0 8px 0;">Psicólogo(a) Clínico(a)</p>
+                                        <span id="psi-crp" class="crp-badge" style="margin-bottom: 10px; font-size: 0.85rem;">CRP: --/------</span>
+                                        <div id="hero-rating-display" class="hero-stars-container" style="margin-bottom: 15px;"></div>
                                     </div>
+
                                     <div class="header-actions" style="display: flex; gap: 10px;">
                                         <button id="btn-share" class="btn-favorite" title="Compartilhar Perfil">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" id="Ios-Share--Streamline-Outlined-Material" height="24" width="24"><desc>Ios Share Streamline Icon: https://streamlinehq.com</desc><path fill="currentColor" d="M5.5 23c-0.4 0 -0.75 -0.15 -1.05 -0.45 -0.3 -0.3 -0.45 -0.65 -0.45 -1.05V8.775c0 -0.4 0.15 -0.75 0.45 -1.05 0.3 -0.3 0.65 -0.45 1.05 -0.45h4.225v1.5H5.5V21.5h13V8.775h-4.275v-1.5H18.5c0.4 0 0.75 0.15 1.05 0.45 0.3 0.3 0.45 0.65 0.45 1.05V21.5c0 0.4 -0.15 0.75 -0.45 1.05 -0.3 0.3 -0.65 0.45 -1.05 0.45H5.5Zm5.725 -7.675V3.9l-2.2 2.2 -1.075 -1.075L11.975 1 16 5.025l-1.075 1.075 -2.2 -2.2v11.425h-1.5Z" stroke-width="0.5"></path></svg>
@@ -573,95 +919,142 @@
                                         </button>
                                     </div>
                                 </div>
-                                
-                                <div id="hero-rating-display" class="hero-stars-container" style="justify-content: flex-start; margin-bottom: 15px;"></div>
-                                
-                                <div id="psi-social-links" class="social-links-profile" style="justify-content: flex-start;"></div>
-                                
-                                <!-- Container para Tags (Preenchido via JS se houver lógica, ou adicione lógica no JS para preencher aqui) -->
-                                <div id="psi-tags-display" class="tags-container">
-                                    <!-- Exemplo estático de como ficará -->
-                                    <!-- <span class="tag-pill">Ansiedade</span> -->
-                                </div>
 
-                                <!-- LOCAL DAS BADGES -->
-                                <div id="psi-badges-display" class="badges-wrapper"></div>
+                                
                             </div>
                         </div>
 
                         <div class="profile-bio-hero" style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-                            <h3 class="titulo-bio" style="font-family: var(--fonte-titulo); color: #1B4332;">Sobre Mim</h3>
-                            <p id="psi-bio-text" style="line-height: 1.8; color: #444;"></p>
+                            <h3 class="titulo-bio" style="font-family: var(--fonte-titulo); color: #1B4332; text-align: left; font-size: 1.4rem;">Como posso te ajudar</h3>
+                            <div id="bio-content-wrapper" class="bio-wrapper-modern is-collapsed">
+                                <p id="psi-bio-text" class="bio-collapsed" style="line-height: 1.8; color: #444; margin-bottom: 5px;"></p>
+                                <div id="bio-fade-overlay" class="bio-fade-overlay"></div>
+                                <button id="btn-ler-mais-bio" class="btn-ler-mais-app" style="display: none;">
+                                    <span class="btn-text">Ler mais</span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     <!-- BLOCO EXCLUSIVO MOBILE: Informações de Atendimento -->
                     <!-- Como o card lateral vira rodapé fixo e esconde detalhes, mostramos aqui -->
                     <div class="mobile-service-info" style="display: none; background: white; padding: 20px; border-radius: 16px; margin-bottom: 30px; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
-                        <h3 style="margin-top: 0; color: #1B4332; font-size: 1.1rem; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">Informações de Atendimento</h3>
+                        <h3 style="margin-top: 0; color: #1B4332; font-size: 1.25rem; font-family: var(--fonte-titulo); margin-bottom: 20px;">Informações de Atendimento</h3>
                         
-                        <div class="info-row" style="justify-content: flex-start; margin-bottom: 12px;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                            <span id="psi-modalidade-mobile">Online e Presencial</span>
-                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div class="info-row" style="justify-content: flex-start; background: #f8f9fa; padding: 15px; border-radius: 16px; border: 1px solid #e9ecef; margin: 0; align-items: center;">
+                                <div style="width: 42px; height: 42px; background: #e8f5e9; color: #1B4332; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                </div>
+                                <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                                    <span style="font-size: 0.75rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">Modalidade</span>
+                                    <span id="psi-modalidade-mobile" style="font-weight: 700; color: #333; font-size: 0.95rem;">Online e Presencial</span>
+                                </div>
+                            </div>
                         
-                        <div id="psi-localizacao-container-mobile" class="info-row" style="display: none; justify-content: flex-start; margin-bottom: 12px;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l8-4 8 4v14M8 21v-4h8v4"></path></svg>
-                            <span id="psi-cidade-estado-mobile"></span>
-                        </div>
+                            <div id="psi-localizacao-container-mobile" class="info-row" style="display: none; justify-content: flex-start; background: #f8f9fa; padding: 15px; border-radius: 16px; border: 1px solid #e9ecef; margin: 0; align-items: center;">
+                                <div style="width: 42px; height: 42px; background: #e0f2fe; color: #0284c7; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l8-4 8 4v14M8 21v-4h8v4"></path></svg>
+                                </div>
+                                <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                                    <span style="font-size: 0.75rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">Localização</span>
+                                    <span id="psi-cidade-estado-mobile" style="font-weight: 700; color: #333; font-size: 0.95rem;"></span>
+                                </div>
+                            </div>
 
-                        <div class="info-row" style="justify-content: flex-start;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                            <span id="psi-disponibilidade-mobile">Consulte horários</span>
+                            <div class="info-row" style="justify-content: flex-start; background: #f8f9fa; padding: 15px; border-radius: 16px; border: 1px solid #e9ecef; margin: 0; align-items: center;">
+                                <div style="width: 42px; height: 42px; background: #fff3e0; color: #f59e0b; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                </div>
+                                <div style="display: flex; flex-direction: column; align-items: flex-start; text-align: left;">
+                                    <span style="font-size: 0.75rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">Disponibilidade</span>
+                                    <span id="psi-disponibilidade-mobile" style="font-weight: 700; color: #333; font-size: 0.95rem;">Consulte horários</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Seção Detalhes Profissionais -->
-                    <div class="profile-section" style="margin-bottom: 50px;">
-                        <h3 style="font-family: var(--fonte-titulo); color: #1B4332; font-size: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 25px;">Detalhes Profissionais</h3>
-                        
-                        <div id="tab-sobre">
-                            <!-- O JS preenche aqui -->
-                        </div>
+                    <!-- TABS NATIVAS (Segmented Controls) -->
+                    <div class="tabs-nav-app">
+                        <button class="tab-link active" data-tab="sobre">Detalhes</button>
+                        <button class="tab-link" data-tab="avaliacoes">Avaliações</button>
                     </div>
 
-                    <!-- Seção Avaliações -->
-                    <div id="tab-avaliacoes" class="profile-section">
-                        <h3 style="font-family: var(--fonte-titulo); color: #1B4332; font-size: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 25px;">Avaliações de Pacientes</h3>
-                        
+                    <!-- Conteúdo: Detalhes Profissionais -->
+                    <div id="tab-sobre" class="tab-content active" style="margin-bottom: 10px; min-height: auto;">
+                        <h3 class="desktop-section-title">Detalhes Profissionais</h3>
+
+                        <!-- Bloco de Formação Acadêmica -->
+                        <div id="psi-formacao-container" style="display: none; background: #f8f9fa; padding: 25px; border-radius: 16px; border: 1px solid #e9ecef; margin-bottom: 25px;">
+                            <h4 style="font-family: var(--font-titulos); color: var(--verde-escuro); margin-top: 0; margin-bottom: 10px; font-size: 1.3rem; display: flex; align-items: center; gap: 8px;">
+                                🎓 Formação Acadêmica
+                            </h4>
+                            <p id="psi-formacao-nivel" style="font-weight: 700; color: #333; margin: 0 0 5px 0; font-size: 1.05rem;"></p>
+                            <p id="psi-formacao-desc" style="color: #555; line-height: 1.6; margin: 0; font-size: 0.95rem;"></p>
+                        </div>
+
+                        <!-- Esta div abaixo impede que o JS apague o título H3 -->
+                        <div id="psi-tags-container"></div>
+                    </div>
+
+                    <!-- Conteúdo: Avaliações -->
+                    <div id="tab-avaliacoes" class="tab-content" style="margin-bottom: 20px;">
+                        <h3 class="desktop-section-title">Avaliações de Pacientes</h3>
                         <div id="reviews-list-container" style="margin-bottom: 40px;">
                             <p style="text-align: center; color: #777;">Nenhuma avaliação ainda.</p>
                         </div>
 
-                        <div class="review-form-box" style="background: #f9fafb; padding: 30px; border-radius: 16px; border: 1px solid #eee;">
-                            <h4 style="margin-top: 0; color: #1B4332; font-size: 1.2rem; margin-bottom: 10px;">Quer deixar uma avaliação?</h4>
-                            <p style="color: #666; font-size: 0.95rem; margin-bottom: 20px;">Conte como foi sua experiência. Seu feedback é anônimo e ajuda outras pessoas a encontrarem o profissional ideal.</p>
-                            
-                            <form id="form-nova-avaliacao">
-                                <div class="star-rating-input" style="margin-bottom: 15px;">
-                                    <input type="radio" id="star5" name="rating" value="5" /><label for="star5" title="Excelente">★</label>
-                                    <input type="radio" id="star4" name="rating" value="4" /><label for="star4" title="Muito bom">★</label>
-                                    <input type="radio" id="star3" name="rating" value="3" /><label for="star3" title="Bom">★</label>
-                                    <input type="radio" id="star2" name="rating" value="2" /><label for="star2" title="Regular">★</label>
-                                    <input type="radio" id="star1" name="rating" value="1" /><label for="star1" title="Ruim">★</label>
+                        <div class="review-form-box" style="background: #ffffff; padding: 30px; border-radius: 24px; border: 1px solid #f0f0f0; box-shadow: 0 8px 30px rgba(0,0,0,0.04);">
+                            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                                <div style="width: 48px; height: 48px; background: #fffbeb; color: #f59e0b; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">⭐</div>
+                                <div>
+                                    <h4 style="margin: 0; color: #1B4332; font-size: 1.35rem; font-family: var(--fonte-titulo);">Deixe sua avaliação</h4>
+                                    <p style="color: #666; font-size: 0.9rem; margin: 4px 0 0 0; line-height: 1.4;">Seu feedback anônimo ajuda outras pessoas a encontrarem o profissional ideal.</p>
                                 </div>
-                                <textarea name="comentario" class="comment-input-capsule" placeholder="Escreva aqui sua avaliação (Opcional)..." rows="1"></textarea>
-                                <button type="submit" class="btn btn-verde" style="margin-top: 15px;">Enviar Avaliação</button>
+                            </div>
+                            
+                            <form id="form-nova-avaliacao" style="margin-top: 25px;">
+                                <div style="background: #fafafa; padding: 25px 20px; border-radius: 16px; border: 1px dashed #e0e0e0; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; transition: all 0.3s ease;">
+                                    <label style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #1B4332; font-family: var(--fonte-titulo);">Como foi a sua experiência?</label>
+                                    <div class="star-rating-input">
+                                        <input type="radio" id="star5" name="rating" value="5" /><label for="star5" title="Excelente">★</label>
+                                        <input type="radio" id="star4" name="rating" value="4" /><label for="star4" title="Muito bom">★</label>
+                                        <input type="radio" id="star3" name="rating" value="3" /><label for="star3" title="Bom">★</label>
+                                        <input type="radio" id="star2" name="rating" value="2" /><label for="star2" title="Regular">★</label>
+                                        <input type="radio" id="star1" name="rating" value="1" /><label for="star1" title="Ruim">★</label>
+                                    </div>
+                                </div>
+
+                                <textarea name="comentario" class="comment-input-capsule" placeholder="Escreva como foi sua experiência (Opcional)..." rows="3" style="background: #f8f9fa; border: 1px solid #e9ecef; padding: 18px 20px; border-radius: 16px; font-size: 1rem; width: 100%; box-sizing: border-box; transition: all 0.3s ease; resize: none; margin-bottom: 20px;"></textarea>
+
+                                <div style="display: flex; justify-content: flex-end;">
+                                    <button type="submit" class="btn btn-principal" style="border-radius: 50px; padding: 14px 35px; font-size: 1.05rem; box-shadow: 0 6px 20px rgba(27,67,50,0.25);">Publicar Avaliação</button>
+                                </div>
                             </form>
                         </div>
+                    </div>
+
+                    <!-- NOVO: Rodapé do Perfil (Redes e Badges) -->
+                    <div class="profile-footer-extras" style="margin-top: 40px; padding: 40px 20px; background: #f8f9fa; border-radius: 24px; border: 1px solid #e9ecef; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+                        <h4 style="font-family: var(--fonte-titulo); color: #1B4332; margin-bottom: 10px; font-size: 1.35rem;">Conheça mais sobre o profissional</h4>
+                        <p style="color: #666; font-size: 0.95rem; margin-bottom: 25px;">Acompanhe o trabalho deste psicólogo em suas redes sociais.</p>
+                        <div id="psi-social-links" class="social-links-profile" style="justify-content: center; margin-bottom: 20px;"></div>
                     </div>
                 </div>
 
                 <!-- COLUNA DIREITA: Card de Conversão (Sticky) -->
                 <aside class="sticky-sidebar">
                     <div class="conversion-card-modern">
-                        <h3 style="margin: 0; color: #666; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Valor da Sessão</h3>
-                        <div>
-                            <div id="psi-valor" class="price-display">Sob Consulta</div>
-                            <span class="price-suffix">por sessão</span>
+                        <div class="price-section">
+                            <h3 class="price-title" style="margin: 0; color: #666; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Valor da Sessão</h3>
+                            <div class="price-wrapper">
+                                <div id="psi-valor" class="price-display">Sob Consulta</div>
+                                <span class="price-suffix">por sessão</span>
+                            </div>
                         </div>
                         
-                        <div style="margin: 20px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 15px 0;">
+                        <div class="info-rows-container" style="margin: 20px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 15px 0;">
                             <div class="info-row">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                                 <span id="psi-modalidade">Online e Presencial</span>
@@ -676,6 +1069,15 @@
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                                 <span id="psi-disponibilidade">Consulte horários</span>
                             </div>
+                        </div>
+
+                        <!-- Badge de Próximo Horário Unificado -->
+                        <div class="badge-proximo-horario">
+                            <span style="position: relative; display: flex; width: 8px; height: 8px;">
+                                <span style="animation: pulse-green 2s infinite; position: absolute; width: 100%; height: 100%; background: #16a34a; border-radius: 50%; opacity: 0.7;"></span>
+                                <span style="position: relative; width: 8px; height: 8px; background: #16a34a; border-radius: 50%;"></span>
+                            </span>
+                            Próximo horário: <span class="texto-proximo-horario">--</span>
                         </div>
 
                         <a href="#" id="btn-agendar-whatsapp" target="_blank" class="btn btn-principal btn-pulse" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 15px;">
@@ -743,76 +1145,85 @@
 
     <script src="/perfil_psicologo.js"></script> 
 
+    <!-- Biblioteca de Confetes para o Efeito UAU -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
     <script>
-        // --- FUNÇÃO PARA RENDERIZAR BADGES (Injetada via Script Inline ou movida para perfil_psicologo.js) ---
-        function renderBadges(badgesData) {
-            const container = document.getElementById('psi-badges-display');
-            if (!container || !badgesData) return;
-
-            let html = '';
-
-            // 1. Badge Autêntico (Segurança)
-            if (badgesData.autentico) {
-                html += `
-                    <div class="badge-item badge-autentico" title="Autêntico: Este profissional mantém o perfil 100% completo e verificado.">
-                        <span class="badge-icon">🛡️</span>
-                    </div>
-                `;
+        // Função para mostrar o Toast Animado e disparar confetes
+        function dispararEfeitoUau() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#1B4332', '#FFEE8C', '#4ade80', '#ffffff']
+                });
             }
 
-            // 2. Badge Semeador (Conteúdo)
-            if (badgesData.semeador) {
-                const nivel = badgesData.semeador; // bronze, prata, ouro
-                const label = nivel.charAt(0).toUpperCase() + nivel.slice(1);
-                html += `
-                    <div class="badge-item badge-${nivel}" title="Semeador (${label}): Produz conteúdo e educa a audiência na plataforma.">
-                        <span class="badge-icon">🌱</span>
-                    </div>
-                `;
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                document.body.appendChild(container);
             }
 
-            // 3. Badge Voz Ativa (Comunidade)
-            if (badgesData.voz_ativa) {
-                const nivel = badgesData.voz_ativa;
-                const label = nivel.charAt(0).toUpperCase() + nivel.slice(1);
-                html += `
-                    <div class="badge-item badge-${nivel}" title="Voz Ativa (${label}): Acolhe e responde dúvidas de pacientes na Comunidade Yelo.">
-                        <span class="badge-icon">💬</span>
-                    </div>
-                `;
-            }
-
-            // 4. Badge Pioneiro
-            if (badgesData.pioneiro) {
-                html += `
-                    <div class="badge-item badge-pioneiro" title="Pioneiro: Membro Fundador, um dos primeiros profissionais da Yelo.">
-                        <span class="badge-icon">🏅</span>
-                    </div>
-                `;
-            }
-
-            container.innerHTML = html;
+            const toast = document.createElement('div');
+            toast.className = `toast toast-success`;
+            toast.innerHTML = `<span style="font-size:1.2rem">✨</span> <span>Link copiado com sucesso!</span>`;
+            
+            container.appendChild(toast);
+            
+            requestAnimationFrame(() => {
+                toast.style.display = 'flex';
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0) scale(1)';
+            });
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-20px) scale(0.9)';
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Lógica para o botão de compartilhar
-            const btnShare = document.getElementById('btn-share');
-            if (btnShare) {
-                btnShare.addEventListener('click', async () => {
+            // Lógica para o botão de compartilhar (Delegação de eventos para funcionar após renderização do JS)
+            document.addEventListener('click', async (e) => {
+                const btnShare = e.target.closest('#btn-share');
+                if (btnShare) {
+                    e.preventDefault();
+                    
+                    // Captura o nome do profissional para personalizar a mensagem
+                    const nomePsi = document.getElementById('psi-nome') ? document.getElementById('psi-nome').textContent.trim() : 'este profissional';
+                    const shareText = `✨ Conheça ${nomePsi} na Yelo!\n\nVeja o perfil completo, avaliações e horários disponíveis acessando o link abaixo:`;
+
+                    // API Nativa de Compartilhamento do Dispositivo (iOS / Android / Safari Mac)
                     if (navigator.share) {
                         try {
                             await navigator.share({
-                                title: document.title,
+                                title: `Perfil de ${nomePsi} na Yelo`,
+                                text: shareText,
                                 url: window.location.href
                             });
                         } catch (err) { console.log('Erro ao compartilhar:', err); }
+                    } else if (navigator.clipboard && window.isSecureContext) {
+                        // Fallback: Desktop sem suporte nativo
+                        const fullText = `${shareText}\n👉 ${window.location.href}`;
+                        navigator.clipboard.writeText(fullText).then(() => {
+                            dispararEfeitoUau();
+                        }).catch(err => console.log('Erro na área de transferência:', err));
                     } else {
-                        navigator.clipboard.writeText(window.location.href).then(() => {
-                            alert('Link do perfil copiado!');
-                        });
+                        const fullText = `${shareText}\n👉 ${window.location.href}`;
+                        const input = document.createElement('textarea');
+                        input.value = fullText;
+                        document.body.appendChild(input);
+                        input.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(input);
+                        dispararEfeitoUau();
                     }
-                });
-            }
+                }
+            });
 
             // Lógica de Rastreamento de KPI (Cliques no WhatsApp)
             const btnWhatsapp = document.getElementById('btn-agendar-whatsapp');
@@ -852,60 +1263,6 @@
             // if (data.badges) renderBadges(data.badges);
             // Como não tenho acesso ao perfil_psicologo.js aqui, deixo a função global disponível.
 
-            // --- LÓGICA DE TOOLTIP PARA BADGES NO MOBILE ---
-            function setupMobileBadgeTooltips() {
-                document.body.addEventListener('click', function(e) {
-                    const existingTooltip = document.querySelector('.mobile-badge-tooltip');
-                    
-                    // Se clicou em um alvo de badge
-                    const target = e.target.closest('.badge-card, .badge-item');
-
-                    // Primeiro, remove qualquer tooltip existente
-                    if (existingTooltip) {
-                        existingTooltip.remove();
-                    }
-
-                    // Se não clicou em um alvo de badge, ou se estamos no desktop, apenas saia
-                    if (!target || window.innerWidth > 992) {
-                        return;
-                    }
-                    
-                    // Se clicou em um alvo, previne outras ações e mostra o novo tooltip
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    const title = target.getAttribute('title');
-                    if (!title) return;
-
-                    // Cria o novo tooltip
-                    const tooltip = document.createElement('div');
-                    tooltip.className = 'mobile-badge-tooltip';
-                    tooltip.textContent = title;
-                    document.body.appendChild(tooltip);
-
-                    // Posiciona o tooltip
-                    const targetRect = target.getBoundingClientRect();
-                    const tooltipRect = tooltip.getBoundingClientRect();
-
-                    let top = targetRect.bottom + 10;
-                    tooltip.classList.add('bottom');
-
-                    if ((top + tooltipRect.height) > window.innerHeight - 20) {
-                        top = targetRect.top - tooltipRect.height - 10;
-                        tooltip.classList.remove('bottom');
-                        tooltip.classList.add('top');
-                    }
-                    
-                    let left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
-                    if (left < 10) left = 10;
-                    if (left + tooltipRect.width > window.innerWidth - 10) left = window.innerWidth - tooltipRect.width - 10;
-
-                    tooltip.style.top = `${top}px`;
-                    tooltip.style.left = `${left}px`;
-                });
-            }
-            setupMobileBadgeTooltips();
-
             // --- NOVO: LÓGICA DE AUTO-RESIZE PARA TEXTAREA DE AVALIAÇÃO ---
             const reviewTextarea = document.querySelector('#form-nova-avaliacao textarea');
             if (reviewTextarea) {
@@ -915,6 +1272,33 @@
                 };
                 reviewTextarea.addEventListener('input', autoResize);
             }
+
+            // --- PLG: Interceptador para Bloquear WhatsApp se o limite do Trial for atingido ---
+            const originalPublicFetch = window.fetch;
+            window.fetch = async function(...args) {
+                const response = await originalPublicFetch.apply(this, args);
+                try {
+                    const url = args[0] instanceof Request ? args[0].url : args[0];
+                    // Fica escutando quando a API envia os dados do psicólogo para popular a página
+                    if (url.includes('/api/public/psychologists/')) {
+                        response.clone().json().then(data => {
+                            if (data && data.id) {
+                                const MAX_TRIAL_CLICKS = 3;
+                                const isAssinante = data.status === 'active' || data.is_exempt;
+                                const btnWhatsApp = document.getElementById('btn-agendar-whatsapp');
+
+                                if (btnWhatsApp && !isAssinante && (data.whatsapp_clicks || 0) >= MAX_TRIAL_CLICKS) {
+                                    btnWhatsApp.classList.add('bloqueado');
+                                    btnWhatsApp.innerHTML = '🚫 Agenda Lotada no Momento';
+                                    btnWhatsApp.href = '#'; // Remove o link real
+                                    btnWhatsApp.onclick = (e) => e.preventDefault(); // Impede evento de rastreio de clique
+                                }
+                            }
+                        }).catch(e => console.warn(e));
+                    }
+                } catch (e) {}
+                return response;
+            };
         });
     </script>
 </body>

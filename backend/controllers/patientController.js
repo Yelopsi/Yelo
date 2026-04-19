@@ -523,3 +523,29 @@ exports.deletePatientAccount = async (req, res) => {
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };
+
+// ----------------------------------------------------------------------
+// Rota: POST /api/patients/me/foto
+// DESCRIÇÃO: Faz upload e atualiza a foto de perfil do paciente.
+// ----------------------------------------------------------------------
+exports.updateProfilePhoto = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'Nenhuma imagem foi enviada.' });
+        }
+
+        const patient = req.patient;
+        if (!patient) {
+            return res.status(401).json({ error: 'Paciente não autenticado.' });
+        }
+
+        // O multer salva o arquivo e disponibiliza o filename. O caminho relativo será este:
+        const fotoUrl = `/uploads/profiles/${req.file.filename}`;
+        patient.fotoUrl = fotoUrl;
+        await patient.save();
+        res.status(200).json({ message: 'Foto atualizada com sucesso!', fotoUrl });
+    } catch (error) {
+        console.error('Erro ao atualizar foto do paciente:', error);
+        res.status(500).json({ error: 'Erro interno ao salvar a imagem.' });
+    }
+};

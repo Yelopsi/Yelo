@@ -1,57 +1,66 @@
-<section class="kpi-grid">
-    <div class="kpi-card">
-        <h4>Receita Recorrente Mensal (MRR)</h4>
-        <p class="kpi-numero" id="kpi-mrr">R$ 0,00</p>
+<div class="modern-dashboard-layout">
+    <div class="main-header">
+        <div>
+            <h1>Financeiro & Planos</h1>
+            <p class="subtitulo-header">Acompanhe a receita, churn e faturas recentes da plataforma.</p>
+        </div>
     </div>
-    <div class="kpi-card">
-        <h4>Churn Rate (Cancelamentos)</h4>
-        <p class="kpi-numero" id="kpi-churn">0%</p>
-    </div>
-    <div class="kpi-card">
-        <h4>Lifetime Value (LTV)</h4>
-        <p class="kpi-numero" id="kpi-ltv">R$ 0,00</p>
-    </div>
-    <div class="kpi-card">
-        <h4>Ticket Médio (ARPU)</h4>
-        <p class="kpi-numero" id="kpi-arpu">R$ 0,00</p>
-    </div>
-</section>
 
-<section class="tabela-container">
-    <h3>Faturas Recentes</h3>
-    <p class="subtitulo-secao">Visualize as transações mais recentes da plataforma.</p>
-    
-    <div class="tabela-wrapper">
-        <table class="tabela-gerenciamento">
-            <thead>
-                <tr>
-                    <th>Psicólogo</th>
-                    <th>Data</th>
-                    <th>Valor</th>
-                    <th>Status</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody id="faturas-recentes-body"></tbody>
-        </table>
+    <div class="kpi-grid">
+        <div class="kpi-card" style="border-top-color: var(--verde-sucesso);">
+            <h4 style="display: flex; align-items: center; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg> MRR</h4>
+            <p class="kpi-numero" id="kpi-mrr" style="color: var(--verde-sucesso);">R$ 0,00</p>
+        </div>
+        <div class="kpi-card" style="border-top-color: var(--coral-quente);">
+            <h4 style="display: flex; align-items: center; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg> Churn Rate</h4>
+            <p class="kpi-numero" id="kpi-churn" style="color: var(--coral-quente);">0%</p>
+        </div>
+        <div class="kpi-card" style="border-top-color: #3498db;">
+            <h4 style="display: flex; align-items: center; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> LTV</h4>
+            <p class="kpi-numero" id="kpi-ltv" style="color: #3498db;">R$ 0,00</p>
+        </div>
+        <div class="kpi-card" style="border-top-color: #f39c12;">
+            <h4 style="display: flex; align-items: center; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Ticket Médio</h4>
+            <p class="kpi-numero" id="kpi-arpu" style="color: #f39c12;">R$ 0,00</p>
+        </div>
     </div>
-</section>
 
-<section class="tabela-container">
-    <h3>Planos Ativos</h3>
-    <p class="subtitulo-secao">Acompanhe os planos de assinatura ativos dos psicólogos.</p>
-    
-    <div class="tabela-wrapper">
-        <table class="tabela-gerenciamento">
-            <thead>
-                <tr>
-                    <th>Psicólogo</th>
-                    <th>Plano</th>
-                    <th>MRR</th>
-                    <th>Próxima Cobrança</th>
-                </tr>
-            </thead>
-            <tbody id="planos-ativos-body"></tbody>
-        </table>
+    <div class="tabela-container" style="margin-bottom: 25px;">
+        <h3 style="display: flex; align-items: center; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--verde-escuro);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> Faturas Recentes</h3>
+        <div class="tabela-wrapper">
+            <table class="tabela-gerenciamento">
+                <thead>
+                    <tr>
+                        <th>Psicólogo</th>
+                        <th>Data</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="faturas-recentes-body">
+                    <tr><td colspan="5" class="loading-row" style="text-align: center; padding: 40px; color: var(--cinza-texto);"><span class="loading-spinner-sm"></span> Carregando faturas...</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
-</section>
+
+    <div class="tabela-container">
+        <h3 style="display: flex; align-items: center; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--verde-escuro);"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg> Planos Ativos</h3>
+        <div class="tabela-wrapper">
+            <table class="tabela-gerenciamento">
+                <thead>
+                    <tr>
+                        <th>Psicólogo</th>
+                        <th>Plano</th>
+                        <th>MRR</th>
+                        <th>Próxima Cobrança</th>
+                    </tr>
+                </thead>
+                <tbody id="planos-ativos-body">
+                    <tr><td colspan="4" class="loading-row" style="text-align: center; padding: 40px; color: var(--cinza-texto);"><span class="loading-spinner-sm"></span> Carregando planos...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -17,7 +17,7 @@ header {
 }
 
 /* Logo */
-.logo { position: relative; display: block; width: 150px; height: 40px; }
+.logo { position: relative; display: block; width: 225px; height: 60px; }
 .logo img { height: 100%; width: auto; position: absolute; top: 0; left: 0; transition: opacity 0.4s; }
 .logo .logo-escura { opacity: 0; }
 .logo .logo-branca { opacity: 1; }
@@ -95,45 +95,53 @@ header.header-rolagem .btn-solid {
 /* --- RODAPÉ (FOOTER) --- */
 .rodape-principal {
     background-color: var(--verde-escuro);
-    color: #adb5bd;
-    padding: 60px 40px;
+    color: #e9ecef;
+    padding: 60px 20px;
     position: relative;
     margin-top: 0;
+    font-family: var(--font-principal);
 }
 
 .rodape-container {
-    max-width: 1100px;
+    max-width: 1200px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 50px;
 }
 
-.rodape-bloco-superior,
-.rodape-base {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
+.rodape-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 40px;
 }
 
-.rodape-nav ul,
-.rodape-links-legais {
+.rodape-col-newsletter,
+.rodape-col-social {
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 25px;
-    list-style: none;
-    margin: 0;
-    padding: 0;
+    flex-direction: column;
+    gap: 15px;
 }
 
-/* --- Ícones Sociais (Rodapé) --- */
-.rodape-social {
+.rodape-col-links {
     display: flex;
+    flex-direction: column;
     gap: 15px;
     align-items: center;
+    text-align: center;
+}
+
+.rodape-titulo {
+    font-family: var(--font-titulos);
+    color: white;
+    font-size: 1.3rem;
+    margin: 0 0 10px 0;
+}
+
+.rodape-social {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .rodape-social .icon-social-footer {
@@ -144,17 +152,16 @@ header.header-rolagem .btn-solid {
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.1); /* Fundo translúcido */
+    background-color: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: #ffffff;
     transition: all 0.3s ease;
 }
 
-/* Estilo dos Ícones SVG */
 .rodape-social .icon-social-footer svg {
     width: 20px;
     height: 20px;
-    fill: currentColor; /* Usa a cor do texto (branco ou verde) */
+    fill: currentColor;
 }
 
 .rodape-social .icon-social-footer:hover {
@@ -164,83 +171,208 @@ header.header-rolagem .btn-solid {
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
-/* --- Newsletter no Rodapé --- */
-.rodape-newsletter {
-    text-align: center;
-    /* O espaçamento agora é controlado pelo 'gap' do .rodape-container */
-    /* Apenas garantimos que não tenha estilos que quebrem o layout */
-    padding: 0;
-}
-
-.rodape-newsletter h4 {
-    font-family: var(--font-titulos);
-    color: var(--branco-puro);
-    font-size: 1.5rem;
-    margin: 0 0 10px 0;
+.rodape-col-newsletter {
+    text-align: left;
 }
 
 .rodape-newsletter p {
-    color: var(--cinza-texto-claro);
-    max-width: 600px;
-    margin: 0 auto 25px auto;
-    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 20px;
+    line-height: 1.5;
+    font-size: 0.95rem;
+}
+
+.rodape-principal form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
+.newsletter-consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.4;
+    text-align: left;
+}
+
+.newsletter-consent input {
+    margin-top: 3px;
+    cursor: pointer;
 }
 
 .newsletter-input-group {
     display: flex;
-    max-width: 450px;
+    flex-direction: column;
+    gap: 10px;
     width: 100%;
-    margin: 0 auto;
-    border-radius: 30px;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background-color: rgba(255, 255, 255, 0.05);
 }
 
 #newsletter-email {
-    flex-grow: 1;
-    border: none;
-    background: transparent;
-    padding: 15px 20px;
-    color: var(--branco-puro);
-    font-size: 1rem;
+    width: 100%;
+    border-radius: 50px;
+    padding: 14px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-sizing: border-box;
+    color: white;
     outline: none;
-    min-width: 0;
+    font-size: 1rem;
+    transition: border-color 0.3s;
 }
 #newsletter-email::placeholder { color: rgba(255, 255, 255, 0.4); }
+#newsletter-email:focus { border-color: var(--cor-Yelo); }
 
 #newsletter-submit-btn {
+    width: fit-content;
+    align-self: center;
+    border-radius: 50px;
+    padding: 10px 30px;
     background-color: var(--cor-Yelo);
     color: var(--verde-escuro);
     border: none;
-    padding: 0 25px;
-    font-weight: bold;
+    font-weight: 700;
+    font-size: 0.95rem;
     cursor: pointer;
-    transition: background-color 0.2s;
-    flex-shrink: 0;
-    white-space: nowrap;
+    transition: background-color 0.2s, transform 0.2s;
 }
-#newsletter-submit-btn:hover { background-color: #fff7b3; }
+#newsletter-submit-btn:hover {
+    background-color: #fff7b3;
+    transform: translateY(-2px);
+}
 
-.newsletter-consent {
-    margin-top: 15px;
+.rodape-nav-vertical ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.rodape-nav-vertical a {
+    color: #adb5bd;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color 0.3s ease;
+}
+.rodape-nav-vertical a:hover {
+    color: var(--cor-Yelo);
+}
+
+.btn-apoio-mulher {
+    color: #ffffff !important;
+    font-weight: 700;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.7);
+    background-color: #8b5cf6; /* Violeta moderno e acessível */
+    padding: 10px 18px;
+    border-radius: 50px; /* Formato pílula */
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    border: 1px solid #7c3aed;
 }
 
-.rodape-bloco-rt { text-align: left; }
-.rodape-bloco-rt p, .rodape-copyright p { font-size: 14px; margin: 0; }
-
-.rodape-nav a, .rodape-links-legais a {
-    color: #e9ecef; text-decoration: none; font-size: 16px; transition: color 0.3s ease;
+.btn-apoio-mulher:hover {
+    background-color: #7c3aed; /* Violeta mais escuro no hover */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
 }
-.rodape-nav a:hover, .rodape-links-legais a:hover { color: var(--cor-Yelo); }
 
-.rodape-divisor { border: none; height: 1px; background-color: #495057; width: 100%; margin: 0; display: block; }
+@media (min-width: 768px) {
+    .li-apoio-mulher { margin-top: 10px; }
+}
+
+.rodape-divisor {
+    border: none;
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.1);
+    width: 100%;
+    margin: 0;
+}
+
+.rodape-base {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 20px;
+    padding-top: 20px;
+}
+
+.rodape-bloco-rt p,
+.rodape-copyright p {
+    font-size: 0.85rem;
+    margin: 0 0 5px 0;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.5;
+}
+
+.rodape-bloco-rt strong {
+    color: #ffffff;
+    font-size: 0.95rem;
+}
+
+.rodape-links-legais {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+}
+
+.rodape-links-legais a {
+    color: #adb5bd;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.3s ease;
+}
+
+.rodape-links-legais a:hover { color: var(--cor-Yelo); }
+
+.app-download-block {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.app-download-row {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.app-badge-wrapper {
+    position: relative;
+    cursor: not-allowed;
+    width: fit-content;
+}
+
+.app-badge-wrapper img {
+    height: 40px;
+    opacity: 0.6;
+    filter: grayscale(100%);
+}
+
+.em-breve-tag {
+    position: absolute;
+    top: -8px;
+    right: -10px;
+    background-color: var(--cor-Yelo);
+    color: var(--verde-escuro);
+    font-size: 0.6rem;
+    font-weight: 800;
+    padding: 3px 6px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    letter-spacing: 0.5px;
+}
 
 /* Onda do Footer */
 .wave-divider-footer { background-color: transparent; line-height: 0; margin-bottom: -1px; }
@@ -264,7 +396,7 @@ header.header-rolagem .btn-solid {
         width: auto;
     }
     
-    nav ul { flex-direction: row !important; gap: 30px; width: auto; margin-right: 30px; }
+    .container-navegacao nav ul { flex-direction: row !important; gap: 30px; width: auto; margin-right: 30px; }
     .botoes-acao { flex-direction: row; margin-top: 0; width: auto; }
     
     /* Cores Desktop */
@@ -275,11 +407,92 @@ header.header-rolagem .btn-solid {
     header:not(.header-rolagem) .botoes-acao .btn-outline { border: 2px solid #ffffff !important; color: #ffffff !important; }
     header:not(.header-rolagem) .botoes-acao .btn-outline:hover { background-color: rgba(255, 255, 255, 0.1) !important; }
     header.header-rolagem .botoes-acao .btn-outline { border: 2px solid var(--verde-escuro) !important; color: var(--verde-escuro) !important; }
+
+    /* Organização em Grid no Desktop */
+    .rodape-grid {
+        grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
+        align-items: start;
+    }
+    
+    .rodape-col-newsletter,
+    .rodape-col-links,
+    .rodape-col-social {
+        min-width: 0; /* FUNDAMENTAL: Impede o vazamento invisível que quebra o Grid */
+    }
+    
+    .newsletter-input-group {
+        flex-direction: row; /* Volta a ser lado a lado */
+        gap: 0;
+        border-radius: 50px;
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 4px;
+        transition: border-color 0.3s;
+    }
+    .newsletter-input-group:focus-within {
+        border-color: var(--cor-Yelo);
+    }
+    #newsletter-email {
+        flex-grow: 1;
+        border-radius: 50px 0 0 50px;
+        border: none;
+        background: transparent;
+        padding: 12px 20px;
+        min-width: 0;
+    }
+    #newsletter-submit-btn {
+        border-radius: 50px;
+        width: auto;
+        padding: 10px 20px;
+        flex-shrink: 0;
+    }
+.rodape-base {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+        text-align: left;
+    }
+    
+    .rodape-bloco-rt { text-align: left; }
+    .rodape-links-legais { justify-content: center; }
+    .rodape-copyright { text-align: right; }
+
 }
 
-@media (max-width: 991px) {
-    /* Footer Stack no Mobile */
-    .rodape-bloco-superior, .rodape-base { flex-direction: column; gap: 20px; align-items: center; text-align: center; }
-    .rodape-nav ul, .rodape-links-legais { justify-content: center; }
-    .rodape-bloco-rt { text-align: center; }
+@media (min-width: 768px) and (max-width: 991px) {
+    .rodape-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .rodape-base {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+        text-align: left;
+    }
+}
+
+/* --- RODAPÉ MOBILE (Centralização e Links em Linha) --- */
+@media (max-width: 767px) {
+    .rodape-col-newsletter {
+        text-align: center;
+        align-items: center;
+    }
+    .newsletter-consent {
+        justify-content: center;
+    }
+    .rodape-nav-vertical ul {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        gap: 15px; /* Adiciona espaçamento horizontal entre os links */
+    }
+    .rodape-col-social, .app-download-block {
+        align-items: center;
+        text-align: center;
+    }
+    .rodape-social, .app-download-row {
+        justify-content: center;
+    }
 }

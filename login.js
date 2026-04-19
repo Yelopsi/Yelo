@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Feedback visual
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Autenticando...';
+            submitBtn.innerHTML = '<svg class="spin-anim" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> Autenticando...';
             if(mensagemEl) mensagemEl.style.display = 'none';
             const email = emailInput.value.trim().toLowerCase();
             const senha = senhaInput.value;
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // 1ª TENTATIVA: ADMIN (No Banco de Dados)
                 // Se der certo, o servidor retorna success: true
-                result = await attemptLogin('/api/login-admin-check', 'admin');
+                result = await attemptLogin('/api/admin/login', 'admin');
 
                 // 2ª TENTATIVA: PACIENTE (Se não for admin)
                 if (!result.success) {
@@ -130,6 +130,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (nomeSalvo) {
                         localStorage.setItem('Yelo_user_name', nomeSalvo);
                     }
+                    
+                    // Salva a foto para o header
+                    if (user && user.fotoUrl) {
+                        localStorage.setItem('Yelo_user_photo', user.fotoUrl);
+                    }
 
                     // Mensagem de sucesso
                     if (mensagemEl) {
@@ -153,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             // Se tiver um redirect na URL (ex: veio do perfil), volta pra lá
                             window.location.href = decodeURIComponent(redirectParam);
                         } else if (finalUserType === 'psychologist') {
-                            window.location.href = '/psi/psi_dashboard.html'; 
+                            window.location.href = '/psi/psi_dashboard'; 
                         } else {
                             window.location.href = '/patient/patient_dashboard';
                         }

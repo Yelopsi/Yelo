@@ -1,6 +1,37 @@
 // Arquivo: psi_dashboard.js (VERSÃO FINAL 2.1)
 
 document.addEventListener('DOMContentLoaded', function() {
+    // --- SHADOW TRACKING (TELEMETRIA DE USO) ---
+    document.body.addEventListener('click', function(e) {
+        // Captura cliques em elementos com classe track-feature ou em links de navegação do menu principal
+        const trackEl = e.target.closest('.track-feature') || e.target.closest('.sidebar-nav a') || e.target.closest('.bottom-nav-item');
+        
+        if (trackEl) {
+            let funcionalidade = trackEl.getAttribute('data-feature');
+            
+            // Fallback: se não tiver data-feature explícito, extrai do data-page (ex: 'psi_financeiro.html' vira 'financeiro')
+            if (!funcionalidade) {
+                const page = trackEl.getAttribute('data-page') || trackEl.getAttribute('data-target-page');
+                if (page) {
+                    funcionalidade = page.replace('psi_', '').replace('.html', '');
+                }
+            }
+            
+            if (!funcionalidade) return;
+            
+            const token = localStorage.getItem('Yelo_token');
+            if (!token) return;
+
+            const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : 'http://localhost:3001';
+
+            fetch(`${API_BASE_URL}/api/tracking/uso-feature`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ feature: funcionalidade })
+            }).catch(err => console.error('Erro no tracking', err));
+        }
+    });
+
     // --- FIX: Adiciona evento de clique para o card de Benchmarking ---
     // Delegação de evento no body para garantir que funcione mesmo com conteúdo carregado dinamicamente.
     document.body.addEventListener('click', function(e) {
@@ -23,32 +54,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Variável para guardar qual plano o usuário está tentando assinar no modal
     let currentPlanAttempt = '';
 
-    // --- APLICA ZOOM SALVO AO INICIAR (V5 - Correção de Altura dos Filhos) ---
-    const savedZoom = localStorage.getItem('yelo_dashboard_zoom');
-    if (savedZoom) {
-        const val = parseFloat(savedZoom);
-        const container = document.getElementById('dashboard-container');
-        
-        // Trava o corpo para evitar barra dupla e garantir fundo
-        document.documentElement.style.overflow = 'hidden';
-        document.body.style.overflow = 'hidden';
-        document.body.style.height = '100vh';
-
-        if (container) {
-            container.style.transformOrigin = "top left";
-            container.style.transform = `scale(${val})`;
-            container.style.width = `${100 / val}%`;
-            container.style.height = `${100 / val}vh`; // Altura compensada
-
-            // CORREÇÃO DO ESPAÇO BRANCO:
-            // Força a Sidebar e o Main a ocuparem 100% da nova altura do container
-            Array.from(container.children).forEach(child => {
-                child.style.height = '100%';
-                child.style.minHeight = '100%';
-            });
-        }
-    }
-
     // Variável global temporária para saber qual botão disparou a ação
     let btnReativacaoAtual = null;
 
@@ -63,18 +68,14 @@ document.addEventListener('DOMContentLoaded', function() {
     globalStyles.innerHTML = `
         /* BADGE DA SIDEBAR */
         .sidebar-badge {
-            background-color: #FFEE8C; /* Amarelo Yelo */
-            color: #1B4332; /* Verde Yelo */
-            border-radius: 50%;
-            min-width: 18px;
-            height: 18px;
-            padding: 0 4px;
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
+            background-color: #E63946; /* Vermelho Alerta (Mais visível) */
+            color: white;
+            border-radius: 50px;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            margin-left: auto; /* Empurra para o canto direito no flexbox sem sobrepor o texto */
             display: none;
-            box-shadow: 0 0 0 1px #fff;
             font-size: 11px;
             font-weight: 800;
             align-items: center;
@@ -137,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
             transform: scale(1.05);
         }
 
-        @keyframes fadeInUp {
+        @keyframes fadeInUpBanner {
             from { opacity: 0; transform: translate(-50%, 20px); }
             to { opacity: 1; transform: translate(-50%, 0); }
         }
@@ -156,27 +157,85 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Função para controlar a badge no menu
     function updateSidebarBadge(pageName, show) {
-        const link = document.querySelector(`.sidebar-nav a[data-page="${pageName}"]`);
-        if (!link) return;
+        let targetPage = pageName;
+        // O motivo da bolinha amarela aparecer em Ajustes foi eliminado:
+        // if (pageName === 'psi_caixa_de_entrada.html') {
+        //     targetPage = 'psi_ajustes_hub.html';
+        // }
         
-        let badge = link.querySelector('.sidebar-badge');
-        if (!badge) {
-            badge = document.createElement('span');
-            badge.className = 'sidebar-badge';
-            link.appendChild(badge);
-        }
-        
-        if (show) {
-            const count = window.psiUnreadConversations.size;
-            if (count > 0) {
-                badge.textContent = count > 99 ? '99+' : count;
+        const updateBadgeOnElement = (element, isBottomNav = false) => {
+            if (!element) return;
+            let badge = element.querySelector('.sidebar-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'sidebar-badge';
+                if (isBottomNav) {
+                    badge.style.position = 'absolute';
+                    badge.style.top = '0';
+                    badge.style.right = '10px';
+                    badge.style.transform = 'none';
+                    badge.style.margin = '0';
+                    element.style.position = 'relative';
+                }
+                element.appendChild(badge);
+            }
+            
+            // Permite receber um número direto ou boolean
+            let num = 0;
+            if (typeof show === 'number') {
+                num = show;
+            } else if (show === true) {
+                num = window.psiUnreadConversations ? window.psiUnreadConversations.size : 0;
+            }
+
+            if (num > 0) {
+                badge.textContent = num > 99 ? '99+' : num;
                 badge.classList.add('visible');
+                badge.style.display = 'flex';
             } else {
                 badge.classList.remove('visible');
+                badge.textContent = '';
+                badge.style.display = 'none';
             }
-        } else {
-            badge.classList.remove('visible');
-            badge.textContent = '';
+        };
+        
+        // Atualiza na sidebar desktop
+        updateBadgeOnElement(document.querySelector(`.sidebar-nav a[data-page="${targetPage}"]`), false);
+        // Atualiza na bottom nav mobile
+        updateBadgeOnElement(document.querySelector(`.bottom-nav-item[data-target-page="${targetPage}"]`), true);
+        
+        // Atualiza no sino do header mobile (Avisos)
+        if (targetPage === 'psi_avisos.html') {
+            const mobileAvisosTrigger = document.getElementById('mobile-avisos-trigger');
+            if (mobileAvisosTrigger) {
+                let badge = mobileAvisosTrigger.querySelector('.sidebar-badge');
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'sidebar-badge';
+                    badge.style.position = 'absolute';
+                    badge.style.top = '-2px';
+                    badge.style.right = '-2px';
+                    badge.style.transform = 'none';
+                    badge.style.margin = '0';
+                    badge.style.padding = '0 5px';
+                    badge.style.fontSize = '9px';
+                    mobileAvisosTrigger.appendChild(badge);
+                }
+                
+                let num = 0;
+                if (typeof show === 'number') num = show;
+                else if (show === true) num = window.psiUnreadConversations ? window.psiUnreadConversations.size : 0;
+
+                if (num > 0) {
+                    badge.textContent = num > 99 ? '99+' : num;
+                    badge.classList.add('visible');
+                    badge.style.display = 'flex';
+                } else {
+                    badge.classList.remove('visible');
+                    badge.textContent = '';
+                    badge.style.display = 'none';
+                }
+            }
         }
     }
 
@@ -335,33 +394,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // --- HELPERS E FETCH ---
-    function showToast(message, type = 'success') {
-        let container = document.getElementById('toast-container');
+    function showToast(message, type = 'success') { // Mantém o nome para compatibilidade
+        // Garante que o container exista
+        let container = document.getElementById('pill-notification-container');
         if (!container) {
             container = document.createElement('div');
-            container.id = 'toast-container';
+            container.id = 'pill-notification-container';
             document.body.appendChild(container);
         }
-        
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        
-        // Define o ícone moderno baseado no tipo
-        let iconSvg = '';
-        if (type === 'success') iconSvg = `<svg width="20" height="20" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
-        else if (type === 'error') iconSvg = `<svg width="20" height="20" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
-        else iconSvg = `<svg width="20" height="20" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
 
-        toast.innerHTML = `${iconSvg}<span>${message}</span>`;
-        container.appendChild(toast);
+        const pill = document.createElement('div');
+        pill.className = `pill-notification ${type}`;
+
+        // Ícones para cada tipo
+        let iconHtml = '';
+        if (type === 'success') {
+            iconHtml = '<span class="icon">✅</span>';
+        } else if (type === 'error') {
+            iconHtml = '<span class="icon">❌</span>';
+        } else if (type === 'info') {
+            iconHtml = '<span class="icon">ℹ️</span>';
+        }
+
+        pill.innerHTML = `${iconHtml}<span>${message}</span>`;
         
-        // Animação de saída limpa
+        container.appendChild(pill);
+
+        // A animação CSS cuida da entrada e saída. Apenas removemos o elemento do DOM depois.
         setTimeout(() => {
-            toast.style.transition = 'all 0.4s ease';
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateY(-20px) scale(0.9)';
-            setTimeout(() => toast.remove(), 400);
-        }, 4000);
+            pill.remove();
+        }, 4500); // O tempo da animação é 4.5s
     }
 
     function formatImageUrl(path) {
@@ -405,6 +467,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok) {
                 psychologistData = await response.json();
 
+                // Sincroniza o nome e foto no LocalStorage para o Header Público
+                if (psychologistData.nome) {
+                    localStorage.setItem('Yelo_user_name', psychologistData.nome);
+                }
+                if (psychologistData.fotoUrl) {
+                    localStorage.setItem('Yelo_user_photo', psychologistData.fotoUrl);
+                }
+
                 atualizarInterfaceLateral(); 
                 return true;
             } else if (response.status === 401) {
@@ -447,19 +517,42 @@ document.addEventListener('DOMContentLoaded', function() {
             mobileImgEl.onerror = function() { this.src = 'https://placehold.co/120x120/1B4332/FFFFFF?text=Psi'; };
         }
 
+        // --- NOVO: Atualiza o Nível Globalmente na Sidebar ---
+        let level = psychologistData.authority_level || 'nivel_iniciante';
+        // Força "Mentor" se a XP máxima já foi atingida
+        if (psychologistData.xp && psychologistData.xp >= 15000) level = 'nivel_mentor';
+
+        const levelMap = { 'nivel_iniciante': 'Iniciante', 'nivel_verificado': 'Verificado', 'nivel_ativo': 'Ativo', 'nivel_especialista': 'Especialista', 'nivel_mentor': 'Mentor' };
+        const levelDisplaySidebar = document.getElementById('psi-sidebar-level');
+        if (levelDisplaySidebar) {
+            levelDisplaySidebar.innerHTML = `🔥 Nível: <strong>${levelMap[level] || 'Iniciante'}</strong>`;
+        }
+
         // --- NOVO: Renderiza as badges ---
-        if (psychologistData.badges) {
-            renderSidebarBadges(psychologistData.badges);
+        if (psychologistData) {
+            renderSidebarBadges(psychologistData);
         }
     }
 
-    function renderSidebarBadges(badgesData) {
+    function renderSidebarBadges(user) {
         const container = document.getElementById('sidebar-badges-container');
-        if (!container || !badgesData) return;
+        if (!container || !user) return;
     
+        let badgesData = user.badges || {};
+        const isMaxLevel = (user.authority_level === 'nivel_mentor' || (user.xp && user.xp >= 15000));
+
+        if (isMaxLevel) {
+            badgesData = {
+                autentico: true,
+                semeador: 'ouro',
+                voz_ativa: 'ouro',
+                pioneiro: true
+            };
+        }
+
         let html = '';
         const badgeInfo = {
-            autentico: { emoji: '🛡️', title: 'Autêntico: Perfil 100% completo e verificado.' },
+            autentico: { emoji: '<svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle;"><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.79-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.758 2.746 1.9 3.42-.047.19-.074.385-.074.58 0 2.21 1.71 4.002 3.918 4.002.47 0 .92-.086 1.336-.25.52 1.335 1.828 2.25 3.337 2.25s2.816-.915 3.337-2.25c.416.164.866.25 1.336.25 2.21 0 3.918-1.792 3.918-4 0-.195-.027-.39-.074-.58 1.14-.675 1.9-1.96 1.9-3.42z" fill="#1B4332"/><path d="M16.97 8.47a1.5 1.5 0 0 1 0 2.12l-6.5 6.5a1.5 1.5 0 0 1-2.12 0l-3.5-3.5a1.5 1.5 0 1 1 2.12-2.12l2.44 2.44 5.44-5.44a1.5 1.5 0 0 1 2.12 0z" fill="white"/></svg>', title: 'Autêntico: Perfil 100% completo e verificado.' },
             semeador: { emoji: '🌱', title: 'Semeador: Produz conteúdo e educa a audiência.' },
             voz_ativa: { emoji: '💬', title: 'Voz Ativa: Acolhe e responde dúvidas na Comunidade.' },
             pioneiro: { emoji: '🏅', title: 'Pioneiro: Um dos primeiros membros da Yelo.' }
@@ -498,6 +591,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!user) return;
 
         const level = user.authority_level || 'nivel_iniciante';
+        
+        // Update novo design da sidebar (Nome do Nível)
+        const levelMap = { 'nivel_iniciante': 'Iniciante', 'nivel_verificado': 'Verificado', 'nivel_ativo': 'Ativo', 'nivel_especialista': 'Especialista', 'nivel_mentor': 'Mentor' };
+        const levelDisplaySidebar = document.getElementById('psi-sidebar-level');
+        if(levelDisplaySidebar) {
+            levelDisplaySidebar.innerHTML = `🔥 Nível: <strong>${levelMap[level] || 'Iniciante'}</strong>`;
+        }
+
         const badges = user.badges || {};
         const currentXP = user.xp || 0;
         const progress = user.gamificationProgress || { blogPostCount: 0, forumActivityCount: 0, answerCount: 0 };
@@ -567,7 +668,7 @@ document.addEventListener('DOMContentLoaded', function() {
             nextLevelText.innerHTML = msg;
         }
 
-        const updateBadgeCard = (elementId, level, currentCount, thresholds) => {
+        const updateBadgeCard = (elementId, badgeLevel, currentCount, thresholds) => {
             const el = document.getElementById(elementId);
             if (!el) return;
             const statusEl = el.querySelector('.badge-status');
@@ -577,18 +678,30 @@ document.addEventListener('DOMContentLoaded', function() {
             
             el.classList.remove('unlocked', 'locked', 'bronze', 'prata', 'ouro', 'unico');
             
+            let finalLevel = badgeLevel;
+            const isMaxLevel = (level === 'nivel_mentor' || currentXP >= 15000);
+
+            if (isMaxLevel) {
+                finalLevel = thresholds ? 'ouro' : 'unico';
+                if (currentCount !== null && thresholds) currentCount = Math.max(currentCount, thresholds.ouro);
+            } else if (thresholds && currentCount !== null) {
+                if (currentCount >= thresholds.ouro) finalLevel = 'ouro';
+                else if (currentCount >= thresholds.prata) finalLevel = 'prata';
+                else if (currentCount >= thresholds.bronze) finalLevel = 'bronze';
+            }
+
             let target, progressTextStr, progressPercentage;
 
             if (thresholds) {
-                if (level === 'ouro') {
+                if (finalLevel === 'ouro') {
                     target = thresholds.ouro;
                     progressTextStr = `${Math.min(currentCount, target)}/${target} (Máximo)`;
                     progressPercentage = 100;
-                } else if (level === 'prata') {
+                } else if (finalLevel === 'prata') {
                     target = thresholds.ouro;
                     progressTextStr = `${currentCount}/${target} para Ouro`;
                     progressPercentage = (currentCount / target) * 100;
-                } else if (level === 'bronze') {
+                } else if (finalLevel === 'bronze') {
                     target = thresholds.prata;
                     progressTextStr = `${currentCount}/${target} para Prata`;
                     progressPercentage = (currentCount / target) * 100;
@@ -599,9 +712,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            if (level) {
-                el.classList.add('unlocked', typeof level === 'string' ? level : 'unico');
-                if(statusEl) statusEl.textContent = typeof level === 'string' ? `${level.charAt(0).toUpperCase() + level.slice(1)}` : "Conquistado";
+            if (finalLevel) {
+                el.classList.add('unlocked', typeof finalLevel === 'string' ? finalLevel : 'unico');
+                if(statusEl) statusEl.textContent = typeof finalLevel === 'string' ? `${finalLevel.charAt(0).toUpperCase() + finalLevel.slice(1)}` : "Conquistado";
             } else {
                 el.classList.add('locked');
                 if(statusEl) statusEl.textContent = "Bloqueado";
@@ -613,8 +726,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if(progressText) progressText.textContent = progressTextStr;
             } else if (progressContainer) {
                 progressContainer.style.display = 'block';
-                if(progressBar) progressBar.style.width = level ? '100%' : '0%';
-                if(progressText) progressText.textContent = level ? '1/1' : '0/1';
+                if(progressBar) progressBar.style.width = finalLevel ? '100%' : '0%';
+                if(progressText) progressText.textContent = finalLevel ? '1/1' : '0/1';
             }
         };
 
@@ -634,8 +747,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function verificarBloqueioGeral(url) {
         if (!psychologistData) return;
 
-        // Páginas permitidas mesmo sem plano (para o usuário poder pagar)
-        const paginasPermitidas = ['psi_assinatura.html']; 
+        // Páginas permitidas mesmo sem plano (para o usuário poder pagar ou acessar os ajustes gerais)
+        const paginasPermitidas = ['psi_assinatura.html', 'psi_ajustes_hub.html']; 
 
         // Verifica se tem plano válido (se plano for null/vazio, considera inativo)
         const temPlano = psychologistData.plano && psychologistData.plano.trim().length > 0;
@@ -661,14 +774,168 @@ document.addEventListener('DOMContentLoaded', function() {
             banner.className = 'restriction-floating-banner';
             banner.innerHTML = `
                 <span>🔒 Modo de visualização. Ative seu plano para interagir.</span>
-                <button onclick="document.querySelector('a[data-page=\\'psi_assinatura.html\\']').click()">Ver Planos</button>
+                <button onclick="window.loadPage('psi_assinatura.html')">Ver Planos</button>
             `;
             document.body.appendChild(banner);
         }
     }
 
+    function inicializarAjustesHub() {
+        const btnPublic = document.getElementById('hub-btn-public-profile');
+        if (btnPublic && psychologistData && psychologistData.slug) {
+            btnPublic.href = `/${psychologistData.slug}`;
+        }
+    }
+
+    // --- LÓGICA DO FALE COM A YELO (MODAL MOBILE) ---
+    function abrirModalFaleComYelo() {
+        let modal = document.getElementById('modal-fale-com-yelo');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'modal-fale-com-yelo';
+            modal.className = 'custom-modal-overlay';
+            modal.innerHTML = `
+                <div class="custom-modal-box">
+                    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h2 style="margin: 0; font-family: var(--font-titulos); color: var(--verde-escuro);">Fale com a Yelo</h2>
+                        <button type="button" class="modal-close" id="btn-fechar-modal-yelo" style="background: none; border: none; font-size: 2rem; cursor: pointer; color: #aaa; padding: 0; line-height: 1;">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p style="margin-bottom: 20px; color: #666; font-size: 0.95rem; line-height: 1.5;">Precisa de ajuda ou tem alguma sugestão? Envie sua mensagem e nossa equipe responderá o mais breve possível.</p>
+                        <form id="form-fale-yelo">
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label for="fale-yelo-assunto" style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--verde-escuro);">Assunto</label>
+                                <select id="fale-yelo-assunto" name="assunto" required style="width: 100%; padding: 12px 15px; border: 1px solid #e0e0e0; border-radius: 12px; font-family: var(--font-principal); font-size: 1rem; background-color: #f9fafb;">
+                                    <option value="Dúvida Geral">Dúvida Geral</option>
+                                    <option value="Sou Profissional">Sou Profissional</option>
+                                    <option value="Financeiro / Assinatura">Financeiro / Assinatura</option>
+                                    <option value="Suporte Técnico">Suporte Técnico</option>
+                                    <option value="Sugestões">Sugestões</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label for="fale-yelo-mensagem" style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--verde-escuro);">Sua mensagem</label>
+                                <textarea id="fale-yelo-mensagem" rows="5" required style="width: 100%; padding: 12px 15px; border: 1px solid #e0e0e0; border-radius: 12px; font-family: var(--font-principal); font-size: 1rem; resize: vertical; box-sizing: border-box; background-color: #f9fafb;" placeholder="Como podemos ajudar?"></textarea>
+                            </div>
+                            <div class="form-status" id="fale-yelo-status" style="min-height:1.5em; margin-bottom: 15px; font-weight: bold; font-size: 0.9rem;"></div>
+                            <div class="form-acoes" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+                                <button type="button" class="btn btn-secundario" id="btn-cancelar-fale-yelo" style="padding: 10px 20px; border-radius: 50px;">Cancelar</button>
+                                <button type="submit" class="btn btn-principal" id="btn-enviar-fale-yelo" style="padding: 10px 20px; border-radius: 50px;">Enviar Mensagem</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            const fecharModal = () => {
+                modal.style.display = 'none';
+                const statusDiv = document.getElementById('fale-yelo-status');
+                if(statusDiv) statusDiv.textContent = '';
+            };
+
+            document.getElementById('btn-fechar-modal-yelo').addEventListener('click', fecharModal);
+            document.getElementById('btn-cancelar-fale-yelo').addEventListener('click', fecharModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) fecharModal();
+            });
+
+            document.getElementById('form-fale-yelo').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const textarea = document.getElementById('fale-yelo-mensagem');
+                const selectAssunto = document.getElementById('fale-yelo-assunto');
+                const btnEnviar = document.getElementById('btn-enviar-fale-yelo');
+                const statusDiv = document.getElementById('fale-yelo-status');
+                
+                const content = textarea.value.trim();
+                const assunto = selectAssunto.value;
+
+                if (!content) return;
+
+                // Identifica o psicólogo logado (dispensa o campo de email visualmente)
+                const nome = psychologistData && psychologistData.nome ? psychologistData.nome : 'Psicólogo Logado';
+                const email = psychologistData && psychologistData.email ? psychologistData.email : 'N/A';
+
+                btnEnviar.disabled = true;
+                btnEnviar.textContent = 'Enviando...';
+                statusDiv.textContent = '';
+
+                fetch('/api/public/contato', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome: nome, email: email, assunto: assunto, mensagem: content })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('Mensagem enviada com sucesso! Responderemos em breve.', 'success');
+                        textarea.value = '';
+                        selectAssunto.selectedIndex = 0;
+                        fecharModal();
+                    } else {
+                        statusDiv.textContent = data.error || 'Erro ao enviar mensagem.';
+                        statusDiv.style.color = '#e22';
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    statusDiv.textContent = 'Erro de conexão. Tente novamente mais tarde.';
+                    statusDiv.style.color = '#e22';
+                })
+                .finally(() => {
+                    btnEnviar.disabled = false;
+                    btnEnviar.textContent = 'Enviar Mensagem';
+                });
+            });
+        }
+
+        const textarea = document.getElementById('fale-yelo-mensagem');
+        if (textarea) textarea.value = '';
+        const statusDiv = document.getElementById('fale-yelo-status');
+        if (statusDiv) statusDiv.textContent = '';
+
+        modal.style.display = 'flex';
+    }
+
+    let currentPageUrl = 'psi_visao_geral.html';
+
     window.loadPage = function(url) {
         if (!url) return;
+
+        // --- FALE COM A YELO (MODAL MOBILE) ---
+        // Se estiver no mobile e tentar abrir a caixa de entrada (Fale com a Yelo)
+        if (url.includes('caixa_de_entrada') && window.innerWidth <= 992) {
+            abrirModalFaleComYelo();
+            
+            // Restaura visualmente a seleção do menu para a página atual que o usuário estava
+            document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
+            document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+            
+            let activeLink = document.querySelector(`.sidebar-nav a[data-page="${currentPageUrl}"]`);
+            let activeBottomLink = document.querySelector(`.bottom-nav-item[data-target-page="${currentPageUrl}"]`);
+            
+            if (!activeLink || !activeBottomLink) {
+                let hubPage = '';
+                if (['psi_pacientes.html', 'psi_financeiro.html', 'psi_analytics.html', 'psi_favoritos_analytics.html'].includes(currentPageUrl)) {
+                    hubPage = 'psi_clinica_hub.html';
+                } else if (['psi_jornada.html', 'psi_blog.html', 'psi_forum.html', 'psi_comunidade.html', 'psi_hub.html', 'psi_lista_espera.html'].includes(currentPageUrl)) {
+                    hubPage = 'psi_evolucao_hub.html';
+                } else if (['psi_meu_perfil.html', 'psi_assinatura.html', 'psi_caixa_de_entrada.html', 'psi_excluir_conta.html'].includes(currentPageUrl)) {
+                    hubPage = 'psi_ajustes_hub.html';
+                }
+                if (hubPage) {
+                    if (!activeLink) activeLink = document.querySelector(`.sidebar-nav a[data-page="${hubPage}"]`);
+                    if (!activeBottomLink) activeBottomLink = document.querySelector(`.bottom-nav-item[data-target-page="${hubPage}"]`);
+                }
+            }
+
+            if (activeLink) activeLink.closest('li').classList.add('active');
+            if (activeBottomLink) activeBottomLink.classList.add('active');
+
+            return; // Interrompe o carregamento da página de chat
+        }
+        
+        currentPageUrl = url;
 
         // --- V6: Limpeza de listeners da página de Blog ---
         if (typeof window.cleanupBlog === 'function') {
@@ -697,9 +964,47 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="loader-wrapper" style="height: 100%; min-height: 400px; align-items: center;">
                 <div class="loader-spinner"></div>
             </div>`;
+            
         document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
-        const activeLink = document.querySelector(`.sidebar-nav a[data-page="${url}"]`);
+        document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+
+        // Garante que o menu inferior reapareça se estivesse oculto pelo Smart Scroll
+        const bNav = document.querySelector('.mobile-bottom-nav');
+        if (bNav) bNav.classList.remove('nav-hidden');
+
+        let activeLink = document.querySelector(`.sidebar-nav a[data-page="${url}"]`);
+        let activeBottomLink = document.querySelector(`.bottom-nav-item[data-target-page="${url}"]`);
+        
+        if (!activeLink || !activeBottomLink) {
+            let hubPage = '';
+            if (['psi_pacientes.html', 'psi_financeiro.html', 'psi_analytics.html', 'psi_favoritos_analytics.html'].includes(url)) {
+                hubPage = 'psi_clinica_hub.html';
+            } else if (['psi_jornada.html', 'psi_blog.html', 'psi_forum.html', 'psi_comunidade.html', 'psi_hub.html', 'psi_lista_espera.html'].includes(url)) {
+                hubPage = 'psi_evolucao_hub.html';
+            } else if (['psi_meu_perfil.html', 'psi_assinatura.html', 'psi_caixa_de_entrada.html', 'psi_excluir_conta.html'].includes(url)) {
+                hubPage = 'psi_ajustes_hub.html';
+            }
+
+            if (hubPage) {
+                if (!activeLink) activeLink = document.querySelector(`.sidebar-nav a[data-page="${hubPage}"]`);
+                if (!activeBottomLink) activeBottomLink = document.querySelector(`.bottom-nav-item[data-target-page="${hubPage}"]`);
+            }
+        }
+
         if (activeLink) activeLink.closest('li').classList.add('active');
+        if (activeBottomLink) activeBottomLink.classList.add('active');
+        
+        // Destaca o sino no header se for a página de avisos
+        const mobileAvisosTrigger = document.getElementById('mobile-avisos-trigger');
+        if (mobileAvisosTrigger) {
+            if (url === 'psi_avisos.html') {
+                mobileAvisosTrigger.style.backgroundColor = '#f0fdf4';
+                mobileAvisosTrigger.style.color = 'var(--verde-escuro)';
+            } else {
+                mobileAvisosTrigger.style.backgroundColor = 'transparent';
+                mobileAvisosTrigger.style.color = '#1B4332';
+            }
+        }
 
         // --- OTIMIZAÇÃO: PRÉ-FETCH DE DADOS (Paralelismo) ---
         // Dispara a busca de dados IMEDIATAMENTE, sem esperar o HTML carregar
@@ -710,9 +1015,7 @@ document.addEventListener('DOMContentLoaded', function() {
              dataPromise = apiFetch(`${API_BASE_URL}/api/qna?page=1&limit=15`).then(r => r.ok ? r.json() : null).catch(() => null);
         } else if (url.includes('psi_forum.html')) {
              // Busca 4 itens (3 para exibir + 1 para checar se tem mais)
-             dataPromise = apiFetch(`${API_BASE_URL}/api/forum/posts?filter=populares&search=&page=1&limit=4&pageSize=3`).then(r => r.ok ? r.json() : null).catch(() => null);
-        } else if (url.includes('psi_caixa_de_entrada.html')) {
-             dataPromise = apiFetch(`${API_BASE_URL}/api/messages?contactType=admin`).then(r => r.ok ? r.json() : null).catch(() => null);
+             dataPromise = apiFetch(`${API_BASE_URL}/api/forum/posts?filter=populares&search=&page=1&limit=4`).then(r => r.ok ? r.json() : null).catch(() => null);
         }
 
         // Se for a caixa de entrada, remove a badge
@@ -733,18 +1036,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 else if (url.includes('meu_perfil')) inicializarLogicaDoPerfil();
                 else if (url.includes('visao_geral')) inicializarVisaoGeral();
-                else if (url.includes('assinatura')) inicializarAssinatura();
                 else if (url.includes('comunidade')) inicializarComunidade(dataPromise); // Passa a promessa
-                else if (url.includes('caixa_de_entrada')) inicializarCaixaEntrada(dataPromise); // Passa a promessa
                 else if (url.includes('psi_hub')) inicializarHubComunidade(); 
+                else if (url.includes('psi_ajustes_hub')) inicializarAjustesHub(); 
                 else if (url.includes('psi_blog')) inicializarBlog(dataPromise); // Passa a promessa
                 else if (url.includes('psi_forum')) inicializarForum(dataPromise); // Passa a promessa
                 else if (url.includes('psi_favoritos_analytics.html')) {
                     // A página se auto-inicializa, mas garantimos que o cleanup de outras páginas rode.
                 }
+                else if (url.includes('psi_avisos.html')) window.inicializarAvisos();
                 // Adicione outras inicializações de página aqui
             })
             .catch(e => mainContent.innerHTML = `<p>Erro ao carregar: ${e}</p>`);
+
+        // --- LÓGICA DE SMART SCROLL (PÁGINAS CURTAS) ---
+        // Adicionado aqui para rodar a cada carregamento de página
+        const scrollableContent = document.querySelector('.dashboard-main');
+        const bottomNav = document.querySelector('.mobile-bottom-nav');
+
+        if (scrollableContent && bottomNav && window.innerWidth <= 992) {
+            // Usa um timeout para garantir que o DOM foi renderizado e a altura é calculada corretamente
+            setTimeout(() => {
+                const isScrollable = scrollableContent.scrollHeight > scrollableContent.clientHeight;
+                if (!isScrollable) {
+                    // Se a página não tem rolagem, encolhe a barra após 2 segundos
+                    setTimeout(() => {
+                        bottomNav.classList.add('nav-hidden');
+                    }, 2000);
+                }
+            }, 150); // Delay de 150ms para cálculo da altura
+        }
     }
 
     // --- LÓGICA DE PAGAMENTO ---
@@ -802,6 +1123,8 @@ document.addEventListener('DOMContentLoaded', function() {
         stepMethod.style.display = 'block';
         form.style.display = 'none';
         pixResult.style.display = 'none';
+        const loaderEl = document.getElementById('pix-direct-loader');
+        if (loaderEl) loaderEl.style.display = 'none';
         
         // Lógica de Abas
         const setTab = (method) => {
@@ -809,30 +1132,91 @@ document.addEventListener('DOMContentLoaded', function() {
             stepMethod.style.display = 'none';
             form.style.display = 'block';
             customerSection.style.display = 'flex';
+            
+            const cepInput = document.getElementById('card-holder-cep');
+            const numInput = document.getElementById('card-holder-number');
+            const elCepRow = cepInput ? cepInput.closest('.payment-flex-row') : null;
 
             if (method === 'CREDIT_CARD') {
                 creditSection.style.display = 'flex';
                 securityBadges.style.display = 'block';
-                btnSubmit.textContent = "Pagar com Cartão";
+                if (elCepRow) elCepRow.style.display = 'flex';
+                btnSubmit.innerHTML = `Iniciar Teste Grátis <span style="display:block;font-size:0.75rem;font-weight:normal;opacity:0.8;margin-top:2px;">Primeira cobrança em 14 dias</span>`;
                 document.getElementById('card-holder-name').placeholder = "Nome impresso no cartão";
                 // Torna campos obrigatórios
                 document.getElementById('card-number').required = true;
                 document.getElementById('card-expiry').required = true;
                 document.getElementById('card-ccv').required = true;
+                if (cepInput) cepInput.required = true;
+                if (numInput) numInput.required = true;
             } else {
                 creditSection.style.display = 'none';
                 securityBadges.style.display = 'none';
-                btnSubmit.textContent = "Gerar PIX";
+                if (elCepRow) elCepRow.style.display = 'none';
+                btnSubmit.textContent = "Gerar QR Code PIX";
                 document.getElementById('card-holder-name').placeholder = "Nome completo";
                 // Remove obrigatoriedade
                 document.getElementById('card-number').required = false;
                 document.getElementById('card-expiry').required = false;
                 document.getElementById('card-ccv').required = false;
+                if (cepInput) cepInput.required = false;
+                if (numInput) numInput.required = false;
             }
         };
         
         btnSelectCard.onclick = () => setTab('CREDIT_CARD');
-        btnSelectPix.onclick = () => setTab('PIX');
+        btnSelectPix.onclick = async () => {
+            currentMethod = 'PIX';
+            
+            // --- FIX: REGRA DO BANCO CENTRAL (BACEN) ---
+            // O Asaas exige CPF para gerar o PIX. Se não tivermos, pedimos minimalista.
+            const hasCpf = psychologistData && (psychologistData.cpf || psychologistData.cnpj);
+            
+            if (!hasCpf) {
+                setTab('PIX');
+                document.getElementById('card-holder-name').value = psychologistData ? psychologistData.nome : '';
+                return;
+            }
+
+            stepMethod.style.display = 'none';
+            if(msgDiv) msgDiv.classList.add('hidden');
+            
+            let loaderEl = document.getElementById('pix-direct-loader');
+            if (!loaderEl) {
+                loaderEl = document.createElement('div');
+                loaderEl.id = 'pix-direct-loader';
+                loaderEl.innerHTML = '<div class="loader-spinner" style="margin: 0 auto;"></div><p style="text-align:center; color:#1B4332; margin-top:15px; font-weight:bold;">Gerando código PIX...</p>';
+                stepMethod.parentNode.insertBefore(loaderEl, stepMethod.nextSibling);
+            }
+            loaderEl.style.display = 'block';
+
+            try {
+                const cupomInput = document.getElementById('modal-cupom-input');
+                const cupom = cupomInput ? cupomInput.value : '';
+                const res = await apiFetch(`${API_BASE_URL}/api/payments/create-preference`, {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        planType, 
+                        cupom,
+                        billingType: 'PIX',
+                        creditCard: {}
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.pix) {
+                    loaderEl.style.display = 'none';
+                    pixResult.style.display = 'block';
+                    document.getElementById('pix-qr-image').src = `data:image/png;base64,${data.pix.encodedImage}`;
+                    document.getElementById('pix-copy-paste').value = data.pix.payload;
+                } else {
+                    throw new Error(data.error || 'Erro ao gerar PIX.');
+                }
+            } catch (error) {
+                loaderEl.style.display = 'none';
+                stepMethod.style.display = 'block';
+                if(msgDiv) { msgDiv.classList.remove('hidden'); msgDiv.textContent = error.message; msgDiv.style.color = "red"; }
+            }
+        };
         
         btnBackMethod.onclick = () => {
             form.style.display = 'none';
@@ -927,9 +1311,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Coleta dados do formulário
             const cardData = {
                 holderName: document.getElementById('card-holder-name').value,
-                holderCpf: document.getElementById('card-holder-cpf').value,
-                holderPhone: document.getElementById('card-holder-phone').value,
-                postalCode: document.getElementById('card-holder-cep').value, // CEP enviado pelo usuário
+                holderCpf: document.getElementById('card-holder-cpf').value.replace(/\D/g, ''),
+                holderPhone: document.getElementById('card-holder-phone').value.replace(/\D/g, ''),
+                postalCode: document.getElementById('card-holder-cep').value.replace(/\D/g, ''), // CEP limpo de traços
                 addressNumber: document.getElementById('card-holder-number').value,
                 addressComplement: document.getElementById('card-holder-complement').value,
                 // Dados enriquecidos pelo CEP (importante para antifraude)
@@ -939,7 +1323,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Dados específicos do cartão
             if (currentMethod === 'CREDIT_CARD') {
-                cardData.number = document.getElementById('card-number').value;
+                cardData.number = document.getElementById('card-number').value.replace(/\D/g, ''); // Remove espaços da máscara
                 cardData.expiry = document.getElementById('card-expiry').value;
                 cardData.ccv = document.getElementById('card-ccv').value;
             }
@@ -1010,7 +1394,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } finally {
                 btnSubmit.disabled = false;
-                btnSubmit.textContent = currentMethod === 'CREDIT_CARD' ? "Pagar Agora" : "Gerar PIX";
+                btnSubmit.innerHTML = currentMethod === 'CREDIT_CARD' ? `Iniciar Teste Grátis <span style="display:block;font-size:0.75rem;font-weight:normal;opacity:0.8;margin-top:2px;">Primeira cobrança em 14 dias</span>` : "Gerar PIX";
             }
         };
     }
@@ -1219,249 +1603,220 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     // --- RESTANTE DAS FUNÇÕES (PERFIL, EXCLUIR CONTA, ETC) ---
     async function inicializarVisaoGeral() {
-        // 1. Saudação e Alerta de Perfil (Mantidos)
-        if (document.getElementById('psi-welcome-name') && psychologistData) {
-            document.getElementById('psi-welcome-name').textContent = `Olá, ${psychologistData.nome.split(' ')[0]}!`;
+        if (!psychologistData) return;
+
+        // 1. Saudação Hero
+        const welcomeEl = document.getElementById('psi-welcome-name');
+        if (welcomeEl) {
+            welcomeEl.textContent = `Olá, ${psychologistData.nome.split(' ')[0]}!`;
         }
 
-        const abordagens = psychologistData.abordagens || psychologistData.abordagens_tecnicas || [];
-        const temas = psychologistData.temas || psychologistData.temas_atuacao || [];
-        const isProfileIncomplete = !psychologistData.nome || !psychologistData.crp || abordagens.length === 0 || temas.length === 0;
+        // Animação de carregamento geral nas métricas
+        const elementsToLoad = ['hero-contacts', 'hero-views', 'kpi-whatsapp-clicks', 'kpi-profile-views', 'kpi-taxa-escolha', 'kpi-artigos', 'kpi-interacoes', 'agenda-hoje', 'faturamento-mes'];
+        elementsToLoad.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = '<span class="loading-spinner-sm" style="display:inline-block; border-color: rgba(27,67,50,0.2); border-top-color: var(--verde-escuro);"></span>';
+        });
 
-        const alertBox = document.getElementById('alert-complete-profile');
-        if (alertBox) alertBox.style.display = isProfileIncomplete ? 'flex' : 'none';
+        try {
+            // Busca estatísticas gerais do perfil e gamificação
+            // FIX: Adicionado timestamp para evitar cache do navegador e garantir que as métricas estejam sempre atualizadas.
+            const resStats = await apiFetch(`${API_BASE_URL}/api/psychologists/me/stats?period=last30days&t=${new Date().getTime()}`);
+            const stats = resStats.ok ? await resStats.json() : {};
 
-        // --- CORREÇÃO: Lógica de bloqueio de recursos movida para fora do try/catch ---
-        // Isso garante que o blur seja aplicado mesmo que a busca de KPIs falhe.
-        const planoAtual = psychologistData.plano ? psychologistData.plano.toUpperCase() : '';
-        
-        const cardFavoritos = 'card-favoritos';
-        const cardDemandas = 'card-demandas';
-        const cardBench = 'card-benchmarking';
+            const profileViews = stats.profileViews || stats.profileAppearances || 0;
+            // CORREÇÃO: O sistema de resultados registra a aparição no match chamando 
+            // a rota /appearance (ProfileAppearanceLogs). Portanto, apontamos esse valor 
+            // para corrigir o contador de impressões zerado.
+            const matchImpressions = stats.matchImpressions > 0 ? stats.matchImpressions : profileViews;
+            const whatsappClicks = stats.whatsappClicks || 0;
 
-        if (!planoAtual || planoAtual === 'ESSENTIAL') {
-            bloquearCard(cardFavoritos, 'Veja quem salvou seu perfil no Plano Clínico');
-            bloquearCard(cardDemandas, 'Saiba quais queixas chegam até você no Plano Clínico');
-            bloquearCard(cardBench, 'Comparativo de mercado exclusivo Plano Referência');
-        } 
-        else if (planoAtual === 'CLINICAL') {
-            desbloquearCard(cardFavoritos);
-            desbloquearCard(cardDemandas);
-            bloquearCard(cardBench, 'Destrave o Comparativo de Mercado no Plano Referência');
-        } 
-        else if (planoAtual === 'REFERENCE') {
-            desbloquearCard(cardFavoritos);
-            desbloquearCard(cardDemandas);
-            desbloquearCard(cardBench);
-            const benchCardEl = document.getElementById(cardBench);
-            if(benchCardEl) {
-                benchCardEl.style.border = "1px solid #FFC107";
-                benchCardEl.style.background = "linear-gradient(to right, #fff, #fffae6)";
-            }
-        }
-        // --- FIM DA CORREÇÃO ---
+            // --- BLOCO 0: HERO & BLOCO 2/3: PACIENTES E AUTORIDADE ---
+            const safeCalc = (num, den) => (den && den > 0 ? ((num / den) * 100).toFixed(1) : null);
+            // CORREÇÃO: A "Taxa de Clique" no card de Pacientes deve ser calculada em relação às aparições no match,
+            // não às visualizações de perfil. Isso evita valores > 100% (caso haja um botão de contato direto na listagem)
+            // e cria uma métrica mais coesa com os outros dados do card.
+            const convRate = safeCalc(whatsappClicks, matchImpressions);
 
-        // --- NOVA LÓGICA DE FILTRO E RENDERIZAÇÃO DE KPIs ---
-        const filterSelect = document.getElementById('kpi-date-filter');
-        const kpiGrid = document.querySelector('.kpi-grid');
-        const btnRefresh = document.getElementById('btn-refresh-kpis');
-
-        // Variável para guardar a instância do gráfico e não duplicar
-        let xpChartInstance = null;
-
-        async function fetchAndRenderKPIs(period = 'last30days') {
-            const cards = document.querySelectorAll('.kpi-grid .kpi-card');
+            if(document.getElementById('hero-contacts')) document.getElementById('hero-contacts').innerHTML = whatsappClicks > 0 ? `+${whatsappClicks}` : '<span style="font-size: 1.1rem; opacity: 0.8; font-weight: 500;">Ainda nenhum contato</span>';
+            if(document.getElementById('hero-views')) document.getElementById('hero-views').innerHTML = profileViews > 0 ? profileViews : '<span style="font-size: 1.1rem; opacity: 0.8; font-weight: 500;">Sem visualizações por enquanto</span>';
             
-            const timerLabel = `Frontend KPI Render ${Date.now()}`;
-            console.time(timerLabel);
-            // Ativa o estado de carregamento com a animação de esqueleto
-            cards.forEach(card => {
-                card.classList.add('is-loading');
-                // Seleciona os elementos de texto para aplicar o esqueleto
-                card.querySelectorAll('.kpi-value, h3, .kpi-link, #lista-demandas div').forEach(el => {
-                    el.classList.add('skeleton-text');
-                });
-            });
-
-            try {
-                const statsUrl = `${API_BASE_URL}/api/psychologists/me/stats?period=${period}`;
-                const res = await apiFetch(statsUrl);
-
-                // --- CORREÇÃO: Verifica o tipo de conteúdo ANTES de tentar ler como JSON ---
-                const contentType = res.headers.get("content-type");
-                if (!contentType || !contentType.includes("application/json")) {
-                    const responseText = await res.text();
-                    console.error("A API de estatísticas não retornou JSON. Resposta do servidor:", responseText);
-                    // Joga um erro claro que será pego pelo bloco catch
-                    throw new Error(`O servidor retornou uma resposta inesperada (tipo: ${contentType}).`);
+            // Métrica real de Ranking (Seu perfil está melhor que...)
+            const realScore = stats.betterThanPercentage !== undefined ? stats.betterThanPercentage : 0;
+            if(document.getElementById('hero-benchmark-text')) {
+                if (realScore > 0) {
+                    document.getElementById('hero-benchmark-text').innerHTML = `🔥 Seu perfil está melhor que <strong>${realScore}%</strong> dos psicólogos`;
+                } else {
+                    document.getElementById('hero-benchmark-text').innerHTML = `🌱 <strong>Dica:</strong> Complete seu perfil para ganhar destaque no ranking!`;
                 }
+            }
 
-                const stats = await res.json();
-                
-                // --- VOLUMES DO FUNIL ---
-                const matchImpressions = stats.matchImpressions || 0;
-                const profileViews = stats.profileViews || stats.profileAppearances || 0;
-                const whatsappClicks = stats.whatsappClicks || 0;
-
-                const elMatchImpressions = document.getElementById('kpi-match-impressions');
-                if (elMatchImpressions) elMatchImpressions.textContent = matchImpressions;
-
-                const elProfileViews = document.getElementById('kpi-profile-views');
-                if (elProfileViews) elProfileViews.textContent = profileViews;
-
-                const elWhatsappClicks = document.getElementById('kpi-whatsapp-clicks');
-                if (elWhatsappClicks) elWhatsappClicks.textContent = whatsappClicks;
-
-                // --- TAXAS DE CONVERSÃO (Cálculo no Frontend como Garantia) ---
-                const safeCalc = (num, den) => (!den || den <= 0) ? 'N/A' : ((num / den) * 100).toFixed(1);
-                const funnelRates = stats.funnelRates || {
-                    choiceRate: safeCalc(profileViews, matchImpressions),
-                    profileConversion: safeCalc(whatsappClicks, profileViews),
-                    finalConversion: safeCalc(whatsappClicks, matchImpressions)
+            // Ação do Botão "Melhorar meu perfil"
+            const btnMelhorarPerfil = document.querySelector('.modern-hero-cta');
+            if (btnMelhorarPerfil) {
+                btnMelhorarPerfil.onclick = (e) => {
+                    e.preventDefault();
+                    window.loadPage('psi_meu_perfil.html');
                 };
+            }
 
-                const elTaxaEscolha = document.getElementById('kpi-taxa-escolha');
-                if (elTaxaEscolha) {
-                    elTaxaEscolha.textContent = (funnelRates.choiceRate === 'N/A') ? 'N/A' : `${funnelRates.choiceRate}%`;
+            if(document.getElementById('psi-sidebar-growth-val')) {
+                const growthRate = profileViews > 0 ? '+12%' : '+0%';
+                document.getElementById('psi-sidebar-growth-val').textContent = growthRate;
+            }
+            
+            const renderFriendlyZero = (value, fallbackText) => value > 0 ? value : `<span style="font-size: 1.2rem; color: #888;">${fallbackText}</span>`;
+            
+            if(document.getElementById('kpi-whatsapp-clicks')) document.getElementById('kpi-whatsapp-clicks').innerHTML = renderFriendlyZero(whatsappClicks, 'Ainda não');
+            if(document.getElementById('kpi-profile-views')) document.getElementById('kpi-profile-views').innerHTML = renderFriendlyZero(profileViews, 'Nenhuma');
+            if(document.getElementById('kpi-match-impressions')) document.getElementById('kpi-match-impressions').innerHTML = renderFriendlyZero(matchImpressions, 'Aguardando');
+            if(document.getElementById('kpi-taxa-escolha')) {
+                if (convRate === null) {
+                    document.getElementById('kpi-taxa-escolha').innerHTML = '<span style="font-size: 1.2rem; color: #888;">Em breve</span>';
+                } else {
+                    document.getElementById('kpi-taxa-escolha').textContent = `${convRate}%`;
                 }
+            }
 
-                const elConversaoPerfil = document.getElementById('kpi-conversao-perfil');
-                if (elConversaoPerfil) {
-                    elConversaoPerfil.textContent = (funnelRates.profileConversion === 'N/A') ? 'N/A' : `${funnelRates.profileConversion}%`;
-                }
+            // --- BLOCO 4: COMUNIDADE ---
+            const progress = stats.gamificationProgress || psychologistData.gamificationProgress || {};
+            const blogCount = progress.semeador || progress.blogPostCount || 0;
+            const forumCount = progress.vozAtiva || progress.forumActivityCount || 0;
+            const answersCount = progress.conselheiro || progress.answerCount || 0;
+            const interactions = forumCount + answersCount;
 
-                const elConversaoFinal = document.getElementById('kpi-conversao-final');
-                if (elConversaoFinal) {
-                    elConversaoFinal.textContent = (funnelRates.finalConversion === 'N/A') ? 'N/A' : `${funnelRates.finalConversion}%`;
-                }
+            if(document.getElementById('kpi-artigos')) document.getElementById('kpi-artigos').innerHTML = renderFriendlyZero(blogCount, 'Nenhum');
+            if(document.getElementById('kpi-interacoes')) document.getElementById('kpi-interacoes').innerHTML = renderFriendlyZero(interactions, 'Nenhuma');
 
-                const elDemandas = document.getElementById('lista-demandas');
-                if (elDemandas) {
-                    if (stats.topDemands && stats.topDemands.length > 0) {
-                        elDemandas.innerHTML = stats.topDemands.map((demanda, index) => 
-                            `<div style="font-size: 0.9rem; margin-bottom: 5px; color: ${index > 1 ? '#666' : 'inherit'};">
-                                ${index + 1}. ${demanda.name} (${demanda.percentage}%)
-                            </div>`
-                        ).join('');
-                    } else {
-                        elDemandas.innerHTML = '<div style="font-size: 0.9rem; color: #999;">Ainda não há dados suficientes para este período.</div>';
-                    }
-                }
+            // --- BLOCO 2: CHECKLIST DINÂMICO & FEEDBACK INTELIGENTE ---
+            const actionListContainer = document.querySelector('.modern-action-list');
+            if (actionListContainer) {
+                const steps = [];
 
-                // --- RENDERIZA GRÁFICO DE XP ---
-                if (stats.xpHistory) {
-                    renderXPChart(stats.xpHistory);
-                }
-                
-                // --- ATUALIZA GAMIFICAÇÃO GERAL ---
-                if (stats.gamificationProgress && psychologistData) {
-                    psychologistData.gamificationProgress = stats.gamificationProgress;
-                    updateGamificationWidgets(psychologistData, true);
-                }
+                // Regra 1: Foto
+                const hasPhoto = psychologistData.fotoUrl && !psychologistData.fotoUrl.includes('placehold.co');
+                steps.push({ title: hasPhoto ? 'Foto profissional adicionada' : 'Adicionar uma foto profissional', impact: '+20% Matches', completed: hasPhoto, url: 'psi_meu_perfil.html' });
 
-            } catch (error) {
-                console.error("Erro ao buscar KPIs:", error);
-                showToast('Não foi possível atualizar as métricas.', 'error');
-            } finally {
-                console.timeEnd(timerLabel);
-                // Desativa o estado de carregamento
-                cards.forEach(card => {
-                    card.classList.remove('is-loading');
-                    // Remove a classe de esqueleto de todos os elementos de texto
-                    card.querySelectorAll('.skeleton-text').forEach(el => {
-                        el.classList.remove('skeleton-text');
-                    });
+                // Regra 2: Bio e Temas
+                const hasBio = psychologistData.bio && psychologistData.bio.length > 150;
+                steps.push({ title: hasBio ? 'Biografia otimizada' : 'Escrever uma biografia detalhada', impact: '+Alta Confiança', completed: hasBio, url: 'psi_meu_perfil.html' });
+
+                // Regra 3: Engajamento (Fórum)
+                const hasForumActivity = forumCount > 0;
+                steps.push({ title: hasForumActivity ? 'Participação ativa na comunidade' : 'Responder a uma dúvida na comunidade', impact: 'Maior Visibilidade', completed: hasForumActivity, url: 'psi_forum.html' });
+
+                // Regra 4: Blog (Artigos)
+                const hasArticle = blogCount > 0;
+                steps.push({ title: hasArticle ? 'Artigo publicado com sucesso' : 'Publicar seu primeiro artigo', impact: 'Autoridade', completed: hasArticle, url: 'psi_blog.html' });
+
+                // Ordena colocando itens pendentes no topo
+                steps.sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1));
+
+                // Filtra para exibir apenas no máximo 4 (sempre garantindo variedade)
+                const visibleSteps = steps.slice(0, 4);
+                const completedTasks = visibleSteps.filter(s => s.completed).length;
+                const totalTasks = visibleSteps.length;
+
+                // Renderiza HTML dinâmico removendo os estáticos preexistentes
+                actionListContainer.innerHTML = '';
+                visibleSteps.forEach(step => {
+                    const html = `
+                        <a href="#" onclick="event.preventDefault(); window.loadPage('${step.url}');" class="modern-action-item ${step.completed ? 'completed' : ''}">
+                            <div class="action-checkbox">${step.completed ? '✓' : ''}</div>
+                            <div class="action-content">
+                                <h4 class="action-title">${step.title}</h4>
+                                ${!step.completed ? `<span class="action-impact">${step.impact}</span>` : ''}
+                            </div>
+                        </a>
+                    `;
+                    actionListContainer.insertAdjacentHTML('beforeend', html);
                 });
-            }
-        }
 
-        function renderXPChart(data) {
-            const ctx = document.getElementById('xpChart');
-            if (!ctx) return;
+                // Atualiza barra de progresso
+                const progressText = document.querySelector('.checklist-progress-text');
+                const progressBar = document.querySelector('.checklist-progress-fill');
+                if (progressText) progressText.textContent = `${completedTasks}/${totalTasks} concluídos`;
+                if (progressBar) progressBar.style.width = `${(completedTasks / totalTasks) * 100}%`;
+            }
+
+            // --- BLOCO 6: NOTIFICAÇÕES E LEMBRETES ---
+            const feed = document.getElementById('notification-feed');
+            const emptyState = document.getElementById('notifications-empty-state');
             
-            if (xpChartInstance) {
-                xpChartInstance.destroy();
+            if (feed) {
+                const notifications = [];
+                const diasInativo = stats.diasDesdeUltimaInteracao || (forumCount === 0 && blogCount === 0 ? 8 : 0);
+                const novasInteracoes = stats.novasInteracoes || 0;
+
+                if (diasInativo > 7) {
+                    notifications.push({
+                        type: 'reminder', icon: '🤔',
+                        text: `Você não interage na comunidade há <strong>${diasInativo} dias</strong>. Que tal fortalecer sua presença?`,
+                        time: 'Agora mesmo', link: 'psi_forum.html'
+                    });
+                }
+
+                if (novasInteracoes > 0) {
+                    notifications.push({
+                        type: 'interaction', icon: '❤️',
+                        text: `Suas publicações receberam <strong>${novasInteracoes} novas interações</strong>! Veja quem curtiu e respondeu.`,
+                        time: 'Hoje', link: 'psi_forum.html?filter=meus_posts'
+                    });
+                }
+
+                if (notifications.length > 0) {
+                    if (emptyState) emptyState.style.display = 'none';
+                    notifications.forEach(notif => {
+                        const item = document.createElement('a');
+                        item.href = '#';
+                        item.className = `notification-item type-${notif.type}`;
+                        item.onclick = (e) => { e.preventDefault(); window.loadPage(notif.link); };
+                        item.innerHTML = `
+                            <div class="notification-icon">${notif.icon}</div>
+                            <div class="notification-content">
+                                <p>${notif.text}</p>
+                                <span class="notification-time">${notif.time}</span>
+                            </div>
+                        `;
+                        feed.appendChild(item);
+                    });
+                } else if (emptyState) {
+                    emptyState.style.display = 'flex';
+                }
             }
 
-            // Prepara dados (se vazio, mostra vazio)
-            const labels = data.map(d => {
-                const parts = d.date.split('-');
-                return `${parts[2]}/${parts[1]}`; // DD/MM
-            });
-            const points = data.map(d => parseInt(d.points));
-
-            xpChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'XP',
-                        data: points,
-                        borderColor: '#1B4332',
-                        backgroundColor: (context) => {
-                            const ctx = context.chart.ctx;
-                            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-                            gradient.addColorStop(0, 'rgba(27, 67, 50, 0.2)');
-                            gradient.addColorStop(1, 'rgba(27, 67, 50, 0)');
-                            return gradient;
-                        },
-                        borderWidth: 3,
-                        tension: 0.4,
-                        fill: true,
-                        pointBackgroundColor: '#fff',
-                        pointBorderColor: '#1B4332',
-                        pointRadius: 4,
-                        pointHoverRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: '#1B4332',
-                            titleColor: '#fff',
-                            bodyColor: '#fff',
-                            callbacks: {
-                                label: function(context) {
-                                    return `+${context.parsed.y} XP`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { borderDash: [5, 5], color: '#f0f0f0' },
-                            ticks: { font: { family: 'Mulish' } }
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { font: { family: 'Mulish' } }
-                        }
+            // --- BLOCO 5: GESTÃO (Consultas paralelas para o dashboard secundário) ---
+            try {
+                // Agenda Hoje
+                const resAppts = await apiFetch(`${API_BASE_URL}/api/appointments`);
+                if(resAppts.ok) {
+                    const allAppts = await resAppts.json();
+                    const todayStr = new Date().toLocaleDateString('pt-BR');
+                    const todayAppts = allAppts.filter(a => new Date(a.start).toLocaleDateString('pt-BR') === todayStr && a.status !== 'available' && a.status !== 'cancelled');
+                    if(document.getElementById('agenda-hoje')) {
+                        document.getElementById('agenda-hoje').innerHTML = todayAppts.length > 0 ? `${todayAppts.length} atends.` : '<span style="color:#888; font-weight:normal; font-size:0.85rem;">Livre hoje</span>';
                     }
                 }
-            });
-        }
 
-        // Adiciona o listener para o filtro
-        if (filterSelect) {
-            // Remove listener antigo para evitar duplicação ao recarregar a página
-            const newFilterSelect = filterSelect.cloneNode(true);
-            filterSelect.parentNode.replaceChild(newFilterSelect, filterSelect);
-            
-            newFilterSelect.addEventListener('change', (e) => {
-                fetchAndRenderKPIs(e.target.value);
-            });
-        }
+                // Financeiro (Mês Atual)
+                const currentMonthStr = new Date().toISOString().slice(0, 7);
+                const resFin = await apiFetch(`${API_BASE_URL}/api/financials/dashboard?period=current`);
+                if(resFin.ok) {
+                    const finData = await resFin.json();
+                    const income = (finData.appointments || []).filter(e => e.status === 'done').reduce((acc, curr) => acc + (curr.value || 0), 0);
+                    if(document.getElementById('faturamento-mes')) {
+                        document.getElementById('faturamento-mes').innerHTML = income > 0 ? `R$ ${income.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '<span style="color:#888; font-weight:normal; font-size:0.85rem;">Sem saldo</span>';
+                    }
+                }
+            } catch(e) {
+                console.warn("Erro ao carregar dados secundários:", e);
+                if(document.getElementById('agenda-hoje')) document.getElementById('agenda-hoje').innerHTML = '<span style="color:#888; font-weight:normal; font-size:0.85rem;">Livre hoje</span>';
+                if(document.getElementById('faturamento-mes')) document.getElementById('faturamento-mes').innerHTML = '<span style="color:#888; font-weight:normal; font-size:0.85rem;">Sem saldo</span>';
+            }
 
-        // Carga inicial dos KPIs
-        fetchAndRenderKPIs('last30days');
-
-        // NOVO: Renderiza o widget de gamificação
-        if (psychologistData) {
-            updateGamificationWidgets(psychologistData, true);
+        } catch (error) {
+            console.error("Erro ao buscar dados da Visão Geral:", error);
+            showToast('Não foi possível atualizar todas as métricas.', 'error');
         }
     }
 
@@ -1502,9 +1857,7 @@ document.addEventListener('DOMContentLoaded', function() {
         overlay.querySelector('button').onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
-            // Simula o clique no menu lateral para carregar a página de assinatura
-            const linkAssinatura = document.querySelector('[data-page="psi_assinatura.html"]');
-            if(linkAssinatura) linkAssinatura.click();
+            window.loadPage('psi_assinatura.html');
         };
     
         card.appendChild(overlay);
@@ -1531,12 +1884,16 @@ document.addEventListener('DOMContentLoaded', function() {
     let documentMaskInstance = null;
 
     function inicializarLogicaDoPerfil() {
-        const form = document.getElementById('perfil-form');
-        if (!form) return;
-
-        const inputDoc = document.getElementById('cpf');
-        const inputRazao = document.getElementById('razao_social');
-        const groupRazao = document.getElementById('group-razao-social');
+        const profileContainer = document.getElementById('profile-blocks-container');
+        if (!profileContainer) return;
+        
+        let originalProfileData = { ...psychologistData };
+        const dirtyBlocks = new Set();
+        const debounceTimers = {};
+        
+        const stickyFooter = document.getElementById('sticky-actions');
+        const dirtyCountSpan = document.getElementById('dirty-count');
+        const saveAllButton = document.getElementById('btn-save-all');
 
         // Inicializa componentes
         setupMultiselects();
@@ -1544,27 +1901,36 @@ document.addEventListener('DOMContentLoaded', function() {
         setupCepSearch();
 
         if (psychologistData) {
-            // Garante que a foto do mobile seja preenchida ao carregar a aba
+            populateBlockForm(psychologistData);
+            
+            // Garante que os inputs inciem travados
+            profileContainer.querySelectorAll('input, textarea, select').forEach(el => { el.disabled = true; });
+        }
+        
+        function populateBlockForm(data) {
+            // Foto Mobile
             const mobileImgEl = document.getElementById('mobile-profile-photo-preview');
             if (mobileImgEl) {
-                mobileImgEl.src = formatImageUrl(psychologistData.fotoUrl);
+                mobileImgEl.src = formatImageUrl(data.fotoUrl);
                 mobileImgEl.onerror = function() { this.src = 'https://placehold.co/120x120/1B4332/FFFFFF?text=Psi'; };
             }
 
-            // 1. Preencher campos de texto simples
-            ['nome', 'email', 'crp', 'telefone', 'bio', 'valor_sessao_numero', 'slug', 'cep', 'cidade', 'estado'].forEach(id => {
+            // Campos Simples
+        ['nome', 'email', 'crp', 'telefone', 'bio', 'valor_sessao_numero', 'slug', 'cep', 'cidade', 'estado', 'razao_social', 'formacao_desc'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) el.value = psychologistData[id] || '';
+                if (el) el.value = data[id] || '';
             });
 
-            // 2. Preenchimento Inteligente do Documento (CPF/CNPJ)
+            // Documento (CPF/CNPJ) Híbrido
+            const inputDoc = document.getElementById('cpf');
+            const groupRazao = document.getElementById('group-razao-social');
             if (inputDoc) {
-                const docSalvo = psychologistData.cpf || psychologistData.cnpj || psychologistData.document_number || '';
+                const docSalvo = data.cpf || data.cnpj || data.document_number || '';
                 if (documentMaskInstance) {
                     documentMaskInstance.value = docSalvo; 
-                    if (documentMaskInstance.unmaskedValue.length > 11) {
+                    if (documentMaskInstance.unmaskedValue.length > 11 && groupRazao) {
                         groupRazao.classList.remove('hidden');
-                    } else {
+                    } else if (groupRazao) {
                         groupRazao.classList.add('hidden');
                     }
                 } else {
@@ -1572,42 +1938,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            if (inputRazao) inputRazao.value = psychologistData.razao_social || '';
-
-            // 3. Preenchimento das Redes Sociais
+            // Redes Sociais
             ['linkedin_url', 'instagram_url', 'facebook_url', 'tiktok_url', 'x_url'].forEach(key => {
                 const el = document.getElementById(key);
-                if (el && psychologistData[key]) {
-                    let val = psychologistData[key].replace(/https?:\/\/(www\.)?/, '').replace(/linkedin\.com\/in\//, '').replace(/instagram\.com\//, '');
+                if (el && data[key]) {
+                    let val = data[key].replace(/https?:\/\/(www\.)?/, '').replace(/linkedin\.com\/in\//, '').replace(/instagram\.com\//, '');
                     el.value = val;
                 }
             });
 
-            // 4. CARREGAR DADOS DOS MULTISELECTS (Lendo os nomes corretos do banco)
-            // Nota: O banco pode retornar 'temas_atuacao' ou 'temas', verificamos ambos
-            
-            // --- CORREÇÃO: Carregamento Robusto de Especialidades/Temas ---
-            const temasData = psychologistData.temas_atuacao || psychologistData.temas || psychologistData.especialidades || [];
+            // Multiselects
+            const temasData = data.temas_atuacao || data.temas || data.especialidades || [];
             updateMultiselect('temas_atuacao_multiselect', temasData);
-            updateMultiselect('especialidades_multiselect', temasData); // Fallback para ID antigo
-
-            const abordagensData = psychologistData.abordagens_tecnicas || psychologistData.abordagens || [];
+            
+            const abordagensData = data.abordagens_tecnicas || data.abordagens || [];
             updateMultiselect('abordagens_tecnicas_multiselect', abordagensData);
             
-            updateMultiselect('genero_identidade_multiselect', psychologistData.genero_identidade ? [psychologistData.genero_identidade] : []);
-            // ADICIONADO: Carrega os dados dos novos campos
-            updateMultiselect('publico_alvo_multiselect', psychologistData.publico_alvo || []);
-            updateMultiselect('estilo_terapia_multiselect', psychologistData.estilo_terapia || []);
-            updateMultiselect('praticas_inclusivas_multiselect', psychologistData.praticas_inclusivas || []);
+            updateMultiselect('genero_identidade_multiselect', data.genero_identidade ? [data.genero_identidade] : []);
+            updateMultiselect('publico_alvo_multiselect', data.publico_alvo || []);
+            updateMultiselect('estilo_terapia_multiselect', data.estilo_terapia || []);
+            updateMultiselect('praticas_inclusivas_multiselect', data.praticas_inclusivas || []);
+            updateMultiselect('disponibilidade_periodo_multiselect', data.disponibilidade_periodo || []);
+            updateMultiselect('formacao_nivel_multiselect', data.formacao_nivel ? [data.formacao_nivel] : []);
 
-            updateMultiselect('disponibilidade_periodo_multiselect', psychologistData.disponibilidade_periodo || []);
-
-            // 5. CORREÇÃO DA MODALIDADE (Online/Presencial)
-            let modData = psychologistData.modalidade || [];
-            if (typeof modData === 'string') {
-                try { modData = JSON.parse(modData); } catch(e) { modData = [modData]; }
-            }
-            // Traduz legado "Apenas X" para o formato novo
+            let modData = data.modalidade || [];
+            if (typeof modData === 'string') { try { modData = JSON.parse(modData); } catch(e) { modData = [modData]; } }
             if (Array.isArray(modData)) {
                 modData = modData.map(item => {
                     if (item.includes('Apenas Online')) return 'Online';
@@ -1616,138 +1971,321 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
             updateMultiselect('modalidade_atendimento_multiselect', modData);
-
-            // 6. Controle de Edição
-            const btnAlterar = document.getElementById('btn-alterar');
-            const multiselects = document.querySelectorAll('.multiselect-tag');
-            const modeIndicator = document.getElementById('form-mode-indicator');
-            const modeText = document.getElementById('form-mode-text');
-            const modeIcon = document.getElementById('form-mode-icon');
+        }
+        
+        // --- Eventos de Edição (Delegação por Bloco) ---
+        profileContainer.addEventListener('click', (e) => {
+            const btnEdit = e.target.closest('.btn-edit');
+            const btnCancel = e.target.closest('.btn-cancel');
+            const btnSave = e.target.closest('.btn-save');
             
-            if(btnAlterar) {
-                btnAlterar.onclick = (e) => {
-                    e.preventDefault();
-                    document.getElementById('form-fieldset').disabled = false;
-                    multiselects.forEach(m => m.classList.remove('disabled'));
-
-                    // Muda para Modo de Edição
-                    if(modeIndicator) {
-                        modeIndicator.classList.remove('mode-indicator-view');
-                        modeIndicator.classList.add('mode-indicator-edit');
-                        modeText.textContent = "Modo de Edição";
-                        modeIcon.textContent = "✏️";
+            if (btnEdit) {
+                e.preventDefault();
+                enterEditMode(btnEdit.closest('.profile-block'));
+            } else if (btnCancel) {
+                e.preventDefault();
+                cancelEditMode(btnCancel.closest('.profile-block'));
+            } else if (btnSave) {
+                e.preventDefault();
+                saveBlockData(btnSave.closest('.profile-block'));
+            } else {
+                // Checa alterações em cliques de multiselect
+                const opt = e.target.closest('.option');
+                if (opt) {
+                    const block = opt.closest('.profile-block');
+                    if (block && block.classList.contains('editing')) {
+                        const blockId = block.dataset.blockId;
+                        clearTimeout(debounceTimers[blockId]);
+                        debounceTimers[blockId] = setTimeout(() => checkForChanges(block), 600);
                     }
+                }
+            }
+        });
 
-                    btnAlterar.classList.add('hidden');
-                    document.getElementById('btn-salvar').classList.remove('hidden');
-                };
+        profileContainer.addEventListener('input', (e) => {
+            const block = e.target.closest('.profile-block');
+            if (block && block.classList.contains('editing')) {
+                const blockId = block.dataset.blockId;
+                clearTimeout(debounceTimers[blockId]);
+                debounceTimers[blockId] = setTimeout(() => checkForChanges(block), 600);
+            }
+        });
+        
+        function enterEditMode(block) {
+            block.classList.add('editing');
+            setBlockState(block, 'default');
+            
+            block.querySelectorAll('input, textarea, select').forEach(el => {
+                // Impede edição de dados sensíveis ou controlados por API
+                if (el.id !== 'email' && el.id !== 'cidade' && el.id !== 'estado') {
+                    el.disabled = false;
+                    el.readOnly = false;
+                }
+            });
+            block.querySelectorAll('.multiselect-tag').forEach(el => el.classList.remove('disabled'));
+
+            block.querySelector('.btn-edit').classList.add('hidden');
+            block.querySelector('.btn-cancel').classList.remove('hidden');
+            block.querySelector('.btn-save').classList.remove('hidden');
+        }
+
+        function cancelEditMode(block) {
+            block.classList.remove('editing');
+            populateBlockForm(originalProfileData); // Reverte pro que tá no banco
+
+            block.querySelectorAll('input, textarea, select').forEach(el => { el.disabled = true; });
+            block.querySelectorAll('.multiselect-tag').forEach(el => el.classList.add('disabled'));
+
+            block.querySelector('.btn-edit').classList.remove('hidden');
+            block.querySelector('.btn-cancel').classList.add('hidden');
+            block.querySelector('.btn-save').classList.add('hidden');
+            
+            checkForChanges(block); // Limpa o estado dirty deste bloco
+        }
+
+        function exitEditMode(block) {
+            block.classList.remove('editing');
+            block.querySelectorAll('input, textarea, select').forEach(el => { el.disabled = true; });
+            block.querySelectorAll('.multiselect-tag').forEach(el => el.classList.add('disabled'));
+            block.querySelector('.btn-edit').classList.remove('hidden');
+            block.querySelector('.btn-cancel').classList.add('hidden');
+            block.querySelector('.btn-save').classList.add('hidden');
+        }
+
+        function setBlockState(block, state, message = '') {
+            const statusEl = block.querySelector('.block-status');
+            const saveBtn = block.querySelector('.btn-save');
+            const btnText = saveBtn ? saveBtn.querySelector('.btn-text') || saveBtn : null;
+            let originalSaveHtml = 'Salvar';
+
+            if (statusEl) statusEl.className = 'block-status'; // Reset
+            if (saveBtn) saveBtn.disabled = false;
+
+            switch (state) {
+                case 'saving':
+                    if (saveBtn) saveBtn.disabled = true;
+                    if (btnText) btnText.innerHTML = '<span class="spinner"></span> Salvando...';
+                    break;
+                case 'success':
+                    if (statusEl) {
+                        statusEl.textContent = message || 'Salvo ✔';
+                        statusEl.classList.add('visible', 'success');
+                        setTimeout(() => statusEl.classList.remove('visible'), 2500);
+                    }
+                    if (btnText) btnText.innerHTML = originalSaveHtml;
+                    break;
+                case 'error':
+                    if (statusEl) {
+                        statusEl.textContent = message || 'Erro ao salvar.';
+                        statusEl.classList.add('visible', 'error');
+                    }
+                    if (btnText) btnText.innerHTML = originalSaveHtml;
+                    break;
+                case 'default':
+                    if (statusEl) statusEl.classList.remove('visible');
+                    if (btnText) btnText.innerHTML = originalSaveHtml;
+                    break;
+            }
+        }
+
+        function getBlockData(block) {
+            const data = {};
+            block.querySelectorAll('input, textarea, select').forEach(input => {
+                if (input.name) {
+                    if (input.type === 'number' || input.id === 'valor_sessao_numero') {
+                        data[input.name] = parseFloat(input.value.toString().replace(',', '.')) || null;
+                    } else if (input.id === 'cpf' || input.id === 'telefone') {
+                        data[input.name] = input.value.replace(/\D/g, ''); // Remove máscara
+                    } else {
+                        data[input.name] = input.value;
+                    }
+                }
+            });
+
+            block.querySelectorAll('.multiselect-tag').forEach(multi => {
+                const id = multi.id.replace('_multiselect', '');
+                data[id] = getMultiselectValues(multi.id);
+            });
+
+            // Select único
+            const elGenero = block.querySelector('#genero_identidade_multiselect');
+            if (elGenero) {
+                const generoArr = getMultiselectValues('genero_identidade_multiselect');
+                data.genero_identidade = generoArr.length > 0 ? generoArr[0] : '';
             }
 
-            // --- AÇÃO DE SALVAR (CORRIGIDA: Agora ouve os erros do servidor) ---
-            form.onsubmit = async (e) => {
-                e.preventDefault();
-                const btnSalvar = document.getElementById('btn-salvar');
-                const btnAlterar = document.getElementById('btn-alterar');
-                const fieldset = document.getElementById('form-fieldset');
-                
-                // Feedback visual de carregamento
-                btnSalvar.textContent = "Salvando...";
-                btnSalvar.disabled = true; 
-                
-                const fd = new FormData(form);
-                const data = Object.fromEntries(fd.entries());
+            // Select único
+            const elFormacao = block.querySelector('#formacao_nivel_multiselect');
+            if (elFormacao) {
+                const formacaoArr = getMultiselectValues('formacao_nivel_multiselect');
+                data.formacao_nivel = formacaoArr.length > 0 ? formacaoArr[0] : '';
+            }
 
-                // --- MAPEAMENTO DE DADOS ---
-                // Helper para só enviar o que existe na tela (evita apagar dados se o HTML estiver desatualizado)
-                const safeGetMultiselect = (key, id) => {
-                    if (document.getElementById(id)) {
-                        data[key] = getMultiselectValues(id);
+            return data;
+        }
+
+        async function saveBlockData(block) {
+            setBlockState(block, 'saving');
+            const payload = getBlockData(block);
+
+            // Lógica legada para limpar razão social se não for CNPJ
+            if (payload.cpf && payload.cpf.length <= 11) payload.razao_social = '';
+
+            try {
+                const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me`, {
+                    method: 'PUT',
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.error || 'Falha ao salvar bloco.');
+                }
+
+                // Tudo certo! Atualiza as origens
+                Object.assign(originalProfileData, payload);
+                psychologistData = { ...psychologistData, ...payload };
+                if (payload.slug) psychologistData.slug = payload.slug;
+
+                // Sincroniza o nome no LocalStorage e no Header Público (se visível)
+                if (payload.nome) {
+                    localStorage.setItem('Yelo_user_name', payload.nome);
+                    const primeiroNome = payload.nome.split(' ')[0];
+                    
+                    const headerGreeting = document.querySelector('.user-greeting-text');
+                    if (headerGreeting) headerGreeting.textContent = `Painel de ${primeiroNome}`;
+                    
+                    const headerAvatar = document.getElementById('header-avatar-initial');
+                    if (headerAvatar && !headerAvatar.tagName.toLowerCase().includes('img')) headerAvatar.textContent = primeiroNome.charAt(0).toUpperCase();
+                }
+
+                setBlockState(block, 'success');
+                dirtyBlocks.delete(block.dataset.blockId);
+                updateStickyFooter();
+                
+                setTimeout(() => exitEditMode(block), 600);
+                atualizarInterfaceLateral();
+
+            } catch (err) {
+                console.error("Erro ao salvar bloco:", err);
+                setBlockState(block, 'error', err.message);
+            }
+        }
+
+        function checkForChanges(block) {
+            const blockId = block.dataset.blockId;
+            const currentData = getBlockData(block);
+            let isDirty = false;
+
+            for (const key in currentData) {
+                let origVal = originalProfileData[key];
+                let currVal = currentData[key];
+
+                if (Array.isArray(currVal)) {
+                    let origArr = origVal;
+                    if (typeof origArr === 'string') { try { origArr = JSON.parse(origArr); } catch(e) { origArr = [origArr]; } }
+                    if (!Array.isArray(origArr)) origArr = origArr ? [origArr] : [];
+
+                    const sortedOriginal = [...origArr].sort();
+                    const sortedCurrent = [...currVal].sort();
+                    if (JSON.stringify(sortedOriginal) !== JSON.stringify(sortedCurrent)) {
+                        isDirty = true; break;
                     }
-                };
-
-                safeGetMultiselect('temas_atuacao', 'temas_atuacao_multiselect');
-                // Fallback: Se não achou o novo ID, tenta o antigo 'especialidades'
-                if (!data.temas_atuacao && document.getElementById('especialidades_multiselect')) {
-                    data.temas_atuacao = getMultiselectValues('especialidades_multiselect');
-                }
-
-                safeGetMultiselect('abordagens_tecnicas', 'abordagens_tecnicas_multiselect');
-                safeGetMultiselect('modalidade', 'modalidade_atendimento_multiselect');
-                safeGetMultiselect('disponibilidade_periodo', 'disponibilidade_periodo_multiselect');
-                safeGetMultiselect('publico_alvo', 'publico_alvo_multiselect');
-                safeGetMultiselect('estilo_terapia', 'estilo_terapia_multiselect');
-                safeGetMultiselect('praticas_inclusivas', 'praticas_inclusivas_multiselect');
-
-                const elGenero = document.getElementById('genero_identidade_multiselect');
-                if (elGenero) {
-                    const generoArr = getMultiselectValues('genero_identidade_multiselect');
-                    data.genero_identidade = generoArr.length > 0 ? generoArr[0] : '';
                 } else {
-                    delete data.genero_identidade;
+                    // Evita falsos positivos com strings numéricas
+                    if ((key === 'cpf' || key === 'telefone') && String(origVal || '').replace(/\D/g, '') !== String(currVal || '').replace(/\D/g, '')) {
+                         isDirty = true; break;
+                    }
+                    else if (key !== 'cpf' && key !== 'telefone' && String(origVal || '') !== String(currVal || '')) {
+                        isDirty = true; break;
+                    }
                 }
+            }
 
-                if (data.valor_sessao_numero) {
-                    data.valor_sessao_numero = parseFloat(data.valor_sessao_numero.toString().replace(',', '.'));
-                }
+            if (isDirty) dirtyBlocks.add(blockId);
+            else dirtyBlocks.delete(blockId);
 
-                if (data.cpf) data.cpf = data.cpf.replace(/\D/g, '');
-                if (data.telefone) data.telefone = data.telefone.replace(/\D/g, '');
-                if (data.cpf && data.cpf.length <= 11) data.razao_social = ''; 
+            updateStickyFooter();
+        }
+
+        function updateStickyFooter() {
+            if (!stickyFooter || !dirtyCountSpan) return;
+            const count = dirtyBlocks.size;
+            if (count > 0) {
+                dirtyCountSpan.textContent = count;
+                stickyFooter.classList.remove('hidden');
+            } else {
+                stickyFooter.classList.add('hidden');
+            }
+        }
+
+        if (saveAllButton) {
+            saveAllButton.onclick = async () => {
+                const btnText = saveAllButton.querySelector('.btn-text') || saveAllButton;
+                const spinner = saveAllButton.querySelector('.spinner');
+                
+                saveAllButton.disabled = true;
+                if (btnText) btnText.classList.add('hidden');
+                if (spinner) spinner.classList.remove('hidden');
+
+                const allDirtyData = {};
+                dirtyBlocks.forEach(blockId => {
+                    const block = profileContainer.querySelector(`[data-block-id="${blockId}"]`);
+                    if (block) {
+                        Object.assign(allDirtyData, getBlockData(block));
+                        setBlockState(block, 'saving');
+                    }
+                });
+
+                if (allDirtyData.cpf && allDirtyData.cpf.length <= 11) allDirtyData.razao_social = '';
 
                 try {
-                    console.log("Enviando atualização:", data);
-                    
-                    // 1. Envia ao servidor e AGUARDA a resposta completa
-                    const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me`, { 
-                        method: 'PUT', 
-                        body: JSON.stringify(data) 
+                    const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me`, {
+                        method: 'PUT',
+                        body: JSON.stringify(allDirtyData)
+                    });
+
+                    if (!res.ok) throw new Error((await res.json()).error || 'Falha ao salvar tudo.');
+
+                    Object.assign(originalProfileData, allDirtyData);
+                    psychologistData = { ...psychologistData, ...allDirtyData };
+                    if (allDirtyData.slug) psychologistData.slug = allDirtyData.slug;
+
+                    // Sincroniza o nome no LocalStorage e no Header Público (se visível)
+                    if (allDirtyData.nome) {
+                        localStorage.setItem('Yelo_user_name', allDirtyData.nome);
+                        const primeiroNome = allDirtyData.nome.split(' ')[0];
+                        
+                        const headerGreeting = document.querySelector('.user-greeting-text');
+                        if (headerGreeting) headerGreeting.textContent = `Painel de ${primeiroNome}`;
+                        
+                        const headerAvatar = document.getElementById('header-avatar-initial');
+                        if (headerAvatar && !headerAvatar.tagName.toLowerCase().includes('img')) headerAvatar.textContent = primeiroNome.charAt(0).toUpperCase();
+                    }
+
+                    dirtyBlocks.forEach(blockId => {
+                        const block = profileContainer.querySelector(`[data-block-id="${blockId}"]`);
+                        if (block) {
+                            setBlockState(block, 'success');
+                            setTimeout(() => exitEditMode(block), 500);
+                        }
                     });
                     
-                    // 2. VERIFICAÇÃO CRUCIAL: O servidor aceitou?
-                    if (!res.ok) {
-                        // Se não aceitou (ex: erro 400 de link duplicado), pegamos a mensagem
-                        const errData = await res.json();
-                        throw new Error(errData.error || 'Erro desconhecido ao salvar.');
-                    }
-
-                    // 3. Se passou daqui, foi SUCESSO REAL
-                    showToast('Perfil salvo com sucesso!', 'success');
-                    
-                    // Atualiza dados locais
-                    psychologistData = { ...psychologistData, ...data };
-                    // Se mudou o link, atualiza o objeto local para refletir na sidebar
-                    if(data.slug) psychologistData.slug = data.slug;
-                    
-                    // Trava o formulário novamente
-                    fieldset.disabled = true; 
-                    const multiselects = document.querySelectorAll('.multiselect-tag');
-                    multiselects.forEach(m => m.classList.add('disabled'));
-
-                    // Volta para Modo de Visualização
-                    if(modeIndicator) {
-                        modeIndicator.classList.remove('mode-indicator-edit');
-                        modeIndicator.classList.add('mode-indicator-view');
-                        modeText.textContent = "Modo de Visualização";
-                        modeIcon.textContent = "●";
-                    }
-
-                    btnSalvar.classList.add('hidden');
-                    btnAlterar.classList.remove('hidden');
-                    
+                    dirtyBlocks.clear();
+                    updateStickyFooter();
                     atualizarInterfaceLateral();
+                    showToast('Todas as alterações salvas!', 'success');
 
                 } catch (err) {
-                    console.error("Erro ao salvar perfil:", err);
-                    // Se for um erro de rede, mostra uma mensagem genérica.
-                    // Se for um erro enviado pelo servidor (ex: "Link já em uso"), mostra a mensagem específica.
-                    let friendlyMessage = 'Não foi possível salvar. Verifique sua conexão e tente novamente.';
-                    if (err.message && !err.message.toLowerCase().includes('failed to fetch')) {
-                        friendlyMessage = err.message;
-                    }
-                    showToast(friendlyMessage, 'error');
+                    showToast(err.message, 'error');
+                    dirtyBlocks.forEach(blockId => {
+                        const block = profileContainer.querySelector(`[data-block-id="${blockId}"]`);
+                        if (block) setBlockState(block, 'error');
+                    });
                 } finally {
-                    btnSalvar.textContent = "Salvar Alterações";
-                    btnSalvar.disabled = false;
+                    saveAllButton.disabled = false;
+                    if (btnText) btnText.classList.remove('hidden');
+                    if (spinner) spinner.classList.add('hidden');
                 }
             };
         }
@@ -1763,6 +2301,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (res.ok) {
                             const d = await res.json();
                             psychologistData.fotoUrl = d.fotoUrl;
+                            localStorage.setItem('Yelo_user_photo', d.fotoUrl);
                             atualizarInterfaceLateral(); showToast('Foto atualizada!');
                         }
                     } catch (err) { showToast('Erro na foto', 'error'); }
@@ -1823,200 +2362,242 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- LÓGICA DA COMUNIDADE (Q&A) ---
     function inicializarComunidade(preFetchedData = null) {
-        let currentPage = 1;
-        const limit = 15;
         // Ajuste dinâmico do Banner (Título e Subtítulo)
         const bannerTitle = document.querySelector('.main-header h1');
         const bannerSub = document.querySelector('.subtitulo-header');
-        if(bannerTitle) bannerTitle.textContent = "Perguntas";
-        if(bannerSub) bannerSub.textContent = "Responda dúvidas da comunidade e ganhe visibilidade.";
+        if(bannerTitle) bannerTitle.textContent = "Comunidade";
+        if(bannerSub) bannerSub.textContent = "Tire dúvidas e compartilhe conhecimento com outros profissionais.";
 
         const container = document.getElementById('qna-list-container');
-        const loadMoreBtn = document.getElementById('btn-load-more-questions');
-        const modal = document.getElementById('qna-answer-modal');
-        const form = document.getElementById('qna-answer-form');
-        const textarea = document.getElementById('qna-answer-textarea');
-        const charCounter = document.getElementById('qna-char-counter');
-        const btnSubmit = document.getElementById('qna-submit-answer');
-        let currentQuestionId = null;
+        const paginationContainer = document.getElementById('qna-pagination');
+        const searchInput = document.getElementById('forum-search-input');
+        
+        // As referências do modal serão buscadas dinamicamente para evitar elementos mortos
+        let allQuestions = [];
+        let filteredQuestions = [];
+        let currentPage = 1;
+        const ITEMS_PER_PAGE = 5;
+        let currentFilter = 'all';
+        let currentQuestionIdToAnswer = null;
 
-        if (!container || !loadMoreBtn) return;
+        if (!container) return;
 
-        async function fetchAndRender(page, append = false) {
-            if (!append) {
-                container.innerHTML = '<div class="loader-wrapper"><div class="loader-spinner"></div></div>';
-            }
-            loadMoreBtn.textContent = 'Carregando...';
-            loadMoreBtn.disabled = true;
-
+        async function loadQuestions() {
+            container.innerHTML = '<div class="loader-wrapper"><div class="loader-spinner"></div></div>';
             try {
                 let questions;
-                if (page === 1 && preFetchedData) {
+                if (preFetchedData) {
                     questions = await preFetchedData;
                     preFetchedData = null;
                 } else {
-                    const res = await apiFetch(`${API_BASE_URL}/api/qna?page=${page}&limit=${limit}`);
+                    // Busca um lote maior para o client-side lidar com os filtros tranquilamente
+                    const res = await apiFetch(`${API_BASE_URL}/api/qna?page=1&limit=100`);
                     if (!res.ok) throw new Error('Falha ao buscar perguntas');
                     questions = await res.json();
                 }
 
-                if (!append) container.innerHTML = '';
-
-                if (questions.length > 0) {
-                    renderQuestions(questions);
-                }
-
-                if (questions.length < limit) {
-                    loadMoreBtn.classList.add('hidden');
-                } else {
-                    loadMoreBtn.classList.remove('hidden');
-                }
-
-                if (page === 1 && questions.length === 0) {
-                    showEmptyState();
-                }
+                allQuestions = questions;
+                applyFiltersAndSort();
             } catch (err) {
                 console.error(err);
-                if (!append) container.innerHTML = `<div style="text-align:center; padding:40px;">Erro ao carregar perguntas.</div>`;
-            } finally {
-                loadMoreBtn.textContent = 'Carregar Mais Perguntas';
-                loadMoreBtn.disabled = false;
+                container.innerHTML = `<div style="text-align:center; padding:40px; color:red;">Erro ao carregar perguntas.</div>`;
             }
         }
 
-        function renderQuestions(allQuestions) {
+        if (searchInput) {
+            searchInput.addEventListener('input', () => { applyFiltersAndSort(); });
+        }
+        
+        const filterTabs = document.querySelectorAll('#qna-filter-tabs .tab-item');
+        if (filterTabs) {
+            filterTabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    filterTabs.forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentFilter = e.target.dataset.filter;
+                    applyFiltersAndSort();
+                });
+            });
+        }
+
+        function applyFiltersAndSort() {
+            const term = searchInput ? searchInput.value.toLowerCase() : '';
             
-            const pendingQuestions = allQuestions.filter(q => q.respondedByMe === false);
-            
-            const template = document.getElementById('qna-card-template-psi');
-            if (!template) {
-                console.error("CRITICAL: Template 'qna-card-template-psi' não encontrado no DOM.");
-                container.innerHTML = '<p style="color:red; text-align:center;">Erro de interface: Template de perguntas não encontrado.</p>';
+            filteredQuestions = allQuestions.filter(q => {
+                const matchesSearch = (q.titulo && q.titulo.toLowerCase().includes(term)) || 
+                                      (q.conteudo && q.conteudo.toLowerCase().includes(term)) ||
+                                      (q.content && q.content.toLowerCase().includes(term));
+                const isAnsweredByMe = q.respondedByMe === true;
+                
+                if (currentFilter === 'pending') return matchesSearch && !isAnsweredByMe;
+                if (currentFilter === 'answered') return matchesSearch && isAnsweredByMe;
+                return matchesSearch;
+            });
+
+            filteredQuestions.sort((a, b) => {
+                const aAnswered = a.respondedByMe === true;
+                const bAnswered = b.respondedByMe === true;
+                
+                if (aAnswered !== bAnswered) return aAnswered ? 1 : -1; 
+                return new Date(b.createdAt) - new Date(a.createdAt);
+            });
+
+            currentPage = 1;
+            renderPage();
+        }
+
+        function renderPage() {
+            container.innerHTML = '';
+            if (filteredQuestions.length === 0) {
+                showEmptyState();
+                if(paginationContainer) paginationContainer.innerHTML = '';
                 return;
             }
-            
-            pendingQuestions.forEach(q => {
-                const clone = template.content.cloneNode(true); // Agora 'template' é garantido que existe
-                
-                // --- CORREÇÃO INFALÍVEL ---
-                // Em vez de procurar pelo nome '.qna-card', pegamos o primeiro elemento do template.
-                // Isso funciona independente do nome da classe no seu HTML.
+
+            const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+            const pageData = filteredQuestions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+            const template = document.getElementById('qna-card-template-psi');
+
+            pageData.forEach(q => {
+                const clone = template.content.cloneNode(true);
                 const cardElement = clone.firstElementChild; 
 
                 if(cardElement) {
-                    // Necessário para o ícone ficar no canto certo
                     cardElement.style.position = 'relative';
                 }
 
-                clone.querySelector('.qna-question-title').textContent = q.titulo || 'Dúvida da Comunidade';
-                clone.querySelector('.qna-question-content').textContent = q.conteudo || q.content;
+                clone.querySelector('.qna-question-title').textContent = q.titulo || q.title || 'Dúvida da Comunidade';
                 
+                // FIX: Procura a caixa principal do card para garantir a reescrita visual
+                const cardBody = clone.querySelector('.qna-card-body');
+                if (cardBody) {
+                    const questionText = q.conteudo || q.content || '';
+                    
+                    // Limpa o estilo de "bloco" original para não interferir no flexbox
+                    cardBody.style.background = 'transparent';
+                    cardBody.style.border = 'none';
+                    cardBody.style.padding = '0';
+                    cardBody.innerHTML = ''; 
+                    
+                    const threadWrapper = document.createElement('div');
+                    threadWrapper.className = 'qna-conversation-thread';
+                    
+                    // Balão da Pergunta
+                    const qBubble = document.createElement('div');
+                    qBubble.className = 'qna-bubble qna-bubble-question';
+                    qBubble.innerHTML = `<p style="margin:0;">${questionText}</p>`;
+                    threadWrapper.appendChild(qBubble);
+                    
+                    cardBody.appendChild(threadWrapper);
+                } else {
+                    // Fallback seguro se a classe HTML não for exata
+                    const fallbackContent = clone.querySelector('.qna-question-content, p, .conteudo');
+                    if (fallbackContent) fallbackContent.textContent = q.conteudo || q.content || '';
+                }
+
                 const dataEnvio = new Date(q.createdAt).toLocaleDateString('pt-BR');
                 clone.querySelector('.qna-question-author').textContent = `Enviada em ${dataEnvio} • Paciente Anônimo`;
 
-                const badge = clone.querySelector('.badge-respondido');
-                if(badge) badge.style.display = 'none';
-
-                // Botão Responder
                 const btnResponder = clone.querySelector('.btn-responder');
-                btnResponder.onclick = () => abrirModalResposta(q.id, q.titulo);
+                
+                const isAnsweredByMe = q.respondedByMe === true;
 
-                // --- BOTÃO LIXEIRA (SVG) ---
-                const btnIgnorar = document.createElement('button');
-                
-                // SVG Inline (O desenho da lixeira)
-                btnIgnorar.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                        <line x1="10" y1="11" x2="10" y2="17"></line>
-                        <line x1="14" y1="11" x2="14" y2="17"></line>
-                    </svg>
-                `;
-                
-                btnIgnorar.title = "Ignorar esta pergunta";
-                
-                // CSS para posicionar e colorir
-                btnIgnorar.style.cssText = `
-                    position: absolute;
-                    top: 15px;
-                    right: 15px;
-                    background: none;
-                    border: none;
-                    padding: 5px;
-                    cursor: pointer;
-                    color: #1B4332; /* Verde Yelo */
-                    opacity: 0.4;
-                    transition: all 0.3s ease;
-                    z-index: 2;
-                `;
-                
-                // Efeito Hover
-                btnIgnorar.onmouseover = () => {
-                    btnIgnorar.style.opacity = '1';
-                    btnIgnorar.style.transform = 'scale(1.1)';
-                };
-                btnIgnorar.onmouseout = () => {
-                    btnIgnorar.style.opacity = '0.4';
-                    btnIgnorar.style.transform = 'scale(1)';
-                };
-
-                // Ação de Clique com Modal Personalizado
-                btnIgnorar.onclick = () => {
-                    abrirModalConfirmacaoPersonalizado(
-                        'Ignorar Pergunta',
-                        'Tem certeza que deseja ignorar esta dúvida? Ela sumirá da sua lista.',
-                        async () => {
-                            try {
-                                if(cardElement) cardElement.style.opacity = '0.5'; 
-                                
-                                const res = await apiFetch(`${API_BASE_URL}/api/qna/${q.id}/ignore`, { method: 'POST' });
-                                if(res.ok) {
-                                    if(cardElement) cardElement.remove(); 
-                                    showToast('Pergunta removida da sua lista.', 'info');
-                                    // Verifica se a lista ficou vazia
-                                    if(container.children.length === 0) inicializarComunidade();
+                if (isAnsweredByMe) {
+                    if (btnResponder) btnResponder.style.display = 'none';
+                    if (cardElement) {
+                        cardElement.style.borderLeft = 'none';
+                        cardElement.style.opacity = '0.5'; // Deixa o card apagado para indicar que já foi respondido
+                    }
+                } else {
+                    if (btnResponder) {
+                        btnResponder.onclick = () => {
+                        const modal = document.getElementById('qna-answer-modal');
+                        const textarea = document.getElementById('qna-answer-textarea');
+                        if (!modal || !textarea) return;
+                        
+                        currentQuestionIdToAnswer = q.id;
+                        modal.querySelector('.modal-title').textContent = `Respondendo: ${q.titulo || q.title || 'Dúvida'}`;
+                        textarea.value = '';
+                        checkCharCount();
+                        if (modal.parentNode !== document.body) document.body.appendChild(modal);
+                        modal.style.setProperty('display', 'flex', 'important');
+                    };
+                    }
+                    
+                    // Botão Lixeira
+                    const btnIgnorar = document.createElement('button');
+                    btnIgnorar.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
+                    btnIgnorar.title = "Ignorar esta pergunta";
+                    btnIgnorar.style.cssText = "position: absolute; top: 15px; right: 15px; background: none; border: none; padding: 5px; cursor: pointer; color: #1B4332; opacity: 0.4; transition: all 0.3s ease; z-index: 2;";
+                    btnIgnorar.onmouseover = () => { btnIgnorar.style.opacity = '1'; btnIgnorar.style.transform = 'scale(1.1)'; };
+                    btnIgnorar.onmouseout = () => { btnIgnorar.style.opacity = '0.4'; btnIgnorar.style.transform = 'scale(1)'; };
+                    
+                    btnIgnorar.onclick = () => {
+                        abrirModalConfirmacaoPersonalizado(
+                            'Ignorar Pergunta',
+                            'Tem certeza que deseja ignorar esta dúvida? Ela sumirá da sua lista.',
+                            async () => {
+                                try {
+                                    if(cardElement) cardElement.style.opacity = '0.5'; 
+                                    const res = await apiFetch(`${API_BASE_URL}/api/qna/${q.id}/ignore`, { method: 'POST' });
+                                    if(res.ok) {
+                                        allQuestions = allQuestions.filter(item => item.id !== q.id);
+                                        applyFiltersAndSort();
+                                        showToast('Pergunta removida.', 'info');
+                                    }
+                                } catch(e) {
+                                    if(cardElement) cardElement.style.opacity = '1'; 
+                                    showToast('Erro ao ignorar pergunta.', 'error');
                                 }
-                            } catch(e) {
-                                console.error(e);
-                                if(cardElement) cardElement.style.opacity = '1'; 
-                                showToast('Erro ao ignorar pergunta.', 'error');
                             }
-                        }
-                    );
-                };
-
-                // Adiciona o botão diretamente no card (se o card foi encontrado)
-                if (cardElement) {
-                    cardElement.appendChild(btnIgnorar);
+                        );
+                    };
+                    
+                    if (cardElement) cardElement.appendChild(btnIgnorar);
                 }
 
                 container.appendChild(clone);
             });
+            renderPagination();
         }
 
-        // 2. Lógica do Modal
-        function abrirModalResposta(id, titulo) {
-            currentQuestionId = id;
-            modal.querySelector('.modal-title').textContent = `Respondendo: ${titulo}`;
-            textarea.value = ''; // Limpa o campo
-            checkCharCount();    // Reseta o contador visualmente
-            
-            // Força display flex com !important por causa do CSS global
-            modal.style.setProperty('display', 'flex', 'important');
+        function renderPagination() {
+            if (!paginationContainer) return;
+            paginationContainer.innerHTML = '';
+            const totalPages = Math.ceil(filteredQuestions.length / ITEMS_PER_PAGE);
+            if (totalPages <= 1) return;
+
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
+                btn.textContent = i;
+                btn.onclick = () => {
+                    currentPage = i;
+                    renderPage();
+                    document.querySelector('.main-header').scrollIntoView({ behavior: 'smooth' });
+                };
+                paginationContainer.appendChild(btn);
+            }
         }
 
         // Função auxiliar para contar caracteres (Reutilizável)
         function checkCharCount() {
-            const len = textarea.value.length;
-            charCounter.textContent = `${len}/50 caracteres`;
-            if (len >= 50) {
-                charCounter.style.color = "#1B4332"; // Verde Yelo
-                charCounter.style.fontWeight = "bold";
-                btnSubmit.disabled = false;
-            } else {
-                charCounter.style.color = "#666";
-                btnSubmit.disabled = true;
+            const textarea = document.getElementById('qna-answer-textarea');
+            const charCounter = document.getElementById('qna-char-counter');
+            const btnSubmit = document.getElementById('qna-submit-answer');
+            
+            if (charCounter && textarea) {
+                const len = textarea.value.length;
+                charCounter.textContent = `${len}/50 caracteres`;
+                if (len >= 50) {
+                    charCounter.style.color = "#1B4332";
+                    charCounter.style.fontWeight = "bold";
+                } else {
+                    charCounter.style.color = "#666";
+                }
+            }
+            if (btnSubmit && textarea) {
+                btnSubmit.disabled = textarea.value.length < 50;
             }
         }
 
@@ -2026,68 +2607,72 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div style="font-size: 3rem; margin-bottom: 10px;">🎉</div>
                     <h3 style="font-family:'New Kansas', serif; margin-bottom: 10px;">Tudo limpo por aqui!</h3>
                     <p style="color:#666; max-width: 400px; margin: 0 auto;">
-                        Você zerou as perguntas da comunidade.
+                        Nenhuma pergunta encontrada com os filtros atuais.
                     </p>
                 </div>`;
         }
 
-        // 2. Lógica do Modal
-        function abrirModalResposta(id, titulo) {
-            currentQuestionId = id;
-            modal.querySelector('.modal-title').textContent = `Respondendo: ${titulo}`;
-            textarea.value = ''; // Limpa o campo
-            checkCharCount();    // Reseta o contador visualmente
-            
-            // Força display flex com !important por causa do CSS global
-            modal.style.setProperty('display', 'flex', 'important');
+        const textarea = document.getElementById('qna-answer-textarea');
+        if (textarea) textarea.oninput = checkCharCount;
+
+        const fecharModal = () => {
+            const modal = document.getElementById('qna-answer-modal');
+            if (modal) modal.style.setProperty('display', 'none', 'important');
+        };
+        
+        const modal = document.getElementById('qna-answer-modal');
+        if (modal) {
+            const closeBtn = modal.querySelector('.modal-close');
+            const cancelBtn = modal.querySelector('.modal-cancel');
+            if(closeBtn) closeBtn.onclick = fecharModal;
+            if(cancelBtn) cancelBtn.onclick = fecharModal;
         }
 
-        // Carga Inicial
-        fetchAndRender(1, false);
+        const form = document.getElementById('qna-answer-form');
+        if (form) {
+            form.onsubmit = async (e) => {
+                e.preventDefault();
+                const textarea = document.getElementById('qna-answer-textarea');
+                const btnSubmit = document.getElementById('qna-submit-answer');
+                if (!currentQuestionIdToAnswer || textarea.value.length < 50) return;
 
-        loadMoreBtn.onclick = () => fetchAndRender(++currentPage, true);
+                const originalText = btnSubmit.textContent;
+                btnSubmit.textContent = "Enviando...";
+                btnSubmit.disabled = true;
+                
+                try {
+                    const res = await apiFetch(`${API_BASE_URL}/api/qna/${currentQuestionIdToAnswer}/answer`, {
+                        method: 'POST',
+                        body: JSON.stringify({ conteudo: textarea.value })
+                    });
 
-        // Fechar Modal
-        const fecharModal = () => modal.style.setProperty('display', 'none', 'important');
-        if(modal.querySelector('.modal-close')) modal.querySelector('.modal-close').onclick = fecharModal;
-        if(modal.querySelector('.modal-cancel')) modal.querySelector('.modal-cancel').onclick = fecharModal;
-
-        // Validação de Caracteres ao digitar
-        textarea.oninput = checkCharCount;
-
-        // 3. Enviar Resposta
-        form.onsubmit = async (e) => {
-            e.preventDefault();
-            btnSubmit.textContent = "Enviando...";
-            btnSubmit.disabled = true; // Evita duplo clique
-            
-            try {
-                const res = await apiFetch(`${API_BASE_URL}/api/qna/${currentQuestionId}/answer`, {
-                    method: 'POST',
-                    body: JSON.stringify({ conteudo: textarea.value })
-                });
-
-                if (res.ok) {
-                    showToast('Resposta enviada com sucesso! 🌻', 'success');
-                    fecharModal();
-                    
-                    // A MÁGICA ACONTECE AQUI:
-                    // Recarregamos a lista. Como o backend agora vai dizer que essa pergunta
-                    // tem "respondedByMe = true", o filtro acima vai escondê-la automaticamente.
-                    inicializarComunidade(); 
-                } else {
-                    throw new Error('Falha no envio');
+                    if (res.ok) {
+                        showToast('Resposta enviada com sucesso! 🌻', 'success');
+                        fecharModal();
+                        
+                        // Atualiza a pergunta no array local
+                        const qIndex = allQuestions.findIndex(q => q.id === currentQuestionIdToAnswer);
+                        if (qIndex !== -1) {
+                            allQuestions[qIndex].respondedByMe = true;
+                            // Salva a resposta digitada para mostrar no balão instantaneamente
+                            allQuestions[qIndex].minhaResposta = textarea.value;
+                        }
+                        
+                        applyFiltersAndSort();
+                    } else {
+                        throw new Error('Falha no envio');
+                    }
+                } catch (error) {
+                    console.error(error);
+                    showToast('Erro ao enviar resposta.', 'error');
+                } finally {
+                    btnSubmit.textContent = originalText;
+                    if(textarea.value.length < 50) btnSubmit.disabled = true;
                 }
+            };
+        }
 
-            } catch (error) {
-                console.error(error);
-                showToast('Erro ao enviar resposta.', 'error');
-            } finally {
-                btnSubmit.textContent = "Enviar Resposta";
-                // Mantém disabled até digitar novamente (se desse erro) ou fecha modal
-                if(textarea.value.length < 50) btnSubmit.disabled = true;
-            }
-        };
+        loadQuestions();
     }
 
     // --- LÓGICA DA CAIXA DE ENTRADA (ATUALIZADA COM SOCKET.IO) ---
@@ -2444,64 +3029,14 @@ document.addEventListener('DOMContentLoaded', function() {
             connectSocket();
         });
 
-        // Limpeza ao sair da página
-        window.cleanupPage = () => {
+        // Limpeza ao sair da página (Chat)
+        window.cleanupPsiChat = () => {
             document.removeEventListener('keydown', handleEscKey);
-            document.removeEventListener('click', handleDocumentClickForMenu);
             if (psiSocket) {
                 psiSocket.disconnect();
                 psiSocket = null;
             }
         };
-    }
-
-    // --- SOCKET GLOBAL (PARA NOTIFICAÇÕES FORA DO CHAT) ---
-    function connectGlobalPsiSocket() {
-        if (typeof io === 'undefined') return;
-        
-        const token = localStorage.getItem('Yelo_token');
-        if (!token) return;
-
-        // Evita duplicar conexão se já existir uma global
-        if (window.psiGlobalSocket && window.psiGlobalSocket.connected) return;
-
-        const socket = io(API_BASE_URL, {
-            auth: { token: token },
-            transports: ['websocket', 'polling']
-        });
-
-        socket.on('connect', () => {
-            // console.log('Socket Global Conectado');
-        });
-
-        socket.on('receiveMessage', (msg) => {
-            // Se receber mensagem do admin, mostra badge
-            if (msg.senderType && msg.senderType.toLowerCase() === 'admin') {
-                // Verifica se o usuário já está na caixa de entrada
-                const activePage = document.querySelector('.sidebar-nav li.active a')?.getAttribute('data-page');
-                const isInboxOpen = activePage && activePage.includes('caixa_de_entrada');
-
-                if (!isInboxOpen) {
-                    if (msg.conversationId) window.psiUnreadConversations.add(msg.conversationId);
-                    updateSidebarBadge('psi_caixa_de_entrada.html', true);
-                    showToast('Nova mensagem do Suporte Yelo', 'info');
-                }
-            }
-        });
-
-        window.psiGlobalSocket = socket;
-    }
-
-    // Carrega lib do socket globalmente se necessário
-    function loadGlobalSocketLib() {
-        if (typeof io !== 'undefined') {
-            connectGlobalPsiSocket();
-            return;
-        }
-        const script = document.createElement('script');
-        script.src = `${API_BASE_URL}/socket.io/socket.io.js`;
-        script.onload = connectGlobalPsiSocket;
-        document.body.appendChild(script);
     }
 
     function inicializarHubComunidade() {
@@ -2543,6 +3078,307 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // --- FEED DE COMUNICADOS (MÓDULO SEPARADO) ---
+    let avisosCache = [];
+    
+    // Função de background para contar não lidos e atualizar a Badge no Menu Lateral
+    window.carregarAvisosBackground = async function() {
+        try {
+            const res = await apiFetch(`${API_BASE_URL}/api/messages?contactType=admin`);
+            if (res.ok) {
+                const mensagens = await res.json();
+                
+                const avisosLidos = JSON.parse(localStorage.getItem('yelo_avisos_lidos') || '[]').map(String);
+                let unread = 0;
+                
+                // --- CORREÇÃO: Diferencia Avisos (Broadcast) de Chat Direto ---
+                // 1. Agrupa todas as mensagens por conversa para análise
+                const conversations = mensagens.reduce((acc, msg) => {
+                    acc[msg.conversationId] = acc[msg.conversationId] || [];
+                    acc[msg.conversationId].push(msg);
+                    return acc;
+                }, {});
+
+                // 2. Identifica quais conversas são "puras" de avisos (só contêm mensagens do admin)
+                const broadcastConversationIds = new Set();
+                for (const convoId in conversations) {
+                    // Se TODAS as mensagens na conversa não foram enviadas por um psicólogo, é um aviso.
+                    const isPurelyAdmin = conversations[convoId].every(m => m.senderType !== 'psychologist');
+                    if (isPurelyAdmin) {
+                        broadcastConversationIds.add(parseInt(convoId, 10));
+                    }
+                }
+
+                // 3. Filtra a lista de avisos para conter apenas mensagens de conversas de broadcast
+                avisosCache = mensagens.filter(msg => broadcastConversationIds.has(msg.conversationId));
+                
+                avisosCache.forEach(msg => {
+                    if (!avisosLidos.includes(String(msg.id)) && msg.status !== 'read') unread++;
+                });
+                
+                // Atualiza a badge do menu passando o número diretamente
+                updateSidebarBadge('psi_avisos.html', unread);
+            }
+        } catch (error) {
+            console.error("Fundo: Erro ao carregar avisos", error);
+        }
+    };
+
+    window.inicializarAvisos = function() {
+        const container = document.getElementById('avisos-feed-container');
+        const btnMarcarLido = document.getElementById('btn-marcar-todos-lidos');
+        const filterBtns = document.querySelectorAll('.aviso-filter-btn');
+        let currentFilter = 'all'; // all, unread
+        
+        if (!container) return;
+        
+        const renderFeed = () => {
+            let avisosLidos = JSON.parse(localStorage.getItem('yelo_avisos_lidos') || '[]').map(String);
+            container.innerHTML = '';
+            
+            let displayAvisos = avisosCache;
+            if (currentFilter === 'unread') {
+                displayAvisos = avisosCache.filter(msg => !avisosLidos.includes(String(msg.id)) && msg.status !== 'read');
+            }
+            
+            if (displayAvisos.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:50px 20px; color:#888;">Nenhum comunicado encontrado.</div>`;
+                return;
+            }
+
+            displayAvisos.forEach(msg => {
+                const isLido = avisosLidos.includes(String(msg.id)) || msg.status === 'read';
+                const data = new Date(msg.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+                const title = msg.title || 'Comunicado Yelo';
+                
+                const item = document.createElement('div');
+                item.className = `aviso-feed-item ${!isLido ? 'unread' : ''}`;
+                
+                // Extrai texto puro para o preview (remove HTML tags)
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = msg.content || msg.message;
+                const plainText = tempDiv.textContent || tempDiv.innerText || "";
+
+                item.innerHTML = `
+                    <div class="aviso-feed-header">
+                        <div class="aviso-icon-wrapper">📢</div>
+                        <div class="aviso-title-group">
+                            <h4 class="aviso-title">${title}</h4>
+                            <span class="aviso-meta">${data}</span>
+                        </div>
+                    </div>
+                    <div class="aviso-preview">${plainText}</div>
+                    <div class="aviso-full-content">
+                        ${msg.content || msg.message}
+                        <div class="aviso-feed-actions">
+                            <button class="btn btn-secundario btn-sm btn-delete-aviso" style="border-radius: 8px; border-color: #E63946; color: #E63946;">Ocultar</button>
+                            ${!isLido ? '<button class="btn btn-principal btn-sm btn-read-aviso" style="border-radius: 8px;">Entendido</button>' : ''}
+                        </div>
+                    </div>
+                `;
+                
+                // Lógica de Expandir
+                item.onclick = (e) => {
+                    // Ignora cliques nos botões internos
+                    if (e.target.closest('.btn')) return;
+                    
+                    const isExpanded = item.classList.contains('expanded');
+                    
+                    // Retrai os outros
+                    document.querySelectorAll('.aviso-feed-item.expanded').forEach(other => {
+                        if(other !== item) other.classList.remove('expanded');
+                    });
+                    
+                    if (!isExpanded) {
+                        item.classList.add('expanded');
+                        // Marca como lido ao expandir
+                        if (!isLido) marcarComoLidoLocal(msg.id, item);
+                    } else {
+                        item.classList.remove('expanded');
+                    }
+                };
+                
+                // Ações do botão
+                const btnDel = item.querySelector('.btn-delete-aviso');
+                if (btnDel) {
+                    btnDel.onclick = () => {
+                        item.style.opacity = 0;
+                        setTimeout(() => item.remove(), 300);
+                        avisosCache = avisosCache.filter(m => m.id !== msg.id);
+                        carregarAvisosBackground(); // atualiza badge
+                    };
+                }
+                
+                const btnRead = item.querySelector('.btn-read-aviso');
+                if (btnRead) {
+                    btnRead.onclick = () => marcarComoLidoLocal(msg.id, item);
+                }
+
+                container.appendChild(item);
+            });
+        };
+        
+        function marcarComoLidoLocal(id, element) {
+            let lidos = JSON.parse(localStorage.getItem('yelo_avisos_lidos') || '[]').map(String);
+            if(!lidos.includes(String(id))) {
+                lidos.push(String(id));
+                localStorage.setItem('yelo_avisos_lidos', JSON.stringify(lidos));
+                element.classList.remove('unread');
+                const btnRead = element.querySelector('.btn-read-aviso');
+                if(btnRead) btnRead.remove();
+                element.querySelector('.aviso-icon-wrapper').style = ""; // Reseta styles inline se houver
+                carregarAvisosBackground(); // Re-calcula e reduz a badge sidebar
+            }
+        }
+        
+        filterBtns.forEach(btn => {
+            btn.onclick = () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                renderFeed();
+            };
+        });
+        
+        if (btnMarcarLido) {
+            btnMarcarLido.onclick = () => {
+                let lidos = JSON.parse(localStorage.getItem('yelo_avisos_lidos') || '[]').map(String);
+                avisosCache.forEach(msg => { if(!lidos.includes(String(msg.id))) lidos.push(String(msg.id)); });
+                localStorage.setItem('yelo_avisos_lidos', JSON.stringify(lidos));
+                renderFeed();
+                carregarAvisosBackground();
+            };
+        }
+
+        // Renderiza com os dados já cacheados (ou espera cachear)
+        if (avisosCache.length > 0) renderFeed();
+        else {
+            window.carregarAvisosBackground().then(() => renderFeed());
+        }
+    };
+
+    // Atualiza badges silenciosamente no background
+    setTimeout(window.carregarAvisosBackground, 2000);
+
+    // --- NOVA LÓGICA DE NOTIFICAÇÕES DE NAVEGADOR (SESSÕES) ---
+    window.setupSessionNotifications = function() {
+        if (!("Notification" in window)) {
+            console.warn("⚠️ Notificações do navegador bloqueadas. O navegador exige HTTPS ou localhost para exibir notificações.");
+            return;
+        }
+
+        const startChecking = () => {
+            if (Notification.permission !== "granted") return;
+
+            const checkAppointments = async () => {
+                try {
+                    const token = localStorage.getItem('Yelo_token');
+                    if (!token) return;
+
+                    const resAppts = await fetch(`${API_BASE_URL}/api/appointments`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    if (resAppts.ok) {
+                        const allAppts = await resAppts.json();
+                        const now = new Date();
+                        
+                        console.log(`[Notificações] Checando ${allAppts.length} agendamentos... Hora atual:`, now.toLocaleTimeString());
+                        
+                        const upcomingAppts = allAppts.filter(a => {
+                            const start = new Date(a.start);
+                            return (a.status === 'scheduled' || a.status === 'confirmed') &&
+                                   start > now;
+                        });
+
+                        upcomingAppts.forEach(appt => {
+                            const start = new Date(appt.start);
+                            const timeUntilStart = start.getTime() - now.getTime();
+                            const fifteenMins = 15 * 60 * 1000;
+                            const minutesLeft = Math.round(timeUntilStart / 60000);
+
+                            console.log(`[Notificações] Sessão ${appt.id} (${appt.title}) - Faltam ${minutesLeft} min.`);
+
+                            // Se a sessão vai começar em até 15 minutos (e já não foi notificada)
+                            if (timeUntilStart > 0 && timeUntilStart <= fifteenMins) { 
+                                const notifKey = `notified_appt_${appt.id}`;
+                                if (!sessionStorage.getItem(notifKey)) {
+                                console.log("🔔 Exibindo notificação para a sessão:", appt.id);
+                                    showDesktopNotification(appt);
+                                    sessionStorage.setItem(notifKey, 'shown');
+                                } else {
+                                    console.log(`[Notificações] Sessão ${appt.id} já foi notificada anteriormente nesta aba.`);
+                                }
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error("Erro ao checar notificações de sessão:", e);
+                }
+            };
+
+            checkAppointments();
+            if (window.notifInterval) clearInterval(window.notifInterval);
+            window.notifInterval = setInterval(checkAppointments, 60000); // Checa a cada 1 minuto
+        };
+
+        if (Notification.permission === "default") {
+            console.log("Aguardando clique na tela para solicitar permissão de notificação...");
+            const requestNotif = async () => {
+                try {
+                    console.log("Solicitando permissão de notificação...");
+                    const permission = await Notification.requestPermission();
+                    console.log("Status da permissão:", permission);
+                    document.removeEventListener('click', requestNotif);
+                    if (permission === "granted") startChecking();
+                } catch(e) { console.error(e); }
+            };
+            document.addEventListener('click', requestNotif);
+        } else if (Notification.permission === "granted") {
+            console.log("Permissão já concedida. Iniciando checagem da agenda...");
+            startChecking();
+        } else if (Notification.permission === "denied") {
+            console.warn("⚠️ Permissão de notificação foi negada pelo navegador.");
+        }
+    };
+
+    function showDesktopNotification(appt) {
+        if (Notification.permission === "granted") {
+            const timeStr = new Date(appt.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            const patientName = appt.title || 'Paciente';
+            
+            try {
+                const notification = new Notification("Sessão em 15 minutos ⏰", {
+                    body: `Sua sessão com ${patientName} começará às ${timeStr}.`,
+                    icon: '/assets/images/favicon.png'
+                });
+
+                notification.onclick = function() {
+                    window.focus();
+                    if (typeof window.loadPage === 'function') {
+                        window.loadPage('psi_pacientes.html');
+                    }
+                    notification.close();
+                };
+            } catch (e) {
+                console.error("Erro ao criar a notificação visual:", e);
+            }
+        }
+    }
+
+    // Função utilitária para você testar as notificações pelo console
+    window.testarNotificacao = function() {
+        if (Notification.permission === "granted") {
+            new Notification("Teste de Notificação Yelo ✅", {
+                body: "Se você está vendo isso, o sistema de alertas do seu computador está funcionando perfeitamente!",
+                icon: '/assets/images/favicon.png'
+            });
+            console.log("Notificação de teste enviada para o Sistema Operacional.");
+        } else {
+            console.warn("Não é possível testar: a permissão atual é", Notification.permission);
+        }
+    };
+
     // INIT
     fetchPsychologistData().then(ok => {
         // Remove o loader global com fade-out
@@ -2572,16 +3408,55 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
             } else {
-                // Carrega a última página visitada ou a visão geral como padrão
-                const lastPage = localStorage.getItem('yelo_last_psi_page');
-                loadPage(lastPage || 'psi_visao_geral.html');
+            // Carrega a última página visitada ou a visão geral como padrão.
+            const lastPage = localStorage.getItem('yelo_last_psi_page');
+            loadPage(lastPage || 'psi_visao_geral.html');
             }
             
-            // Inicia socket global para notificações
-            loadGlobalSocketLib();
+            // --- LÓGICA DE SMART SCROLL (OCULTAR MENU INFERIOR AO ROLAR) ---
+            function setupSmartScroll() {
+                // Só executa em telas mobile
+                if (window.innerWidth > 992) return;
+
+                const bottomNav = document.querySelector('.mobile-bottom-nav');
+                // O elemento que de fato rola é o .dashboard-main
+                const scrollableContent = document.querySelector('.dashboard-main');
+                
+                if (!bottomNav || !scrollableContent) return;
+
+                // Adiciona listener para expandir ao clicar na barra encolhida (executa uma vez)
+                bottomNav.addEventListener('click', () => {
+                    if (bottomNav.classList.contains('nav-hidden')) {
+                        // Apenas remove a classe, a navegação continua se o clique foi num link
+                        bottomNav.classList.remove('nav-hidden');
+                    }
+                });
+
+                let lastScrollY = scrollableContent.scrollTop;
+                const scrollThreshold = 100; // Distância mínima para começar a ocultar
+
+                scrollableContent.addEventListener('scroll', () => {
+                    const currentScrollY = scrollableContent.scrollTop;
+
+                    if (currentScrollY > lastScrollY && currentScrollY > scrollThreshold) {
+                        // Rolando para baixo: Oculta o menu
+                        bottomNav.classList.add('nav-hidden');
+                    } else if (currentScrollY < lastScrollY) {
+                        // Rolando para cima: Mostra o menu
+                        bottomNav.classList.remove('nav-hidden');
+                    }
+                    lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
+                }, { passive: true });
+            }
+            setupSmartScroll();
 
             // --- NOVO: INICIA A LÓGICA DE TOOLTIPS MOBILE ---
             setupMobileBadgeTooltips();
+            
+            // --- NOVO: INICIA A LÓGICA DE NOTIFICAÇÕES DE NAVEGADOR ---
+            if (typeof window.setupSessionNotifications === 'function') {
+                window.setupSessionNotifications();
+            }
         } else {
             // Se falhou mas não deslogou (ex: erro 500 do banco), mostra tela de erro amigável
             // Isso evita que o usuário veja uma tela branca ou seja deslogado injustamente
@@ -3019,14 +3894,11 @@ function inicializarBlog(preFetchedData = null) {
     // --- Navegação ---
     const toggleView = (showForm) => {
         if (showForm) {
-            viewLista.style.display = 'none';
-            viewForm.style.display = 'block';
+            viewForm.style.display = 'flex';
             // Foca no título para facilitar
             setTimeout(() => document.getElementById('blog-titulo').focus(), 100);
         } else {
             viewForm.style.display = 'none';
-            viewLista.style.display = 'block';
-            // limparFormulario(); // Removido para manter o rascunho se cancelar
         }
     };
 
@@ -3269,12 +4141,23 @@ function inicializarBlog(preFetchedData = null) {
 
     // --- V6: GERENCIAMENTO DE LISTENERS ---
     const btnCancelar = document.getElementById('btn-cancelar-artigo');
+    const btnFecharModal = document.getElementById('btn-fechar-modal-artigo');
+
     blogCancelHandler = (e) => {
         e.preventDefault();
         toggleView(false);
     };
     if (btnCancelar) {
         btnCancelar.addEventListener('click', blogCancelHandler);
+    }
+    if (btnFecharModal) {
+        btnFecharModal.addEventListener('click', blogCancelHandler);
+    }
+    // Fecha ao clicar fora do modal
+    if (viewForm) {
+        viewForm.addEventListener('click', (e) => {
+            if (e.target === viewForm) blogCancelHandler(e);
+        });
     }
 
     blogSubmitHandler = async function(e) {
@@ -3338,6 +4221,9 @@ function inicializarBlog(preFetchedData = null) {
         }
         if (btnCancelar && blogCancelHandler) {
             btnCancelar.removeEventListener('click', blogCancelHandler);
+        }
+        if (btnFecharModal && blogCancelHandler) {
+            btnFecharModal.removeEventListener('click', blogCancelHandler);
         }
         if (inputTitulo && blogTitleInputHandler) {
             inputTitulo.removeEventListener('input', blogTitleInputHandler);
@@ -3426,7 +4312,7 @@ async function inicializarForum(preFetchedData = null) {
 
         // 2. BADGES DE CONQUISTA (ÍCONES)
         const badgeIconMap = {
-            autentico: { icon: '🛡️', title: 'Autêntico' },
+            autentico: { icon: '<svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: text-bottom;"><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.79-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.758 2.746 1.9 3.42-.047.19-.074.385-.074.58 0 2.21 1.71 4.002 3.918 4.002.47 0 .92-.086 1.336-.25.52 1.335 1.828 2.25 3.337 2.25s2.816-.915 3.337-2.25c.416.164.866.25 1.336.25 2.21 0 3.918-1.792 3.918-4 0-.195-.027-.39-.074-.58 1.14-.675 1.9-1.96 1.9-3.42z" fill="#1B4332"/><path d="M16.97 8.47a1.5 1.5 0 0 1 0 2.12l-6.5 6.5a1.5 1.5 0 0 1-2.12 0l-3.5-3.5a1.5 1.5 0 1 1 2.12-2.12l2.44 2.44 5.44-5.44a1.5 1.5 0 0 1 2.12 0z" fill="white"/></svg>', title: 'Autêntico' },
             semeador:  { icon: '🌱', title: 'Semeador' },
             voz_ativa: { icon: '💬', title: 'Voz Ativa' },
             pioneiro:  { icon: '🏅', title: 'Pioneiro' }
@@ -3683,7 +4569,7 @@ async function inicializarForum(preFetchedData = null) {
         try {
             // Busca um item a mais para verificar se há próxima página
             const fetchLimit = COMMENTS_LIMIT + 1;
-            const res = await apiFetch(`${API_BASE_URL}/api/forum/posts/${postId}/comments?page=${page}&limit=${fetchLimit}&pageSize=${COMMENTS_LIMIT}&_t=${Date.now()}`);
+            const res = await apiFetch(`${API_BASE_URL}/api/forum/posts/${postId}/comments?page=${page}&limit=${fetchLimit}`);
             
             if (!res.ok) throw new Error('Erro ao buscar comentários');
             
@@ -3841,8 +4727,8 @@ async function inicializarForum(preFetchedData = null) {
 
             // 1. Botão Toggle (Ver X respostas) - Inicial
             const toggleBtn = document.createElement('button');
-            toggleBtn.textContent = `Ver mais ${comment.replies.length} respostas`;
-            toggleBtn.style.cssText = "background:none; border:none; color:#1B4332; font-size:0.85rem; font-weight:600; cursor:pointer; margin-top:10px; padding:5px 0; text-decoration:underline; display:block;";
+            toggleBtn.innerHTML = `[+] Ver respostas (${comment.replies.length})`;
+            toggleBtn.style.cssText = "background:none; border:none; color:#1c1c1c; font-size:0.85rem; font-weight:600; cursor:pointer; margin-top:5px; padding:0; display:block;";
             
             // 2. Botão Carregar Mais (Aparece no final da lista)
             const loadMoreBtn = document.createElement('button');
@@ -3874,10 +4760,15 @@ async function inicializarForum(preFetchedData = null) {
 
             // Ação do Toggle (Abrir Thread)
             toggleBtn.onclick = () => {
-                repliesContainer.style.display = 'block';
-                toggleBtn.style.display = 'none';
-                // Se ainda não renderizou nada, renderiza o primeiro lote
-                if (shownCount === 0) renderNextBatch();
+                const isHidden = repliesContainer.style.display === 'none';
+                if (isHidden) {
+                    repliesContainer.style.display = 'block';
+                    toggleBtn.innerHTML = `[-] Ocultar respostas`;
+                    if (shownCount === 0) renderNextBatch();
+                } else {
+                    repliesContainer.style.display = 'none';
+                    toggleBtn.innerHTML = `[+] Ver respostas (${comment.replies.length})`;
+                }
             };
 
             // Ação do Load More (Carregar mais 3)
@@ -3895,8 +4786,7 @@ async function inicializarForum(preFetchedData = null) {
                     
                     // Colapsa
                     repliesContainer.style.display = 'none';
-                    toggleBtn.style.display = 'block';
-                    toggleBtn.textContent = `Ver mais ${comment.replies.length} respostas (Thread colapsada)`;
+                    toggleBtn.innerHTML = `[+] Ver respostas (${comment.replies.length})`;
                 }
             });
         }
@@ -3963,7 +4853,7 @@ async function inicializarForum(preFetchedData = null) {
             } else {
                 // Busca um item a mais (POSTS_LIMIT + 1) para verificar se há próxima página
                 const fetchLimit = POSTS_LIMIT + 1;
-                const res = await apiFetch(`${API_BASE_URL}/api/forum/posts?filter=${activeFilter}&search=${encodeURIComponent(searchTerm)}&page=${page}&limit=${fetchLimit}&pageSize=${POSTS_LIMIT}&_t=${Date.now()}`);
+                const res = await apiFetch(`${API_BASE_URL}/api/forum/posts?filter=${activeFilter}&search=${encodeURIComponent(searchTerm)}&page=${page}&limit=${fetchLimit}`);
                 if (!res.ok) throw new Error('Erro ao buscar posts');
                 posts = await res.json();
             }
@@ -4190,7 +5080,14 @@ async function inicializarForum(preFetchedData = null) {
     function openEditPostModal(post) {
         // Popula o formulário com os dados atuais
         createForm.querySelector('[name="title"]').value = post.title;
-        createForm.querySelector('[name="category"]').value = post.category;
+        
+        const catSelect = document.getElementById('post-category');
+        if (catSelect && catSelect.tomselect) {
+            catSelect.tomselect.setValue(post.category);
+        } else {
+            createForm.querySelector('[name="category"]').value = post.category;
+        }
+        
         const contentTextarea = createForm.querySelector('[name="content"]');
         contentTextarea.value = post.content;
         contentTextarea.style.height = 'auto';
@@ -4315,6 +5212,20 @@ async function inicializarForum(preFetchedData = null) {
     if (createTextarea) {
         setupAutoResizeTextarea(createTextarea);
     }
+            
+            // --- ESTÉTICA DO SELECT CATEGORIA (TomSelect) ---
+            const catSelect = document.getElementById('post-category');
+            if (catSelect && typeof TomSelect !== 'undefined' && !catSelect.tomselect) {
+                const isDesktop = window.innerWidth >= 992;
+                if (isDesktop) {
+                    new TomSelect(catSelect, {
+                        create: false,
+                        controlInput: `<input type="text" autocomplete="off" size="1" style="opacity:0; width:0; position:absolute; pointer-events:none;">`,
+                        dropdownParent: 'body',
+                        dropdownClass: 'ts-dropdown custom-ts-dropdown'
+                    });
+                }
+            }
 
     // --- NOVA UX: Criar Post Moderno (Estilo Feed) ---
     let createPrompt = document.getElementById('modern-create-post-prompt');
@@ -4339,6 +5250,9 @@ async function inicializarForum(preFetchedData = null) {
             createForm.reset();
             if (createTextarea) {
                 createTextarea.style.height = 'auto';
+            }
+            if (catSelect && catSelect.tomselect) {
+                catSelect.tomselect.clear(true);
             }
             createModal.querySelector('h3').textContent = 'Criar Nova Discussão';
             document.getElementById('forum-submit-post-btn').textContent = 'Publicar';
@@ -4460,4 +5374,4 @@ if (fabContainer && fabDragTarget) {
         }
     });
 }
-});
+});     

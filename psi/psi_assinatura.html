@@ -1,204 +1,417 @@
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 <style>
-    /* --- AJUSTES DE UX MOBILE (ASSINATURA) --- */
+    /* --- DESIGN APP-LIKE E MOBILE-FIRST --- */
+    .page-wrapper-assinatura {
+        width: 100%;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding-bottom: 100px;
+        font-family: var(--font-principal, 'Inter', sans-serif);
+    }
+
+    /* Header App-Like */
+    .header-assinatura {
+        text-align: center;
+        margin-bottom: 30px;
+        background: #fff;
+        padding: 30px 20px;
+        border-radius: 24px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        border: 1px solid #f0f0f0;
+    }
+    .header-assinatura h1 {
+        font-family: var(--font-titulos, serif);
+        font-size: 2.2rem;
+        color: #1B4332;
+        margin: 0 0 10px 0;
+        line-height: 1.2;
+    }
+    .header-assinatura p {
+        color: #666;
+        margin: 0;
+        font-size: 1.05rem;
+        line-height: 1.5;
+    }
+
+    /* Banner VIP Premium */
+    .vip-card-modern {
+        background: linear-gradient(135deg, #1B4332 0%, #0a2116 100%);
+        border-radius: 24px;
+        padding: 35px 25px;
+        color: white;
+        text-align: center;
+        box-shadow: 0 15px 35px rgba(27,67,50,0.25);
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 30px;
+        animation: slideDown 0.5s ease;
+    }
+    .vip-card-modern::before {
+        content: '💎';
+        position: absolute;
+        font-size: 10rem;
+        opacity: 0.08;
+        top: -30px;
+        right: -30px;
+        transform: rotate(15deg);
+        pointer-events: none;
+    }
+    .vip-card-modern h2 {
+        margin: 0 0 10px 0;
+        font-family: var(--font-titulos, serif);
+        font-size: 2rem;
+        position: relative;
+        z-index: 2;
+        color: #ffffff !important;
+    }
+    .vip-card-modern p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0 auto 20px auto;
+        max-width: 500px;
+        position: relative;
+        z-index: 2;
+    }
+    
+    /* Planos Cards (App Style) */
+    .plans-grid-modern {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+    }
+    .plan-card-modern {
+        background: #fff;
+        border-radius: 24px;
+        padding: 30px 25px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+        border: 1px solid #f0f0f0;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .plan-card-modern:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+    }
+    .plan-card-modern.active-highlight {
+        border: 2px solid #1B4332;
+        box-shadow: 0 10px 40px rgba(27,67,50,0.1);
+    }
+    .plan-card-modern.disabled-plan {
+        opacity: 0.75;
+        background: #fcfcfc;
+    }
+    .plan-card-modern.disabled-plan:hover {
+        transform: none;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+    }
+
+    /* Tags Flutuantes */
+    .floating-tag {
+        position: absolute;
+        top: -14px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #FFEE8C 0%, #F4D35E 100%);
+        color: #1B4332;
+        padding: 6px 20px;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 800;
+        box-shadow: 0 4px 15px rgba(244, 211, 94, 0.4);
+        white-space: nowrap;
+        letter-spacing: 0.5px;
+    }
+    .floating-tag.coming-soon {
+        background: #e9ecef;
+        color: #666;
+        box-shadow: none;
+        border: 1px solid #dee2e6;
+    }
+
+    /* Preços */
+    .price-block { margin: 20px 0; text-align: center; }
+    .price-block .price {
+        font-family: var(--font-titulos, serif);
+        font-size: 3.2rem;
+        color: #1B4332;
+        line-height: 1;
+        font-weight: 700;
+        display: inline-block;
+    }
+    .price-block .period { color: #888; font-size: 1rem; font-weight: 500; }
+    .price-block .old-price {
+        text-decoration: line-through;
+        color: #adb5bd;
+        font-size: 1.1rem;
+        margin-right: 8px;
+        font-weight: 500;
+    }
+
+    /* Lista de Benefícios */
+    .features-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 30px 0;
+        flex-grow: 1;
+    }
+    .features-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 14px;
+        color: #495057;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        font-weight: 500;
+    }
+    .features-list li i {
+        color: #16a34a;
+        font-style: normal;
+        font-size: 1.2rem;
+        margin-top: -2px;
+    }
+
+    /* Botões (App-Like) */
+    .btn-modern {
+        width: 100%;
+        padding: 16px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1.05rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .btn-primary-modern {
+        background: #1B4332;
+        color: white;
+        box-shadow: 0 6px 20px rgba(27,67,50,0.25);
+    }
+    .btn-primary-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(27,67,50,0.35);
+        background: #143d2e;
+    }
+
+    /* Card Resumo do Plano (Status Atual) */
+    .current-plan-summary {
+        background: #fff;
+        border: 2px solid #1B4332;
+        border-radius: 24px;
+        padding: 25px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 40px;
+        box-shadow: 0 10px 40px rgba(27, 67, 50, 0.08);
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    
+    /* Badges de Status Modernos */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #dcfce7;
+        color: #166534;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        border: 1px solid #bbf7d0;
+    }
+
+    /* Mobile Adjustments */
     @media (max-width: 768px) {
-        .main-header {
-            padding: 25px 20px !important;
-            text-align: center;
-            flex-direction: column;
-            gap: 15px;
-        }
+        .page-wrapper-assinatura { padding: 15px; }
+        .header-assinatura { padding: 25px 15px; border-radius: 20px; margin-bottom: 25px; }
+        .header-assinatura h1 { font-size: 1.8rem; }
+        .current-plan-summary { flex-direction: column; align-items: flex-start; padding: 20px; border-radius: 20px; }
+        .current-plan-summary > div:last-child { width: 100%; text-align: left !important; }
+        .plan-card-modern { padding: 25px 20px; }
+        .price-block .price { font-size: 2.5rem; }
         
-        #vip-banner {
-            padding: 20px !important;
-            margin: 15px 0 !important;
-        }
-        
-        /* Card de Resumo (Topo) */
-        #card-resumo-assinatura {
-            flex-direction: column;
-            align-items: center !important;
-            text-align: center !important;
-            padding: 25px 20px !important;
-            gap: 15px;
-            border-left: 1px solid #e0e0e0 !important; /* Remove destaque lateral no mobile */
-            border-top: 4px solid #1B4332 !important; /* Move destaque para o topo */
-        }
-        
-        #card-resumo-assinatura .info-lado-esquerdo,
-        #card-resumo-assinatura .info-lado-direito {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-        }
-        
-        #banner-renovacao {
-            text-align: center !important;
-        }
-
-        /* Grid de Planos */
-        .planos-grid {
-            grid-template-columns: 1fr !important;
-            padding: 0 !important;
-            gap: 25px !important;
-        }
-        
-        .plano-card {
-            max-width: 100% !important;
-        }
-
-        /* Botões Full Width */
-        .plano-cta button { width: 100% !important; }
-
         /* Inputs do Modal de Pagamento (Evita Zoom iOS) */
         #payment-form input {
             font-size: 16px !important;
         }
     }
+
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 </style>
 
-<div class="main-header">
-    <div class="header-content">
-        <h1>Gerencie sua Assinatura</h1>
-        <p>Escolha o plano que melhor se alinha ao seu momento profissional.</p>
+<div class="page-wrapper-assinatura">
+    
+    <div class="header-assinatura">
+        <h1>Sua Assinatura 💎</h1>
+        <p>Gerencie seu plano, acesse benefícios e eleve sua carreira.</p>
     </div>
-</div>
 
-<div class="assinatura-wrapper">
+    <!-- BANNER VIP -->
+    <div id="vip-banner" class="vip-card-modern" style="display: none;">
+        <h2 id="vip-plan-name">Plano Essencial VIP</h2>
+        <p>Sua isenção premium foi concedida pela administração da Yelo. Aproveite todos os recursos da plataforma sem custo algum.</p>
+        <div style="display: inline-block; background: rgba(255,255,255,0.15); padding: 8px 24px; border-radius: 50px; font-size: 0.95rem; font-weight: 600; backdrop-filter: blur(4px);">
+            Status de Parceiro Ativo ✅
+        </div>
+    </div>
 
-<!-- BANNER VIP (Invisível por padrão) -->
-<div id="vip-banner" style="display: none; margin: 20px auto; width: 100%; background: linear-gradient(135deg, #dcfce7 0%, #f0fdf4 100%); border: 1px solid #86efac; border-radius: 16px; padding: 30px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-    <div style="font-size: 3rem; margin-bottom: 15px;">💎</div>
-    <h2 style="color: #166534; margin-bottom: 10px; font-size: 1.8rem; font-family: var(--font-titulos);">Status VIP Ativo</h2>
-    <p style="color: #15803d; font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
-        Sua isenção para o <strong id="vip-plan-name">Plano Essencial</strong> foi concedida pela administração da Yelo.
-    </p>
-    <p style="color: #16a34a; font-size: 0.9rem; margin-top: 15px;">
-        Aproveite todos os recursos premium sem custo. Obrigado por ser um parceiro essencial!
-    </p>
-</div>
-
-            <section id="card-resumo-assinatura" class="plano-atual-moderno" style="display: none;">
-                <div class="info-lado-esquerdo">
-                    <div class="nome-plano-banner" id="banner-nome-plano">--</div>
-                    
-                    <div class="status-badge">
-                        <span style="width: 8px; height: 8px; background: #4ade80; border-radius: 50%;"></span>
-                        Ativo e Validado
-                    </div>
+    <!-- RESUMO DO PLANO ATUAL (Invisível por padrão) -->
+    <section id="card-resumo-assinatura" class="current-plan-summary" style="display: none;">
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <h2 id="banner-nome-plano" style="margin: 0; font-family: var(--font-titulos); font-size: 1.8rem; color: #1B4332;">--</h2>
+                <div class="status-badge">
+                    <span style="width: 8px; height: 8px; background: #16a34a; border-radius: 50%; display: inline-block;"></span>
+                    Ativo
                 </div>
-                
-                <div class="info-lado-direito">
-                    <div class="preco-destaque" id="banner-preco" style="font-size: 1.8rem; font-weight: 700;">R$ -- / mês</div>
-                    <span class="data-renovacao" id="banner-renovacao" style="display:block; text-align:right; opacity:0.8; margin-top:5px; font-size:0.9rem;">Renova em: --/--/----</span>
-                </div>
-            </section>
+            </div>
+            <span id="banner-renovacao" style="color: #666; font-size: 0.95rem; font-weight: 500;">Renova em: --/--/----</span>
+        </div>
+        <div style="text-align: right;">
+            <div class="price-block" style="margin: 0;">
+                <div id="banner-preco" class="price" style="font-size: 2.2rem;">R$ --</div>
+            </div>
+        </div>
+    </section>
 
-<section class="planos-grid">
-    <div class="plano-card promo-ativa" id="card-plano-essencial">
-        <div class="tag-oferta-topo" id="tag-oferta-essencial">
-            🔥 3 Meses com 50% OFF
+    <!-- GRID DE PLANOS -->
+    <section class="plans-grid-modern">
+        
+        <!-- PLANO ESSENCIAL -->
+        <div class="plan-card-modern active-highlight" id="card-plano-essencial">
+            <div class="floating-tag" id="tag-oferta-essencial" style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; box-shadow: 0 4px 15px rgba(22, 163, 74, 0.4);">🔥 LICENÇA FUNDADOR</div>
+            <h2 style="margin: 0; font-family: var(--font-titulos); color: #1B4332; font-size: 1.6rem; text-align: center;">Plano Premium Yelo</h2>
+            
+            <div class="price-block" id="preco-essencial">
+                <span class="old-price">R$ 199</span>
+                <div class="price">R$ 99</div>
+                <span class="period">/mês</span>
+                <div style="font-size: 0.85rem; color: #16a34a; font-weight: 800; margin-top: 5px;">14 DIAS DE TESTE GRÁTIS</div>
+            </div>
+
+            <div style="background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 12px; margin-bottom: 20px; text-align: center;">
+                <span style="color: #b45309; font-size: 0.85rem; font-weight: 800; display: block; margin-bottom: 4px;">OPORTUNIDADE EXCLUSIVA</span>
+                <span style="color: #92400e; font-size: 0.9rem; line-height: 1.4; display: block;"><strong>A primeira cobrança só ocorre no 15º dia</strong>. Cancele antes se não gostar!</span>
+            </div>
+
+            <ul class="features-list">
+                <li><i>✅</i> <span>Marketplace Prioritário (Match Inteligente)</span></li>
+                <li><i>✅</i> <span>Agenda e Financeiro Completos</span></li>
+                <li><i>✅</i> <span>Página Pública (Perfil Yelo Otimizado)</span></li>
+                <li><i>✨</i> <strong style="color: #16a34a;">Licença vitalícia sem reajuste de mensalidade</strong></li>
+            </ul>
+
+            <div style="margin-top: auto;">
+                <button class="btn-modern btn-primary-modern btn-upgrade btn-mudar-plano" data-plano="ESSENTIAL" style="background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%);">
+                    Iniciar Trial Gratuito 🚀
+                </button>
+                <p style="font-size: 0.75rem; color: #888; text-align: center; margin: 12px 0 0 0; display: flex; align-items: center; justify-content: center; gap: 5px; font-weight: 500;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    Ambiente 100% seguro
+                </p>
+            </div>
         </div>
-        <h2>Plano Essencial</h2>
-        <div class="preco-desconto" id="preco-essencial">
-            <span class="preco-antigo">R$ 99</span>
-            <span class="preco-novo">R$ 49,50</span>
-            <span>/mês</span>
+
+        <!-- PLANO CLÍNICO -->
+        <div class="plan-card-modern disabled-plan">
+            <div class="floating-tag coming-soon">EM BREVE</div>
+            <h2 style="margin: 0; font-family: var(--font-titulos); color: #666; font-size: 1.6rem; text-align: center;">Plano Clínico</h2>
+            
+            <div class="price-block">
+                <div class="price" style="color: #666;">R$ 159</div>
+                <span class="period">/mês</span>
+            </div>
+
+            <ul class="features-list" style="filter: grayscale(100%); opacity: 0.8;">
+                <li><i>✨</i> <strong>Tudo do Essencial, mais:</strong></li>
+                <li><i>✅</i> <span>Eventos e Workshops Exclusivos</span></li>
+                <li><i>✅</i> <span>Acesso a Pacientes da Comunidade</span></li>
+                <li><i>✅</i> <span>Indicadores Avançados (Conversão)</span></li>
+                <li><i>✅</i> <span>URL Personalizada na Yelo</span></li>
+            </ul>
+
+            <div style="margin-top: auto;">
+                <button class="btn-modern" disabled style="background: #e9ecef; color: #999; cursor: not-allowed;">
+                    Disponível em Breve
+                </button>
+            </div>
         </div>
-        <ul class="beneficios-lista">
-            <li>✅ Participação no Match</li>
-            <li>✅ Indicadores Simples (Views/Cliques)</li>
-            <li>✅ Página Pública de Divulgação</li>
-            <li>✅ Fórum de Discussões</li>
-        </ul>
-        <div class="plano-cta">
-            <button class="btn-mudar-plano btn-upgrade" data-plano="ESSENTIAL" style="width: 100%;">QUERO COMEÇAR AGORA 🚀</button>
-            <p style="font-size: 0.75rem; color: #888; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 5px;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-lock" style="width: 12px; height: 12px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Pagamento seguro</p>
+
+        <!-- PLANO REFERÊNCIA -->
+        <div class="plan-card-modern disabled-plan">
+            <div class="floating-tag coming-soon">EM BREVE</div>
+            <h2 style="margin: 0; font-family: var(--font-titulos); color: #666; font-size: 1.6rem; text-align: center;">Plano Referência</h2>
+            
+            <div class="price-block">
+                <div class="price" style="color: #666;">R$ 259</div>
+                <span class="period">/mês</span>
+            </div>
+
+            <ul class="features-list" style="filter: grayscale(100%); opacity: 0.8;">
+                <li><i>🚀</i> <strong>Tudo do Clínico, mais:</strong></li>
+                <li><i>✅</i> <span>Supervisão Clínica Integrada</span></li>
+                <li><i>✅</i> <span>Destaque Prioritário nas Buscas</span></li>
+                <li><i>✅</i> <span>Análise de Perfil Otimizada com IA</span></li>
+                <li><i>✅</i> <span>Selo de Autoridade Premium</span></li>
+            </ul>
+
+            <div style="margin-top: auto;">
+                <button class="btn-modern" disabled style="background: #e9ecef; color: #999; cursor: not-allowed;">
+                    Disponível em Breve
+                </button>
+            </div>
         </div>
+
+    </section>
+
+    <!-- ÁREA DE CANCELAMENTO (DANGER ZONE) -->
+    <div id="area-cancelamento" style="display: none; margin-top: 50px; background: #fffaf5; border-radius: 20px; padding: 25px; text-align: center; border: 1px solid #fecaca;">
+        <p style="color: #991b1b; font-size: 0.95rem; margin: 0 0 15px 0; font-weight: 500;">
+            Se você cancelar, seu perfil deixará de aparecer nas buscas após o fim do período atual pago.
+        </p>
+        <button id="btn-cancelar-assinatura" style="background: none; border: none; color: #dc2626; font-weight: 700; text-decoration: underline; cursor: pointer; font-size: 0.95rem; transition: color 0.2s;">
+            Cancelar renovação automática
+        </button>
     </div>
 
-    <div class="plano-card destaque-visual" style="border: 2px solid #ccc; opacity: 0.8; position: relative;">
-        <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #999; color: #fff; font-size: 0.75rem; font-weight: bold; padding: 2px 10px; border-radius: 12px;">
-            EM BREVE
-        </div>
-        <h2 style="color: #666;">Plano Clínico</h2>
-        <div class="preco" style="color: #666;">R$ 159<span>/mês</span></div>
-        <ul class="beneficios-lista" style="filter: grayscale(100%);">
-            <li>✨ <strong>Tudo do Essencial, mais:</strong></li>
-            <li>✅ Intervisão e Workshops</li>
-            <li>✅ Perguntas e Respostas</li>
-            <li>✅ Indicadores (Conversão e Picos)</li>
-            <li>✅ URL Personalizada</li>
-        </ul>
-        <div class="plano-cta">
-            <button class="btn-mudar-plano" disabled style="background-color: #e0e0e0; color: #888; border: none; cursor: not-allowed; width: 100%;">
-                Disponível em Breve
-            </button>
-        </div>
-    </div>
-
-    <div class="plano-card" style="border: 2px solid #eee; opacity: 0.7; position: relative;">
-        <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #999; color: #fff; font-size: 0.75rem; font-weight: bold; padding: 2px 10px; border-radius: 12px;">
-            EM BREVE
-        </div>
-        <h2 style="color: #666;">Plano Referência</h2>
-        <div class="preco" style="color: #666;">R$ 259<span>/mês</span></div>
-        <ul class="beneficios-lista" style="filter: grayscale(100%);">
-            <li>🚀 <strong>Tudo do Clínico, mais:</strong></li>
-            <li>✅ Supervisão Clínica</li>
-            <li>✅ Destaque nos Resultados</li>
-            <li>✅ Análise de Perfil com IA</li>
-            <li>✅ Insights Avançados (Competitividade)</li>
-        </ul>
-        <div class="plano-cta">
-            <button class="btn-mudar-plano" disabled style="background-color: #e0e0e0; color: #888; border: none; cursor: not-allowed; width: 100%;">
-                Disponível em Breve
-            </button>
-        </div>
-    </div>
-</section>
-
-<div id="area-cancelamento" class="danger-zone" style="display: none;">
-    <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">Se você cancelar, seu perfil deixará de aparecer nas buscas após o fim do período atual.</p>
-    <button id="btn-cancelar-assinatura" class="btn-cancelar-discreto">
-        Cancelar renovação automática
-    </button>
 </div>
-</div>
 
+<!-- MODAL CONFIRMA CANCELAMENTO -->
 <div id="modal-cancelamento" class="custom-modal-overlay" style="display: none;">
-    <div class="custom-modal-box" style="padding: 20px; text-align: center; max-width: 400px; max-height: 90vh; overflow-y: auto;">
-        <div style="margin-bottom: 10px; color: #e63946;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
-            </svg>
-        </div>
-        <h3 style="margin-top: 0; margin-bottom: 8px; color: #333; font-size: 1.2rem;">Tem certeza?</h3>
-        <p style="color: #666; margin-bottom: 15px; line-height: 1.3; font-size: 0.9rem;">
-            Você continuará com acesso aos benefícios até o fim do período pago, mas sua assinatura não será renovada.
-        </p>
-        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-            <button id="btn-fechar-modal-cancel" style="padding: 10px 20px; border: 1px solid #ddd; background: #fff; border-radius: 6px; cursor: pointer; color: #555; font-weight: 600; flex: 1; min-width: 120px;">Manter Plano</button>
-            <button id="btn-confirmar-cancelamento" style="padding: 10px 20px; border: none; background: #e63946; border-radius: 6px; cursor: pointer; color: #fff; font-weight: bold; flex: 1; min-width: 120px;">Sim, Cancelar</button>
+    <div class="custom-modal-box" style="padding: 40px 30px; text-align: center; max-width: 420px;">
+        <div class="sheet-drag-handle"></div>
+        <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; background: #fef2f2; border-radius: 50%; color: #e63946; font-size: 2rem; margin-bottom: 20px;">⚠️</div>
+        <h3 style="margin: 0 0 10px 0; color: #1B4332; font-family: var(--font-titulos); font-size: 1.8rem;">Tem certeza?</h3>
+        <p style="color: #555; font-size: 1rem; margin: 0 0 30px 0; line-height: 1.5;">Você continuará com acesso aos benefícios até o fim do período pago, mas sua assinatura não será renovada no próximo mês.</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button id="btn-fechar-modal-cancel" class="btn-modern" style="background: #f1f3f5; color: #333;">Não, manter meu plano</button>
+            <button id="btn-confirmar-cancelamento" class="btn-modern" style="background: #fff; color: #e63946; border: 2px solid #ffebee; box-shadow: none;">Sim, quero cancelar</button>
         </div>
     </div>
 </div>
 
+<!-- MODAL SUCESSO CANCELAMENTO -->
 <div id="modal-sucesso-cancelamento" class="custom-modal-overlay" style="display: none;">
-    <div class="custom-modal-box" style="text-align: center; max-height: 90vh; overflow-y: auto;">
-        <div style="margin-bottom: 20px; color: #1B4332;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-            </svg>
-        </div>
-        <h3 style="margin-top:0; color: #1B4332; font-size: 1.5rem;">Tudo Certo!</h3>
-        <p id="msg-sucesso-cancelamento" style="color:#666; line-height: 1.6; margin-bottom: 25px; font-size: 1.1rem;">
-            Assinatura cancelada e valor estornado.
-        </p>
-        <button id="btn-fechar-sucesso-cancel" style="background-color: #1B4332; color: white; padding: 12px 35px; border-radius: 50px; font-weight: bold; border: none; cursor: pointer; transition: transform 0.2s; font-size: 1rem; width: 100%;">
+    <div class="custom-modal-box" style="padding: 40px 30px; text-align: center; max-width: 420px;">
+        <div class="sheet-drag-handle"></div>
+        <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; background: #f0fdf4; border-radius: 50%; color: #16a34a; font-size: 2rem; margin-bottom: 20px;">✅</div>
+        <h3 style="margin: 0 0 10px 0; color: #1B4332; font-family: var(--font-titulos); font-size: 1.8rem;">Tudo Certo!</h3>
+        <p id="msg-sucesso-cancelamento" style="color: #555; font-size: 1rem; margin: 0 0 30px 0; line-height: 1.5;">Sua assinatura foi cancelada. Lamentamos ver você partir.</p>
+        
+        <button id="btn-fechar-sucesso-cancel" class="btn-modern btn-primary-modern">
             Entendido
         </button>
     </div>
@@ -208,6 +421,18 @@
 (async () => {
     const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : 'http://localhost:3001';
     const token = localStorage.getItem('Yelo_token');
+
+    // --- FIX CRÍTICO: BINDING DO BOTÃO IMEDIATO ---
+    // Movemos isso para FORA do bloco da API. Assim, mesmo que a API falhe ou demore,
+    // o botão funciona imediatamente e abre o modal de pagamento.
+    document.querySelectorAll('.btn-upgrade').forEach(btn => {
+        btn.onclick = (e) => {
+            e.preventDefault();
+            if (window.iniciarPagamento) {
+                window.iniciarPagamento(btn.getAttribute('data-plano') || 'ESSENTIAL', btn);
+            }
+        };
+    });
 
     if (!token) return; // Se não estiver logado, o comportamento padrão (mostrar planos) permanece ou redireciona
 
@@ -220,6 +445,7 @@
 
         if (response.ok) {
             const user = await response.json();
+            window.currentUserData = user; // Salva para o modal de pagamento
             console.log("Debug Assinatura - Dados do Usuário:", user);
 
             // VERIFICAÇÃO VIP
@@ -353,14 +579,6 @@
                     }
                 }
             }
-
-            // --- LÓGICA PARA PRIMEIRA ASSINATURA (Botões "Quero Começar Agora") ---
-            document.querySelectorAll('.btn-upgrade').forEach(btn => {
-                btn.onclick = (e) => {
-                    e.preventDefault();
-                    abrirModalPagamento(btn.getAttribute('data-plano') || 'ESSENTIAL');
-                };
-            });
         }
     } catch (error) {
         console.error("Erro ao verificar status VIP:", error);
@@ -449,7 +667,7 @@
         if (planNameEl) planNameEl.textContent = `Plano ${nomeExibicao}`;
 
         // 1. Esconde a grid de planos (pagamento)
-        const planosGrid = document.querySelector('.planos-grid');
+        const planosGrid = document.querySelector('.plans-grid-modern');
         if (planosGrid) planosGrid.style.setProperty('display', 'none', 'important');
 
         // 2. Esconde área de cancelamento (não faz sentido para isentos)
@@ -541,217 +759,5 @@
             fire(0.1, { spread: 120, startVelocity: 45 });
         }
     }
-
-    // Função auxiliar para abrir o modal de pagamento
-    function abrirModalPagamento(plano) {
-        const modal = document.getElementById('payment-modal');
-        if (modal) {
-            modal.style.display = 'flex';
-            modal.setAttribute('data-selected-plan', plano); // Salva o plano escolhido no modal
-            
-            initPaymentModalLogic(); // Garante que os botões funcionem
-            
-            // Reseta para a tela inicial do modal
-            const stepMethod = document.getElementById('step-payment-method');
-            const stepForm = document.getElementById('payment-form');
-            const pixResult = document.getElementById('pix-result-container');
-            if(stepMethod) stepMethod.style.display = 'block';
-            if(stepForm) stepForm.style.display = 'none';
-            if(pixResult) pixResult.style.display = 'none';
-        }
-    }
-
-    // --- LÓGICA DO MODAL DE PAGAMENTO (Correção do Bug) ---
-    function initPaymentModalLogic() {
-        const modal = document.getElementById('payment-modal');
-        if (!modal) return;
-        let currentMethod = 'CREDIT_CARD'; // Estado para controlar o método
-
-        const btnCard = document.getElementById('btn-select-card');
-        const btnPix = document.getElementById('btn-select-pix');
-        const stepMethod = document.getElementById('step-payment-method');
-        const stepForm = document.getElementById('payment-form');
-        const pixResult = document.getElementById('pix-result-container');
-        const btnBack = document.getElementById('btn-back-method');
-        const btnClose = document.getElementById('btn-close-modal-x');
-        const btnPagar = document.getElementById('btn-confirmar-stripe'); // Botão de Pagar
-
-        // Função para resetar o modal ao estado inicial
-        const resetModal = () => {
-            if(stepMethod) stepMethod.style.display = 'block';
-            if(stepForm) stepForm.style.display = 'none';
-            if(pixResult) pixResult.style.display = 'none';
-        };
-
-        // 1. Fechar Modal
-        if(btnClose) btnClose.onclick = () => { 
-            modal.style.display = 'none'; 
-            resetModal(); 
-        };
-
-        // 2. Selecionar Cartão
-        if(btnCard) btnCard.onclick = () => {
-            currentMethod = 'CREDIT_CARD';
-            if(stepMethod) stepMethod.style.display = 'none';
-            if(stepForm) stepForm.style.display = 'block';
-            document.getElementById('credit-card-section').style.display = 'flex'; // Mostra campos de cartão
-            btnPagar.textContent = 'Pagar Agora';
-        };
-
-        // 3. Selecionar PIX
-        if(btnPix) btnPix.onclick = () => {
-            currentMethod = 'PIX';
-            if(stepMethod) stepMethod.style.display = 'none';
-            if(stepForm) stepForm.style.display = 'block'; // Mostra formulário para dados do titular
-            document.getElementById('credit-card-section').style.display = 'none'; // Esconde campos de cartão
-            btnPagar.textContent = 'Gerar QR Code PIX';
-        };
-
-        // 4. Botão Voltar (dentro do form de cartão)
-        if(btnBack) btnBack.onclick = () => {
-            if(stepForm) stepForm.style.display = 'none';
-            if(stepMethod) stepMethod.style.display = 'block';
-        };
-
-        // 5. Processar Pagamento (Cartão)
-        // Removemos listeners antigos para evitar duplicação
-        const novoBtnPagar = btnPagar.cloneNode(true);
-        btnPagar.parentNode.replaceChild(novoBtnPagar, btnPagar);
-
-        novoBtnPagar.onclick = async (e) => {
-            e.preventDefault();
-            const plano = modal.getAttribute('data-selected-plan') || 'ESSENTIAL';
-            
-            // 1. Limpa os caracteres especiais (pontos, traços, parênteses e espaços) para o Asaas não rejeitar
-            const rawCpf = document.getElementById('card-holder-cpf').value || '';
-            const rawPhone = document.getElementById('card-holder-phone').value || '';
-            const rawCep = document.getElementById('card-holder-cep').value || '';
-
-            const cleanCpf = rawCpf.replace(/\D/g, '');
-            const cleanPhone = rawPhone.replace(/\D/g, '');
-            const cleanCep = rawCep.replace(/\D/g, '');
-
-            // Coleta dados do formulário
-            const cardData = {
-                holderName: document.getElementById('card-holder-name').value,
-                holderCpf: cleanCpf,
-                holderPhone: cleanPhone,
-                // Campos de endereço (opcionais ou obrigatórios dependendo da sua regra)
-                postalCode: cleanCep,
-                addressNumber: document.getElementById('card-holder-number').value
-            };
-
-            // Adiciona dados do cartão apenas se for cartão
-            if (currentMethod === 'CREDIT_CARD') {
-                cardData.number = document.getElementById('card-number').value.replace(/\D/g, ''); // Remove espaços do cartão
-                cardData.expiry = document.getElementById('card-expiry').value;
-                cardData.ccv = document.getElementById('card-ccv').value;
-            }
-
-            // Validação simples
-            if(!cardData.holderName || !cardData.holderCpf || !cardData.holderPhone) {
-                alert('Por favor, preencha os dados do titular.');
-                return;
-            }
-            
-            // 2. Validação Estrita do Asaas (Bloqueia o envio se faltar número)
-            if (cardData.holderCpf.length !== 11 && cardData.holderCpf.length !== 14) {
-                alert('O CPF/CNPJ deve conter 11 ou 14 números.');
-                return;
-            }
-            if (cardData.holderPhone.length < 10) {
-                alert('O celular informado é inválido. Não se esqueça do DDD.');
-                return;
-            }
-            if (cardData.postalCode && cardData.postalCode.length !== 8) {
-                alert('O CEP deve conter 8 números.');
-                return;
-            }
-
-            if (currentMethod === 'CREDIT_CARD' && (!cardData.number || !cardData.expiry || !cardData.ccv)) {
-                alert('Por favor, preencha os dados do cartão.');
-                return;
-            }
-
-            novoBtnPagar.textContent = 'Processando...';
-            novoBtnPagar.disabled = true;
-
-            try {
-                const res = await fetch(`${(typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : 'http://localhost:3001'}/api/payments/create-preference`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('Yelo_token')}` 
-                    },
-                    body: JSON.stringify({ planType: plano, billingType: currentMethod, creditCard: cardData })
-                });
-                const data = await res.json();
-
-                if(res.ok) {
-                    if (currentMethod === 'PIX' && data.pix) {
-                        // Exibe o resultado do PIX
-                        stepForm.style.display = 'none';
-                        pixResult.style.display = 'block';
-                        
-                        const qrImg = document.getElementById('pix-qr-image');
-                        const copyInput = document.getElementById('pix-copy-paste');
-                        
-                        if(qrImg) qrImg.src = `data:image/png;base64,${data.pix.encodedImage}`;
-                        if(copyInput) copyInput.value = data.pix.payload;
-                        
-                        novoBtnPagar.textContent = 'Gerar QR Code PIX'; // Reseta botão
-                        novoBtnPagar.disabled = false;
-                    } else {
-                        // Sucesso Cartão
-                        modal.style.display = 'none';
-                        showToast('Pagamento aprovado! Bem-vindo(a) à Yelo! 🚀', 'success');
-                        lancarConfetes();
-                        setTimeout(() => window.location.reload(), 2000);
-                    }
-                } else {
-                    alert(data.error || 'Erro ao processar pagamento.');
-                    novoBtnPagar.textContent = currentMethod === 'PIX' ? 'Gerar QR Code PIX' : 'Pagar Agora';
-                    novoBtnPagar.disabled = false;
-                }
-            } catch(err) {
-                alert('Erro de conexão.');
-                novoBtnPagar.textContent = currentMethod === 'PIX' ? 'Gerar QR Code PIX' : 'Pagar Agora';
-                novoBtnPagar.disabled = false;
-            }
-        };
-
-        // --- MÁSCARAS DE INPUT (Formatação Automática) ---
-        if (typeof IMask !== 'undefined') {
-            const cardInput = document.getElementById('card-number');
-            const expiryInput = document.getElementById('card-expiry');
-            const ccvInput = document.getElementById('card-ccv');
-            const cpfInput = document.getElementById('card-holder-cpf');
-            const phoneInput = document.getElementById('card-holder-phone');
-            const cepInput = document.getElementById('card-holder-cep');
-
-            if(cardInput) IMask(cardInput, { mask: '0000 0000 0000 0000' });
-            if(expiryInput) IMask(expiryInput, { mask: '00/0000' }); // MM/AAAA
-            if(ccvInput) IMask(ccvInput, { mask: '0000' });
-            if(cpfInput) IMask(cpfInput, { mask: '000.000.000-00' });
-            if(phoneInput) IMask(phoneInput, { mask: '(00) 00000-0000' });
-            if(cepInput) IMask(cepInput, { mask: '00000-000' });
-        }
-
-        // Lógica de Copiar PIX
-        const btnCopyPix = document.getElementById('btn-copy-pix');
-        if(btnCopyPix) {
-            btnCopyPix.onclick = () => {
-                const copyText = document.getElementById('pix-copy-paste');
-                copyText.select();
-                copyText.setSelectionRange(0, 99999); // Mobile
-                navigator.clipboard.writeText(copyText.value);
-                btnCopyPix.textContent = 'Copiado!';
-                setTimeout(() => btnCopyPix.textContent = 'Copiar', 2000);
-            };
-        }
-    }
-
-    // Inicializa a lógica assim que a página carrega
-    initPaymentModalLogic();
 })();
 </script>

@@ -1,0 +1,52 @@
+<style>
+    @media (max-width: 991px) {
+        #clinica-hub-grid {
+            padding-bottom: 80px; /* Garante que o último card não fique escondido pela navegação mobile */
+        }
+    }
+</style>
+
+<div class="main-header">
+    <div class="header-content">
+        <h1>Gestão da Clínica</h1>
+        <p>Gerencie seus pacientes, agendamentos, finanças e métricas de desempenho.</p>
+    </div>
+</div>
+
+<div id="clinica-hub-grid" class="hub-grid fade-in-up">
+    <a href="#" onclick="window.loadPage('psi_pacientes.html')" class="hub-card">
+        <div class="hub-icon">👥</div>
+        <div class="hub-info">
+            <h3>Meus Pacientes</h3>
+            <p>Carteira de pacientes e agenda de sessões.</p>
+        </div>
+    </a>
+    <a href="#" onclick="window.loadPage('psi_financeiro.html')" class="hub-card" style="animation-delay: 0.1s;">
+        <div class="hub-icon">💰</div>
+        <div class="hub-info">
+            <h3>Financeiro</h3>
+            <p>Controle de receitas, despesas e fluxo de caixa.</p>
+        </div>
+    </a>
+    <a href="#" onclick="window.loadPage('psi_analytics.html')" class="hub-card" style="animation-delay: 0.2s;">
+        <div class="hub-icon">📊</div>
+        <div class="hub-info">
+            <h3>Métricas & Mercado</h3>
+            <p>Análise de preços e temas em alta.</p>
+        </div>
+    </a>
+    <a href="#" onclick="window.loadPage('psi_favoritos_analytics.html')" class="hub-card" style="animation-delay: 0.3s;">
+        <div class="hub-icon">❤️</div>
+        <div class="hub-info">
+            <h3>Análise de Favoritos</h3>
+            <p>Entenda o perfil de quem se interessa por você.</p>
+        </div>
+    </a>
+    <a href="#" onclick="window.loadPage('psi_calculadora_honorarios.html')" class="hub-card" style="animation-delay: 0.4s;">
+        <div class="hub-icon" style="background-color: #fef3c7; color: #d97706;">🧮</div>
+        <div class="hub-info">
+            <h3>Calculadora de Honorários</h3>
+            <p>Descubra o valor ideal para suas sessões.</p>
+        </div>
+    </a>
+</div>

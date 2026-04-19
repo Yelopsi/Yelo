@@ -24,19 +24,45 @@
 
     /* --- BOTTOM NAVIGATION BAR (MOBILE UX) --- */
     .bottom-nav {
-        display: none; /* Oculto no Desktop */
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 65px;
-        background-color: #ffffff;
-        /* Substitui box-shadow por drop-shadow para contornar a wave */
-        filter: drop-shadow(0 -5px 15px rgba(0,0,0,0.08));
-        z-index: 9999;
-        justify-content: space-around;
-        align-items: center;
-        padding-bottom: env(safe-area-inset-bottom); /* Ajuste para iPhone X+ */
+        display: none; /* Oculto no Desktop por padrão */
+        /* Forçamos o formato com !important para evitar conflitos com o style.css global */
+        position: fixed !important;
+        bottom: calc(20px + env(safe-area-inset-bottom)) !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: calc(100% - 40px) !important;
+        max-width: 400px !important;
+        background-color: rgba(255, 255, 255, 0.90) !important;
+        backdrop-filter: blur(12px) !important;
+        border-radius: 50px !important; /* Formato de Pílula */
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+        z-index: 9999 !important;
+        justify-content: space-around !important;
+        align-items: center !important;
+        padding: 8px 16px !important;
+        border-top: none !important;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    /* Classe que encolhe a barra de navegação (Estilo Safari/App-like) */
+    .bottom-nav.nav-hidden {
+        transform: translateX(-50%) translateY(15px) scale(0.85) !important;
+        padding: 4px 16px !important;
+        background-color: rgba(255, 255, 255, 0.70) !important;
+        backdrop-filter: blur(8px) !important;
+    }
+
+    .bottom-nav.nav-hidden .bottom-nav-item {
+        padding: 4px 0 !important;
+        gap: 0;
+    }
+
+    .bottom-nav.nav-hidden .bottom-nav-item span {
+        max-height: 0;
+        opacity: 0;
+        transform: scale(0.5);
+        margin-top: 0;
+        overflow: hidden;
     }
 
     .bottom-nav-wave {
@@ -48,6 +74,7 @@
         overflow: hidden;
         line-height: 0;
         pointer-events: none;
+        display: none; /* Oculta a onda, pois a barra agora é uma pílula flutuante */
     }
     
     .bottom-nav-wave svg {
@@ -73,29 +100,42 @@
         background: none;
         border: none;
         cursor: pointer;
-        padding: 5px 0 0 0;
-        transition: color 0.2s ease;
+        padding: 6px 0;
+        border-radius: 20px;
+        gap: 2px;
+        transition: all 0.3s ease;
+    }
+
+    .bottom-nav-item span {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        max-height: 15px;
+        opacity: 1;
+        transform: scale(1);
+        display: block;
+        overflow: hidden;
     }
 
     .bottom-nav-item svg {
         width: 24px;
         height: 24px;
-        margin-bottom: 4px;
         fill: none;
         stroke: currentColor;
         stroke-width: 2;
         stroke-linecap: round;
         stroke-linejoin: round;
-        transition: stroke 0.2s ease;
+        transition: all 0.3s ease;
     }
 
     .bottom-nav-item.active {
         color: var(--verde-escuro, #1B4332);
+        font-weight: 600;
+        background-color: #f0fdf4;
     }
     
     .bottom-nav-item.active svg {
         stroke: var(--verde-escuro, #1B4332);
         fill: rgba(27, 67, 50, 0.1); /* Preenchimento sutil no ativo */
+        transform: translateY(-2px);
     }
 
     /* Ajustes de Responsividade */
@@ -107,7 +147,7 @@
             display: flex; /* Mostra a barra inferior */
         }
         body {
-            padding-bottom: 140px; /* Garante que o conteúdo não fique escondido atrás da barra */
+            padding-bottom: 100px !important; /* Ajuste otimizado para a nova barra em pílula */
         }
         /* Ajuste para o menu "Mais" (container-navegacao) não cobrir a barra se for fixed */
         .container-navegacao.ativo {
@@ -159,7 +199,7 @@
             <ul>
                 <li><a href="/">Início</a></li>
                 <li><a href="/sobre">Sobre</a></li>
-                <li><a href="/comunidade">Psis Respondem</a></li>
+                <li><a href="/comunidade">Pergunte</a></li>
                 <li><a href="/profissionais">Para Profissionais</a></li>
                 <li><a href="/faq">FAQ</a></li>
                 <li><a href="/blog">Blog</a></li>
@@ -195,7 +235,7 @@
     
     <a href="/comunidade" class="bottom-nav-item" id="nav-community">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
-        <span>Psis Respondem</span>
+        <span>Pergunte</span>
     </a>
 
     <a href="/questionario.html" class="bottom-nav-item" id="nav-start">
@@ -270,5 +310,44 @@
                 link.classList.add('active');
             }
         });
+
+        // --- LÓGICA DE SMART SCROLL (PÁGINAS PÚBLICAS) ---
+        function setupPublicSmartScroll() {
+            if (window.innerWidth > 992) return; // Apenas no mobile
+
+            const bottomNav = document.querySelector('.bottom-nav');
+            if (!bottomNav) return;
+
+            // Adiciona listener para expandir ao clicar na barra encolhida
+            bottomNav.addEventListener('click', () => {
+                if (bottomNav.classList.contains('nav-hidden')) {
+                    bottomNav.classList.remove('nav-hidden');
+                }
+            });
+
+            // Verifica se a página tem rolagem
+            const isScrollable = document.documentElement.scrollHeight > document.documentElement.clientHeight;
+
+            if (isScrollable) {
+                // Se tem rolagem, usa a lógica de scroll
+                let lastScrollY = window.scrollY;
+                const scrollThreshold = 100;
+                window.addEventListener('scroll', () => {
+                    const currentScrollY = window.scrollY;
+                    if (currentScrollY > lastScrollY && currentScrollY > scrollThreshold) {
+                        bottomNav.classList.add('nav-hidden');
+                    } else if (currentScrollY < lastScrollY) {
+                        bottomNav.classList.remove('nav-hidden');
+                    }
+                    lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
+                }, { passive: true });
+            } else {
+                // Se não tem rolagem, encolhe após 2 segundos
+                setTimeout(() => {
+                    bottomNav.classList.add('nav-hidden');
+                }, 2000);
+            }
+        }
+        setupPublicSmartScroll();
     });
 </script>

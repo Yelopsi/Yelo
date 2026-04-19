@@ -11,108 +11,171 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     
     <style>
-        .login-container { max-width: 450px !important; margin-top: 60px; margin-bottom: 80px; }
-        .form-group input { width: 100%; box-sizing: border-box; }
-
-        .input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
+        :root {
+            --fonte-titulo: 'Lora', serif;
+            --fonte-corpo: 'Mulish', sans-serif;
         }
-        .input-wrapper input {
-            padding-right: 45px; /* Espaço para o ícone não cobrir o texto */
-        }
-        .btn-toggle-senha {
-            position: absolute;
-            right: 15px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #666;
-            display: flex;
+        html, body {
+            overflow: hidden !important; /* Bloqueia barras duplas no desktop e rolagem lateral */
+            width: 100%;
+            height: 100%;
+            margin: 0;
             padding: 0;
         }
-        .btn-toggle-senha:hover { color: #1B4332; }
-
-        /* Ajuste do Botão Google */
-        .g_id_signin {
+        body {
+            font-family: var(--fonte-corpo), sans-serif;
+            background-color: #f9fafb;
             display: flex;
+            align-items: center; /* Centraliza a caixa principal verticalmente */
             justify-content: center;
-            width: 100%;
+            position: relative;
         }
         
-        /* Doodles de Fundo */
-        .doodle-bg {
-            position: absolute;
-            opacity: 0.4;
-            pointer-events: none;
-            z-index: 0;
-            color: #e0e0e0;
+        /* App-Like Auth Box */
+        .app-auth-box {
+            background: #ffffff;
+            width: 100%;
+            max-width: 500px; /* Alargado para caber 2 colunas */
+            max-height: 100vh;
+            overflow-y: auto; /* Rolagem apenas interna se não couber na tela */
+            padding: 30px 24px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 2;
+            scrollbar-width: none; /* Oculta a barra no Firefox */
+            -ms-overflow-style: none; /* Oculta a barra no IE/Edge */
         }
+        .app-auth-box::-webkit-scrollbar {
+            display: none; /* Oculta a barra no Chrome, Safari e Opera */
+        }
+        @media(min-width: 480px) {
+            .app-auth-box {
+                border-radius: 24px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+                padding: 30px 32px;
+                max-height: 95vh;
+            }
+        }
+
+        /* Sistema de 2 Colunas para o Desktop */
+        .form-row { display: flex; flex-direction: column; }
+        @media(min-width: 480px) {
+            .form-row { flex-direction: row; gap: 15px; }
+            .form-row .app-input-group { flex: 1; margin-bottom: 12px; }
+        }
+
+        .app-top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .app-back-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: #f3f4f6; color: #333; text-decoration: none; transition: 0.2s; }
+        .app-back-btn:hover { background: #e5e7eb; }
+        .app-logo { height: 28px; }
+        
+        .app-title { font-family: var(--fonte-titulo, serif); font-size: 1.8rem; color: #1B4332; margin: 0 0 8px 0; line-height: 1.2; font-weight: 700; }
+        .app-subtitle { color: #666; margin: 0 0 20px 0; font-size: 0.95rem; }
+        
+         .app-input-group { margin-bottom: 12px; position: relative; }
+        .app-input-group label { display: block; font-size: 0.8rem; font-weight: 700; color: #4b5563; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .app-input { width: 100%; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 14px; font-size: 16px; color: #111; transition: all 0.3s ease; box-sizing: border-box; font-family: inherit; }
+        .app-input:focus { background: #fff; border-color: #1B4332; box-shadow: 0 0 0 4px rgba(27, 67, 50, 0.1); outline: none; }
+        
+        .app-input-password-wrapper { position: relative; display: flex; align-items: center; }
+        .app-input-password-wrapper input { padding-right: 50px; }
+        .btn-toggle-senha { position: absolute; right: 16px; top: 50% !important; bottom: auto !important; transform: translateY(-50%) !important; width: auto !important; height: auto !important; z-index: 10 !important; color: #9ca3af; background: none; border: none; cursor: pointer; display: flex; padding: 4px; transition: color 0.2s; }
+        .btn-toggle-senha:hover { color: #1B4332; }
+        
+        .app-btn-primary { width: 100%; background: #1B4332; color: #fff; border: none; border-radius: 50px; padding: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.3s; margin-top: 5px; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .app-btn-primary:hover { background: #143d2e; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(27, 67, 50, 0.25); }
+        .app-btn-primary:disabled { opacity: 0.7; cursor: not-allowed; transform: none; box-shadow: none; }
+        
+        .app-divider { display: flex; align-items: center; text-align: center; margin: 15px 0; color: #9ca3af; font-size: 0.85rem; font-weight: 600; }
+        .app-divider::before, .app-divider::after { content: ''; flex: 1; border-bottom: 1px solid #e5e7eb; }
+        .app-divider span { padding: 0 15px; }
+        
+        .app-footer-link { text-align: center; margin-top: 15px; font-size: 0.9rem; color: #6b7280; }
+        .app-footer-link a { color: #1B4332; font-weight: 700; text-decoration: none; }
+        
+        .form-group-checkbox { display: flex; gap: 10px; align-items: start; margin-top: 5px; margin-bottom: 10px; }
+        .form-group-checkbox input[type="checkbox"] { width: 18px; height: 18px; margin-top: 2px; accent-color: #1B4332; cursor: pointer; flex-shrink: 0; }
+        .form-group-checkbox label { font-size: 0.85rem; color: #666; font-weight: normal; text-transform: none; letter-spacing: normal; }
+        
+        .g_id_signin { display: flex; justify-content: center; width: 100%; }
+        .doodle-bg { position: absolute; opacity: 0.4; pointer-events: none; z-index: 0; color: #e0e0e0; }
         .doodle-bg.top-left { top: -50px; left: -50px; width: 300px; transform: rotate(45deg); }
         .doodle-bg.bottom-right { bottom: -50px; right: -50px; width: 250px; transform: rotate(-45deg); }
+        .mensagem-oculta { display: none !important; }
+        .mensagem-erro { color: #dc2626; font-size: 0.9rem; margin-bottom: 15px; text-align: center; background: #fef2f2; padding: 10px; border-radius: 8px; }
+        .mensagem-sucesso { color: #15803d; font-size: 0.9rem; margin-bottom: 15px; text-align: center; background: #f0fdf4; padding: 10px; border-radius: 8px; }
+        .spin-anim { animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="pagina-login">
-
-    <%- include('partials/header') %>
-
-    <main class="login-main ruido" style="position: relative; overflow: hidden;">
+<body>
         <svg class="doodle-bg top-left" viewBox="0 0 200 200" fill="currentColor"><path d="M45.7,-76.3C58.9,-69.3,69.1,-55.6,76.3,-41.2C83.5,-26.8,87.7,-11.7,85.6,2.6C83.5,16.9,75.1,30.4,65.6,42.2C56.1,54,45.5,64.1,33.3,70.3C21.1,76.5,7.3,78.8,-5.3,76.9C-17.9,75,-34.7,68.9,-48.6,59.6C-62.5,50.3,-73.5,37.8,-79.6,23.3C-85.7,8.8,-86.9,-7.7,-80.7,-21.8C-74.5,-35.9,-60.9,-47.6,-46.8,-54.3C-32.7,-61,-18.1,-62.7,-2.9,-62.2C12.3,-61.7,24.6,-59,32.5,-83.3L45.7,-76.3Z" transform="translate(100 100)" /></svg>
         <svg class="doodle-bg bottom-right" viewBox="0 0 200 200" fill="currentColor"><path d="M38.1,-63.8C49.3,-54.6,58.3,-43.3,65.5,-30.8C72.7,-18.3,78.1,-4.6,76.3,8.3C74.5,21.2,65.5,33.3,55.3,43.4C45.1,53.5,33.7,61.6,21.1,66.1C8.5,70.6,-5.3,71.5,-18.4,67.8C-31.5,64.1,-43.9,55.8,-53.4,45.2C-62.9,34.6,-69.5,21.7,-70.8,8.2C-72.1,-5.3,-68.1,-19.4,-59.6,-31.1C-51.1,-42.8,-38.1,-52.1,-25.3,-60.1C-12.5,-68.1,0.1,-74.8,12.7,-74.8C25.3,-74.8,38.1,-68.1,38.1,-63.8Z" transform="translate(100 100)" /></svg>
 
-        <div class="login-container" style="position: relative; z-index: 2;">
-            <h1 class="login-titulo">Criar conta</h1>
-            <p style="text-align:center; margin-bottom:20px; color: #555;">
-                Junte-se à Yelo para cuidar da sua saúde mental.
-            </p>
+        <div class="app-auth-box">
+            <div class="app-top-bar">
+                <a href="/" class="app-back-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </a>
+                <img src="/assets/logos/logo-escura.png" alt="Yelo" class="app-logo">
+                <div style="width: 40px;"></div>
+            </div>
+
+            <h1 class="app-title">Criar conta</h1>
+            <p class="app-subtitle">Sua jornada de cuidado começa aqui.</p>
             
-            <form class="login-form" id="form-registro">
+            <form id="form-registro">
                 <p id="mensagem-registro" class="mensagem-oculta" style="text-align: center; margin-bottom: 15px; font-weight: bold;"></p>
                 
-                <div class="form-group">
-                    <label for="nome-completo">Nome Completo</label>
-                    <input type="text" id="nome-completo" name="nome" placeholder="Seu nome" autocomplete="name" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="email">E-mail</label>
-                    <input type="email" id="email" name="email" placeholder="seu@email.com" autocomplete="email" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="senha">Senha</label>
-                    <div class="input-wrapper">
-                        <input type="password" id="senha" name="senha" placeholder="Mínimo 6 caracteres" autocomplete="new-password" required minlength="6">
-                        <button type="button" class="btn-toggle-senha" data-target="senha" title="Mostrar senha">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                        </button>
+                <div class="form-row">
+                    <div class="app-input-group">
+                        <label for="nome-completo">Nome Completo</label>
+                        <input type="text" id="nome-completo" class="app-input" name="nome" placeholder="Seu nome" autocomplete="name" required>
+                    </div>
+    
+                    <div class="app-input-group">
+                        <label for="email">E-mail</label>
+                        <input type="email" id="email" class="app-input" name="email" placeholder="seu@email.com" autocomplete="email" required>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="confirmar-senha">Confirmar Senha</label>
-                    <div class="input-wrapper">
-                        <input type="password" id="confirmar-senha" name="confirmar-senha" placeholder="Repita a senha" autocomplete="new-password" required>
-                        <button type="button" class="btn-toggle-senha" data-target="confirmar-senha" title="Mostrar senha">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                        </button>
+                <div class="form-row">
+                    <div class="app-input-group">
+                        <label for="senha">Senha</label>
+                        <div class="app-input-password-wrapper">
+                            <input type="password" id="senha" class="app-input" name="senha" placeholder="Mínimo 6 caracteres" autocomplete="new-password" required minlength="6">
+                            <button type="button" class="btn-toggle-senha" data-target="senha" title="Mostrar senha">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </button>
+                        </div>
+                    </div>
+    
+                    <div class="app-input-group">
+                        <label for="confirmar-senha">Confirmar Senha</label>
+                        <div class="app-input-password-wrapper">
+                            <input type="password" id="confirmar-senha" class="app-input" name="confirmar-senha" placeholder="Repita a senha" autocomplete="new-password" required>
+                            <button type="button" class="btn-toggle-senha" data-target="confirmar-senha" title="Mostrar senha">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="form-group-checkbox" style="display: flex; gap: 10px; align-items: start; margin-top: 10px;">
-                    <input type="checkbox" id="termos" name="termos" required style="margin-top: 4px;">
-                    <label for="termos" style="font-size: 0.85rem; color: #666;">
-                        Li e aceito os <a href="/termos" target="_blank" style="color: var(--verde-escuro); font-weight: bold;">Termos de Uso</a> e <a href="/privacidade" target="_blank" style="color: var(--verde-escuro); font-weight: bold;">Política de Privacidade</a>.
+                <div class="form-group-checkbox">
+                    <input type="checkbox" id="termos" name="termos" required>
+                    <label for="termos">
+                        Li e aceito os <a href="/termos" target="_blank" style="color: #1B4332; font-weight: bold;">Termos de Uso</a> e <a href="/privacidade" target="_blank" style="color: #1B4332; font-weight: bold;">Política de Privacidade</a>.
                     </label>
                 </div>
 
-                <button type="submit" class="btn-cta-principal" style="border: none; cursor: pointer; margin-top: 15px;">
+                <button type="submit" class="app-btn-primary">
                     Criar Conta Gratuita
                 </button>
             </form>
 
-            <div class="divisor"><span>OU</span></div>
+            <div class="app-divider"><span>OU ACESSE COM</span></div>
 
             <!-- Botão do Google -->
             <div id="g_id_onload"
@@ -128,20 +191,14 @@
                  data-logo_alignment="left">
             </div>
 
-            <div class="login-links" style="margin-top: 25px; text-align: center;">
-                <a href="/login">Já tem uma conta? <strong>Faça Login</strong></a>
+            <div class="app-footer-link">
+                Já tem uma conta? <a href="/login">Faça Login</a>
             </div>
-            
-            <hr style="margin: 30px 0; border: 0; border-top: 1px solid #eee;">
             
             <div style="text-align: center;">
-                <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">É psicólogo(a)?</p>
-                <a href="/psi_questionario.html" class="btn btn-outline" style="color: var(--verde-escuro); border-color: var(--verde-escuro);">Cadastrar como Profissional</a>
+                <p style="font-size: 0.9rem; color: #666; margin-top: 15px;">É psicólogo(a)? <a href="/psi_questionario.html" style="color: #1B4332; font-weight: 700; text-decoration: none;">Cadastrar-se</a></p>
             </div>
         </div>
-    </main>
-
-    <%- include('partials/footer') %>
     
     <script src="/config.js"></script>
     <script src="/cadastro.js"></script>

@@ -68,17 +68,17 @@
                         <span id="char-counter" style="color: #666;">0/50 caracteres</span>
                     </div>
 
-                    <div style="background-color: rgba(255,255,255,0.6); padding: 20px; border-radius: 16px; margin-top: 20px; border: 1px solid rgba(0,0,0,0.05); font-size: 0.85rem; color: #555;">
-                        <ul style="margin: 0; padding-left: 20px; line-height: 1.6;">
-                            <li style="margin-bottom: 5px;"><strong>100% Anônimo:</strong> Sua pergunta será publicada sem identificar você.</li>
-                            <li style="margin-bottom: 5px;"><strong>Seja objetivo:</strong> Perguntas claras e breves recebem melhores respostas.</li>
-                            <li style="margin-bottom: 5px;"><strong>Para a comunidade:</strong> A dúvida é enviada para todos os especialistas, não para um específico.</li>
-                            <li style="margin-bottom: 5px;"><strong>Caráter Informativo:</strong> Não substitui consulta clínica. Se você está em crise, <a href="/ajuda">Estes recursos</a> podem fornecer ajuda imediata.</li>
+                    <div class="ask-disclaimers">
+                        <ul>
+                            <li><strong>100% Anônimo:</strong> Sua pergunta será publicada sem identificar você.</li>
+                            <li><strong>Seja objetivo:</strong> Perguntas claras e breves recebem melhores respostas.</li>
+                            <li><strong>Para a comunidade:</strong> A dúvida é enviada para todos os especialistas, não para um específico.</li>
+                            <li><strong>Caráter Informativo:</strong> Não substitui consulta clínica. Se você está em crise, <a href="/ajuda">Estes recursos</a> podem fornecer ajuda imediata.</li>
                             <li><strong>Restrições:</strong> Não são permitidas perguntas sobre casos muito específicos, segundas opiniões ou dosagens de medicamentos.</li>
                         </ul>
                     </div>
 
-                    <div style="margin-top: 20px;">
+                    <div style="margin-top: 20px; text-align: center;">
                         <button type="submit" class="btn btn-principal" id="submit-question-btn" disabled style="width: 100%; max-width: 300px;">Enviar Pergunta</button>
                     </div>
                 </form>
@@ -107,24 +107,28 @@
     <div id="Yelo-toast" class="toast"></div>
 
     <template id="qa-card-template">
-        <div class="qa-card">
-            <div class="qa-card-question">
+        <div class="qa-card qna-conversation-thread">
+            <div class="qa-bubble qa-bubble-question">
                 <h2 class="data-question-title"></h2>
-                <p class="data-question-content" style="margin-bottom: 10px;"></p>
-                <span class="data-patient-name" style="font-size: 0.8rem; color: #888;"></span>
+                <p class="data-question-content"></p>
+                <span class="data-patient-name" style="display:block; text-align:right; font-size:0.75rem; color:#888; margin-top:10px;"></span>
             </div>
             <div class="qa-card-answers-container"></div>
         </div>
     </template>
 
     <template id="qa-answer-template">
-        <div class="qa-card-answer">
-            <div class="answer-text-content"><p class="data-answer-content">Carregando resposta...</p></div>
-            <div class="answer-psy-sidebar">
+        <div class="qa-bubble qa-bubble-answer">
+            <div class="answer-psy-header">
                 <img class="data-psy-photo" src="" alt="Foto">
-                <h4 class="data-psy-name">Nome do Psicólogo</h4>
-                <p class="data-psy-crp">CRP 00/000000</p>
-                <a href="#" class="btn btn-verde btn-ver-perfil" style="padding: 5px 15px; font-size: 0.8rem;">Ver perfil</a>
+                <div class="psy-info-mob" style="flex-grow: 1; line-height: 1.2;">
+                    <h4 class="data-psy-name" style="margin: 0; font-size: 0.95rem; color: #1B4332;"></h4>
+                    <span class="data-psy-crp" style="font-size: 0.75rem; color: #555;"></span>
+                </div>
+                <a href="#" class="btn-ver-perfil">Ver perfil</a>
+            </div>
+            <div class="answer-text-content">
+                <p class="data-answer-content" style="margin: 0;"></p>
             </div>
         </div>
     </template>

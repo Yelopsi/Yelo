@@ -3,6 +3,31 @@
 document.addEventListener('DOMContentLoaded', async () => {
     let visibleReviewCount = 5;
     
+    // --- 0. FIX CSS: GARANTIR STICKY E EXIBIÇÃO DE BADGES ---
+    if (!document.getElementById('fix-layout-perfil')) {
+        const cssFix = document.createElement('style');
+        cssFix.id = 'fix-layout-perfil';
+        cssFix.innerHTML = `
+            /* Clip permite o 'sticky' funcionar nativamente. */
+            body, html { overflow-x: clip !important; }
+            .profile-page-main, .container, .profile-layout-grid {
+                overflow: visible !important;
+            }
+            .profile-layout-grid {
+                align-items: flex-start !important; /* CRÍTICO PARA O STICKY FUNCIONAR */
+            }
+            .sticky-sidebar {
+                position: -webkit-sticky !important;
+                position: sticky !important;
+                top: 100px !important;
+                align-self: flex-start !important;
+                height: max-content !important;
+                z-index: 90 !important;
+            }
+        `;
+        document.head.appendChild(cssFix);
+    }
+
     // --- 1. CONFIGURAÇÃO INICIAL ---
     const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') 
         ? window.API_BASE_URL 
@@ -22,15 +47,76 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- 2. FUNÇÕES AUXILIARES DE UI ---
     const showToast = (message, type = 'success') => {
-        if (!toastContainer) return;
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.innerHTML = message;
-        toastContainer.appendChild(toast);
+        let container = document.getElementById('pill-notification-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'pill-notification-container';
+            document.body.appendChild(container);
+        }
+
+        const pill = document.createElement('div');
+        pill.className = `pill-notification ${type}`;
+
+        let iconHtml = '';
+        if (type === 'success') {
+            iconHtml = '<span class="icon">✅</span>';
+        } else if (type === 'error') {
+            iconHtml = '<span class="icon">❌</span>';
+        } else if (type === 'info') {
+            iconHtml = '<span class="icon">ℹ️</span>';
+        }
+
+        pill.innerHTML = `${iconHtml}<span>${message}</span>`;
+        container.appendChild(pill);
+
         setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => toast.remove(), 500);
-        }, 4000);
+            pill.remove();
+        }, 4500);
+    };
+
+    const showModernModal = (icon, title, message, primaryText, primaryUrl, secondaryText, customHtml = '') => {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:999999; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(3px); opacity: 0; transition: opacity 0.3s ease;";
+        
+        const box = document.createElement('div');
+        box.style.cssText = "background:#fff; padding:40px 30px; border-radius:24px; width:90%; max-width:420px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.15); transform: translateY(20px); transition: transform 0.3s ease;";
+        
+        box.innerHTML = `
+            <div style="font-size:3.5rem; margin-bottom:15px; line-height:1;">${icon}</div>
+            <h3 style="color:var(--verde-escuro, #1B4332); margin:0 0 15px 0; font-family: var(--font-titulos, serif); font-size:1.6rem;">${title}</h3>
+            <p style="color:#555; font-size:1rem; line-height:1.6; margin-bottom:30px;">${message}</p>
+            ${customHtml}
+            <div style="display:flex; flex-direction:column; gap:12px;">
+                ${primaryText ? `<button id="modal-primary-btn" style="background:var(--verde-escuro, #1B4332); color:#fff; border:none; padding:14px; border-radius:50px; font-weight:bold; font-size:1rem; cursor:pointer; transition:transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 15px rgba(27,67,50,0.2);">${primaryText}</button>` : ''}
+                <button id="modal-secondary-btn" style="background:transparent; color:#666; border:none; padding:10px; font-weight:600; cursor:pointer; text-decoration:underline;">${secondaryText}</button>
+            </div>
+        `;
+        
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+        
+        requestAnimationFrame(() => {
+            overlay.style.opacity = '1';
+            box.style.transform = 'translateY(0)';
+        });
+        
+        const primaryBtn = document.getElementById('modal-primary-btn');
+        if (primaryBtn) {
+            primaryBtn.onclick = () => { 
+                if (typeof primaryUrl === 'function') {
+                    primaryUrl();
+                } else {
+                    window.location.href = primaryUrl; 
+                }
+            };
+        }
+        const closeModal = () => {
+            overlay.style.opacity = '0';
+            box.style.transform = 'translateY(20px)';
+            setTimeout(() => overlay.remove(), 300);
+        };
+        document.getElementById('modal-secondary-btn').onclick = closeModal;
+        overlay.onclick = (e) => { if(e.target === overlay) closeModal(); };
     };
 
     const toggleLoading = (isLoading) => {
@@ -91,6 +177,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             const style = document.createElement('style');
             style.id = 'dynamic-tags-style';
             style.innerHTML = `
+                .tags-container {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 25px;
+                    margin-top: 25px;
+                    text-align: left;
+                }
+                @media (max-width: 992px) {
+                    .tags-container { grid-template-columns: repeat(2, 1fr); }
+                }
+                @media (max-width: 600px) {
+                    .tags-container { grid-template-columns: 1fr; gap: 15px; }
+                }
                 .tag-pill {
                     display: inline-block;
                     padding: 6px 14px;
@@ -141,10 +240,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 tagsContainer = document.createElement('div');
                 tagsContainer.id = 'psi-tags-container';
                 tagsContainer.className = 'tags-container';
-                
-                // Estilos para garantir visualização correta dentro da aba
-                // REMOVIDO: display flex global, pois agora teremos blocos verticais (grupos)
-                tagsContainer.style.marginTop = '20px'; // Espaçamento para separar do texto acima
                 
                 tabSobre.appendChild(tagsContainer);
             } 
@@ -359,6 +454,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div>
                 <div class="summary-stars">${summaryStarsHtml}</div>
                 <div class="summary-count">Baseado em ${reviews.length} avaliações</div>
+                <div style="font-size: 0.85rem; color: #10b981; margin-top: 6px; display: flex; align-items: center; gap: 4px; font-weight: 600;">
+                    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="14" height="14"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path></svg>
+                    Avaliações 100% Autenticadas
+                </div>
             </div>
         `;
         // Insere o sumário ANTES da lista de reviews
@@ -461,56 +560,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // E. Renderiza Badges de Gamificação (NOVO)
-    const renderBadges = (badgesData) => {
-        const container = document.getElementById('psi-badges-display');
-        if (!container || !badgesData) return;
-
-        let html = '';
-
-        // 1. Badge Autêntico (Segurança)
-        if (badgesData.autentico) {
-            html += `
-                <div class="badge-item badge-autentico" title="Autêntico: Este profissional mantém o perfil 100% completo e verificado.">
-                    <span class="badge-icon">🛡️</span>
-                </div>
-            `;
-        }
-
-        // 2. Badge Semeador (Conteúdo)
-        if (badgesData.semeador) {
-            const nivel = badgesData.semeador; // bronze, prata, ouro
-            const label = nivel.charAt(0).toUpperCase() + nivel.slice(1);
-            html += `
-                <div class="badge-item badge-${nivel}" title="Semeador (${label}): Produz conteúdo e educa a audiência na plataforma.">
-                    <span class="badge-icon">🌱</span>
-                </div>
-            `;
-        }
-
-        // 3. Badge Voz Ativa (Comunidade)
-        if (badgesData.voz_ativa) {
-            const nivel = badgesData.voz_ativa;
-            const label = nivel.charAt(0).toUpperCase() + nivel.slice(1);
-            html += `
-                <div class="badge-item badge-${nivel}" title="Voz Ativa (${label}): Acolhe e responde dúvidas de pacientes na Comunidade Yelo.">
-                    <span class="badge-icon">💬</span>
-                </div>
-            `;
-        }
-
-        // 4. Badge Pioneiro
-        if (badgesData.pioneiro) {
-            html += `
-                <div class="badge-item badge-pioneiro" title="Pioneiro: Membro Fundador, um dos primeiros profissionais da Yelo.">
-                    <span class="badge-icon">🏅</span>
-                </div>
-            `;
-        }
-
-        container.innerHTML = html;
-    };
-
     // --- 5. POPULAR PERFIL (BLINDADO) ---
     const populateProfile = (profile) => {
         // Garante que a mensagem de erro esteja oculta
@@ -526,7 +575,84 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // 1. Textos Básicos
             safeText('psi-nome', profile.nome);
-            safeText('psi-crp', profile.crp ? `CRP: ${profile.crp}` : '');
+            safeText('psi-crp', profile.crp ? `CRP: ${profile.crp}` : 'CRP: Em validação');
+
+            // --- NOVO: GERADOR DE RESUMO PROFISSIONAL DINÂMICO ---
+            const gerarResumoProfissional = (especialidadesPsi, demandasPaciente = []) => {
+                const dicionario = {
+                    "que faça parte da comunidade lgbtqiapn+": "questões LGBTQIAPN+",
+                    "que seja uma pessoa não-branca (racializada) / prática antirracista": "práticas antirracistas",
+                    "que tenha uma perspectiva feminista": "perspectiva feminista",
+                    "que entenda de neurodiversidade (tdah, autismo, etc.)": "neurodiversidade",
+                    "relacionamentos": "conflitos de relacionamento",
+                    "carreira": "transição de carreira",
+                    "luto": "processos de luto",
+                    "traumas": "superação de traumas"
+                };
+            
+                const normalizar = (item) => {
+                    if (!item || typeof item !== 'string') return null;
+                    const limpo = item.trim().toLowerCase();
+                    return dicionario[limpo] || limpo;
+                };
+            
+                const espPsiNorm = (especialidadesPsi || []).map(normalizar).filter(Boolean);
+                const demPacNorm = (demandasPaciente || []).map(normalizar).filter(Boolean);
+            
+                if (espPsiNorm.length === 0) {
+                    const fallbacks = [
+                        "Acompanhamento psicológico focado no desenvolvimento pessoal e saúde mental.",
+                        "Atendimento clínico dedicado ao acolhimento e bem-estar emocional.",
+                        "Um espaço seguro de escuta para o seu autoconhecimento."
+                    ];
+                    return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+                }
+            
+                const intersecao = espPsiNorm.filter(e => demPacNorm.includes(e));
+                const exclusivasPsi = espPsiNorm.filter(e => !demPacNorm.includes(e));
+                const listaCombinada = [...new Set([...intersecao, ...exclusivasPsi])];
+            
+                const exibir = listaCombinada.slice(0, 3);
+                const possuiMais = listaCombinada.length > 3;
+            
+                if (exibir.includes('ansiedade') && exibir.includes('estresse')) {
+                    exibir[exibir.indexOf('ansiedade')] = 'ansiedade e estresse';
+                    exibir.splice(exibir.indexOf('estresse'), 1);
+                    if (listaCombinada[3]) exibir.push(listaCombinada[3]);
+                }
+            
+                let listaFormatada = "";
+                if (exibir.length === 1) listaFormatada = exibir[0];
+                else if (exibir.length === 2) listaFormatada = `${exibir[0]} e ${exibir[1]}`;
+                else listaFormatada = `${exibir[0]}, ${exibir[1]} e ${exibir[2]}`;
+            
+                const templates = [
+                    `Apoio em ${listaFormatada}`,
+                    `Foco em ${listaFormatada}`,
+                    `Acolhimento para ${listaFormatada}`,
+                    `Atende ${listaFormatada}`,
+                    `Experiência com ${listaFormatada}`
+                ];
+            
+                let resumoFinal = templates[Math.floor(Math.random() * templates.length)];
+                resumoFinal = resumoFinal.charAt(0).toUpperCase() + resumoFinal.slice(1);
+            
+                if (possuiMais) {
+                    const sufixos = [ " e mais.", " e outras.", " e outras demandas." ];
+                    resumoFinal += sufixos[Math.floor(Math.random() * sufixos.length)];
+                } else { resumoFinal += "."; }
+            
+                return resumoFinal;
+            };
+
+            // Tenta resgatar preferências temporárias salvas do questionário (Match recente)
+            let patientRecentDemands = [];
+            try { const matchData = JSON.parse(sessionStorage.getItem('matchResults')); if (matchData && matchData.userPreferences) { patientRecentDemands = matchData.userPreferences.temas_buscados || []; } } catch(e) {}
+            
+            // Junta todos os atributos textuais do psi que representam especialidade
+            const allPsiSpecialties = [...(profile.temas_atuacao || []), ...(profile.praticas_inclusivas || []), ...(profile.especialidades || [])];
+            
+            safeText('psi-especialidade-principal', gerarResumoProfissional(allPsiSpecialties, patientRecentDemands));
             
             // 2. Modalidade
             const modRaw = profile.modalidade;
@@ -602,8 +728,59 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (bioEl) {
                 if (profile.bio && profile.bio.trim().length > 0) {
                     bioEl.innerHTML = profile.bio.replace(/\n/g, '<br>');
+                    
+                    // Lógica de Ler Mais / Ler Menos (App-Like)
+                    const checkBioOverflow = () => {
+                        const btnLerMais = document.getElementById('btn-ler-mais-bio');
+                        const overlay = document.getElementById('bio-fade-overlay');
+                        const bioWrapper = document.getElementById('bio-content-wrapper');
+                        
+                        // Fallback seguro: Verifica por altura OU se o texto possui mais de 250 caracteres
+                        if (btnLerMais && (bioEl.scrollHeight > bioEl.clientHeight || profile.bio.length > 250)) {
+                            btnLerMais.style.display = 'inline-flex';
+                            if (overlay) overlay.style.opacity = '1';
+                            
+                            btnLerMais.onclick = () => {
+                                const isCollapsed = bioEl.classList.contains('bio-collapsed');
+                                const btnText = btnLerMais.querySelector('.btn-text');
+                                
+                                if (isCollapsed) {
+                                    bioEl.classList.remove('bio-collapsed');
+                                    bioWrapper.classList.remove('is-collapsed');
+                                    btnLerMais.classList.add('expanded');
+                                    if(btnText) btnText.textContent = 'Ler menos';
+                                } else {
+                                    bioEl.classList.add('bio-collapsed');
+                                    bioWrapper.classList.add('is-collapsed');
+                                    btnLerMais.classList.remove('expanded');
+                                    if(btnText) btnText.textContent = 'Ler mais';
+                                    
+                                    // Rola suavemente de volta ao título para não perder contexto
+                                    const bioHeader = document.querySelector('.titulo-bio');
+                                    if (bioHeader) {
+                                        const headerOffset = 120; // Compensar Header Fixo
+                                        const elementPosition = bioHeader.getBoundingClientRect().top;
+                                        window.scrollTo({ top: elementPosition + window.scrollY - headerOffset, behavior: "smooth" });
+                                    }
+                                }
+                            };
+                        }
+                    };
+                    setTimeout(checkBioOverflow, 150);
+                    // Dupla checagem para garantir que o DOM renderizou as fontes
+                    setTimeout(checkBioOverflow, 600);
                 } else {
                     bioEl.innerHTML = '<em style="color:#999;">Biografia não informada.</em>';
+                }
+            }
+            
+            // 4.5 Formação Acadêmica
+            const formacaoContainer = document.getElementById('psi-formacao-container');
+            if (formacaoContainer) {
+                if (profile.formacao_nivel || (profile.formacao_desc && profile.formacao_desc.trim() !== '')) {
+                    formacaoContainer.style.display = 'block';
+                    safeText('psi-formacao-nivel', profile.formacao_nivel || 'Formação');
+                    safeText('psi-formacao-desc', profile.formacao_desc || '');
                 }
             }
 
@@ -634,30 +811,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             // 7. WhatsApp
-            const btnZap = document.getElementById('btn-agendar-whatsapp');
-            if (btnZap) {
+            const setupZapButton = (btnId) => {
+                const btnZap = document.getElementById(btnId);
+                if (!btnZap) return;
+
                 if (profile.telefone) {
                     const cleanPhone = profile.telefone.replace(/\D/g, '');
-                    btnZap.href = `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=Olá! Vi seu perfil na Yelo e gostaria de verificar horários disponíveis.`;
+                    btnZap.href = `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=Olá, ${profile.nome.split(' ')[0]}! Vi seu perfil na Yelo e gostaria de verificar horários disponíveis para agendamento.`;
                     btnZap.target = '_blank'; // Garante abertura em nova aba
                     btnZap.classList.remove('disabled');
 
                     // --- NOVO: RASTREAMENTO DE CLIQUE ---
-                    // Remove listeners antigos para evitar duplicação
                     const newBtnZap = btnZap.cloneNode(true);
                     btnZap.parentNode.replaceChild(newBtnZap, btnZap);
                     
                     newBtnZap.addEventListener('click', async () => {
                         try {
-                            // Tenta pegar o ID do paciente logado do localStorage
-                            // O token JWT tem o ID, mas para simplificar, vamos ver se temos o ID salvo ou decodificar
-                            // Se não tiver, manda null (Visitante)
                             let patientId = null;
                             const token = localStorage.getItem('Yelo_token');
-                            if (token) {
-                                // Decodificação simples do JWT (payload é a segunda parte)
-                                const payload = JSON.parse(atob(token.split('.')[1]));
-                                if (payload.type === 'patient') patientId = payload.id;
+                            if (token && token !== 'cookie_auth_active') {
+                                try {
+                                    const payload = JSON.parse(atob(token.split('.')[1]));
+                                    if (payload.type === 'patient') patientId = payload.id;
+                                } catch(e) {}
                             }
 
                             // [NOVO] Recupera o telefone do questionário (se houver)
@@ -677,14 +853,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     btnZap.classList.add('disabled');
                     btnZap.href = "#";
                 }
-            }
+            };
+
+            // Configura ambos os botões de ação (Mobile Hero e Sticky Bottom/Desktop)
+            setupZapButton('btn-agendar-whatsapp');
+            setupZapButton('btn-agendar-whatsapp-hero');
 
             // 8. Funções Extras (Executadas isoladamente para não quebrar o fluxo)
             try { if(typeof renderTagsSection === 'function') renderTagsSection(profile); } catch(e) { console.warn('Tags:', e); }
             try { if(typeof renderSocialLinks === 'function') renderSocialLinks(profile); } catch(e) { console.warn('Social:', e); }
             try { if(typeof renderHeroRating === 'function') renderHeroRating(profile.reviews); } catch(e) { console.warn('Rating:', e); }
             try { if(typeof renderReviewsList === 'function') renderReviewsList(profile.reviews); } catch(e) { console.warn('ReviewsList:', e); }
-            try { if(typeof renderBadges === 'function') renderBadges(profile.badges); } catch(e) { console.warn('Badges:', e); }
             try { if(typeof setupReviewForm === 'function') setupReviewForm(profile.id); } catch(e) { console.warn('ReviewForm:', e); }
             try { if(typeof setupFavoriteButton === 'function') setupFavoriteButton(profile.id); } catch(e) { console.warn('Favorite:', e); }
 
@@ -739,34 +918,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const rating = ratingInput ? ratingInput.value : null;
             const comment = commentInput ? commentInput.value.trim() : '';
 
-            // 1. Verifica Login
-            const token = localStorage.getItem('Yelo_token');
-            if (!token) {
-                // Salva rascunho antes de redirecionar
-                if (rating || comment) {
-                    localStorage.setItem(draftKey, JSON.stringify({ rating, comment }));
-                }
-
-                // Abre Modal de Login em vez de redirecionar direto
-                const modal = document.getElementById('modal-login-required');
-                const btnLogin = document.getElementById('btn-modal-login');
-                const btnStay = document.getElementById('btn-modal-stay');
-
-                if (modal && btnLogin) {
-                    const currentUrl = encodeURIComponent(window.location.href);
-                    btnLogin.href = `/login?redirect=${currentUrl}`;
-                    
-                    modal.style.display = 'flex';
-                    
-                    if(btnStay) btnStay.onclick = (e) => { e.preventDefault(); modal.style.display = 'none'; };
-                    modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
-                } else {
-                    // Fallback caso o modal não exista no HTML
-                    window.location.href = `/login?redirect=${encodeURIComponent(window.location.href)}`;
-                }
-                return;
-            }
-
             if (!rating) {
                 showToast("Por favor, selecione uma nota (estrelas).", "error");
                 return;
@@ -774,46 +925,157 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const btn = form.querySelector('button[type="submit"]');
             const originalText = btn ? btn.textContent : 'Enviar';
-            if (btn) { btn.disabled = true; btn.textContent = "Enviando..."; }
 
-            try {
-                const response = await fetch(`${BASE_URL}/api/reviews`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ psychologistId, rating: parseInt(rating), comment })
-                });
+            const enviarAvaliacao = async (authToken) => {
+                if (btn) { btn.disabled = true; btn.textContent = "Enviando..."; }
 
-                const data = await response.json();
+                try {
+                    const response = await fetch(`${BASE_URL}/api/reviews`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}`
+                        },
+                        body: JSON.stringify({ psychologistId, rating: parseInt(rating), comment })
+                    });
 
-                if (response.ok) {
-                    showToast("Avaliação enviada com sucesso!", "success");
-                    form.reset();
-                    localStorage.removeItem(draftKey); // Limpa rascunho
-                    setTimeout(() => window.location.reload(), 1500);
-                } else {
-                    // TRATAMENTO DE SESSÃO EXPIRADA (401)
-                    if (response.status === 401) {
-                        // Salva rascunho se a sessão caiu no meio do processo
-                        if (rating || comment) {
-                            localStorage.setItem(draftKey, JSON.stringify({ rating, comment }));
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        showToast("Avaliação enviada com sucesso!", "success");
+                        localStorage.removeItem(draftKey); // Limpa rascunho
+                        
+                        // 1. Injeta a avaliação no topo da lista visualmente sem recarregar a página
+                        const listContainer = document.getElementById('reviews-list-container');
+                        if (listContainer) {
+                            const emptyState = listContainer.querySelector('p');
+                            if (emptyState && emptyState.textContent.includes('não possui avaliações')) emptyState.remove();
+                            
+                            const userName = localStorage.getItem('Yelo_user_name') || 'Você';
+                            const initial = userName.charAt(0).toUpperCase();
+                            const newReviewHtml = `
+                                <div class="review-card" style="border-left: 4px solid var(--cor-Yelo); animation: fadeIn 0.5s ease; margin-bottom: 20px;">
+                                    <div class="review-header">
+                                        <div class="review-avatar">
+                                            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="50" fill="#E8F5E9"/><text x="50" y="55" font-family="Arial" font-size="40" fill="#1B4332" text-anchor="middle" dominant-baseline="middle">${initial}</text></svg>
+                                        </div>
+                                        <div class="review-author-info">
+                                        <strong class="review-author-name">${userName} <span style="display:inline-flex; align-items:center; margin-left:4px;" title="Autenticado pelo Google"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="12" height="12"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path></svg></span></strong>
+                                            <span class="review-date">Agora mesmo</span>
+                                        </div>
+                                    </div>
+                                    <div class="review-rating">${'★'.repeat(parseInt(rating))}${'<span style="color:#ddd">★</span>'.repeat(5 - parseInt(rating))}</div>
+                                    <p class="review-comment">${comment}</p>
+                                </div>
+                            `;
+                            listContainer.insertAdjacentHTML('afterbegin', newReviewHtml);
                         }
-                        localStorage.removeItem('Yelo_token'); // Limpa token inválido
-                        showToast("Sessão expirada. Faça login novamente.", "error");
-                        const currentUrl = encodeURIComponent(window.location.href);
-                        setTimeout(() => window.location.href = `/login?redirect=${currentUrl}`, 2000);
+
+                        // 2. Substitui o formulário por um Call to Action de sucesso
+                        const formBox = form.closest('.review-form-box');
+                        if (formBox) {
+                            formBox.innerHTML = `
+                                <div style="text-align: center; padding: 20px 10px; animation: fadeIn 0.5s ease;">
+                                    <div style="font-size: 3rem; margin-bottom: 10px;">🎉</div>
+                                    <h3 style="color: var(--verde-escuro); margin-bottom: 10px; font-family: var(--font-titulos);">Avaliação Publicada!</h3>
+                                    <p style="color: #666; margin-bottom: 25px; line-height: 1.5; font-size: 0.95rem;">Obrigado por sua contribuição. Como você utilizou o Google para a validação, ativamos uma conta gratuita de paciente para você acompanhar suas interações.</p>
+                                    <button onclick="window.location.href='/patient/patient_dashboard.html'" style="background: var(--verde-escuro); color: white; padding: 14px 30px; border-radius: 50px; font-weight: bold; border: none; cursor: pointer; width: 100%; transition: transform 0.2s;">Acessar Área do Paciente</button>
+                                </div>
+                            `;
+                        } else {
+                            setTimeout(() => window.location.href = '/patient/patient_dashboard.html', 2000);
+                        }
                     } else {
-                        showToast(data.error || "Erro ao salvar avaliação.", "error");
+                        // TRATAMENTO DE SESSÃO EXPIRADA (401)
+                        if (response.status === 401) {
+                            // Salva rascunho se a sessão caiu no meio do processo
+                            if (rating || comment) {
+                                localStorage.setItem(draftKey, JSON.stringify({ rating, comment }));
+                            }
+                            localStorage.removeItem('Yelo_token'); // Limpa token inválido
+                            showToast("Sessão expirada. Faça login novamente.", "error");
+                            const currentUrl = encodeURIComponent(window.location.href);
+                            setTimeout(() => window.location.href = `/login?redirect=${currentUrl}`, 2000);
+                        } else {
+                            showToast(data.error || "Erro ao salvar avaliação.", "error");
+                        }
                     }
+                } catch (error) {
+                    console.error("Erro review:", error);
+                    showToast("Erro de conexão.", "error");
+                } finally {
+                    if (btn) { btn.disabled = false; btn.textContent = originalText; }
                 }
-            } catch (error) {
-                console.error("Erro review:", error);
-                showToast("Erro de conexão.", "error");
-            } finally {
-                if (btn) { btn.disabled = false; btn.textContent = originalText; }
+            };
+
+            // 1. Verifica Login
+            const token = localStorage.getItem('Yelo_token');
+            if (!token) {
+                if (rating || comment) {
+                    localStorage.setItem(draftKey, JSON.stringify({ rating, comment }));
+                }
+                
+                showModernModal(
+                    '🔒',
+                    'Identificação Necessária',
+                    'Para garantir autenticidade e evitar perfis falsos, confirme sua identidade com o Google com um único clique.',
+                    null, // Botão primário substituído pelo iframe do Google
+                    null,
+                    'Cancelar',
+                    '<div id="google-btn-container" style="display:flex; justify-content:center; margin-bottom: 20px; min-height: 44px;"></div>'
+                );
+        
+                const script = document.createElement('script');
+                script.src = 'https://accounts.google.com/gsi/client';
+                script.async = true;
+                script.defer = true;
+                script.onload = () => {
+                    google.accounts.id.initialize({
+                        client_id: '283886540808-qj13i35cfagnp9rc6qou1o66mdv3ppkl.apps.googleusercontent.com',
+                        callback: async (response) => {
+                            try {
+                                const containerBtn = document.getElementById('google-btn-container');
+                                if (containerBtn) containerBtn.innerHTML = '<span style="color:#1B4332; font-weight:bold;">Validando e enviando...</span>';
+                                
+                                const authRes = await fetch(`${BASE_URL}/api/patients/google`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ token: response.credential })
+                                });
+                                
+                                if (authRes.ok) {
+                                    const authData = await authRes.json();
+                                    localStorage.setItem('Yelo_token', 'cookie_auth_active');
+                                    localStorage.setItem('Yelo_user_type', 'patient');
+                                    localStorage.setItem('Yelo_user_name', authData.nome);
+                                    
+                                    const modernOverlay = document.querySelector('div[style*="z-index:999999"]');
+                                    if (modernOverlay) modernOverlay.remove();
+                                    
+                                    enviarAvaliacao(authData.token || 'cookie_auth_active');
+                                } else {
+                                    showToast("Falha na autenticação com o Google.", "error");
+                                    if (containerBtn) {
+                                        containerBtn.innerHTML = '';
+                                        google.accounts.id.renderButton(containerBtn, { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with' });
+                                    }
+                                }
+                            } catch (error) {
+                                showToast("Erro ao conectar com o Google.", "error");
+                            }
+                        }
+                    });
+                    const container = document.getElementById('google-btn-container');
+                    if (container) {
+                        google.accounts.id.renderButton(container, { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with' });
+                    }
+                };
+                document.head.appendChild(script);
+                return;
             }
+
+            // Já está logado
+            enviarAvaliacao(token);
         };
     };
 
@@ -848,28 +1110,62 @@ document.addEventListener('DOMContentLoaded', async () => {
             e.preventDefault();
             
             if (!token || userType !== 'patient') {
-                // Lógica do Modal de Favoritos com Redirecionamento Inteligente
-                const modal = document.getElementById('modal-login-favorite');
-                if (modal) {
-                    const btnLogin = document.getElementById('btn-modal-fav-login');
-                    const btnCancel = document.getElementById('btn-modal-fav-cancel');
-                    
-                    // Monta a URL de retorno incluindo o parâmetro para auto-favoritar
-                    const currentUrl = window.location.href;
-                    const separator = currentUrl.includes('?') ? '&' : '?';
-                    const redirectUrl = encodeURIComponent(`${currentUrl}${separator}autoFavorite=true`);
-                    
-                    if (btnLogin) btnLogin.href = `/cadastro?redirect=${redirectUrl}`;
-                    
-                    modal.style.display = 'flex';
-                    
-                    const closeModal = () => { modal.style.display = 'none'; };
-                    if (btnCancel) btnCancel.onclick = closeModal;
-                    modal.onclick = (ev) => { if (ev.target === modal) closeModal(); };
-                } else {
-                    // Fallback caso o modal não exista
-                    window.location.href = `/cadastro?redirect=${encodeURIComponent(window.location.href)}`;
-                }
+                const currentUrl = window.location.href;
+                const separator = currentUrl.includes('?') ? '&' : '?';
+                const redirectUrl = encodeURIComponent(`${currentUrl}${separator}autoFavorite=true`);
+
+                showModernModal(
+                    '❤️',
+                    'Salvar Favorito',
+                    'Conecte sua conta em 1 clique para salvar seus profissionais favoritos de forma segura e acessá-los depois.',
+                    null,
+                    null,
+                    'Agora não',
+                    '<div id="google-btn-fav-container" style="display:flex; justify-content:center; margin-bottom: 20px; min-height: 44px;"></div>'
+                );
+                
+                const script = document.createElement('script');
+                script.src = 'https://accounts.google.com/gsi/client';
+                script.async = true;
+                script.defer = true;
+                script.onload = () => {
+                    google.accounts.id.initialize({
+                        client_id: '283886540808-qj13i35cfagnp9rc6qou1o66mdv3ppkl.apps.googleusercontent.com',
+                        callback: async (response) => {
+                            try {
+                                const authRes = await fetch(`${BASE_URL}/api/patients/google`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ token: response.credential })
+                                });
+                                
+                                if (authRes.ok) {
+                                    const authData = await authRes.json();
+                                    localStorage.setItem('Yelo_token', 'cookie_auth_active');
+                                    localStorage.setItem('Yelo_user_type', 'patient');
+                                    localStorage.setItem('Yelo_user_name', authData.nome);
+                                    
+                                    const modernOverlay = document.querySelector('div[style*="z-index:999999"]');
+                                    if (modernOverlay) modernOverlay.remove();
+                                    
+                                    // Favorita na mesma hora
+                                    await fetch(`${BASE_URL}/api/patients/favorites`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authData.token || 'cookie_auth_active'}` },
+                                        body: JSON.stringify({ psychologistId })
+                                    });
+                                    activeBtn.classList.add('active');
+                                    showToast("Adicionado aos favoritos!", "success");
+                                }
+                            } catch (error) { }
+                        }
+                    });
+                    const container = document.getElementById('google-btn-fav-container');
+                    if (container) {
+                        google.accounts.id.renderButton(container, { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with' });
+                    }
+                };
+                document.head.appendChild(script);
                 return;
             }
 
@@ -951,6 +1247,47 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
             // -----------------------------------------------------
+
+            // --- EXIBIR PRÓXIMO HORÁRIO DISPONÍVEL ---
+            try {
+                let nextSlot = null;
+
+                // 1. Tenta verificar se a API já trouxe essa info embutida no perfil
+                if (profileData.proximoAtendimento) {
+                    nextSlot = new Date(profileData.proximoAtendimento);
+                } else {
+                    // 2. Faz uma requisição auxiliar buscando a agenda pública do psi
+                    const resAgenda = await fetch(`${BASE_URL}/api/public/psychologists/${slug}/availability`);
+                    if (resAgenda.ok) {
+                        const slots = await resAgenda.json();
+                        const now = new Date();
+                        const futureSlots = slots
+                            .filter(s => new Date(s.start) > now && s.status === 'available')
+                            .sort((a, b) => new Date(a.start) - new Date(b.start));
+                            
+                        if (futureSlots.length > 0) {
+                            nextSlot = new Date(futureSlots[0].start);
+                        }
+                    }
+                }
+
+                if (nextSlot && nextSlot > new Date()) {
+                    const now = new Date();
+                    const tomorrow = new Date(now);
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    
+                    let dateStr = nextSlot.toDateString() === now.toDateString() ? 'Hoje' 
+                                : nextSlot.toDateString() === tomorrow.toDateString() ? 'Amanhã' 
+                                : nextSlot.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                    
+                    const timeStr = nextSlot.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
+                    document.querySelectorAll('.texto-proximo-horario').forEach(el => el.textContent = `${dateStr}, às ${timeStr}`);
+                    document.querySelectorAll('.badge-proximo-horario').forEach(el => {
+                        el.classList.add('has-slot');
+                        el.style.setProperty('display', 'flex', 'important'); // Força a exibição
+                    });
+                }
+            } catch (e) { console.warn("Aviso de próximo horário ignorado: Rota pendente no backend.", e); }
 
             toggleLoading(false);
 

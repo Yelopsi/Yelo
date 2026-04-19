@@ -1,7 +1,7 @@
 <div class="main-header" style="padding: 25px 40px;">
     <div class="header-content">
         <h1>Meu Perfil</h1>
-        <p>Gerencie suas informações pessoais e profissionais.</p>
+        <p>Gerencie suas informações. As alterações são salvas em blocos.</p>
     </div>
     <a href="#" id="btn-view-public-profile" class="btn btn-secundario" target="_blank" style="opacity: 0; pointer-events: none; transition: opacity 0.3s;">
         Ver como Paciente
@@ -9,9 +9,7 @@
 </div>
 
 <div class="widget">
-    <!-- FOTO DE PERFIL NO MOBILE -->
     <div class="mobile-photo-upload-section">
-        <!-- Dispara o clique no input file escondido do painel principal -->
         <div class="profile-photo-wrapper-mobile" onclick="document.getElementById('sidebar-photo-input').click()" title="Alterar foto">
             <img id="mobile-profile-photo-preview" src="https://placehold.co/120x120/1B4332/FFFFFF?text=Psi" alt="Sua Foto">
             <div class="camera-icon-badge">📷</div>
@@ -19,20 +17,23 @@
         <p>Toque para alterar a foto</p>
     </div>
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h3 style="margin:0;">Informações do Perfil</h3>
-        <span id="form-mode-indicator" class="mode-indicator-view">
-            <span id="form-mode-icon">●</span> <span id="form-mode-text">Modo de Visualização</span>
-        </span>
-    </div>
+    <!-- ================================================== -->
+    <!-- INÍCIO DOS BLOCOS DE PERFIL REATORADOS             -->
+    <!-- ================================================== -->
+    <div id="profile-blocks-container">
 
-    <form id="perfil-form">
-        <fieldset id="form-fieldset" disabled>
-            
-            <!-- SEÇÃO 1: DADOS BÁSICOS -->
-            <div class="profile-section">
+        <!-- Bloco 1: Dados Pessoais -->
+        <div class="profile-block" data-block-id="personal">
+            <div class="block-header">
                 <h4 class="section-title">Dados Pessoais</h4>
-                
+                <div class="block-actions">
+                    <span class="block-status"></span>
+                    <button type="button" class="btn btn-sm btn-secundario btn-edit">Editar</button>
+                    <button type="button" class="btn btn-sm btn-secundario btn-cancel hidden">Cancelar</button>
+                    <button type="button" class="btn btn-sm btn-principal btn-save hidden">Salvar</button>
+                </div>
+            </div>
+            <div class="block-content">
                 <div class="form-row">
                     <div class="form-group" style="flex: 2;">
                         <label for="nome">Nome de Exibição *</label>
@@ -43,12 +44,11 @@
                         <input type="text" id="crp" name="crp" required placeholder="00/00000">
                     </div>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label for="email">E-mail de Acesso *</label>
                         <input type="email" id="email" name="email" required>
-                    </div>
+                    </div> 
                     <div class="form-group">
                         <label for="telefone">WhatsApp Profissional *</label>
                         <input type="tel" id="telefone" name="telefone" inputmode="numeric" placeholder="(00) 00000-0000" required>
@@ -67,10 +67,20 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- SEÇÃO 2: ENDEREÇO -->
-            <div class="profile-section">
+        <!-- Bloco 2: Localização -->
+        <div class="profile-block" data-block-id="location">
+            <div class="block-header">
                 <h4 class="section-title">Localização</h4>
+                <div class="block-actions">
+                    <span class="block-status"></span>
+                    <button type="button" class="btn btn-sm btn-secundario btn-edit">Editar</button>
+                    <button type="button" class="btn btn-sm btn-secundario btn-cancel hidden">Cancelar</button>
+                    <button type="button" class="btn btn-sm btn-principal btn-save hidden">Salvar</button>
+                </div>
+            </div>
+            <div class="block-content">
                 <div class="form-row">
                     <div class="form-group" style="flex: 1;">
                         <label for="cep">CEP *</label>
@@ -91,20 +101,28 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- SEÇÃO 3: PERFIL PROFISSIONAL -->
-            <div class="profile-section">
+        <!-- Bloco 3: Detalhes Profissionais -->
+        <div class="profile-block" data-block-id="professional">
+            <div class="block-header">
                 <h4 class="section-title">Detalhes Profissionais</h4>
-                
+                <div class="block-actions">
+                    <span class="block-status"></span>
+                    <button type="button" class="btn btn-sm btn-secundario btn-edit">Editar</button>
+                    <button type="button" class="btn btn-sm btn-secundario btn-cancel hidden">Cancelar</button>
+                    <button type="button" class="btn btn-sm btn-principal btn-save hidden">Salvar</button>
+                </div>
+            </div>
+            <div class="block-content">
                 <div class="form-group highlight-box">
                     <label for="slug" style="color: #1B4332;">🔗 Link do seu Perfil (Personalizável) *</label>
-                    <div class="input-prefix-group" style="background: #fff;">
+                    <div class="input-prefix-group" style="background: #fff; max-width: 400px;">
                         <span class="prefix">yelopsi.com.br/</span>
                         <input type="text" id="slug" name="slug" placeholder="seu-nome" pattern="[a-z0-9\-]+" title="Use apenas letras minúsculas, números e hífen" style="font-weight: bold; color: #1B4332;" required>
                     </div>
                     <small style="color: #666; font-size: 0.8rem; margin-top: 5px; display: block;">Você poderá enviar esse link aos seus pacientes e usar como página profissional.</small>
                 </div>
-
                 <div class="form-group">
                     <label for="bio">Biografia / Sobre Mim *</label>
                     <div style="background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 10px;">
@@ -113,7 +131,6 @@
                     <textarea id="bio" name="bio" rows="6" placeholder="Escreva um texto acolhedor contando sua experiência, abordagem e como você pode ajudar o paciente..." required></textarea>
                     <div style="text-align: right; font-size: 0.8rem; color: #999; margin-top: 5px;">Recomendado: 300-500 caracteres</div>
                 </div>
-
                 <div class="form-group" style="max-width: 200px;">
                     <label for="valor_sessao_numero">Valor da Sessão *</label>
                     <div class="input-prefix-group">
@@ -122,10 +139,56 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- SEÇÃO 4: REDES SOCIAIS (GRID) -->
-            <div class="profile-section">
+        </div>
+
+        <!-- Bloco Novo: Formação Acadêmica -->
+        <div class="profile-block" data-block-id="academic">
+            <div class="block-header">
+                <h4 class="section-title">Formação Acadêmica</h4>
+                <div class="block-actions">
+                    <span class="block-status"></span>
+                    <button type="button" class="btn btn-sm btn-secundario btn-edit">Editar</button>
+                    <button type="button" class="btn btn-sm btn-secundario btn-cancel hidden">Cancelar</button>
+                    <button type="button" class="btn btn-sm btn-principal btn-save hidden">Salvar</button>
+                </div>
+            </div>
+            <div class="block-content">
+                <div class="form-row">
+                    <div class="form-group" style="flex: 1; min-width: 250px; max-width: 400px;">
+                        <label>Nível de Formação Principal</label>
+                        <div class="multiselect-tag disabled" id="formacao_nivel_multiselect" data-single-select="true">
+                            <div class="multiselect-display"></div>
+                            <div class="multiselect-options">
+                                <div class="option" data-value="Graduação">Graduação</div>
+                                <div class="option" data-value="Especialização">Especialização / Pós-Graduação</div>
+                                <div class="option" data-value="Mestrado">Mestrado</div>
+                                <div class="option" data-value="Doutorado">Doutorado</div>
+                                <div class="option" data-value="Pós-Doutorado">Pós-Doutorado</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="formacao_desc">Detalhes da Formação</label>
+                        <textarea id="formacao_desc" name="formacao_desc" rows="3" placeholder="Ex: Graduação em Psicologia pela USP. Especialização em Terapia Cognitivo-Comportamental pela PUC..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bloco 4: Redes Sociais -->
+        <div class="profile-block" data-block-id="social">
+            <div class="block-header">
                 <h4 class="section-title">Redes Sociais</h4>
+                <div class="block-actions">
+                    <span class="block-status"></span>
+                    <button type="button" class="btn btn-sm btn-secundario btn-edit">Editar</button>
+                    <button type="button" class="btn btn-sm btn-secundario btn-cancel hidden">Cancelar</button>
+                    <button type="button" class="btn btn-sm btn-principal btn-save hidden">Salvar</button>
+                </div>
+            </div>
+            <div class="block-content">
                 <div class="social-grid">
                     <div class="form-group">
                         <label>Instagram</label>
@@ -149,11 +212,20 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- SEÇÃO 5: ESPECIALIDADES (Multiselects) -->
-            <div class="profile-section">
+        <!-- Bloco 5: Especialidades e Atuação -->
+        <div class="profile-block" data-block-id="specialties">
+            <div class="block-header">
                 <h4 class="section-title">Especialidades e Atuação</h4>
-                
+                <div class="block-actions">
+                    <span class="block-status"></span>
+                    <button type="button" class="btn btn-sm btn-secundario btn-edit">Editar</button>
+                    <button type="button" class="btn btn-sm btn-secundario btn-cancel hidden">Cancelar</button>
+                    <button type="button" class="btn btn-sm btn-principal btn-save hidden">Salvar</button>
+                </div>
+            </div>
+            <div class="block-content">
             <div class="form-group">
                 <label>Temas de Atuação *</label>
                 <div class="multiselect-tag disabled" id="temas_atuacao_multiselect">
@@ -171,8 +243,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- NOVOS CAMPOS PARA MELHORAR O MATCH -->
             <div class="form-group">
                 <label>Público-Alvo Principal *</label>
                 <div class="multiselect-tag disabled" id="publico_alvo_multiselect">
@@ -185,7 +255,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="form-group">
                 <label>Estilo de Terapia (Como você se descreve para o paciente?) *</label>
                 <div class="multiselect-tag disabled" id="estilo_terapia_multiselect">
@@ -198,7 +267,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="form-group">
                 <label>Identificadores e Práticas Inclusivas *</label>
                 <div class="multiselect-tag disabled" id="praticas_inclusivas_multiselect">
@@ -211,7 +279,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="form-group">
                 <label>Abordagens e Técnicas *</label>
                 <div class="multiselect-tag disabled" id="abordagens_tecnicas_multiselect" data-single-select="true">
@@ -226,7 +293,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="form-group">
                 <label>Gênero de Identidade *</label>
                 <div class="multiselect-tag disabled" id="genero_identidade_multiselect" data-single-select="true">
@@ -239,7 +305,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="form-group">
                 <label>Modalidade de Atendimento *</label>
                 <div class="multiselect-tag disabled" id="modalidade_atendimento_multiselect" data-input-id="modalidade_input">
@@ -251,7 +316,6 @@
                     <input type="hidden" id="modalidade_input" name="modalidade">
                 </div>
             </div>
-
             <div class="form-group">
                 <label>Disponibilidade *</label>
                 <div class="multiselect-tag disabled" id="disponibilidade_periodo_multiselect">
@@ -264,13 +328,17 @@
                 </div>
             </div>
             </div>
-
-        </fieldset>
-        <div class="form-actions">
-            <button type="button" id="btn-alterar" class="btn btn-principal">Alterar Dados</button>
-            <button type="submit" id="btn-salvar" class="btn btn-principal hidden">Salvar Alterações</button>
         </div>
-    </form>
+    </div>
+</div>
+
+<!-- Botão Sticky de Salvamento Global (Temporário) -->
+<div class="sticky-footer-actions hidden" id="sticky-actions">
+    <p><span id="dirty-count">0</span> seções com alterações não salvas.</p>
+    <button type="button" class="btn btn-principal" id="btn-save-all">
+        <span class="btn-text">Salvar alterações</span>
+        <span class="spinner hidden"></span>
+    </button>
 </div>
 
 <div class="widget" style="margin-top: 20px;">
@@ -279,15 +347,17 @@
         <!-- Campo oculto para acessibilidade e gerenciadores de senha -->
         <input type="text" name="username" autocomplete="username" style="display:none;">
 
-        <div class="form-group">
-            <label for="senha_atual">Senha Atual</label>
-            <input type="password" id="senha_atual" name="senha_atual" required autocomplete="current-password">
+        <div class="form-row">
+            <div class="form-group" style="flex: 1; max-width: 350px;">
+                <label for="senha_atual">Senha Atual</label>
+                <input type="password" id="senha_atual" name="senha_atual" required autocomplete="current-password">
+            </div>
+            <div class="form-group" style="flex: 1; max-width: 350px;">
+                <label for="nova_senha">Nova Senha</label>
+                <input type="password" id="nova_senha" name="nova_senha" required autocomplete="new-password">
+            </div>
         </div>
-        <div class="form-group">
-            <label for="nova_senha">Nova Senha</label>
-            <input type="password" id="nova_senha" name="nova_senha" required autocomplete="new-password">
-        </div>
-        <div class="form-actions">
+        <div class="form-actions" style="justify-content: flex-start;">
             <button type="submit" class="btn btn-primario">Alterar Senha</button>
         </div>
     </form>

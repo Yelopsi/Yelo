@@ -46,11 +46,20 @@ window.initializePage = function() {
                         }[invoice.status] || 'status-inativo';
 
                         row.innerHTML = `
-                            <td data-label="Psicólogo">${invoice.psychologistName}</td>
-                            <td data-label="Data">${new Date(invoice.date).toLocaleDateString('pt-BR')}</td>
-                            <td data-label="Valor">R$ ${invoice.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                            <td data-label="Psicólogo">
+                                <div style="font-weight: 600; color: var(--verde-escuro); display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 32px; height: 32px; border-radius: 50%; background-color: #f0fdf4; color: var(--verde-escuro); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem;">
+                                        ${invoice.psychologistName.charAt(0).toUpperCase()}
+                                    </div>
+                                    <span>${invoice.psychologistName}</span>
+                                </div>
+                            </td>
+                            <td data-label="Data" style="color: #666; font-size: 0.9rem;">${new Date(invoice.date).toLocaleDateString('pt-BR')}</td>
+                            <td data-label="Valor" style="font-weight: 600; color: #333;">R$ ${invoice.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                             <td data-label="Status"><span class="status ${statusClass}">${invoice.status}</span></td>
-                            <td data-label="Ações"><button class="btn-tabela btn-details">Ver Detalhes</button></td>
+                            <td data-label="Ações" style="white-space: nowrap;"><button class="btn-tabela btn-details" style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 20px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg> Ver Detalhes
+                            </button></td>
                         `;
 
                         // Adiciona o listener para o botão "Ver Detalhes"
@@ -73,7 +82,7 @@ window.initializePage = function() {
                         faturasBody.appendChild(row);
                     });
                 } else {
-                    faturasBody.innerHTML = '<tr><td colspan="5" class="empty-row">Nenhuma fatura recente encontrada.</td></tr>';
+                    faturasBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--cinza-texto);">Nenhuma fatura recente encontrada.</td></tr>';
                 }
             }
 
@@ -84,20 +93,27 @@ window.initializePage = function() {
                     data.activePlans.forEach(plan => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td data-label="Psicólogo"><strong>${plan.psychologistName}</strong></td>
-                            <td data-label="Plano">${plan.planName}</td>
-                            <td data-label="MRR">R$ ${plan.mrr.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                            <td data-label="Próxima Cobrança">${plan.nextBilling ? new Date(plan.nextBilling).toLocaleDateString('pt-BR') : 'Isento'}</td>
+                            <td data-label="Psicólogo">
+                                <div style="font-weight: 600; color: var(--verde-escuro); display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 32px; height: 32px; border-radius: 50%; background-color: #f0fdf4; color: var(--verde-escuro); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem;">
+                                        ${plan.psychologistName.charAt(0).toUpperCase()}
+                                    </div>
+                                    <span>${plan.psychologistName}</span>
+                                </div>
+                            </td>
+                            <td data-label="Plano"><span style="background-color: var(--cor-Yelo); color: var(--verde-escuro); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">${plan.planName}</span></td>
+                            <td data-label="MRR" style="font-weight: 600; color: #333;">R$ ${plan.mrr.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                            <td data-label="Próxima Cobrança" style="color: #666; font-size: 0.9rem;">${plan.nextBilling ? new Date(plan.nextBilling).toLocaleDateString('pt-BR') : '<span style="background: #f1f3f5; padding: 2px 8px; border-radius: 4px;">Isento</span>'}</td>
                         `;
                         planosBody.appendChild(row);
                     });
                 } else {
-                    planosBody.innerHTML = '<tr><td colspan="4" class="empty-row">Nenhum plano ativo no momento.</td></tr>';
+                    planosBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: var(--cinza-texto);">Nenhum plano ativo no momento.</td></tr>';
                 }
             }
         } catch (error) {
             console.error("Erro ao carregar dados financeiros:", error);
-            if (faturasBody) faturasBody.innerHTML = `<tr><td colspan="5" class="error-row">${error.message}</td></tr>`;
+            if (faturasBody) faturasBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--coral-quente);">${error.message}</td></tr>`;
         }
     }
 

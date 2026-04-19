@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title>Material de Divulgação | Yelo</title>
+    <meta name="description" content="Baixe materiais exclusivos para divulgar seu perfil da Yelo nas redes sociais.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1B4332">
+
+    <%- include('partials/head') %>
+
+    <style>
+        /* --- ESTILOS DO GERADOR AUTOMÁTICO DE POSTS --- */
+        .hero-divulgacao {
+            padding: 100px 20px 60px;
+            background-color: var(--verde-escuro);
+            color: #fff;
+            text-align: center;
+            margin-top: -2px;
+            position: relative;
+        }
+        .hero-divulgacao h1 {
+            font-family: var(--font-titulos);
+            font-size: clamp(2.2rem, 4vw, 3.2rem);
+            margin-bottom: 15px;
+            color: #fff;
+        }
+        .hero-divulgacao p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 650px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .secao-gerador {
+            padding: 40px 20px 100px;
+            background-color: var(--off-white);
+        }
+
+        .posts-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        .post-preview-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+            border: 1px solid #f0f0f0;
+            transition: transform 0.3s ease;
+        }
+        .post-preview-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+        }
+
+        /* O Truque do Viewport para o Canvas de 1080x1080 */
+        .canvas-viewport {
+            width: 100%;
+            aspect-ratio: 3 / 4; /* Formato 1080x1440 */
+            background: transparent;
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        /* O Canvas Real (Alta Resolução) */
+        .post-canvas {
+            width: 1080px !important;
+            height: 1440px !important; /* Formato 1080x1440 */
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-origin: top left;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .post-canvas * { box-sizing: border-box; }
+
+        /* --- VARIÁVEIS DE TEMA NO CANVAS --- */
+        .post-canvas {
+            --post-bg: #1B4332; --post-text-primary: #FFEE8C; --post-text-secondary: #ffffff; --post-accent: #E63946;
+            background-color: var(--post-bg);
+            color: var(--post-text-primary);
+        }
+        .post-canvas.theme-verde { --post-bg: #1B4332; --post-text-primary: #FFEE8C; --post-text-secondary: #ffffff; --post-accent: #E63946; }
+        .post-canvas.theme-creme { --post-bg: #F8F3ED; --post-text-primary: #1B4332; --post-text-secondary: #555555; --post-accent: #1B4332; }
+        .post-canvas.theme-amarelo { --post-bg: #FFEE8C; --post-text-primary: #1B4332; --post-text-secondary: #333333; --post-accent: #1B4332; }
+        .post-canvas.theme-branco { --post-bg: #ffffff; --post-text-primary: #1B4332; --post-text-secondary: #555555; --post-accent: #E63946; }
+        .post-canvas.theme-coral { --post-bg: #E63946; --post-text-primary: #ffffff; --post-text-secondary: #ffcccc; --post-accent: #FFEE8C; }
+        .post-canvas.theme-escuro { --post-bg: #222222; --post-text-primary: #FFEE8C; --post-text-secondary: #dddddd; --post-accent: #E63946; }
+        .post-canvas.theme-imagem { --post-bg: transparent; --post-text-primary: #ffffff; --post-text-secondary: #e0e0e0; --post-accent: #FFEE8C; }
+
+        /* --- MELHORIA DE LEITURA PARA IMAGENS DE FUNDO --- */
+        .post-canvas.theme-imagem .post-headline {
+            text-shadow: 0 4px 30px rgba(0,0,0,0.8);
+        }
+        .post-canvas.theme-imagem .post-subtext {
+            text-shadow: 0 2px 20px rgba(0,0,0,0.6);
+        }
+
+        /* --- TIPOGRAFIA --- */
+        .post-canvas.font-padrao { --post-font-title: var(--font-titulos); --post-font-body: var(--font-principal); }
+        .post-canvas.font-elegante { --post-font-title: 'Georgia', 'Times New Roman', serif; --post-font-body: 'Georgia', 'Times New Roman', serif; }
+        .post-canvas.font-moderna { --post-font-title: 'Helvetica Neue', Helvetica, Arial, sans-serif; --post-font-body: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+
+        /* --- ALINHAMENTO --- */
+        .post-canvas.text-left .content-wrapper, .post-canvas.text-left .inner-card { text-align: left !important; align-items: flex-start !important; }
+        .post-canvas.text-center .content-wrapper, .post-canvas.text-center .inner-card { text-align: center !important; align-items: center !important; }
+
+        /* --- TEXTURA DE RUÍDO --- */
+        .post-canvas.pattern-noise {
+            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNSBXaW5kb3dzIiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuaWlkOjVBNTgzQTgyN0I0QjExRTNBQzBDRjg1QzY0OTQzQTY1IiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOjVBNTgzQTgzN0I0QjExRTNBQzBDRjg1QzY0OTQzQTY1Ij4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6NUE1ODNBODA3QjRCMTFFM0FDMENGODVDNjQ5NDNBNjUiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6NUE1ODNBODE3QjRCMTFFM0FDMENGODVDNjQ5NDNBNjUiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz5X7iHnAAACIElEQVR42mJgwA4Y0QUYcIAoA+58ZqDk/2eAAQz8gxFcWUBsBgYDBpZ/GDBwYHMZGBjYGfgZGMH4DIz/sWAAI1HlGZgY2BkYgPIsDIz//jAwgIUZmIHqzAz/gTIFDCDOvwbIuSxAHAam/38YGMDCvAwMTAwMDIz/fxggmMD8fwaGO0DZ/xggmM//ZWD8B1QGEmL8fwiIxfj/H5cE/797GFiA7O//2RkYQGoZGP/tBxJmYP//F6QvjJGBiYEJqITz/wFGBmEGoA7Of6DUD/b//2f8D1P1H2L/f/D/f0iIIfb/H1wS/P/pYP///wGqY2BgAsozM/wHSrAwMDBxMSgD2cwMQNf8g4W5GJQZGJjA9D8DKP13L5AAQ9h/mErWfx1Asv//f98BEuD6vwfIP/7/BwOIgQEowMzECMRi//9/R8j+H6YJ2BwB5i/2//9Bcsz/n4IHtz8AA5n8GBqA6zv//vYFk//9/D3EZYn//g1SC7f8PYjH//3/2I1aC4//Zgfz//86B1YD9/8fK/B+mCWw/O1AKKMnCgK4QjI2Z4T9I4D/YfwZlBiB+wMjE//+8A6uB8sL//+vA/P9zH7ET/H/3ACsDMwMjsP//n30HTA0DE8P/fQzKTIwMzP9hAkwMIPXMDExAZSCVzAxMDGws/zAwMLCx/MNiBth+/3/XwPz//95D7P///+5hdAJi/H/vAFIJtv/vHSDH8H8nFjOQ/wD5/98ZSPb/fx24GvYfIAFi///vHlYMzP//A8U4GP7D1DGwsfyHiTFwMTEDqWRnAAqwMDExgFX9h2kCtgQoBcT///+/O8RiyP6/c4Ak2P8/AysDUv//vwfYCZj/f17BaoB8/P8PUonI/z//z4D5//c9kAAj03/gV5gZvgPl2RkYf4OFGRhAJYwM//YBMwLbf2AWI2b///8OkI8R+f/n/z04NWH3//f/cx9Ihpn/9+DUBDIExGLM///vO8Ti//8/4+SA/T//3wGrwfL//w3I//9mZ2BkAAoB2/kPFmZk+A9UwMQIVMIAMj8j03+wG0CGMDL8PwQ0mQkAk9fC4h9mE7QAAAAASUVORK5CYII=');
+            background-repeat: repeat;
+            background-size: 150px;
+            background-blend-mode: overlay;
+        }
+
+        /* --- DECORAÇÕES --- */
+        .decorations { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; overflow: hidden; }
+        
+        .dec-aspas, .dec-doodle, .dec-geo { display: none; position: absolute; }
+        
+        .post-canvas.ornament-aspas .dec-aspas { display: block; top: 50px; left: 80px; font-size: 400px; color: var(--post-accent); opacity: 0.15; font-family: Georgia, serif; line-height: 1; }
+        .post-canvas.ornament-doodle .dec-doodle { display: block; bottom: 80px; right: -40px; width: 450px; height: 450px; color: var(--post-accent); opacity: 0.15; transform: rotate(-10deg); }
+        .post-canvas.ornament-geo .dec-geo { display: block; top: 0; right: 0; width: 450px; height: 450px; background-color: var(--post-accent); border-radius: 0 0 0 100%; opacity: 0.9; }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+        }
+
+        /* --- ELEMENTOS DO POST --- */
+        .post-headline {
+            font-family: var(--post-font-title);
+            font-size: 105px; 
+            line-height: 1.15;
+            margin: 0;
+            color: var(--post-text-primary);
+            word-wrap: break-word;
+        }
+        .post-subtext {
+            font-family: var(--post-font-body);
+            font-size: 48px;
+            line-height: 1.4;
+            margin: 50px 0 0 0;
+            color: var(--post-text-secondary);
+            word-wrap: break-word;
+            opacity: 0.95;
+        }
+        .post-footer {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        .post-signature {
+            font-family: var(--post-font-body);
+            font-size: 38px;
+            font-weight: bold;
+            color: var(--post-text-primary);
+            opacity: 0.8;
+            letter-spacing: 1px;
+        }
+        .post-logo { height: 70px; width: auto; opacity: 0.9; object-fit: contain; }
+
+        /* --- TEMPLATES LÓGICA --- */
+        .post-canvas.layout-minimal {
+            text-align: center; padding: 120px;
+        }
+        .post-canvas.layout-minimal .content-wrapper { justify-content: center; align-items: center; }
+        .post-canvas.layout-minimal .post-headline { font-size: 120px; }
+
+        .post-canvas.layout-editorial {
+            text-align: left; padding: 120px;
+        }
+        .post-canvas.layout-editorial .content-wrapper { justify-content: flex-start; }
+        .post-canvas.layout-editorial .post-headline { margin-top: 120px; }
+        .post-canvas.layout-editorial .post-headline::after {
+            content: ''; display: block; width: 150px; height: 8px;
+            background-color: var(--post-accent); margin-top: 60px;
+        }
+        
+        .post-canvas.layout-card {
+            padding: 80px;
+        }
+        .post-canvas.layout-card .content-wrapper { justify-content: center; align-items: center; }
+        .post-canvas.layout-card .inner-card {
+            display: flex; flex-direction: column; justify-content: center;
+            background: rgba(255,255,255,0.1);
+            padding: 120px; border-radius: 80px; width: 100%; height: 100%;
+            border: 4px solid rgba(255,255,255,0.2);
+            text-align: center;
+            backdrop-filter: blur(8px);
+        }
+        .post-canvas.layout-card.theme-branco .inner-card,
+        .post-canvas.layout-card.theme-creme .inner-card {
+            background: #ffffff; border-color: #eee;
+        }
+
+        .post-canvas.layout-citacao { padding: 120px; text-align: left; }
+        .post-canvas.layout-citacao .content-wrapper { justify-content: center; }
+        .post-canvas.layout-citacao .post-headline { font-size: 90px; font-style: italic; font-weight: normal; position: relative; }
+        .post-canvas.layout-citacao .post-headline::before { content: '“'; display: block; font-size: 200px; color: var(--post-accent); line-height: 0.5; margin-bottom: 40px; }
+        .post-canvas.layout-citacao .post-subtext { text-align: right; border-right: 8px solid var(--post-accent); padding-right: 40px; margin-top: 80px; font-weight: bold; }
+
+        .logo-clara { display: none; }
+        .logo-escura { display: block; }
+        .post-canvas.theme-verde .logo-clara { display: block; }
+        .post-canvas.theme-verde .logo-escura { display: none; }
+        .post-canvas.theme-coral .logo-clara, .post-canvas.theme-escuro .logo-clara { display: block; }
+        .post-canvas.theme-coral .logo-escura, .post-canvas.theme-escuro .logo-escura { display: none; }
+        .post-canvas.theme-imagem .logo-clara { display: block; }
+        .post-canvas.theme-imagem .logo-escura { display: none; }
+
+        /* BOTÃO DE DOWNLOAD (NOVO) */
+        .btn-download-post {
+            width: 100%;
+            background: var(--verde-escuro);
+            color: #fff;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s;
+            font-family: var(--font-principal);
+        }
+        .btn-download-post:hover { background: #143d2e; transform: translateY(-2px); }
+        .btn-download-post:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+        
+    </style>
+    
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body>
+
+    <%- include('partials/header') %>
+
+    <main>
+        <section class="hero-divulgacao">
+            <div class="container" style="padding-bottom: 0; padding-top: 20px;">
+                <h1>Seus Posts Estão Prontos</h1>
+                <p>Opções de alta conversão para você publicar no Instagram. Focadas nos benefícios da terapia online na Yelo e no design premium (1080x1440).</p>
+            </div>
+            <div class="wave-divider wave-bottom">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="var(--off-white)" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
+        </section>
+
+        <section class="secao-gerador">
+            <!-- Container onde os posts automáticos aparecerão -->
+            <div class="posts-grid" id="posts-grid"></div>
+        </section>
+
+    </main>
+
+    <%- include('partials/footer') %>
+
+    <!-- SCRIPT DE GERAÇÃO AUTOMÁTICA -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const grid = document.getElementById('posts-grid');
+
+            // --- 1. BANCO DE CÓPIAS (COPYWRITING EMOCIONAL E DIRETO) ---
+            const COPIES = [
+                { 
+                    h: "Encontrar o psicólogo ideal não precisa ser na sorte.", 
+                    s: "Na Yelo, nossa inteligência conecta você ao profissional perfeito para o seu momento e necessidades." 
+                },
+                { 
+                    h: "A terapia que se adapta à sua rotina, não o contrário.", 
+                    s: "Faça suas sessões online de onde estiver, com total segurança, privacidade e flexibilidade de horários." 
+                },
+                { 
+                    h: "Você merece ser ouvido por quem realmente te entende.", 
+                    s: "Na Yelo, você encontra profissionais que respeitam sua identidade, raça, orientação e vivências." 
+                },
+                { 
+                    h: "Cuidar da mente é um investimento, não um luxo.", 
+                    s: "Encontre psicólogos qualificados com valores que cabem no seu orçamento. A saúde mental é para todos." 
+                },
+                { 
+                    h: "Dar o primeiro passo para a terapia ficou mais fácil.", 
+                    s: "Sem burocracia. Escolha seu profissional, agende online e comece hoje mesmo sua jornada de autoconhecimento." 
+                },
+                { 
+                    h: "Seu espaço seguro está a apenas um clique de distância.", 
+                    s: "Plataforma 100% sigilosa e preparada para você focar no que realmente importa: a sua saúde emocional." 
+                }
+            ];
+
+            // --- 2. CONFIGURAÇÕES VISUAIS ---
+            const THEMES = ['theme-verde', 'theme-creme', 'theme-amarelo', 'theme-branco', 'theme-coral', 'theme-escuro'];
+            const LAYOUTS = ['layout-minimal', 'layout-editorial', 'layout-card', 'layout-citacao'];
+            const FONTS = ['font-padrao', 'font-elegante', 'font-moderna'];
+            const ALIGNS = ['text-center', 'text-left'];
+            const ORNAMENTS = ['none', 'ornament-aspas', 'ornament-doodle', 'ornament-geo'];
+
+            // --- 2.1 BANCO DE IMAGENS ---
+            const IMAGES = [
+                "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1080&q=80",
+                "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1080&q=80",
+                "https://images.unsplash.com/photo-1573497491208-6b1acb260507?auto=format&fit=crop&w=1080&q=80",
+                "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=1080&q=80",
+                "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1080&q=80",
+                "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1080&q=80",
+                "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=1080&q=80",
+                "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1080&q=80"
+            ];
+            
+            // --- 2.2 BANCO DE DOODLES (RABISCOS VARIADOS) ---
+            const DOODLES = [
+                `<svg class="dec-doodle" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 50 Q 50 10 90 50 T 170 50"></path><path d="M10 80 Q 50 40 90 80 T 170 80"></path><path d="M10 110 Q 50 70 90 110 T 170 110"></path></svg>`,
+                `<svg class="dec-doodle" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><circle cx="100" cy="100" r="80" stroke-dasharray="15 15"></circle><circle cx="100" cy="100" r="50"></circle></svg>`,
+                `<svg class="dec-doodle" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M 20 180 L 100 20 L 180 180 Z"></path><path d="M 60 100 L 140 100"></path></svg>`,
+                `<svg class="dec-doodle" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M 20 20 C 80 100, 120 100, 180 180"></path><path d="M 180 20 C 120 100, 80 100, 20 180"></path></svg>`,
+                `<svg class="dec-doodle" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><rect x="40" y="40" width="120" height="120" rx="10" transform="rotate(15 100 100)"></rect><rect x="40" y="40" width="120" height="120" rx="10" transform="rotate(45 100 100)"></rect></svg>`,
+                `<svg class="dec-doodle" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M 10 100 Q 50 20 100 100 T 190 100"></path></svg>`
+            ];
+
+            // Sorteia e escolhe no máximo 4 cópias únicas
+            const selectedCopies = [...COPIES].sort(() => 0.5 - Math.random()).slice(0, 4);
+
+            // Renderiza no HTML
+            selectedCopies.forEach((copy, index) => {
+                const theme = THEMES[Math.floor(Math.random() * THEMES.length)];
+                const layout = LAYOUTS[Math.floor(Math.random() * LAYOUTS.length)];
+                const font = FONTS[Math.floor(Math.random() * FONTS.length)];
+                const align = ALIGNS[Math.floor(Math.random() * ALIGNS.length)];
+                const ornament = ORNAMENTS[Math.floor(Math.random() * ORNAMENTS.length)];
+                const noise = Math.random() > 0.5 ? 'pattern-noise' : '';
+
+                // Lógica de Imagem
+                const useImage = Math.random() > 0.5; // 50% de chance de ter background com foto
+                let bgStyle = '';
+                let themeClass = theme;
+                if (useImage) {
+                    const img = IMAGES[Math.floor(Math.random() * IMAGES.length)];
+                    // Degradê com um tom de verde mais escuro/sólido para alto contraste
+                    bgStyle = `style="background: linear-gradient(to bottom, rgba(10, 25, 18, 0.6), rgba(10, 25, 18, 0.95)), url('${img}') center/cover;"`;
+                    themeClass = 'theme-imagem';
+                }
+
+                // Sorteia um doodle para evitar repetição visual caso o ornamento seja de doodles
+                const randomDoodle = DOODLES[Math.floor(Math.random() * DOODLES.length)];
+
+                const html = `
+                <div class="post-preview-card">
+                    <div class="canvas-viewport" id="viewport-${index}">
+                        <div class="post-canvas ${themeClass} ${layout} ${font} ${align} ${ornament} ${noise}" id="post-${index}" ${bgStyle}>
+                            <div class="decorations">
+                                <span class="dec-aspas">"</span>
+                                ${randomDoodle}
+                                <div class="dec-geo"></div>
+                            </div>
+                            <div class="content-wrapper">
+                                <div class="inner-card">
+                                    <h2 class="post-headline">${copy.h}</h2>
+                                    <p class="post-subtext">${copy.s}</p>
+                                    <div class="post-footer">
+                                        <div class="post-signature">Yelo - Terapia Online</div>
+                                        <div class="post-brand">
+                                            <img src="/assets/logos/logo-branca.png" class="post-logo logo-clara" alt="Yelo">
+                                            <img src="/assets/logos/logo-escura.png" class="post-logo logo-escura" alt="Yelo">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn-download-post" data-target="post-${index}" data-title="${copy.h.substring(0, 30)}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Baixar Post
+                    </button>
+                </div>
+                `;
+                grid.insertAdjacentHTML('beforeend', html);
+            });
+
+            // --- 3. LÓGICA DE ESCALONAMENTO PARA EXIBIÇÃO NO GRID ---
+            const adjustScale = () => {
+                document.querySelectorAll('.canvas-viewport').forEach(viewport => {
+                    const scale = viewport.clientWidth / 1080;
+                    viewport.querySelector('.post-canvas').style.transform = `scale(${scale})`;
+                });
+            };
+            window.addEventListener('resize', adjustScale);
+            setTimeout(adjustScale, 50); // Aplica escala
+
+            // --- 4. LÓGICA DE DOWNLOAD (HTML2CANVAS CLONADO OFF-SCREEN) ---
+            document.querySelectorAll('.btn-download-post').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetId = btn.getAttribute('data-target');
+                    const headlineBase = btn.getAttribute('data-title');
+                    const originalNode = document.getElementById(targetId);
+                    
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '⏳ Processando...';
+                    btn.disabled = true;
+
+                    // Cria um container invisível no Body para renderizar em tamanho real (1:1)
+                    const cloneContainer = document.createElement('div');
+                    cloneContainer.style.position = 'absolute';
+                    cloneContainer.style.left = '-9999px';
+                    cloneContainer.style.top = '0';
+                    
+                    const cloneNode = originalNode.cloneNode(true);
+                    cloneNode.style.transform = 'none'; // Remove escala
+                    cloneContainer.appendChild(cloneNode);
+                    document.body.appendChild(cloneContainer);
+
+                    html2canvas(cloneNode, {
+                        scale: 1, // Escala 1:1 baseada em 1080x1080
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: null,
+                        width: 1080,
+                        height: 1440
+                    }).then(canvas => {
+                        const filename = 'post-' + headlineBase.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, '-') + '.png';
+                        
+                        const link = document.createElement('a');
+                        link.download = filename;
+                        link.href = canvas.toDataURL('image/png', 1.0);
+                        link.click();
+                    }).catch(err => {
+                        console.error('Erro ao gerar post:', err);
+                        alert('Ocorreu um erro ao gerar a imagem. Tente novamente.');
+                    }).finally(() => {
+                        // Limpeza
+                        document.body.removeChild(cloneContainer);
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    });
+                });
+                
+            });
+        });
+    </script>
+</body>
+</html>

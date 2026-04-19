@@ -6,6 +6,15 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('beforeinstallprompt', (e) => {
         // Previne o mini-infobar de aparecer no Chrome
         e.preventDefault();
+        
+        // Verifica a trava de 7 dias do localStorage
+        const lastDismissed = localStorage.getItem('yelo_pwa_dismissed_at');
+        const now = new Date().getTime();
+        const DIAS_7_EM_MS = 7 * 24 * 60 * 60 * 1000;
+        if (lastDismissed && (now - parseInt(lastDismissed)) <= DIAS_7_EM_MS) {
+            return; // Se ainda não passaram 7 dias, ignora o prompt nativo
+        }
+        
         // Guarda o evento para que possa ser acionado mais tarde.
         deferredPrompt = e;
         // Mostra nosso banner de instalação customizado
