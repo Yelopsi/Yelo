@@ -2858,6 +2858,17 @@ app.post('/api/login-admin-check', async (req, res) => {
 // FRONTEND DINÂMICO (EJS) - ORDEM CORRIGIDA
 // =============================================================
 
+// --- FERRAMENTAS INTERNAS (EQUIPE YELO) ---
+// Acesso restrito via Cookie de Admin
+app.get('/admin/gerador-email', verifyTokenLocal, (req, res) => {
+    if (req.userDecoded && (req.userDecoded.role === 'admin' || req.userDecoded.type === 'admin')) {
+        // O arquivo HTML deve ser salvo dentro da pasta 'views' para não ser público
+        res.sendFile(path.join(__dirname, '../views/gerador_email.html'));
+    } else {
+        res.redirect('/admin'); // Redireciona para o login do admin se não estiver autenticado
+    }
+});
+
 // 1º: PRIMEIRO defina a rota da Home.
 // Isso garante que o servidor renderize o index.ejs ao acessar a raiz '/'
 app.get('/', async (req, res) => {
