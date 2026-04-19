@@ -41,6 +41,28 @@
         align-items: center !important;
         padding: 8px 16px !important;
         border-top: none !important;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    /* Classe que encolhe a barra de navegação (Estilo Safari/App-like) */
+    .bottom-nav.nav-hidden {
+        transform: translateX(-50%) translateY(15px) scale(0.85) !important;
+        padding: 4px 16px !important;
+        background-color: rgba(255, 255, 255, 0.70) !important;
+        backdrop-filter: blur(8px) !important;
+    }
+
+    .bottom-nav.nav-hidden .bottom-nav-item {
+        padding: 4px 0 !important;
+        gap: 0;
+    }
+
+    .bottom-nav.nav-hidden .bottom-nav-item span {
+        max-height: 0;
+        opacity: 0;
+        transform: scale(0.5);
+        margin-top: 0;
+        overflow: hidden;
     }
 
     .bottom-nav-wave {
@@ -82,6 +104,15 @@
         border-radius: 20px;
         gap: 2px;
         transition: all 0.3s ease;
+    }
+
+    .bottom-nav-item span {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        max-height: 15px;
+        opacity: 1;
+        transform: scale(1);
+        display: block;
+        overflow: hidden;
     }
 
     .bottom-nav-item svg {
@@ -279,5 +310,44 @@
                 link.classList.add('active');
             }
         });
+
+        // --- LÓGICA DE SMART SCROLL (PÁGINAS PÚBLICAS) ---
+        function setupPublicSmartScroll() {
+            if (window.innerWidth > 992) return; // Apenas no mobile
+
+            const bottomNav = document.querySelector('.bottom-nav');
+            if (!bottomNav) return;
+
+            // Adiciona listener para expandir ao clicar na barra encolhida
+            bottomNav.addEventListener('click', () => {
+                if (bottomNav.classList.contains('nav-hidden')) {
+                    bottomNav.classList.remove('nav-hidden');
+                }
+            });
+
+            // Verifica se a página tem rolagem
+            const isScrollable = document.documentElement.scrollHeight > document.documentElement.clientHeight;
+
+            if (isScrollable) {
+                // Se tem rolagem, usa a lógica de scroll
+                let lastScrollY = window.scrollY;
+                const scrollThreshold = 100;
+                window.addEventListener('scroll', () => {
+                    const currentScrollY = window.scrollY;
+                    if (currentScrollY > lastScrollY && currentScrollY > scrollThreshold) {
+                        bottomNav.classList.add('nav-hidden');
+                    } else if (currentScrollY < lastScrollY) {
+                        bottomNav.classList.remove('nav-hidden');
+                    }
+                    lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
+                }, { passive: true });
+            } else {
+                // Se não tem rolagem, encolhe após 2 segundos
+                setTimeout(() => {
+                    bottomNav.classList.add('nav-hidden');
+                }, 2000);
+            }
+        }
+        setupPublicSmartScroll();
     });
 </script>

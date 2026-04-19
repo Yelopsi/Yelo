@@ -19,14 +19,15 @@ async function setVipStatus() {
     console.log(`🚀 Procurando psicólogo com o e-mail: ${userEmail}`);
 
     try {
+        const senhaProvisoria = 'yelo123';
+        const hashedPassword = await bcrypt.hash(senhaProvisoria, 10);
+
         let psychologist = await db.Psychologist.findOne({
             where: { email: userEmail }
         });
 
         if (!psychologist) {
             console.log(`- Psicólogo não encontrado. Criando uma conta de teste...`);
-            const senhaProvisoria = 'yelo123';
-            const hashedPassword = await bcrypt.hash(senhaProvisoria, 10);
 
             psychologist = await db.Psychologist.create({
                 email: userEmail,
@@ -37,13 +38,24 @@ async function setVipStatus() {
             });
             
             console.log(`- Conta criada com sucesso! A senha provisória é: ${senhaProvisoria}`);
+        } else {
+            console.log(`- Psicólogo encontrado. Redefinindo a senha para: ${senhaProvisoria}...`);
+            await psychologist.update({ senha: hashedPassword });
         }
 
         // Atualiza para VIP, define o melhor plano e ativa a conta
         await psychologist.update({ 
             is_exempt: true,
             plano: 'REFERENCE', // Concede o plano mais alto como cortesia
-            status: 'active'
+            status: 'active',
+            authority_level: 'nivel_mentor',
+            xp: 20000,
+            badges: {
+                autentico: true,
+                pioneiro: true,
+                semeador: 'ouro',
+                voz_ativa: 'ouro'
+            }
         });
 
         console.log(`\n✅ Sucesso! O psicólogo "${psychologist.nome}" (${psychologist.email}) agora é VIP e tem uma assinatura ativa.`);

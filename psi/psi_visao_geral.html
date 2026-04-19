@@ -6,7 +6,7 @@
                 <h1 id="psi-welcome-name" class="modern-hero-title">👋 Olá!</h1>
                 <p class="modern-hero-subtitle">Seu crescimento essa semana:</p>
             </div>
-            <button class="modern-hero-cta" onclick="window.loadPage('psi_meu_perfil.html')">
+            <button class="modern-hero-cta">
                 Melhorar meu perfil
             </button>
         </div>
@@ -41,37 +41,11 @@
                     <div class="checklist-progress-fill" style="width: 0%;"></div>
                 </div>
                 <div class="modern-action-list">
-                    <!-- O input hidden garante a compatibilidade com o JS existente -->
-                    <a href="#" class="modern-action-item" onclick="window.loadPage('psi_meu_perfil.html')">
-                        <div class="action-checkbox">
-                            <input type="checkbox" id="check-foto" style="display: none;" disabled>
-                            ✓
-                        </div>
-                        <div class="action-content">
-                            <h4 class="action-title">Adicionar foto profissional</h4>
-                            <span class="action-impact">+30% de cliques</span>
-                        </div>
-                    </a>
-                    <a href="#" class="modern-action-item" onclick="window.loadPage('psi_meu_perfil.html')">
-                        <div class="action-checkbox">
-                            <input type="checkbox" id="check-bio" style="display: none;" disabled>
-                            ✓
-                        </div>
-                        <div class="action-content">
-                            <h4 class="action-title">Escrever bio mais clara</h4>
-                            <span class="action-impact">+50% conversão</span>
-                        </div>
-                    </a>
-                    <a href="#" class="modern-action-item" onclick="window.loadPage('psi_blog.html')">
-                        <div class="action-checkbox">
-                            <input type="checkbox" id="check-artigo" style="display: none;" disabled>
-                            ✓
-                        </div>
-                        <div class="action-content">
-                            <h4 class="action-title">Publicar primeiro artigo</h4>
-                            <span class="action-impact">+Visitas orgânicas</span>
-                        </div>
-                    </a>
+                <!-- As ações serão injetadas dinamicamente pelo JavaScript (psi_dashboard.js) -->
+                <div style="text-align: center; color: #888; padding: 20px 0; font-size: 0.95rem;">
+                    <span class="loading-spinner-sm" style="display:inline-block; border-color: rgba(27,67,50,0.2); border-top-color: var(--verde-escuro); margin-bottom: 10px;"></span><br>
+                    Analisando seu perfil...
+                </div>
                 </div>
             </div>
 
@@ -83,20 +57,28 @@
                 <div class="patients-metrics-group">
                     <div class="p-metric">
                         <div class="p-metric-val" id="kpi-whatsapp-clicks">0</div>
-                        <div class="p-metric-label">Novos contatos</div>
+                        <div class="p-metric-label">
+                            Novos contatos
+                            <span class="info-tooltip" style="margin-left: 0; width: 16px; height: 16px;" data-tooltip="Total de pacientes que clicaram para falar com você no WhatsApp." tabindex="0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></span>
+                        </div>
                     </div>
                     <div class="p-metric">
                         <div class="p-metric-val" id="kpi-match-impressions">0</div>
-                        <div class="p-metric-label">Aparições no match</div>
+                        <div class="p-metric-label">
+                            Aparições no match
+                            <span class="info-tooltip" style="margin-left: 0; width: 16px; height: 16px;" data-tooltip="Vezes que seu perfil foi recomendado pelo algoritmo aos pacientes." tabindex="0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></span>
+                        </div>
                     </div>
                     <div class="p-metric">
                         <div class="p-metric-val" id="kpi-taxa-escolha">0%</div>
-                        <div class="p-metric-label">Taxa de clique</div>
+                        <div class="p-metric-label">
+                            Taxa de clique
+                            <span class="info-tooltip" style="margin-left: 0; width: 16px; height: 16px;" data-tooltip="Percentual de cliques recebidos em relação às vezes que você apareceu no match." tabindex="0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></span>
+                        </div>
                     </div>
                 </div>
                 <button class="btn-primary-action" onclick="window.loadPage('psi_pacientes.html')">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                    Ver conversas no WhatsApp
+                Gerenciar
                 </button>
             </div>
         </div>

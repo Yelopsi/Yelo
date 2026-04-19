@@ -75,11 +75,13 @@ window.initializePage = function() {
              // Mostra spinners nos cards (agora incluindo os novos)
              bigKpis.forEach(id => {
                  const el = document.getElementById(id);
-                 if(el) el.innerHTML = '<div class="loading-spinner" style="display:block"></div>';
+                 const color = ['kpi-mrr', 'kpi-new-patients', 'kpi-new-psychologists', 'kpi-questionnaires-today'].includes(id) ? 'var(--cor-Yelo)' : 'var(--verde-escuro)';
+                 const baseColor = ['kpi-mrr', 'kpi-new-patients', 'kpi-new-psychologists', 'kpi-questionnaires-today'].includes(id) ? 'rgba(255,255,255,0.2)' : 'rgba(27,67,50,0.2)';
+                 if(el) el.innerHTML = `<span class="loading-spinner-sm" style="display:inline-block; border-color: ${baseColor}; border-top-color: ${color};"></span>`;
              });
              smallKpis.forEach(id => {
                  const el = document.getElementById(id);
-                 if(el) el.innerHTML = '<div class="loading-spinner-sm"></div>';
+                 if(el) el.innerHTML = '<span class="loading-spinner-sm" style="display:inline-block; border-color: rgba(27,67,50,0.2); border-top-color: var(--verde-escuro);"></span>';
              });
          }
 
@@ -196,23 +198,27 @@ window.initializePage = function() {
             const ctx = chartCanvas.getContext('2d');
 
             newUsersChartInstance = new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: chartData.labels, // Ex: ['Maio', 'Junho', 'Julho']
                     datasets: [
                         {
                             label: 'Novos Pacientes',
                             data: chartData.patientData,
-                            backgroundColor: 'rgba(27, 67, 50, 0.7)', // Verde escuro
+                            backgroundColor: 'rgba(27, 67, 50, 0.1)', // Verde escuro translúcido
                             borderColor: 'rgba(27, 67, 50, 1)',
-                            borderWidth: 1
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3
                         },
                         {
                             label: 'Novos Psicólogos',
                             data: chartData.psychologistData,
-                            backgroundColor: 'rgba(255, 238, 140, 0.7)', // Amarelo Yelo
-                            borderColor: 'rgba(255, 238, 140, 1)',
-                            borderWidth: 1
+                            backgroundColor: 'rgba(255, 238, 140, 0.3)', // Amarelo Yelo translúcido
+                            borderColor: '#F59E0B', // Laranja/Amarelo forte para destaque na linha
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3
                         }
                     ]
                 },

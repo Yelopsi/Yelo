@@ -1,3 +1,11 @@
+<style>
+    @media (max-width: 991px) {
+        #clinica-hub-grid {
+            padding-bottom: 80px; /* Garante que o último card não fique escondido pela navegação mobile */
+        }
+    }
+</style>
+
 <div class="main-header">
     <div class="header-content">
         <h1>Gestão da Clínica</h1>
@@ -5,7 +13,7 @@
     </div>
 </div>
 
-<div class="hub-grid fade-in-up">
+<div id="clinica-hub-grid" class="hub-grid fade-in-up">
     <a href="#" onclick="window.loadPage('psi_pacientes.html')" class="hub-card">
         <div class="hub-icon">👥</div>
         <div class="hub-info">
@@ -32,6 +40,13 @@
         <div class="hub-info">
             <h3>Análise de Favoritos</h3>
             <p>Entenda o perfil de quem se interessa por você.</p>
+        </div>
+    </a>
+    <a href="#" onclick="window.loadPage('psi_calculadora_honorarios.html')" class="hub-card" style="animation-delay: 0.4s;">
+        <div class="hub-icon" style="background-color: #fef3c7; color: #d97706;">🧮</div>
+        <div class="hub-info">
+            <h3>Calculadora de Honorários</h3>
+            <p>Descubra o valor ideal para suas sessões.</p>
         </div>
     </a>
 </div>

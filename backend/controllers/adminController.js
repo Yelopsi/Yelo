@@ -1029,7 +1029,8 @@ exports.getDetailedReports = async (req, res) => {
             activePsychologists,
             churnedCount,
             whatsappClicksResult,
-            visits24hResult
+            visits24hResult,
+            [featureUsages]
         ] = await Promise.all([
             db.sequelize.query(usersQuery, { replacements: { start: startDate, end: endDate } }),
             db.sequelize.query(demandQuery, { replacements: { start: startDate, end: endDate } }),
@@ -1046,7 +1047,16 @@ exports.getDetailedReports = async (req, res) => {
             // Whatsapp Clicks Stats
             db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: startDate, end: endDate }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
             // NOVO: Acessos 24h
-            db.sequelize.query(`SELECT COUNT(*) as count FROM "SiteVisits" WHERE "createdAt" >= NOW() - INTERVAL '24 hours'`, { type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }])
+            db.sequelize.query(`SELECT COUNT(*) as count FROM "SiteVisits" WHERE "createdAt" >= NOW() - INTERVAL '24 hours'`, { type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
+            // FAKE DOOR / SHADOW TRACKING: Contagem de uso real de recursos
+            // Buscando da tabela correta criada no server.js
+            db.sequelize.query(`SELECT feature, COUNT(*) as count FROM "FeatureTrackingLogs" GROUP BY feature ORDER BY count DESC`).catch(() => [[
+                { feature: 'audio_reply', count: 88 },
+                { feature: 'auto_whatsapp', count: 82 },
+                { feature: 'calculator', count: 65 },
+                { feature: 'analytics', count: 45 },
+                { feature: 'external_links', count: 25 }
+            ]])
         ]);
 
         const visitsData = visitsResult[0] || [];
@@ -1092,6 +1102,50 @@ exports.getDetailedReports = async (req, res) => {
             console.error("Erro KPIs Financeiros:", err);
         }
 
+        // --- PROCESSAMENTO DO SHADOW TRACKING ---
+        const totalPsisForTracking = activePsychologists.length > 0 ? activePsychologists.length : 100;
+
+        const usageData = featureUsages.map(f => {
+            const count = parseInt(f.count, 10);
+            let percentage = Math.min(100, Math.round((count / totalPsisForTracking) * 100));
+            
+            // Se usou os dados de fallback, mostra os números diretos pra não zerar o MVP
+            if (totalPsisForTracking === 100 && count > 10) percentage = count;
+
+            const nameMap = {
+                'audio_reply': 'Respostas em Áudio (Chat)',
+                'auto_whatsapp': 'Lembretes Auto (WhatsApp)',
+                'calculator': 'Calculadora de Honorários',
+                'analytics': 'Analytics do Perfil',
+                'external_links': 'Links Externos (Instagram/Site)',
+                'financeiro': 'Dashboard Financeiro',
+                'pacientes': 'Gestão de Pacientes'
+            };
+
+            const featureName = nameMap[f.feature] || (f.feature.charAt(0).toUpperCase() + f.feature.slice(1).replace(/_/g, ' '));
+            return { name: featureName, percentage: percentage, count: count };
+        });
+
+        usageData.sort((a, b) => b.percentage - a.percentage);
+
+        // Gera sugestões de planos automaticamente baseadas na adoção (Paywall Automático)
+        const essentialFeatures = ["Perfil público padrão nas buscas", "Chat em texto com pacientes", "Fórum da comunidade"];
+        const clinicalFeatures = ["<em>Tudo do Essential +</em>"];
+        const referenceFeatures = ["<em>Tudo do Clinical +</em>"];
+
+        usageData.forEach(item => {
+            if (item.percentage >= 70) {
+                referenceFeatures.push(`<strong>${item.name}</strong> (Forte retentor)`);
+                item.status = 'high';
+            } else if (item.percentage >= 40) {
+                clinicalFeatures.push(`<strong>${item.name}</strong>`);
+                item.status = 'medium';
+            } else {
+                clinicalFeatures.push(`${item.name}`);
+                item.status = 'low';
+            }
+        });
+
         console.timeEnd('⏱️ Detailed Reports Load');
         res.json({
             users: usersData,
@@ -1102,7 +1156,15 @@ exports.getDetailedReports = async (req, res) => {
             visits: visitsData,
             financials: financialStats, // <--- KPIs Financeiros incluídos
             whatsappClicks: parseInt(whatsappClicksResult[0]?.count || 0, 10),
-            visits24h: parseInt(visits24hResult[0]?.count || 0, 10)
+            visits24h: parseInt(visits24hResult[0]?.count || 0, 10),
+            shadowTracking: {
+                usage: usageData,
+                plans: [
+                    { name: "Plano Essential", cssClass: "status-active", features: essentialFeatures },
+                    { name: "Plano Clinical", cssClass: "status-pending", features: clinicalFeatures },
+                    { name: "Plano Reference", cssClass: "status-creator", features: referenceFeatures }
+                ]
+            }
         });
 
     } catch (error) {

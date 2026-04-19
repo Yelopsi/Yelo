@@ -47,6 +47,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true
     },
+    fotoUrl: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     
     // --- CAMPOS NOVOS (Do Questionário) ---
     valor_sessao_faixa: {
@@ -90,6 +94,30 @@ module.exports = (sequelize, DataTypes) => {
     sessionValue: {
       type: DataTypes.FLOAT,
       defaultValue: 0
+    },
+    faixa_etaria: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    idade: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    identidade_genero: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    utm_source: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    utm_medium: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    utm_campaign: {
+      type: DataTypes.STRING,
+      allowNull: true
     },
     status: {
       type: DataTypes.STRING,

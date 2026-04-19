@@ -21,7 +21,7 @@ const protect = async (req, res, next) => {
     if (token) {
         try {
             // 3. Verifica o token
-            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
             // 4. Lógica Unificada para encontrar o usuário
             const userType = decoded.type || decoded.role; // Aceita 'type' (psi/paciente) ou 'role' (admin)
@@ -34,11 +34,17 @@ const protect = async (req, res, next) => {
                 user = await db.Psychologist.findByPk(decoded.id, { attributes: { exclude: ['senha'] } });
                 if (user) req.psychologist = user;
             } else if (userType === 'admin') {
-                // Busca o admin na tabela correta ('Admins')
-                const [adminResults] = await db.sequelize.query('SELECT * FROM "Admins" WHERE id = :id', { replacements: { id: decoded.id } });
-                user = adminResults[0];
-                // Para compatibilidade, anexa como req.psychologist também
-                if (user) req.psychologist = { id: user.id, nome: user.nome, email: user.email, isAdmin: true };
+                // 1. Tenta buscar na tabela nova de Psicólogos (novo padrão unificado)
+                user = await db.Psychologist.findByPk(decoded.id, { attributes: { exclude: ['senha'] } });
+                
+                if (user && user.isAdmin) {
+                    req.psychologist = user;
+                } else {
+                    // 2. Fallback para a tabela antiga ('Admins') - Mantém compatibilidade
+                    const [adminResults] = await db.sequelize.query('SELECT * FROM "Admins" WHERE id = :id', { replacements: { id: decoded.id } });
+                    user = adminResults[0];
+                    if (user) req.psychologist = { id: user.id, nome: user.nome, email: user.email, isAdmin: true };
+                }
             }
 
             // 5. Validação Final

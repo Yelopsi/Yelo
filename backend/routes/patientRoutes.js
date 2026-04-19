@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const patientController = require('../controllers/patientController');
-const { protect } = require('../middleware/authMiddleware'); // Importa o Middleware
+const { protect, admin } = require('../middleware/authMiddleware'); // Importa o Middleware e Admin
+const { uploadProfilePhoto } = require('../middleware/upload'); // Importa o multer configurado
 const db = require('../models'); // Necessário para as queries diretas de favoritos
 
 // Rota de Registro: /api/patients/register (Acesso Público)
@@ -18,6 +19,9 @@ router.post('/google', patientController.googleLogin);
 // Ele garante que o token JWT seja válido.
 router.get('/me', protect, patientController.getPatientData);
 
+// Rota de Upload da Foto do Paciente: /api/patients/me/foto (Acesso PRIVADO)
+router.post('/me/foto', protect, uploadProfilePhoto.single('foto'), patientController.updateProfilePhoto);
+
 // Rota para SALVAR as respostas do questionário (Acesso PRIVADO)
 router.put('/answers', protect, patientController.updatePatientAnswers);
 
@@ -27,8 +31,8 @@ router.put('/me', protect, patientController.updatePatientDetails);
 // Rota para buscar as avaliações do paciente logado (Acesso PRIVADO)
 router.get('/me/reviews', protect, patientController.getPatientReviews);
 
-// --- ROTA DE DEBUG (VERIFICA COLUNAS DO BANCO) ---
-router.get('/debug/columns', async (req, res) => {
+// --- ROTA DE DEBUG (PROTEGIDA PARA PRODUÇÃO) ---
+router.get('/debug/columns', protect, admin, async (req, res) => {
     try {
         const [results] = await db.sequelize.query(`
             SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'Psychologists';
@@ -39,8 +43,9 @@ router.get('/debug/columns', async (req, res) => {
     }
 });
 
-// --- ROTA DE DEBUG/CORREÇÃO (Execute uma vez se der erro de coluna) ---
-router.get('/favorites/fix-schema', async (req, res) => {
+// --- ROTA DE DEBUG/CORREÇÃO (PROTEGIDA PARA PRODUÇÃO) ---
+/* DESATIVADO PARA PRODUÇÃO: Risco de perda de dados
+router.get('/favorites/fix-schema', protect, admin, async (req, res) => {
     try {
         console.log('[DEBUG] Tentando recriar tabela PatientFavorites...');
         await db.sequelize.query('DROP TABLE IF EXISTS "PatientFavorites";');
@@ -51,11 +56,15 @@ router.get('/favorites/fix-schema', async (req, res) => {
         res.status(500).send('Erro ao recriar tabela: ' + error.message);
     }
 });
+*/
 
 // --- ROTAS DE FAVORITOS (CORREÇÃO PARA O DASHBOARD) ---
 
+let isFavoritesTableChecked = false; // Flag de controle
+
 // Helper para garantir tabela e evitar erros 500
 const ensureFavoritesTable = async () => {
+    if (isFavoritesTableChecked) return; // Evita queries de DDL em todas as requisições
     try {
         // 1. Cria a tabela se não existir
         await db.sequelize.query(`
@@ -77,7 +86,7 @@ const ensureFavoritesTable = async () => {
 
         // 3. Garante a coluna deletedAt se a tabela já existia antes
         await db.sequelize.query(`ALTER TABLE "PatientFavorites" ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMP WITH TIME ZONE;`);
-
+        isFavoritesTableChecked = true; // Marca como verificado na memória do Node
     } catch (e) {
         console.error("Erro ao criar tabela PatientFavorites:", e);
     }

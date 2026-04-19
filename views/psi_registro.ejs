@@ -2,21 +2,6 @@
 <html lang="pt-BR">
 <head>
     <title>Registro de Psicólogo - Yelo</title>
-    <!-- Meta Pixel Code -->
-    <script>
-        !function(f,b,e,v,n,t,s)
-        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];
-        s.parentNode.insertBefore(t,s)}(window, document,'script',
-        'https://connect.facebook.net/en_US/fbevents.js');
-        fbq('init', '2009156873008197'); // Pixel ID da Yelo
-        fbq('track', 'PageView');
-    </script>
-    <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=2009156873008197&ev=PageView&noscript=1"/></noscript>
-    <!-- End Meta Pixel Code -->
     <%- include('partials/head') %>
     
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -165,9 +150,9 @@
     <script src="/config.js"></script>
     <script src="/psi_registro.js"></script>
     <script>
-        function toggleSenha(id) {
+        function toggleSenha(id, btn) {
             const input = document.getElementById(id);
-            const btn = input.nextElementSibling; // Pega o botão do ícone
+            if (!btn) btn = input.nextElementSibling; // Pega o botão do ícone se não for passado
             
             if (input.type === "password") {
                 input.type = "text";
@@ -178,8 +163,8 @@
             }
         }
 
-        // Variável para armazenar o token se o usuário usar o Google
-        let googleRegisterToken = null;
+        // Usamos window para evitar erro de "has already been declared" se o script rodar mais de uma vez
+        window.googleRegisterToken = null;
 
         async function handlePsiGoogleRegister(response) {
             try {
@@ -213,7 +198,7 @@
                         document.getElementById('confirmar-senha').value = 'GoogleAuth123!';
 
                         // Salva o token para enviar no registro
-                        googleRegisterToken = response.credential;
+                        window.googleRegisterToken = response.credential;
 
                         // Feedback visual
                         const msg = document.getElementById('mensagem-registro-psi');
@@ -235,17 +220,20 @@
         }
 
         // Intercepta o fetch global para injetar o token do Google no corpo da requisição de registro
-        const originalFetch = window.fetch;
-        window.fetch = function(url, options) {
-            if (url && url.includes && (url.includes('/register') || url.includes('/psychologists')) && options && options.method === 'POST' && googleRegisterToken) {
-                try {
-                    const body = JSON.parse(options.body);
-                    body.googleToken = googleRegisterToken;
-                    options.body = JSON.stringify(body);
-                } catch(e) { /* Ignora se não for JSON */ }
-            }
-            return originalFetch(url, options);
-        };
+        if (!window.__fetchInterceptedPsi) {
+            window.__originalFetchPsi = window.fetch;
+            window.fetch = function(url, options) {
+                if (url && url.includes && (url.includes('/register') || url.includes('/psychologists')) && options && options.method === 'POST' && window.googleRegisterToken) {
+                    try {
+                        const body = JSON.parse(options.body);
+                        body.googleToken = window.googleRegisterToken;
+                        options.body = JSON.stringify(body);
+                    } catch(e) { /* Ignora se não for JSON */ }
+                }
+                return window.__originalFetchPsi(url, options);
+            };
+            window.__fetchInterceptedPsi = true;
+        }
     </script>
 </body>
 </html>

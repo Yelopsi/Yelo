@@ -1,106 +1,137 @@
-<div class="dashboard-header-actions">
-    <button id="btn-refresh-dashboard" class="btn-primario btn-sm" title="Atualizar dados agora">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-        <span>Atualizar</span>
-    </button>
-</div>
-
-<div class="kpi-grid">
-    <div class="kpi-card">
-        <h4>Receita Recorrente (MRR)</h4>
-        <p class="kpi-numero" id="kpi-mrr">R$ 0,00</p>
-    </div>
-    <div class="kpi-card">
-        <h4>Novos Pacientes (30d)</h4>
-        <p class="kpi-numero" id="kpi-new-patients">0</p>
-    </div>
-    <div class="kpi-card">
-        <h4>Novos Psicólogos (30d)</h4>
-        <p class="kpi-numero" id="kpi-new-psychologists">0</p>
-    </div>
-    <div class="kpi-card">
-        <h4>Questionários (Hoje)</h4>
-        <p class="kpi-numero" id="kpi-questionnaires-today">0</p>
-    </div>
-    <div class="kpi-card">
-        <h4>Taxa de Conversão Geral</h4>
-        <p class="kpi-numero" id="kpi-geral-conversao">0%</p>
-    </div>
-    <div class="kpi-card">
-        <h4>Total de Aparições (Match)</h4>
-        <p class="kpi-numero" id="kpi-total-matches">0</p>
-    </div>
-    <div class="kpi-card">
-        <h4>Total de Cliques (Contato)</h4>
-        <p class="kpi-numero" id="kpi-total-cliques">0</p>
-    </div>
-</div>
-
-<h3 style="margin: 30px 0 15px 0; color: #1B4332; font-family: 'Inter', sans-serif; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-    Raio-X da Base (Histórico Completo)
-</h3>
-
-<div class="kpi-grid">
-    
-    <div class="kpi-card" style="border-left: 4px solid #1B4332;">
-        <h4>Pacientes (Total)</h4>
-        <div class="kpi-detalhes" style="margin-top: 10px; font-size: 0.9rem;">
-            <p>Cadastrados: <strong id="kpi-pat-total">-</strong></p>
-            <p style="color: #2e7d32;">Ativos: <strong id="kpi-pat-active">-</strong></p>
-            <p style="color: #c62828;">Excluídos: <strong id="kpi-pat-deleted">-</strong></p>
-        </div>
-    </div>
-
-    <div class="kpi-card" style="border-left: 4px solid #FFC107;">
-        <h4>Psicólogos (Total)</h4>
-        <div class="kpi-detalhes" style="margin-top: 10px; font-size: 0.9rem;">
-            <p>Cadastrados: <strong id="kpi-psi-total">-</strong></p>
-            <div style="background: #f8f9fa; padding: 5px; border-radius: 4px; margin: 5px 0;">
-                <small>Planos Ativos:</small><br>
-                🌱 <span id="kpi-plan-Essencial">0</span> | 
-                💡 <span id="kpi-plan-Clínico">0</span> | 
-                ☀️ <span id="kpi-plan-sol">0</span>
+<div class="modern-dashboard-layout">
+    <!-- HERO BLOCK -->
+    <div class="modern-hero-card">
+        <div class="modern-hero-header">
+            <div class="hero-content">
+                <h1 class="modern-hero-title">Visão Geral da Plataforma</h1>
+                <p class="modern-hero-subtitle">Acompanhe as métricas e o crescimento da Yelo.</p>
             </div>
-            <p style="color: #c62828;">Excluídos: <strong id="kpi-psi-deleted">-</strong></p>
+            <div class="dashboard-header-actions" style="margin: 0;">
+                <button id="btn-refresh-dashboard" class="modern-hero-cta" title="Atualizar dados agora">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Atualizar</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="modern-hero-metrics">
+            <div class="hero-metric-item">
+                <span class="hero-metric-value" id="kpi-mrr">R$ 0,00</span>
+                <span class="hero-metric-label">Receita Recorrente (MRR)</span>
+            </div>
+            <div class="hero-metric-item">
+                <span class="hero-metric-value" id="kpi-new-patients">0</span>
+                <span class="hero-metric-label">Novos Pacientes (30d)</span>
+            </div>
+            <div class="hero-metric-item">
+                <span class="hero-metric-value" id="kpi-new-psychologists">0</span>
+                <span class="hero-metric-label">Novos Psicólogos (30d)</span>
+            </div>
+             <div class="hero-metric-item">
+                <span class="hero-metric-value" id="kpi-questionnaires-today">0</span>
+                <span class="hero-metric-label">Questionários (Hoje)</span>
+            </div>
         </div>
     </div>
 
-    <div class="kpi-card" style="border-left: 4px solid #E63946;">
-        <h4>Questionários (Total)</h4>
-        <div class="kpi-detalhes" style="margin-top: 10px; font-size: 0.9rem;">
-            <p>Total Gerado: <strong id="kpi-quest-total">-</strong></p>
-            <p style="color: #c62828;">Desistências: <strong id="kpi-quest-deleted">-</strong></p>
-        </div>
-    </div>
-</div>
+    <!-- MAIN GRID -->
+    <div class="modern-dashboard-grid">
+        <!-- COLUNA ESQUERDA -->
+        <div class="dashboard-column-main">
+            <!-- Raio X -->
+            <div class="modern-patients-card">
+                <div class="card-header-modern">
+                    <h2 class="card-title-modern">
+                        Raio-X da Base
+                    </h2>
+                </div>
+                
+                <div class="patients-metrics-group" style="gap: 15px; flex-wrap: wrap;">
+                    <div class="p-metric">
+                        <div class="p-metric-val" id="kpi-pat-total">-</div>
+                        <div class="p-metric-label">Pacientes Total</div>
+                        <div style="font-size: 0.8rem; margin-top: 5px;">Ativos: <strong id="kpi-pat-active" style="color: #10b981;">-</strong> | Excluídos: <strong id="kpi-pat-deleted" style="color: #ef4444;">-</strong></div>
+                    </div>
+                    <div class="p-metric">
+                        <div class="p-metric-val" id="kpi-psi-total">-</div>
+                        <div class="p-metric-label">Psicólogos Total</div>
+                        <div style="font-size: 0.8rem; margin-top: 5px;">Excluídos: <strong id="kpi-psi-deleted" style="color: #ef4444;">-</strong></div>
+                        <div style="font-size: 0.75rem; margin-top: 5px; color: #666;">
+                            Essencial: <span id="kpi-plan-Essencial">0</span> | Clínico: <span id="kpi-plan-Clínico">0</span> | Ref: <span id="kpi-plan-sol">0</span>
+                        </div>
+                    </div>
+                    <div class="p-metric" style="border: none;">
+                        <div class="p-metric-val" id="kpi-quest-total">-</div>
+                        <div class="p-metric-label">Questionários Total</div>
+                        <div style="font-size: 0.8rem; margin-top: 5px;">Desistências: <strong id="kpi-quest-deleted" style="color: #ef4444;">-</strong></div>
+                    </div>
+                </div>
 
-<div class="widgets-container">
-    <div class="widget">
-        <h3>Alertas e Ações Rápidas</h3>
-        <ul class="lista-acoes">
-            <li>
-                <span class="acao-numero" id="waiting-list-count">0</span>
-                <p class="acao-texto">Candidatos na Lista de Espera</p>
-                <a href="#" class="acao-link" data-page-link="admin_lista_espera.html">Gerenciar →</a>
-            </li>
-            <li>
-                <span class="acao-numero" id="pending-reviews-count">0</span>
-                <p class="acao-texto">Avaliações para Moderação</p>
-                <a href="#" class="acao-link" data-page-link="admin_gestao_conteudo.html">Revisar →</a>
-            </li>
-        </ul>
-    </div>
-    <div class="widget">
-        <h3>Atividade Recente</h3>
-        <p>(Em breve...)</p>
-    </div>
-</div>
-<!-- Seção para o Gráfico -->
-<div class="widget">
-    <h3>Novos Usuários (Últimos 6 Meses)</h3>
-    <div class="chart-container">
-        <canvas id="new-users-chart"></canvas>
+                <div class="patients-metrics-group" style="gap: 15px;">
+                    <div class="p-metric">
+                        <div class="p-metric-val" id="kpi-geral-conversao">0%</div>
+                        <div class="p-metric-label">Taxa Conversão Geral</div>
+                    </div>
+                    <div class="p-metric">
+                        <div class="p-metric-val" id="kpi-total-matches">0</div>
+                        <div class="p-metric-label">Total Aparições (Match)</div>
+                    </div>
+                    <div class="p-metric" style="border: none;">
+                        <div class="p-metric-val" id="kpi-total-cliques">0</div>
+                        <div class="p-metric-label">Total Cliques (Contato)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico -->
+            <div class="modern-management-card" style="background: var(--branco-puro);">
+                <div class="management-header">
+                    Novos Usuários (Últimos 6 Meses)
+                </div>
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="new-users-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUNA DIREITA -->
+        <div class="dashboard-column-side">
+            <!-- Alertas -->
+            <div class="modern-notifications-card">
+                <div class="management-header">
+                    Alertas e Ações Rápidas
+                </div>
+                <div class="notification-list">
+                    <a href="#" class="notification-item type-reminder" data-page-link="admin_lista_espera.html">
+                        <div class="notification-icon">⏳</div>
+                        <div class="notification-content">
+                            <p><strong><span id="waiting-list-count">0</span> Candidatos</strong> na Lista de Espera.</p>
+                            <span class="notification-time">Gerenciar agora</span>
+                        </div>
+                    </a>
+                    
+                    <a href="#" class="notification-item type-interaction" data-page-link="admin_gestao_conteudo.html">
+                        <div class="notification-icon">⭐</div>
+                        <div class="notification-content">
+                            <p><strong><span id="pending-reviews-count">0</span> Avaliações</strong> para Moderação.</p>
+                            <span class="notification-time">Revisar agora</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Atividade Recente -->
+            <div class="modern-community-card">
+                <div class="card-header-modern" style="margin-bottom: 15px;">
+                    <h2 class="card-title-modern" style="font-size: 1.1rem;">Atividade Recente</h2>
+                </div>
+                <div class="smart-empty-state">
+                    <div class="empty-state-icon">📡</div>
+                    <p class="empty-state-text">Em breve você verá as atividades em tempo real aqui.</p>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

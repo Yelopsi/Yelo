@@ -36,47 +36,8 @@ router.put('/psychologists/:id/moderate', adminController.moderatePsychologist);
 router.get('/stats', adminController.getDashboardStats);
 
 // Rota para buscar e atualizar os dados do admin logado
-// router.get('/me', adminController.getAdminData); // Substituído pela versão inline abaixo
-// router.put('/me', adminController.updateAdminData); // Substituído pela versão inline abaixo
-
-// --- ROTA DE PERFIL DO ADMIN (GET) - INLINE ---
-router.get('/me', async (req, res) => {
-    try {
-        const [results] = await db.sequelize.query(
-            `SELECT id, nome, email, telefone, "fotoUrl" FROM "Admins" WHERE id = :id`,
-            { replacements: { id: req.user.id } }
-        );
-        if (results.length === 0) return res.status(404).json({ error: 'Admin não encontrado' });
-        res.json(results[0]);
-    } catch (error) {
-        res.status(500).json({ error: 'Erro ao buscar perfil: ' + error.message });
-    }
-});
-
-// --- ROTA DE ATUALIZAÇÃO DO PERFIL DO ADMIN (PUT) - INLINE ---
-router.put('/me', async (req, res) => {
-    try {
-        const { nome, email, telefone } = req.body;
-        const emailFinal = email ? email.toLowerCase() : email;
-
-        // Validação de e-mail único (se mudou)
-        if (emailFinal) {
-            const [existing] = await db.sequelize.query(
-                `SELECT id FROM "Admins" WHERE email = :email AND id != :id`,
-                { replacements: { email: emailFinal, id: req.user.id } }
-            );
-            if (existing.length > 0) return res.status(400).json({ error: 'Este e-mail já está em uso.' });
-        }
-
-        await db.sequelize.query(
-            `UPDATE "Admins" SET nome = :nome, email = :email, telefone = :telefone, "updatedAt" = NOW() WHERE id = :id`,
-            { replacements: { nome, email: emailFinal, telefone, id: req.user.id } }
-        );
-        res.json({ message: 'Perfil atualizado com sucesso!' });
-    } catch (error) {
-        res.status(500).json({ error: 'Erro ao atualizar perfil: ' + error.message });
-    }
-});
+router.get('/me', adminController.getAdminData);
+router.put('/me', adminController.updateAdminData);
 
 router.put('/me/password', adminController.updateAdminPassword);
 router.put('/me/photo', upload.single('profilePhoto'), adminController.updateAdminPhoto);

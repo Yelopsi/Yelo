@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
         msgFeedback.className = 'mensagem-oculta';
         
         btnSubmit.disabled = true;
-        btnSubmit.textContent = 'Criando conta...';
+        btnSubmit.innerHTML = '<svg class="spin-anim" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> Criando conta...';
         btnSubmit.style.opacity = '0.7';
 
         // 2. Coleta dados

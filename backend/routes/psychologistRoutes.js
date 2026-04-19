@@ -45,7 +45,6 @@ router.put('/me/photo', uploadProfilePhoto.single('profilePhoto'), psychologistC
 router.post('/me/foto', uploadProfilePhoto.single('foto'), psychologistController.updateProfilePhoto); // Rota alternativa para compatibilidade
 
 router.put('/me/crp-document', uploadCrpDocument.single('crpDocument'), psychologistController.uploadCrpDocument);
-router.get('/me/unread-count', psychologistController.getUnreadMessageCount);
 router.get('/me/qna-unanswered-count', psychologistController.getUnansweredQuestionsCount);
 router.put('/me/password', psychologistController.updatePsychologistPassword);
 router.delete('/me', psychologistController.deletePsychologistAccount);

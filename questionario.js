@@ -15,7 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
         meta.content = "#1B4332";
         document.head.appendChild(meta);
     }
+    
+    // FIX: Aplica a cor verde e a textura de ruído diretamente no HTML.
+    // Isso garante que as "sobras" de tela no rodapé (safe-areas ou telas altas) mantenham a mesma textura contínua.
     document.documentElement.style.backgroundColor = '#1B4332';
+    document.documentElement.style.backgroundImage = 'var(--ruido-claro)';
+    document.documentElement.style.backgroundAttachment = 'fixed';
+    document.documentElement.style.backgroundRepeat = 'repeat';
 
     let currentSearchId = null; // Guarda o ID do rascunho
 

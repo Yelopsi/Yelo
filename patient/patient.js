@@ -42,6 +42,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // --- ATUALIZAÇÃO: Preenche sidebar com dados do paciente ---
                 updateSidebarUserInfo(patientData);
                 
+                if (patientData.nome) localStorage.setItem('Yelo_user_name', patientData.nome);
+                if (patientData.fotoUrl) localStorage.setItem('Yelo_user_photo', patientData.fotoUrl);
+                
                 initializeDashboard();
             } else {
                 throw new Error("Sessão inválida.");
@@ -58,17 +61,19 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateSidebarUserInfo(data) {
         const nameEl = document.getElementById('patient-sidebar-name');
         const photoEl = document.getElementById('patient-sidebar-photo');
+        const mobilePhotoEl = document.getElementById('patient-mobile-photo');
         
         if (nameEl && data.nome) {
             nameEl.textContent = data.nome.split(' ')[0];
         }
         
-        if (photoEl && data.fotoUrl) {
+        if (data.fotoUrl) {
             let fotoUrl = data.fotoUrl;
             if (fotoUrl && !fotoUrl.startsWith('http') && !fotoUrl.startsWith('data:')) {
                 fotoUrl = `${API_BASE_URL}/${fotoUrl.replace(/^backend\/public\//, '').replace(/^\//, '')}`;
             }
-            photoEl.src = fotoUrl; 
+            if (photoEl) photoEl.src = fotoUrl; 
+            if (mobilePhotoEl) mobilePhotoEl.src = fotoUrl;
         }
     }
 
@@ -77,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // -----------------------------------------------------
 
     function inicializarVisaoGeral() {
-        const welcomeHeader = document.querySelector('.welcome-section h1'); // Seletor atualizado
+        const welcomeHeader = document.querySelector('.welcome-section h1, .modern-hero-title'); // Seletor atualizado para moderno
         if (welcomeHeader && patientData) {
             const nomeCurto = patientData.nome.split(' ')[0];
             let saudacao = 'Boas-vindas'; // Padrão neutro
@@ -95,6 +100,49 @@ document.addEventListener('DOMContentLoaded', () => {
             const nomeUsuarioEl = document.getElementById('nome-usuario-dash');
             if (nomeUsuarioEl && patientData && patientData.nome) nomeUsuarioEl.textContent = patientData.nome.split(' ')[0];
         }
+
+        // --- Buscar KPIs do Dashboard de Informações ---
+        try {
+            const token = localStorage.getItem('Yelo_token');
+            const headers = { 'Authorization': `Bearer ${token}` };
+
+            // Matches Encontrados
+            fetch(`${API_BASE_URL}/api/psychologists/matches`, { headers })
+                .then(res => res.json())
+                .then(data => {
+                    const list = Array.isArray(data) ? data : (data.results || []);
+                    const el = document.getElementById('kpi-matches');
+                    if (el) el.textContent = list.length;
+                }).catch(() => {
+                    const el = document.getElementById('kpi-matches');
+                    if (el) el.textContent = '0';
+                });
+
+            // Favoritos
+            fetch(`${API_BASE_URL}/api/patients/favorites`, { headers })
+                .then(res => res.json())
+                .then(data => {
+                    const el = document.getElementById('kpi-favoritos');
+                    if (el) el.textContent = data.length || 0;
+                }).catch(() => {
+                    const el = document.getElementById('kpi-favoritos');
+                    if (el) el.textContent = '0';
+                });
+
+            // Avaliações Publicadas
+            fetch(`${API_BASE_URL}/api/patients/me/reviews`, { headers })
+                .then(res => res.json())
+                .then(data => {
+                    const el = document.getElementById('kpi-avaliacoes');
+                    if (el) el.textContent = data.length || 0;
+                }).catch(() => {
+                    const el = document.getElementById('kpi-avaliacoes');
+                    if (el) el.textContent = '0';
+                });
+                
+        } catch (err) {
+            console.error('Erro ao buscar estatísticas:', err);
+        }
     }
     
     // Função para a tela de Matches
@@ -102,6 +150,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const matchesGrid = document.getElementById('matches-grid');
         if (!matchesGrid) return;
         
+        matchesGrid.className = 'pro-results-grid'; // Aplica o grid moderno Yelo
+
         try {
             const token = localStorage.getItem('Yelo_token');
             
@@ -138,33 +188,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 const tags = pro.temas_atuacao || pro.temas || [];
-                const tagsHtml = tags.slice(0, 3).map(tag => `<span class="match-tag">${tag}</span>`).join('');
+                // Pílulas com tamanho exato ao texto (fit-content) e cantos bem arredondados
+                const tagsHtml = tags.slice(0, 3).map(tag => `<span class="tag" style="white-space: nowrap; width: max-content; display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; background-color: #e8f5e9; color: var(--verde-escuro); border: 1px solid #c8e6c9; line-height: 1.2;">${tag}</span>`).join('');
                 const priceFormatted = (pro.valor_sessao_numero || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 const bio = pro.bio || "Sem biografia.";
                 const profileLink = pro.slug ? `/${pro.slug}` : `../perfil_psicologo.html?id=${pro.id}`;
 
                 return `
-                <div class="match-card">
-                    <div class="heart-icon" data-id="${pro.id}" title="Favoritar">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                <div class="pro-card-resultado">
+                    <div class="pro-card-header">
+                        <div class="heart-icon" data-id="${pro.id}" title="Favoritar">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        </div>
+                        <img src="${fotoUrl}" alt="${pro.nome}" class="pro-card-img">
                     </div>
                     
-                    <img src="${fotoUrl}" alt="${pro.nome}" class="match-header-img">
-                    
-                    <div class="match-body">
-                        <h3 class="match-name">${pro.nome}</h3>
-                        <span class="match-crp">CRP ${pro.crp}</span>
+                    <div class="pro-card-body">
+                        <div class="pro-info">
+                            <h3 style="font-family: var(--font-titulos); font-size: 1.35rem; color: var(--verde-escuro); margin: 0 0 5px 0; font-weight: 700;">${pro.nome}</h3>
+                            <div class="crp" style="font-size: 0.85rem; color: #888; margin-bottom: 8px;">CRP ${pro.crp}</div>
+                        </div>
                         
-                        <div class="match-tags">${tagsHtml}</div>
+                        <div class="match-reasons" style="margin: 12px 0; display: flex; flex-wrap: wrap; gap: 6px;">
+                            ${tagsHtml}
+                        </div>
                         
-                        <p class="match-bio">${bio}</p>
+                        <p class="bio-snippet" style="font-style: italic; color: var(--cinza-texto); flex-grow: 1; margin-bottom: 20px; font-size: 0.95rem; line-height: 1.5;">${bio.length > 100 ? bio.substring(0, 100) + '...' : bio}</p>
                         
-                        <div class="match-footer">
-                            <div class="match-price">
-                                <span>Valor Sessão</span>
-                                <strong>${priceFormatted}</strong>
+                        <div class="pro-footer">
+                            <div class="price-tag">
+                                <span class="label">Valor Sessão</span>
+                                <span class="value">${priceFormatted}</span>
                             </div>
-                            <a href="${profileLink}" class="btn-profile">Ver Perfil</a>
+                            <a href="${profileLink}" class="btn btn-principal btn-sm" style="border-radius: 50px; width: max-content; padding: 8px 20px; white-space: nowrap; flex-shrink: 0; line-height: 1;">Ver Perfil</a>
                         </div>
                     </div>
                 </div>
@@ -207,6 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 favoritosGrid.classList.remove('hidden');
                 favoritosVazio.classList.add('hidden');
+                favoritosGrid.className = 'pro-results-grid'; // Aplica o grid moderno Yelo
 
                 // Reutiliza a lógica de criação de card (similar a 'inicializarMatches')
                 favoritosGrid.innerHTML = favorites.map(pro => {
@@ -217,33 +274,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     const tags = pro.temas_atuacao || pro.temas || [];
-                    const tagsHtml = tags.slice(0, 3).map(tag => `<span class="match-tag">${tag}</span>`).join('');
+                    // Pílulas com tamanho exato ao texto (fit-content) e cantos bem arredondados
+                    const tagsHtml = tags.slice(0, 3).map(tag => `<span class="tag" style="white-space: nowrap; width: max-content; display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; background-color: #e8f5e9; color: var(--verde-escuro); border: 1px solid #c8e6c9; line-height: 1.2;">${tag}</span>`).join('');
                     const priceFormatted = (pro.valor_sessao_numero || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                     const bio = pro.bio || "Sem biografia.";
                     const profileLink = pro.slug ? `/${pro.slug}` : `../perfil_psicologo.html?id=${pro.id}`;
 
                     return `
-                    <div class="match-card">
-                        <div class="heart-icon favorited" data-id="${pro.id}" title="Desfavoritar">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                    <div class="pro-card-resultado">
+                        <div class="pro-card-header">
+                            <div class="heart-icon favorited" data-id="${pro.id}" title="Desfavoritar">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                            </div>
+                            <img src="${fotoUrl}" alt="${pro.nome}" class="pro-card-img">
                         </div>
                         
-                        <img src="${fotoUrl}" alt="${pro.nome}" class="match-header-img">
-                        
-                        <div class="match-body">
-                            <h3 class="match-name">${pro.nome}</h3>
-                            <span class="match-crp">CRP ${pro.crp}</span>
-                            
-                            <div class="match-tags">${tagsHtml}</div>
-                            
-                            <p class="match-bio">${bio}</p>
-                            
-                            <div class="match-footer">
-                                <div class="match-price">
-                                    <span>Valor Sessão</span>
-                                    <strong>${priceFormatted}</strong>
+                        <div class="pro-card-body">
+                            <div class="pro-info">
+                                <h3 style="font-family: var(--font-titulos); font-size: 1.35rem; color: var(--verde-escuro); margin: 0 0 5px 0; font-weight: 700;">${pro.nome}</h3>
+                                <div class="crp" style="font-size: 0.85rem; color: #888; margin-bottom: 8px;">CRP ${pro.crp}</div>
+                            </div>
+                            <div class="match-reasons" style="margin: 12px 0; display: flex; flex-wrap: wrap; gap: 6px;">
+                                ${tagsHtml}
+                            </div>
+                            <p class="bio-snippet" style="font-style: italic; color: var(--cinza-texto); flex-grow: 1; margin-bottom: 20px; font-size: 0.95rem; line-height: 1.5;">${bio.length > 100 ? bio.substring(0, 100) + '...' : bio}</p>
+                            <div class="pro-footer">
+                                <div class="price-tag">
+                                    <span class="label">Valor Sessão</span>
+                                    <span class="value">${priceFormatted}</span>
                                 </div>
-                                <a href="${profileLink}" class="btn-profile">Ver Perfil</a>
+                                <a href="${profileLink}" class="btn btn-principal btn-sm" style="border-radius: 50px; width: max-content; padding: 8px 20px; white-space: nowrap; flex-shrink: 0; line-height: 1;">Ver Perfil</a>
                             </div>
                         </div>
                     </div>
@@ -377,42 +437,60 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (!formDados || !formSenha) return;
 
-        // --- REMOVE A OPÇÃO DE FOTO (SOLICITADO) ---
-        const photoSection = document.querySelector('.profile-photo-section');
-        if (photoSection) photoSection.style.display = 'none';
-        // -------------------------------------------
-
         // Preenche os campos com os dados atuais do paciente
         const nomeInput = document.getElementById('nome-paciente');
         const emailInput = document.getElementById('email-paciente');
         const btnDados = formDados.querySelector('button[type="submit"]');
         
-        let isEditing = false; // Estado inicial: Visualização
-
         if (patientData && patientData.nome) {
             nomeInput.value = patientData.nome;
             emailInput.value = patientData.email;
         }
 
-        // --- Lógica para atualizar dados pessoais (Toggle Alterar/Salvar) ---
+        // --- Lógica da Foto de Perfil na aba Minha Conta ---
+        const photoPreview = document.getElementById('account-profile-photo-preview');
+        const photoTrigger = document.getElementById('account-photo-trigger');
+        const photoInput = document.getElementById('account-photo-input');
+
+        if (patientData && patientData.fotoUrl && photoPreview) {
+            let fotoUrl = patientData.fotoUrl;
+            if (fotoUrl && !fotoUrl.startsWith('http') && !fotoUrl.startsWith('data:')) {
+                fotoUrl = `${API_BASE_URL}/${fotoUrl.replace(/^backend\/public\//, '').replace(/^\//, '')}`;
+            }
+            photoPreview.src = fotoUrl;
+        }
+
+        if (photoTrigger && photoInput) {
+            photoTrigger.onclick = () => photoInput.click();
+            photoInput.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 10 * 1024 * 1024) {
+                        return showToast('Arquivo muito grande. Limite máximo: 10MB.', 'error');
+                    }
+                    const fd = new FormData();
+                    fd.append('foto', file);
+                    showToast('Enviando foto...', 'info');
+                    try {
+                        const res = await fetch(`${API_BASE_URL}/api/patients/me/foto`, { method: 'POST', headers: { 'Authorization': `Bearer ${localStorage.getItem('Yelo_token')}` }, body: fd });
+                        if (res.ok) {
+                            const d = await res.json();
+                            if(patientData) patientData.fotoUrl = d.fotoUrl;
+                            updateSidebarUserInfo(patientData);
+                            let novaFotoUrl = d.fotoUrl;
+                            if (novaFotoUrl && !novaFotoUrl.startsWith('http') && !novaFotoUrl.startsWith('data:')) novaFotoUrl = `${API_BASE_URL}/${novaFotoUrl.replace(/^backend\/public\//, '').replace(/^\//, '')}`;
+                            if(photoPreview) photoPreview.src = novaFotoUrl;
+                            showToast('Foto atualizada com sucesso!', 'success');
+                        } else throw new Error();
+                    } catch (err) { showToast('Erro ao atualizar foto.', 'error'); } finally { photoInput.value = ''; }
+                }
+            };
+        }
+
+        // --- Lógica para atualizar dados pessoais ---
         formDados.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // 1. Se NÃO estiver editando, ativa o modo de edição
-            if (!isEditing) {
-                isEditing = true;
-                nomeInput.disabled = false;
-                emailInput.disabled = false;
-                nomeInput.focus();
-                
-                // Muda aparência do botão
-                btnDados.textContent = 'Salvar Dados';
-                btnDados.classList.remove('btn-secundario');
-                btnDados.classList.add('btn-principal');
-                return;
-            }
-
-            // 2. Se JÁ estiver editando, realiza o salvamento
             const token = localStorage.getItem('Yelo_token');
             const originalText = btnDados.textContent;
             btnDados.disabled = true;
@@ -445,20 +523,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem('Yelo_user_name', novoNome);
                     
                     // Atualiza "Olá, [Nome]" no Header
-                    const headerGreeting = document.querySelector('.user-greeting');
-                    if (headerGreeting) headerGreeting.textContent = `Olá, ${primeiroNome}`;
+                    const headerGreeting = document.querySelector('.user-greeting-text');
+                    if (headerGreeting) headerGreeting.textContent = `Painel de ${primeiroNome}`;
+                    const headerAvatar = document.getElementById('header-avatar-initial');
+                    if (headerAvatar && !headerAvatar.tagName.toLowerCase().includes('img')) headerAvatar.textContent = primeiroNome.charAt(0).toUpperCase();
 
                     // Atualiza Banner de Boas-vindas (se estiver visível)
                     const dashName = document.getElementById('nome-usuario-dash');
                     if (dashName) dashName.textContent = primeiroNome;
 
-                    // Volta ao estado de visualização
-                    isEditing = false;
-                    nomeInput.disabled = true;
-                    emailInput.disabled = true;
-                    btnDados.textContent = 'Alterar Dados';
-                    btnDados.classList.remove('btn-principal');
-                    btnDados.classList.add('btn-secundario');
                 } else {
                     throw new Error(result.error);
                 }
@@ -466,7 +539,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast(error.message || 'Erro ao atualizar dados.', 'error');
             } finally {
                 btnDados.disabled = false;
-                if (isEditing) btnDados.textContent = 'Salvar Dados'; // Mantém texto se der erro
+                btnDados.textContent = originalText;
             }
         });
 
@@ -514,13 +587,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Abrir Modal
             btnExcluir.addEventListener('click', (e) => {
                 e.preventDefault();
-                modalExclusao.style.display = 'flex';
+                modalExclusao.style.setProperty('display', 'flex', 'important');
                 inputSenhaExclusao.value = ''; 
                 setTimeout(() => inputSenhaExclusao.focus(), 100);
             });
 
             // Fechar Modal
-            const fecharModal = () => { modalExclusao.style.display = 'none'; };
+            const fecharModal = () => { modalExclusao.style.setProperty('display', 'none', 'important'); };
             if (btnCancelar) btnCancelar.addEventListener('click', (e) => { e.preventDefault(); fecharModal(); });
             modalExclusao.addEventListener('click', (e) => { if (e.target === modalExclusao) fecharModal(); });
 
@@ -570,7 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 4. GERENCIADOR DE CARREGAMENTO E INICIALIZAÇÃO
     // -----------------------------------------------------
 
-    function loadPage(pageUrl) {
+    window.loadPage = function(pageUrl) {
         if (!pageUrl) return;
 
         fetch(pageUrl) 
@@ -578,6 +651,30 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(html => {
                 mainContent.innerHTML = html;
                 
+                // --- Lógica de Hub: Sincronizar estado ativo na Sidebar e Bottom Nav ---
+                document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
+                document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+
+                let activeLink = document.querySelector(`.sidebar-nav a[data-page="${pageUrl}"]`);
+                let activeBottomLink = document.querySelector(`.bottom-nav-item[data-target-page="${pageUrl}"]`);
+                
+                if (!activeLink || !activeBottomLink) {
+                    let hubPage = '';
+                    if (['patient_matches.html', 'patient_favoritos.html', 'patient_avaliacoes.html'].includes(pageUrl)) {
+                        hubPage = 'patient_conexoes_hub.html';
+                    } else if (['patient_minha_conta.html'].includes(pageUrl)) {
+                        hubPage = 'patient_ajustes_hub.html';
+                    }
+
+                    if (hubPage) {
+                        if (!activeLink) activeLink = document.querySelector(`.sidebar-nav a[data-page="${hubPage}"]`);
+                        if (!activeBottomLink) activeBottomLink = document.querySelector(`.bottom-nav-item[data-target-page="${hubPage}"]`);
+                    }
+                }
+
+                if (activeLink) activeLink.closest('li').classList.add('active');
+                if (activeBottomLink) activeBottomLink.classList.add('active');
+
                 if (pageUrl.includes('patient_visao_geral.html')) {
                     inicializarVisaoGeral();
                 } else if (pageUrl.includes('patient_matches.html')) {
@@ -606,6 +703,41 @@ document.addEventListener('DOMContentLoaded', () => {
         const dashboardContainer = document.getElementById('dashboard-container');
         if (dashboardContainer) dashboardContainer.style.display = 'flex';
 
+        // --- LÓGICA DE UPLOAD DE FOTO (SIDEBAR) ---
+        const sidebarTrigger = document.getElementById('sidebar-photo-trigger');
+        const sidebarInput = document.getElementById('sidebar-photo-input');
+
+        if (sidebarTrigger && sidebarInput) {
+            sidebarTrigger.onclick = () => sidebarInput.click();
+
+            sidebarInput.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 10 * 1024 * 1024) {
+                        showToast('Arquivo muito grande. Limite máximo: 10MB.', 'error');
+                        sidebarInput.value = '';
+                        return;
+                    }
+
+                    const fd = new FormData();
+                    fd.append('foto', file);
+                    showToast('Enviando foto...', 'info');
+
+                    try {
+                        const res = await fetch(`${API_BASE_URL}/api/patients/me/foto`, { method: 'POST', headers: { 'Authorization': `Bearer ${localStorage.getItem('Yelo_token')}` }, body: fd });
+                        if (res.ok) {
+                            const d = await res.json();
+                            if(patientData) patientData.fotoUrl = d.fotoUrl;
+                            updateSidebarUserInfo(patientData);
+                            showToast('Foto atualizada!', 'success');
+                        } else throw new Error();
+                    } catch (err) {
+                        showToast('Erro ao atualizar foto.', 'error');
+                    } finally { sidebarInput.value = ''; }
+                }
+            };
+        }
+
         // --- LÓGICA DO MENU MOBILE (ADAPTADA PARA O HEADER GLOBAL) ---
         const menuBtn = document.querySelector('.menu-hamburguer');
         if (menuBtn && sidebar) {
@@ -621,13 +753,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // --- LÓGICA DE LOGOUT ---
-        // (Corrigido para usar a URL de login correta e o seletor de Sair)
-        const logoutLink = document.querySelector('.sidebar-footer a[href="/index.html"]'); // ACHA O BOTÃO "SAIR"
+        const logoutLink = document.getElementById('btn-logout'); 
         if (logoutLink) {
             logoutLink.addEventListener('click', (e) => {
                 e.preventDefault();
                 localStorage.removeItem('Yelo_token'); 
-                window.location.href = '/login'; // MANDA PARA A PÁGINA DE LOGIN (NA RAIZ)
+                window.location.href = '/login'; 
             });
         }
 
@@ -651,7 +782,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (sidebarLink) sidebarLink.classList.add('active');
 
                     // 2. Carrega a página DIRETAMENTE (sem depender do click no menu)
-                    loadPage(page);
+                    window.loadPage(page);
                 }
             }
         });
@@ -686,16 +817,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     sidebar.classList.remove('is-open');
                 }
 
-                const allLinks = sidebarNavList.querySelectorAll('li');
-                allLinks.forEach(item => item.classList.remove('active'));
-                li.classList.add('active');
-
-                loadPage(page);
+                window.loadPage(page);
             });
         }
 
         // --- INICIALIZAÇÃO DE TELA (Carrega a Visão Geral) ---
-        loadPage('./patient_visao_geral.html');
+        window.loadPage('patient_visao_geral.html');
 
     } // FIM initializeDashboard()
 

@@ -13,7 +13,7 @@ window.initializePage = function() {
     // Função para buscar e renderizar os dados
     async function fetchAndRenderPsychologists(page = 1) {
         if (!tableBody) return;
-        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px;">Carregando...</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="7" class="loading-row" style="text-align: center; padding: 40px; color: var(--cinza-texto);"><span class="loading-spinner-sm"></span> Carregando profissionais...</td></tr>`;
 
         const searchTerm = searchInput.value;
         const status = statusFilter.value;
@@ -42,7 +42,7 @@ window.initializePage = function() {
             }
         } catch (error) {
             console.error("Erro ao buscar psicólogos:", error);
-            tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: red;">Erro ao carregar dados.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 40px; color: var(--coral-quente);">Erro ao carregar dados.</td></tr>`;
         }
     }
 
@@ -50,7 +50,7 @@ window.initializePage = function() {
     function renderTable(psychologists) {
         tableBody.innerHTML = '';
         if (psychologists.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px;">Nenhum psicólogo encontrado.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 40px; color: var(--cinza-texto);">Nenhum profissional encontrado.</td></tr>`;
             return;
         }
 
@@ -61,25 +61,36 @@ window.initializePage = function() {
             const statusClass = isDeleted ? 'status-cancelada' : `status-${psy.status || 'inactive'}`;
             const dataCadastro = new Date(psy.createdAt).toLocaleDateString('pt-BR');
             
+            const planoName = psy.plano ? (psy.plano.charAt(0).toUpperCase() + psy.plano.slice(1).toLowerCase()) : 'Nenhum';
+            
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td data-label="Nome">
-                    <a href="#" onclick="navigateToPage('admin_detalhes_psicologo.html?id=${psy.id}'); return false;" style="font-weight: 600; color: #1B4332; text-decoration: underline; cursor: pointer;">
-                        ${psy.nome}
+                    <a href="#" onclick="navigateToPage('admin_detalhes_psicologo.html?id=${psy.id}'); return false;" style="font-weight: 600; color: var(--verde-escuro); text-decoration: none; display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 32px; height: 32px; border-radius: 50%; background-color: #f0fdf4; color: var(--verde-escuro); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem;">
+                            ${psy.nome.charAt(0).toUpperCase()}
+                        </div>
+                        <span style="transition: color 0.2s;" onmouseover="this.style.color='var(--cor-Yelo)'" onmouseout="this.style.color='var(--verde-escuro)'">${psy.nome}</span>
                     </a>
                 </td>
-                <td data-label="Email">${psy.email}</td>
+                <td data-label="Email" style="color: #555;">${psy.email}</td>
                 <td data-label="Status"><span class="status ${statusClass}">${statusLabel}</span></td>
-                <td data-label="Cadastro">${dataCadastro}</td>
-                <td data-label="Plano">${psy.plano || 'Nenhum'}</td>
+                <td data-label="Cadastro" style="color: #666; font-size: 0.9rem;">${dataCadastro}</td>
+                <td data-label="Plano"><span style="background-color: ${psy.plano ? 'var(--cor-Yelo)' : '#f1f3f5'}; color: ${psy.plano ? 'var(--verde-escuro)' : '#666'}; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">${planoName}</span></td>
                 <td data-label="Status VIP">
-                    <button class="btn-vip-toggle ${isVip ? 'active' : ''}" data-id="${psy.id}" ${isDeleted ? 'disabled' : ''}>
-                        ${isVip ? '💎 VIP' : (isDeleted ? 'Inativo' : 'Tornar VIP')}
+                    <button class="btn-vip-toggle ${isVip ? 'active' : ''}" data-id="${psy.id}" ${isDeleted ? 'disabled' : ''} style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 12px; border-radius: 20px; font-weight: 600;">
+                        ${isVip ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9Z"></path><path d="M11 3 8 9l4 13"></path><path d="M13 3l3 6-4 13"></path><path d="M2 9h20"></path></svg> VIP' : (isDeleted ? 'Inativo' : 'Tornar VIP')}
                     </button>
                 </td>
-                <td data-label="Ações">
-                    <button class="btn-tabela" onclick="navigateToPage('admin_detalhes_psicologo.html?id=${psy.id}')">Detalhes</button>
-                    ${isDeleted ? `<span style="font-size:0.85rem; color:#999; margin-left:10px;">Na Lixeira</span>` : `<button class="btn-tabela btn-tabela-perigo btn-delete-psy" data-id="${psy.id}" data-name="${psy.nome}">Excluir</button>`}
+                <td data-label="Ações" style="white-space: nowrap;">
+                    <button class="btn-tabela" onclick="navigateToPage('admin_detalhes_psicologo.html?id=${psy.id}')" style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 20px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        Detalhes
+                    </button>
+                    ${isDeleted ? `<span style="font-size:0.85rem; color:#999; margin-left:10px; display: inline-flex; align-items: center; gap: 4px;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg> Na Lixeira</span>` : `<button class="btn-tabela btn-tabela-perigo btn-delete-psy" data-id="${psy.id}" data-name="${psy.nome}" style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 20px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                        Excluir
+                    </button>`}
                 </td>
             `;
             tableBody.appendChild(row);

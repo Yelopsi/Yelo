@@ -120,6 +120,42 @@ document.addEventListener('DOMContentLoaded', function() {
             window.updateSidebarBadge('admin_caixa_entrada.html', false);
         }
 
+        // --- LÓGICA DE HUB: Sincronizar estado ativo na Sidebar e Bottom Nav ---
+        document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
+        document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+
+        let activeLink = document.querySelector(`.sidebar-nav a[data-page="${pageUrl}"]`);
+        let activeBottomLink = document.querySelector(`.bottom-nav-item[data-target-page="${pageUrl}"]`);
+        
+        if (!activeLink || !activeBottomLink) {
+            let hubPage = '';
+            if (['admin_caixa_entrada.html', 'admin_avisos.html', 'admin_followup.html'].includes(pageUrl)) hubPage = 'admin_comunicacao_hub.html';
+            else if (['admin_gerenciar_psicologos.html', 'admin_gerenciar_pacientes.html', 'admin_lista_espera.html'].includes(pageUrl)) hubPage = 'admin_usuarios_hub.html';
+            else if (['admin_gestao_conteudo.html', 'admin_comunidade_gestao.html', 'admin_moderacao_forum.html', 'admin_avaliacoes.html', 'admin_avaliacoes_psi.html'].includes(pageUrl)) hubPage = 'admin_conteudo_hub.html';
+            else if (['admin_financeiro.html', 'admin_indicadores.html', 'admin_downloads.html', 'relatorios'].includes(pageUrl) || pageUrl === 'relatorios') hubPage = 'admin_dados_hub.html';
+            else if (['admin_minha_conta.html', 'admin_configuracoes.html', 'admin_logs_sistema.html'].includes(pageUrl)) hubPage = 'admin_configuracoes_hub.html';
+
+            if (hubPage) {
+                if (!activeLink) activeLink = document.querySelector(`.sidebar-nav a[data-page="${hubPage}"]`);
+                if (!activeBottomLink) activeBottomLink = document.querySelector(`.bottom-nav-item[data-target-page="${hubPage}"]`);
+            }
+        }
+
+        if (activeLink) activeLink.closest('li').classList.add('active');
+        if (activeBottomLink) activeBottomLink.classList.add('active');
+
+        // Tratamento especial para "Relatórios" que é uma div embutida
+        if (pageUrl === 'relatorios') {
+            document.getElementById('main-content').style.display = 'none';
+            document.getElementById('relatorios').style.display = 'block';
+            loadReports();
+            return;
+        } else {
+            const relSection = document.getElementById('relatorios');
+            if(relSection) relSection.style.display = 'none';
+            mainContent.style.display = 'block';
+        }
+
         const absolutePageUrl = `/admin/${pageUrl}`;
         mainContent.innerHTML = '<p style="text-align:center; padding: 40px;">Carregando...</p>';
 
@@ -142,14 +178,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 document.body.appendChild(script);
                 updateWelcomeMessage();
+
+                // --- LÓGICA DE SMART SCROLL (PÁGINAS CURTAS) ---
+                const scrollableContent = document.querySelector('.dashboard-main');
+                const bottomNav = document.querySelector('.mobile-bottom-nav');
+                if (scrollableContent && bottomNav && window.innerWidth <= 992) {
+                    // Restaura a barra a cada carregamento de página
+                    bottomNav.classList.remove('nav-hidden'); 
+                    setTimeout(() => {
+                        const isScrollable = scrollableContent.scrollHeight > scrollableContent.clientHeight;
+                        if (!isScrollable) {
+                            setTimeout(() => bottomNav.classList.add('nav-hidden'), 2000);
+                        }
+                    }, 150);
+                }
             })
             .catch(e => mainContent.innerHTML = '<p>Erro ao carregar conteúdo.</p>');
     }
-    window.navigateToPage = loadPage; // Expõe a função globalmente
+    window.loadPage = loadPage; // Padrão unificado (App-Like)
+    window.navigateToPage = loadPage; // Mantém compatibilidade com botões antigos
 
     function logout() {
-        // --- MIGRAÇÃO: Chama a rota do servidor para limpar o Cookie HttpOnly ---
-        window.location.href = '/logout'; 
+        localStorage.removeItem('Yelo_token');
+        localStorage.removeItem('Yelo_token_admin');
+        window.location.href = '/login'; 
     }
 
     async function initializeAndProtect() {
@@ -184,12 +236,31 @@ document.addEventListener('DOMContentLoaded', function() {
             const adminNameEl = document.querySelector('.nome-admin');
             if (adminNameEl) adminNameEl.textContent = admin.nome;
 
+            // Atualiza as fotos de avatar se o admin tiver uma foto salva
+            if (admin.fotoUrl) {
+                const sidebarPhoto = document.getElementById('admin-sidebar-photo');
+                const mobilePhoto = document.getElementById('admin-mobile-photo');
+                if (sidebarPhoto) sidebarPhoto.src = admin.fotoUrl;
+                if (mobilePhoto) mobilePhoto.src = admin.fotoUrl;
+            }
+
             // Inicia o restante do painel
             setupPageNavigation();
             updateWelcomeMessage();
 
+            // --- INICIALIZA LÓGICA DO SMART SCROLL ---
+            setupSmartScroll();
+
             // --- INICIALIZA SOCKET (Conecta o Admin à sala) ---
             connectAdminSocket(token);
+            
+            // --- FIX: Remove loader da tela
+            const loader = document.getElementById('global-loader');
+            if (loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 500);
+            }
+            document.getElementById('dashboard-container').style.display = 'flex';
 
         } catch (error) {
             console.error("Erro de autenticação:", error);
@@ -230,44 +301,53 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function setupPageNavigation() {
-        const allNavItems = document.querySelectorAll('.sidebar-nav li');
+        // Adiciona delegação via Hub também, então monitora os links reais clicados
+        const allNavItems = document.querySelectorAll('.sidebar-nav a[data-page], .bottom-nav-item[data-target-page]');
         
-        const initialLink = document.querySelector('.sidebar-nav li.active[data-page]');
-        if (initialLink) loadPage(initialLink.getAttribute('data-page'));
+        window.loadPage('admin_visao_geral.html'); // Carrega a home por padrão
 
         allNavItems.forEach(link => {
             link.addEventListener('click', function (e) {
                 e.preventDefault();
-                
-                // Atualiza visualmente o item ativo
-                allNavItems.forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
-                
-                const page = this.getAttribute('data-page');
-                const target = this.getAttribute('data-target');
-
-                if (page) {
-                    // Navegação normal
-                    document.getElementById('relatorios').style.display = 'none';
-                    mainContent.style.display = 'block';
-                    loadPage(page);
-                } else if (target === 'relatorios') {
-                    // Seção de Relatórios
-                    mainContent.style.display = 'none';
-                    document.getElementById('relatorios').style.display = 'block';
-                    loadReports();
-                    updateWelcomeMessage(); // Atualiza o título também para Relatórios
-                }
+                const page = this.getAttribute('data-page') || this.getAttribute('data-target-page');
+                if (page) window.loadPage(page);
 
                 // --- CORREÇÃO MOBILE: FECHAR MENU AO CLICAR ---
                 const sidebar = document.querySelector('.dashboard-sidebar');
-                const overlay = document.querySelector('.mobile-overlay');
-                if (sidebar && sidebar.classList.contains('is-open')) {
+                if (sidebar && sidebar.classList.contains('is-open') && window.innerWidth <= 992) {
                     sidebar.classList.remove('is-open');
-                    overlay.classList.remove('is-visible');
                 }
             });
         });
+    }
+
+    // --- SMART SCROLL (COMPORTAMENTO APP-LIKE MOBILE) ---
+    function setupSmartScroll() {
+        if (window.innerWidth > 992) return;
+
+        const bottomNav = document.querySelector('.mobile-bottom-nav');
+        const scrollableContent = document.querySelector('.dashboard-main');
+        
+        if (!bottomNav || !scrollableContent) return;
+
+        bottomNav.addEventListener('click', () => {
+            if (bottomNav.classList.contains('nav-hidden')) {
+                bottomNav.classList.remove('nav-hidden');
+            }
+        });
+
+        let lastScrollY = scrollableContent.scrollTop;
+        const scrollThreshold = 100;
+
+        scrollableContent.addEventListener('scroll', () => {
+            const currentScrollY = scrollableContent.scrollTop;
+            if (currentScrollY > lastScrollY && currentScrollY > scrollThreshold) {
+                bottomNav.classList.add('nav-hidden');
+            } else if (currentScrollY < lastScrollY) {
+                bottomNav.classList.remove('nav-hidden');
+            }
+            lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
+        }, { passive: true });
     }
 
     // --- AQUI ESTÁ A CORREÇÃO DO MODAL ---
@@ -451,22 +531,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Listener para quando os dados do admin forem atualizados em outra página
         window.addEventListener('adminDataUpdated', updateWelcomeMessage);
 
-        // --- LÓGICA DO MENU MOBILE ---
-        const toggleBtn = document.getElementById('toggleSidebar');
-        const sidebar = document.querySelector('.dashboard-sidebar');
-        const overlay = document.querySelector('.mobile-overlay');
-
-        if (toggleBtn && sidebar && overlay) {
-            toggleBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('is-open');
-                overlay.classList.toggle('is-visible');
-            });
-
-            overlay.addEventListener('click', () => {
-                sidebar.classList.remove('is-open');
-                overlay.classList.remove('is-visible');
-            });
-        }
     }
 
     // ==========================================
@@ -763,6 +827,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 clicksEl.textContent = (data.whatsappClicks || 0).toLocaleString('pt-BR');
             }
 
+            // --- RENDERIZA O SHADOW TRACKING ---
+            if (typeof renderShadowTracking === "function") renderShadowTracking(data.shadowTracking);
+
             // --- ESCONDE SKELETONS E MOSTRA CONTEÚDO ---
             document.querySelectorAll('#relatorios .kpi-card').forEach(card => {
                 const skeleton = card.querySelector('.kpi-skeleton');
@@ -833,6 +900,52 @@ document.addEventListener('DOMContentLoaded', function() {
         // Insere o card no container especificado
         container.insertAdjacentHTML('beforeend', cardHtml);
     };
+    
+    // --- FUNÇÃO PARA RENDERIZAR SHADOW TRACKING ---
+    function renderShadowTracking(stData) {
+        const usageList = document.getElementById('st-usage-list');
+        const plansList = document.getElementById('st-plans-list');
+        
+        if (!usageList || !plansList) return;
+
+        // Se o backend não retornar dados ou a lista estiver vazia
+        if (!stData || !stData.usage || stData.usage.length === 0) {
+            usageList.innerHTML = '<p style="color: #999; font-size: 0.9rem; font-style: italic;">Aguardando dados de cliques/tracking no banco.</p>';
+            plansList.innerHTML = '<p style="color: #166534; font-size: 0.9rem; font-style: italic;">Aguardando interações dos psicólogos para modelar o Paywall...</p>';
+            return;
+        }
+
+        // 1. Injeta HTML do Uso de Features (com animação de barra)
+        usageList.innerHTML = stData.usage.map(item => {
+            let colorClass = 'medium';
+            if (item.percentage >= 70) colorClass = 'high';
+            else if (item.percentage < 40) colorClass = 'low';
+            if (item.status) colorClass = item.status; // Respeita a cor do backend se enviada
+
+            return `
+                <li class="feature-usage-item">
+                    <div class="feature-header">
+                        <span>${item.name}</span>
+                        <span>${item.percentage}%</span>
+                    </div>
+                    <div class="feature-bar-bg">
+                        <div class="feature-bar-fill ${colorClass}" style="width: 0%; transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1);"></div>
+                    </div>
+                </li>
+            `;
+        }).join('');
+
+        // Animação suave para as barras crescerem
+        setTimeout(() => {
+            const bars = usageList.querySelectorAll('.feature-bar-fill');
+            stData.usage.forEach((item, index) => { if(bars[index]) bars[index].style.width = item.percentage + '%'; });
+        }, 100);
+
+        // 2. Injeta HTML das Sugestões de Planos
+        if (stData.plans && stData.plans.length > 0) {
+            plansList.innerHTML = stData.plans.map(plan => `<div class="upsell-tier"><div class="upsell-tier-name"><span class="status ${plan.cssClass || 'status-active'}">${plan.name}</span></div><ul class="upsell-tier-features">${plan.features.map(f => `<li>${f}</li>`).join('')}</ul></div>`).join('');
+        }
+    }
 
     // 1. Gráfico de Usuários (Linha)
     function renderUsersChart(data, visitsData) { // Recebe visitsData agora
@@ -857,7 +970,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     { label: 'Novos Psicólogos', data: psis, borderColor: '#F9A825', tension: 0.3 }
                 ]
             },
-            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
         });
     }
 
@@ -871,17 +984,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const drop = data.map(item => item.desistencias);
 
         chartInstances.demand = new Chart(ctx, {
-            type: 'bar',
+            type: 'line',
             data: {
                 labels: labels,
                 datasets: [
-                    { label: 'Concluídos', data: done, backgroundColor: '#2E7D32' }, // Verde
-                    { label: 'Desistências', data: drop, backgroundColor: '#e74c3c' } // Vermelho
+                    { label: 'Concluídos', data: done, borderColor: '#2E7D32', backgroundColor: 'rgba(46, 125, 50, 0.1)', tension: 0.3, fill: true },
+                    { label: 'Desistências', data: drop, borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.1)', tension: 0.3, fill: true }
                 ]
             },
             options: {
                 responsive: true,
-                scales: { x: { stacked: true }, y: { stacked: true } },
+                maintainAspectRatio: false,
+                scales: { x: { stacked: false }, y: { stacked: false } },
                 plugins: { legend: { position: 'bottom' } }
             }
         });
@@ -910,7 +1024,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 labels: labels,
                 datasets: [{ data: values, backgroundColor: colors }]
             },
-            options: { responsive: true, plugins: { legend: { position: 'right' } } }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
         });
     }
 
@@ -949,7 +1063,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     ]
                 }]
             },
-            options: { responsive: true, plugins: { legend: { position: 'right' } } }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
         });
     }
 

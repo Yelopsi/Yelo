@@ -1,3 +1,11 @@
+<style>
+    @media (max-width: 991px) {
+        #evolucao-hub-grid {
+            padding-bottom: 80px; /* Garante que o último card não fique escondido pela navegação mobile */
+        }
+    }
+</style>
+
 <div class="main-header">
     <div class="header-content">
         <h1>Evolução & Comunidade</h1>
@@ -5,7 +13,7 @@
     </div>
 </div>
 
-<div class="hub-grid fade-in-up">
+<div id="evolucao-hub-grid" class="hub-grid fade-in-up">
     <a href="#" onclick="window.loadPage('psi_jornada.html')" class="hub-card">
         <div class="hub-icon">🚀</div>
         <div class="hub-info">
