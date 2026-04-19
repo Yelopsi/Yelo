@@ -14,7 +14,7 @@
         body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #f4f6f5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
         
         /* CLASSES RESPONSIVAS */
-        @media screen and (max-width: 600px) {
+        @media screen and (max-width: 650px) {
             .email-container {
                 width: 100% !important;
                 margin: auto !important;
@@ -24,12 +24,15 @@
                 height: auto !important;
             }
             .content-padding {
-                padding: 30px 20px !important;
+                padding: 25px 15px !important;
             }
             .btn-cta {
                 display: block !important;
                 width: 100% !important;
                 box-sizing: border-box !important;
+            }
+            .wrapper-padding {
+                padding: 15px 10px !important;
             }
         }
 
@@ -142,7 +145,7 @@
         <div class="app-preview">
             
             <!-- ENVOLTÓRIO DO E-MAIL (O que será copiado) -->
-            <div id="email-output-wrapper" style="width: 100%; max-width: 800px; display: flex; justify-content: center;">
+            <div id="email-output-wrapper" style="width: 100%; text-align: center; background-color: #f3f4f6; padding: 20px 0;">
                 
                 <!-- PREHEADER (Texto invisível que aparece na prévia do Gmail/Outlook) -->
                 <div id="preview-preheader" style="display: none; font-size: 1px; color: #fefefe; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
@@ -150,12 +153,12 @@
                 </div>
 
                 <!-- CONTAINER PRINCIPAL (Fundo Cinza/Off-white) -->
-                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f3f4f6; padding: 40px 0;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" align="center" style="background-color: #f3f4f6;">
                     <tr>
-                        <td align="center" style="padding: 20px 0;">
+                        <td align="center" class="wrapper-padding" style="padding: 30px 10px;">
                             
-                            <!-- CORPO DO E-MAIL (Cartão Branco Max 600px) -->
-                            <table border="0" cellpadding="0" cellspacing="0" width="600" class="email-container" style="background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); border: 1px solid #e5e7eb;">
+                            <!-- CORPO DO E-MAIL (Cartão Branco Max 650px) -->
+                            <table border="0" cellpadding="0" cellspacing="0" width="650" align="center" class="email-container" style="width: 100%; max-width: 650px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); border: 1px solid #e5e7eb; margin: 0 auto; text-align: left;">
                                 
                                 <!-- HEADER (Logo Yelo) -->
                                 <tr id="preview-header">
@@ -169,7 +172,7 @@
 
                                 <!-- CONTEÚDO PRINCIPAL -->
                                 <tr>
-                                    <td class="content-padding" style="padding: 40px 40px 30px 40px; color: #374151; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; text-align: justify;">
+                                    <td class="content-padding" style="padding: 35px 30px 30px 30px; color: #374151; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.6; text-align: left;">
                                         
                                         <!-- Título -->
                                         <h1 id="preview-titulo" style="color: #111827; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-top: 0; margin-bottom: 25px; text-align: center;">
@@ -200,11 +203,11 @@
                                         <table id="preview-cta-container" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px;">
                                             <tr>
                                                 <td align="center">
-                                                    <table border="0" cellpadding="0" cellspacing="0">
+                                                    <table border="0" cellpadding="0" cellspacing="0" align="center">
                                                         <tr>
-                                                            <td align="center" bgcolor="#FFEE8C" style="border-radius: 50px;">
-                                                                <a id="preview-btn" href="https://www.yelopsi.com.br" target="_blank" class="btn-cta" style="display: inline-block; padding: 16px 36px; font-family: Helvetica, Arial, sans-serif; font-size: 16px; color: #1B4332; text-decoration: none; font-weight: bold; border-radius: 50px; background-color: #FFEE8C; border: 1px solid #FFEE8C;">
-                                                                    Acessar Plataforma
+                                                            <td align="center" bgcolor="#FFEE8C" style="border-radius: 50px; background-color: #FFEE8C;">
+                                                                <a id="preview-btn" href="https://www.yelopsi.com.br" target="_blank" class="btn-cta" style="display: inline-block; padding: 15px 35px; font-family: Helvetica, Arial, sans-serif; font-size: 16px; color: #1B4332; text-decoration: none !important; font-weight: bold; border-radius: 50px; background-color: #FFEE8C; border: 1px solid #FFEE8C;">
+                                                                    <span style="color: #1B4332; text-decoration: none !important;">Acessar Plataforma</span>
                                                                 </a>
                                                             </td>
                                                         </tr>
@@ -225,7 +228,7 @@
 
                                 <!-- LINHA DIVISÓRIA -->
                                 <tr>
-                                    <td style="padding: 0 50px;">
+                                    <td style="padding: 0 30px;">
                                         <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
                                                 <td style="border-top: 1px solid #f3f4f6;"></td>
@@ -236,7 +239,7 @@
 
                                 <!-- FOOTER (Rodapé) -->
                                 <tr id="preview-footer">
-                                    <td align="center" style="padding: 30px 40px 40px 40px; font-family: Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.5; color: #9ca3af; background-color: #ffffff;">
+                                    <td align="center" style="padding: 30px 30px 40px 30px; font-family: Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.5; color: #9ca3af; background-color: #ffffff;">
                                         
                                         <!-- REDES SOCIAIS -->
                                         <table border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
@@ -323,7 +326,7 @@
             const btnLink = document.getElementById('input-btn-link').value;
             const btnPreview = document.getElementById('preview-btn');
             
-            btnPreview.innerText = btnText;
+            btnPreview.innerHTML = `<span style="color: #1B4332; text-decoration: none !important;">${btnText}</span>`;
             btnPreview.href = btnLink;
         }
 
@@ -371,11 +374,12 @@
         img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
         table { border-collapse: collapse !important; }
         body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #f3f4f6; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-        @media screen and (max-width: 600px) {
+        @media screen and (max-width: 650px) {
             .email-container { width: 100% !important; margin: auto !important; }
             .fluid-img { max-width: 100% !important; height: auto !important; }
-            .content-padding { padding: 30px 20px !important; }
+            .content-padding { padding: 25px 15px !important; }
             .btn-cta { display: block !important; width: 100% !important; box-sizing: border-box !important; }
+            .wrapper-padding { padding: 15px 10px !important; }
         }
     <\/style>
 </head>
