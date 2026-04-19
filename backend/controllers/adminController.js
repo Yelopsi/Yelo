@@ -721,26 +721,51 @@ exports.updateAdminPhoto = async (req, res) => {
             api_secret: process.env.CLOUDINARY_API_SECRET
         });
 
-        const result = await cloudinary.uploader.upload(req.file.path, {
-            folder: 'yelo/profiles',
-            public_id: `admin-profile-${userId}`,
-            overwrite: true,
-            transformation: [{ width: 500, height: 500, crop: 'fill', gravity: 'face' }, { quality: 'auto' }, { fetch_format: 'auto' }]
-        });
-        const fotoUrl = result.secure_url;
-
-        // Limpeza do arquivo temporário local
-        const fs = require('fs').promises;
-        try { await fs.unlink(req.file.path); } catch (e) { console.warn("Erro ao deletar arquivo local:", e); }
-
-        if (userType === 'psychologist') {
-            await db.Psychologist.update({ fotoUrl }, { where: { id: userId } });
-            return res.status(200).json({ message: 'Foto atualizada!', fotoUrl });
+        let fotoUrl = '';
+        try {
+            if (req.file.path) {
+                const result = await cloudinary.uploader.upload(req.file.path, {
+                    folder: 'yelo/profiles',
+                    public_id: `admin-profile-${userId}-${Date.now()}`,
+                    overwrite: true,
+                    transformation: [{ width: 500, height: 500, crop: 'fill', gravity: 'face' }, { quality: 'auto' }, { fetch_format: 'auto' }]
+                });
+                fotoUrl = result.secure_url;
+                
+                const fs = require('fs').promises;
+                try { await fs.unlink(req.file.path); } catch (e) { console.warn("Erro ao deletar arquivo local:", e); }
+            } else if (req.file.buffer) {
+                fotoUrl = await new Promise((resolve, reject) => {
+                    cloudinary.uploader.upload_stream(
+                        {
+                            folder: 'yelo/profiles',
+                            public_id: `admin-profile-${userId}-${Date.now()}`,
+                            overwrite: true,
+                            transformation: [{ width: 500, height: 500, crop: 'fill', gravity: 'face' }, { quality: 'auto' }, { fetch_format: 'auto' }]
+                        },
+                        (error, result) => {
+                            if (error) reject(error);
+                            else resolve(result.secure_url);
+                        }
+                    ).end(req.file.buffer);
+                });
+            } else {
+                throw new Error('Formato de arquivo não suportado');
+            }
+        } catch (uploadError) {
+            console.error('Erro no Cloudinary:', uploadError);
+            return res.status(500).json({ error: 'Erro ao enviar imagem para a nuvem.' });
         }
 
-        await db.sequelize.query(`UPDATE "Admins" SET "fotoUrl" = :fotoUrl, "updatedAt" = NOW() WHERE id = :id`, {
-            replacements: { fotoUrl, id: userId }
-        });
+        const isModernAdmin = await db.Psychologist.findOne({ where: { id: userId, isAdmin: true } });
+
+        if (isModernAdmin) {
+            await db.Psychologist.update({ fotoUrl }, { where: { id: userId } });
+        } else {
+            await db.sequelize.query(`UPDATE "Admins" SET "fotoUrl" = :fotoUrl, "updatedAt" = NOW() WHERE id = :id`, {
+                replacements: { fotoUrl, id: userId }
+            });
+        }
         return res.status(200).json({ message: 'Foto atualizada!', fotoUrl });
     } catch (error) {
         console.error('Erro ao atualizar foto do admin:', error);
