@@ -2494,7 +2494,19 @@ app.delete('/api/admin/psychologists/:id', async (req, res) => {
 
 // ROTAS DE ADMIN (ORDEM DE ESPECIFICIDADE IMPORTA)
 app.use('/api/admin/messages', adminMessageRoutes); // Rotas de mensagem do admin (mais específicas)
+
+// --- ROTA EXPLÍCITA E BLINDADA PARA UPLOAD DE FOTO DO ADMIN ---
+const multer = require('multer');
+const uploadAdmin = multer({ dest: 'uploads/profiles/', limits: { fileSize: 10 * 1024 * 1024 } });
+app.put('/api/admin/me/photo', verifyTokenLocal, (req, res, next) => {
+    uploadAdmin.single('foto')(req, res, (err) => {
+        if (err) return res.status(400).json({ error: `Erro no interpretador de imagem: ${err.message}` });
+        next();
+    });
+}, adminController.updateAdminPhoto);
+
 app.use('/api/admin', adminRoutes); // Rotas genéricas do admin (devem vir por último)
+
 
 // --- ROTAS DE GESTÃO DE CONTEÚDO (ADMIN) ---
 // Adicionadas aqui para garantir precedência e funcionamento sem depender de adminRoutes.js
