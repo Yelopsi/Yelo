@@ -18,7 +18,12 @@ module.exports = (sequelize, DataTypes) => {
   }
   Conversation.init({
     patientId: DataTypes.INTEGER,
-    psychologistId: DataTypes.INTEGER
+    psychologistId: DataTypes.INTEGER,
+    // --- CORREÇÃO: Adiciona o campo status que estava sendo removido ---
+    status: {
+      type: DataTypes.STRING,
+      defaultValue: 'active' // active, archived
+    }
   }, {
     sequelize,
     modelName: 'Conversation',

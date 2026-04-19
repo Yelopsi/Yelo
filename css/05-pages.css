@@ -1,39 +1,27 @@
 /* public/css/05-pages.css */
 
-/* --- RUÍDO GLOBAL (NOISE TEXTURE) --- */
-body:not(.pagina-dashboard)::after {
-    content: "";
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 500 500' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1 0 0 0 -0.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100vh;
-    z-index: 9999; /* Sobrepõe seções com fundo colorido */
-    opacity: 0.30 !important;
-    mix-blend-mode: multiply;
-    pointer-events: none;
-}
-
 /* --- SEÇÕES GERAIS --- */
-.container { max-width: 900px; margin: 0 auto; padding: 60px 20px; text-align: center; }
-.secao-conteudo-pro h2, .titulo-secao { font-family: var(--font-titulos); font-weight: 700; font-size: 2.5rem; color: #333; margin-bottom: 60px; text-align: center; }
-.subtitulo-secao { font-size: 1.2rem; line-height: 1.6; color: var(--cinza-texto); max-width: 700px; margin: 0 auto 50px auto; text-align: center; }
+.container { max-width: calc(900px * var(--ui-scale, 1)); margin: 0 auto; padding: calc(60px * var(--ui-scale, 1)) calc(20px * var(--ui-scale, 1)); text-align: center; }
+.secao-conteudo-pro h2, .titulo-secao { font-family: var(--font-titulos); font-weight: 700; font-size: calc(2.5rem * var(--ui-scale, 1)); color: #333; margin-bottom: calc(60px * var(--ui-scale, 1)); text-align: center; }
+.subtitulo-secao { font-size: calc(1.2rem * var(--ui-scale, 1)); line-height: 1.6; color: var(--cinza-texto); max-width: calc(700px * var(--ui-scale, 1)); margin: 0 auto calc(50px * var(--ui-scale, 1)) auto; text-align: center; }
 
 /* --- HERO (Home) --- */
-.hero { padding: 80px 50px 100px 50px; text-align: center; background-color: var(--verde-escuro); position: relative; margin-top: -2px; }
-.hero-fundo-escuro { padding-top: 100px; }
-.hero-texto h1 { font-size: 48px; color: white; margin-bottom: 10px; line-height: 1.1; }
-.hero-texto p { font-size: 19px; color: white; margin-bottom: 40px; }
+.hero { padding: calc(80px * var(--ui-scale, 1)) calc(50px * var(--ui-scale, 1)) calc(100px * var(--ui-scale, 1)) calc(50px * var(--ui-scale, 1)); text-align: center; background-color: var(--verde-escuro); position: relative; margin-top: -2px; }
+.hero-fundo-escuro { padding-top: calc(100px * var(--ui-scale, 1)); }
+.hero-texto h1 { font-size: calc(48px * var(--ui-scale, 1)); color: white; margin-bottom: calc(10px * var(--ui-scale, 1)); line-height: 1.1; }
+.hero-texto p { font-size: calc(19px * var(--ui-scale, 1)); color: white; margin-bottom: calc(40px * var(--ui-scale, 1)); }
 .wave-divider { position: absolute; bottom: -1px; left: 0; width: 100%; line-height: 0; border: none !important; }
-.wave-divider svg { display: block; width: 100%; height: 80px; }
+.wave-divider svg { display: block; width: 100%; height: calc(80px * var(--ui-scale, 1)); }
 @media (max-width: 480px) {
-    .hero-texto h1 { font-size: 42px; }
-    .hero-texto p { font-size: 16px; line-height: 1.4; }
+    .hero-texto h1 { font-size: calc(42px * var(--ui-scale, 1)); }
+    .hero-texto p { font-size: calc(16px * var(--ui-scale, 1)); line-height: 1.4; }
 }
 
 /* --- SEÇÃO TERAPEUTAS --- */
-.secao-terapeutas { padding: 70px 20px 100px 20px; position: relative; background-color: #fdfaf6; overflow: hidden; }
-.secao-conteudo { display: grid; grid-template-columns: 1fr; gap: 40px; max-width: 1100px; margin: 0 auto; align-items: center; }
-.texto-terapeutas h2 { font-size: 32px; color: var(--verde-escuro); margin-top: 0; line-height: 1.2; }
-.texto-terapeutas p { font-size: 16px; line-height: 1.6; color: #333; }
+.secao-terapeutas { padding: calc(70px * var(--ui-scale, 1)) calc(20px * var(--ui-scale, 1)) calc(100px * var(--ui-scale, 1)) calc(20px * var(--ui-scale, 1)); position: relative; background-color: #ffffff; overflow: hidden; }
+.secao-conteudo { display: grid; grid-template-columns: 1fr; gap: calc(40px * var(--ui-scale, 1)); max-width: calc(1100px * var(--ui-scale, 1)); margin: 0 auto; align-items: center; }
+.texto-terapeutas h2 { font-size: calc(32px * var(--ui-scale, 1)); color: var(--verde-escuro); margin-top: 0; line-height: 1.2; }
+.texto-terapeutas p { font-size: calc(16px * var(--ui-scale, 1)); line-height: 1.6; color: #333; }
 
 /* --- VITRINE DE TERAPEUTAS (Collage Animado) --- */
 .therapist-collage {
@@ -117,12 +105,12 @@ body:not(.pagina-dashboard)::after {
 }
 
 /* --- SEÇÃO COMO FUNCIONA --- */
-.como-funciona { padding: 70px 20px; background-color: white; position: relative; }
-.passo { display: grid; grid-template-columns: 1fr; gap: 50px; align-items: center; max-width: 1100px; margin: 0 auto; }
-.passo-texto h3 { font-size: 28px; color: var(--verde-escuro); line-height: 1.3; margin-top: 0; }
-.passo-texto p { font-size: 16px; line-height: 1.6; color: #333; }
+.como-funciona { padding: calc(70px * var(--ui-scale, 1)) calc(20px * var(--ui-scale, 1)); background-color: #ffffff; position: relative; }
+.passo { display: grid; grid-template-columns: 1fr; gap: calc(50px * var(--ui-scale, 1)); align-items: center; max-width: calc(1100px * var(--ui-scale, 1)); margin: 0 auto; }
+.passo-texto h3 { font-size: calc(28px * var(--ui-scale, 1)); color: var(--verde-escuro); line-height: 1.3; margin-top: 0; }
+.passo-texto p { font-size: calc(16px * var(--ui-scale, 1)); line-height: 1.6; color: #333; }
 
-.passo-imagens { position: relative; min-height: 450px; }
+.passo-imagens { position: relative; min-height: calc(450px * var(--ui-scale, 1)); }
 .passo-foto { position: absolute; border-radius: 16px; border: 4px solid white; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
 .foto-passo1-1 { width: 40%; top: 0; left: 15%; }
 .foto-passo1-2 { width: 35%; top: 40%; right: 10%; }
@@ -130,12 +118,12 @@ body:not(.pagina-dashboard)::after {
 .forma-meia-lua { width: 100px; height: 50px; background-color: #E8D8C2; border-radius: 50px 50px 0 0; position: absolute; top: 10%; left: 5%; z-index: -1; }
 
 /* --- FAQ & AVISO --- */
-.faq-secao { padding: 70px 20px 100px 20px; background-color: #fdfaf6; position: relative; }
-.acordeao-container { max-width: 600px; margin: 0 auto; }
+.faq-secao { padding: calc(70px * var(--ui-scale, 1)) calc(20px * var(--ui-scale, 1)) calc(100px * var(--ui-scale, 1)) calc(20px * var(--ui-scale, 1)); background-color: #ffffff; position: relative; }
+.acordeao-container { max-width: calc(600px * var(--ui-scale, 1)); margin: 0 auto; }
 .acordeao-item { border-bottom: 1px solid #ddd; }
-.acordeao-titulo { display: flex; justify-content: space-between; width: 100%; padding: 20px 0; background: none; border: none; cursor: pointer; text-align: center; font-size: 18px; font-weight: 500; color: #333; }
+.acordeao-titulo { display: flex; justify-content: space-between; width: 100%; padding: calc(20px * var(--ui-scale, 1)) 0; background: none; border: none; cursor: pointer; text-align: center; font-size: calc(18px * var(--ui-scale, 1)); font-weight: 500; color: #333; }
 .acordeao-conteudo { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; }
-.acordeao-conteudo p { padding: 0 10px 20px 10px; font-size: 14px; text-align: justify; color: #555; }
+.acordeao-conteudo p { padding: 0 calc(10px * var(--ui-scale, 1)) calc(20px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1)); font-size: calc(14px * var(--ui-scale, 1)); text-align: justify; color: #555; }
 
 /* --- AJUSTE FAQ MOBILE (CENTRALIZADO) --- */
 @media (max-width: 767px) {
@@ -149,12 +137,12 @@ body:not(.pagina-dashboard)::after {
     }
 }
 
-.aviso-crise { padding: 40px 20px 120px 20px; background-color: #fdfaf6; border-top: 1px solid #e9ecef; position: relative; text-align: center; }
+.aviso-crise { padding: 40px 20px 120px 20px; background-color: var(--off-white); border-top: 1px solid #e9ecef; position: relative; text-align: center; }
 .aviso-conteudo { max-width: 1100px; margin: 0 auto; }
 .aviso-texto a { color: #007bff; text-decoration: underline; }
 
 /* --- PÁGINAS DE LOGIN / REGISTRO --- */
-.login-main { display: flex; justify-content: center; align-items: center; padding: 80px 20px; background-color: var(--off-white); min-height: calc(100vh - 160px); }
+.login-main { display: flex; justify-content: center; align-items: center; padding: 80px 20px; background-color: transparent; min-height: calc(100vh - 160px); }
 .login-container { background-color: var(--branco-puro); padding: 35px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); width: 100%; max-width: 420px; text-align: center; }
 .login-titulo { color: var(--verde-escuro); margin-bottom: 30px; }
 .login-links { margin-top: 25px; }
@@ -180,7 +168,7 @@ body:not(.pagina-dashboard)::after {
 .sidebar-nav ul { margin-top: 30px; }
 .sidebar-nav li a { display: block; color: #adb5bd; padding: 15px; border-radius: 8px; transition: all 0.2s; }
 .sidebar-nav li.active a, .sidebar-nav li a:hover { background-color: rgba(255,255,255,0.1); color: white; }
-.dashboard-main { flex-grow: 1; padding: 40px; overflow-y: auto; background-color: #f8f9fa; }
+.dashboard-main { flex-grow: 1; padding: 40px; overflow-y: auto; background-color: var(--cinza-fundo); }
 .welcome-header { background-color: var(--verde-escuro); color: white; padding: 40px; border-radius: 16px; margin-bottom: 30px; }
 .welcome-header h1 { font-family: var(--font-titulos); color: white; margin: 0; }
 
@@ -441,180 +429,328 @@ body:not(.pagina-dashboard)::after {
 
 /* --- PÁGINA PERGUNTAS E RESPOSTAS (Q&A) --- */
 
+/* ==========================================================================
+   PÁGINA PERGUNTAS E RESPOSTAS (Q&A) - APP LIKE
+   ========================================================================== */
+
 /* 1. Cards de Benefícios (Topo) */
 .beneficios-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 40px;
-    margin: 60px auto;
-    text-align: left;
+    gap: 24px;
+    margin: 40px auto 60px auto;
 }
 .beneficio-card {
-    background-color: #F8F3ED; /* Creme */
-    padding: 30px;
-    border-radius: 24px 60px 24px 60px;
-    border: 1px solid rgba(0,0,0,0.03);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    transition: transform 0.3s ease;
-}
-.beneficio-card:nth-child(2n) {
-    background-color: #E6F4F1; /* Verde suave */
-    border-radius: 60px 24px 60px 24px;
-}
-.beneficio-card:nth-child(3n) {
-    background-color: #FFF8E1; /* Amarelo suave */
-    border-radius: 24px 60px 24px 60px;
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 20px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-align: center;
 }
 .beneficio-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.06);
 }
 .beneficio-card h3 {
     font-family: var(--font-titulos);
-    font-size: 1.4rem;
+    font-size: 1.25rem;
     color: var(--verde-escuro);
     margin-top: 0;
     margin-bottom: 10px;
 }
 .beneficio-card p {
-    font-size: 0.9rem;
-    color: #666;
-    line-height: 1.6;
+    font-size: 0.95rem;
+    color: #555;
+    line-height: 1.5;
     margin: 0;
 }
 
+.beneficio-card:nth-child(1) { border-top: 4px solid var(--verde-escuro); }
+.beneficio-card:nth-child(2) { border-top: 4px solid var(--cor-Yelo); }
+.beneficio-card:nth-child(3) { border-top: 4px solid #4ade80; }
+
 /* 2. Barra de Busca Grande */
 .qa-search-container {
-    max-width: 800px;
-    margin: 40px auto;
+    max-width: 700px;
+    margin: 0 auto 40px auto;
     position: relative;
-    width: 100%; /* Garante responsividade */
-    padding: 0 10px; /* Margem de segurança no mobile */
+    width: 100%;
 }
 .qa-search-container input {
     width: 100%;
-    padding: 18px 25px 18px 50px; /* Espaço para ícone */
+    padding: 16px 25px 16px 55px;
     border-radius: 50px;
-    border: 1px solid #e0e0e0;
-    font-size: 1rem;
+    border: 1px solid transparent;
+    background-color: #f0f2f5;
+    font-size: 1.05rem;
     font-family: var(--font-principal);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    color: #333;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
     outline: none;
-    transition: border-color 0.3s;
-    box-sizing: border-box; /* Segurança extra contra vazamento */
+    transition: all 0.3s ease;
+    box-sizing: border-box;
 }
 .qa-search-container input:focus {
+    background-color: #ffffff;
     border-color: var(--verde-escuro);
+    box-shadow: 0 0 0 4px rgba(27, 67, 50, 0.1);
 }
 .qa-search-icon {
     position: absolute;
-    left: 20px;
+    left: 22px;
     top: 50%;
     transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
-    color: #999;
+    width: 22px;
+    height: 22px;
+    color: #888;
+    pointer-events: none;
 }
 
 /* 3. Caixa "Faça sua Pergunta" */
 .ask-box-container {
-    background-color: #F8F3ED; /* Creme */
-    border: 1px solid rgba(0,0,0,0.03);
-    border-radius: 24px 60px 24px 60px;
-    padding: 40px;
-    max-width: 900px;
-    margin: 60px auto;
-    text-align: left;
-    width: 100%; /* Garante que não ultrapasse a tela */
+    background-color: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 24px;
+    padding: 35px;
+    max-width: 700px;
+    margin: 0 auto 60px auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.04);
     box-sizing: border-box;
 }
 .ask-box-container h3 {
     font-family: var(--font-titulos);
     color: var(--verde-escuro);
     margin-top: 0;
-    font-size: 1.5rem;
+    font-size: 1.6rem;
+    text-align: center;
+    margin-bottom: 25px;
 }
 .ask-box-container textarea {
     width: 100%;
     height: 120px;
-    padding: 15px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-family: var(--font-leitura);
+    padding: 18px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 16px;
+    font-family: var(--font-principal);
     font-size: 1rem;
+    color: #333;
     resize: vertical;
-    margin-top: 15px;
-    box-sizing: border-box; /* Impede que o padding estoure a largura */
+    box-sizing: border-box;
+    transition: all 0.3s ease;
 }
-.ask-disclaimers {
-    font-size: 0.85rem;
-    color: #666;
-    margin-top: 15px;
-    padding-left: 20px;
+.ask-box-container textarea:focus {
+    background-color: #ffffff;
+    border-color: var(--verde-escuro);
+    box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
+    outline: none;
 }
-.ask-disclaimers li { margin-bottom: 5px; }
 
-/* Ajuste Mobile para a caixa de pergunta */
-@media (max-width: 768px) {
-    .ask-box-container {
-        padding: 20px; /* Reduz padding para dar mais espaço ao texto no celular */
-    }
+.ask-disclaimers {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 25px;
+    color: #166534;
+    font-size: 0.9rem;
 }
+.ask-disclaimers ul {
+    margin: 0;
+    padding-left: 20px;
+    line-height: 1.6;
+}
+.ask-disclaimers li { margin-bottom: 8px; }
+.ask-disclaimers li:last-child { margin-bottom: 0; }
 
 /* 4. Cards de Perguntas e Respostas */
-.qa-card { margin-bottom: 40px; }
-
-.qa-card-question {
-    background-color: #ffffff;
-    border: 1px solid rgba(0,0,0,0.05);
-    border-radius: 24px 60px 24px 60px;
-    padding: 30px;
-    position: relative;
-    text-align: left;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.03);
-}
-.qa-card-question h2 {
-    font-family: var(--font-titulos);
-    font-size: 1.5rem;
-    color: var(--verde-escuro);
-    margin-top: 0;
-}
-
-.qa-card-answer {
-    background-color: #fdfaf6;
-    border: 1px solid rgba(0,0,0,0.03);
-    border-radius: 60px 24px 60px 24px;
-    margin-top: 20px;
-    margin-left: 20px; /* Indentação visual */
+/* 4. Cards de Perguntas e Respostas (Formato Chat / Balões) */
+.qa-card { 
     display: flex;
-    flex-direction: column; /* Mobile first */
-    overflow: hidden;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    flex-direction: column;
+    gap: 15px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    margin: 0 auto 40px auto;
+    max-width: 800px; /* Mantém a thread de conversa centralizada */
+    width: 100%;
+    overflow: visible; 
+    padding: 0;
+}
+.qa-card:hover {
+    transform: none;
+    box-shadow: none;
 }
 
-/* Layout Desktop da Resposta (Texto esquerda | Psi direita) */
-@media (min-width: 768px) {
-    .qa-card-answer {
-        flex-direction: row;
-    }
-    .answer-text-content { flex: 2; padding: 25px; text-align: left; }
-    .answer-psy-sidebar { 
-        flex: 1; 
-        background-color: #f8f9fa; 
-        border-left: 1px solid #eee; 
-        padding: 25px; 
-        display: flex; 
-        flex-direction: column; 
-        align-items: center; 
-        text-align: center;
-    }
+.qa-card-answers-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
 }
 
-.answer-psy-sidebar img {
-    width: 70px; height: 70px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;
+.qa-bubble {
+    padding: 16px 20px;
+    border-radius: 18px;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    position: relative;
+    word-break: break-word;
+    box-shadow: none;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08)); /* Drop-shadow contorna a cauda */
+    width: 100%;
+    max-width: 90%;
+    align-self: center; /* Centraliza na coluna da página */
+    text-align: left; /* Justifica o texto à esquerda */
 }
-.data-psy-name { font-weight: bold; color: var(--verde-escuro); margin: 0; }
-.data-psy-crp { font-size: 0.85rem; color: #777; margin: 5px 0 10px 0; }
+
+.qa-bubble-question {
+    background-color: #ffffff;
+    border: none;
+    color: #333;
+    border-radius: 16px 16px 0 16px; /* Canto reto em baixo na direita */
+    margin-bottom: 12px; /* Espaço para a cauda não colar na resposta */
+}
+
+.qa-bubble-question::before {
+    display: none; /* Remove a cauda antiga */
+}
+
+.qa-bubble-question::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-top: 12px solid #ffffff;
+    border-left: 18px solid transparent;
+}
+
+.qa-bubble-question h2 {
+    font-family: var(--font-titulos);
+    font-size: 1.3rem;
+    color: var(--verde-escuro);
+    margin: 0 0 12px 0;
+    line-height: 1.4;
+}
+
+.qa-bubble-question p {
+    margin: 0;
+    color: #444;
+    white-space: pre-wrap;
+}
+
+.data-patient-name {
+    font-size: 0.85rem;
+    color: #888;
+    font-weight: 500;
+}
+
+.qa-bubble-answer {
+    background-color: #e8f5e9; /* Verde claro Yelo */
+    border: none;
+    color: #111;
+    border-radius: 0 16px 16px 16px; /* Canto reto no topo esquerdo */
+    margin-top: 5px; /* Afasta um pouco da cauda da pergunta */
+}
+
+.qa-bubble-answer::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 0;
+    width: 0;
+    height: 0;
+    border-bottom: 12px solid #e8f5e9;
+    border-right: 18px solid transparent;
+}
+
+.qa-bubble-answer p {
+    margin: 0;
+    color: #222;
+    white-space: pre-wrap;
+}
+
+.answer-psy-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(27, 67, 50, 0.1);
+    width: 100%;
+}
+
+.answer-psy-header img.data-psy-photo {
+    width: 36px; 
+    height: 36px; 
+    border-radius: 50%; 
+    object-fit: cover; 
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+    margin-bottom: 0 !important;
+}
+
+.answer-psy-header .psy-info-mob {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex-grow: 1;
+    text-align: left;
+}
+
+.data-psy-name { font-weight: 700; color: var(--verde-escuro); margin: 0; font-size: 0.95rem; }
+.data-psy-name:hover { text-decoration: underline; }
+.data-psy-crp { font-size: 0.75rem; color: #666; margin: 0; }
+
+.answer-psy-header .btn-ver-perfil {
+    background-color: var(--verde-escuro);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    text-decoration: none;
+    white-space: nowrap;
+    margin-left: auto;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+.answer-psy-header .btn-ver-perfil:hover {
+    background-color: #143d2e;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .qa-bubble {
+        max-width: 95%;
+        padding: 15px 20px;
+        font-size: 1rem;
+    }
+    .answer-psy-header {
+        flex-wrap: nowrap;
+        gap: 10px;
+    }
+    .answer-psy-header .psy-info-mob {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+    .answer-psy-header .btn-ver-perfil {
+        display: none !important; /* Esconde no mobile */
+    }
+    .beneficios-grid { grid-template-columns: 1fr; gap: 15px; }
+    .ask-box-container { padding: 25px; border-radius: 20px; }
+    .ask-disclaimers { padding: 15px; }
+    .main-perguntas { padding-top: 100px !important; }
+}
 
 /* 5. Grid de Profissionais Ativos */
 .active-pro-grid {
@@ -1046,7 +1182,7 @@ body:not(.pagina-dashboard)::after {
 
 .como-funciona {
     padding: 40px 20px; /* Mais respiro vertical */
-    background-color: #fdfaf6; /* Fundo Off-white quente */
+    background-color: transparent; /* Fundo Off-white herdado */
     overflow: hidden; /* Para conter decorações */
 }
 
@@ -1202,7 +1338,7 @@ body:not(.pagina-dashboard)::after {
 
 .comparativo-secao {
     padding: 80px 20px;
-    background-color: #fdfaf6; /* Fundo off-white para destacar do resto */
+    background-color: #ffffff;
 }
 
 .tabela-comparativa {
@@ -1322,19 +1458,19 @@ body:not(.pagina-dashboard)::after {
 
 /* Seção 2: Terapeutas -> BRANCO */
 .secao-terapeutas {
-    background-color: var(--branco-puro) !important;
+    background-color: transparent !important;
 }
 
 /* Seção 3: Como Funciona -> OFF-WHITE (Creme) */
 .como-funciona {
-    background-color: var(--off-white) !important;
+    background-color: transparent !important;
 }
 
 /* --- PÁGINA DE CONTATO --- */
 .pagina-contato-main {
     padding-top: 120px;
     padding-bottom: 80px;
-    background-color: #fcfcfc;
+    background-color: var(--off-white);
 }
 
 .contato-grid {
@@ -1486,17 +1622,6 @@ body:not(.pagina-dashboard)::after {
 }
 
 
-/* Seção 4: FAQ -> BRANCO */
-.faq-secao {
-    background-color: var(--branco-puro) !important;
-}
-
-/* Seção 5: Aviso de Crise -> OFF-WHITE */
-.aviso-crise {
-    background-color: var(--off-white) !important;
-    border-top: none; /* Remove borda se houver, para ficar limpo */
-}
-
 /* Estado TRAVADO (Menos de 50 caracteres) */
 #submit-question-btn:disabled {
     background-color: #e0e0e0; /* Cinza claro */
@@ -1570,17 +1695,18 @@ body:not(.pagina-dashboard)::after {
 /* --- 2. STATUS AGUARDANDO (Card de Pergunta) --- */
 
 .status-aguardando {
-    display: flex;
+    align-self: center;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
-    background-color: #f8f9fa;
-    color: #6c757d;
-    padding: 10px 15px;
-    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.05);
+    color: #666;
+    padding: 6px 14px;
+    border-radius: 20px;
     font-size: 0.85rem;
     font-weight: 500;
-    border: 1px dashed #dee2e6;
-    margin-top: 15px;
+    border: none;
+    margin-top: 5px;
 }
 
 /* ==========================================================================
@@ -1590,7 +1716,7 @@ body:not(.pagina-dashboard)::after {
 
 /* 1. Layout da Página de Questionário */
 .pagina-questionario {
-    background-color: var(--verde-escuro);
+    background-color: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1857,7 +1983,7 @@ body:not(.pagina-dashboard)::after {
 
 /* Corpo do Manifesto */
 .manifesto-body-section {
-    background-color: var(--off-white);
+    background-color: transparent;
     padding: 60px 20px 80px 20px;
     color: #333;
 }
@@ -2081,7 +2207,7 @@ body:not(.pagina-dashboard)::after {
 
 /* --- TERMÔMETRO VISUAL (CSS DRAWING) --- */
 .secao-termometro {
-    background-color: #fdfaf6;
+    background-color: transparent;
     padding: 60px 20px;
 }
 
@@ -2186,7 +2312,7 @@ body:not(.pagina-dashboard)::after {
 }
 
 /* Canais de Apoio */
-.secao-canais-apoio { padding: 60px 20px 100px 20px; background-color: #fff; }
+.secao-canais-apoio { padding: 60px 20px 100px 20px; background-color: transparent; }
 .canais-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -2281,7 +2407,7 @@ body:not(.pagina-dashboard)::after {
    ========================================================================== */
 
 .pagina-legal {
-    background-color: #f4f7f6; /* Fundo levemente cinza/verde para descanso visual */
+    background-color: transparent; /* Fundo levemente cinza/verde para descanso visual */
     padding: 80px 20px;
     min-height: 100vh;
 }

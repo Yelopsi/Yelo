@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title>Apresentação Executiva | Yelo</title>
+    
+    <meta name="description" content="Você foca 100% no atendimento clínico, nós cuidamos da captação inteligente, gestão e inteligência de mercado do seu consultório. Conheça a Yelo.">
+    <meta property="og:title" content="Convite Exclusivo: Conheça a Yelo">
+    <meta property="og:description" content="O ecossistema definitivo para psicólogos. Captação, gestão, analytics e comunidade. Acesse para criar seu perfil.">
+    <meta property="og:type" content="website">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="theme-color" content="#1B4332">
+
+    <%- include('partials/head') %>
+
+    <style>
+        /* Estilos da Landing Page Convite */
+        .convite-hero {
+            padding: 140px 20px 80px;
+            background-color: var(--verde-escuro);
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+            margin-top: -2px;
+        }
+        
+        .container-hero {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .hero-text h1 {
+            font-family: var(--font-titulos);
+            font-size: clamp(2.5rem, 4vw, 3.5rem);
+            line-height: 1.1;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+        
+        .hero-text p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .hero-image img {
+            width: 100%;
+            height: auto;
+            border-radius: 24px 60px 24px 60px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            object-fit: cover;
+            aspect-ratio: 4/5;
+        }
+        
+        .section-padding { padding: 100px 20px; position: relative; }
+        .bg-light { background-color: var(--off-white); }
+        .bg-alert { background-color: #fff5f5; }
+        
+        .section-title {
+            text-align: center;
+            font-family: var(--font-titulos);
+            font-size: 2.5rem;
+            color: var(--verde-escuro);
+            margin-bottom: 15px;
+        }
+        
+        .section-title.alert { color: var(--coral-quente); }
+        
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 60px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+        
+        /* Layouts de Grade */
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; max-width: 1200px; margin: 0 auto; align-items: center; }
+        .grid-2x2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; max-width: 1000px; margin: 0 auto; }
+        
+        .feature-card {
+            background: #fff;
+            padding: 40px 30px;
+            border-radius: 24px 60px 24px 60px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.03);
+            transition: transform 0.3s;
+        }
+        .feature-card:nth-child(2n) { border-radius: 60px 24px 60px 24px; background: #F8F3ED; }
+        .feature-card:nth-child(3n) { border-radius: 24px 60px 24px 60px; background: #E6F4F1; }
+        
+        .feature-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.08); }
+        .feature-card h3 { color: var(--verde-escuro); margin-bottom: 15px; font-family: var(--font-titulos); font-size: 1.4rem; }
+        .feature-card p { color: #555; line-height: 1.6; margin: 0; }
+        .icon-large { font-size: 2.5rem; margin-bottom: 20px; display: block; }
+        
+        .feature-item {
+            background: #fff;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+        .feature-item h4 { color: var(--verde-escuro); margin-top: 0; margin-bottom: 10px; font-family: var(--font-titulos); font-size: 1.2rem; }
+        .feature-item p { color: #555; line-height: 1.5; margin: 0; font-size: 1rem; }
+        
+        .problem-card {
+            background: #fff;
+            padding: 30px;
+            border-left: 4px solid var(--coral-quente);
+            border-radius: 0 12px 12px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .problem-card h3 { color: var(--coral-quente); margin-top: 0; margin-bottom: 10px; font-size: 1.3rem; font-family: var(--font-titulos); }
+        .problem-card p { color: #555; line-height: 1.6; margin: 0; }
+        
+        .image-organic {
+            width: 100%;
+            border-radius: 60px 24px 60px 24px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            object-fit: cover;
+            aspect-ratio: 4/3;
+        }
+        .image-organic.alt { border-radius: 24px 60px 24px 60px; }
+        
+        .btn-cta {
+            background-color: var(--cor-Yelo);
+            color: var(--verde-escuro);
+            padding: 16px 40px;
+            border-radius: 50px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s, background-color 0.2s;
+            font-size: 1.1rem;
+        }
+        .btn-cta:hover { transform: scale(1.05); background-color: #fff4b3; }
+
+        .mvp-badge {
+            display: inline-block;
+            background-color: var(--coral-quente);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+            animation: pulse-red 2s infinite;
+        }
+        
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(230, 57, 70, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0); }
+        }
+        
+        .highlight-box {
+            background: #fffbeb;
+            border: 2px solid #f59e0b;
+            padding: 40px;
+            border-radius: 24px;
+            text-align: center;
+            max-width: 800px;
+            margin: 60px auto 0;
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.1);
+        }
+        
+        .highlight-box h3 { color: #b45309; font-family: var(--font-titulos); font-size: 1.8rem; margin-top: 0; margin-bottom: 15px; }
+        .highlight-box p { color: #92400e; font-size: 1.1rem; line-height: 1.6; margin-bottom: 0; }
+
+        /* Doodles */
+        .doodle-hero {
+            position: absolute;
+            opacity: 0.1;
+            pointer-events: none;
+            color: #fff;
+        }
+        .doodle-hero.left { top: 10%; left: -5%; width: 300px; transform: rotate(15deg); }
+        .doodle-hero.right { bottom: 10%; right: -5%; width: 250px; transform: rotate(-15deg); }
+
+        @media (max-width: 900px) {
+            .container-hero, .grid-2 { grid-template-columns: 1fr; text-align: center; }
+            .grid-2x2 { grid-template-columns: 1fr; }
+            .hero-text { order: 1; }
+            .hero-image { order: 2; margin-top: 20px; }
+            .grid-2 .image-col { order: 2; margin-top: 30px; }
+            .grid-2 .text-col { order: 1; text-align: left; }
+            .hero-text h1 { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <%- include('partials/header') %>
+
+    <main>
+        <!-- HERO SECTION -->
+        <section class="convite-hero">
+            <svg class="doodle-hero left" viewBox="0 0 200 200" fill="currentColor"><path d="M45.7,-76.3C58.9,-69.3,69.1,-55.6,76.3,-41.2C83.5,-26.8,87.7,-11.7,85.6,2.6C83.5,16.9,75.1,30.4,65.6,42.2C56.1,54,45.5,64.1,33.3,70.3C21.1,76.5,7.3,78.8,-5.3,76.9C-17.9,75,-34.7,68.9,-48.6,59.6C-62.5,50.3,-73.5,37.8,-79.6,23.3C-85.7,8.8,-86.9,-7.7,-80.7,-21.8C-74.5,-35.9,-60.9,-47.6,-46.8,-54.3C-32.7,-61,-18.1,-62.7,-2.9,-62.2C12.3,-61.7,24.6,-59,32.5,-83.3L45.7,-76.3Z" transform="translate(100 100)" /></svg>
+            <svg class="doodle-hero right" viewBox="0 0 200 200" fill="currentColor"><path d="M38.1,-63.8C49.3,-54.6,58.3,-43.3,65.5,-30.8C72.7,-18.3,78.1,-4.6,76.3,8.3C74.5,21.2,65.5,33.3,55.3,43.4C45.1,53.5,33.7,61.6,21.1,66.1C8.5,70.6,-5.3,71.5,-18.4,67.8C-31.5,64.1,-43.9,55.8,-53.4,45.2C-62.9,34.6,-69.5,21.7,-70.8,8.2C-72.1,-5.3,-68.1,-19.4,-59.6,-31.1C-51.1,-42.8,-38.1,-52.1,-25.3,-60.1C-12.5,-68.1,0.1,-74.8,12.7,-74.8C25.3,-74.8,38.1,-68.1,38.1,-63.8Z" transform="translate(100 100)" /></svg>
+
+            <div class="container-hero">
+                <div class="hero-text">
+                    <span class="mvp-badge">Convite Exclusivo - Fase MVP</span>
+                    <h1>Concentre-se no atendimento clínico. Nós cuidamos do resto.</h1>
+                    <p>O ecossistema definitivo para psicólogos. A tecnologia assume a captação inteligente, a inteligência de mercado e o gerenciamento, para você focar 100% no seu paciente.</p>
+                    <a href="/psi_questionario.html" class="btn-cta">Fazer parte do Ecossistema</a>
+                </div>
+                <div class="hero-image">
+                    <img src="https://images.pexels.com/photos/5699419/pexels-photo-5699419.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Psicóloga sorrindo e trabalhando no notebook">
+                </div>
+            </div>
+            
+            <div class="wave-divider wave-bottom">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#fff5f5" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
+        </section>
+
+        <!-- PROBLEMA -->
+        <section class="section-padding bg-alert">
+            <h2 class="section-title alert">O Problema Atual</h2>
+            <p class="section-subtitle">O mercado de saúde mental digital está saturado, mas não funciona a favor do psicólogo.</p>
+            
+            <div class="grid-3">
+                <div class="problem-card">
+                    <h3>Plataformas Exploratórias</h3>
+                    <p>Aplicativos tradicionais cobram comissões abusivas (chegando a 40% ou 50% por sessão), desvalorizando a sua hora clínica e seu esforço profissional.</p>
+                </div>
+                <div class="problem-card">
+                    <h3>A "Obrigação" de ser Marqueteiro</h3>
+                    <p>Profissionais gastam horas preciosas produzindo conteúdo para redes sociais competindo contra algoritmos, em vez de focarem no estudo e atendimento.</p>
+                </div>
+                <div class="problem-card">
+                    <h3>Leads Desqualificados</h3>
+                    <p>Diretórios comuns apenas listam nomes em ordem alfabética. O paciente escolhe sem critério, gerando altas taxas de evasão logo na primeira sessão.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- A SOLUÇÃO (PACIENTE) -->
+        <section class="section-padding">
+            <div class="grid-2">
+                <div class="image-col">
+                    <img src="https://images.pexels.com/photos/7176319/pexels-photo-7176319.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Paciente em sessão de terapia online pelo notebook" class="image-organic">
+                </div>
+                <div class="text-col">
+                    <h2 class="section-title" style="text-align: left;">A Solução: Captação Inteligente</h2>
+                    <p class="section-subtitle" style="text-align: left; margin-left: 0; margin-bottom: 30px;">A experiência do paciente na Yelo é desenhada para reduzir atritos e garantir uma compatibilidade terapêutica real.</p>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <div>
+                            <h3 style="color: var(--verde-escuro); font-family: var(--font-titulos); margin: 0 0 5px 0;">🎯 Match Inteligente</h3>
+                            <p style="color: #555; line-height: 1.5; margin: 0;">O paciente responde a um questionário amigável sobre motivações e sintomas. Nosso algoritmo cruza esses dados com o seu perfil e entrega o match perfeito para a sua abordagem.</p>
+                        </div>
+                        <div>
+                            <h3 style="color: var(--verde-escuro); font-family: var(--font-titulos); margin: 0 0 5px 0;">✨ Perfis Completos</h3>
+                            <p style="color: #555; line-height: 1.5; margin: 0;">Sua página pública exibe biografia, abordagens, avaliações e um botão direto para agendamento no seu WhatsApp. Sem barreiras de comunicação.</p>
+                        </div>
+                        <div>
+                            <h3 style="color: var(--verde-escuro); font-family: var(--font-titulos); margin: 0 0 5px 0;">🤝 Interação Direta</h3>
+                            <p style="color: #555; line-height: 1.5; margin: 0;">Pacientes reais enviam dúvidas anônimas. Ao respondê-las, você atrai tráfego qualificado direto para o seu perfil, furando a fila do algoritmo de match.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- O HUB DO PSICÓLOGO -->
+        <section class="section-padding bg-light">
+            <h2 class="section-title">Seu Hub de Gestão e Marketing</h2>
+            <p class="section-subtitle">Muito além de um catálogo. Tudo o que você precisa para profissionalizar seu consultório em uma única tela.</p>
+            
+            <div class="grid-2x2">
+                <div class="feature-item">
+                    <h4>📱 Presença Digital</h4>
+                    <p>Sua página pública funciona como um site profissional com URL personalizada. Publique no nosso blog nativo e fortaleça sua marca pessoal no Google.</p>
+                </div>
+                <div class="feature-item">
+                    <h4>📅 Gestão de Consultório</h4>
+                    <p>Agenda inteligente, controle de pacientes e fluxo de caixa. <strong>100% de autonomia financeira:</strong> os pagamentos ocorrem livremente entre você e o paciente.</p>
+                </div>
+                <div class="feature-item">
+                    <h4>📊 Métricas e Inteligência</h4>
+                    <p>Acompanhe visualizações do perfil, cliques no seu WhatsApp, temas mais buscados do mês (tendências) e o seu benchmark de preços na sua cidade.</p>
+                </div>
+                <div class="feature-item">
+                    <h4>🛠️ Assistente e Checklists</h4>
+                    <p>O painel analisa seu perfil automaticamente e gera sugestões práticas de como melhorar sua conversão e força dentro da plataforma.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- COMUNIDADE E GAMIFICAÇÃO -->
+        <section class="section-padding">
+            <div class="grid-2">
+                <div class="text-col">
+                    <h2 class="section-title" style="text-align: left;">Autoridade Recompensada</h2>
+                    <p class="section-subtitle" style="text-align: left; margin-left: 0; margin-bottom: 30px;">Na Yelo, o seu conhecimento técnico e sua vontade de ajudar são o seu melhor marketing.</p>
+                    
+                    <div style="margin-bottom: 25px;">
+                        <h3 style="color: var(--verde-escuro); font-family: var(--font-titulos); margin: 0 0 5px 0;">Fórum Exclusivo (Intervisão)</h3>
+                        <p style="color: #555; line-height: 1.5; margin: 0;">Um ambiente seguro (estilo Reddit) exclusivo para psicólogos validados. Discuta casos, tire dúvidas sobre burocracias do CRP e ferramentas clínicas com seus pares.</p>
+                    </div>
+                    
+                    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 0 12px 12px 0;">
+                        <h3 style="color: #166534; font-family: var(--font-titulos); margin: 0 0 10px 0;">🎮 O Algoritmo Justo (Gamificação)</h3>
+                        <p style="color: #14532d; line-height: 1.5; margin: 0;">Sua participação no fórum, artigos no blog e respostas aos pacientes rendem Pontos de Experiência (XP) e Badges. <strong>Psicólogos com Níveis Maiores ganham prioridade absoluta no Algoritmo de Match.</strong></p>
+                    </div>
+                </div>
+                <div class="image-col">
+                    <img src="https://images.pexels.com/photos/3184339/pexels-photo-3184339.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Profissionais interagindo em uma comunidade" class="image-organic alt">
+                </div>
+            </div>
+        </section>
+
+        <!-- MODELO E ROADMAP -->
+        <section class="section-padding bg-light">
+            <h2 class="section-title">O Modelo Yelo</h2>
+            <p class="section-subtitle">Nós somos um Software de Gestão e Captação (SaaS), não um "sócio oculto" do seu consultório.</p>
+            
+            <div class="grid-2">
+                <div>
+                    <ul class="roadmap-list" style="margin-bottom: 30px; font-size: 1.1rem;">
+                        <li><strong>Pacientes:</strong> Busca e Match sempre 100% Gratuitos.</li>
+                        <li><strong>Psicólogos:</strong> Assinatura mensal fixa. <strong>Não cobramos taxas ou comissões sobre as suas sessões.</strong> O valor acordado com o paciente é 100% seu.</li>
+                    </ul>
+                    
+                    <h3 style="color: var(--verde-escuro); font-family: var(--font-titulos); margin-top: 40px; margin-bottom: 15px;">🚀 Roadmap Futuro</h3>
+                    <ul class="roadmap-list">
+                        <li><strong>Grupos de Intervisão Formais:</strong> Salas exclusivas com áudio/vídeo para estudos de casos estruturados.</li>
+                        <li><strong>Supervisão Clínica:</strong> Contratação direta de supervisores experientes (Nível Mentor) cadastrados na Yelo.</li>
+                    </ul>
+                </div>
+                
+                <div class="highlight-box" style="margin: 0;">
+                    <h3>🌟 Oportunidade: Fase MVP</h3>
+                    <p>Como estamos em fase de validação tecnológica e expansão de base, o Plano Essencial atualmente garante <strong>acesso vitalício, liberado e irrestrito a todas as funcionalidades Premium</strong> para os profissionais pioneiros que entrarem agora.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA FINAL -->
+        <section class="section-padding" style="background-color: #ffffff; text-align: center;">
+            <h2 style="font-family: var(--font-titulos); font-size: 3rem; margin-bottom: 20px; color: var(--verde-escuro);">Vamos crescer juntos?</h2>
+            <p style="font-size: 1.3rem; opacity: 0.9; margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto; color: #555;">Junte-se ao ecossistema que está redefinindo a forma como psicólogos gerenciam suas carreiras e captam pacientes no Brasil.</p>
+            <a href="/psi_questionario.html" class="btn-cta" style="background-color: var(--verde-escuro); color: var(--cor-Yelo); padding: 18px 50px; font-size: 1.2rem;">Criar meu perfil profissional</a>
+        </section>
+    </main>
+
+    <%- include('partials/footer') %>
+
+</body>
+</html>

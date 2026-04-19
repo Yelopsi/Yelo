@@ -12,19 +12,17 @@ exports.getAllPosts = async (req, res) => {
         const parsedPageSize = pageSize ? parseInt(pageSize, 10) : parsedLimit;
         const offset = (page - 1) * parsedPageSize;
 
-        // Define a ordem da busca baseada no filtro
-        const pinnedOrder = [['isPinned', 'DESC']]; // Posts fixados primeiro
-        let order;
+        let orderClause;
 
         if (filter === 'populares') {
-            // Otimização: Usa COUNT agregado em vez de subquery para cada linha.
-            // O DISTINCT é importante para não contar errado devido ao JOIN.
-            order = [...pinnedOrder, [db.Sequelize.literal('("ForumPost"."votes" + COUNT(DISTINCT "ForumComments"."id"))'), 'DESC']];
+            orderClause = [
+                db.Sequelize.literal('COALESCE("ForumPost"."isPinned", false) DESC'),
+                db.Sequelize.literal('("ForumPost"."votes" + COUNT(DISTINCT "ForumComments"."id")) DESC')
+            ];
         } else {
-            // Lógica Híbrida: Recentes no topo, mas "Virais" (Interações >= 5) furam a fila
-            order = [
-                ...pinnedOrder,
-                [db.Sequelize.literal('CASE WHEN ("ForumPost"."votes" + COUNT(DISTINCT "ForumComments"."id")) >= 5 THEN 1 ELSE 0 END'), 'DESC'],
+            orderClause = [
+                db.Sequelize.literal('COALESCE("ForumPost"."isPinned", false) DESC'),
+                db.Sequelize.literal('CASE WHEN ("ForumPost"."votes" + COUNT(DISTINCT "ForumComments"."id")) >= 5 THEN 1 ELSE 0 END DESC'),
                 ['createdAt', 'DESC']
             ];
         }
@@ -42,15 +40,12 @@ exports.getAllPosts = async (req, res) => {
 
         const posts = await ForumPost.findAll({
             where,
-            order,
+            order: orderClause,
             attributes: {
                 include: [
-                    // Otimização: Conta comentários usando JOIN + GROUP BY em vez de subquery
-                    'isPinned',
+                    [db.Sequelize.literal('COALESCE("ForumPost"."isPinned", false)'), 'isPinned'],
                     [db.sequelize.fn('COUNT', db.sequelize.fn('DISTINCT', db.sequelize.col('ForumComments.id'))), 'commentCount'],
-                    // Otimização: EXISTS é geralmente rápido, especialmente com índices. Mantido.
                     [db.Sequelize.literal(`EXISTS (SELECT 1 FROM "ForumVotes" WHERE "ForumVotes"."ForumPostId" = "ForumPost"."id" AND "ForumVotes"."PsychologistId" = ${psychologistId})`), 'supportedByMe'],
-                    // Subconsulta para verificar se o post pertence ao psicólogo logado
                     [db.Sequelize.literal(`("ForumPost"."PsychologistId" = ${psychologistId})`), 'isMine']
                 ]
             },
@@ -80,7 +75,7 @@ exports.getAllPosts = async (req, res) => {
             category: post.category,
             isAnonymous: post.isAnonymous,
             createdAt: post.createdAt,
-            isPinned: post.isPinned,
+            isPinned: post.dataValues.isPinned,
             votes: post.votes,
             authorBadges: post.isAnonymous ? {} : post.Psychologist?.badges, // Passa as badges para o front
             authorLevel: post.isAnonymous ? null : post.Psychologist?.authority_level, // Passa o nível

@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Dashboard do Psicólogo</title>
     
     <link rel="stylesheet" href="/css/01-variables.css">
@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="/css/psi_dashboard.css"> 
     
     <script src="https://unpkg.com/imask"></script>
+    <!-- BIBLIOTECA DE CONFETES (PLG) -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- ADICIONADO: Biblioteca de Gráficos -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
@@ -17,6 +19,13 @@
     <!-- EDITOR DE TEXTO (QUILL) -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    
+    <!-- FLAT PICKR & TOM SELECT (Estética de Formulários APP-LIKE) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/pt.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <link rel="icon" href="../assets/images/favicon.png" type="image/png">
     <style>
         /* Correção Visual: Toast sempre no topo */
@@ -105,9 +114,10 @@
         /* Header Mobile (Novo) */
         .mobile-header {
             display: none;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
-            padding: 15px 20px;
+            padding: 10px 20px;
+            gap: 12px;
             background: #fff;
             position: fixed;
             top: 0; left: 0; right: 0;
@@ -125,19 +135,15 @@
 
         @media (max-width: 992px) {
             .mobile-header { display: flex; }
+            
+            /* App-like stack para os inputs do modal de pagamento */
+            .payment-flex-row { flex-direction: column !important; gap: 10px; }
+            .payment-flex-row.keep-row { flex-direction: row !important; }
         }
-
-        /* Animação de Bounce do FAB */
-        @keyframes bounceEntry {
-            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
-            40% {transform: translateY(-20px);}
-            60% {transform: translateY(-10px);}
-        }
+        .payment-flex-row { display: flex; gap: 10px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body class="pagina-dashboard">
-
-    <div id="toast-container"></div>
 
     <!-- GLOBAL LOADER (Carregamento Inicial) -->
     <div id="global-loader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8f9fa; z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s;">
@@ -147,126 +153,104 @@
 
     <!-- MOBILE HEADER (Novo) -->
     <div class="mobile-header">
-        <img src="../assets/logos/logo-escura.png" alt="Yelo" class="logo-mobile">
+        <div style="position: relative; cursor: pointer;" id="mobile-avatar-trigger">
+            <img src="https://placehold.co/100x100" alt="Perfil" class="avatar-mobile" id="psi-mobile-photo">
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex-grow: 1;">
+            <span class="sp-status" id="psi-mobile-level" style="font-size: 0.75rem; padding: 4px 8px; margin: 0; line-height: 1;">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                🔥 Iniciante
+            </span>
+            <div id="mobile-badges-container" style="display: flex; gap: 4px; align-items: center;"></div>
+        </div>
+        
+        <div style="position: relative; cursor: pointer; margin-left: auto; padding: 4px; color: #1B4332; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s;" id="mobile-avisos-trigger" onclick="if(window.loadPage) window.loadPage('psi_avisos.html')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 22px; height: 22px; display: block;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+        </div>
     </div>
 
     <div id="dashboard-container" style="display: none;"> 
         
-        <div class="sidebar-backdrop"></div>
-        
-        <aside class="dashboard-sidebar">
-            <div class="sidebar-header">
-                <img src="../assets/logos/logo-branca.png" alt="Logo Yelo" class="sidebar-logo" style="max-width: 120px; display: block; margin: 0 auto;">
-            </div>
-            
-            <div class="sidebar-user-block"> 
-                <div id="sidebar-photo-trigger" style="position: relative; cursor: pointer; display: inline-block; transition: transform 0.2s;" title="Alterar foto">
-                    <img id="psi-sidebar-photo" src="https://placehold.co/70x70" alt="Foto Perfil" style="border-radius: 50%; border: 2px solid #FFEE8C; display: block;">
-                    <div style="position: absolute; bottom: 0; right: 0; background: #FFEE8C; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 2px solid #1B4332;">
-                        📷
-                    </div>
+        <!-- NOVA SIDEBAR MODERNA -->
+        <aside class="modern-sidebar-container dashboard-sidebar">
+            <!-- Perfil do Usuário no Topo da Sidebar -->
+            <div class="sidebar-profile-modern">
+                <div class="sp-avatar-wrapper" id="sidebar-photo-trigger" style="cursor: pointer;">
+                    <img src="https://placehold.co/100x100" alt="Perfil" class="sp-avatar" id="psi-sidebar-photo">
+                    <input type="file" id="sidebar-photo-input" accept="image/*" style="display: none;">
                 </div>
-                <input type="file" id="sidebar-photo-input" accept="image/*" style="display: none;">
-            
-                <div class="user-info">
-                    <p id="psi-sidebar-name">Carregando...</p>
-                    <!-- Container para as Badges de Gamificação -->
-                    <div id="sidebar-badges-container" style="margin-top: 8px; min-height: 28px;"></div>
-                    <!-- Botão restaurado (oculto) para manter a estrutura das badges -->
-                    <a href="#" id="btn-view-public-profile" target="_blank"eight="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                        Ver página pública
-                    </a>
-                </div>
+                
+                <h3 id="psi-sidebar-name">Carregando...</h3>
+                <div id="psi-sidebar-level" class="sp-level-indicator">🔥 Nível: <strong>Iniciante</strong></div>
+                
+                <!-- Container de Badges Desktop -->
+                <div id="sidebar-badges-container"></div>
             </div>
 
-            <nav class="sidebar-nav">
+            <!-- Menu de Navegação -->
+            <nav class="modern-sidebar-nav sidebar-nav">
                 <ul>
-                    <li class="active">
-                        <a href="#" data-page="psi_visao_geral.html">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                            <span>Painel</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" data-page="psi_analytics.html">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-                            <span>Métricas & Mercado</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" data-page="psi_pacientes.html">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                            <span>Pacientes</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" data-page="psi_financeiro.html">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                            <span>Financeiro</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" data-page="psi_comunidade.html">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                            <span>Perguntas</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" data-page="psi_forum.html">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                            <span>Fórum</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" data-page="psi_blog.html">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                            <span>Meus Artigos</span>
-                        </a>
-                    </li>
+                    <li class="active"><a href="#" data-page="psi_visao_geral.html" class="nav-item-modern">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                        <span>Início</span>
+                    </a></li>
+                    <li><a href="#" data-page="psi_clinica_hub.html" class="nav-item-modern">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"></path><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"></path><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"></path><path d="M17.599 6.5a3 3 0 0 0 .399-1.375"></path></svg>
+                        <span>Clínica</span>
+                    </a></li>
+                    <li><a href="#" data-page="psi_evolucao_hub.html" class="nav-item-modern">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"></path><path d="M18 20V4"></path><path d="M6 20v-4"></path></svg>
+                        <span>Evolução</span>
+                    </a></li>
+                    <li><a href="#" data-page="psi_ajustes_hub.html" class="nav-item-modern">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        <span>Ajustes</span>
+                    </a></li>
+                    <li><a href="#" data-page="psi_avisos.html" class="nav-item-modern">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                        <span>Avisos</span>
+                    </a></li>
+                    <!-- Oculto para que a lógica global de JS continue funcionando no logout -->
+                    <button id="btn-logout" style="display:none;"></button>
                 </ul>
             </nav>
-            
-            <div class="sidebar-footer">
-                <a href="/" class="btn-sidebar-home" title="Ir para Home">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                </a>
-                <button id="btn-logout">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                    Encerrar Sessão
-                </button>
-            </div>
         </aside>
 
         <main class="dashboard-main">
-            <!-- CONTROLES DE ZOOM (Global) -->
-            <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 15px; gap: 12px;">
-                <div id="desktop-menu-trigger" style="cursor: pointer; color: #1B4332; font-weight: 800; font-family: var(--font-titulos); letter-spacing: 1px; font-size: 0.9rem; display: inline-block; border: 1px solid #1B4332; padding: 5px 15px; border-radius: 20px; margin-right: 10px;">
-                    + MENU
+            
+            <!-- BANNER DE LEADS (PLG) - Oculto por padrão, ativado via JS -->
+            <div id="lead-plg-banner" class="lead-plg-banner" style="display: none;">
+                <div class="lead-plg-content">
+                    <div class="lead-plg-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor" style="width: 24px; height: 24px;"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-23.2-115-65.1-157zM223.9 414.8c-33.2 0-65.8-8.9-94-25.7l-6.7-4-69.8 18.3L72 334.1l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 54.3 0 105.4 21.2 143.8 59.6 38.4 38.4 59.6 89.4 59.6 143.8 0 101.7-82.8 184.5-184.6 184.5zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-2.1-3.6 2.1-3.2 7.6-14.1 1.4-2.8 2.8-5.2 1.4-7.6-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg>
+                    </div>
+                    <div class="lead-plg-text">
+                        <h3 id="lead-plg-title">Opa, tem paciente querendo falar com você!</h3>
+                        <p>Seu perfil já começou a transformar vidas. Assine o plano Premium para ter acesso ilimitado a novos pacientes e focar no que você faz de melhor.</p>
+                    </div>
                 </div>
-                <span style="font-size: 0.85rem; color: #666; font-weight: 500;">Ajuste o zoom da tela:</span>
-                <div class="zoom-controls-minimal light-theme">
-                    <button class="btn-zoom-min" id="btn-zoom-out" title="Diminuir">-</button>
-                    <span id="zoom-level-display">100%</span>
-                    <button class="btn-zoom-min" id="btn-zoom-in" title="Aumentar">+</button>
-                    <button class="btn-zoom-min btn-zoom-reset" id="btn-zoom-reset" title="Restaurar Padrão">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                    </button>
-                </div>
+                <a href="#" onclick="if(window.loadPage) window.loadPage('psi_assinatura.html')" class="lead-plg-btn">Assinar Agora</a>
             </div>
+
             <div id="main-content"></div>
         </main>
     </div>
 
     <div id="payment-modal" class="custom-modal-overlay" style="display: none;">
-        <div class="custom-modal-box">
-            <button id="btn-close-modal-x" style="float: right; background:none; border:none; font-size:1.2rem; cursor:pointer;">✕</button>
-            <h3 style="margin-top:0;">Finalizar Assinatura</h3>
+        <div class="custom-modal-box" style="padding: 30px; box-sizing: border-box;">
+            <div class="sheet-drag-handle"></div>
+            <button type="button" class="modal-close-btn" id="btn-close-modal-x"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
             
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px; background: #e8f5e9; border-radius: 50%; color: #1B4332; font-size: 1.8rem; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(27,67,50,0.1);">💳</div>
+                <h3 style="margin: 0; color: #1B4332; font-family: var(--font-titulos); font-size: 1.6rem;">Finalizar Assinatura</h3>
+                <p style="color: #666; font-size: 0.95rem; margin: 5px 0 0 0;">Escolha o método de pagamento ideal para você.</p>
+            </div>
+
             <!-- TELA 1: SELEÇÃO DE MÉTODO -->
             <div id="step-payment-method" style="display: block;">
-                <p style="color: #666; margin-bottom: 20px;">Escolha como deseja pagar:</p>
                 
-                <button type="button" id="btn-select-card" style="width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 12px; background: #fff; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s;">
+                <button type="button" id="btn-select-card" style="width: 100%; padding: 18px 20px; margin-bottom: 15px; border: 1px solid #e0e0e0; border-radius: 16px; background: #fff; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
                     <div style="display: flex; align-items: center; gap: 15px;">
                         <span style="font-size: 1.5rem;">💳</span>
                         <div style="text-align: left;">
@@ -277,7 +261,7 @@
                     <span style="color: #1B4332;">➔</span>
                 </button>
 
-                <button type="button" id="btn-select-pix" style="width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 12px; background: #fff; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s;">
+                <button type="button" id="btn-select-pix" style="width: 100%; padding: 18px 20px; border: 1px solid #e0e0e0; border-radius: 16px; background: #fff; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
                     <div style="display: flex; align-items: center; gap: 15px;">
                         <span style="font-size: 1.5rem;">💠</span>
                         <div style="text-align: left;">
@@ -298,7 +282,7 @@
 
             <!-- RESULTADO PIX (QR CODE) -->
             <div id="pix-result-container" style="display: none; text-align: center; padding: 20px;">
-                <p style="color: #1B4332; font-weight: bold; margin-bottom: 15px;">Escaneie o QR Code para pagar:</p>
+                <p style="color: #1B4332; font-weight: 700; margin-bottom: 15px; font-size: 1.1rem;">Escaneie o QR Code para pagar:</p>
                 <img id="pix-qr-image" src="" style="width: 200px; height: 200px; display: block; margin: 0 auto 15px auto; border: 1px solid #eee; padding: 10px; border-radius: 8px;">
                 
                 <p style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">Ou copie e cole o código:</p>
@@ -310,29 +294,31 @@
                 <div style="font-size: 0.85rem; color: #856404; background: #fff3cd; padding: 10px; border-radius: 8px; border: 1px solid #ffeeba;">
                     Após o pagamento, seu plano será ativado automaticamente em alguns instantes.
                 </div>
-                <button type="button" id="btn-pix-paid" style="margin-top: 15px; width: 100%; padding: 12px; background: #1B4332; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Já realizei o pagamento</button>
+                <button type="button" id="btn-pix-paid" class="btn btn-principal" style="margin-top: 15px; width: 100%; padding: 14px; border-radius: 50px; font-size: 1rem; box-shadow: 0 4px 15px rgba(27,67,50,0.2);">Já realizei o pagamento</button>
             </div>
 
             <!-- TELA 2: FORMULÁRIO (Escondido inicialmente) -->
             <form id="payment-form" style="display: none;">
                 <button type="button" id="btn-back-method" style="background: none; border: none; color: #666; cursor: pointer; margin-bottom: 15px; display: flex; align-items: center; gap: 5px; font-size: 0.9rem;">
-                    ← Voltar para métodos
+                &larr; Voltar para métodos
                 </button>
 
                 <!-- DADOS DO TITULAR (COMUM) -->
                 <div id="customer-data-section" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
                     <h4 style="margin: 0 0 5px 0; font-size: 0.9rem; color: #1B4332;">Dados do Titular</h4>
-                    <input type="text" id="card-holder-name" placeholder="Nome impresso no cartão" required style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                    <input type="text" id="card-holder-name" placeholder="Nome impresso no cartão" required style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 5px;" autocapitalize="words">
                     
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="card-holder-cpf" placeholder="CPF do titular" required style="flex: 1.5; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
-                        <input type="text" id="card-holder-phone" placeholder="Celular (com DDD)" required style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                    <div class="payment-flex-row">
+                        <input type="text" id="card-holder-cpf" placeholder="CPF do titular" required style="flex: 1.5; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;" inputmode="numeric">
+                        <input type="tel" id="card-holder-phone" placeholder="Celular (com DDD)" required style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;" inputmode="tel">
                     </div>
 
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="card-holder-cep" placeholder="CEP" required style="flex: 2; min-width: 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
-                        <input type="text" id="card-holder-number" placeholder="Número" required style="flex: 1; min-width: 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
-                        <input type="text" id="card-holder-complement" placeholder="Comp." style="flex: 1; min-width: 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                    <div class="payment-flex-row">
+                        <input type="text" id="card-holder-cep" placeholder="CEP" required style="flex: 2; min-width: 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;" inputmode="numeric">
+                        <div class="payment-flex-row keep-row" style="flex: 2; display: flex; gap: 10px;">
+                            <input type="text" id="card-holder-number" placeholder="Número" required style="flex: 1; min-width: 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;" inputmode="numeric">
+                            <input type="text" id="card-holder-complement" placeholder="Comp." style="flex: 1; min-width: 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;">
+                        </div>
                         <!-- Campos ocultos preenchidos pelo CEP -->
                         <input type="hidden" id="card-holder-street">
                         <input type="hidden" id="card-holder-neighborhood">
@@ -344,18 +330,18 @@
                 <!-- DADOS DO CARTÃO (ESPECÍFICO) -->
                 <div id="credit-card-section" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
                     <h4 style="margin: 0 0 5px 0; font-size: 0.9rem; color: #1B4332;">Dados do Cartão</h4>
-                    <input type="text" id="card-number" placeholder="0000 0000 0000 0000" required style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                    <input type="text" id="card-number" placeholder="0000 0000 0000 0000" required style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 5px;" inputmode="numeric">
                     
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="card-expiry" placeholder="MM/AAAA" required style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
-                        <input type="text" id="card-ccv" placeholder="CCV" required style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                    <div class="payment-flex-row keep-row" style="display: flex; gap: 10px;">
+                    <input type="text" id="card-expiry" placeholder="MM/AAAA" required style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: var(--font-principal); box-sizing: border-box;" inputmode="numeric">
+                    <input type="text" id="card-ccv" placeholder="CVV" required style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: var(--font-principal); box-sizing: border-box;" inputmode="numeric">
                     </div>
                 </div>
 
                 <!-- SECURITY BADGES SECTION -->
                 <div id="security-badges" style="background-color: #f8f9fa; border-radius: 8px; padding: 15px; margin-bottom: 20px; border: 1px solid #e9ecef;">
                     <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 15px; opacity: 0.8;">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" style="height: 24px;">
+                        <img src="https://cdn.simpleicons.org/visa/1434CB" alt="Visa" style="height: 24px;">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" style="height: 24px;">
                         <img src="https://stc.pagseguro.uol.com.br/public/img/payment-methods-flags/68x30/elo.png" alt="Elo" style="height: 24px; background: white; border-radius: 2px;">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/3/30/American_Express_logo.svg" alt="Amex" style="height: 24px;">
@@ -368,48 +354,58 @@
                     </div>
                 </div>
 
-                <button id="btn-confirmar-stripe" style="margin-top: 0; width: 100%; background: #1B4332; color: #fff; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Pagar Agora</button>
+                <button id="btn-confirmar-stripe" class="btn btn-principal" style="margin-top: 10px; width: 100%; padding: 14px; border-radius: 50px; font-size: 1rem; box-shadow: 0 4px 15px rgba(27,67,50,0.2); border: none;">Pagar Agora</button>
             </form>
         </div>
     </div>
     
     <div id="modal-reativacao" class="custom-modal-overlay" style="display: none;">
-        <div class="custom-modal-box">
-            <div style="margin-bottom: 20px; color: #1B4332; font-size: 3rem; text-align: center;">
-               🚀
+        <div class="custom-modal-box" style="padding: 30px; text-align: center; max-width: 450px;">
+            <div class="sheet-drag-handle"></div>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px; background: #e8f5e9; border-radius: 50%; color: #1B4332; font-size: 1.8rem; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(27,67,50,0.1);">🚀</div>
+                <h3 style="margin: 0; color: #1B4332; font-family: var(--font-titulos); font-size: 1.6rem;">Vamos continuar juntos?</h3>
+                <p style="color:#666; line-height: 1.6; text-align: center; font-size: 1.05rem; margin-top: 10px;">Ao reativar, você mantém seus benefícios e sua assinatura renovará normalmente na data prevista. <strong>Nenhuma cobrança extra será feita hoje.</strong></p>
             </div>
-            <h3 style="margin-top:0; color: #1B4332; text-align: center; font-family: var(--font-titulos);">Vamos continuar juntos?</h3>
-            <p style="color:#666; line-height: 1.6; text-align: center; font-size: 1.05rem;">Ao reativar, você mantém seus benefícios e sua assinatura renovará normalmente na data prevista. <strong>Nenhuma cobrança extra será feita hoje.</strong></p>
-            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
-                <button id="btn-fechar-modal-reativacao" style="padding: 12px 25px; background: transparent; border: 2px solid #ddd; border-radius: 50px; cursor: pointer; font-weight: 600; color: #666; transition: all 0.2s;">Pensar melhor</button>
-                <button id="btn-confirmar-reativacao" style="padding: 12px 30px; background: #1B4332; color: #fff; border:none; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(27,67,50,0.2); transition: transform 0.2s;">Sim, Reativar Agora</button>
+            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px; flex-wrap: wrap;">
+                <button id="btn-fechar-modal-reativacao" class="btn btn-secundario" style="flex: 1; padding: 14px; border-radius: 50px; font-size: 1rem; min-width: 140px;">Pensar melhor</button>
+                <button id="btn-confirmar-reativacao" class="btn btn-principal" style="flex: 1; padding: 14px; border-radius: 50px; font-size: 1rem; box-shadow: 0 4px 15px rgba(27,67,50,0.2); min-width: 140px;">Sim, Reativar</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL DE RECORTE DE FOTO (CROPPER) -->
     <div id="crop-modal" class="custom-modal-overlay" style="display: none; z-index: 200000;">
-        <div class="custom-modal-box" style="max-width: 600px; width: 90%;">
-            <h3 style="margin-top: 0; color: #1B4332;">Ajustar Foto de Perfil</h3>
-            <div style="height: 400px; width: 100%; background: #f0f0f0; margin: 20px 0; overflow: hidden;">
+        <div class="custom-modal-box" style="max-width: 600px; width: 90%; padding: 30px;">
+            <div class="sheet-drag-handle"></div>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: #1B4332; font-family: var(--font-titulos); font-size: 1.6rem;">Ajustar Foto de Perfil</h3>
+                <p style="color: #666; font-size: 0.95rem; margin: 5px 0 0 0;">Arraste e redimensione para centralizar seu rosto.</p>
+            </div>
+            
+            <div style="height: 400px; width: 100%; background: #f0f0f0; margin: 20px 0; overflow: hidden; border-radius: 12px;">
                 <img id="image-to-crop" src="" style="max-width: 100%; display: block;">
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                <button id="btn-cancel-crop" style="padding: 10px 20px; border: 1px solid #ccc; background: white; border-radius: 5px; cursor: pointer;">Cancelar</button>
-                <button id="btn-confirm-crop" style="padding: 10px 20px; background: #1B4332; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Recortar e Salvar</button>
+                <button id="btn-cancel-crop" class="btn btn-secundario" style="flex: 1; padding: 14px; border-radius: 50px; font-size: 1rem;">Cancelar</button>
+                <button id="btn-confirm-crop" class="btn btn-principal" style="flex: 2; padding: 14px; border-radius: 50px; font-size: 1rem; box-shadow: 0 4px 15px rgba(27,67,50,0.2);">Recortar e Salvar</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL DE BOAS-VINDAS (REATIVAÇÃO DE CONTA) -->
     <div id="modal-welcome-back" class="custom-modal-overlay" style="display: none;">
-        <div class="custom-modal-box" style="text-align: center;">
-            <div style="margin-bottom: 20px; color: #1B4332; font-size: 3rem;">🎉</div>
-            <h3 style="margin-top:0; color: #1B4332;">Bem-vindo(a) de volta!</h3>
-            <p style="color:#666; line-height: 1.6; margin-bottom: 15px;">Que alegria ter você conosco novamente. Sua conta foi reativada com sucesso.</p>
+        <div class="custom-modal-box" style="text-align: center; padding: 30px; max-width: 450px;">
+            <div class="sheet-drag-handle"></div>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px; background: #e8f5e9; border-radius: 50%; color: #1B4332; font-size: 1.8rem; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(27,67,50,0.1);">🎉</div>
+                <h3 style="margin: 0; color: #1B4332; font-family: var(--font-titulos); font-size: 1.6rem;">Bem-vindo(a) de volta!</h3>
+            </div>
+            
+            <p style="color:#666; line-height: 1.6; margin-bottom: 20px; font-size: 1.05rem;">Que alegria ter você conosco novamente. Sua conta foi reativada com sucesso.</p>
             <p style="color:#1B4332; background-color: #e8f5e9; padding: 15px; border-radius: 8px; font-size: 0.95rem; line-height: 1.5;"><strong>Seus dados estão seguros:</strong><br>Todo o seu histórico, pacientes, anotações e configurações foram preservados exatamente como você os deixou.</p>
             <div style="margin-top: 25px;">
-                <button id="btn-fechar-welcome-back" class="btn" style="background-color: #1B4332; color: white; padding: 12px 35px; border-radius: 50px; font-weight: bold; border: none; cursor: pointer; transition: transform 0.2s; font-size: 1rem;">Acessar meu Painel</button>
+                <button id="btn-fechar-welcome-back" class="btn btn-principal" style="width: 100%; padding: 14px; border-radius: 50px; font-size: 1rem; box-shadow: 0 4px 15px rgba(27,67,50,0.2);">Acessar meu Painel</button>
             </div>
         </div>
     </div>
@@ -422,110 +418,35 @@
             </svg>
         </div>
         <a href="#" class="bottom-nav-item active" data-target-page="psi_visao_geral.html">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-            <span>Painel</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span>Início</span>
         </a>
         
-        <a href="#" class="bottom-nav-item" data-target-page="psi_pacientes.html">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            <span>Pacientes</span>
+        <a href="#" class="bottom-nav-item" data-target-page="psi_clinica_hub.html">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"></path><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"></path><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"></path><path d="M17.599 6.5a3 3 0 0 0 .399-1.375"></path></svg>
+            <span>Clínica</span>
         </a>
 
-        <a href="#" class="bottom-nav-item" data-target-page="psi_financeiro.html">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-            <span>Financeiro</span>
+        <a href="#" class="bottom-nav-item" data-target-page="psi_evolucao_hub.html">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"></path><path d="M18 20V4"></path><path d="M6 20v-4"></path></svg>
+            <span>Evolução</span>
         </a>
 
-        <a href="#" class="bottom-nav-item" data-target-page="psi_comunidade.html">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-            <span>Perguntas</span>
+        <a href="#" class="bottom-nav-item" data-target-page="psi_ajustes_hub.html">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span>Ajustes</span>
         </a>
-        <div class="bottom-nav-item" id="bottom-nav-menu-trigger" style="cursor: pointer;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-            <span>Menu</span>
-        </div>
     </nav>
 
-    <!-- FAB (Floating Action Button) -->
-    <div class="fab-container">
-        <div class="fab-options" id="fab-options">
-            <button class="fab-option" onclick="window.loadPage('psi_blog.html')">
-                <span>Meus Artigos</span>
-                <div class="fab-icon-small">✍️</div>
-            </button>
-            <button class="fab-option" onclick="window.loadPage('psi_forum.html')">
-                <span>Fórum</span>
-                <div class="fab-icon-small">💬</div>
-            </button>
-            <button class="fab-option" onclick="window.openNewPatientFromGlobal()">
-                <span>Novo Paciente</span>
-                <div class="fab-icon-small">👤</div>
-            </button>
-        </div>
-        <button class="fab-main" id="fab-trigger" style="animation: bounceEntry 1.5s ease 1s;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        </button>
-    </div>
-
-    <!-- MENU DE CONTA (Bottom Sheet) -->
-    <div class="account-sheet-overlay" id="account-sheet-overlay">
-        <div class="account-sheet">
-            <div class="sheet-header">
-                <h3>Minha Conta</h3>
-                <button class="close-sheet" id="close-account-sheet">✕</button>
-            </div>
-            <div class="sheet-content">
-                <div class="sheet-section">
-                    <h4>Conta Profissional</h4>
-                    <a href="#" id="mobile-public-profile-link" target="_blank" class="sheet-link">Perfil Público</a>
-                </div>
-                <div class="sheet-section">
-                    <h4>Comunidade</h4>
-                    <a href="#" data-page="psi_hub.html" class="sheet-link">Comunidade</a>
-                    <a href="#" data-page="psi_jornada.html" class="sheet-link">Jornada</a>
-                    <a href="#" data-page="psi_forum.html" class="sheet-link">Fórum</a>
-                </div>
-                <div class="sheet-section">
-                    <h4>Sistema</h4>
-                    <a href="#" data-page="psi_assinatura.html" class="sheet-link">Assinatura e Pagamentos</a>
-                    <a href="#" data-page="psi_meu_perfil.html" class="sheet-link">Ajustes de perfil</a>
-                    <a href="mailto:oi@yelopsi.com.br" class="sheet-link" style="color: #1B4332; font-weight: 700;">Fale com a Yelo (E-mail)</a>
-                </div>
-                <div class="sheet-section">
-                    <button id="btn-logout-sheet" class="sheet-link logout">Encerrar sessão</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script src="../config.js"></script>
     <script src="psi_dashboard.js"></script>
-    <script src="psi_caixa_de_entrada.js"></script>
     
     <script>
-        // Função Global para abrir modal de Novo Paciente (usada pelo FAB)
-        window.openNewPatientFromGlobal = function() {
-            // Define flag para abrir modal automaticamente ao carregar a página de pacientes
-            sessionStorage.setItem('autoOpenNewPatient', 'true');
-            window.loadPage('psi_pacientes.html');
-        };
-
         // Script para controlar o menu mobile (Sanduíche)
         document.addEventListener('DOMContentLoaded', () => {
             const sidebar = document.querySelector('.dashboard-sidebar');
             
-            // --- FIX: RESETAR POSIÇÃO DO FAB ---
-            // Garante que o botão volte para o lugar original se tiver sido arrastado para fora
-            const fabContainer = document.querySelector('.fab-container');
-            if (fabContainer) {
-                fabContainer.style.top = '';
-                fabContainer.style.left = '';
-                fabContainer.style.right = '';
-                fabContainer.style.bottom = '';
-                fabContainer.style.transform = '';
-                fabContainer.style.position = 'fixed'; // Garante reset
-            }
-
             const overlay = document.querySelector('.sidebar-backdrop');
 
             // --- LÓGICA DA BOTTOM NAV (MOBILE) ---
@@ -543,88 +464,34 @@
 
                     // Encontra e clica no link correspondente da sidebar
                     const sidebarLink = document.querySelector(`.sidebar-nav a[data-page="${targetPage}"]`);
-                    if (sidebarLink) sidebarLink.click();
+                    if (sidebarLink) {
+                        sidebarLink.click();
+                    } else if (typeof window.loadPage === 'function') {
+                        window.loadPage(targetPage); // Carrega a página diretamente se não estiver na sidebar
+                    }
                 });
             });
 
-            // --- LÓGICA DO FAB ---
-            const fabTrigger = document.getElementById('fab-trigger');
-            const fabOptions = document.getElementById('fab-options');
+
+            // --- LÓGICA DE SINCRONIZAÇÃO DO CABEÇALHO MOBILE ---
+            // Espelha a foto, nível e badges gerados pelo JS na sidebar para o header mobile
+            const syncMobileHeader = new MutationObserver(() => {
+                const sidebarPhoto = document.getElementById('psi-sidebar-photo');
+                const mobilePhoto = document.getElementById('psi-mobile-photo');
+                if(sidebarPhoto && mobilePhoto && mobilePhoto.src !== sidebarPhoto.src) mobilePhoto.src = sidebarPhoto.src;
+
+                const sidebarLevel = document.getElementById('psi-sidebar-level');
+                const mobileLevel = document.getElementById('psi-mobile-level');
+                if(sidebarLevel && mobileLevel && mobileLevel.innerHTML !== sidebarLevel.innerHTML) mobileLevel.innerHTML = sidebarLevel.innerHTML;
+                
+                const sidebarBadges = document.getElementById('sidebar-badges-container');
+                const mobileBadges = document.getElementById('mobile-badges-container');
+                if(sidebarBadges && mobileBadges && mobileBadges.innerHTML !== sidebarBadges.innerHTML) mobileBadges.innerHTML = sidebarBadges.innerHTML;
+            });
             
-            if(fabTrigger && fabOptions) {
-                // 1. Toggle do Menu (respeitando se foi arrastado)
-                fabTrigger.addEventListener('click', (e) => {
-                    if (fabTrigger.getAttribute('data-dragged') === 'true') {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        return;
-                    }
-                    fabOptions.classList.toggle('active');
-                    fabTrigger.classList.toggle('active');
-                });
-
-                // 2. Fechar opções ao clicar em uma delas
-                document.querySelectorAll('.fab-option').forEach(opt => {
-                    opt.addEventListener('click', () => {
-                        fabOptions.classList.remove('active');
-                        fabTrigger.classList.remove('active');
-                    });
-                });
-
-                // 3. Lógica de Arrastar Livre (Free Drag)
-                let isDragging = false;
-                let startX, startY, initialLeft, initialTop;
-
-                const onDragStart = (e) => {
-                    const touch = e.touches ? e.touches[0] : e;
-                    startX = touch.clientX;
-                    startY = touch.clientY;
-                    
-                    // Converte posição atual para pixels fixos para permitir movimento livre
-                    const rect = fabContainer.getBoundingClientRect();
-                    fabContainer.style.bottom = 'auto';
-                    fabContainer.style.right = 'auto';
-                    fabContainer.style.left = rect.left + 'px';
-                    fabContainer.style.top = rect.top + 'px';
-                    
-                    initialLeft = rect.left;
-                    initialTop = rect.top;
-                    isDragging = false;
-
-                    document.addEventListener('mousemove', onDragMove);
-                    document.addEventListener('touchmove', onDragMove, { passive: false });
-                    document.addEventListener('mouseup', onDragEnd);
-                    document.addEventListener('touchend', onDragEnd);
-                };
-
-                const onDragMove = (e) => {
-                    const touch = e.touches ? e.touches[0] : e;
-                    const dx = touch.clientX - startX;
-                    const dy = touch.clientY - startY;
-
-                    // Só considera arrasto se mover mais que 5px (evita cliques acidentais)
-                    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-                        isDragging = true;
-                        e.preventDefault(); // Evita scroll da página
-                        fabContainer.style.left = (initialLeft + dx) + 'px';
-                        fabContainer.style.top = (initialTop + dy) + 'px';
-                    }
-                };
-
-                const onDragEnd = () => {
-                    document.removeEventListener('mousemove', onDragMove);
-                    document.removeEventListener('touchmove', onDragMove);
-                    document.removeEventListener('mouseup', onDragEnd);
-                    document.removeEventListener('touchend', onDragEnd);
-
-                    if (isDragging) {
-                        fabTrigger.setAttribute('data-dragged', 'true');
-                        setTimeout(() => fabTrigger.removeAttribute('data-dragged'), 100);
-                    }
-                };
-
-                fabTrigger.addEventListener('mousedown', onDragStart);
-                fabTrigger.addEventListener('touchstart', onDragStart, { passive: false });
+            const sidebarProfile = document.querySelector('.sidebar-profile-modern');
+            if(sidebarProfile) {
+                syncMobileHeader.observe(sidebarProfile, { childList: true, subtree: true, attributes: true, characterData: true });
             }
 
             // --- LÓGICA DO MENU DE CONTA (BOTTOM SHEET) ---
@@ -634,7 +501,6 @@
             
             // Gatilhos para abrir (Avatar Sidebar + Avatar Mobile + Botão Desktop)
             const triggers = [
-                document.getElementById('psi-sidebar-photo'),
                 document.getElementById('mobile-avatar-trigger'),
                 document.getElementById('desktop-menu-trigger'),
                 document.getElementById('bottom-nav-menu-trigger')
@@ -644,8 +510,12 @@
                 if(t) {
                     t.addEventListener('click', (e) => {
                         e.stopPropagation(); // Evita disparar upload de foto se estiver aninhado
-                        accountSheetOverlay.classList.add('active');
-                        setTimeout(() => accountSheet.classList.add('active'), 10);
+                        if (accountSheetOverlay) {
+                            accountSheetOverlay.classList.add('active');
+                        }
+                        if (accountSheet) {
+                            setTimeout(() => accountSheet.classList.add('active'), 10);
+                        }
                     });
                 }
             });
@@ -662,8 +532,12 @@
             }
 
             const closeSheet = () => {
-                accountSheet.classList.remove('active');
-                setTimeout(() => accountSheetOverlay.classList.remove('active'), 300);
+                if (accountSheet) {
+                    accountSheet.classList.remove('active');
+                }
+                if (accountSheetOverlay) {
+                    setTimeout(() => accountSheetOverlay.classList.remove('active'), 300);
+                }
             };
 
             if(closeSheetBtn) closeSheetBtn.addEventListener('click', closeSheet);
@@ -704,12 +578,6 @@
                 localStorage.removeItem('Yelo_account_restored'); // Limpa para não mostrar novamente
             }
 
-            // --- FIX: FORÇAR VISÃO GERAL COMO PÁGINA INICIAL ---
-            const linkVisaoGeral = document.querySelector('a[data-page="psi_visao_geral.html"]');
-            if (linkVisaoGeral) {
-                setTimeout(() => linkVisaoGeral.click(), 100);
-            }
-
             // --- FIX: LÓGICA DE ZOOM (GLOBAL) ---
             // Garante que o zoom funcione corretamente mesmo após refresh na página de pacientes
             const btnZoomIn = document.getElementById('btn-zoom-in');
@@ -719,8 +587,8 @@
             const mainContent = document.getElementById('main-content');
 
             if (btnZoomIn && btnZoomOut && btnZoomReset && mainContent) {
-                // Padrão 80% ou carrega do localStorage
-                let currentZoom = parseInt(localStorage.getItem('psi_zoom_level')) || 80;
+                // Padrão 100% (o tamanho base de todos os elementos já foi reduzido em 30% no CSS)
+                let currentZoom = parseInt(localStorage.getItem('psi_zoom_level')) || 100;
 
                 const applyZoom = () => {
                     mainContent.style.transform = `scale(${currentZoom / 100})`;
@@ -752,7 +620,7 @@
                     if (currentZoom > 50) { currentZoom -= 10; applyZoom(); }
                 });
 
-                newBtnReset.addEventListener('click', () => { currentZoom = 80; applyZoom(); });
+                newBtnReset.addEventListener('click', () => { currentZoom = 100; applyZoom(); });
             }
         });
 
@@ -789,6 +657,10 @@
                         const executeScript = (script) => {
                             try {
                                 const newScript = document.createElement('script');
+                                // Copia todos os atributos originais (vital para manter o type="module" e permitir o await)
+                                Array.from(script.attributes).forEach(attr => {
+                                    newScript.setAttribute(attr.name, attr.value);
+                                });
                                 if (script.src) {
                                     newScript.src = script.src;
                                     // Garante que os scripts executem estritamente na ordem que foram inseridos
@@ -820,6 +692,63 @@
         });
         const mainContainer = document.getElementById('main-content');
         if(mainContainer) mainContentObserver.observe(mainContainer, { childList: true, subtree: true });
+    </script>
+
+    <!-- PLG: LÓGICA DO BANNER E CONFETES (Auto-Interceptação) -->
+    <script>
+        window.verificarConquistasPLG = function(user) {
+            if (!user) return;
+            
+            const clicks = user.whatsapp_clicks || 0;
+            const appearances = user.profile_appearances || 0; 
+            
+            // 1. Mostrar o Banner (Apenas se tiver leads/cliques e não for pagante/VIP)
+            const banner = document.getElementById('lead-plg-banner');
+            const title = document.getElementById('lead-plg-title');
+            
+            if (clicks > 0 && user.status !== 'active' && !user.is_exempt) {
+                if (banner && title) {
+                    title.innerText = `Opa, ${clicks} paciente(s) tentou falar com você! 💛`;
+                    banner.style.display = 'flex';
+                }
+            } else if (banner) {
+                banner.style.display = 'none';
+            }
+            
+            // 2. Disparar Confetes de Sucesso (Primeiro match ou primeiro clique)
+            if (clicks > 0 || appearances > 0) {
+                // Usa o ID do usuário para garantir que, se ele trocar de máquina, verá a celebração 1 vez.
+                const confettiKey = `Yelo_confetti_shown_${user.id}`;
+                
+                if (!localStorage.getItem(confettiKey)) {
+                    localStorage.setItem(confettiKey, 'true');
+                    
+                    // Atraso sutil para o dashboard terminar de renderizar antes da festa 🎉
+                    setTimeout(() => {
+                        var duration = 4 * 1000;
+                        var end = Date.now() + duration;
+                        (function frame() {
+                            confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#1B4332', '#FFEE8C', '#f59e0b'] });
+                            confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#1B4332', '#FFEE8C', '#f59e0b'] });
+                            if (Date.now() < end) requestAnimationFrame(frame);
+                        }());
+                    }, 600);
+                }
+            }
+        };
+
+        // Interceptador Global: Fica esperando silenciosamente a requisição dos dados do perfil
+        const originalPlgFetch = window.fetch;
+        window.fetch = async function(...args) {
+            const response = await originalPlgFetch.apply(this, args);
+            try {
+                const url = args[0] instanceof Request ? args[0].url : args[0];
+                if (url.includes('/api/psychologists/me') && !url.includes('/posts') && !url.includes('/analytics')) {
+                    response.clone().json().then(data => { if (data && data.id) window.verificarConquistasPLG(data); }).catch(e => {});
+                }
+            } catch (e) {}
+            return response;
+        };
     </script>
 </body>
 </html>

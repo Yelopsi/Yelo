@@ -1,6 +1,8 @@
 // backend/server.js (VERSÃO PRIORITÁRIA)
 
 require('dotenv').config();
+// --- FORÇA O FUSO HORÁRIO DO BRASIL NO RENDER ---
+process.env.TZ = 'America/Sao_Paulo';
 const express = require('express');
 const http = require('http');
 const path = require('path');
@@ -44,6 +46,8 @@ if (db.Psychologist) {
         subscriptionId: DataTypes.STRING,
         cancelAtPeriodEnd: DataTypes.BOOLEAN,
         subscription_payments_count: DataTypes.INTEGER,
+        dailySummaryTime: DataTypes.STRING,
+        reminderHoursBefore: DataTypes.INTEGER,
         linkedin_url: DataTypes.STRING,
         instagram_url: DataTypes.STRING,
         facebook_url: DataTypes.STRING,
@@ -56,7 +60,9 @@ if (db.Psychologist) {
         bio: DataTypes.TEXT,
         crpDocumentUrl: DataTypes.TEXT,
         resetPasswordToken: DataTypes.STRING,
-        resetPasswordExpires: DataTypes.BIGINT
+        resetPasswordExpires: DataTypes.BIGINT,
+        formacao_nivel: DataTypes.STRING,
+        formacao_desc: DataTypes.TEXT
     };
 
     for (const [col, type] of Object.entries(colsToAdd)) {
@@ -78,6 +84,19 @@ if (db.Appointment && !db.Appointment.rawAttributes.patientId) {
     }
 }
 
+// --- FIX: Define Association between Appointment and Psychologist ---
+if (db.Appointment && db.Psychologist) {
+    // Check if association already exists to avoid errors on restart
+    if (!db.Appointment.associations.psychologist) {
+        console.log("[FIX] Defining Appointment -> Psychologist association.");
+        db.Appointment.belongsTo(db.Psychologist, { as: 'psychologist', foreignKey: 'psychologistId' });
+    }
+    if (!db.Psychologist.associations.appointments) {
+        console.log("[FIX] Defining Psychologist -> Appointment association.");
+        db.Psychologist.hasMany(db.Appointment, { as: 'appointments', foreignKey: 'psychologistId' });
+    }
+}
+
 // --- FIX: Patch Patient Model (Garante leitura de campos novos) ---
 if (db.Patient) {
     const attrs = db.Patient.rawAttributes;
@@ -96,12 +115,19 @@ if (db.Patient) {
         abordagem_desejada: DataTypes.JSONB,
         praticas_afirmativas: DataTypes.JSONB,
         telefone: DataTypes.STRING,
+        recebe_mensagens: { type: DataTypes.BOOLEAN, defaultValue: true },
         resetPasswordToken: DataTypes.STRING,
         resetPasswordExpires: DataTypes.BIGINT
     };
 
-    for (const [col, type] of Object.entries(colsToAdd)) {
-        if (!attrs[col]) { attrs[col] = { type }; patched = true; }
+    for (const [col, definition] of Object.entries(colsToAdd)) {
+        if (!attrs[col]) {
+            // If the definition already has a 'type' property, it's a full definition object. Use it directly.
+            // Otherwise, it's a simple DataType, so wrap it.
+            if (definition.type) { attrs[col] = definition; } 
+            else { attrs[col] = { type: definition }; }
+            patched = true;
+        }
     }
 
     
@@ -196,7 +222,6 @@ if (db.Message && db.Conversation) {
 // Importação de Rotas
 const patientRoutes = require('./routes/patientRoutes');
 const psychologistRoutes = require('./routes/psychologistRoutes');
-const messagingRoutes = require('./routes/messagingRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const demandRoutes = require('./routes/demandRoutes');
 const usuarioRoutes = require('./routes/usuarioRoutes');
@@ -204,9 +229,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const qnaRoutes = require('./routes/qnaRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
-const supportRoutes = require('./routes/supportRoutes');
 const adminMessageRoutes = require('./routes/adminMessageRoutes');
-const adminSupportRoutes = require('./routes/adminSupportRoutes');
 const blogRoutes = require('./routes/blogRoutes');
 const newsletterRoutes = require('./routes/newsletterRoutes'); // <-- ADICIONADO
 const forumRoutes = require('./routes/forumRoutes'); // <--- ADICIONADO
@@ -256,8 +279,11 @@ app.use((req, res, next) => {
     const host = req.headers.host ? req.headers.host.split(':')[0] : req.hostname;
     const target = 'www.yelopsi.com.br';
 
-    // Ignora localhost e domínios de desenvolvimento (Render)
-    if (host.includes('localhost') || host.includes('127.0.0.1') || host.includes('onrender.com') || host.includes('render.com')) {
+    // Ignora IPs na rede local (ex: 192.168.x.x) para permitir testes pelo celular
+    const isLocalIp = /^(\d{1,3}\.){3}\d{1,3}$/.test(host);
+
+    // Ignora localhost, IPs locais e domínios de desenvolvimento (Render)
+    if (host.includes('localhost') || host.includes('127.0.0.1') || host.includes('onrender.com') || host.includes('render.com') || isLocalIp) {
         return next();
     }
 
@@ -347,7 +373,7 @@ if (io) {
                 }
             }
             if (token) {
-                user = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+                user = jwt.verify(token, process.env.JWT_SECRET);
                 
                 // --- CORREÇÃO CRÍTICA: Entra na sala do usuário para receber mensagens ---
                 // Inscreve em múltiplas variações de sala para garantir que o Controller encontre o socket
@@ -446,7 +472,15 @@ if (io) {
 
 // --- MIDDLEWARES ---
 app.use(cors({
-    origin: (origin, callback) => callback(null, true), // Necessário para aceitar cookies
+    origin: (origin, callback) => {
+        const allowedOrigins = [process.env.FRONTEND_URL];
+        // Em produção, restringir para a URL do frontend. Permite requisições sem origin (como server-to-server)
+        if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+            callback(null, true);
+        } else {
+            callback(new Error('Origem não permitida pelo CORS'));
+        }
+    },
     credentials: true
 }));
 app.use(cookieParser()); // <-- Adicionado para ler cookies de sessão
@@ -524,6 +558,21 @@ app.use((req, res, next) => {
 });
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// --- MIDDLEWARE LOCAL DE AUTENTICAÇÃO ---
+const verifyTokenLocal = (req, res, next) => {
+    let token = req.headers.authorization?.split(' ')[1];
+    if (!token || token === 'null' || token === 'undefined' || token === 'cookie_auth_active') {
+        token = req.cookies?.token;
+    }
+    if (!token) return res.status(401).json({ error: 'Não autorizado' });
+    try {
+        req.userDecoded = jwt.verify(token, process.env.JWT_SECRET);
+        next();
+    } catch (e) {
+        return res.status(401).json({ error: 'Token inválido ou expirado' });
+    }
+};
+
 // =============================================================
 // ROTA DE ANALYTICS (SESSÃO ANÔNIMA)
 // =============================================================
@@ -569,6 +618,28 @@ app.post('/api/analytics/pwa-install', async (req, res) => {
     }
 });
 
+// =============================================================
+// ROTA DE TELEMETRIA (SHADOW TRACKING)
+// =============================================================
+app.post('/api/tracking/uso-feature', verifyTokenLocal, async (req, res) => {
+    try {
+        const { feature } = req.body;
+        const psiId = req.userDecoded.id;
+        
+        if (!feature) return res.status(400).send('Feature não informada');
+        
+        await db.sequelize.query(
+            `INSERT INTO "FeatureTrackingLogs" ("psychologistId", "feature", "createdAt") VALUES (:psiId, :feature, NOW())`,
+            { replacements: { psiId, feature }, type: db.sequelize.QueryTypes.INSERT }
+        );
+        
+        res.status(200).send('Tracked');
+    } catch (error) {
+        console.error('Erro a registar telemetria:', error);
+        res.status(500).send('Erro interno');
+    }
+});
+
 // ROTA DE ESTATÍSTICAS PWA (ADMIN) - Leitura para o Relatório
 app.get('/api/admin/stats/pwa', async (req, res) => {
     try {
@@ -602,6 +673,11 @@ app.get('/api/admin/stats/pwa', async (req, res) => {
 // =============================================================
 
  // COMENTE TUDO ISTO AQUI PARA NINGUÉM ACESSAR:
+
+// Bloqueio global para as rotas de correção em produção
+if (process.env.NODE_ENV === 'production') {
+    app.use(['/api/fix-*', '/fix-*'], (req, res) => res.status(403).json({ error: 'Rotas de manutenção desativadas em produção.' }));
+}
 
 app.get('/api/fix-activate-psis', async (req, res) => { /* ... */ });
 
@@ -1249,6 +1325,16 @@ app.get('/api/fix-test-email', async (req, res) => {
                 { email: emailDestino, nome: 'Usuário Teste' }, 1
             );
             res.send(`✅ E-mail de REMARKETING enviado para: ${emailDestino}.`);
+        } else if (type === 'first_lead') {
+            await emailService.sendFirstLeadEmail(
+                { email: emailDestino, nome: 'Usuário Teste' }
+            );
+            res.send(`✅ E-mail de PRIMEIRO LEAD enviado para: ${emailDestino}.`);
+        } else if (type === 'limit_reached') {
+            await emailService.sendLimitReachedEmail(
+                { email: emailDestino, nome: 'Usuário Teste' }, 3
+            );
+            res.send(`✅ E-mail de LIMITE ATINGIDO enviado para: ${emailDestino}.`);
         } else {
             // Testa o e-mail de Recuperação de Senha (Padrão)
             await emailService.sendPasswordResetEmail(
@@ -1267,29 +1353,124 @@ app.get('/api/fix-test-email', async (req, res) => {
     }
 });
 
-// --- SERVIÇO DE WHATSAPP (SIMULADO) ---
-const whatsappService = {
-    sendMessage: async (phone, message) => {
-        // AQUI ENTRARIA A INTEGRAÇÃO REAL (Twilio, Z-API, WPPConnect, etc.)
-        console.log(`\n📱 [WHATSAPP] Enviando para ${phone}:`);
-        console.log(`   "${message}"\n`);
-        return true;
-    },
-    
-    formatDate: (date) => {
-        return new Date(date).toLocaleString('pt-BR', { 
-            day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' 
-        });
-    },
+// --- SERVIÇO DE WHATSAPP (INTEGRAÇÃO OFICIAL META) ---
+const whatsappService = require('../whatsappService');
 
-    // Simula envio de mensagem com botões/opções
-    sendInteractiveMessage: async (phone, text, options) => {
-        console.log(`\n📱 [WHATSAPP INTERATIVO] Para ${phone}:`);
-        console.log(`   Texto: "${text}"`);
-        console.log(`   Opções: [ ${options.join(' | ')} ]\n`);
-        return true;
+// =============================================================
+// WHATSAPP WEBHOOKS (RESPOSTAS DOS PACIENTES)
+// =============================================================
+const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || 'yelo_webhook_123';
+
+// Rota exigida pela Meta para autorizar nosso servidor (Verificação GET)
+app.get('/api/webhooks/whatsapp', (req, res) => {
+    const mode = req.query['hub.mode'];
+    const token = req.query['hub.verify_token'];
+    const challenge = req.query['hub.challenge'];
+
+    if (mode === 'subscribe' && token === WHATSAPP_VERIFY_TOKEN) {
+        console.log('✅ [WHATSAPP] Webhook verificado pela Meta!');
+        res.status(200).send(challenge);
+    } else {
+        res.sendStatus(403);
     }
-};
+});
+
+// Rota onde chegam as respostas e os cliques em botões (Recepção POST)
+app.post('/api/webhooks/whatsapp', async (req, res) => {
+    try {
+        const body = req.body;
+        if (body.object === 'whatsapp_business_account') {
+            for (const entry of body.entry) {
+                for (const change of entry.changes) {
+                    const value = change.value;
+                    if (value.messages && value.messages[0]) {
+                        const message = value.messages[0];
+                        const phone = message.from; // Número de quem enviou (Paciente)
+
+                        // Trata caso a interação tenha sido um clique num botão
+                        if (message.type === 'interactive' && message.interactive.type === 'button_reply') {
+                            const buttonText = message.interactive.button_reply.title.toUpperCase();
+                            console.log(`📱 [WHATSAPP] Paciente ${phone} clicou em: [${buttonText}]`);
+                            
+                            // Busca o paciente pelo telefone (ignorando o código DDI 55)
+                            const phoneSuffix = phone.startsWith('55') ? phone.substring(2) : phone;
+                            const patient = await db.Patient.findOne({ where: { telefone: { [Op.like]: `%${phoneSuffix}%` } } });
+
+                            if (patient) {
+                                // Busca o agendamento futuro "aguardando confirmação" desse paciente
+                                const appointment = await db.Appointment.findOne({
+                                    where: { patientId: patient.id, status: 'scheduled' },
+                                    order: [['start', 'ASC']]
+                                });
+
+                                if (appointment) {
+                                    // Busca os dados do psicólogo para poder avisá-lo
+                                    const psi = await db.Psychologist.findByPk(appointment.psychologistId);
+                                    const dateStr = new Date(appointment.start).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit' });
+                                    const timeStr = new Date(appointment.start).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
+                                    
+                                    const patientFirstName = patient.nome.split(' ')[0];
+                                    const psiFirstName = psi ? psi.nome.split(' ')[0] : 'Psicólogo';
+
+                                    if (buttonText.includes('CONFIRMAR') || buttonText.includes('SIM')) {
+                                        await appointment.update({ status: 'confirmed' });
+                                        // [DESATIVADO TEMPORARIAMENTE]
+                                        // await whatsappService.sendMessage(phone, "✅ Que ótimo! Sua sessão foi confirmada na agenda do(a) psicólogo(a). Até logo!");
+                                    } else if (buttonText.includes('CANCELAR') || buttonText.includes('NÃO')) {
+                                        await appointment.update({ status: 'cancelled' });
+                                        await db.Appointment.create({ title: 'Disponível', start: appointment.start, end: appointment.end, psychologistId: appointment.psychologistId, status: 'available', value: 0 });
+                                        // [DESATIVADO TEMPORARIAMENTE]
+                                        // await whatsappService.sendMessage(phone, "❌ Tudo bem, sua sessão foi cancelada e o horário liberado na agenda.");
+                                        
+                                        // 🔔 AVISO IMEDIATO PARA O PSICÓLOGO
+                                        /*
+                                        if (psi && psi.telefone) {
+                                            await whatsappService.sendTemplateMessage(psi.telefone, 'alerta_agenda', 'pt_BR', [
+                                                { type: "body", parameters: [
+                                                    { type: "text", text: psiFirstName },
+                                                    { type: "text", text: patientFirstName },
+                                                    { type: "text", text: "cancelou" },
+                                                    { type: "text", text: `${dateStr} às ${timeStr}` }
+                                                ]}
+                                            ]);
+                                        }
+                                        */
+                                    } else if (buttonText.includes('REAGENDAR') || buttonText.includes('TROCAR')) {
+                                        await appointment.update({ status: 'rescheduled' });
+                                        // [DESATIVADO TEMPORARIAMENTE]
+                                        // await whatsappService.sendMessage(phone, "🔄 Você optou por reagendar. Por favor, acesse a plataforma Yelo ou mande uma mensagem direta para o psicólogo para escolher um novo horário.");
+                                        
+                                        // 🔔 AVISO IMEDIATO PARA O PSICÓLOGO
+                                        /*
+                                        if (psi && psi.telefone) {
+                                            await whatsappService.sendTemplateMessage(psi.telefone, 'alerta_agenda', 'pt_BR', [
+                                                { type: "body", parameters: [
+                                                    { type: "text", text: psiFirstName },
+                                                    { type: "text", text: patientFirstName },
+                                                    { type: "text", text: "solicitou o reagendamento de" },
+                                                    { type: "text", text: `${dateStr} às ${timeStr}` }
+                                                ]}
+                                            ]);
+                                        }
+                                        */
+                                    }
+                                }
+                            }
+                        } else if (message.type === 'text') {
+                            console.log(`📱 [WHATSAPP] Texto recebido de ${phone}: ${message.text.body}`);
+                        }
+                    }
+                }
+            }
+            res.status(200).send('EVENT_RECEIVED');
+        } else {
+            res.sendStatus(404);
+        }
+    } catch (error) {
+        console.error("❌ [WHATSAPP] Erro no webhook:", error);
+        res.sendStatus(500);
+    }
+});
 
 // --- AGENDADORES (CRON JOBS) ---
 const startCronJobs = () => {
@@ -1303,12 +1484,17 @@ const startCronJobs = () => {
       console.warn('⚠️ [CRON] Aviso: Não foi possível carregar o scheduler.js.', err.message);
   }
 
+  let lastReminderHour = -1;
+  let lastSummaryMinute = "";
+
   setInterval(async () => {
     const now = new Date();
-    const currentHM = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); // Ex: "08:00"
+    const currentHM = now.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' }); // Ex: "08:00"
     
     // 1. RESUMO DIÁRIO (Personalizado por Psicólogo)
-    try {
+    if (currentHM !== lastSummaryMinute) {
+        lastSummaryMinute = currentHM;
+        try {
         // Busca psicólogos que configuraram o resumo para o horário atual
         const psisSummary = await db.Psychologist.findAll({ 
             where: { dailySummaryTime: currentHM } 
@@ -1317,8 +1503,9 @@ const startCronJobs = () => {
         if (psisSummary.length > 0) {
             console.log(`⏰ [CRON] Enviando resumo diário para ${psisSummary.length} psicólogos às ${currentHM}...`);
             
-            const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
-            const endOfDay = new Date(); endOfDay.setHours(23,59,59,999);
+            const brtDateStr = now.toLocaleDateString("sv-SE", {timeZone: "America/Sao_Paulo"}); // Garante YYYY-MM-DD no Brasil
+            const startOfDay = new Date(`${brtDateStr}T00:00:00-03:00`);
+            const endOfDay = new Date(`${brtDateStr}T23:59:59.999-03:00`);
             const psiIds = psisSummary.map(p => p.id);
 
             const appointments = await db.Appointment.findAll({
@@ -1343,7 +1530,7 @@ const startCronJobs = () => {
                     let msgLines = [`Olá ${psi.nome}. Segue o resumo das suas sessões de hoje:`];
                     
                     for (const app of apps) {
-                        const time = new Date(app.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                        const time = new Date(app.start).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
                         const patientName = app.title || 'Paciente'; // Nome do paciente
                         
                         let statusText = app.status;
@@ -1355,20 +1542,27 @@ const startCronJobs = () => {
                         msgLines.push(`${patientName}, às ${time} - ${statusText}`);
                     }
                     
-                    whatsappService.sendMessage(psi.telefone || `Psi_${psi.id}`, msgLines.join('\n'));
+                    // [DESATIVADO TEMPORARIAMENTE] Aguardando configuração na Meta
+                    // whatsappService.sendMessage(psi.telefone || `Psi_${psi.id}`, msgLines.join('\n'));
                 } else {
-                    whatsappService.sendMessage(psi.telefone || `Psi_${psi.id}`, `Olá ${psi.nome}. Nenhuma sessão agendada para hoje.`);
+                    // [DESATIVADO TEMPORARIAMENTE] Aguardando configuração na Meta
+                    // whatsappService.sendMessage(psi.telefone || `Psi_${psi.id}`, `Olá ${psi.nome}. Nenhuma sessão agendada para hoje.`);
                 }
             }
-        }
-    } catch (e) { console.error("Erro no cron de resumo:", e); }
+            }
+        } catch (e) { console.error("Erro no cron de resumo:", e); }
+    }
 
     // 2. LEMBRETES DE SESSÃO (A cada hora cheia)
-    if (now.getMinutes() === 0) {
+    const currentBrtHour = parseInt(now.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit' }), 10);
+    
+    // Garante que rode apenas 1 vez por hora, mesmo que o setInterval atrase alguns segundos
+    if (currentBrtHour !== lastReminderHour) {
+        lastReminderHour = currentBrtHour;
         console.log("⏰ [CRON] Verificando lembretes de sessão...");
         try {
             // Busca sessões nas próximas 48h para verificar antecedência
-            const lookAhead = new Date(); lookAhead.setHours(lookAhead.getHours() + 48);
+            const lookAhead = new Date(now.getTime() + 48 * 60 * 60 * 1000);
             
             const upcomingAppointments = await db.Appointment.findAll({
                 where: { 
@@ -1386,14 +1580,33 @@ const startCronJobs = () => {
         
                 // Se faltar exatamente X horas (com margem de erro de 5 min)
                 if (Math.abs(timeDiff - hoursBefore) < 0.1) {
-                    const dateStr = new Date(appt.start).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-                    const timeStr = new Date(appt.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    const patient = await db.Patient.findByPk(appt.patientId);
+                    // Pula se não tiver telefone ou se optou por NÃO receber mensagens
+                    if (!patient || !patient.telefone || patient.recebe_mensagens === false) continue;
+
+                    const dateStr = new Date(appt.start).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit' });
+                    const timeStr = new Date(appt.start).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
                     
-                    const msg = `Olá, sou a Yelo, assistente virtual de ${appt.psychologist.nome}. Você confirma a sessão do dia ${dateStr} às ${timeStr}?`;
-                    
-                    whatsappService.sendInteractiveMessage(`Paciente_${appt.id}`, msg, [
-                        "Sim, eu confirmo", "Preciso reagendar", "Quero cancelar"
-                    ]);
+                    // Primeiro nome do paciente e psicologo
+                    const patientFirstName = patient.nome.split(' ')[0];
+                    const psiFirstName = appt.psychologist.nome.split(' ')[0];
+
+                    // Disparo oficial usando a Cloud API
+                    // [DESATIVADO TEMPORARIAMENTE] Aguardando configuração na Meta
+                    /*
+                    await whatsappService.sendTemplateMessage(
+                        patient.telefone, 
+                        'lembrete_sessao', // <-- Nome EXATO que você vai dar ao Template na Meta
+                        'pt_BR', 
+                        [
+                            { type: "body", parameters: [
+                                { type: "text", text: patientFirstName },
+                                { type: "text", text: psiFirstName },
+                                { type: "text", text: `${dateStr} às ${timeStr}` }
+                            ]}
+                        ]
+                    );
+                    */
                 }
             }
         } catch (e) { console.error("Erro no cron de lembretes:", e); }
@@ -1402,11 +1615,15 @@ const startCronJobs = () => {
 };
 
 // --- ROTAS DE PACIENTES (CRUD) ---
-app.get('/api/my-patients', async (req, res) => {
+app.get('/api/my-patients', verifyTokenLocal, async (req, res) => {
     try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) return res.status(401).json({ error: 'Não autorizado' });
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+        const decoded = req.userDecoded;
+        
+        // Garantia de que o modelo existe
+        if (!db.Patient) {
+            console.error("Erro: db.Patient não está definido.");
+            return res.status(500).json({ error: 'Modelo de pacientes não encontrado.' });
+        }
 
         // Busca pacientes vinculados a este psicólogo (Lógica simplificada: busca todos por enquanto ou cria tabela de vínculo)
         // Para este MVP, vamos buscar na tabela Patients onde o psicólogo criou (se houver coluna) 
@@ -1417,16 +1634,14 @@ app.get('/api/my-patients', async (req, res) => {
         const patients = await db.Patient.findAll(); 
         res.json(patients);
     } catch (error) {
+        console.error("Erro em GET /api/my-patients:", error);
         res.status(500).json({ error: 'Erro ao buscar pacientes.' });
     }
 });
 
 // --- ROTA: Buscar Detalhes do Paciente (CORREÇÃO DO ERRO 404) ---
-app.get('/api/my-patients/:id', async (req, res) => {
+app.get('/api/my-patients/:id', verifyTokenLocal, async (req, res) => {
     try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) return res.status(401).json({ error: 'Não autorizado' });
-        
         const { id } = req.params;
         const patient = await db.Patient.findByPk(id);
         
@@ -1434,13 +1649,14 @@ app.get('/api/my-patients/:id', async (req, res) => {
         
         res.json(patient);
     } catch (error) {
+        console.error("Erro em GET /api/my-patients/:id :", error);
         res.status(500).json({ error: 'Erro ao buscar detalhes do paciente.' });
     }
 });
 
-app.post('/api/my-patients', async (req, res) => {
+app.post('/api/my-patients', verifyTokenLocal, async (req, res) => {
     try {
-        const { name, phone, email, status, sessionValue, observacoes } = req.body;
+        const { name, phone, email, status, sessionValue, observacoes, recebeMensagens } = req.body;
         // Cria paciente (simplificado)
         const patient = await db.Patient.create({
             nome: name,
@@ -1449,6 +1665,7 @@ app.post('/api/my-patients', async (req, res) => {
             status: status || 'ativo',
             sessionValue: sessionValue || 0,
             observacoes: observacoes, // Salva observações na criação
+            recebe_mensagens: recebeMensagens !== undefined ? recebeMensagens : true,
             senha: await bcrypt.hash('temp123', 8) // FIX: Senha obrigatória
         });
         res.json(patient);
@@ -1459,13 +1676,10 @@ app.post('/api/my-patients', async (req, res) => {
     }
 });
 
-app.put('/api/my-patients/:id', async (req, res) => {
+app.put('/api/my-patients/:id', verifyTokenLocal, async (req, res) => {
     try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) return res.status(401).json({ error: 'Não autorizado' });
-        
         const { id } = req.params;
-        const { name, phone, email, status, sessionValue, observacoes } = req.body;
+        const { name, phone, email, status, sessionValue, observacoes, recebeMensagens } = req.body;
         
         const patient = await db.Patient.findByPk(id);
         if (!patient) return res.status(404).json({ error: 'Paciente não encontrado' });
@@ -1475,7 +1689,8 @@ app.put('/api/my-patients/:id', async (req, res) => {
             telefone: phone,
             status: status,
             sessionValue: sessionValue,
-            observacoes: observacoes // Atualiza observações
+            observacoes: observacoes, // Atualiza observações
+            recebe_mensagens: recebeMensagens !== undefined ? recebeMensagens : true
         };
 
         // Só atualiza email se for válido e não vazio (evita erro de validação)
@@ -1492,11 +1707,8 @@ app.put('/api/my-patients/:id', async (req, res) => {
     }
 });
 
-app.delete('/api/my-patients/:id', async (req, res) => {
+app.delete('/api/my-patients/:id', verifyTokenLocal, async (req, res) => {
     try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) return res.status(401).json({ error: 'Não autorizado' });
-        
         const { id } = req.params;
         const patient = await db.Patient.findByPk(id);
         
@@ -1505,15 +1717,15 @@ app.delete('/api/my-patients/:id', async (req, res) => {
         await patient.destroy();
         res.json({ success: true, message: 'Paciente excluído com sucesso.' });
     } catch (error) {
+        console.error("Erro em DELETE /api/my-patients/:id :", error);
         res.status(500).json({ error: 'Erro ao excluir paciente.' });
     }
 });
 
 // --- ROTAS DE AGENDAMENTOS (COM WHATSAPP) ---
-app.get('/api/appointments', async (req, res) => {
+app.get('/api/appointments', verifyTokenLocal, async (req, res) => {
     try {
-        const token = req.headers.authorization?.split(' ')[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+        const decoded = req.userDecoded;
         
         const appointments = await db.Appointment.findAll({
             where: { psychologistId: decoded.id }
@@ -1521,7 +1733,7 @@ app.get('/api/appointments', async (req, res) => {
 
         // --- FIX: Mapeamento de Cores por Status (Legenda) ---
         const events = appointments.map(a => {
-            const app = a.toJSON();
+            const app = typeof a.toJSON === 'function' ? a.toJSON() : a;
             let color = '#3788d8'; // Agendado (Azul Padrão)
 
             if (app.status === 'confirmed') color = '#1B4332'; // Confirmado (Verde Escuro)
@@ -1534,16 +1746,15 @@ app.get('/api/appointments', async (req, res) => {
 
         res.json(events);
     } catch (error) {
+        console.error("Erro em GET /api/appointments:", error);
         res.status(500).json({ error: 'Erro ao buscar agenda.' });
     }
 });
 
 // --- ROTA: Buscar Horários Disponíveis (Para Reagendamento) ---
-app.get('/api/appointments/available', async (req, res) => {
+app.get('/api/appointments/available', verifyTokenLocal, async (req, res) => {
     try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) return res.status(401).json({ error: 'Não autorizado' });
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+        const decoded = req.userDecoded;
         
         const slots = await db.Appointment.findAll({
             where: {
@@ -1555,24 +1766,25 @@ app.get('/api/appointments/available', async (req, res) => {
         });
         res.json(slots);
     } catch (error) {
+        console.error("Erro em GET /api/appointments/available:", error);
         res.status(500).json({ error: 'Erro ao buscar horários disponíveis.' });
     }
 });
 
-app.post('/api/appointments', async (req, res) => {
+app.post('/api/appointments', verifyTokenLocal, async (req, res) => {
     try {
-        const token = req.headers.authorization?.split(' ')[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+        const decoded = req.userDecoded;
         const { title, start, end, patientId, phone, status } = req.body;
 
         const appt = await db.Appointment.create({
-            title, start, end, patientId,
+            title, start: start, end: end, patientId,
             psychologistId: decoded.id,
             status: status || 'scheduled', // [CORREÇÃO] Aceita 'available' se enviado
             value: 0
         });
 
-        // 🔔 NOTIFICAÇÃO WHATSAPP: CONFIRMAÇÃO
+        // 🔔 NOTIFICAÇÃO WHATSAPP: CONFIRMAÇÃO (DESATIVADA: Foco apenas em lembretes)
+        /*
         if (phone) {
             try {
                 const msg = `Olá ${title}, sua sessão foi confirmada para ${whatsappService.formatDate(start)}.`;
@@ -1581,6 +1793,7 @@ app.post('/api/appointments', async (req, res) => {
                 console.error("Erro ao enviar notificação WhatsApp:", err);
             }
         }
+        */
 
         res.json(appt);
     } catch (error) {
@@ -1589,7 +1802,7 @@ app.post('/api/appointments', async (req, res) => {
     }
 });
 
-app.put('/api/appointments/:id', async (req, res) => {
+app.put('/api/appointments/:id', verifyTokenLocal, async (req, res) => {
     try {
         const { status, start, end, value, phone, title } = req.body;
         const appt = await db.Appointment.findByPk(req.params.id);
@@ -1598,7 +1811,7 @@ app.put('/api/appointments/:id', async (req, res) => {
 
         const oldStart = appt.start;
         
-        await appt.update({ status, start, end, value });
+        await appt.update({ status, start: start, end: end, value });
 
         // --- LÓGICA: LIBERAR HORÁRIO AO CANCELAR ---
         if (status === 'cancelled') {
@@ -1624,7 +1837,8 @@ app.put('/api/appointments/:id', async (req, res) => {
             }
         }
 
-        // 🔔 NOTIFICAÇÕES WHATSAPP
+        // 🔔 NOTIFICAÇÕES WHATSAPP (DESATIVADAS: Foco apenas em lembretes)
+        /*
         if (phone) {
             // 1. Reagendamento (Data mudou)
             if (start && new Date(start).getTime() !== new Date(oldStart).getTime()) {
@@ -1663,15 +1877,17 @@ app.put('/api/appointments/:id', async (req, res) => {
                 whatsappService.sendMessage(phone, msg);
             }
         }
+        */
 
         res.json(appt);
     } catch (error) {
+        console.error("Erro em PUT /api/appointments/:id :", error);
         res.status(500).json({ error: 'Erro ao atualizar agendamento.' });
     }
 });
 
 // --- ROTA: SIMULAR LEMBRETE (DISPARO MANUAL) ---
-app.post('/api/appointments/:id/remind', async (req, res) => {
+app.post('/api/appointments/:id/remind', verifyTokenLocal, async (req, res) => {
     try {
         const appt = await db.Appointment.findByPk(req.params.id);
         if (!appt) return res.status(404).json({ error: 'Agendamento não encontrado.' });
@@ -1686,20 +1902,21 @@ app.post('/api/appointments/:id/remind', async (req, res) => {
         
         const msg = `Olá, sou a Yelo, assistente virtual de ${psychologist ? psychologist.nome : 'seu psicólogo'}. Você confirma a sessão do dia ${dateStr} às ${timeStr}?`;
         
-        await whatsappService.sendInteractiveMessage(patient.telefone, msg, ["Sim, eu confirmo", "Preciso reagendar", "Quero cancelar"]);
+        // [DESATIVADO TEMPORARIAMENTE] await whatsappService.sendInteractiveMessage(patient.telefone, msg, ["Sim, eu confirmo", "Preciso reagendar", "Quero cancelar"]);
 
-        res.json({ success: true, message: 'Lembrete enviado com sucesso!' });
+        res.json({ success: true, message: 'Funcionalidade em configuração. Lembrete simulado com sucesso!' });
     } catch (error) {
         console.error("Erro ao enviar lembrete manual:", error);
         res.status(500).json({ error: 'Erro ao enviar lembrete.' });
     }
 });
 
-app.delete('/api/appointments/:id', async (req, res) => {
+app.delete('/api/appointments/:id', verifyTokenLocal, async (req, res) => {
     try {
         await db.Appointment.destroy({ where: { id: req.params.id } });
         res.json({ success: true });
     } catch (error) {
+        console.error("Erro em DELETE /api/appointments/:id :", error);
         res.status(500).json({ error: 'Erro ao excluir.' });
     }
 });
@@ -1790,6 +2007,7 @@ app.get('/api/fix-patient-table', async (req, res) => {
         await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "valor_sessao_faixa" VARCHAR(255);');
         await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "temas_buscados" JSONB DEFAULT \'[]\';');
         await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "identidade_genero" VARCHAR(255);');
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "recebe_mensagens" BOOLEAN DEFAULT TRUE;');
         
         res.send("✅ Tabela de Pacientes verificada e corrigida.");
     } catch (error) {
@@ -1801,11 +2019,9 @@ app.get('/api/fix-patient-table', async (req, res) => {
 // --- ROTAS FINANCEIRAS (PRODUÇÃO) ---
 
 // 1. Obter Resumo Financeiro (Dashboard)
-app.get('/api/financials/dashboard', async (req, res) => {
+app.get('/api/financials/dashboard', verifyTokenLocal, async (req, res) => {
     try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) return res.status(401).json({ error: 'Não autorizado' });
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+        const decoded = req.userDecoded;
         
         // Filtro de data (opcional, padrão mês atual)
         const { month } = req.query; // Formato YYYY-MM
@@ -1844,11 +2060,9 @@ app.get('/api/financials/dashboard', async (req, res) => {
 });
 
 // 2. Criar Despesa
-app.post('/api/financials/expenses', async (req, res) => {
+app.post('/api/financials/expenses', verifyTokenLocal, async (req, res) => {
     try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) return res.status(401).json({ error: 'Não autorizado' });
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+        const decoded = req.userDecoded;
 
         const { description, value, date } = req.body;
         
@@ -1867,15 +2081,14 @@ app.post('/api/financials/expenses', async (req, res) => {
 });
 
 // 3. Excluir Despesa
-app.delete('/api/financials/expenses/:id', async (req, res) => {
+app.delete('/api/financials/expenses/:id', verifyTokenLocal, async (req, res) => {
     try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) return res.status(401).json({ error: 'Não autorizado' });
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+        const decoded = req.userDecoded;
 
         await db.Expense.destroy({ where: { id: req.params.id, psychologistId: decoded.id } });
         res.json({ success: true });
     } catch (error) {
+        console.error("Erro em DELETE /api/financials/expenses/:id :", error);
         res.status(500).json({ error: 'Erro ao excluir despesa.' });
     }
 });
@@ -1917,14 +2130,285 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use('/api/patients', patientRoutes);
 
+// --- CORREÇÃO DE AUTENTICAÇÃO DO BLOG (Bypass 403 usando verifyTokenLocal) ---
+app.get('/api/psychologists/me/posts', verifyTokenLocal, async (req, res) => {
+    try {
+        const psiId = req.userDecoded.id;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = (page - 1) * limit;
+
+        let rows = [];
+        try {
+            const result = await db.Post.findAndCountAll({
+                where: { psychologistId: psiId },
+                order: [['createdAt', 'DESC']],
+                limit,
+                offset
+            });
+            rows = result.rows;
+        } catch (e) {
+            const result = await db.Post.findAndCountAll({
+                where: { psychologist_id: psiId },
+                order: [['created_at', 'DESC']],
+                limit,
+                offset
+            });
+            rows = result.rows;
+        }
+
+        // O FRONTEND ESPERA UM ARRAY DIRETAMENTE
+        res.json(rows);
+    } catch (error) {
+        console.error("Erro GET posts:", error);
+        res.status(500).json({ error: 'Erro interno ao buscar artigos.' });
+    }
+});
+
+app.post('/api/psychologists/me/posts', verifyTokenLocal, async (req, res) => {
+    try {
+        const psiId = req.userDecoded.id;
+        const { titulo, conteudo, imagem_url } = req.body;
+        const slug = titulo.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
+
+        const postPayload = { titulo, conteudo, slug };
+        
+        // Suporte dinâmico para os campos dependendo da versão do Model ativo
+        if (db.Post.rawAttributes && db.Post.rawAttributes.psychologistId) postPayload.psychologistId = psiId;
+        else postPayload.psychologist_id = psiId;
+        
+        if (db.Post.rawAttributes && db.Post.rawAttributes.imagemUrl) postPayload.imagemUrl = imagem_url;
+        else postPayload.imagem_url = imagem_url;
+
+        const novoPost = await db.Post.create(postPayload);
+
+        try {
+            const gamificationService = require('./services/gamificationService');
+            if (gamificationService) await gamificationService.processAction(psiId, 'blog_post');
+        } catch(e) { console.error("Erro gamificação blog:", e); }
+
+        res.status(201).json(novoPost);
+    } catch (error) {
+        console.error("Erro POST post:", error);
+        res.status(500).json({ error: 'Erro interno ao criar artigo.' });
+    }
+});
+
+app.put('/api/psychologists/me/posts/:id', verifyTokenLocal, async (req, res) => {
+    try {
+        const psiId = req.userDecoded.id;
+        const { titulo, conteudo, imagem_url } = req.body;
+        
+        let post = await db.Post.findOne({ where: { id: req.params.id, psychologistId: psiId } }).catch(() => null);
+        if (!post) post = await db.Post.findOne({ where: { id: req.params.id, psychologist_id: psiId } }).catch(() => null);
+        
+        if (!post) return res.status(404).json({ error: 'Artigo não encontrado.' });
+        
+        const updatePayload = { titulo, conteudo };
+        if (db.Post.rawAttributes && db.Post.rawAttributes.imagemUrl) updatePayload.imagemUrl = imagem_url;
+        else updatePayload.imagem_url = imagem_url;
+
+        await post.update(updatePayload);
+        res.json(post);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro interno ao atualizar artigo.' });
+    }
+});
+
+app.delete('/api/psychologists/me/posts/:id', verifyTokenLocal, async (req, res) => {
+    try {
+        const psiId = req.userDecoded.id;
+        let deleted = await db.Post.destroy({ where: { id: req.params.id, psychologistId: psiId } }).catch(() => 0);
+        if (!deleted) deleted = await db.Post.destroy({ where: { id: req.params.id, psychologist_id: psiId } }).catch(() => 0);
+        
+        if (!deleted) return res.status(404).json({ error: 'Artigo não encontrado.' });
+        res.json({ message: 'Artigo excluído com sucesso.' });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro interno ao excluir artigo.' });
+    }
+});
+
 // MOVIDO PARA CIMA: Evita conflito com a rota genérica /api/psychologists
 app.use('/api/psychologists/me/posts', blogRoutes);
 
 // ROTA DE ANALYTICS (NOVA)
 app.get('/api/psychologists/me/analytics', protect, psychologistController.getAnalyticsData);
-// ROTA DE FAVORITOS (NOVA)
+
+// ROTA DE FAVORITOS (DADOS REAIS)
+app.get('/api/psychologists/me/favorites-profile', verifyTokenLocal, async (req, res) => {
+    try {
+        const decoded = req.userDecoded;
+        const psiId = decoded.id;
+
+        let patients = [];
+
+        // 1. TENTA BUSCAR NA TABELA DE ASSOCIAÇÃO "PatientFavorites" (Padrão comum do Sequelize)
+        try {
+            patients = await db.sequelize.query(`
+                SELECT p.temas_buscados, p.valor_sessao_faixa, p.identidade_genero
+                FROM "Patients" p
+                INNER JOIN "PatientFavorites" pf 
+                   ON p.id = pf."patientId" OR p.id = pf."PatientId"
+                WHERE pf."psychologistId" = :psiId OR pf."PsychologistId" = :psiId
+            `, {
+                replacements: { psiId },
+                type: db.sequelize.QueryTypes.SELECT
+            });
+        } catch (errAssoc) {
+            // 2. SE FALHAR, TENTA BUSCAR EM UMA TABELA GENÉRICA DE FAVORITOS
+            try {
+                patients = await db.sequelize.query(`
+                    SELECT p.temas_buscados, p.valor_sessao_faixa, p.identidade_genero
+                    FROM "Patients" p
+                    INNER JOIN "Favorites" f 
+                       ON p.id = f."patientId" OR p.id = f."PatientId"
+                    WHERE f."psychologistId" = :psiId OR f."PsychologistId" = :psiId
+                `, {
+                    replacements: { psiId },
+                    type: db.sequelize.QueryTypes.SELECT
+                });
+            } catch (errFav) {
+                // 3. SE FALHAR NOVAMENTE, TENTA BUSCAR NA PRÓPRIA TABELA DE PATIENTS (Caso use Array JSONB)
+                try {
+                    const allPatients = await db.Patient.findAll({
+                        attributes: ['favoritos', 'favorites', 'temas_buscados', 'valor_sessao_faixa', 'identidade_genero']
+                    });
+                    
+                    patients = allPatients.filter(p => {
+                        const favs = p.favoritos || p.favorites || [];
+                        return Array.isArray(favs) && favs.includes(psiId);
+                    });
+                } catch (errJson) {
+                    console.warn("⚠️ Não foi possível encontrar a relação de favoritos no banco. Retornando vazio.");
+                    patients = [];
+                }
+            }
+        }
+
+        // Estrutura de retorno
+        const data = {
+            total: patients.length,
+            temas: {},
+            faixaValor: {},
+            genero: {}
+        };
+
+        // Agrupa os dados dos pacientes
+        patients.forEach(p => {
+            // Agrega Temas
+            let temas = p.temas_buscados;
+            if (typeof temas === 'string') {
+                try { temas = JSON.parse(temas); } catch (e) { temas = []; }
+            }
+            if (Array.isArray(temas)) {
+                temas.forEach(t => {
+                    if (t) data.temas[t] = (data.temas[t] || 0) + 1;
+                });
+            }
+
+            // Agrega Faixa de Valor
+            if (p.valor_sessao_faixa) {
+                const f = p.valor_sessao_faixa;
+                data.faixaValor[f] = (data.faixaValor[f] || 0) + 1;
+            }
+
+            // Agrega Gênero
+            if (p.identidade_genero) {
+                const g = p.identidade_genero;
+                data.genero[g] = (data.genero[g] || 0) + 1;
+            }
+        });
+
+        // Ordena os temas e pega o TOP 5 para o gráfico não ficar poluído
+        const sortedTemas = Object.entries(data.temas)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .reduce((obj, [key, val]) => {
+                obj[key] = val;
+                return obj;
+            }, {});
+        
+        data.temas = sortedTemas;
+
+        res.json(data);
+    } catch (error) {
+        console.error("Erro ao processar analytics de favoritos:", error);
+        res.status(500).json({ error: 'Erro interno ao analisar os favoritos.' });
+    }
+});
+
+// ROTAS DE PSICÓLOGOS
 app.use('/api/psychologists', psychologistRoutes);
-app.use('/api/messaging', messagingRoutes);
+
+// --- ROTA: ESTATÍSTICAS DE CONTRIBUIÇÃO DO PSICÓLOGO ---
+app.get('/api/psychologists/me/contributions-stats', verifyTokenLocal, async (req, res) => {
+    try {
+        const psychologistId = req.userDecoded.id;
+        const replacements = { psiId: psychologistId };
+
+        // Otimização: Executa todas as contagens em paralelo e usa raw queries para robustez máxima
+        const [
+            psychologistResult,
+            whatsappClicksResult,
+            profileAppearancesResult,
+            matchAppearancesResult,
+            blogPostsResult,
+            blogLikesResult,
+            forumPostsResult,
+            forumCommentsResult,
+            qnaAnswersResult
+        ] = await Promise.all([
+            // XP
+            db.sequelize.query('SELECT xp FROM "Psychologists" WHERE id = :psiId', { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ xp: 0 }]),
+            
+            // Logs
+            db.sequelize.query('SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "psychologistId" = :psiId OR "PsychologistId" = :psiId', { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
+            db.sequelize.query('SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :psiId OR "PsychologistId" = :psiId', { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
+            db.sequelize.query('SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :psiId OR "PsychologistId" = :psiId', { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
+
+            // Blog
+            db.sequelize.query('SELECT COUNT(*) as count FROM "posts" WHERE "psychologist_id" = :psiId OR "psychologistId" = :psiId', { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
+            db.sequelize.query('SELECT SUM(curtidas) as sum FROM "posts" WHERE "psychologist_id" = :psiId OR "psychologistId" = :psiId', { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ sum: 0 }]),
+            
+            // Forum
+            db.sequelize.query('SELECT COUNT(*) as count FROM "ForumPosts" WHERE "PsychologistId" = :psiId OR "psychologistId" = :psiId', { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
+            db.sequelize.query('SELECT COUNT(*) as count FROM "ForumComments" WHERE "PsychologistId" = :psiId OR "psychologistId" = :psiId', { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
+            
+            // Q&A
+            db.sequelize.query('SELECT COUNT(*) as count FROM "answers" WHERE "psychologistId" = :psiId', { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }])
+        ]);
+
+        // Processa os resultados das raw queries
+        const xp = parseInt(psychologistResult[0]?.xp || 0, 10);
+        const whatsappClicks = parseInt(whatsappClicksResult[0]?.count || 0, 10);
+        const profileAppearances = parseInt(profileAppearancesResult[0]?.count || 0, 10);
+        const matchAppearances = parseInt(matchAppearancesResult[0]?.count || 0, 10);
+        const blogPosts = parseInt(blogPostsResult[0]?.count || 0, 10);
+        const blogLikes = parseInt(blogLikesResult[0]?.sum || 0, 10);
+        const forumPosts = parseInt(forumPostsResult[0]?.count || 0, 10);
+        const forumComments = parseInt(forumCommentsResult[0]?.count || 0, 10);
+        const qnaAnswers = parseInt(qnaAnswersResult[0]?.count || 0, 10);
+
+        res.json({
+            xp,
+            whatsappClicks,
+            profileAppearances,
+            matchAppearances,
+            blogPosts,
+            blogLikes,
+            forumPosts,
+            forumComments,
+            qnaAnswers
+        });
+
+    } catch (error) {
+        console.error("Erro CRÍTICO ao buscar estatísticas de contribuição:", error);
+        res.status(500).json({ error: 'Erro interno ao buscar estatísticas de contribuição.' });
+    }
+});
+
+// Alias: Aponta a rota antiga para o controller moderno para evitar quebrar o Frontend
+app.use('/api/messaging', messageRoutes); 
 app.use('/api/messages', messageRoutes);
 app.use('/api/demand', demandRoutes);
 app.use('/api/usuarios', usuarioRoutes);
@@ -1966,7 +2450,7 @@ app.delete('/api/admin/psychologists/:id', async (req, res) => {
         // Verificação básica de token (Admin)
         const token = req.headers.authorization?.split(' ')[1];
         if (!token) return res.status(401).json({ error: 'Não autorizado' });
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         if (decoded.role !== 'admin' && decoded.type !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
 
         const { id } = req.params;
@@ -1981,7 +2465,6 @@ app.delete('/api/admin/psychologists/:id', async (req, res) => {
 
 // ROTAS DE ADMIN (ORDEM DE ESPECIFICIDADE IMPORTA)
 app.use('/api/admin/messages', adminMessageRoutes); // Rotas de mensagem do admin (mais específicas)
-app.use('/api/admin/support', adminSupportRoutes); // Rotas de suporte do admin (mais específicas)
 app.use('/api/admin', adminRoutes); // Rotas genéricas do admin (devem vir por último)
 
 // --- ROTAS DE GESTÃO DE CONTEÚDO (ADMIN) ---
@@ -2020,7 +2503,7 @@ const checkAdminToken = (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'Não autorizado' });
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secreto_yelo_dev');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         if (decoded.role !== 'admin' && decoded.type !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
         next();
     } catch (e) {
@@ -2041,7 +2524,6 @@ app.get('/api/admin/export/waitlist', adminController.exportWaitlist);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/qna', qnaRoutes);
 app.use('/api/payments', paymentRoutes);
-app.use('/api/support', supportRoutes);
 // app.use('/api/newsletter', newsletterRoutes); // <-- REMOVIDO DAQUI
 app.use('/api/forum', forumRoutes); // <--- ROTAS DO FÓRUM
 
@@ -2058,14 +2540,41 @@ app.post('/api/public/psychologists/:slug/whatsapp-click', async (req, res) => {
             return res.status(404).send('Psicólogo não encontrado.');
         }
 
+        // --- PLG: TRAVA DE LIMITE DE CLIQUES (TRIAL) ---
+        const MAX_TRIAL_CLICKS = 3;
+        const isAssinante = psychologist.status === 'active' || psychologist.is_exempt;
+        const clicksAtuais = psychologist.whatsapp_clicks || 0;
+
+        if (!isAssinante && clicksAtuais >= MAX_TRIAL_CLICKS) {
+            return res.status(403).json({ 
+                error: 'Profissional com agenda lotada no momento.' 
+            });
+        }
+
         // Insere com o patientId (pode ser null se for visitante)
         await db.sequelize.query(
             `INSERT INTO "WhatsappClickLogs" ("psychologistId", "patientId", "guestPhone", "guestName", "createdAt", "updatedAt") VALUES (:id, :patId, :phone, :name, NOW(), NOW())`,
             { replacements: { id: psychologist.id, patId: patientId || null, phone: guestPhone || null, name: guestName || null } }
         );
 
+        // --- ATUALIZA O CONTADOR DE CLIQUES NO PERFIL DO PSICÓLOGO (Para o Match Algorithm) ---
+        await db.sequelize.query(
+            `UPDATE "Psychologists" SET "whatsapp_clicks" = COALESCE("whatsapp_clicks", 0) + 1 WHERE id = :id`,
+            { replacements: { id: psychologist.id } }
+        );
+
         // --- GAMIFICATION: CLIQUE WHATSAPP (10 pts) ---
         gamificationService.processAction(psychologist.id, 'whatsapp_click').catch(e => console.error(e));
+
+        // --- DISPARO DE E-MAIL (PRIMEIRO LEAD) ---
+        // --- DISPARO DE E-MAIL (LEADS E LIMITE) ---
+        const emailService = require('./services/emailService');
+        if (clicksAtuais === 0) {
+            const emailService = require('./services/emailService');
+            emailService.sendFirstLeadEmail(psychologist).catch(e => console.error('[EMAIL] Erro ao enviar aviso de primeiro lead:', e));
+        } else if (!isAssinante && clicksAtuais === (MAX_TRIAL_CLICKS - 1)) {
+            emailService.sendLimitReachedEmail(psychologist, MAX_TRIAL_CLICKS).catch(e => console.error('[EMAIL] Erro ao enviar aviso de limite atingido:', e));
+        }
 
         res.status(200).send('Clique registrado com sucesso.');
     } catch (error) {
@@ -2107,6 +2616,65 @@ app.get('/api/public/psychologists/list', async (req, res) => {
         res.json(psis);
     } catch (error) {
         res.status(500).json({ error: 'Erro ao buscar psicólogos.' });
+    }
+});
+
+// --- ROTA PÚBLICA: PRÓXIMOS HORÁRIOS DO PSICÓLOGO ---
+app.get('/api/public/psychologists/:slug/availability', async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const psychologist = await db.Psychologist.findOne({ where: { slug } });
+
+        if (!psychologist) {
+            return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+        }
+
+        const availableSlots = await db.Appointment.findAll({
+            where: {
+                psychologistId: psychologist.id,
+                status: 'available',
+                start: { [Op.gt]: new Date() } // Apenas horários futuros
+            },
+            attributes: ['id', 'start', 'end', 'status'], // Traz apenas o necessário (mais leve)
+            order: [['start', 'ASC']]
+        });
+
+        res.json(availableSlots);
+    } catch (error) {
+        console.error("Erro ao buscar horários disponíveis:", error);
+        res.status(500).json({ error: 'Erro interno ao buscar agenda.' });
+    }
+});
+
+// --- ROTA PÚBLICA DE CONTATO (Formulário do site) ---
+app.post('/api/public/contato', async (req, res) => {
+    try {
+        const { nome, email, assunto, mensagem } = req.body;
+        
+        if (!nome || !email || !mensagem) {
+            return res.status(400).json({ success: false, error: 'Preencha todos os campos obrigatórios.' });
+        }
+
+        const emailService = require('./services/emailService');
+        
+        // O email que vai receber as mensagens de contato (pode ser o admin ou suporte)
+        const emailDestino = process.env.EMAIL_SUPPORT || 'oi@yelopsi.com.br';
+        
+        // Formata a mensagem que você vai receber na sua caixa de entrada
+        const conteudoHtml = `
+            <p><strong>Nome do Remetente:</strong> ${nome}</p>
+            <p><strong>E-mail de Contato:</strong> ${email}</p>
+            <p><strong>Assunto Selecionado:</strong> ${assunto || 'Não informado'}</p>
+            <hr>
+            <p><strong>Mensagem:</strong><br>${mensagem.replace(/\n/g, '<br>')}</p>
+        `;
+        
+        await emailService.sendEmail(emailDestino, `Novo Contato pelo Site: ${assunto}`, conteudoHtml);
+        
+        res.json({ success: true, message: 'Mensagem enviada com sucesso!' });
+    } catch (error) {
+        console.error("Erro na rota de contato:", error);
+        res.status(500).json({ success: false, error: 'Erro interno ao enviar a mensagem.' });
     }
 });
 
@@ -2260,7 +2828,7 @@ app.post('/api/login-admin-check', async (req, res) => {
         // D) GERA O TOKEN (A Correção Principal)
         const token = jwt.sign(
             { id: adminUser.id, role: 'admin', type: 'admin', nome: adminUser.nome }, // CORREÇÃO: Adicionado type: 'admin'
-            process.env.JWT_SECRET || 'secreto_yelo_dev', // Usa sua chave secreta
+            process.env.JWT_SECRET, // Usa sua chave secreta
             { expiresIn: '24h' }
         );
 
@@ -2738,7 +3306,9 @@ const startServer = async () => {
                 ADD COLUMN IF NOT EXISTS "utm_source" VARCHAR(255),
                 ADD COLUMN IF NOT EXISTS "utm_medium" VARCHAR(255),
                 ADD COLUMN IF NOT EXISTS "utm_campaign" VARCHAR(255),
-                ADD COLUMN IF NOT EXISTS "xp" INTEGER DEFAULT 0;`,
+                ADD COLUMN IF NOT EXISTS "xp" INTEGER DEFAULT 0,
+                ADD COLUMN IF NOT EXISTS "formacao_nivel" VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS "formacao_desc" TEXT;`,
             
             `ALTER TABLE "Psychologists" ALTER COLUMN "crp" DROP NOT NULL;`,
 
@@ -2763,6 +3333,7 @@ const startServer = async () => {
                 ADD COLUMN IF NOT EXISTS "valor_sessao_faixa" VARCHAR(255),
                 ADD COLUMN IF NOT EXISTS "temas_buscados" JSONB DEFAULT '[]',
                 ADD COLUMN IF NOT EXISTS "identidade_genero" VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS "recebe_mensagens" BOOLEAN DEFAULT TRUE,
                 ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;`,
             
             `ALTER TABLE "Patients" ALTER COLUMN "email" DROP NOT NULL;`,
@@ -2771,6 +3342,7 @@ const startServer = async () => {
             `ALTER TABLE "Messages" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'sent';`,
             `ALTER TABLE "Conversations" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`,
             `ALTER TABLE "ForumPosts" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`,
+            `ALTER TABLE "ForumPosts" ADD COLUMN IF NOT EXISTS "isPinned" BOOLEAN DEFAULT FALSE;`,
             `ALTER TABLE "ForumComments" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`,
             `ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "patientId" INTEGER;`,
             `ALTER TABLE "SystemLogs" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;`,
@@ -2788,6 +3360,9 @@ const startServer = async () => {
             `CREATE TABLE IF NOT EXISTS "PwaInstallLogs" ( "id" SERIAL PRIMARY KEY, "userAgent" TEXT, "platform" VARCHAR(50), "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
             `CREATE TABLE IF NOT EXISTS "ProfileAppearanceLogs" ( "id" SERIAL PRIMARY KEY, "psychologistId" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
             `CREATE TABLE IF NOT EXISTS "MatchEvents" ( "id" SERIAL PRIMARY KEY, "psychologistId" INTEGER, "matchTags" TEXT[], "matchScore" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
+            `CREATE TABLE IF NOT EXISTS "FeatureTrackingLogs" ( "id" SERIAL PRIMARY KEY, "psychologistId" INTEGER, "feature" VARCHAR(255), "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
+            `ALTER TABLE "MatchEvents" ADD COLUMN IF NOT EXISTS "patientId" INTEGER;`,
+            `ALTER TABLE "MatchEvents" ADD COLUMN IF NOT EXISTS "source" VARCHAR(255);`,
             `CREATE TABLE IF NOT EXISTS "AdminPushSubscriptions" ( "id" SERIAL PRIMARY KEY, "endpoint" TEXT UNIQUE NOT NULL, "keys" JSONB NOT NULL, "adminId" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
             `CREATE TABLE IF NOT EXISTS "SystemSettings" ( "id" SERIAL PRIMARY KEY, "maintenance_mode" BOOLEAN DEFAULT FALSE, "allow_registrations" BOOLEAN DEFAULT TRUE, "price_Essencial" FLOAT, "price_Clínico" FLOAT, "price_sol" FLOAT, "whatsapp_support" VARCHAR(255), "email_support" VARCHAR(255), "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
             `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "telefone" VARCHAR(255);`,
@@ -2851,6 +3426,23 @@ const startServer = async () => {
         } else {
             console.log('⏩ [DB SYNC] Verificação de schema pulada (SKIP_SCHEMA_SYNC ativado).');
         }
+
+         // --- FIX DEFINITIVO: Adiciona colunas faltantes em Patients via queryInterface ---
+        const queryInterface = db.sequelize.getQueryInterface();
+        const patientAttributes = await queryInterface.describeTable('Patients');
+
+        if (!patientAttributes.observacoes) {
+            await queryInterface.addColumn('Patients', 'observacoes', { type: DataTypes.TEXT });
+        }
+        if (!patientAttributes.sessionValue) {
+            await queryInterface.addColumn('Patients', 'sessionValue', { type: DataTypes.FLOAT, defaultValue: 0 });
+        }
+        if (!patientAttributes.recebe_mensagens) {
+            await queryInterface.addColumn('Patients', 'recebe_mensagens', { type: DataTypes.BOOLEAN, defaultValue: true });
+        }
+        // Adicione outras colunas do 'colsToAdd' aqui se necessário no futuro
+        // --------------------------------------------------------------------------------
+
         
         // [FIX] Libera o acesso APENAS quando tudo estiver pronto
         isDbSynced = true;
@@ -2865,10 +3457,12 @@ const startServer = async () => {
 
     if (process.env.NODE_ENV !== 'production') {
         console.log('🔄 Iniciando sincronização do Banco de Dados (DEV)...');
-        console.time('🗄️ Sequelize Sync');
-        await db.sequelize.sync({ alter: true }); // Usar { alter: true } em DEV é seguro e útil.
-        console.timeEnd('🗄️ Sequelize Sync');
-        console.log('✅ Banco de dados sincronizado (DEV).');
+        // [REMOVIDO] A sincronização com 'alter: true' está causando o bug.
+        // As correções manuais acima são mais seguras.
+        // console.time('🗄️ Sequelize Sync');
+        // await db.sequelize.sync({ alter: true }); 
+        // console.timeEnd('🗄️ Sequelize Sync');
+        console.log('✅ Sincronização de DEV concluída (usando correções manuais).');
     } else {
         // Em produção, não usamos sync() para evitar problemas. As correções manuais acima cuidam das alterações.
         console.log('✅ [DB SYNC] Conexão com banco de dados estabelecida (Modo Produção).');

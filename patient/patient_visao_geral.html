@@ -1,43 +1,38 @@
-<div class="dashboard-home">
-    <!-- Banner de Boas-vindas -->
-    <div class="welcome-section" style="background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%); color: white; padding: 40px; border-radius: 16px; margin-bottom: 40px; box-shadow: 0 10px 30px rgba(27, 67, 50, 0.15); position: relative; overflow: hidden;">
-        <h1 style="font-family: var(--font-titulos); font-size: 2.2rem; margin: 0 0 10px 0; color: #FFFFFF;">Olá, <span id="nome-usuario-dash">Visitante</span>! 👋</h1>
-        <p style="font-family: var(--font-principal); font-size: 1.1rem; opacity: 0.9; margin: 0; max-width: 600px;">Que bom te ver por aqui. Este é o seu espaço seguro para gerenciar sua jornada de cuidado.</p>
+<div class="modern-dashboard-layout">
+    <!-- Hero Moderno -->
+    <div class="modern-hero-card">
+        <div class="modern-hero-header">
+            <div class="hero-content">
+                <h1 class="modern-hero-title">Olá, <span id="nome-usuario-dash">Visitante</span>! 👋</h1>
+                <p class="modern-hero-subtitle">Que bom te ver por aqui. Este é o seu espaço seguro para gerenciar sua jornada de cuidado.</p>
+            </div>
+        </div>
     </div>
 
-    <!-- Grid de Ações Rápidas -->
-    <div class="kpi-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px;">
-        <!-- Card Matches -->
-        <div class="kpi-card action-card" data-page-target="patient_matches.html" style="cursor: pointer;">
-            <div class="card-icon match-icon" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 24px; background-color: #E8F5E9; color: #1B4332;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            </div>
-            <div>
-                <h3 style="margin: 0 0 5px 0; font-size: 1.2rem; color: #1B4332; font-family: var(--font-titulos);">Meus Matches</h3>
-                <p style="margin: 0; color: #666; font-size: 0.95rem;">Veja os profissionais compatíveis</p>
-            </div>
+    <!-- Grid de Informações (KPIs) -->
+    <div class="kpi-grid" style="padding-top: 0; margin-bottom: 20px;">
+        <div class="kpi-card" style="border-top-color: #1B4332;">
+            <h4>Matches Compatíveis</h4>
+            <p class="kpi-numero" id="kpi-matches">
+                <span class="loading-spinner-sm"></span>
+            </p>
+            <span class="kpi-delta">Profissionais encontrados</span>
         </div>
 
-        <!-- Card Favoritos -->
-        <div class="kpi-card action-card" data-page-target="patient_favoritos.html" style="cursor: pointer;">
-            <div class="card-icon fav-icon" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 24px; background-color: #FFF3E0; color: #F59E0B;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-            </div>
-            <div>
-                <h3 style="margin: 0 0 5px 0; font-size: 1.2rem; color: #1B4332; font-family: var(--font-titulos);">Favoritos</h3>
-                <p style="margin: 0; color: #666; font-size: 0.95rem;">Profissionais que você salvou</p>
-            </div>
+        <div class="kpi-card" style="border-top-color: #F59E0B;">
+            <h4>Favoritos Salvos</h4>
+            <p class="kpi-numero" id="kpi-favoritos">
+                <span class="loading-spinner-sm"></span>
+            </p>
+            <span class="kpi-delta">Perfis guardados</span>
         </div>
 
-        <!-- Card Minha Conta -->
-        <div class="kpi-card action-card" data-page-target="patient_minha_conta.html" style="cursor: pointer;">
-            <div class="card-icon account-icon" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 24px; background-color: #F3F4F6; color: #4B5563;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            </div>
-            <div>
-                <h3 style="margin: 0 0 5px 0; font-size: 1.2rem; color: #1B4332; font-family: var(--font-titulos);">Minha Conta</h3>
-                <p style="margin: 0; color: #666; font-size: 0.95rem;">Seus dados e configurações</p>
-            </div>
+        <div class="kpi-card" style="border-top-color: #BE185D;">
+            <h4>Minhas Avaliações</h4>
+            <p class="kpi-numero" id="kpi-avaliacoes">
+                <span class="loading-spinner-sm"></span>
+            </p>
+            <span class="kpi-delta">Feedbacks enviados</span>
         </div>
     </div>
 </div>

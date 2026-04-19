@@ -179,7 +179,9 @@
                 </div>
             </div>
 
-            <img src="<%= post.imagem_url || getImagemFixa(post.id) %>" alt="<%= post.titulo %>" class="imagem-destaque-artigo">
+            <% if (post.imagem_url) { %>
+            <img src="<%= post.imagem_url %>" alt="<%= post.titulo %>" class="imagem-destaque-artigo">
+            <% } %>
 
             <div class="conteudo-texto">
                 <%- post.conteudo || '' %>
@@ -286,7 +288,9 @@
             <% if (recentes && recentes.length > 0) { %>
                 <% recentes.forEach(item => { %>
                     <a href="/blog/post/<%= item.id %>" class="card-lateral">
-                        <img src="<%= item.imagem_url || getImagemFixa(item.id) %>" alt="Capa">
+                        <% if (item.imagem_url) { %>
+                        <img src="<%= item.imagem_url %>" alt="Capa">
+                        <% } %>
                         <div class="card-lateral-info">
                             <h4><%= item.titulo %></h4>
                             <span><%= new Date(item.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }) %></span>

@@ -10,6 +10,7 @@ async function processRemarketing() {
         const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
         const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
         const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
         // Busca psicólogos inativos, não administradores, sem assinatura Asaas, não VIPs
         const targetPsis = await db.Psychologist.findAll({
@@ -43,6 +44,12 @@ async function processRemarketing() {
                 await emailService.sendRemarketingEmail(psi, 3);
                 await psi.update({ remarketing_step: 3, last_remarketing_at: now });
                 console.log(`[REMARKETING] Email passo 3 enviado para ${psi.email}`);
+                enviados++;
+            } else if (step === 3 && createdAt <= fourteenDaysAgo && psi.whatsapp_clicks > 0) {
+                // Passo 4: 14 dias após o cadastro (fim do trial) para usuários que receberam contatos
+                await emailService.sendRemarketingEmail(psi, 4);
+                await psi.update({ remarketing_step: 4, last_remarketing_at: now });
+                console.log(`[REMARKETING] Email passo 4 (Conversão de Lead) enviado para ${psi.email}`);
                 enviados++;
             }
         }

@@ -155,14 +155,38 @@
                 this.querySelector('button').disabled = true;
                 this.querySelector('button').textContent = 'Enviando...';
                 
-                // Simulação de envio
-                setTimeout(() => { 
+                // Envio real para o Backend
+                fetch('/api/public/contato', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        nome: nome,
+                        email: email,
+                        assunto: assunto,
+                        mensagem: mensagem
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        status.textContent = 'Mensagem enviada com sucesso! Responderemos em breve.';
+                        status.style.color = '#198754';
+                        this.reset();
+                    } else {
+                        status.textContent = data.error || 'Erro ao enviar mensagem.';
+                        status.style.color = '#e22';
+                    }
+                })
+                .catch(err => {
+                    status.textContent = 'Erro de conexão. Tente novamente mais tarde.';
+                    status.style.color = '#e22';
+                })
+                .finally(() => {
                     this.querySelector('button').disabled = false;
                     this.querySelector('button').textContent = 'Enviar Mensagem';
-                    status.textContent = 'Mensagem enviada com sucesso! Responderemos em breve.';
-                    status.style.color = '#198754';
-                    this.reset();
-                }, 1500);
+                });
             };
         }
     </script>

@@ -177,19 +177,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1500);
     }
 
-    // Função simples de Toast (Notificação)
+    // Função de Notificação (Estilo WhatsApp)
     function showToast(message, type = 'success') {
-        const container = document.getElementById('toast-container');
-        if (!container) return;
+        // Garante que o container exista
+        let container = document.getElementById('pill-notification-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'pill-notification-container';
+            document.body.appendChild(container);
+        }
+
+        const pill = document.createElement('div');
+        pill.className = `pill-notification ${type}`;
+
+        // Ícones para cada tipo
+        let iconHtml = '';
+        if (type === 'success') {
+            iconHtml = '<span class="icon">✅</span>';
+        } else if (type === 'error') {
+            iconHtml = '<span class="icon">❌</span>';
+        } else if (type === 'info') {
+            iconHtml = '<span class="icon">ℹ️</span>';
+        }
+
+        pill.innerHTML = `${iconHtml}<span>${message}</span>`;
         
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.textContent = message;
-        toast.style.display = 'block';
-        toast.style.opacity = '1';
-        
-        container.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
+        container.appendChild(pill);
+
+        // A animação CSS cuida da entrada e saída. Apenas removemos o elemento do DOM depois.
+        setTimeout(() => {
+            pill.remove();
+        }, 4500); // O tempo da animação é 4.5s
     }
 
     init();

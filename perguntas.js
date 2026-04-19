@@ -78,7 +78,31 @@ document.addEventListener('DOMContentLoaded', () => {
             const clone = templateCard.content.cloneNode(true);
             
             clone.querySelector('.data-question-title').textContent = q.title || 'Dúvida da Comunidade';
-            clone.querySelector('.data-question-content').textContent = q.content;
+            
+            const contentEl = clone.querySelector('.data-question-content');
+
+            // Colapsa textos de perguntas muito longas (Via JavaScript para garantir o corte perfeito)
+            if (q.content && q.content.length > 200) {
+                const fullText = q.content;
+                const shortText = fullText.substring(0, 200) + '...';
+                contentEl.textContent = shortText;
+
+                const readMoreBtn = document.createElement('button');
+                readMoreBtn.className = 'btn-read-more';
+                // Style inline garante que o botão tenha estilo no Desktop, mesmo se houver conflito no CSS
+                readMoreBtn.style.cssText = "background: transparent; border: 1px solid #1B4332; color: #1B4332; font-weight: 600; padding: 6px 16px; border-radius: 20px; margin-top: 5px; margin-bottom: 15px; cursor: pointer; font-size: 0.85rem; display: inline-block; transition: all 0.2s ease;";
+                readMoreBtn.textContent = 'Ler mais...';
+                
+                let isCollapsed = true;
+                readMoreBtn.onclick = () => {
+                    isCollapsed = !isCollapsed;
+                    contentEl.textContent = isCollapsed ? shortText : fullText;
+                    readMoreBtn.textContent = isCollapsed ? 'Ler mais...' : 'Mostrar menos';
+                };
+                contentEl.after(readMoreBtn);
+            } else {
+                contentEl.textContent = q.content;
+            }
             
             const dataEnvio = new Date(q.createdAt).toLocaleDateString('pt-BR', {
                 day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit'
@@ -88,15 +112,42 @@ document.addEventListener('DOMContentLoaded', () => {
             const answersContainer = clone.querySelector('.qa-card-answers-container');
             
             if (q.answers && q.answers.length > 0) {
-                q.answers.forEach(ans => {
+                // Ordena para garantir que a mais recente seja a primeira (índice 0)
+                const sortedAnswers = q.answers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                
+                const renderAns = (ans, containerEl) => {
                     const ansClone = templateAnswer.content.cloneNode(true);
-                    ansClone.querySelector('.data-answer-content').textContent = ans.content;
+                    const ansContentEl = ansClone.querySelector('.data-answer-content');
+
+                    // Colapsa textos de respostas muito longas também (Via JavaScript)
+                    if (ans.content && ans.content.length > 250) {
+                        const fullText = ans.content;
+                        const shortText = fullText.substring(0, 250) + '...';
+                        ansContentEl.textContent = shortText;
+
+                        const readMoreAnsBtn = document.createElement('button');
+                        readMoreAnsBtn.className = 'btn-read-more';
+                        readMoreAnsBtn.style.cssText = "background: transparent; border: 1px solid #1B4332; color: #1B4332; font-weight: 600; padding: 6px 16px; border-radius: 20px; margin-top: 5px; margin-bottom: 15px; cursor: pointer; font-size: 0.85rem; display: inline-block; transition: all 0.2s ease;";
+                        readMoreAnsBtn.textContent = 'Ler mais...';
+                        
+                        let isCollapsed = true;
+                        readMoreAnsBtn.onclick = () => {
+                            isCollapsed = !isCollapsed;
+                            ansContentEl.textContent = isCollapsed ? shortText : fullText;
+                            readMoreAnsBtn.textContent = isCollapsed ? 'Ler mais...' : 'Mostrar menos';
+                        };
+                        ansContentEl.after(readMoreAnsBtn);
+                    } else {
+                        ansContentEl.textContent = ans.content;
+                    }
                     
                     if (ans.psychologist) {
-                        ansClone.querySelector('.data-psy-name').textContent = ans.psychologist.nome;
+                        const nameEl = ansClone.querySelector('.data-psy-name');
+                        const img = ansClone.querySelector('.data-psy-photo');
+                        
+                        nameEl.textContent = ans.psychologist.nome;
                         ansClone.querySelector('.data-psy-crp').textContent = `CRP: ${ans.psychologist.crp}`;
                         
-                        const img = ansClone.querySelector('.data-psy-photo');
                         if (ans.psychologist.fotoUrl) {
                             let url = ans.psychologist.fotoUrl;
                             if(!url.startsWith('http')) url = `${BASE_URL}${url}`;
@@ -107,13 +158,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         const btnPerfil = ansClone.querySelector('.btn-ver-perfil');
                         if (ans.psychologist.slug) {
-                            btnPerfil.href = `/${ans.psychologist.slug}`;
+                            const profileUrl = `/${ans.psychologist.slug}`;
+                            btnPerfil.href = profileUrl;
+                            
+                            // Navegação via foto e nome (para mobile e desktop)
+                            img.style.cursor = 'pointer';
+                            img.onclick = () => window.location.href = profileUrl;
+                            nameEl.style.cursor = 'pointer';
+                            nameEl.onclick = () => window.location.href = profileUrl;
                         } else {
                             btnPerfil.style.display = 'none';
                         }
                     }
-                    answersContainer.appendChild(ansClone);
-                });
+                    containerEl.appendChild(ansClone);
+                };
+
+                // Renderiza a última resposta (a mais recente após o sort)
+                renderAns(sortedAnswers[0], answersContainer);
+
+                // Se houver mais respostas, esconde as antigas com botão de expandir
+                if (sortedAnswers.length > 1) {
+                    const extraContainer = document.createElement('div');
+                    extraContainer.style.display = 'none';
+                    extraContainer.style.flexDirection = 'column';
+                    extraContainer.style.gap = '15px';
+                    extraContainer.style.width = '100%';
+                    
+                    for (let i = 1; i < sortedAnswers.length; i++) {
+                        renderAns(sortedAnswers[i], extraContainer);
+                    }
+                    
+                    const btnVerMais = document.createElement('button');
+                    btnVerMais.className = 'btn-read-more';
+                    btnVerMais.style.cssText = "background: transparent; border: none; color: #1B4332; font-weight: 600; padding: 0; margin-top: 5px; cursor: pointer; font-size: 0.9rem; align-self: flex-end; text-decoration: underline;";
+                    btnVerMais.textContent = `Ver outras ${sortedAnswers.length - 1} respostas`;
+                    
+                    btnVerMais.onclick = () => {
+                        extraContainer.style.display = 'flex';
+                        btnVerMais.style.display = 'none';
+                    };
+                    
+                    answersContainer.appendChild(btnVerMais);
+                    answersContainer.appendChild(extraContainer);
+                }
+
             } else {
                 const waiting = document.createElement('div');
                 waiting.className = "status-aguardando"; 
@@ -219,15 +307,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showToast(message, type = 'success') {
-        let toast = document.getElementById('Yelo-toast');
-        if (!toast) return alert(message);
-        toast.textContent = message;
-        toast.className = `toast toast-${type}`;
-        toast.style.display = 'block';
-        requestAnimationFrame(() => { toast.style.opacity = '1'; });
+        // Garante que o container exista
+        let container = document.getElementById('pill-notification-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'pill-notification-container';
+            document.body.appendChild(container);
+        }
+
+        const pill = document.createElement('div');
+        pill.className = `pill-notification ${type}`;
+
+        // Ícones para cada tipo
+        let iconHtml = '';
+        if (type === 'success') {
+            iconHtml = '<span class="icon">✅</span>';
+        } else if (type === 'error') {
+            iconHtml = '<span class="icon">❌</span>';
+        } else if (type === 'info') {
+            iconHtml = '<span class="icon">ℹ️</span>';
+        }
+
+        pill.innerHTML = `${iconHtml}<span>${message}</span>`;
+        
+        container.appendChild(pill);
+
+        // A animação CSS cuida da entrada e saída. Apenas removemos o elemento do DOM depois.
         setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => { toast.style.display = 'none'; }, 400); 
-        }, 4000);
+            pill.remove();
+        }, 4500); // O tempo da animação é 4.5s
     }
 });

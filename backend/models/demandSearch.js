@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
             primaryKey: true
         },
         searchParams: {
-            type: DataTypes.JSON,
+            type: DataTypes.JSONB, // CORREÇÃO: JSONB é necessário para índices GIN no PostgreSQL
             allowNull: true // Permite nulo para criar o rascunho inicial
         },
         // --- AQUI ESTÁ A PARTE QUE FALTOU ---

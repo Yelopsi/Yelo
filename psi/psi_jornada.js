@@ -31,16 +31,21 @@ window.inicializarPaginaJornada = async () => {
         const currentLevel = LEVELS.find(l => l.slug === currentLevelSlug) || LEVELS[0];
         const nextLevel = LEVELS.find(l => l.min > currentXp) || currentLevel;
         
-        const xpForNextLevel = nextLevel.min - currentLevel.min;
-        const xpProgress = currentXp - currentLevel.min;
-        const progressPercentage = xpForNextLevel > 0 ? (xpProgress / xpForNextLevel) * 100 : 100;
+        // Lógica Absoluta: A barra mostra o progresso total em relação ao teto do próximo nível.
+        // Evita a frustração visual da barra "zerar" quando o psicólogo sobe de nível.
+        const progressPercentage = nextLevel.min > 0 ? (currentXp / nextLevel.min) * 100 : 100;
 
         document.getElementById('xp-bar-fill').style.width = `${Math.min(100, progressPercentage)}%`;
         document.getElementById('xp-progress-text').textContent = `${currentXp} / ${nextLevel.min} XP`;
         document.getElementById('current-level-display').textContent = currentLevel.label;
         document.getElementById('xp-current-level-label').textContent = currentLevel.label;
         document.getElementById('xp-next-level-label').textContent = nextLevel.label;
-        document.getElementById('next-level-text').textContent = `Faltam ${Math.max(0, nextLevel.min - currentXp)} XP para alcançar o nível de ${nextLevel.label}.`;
+        
+        if (currentLevel.slug === nextLevel.slug) {
+            document.getElementById('next-level-text').innerHTML = `🏆 Incrível! Você alcançou o nível máximo de autoridade na Yelo. Continue inspirando nossa comunidade!`;
+        } else {
+            document.getElementById('next-level-text').innerHTML = `Você está a apenas <strong>${Math.max(0, nextLevel.min - currentXp)} XP</strong> de conquistar o nível <strong>${nextLevel.label}</strong>!`;
+        }
     }
 
     function updateBadgeCard(badgeId, currentCount, currentLevel) {
@@ -74,12 +79,15 @@ window.inicializarPaginaJornada = async () => {
         card.querySelector('.badge-progress-bar').style.width = `${Math.min(100, progressPercentage)}%`;
 
         card.classList.remove('locked', 'bronze', 'prata', 'ouro');
+        
+        const statusEl = card.querySelector('.badge-status');
         if (currentLevel) {
             card.classList.add('unlocked', currentLevel);
-            card.querySelector('.badge-status').textContent = currentLevel.charAt(0).toUpperCase() + currentLevel.slice(1);
+            if (statusEl) statusEl.innerHTML = `Nível ${currentLevel.charAt(0).toUpperCase() + currentLevel.slice(1)}`;
         } else {
             card.classList.add('locked');
-            card.querySelector('.badge-status').textContent = 'Bloqueado';
+            if (badgeId === 'pioneiro' && !currentLevel) { if (statusEl) statusEl.textContent = 'Legado'; }
+            else { if (statusEl) statusEl.textContent = 'Bloqueado'; }
         }
     }
 
@@ -90,12 +98,13 @@ window.inicializarPaginaJornada = async () => {
         card.classList.remove('locked', 'unlocked');
         if (isUnlocked) {
             card.classList.add('unlocked', 'unico');
-            card.querySelector('.badge-status').textContent = 'Conquistado';
+            card.querySelector('.badge-status').innerHTML = 'Conquistado 🎉';
             card.querySelector('.badge-progress-bar').style.width = '100%';
             card.querySelector('.badge-progress-text').textContent = '1/1';
         } else {
             card.classList.add('locked');
-            card.querySelector('.badge-status').textContent = 'Bloqueado';
+            if (badgeId === 'pioneiro') { card.querySelector('.badge-status').textContent = 'Legado'; }
+            else { card.querySelector('.badge-status').textContent = 'Bloqueado'; }
             card.querySelector('.badge-progress-bar').style.width = '0%';
             card.querySelector('.badge-progress-text').textContent = '0/1';
         }
@@ -131,6 +140,6 @@ window.inicializarPaginaJornada = async () => {
 
     } catch (error) {
         console.error("psi_jornada.js: Erro fatal ao carregar:", error);
-        document.getElementById('next-level-text').textContent = "Erro ao carregar progresso.";
+        document.getElementById('next-level-text').innerHTML = "<span style='color: #d32f2f;'>Não foi possível carregar seu progresso. Tente atualizar a página.</span>";
     }
 };

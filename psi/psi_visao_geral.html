@@ -1,218 +1,156 @@
-<div class="main-header">
-    <div class="header-content">
-        <h1 id="psi-welcome-name">Olá!</h1>
-        <p>Este é o seu centro de controle. Acompanhe suas métricas e atividades.</p>
-    </div>
-    <div class="dashboard-header-actions">
-    </div>
-</div>
-
-<!-- Alerta para completar o perfil -->
-<div id="alert-complete-profile" class="alert-box warning" style="display: none; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-    <span><strong>Seu perfil está incompleto!</strong> Complete-o para aparecer nos resultados de busca dos pacientes.</span>
-    <a href="#" data-page="psi_meu_perfil.html" class="btn btn-sm" style="background-color: #f59e0b; color: white; text-decoration: none;">Completar Perfil</a>
-</div>
-
-<!-- WIDGET DE GAMIFICAÇÃO (PROGRESSO) -->
-<div class="gamification-panel-overview" onclick="window.loadPage('psi_jornada.html')" style="margin-bottom: 30px; padding: 20px 25px; border: 1px solid #eee; box-shadow: none; cursor: pointer;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <h3 class="gami-title" style="font-size: 1rem; margin: 0;">Sua Evolução</h3>
-        <span id="current-level-display" class="gami-level-badge" style="font-size: 0.75rem; padding: 3px 10px;">Iniciante</span>
-    </div>
-
-    <!-- Barra de Progresso de XP -->
-    <div class="xp-progress-container" style="margin-bottom: 8px;">
-        <div class="xp-bar-wrapper" style="height: 8px; border-radius: 4px;">
-            <div id="xp-bar-fill" class="xp-bar-fill" style="border-radius: 4px;"></div>
+<div class="modern-dashboard-layout">
+    <!-- BLOCO 0: HERO (Banner de Desempenho) -->
+    <div class="modern-hero-card fade-in-up">
+        <div class="modern-hero-header">
+            <div class="hero-content">
+                <h1 id="psi-welcome-name" class="modern-hero-title">👋 Olá!</h1>
+                <p class="modern-hero-subtitle">Seu crescimento essa semana:</p>
+            </div>
+            <button class="modern-hero-cta">
+                Melhorar meu perfil
+            </button>
         </div>
-    </div>
-
-    <!-- Resumo de Texto (XP e Próximo Nível) -->
-    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #666;">
-        <span id="xp-progress-text" style="font-weight: 600; color: #333;">0 / 500 XP</span>
         
-        <!-- Container para o texto do próximo nível (Reaproveitando IDs para o JS funcionar) -->
-        <div id="next-level-info" style="background: none; border: none; padding: 0; margin: 0; display: inline;">
-            <span id="next-level-text">Carregando...</span>
+        <div class="modern-hero-metrics">
+            <div class="hero-metric-item">
+                <span class="hero-metric-value" id="hero-contacts">+0</span>
+                <span class="hero-metric-label">Contatos de pacientes</span>
+            </div>
+            <div class="hero-metric-item">
+                <span class="hero-metric-value" id="hero-views">0</span>
+                <span class="hero-metric-label">Visualizações no perfil</span>
+            </div>
         </div>
+        
+        <span class="hero-benchmark-tag" id="hero-benchmark-text">🔥 Seu perfil está melhor que <strong>0%</strong> dos psicólogos</span>
     </div>
-    
-    <!-- Elementos ocultos necessários para o JS não quebrar -->
-    <span id="xp-current-level-label" style="display: none;"></span>
-    <span id="xp-next-level-label" style="display: none;"></span>
-</div>
 
-<!-- Controles de Filtro de KPI -->
-<div class="kpi-controls" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 20px;">
-    <select id="kpi-date-filter" class="form-control" style="max-width: 200px;">
-        <option value="last7days">Últimos 7 dias</option>
-        <option value="last30days" selected>Últimos 30 dias</option>
-        <option value="last90days">Últimos 90 dias</option>
-        <option value="all_time">Todo o período</option>
-    </select>
-</div>
+    <!-- GRID DE CONTEÚDO (Dividido em duas colunas no Desktop) -->
+    <div class="modern-dashboard-grid">
+        
+        <!-- COLUNA PRINCIPAL (ESQUERDA) -->
+        <div class="dashboard-column-main">
+            
+            <!-- BLOCO 1: O QUE FAZER AGORA (Checklist) -->
+            <div class="modern-checklist-card fade-in-up delay-1">
+                <div class="checklist-header">
+                    <h3 class="checklist-title">🚀 Próximos passos para crescer</h3>
+                    <span class="checklist-progress-text">0/3</span>
+                </div>
+                <div class="checklist-progress-track">
+                    <div class="checklist-progress-fill" style="width: 0%;"></div>
+                </div>
+                <div class="modern-action-list">
+                <!-- As ações serão injetadas dinamicamente pelo JavaScript (psi_dashboard.js) -->
+                <div style="text-align: center; color: #888; padding: 20px 0; font-size: 0.95rem;">
+                    <span class="loading-spinner-sm" style="display:inline-block; border-color: rgba(27,67,50,0.2); border-top-color: var(--verde-escuro); margin-bottom: 10px;"></span><br>
+                    Analisando seu perfil...
+                </div>
+                </div>
+            </div>
 
-<!-- Grid de KPIs -->
-<div class="kpi-grid">
-    <div class="kpi-card">
-        <h3>Aparições no Match</h3>
-        <div class="kpi-value" id="kpi-match-impressions">0</div>
-        <p class="kpi-desc">Vezes que seu perfil apareceu no Top 3 de um paciente.</p>
-    </div>
-    <div class="kpi-card">
-        <h3>Visualizações de Perfil</h3>
-        <div class="kpi-value" id="kpi-profile-views">0</div>
-        <p class="kpi-desc">Pacientes que clicaram para ver seu perfil completo.</p>
-    </div>
-    <div class="kpi-card">
-        <h3>Cliques no WhatsApp</h3>
-        <div class="kpi-value" id="kpi-whatsapp-clicks">0</div>
-        <p class="kpi-desc">Pacientes que iniciaram contato após ver seu perfil.</p>
-    </div>
-</div>
-
-<div class="kpi-grid" style="margin-top: 25px;">
-    <div class="kpi-card">
-        <h3 title="Cliques no Perfil ÷ Aparições no Match">Taxa de Escolha (CTR)</h3>
-        <div class="kpi-value" id="kpi-taxa-escolha">N/A</div>
-        <p class="kpi-desc">Avalia a atratividade inicial da sua "vitrine".</p>
-    </div>
-    <div class="kpi-card">
-        <h3 title="Cliques no WhatsApp ÷ Visualizações de Perfil">Conversão do Perfil</h3>
-        <div class="kpi-value" id="kpi-conversao-perfil">N/A</div>
-        <p class="kpi-desc">Avalia o poder de persuasão da sua biografia.</p>
-    </div>
-    <div class="kpi-card">
-        <h3 title="Cliques no WhatsApp ÷ Aparições no Match">Conversão Final</h3>
-        <div class="kpi-value" id="kpi-conversao-final">N/A</div>
-        <p class="kpi-desc">Eficiência ponta a ponta do seu funil.</p>
-    </div>
-</div>
-
-<div class="kpi-grid" style="margin-top: 25px;">
-    <div id="card-demandas" class="kpi-card">
-        <h3>Principais Queixas Buscadas</h3>
-        <div id="lista-demandas" class="kpi-list">
-            <div class="skeleton-text" style="height: 1.2em; width: 80%; margin-bottom: 8px;"></div>
-            <div class="skeleton-text" style="height: 1.2em; width: 70%;"></div>
+            <!-- BLOCO 2: PACIENTES (Indicadores de Retorno) -->
+            <div class="modern-patients-card fade-in-up delay-2">
+                <div class="card-header-modern">
+                    <h3 class="card-title-modern">💬 Pacientes</h3>
+                </div>
+                <div class="patients-metrics-group">
+                    <div class="p-metric">
+                        <div class="p-metric-val" id="kpi-whatsapp-clicks">0</div>
+                        <div class="p-metric-label">
+                            Novos contatos
+                            <span class="info-tooltip" style="margin-left: 0; width: 16px; height: 16px;" data-tooltip="Total de pacientes que clicaram para falar com você no WhatsApp." tabindex="0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></span>
+                        </div>
+                    </div>
+                    <div class="p-metric">
+                        <div class="p-metric-val" id="kpi-match-impressions">0</div>
+                        <div class="p-metric-label">
+                            Aparições no match
+                            <span class="info-tooltip" style="margin-left: 0; width: 16px; height: 16px;" data-tooltip="Vezes que seu perfil foi recomendado pelo algoritmo aos pacientes." tabindex="0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></span>
+                        </div>
+                    </div>
+                    <div class="p-metric">
+                        <div class="p-metric-val" id="kpi-taxa-escolha">0%</div>
+                        <div class="p-metric-label">
+                            Taxa de clique
+                            <span class="info-tooltip" style="margin-left: 0; width: 16px; height: 16px;" data-tooltip="Percentual de cliques recebidos em relação às vezes que você apareceu no match." tabindex="0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></span>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-primary-action" onclick="window.loadPage('psi_pacientes.html')">
+                Gerenciar
+                </button>
+            </div>
         </div>
-        <p class="kpi-desc">Temas mais procurados por pacientes compatíveis com você.</p>
-    </div>
-    <div id="card-benchmarking" class="kpi-card">
-        <h3>Benchmarking de Mercado</h3>
-        <p class="kpi-desc">Compare sua performance com a média da plataforma.</p>
-        <a href="#" class="kpi-link" data-page="psi_analytics.html">Ver análise completa &rarr;</a>
+
+        <!-- COLUNA SECUNDÁRIA (DIREITA) -->
+        <div class="dashboard-column-side">
+            
+            <!-- BLOCO 3: AUTORIDADE (Rede Social) -->
+            <div class="modern-community-card fade-in-up delay-3">
+                <div class="card-header-modern">
+                    <h3 class="card-title-modern">🧠 Presença na comunidade</h3>
+                </div>
+                <div class="community-stats">
+                    <div class="c-stat">
+                        <div class="c-stat-icon">✍️</div>
+                        <div class="c-stat-info">
+                            <span class="c-stat-val" id="kpi-artigos">0</span>
+                            <span class="c-stat-label">Artigos publicados</span>
+                        </div>
+                    </div>
+                    <div class="c-stat">
+                        <div class="c-stat-icon">💬</div>
+                        <div class="c-stat-info">
+                            <span class="c-stat-val" id="kpi-interacoes">0</span>
+                            <span class="c-stat-label">Interações no fórum</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-secondary-action" onclick="window.loadPage('psi_blog.html')">Escrever artigo</button>
+                    <button class="btn-secondary-action" onclick="window.loadPage('psi_forum.html')">Participar do fórum</button>
+                </div>
+            </div>
+
+            <!-- BLOCO 4: GESTÃO (Widgets Compactos) -->
+            <div class="modern-management-card fade-in-up delay-4">
+                <div class="management-header">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+                    Gestão Resumida
+                </div>
+                <div class="management-list">
+                    <a href="#" class="management-item" onclick="window.loadPage('psi_pacientes.html')">
+                        <div class="m-item-left">
+                            <span class="m-item-icon">📅</span>
+                            <span class="m-item-title">Agenda Hoje</span>
+                        </div>
+                        <span class="m-item-value" id="agenda-hoje">0 atends.</span>
+                    </a>
+                    <a href="#" class="management-item" onclick="window.loadPage('psi_financeiro.html')">
+                        <div class="m-item-left">
+                            <span class="m-item-icon">💰</span>
+                            <span class="m-item-title">Financeiro</span>
+                        </div>
+                        <span class="m-item-value" id="faturamento-mes">R$ 0,00</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- BLOCO 5: NOTIFICAÇÕES E LEMBRETES (NOVO) -->
+            <div class="modern-notifications-card fade-in-up delay-5">
+                <div class="card-header-modern" style="margin-bottom: 16px;">
+                    <h3 class="card-title-modern">🔔 Fique por dentro</h3>
+                </div>
+                <div class="notification-list" id="notification-feed">
+                    <!-- Notificações serão injetadas aqui pelo JS -->
+                    <div class="smart-empty-state" id="notifications-empty-state" style="margin-bottom: 0; padding: 15px;">
+                        <div class="empty-state-icon">✨</div>
+                        <p class="empty-state-text" style="font-size: 0.9rem;">Nenhuma novidade por enquanto. Tudo em dia!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
     </div>
 </div>
-
-<style>
-    /* Estilos Específicos da Visão Geral */
-    .kpi-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 25px;
-        margin-bottom: 30px;
-    }
-    
-    .kpi-card {
-        background: white;
-        padding: 25px;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        border: 1px solid rgba(0,0,0,0.05);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        display: flex;
-        flex-direction: column;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .kpi-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-    }
-
-    .kpi-card h3 {
-        font-size: 0.85rem;
-        color: #666;
-        margin: 0 0 15px 0;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .kpi-value {
-        font-size: 2.5rem;
-        font-weight: 800;
-        color: #1B4332; /* Verde Yelo */
-        margin-bottom: 10px;
-        line-height: 1;
-    }
-
-    .kpi-desc {
-        font-size: 0.9rem;
-        color: #888;
-        margin: 0;
-        line-height: 1.5;
-        flex-grow: 1;
-    }
-
-    .kpi-link {
-        display: inline-flex;
-        align-items: center;
-        margin-top: 20px;
-        color: #1B4332;
-        font-weight: 600;
-        text-decoration: none;
-        font-size: 0.9rem;
-        transition: color 0.2s;
-    }
-    .kpi-link:hover {
-        color: #2D6A4F;
-        text-decoration: underline;
-    }
-
-    /* Controles */
-    .form-control {
-        padding: 8px 12px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        font-family: inherit;
-        color: #333;
-        outline: none;
-        background-color: white;
-    }
-    
-    .btn-icon {
-        background: white;
-        border: 1px solid #ddd;
-        width: 36px;
-        height: 36px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        color: #555;
-        transition: all 0.2s;
-    }
-    .btn-icon:hover {
-        background: #f5f5f5;
-        color: #1B4332;
-        border-color: #1B4332;
-    }
-
-    /* Skeleton Loading */
-    .skeleton-text {
-        background-color: #f0f0f0;
-        border-radius: 4px;
-        animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse {
-        0% { opacity: 0.6; }
-        50% { opacity: 1; }
-        100% { opacity: 0.6; }
-    }
-</style>
-
-<!-- O script que popula esta página está no arquivo principal psi_dashboard.js, na função inicializarVisaoGeral() -->

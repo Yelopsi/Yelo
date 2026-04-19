@@ -1,0 +1,683 @@
+<style>
+    /* FIX DEFINITIVO: Remove as âncoras falsas de scroll para o Sticky funcionar na janela */
+    body.pagina-dashboard,
+    #dashboard-container,
+    .dashboard-main {
+        overflow-y: visible !important;
+        overflow-x: clip !important;
+    }
+
+    /* Layout da Calculadora */
+    .calc-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+        padding-bottom: 130px; /* Espaço extra para o card não cobrir o último campo */
+    }
+
+    @media (min-width: 992px) {
+        .calc-layout {
+            display: grid !important;
+            grid-template-columns: 1.5fr 1fr !important;
+            align-items: stretch !important; /* Cria a trilha esticada */
+            padding-bottom: 30px;
+        }
+        .calc-form-area {
+            max-width: 100% !important;
+        }
+        .calc-result-column {
+            height: 100%;
+        }
+        .calc-result-area {
+            position: -webkit-sticky !important;
+            position: sticky !important;
+            top: 20px !important;
+            z-index: 90 !important;
+        }
+    }
+
+    .calc-result-area {
+        border-radius: 24px;
+        padding: 30px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        border: 1px solid #f0f0f0;
+        margin-bottom: 25px;
+    }
+
+    .calc-section h3 {
+        font-family: var(--font-titulos);
+        color: var(--verde-escuro);
+        font-size: 1.4rem;
+        margin: 0 0 5px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .calc-section p.subtitle {
+        color: #666;
+        font-size: 0.95rem;
+        margin: 0 0 25px 0;
+        line-height: 1.5;
+    }
+
+    .calc-input-group {
+        margin-bottom: 20px;
+    }
+    
+    .calc-input-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .calc-input-group label {
+        display: block;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+    }
+
+    /* Estética Premium para os Dropdowns (Selects Nativos) */
+    .calc-section select.form-control {
+        appearance: none;
+        -webkit-appearance: none;
+        background-color: #f9fafb !important;
+        border: 1px solid #ced4da !important;
+        border-radius: 12px !important;
+        padding: 12px 16px !important;
+        font-size: 1rem !important;
+        font-family: var(--font-principal) !important;
+        color: #1B4332 !important;
+        font-weight: 600 !important;
+        cursor: pointer;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important;
+        transition: all 0.3s ease !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231B4332' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 16px center !important;
+        padding-right: 45px !important;
+    }
+
+    .calc-section select.form-control:focus {
+        border-color: var(--verde-escuro) !important;
+        background-color: #fff !important;
+        box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1) !important;
+        outline: none !important;
+    }
+
+    /* FORÇA O SELECT NATIVO APENAS NO MOBILE */
+    @media (max-width: 992px) {
+        .calc-section select.form-control {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        .calc-section .ts-wrapper {
+            display: none !important;
+        }
+    }
+
+    /* Tom Select Specific Tweaks for Calculator */
+    .calc-section .ts-wrapper { padding: 0 !important; border: none !important; }
+    .calc-section .ts-wrapper.dropdown-active { z-index: 100 !important; position: relative !important; }
+    .calc-section .ts-control {
+        background-color: #f9fafb !important; border: 1px solid #ced4da !important; border-radius: 12px !important;
+        padding: 12px 16px !important; font-size: 1rem !important; font-family: var(--font-principal) !important;
+        color: #1B4332 !important; font-weight: 600 !important; cursor: pointer; width: 100% !important;
+        box-sizing: border-box !important; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important;
+        transition: all 0.3s ease !important; min-height: 48px; display: flex; align-items: center;
+    }
+    .calc-section .ts-wrapper.focus .ts-control { border-color: var(--verde-escuro) !important; background-color: #fff !important; box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1) !important; outline: none !important; }
+    .calc-section .ts-control::after { content: '▼'; font-size: 0.7rem; position: absolute; right: 16px; color: #1B4332; pointer-events: none; transition: transform 0.3s; }
+    .calc-section .ts-wrapper.dropdown-active .ts-control::after { transform: rotate(180deg); }
+
+    /* Forçar dropdown para cima (evitar corte no fim da página) */
+    .custom-ts-dropdown.drop-up {
+        top: auto !important;
+        bottom: 100% !important;
+        margin-top: 0 !important;
+        margin-bottom: 5px !important;
+        box-shadow: 0 -10px 30px rgba(0,0,0,0.1) !important; /* Sombra invertida para cima */
+    }
+
+    /* Estilo Especial para o Card de Resultado */
+    .result-card {
+        background: linear-gradient(135deg, #1B4332 0%, #0d2e21 100%);
+        color: white;
+        border-radius: 24px;
+        padding: 30px;
+        box-shadow: 0 15px 35px rgba(27, 67, 50, 0.2);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .result-card-header-mobile {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .mobile-expand-icon {
+        display: none; /* Oculto no Desktop */
+    }
+
+    .result-card::before {
+        content: '';
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 150px;
+        height: 150px;
+        background: radial-gradient(circle, rgba(255, 238, 140, 0.15) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .result-value-main {
+        font-family: var(--font-titulos);
+        font-size: 3.5rem;
+        color: var(--cor-Yelo);
+        margin: 10px 0;
+        line-height: 1;
+        font-weight: 700;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .result-details {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 20px;
+        margin-top: 25px;
+        text-align: left;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .result-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 0.95rem;
+    }
+    .result-row:last-child { margin-bottom: 0; }
+    .result-row span:last-child { font-weight: 700; }
+
+    .market-comparison {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.8);
+        text-align: center;
+        line-height: 1.5;
+    }
+
+    /* Range Slider App-Like */
+    .custom-range-slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 8px;
+        border-radius: 5px;
+        background: #e9ecef;
+        outline: none;
+        margin: 15px 0;
+    }
+    .custom-range-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--verde-escuro);
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        transition: transform 0.1s;
+    }
+    .custom-range-slider::-webkit-slider-thumb:active {
+        transform: scale(1.2);
+    }
+
+    @media (max-width: 991px) {
+        .calc-result-area {
+            position: fixed !important;
+            bottom: calc(var(--mobile-bottom-h, 70px) + 35px + env(safe-area-inset-bottom)) !important;
+            top: auto !important; /* Remove a âncora do topo imposta pela classe global */
+            left: 15px;
+            right: 15px;
+            z-index: 1000 !important;
+            margin-bottom: 0;
+            padding: 0;
+            border: none;
+            background: transparent;
+            box-shadow: none;
+        }
+        .result-card {
+            padding: 15px 20px;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .result-card-header-mobile {
+            flex-direction: row;
+            justify-content: space-between;
+            gap: 0;
+            width: 100%;
+        }
+        .mobile-expand-icon {
+            display: block; /* Mostra apenas no Mobile */
+            transition: transform 0.3s ease;
+        }
+        .result-card::before { display: none; }
+        .result-details, .market-comparison, #summary-box { display: none; }
+        .result-value-main { font-size: 1.8rem; margin: 0; }
+        .result-card h3 { margin: 0; font-size: 1rem; text-align: left; }
+        .result-card p { display: none; }
+
+        /* --- ESTADO EXPANDIDO NO MOBILE --- */
+        .result-card.expanded .result-details,
+        .result-card.expanded .market-comparison,
+        .result-card.expanded #summary-box,
+        .result-card.expanded p {
+            display: block;
+            margin-top: 15px;
+        }
+        .result-card.expanded .mobile-expand-icon {
+            transform: rotate(180deg);
+        }
+    }
+
+    /* Switch Toggle (Sincronização Automática) */
+    .switch-toggle { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch-toggle input { opacity: 0; width: 0; height: 0; }
+    .switch-toggle .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+    .switch-toggle .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    .switch-toggle input:checked + .slider { background-color: var(--verde-escuro, #1B4332); }
+    .switch-toggle input:checked + .slider:before { transform: translateX(20px); }
+</style>
+
+<div class="main-header" style="border-radius: 16px; margin-bottom: 25px;">
+    <div class="header-content">
+        <button onclick="window.loadPage('psi_clinica_hub.html')" style="margin-bottom: 15px; background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s;">&larr; Voltar para Clínica</button>
+        <h1 style="margin: 0; font-family: var(--font-titulos); font-size: 2.2rem; color: white;">Calculadora de Honorários 🧮</h1>
+        <p style="margin: 5px 0 0 0; color: rgba(255,255,255,0.85); font-size: 1.1rem; max-width: 600px;">Descubra o valor ideal da sua sessão para viver bem da psicologia, sem achismos.</p>
+    </div>
+</div>
+
+<div class="calc-layout">
+    
+    <!-- COLUNA DO FORMULÁRIO -->
+    <div class="calc-form-area">
+        
+        <div class="assistant-card" style="margin-bottom: 25px; display: flex; gap: 15px; align-items: flex-start;">
+            <div class="assistant-icon">💡</div>
+            <div>
+                <strong style="color: #1B4332; display: block; margin-bottom: 5px; font-size: 1.1rem;">Sua saúde financeira também importa.</strong>
+                <p style="color: #555; margin: 0; font-size: 0.9rem; line-height: 1.5;">
+                    Não se trata apenas de pagar contas, mas de ter qualidade de vida para oferecer o melhor aos seus pacientes. Altere os valores abaixo e veja o cálculo atualizar em tempo real.
+                </p>
+            </div>
+        </div>
+
+        <!-- INTEGRAÇÃO COM AGENDA (Automático) -->
+        <div class="assistant-card" style="margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; padding: 20px; background: #fff; border: 1px solid #e9ecef; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <div style="background: #f0fdf4; color: #1B4332; width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">📅</div>
+                <div>
+                    <strong style="color: #1B4332; display: block; margin-bottom: 3px; font-size: 1.05rem;">Sincronizar com minha Agenda</strong>
+                    <p style="color: #666; margin: 0; font-size: 0.85rem; line-height: 1.4;">
+                        Puxa dados da sua agenda atual para calcular o que falta para bater a meta.
+                    </p>
+                </div>
+            </div>
+            <label class="switch-toggle" style="margin: 0; flex-shrink: 0;">
+                <input type="checkbox" id="calc-auto-mode">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <!-- BLOCO 1: Metas e Qualidade de Vida -->
+        <div class="calc-section">
+            <h3><span style="font-size: 1.5rem;">🎯</span> Estilo de Vida e Metas</h3>
+            <p class="subtitle">Quanto você quer ganhar e quanto tempo quer trabalhar?</p>
+            
+            <div class="calc-input-group">
+                <label>Renda Líquida Desejada por Mês</label>
+                <div class="input-prefix-group" style="background: #f9fafb;">
+                    <span class="prefix">R$</span>
+                    <input type="number" id="calc-renda" value="5000" step="500" class="calc-trigger">
+                </div>
+                <small style="color: #888; font-size: 0.8rem; margin-top: 5px; display: block;">O valor que você quer que sobre livre no seu bolso.</small>
+            </div>
+
+            <div class="calc-input-group">
+                <label>Quantas horas por semana você quer atender?</label>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <input type="range" id="calc-horas" min="5" max="40" value="20" class="custom-range-slider calc-trigger">
+                    <span id="label-horas" style="font-weight: 700; color: var(--verde-escuro); font-size: 1.2rem; min-width: 55px; text-align: right;">20 h</span>
+                </div>
+                <small style="color: #888; font-size: 0.8rem;">Lembre-se de reservar tempo para estudos, burocracia e descanso.</small>
+            </div>
+            
+            <div class="calc-input-group" style="margin-top: 20px;">
+                <label>Semanas de Férias/Recesso por Ano</label>
+                <select id="calc-ferias" class="form-control calc-trigger">
+                    <option value="0">Nenhuma (Não recomendado)</option>
+                    <option value="2">2 Semanas (15 dias)</option>
+                    <option value="4" selected>4 Semanas (30 dias)</option>
+                    <option value="6">6 Semanas (45 dias)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- BLOCO 2: Custos Operacionais -->
+        <div class="calc-section">
+            <h3><span style="font-size: 1.5rem;">💼</span> Custos Operacionais (Mensal)</h3>
+            <p class="subtitle">Gastos fixos para manter sua clínica rodando.</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div class="calc-input-group">
+                    <label>Aluguel / Plataformas</label>
+                    <div class="input-prefix-group"><span class="prefix">R$</span><input type="number" id="calc-custo-aluguel" value="150" class="calc-trigger"></div>
+                </div>
+                <div class="calc-input-group">
+                    <label>Supervisão / Terapia</label>
+                    <div class="input-prefix-group"><span class="prefix">R$</span><input type="number" id="calc-custo-desenvolvimento" value="400" class="calc-trigger"></div>
+                </div>
+                <div class="calc-input-group">
+                    <label>CRP, Contador, Impostos</label>
+                    <div class="input-prefix-group"><span class="prefix">R$</span><input type="number" id="calc-custo-impostos" value="250" class="calc-trigger"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BLOCO 3: Seu Perfil e Mercado -->
+        <div class="calc-section">
+            <h3><span style="font-size: 1.5rem;">⭐</span> Sua Autoridade</h3>
+            <p class="subtitle">Ajuste fino baseado na sua formação e métricas da Yelo.</p>
+            
+            <div class="calc-input-group">
+                <label>Tempo de Experiência Clínica</label>
+                <select id="calc-xp" class="form-control calc-trigger">
+                    <option value="1">Até 2 anos (Iniciante)</option>
+                    <option value="1.25" selected>2 a 5 anos (Intermediário)</option>
+                    <option value="1.5">5 a 10 anos (Avançado)</option>
+                    <option value="2">Mais de 10 anos (Sênior)</option>
+                </select>
+            </div>
+
+            <div class="calc-input-group">
+                <label>Maior Grau de Formação</label>
+                <select id="calc-formacao" class="form-control calc-trigger">
+                    <option value="1" selected>Graduação</option>
+                    <option value="1.15">Especialização / Pós-graduação</option>
+                    <option value="1.3">Mestrado</option>
+                    <option value="1.5">Doutorado</option>
+                </select>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- COLUNA DE RESULTADO (STICKY DESKTOP) -->
+    <div class="calc-result-column">
+        <div class="calc-result-area dashboard-sticky-card">
+            <div class="result-card" id="mobile-result-card">
+                <div class="result-card-header-mobile">
+                    <div>
+                        <h3 style="margin: 0; font-family: var(--font-principal); font-size: 1.1rem; color: rgba(255,255,255,0.9); font-weight: 500;">Valor Ideal por Sessão</h3>
+                    <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: rgba(255,255,255,0.6);">Para atingir sua meta financeira</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="result-value-main" id="res-valor-sessao">R$ 0,00</div>
+                    <svg class="mobile-expand-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+            </div>
+            
+            <div class="result-details">
+                <div class="result-row">
+                    <span>Sessões p/ mês <span style="font-size: 0.7rem; font-weight: normal; opacity: 0.8;">(Ocupação de 75%)</span>:</span>
+                    <span id="res-sessoes-mes">0</span>
+                </div>
+                <div class="result-row">
+                    <span>Faturamento Bruto:</span>
+                    <span id="res-faturamento">R$ 0,00</span>
+                </div>
+                <div class="result-row" style="color: #ff9999;">
+                    <span>Custo Total:</span>
+                    <span id="res-custos">- R$ 0,00</span>
+                </div>
+                <div style="height: 1px; background: rgba(255,255,255,0.2); margin: 10px 0;"></div>
+                <div class="result-row" style="color: #a7f3d0;">
+                    <span>Lucro Líquido:</span>
+                    <span id="res-lucro">R$ 0,00</span>
+                </div>
+            </div>
+
+            <div class="market-comparison">
+                <span style="font-size: 1.2rem; display: block; margin-bottom: 5px;">📊</span>
+                Com base na sua experiência e formação, a média praticada por psicólogos similares na Yelo é de <strong style="color: var(--cor-Yelo);" id="res-media-mercado">R$ 0,00</strong>.
+            </div>
+
+            <!-- Caixa de Resumo Dinâmico -->
+            <div id="summary-box" style="background: rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 20px; margin-top: 20px; text-align: left; border-left: 4px solid var(--cor-Yelo);">
+                <h4 style="margin: 0 0 10px 0; color: var(--cor-Yelo); font-family: var(--font-titulos); font-size: 1.1rem;">Análise da sua Meta</h4>
+                <p id="summary-text" style="margin: 0; color: rgba(255, 255, 255, 0.85); font-size: 0.9rem; line-height: 1.5;"></p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    (function() {
+        // Elementos de Input
+        const inputs = document.querySelectorAll('.calc-trigger');
+        const rangeHoras = document.getElementById('calc-horas');
+        const labelHoras = document.getElementById('label-horas');
+        const autoModeToggle = document.getElementById('calc-auto-mode');
+        window.autoData = null; // Armazenará os dados reais buscados da API
+        
+        // Formatação de Moeda
+        const formatCurrency = (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        // Função Principal de Cálculo
+        function calcularHonorarios() {
+            // 1. Pegar valores brutos
+            const rendaLiquida = parseFloat(document.getElementById('calc-renda').value) || 0;
+            const horasSemana = parseInt(rangeHoras.value) || 0;
+            const feriasSemanas = parseInt(document.getElementById('calc-ferias').value) || 0;
+            
+            const custoAluguel = parseFloat(document.getElementById('calc-custo-aluguel').value) || 0;
+            const custoDesenv = parseFloat(document.getElementById('calc-custo-desenvolvimento').value) || 0;
+            const custoImp = parseFloat(document.getElementById('calc-custo-impostos').value) || 0;
+            
+            const multXp = parseFloat(document.getElementById('calc-xp').value) || 1;
+            const multFormacao = parseFloat(document.getElementById('calc-formacao').value) || 1;
+
+            // Atualiza Label Visual do Range
+            labelHoras.textContent = `${horasSemana} h`;
+
+            // 2. Cálculos de Tempo
+            const semanasUteisAno = 52 - feriasSemanas;
+            const semanasUteisMes = semanasUteisAno / 12; // Média real de semanas trabalhadas no mês
+            
+            // TAXA DE OCUPAÇÃO: Consideramos que 75% das horas disponíveis são preenchidas/cobradas
+            const taxaOcupacao = 0.75;
+            const sessoesEfetivasPorMes = Math.floor(horasSemana * semanasUteisMes * taxaOcupacao);
+
+            // 3. Cálculos Financeiros Base
+            const custoTotalMensal = custoAluguel + custoDesenv + custoImp;
+            
+            // Faturamento Bruto Necessário = Renda Líquida + Custos Fixos
+            const faturamentoNecessario = rendaLiquida + custoTotalMensal;
+
+            // Valor Ideal da Sessão (Break-even + Lucro Desejado)
+            let valorSessaoIdeal = 0;
+            if (sessoesEfetivasPorMes > 0) {
+                valorSessaoIdeal = faturamentoNecessario / sessoesEfetivasPorMes;
+            }
+
+            // 4. Inteligência de Mercado (Yelo Mock)
+            // Base mais realista: R$ 120 * Multiplicador de XP * Multiplicador de Formação
+            const mediaMercado = 120 * multXp * multFormacao;
+
+            // 5. Renderização na Tela
+            document.getElementById('res-sessoes-mes').textContent = sessoesEfetivasPorMes;
+            document.getElementById('res-custos').textContent = `- ${formatCurrency(custoTotalMensal)}`;
+            
+            // Efeito visual no número principal
+            const elValor = document.getElementById('res-valor-sessao');
+            elValor.style.transform = 'scale(1.1)';
+            setTimeout(() => elValor.style.transform = 'scale(1)', 150);
+            elValor.textContent = formatCurrency(valorSessaoIdeal);
+
+            document.getElementById('res-faturamento').textContent = formatCurrency(faturamentoNecessario);
+            document.getElementById('res-lucro').textContent = formatCurrency(rendaLiquida);
+            document.getElementById('res-media-mercado').textContent = formatCurrency(mediaMercado);
+
+            // Lógica do Resumo Dinâmico
+            let summaryHtml = "";
+            let isAutoMode = autoModeToggle && autoModeToggle.checked;
+
+            if (isAutoMode && window.autoData) {
+                const { sessionsCount, uniquePatients, totalIncome, avgSessionValue } = window.autoData;
+                
+                const faturamentoFaltante = Math.max(0, faturamentoNecessario - totalIncome);
+                const valorBaseCalculo = avgSessionValue > 0 ? avgSessionValue : valorSessaoIdeal;
+                const sessoesFaltantes = valorBaseCalculo > 0 ? Math.ceil(faturamentoFaltante / valorBaseCalculo) : 0;
+                const pacientesEstimadosFaltantes = Math.ceil(sessoesFaltantes / 4); // Estimativa de 4 sessões/mês
+                
+                summaryHtml = `
+                    <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <span style="font-size: 1.1rem; display: block; margin-bottom: 5px;">📅 <strong>Sua Agenda Atual:</strong></span>
+                        Você tem <strong>${sessionsCount} sessões</strong> (${uniquePatients} pacientes) marcadas este mês.<br>
+                        Faturamento atual: <strong style="color: var(--cor-Yelo);">${formatCurrency(totalIncome)}</strong>.
+                    </div>
+                `;
+                
+                if (faturamentoFaltante > 0) {
+                    summaryHtml += `
+                        Para alcançar sua meta de <strong>${formatCurrency(rendaLiquida)} livres</strong>, você ainda precisa faturar <strong>${formatCurrency(faturamentoFaltante)}</strong>.<br><br>
+                        Considerando seu valor médio/ideal (<strong>${formatCurrency(valorBaseCalculo)}</strong>), você precisa de mais <strong>${sessoesFaltantes} sessões</strong> neste mês (aprox. <strong>${pacientesEstimadosFaltantes} novos pacientes</strong>).
+                    `;
+                    
+                    if ((sessionsCount + sessoesFaltantes) > sessoesEfetivasPorMes) {
+                        summaryHtml += `<br><br><em style="color: #ff9999;">⚠️ Atenção: Para atingir essa meta você precisará ultrapassar as ${horasSemana}h semanais estipuladas. Considere reajustar o valor da sua sessão!</em>`;
+                    } else {
+                        summaryHtml += `<br><br><em style="color: #a7f3d0;">✨ Excelente: Sua meta de ${horasSemana}h/semana comporta esses novos atendimentos sem sobrecarregar sua rotina!</em>`;
+                    }
+                } else {
+                    summaryHtml += `
+                        <div style="color: #a7f3d0; font-weight: bold; margin-top: 10px; font-size: 1.05rem;">
+                            🎉 Parabéns! Você já atingiu ou superou sua meta de faturamento e renda líquida para este mês!
+                        </div>
+                    `;
+                }
+            } else {
+                if (valorSessaoIdeal > mediaMercado * 1.3) summaryHtml = `O valor para atingir sua meta está <strong>acima da média</strong> do mercado. Isso é perfeitamente possível, mas exigirá um posicionamento de marca forte e foco em um nicho específico para atrair pacientes dispostos a investir esse valor.`;
+                else if (valorSessaoIdeal < mediaMercado * 0.7) summaryHtml = `Sua meta exige um valor <strong>abaixo da média</strong>. Você pode atingir sua meta financeira facilmente ou até considerar cobrar um pouco mais para valorizar seu trabalho e ter ainda mais tempo livre!`;
+                else summaryHtml = `Excelente! O valor ideal está <strong>altamente alinhado</strong> com a média praticada. Isso significa que sua meta financeira é muito realista e sustentável no longo prazo.`;
+                if (horasSemana >= 35) summaryHtml += `<br><br><em style="color: #ff9999;">Atenção: Você selecionou uma carga horária alta. Lembre-se de reservar energia para evolução clínica e descanso.</em>`;
+            }
+            
+            const summaryText = document.getElementById('summary-text');
+            if(summaryText) summaryText.innerHTML = summaryHtml;
+        }
+
+        // Atrelar eventos a todos os inputs
+        inputs.forEach(input => {
+            input.addEventListener('input', calcularHonorarios);
+        });
+
+        // Evento de Sincronização Automática com a Agenda Real
+        if (autoModeToggle) {
+            autoModeToggle.addEventListener('change', async (e) => {
+                if (e.target.checked) {
+                    const token = localStorage.getItem('token') || localStorage.getItem('Yelo_token');
+                    const summaryText = document.getElementById('summary-text');
+                    if (summaryText) summaryText.innerHTML = "Sincronizando dados da sua agenda... ⏳";
+                    
+                    try {
+                        const res = await fetch('/api/financials/dashboard', {
+                            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+                            credentials: 'include'
+                        });
+                        
+                        if (res.ok) {
+                            const data = await res.json();
+                            const activeAppointments = data.appointments.filter(a => a.status !== 'cancelled' && a.status !== 'available');
+                            const totalIncome = activeAppointments.reduce((sum, a) => sum + (parseFloat(a.value) || 0), 0);
+                            const uniquePatients = new Set(activeAppointments.map(a => a.patientId || a.title)).size;
+                            const totalCosts = data.expenses.reduce((sum, ex) => sum + (parseFloat(ex.value) || 0), 0);
+                            
+                            window.autoData = {
+                                sessionsCount: activeAppointments.length,
+                                uniquePatients: uniquePatients,
+                                totalIncome: totalIncome,
+                                totalCosts: totalCosts,
+                                avgSessionValue: activeAppointments.length > 0 ? (totalIncome / activeAppointments.length) : 0
+                            };
+                            
+                            if (totalCosts > 0) {
+                                document.getElementById('calc-custo-aluguel').value = totalCosts;
+                                document.getElementById('calc-custo-desenvolvimento').value = 0;
+                                document.getElementById('calc-custo-impostos').value = 0;
+                            }
+                        } else {
+                            alert("Não foi possível acessar sua agenda. Verifique sua conexão.");
+                            e.target.checked = false;
+                            window.autoData = null;
+                        }
+                    } catch (err) { alert("Erro ao conectar com a agenda."); e.target.checked = false; window.autoData = null; }
+                } else { window.autoData = null; }
+                calcularHonorarios();
+            });
+        }
+
+        // Calcular na inicialização
+        calcularHonorarios();
+
+        // Evento de Expandir/Colapsar Card no Mobile
+        const mobileCard = document.getElementById('mobile-result-card');
+        if (mobileCard) {
+            mobileCard.addEventListener('click', () => {
+                if (window.innerWidth <= 991) {
+                    mobileCard.classList.toggle('expanded');
+                }
+            });
+        }
+
+        // Inicializa o TomSelect para o Desktop
+        if (typeof TomSelect !== 'undefined') {
+            const isMobile = window.innerWidth <= 992 || /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (!isMobile) {
+                const tsOptions = { 
+                    create: false, 
+                    controlInput: `<input type="text" autocomplete="off" size="1" readonly style="opacity:0; position:absolute; left:-10000px;">`, 
+                    dropdownClass: 'ts-dropdown custom-ts-dropdown' 
+                };
+                const initTS = (selector, extraClass = '') => {
+                    const el = document.querySelector(selector);
+                    if (el) { 
+                        if (el.tomselect) el.tomselect.destroy(); 
+                        let currentOptions = { ...tsOptions };
+                        if (extraClass) {
+                            currentOptions.dropdownClass = tsOptions.dropdownClass + ' ' + extraClass;
+                        }
+                        const ts = new TomSelect(el, currentOptions); 
+                        ts.on('change', calcularHonorarios); 
+                    }
+                };
+                initTS("#calc-ferias");
+                initTS("#calc-xp", "drop-up");
+                initTS("#calc-formacao", "drop-up");
+            }
+        }
+    })();
+</script>

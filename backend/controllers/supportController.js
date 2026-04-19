@@ -1,108 +1,26 @@
-const { SupportMessage, Psychologist } = require('../models');
+const emailService = require('../services/emailService');
 
-// 1. LISTAR CONVERSAS (Correção para erro attr[0].includes)
-exports.getConversations = async (req, res) => {
-  try {
-    // Se a rota for acessada pelo ADMIN, busca lista de psicólogos agrupada
-    if (req.originalUrl && req.originalUrl.includes('/api/admin')) {
+exports.sendSupportContact = async (req, res) => {
+    try {
+        const { subject, message, to } = req.body;
         
-        // CORREÇÃO: Usamos 'group' para listar psicólogos únicos sem erro de sintaxe
-        const senders = await SupportMessage.findAll({
-            attributes: ['psychologist_id'],
-            group: ['psychologist_id'],
-            raw: true
-        });
+        // Identifica o usuário logado (o seu middleware 'protect' geralmente salva em req.psychologist ou req.user)
+        const userEmail = req.psychologist ? req.psychologist.email : (req.user ? req.user.email : 'Email não identificado');
+        const userName = req.psychologist ? req.psychologist.nome : (req.user ? req.user.nome : 'Usuário Yelo');
 
-        const ids = senders.map(s => s.psychologist_id);
-        
-        if (ids.length === 0) return res.json([]);
+        const html = `
+            <h2>Nova solicitação de suporte: ${subject}</h2>
+            <p><strong>De:</strong> ${userName} (${userEmail})</p>
+            <br/>
+            <p><strong>Mensagem:</strong><br/>${message.replace(/\n/g, '<br>')}</p>
+        `;
 
-        const psis = await Psychologist.findAll({
-            where: { id: ids },
-            attributes: ['id', 'nome', 'email', 'fotoUrl']
-        });
-        
-        return res.json(psis);
-    } 
-    // Se for PSICÓLOGO, vê apenas o admin
-    else {
-        return res.json([{
-            id: 'suporte_admin',
-            type: 'support',
-            participant: { nome: 'Suporte Yelo', role: 'Administração' }
-        }]);
+        // Usa a função que acabamos de exportar para disparar o e-mail
+        await emailService.sendEmail(to, `Suporte Yelo: ${subject}`, html);
+
+        res.status(200).json({ success: true, message: 'Mensagem enviada com sucesso.' });
+    } catch (error) {
+        console.error('Erro ao enviar e-mail de suporte:', error);
+        res.status(500).json({ error: 'Erro interno ao processar sua solicitação.' });
     }
-  } catch (error) {
-    console.error('Erro GetConversations:', error);
-    res.status(500).json({ error: 'Erro interno' });
-  }
-};
-
-// 2. LER MENSAGENS
-exports.getMessages = async (req, res) => {
-  try {
-    let psiId;
-
-    // Se tem ID na URL (Admin acessando), usa ele. 
-    if (req.params.psiId) {
-        psiId = req.params.psiId;
-    } else {
-        // Se não (Psicólogo acessando), usa o ID do token.
-        psiId = req.psychologist ? req.psychologist.id : (req.user ? req.user.id : null);
-    }
-
-    if (!psiId) return res.status(400).json({ error: 'ID indefinido' });
-
-    const messages = await SupportMessage.findAll({
-      where: { psychologist_id: psiId },
-      order: [['created_at', 'ASC']]
-    });
-
-    // Formata para o frontend
-    const formatted = messages.map(msg => ({
-      id: msg.id,
-      content: msg.content,
-      senderType: msg.sender_type,
-      createdAt: msg.created_at
-    }));
-
-    res.json(formatted);
-  } catch (error) {
-    console.error('Erro GetMessages:', error);
-    res.status(500).json({ error: 'Erro ao buscar mensagens' });
-  }
-};
-
-// 3. ENVIAR / RESPONDER
-exports.sendMessage = exports.replyMessage = async (req, res) => {
-  try {
-    let psiId, senderType;
-
-    // Se tem ID na URL, é o Admin respondendo para aquele psicólogo
-    if (req.params.psiId) {
-        psiId = req.params.psiId;
-        senderType = 'admin';
-    } 
-    // Senão, é o Psicólogo enviando pergunta
-    else {
-        psiId = req.psychologist ? req.psychologist.id : (req.user ? req.user.id : null);
-        senderType = 'psychologist';
-    }
-
-    const { content } = req.body;
-    
-    if(!content) return res.status(400).json({ error: 'Conteúdo vazio' });
-
-    await SupportMessage.create({
-      psychologist_id: psiId,
-      sender_type: senderType,
-      content: content,
-      created_at: new Date()
-    });
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Erro SendMessage:', error);
-    res.status(500).json({ error: 'Erro ao enviar mensagem' });
-  }
 };

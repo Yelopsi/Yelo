@@ -1,0 +1,56 @@
+<style>
+    @media (min-width: 993px) {
+        .mobile-only-card { display: none !important; }
+    }
+</style>
+<div class="modern-dashboard-layout">
+    <div class="main-header" style="padding: 20px 25px; margin-bottom: 25px;">
+        <div>
+            <h1 style="font-size: 1.8rem;">Ajustes e Sistema</h1>
+            <p class="subtitulo-header">Controle operacional e monitoramento.</p>
+        </div>
+    </div>
+
+    <div class="hub-grid" style="padding-top: 0;">
+        <a href="#" onclick="if(window.loadPage) window.loadPage('admin_configuracoes.html'); return false;" class="hub-card">
+            <div class="hub-icon" style="background-color: #F3F4F6; color: #4B5563;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </div>
+            <div class="hub-info">
+                <h3>Configurações Globais</h3>
+                <p>Preços, Manutenção e Contatos Yelo.</p>
+            </div>
+        </a>
+
+        <a href="#" onclick="if(window.loadPage) window.loadPage('admin_minha_conta.html'); return false;" class="hub-card">
+            <div class="hub-icon" style="background-color: #E8F5E9; color: #1B4332;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+            <div class="hub-info">
+                <h3>Meu Perfil Admin</h3>
+                <p>Ajuste seu nome, foto e senha de acesso.</p>
+            </div>
+        </a>
+
+        <a href="#" onclick="if(window.loadPage) window.loadPage('admin_logs_sistema.html'); return false;" class="hub-card">
+            <div class="hub-icon" style="background-color: #FEE2E2; color: #E63946;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            </div>
+            <div class="hub-info">
+                <h3>Monitoramento e Logs</h3>
+                <p>Erros, saúde do servidor e acessos.</p>
+            </div>
+        </a>
+
+        <!-- Card Sair (Apenas Mobile) -->
+        <a href="#" onclick="localStorage.removeItem('Yelo_token'); localStorage.removeItem('Yelo_token_admin'); window.location.href='/login'; return false;" class="hub-card logout-card mobile-only-card" style="border-color: #fca5a5;">
+            <div class="hub-icon" style="background-color: #fef2f2; color: #E63946;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </div>
+            <div class="hub-info">
+                <h3 style="color: #E63946; margin-bottom: 5px;">Sair</h3>
+                <p style="color: #666; font-size: 0.9rem;">Encerrar sua sessão de forma segura</p>
+            </div>
+        </a>
+    </div>
+</div>

@@ -1,15 +1,10 @@
 const express = require('express');
 const router = express.Router();
-// Importa o controlador de suporte que (espero que) você já tenha criado
 const supportController = require('../controllers/supportController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/authMiddleware'); 
 
-// Protege todas as rotas abaixo
-router.use(protect);
-
-// Definição das rotas
-router.get('/conversations', supportController.getConversations);
-router.get('/conversations/:id', supportController.getMessages);
-router.post('/messages', supportController.sendMessage);
+// Rota protegida: POST /api/support/contact
+// O middleware 'protect' garante que apenas usuários logados (autenticados) consigam enviar mensagens
+router.post('/contact', protect, supportController.sendSupportContact);
 
 module.exports = router;

@@ -2,67 +2,89 @@
 <!-- ESTRUTURA REFEITA DO ZERO PARA ISOLAMENTO DE LAYOUT -->
 
 <style>
-    /* Estilos da Página de Suporte (E-mail) */
+    /* Estilos da Página de Suporte (Formulário App-like) */
+    .app-like-wrapper {
+        display: flex;
+        flex-direction: column;
+    }
+
     .support-container {
+        display: flex;
+        flex-direction: column;
         max-width: 600px;
-        margin: 40px auto;
+        width: 100%;
+        margin: 0 auto;
         background-color: #fff;
         border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        padding: 40px;
-        text-align: center;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08); /* Sombra mais destacada e bonita no desktop */
         border: 1px solid #f0f0f0;
         animation: fadeIn 0.5s ease-out;
+        overflow: hidden;
     }
 
-    .support-icon {
-        width: 80px;
-        height: 80px;
-        background-color: #f0fdf4;
-        color: #1B4332;
-        border-radius: 50%;
+    .support-form {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 25px auto;
-        font-size: 2rem;
+        flex-direction: column;
+        height: 100%;
     }
 
-    .support-title {
-        font-family: var(--font-titulos);
-        font-size: 1.8rem;
+    .support-scroll-area {
+        padding: 40px 40px 20px 40px;
+        scrollbar-width: none; 
+        -ms-overflow-style: none; 
+    }
+    .support-scroll-area::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Novos estilos para os inputs do form */
+    .support-form .form-group {
+        text-align: left;
+        margin-bottom: 20px;
+    }
+
+    .support-form label {
+        display: block;
+        font-weight: bold;
         color: #1B4332;
-        margin-bottom: 15px;
-        font-weight: 700;
+        margin-bottom: 8px;
+        font-size: 0.95rem;
     }
 
-    .support-text {
-        color: #666;
-        font-size: 1.1rem;
-        line-height: 1.6;
-        margin-bottom: 30px;
-    }
-
-    .email-box {
-        background-color: #f9fafb;
-        border: 1px dashed #ccc;
-        padding: 15px;
+    .support-form input,
+    .support-form select,
+    .support-form textarea {
+        width: 100%;
+        padding: 14px;
         border-radius: 8px;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 30px;
-        font-size: 1.2rem;
-        user-select: all;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-    .email-box:hover {
-        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        font-family: var(--font-principal);
+        font-size: 16px !important; /* Previne zoom de câmera automático no clique (iOS/Mobile) */
+        background-color: #f9fafb;
+        outline: none;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
     }
 
-    .btn-email {
+    .support-form input:focus,
+    .support-form select:focus,
+    .support-form textarea:focus {
+        border-color: #1B4332;
+        box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
+        background-color: #fff;
+    }
+
+    .support-footer {
+        padding: 20px 40px;
+        background: #fff;
+        border-top: 1px solid #f0f0f0;
+        flex-shrink: 0;
+    }
+
+    .btn-submit-support {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 10px;
         background-color: #1B4332;
         color: #fff;
@@ -74,12 +96,20 @@
         transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
         border: none;
         cursor: pointer;
+        width: 100%;
     }
 
-    .btn-email:hover {
+    .btn-submit-support:hover {
         transform: translateY(-3px);
         box-shadow: 0 5px 15px rgba(27, 67, 50, 0.2);
         background-color: #143d2e;
+    }
+
+    .btn-submit-support:disabled {
+        background-color: #999;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
     }
 
     @keyframes fadeIn {
@@ -87,41 +117,216 @@
         to { opacity: 1; transform: translateY(0); }
     }
 
+    /* --- TomSelect (Estética Yelo) --- */
+    .support-form .ts-wrapper { padding: 0 !important; border: none !important; background: transparent !important; box-shadow: none !important; min-height: auto !important; }
+    .support-form .ts-control {
+        width: 100% !important;
+        padding: 10px 14px !important;
+        border: 1px solid #ccc !important;
+        border-radius: 8px !important;
+        font-size: 0.95rem !important;
+        background-color: #f9fafb !important;
+        font-family: var(--font-principal) !important;
+        color: #333 !important;
+        transition: all 0.3s ease !important;
+        cursor: pointer;
+        display: flex; align-items: center;
+    }
+    .support-form .ts-wrapper.focus .ts-control {
+        border-color: #1B4332 !important;
+        background-color: #fff !important;
+        box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1) !important;
+    }
+    .support-form .ts-control::after {
+        content: '▼'; font-size: 0.7rem; position: absolute; right: 15px; color: #333; pointer-events: none; transition: transform 0.3s;
+    }
+    .support-form .ts-wrapper.dropdown-active .ts-control::after { transform: rotate(180deg); }
+
     @media (max-width: 992px) {
+        .app-like-wrapper {
+            /* Calcula o espaço exato entre o menu inferior e superior no mobile para travamento */
+            height: calc(100dvh - var(--mobile-header-h, 70px) - var(--mobile-bottom-h, 80px) - 50px);
+            min-height: 400px;
+        }
+        .main-header {
+            display: none; /* Oculta cabeçalho padrão para imersão total */
+        }
         .support-container {
-            margin: 20px;
-            padding: 30px 20px;
+            flex-grow: 1;
+            border-radius: 20px;
+            box-shadow: none;
+            border: none;
         }
-        .support-title {
-            font-size: 1.5rem;
+        .support-scroll-area {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 25px 20px 10px 20px;
         }
+        .support-footer {
+            padding: 15px 20px;
+        }
+        .support-icon { width: 60px; height: 60px; font-size: 1.5rem; }
+        .support-title { font-size: 1.4rem; }
+            
+            /* Força select nativo no Mobile com seta customizada */
+            #support-subject { display: block !important; visibility: visible !important; opacity: 1 !important; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%231B4332' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 15px center; padding-right: 40px !important; }
+            .support-form .ts-wrapper { display: none !important; }
     }
 </style>
 
+<div class="app-like-wrapper">
 <div class="main-header">
     <div>
-        <h1>Suporte</h1>
-        <p class="subtitulo-header">Precisa de ajuda? Fale com a gente.</p>
+        <h1>Fale com a Yelo</h1>
+        <p class="subtitulo-header">Envie sua dúvida, sugestão ou relate um problema.</p>
     </div>
 </div>
 
-<div class="support-container">
-    <div class="support-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2-2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-    </div>
-    
-    <h2 class="support-title">Entre em contato via E-mail</h2>
-    
-    <p class="support-text">
-        Para resolver dúvidas, relatar problemas ou enviar sugestões, nossa equipe está pronta para te atender pelo canal oficial.
-    </p>
+<div class="support-container" style="max-width: 650px;">
+    <form id="yelo-support-form" class="support-form">
+        <div class="support-scroll-area" style="padding: 30px;">
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px;">
+                <div style="width: 50px; height: 50px; background: #f0fdf4; color: #1B4332; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; box-shadow: 0 4px 10px rgba(27,67,50,0.05);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2-2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2-2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                </div>
+                <div>
+                    <h3 style="margin: 0; color: #1B4332; font-family: var(--font-titulos); font-size: 1.5rem;">Como podemos ajudar?</h3>
+                    <p style="color: #666; font-size: 0.9rem; margin: 2px 0 0 0; text-align: left;">Preencha os detalhes e nossa equipe de suporte entrará em contato.</p>
+                </div>
+            </div>
 
-    <div class="email-box" title="Clique para copiar" onclick="navigator.clipboard.writeText('oi@yelopsi.com.br'); alert('E-mail copiado!');">
-        oi@yelopsi.com.br
-    </div>
+            <div class="form-group" style="margin-bottom: 15px; text-align: left;">
+                <label for="support-subject" style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: #495057; margin-bottom: 5px; display: block;">Assunto *</label>
+                <select id="support-subject" required style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #ccc; background-color: #f9fafb; font-size: 0.95rem; font-family: var(--font-principal);">
+                    <option value="" disabled selected>Selecione um assunto...</option>
+                    <option value="Dúvida sobre a plataforma">Dúvida sobre a plataforma</option>
+                    <option value="Problema técnico">Problema técnico</option>
+                    <option value="Sugestão de melhoria">Sugestão de melhoria</option>
+                    <option value="Assinatura e Pagamento">Assinatura e Pagamento</option>
+                    <option value="Outros">Outros</option>
+                </select>
+            </div>
 
-    <a href="mailto:oi@yelopsi.com.br" class="btn-email">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-        Enviar E-mail Agora
-    </a>
+            <div class="form-group" style="margin-bottom: 0; text-align: left;">
+                <label for="support-message" style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: #495057; margin-bottom: 5px; display: block;">Sua Mensagem *</label>
+                <textarea id="support-message" rows="5" required placeholder="Descreva com o máximo de detalhes como podemos te ajudar..." style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #ccc; background-color: #f9fafb; font-size: 0.95rem; font-family: var(--font-principal); resize: vertical;"></textarea>
+            </div>
+        </div>
+
+        <div class="support-footer" style="display: flex; justify-content: flex-end; padding: 20px 30px; gap: 10px; align-items: center;">
+            <button type="button" class="btn btn-secundario" style="padding: 10px 20px; border-radius: 50px; font-size: 0.95rem;" onclick="window.loadPage('psi_ajustes_hub.html')">Cancelar</button>
+            <button type="submit" class="btn-submit-support" id="btn-submit-support" style="width: auto; padding: 10px 24px; font-size: 0.95rem; box-shadow: 0 4px 15px rgba(27,67,50,0.2); margin: 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: -2px;"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                Enviar Mensagem
+            </button>
+        </div>
+    </form>
 </div>
+</div>
+
+<script>
+    (function() {
+        function showSupportToast(message, type = 'success') {
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                document.body.appendChild(container);
+            }
+            const toast = document.createElement('div');
+            toast.className = 'toast toast-' + type;
+            
+            const iconSvg = type === 'success' 
+                ? '<svg width="20" height="20" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'
+                : '<svg width="20" height="20" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+            
+            toast.innerHTML = iconSvg + '<span>' + message + '</span>';
+            container.appendChild(toast);
+            
+            requestAnimationFrame(() => {
+                toast.style.display = 'flex';
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0) scale(1)';
+            });
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-20px) scale(0.9)';
+                setTimeout(() => toast.remove(), 400);
+            }, 4000);
+        }
+
+        // --- Inicializa o TomSelect para o dropdown de Assunto ---
+        if (typeof TomSelect !== 'undefined') {
+            const isMobile = window.innerWidth <= 992 || /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (!isMobile) {
+                const subjectSelect = document.getElementById('support-subject');
+                if (subjectSelect && !subjectSelect.tomselect) {
+                    new TomSelect(subjectSelect, {
+                        create: false,
+                        controlInput: `<input type="text" autocomplete="off" size="1" readonly style="opacity:0; position:absolute; left:-10000px;">`,
+                        dropdownParent: 'body',
+                        dropdownClass: 'ts-dropdown custom-ts-dropdown'
+                    });
+                }
+            }
+        }
+
+        document.getElementById('yelo-support-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const subject = document.getElementById('support-subject').value;
+            const message = document.getElementById('support-message').value;
+            const btnSubmit = document.getElementById('btn-submit-support');
+            const originalText = btnSubmit.innerHTML;
+
+            btnSubmit.innerHTML = 'Enviando... ⏳';
+            btnSubmit.disabled = true;
+
+            try {
+                const token = localStorage.getItem('Yelo_token');
+                const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
+                
+                // Busca os dados do psicólogo logado para pegar o email real
+                let nome = localStorage.getItem('Yelo_user_name') || 'Psicólogo Logado';
+                let email = 'nao_informado@yelopsi.com.br';
+                
+                try {
+                    const meRes = await fetch(`${BASE_URL}/api/psychologists/me`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (meRes.ok) {
+                        const meData = await meRes.json();
+                        if (meData.nome) nome = meData.nome;
+                        if (meData.email) email = meData.email;
+                    }
+                } catch (err) {
+                    console.warn('Não foi possível obter o perfil para o contato:', err);
+                }
+
+                const response = await fetch(`${BASE_URL}/api/public/contato`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ nome: nome, email: email, assunto: subject, mensagem: message })
+                });
+
+                if (response.ok) {
+                    showSupportToast('Mensagem enviada com sucesso! Retornaremos em breve.', 'success');
+                    document.getElementById('yelo-support-form').reset();
+                } else {
+                    const data = await response.json();
+                    showSupportToast(data.error || 'Erro ao enviar a mensagem.', 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao enviar suporte:', error);
+                showSupportToast('Erro de conexão ao tentar enviar a mensagem.', 'error');
+            } finally {
+                btnSubmit.innerHTML = originalText;
+                btnSubmit.disabled = false;
+            }
+        });
+    })();
+</script>

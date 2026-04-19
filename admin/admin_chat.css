@@ -10,6 +10,9 @@
     border: 1px solid #e9ecef;
     overflow: hidden;
     font-family: var(--font-principal);
+    background-image: var(--ruido-global) !important;
+    background-attachment: fixed !important;
+    background-repeat: repeat !important;
 }
 
 /* Sidebar (Lista) */

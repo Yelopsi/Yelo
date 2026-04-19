@@ -1,31 +1,42 @@
-<!-- c:/Users/Anderson/Desktop/Yelo/admin/admin_lista_espera.html -->
+<div class="modern-dashboard-layout">
+    <div class="main-header">
+        <div>
+            <h1>Lista de Espera</h1>
+            <p class="subtitulo-header">Gerencie profissionais aguardando aprovação para ingressar na plataforma.</p>
+        </div>
+    </div>
 
-<section class="content-section">
-    <div class="filtros-container" style="margin-bottom: 20px;">
-        <input type="text" id="search-input" class="campo-busca" placeholder="Buscar na lista de espera...">
+    <div class="widget" style="margin-bottom: 25px;">
+        <div class="filtros-container" style="margin-bottom: 0;">
+            <div class="search-wrapper" style="flex-grow: 1; position: relative;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="search-input" class="campo-busca" placeholder="Buscar na lista de espera..." style="width: 100%; padding-left: 42px;">
+            </div>
+        </div>
     </div>
 
     <div class="tabela-container">
-        <table class="tabela-moderna">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Email</th>
-                    <th>CRP</th>
-                    <th>Status</th>
-                    <th>Data de Entrada</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody id="waiting-list-body">
-                <!-- O JavaScript irá preencher esta área -->
-                <tr>
-                    <td colspan="6" class="loading-row">Carregando lista de espera...</td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="tabela-wrapper">
+            <table class="tabela-gerenciamento">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th>CRP</th>
+                        <th>Status</th>
+                        <th>Data de Entrada</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="waiting-list-body">
+                    <tr>
+                        <td colspan="6" class="loading-row" style="text-align: center; padding: 40px; color: var(--cinza-texto);"><span class="loading-spinner-sm"></span> Carregando lista de espera...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
-</section>
+</div>
 
 <!-- Template para cada linha da tabela (usado pelo JS) -->
 <template id="waiting-list-row-template">

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Qual a Terapia Ideal para Você? | Yelo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/01-variables.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { background-color: var(--verde-escuro); color: white; display: flex; flex-direction: column; min-height: 100vh; margin: 0; overflow-x: hidden; }
+        .quiz-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .quiz-header a { color: rgba(255,255,255,0.7); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+        
+        .quiz-progress { height: 6px; background: rgba(255,255,255,0.1); width: 100%; position: relative; }
+        .quiz-progress-fill { height: 100%; background: var(--cor-Yelo); width: 0%; transition: width 0.4s ease; }
+        
+        .quiz-container { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px 20px; max-width: 600px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+        
+        .quiz-question-box { width: 100%; animation: slideIn 0.4s ease; display: none; }
+        .quiz-question-box.active { display: block; }
+        
+        .quiz-question-box h2 { font-family: var(--font-titulos); font-size: 2rem; margin: 0 0 30px 0; text-align: center; color: white; }
+        
+        .option-btn {
+            display: block; width: 100%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
+            padding: 20px; border-radius: 16px; color: white; font-size: 1.1rem; font-family: var(--font-principal);
+            text-align: left; cursor: pointer; transition: all 0.2s ease; margin-bottom: 15px; font-weight: 500;
+        }
+        .option-btn:hover { background: rgba(255,255,255,0.15); transform: translateX(5px); border-color: var(--cor-Yelo); }
+        
+        .result-box { display: none; text-align: center; width: 100%; animation: slideUp 0.6s ease; }
+        .result-box.active { display: block; }
+        
+        .result-card { background: white; color: var(--verde-escuro); padding: 40px 30px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .result-card h3 { font-family: var(--font-titulos); font-size: 2.2rem; margin: 0 0 10px 0; color: var(--verde-escuro); }
+        .result-card .badge { display: inline-block; background: #e8f5e9; color: #16a34a; padding: 6px 15px; border-radius: 20px; font-weight: 700; margin-bottom: 20px; font-size: 0.9rem; }
+        .result-card p { font-size: 1.05rem; color: #555; line-height: 1.6; margin-bottom: 30px; }
+        
+        .cta-btn {
+            display: block; width: 100%; text-align: center; box-sizing: border-box; background: var(--verde-escuro); color: white; padding: 18px; border-radius: 50px;
+            font-size: 1.1rem; font-weight: bold; text-decoration: none; transition: transform 0.2s; box-shadow: 0 5px 15px rgba(27,67,50,0.3); margin-top: 25px;
+        }
+        .cta-btn:hover { transform: translateY(-3px); background: #143d2e; }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <header class="quiz-header">
+        <a href="ferramentas.html">&larr; Voltar</a>
+        <img src="assets/logos/logo-branca.png" alt="Logo Yelo" style="height: 26px; width: auto;">
+    </header>
+    
+    <div class="quiz-progress"><div class="quiz-progress-fill" id="progress-bar"></div></div>
+
+    <main class="quiz-container">
+        <!-- Renderizado via JS -->
+        <div id="quiz-area" style="width: 100%;"></div>
+
+        <!-- Tela de Resultado -->
+        <div id="result-area" class="result-box">
+            <div class="result-card">
+                <span class="badge">Match Perfeito Encontrado</span>
+                <h3 id="res-title">Terapia Cognitivo-Comportamental</h3>
+                <p id="res-desc">Com base nas suas respostas, você se beneficia de abordagens práticas e focadas no presente. A TCC ajudará você a identificar padrões de pensamentos negativos e fornecerá ferramentas práticas para mudá-los.</p>
+                <a href="questionario.html" class="cta-btn">Encontrar meu Psicólogo</a>
+                <button onclick="location.reload()" style="background: none; border: none; color: #888; margin-top: 20px; cursor: pointer; text-decoration: underline; font-weight: 500;">Refazer teste</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const questions = [
+            {
+                q: "Quando você enfrenta um problema, qual é a sua reação natural?",
+                options: [
+                    { t: "Gosto de focar em soluções práticas e agir.", type: "tcc" },
+                    { t: "Prefiro refletir sobre como cheguei a essa situação.", type: "psi" },
+                    { t: "Foco em como aquilo me faz sentir no momento.", type: "hum" }
+                ]
+            },
+            {
+                q: "O que você espera do seu psicólogo?",
+                options: [
+                    { t: "Que seja um parceiro ativo, passando exercícios e tarefas.", type: "tcc" },
+                    { t: "Que escute bastante e me ajude a interpretar o que digo.", type: "psi" },
+                    { t: "Que seja extremamente acolhedor e me aceite como sou.", type: "hum" }
+                ]
+            },
+            {
+                q: "Em qual destes focos você prefere trabalhar?",
+                options: [
+                    { t: "Mudar hábitos e comportamentos do meu dia a dia.", type: "tcc" },
+                    { t: "Entender traumas da infância e meu inconsciente.", type: "psi" },
+                    { t: "Desenvolver meu potencial e tomar minhas próprias decisões.", type: "hum" }
+                ]
+            },
+            {
+                q: "Sobre a sua relação com o tempo nas sessões, o que faz mais sentido?",
+                options: [
+                    { t: "Quero focar em como melhorar meu hoje e o meu amanhã.", type: "tcc" },
+                    { t: "Preciso investigar meu passado e minha infância para entender o presente.", type: "psi" },
+                    { t: "Quero explorar meus sentimentos atuais e quem eu sou neste exato momento.", type: "hum" }
+                ]
+            },
+            {
+                q: "Como você prefere que a dinâmica das sessões funcione?",
+                options: [
+                    { t: "Gosto de conversas estruturadas, objetivas e focadas em metas.", type: "tcc" },
+                    { t: "Prefiro um espaço livre, onde eu falo o que vem à mente e o terapeuta faz pontuações.", type: "psi" },
+                    { t: "Gosto de um diálogo fluido, focado na empatia e na minha autoaceitação.", type: "hum" }
+                ]
+            },
+            {
+                q: "Qual sua opinião sobre 'tarefas de casa' na terapia?",
+                options: [
+                    { t: "Adoro! Quero ter exercícios práticos para fazer entre as sessões.", type: "tcc" },
+                    { t: "Não gosto. O trabalho mais importante deve ser de reflexão e análise interna.", type: "psi" },
+                    { t: "Prefiro que o foco seja apenas vivenciar e observar minhas emoções no meu ritmo.", type: "hum" }
+                ]
+            },
+            {
+                q: "Qual é o seu objetivo principal ao buscar ajuda agora?",
+                options: [
+                    { t: "Aliviar sintomas específicos (ansiedade, fobias, etc) de forma mais rápida.", type: "tcc" },
+                    { t: "Descobrir a origem de padrões e ciclos que se repetem na minha vida.", type: "psi" },
+                    { t: "Encontrar um sentido maior para a minha vida e me desenvolver como pessoa.", type: "hum" }
+                ]
+            }
+        ];
+
+        const results = {
+            "tcc": { title: "TCC (Cognitivo-Comportamental)", desc: "A TCC é ideal para você! Ela é muito prática, focada no presente e trabalha para identificar e alterar padrões de pensamento que causam sofrimento. Você sairá das sessões com tarefas reais para aplicar no dia a dia." },
+            "psi": { title: "Psicanálise", desc: "A Psicanálise combina muito com o seu perfil. Ela foca no aprofundamento do seu inconsciente e nas raízes dos problemas (frequentemente ligadas ao passado e infância). O processo exige reflexão livre e proporciona um profundo autoconhecimento." },
+            "hum": { title: "Abordagem Humanista", desc: "As abordagens Humanistas (como Centrada na Pessoa ou Gestalt) são perfeitas para você. O foco é total na empatia, no acolhimento e no seu desenvolvimento pessoal no momento presente, sem julgamentos." }
+        };
+
+        let currentQ = 0;
+        let scores = { tcc: 0, psi: 0, hum: 0 };
+
+        function renderQuestion() {
+            const area = document.getElementById('quiz-area');
+            area.innerHTML = '';
+            
+            if (currentQ >= questions.length) {
+                showResult();
+                return;
+            }
+
+            const q = questions[currentQ];
+            let html = `<div class="quiz-question-box active"><h2>${q.q}</h2>`;
+            
+            q.options.forEach(opt => {
+                html += `<button class="option-btn" onclick="answer('${opt.type}')">${opt.t}</button>`;
+            });
+            
+            html += `</div>`;
+            area.innerHTML = html;
+            
+            // Update Progress
+            document.getElementById('progress-bar').style.width = `${((currentQ) / questions.length) * 100}%`;
+        }
+
+        function answer(type) {
+            scores[type]++;
+            currentQ++;
+            renderQuestion();
+        }
+
+        function showResult() {
+            document.getElementById('progress-bar').style.width = '100%';
+            const highestType = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+            
+            document.getElementById('res-title').innerText = results[highestType].title;
+            document.getElementById('res-desc').innerText = results[highestType].desc;
+            
+            document.getElementById('result-area').classList.add('active');
+        }
+
+        // Init
+        renderQuestion();
+    </script>
+</body>
+</html>

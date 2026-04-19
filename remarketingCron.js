@@ -1,8 +1,8 @@
 // backend/cron/remarketingCron.js
 
 const { Op } = require('sequelize');
-const db = require('../models');
-const { sendRemarketingEmail } = require('../services/emailService');
+const db = require('./backend/models');
+const { sendRemarketingEmail } = require('./backend/services/emailService');
 
 /**
  * Encontra psicólogos que se cadastraram mas não ativaram a assinatura
@@ -32,6 +32,12 @@ async function sendPendingSubscriptionEmails() {
             // Registrados entre 7 e 8 dias atrás (168h - 192h)
             minHours: 168,
             maxHours: 192,
+        },
+        {
+            step: 4,
+            // Registrados entre 14 e 15 dias atrás (336h - 360h) -> Fim do período Trial
+            minHours: 336,
+            maxHours: 360,
         }
     ];
 
@@ -55,10 +61,15 @@ async function sendPendingSubscriptionEmails() {
                 }
             });
 
-            if (pendingPsychologists.length > 0) {
-                console.log(`CRON: Encontrados ${pendingPsychologists.length} psicólogos para o passo ${config.step} de remarketing.`);
+            // Para o passo 4 (Leads), filtra apenas os psicólogos que receberam cliques no WhatsApp
+            const eligiblePsychologists = config.step === 4 
+                ? pendingPsychologists.filter(p => (p.whatsapp_clicks || 0) > 0)
+                : pendingPsychologists;
 
-                for (const psychologist of pendingPsychologists) {
+            if (eligiblePsychologists.length > 0) {
+                console.log(`CRON: Encontrados ${eligiblePsychologists.length} psicólogos para o passo ${config.step} de remarketing.`);
+
+                for (const psychologist of eligiblePsychologists) {
                     await sendRemarketingEmail(psychologist, config.step);
                     console.log(`CRON: E-mail de remarketing (passo ${config.step}) enviado para ${psychologist.email}.`);                    
                     // Adiciona um log no banco de dados para auditoria

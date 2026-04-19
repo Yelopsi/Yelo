@@ -2,6 +2,47 @@ const db = require('../models');
 const { Op } = require('sequelize');
 const { getIo } = require('../config/socket'); // Importa o Socket
 
+// Lista as conversas do usuário logado (Consolidado do antigo messagingController)
+exports.getConversations = async (req, res) => {
+    try {
+        const user = req.psychologist || req.patient;
+        if (!user) {
+            return res.status(401).json({ error: 'Usuário não autenticado.' });
+        }
+
+        const userId = user.id;
+        const isPsychologist = !!req.psychologist;
+
+        // Busca conversas reais no banco de dados usando a arquitetura nova
+        const whereClause = isPsychologist ? { psychologistId: userId } : { patientId: userId };
+        const conversations = await db.Conversation.findAll({ where: whereClause });
+
+        if (conversations.length === 0) {
+            // MVP Fallback: Se não houver conversas no banco, retorna a conversa fixa de suporte
+            return res.json([{
+                id: 'suporte_admin',
+                type: 'support',
+                participant: { nome: 'Suporte Yelo', role: 'Administração' },
+                lastMessage: 'Canal direto com a administração.',
+                updatedAt: new Date()
+            }]);
+        }
+
+        // Mapeia conversas reais para o formato esperado pelo frontend
+        const formattedConversations = conversations.map(convo => ({
+            id: convo.id,
+            type: (!convo.patientId) ? 'support' : 'chat',
+            participant: (!convo.patientId) ? { nome: 'Suporte Yelo', role: 'Administração' } : { nome: 'Contato' },
+            updatedAt: convo.updatedAt
+        }));
+        
+        return res.json(formattedConversations);
+    } catch (error) {
+        console.error('Erro ao buscar conversas:', error);
+        res.status(500).json({ error: 'Erro interno ao buscar conversas.' });
+    }
+};
+
 // Lista mensagens entre o usuário logado e um contato (Admin ou outro usuário)
 exports.getMessages = async (req, res) => {
     try {
@@ -23,7 +64,8 @@ exports.getMessages = async (req, res) => {
 
         const { contactType } = req.query; // ex: 'admin'
 
-        if (contactType === 'admin') {
+        // Para manter a retrocompatibilidade com o MVP, assumimos 'admin' se não especificado
+        if (contactType === 'admin' || !contactType) {
             // 1. Encontra o ID da conversa entre este usuário e o admin.
             // A convenção é que a conversa com o admin tem o patientId nulo.
             const whereClause = { psychologistId: userId, patientId: null };
@@ -128,5 +170,29 @@ exports.sendMessage = async (req, res) => {
     } catch (error) {
         console.error('Erro ao enviar mensagem:', error);
         res.status(500).json({ error: 'Erro interno ao enviar mensagem: ' + error.message });
+    }
+};
+
+// Marca todas as mensagens de uma conversa como lidas para o usuário logado
+exports.markConversationAsRead = async (req, res) => {
+    try {
+        const conversationId = req.params.id;
+        const userId = req.psychologist?.id || req.patient?.id;
+        const userType = req.psychologist ? 'psychologist' : 'patient';
+
+        await db.Message.update(
+            { isRead: true },
+            {
+                where: {
+                    conversationId: conversationId,
+                    recipientId: userId,
+                    recipientType: userType
+                }
+            }
+        );
+        res.status(200).json({ message: 'Mensagens marcadas como lidas.' });
+    } catch (error) {
+        console.error('Erro ao marcar mensagens como lidas:', error);
+        res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };

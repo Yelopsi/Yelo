@@ -21,7 +21,7 @@
         .pagina-blog {
             padding-top: 140px;
             padding-bottom: 80px;
-            background-color: #fdfaf6;
+            background-color: transparent;
             min-height: 100vh;
         }
 
@@ -190,10 +190,12 @@
         <% if (posts && posts.length > 0) { %>
             
             <% const destaque = posts[0]; %>
-            <a href="/blog/post/<%= destaque.id %>" class="post-destaque">
+            <a href="/blog/post/<%= destaque.id %>" class="post-destaque" <%= !destaque.imagem_url ? 'style="grid-template-columns: 1fr;"' : '' %>>
+                <% if (destaque.imagem_url) { %>
                 <div class="destaque-img-wrapper">
-                    <img src="<%= destaque.imagem_url || getImagemFixa(destaque.id) %>" alt="<%= destaque.titulo %>">
+                    <img src="<%= destaque.imagem_url %>" alt="<%= destaque.titulo %>">
                 </div>
+                <% } %>
                 
                 <div class="destaque-conteudo">
                     <span class="tag-destaque">MAIS RECENTE</span>
@@ -213,7 +215,9 @@
                     <% outros.forEach(post => { %>
                         <article class="post-card">
                             <a href="/blog/post/<%= post.id %>" class="card-link">
-                                <img src="<%= post.imagem_url || getImagemFixa(post.id) %>" alt="<%= post.titulo %>" class="card-img">
+                                <% if (post.imagem_url) { %>
+                                <img src="<%= post.imagem_url %>" alt="<%= post.titulo %>" class="card-img">
+                                <% } %>
                                 <div class="post-card-body">
                                     <span class="card-date">
                                         <%= new Date(post.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }) %>

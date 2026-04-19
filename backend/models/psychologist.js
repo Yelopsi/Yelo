@@ -238,15 +238,51 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: 0,
         allowNull: false
     },
+    stripeSubscriptionId: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    subscription_payments_count: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    },
     // --- XP (NOVO) ---
     xp: {
         type: DataTypes.INTEGER,
         defaultValue: 0
     },
+    remarketing_step: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+    },
+    last_remarketing_at: {
+        type: DataTypes.DATE
+    },
+    utm_source: {
+        type: DataTypes.STRING
+    },
+    utm_medium: {
+        type: DataTypes.STRING
+    },
+    utm_campaign: {
+        type: DataTypes.STRING
+    },
     // --- GAMIFICATION (NOVO) ---
     authority_level: {
         type: DataTypes.STRING,
         defaultValue: 'nivel_iniciante' // nivel_iniciante, nivel_verificado, nivel_ativo, nivel_especialista, nivel_mentor
+    },
+    crpDocumentUrl: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    dailySummaryTime: {
+      type: DataTypes.STRING,
+      defaultValue: '08:00'
+    },
+    reminderHoursBefore: {
+      type: DataTypes.INTEGER,
+      defaultValue: 24
     },
     badges: {
         type: DataTypes.JSONB,
