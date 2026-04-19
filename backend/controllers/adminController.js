@@ -762,6 +762,12 @@ exports.updateAdminPhoto = async (req, res) => {
         if (isModernAdmin) {
             await db.Psychologist.update({ fotoUrl }, { where: { id: userId } });
         } else {
+            try {
+                await db.sequelize.query('ALTER TABLE "Admins" ADD COLUMN IF NOT EXISTS "fotoUrl" VARCHAR(255);');
+            } catch (colErr) {
+                console.warn("Aviso ao verificar coluna fotoUrl:", colErr.message);
+            }
+
             await db.sequelize.query(`UPDATE "Admins" SET "fotoUrl" = :fotoUrl, "updatedAt" = NOW() WHERE id = :id`, {
                 replacements: { fotoUrl, id: userId }
             });
@@ -769,7 +775,7 @@ exports.updateAdminPhoto = async (req, res) => {
         return res.status(200).json({ message: 'Foto atualizada!', fotoUrl });
     } catch (error) {
         console.error('Erro ao atualizar foto do admin:', error);
-        res.status(500).json({ error: 'Erro interno no servidor ao processar a imagem.' });
+        return res.status(500).json({ error: `Erro interno ao processar a imagem: ${error.message}` });
     }
 };
 
