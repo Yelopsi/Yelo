@@ -2444,7 +2444,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     box-shadow: 0 5px 15px rgba(27, 67, 50, 0.3);
 }
 
-/* Estado: Bloqueado (Trial Excedido) */
+damente a/* Estado: Bloqueado (Trial Excedido) */
 #btn-agendar-whatsapp.bloqueado {
     background-color: #e0e0e0 !important;
     color: #888 !important;

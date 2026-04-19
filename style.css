@@ -3251,55 +3251,47 @@ body.pagina-dashboard {
 
 #toast-container, .toast-container {
     position: fixed;
-    top: 30px;
-    left: 50%;
-    transform: translateX(-50%);
+    bottom: 40px !important;
+    top: auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
     z-index: 2147483647;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     pointer-events: none; /* Permite clicar através do container invisível */
 }
 
 .toast {
     pointer-events: auto;
-    min-width: 250px;
+    min-width: auto;
+    white-space: nowrap;
     max-width: 90vw;
-    background: rgba(30, 41, 59, 0.95); /* Escuro moderno (Slate 800) */
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(27, 67, 50, 0.95) !important; /* Verde Escuro Yelo */
     color: #ffffff;
     font-family: var(--font-principal, sans-serif);
-    font-weight: 600;
-    font-size: 0.95rem;
-    padding: 14px 24px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 12px 24px;
     border-radius: 50px; /* Formato de Pílula */
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0,0,0,0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 8px;
     opacity: 0;
-    animation: slideDownSpring 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    animation: slideUpToast 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Indicadores Sutis em vez de mudar o fundo todo */
-.toast.toast-success, .toast.success {
-    border-left: 5px solid #10b981; /* Verde esmeralda moderno */
-}
+/* Remove borders to mimic minimalist WhatsApp toast */
+.toast.toast-success, .toast.success, .toast.toast-info, .toast.info { border-left: none !important; background: rgba(27, 67, 50, 0.95) !important; }
+.toast.toast-error, .toast.error { border-left: none !important; background: rgba(230, 57, 70, 0.95) !important; }
 
-.toast.toast-error, .toast.error {
-    border-left: 5px solid #ef4444; /* Vermelho moderno */
-}
-
-.toast.toast-info, .toast.info {
-    border-left: 5px solid #3b82f6; /* Azul moderno */
-}
-
-@keyframes slideDownSpring {
-    0% { transform: translateY(-30px) scale(0.9); opacity: 0; }
+@keyframes slideUpToast {
+    0% { transform: translateY(30px) scale(0.9); opacity: 0; }
     100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
@@ -4451,35 +4443,47 @@ header.header-rolagem .botoes-acao .btn-outline:hover {
    ========================================================================== */
 #toast-container {
     position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 200001 !important; /* Acima do modal e header */
+     bottom: 40px !important;
+    top: auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 2147483647 !important; /* Acima de tudo */
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 10px;
+    pointer-events: none;
 }
 
 .toast {
+    pointer-events: auto;
     color: #fff;
     font-weight: 500;
+    font-size: 0.9rem;
     font-family: var(--font-principal);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    display: none; /* JS controla o display block */
-    opacity: 0;    /* JS controla a opacidade */
-    transition: opacity 0.4s ease-in-out;
+    background: rgba(27, 67, 50, 0.95) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    opacity: 0;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    padding: 12px 24px;
+    border-radius: 50px;
+    border: none !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+    animation: slideUpToast 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Tipos de Toast */
-.toast.toast-success { background-color: #1B4332; border-left: 5px solid #FFEE8C; }
-.toast.toast-error { background-color: #E63946; border-left: 5px solid #ffb4b4; }
+.toast.toast-success, .toast.toast-info { border-left: none !important; background-color: rgba(27, 67, 50, 0.95) !important; }
+.toast.toast-error { border-left: none !important; background-color: rgba(230, 57, 70, 0.95) !important; }
 
-@keyframes slideInRight {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
 
-@keyframes fadeOut {
-    to { opacity: 0; transform: translateY(-10px); }
+@keyframes slideUpToast {
+    0% { transform: translateY(30px) scale(0.9); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 /* ==========================================================================
    ESTILO MODERNO: SEÇÃO SOBRE MIM
