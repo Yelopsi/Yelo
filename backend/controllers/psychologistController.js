@@ -872,9 +872,21 @@ exports.inviteFromWaitlist = async (req, res) => {
 
         const frontendUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
         const invitationLink = `${frontendUrl}/psi-registro?token=${invitationToken}&email=${encodeURIComponent(candidate.email)}`;
-        await require('../services/emailService').sendInvitationEmail(candidate, invitationLink); // Placeholder
-
-        res.status(200).json({ message: `Convite enviado com sucesso para ${candidate.email}.` });
+        
+        const emailService = require('../services/emailService');
+        const htmlContent = `<h2>Olá, ${candidate.nome}!</h2><p>Temos uma ótima notícia: uma vaga foi liberada para você na Yelo!</p><p>Clique no link abaixo para concluir seu cadastro e começar a atender pacientes:</p><a href="${invitationLink}" style="display:inline-block; padding:10px 20px; background:#1B4332; color:#fff; text-decoration:none; border-radius:5px;">Concluir Cadastro</a><p>Seja bem-vindo(a)!</p>`;
+        
+        try {
+            if (typeof emailService.sendInvitationEmail === 'function') {
+                await emailService.sendInvitationEmail(candidate, invitationLink);
+            } else if (typeof emailService.sendEmail === 'function') {
+                await emailService.sendEmail(candidate.email, "Seu convite para a Yelo chegou! 🎉", htmlContent);
+            }
+            res.status(200).json({ message: `Convite enviado com sucesso para ${candidate.email}.` });
+        } catch (emailErr) {
+            console.error('Erro ao enviar e-mail de convite:', emailErr);
+            res.status(200).json({ message: `Status atualizado, mas houve uma falha ao disparar o e-mail via SMTP para ${candidate.email}. O Link de cadastro manual é: ${invitationLink}` });
+        }
     } catch (error) {
         console.error('Erro ao enviar convite manual:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });

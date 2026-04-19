@@ -276,4 +276,16 @@ window.initializePage = function() {
 
     // Limpa o intervalo quando a página for "desmontada" (função chamada pelo admin.js)
     window.cleanupPage = () => clearInterval(refreshInterval);
+
+        // --- NAVEGAÇÃO DOS CARDS DE AÇÃO RÁPIDA ---
+        const actionLinks = document.querySelectorAll('[data-page-link]');
+        actionLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetPage = link.getAttribute('data-page-link');
+                if (targetPage && typeof window.loadPage === 'function') {
+                    window.loadPage(targetPage);
+                }
+            });
+        });
 };

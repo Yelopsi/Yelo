@@ -254,6 +254,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // --- INICIALIZA SOCKET (Conecta o Admin à sala) ---
             connectAdminSocket(token);
             
+            // --- INICIALIZA UPLOAD DE FOTO ---
+            setupAdminPhotoUpload();
+
             // --- FIX: Remove loader da tela
             const loader = document.getElementById('global-loader');
             if (loader) {
@@ -531,6 +534,90 @@ document.addEventListener('DOMContentLoaded', function() {
         // Listener para quando os dados do admin forem atualizados em outra página
         window.addEventListener('adminDataUpdated', updateWelcomeMessage);
 
+    }
+
+    // ==========================================
+    // UPLOAD DE FOTO DO ADMIN
+    // ==========================================
+    function setupAdminPhotoUpload() {
+        const sidebarTrigger = document.getElementById('admin-photo-trigger');
+        const mobileTrigger = document.getElementById('mobile-avatar-trigger');
+        const photoInput = document.getElementById('admin-photo-input');
+        const cropModal = document.getElementById('crop-modal');
+        const imageElement = document.getElementById('image-to-crop');
+        const btnCancelCrop = document.getElementById('btn-cancel-crop');
+        const btnConfirmCrop = document.getElementById('btn-confirm-crop');
+        let cropper = null;
+
+        const openFileInput = () => { if (photoInput) photoInput.click(); };
+
+        if (sidebarTrigger) sidebarTrigger.onclick = openFileInput;
+        if (mobileTrigger) mobileTrigger.onclick = openFileInput;
+
+        if (photoInput) {
+            photoInput.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 10 * 1024 * 1024) {
+                        showToast('Arquivo muito grande. Limite máximo: 10MB.', 'error');
+                        photoInput.value = '';
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        if (cropModal) cropModal.style.display = 'flex';
+                        if (imageElement) {
+                            imageElement.src = event.target.result;
+                            if (cropper) cropper.destroy();
+                            cropper = new Cropper(imageElement, { aspectRatio: 1, viewMode: 1, autoCropArea: 1 });
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+        }
+
+        if (btnCancelCrop) {
+            btnCancelCrop.onclick = () => {
+                if (cropModal) cropModal.style.display = 'none';
+                if (cropper) cropper.destroy();
+                if (photoInput) photoInput.value = '';
+            };
+        }
+
+        if (btnConfirmCrop) {
+            btnConfirmCrop.onclick = () => {
+                if (!cropper) return;
+                cropper.getCroppedCanvas({ width: 400, height: 400 }).toBlob(async (blob) => {
+                    if (!blob) return;
+                    if (cropModal) cropModal.style.display = 'none';
+                    const fd = new FormData();
+                    fd.append('foto', blob, 'profile.jpg');
+                    showToast('Enviando foto...', 'info');
+
+                    try {
+                        const token = localStorage.getItem('Yelo_token');
+                        const res = await fetch(`${API_BASE_URL}/api/admin/me/photo`, { 
+                            method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }, body: fd 
+                        });
+                        
+                        if (res.ok) {
+                            const d = await res.json();
+                            const sidebarPhoto = document.getElementById('admin-sidebar-photo');
+                            const mobilePhoto = document.getElementById('admin-mobile-photo');
+                            if (sidebarPhoto) sidebarPhoto.src = d.fotoUrl;
+                            if (mobilePhoto) mobilePhoto.src = d.fotoUrl;
+                            showToast('Foto atualizada!', 'success');
+                        } else { throw new Error('Erro ao enviar foto.'); }
+                    } catch (err) {
+                        showToast(err.message || 'Erro ao enviar foto.', 'error');
+                    } finally {
+                        if (cropper) cropper.destroy();
+                        if (photoInput) photoInput.value = '';
+                    }
+                }, 'image/jpeg', 0.9);
+            };
+        }
     }
 
     // ==========================================

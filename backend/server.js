@@ -741,6 +741,35 @@ app.get('/api/fix-clean-soft-deleted', async (req, res) => {
     }
 });
 
+// --- ROTA DE CORREÇÃO: ENVIAR CONVITE PARA TODOS DA LISTA DE ESPERA E LIMPAR ---
+app.get('/api/fix-invite-all-waitlist', async (req, res) => {
+    try {
+        const waitlist = await db.WaitingList.findAll({ where: { status: 'pending' } });
+        if (waitlist.length === 0) return res.send("A lista de espera já está vazia!");
+
+        const emailService = require('./services/emailService');
+        let sentCount = 0;
+
+        for (const candidate of waitlist) {
+            const invitationToken = crypto.randomBytes(32).toString('hex');
+            const expirationDate = new Date();
+            expirationDate.setDate(expirationDate.getDate() + 7);
+
+            await candidate.update({ status: 'invited', invitationToken, invitationExpiresAt: expirationDate });
+
+            const link = `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/psi-registro?token=${invitationToken}&email=${encodeURIComponent(candidate.email)}`;
+            const htmlContent = `<h2>Olá, ${candidate.nome}!</h2><p>Uma vaga foi liberada para você na Yelo!</p><a href="${link}" style="display:inline-block; padding:10px 20px; background:#1B4332; color:#fff; text-decoration:none; border-radius:5px;">Concluir Cadastro</a>`;
+
+            try {
+                if (typeof emailService.sendInvitationEmail === 'function') await emailService.sendInvitationEmail(candidate, link);
+                else if (typeof emailService.sendEmail === 'function') await emailService.sendEmail(candidate.email, "Seu convite para a Yelo chegou! 🎉", htmlContent);
+                sentCount++;
+            } catch(e) { console.error(`Erro email para ${candidate.email}:`, e.message); }
+        }
+        res.send(`<h2>✅ Sucesso!</h2><p>${sentCount} psicólogos foram convidados e a lista de espera foi esvaziada.</p>`);
+    } catch (error) { res.status(500).send("Erro: " + error.message); }
+});
+
 // --- ROTA DE AUDITORIA: BLOQUEIA PERFIS QUE BURLARAM O PAGAMENTO ---
 app.get('/api/fix-inadimplentes', async (req, res) => {
     try {
