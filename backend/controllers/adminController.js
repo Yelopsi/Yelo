@@ -705,22 +705,43 @@ exports.updateAdminPhoto = async (req, res) => {
         if (!req.file) {
             return res.status(400).json({ error: 'Nenhum arquivo de imagem foi enviado.' });
         }
-        const fotoUrl = `/uploads/profiles/${req.file.filename}`;
-        const userType = req.user.type;
-        
-        if (userType === 'psychologist' && req.psychologist) {
-            await req.psychologist.update({ fotoUrl });
+
+        const userId = (req.user && req.user.id) || (req.userDecoded && req.userDecoded.id);
+        const userType = (req.user && req.user.type) || (req.userDecoded && req.userDecoded.type) || 'admin';
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Usuário não autenticado.' });
+        }
+
+        // Integração com Cloudinary
+        const cloudinary = require('cloudinary').v2;
+        cloudinary.config({
+            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+            api_key: process.env.CLOUDINARY_API_KEY,
+            api_secret: process.env.CLOUDINARY_API_SECRET
+        });
+
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: 'yelo/profiles',
+            public_id: `admin-profile-${userId}`,
+            overwrite: true,
+            transformation: [{ width: 500, height: 500, crop: 'fill', gravity: 'face' }, { quality: 'auto' }, { fetch_format: 'auto' }]
+        });
+        const fotoUrl = result.secure_url;
+
+        // Limpeza do arquivo temporário local
+        const fs = require('fs').promises;
+        try { await fs.unlink(req.file.path); } catch (e) { console.warn("Erro ao deletar arquivo local:", e); }
+
+        if (userType === 'psychologist') {
+            await db.Psychologist.update({ fotoUrl }, { where: { id: userId } });
             return res.status(200).json({ message: 'Foto atualizada!', fotoUrl });
         }
 
-        if (userType === 'admin') {
-            await db.sequelize.query(`UPDATE "Admins" SET "fotoUrl" = :fotoUrl, "updatedAt" = NOW() WHERE id = :id`, {
-                replacements: { fotoUrl, id: req.user.id }
-            });
-            return res.status(200).json({ message: 'Foto atualizada!', fotoUrl });
-        }
-
-        res.status(404).json({ error: 'Usuário não encontrado.' });
+        await db.sequelize.query(`UPDATE "Admins" SET "fotoUrl" = :fotoUrl, "updatedAt" = NOW() WHERE id = :id`, {
+            replacements: { fotoUrl, id: userId }
+        });
+        return res.status(200).json({ message: 'Foto atualizada!', fotoUrl });
     } catch (error) {
         console.error('Erro ao atualizar foto do admin:', error);
         res.status(500).json({ error: 'Erro interno no servidor ao processar a imagem.' });

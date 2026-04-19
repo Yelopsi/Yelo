@@ -105,7 +105,7 @@ window.initializePage = function() {
                     inviteButton.style.gap = '5px';
                     inviteButton.style.padding = '6px 12px';
                     inviteButton.style.borderRadius = '20px';
-                    inviteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> ${candidate.status === 'invited' ? 'Reenviar Convite' : 'Convidar'}`;
+                    inviteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> ${candidate.status === 'invited' ? 'Reenviar' : 'Convidar'}`;
                     inviteButton.onclick = () => sendInvitation(candidate.id, inviteButton);
                     actionsCell.appendChild(inviteButton);
                 } else {

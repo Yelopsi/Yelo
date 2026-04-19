@@ -672,6 +672,7 @@ exports.addToWaitlist = async (req, res) => {
 exports.getWaitingList = async (req, res) => {
     try {
         const waitingList = await db.WaitingList.findAll({
+            where: { status: 'pending' },
             order: [['createdAt', 'DESC']]
         });
         res.status(200).json(waitingList);

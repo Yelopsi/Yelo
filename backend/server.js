@@ -742,7 +742,7 @@ app.get('/api/fix-clean-soft-deleted', async (req, res) => {
 });
 
 // --- ROTA DE CORREÇÃO: ENVIAR CONVITE PARA TODOS DA LISTA DE ESPERA E LIMPAR ---
-app.get('/api/fix-invite-all-waitlist', async (req, res) => {
+app.get('/api/run-invite-all-waitlist', async (req, res) => {
     try {
         const waitlist = await db.WaitingList.findAll({ where: { status: 'pending' } });
         if (waitlist.length === 0) return res.send("A lista de espera já está vazia!");
