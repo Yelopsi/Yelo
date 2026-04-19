@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Pagamento Confirmado - Yelo Psi</title>
+    <style type="text/css">
+        body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+        table { border-collapse: collapse !important; }
+        body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #f3f4f6; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+        @media screen and (max-width: 600px) {
+            .email-container { width: 100% !important; margin: auto !important; }
+            .content-padding { padding: 30px 20px !important; }
+            .btn-cta { display: block !important; width: 100% !important; box-sizing: border-box !important; }
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6;">
+
+    <div style="display: none; font-size: 1px; color: #fefefe; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
+        Tudo certo com a sua assinatura! Seu pagamento foi aprovado e seu perfil continua ativo.
+    </div>
+
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f3f4f6; padding: 40px 0;">
+        <tr>
+            <td align="center" style="padding: 20px 0;">
+                <table border="0" cellpadding="0" cellspacing="0" width="600" class="email-container" style="background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); border: 1px solid #e5e7eb;">
+                    <tr>
+                        <td align="center" style="padding: 45px 0; background-color: #1B4332;">
+                            <a href="https://www.yelopsi.com.br" target="_blank">
+                                <img src="https://www.yelopsi.com.br/assets/logos/logo-branca.png?v=2" alt="Yelo" width="120" style="display: block; font-family: Helvetica, Arial, sans-serif; color: #ffffff; font-size: 24px; font-weight: bold;">
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="content-padding" style="padding: 40px 40px 30px 40px; color: #374151; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; text-align: justify;">
+                            
+                            <h1 style="color: #111827; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-top: 0; margin-bottom: 25px; text-align: center;">
+                                Pagamento Aprovado! 🎉
+                            </h1>
+
+                            <p style="margin: 0 0 20px 0;">
+                                Olá, <strong>{{nome}}</strong>!
+                            </p>
+
+                            <p style="margin: 0 0 20px 0;">
+                                Passando para confirmar que recebemos o pagamento da sua assinatura na Yelo Psi. O seu perfil continua 100% ativo e pronto para receber novos pacientes na plataforma.
+                            </p>
+                            
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 35px 0; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px;">
+                                <tr>
+                                    <td style="padding: 24px; color: #475569; font-family: Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.6; text-align: left;">
+                                        <span style="font-size: 18px; margin-right: 8px; vertical-align: middle;">🧾</span> <strong style="color: #1e293b;">Resumo da Transação:</strong><br><br>
+                                        <strong>Plano:</strong> {{plano}}<br>
+                                        <strong>Valor pago:</strong> R$ {{valor}}<br>
+                                        <br>
+                                        <em>O recibo/nota fiscal ficará disponível diretamente no seu painel financeiro.</em>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td align="center">
+                                        <table border="0" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td align="center" bgcolor="#FFEE8C" style="border-radius: 50px;">
+                                                    <a href="{{linkAcao}}" target="_blank" class="btn-cta" style="display: inline-block; padding: 16px 36px; font-family: Helvetica, Arial, sans-serif; font-size: 16px; color: #1B4332; text-decoration: none; font-weight: bold; border-radius: 50px; background-color: #FFEE8C; border: 1px solid #FFEE8C;">
+                                                        Acessar meu Painel
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin: 40px 0 0 0; color: #6b7280; text-align: center;">
+                                Com carinho,<br>
+                                <strong style="color: #111827;">Equipe Yelo</strong>💚
+                            </p>
+
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0 50px;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr><td style="border-top: 1px solid #f3f4f6;"></td></tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="padding: 30px 40px 40px 40px; font-family: Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.5; color: #9ca3af; background-color: #ffffff;">
+                            <p style="margin: 0 0 10px 0;">
+                                Dúvidas com seu pagamento? Fale com a gente em <a href="mailto:financeiro@yelopsi.com.br" style="color: #1B4332; text-decoration: underline;">financeiro@yelopsi.com.br</a>
+                            </p>
+                            <p style="margin: 0 0 10px 0;">
+                                © 2026 Yelo Saúde Mental. Todos os direitos reservados.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

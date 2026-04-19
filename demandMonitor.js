@@ -176,7 +176,8 @@ async function inviteNextInLine(nicheCriteria, specificCandidateId = null) {
             invitationExpiresAt: expirationDate,
         });
 
-        const invitationLink = `http://127.0.0.1:5500/psi_registro.html?token=${invitationToken}&email=${candidate.email}`;
+        const baseUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
+        const invitationLink = `${baseUrl}/psi-registro?token=${invitationToken}&email=${encodeURIComponent(candidate.email)}`;
         await sendInvitationEmail(candidate, invitationLink);
         console.log(`CRON: Convite enviado para ${candidate.email}.`);
         return true;

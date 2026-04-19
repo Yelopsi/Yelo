@@ -10,16 +10,31 @@
         const today = new Date();
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(today.getDate() - 30);
+        const tomorrow = new Date(today); 
+        tomorrow.setDate(tomorrow.getDate() + 1);
         
         const elStart = document.getElementById('global-date-start');
         const elEnd = document.getElementById('global-date-end');
         
         if (elStart && elEnd) {
-            const formatDate = (d) => { const year = d.getFullYear(); const month = String(d.getMonth() + 1).padStart(2, '0'); const day = String(d.getDate()).padStart(2, '0'); return `${year}-${month}-${day}`; };
-            elStart.value = formatDate(thirtyDaysAgo);
-            // Ajuste: Define o fim como "Amanhã" para garantir que pegue tudo de hoje, independente do fuso horário UTC
-            const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
-            elEnd.value = formatDate(tomorrow);
+            if (typeof flatpickr !== 'undefined') {
+                const config = {
+                    dateFormat: "Y-m-d",
+                    altInput: true,
+                    altFormat: "d/m/Y",
+                    locale: "pt",
+                    disableMobile: false // Força a roleta nativa no mobile
+                };
+                flatpickr(elStart, { ...config, defaultDate: thirtyDaysAgo });
+                flatpickr(elEnd, { ...config, defaultDate: tomorrow });
+            } else {
+                // Fallback de segurança se a biblioteca não carregar
+                const formatDate = (d) => { const year = d.getFullYear(); const month = String(d.getMonth() + 1).padStart(2, '0'); const day = String(d.getDate()).padStart(2, '0'); return `${year}-${month}-${day}`; };
+                elStart.type = 'date';
+                elEnd.type = 'date';
+                elStart.value = formatDate(thirtyDaysAgo);
+                elEnd.value = formatDate(tomorrow);
+            }
         }
 
         loadFollowUpList();
@@ -343,33 +358,30 @@
             let showUnlock = false;
 
             if (item.status === 'contact_made') {
-                badgeHtml = `<span class="status-badge" style="background:#c3e6cb; color:#155724; font-size: 0.75rem;">Contato realizado</span>`;
-                rowStyle = 'background-color: #e8f5e9;';
+                badgeHtml = `<span class="status-badge" style="background:#dcfce7; color:#166534; font-size: 0.75rem; border: 1px solid #bbf7d0; padding: 4px 10px; border-radius: 20px;">Contato realizado</span>`;
                 selectDisabled = true;
                 selectedValue = 'contact_made';
                 showUnlock = true;
             } else if (item.status === 'contact_failed') {
-                badgeHtml = `<span class="status-badge" style="background:#ffeeba; color:#856404; font-size: 0.75rem;">Contato não realizado</span>`;
-                rowStyle = 'background-color: #fff3cd;';
+                badgeHtml = `<span class="status-badge" style="background:#fef2f2; color:#b91c1c; font-size: 0.75rem; border: 1px solid #fecaca; padding: 4px 10px; border-radius: 20px;">Sem resposta</span>`;
                 selectDisabled = true;
                 selectedValue = 'contact_failed';
                 showUnlock = true;
             } else if (item.status === 'not_attempted') {
-                badgeHtml = `<span class="status-badge" style="background:#fff3cd; color:#856404; font-size: 0.75rem;">Ainda não tentou</span>`;
+                badgeHtml = `<span class="status-badge" style="background:#fffbeb; color:#b45309; font-size: 0.75rem; border: 1px solid #fde68a; padding: 4px 10px; border-radius: 20px;">Ainda não tentou</span>`;
                 selectDisabled = true;
                 selectedValue = 'not_attempted';
                 showUnlock = true;
             } else if (item.status === 'opt_out') {
-                badgeHtml = `<span class="status-badge" style="background:#f5c6cb; color:#721c24; font-size: 0.75rem;">Opt-out</span>`;
-                rowStyle = 'background-color: #f8d7da; opacity: 0.6;';
+                badgeHtml = `<span class="status-badge" style="background:#f3f4f6; color:#4b5563; font-size: 0.75rem; border: 1px solid #e5e7eb; padding: 4px 10px; border-radius: 20px;">Opt-out</span>`;
                 selectDisabled = true;
                 selectedValue = 'opt_out';
                 whatsappStyle += ' pointer-events: none; opacity: 0.5; cursor: not-allowed;';
                 showUnlock = true;
             } else if (item.message_sent_at) {
-                badgeHtml = `<span class="status-badge" data-status="sent" style="background:#cce5ff; color:#004085; font-size: 0.75rem;">Mensagem enviada</span>`;
+                badgeHtml = `<span class="status-badge" data-status="sent" style="background:#e0f2fe; color:#0369a1; font-size: 0.75rem; border: 1px solid #bae6fd; padding: 4px 10px; border-radius: 20px;">Mensagem enviada</span>`;
             } else {
-                badgeHtml = `<span class="status-badge" data-status="pending" style="background:#e2e3e5; color:#383d41; font-size: 0.75rem;">Pendente</span>`;
+                badgeHtml = `<span class="status-badge" data-status="pending" style="background:#f8f9fa; color:#6c757d; font-size: 0.75rem; border: 1px solid #dee2e6; padding: 4px 10px; border-radius: 20px;">Pendente</span>`;
                 selectedValue = ''; // Deixa em branco para forçar escolha
             }
             
@@ -383,36 +395,38 @@
             if(rowStyle) tr.style.cssText = rowStyle;
 
             tr.innerHTML = `
-                <td style="padding: 8px;">
-                    <div style="font-size: 0.85rem;">${formattedDate}</div>
-                    <div style="font-size: 0.75rem; color: #999; margin-top: 2px;">há ${daysDiff} dias</div>
+                <td data-label="Data" style="padding: 15px;">
+                    <div style="font-size: 0.95rem; font-weight: 600; color: #333;">${formattedDate}</div>
+                    <div style="font-size: 0.8rem; color: #888; margin-top: 2px;">há ${daysDiff} dias</div>
                 </td>
-                <td style="padding: 8px;">
-                    <div style="font-weight: 500; font-size: 0.9rem;">${item.patientName}</div>
-                    <div style="font-size: 0.8rem; color: #666;">${formatPhone(item.patientPhone)}</div>
+                <td data-label="Paciente" style="padding: 15px;">
+                    <div style="font-weight: 600; font-size: 0.95rem; color: #333;">${item.patientName}</div>
+                    <div style="font-size: 0.85rem; color: #666; margin-top: 2px;">${formatPhone(item.patientPhone)}</div>
                 </td>
-                <td style="padding: 8px; font-size: 0.9rem;">${item.psychologistName}</td>
-                <td style="padding: 8px;">
+                <td data-label="Psicólogo" style="padding: 15px; font-size: 0.95rem; color: #444; font-weight: 500;">
+                    ${item.psychologistName}
+                </td>
+                <td data-label="Status" style="padding: 15px;">
                     ${badgeHtml}
-                    <div style="font-size: 0.75rem; color: #28a745; margin-top: 4px;">✔ Autorizado</div>
+                    ${item.status === 'contact_made' || item.status === 'opt_out' ? '' : `<div style="font-size: 0.75rem; color: #10b981; margin-top: 6px; font-weight: 600; display: flex; align-items: center; gap: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg> Autorizado</div>`}
                 </td>
-                <td style="padding: 8px;">
-                    <div class="actions-cell" style="align-items: center;">
-                        <a href="${whatsappLink}" target="_blank" class="btn-icon btn-whatsapp" data-id="${item.id}" title="${whatsappTitle}" style="${whatsappStyle}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #25D366;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                <td data-label="Ações" style="padding: 15px;">
+                    <div class="actions-cell" style="display: flex; align-items: center; justify-content: center; width: 100%; gap: 10px; flex-wrap: wrap;">
+                        <a href="${whatsappLink}" target="_blank" class="btn-icon btn-whatsapp" data-id="${item.id}" title="${whatsappTitle}" style="${whatsappStyle} background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                         </a>
                         <div class="select-wrapper" style="position: relative; display: inline-block;">
-                            <select class="followup-select" data-id="${item.id}" ${selectDisabled ? 'disabled' : ''} style="padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.8rem; color: #333; cursor: pointer; background-color: white; max-width: 145px;">
+                            <select class="form-control followup-select" data-id="${item.id}" ${selectDisabled ? 'disabled' : ''} style="padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; min-width: 160px; background-color: ${selectDisabled ? '#f8f9fa' : '#fff'}; border: 1px solid #ddd; cursor: pointer;">
                                 <option value="" ${!selectedValue ? 'selected' : ''} disabled>Registrar resultado...</option>
                                 <option value="contact_made" ${selectedValue === 'contact_made' ? 'selected' : ''}>✅ Contato realizado</option>
-                                <option value="contact_failed" ${selectedValue === 'contact_failed' ? 'selected' : ''}>❌ Contato não realizado</option>
+                                <option value="contact_failed" ${selectedValue === 'contact_failed' ? 'selected' : ''}>❌ Sem resposta</option>
                                 <option value="not_attempted" ${selectedValue === 'not_attempted' ? 'selected' : ''}>⏳ Ainda não tentou</option>
                                 <option value="opt_out" ${selectedValue === 'opt_out' ? 'selected' : ''}>🚫 Opt-out</option>
                             </select>
                         </div>
-                        <div class="actions-wrapper" style="display: flex; align-items: center; gap: 4px; margin-left: 8px;">
-                            ${showUnlock ? `<button class="btn-unlock" data-id="${item.id}" title="Destravar" style="background: none; border: none; cursor: pointer; font-size: 12px; opacity: 0.6; padding: 4px; display: flex;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg></button>` : ''}
-                            ${showUnlock ? `<button class="btn-delete-followup" data-id="${item.id}" title="Excluir" style="background: none; border: none; cursor: pointer; font-size: 12px; opacity: 0.6; padding: 4px; display: flex; color: #e74c3c;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>` : ''}
+                        <div class="actions-wrapper" style="display: flex; gap: 5px;">
+                            ${showUnlock ? `<button class="btn-unlock" data-id="${item.id}" title="Destravar Status" style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; cursor: pointer; padding: 8px; color: #666; transition: all 0.2s;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg></button>` : ''}
+                            ${showUnlock ? `<button class="btn-delete-followup" data-id="${item.id}" title="Excluir Contato" style="background: #fff1f2; border: 1px solid #ffe4e6; border-radius: 8px; cursor: pointer; padding: 8px; color: #e11d48; transition: all 0.2s;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>` : ''}
                         </div>
                     </div>
                 </td>

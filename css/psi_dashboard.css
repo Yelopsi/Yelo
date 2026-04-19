@@ -8,22 +8,25 @@
    2. ESTRUTURA DO LAYOUT (DASHBOARD)
    ========================================================================== */
 html {
-    overflow-x: hidden; /* Impede que a página inteira role para os lados */
+    overflow-x: clip; /* Impede rolagem horizontal sem quebrar o sticky */
     font-size: 70%; /* A pedido: Reduz globalmente elementos e textos baseados em rem (~30%) */
 }
 
 body.pagina-dashboard {
     font-family: var(--font-principal) !important; /* Força a fonte Inter */
-    background-color: var(--cinza-fundo);
+    background-color: var(--cinza-fundo) !important;
+    zoom: 0.88; /* Zoom out de 12% para todo o ecossistema logado */
+    background-image: var(--ruido-global) !important;
+    background-attachment: fixed !important;
+    background-repeat: repeat !important;
     color: var(--cinza-texto);
     margin: 0;
     padding: 0;
-    min-height: 100vh;
-    width: 100%; /* Corrige a "dança" lateral (era 100vw) */
-    max-width: 100vw; /* Garante que não exceda a viewport */
-    overflow-y: auto; /* Restaura rolagem da página */
+    min-height: calc(100vh / 0.88);
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden; /* Impede a rolagem do body, transferindo para .dashboard-main */
     position: relative;
-    -webkit-overflow-scrolling: touch; /* Rolagem suave no iOS */
 }
 
 /* Correção para Modais (Garante que fiquem escondidos e sobrepostos) */
@@ -32,7 +35,7 @@ body.pagina-dashboard {
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
+    height: calc(100vh / 0.88);
     background: rgba(0, 0, 0, 0.5);
     display: none; /* Oculto por padrão */
     justify-content: center;
@@ -74,7 +77,7 @@ body.pagina-dashboard {
 }
 .dashboard-container { 
     display: flex; 
-    min-height: 100vh;
+    min-height: calc(100vh / 0.88);
     width: 100%;
 }
 
@@ -92,14 +95,27 @@ body.pagina-dashboard {
     display: flex;
     flex-direction: column;
     padding: 20px; /* Padding reduzido para economia de tela */
-    background-color: #f8f9fa !important; /* Fundo cinza claro para destacar os cards */
+    background-color: transparent !important; /* Fundo transparente para ver o ruído global */
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: clip; /* FUNDAMENTAL: Destrava o eixo X para permitir cards fixos */
     position: relative;
     box-sizing: border-box;
     -webkit-overflow-scrolling: touch; /* Rolagem suave no iOS */
     margin-left: 0; /* Removido o !important para permitir sobreposição pelo media query */
     width: 100%;
+}
+
+/* ==========================================================================
+   FIX GLOBAL: STICKY CARDS NO DASHBOARD
+   Garante que painéis laterais fiquem fixos ao rolar (Ex: Calculadora).
+   ========================================================================== */
+.dashboard-sticky-card {
+    position: -webkit-sticky !important;
+    position: sticky !important;
+    top: 20px !important;
+    align-self: flex-start !important;
+    height: max-content !important;
+    z-index: 90;
 }
 
 /* Ajuste para quando o chat mobile estiver aberto */
@@ -113,6 +129,7 @@ body.chat-mobile-open {
     max-width: 1200px; /* Alargado para suportar o novo layout moderno */
     margin: 0 auto;
     display: block; /* Deixa o layout moderno gerenciar as colunas e espaçamentos */
+    transform: none !important; /* FIX: Impede que o JS do zoom quebre o 'position: sticky' dos cards flutuantes */
 }
 
 /* Títulos Gerais */
@@ -185,7 +202,8 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
 .form-grid-credenciais { display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; }
 
 /* Inputs */
-.form-group { margin-bottom: 15px; position: relative; } /* Reduzido de 20px */
+.form-group { margin-bottom: 15px; position: relative; }
+.form-group:focus-within { z-index: 100; } /* Garante que dropdowns se sobreponham aos inputs de baixo */
 .form-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 13px; } /* Reduzido de 8px e 14px */
 .form-group input, .form-group textarea, .form-group select, .filtro-select {
     width: 100%; padding: 8px 12px; /* Reduzido de 11px */
@@ -213,6 +231,7 @@ textarea#bio {
 
 /* Botões de Formulário */
 .btn { padding: 10px 24px; border-radius: 25px; font-weight: 700; border: none; cursor: pointer; transition: transform 0.2s; display: inline-block; }
+.btn { padding: 10px 24px; border-radius: 25px; font-weight: 700; border: 2px solid transparent; cursor: pointer; transition: transform 0.2s; display: inline-block; text-align: center; box-sizing: border-box; }
 .btn-principal, .btn-rapido, .btn-primario { background-color: var(--verde-escuro); color: var(--branco-puro); }
 .btn-secundario { background-color: transparent; border: 2px solid var(--verde-escuro); color: var(--verde-escuro); }
 .btn:hover { transform: scale(1.03); }
@@ -389,7 +408,7 @@ textarea#bio {
    ========================================================================== */
 /* Inbox */
 .inbox-container {
-    display: flex; height: calc(100vh - 150px);
+    display: flex; height: calc((100vh / 0.88) - 150px);
     background: var(--branco-puro); border-radius: 16px;
     overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
@@ -434,11 +453,59 @@ textarea#bio {
 }
 
 /* ==========================================================================
-   7. Q&A COMUNIDADE
+   7. Q&A COMUNIDADE (REFINADO PARA CHAT)
    ========================================================================== */
-.qna-card-psi { background: #fff; padding: 25px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
-.qna-question-title { font-size: 1.2rem; margin-bottom: 10px; }
-.qna-card-body { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+.qna-card-psi { background: #fff; padding: 25px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #e9ecef; transition: transform 0.2s, box-shadow 0.2s; }
+.qna-card-psi:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.06); }
+.qna-question-title { font-size: 1.3rem; margin-bottom: 5px; color: var(--verde-escuro); font-family: var(--font-titulos); }
+.qna-question-author { font-size: 0.85rem; color: #888; display: block; margin-bottom: 15px; }
+
+/* Mantido para compatibilidade se houver lugares não migrados */
+.qna-card-body { background: #f8f9fa; padding: 15px 20px; border-radius: 12px; font-size: 0.95rem; color: #444; line-height: 1.6; border-left: 4px solid var(--cor-Yelo); }
+
+/* Novos estilos de Conversação (Balões) */
+.qna-conversation-thread {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    margin: 20px 0 !important;
+    width: 100%;
+}
+.qna-bubble {
+    padding: 14px 18px !important;
+    font-size: 0.95rem !important;
+    line-height: 1.5 !important;
+    position: relative !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+    word-break: break-word !important;
+}
+.qna-bubble-question {
+    background-color: #ffffff !important;
+    border: 1px solid #e9ecef !important;
+    color: #333 !important;
+    align-self: flex-start !important;
+    border-radius: 16px 16px 16px 4px !important; /* Estilo WhatsApp (cauda esquerda) */
+    max-width: 85% !important;
+}
+.qna-bubble-answer {
+    background-color: #e8f5e9 !important; /* Verde claro Yelo */
+    border: 1px solid #c8e6c9 !important;
+    color: #111 !important;
+    align-self: flex-end !important;
+    border-radius: 16px 16px 4px 16px !important; /* Estilo WhatsApp (cauda direita) */
+    max-width: 85% !important;
+}
+.qna-bubble-answer strong {
+    display: block !important;
+    font-size: 0.75rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    margin-bottom: 6px !important;
+    color: #128C7E !important; /* Verde escuro clássico do zap */
+    opacity: 0.9 !important;
+}
+
+.qna-card-actions { margin-top: 15px; display: flex; align-items: center; justify-content: space-between; }
 
 /* Botão Responder (Ajuste solicitado: Pequeno e à esquerda) */
 .btn-responder {
@@ -446,9 +513,72 @@ textarea#bio {
     display: inline-block !important;
     padding: 8px 20px !important;
     font-size: 0.9rem !important;
-    margin-top: 15px;
+    margin-top: 0;
     background-color: var(--verde-escuro);
     color: #fff;
+    border-radius: 50px;
+    transition: all 0.2s ease;
+}
+.btn-responder:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(27, 67, 50, 0.2);
+}
+
+/* Ajustes Mobile Q&A */
+@media (max-width: 768px) {
+    .qna-card-psi {
+        padding: 18px;
+        border-radius: 12px;
+    }
+    .qna-question-title {
+        font-size: 1.15rem;
+        line-height: 1.3;
+    }
+    .qna-bubble {
+        padding: 12px 15px !important;
+        font-size: 0.95rem !important;
+        max-width: 92% !important;
+    }
+    .qna-bubble-answer {
+        margin-left: auto !important;
+    }
+    .qna-bubble-question {
+        margin-right: auto !important;
+    }
+}
+
+/* Paginação do Fórum/Q&A */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 30px;
+}
+.pagination-btn {
+    background-color: var(--branco-puro);
+    border: 1px solid var(--cinza-borda);
+    color: var(--verde-escuro);
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+.pagination-btn:hover:not(:disabled) {
+    background-color: #f0fdf4;
+    border-color: var(--verde-escuro);
+}
+.pagination-btn.active {
+    background-color: var(--verde-escuro);
+    color: var(--branco-puro);
+    border-color: var(--verde-escuro);
+}
+.pagination-btn:disabled {
+    background-color: #f1f3f5;
+    color: #adb5bd;
+    cursor: not-allowed;
+    border-color: #e9ecef;
 }
 
 /* Modal Q&A */
@@ -476,6 +606,33 @@ textarea#bio {
     justify-content: space-around;
     align-items: center;
     padding: 8px 16px !important;
+    /* Adicionado para o Smart Scroll: Animação suave de entrada/saída */
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Classe que encolhe a barra de navegação (Estilo Safari/App-like) */
+.mobile-bottom-nav.nav-hidden {
+    transform: translateX(-50%) translateY(15px) scale(0.85) !important;
+    padding: 4px 16px !important;
+    background-color: rgba(255, 255, 255, 0.70) !important;
+    backdrop-filter: blur(8px) !important;
+}
+
+.mobile-bottom-nav.nav-hidden .bottom-nav-item {
+    padding: 4px 0 !important;
+    gap: 0;
+}
+
+.mobile-bottom-nav.nav-hidden .bottom-nav-item svg {
+    transform: scale(0.9);
+}
+
+.mobile-bottom-nav.nav-hidden .bottom-nav-item span {
+    max-height: 0;
+    opacity: 0;
+    transform: scale(0.5);
+    margin-top: 0;
+    overflow: hidden;
 }
 
 .bottom-nav-wave {
@@ -504,19 +661,35 @@ textarea#bio {
     align-items: center;
     text-decoration: none;
     color: #999;
-    font-size: 0.7rem;
+    font-size: 0.65rem; /* Ajustado para caber mais itens sem esmagar */
     gap: 2px;
     transition: all 0.3s ease;
-    width: 25%; /* 4 itens = 25% cada */
+    flex: 1; /* Dinâmico: 4, 5 ou 6 itens dividirão o espaço igual! */
+    min-width: 0; /* Impede o vazamento */
     padding: 6px 0;
     border-radius: 20px;
+    overflow: hidden;
+}
+
+.bottom-nav-item span {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 15px;
+    opacity: 1;
+    transform: scale(1);
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Adiciona "..." se o nome for gigante */
+    white-space: nowrap;
+    width: 100%;
+    text-align: center;
 }
 
 .bottom-nav-item svg {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     stroke-width: 2px;
     transition: transform 0.3s ease;
+    flex-shrink: 0;
 }
 
 .bottom-nav-item.active {
@@ -534,7 +707,7 @@ textarea#bio {
    ========================================================================== */
 .fab-container {
     position: fixed;
-    bottom: calc(100px + env(safe-area-inset-bottom)); /* Acima da nova bottom nav em pílula */
+    bottom: calc(var(--mobile-bottom-h, 80px) + 30px) !important; /* Acima da nova bottom nav em pílula com respiro dinâmico */
     left: 20px; /* Movido para a esquerda conforme solicitado */
     right: auto;
     z-index: 10000;
@@ -614,7 +787,7 @@ textarea#bio {
    ACCOUNT MENU (BOTTOM SHEET)
    ========================================================================== */
 .account-sheet-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    position: fixed; top: 0; left: 0; width: 100%; height: calc(100vh / 0.88);
     background: rgba(0,0,0,0.5); z-index: 10001;
     opacity: 0; visibility: hidden; transition: all 0.3s;
 }
@@ -666,7 +839,7 @@ textarea#bio {
     .sidebar-backdrop {
         position: fixed;
         top: 0; left: 0;
-        width: 100%; height: 100%;
+        width: 100%; height: calc(100vh / 0.88);
         background-color: rgba(27, 67, 50, 0.5); /* Verde escuro com transparência */
         backdrop-filter: blur(2px);
         z-index: 99999; /* ACIMA do chat (99990) */
@@ -682,7 +855,10 @@ textarea#bio {
 
     /* --- SIDEBAR (MENU LATERAL) --- */
     .dashboard-sidebar {
-        display: none !important; /* REMOVE SIDEBAR NO MOBILE */
+    width: 250px; background-color: var(--verde-escuro); color: white; display: flex; flex-direction: column; padding: 25px; box-shadow: 5px 0px 15px rgba(0,0,0,0.1); z-index: 10;
+    background-image: var(--ruido-claro) !important;
+    background-attachment: fixed !important;
+    background-repeat: repeat !important;
     }
 
     /* --- BOTÃO HAMBÚRGUER (ANIMADO) --- */
@@ -743,8 +919,8 @@ textarea#bio {
     /* Ajuste de padding para não ficar escondido atrás da bottom nav */
     .dashboard-main { 
         width: 100%; 
-        /* Padding de 110px embaixo para garantir que o conteúdo fique visível acima da pílula */
-        padding: calc(var(--mobile-header-h, 70px) + 20px) 20px calc(110px + env(safe-area-inset-bottom)) 20px;
+        /* Padding inferior dinâmico para garantir que o conteúdo tenha o mesmo 'respiro' acima da bottom nav em todas as páginas */
+        padding: calc(var(--mobile-header-h, 70px) + 20px) 20px calc(var(--mobile-bottom-h, 80px) + 50px) 20px;
         margin-left: 0 !important; /* Remove a margem no mobile */
     }
 
@@ -760,7 +936,7 @@ textarea#bio {
     /* --- INBOX APP-LIKE (MOBILE) --- */
     .inbox-container { 
         flex-direction: column; 
-        height: calc(100dvh - 220px) !important; /* Ajuste para novo espaçamento */
+        height: calc((100dvh / 0.88) - 220px) !important; /* Ajuste para novo espaçamento */
         min-height: 0 !important;
     }
     .inbox-sidebar { width: 100%; max-width: none; height: 100%; overflow-y: auto; display: flex; flex-direction: column; }
@@ -930,7 +1106,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 /* 2. Ajuste da Largura da Lista de Mensagens */
 .inbox-container {
     /* Garante altura fixa para ter rolagem interna */
-    height: calc(100vh - 240px); 
+    height: calc((100vh / 0.88) - 240px); 
     min-height: 500px;
 }
 
@@ -1002,7 +1178,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 .form-actions {
     margin-top: 30px;
     display: flex;
-    justify-content: flex-start; /* Alinha à esquerda */
+    justify-content: flex-end; /* Alinha à direita */
     gap: 15px;
 }
 
@@ -1269,7 +1445,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 
 /* Estilos Específicos do Modal da Comunidade (compatível com seu HTML atual) */
 .modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    position: fixed; top: 0; left: 0; width: 100%; height: calc(100vh / 0.88);
     background: rgba(0, 0, 0, 0.5);
     display: none; /* Controlado pelo JS */
     justify-content: center; align-items: center;
@@ -1342,7 +1518,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 /* Container Principal */
 .inbox-container {
     display: flex;
-    height: calc(100vh - 130px); /* Altura otimizada para Desktop App-like */
+    height: calc((100vh / 0.88) - 130px); /* Altura otimizada para Desktop App-like */
     min-height: 500px;
     background-color: var(--branco-puro);
     border-radius: 16px;
@@ -1635,6 +1811,77 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 
 .btn-perigo-final:hover {
     background-color: #c9303c;
+}
+
+/* Media query for desktop */
+@media (min-width: 992px) {
+    .exit-stats-grid {
+        grid-template-columns: repeat(3, 1fr); /* Start with 3 columns for medium desktops */
+        gap: 25px; /* Slightly less gap for 3 columns */
+    }
+
+    .exit-stat-card {
+        padding: 25px; /* Adjust padding for 3 columns */
+    }
+
+    .stat-icon {
+        font-size: 28px; /* Adjust icon size */
+    }
+
+    .stat-value {
+        font-size: 32px; /* Adjust value size */
+    }
+
+    .stat-label {
+        font-size: 13px; /* Adjust label size */
+    }
+}
+
+@media (min-width: 1200px) { /* New breakpoint for larger desktops */
+    .exit-stats-grid {
+        grid-template-columns: repeat(4, 1fr); /* Go to 4 columns for large desktops */
+        gap: 30px; /* More space between cards on larger desktop */
+    }
+
+    .exit-stat-card {
+        padding: 30px; /* More padding for larger cards on larger desktop */
+    }
+
+    .stat-icon {
+        font-size: 32px; /* Larger icons */
+    }
+
+    .stat-value {
+        font-size: 36px; /* Larger values */
+    }
+
+    .stat-label {
+        font-size: 14px; /* Slightly larger labels */
+    }
+}
+
+/* Media query for desktop */
+@media (min-width: 992px) {
+    .exit-stats-grid {
+        grid-template-columns: repeat(4, 1fr); /* Fixed 4 columns for desktop */
+        gap: 30px; /* More space between cards on desktop */
+    }
+
+    .exit-stat-card {
+        padding: 30px; /* More padding for larger cards on desktop */
+    }
+
+    .stat-icon {
+        font-size: 32px; /* Larger icons */
+    }
+
+    .stat-value {
+        font-size: 36px; /* Larger values */
+    }
+
+    .stat-label {
+        font-size: 14px; /* Slightly larger labels */
+    }
 }
 /* ==========================================================================
    9. FEATURE GATING (BLOQUEIO PREMIUM DE RECURSOS)
@@ -2041,7 +2288,6 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     bottom: -6px; /* Aponta para baixo */
     border-top: 6px solid #1f2937;
 }
-}
 /* ==========================================================================
    CSS EXTRA: LAYOUT DO PERFIL PÚBLICO (Recuperação)
    Cole isso no final do arquivo css/psi_dashboard.css
@@ -2050,14 +2296,26 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 /* 1. Container Principal do Perfil */
 .profile-page-main {
     padding: 40px 0 80px 0;
-    background-color: #fcfcfc;
-    min-height: 80vh;
+    background-color: transparent;
+    min-height: calc(80vh / 0.88);
+    width: 100% !important;
+    max-width: 100% !important;
 }
 
 .profile-page-main .container {
     max-width: 1100px;
     margin: 0 auto;
     padding: 0 20px;
+}
+.profile-page-main.container,
+.profile-page-main .container,
+.profile-page-wrapper {
+    max-width: 1200px !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 20px !important;
+    box-sizing: border-box !important;
+    text-align: left !important;
 }
 
 /* 2. O GRID (Divide: Esquerda=Bio/Foto | Direita=Preço) */
@@ -2117,13 +2375,17 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 }
 
 /* Texto da Bio (Alinhado à esquerda para leitura) */
-.profile-bio-hero,
-#psi-bio-text {
+.profile-bio-hero {
     margin-top: 30px;
     text-align: justify;
     text-justify: inter-word;
     border-top: 1px solid #eee;
     padding-top: 20px;
+}
+
+#psi-bio-text {
+    text-align: justify;
+    text-justify: inter-word;
 }
 
 /* 4. Coluna da Direita (Card de Valor/Preço) */
@@ -2180,6 +2442,15 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     transform: translateY(-3px);
     background-color: #143d2e !important; /* Um pouco mais escuro no hover */
     box-shadow: 0 5px 15px rgba(27, 67, 50, 0.3);
+}
+
+/* Estado: Bloqueado (Trial Excedido) */
+#btn-agendar-whatsapp.bloqueado {
+    background-color: #e0e0e0 !important;
+    color: #888 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    box-shadow: none !important;
 }
 
 /* 5. Abas (Detalhes e Avaliações) */
@@ -2352,17 +2623,22 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 .star-rating-input {
     display: flex;
     flex-direction: row-reverse; /* Inverte para o hover funcionar da esq p/ dir visualmente */
-    justify-content: flex-end;
-    gap: 5px;
+    justify-content: center; /* Centraliza as estrelas */
+    gap: 8px; /* Mais espaço entre elas */
+    
 }
 
 .star-rating-input input { display: none; }
 
 .star-rating-input label {
-    font-size: 30px;
-    color: #ddd;
+    font-size: 2.8rem; /* Estrelas bem maiores e fáceis de tocar */
+    color: #e4e5e9; /* Cinza mais suave e elegante */
     cursor: pointer;
     transition: color 0.2s;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efeito elástico (bouncy) */
+    line-height: 1;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Sombra base sutil */
+    
 }
 
 /* Hover e Checked: Pinta as estrelas de amarelo */
@@ -2370,6 +2646,8 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 .star-rating-input label:hover,
 .star-rating-input label:hover ~ label {
     color: #FFC107;
+    transform: scale(1.15); /* As estrelas pulam ao serem focadas */
+    text-shadow: 0 4px 15px rgba(255, 193, 7, 0.35); /* Brilho amarelo espalhado */
 }
 
 /* --- TAG DE OFERTA (Topo do Card) --- */
@@ -2657,263 +2935,108 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 }
 
 /* Card de Post no Feed */
-.forum-post-card {
-    display: flex;
-    gap: 15px;
+/* --- ESTÉTICA REDDIT (APP-LIKE) --- */
+.reddit-style-card {
     background: #fff;
-    border: 1px solid #e9ecef;
+    border: 1px solid #edeff1;
     border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 15px;
+    padding: 16px;
+    margin-bottom: 12px;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-.forum-post-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.07);
-}
-
-/* Votos (Apoio) */
-.post-votes {
-    display: flex;
-    flex-direction: row; /* Alinha horizontalmente */
-    align-items: center; /* Centraliza verticalmente */
-    gap: 5px; /* Espaço menor entre coração e número */
-    max-width: 100%;
-}
-.support-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #888;
-    padding: 5px;
-    border-radius: 50%;
-    transition: color 0.2s, background-color 0.2s;
-}
-.support-btn:hover {
-    color: var(--coral-quente);
-    background-color: #fef2f2;
-}
-.support-btn.supported {
-    color: var(--coral-quente);
-}
-.support-btn.supported svg {
-    fill: var(--coral-quente);
-    stroke: var(--coral-quente);
-}
-.post-votes-count {
-    font-weight: 700;
-    color: #333;
-    font-size: 1.1rem;
-}
-
-/* Conteúdo do Card */
-.post-content-summary {
-    flex: 1;
-    min-width: 0; /* CRÍTICO: Permite que o flex item encolha e o texto quebre linha */
-}
-/* Garante que textos longos não vazem o card */
-.post-title, .post-snippet, .full-post-content, .comment-body {
-    word-break: break-word;
-    overflow-wrap: anywhere;
-}
-.post-meta {
-    font-size: 0.8rem;
-    color: #666;
-    margin-bottom: 8px;
-    display: flex;
-    flex-wrap: wrap; /* Permite quebrar linha se necessário */
-    gap: 8px; /* Espaçamento uniforme */
-    align-items: center;
-}
-.forum-avatar-small {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    object-fit: cover;
-    vertical-align: middle;
-    margin-right: 6px;
-}
-.post-meta .post-category {
-    font-weight: bold;
-    color: var(--verde-escuro);
-}
-.post-category-mobile {
-    display: none; /* Oculto por padrão (Desktop) */
-}
-/* Adiciona o separador visualmente apenas onde necessário */
-.post-meta > span:not(:last-child)::after {
-    content: "•";
-    margin-left: 8px;
-    color: #ccc;
-    font-weight: normal;
-}
-.post-title {
-    margin: 0 0 8px 0;
-    font-size: 1.2rem;
-    color: #111;
-}
-.post-snippet {
-    margin: 0 0 15px 0;
-    color: #555;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    text-align: justify;
-}
-.post-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.85rem;
-    color: #666;
-}
-
-.post-actions-right {
-    display: flex;
-    gap: 8px; /* Reduzido para aproximar ícones */
-    align-items: center;
-    flex-wrap: nowrap; /* Impede quebra de linha nos ícones */
-}
-
-.delete-btn {
-    background: none; border: none; cursor: pointer;
-    font-size: 1rem; opacity: 0.7; transition: opacity 0.2s;
-}
-.delete-btn:hover { opacity: 1; }
-
-/* Botão Denunciar */
-.report-btn {
-    background: none;
-    border: none;
-    color: #999;
-    font-size: 0.8rem;
-    font-weight: 500;
-    cursor: pointer;
-    padding: 5px 8px;
-    border-radius: 6px;
-    transition: color 0.2s, background-color 0.2s;
-}
-.report-btn:hover {
-    color: var(--coral-quente);
-    background-color: #fff5f5;
-}
-
-/* View de Post Completo */
-.full-post-content {
-    font-size: 1.1rem;
-    line-height: 1.7;
-    color: #333;
-    white-space: pre-wrap; /* Preserva quebras de linha e espaços */
-    text-align: justify;
-}
-.full-post-actions {
-    margin-top: 30px;
-    display: flex;
-    gap: 20px;
-    align-items: center;
-}
-.full-post-actions .support-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    padding: 8px 15px;
-    border-radius: 25px;
-    border: 1px solid #ddd;
-}
-
-/* Seção de Comentários */
-.comment-thread {
-    margin-top: 30px;
+    transition: border-color 0.2s;
     display: flex;
     flex-direction: column;
-    gap: 15px;
 }
-.comment-card {
-    background: #f8f9fa;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    padding: 15px;
+.reddit-style-card:hover {
+    border-color: #878a8c;
+}
+
+.reddit-card-header {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.85rem; color: #787c7e; margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+.post-author-avatar {
+    width: 22px; height: 22px; border-radius: 50%; object-fit: cover;
+}
+.post-category { font-weight: 700; color: var(--verde-escuro); }
+.post-author { font-weight: 500; color: #1c1c1c; }
+.meta-separator { color: #ccc; font-size: 0.7rem; }
+
+.reddit-card-body .post-title {
+    font-size: 1.15rem; font-weight: 700; color: #1c1c1c; margin: 0 0 6px 0;
+    word-break: break-word;
+}
+.reddit-card-body .post-snippet {
+    font-size: 0.95rem; color: #4a4a4a; margin: 0; line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+    word-break: break-word;
+}
+
+.reddit-card-footer {
+    display: flex; justify-content: space-between; align-items: center; margin-top: 12px;
+}
+
+.reddit-action-bar { display: flex; gap: 8px; }
+.reddit-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background-color: #f1f3f5; color: #495057;
+    padding: 6px 12px; border-radius: 20px;
+    font-weight: 600; font-size: 0.85rem;
+    border: none; cursor: pointer; transition: background 0.2s;
+}
+.reddit-pill:hover { background-color: #e2e6ea; }
+.reddit-pill svg { width: 16px; height: 16px; }
+
+.support-btn.supported.reddit-pill {
+    color: var(--coral-quente); background-color: #fff5f5;
+}
+.support-btn.supported.reddit-pill svg {
+    fill: var(--coral-quente); stroke: var(--coral-quente);
+}
+
+.post-actions-right { display: flex; gap: 4px; align-items: center; }
+.icon-btn-small {
+    background: transparent; border: none; padding: 6px; border-radius: 50%;
+    color: #878a8c; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.icon-btn-small:hover { background: #f1f3f5; color: #1c1c1c; }
+
+/* View de Post Completo (App Header) */
+.reddit-app-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid #edeff1;
+    position: sticky; top: 0; background: var(--cinza-fundo); z-index: 100;
+}
+.app-back-btn {
+    background: none; border: none; color: #1c1c1c; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; padding: 5px;
+}
+.app-header-title { font-weight: 700; font-size: 1.1rem; color: #1c1c1c; }
+
+/* View de Post Completo */
+/* Seção de Comentários */
+.reddit-comment {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin-bottom: 15px;
 }
 .comment-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.8rem;
-    color: #666;
-    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
 }
-.comment-author { font-weight: bold; color: #444; }
-/* Ajuste para alinhar foto no comentário */
-.comment-author img {
-    vertical-align: middle;
-}
-.comment-text-area {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 15px;
-    font-size: 0.95rem;
-    color: #333;
-    line-height: 1.5;
-}
-.comment-body { flex-grow: 1; }
-.comment-text-area .report-btn.inline-report {
-    display: inline-block;
-    font-size: 0.75rem;
-    color: #aaa;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    flex-shrink: 0;
-}
-.comment-text-area .report-btn.inline-report:hover {
-    color: var(--coral-quente);
-    text-decoration: underline;
-}
+.comment-avatar { width: 28px !important; height: 28px !important; border-radius: 50%; }
+.comment-author-line { font-size: 0.9rem; font-weight: 600; color: #1c1c1c; }
+.comment-time { font-size: 0.8rem; color: #787c7e; }
 
-/* --- AÇÕES DO COMENTÁRIO (Like, Responder, Denunciar) --- */
+.comment-body-wrapper {
+    margin-left: 36px; /* Alinha com o texto, deixando avatar para trás */
+}
+.comment-body {
+    margin: 0 !important; font-size: 0.95rem; color: #1c1c1c; line-height: 1.5; word-break: break-word;
+}
 .comment-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px; /* Reduzido para aproximar ícones */
-    margin-top: 10px;
-    width: 100%;
-    flex-wrap: wrap; /* Permite quebrar linha em telas muito pequenas */
-    flex-wrap: nowrap; /* Força ficar na mesma linha no mobile */
-}
-
-/* Botão de Like (Coração) */
-.comment-like-btn {
-    background: none; border: none; cursor: pointer;
-    display: flex; align-items: center; gap: 6px;
-    color: #888; font-weight: 600; font-size: 0.85rem;
-    padding: 5px 8px; border-radius: 20px; transition: all 0.2s;
-}
-.comment-like-btn:hover { color: var(--coral-quente); background-color: #fff5f5; }
-.comment-like-btn svg { transition: fill 0.2s; }
-
-.comment-like-btn.liked { color: var(--coral-quente); }
-.comment-like-btn.liked svg {
-    fill: var(--coral-quente);
-    stroke: var(--coral-quente);
-}
-
-/* Botão Responder (Estética do Site) */
-.comment-reply-btn {
-    background: none; border: none; cursor: pointer;
-    display: flex; align-items: center; gap: 6px;
-    color: var(--verde-escuro); /* Verde Yelo */
-    font-family: var(--font-principal); font-weight: 600; font-size: 0.85rem;
-    padding: 5px 12px; border-radius: 20px; transition: all 0.2s;
-}
-.comment-reply-btn:hover { background-color: rgba(27, 67, 50, 0.08); }
-
-/* Botão Denunciar (Ajustado à direita no limite) */
-.comment-actions .report-btn.inline-report {
-    margin-left: auto; /* Empurra para a direita */
+    display: flex; gap: 8px; margin-top: 6px; align-items: center;
 }
 
 /* Disclaimer Box for Case Discussions */
@@ -3023,6 +3146,67 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     color: #999;
 }
 
+/* --- TomSelect do Modal do Fórum --- */
+#forum-create-modal .ts-wrapper { padding: 0 !important; border: none !important; background: transparent !important; box-shadow: none !important; min-height: auto !important; }
+#forum-create-modal .ts-control {
+    width: 100% !important;
+    padding: 10px 14px !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 10px !important;
+    font-size: 0.95rem !important;
+    background-color: #f9fafb !important;
+    font-family: var(--font-principal) !important;
+    color: #333 !important;
+    transition: all 0.3s ease !important;
+    cursor: pointer;
+    display: flex; align-items: center;
+}
+#forum-create-modal .ts-wrapper.focus .ts-control {
+    border-color: var(--verde-escuro) !important;
+    background-color: #fff !important;
+    box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1) !important;
+}
+#forum-create-modal .ts-control::after {
+    content: '▼'; font-size: 0.7rem; position: absolute; right: 15px; color: #333; pointer-events: none; transition: transform 0.3s;
+}
+#forum-create-modal .ts-wrapper.dropdown-active .ts-control::after { transform: rotate(180deg); }
+
+/* Menu de Opções aberto do TomSelect (Fórum) */
+.ts-dropdown.custom-ts-dropdown {
+    position: absolute;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    margin-top: 5px;
+    z-index: 10005; /* Acima do modal */
+    overflow: hidden;
+    font-family: var(--font-principal);
+}
+.ts-dropdown.custom-ts-dropdown .ts-dropdown-content {
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 8px;
+}
+.ts-dropdown.custom-ts-dropdown .option {
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 8px;
+    color: #4b5563;
+    font-weight: 500;
+    transition: all 0.2s;
+    margin-bottom: 2px;
+}
+.ts-dropdown.custom-ts-dropdown .option:hover,
+.ts-dropdown.custom-ts-dropdown .option.active {
+    background-color: #f0fdf4; /* Verde claro Yelo */
+    color: var(--verde-escuro);
+}
+.ts-dropdown.custom-ts-dropdown .option.selected {
+    background-color: var(--verde-escuro);
+    color: #ffffff;
+}
+
 /* ==========================================================================
    CORREÇÕES MOBILE ESPECÍFICAS DO FÓRUM
    ========================================================================== */
@@ -3034,40 +3218,9 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 }
 
 @media (max-width: 768px) {
-    /* 1. Ajuste do Card no Feed */
-    .forum-post-card {
-        flex-direction: column; /* Empilha votos e conteúdo */
-        padding: 15px; /* Reduz padding para ganhar espaço */
-        gap: 10px;
-        width: 100%; /* Força largura total */
-        max-width: 100%; /* Impede vazamento */
-        box-sizing: border-box;
-    }
-    
-    /* Limpeza do Meta no Mobile: Esconde categoria para focar no Autor e Tempo */
-    .post-meta .post-category {
-        display: none;
-    }
-
     /* Garante que a sidebar do post ocupe a largura total no mobile */
     .forum-post-sidebar {
         width: 100%;
-    }
-
-    .post-votes {
-        flex-direction: row; /* Votos na horizontal no topo */
-        justify-content: flex-start;
-        width: 100%;
-        margin-bottom: 5px;
-        min-width: auto;
-    }
-    
-    .post-category-mobile {
-        display: inline-block;
-        font-size: 0.85rem;
-        font-weight: 700;
-        color: var(--verde-escuro);
-        margin-left: 10px;
     }
 
     /* 2. Ajuste da View de Post Completo (Evita "dança" lateral) */
@@ -3107,37 +3260,6 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     }
 }
 /* ==========================================================================
-   NOVO SISTEMA DE RUÍDO - DASHBOARD (FUNDO APENAS)
-   ========================================================================== */
-
-/* 1. Define a cor do dashboard no HTML (Fundo cinza claro) */
-html {
-    background-color: var(--cinza-fundo); 
-}
-
-/* 2. Deixa o body transparente para ver a camada de ruído atrás dele */
-body.pagina-dashboard {
-    background-color: transparent !important; 
-}
-
-/* 3. Aplica o ruído na camada de fundo */
-body.pagina-dashboard::after {
-    content: "";
-    /* Mesma textura do site público */
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 500 500' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1 0 0 0 -0.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
-    
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100vh;
-    
-    /* Garante que fique atrás dos cards e da sidebar */
-    z-index: -1; 
-    
-    opacity: 0.30; 
-    mix-blend-mode: multiply;
-    pointer-events: none;
-}
-
-/* ==========================================================================
    AJUSTE MOBILE: CHAT DIRETO (TIPO WHATSAPP)
    ========================================================================== */
 @media (max-width: 768px) {
@@ -3153,7 +3275,7 @@ body.pagina-dashboard::after {
         top: 0;
         left: 0;
         right: 0;
-        bottom: calc(90px + env(safe-area-inset-bottom)) !important; /* Ajuste para alinhar com a nova bottom nav em pílula */
+        bottom: calc(var(--mobile-bottom-h, 80px) + 20px) !important; /* Respiro dinâmico para o chat não colar no menu */
         width: auto !important;
         height: auto !important;
         z-index: 99990; /* Alto, mas abaixo da Sidebar (100000) */
@@ -3257,29 +3379,19 @@ body.pagina-dashboard::after {
    17. NESTED THREADING (REDDIT STYLE) & MOBILE INPUT
    ========================================================================== */
 
-/* Remove estilo de card individual para criar fluxo contínuo */
-.comment-card {
-    background: transparent !important;
-    border: none !important;
-    border-radius: 0 !important;
-    padding: 0 !important; /* Remove padding do container pai */
-    margin-bottom: 15px;
-    position: relative;
-}
-
 /* Linha Guia (Thread Line) */
 .comment-replies-container {
-    margin-left: 12px; /* Recuo do pai */
-    padding-left: 12px; /* Espaço entre linha e filho */
-    border-left: 2px solid #e5e7eb; /* Linha cinza contínua */
+    margin-left: 14px !important; /* Metade do avatar */
+    padding-left: 20px !important; 
+    border-left: 2px solid #edeff1 !important; 
     display: flex;
     flex-direction: column;
-    margin-top: 10px;
+    margin-top: 10px !important;
 }
 
 /* Hover na linha guia para destaque visual */
 .comment-replies-container:hover {
-    border-left-color: #ccc;
+    border-left-color: var(--verde-escuro) !important;
 }
 
 /* Ajuste de espaçamento interno do conteúdo do comentário */
@@ -3677,7 +3789,7 @@ body.pagina-dashboard::after {
     .patients-layout-grid { 
         grid-template-columns: 450px 1fr; 
         gap: 25px;
-        height: calc(100vh - 100px);
+        height: calc((100vh / 0.88) - 100px);
         min-height: 850px;
         padding-bottom: 0;
     }
@@ -3786,20 +3898,6 @@ body.pagina-dashboard::after {
 
 /* 3. Estilo da Grade */
 .fc-theme-standard td, .fc-theme-standard th { border-color: #f0f0f0; }
-
-/* [FIX DEFINITIVO] Força a altura da linha de tempo e do rótulo da hora para serem IDÊNTICAS */
-.fc-timegrid-slot { 
-    height: 60px !important; /* Altura fixa para slots de 1 hora */
-    border-bottom: 1px solid #f0f0f0 !important;
-}
-
-/* Garante que a coluna da esquerda (horas) tenha a mesma altura, evitando desalinhamento */
-.fc .fc-timegrid-slot-label-frame {
-    height: 60px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
 
 /* 4. Estilo dos Eventos */
 .fc-event {
@@ -4272,6 +4370,24 @@ input:checked + .slider:before { transform: translateX(20px); }
     padding-right: 40px !important;
 }
 
+/* FORÇA O SELECT NATIVO APENAS NO MOBILE: Garante o picker nativo no Mobile e plugin no Desktop */
+@media (max-width: 992px) {
+    #modal-appointment select,
+    .custom-modal-box select.native-yelo-select {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        cursor: pointer !important;
+    }
+
+    /* Esconde qualquer plugin de terceiros (TomSelect/Select2) no modal de agendamento no Mobile */
+    #modal-appointment .ts-wrapper,
+    #modal-appointment .select2-container,
+    #modal-appointment .custom-select-wrapper {
+        display: none !important;
+    }
+}
+
 /* Ícones de Data/Hora (Ajuste de cor para Verde Yelo) */
 .custom-modal-box input[type="date"]::-webkit-calendar-picker-indicator,
 .custom-modal-box input[type="time"]::-webkit-calendar-picker-indicator {
@@ -4347,7 +4463,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 /* Ajuste Mobile (Mais compacto e posicionado acima da nav) */
 @media (max-width: 768px) {
     .restriction-floating-banner {
-        bottom: calc(115px + env(safe-area-inset-bottom)) !important; /* Acima da nova Bottom Nav em pílula */
+        bottom: calc(var(--mobile-bottom-h, 80px) + 30px) !important; /* Respiro dinâmico padrão acima da navegação */
         padding: 10px 15px;
         width: 90%; /* Ocupa largura para não quebrar texto */
         border-radius: 12px; /* Menos arredondado */
@@ -4747,14 +4863,20 @@ input:checked + .slider:before { transform: translateX(20px); }
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
 }
 
 .btn-primary-action {
-    width: 100%;
+    width: fit-content;
+    margin-left: auto; /* Empurra o botão totalmente para a direita */
+    margin-right: 0;
     background: var(--verde-escuro);
     color: white;
     border: none;
-    padding: 16px;
+    padding: 12px 30px;
     border-radius: 16px;
     font-size: 1.05rem;
     font-weight: 600;
@@ -4996,12 +5118,12 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 /* --- SIDEBAR MODERNA (APP-LIKE) --- */
 .modern-sidebar-container {
-    width: 280px; /* Aumentado para mais respiro */
+    width: 220px; /* Reduzido de 280px para ficar mais compacta */
     background: #fcfcfc; /* Fundo mais claro, quase branco */
     border-right: 1px solid #f0f0f0; /* Borda mais sutil */
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: calc(100vh / 0.88);
     position: fixed;
     top: 0;
     left: 0;
@@ -5024,31 +5146,87 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 .sp-avatar-wrapper {
     position: relative;
-    width: 70px; /* Foto menor e mais discreta */
-    height: 70px;
-    margin-bottom: 5px;
+    width: 100px; /* Foto maior, o dobro do tamanho original */
+    height: 100px;
+    margin-bottom: 10px;
+    border-radius: 50%; /* Garante que a área clicável seja exatamente o círculo */
+    overflow: hidden;   /* Corta os cantos quadrados e transparentes invisíveis */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer; /* Garante que o cursor de clique apareça */
+    z-index: 10; /* Eleva o elemento para evitar bloqueios de clique */
+}
+
+.sp-avatar-wrapper:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Indicador visual 'Trocar' elegante ao passar o mouse */
+.sp-avatar-wrapper::after {
+    content: '📷 Trocar';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 35%;
+    background-color: rgba(27, 67, 50, 0.75); /* Fundo verde escuro translúcido */
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 8px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none; /* Permite que o clique atravesse o texto perfeitamente */
+}
+
+.sp-avatar-wrapper:hover::after {
+    opacity: 1;
+}
+
+/* Garante que, se houver um input de arquivo interno, ele seja totalmente clicável */
+.sp-avatar-wrapper input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 20;
 }
 
 .sp-avatar {
-    width: 100%;
-    height: 100%;
+    width: 100% !important;
+    height: 100% !important;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid var(--cor-Yelo);
+    border: 3px solid var(--cor-Yelo) !important;
+    box-sizing: border-box; /* Borda pro lado de dentro, impedindo distorção */
+    display: block; /* Remove espaços mortos/fantasma padrão de imagens (HTML) */
 }
 
 .sidebar-profile-modern h3 {
     margin: 0;
-    font-size: 1.05rem;
+    font-size: 1.65rem !important; /* Aumentado consideravelmente */
     color: var(--verde-escuro);
-    font-family: var(--font-titulos);
-    font-weight: 600;
+    font-family: var(--font-titulos) !important;
+    font-weight: 700 !important; /* Peso Bold para destacar a New Kansas */
+    line-height: 1.2;
 }
 
 .sp-level-indicator {
-    font-size: 0.8rem;
-    color: #666;
-    font-weight: 500;
+    font-size: 0.9rem !important; /* Ajustado para o formato pílula */
+    color: var(--verde-escuro) !important; /* Texto escuro para garantir leitura no fundo claro */
+    background-color: #e8f5e9; /* Fundo verde menta */
+    padding: 6px 14px;
+    border-radius: 50px; /* Transforma num formato de pílula */
+    font-weight: 700 !important;
+    margin-top: 10px;
+    display: inline-block;
+    border: 1px solid #c8e6c9; /* Borda sutil para acabamento */
 }
 
 .modern-sidebar-nav {
@@ -5059,40 +5237,77 @@ input:checked + .slider:before { transform: translateX(20px); }
 }
 .modern-sidebar-nav::-webkit-scrollbar { display: none; }
 
+.modern-sidebar-nav ul {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important; /* Gap vertical padrão */
+    flex-grow: 1;
+}
+
+/* --- SIDEBAR MODERNA (AJUSTADA PARA ALINHAMENTO PERFEITO) --- */
+
 .nav-item-modern {
     display: flex;
-    align-items: center;
+    align-items: center;    /* Centralização vertical matemática */
+    flex-direction: row;    /* Voltamos para o padrão: ícone na esquerda */
+    display: flex !important;
+    align-items: center !important; /* Alinha o centro do SVG com o centro do Texto */
+    flex-direction: row !important; /* Mantém a ordem Icone -> Texto */
+    justify-content: flex-start !important; 
     gap: 12px;
-    padding: 10px;
-    border-radius: 8px;
-    color: #444;
+    padding: 12px 15px;
+    border-radius: 50px !important;
+        color: var(--verde-escuro) !important;
     text-decoration: none;
     font-weight: 600; 
-    font-size: 0.9rem;
+    font-size: 1.05rem; /* Aumentado para ornar com o perfil */
+    font-size: 1.05rem;
+    letter-spacing: 0.3px;
     transition: background-color 0.2s, color 0.2s;
     position: relative;
 }
 
+/* O Segredo do Alinhamento do Ícone */
 .sidebar-nav a.nav-item-modern svg {
-    width: 20px; 
-    height: 20px;
+    width: 22px; /* Aumentado proporcionalmente ao texto */
+    width: 22px;
+    height: 22px;
     flex-shrink: 0;
-    color: #777;
+    color: var(--verde-escuro);
+    display: block;         /* Mata o espaçamento de "baseline" do SVG */
+    display: block; /* REMOVE o desalinhamento de baseline (espaço embaixo do svg) */
     transition: color 0.2s;
+}
+
+/* O Segredo do Alinhamento do Texto */
+.sidebar-nav a.nav-item-modern span {
+    display: flex;
+    align-items: center;
+    line-height: 1;         /* Remove alturas de linha extras que empurram o texto */
+    margin-top: 1px;        /* Ajuste óptico: fontes costumam "flutuar" um pouco */
+    display: block;
+    line-height: 1; /* Remove alturas de linha que empurram o texto para baixo */
+    margin-bottom: 0; /* Garante que não haja margem residual */
+    padding: 0;
+    color: var(--verde-escuro) !important;
 }
 
 .sidebar-nav a.nav-item-modern:hover {
     background: #f0f0f0;
-    color: #111;
+    color: var(--verde-escuro) !important;
 }
 
 .sidebar-nav a.nav-item-modern:hover svg {
-    color: #111;
+    color: var(--verde-escuro);
 }
 
 .sidebar-nav li.active a.nav-item-modern {
     background: #e8f5e9; /* Verde bem claro */
-    color: var(--verde-escuro);
+    color: var(--verde-escuro) !important;
+    border-radius: 50px !important;
 }
 
 .sidebar-nav li.active a.nav-item-modern svg {
@@ -5107,12 +5322,16 @@ input:checked + .slider:before { transform: translateX(20px); }
 /* Ajuste principal para comportar a nova sidebar */
 @media (min-width: 992px) {
     .dashboard-main {
-        margin-left: 280px !important; 
-        width: calc(100% - 280px) !important; 
+        margin-left: 220px !important; 
+        width: calc(100% - 220px) !important; 
     }
     /* Esconder top nav antiga se usar sidebar lateral */
     .dashboard-top-nav {
         display: none !important;
+    }
+        /* Aumenta o gap dos itens do menu na versão desktop para preencher melhor a sidebar */
+    .modern-sidebar-nav ul {
+        gap: 22px !important;
     }
 }
 
@@ -5199,7 +5418,7 @@ input:checked + .slider:before { transform: translateX(20px); }
     display: flex !important;
     flex-direction: column !important;
     width: 100%;
-    min-height: 100vh;
+    min-height: calc(100vh / 0.88);
     overflow-x: hidden;
 }
 
@@ -5290,4 +5509,517 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 .hub-card.logout-card:hover {
     border-color: #e63946;
+}
+
+
+/* ==========================================================================
+   ARQUITETURA DE BLOCOS DE PERFIL (psi_meu_perfil.html)
+   ========================================================================== */
+.profile-block {
+    border: 1px solid #e9ecef;
+    border-radius: 16px;
+    margin-bottom: 25px;
+    background-color: #fff;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    overflow: visible;
+}
+
+.block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px; /* Restaurado o padding original */
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+}
+
+.block-header .section-title { margin: 0; font-size: 1.1rem; color: var(--verde-escuro); }
+.block-actions { 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    margin-left: auto;
+}
+.block-actions .btn { 
+    width: 110px !important; 
+    height: 38px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+}
+
+/* CORREÇÃO: Impede que botões ocultos ocupem espaço invisível empurrando o layout */
+.block-actions .btn.hidden {
+    display: none !important;
+}
+.block-actions .btn-principal { 
+    border: 2px solid transparent !important; 
+    font-weight: 600 !important; /* Ajuste fino: Reduz o peso da fonte para compensar o contraste e igualar visualmente ao "Cancelar" */
+}
+.block-actions .btn-secundario { border: 2px solid var(--verde-escuro) !important; }
+.block-content { padding: 20px; }
+
+/* Inputs desabilitados por padrão (Modo Visualização) */
+.profile-block input:disabled,
+.profile-block textarea:disabled,
+.profile-block select:disabled {
+    background-color: #f0f2f5 !important;
+    cursor: not-allowed;
+    border-color: transparent !important;
+    color: #6c757d;
+}
+
+.profile-block .multiselect-tag.disabled .multiselect-display {
+    background-color: #f0f2f5;
+    cursor: not-allowed;
+    border-color: transparent;
+    color: #6c757d;
+}
+
+/* Estado de Edição Ativo */
+.profile-block.editing {
+    border-color: var(--verde-escuro);
+    box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
+}
+
+.profile-block.editing input,
+.profile-block.editing textarea,
+.profile-block.editing select {
+    background-color: #fff !important;
+    cursor: text;
+    border-color: #ced4da !important;
+    color: #333;
+}
+
+.profile-block.editing .multiselect-tag.disabled {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.profile-block.editing .multiselect-tag.disabled .multiselect-display {
+    background-color: #fff;
+    cursor: pointer;
+    border-color: #ced4da;
+}
+
+/* ==========================================================================
+   NOTIFICAÇÕES ESTILO PÍLULA (WHATSAPP)
+   ========================================================================== */
+
+#pill-notification-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2147483647; /* Highest z-index */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.pill-notification {
+    pointer-events: auto;
+    background: rgba(30, 41, 59, 0.95); /* Dark, modern background */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #ffffff;
+    font-family: var(--font-principal, sans-serif);
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 12px 24px;
+    border-radius: 50px; /* Pill shape */
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transform: translateY(100px);
+    animation: slideUpAndDown 4.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+.pill-notification .icon { font-size: 1.1rem; }
+.pill-notification.success .icon { color: #4ade80; }
+.pill-notification.error .icon { color: #f87171; }
+.pill-notification.info .icon { color: #60a5fa; }
+
+@keyframes slideUpAndDown {
+    0% { opacity: 0; transform: translateY(100px); }
+    10% { opacity: 1; transform: translateY(0); }
+    85% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(100px); }
+}
+
+/* Feedback Visual do Bloco */
+.block-status {
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: opacity 0.3s ease;
+    opacity: 0;
+}
+.block-status.visible { opacity: 1; }
+.block-status.success { color: var(--verde-sucesso); }
+.block-status.error { color: var(--coral-quente); }
+
+/* Helpers */
+.hidden { display: none !important; }
+
+/* Botão Sticky Global (Auto-save transição) */
+.sticky-footer-actions {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    left: auto;
+    width: auto;
+    background-color: transparent;
+    padding: 0;
+    box-shadow: none;
+    z-index: 1001;
+    transform: translateY(150%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sticky-footer-actions:not(.hidden) {
+    transform: translateY(0);
+}
+
+.sticky-footer-actions p {
+    display: none; /* Esconde o texto para ficar minimalista */
+}
+
+.sticky-footer-actions .btn {
+    background-color: var(--verde-escuro);
+    color: #fff;
+    padding: 15px 30px;
+    border-radius: 50px;
+    box-shadow: 0 10px 25px rgba(27, 67, 50, 0.3);
+    font-size: 1.05rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.sticky-footer-actions .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(27, 67, 50, 0.4);
+    background-color: #143d2e;
+}
+
+/* Spinner para botões */
+.spinner {
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-left-color: var(--verde-escuro);
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    vertical-align: middle;
+    animation: spin 0.8s linear infinite;
+}
+
+/* ==========================================================================
+   AJUSTES DE UX MOBILE: PERFIL (BOTÕES, STICKY FOOTER E ZOOM)
+   ========================================================================== */
+@media (max-width: 992px) {
+    /* 1. Remove contorno de pílula dos botões de edição do bloco de perfil */
+    .block-actions {
+        gap: 5px !important;
+    }
+    .block-actions .btn {
+        padding: 5px 8px !important;
+        background: transparent !important;
+        border: none !important;
+        min-width: 0 !important; /* Reseta restrições de tamanho */
+        width: auto !important;
+        height: auto !important;
+        font-size: 0.95rem !important;
+        box-shadow: none !important;
+        color: var(--verde-escuro) !important;
+    }
+    .block-actions .btn-cancel {
+        color: #888 !important; /* Deixa o botão de cancelar mais discreto */
+    }
+    .block-actions .btn-save {
+        font-weight: 800 !important;
+    }
+
+    /* 2. Botão Flutuante de Salvar responsivo e acima da navegação */
+    .sticky-footer-actions {
+        bottom: calc(var(--mobile-bottom-h, 80px) + 20px) !important;
+        right: 20px !important;
+        left: auto !important;
+        width: auto !important;
+        padding: 0 !important;
+        background-color: transparent !important;
+        transform: translateY(200px) !important; /* Oculto (Move para baixo da tela inteira) */
+        opacity: 0;
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s;
+    }
+    .sticky-footer-actions:not(.hidden) {
+        transform: translateY(0) !important; /* Visível */
+        opacity: 1;
+    }
+    .sticky-footer-actions .btn {
+        padding: 12px 24px !important;
+        font-size: 1rem !important;
+    }
+
+    /* 3. Evitar Zoom no iOS ao clicar nos inputs (Fonte >= 16px) */
+    .profile-block input,
+    .profile-block textarea,
+    .profile-block select,
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        font-size: 16px !important;
+    }
+}
+
+/* --- FEED DE AVISOS (APP-LIKE) --- */
+.avisos-feed-widget {
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+    border: none;
+}
+
+.avisos-filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 15px;
+    overflow-x: auto;
+    scrollbar-width: none; /* Esconde scrollbar */
+}
+.avisos-filters::-webkit-scrollbar { display: none; }
+
+.aviso-filter-btn {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #495057;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+.aviso-filter-btn:hover { background: #e9ecef; }
+.aviso-filter-btn.active {
+    background: var(--verde-escuro);
+    color: white;
+    border-color: var(--verde-escuro);
+}
+
+.avisos-feed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.aviso-feed-item {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #e9ecef;
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    overflow: hidden;
+}
+.aviso-feed-item:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+}
+.aviso-feed-item.unread {
+    background: #f0fdf4;
+    border-left: 4px solid #16a34a;
+}
+.aviso-feed-item.unread .aviso-title {
+    font-weight: 700;
+    color: var(--verde-escuro);
+}
+
+.aviso-feed-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+.aviso-icon-wrapper {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: #e8f5e9; color: #1B4332;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; flex-shrink: 0;
+}
+.aviso-feed-item.unread .aviso-icon-wrapper {
+    background: #16a34a; color: white;
+}
+.aviso-title-group { flex-grow: 1; min-width: 0; }
+.aviso-title {
+    font-family: var(--font-principal); font-size: 1.05rem; font-weight: 600;
+    color: #333; margin: 0 0 4px 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.aviso-meta { font-size: 0.8rem; color: #888; display: block; }
+
+.aviso-preview {
+    margin: 10px 0 0 0; font-size: 0.95rem; color: #555; line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Accordion Expandido */
+.aviso-feed-item.expanded .aviso-title { white-space: normal; overflow: visible; }
+.aviso-feed-item.expanded .aviso-preview { display: none; }
+
+.aviso-full-content {
+    max-height: 0; opacity: 0; overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.4s ease, margin-top 0.4s ease;
+    font-size: 0.95rem; color: #444; line-height: 1.6;
+}
+.aviso-feed-item.expanded .aviso-full-content {
+    max-height: 1000px; /* Altura arbitrária grande para fluir */
+    opacity: 1; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px;
+}
+.aviso-full-content p { margin-bottom: 10px; }
+.aviso-full-content p:last-child { margin-bottom: 0; }
+
+.aviso-feed-actions {
+    margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;
+}
+    display: block;
+}
+.aviso-card-psi .aviso-conteudo {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #444;
+    line-height: 1.5;
+}
+.aviso-card-psi .aviso-conteudo p {
+    margin-bottom: 10px;
+}
+.aviso-card-psi .aviso-conteudo p:last-child {
+    margin-bottom: 0;
+}
+
+/* Botão Like nos Comentários */
+.comment-like-btn.liked.reddit-pill {
+    color: var(--coral-quente); background-color: #fff5f5;
+}
+.comment-like-btn.liked.reddit-pill svg {
+    fill: var(--coral-quente); stroke: var(--coral-quente);
+}
+/* ==========================================================================
+   AJUSTES DO MODAL DE NOVO ARTIGO (E MODAIS EM GERAL)
+   ========================================================================== */
+
+/* 1. Ajuste opcional para deixar o modal do blog um pouco mais largo no Desktop */
+#modal-artigo .custom-modal-box,
+#modal-blog .custom-modal-box,
+#modal-post .custom-modal-box {
+    max-width: 750px;
+}
+
+/* 2. Limita a altura do campo de texto/editor para evitar que o modal passe da tela */
+.custom-modal-box textarea,
+.custom-modal-box .rich-text-editor {
+    min-height: 150px !important; /* Altura inicial razoável */
+    max-height: 45vh !important;  /* Máximo de 45% da altura da tela */
+    min-height: 100px !important;
+    max-height: 40vh !important;  /* Controla altura no mobile */
+    overflow-y: auto !important;  /* Rolagem APENAS dentro da caixa se o texto for longo */
+}
+
+/* Controla especificamente o Quill Editor para comportamento App-like */
+#modal-artigo .ql-container,
+#view-form-artigo .ql-container,
+#modal-blog .ql-container {
+    max-height: 40vh !important;
+    overflow-y: auto !important;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+/* Força a estrutura dos botões de ação a abraçarem o texto e ficarem no rodapé */
+.custom-modal-box .form-acoes,
+.custom-modal-box .modal-footer {
+    display: flex !important;
+    justify-content: flex-end !important; /* Joga os botões para o canto */
+    gap: 12px !important;
+    margin-top: 20px !important;
+}
+
+/* 3. Ajusta as pílulas (botões) do rodapé para abraçarem o texto elegantemente */
+.custom-modal-box .modal-footer .btn,
+.custom-modal-box .form-acoes .btn {
+    width: auto !important;         /* Remove larguras forçadas (ex: 100%) */
+    min-width: 0 !important;        /* Remove largura mínima padrão do dashboard */
+    padding: 10px 24px !important;  /* Deixa a pílula enxuta e proporcional */
+    padding: 8px 20px !important;   /* Deixa a pílula mais enxuta (app-like) */
+    font-size: 0.95rem !important;  /* Tamanho de fonte legível */
+    flex-grow: 0 !important;        /* Impede que o botão estique para os lados */
+    justify-content: center;
+    white-space: nowrap;            /* Impede que o texto do botão quebre em duas linhas */
+}
+
+/* 4. Reduz o espaço vazio antes dos botões para o modal ficar mais compacto */
+.custom-modal-box .modal-footer,
+.custom-modal-box .form-acoes {
+    margin-top: 20px !important;
+    gap: 12px !important;
+}
+
+/* ==========================================================================
+   PLG: BANNER DE LEADS (WHATSAPP CLICKS)
+   ========================================================================== */
+.lead-plg-banner {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border: 1px solid #fde68a;
+    border-left: 6px solid #f59e0b;
+    border-radius: 16px;
+    padding: 20px 25px;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.1);
+    animation: slideDownFade 0.5s ease-out;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.lead-plg-content { display: flex; align-items: center; gap: 15px; }
+
+.lead-plg-icon {
+    width: 48px; height: 48px;
+    background-color: #f59e0b; color: #fff;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; flex-shrink: 0;
+    animation: pulse-fab 2s infinite;
+}
+
+.lead-plg-text h3 { margin: 0 0 5px 0; color: #92400e; font-size: 1.2rem; font-family: var(--font-titulos); }
+.lead-plg-text p { margin: 0; color: #b45309; font-size: 0.95rem; }
+
+.lead-plg-btn {
+    background-color: var(--verde-escuro); color: #fff;
+    padding: 10px 24px; border-radius: 50px;
+    text-decoration: none; font-weight: bold; font-size: 0.95rem;
+    transition: transform 0.2s, box-shadow 0.2s; white-space: nowrap;
+}
+
+.lead-plg-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(27, 67, 50, 0.2); }
+
+@keyframes slideDownFade {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
 }

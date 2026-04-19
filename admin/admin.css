@@ -21,178 +21,17 @@ html {
 
 body.pagina-dashboard {
     font-family: var(--font-principal);
+    zoom: 0.88; /* Zoom out de 12% para o painel administrativo */
     position: relative;
     padding-top: 0 !important; /* CORREÇÃO GLOBAL */
+    background-color: transparent !important;
+    background-image: var(--ruido-global) !important;
+    background-attachment: fixed !important;
+    background-repeat: repeat !important;
 }
-
-body.pagina-dashboard::after {
-    content: "";
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 500 500' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1 0 0 0 -0.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100vh;
-    z-index: -1;
-    opacity: 0.30;
-    mix-blend-mode: multiply;
-    pointer-events: none;
-}
-
 .pagina-dashboard h1, .pagina-dashboard h2, .pagina-dashboard h3, .pagina-dashboard h4 {
     font-family: var(--font-titulos); /* Padronizado: New Kansas */
     font-weight: 500; /* Medium para melhor leitura */
-}
-/* --- SIDEBAR DO ADMIN (ESTRUTURA INDEPENDENTE) --- */
-.dashboard-sidebar {
-    background-color: var(--verde-escuro);
-    color: var(--branco-puro);
-    display: flex;
-    flex-direction: column;
-    padding: 25px 20px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 280px; /* Largura ajustada para padrão */
-    height: 100vh;
-    z-index: 1000;
-    overflow-y: auto; /* Permite rolar se o menu for alto */
-    overflow: hidden; /* A rolagem fica só na lista (.sidebar-nav) */
-    box-shadow: 5px 0 15px rgba(0,0,0,0.05);
-}
-
-.sidebar-nav ul {
-    display: flex !important;
-    flex-direction: column !important; /* Força verticalidade */
-    gap: 5px !important; /* Espaçamento padrão */
-    margin-top: 20px !important;
-    padding: 0 !important;
-    list-style: none !important;
-}
-
-.sidebar-nav li {
-    width: 100%;
-}
-
-.sidebar-nav li a {
-    display: flex !important;
-    align-items: center;
-    justify-content: flex-start !important;
-    gap: 10px;
-    padding: 10px 8px;
-    width: 100%;
-    box-sizing: border-box;
-    border-radius: 10px;
-    color: rgba(255, 255, 255, 0.7) !important;
-    text-decoration: none;
-    text-align: left !important;
-    font-weight: 500;
-    font-size: 0.95rem;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    overflow: hidden;
-    margin: 0;
-    border-left: 4px solid transparent;
-}
-
-.sidebar-nav li.active a {
-    background-color: rgba(255, 255, 255, 0.08) !important;
-    color: var(--cor-Yelo) !important;
-    border-left-color: var(--cor-Yelo);
-    font-weight: 700;
-}
-
-.sidebar-nav li a:hover {
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    transform: translateX(5px);
-    color: #fff !important;
-}
-
-.sidebar-nav li a svg { width: 20px; height: 20px; opacity: 0.7; transition: stroke 0.3s; flex-shrink: 0; }
-.sidebar-nav li.active a svg { opacity: 1; stroke: var(--cor-Yelo); }
-
-/* Botão de Logout Estilizado */
-#btn-logout {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    flex-grow: 1;
-    padding: 12px;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    color: #ff8a80; /* Vermelho suave */
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 0.9rem;
-}
-
-#btn-logout:hover {
-    background: rgba(211, 47, 47, 0.15);
-    border-color: #ff5252;
-    color: #ff5252;
-    transform: translateY(-2px);
-}
-
-/* --- BARRA DE ROLAGEM DA SIDEBAR (CUSTOMIZADA) --- */
-.sidebar-nav {
-    flex-grow: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.2) transparent;
-}
-.sidebar-nav::-webkit-scrollbar { width: 5px; display: block; }
-.sidebar-nav::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 3px; }
-.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
-.sidebar-nav::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
-
-.dashboard-main {
-    margin-left: 250px !important;
-    width: calc(100% - 250px) !important;
-    padding: 40px;
-    background-color: transparent; /* Permite que o ruído de fundo seja visível */
-}
-
-.sidebar-header { padding-bottom: 20px; text-align: center; }
-.sidebar-logo img { height: 35px; }
-.sidebar-footer {
-    margin-top: auto;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-top: 20px;
-    text-align: center;
-}
-
-.sidebar-btn-wrapper {
-    display: flex;
-    gap: 10px;
-    width: 100%;
-}
-
-/* Botão Home (Novo) */
-.btn-sidebar-home {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    flex-shrink: 0;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    color: var(--branco-puro);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-decoration: none;
-}
-.btn-sidebar-home:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
-}
-
-.sidebar-footer .nome-admin { 
-    font-family: var(--font-titulos); /* Fonte de Destaque */
-    font-size: 1.1rem; /* Tamanho maior para destaque */
-    font-weight: 500; /* Peso Medium */
-    margin-bottom: 10px; 
-    color: var(--branco-puro); /* Garante que o texto seja branco */
 }
 
 #main-content {
@@ -226,6 +65,14 @@ body.pagina-dashboard::after {
     transform: translateY(-5px);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
 }
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
 .kpi-card h4 {
     font-family: var(--font-principal);
     font-size: 15px;
@@ -840,70 +687,117 @@ body.pagina-dashboard::after {
     padding: 10px 8px;
     }
 }
-/* --- Overlay Mobile (Fundo escuro quando o menu está aberto) --- */
-.mobile-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
+
+/* ==========================================================================
+   WIDGET DE SHADOW TRACKING (ANÁLISE DE FEATURES)
+   ========================================================================== */
+.tracking-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-top: 20px;
+}
+
+.feature-usage-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.feature-usage-item {
+    margin-bottom: 22px;
+}
+
+.feature-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--verde-escuro);
+}
+
+.feature-bar-bg {
+    height: 10px;
+    background-color: var(--cinza-borda);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.feature-bar-fill {
     height: 100%;
-    background: rgba(0,0,0,0.5);
-    z-index: 999; /* Abaixo da sidebar */
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease;
+    border-radius: 5px;
+    transition: width 1s ease-in-out;
 }
-.mobile-overlay.is-visible {
-    opacity: 1;
-    visibility: visible;
+
+/* Cores das barras de progresso baseadas na saúde do engajamento */
+.feature-bar-fill.high { background-color: var(--verde-sucesso); }
+.feature-bar-fill.medium { background-color: #f59e0b; /* Amarelo Escuro/Laranja */ }
+.feature-bar-fill.low { background-color: var(--coral-quente); }
+
+.upsell-suggestions {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 16px;
+    padding: 25px;
 }
- 
-/* --- Responsividade do Admin (Mobile) --- */
+
+.upsell-tier {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px dashed #bbf7d0;
+}
+
+.upsell-tier:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.upsell-tier-name {
+    font-weight: 700;
+    color: var(--verde-escuro);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.05rem;
+}
+
+.upsell-tier-features {
+    font-size: 0.9rem;
+    color: #166534;
+    margin: 0;
+    padding-left: 20px;
+    line-height: 1.6;
+}
+
+/* Responsividade do Tracker */
 @media (max-width: 992px) {
- 
-    /* 1. Botão Hambúrguer (Mostra e Estiliza) */
-    .btn-toggle-sidebar {
-        display: block; /* Mostra o botão */
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        width: auto;
-        height: auto;
-        background-color: var(--branco-puro);
-        border: none;
-        cursor: pointer;
-        padding: 10px;
-        border-radius: 8px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        z-index: 1002; /* Acima da sidebar e do overlay */
+    .tracking-grid {
+        grid-template-columns: 1fr;
+        gap: 25px;
     }
-    .btn-toggle-sidebar span {
-        display: block;
-        width: 25px;
-        height: 3px;
-        background-color: var(--verde-escuro);
-        margin: 4px 0;
-        border-radius: 2px;
-        transition: all 0.3s ease;
-    }
- 
-    /* 2. Sidebar (Esconde fora da tela) */
-    .dashboard-sidebar {
-        position: fixed;
-        transform: translateX(-100%);
-        transition: transform 0.3s ease-in-out;
-        z-index: 1001; /* Acima do conteúdo principal e do overlay */
-    }
-    .dashboard-sidebar.is-open {
-        transform: translateX(0);
-    }
-    
-    /* 3. Conteúdo Principal (Ocupa 100% da tela) */
-    .dashboard-main {
-        margin-left: 0 !important; /* Remove o espaço da sidebar */
-        width: 100% !important;
-        padding: 20px; /* Padding menor para mobile */
-    }
+}
+
+/* --- MOBILE HEADER (APP-LIKE) --- */
+.mobile-header {
+    display: none;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 10px 20px;
+    gap: 12px;
+    background: #fff;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+.mobile-header .avatar-mobile {
+    width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid var(--verde-escuro); display: block;
+}
+@media (max-width: 992px) {
+    .mobile-header { display: flex; }
 }
 /* ==========================================================================
    LAYOUT WHATSAPP-LIKE (Full-Height)
@@ -2946,20 +2840,6 @@ input:checked + .slider:before { transform: translateX(22px); }
     box-sizing: border-box;
 }
 
-/* 2. Força altura EXATA para alinhar grade e horários (48px = 2 slots de 30min ou 1 de 1h dependendo da config) */
-.fc .fc-timegrid-slot {
-    height: 48px !important;
-    border-bottom: 1px solid var(--cinza-borda) !important;
-}
-
-/* Garante que o rótulo da hora (esquerda) tenha a mesma altura */
-.fc .fc-timegrid-slot-label-frame {
-    min-height: 48px !important;
-    height: 48px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
 
 /* 3. Ajuste de Cores e Contraste */
 .fc-event[style*="background-color: #FFC107"], .fc-event[style*="rgb(255, 193, 7)"] {
@@ -2985,4 +2865,113 @@ input:checked + .slider:before { transform: translateX(22px); }
 .btn-delete-appt:hover {
     background-color: #ef9a9a;
     color: #b71c1c;
+}
+
+/* ==========================================================================
+   SIDEBAR MODERNA DO ADMIN (COMPACTA E ALINHADA)
+   ========================================================================== */
+
+.sp-avatar-wrapper {
+    position: relative;
+    width: 80px; /* Reduzido para ganhar espaço vertical */
+    height: 80px;
+    margin-bottom: 5px;
+    border-radius: 50%;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.sidebar-profile-modern h3 {
+    margin: 0;
+    font-size: 1.3rem !important; /* Reduzido para caber melhor na tela */
+    color: var(--verde-escuro);
+    font-family: var(--font-titulos) !important;
+    font-weight: 700 !important;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.sp-level-indicator {
+    font-size: 0.8rem !important; /* Ajustado para o formato pílula */
+    color: var(--verde-escuro) !important;
+    background-color: #e8f5e9;
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-weight: 700 !important;
+    margin-top: 5px;
+    display: inline-block;
+    border: 1px solid #c8e6c9;
+    text-align: center;
+}
+
+/* Remove o recuo padrão do navegador e empilha os itens */
+.sidebar-nav ul, .modern-sidebar-nav ul {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+}
+
+/* Remove qualquer margem fantasma das linhas (li) */
+.sidebar-nav li, .modern-sidebar-nav li {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    display: block !important;
+}
+
+.nav-item-modern {
+    display: flex !important;
+    align-items: center !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important; 
+    gap: 12px;
+    padding: 10px 15px !important; /* Garante o alinhamento interno padrão */
+    border-radius: 50px !important;
+    color: var(--verde-escuro) !important;
+    text-decoration: none;
+    font-weight: 600; 
+    font-size: 0.95rem;
+    letter-spacing: 0.3px;
+    transition: background-color 0.2s, color 0.2s;
+    position: relative;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+.sidebar-nav a.nav-item-modern svg, .modern-sidebar-nav a.nav-item-modern svg,
+.sidebar-nav a.nav-item-modern i, .modern-sidebar-nav a.nav-item-modern i,
+.sidebar-nav a.nav-item-modern img, .modern-sidebar-nav a.nav-item-modern img,
+.sidebar-nav a.nav-item-modern .icon, .modern-sidebar-nav a.nav-item-modern .icon {
+    width: 22px !important;
+    height: 22px !important;
+    min-width: 22px !important; /* Impede que ícones diferentes desalinhem o texto */
+        max-width: 22px !important; /* Blinda contra vazamentos de largura SVG */
+    flex: 0 0 22px !important; /* BLINDAGEM MÁXIMA: Trava o Flexbox impedindo distorção no Safari/Chrome */
+    color: var(--verde-escuro);
+    display: block !important; /* Oculte o flex interno que causava a quebra das tags <line> */
+    font-size: 1.15rem; /* Ajusta o tamanho caso seja uma fonte de ícone */
+    transition: color 0.2s;
+    margin: 0 !important;
+}
+
+.sidebar-nav a.nav-item-modern span, .modern-sidebar-nav a.nav-item-modern span {
+    flex: 1 1 auto !important; /* Permite que o texto ocupe o resto do espaço graciosamente */
+    text-align: left !important; /* Força alinhamento e anula qualquer justify global */
+    white-space: nowrap !important; /* Impede quebra de linha que distorce a altura */
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    margin: 0 !important; /* Zera margens, o gap do container pai fará a separação perfeita */
+    color: var(--verde-escuro) !important;
+}
+
+@media (min-width: 992px) {
+    .modern-sidebar-nav ul, .sidebar-nav ul {
+        gap: 8px !important; /* Mantém o gap compacto para evitar rolagem na versão desktop */
+    }
 }

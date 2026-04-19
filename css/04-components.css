@@ -37,6 +37,7 @@
 .form-group input {
     width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px;
     box-sizing: border-box; font-family: var(--font-leitura); font-size: 15px; padding-right: 40px;
+    background-color: #ffffff; /* Fundo sólido para evitar vazamento de noise */
 }
 .password-toggle-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; width: 24px; height: 24px; color: #555; }
 .form-group-checkbox { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }

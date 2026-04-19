@@ -23,8 +23,9 @@ exports.createPreference = async (req, res) => {
         const psychologistId = req.psychologist.id;
         const psychologist = await db.Psychologist.findByPk(psychologistId);
 
-        // Lógica do Cupom VIP
-        if (cupom && cupom.toUpperCase() === 'SOLVIP') {
+        // Lógica do Cupom VIP (Agora depende do .env para segurança)
+        const validCoupon = process.env.VIP_COUPON;
+        if (cupom && validCoupon && cupom.toUpperCase() === validCoupon.toUpperCase()) {
             const psi = await db.Psychologist.findByPk(psychologistId);
             const hoje = new Date();
             const trintaDias = new Date(hoje.setDate(hoje.getDate() + 30));
@@ -37,13 +38,11 @@ exports.createPreference = async (req, res) => {
             return res.json({ couponSuccess: true, message: 'Cupom VIP aplicado!' });
         }
 
-        // Validação de dados do titular (comum para ambos)
-        if (!creditCard || !creditCard.holderName || !creditCard.holderCpf || !creditCard.holderPhone) {
-            return res.status(400).json({ error: 'Dados do titular incompletos.' });
-        }
-        
-        // Validação específica de cartão
+        // Validação de dados do titular e do cartão (Apenas se não for PIX)
         if (billingType !== 'PIX') {
+            if (!creditCard || !creditCard.holderName || !creditCard.holderCpf || !creditCard.holderPhone) {
+                return res.status(400).json({ error: 'Dados do titular incompletos.' });
+            }
             if (!creditCard.number || !creditCard.expiry || !creditCard.ccv) {
                 return res.status(400).json({ error: 'Dados do cartão incompletos.' });
             }
@@ -61,12 +60,24 @@ exports.createPreference = async (req, res) => {
         }
 
         // --- FIX: SANITIZAÇÃO DE DADOS DO TITULAR ---
-        const postalCode = creditCard.postalCode ? creditCard.postalCode.replace(/\D/g, '') : '';
-        let phone = creditCard.holderPhone ? creditCard.holderPhone.replace(/\D/g, '') : '';
+        const postalCode = creditCard && creditCard.postalCode ? creditCard.postalCode.replace(/\D/g, '') : '';
+        let phone = creditCard && creditCard.holderPhone ? creditCard.holderPhone.replace(/\D/g, '') : '';
         // Se o telefone do titular for inválido/curto, tenta usar o do perfil do psicólogo
         if (phone.length < 10) {
              const psiPhone = psychologist.telefone ? psychologist.telefone.replace(/\D/g, '') : '';
              if (psiPhone.length >= 10) phone = psiPhone;
+        }
+
+        // --- FIX: Limpeza de CPF e Atualização Dinâmica ---
+        const cleanCpfCnpj = (creditCard && creditCard.holderCpf) ? creditCard.holderCpf.replace(/\D/g, '') : (psychologist.cpf || psychologist.cnpj || '');
+
+        // Atualiza o banco local se o psicólogo ainda não tinha CPF salvo
+        if (cleanCpfCnpj && !psychologist.cpf) {
+            try {
+                await psychologist.update({ cpf: cleanCpfCnpj });
+            } catch (err) {
+                console.warn(`[AVISO] CPF ${cleanCpfCnpj} já pertence a outra conta local. Seguindo com o pagamento no Asaas...`);
+            }
         }
 
         // 1. Cria ou Recupera o Cliente no Asaas
@@ -97,6 +108,17 @@ exports.createPreference = async (req, res) => {
 
         if (customerSearch.data && customerSearch.data.length > 0) {
             customerIdAsaas = customerSearch.data[0].id;
+            const existingCpf = customerSearch.data[0].cpfCnpj;
+
+            // --- FIX: O Asaas exige CPF para PIX. Se o cliente antigo não tinha, atualizamos agora ---
+            if (!existingCpf && cleanCpfCnpj) {
+                console.log(`[ASAAS] Atualizando CPF do cliente existente: ${customerIdAsaas}`);
+                await fetch(`${ASAAS_API_URL}/customers/${customerIdAsaas}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                    body: JSON.stringify({ cpfCnpj: cleanCpfCnpj })
+                });
+            }
         } else {
             // Cria novo cliente
             const newCustomer = await fetch(`${ASAAS_API_URL}/customers`, {
@@ -108,7 +130,7 @@ exports.createPreference = async (req, res) => {
                 body: JSON.stringify({
                     name: psychologist.nome,
                     email: psychologist.email,
-                    cpfCnpj: creditCard.holderCpf || psychologist.cpf || psychologist.cnpj,
+                    cpfCnpj: cleanCpfCnpj,
                     mobilePhone: phone, // Usa o telefone sanitizado
                     notificationDisabled: true // <--- DESATIVA E-MAILS NATIVOS DO ASAAS (Usaremos os da Yelo)
                 })
@@ -119,13 +141,20 @@ exports.createPreference = async (req, res) => {
         }
 
         // --- LÓGICA INTELIGENTE DE DATA DE COBRANÇA ---
-        // Padrão: Cobra hoje (UTC-3)
+        let isTrial = false;
         let nextDueDate = new Date(Date.now() - 10800000).toISOString().split('T')[0];
 
         // Se for reativação (usuário tem plano pago no futuro), agenda para o fim do ciclo
         if (psychologist.planExpiresAt && new Date(psychologist.planExpiresAt) > new Date()) {
             nextDueDate = new Date(psychologist.planExpiresAt).toISOString().split('T')[0];
             console.log(`[ASAAS] Reativação: Cobrança agendada para ${nextDueDate} (Fim do período pago)`);
+        } else if (billingType !== 'PIX') {
+            // TRIAL DE 14 DIAS PARA NOVAS ASSINATURAS NO CARTÃO
+            const dueDate = new Date(Date.now() - 10800000);
+            dueDate.setDate(dueDate.getDate() + 14);
+            nextDueDate = dueDate.toISOString().split('T')[0];
+            isTrial = true;
+            console.log(`[ASAAS] Nova Assinatura: Trial de 14 dias. Primeira cobrança em ${nextDueDate}`);
         }
 
         // --- FLUXO PIX ---
@@ -138,11 +167,6 @@ exports.createPreference = async (req, res) => {
                 cycle: 'MONTHLY', // Adicionado: Ciclo mensal obrigatório
                 description: `Assinatura Yelo - Plano ${planType}`,
                 externalReference: String(psychologistId),
-                discount: {
-                    value: 50,
-                    type: 'PERCENTAGE',
-                    cyclesCount: 3 // Garante os 3 meses de desconto nativamente
-                },
             };
             
             let subscriptionRes = await fetch(`${ASAAS_API_URL}/subscriptions`, {
@@ -206,7 +230,10 @@ exports.createPreference = async (req, res) => {
         }
 
         // 2. Cria a Assinatura com Cartão de Crédito
-        const [expiryMonth, expiryYear] = creditCard.expiry.split('/');
+        let expiryMonth = '', expiryYear = '';
+        if (billingType !== 'PIX') {
+            [expiryMonth, expiryYear] = creditCard.expiry.split('/');
+        }
 
         const subscriptionPayload = {
             customer: customerIdAsaas,
@@ -217,19 +244,14 @@ exports.createPreference = async (req, res) => {
             description: `Assinatura Yelo - Plano ${planType}`,
             externalReference: String(psychologistId),
             softDescriptor: 'Yelo Saúde Mental', // Texto na fatura (Max 13 chars)
-            discount: {
-                value: 50,
-                type: 'PERCENTAGE',
-                cyclesCount: 3 // Garante os 3 meses de desconto nativamente
-            },
-            creditCard: {
+            creditCard: billingType === 'PIX' ? undefined : {
                 holderName: creditCard.holderName,
                 number: creditCard.number,
                 expiryMonth: expiryMonth,
                 expiryYear: expiryYear.length === 2 ? `20${expiryYear}` : expiryYear,
                 ccv: creditCard.ccv
             },
-            creditCardHolderInfo: {
+            creditCardHolderInfo: billingType === 'PIX' ? undefined : {
                 name: creditCard.holderName,
                 email: psychologist.email,
                 cpfCnpj: creditCard.holderCpf,
@@ -262,9 +284,23 @@ exports.createPreference = async (req, res) => {
             throw new Error(subscriptionData.errors[0].description);
         }
 
-        await psychologist.update({
-            stripeSubscriptionId: subscriptionData.id // Salva apenas a referência (Aguardando Webhook)
-        });
+        if (isTrial) {
+            const trialEndDate = new Date();
+            trialEndDate.setDate(trialEndDate.getDate() + 14);
+
+            await psychologist.update({
+                stripeSubscriptionId: subscriptionData.id,
+                status: 'active',
+                plano: planType,
+                planExpiresAt: trialEndDate
+            });
+
+            gamificationService.assignPioneerBadge(psychologistId).catch(e => console.error("Erro no hook de badge Pioneiro (Trial):", e));
+        } else {
+            await psychologist.update({
+                stripeSubscriptionId: subscriptionData.id // Salva apenas a referência (Aguardando Webhook)
+            });
+        }
 
         res.json({ success: true, subscriptionId: subscriptionData.id });
 
@@ -290,8 +326,12 @@ exports.handleWebhook = async (req, res) => {
     const event = req.body;
     
     // Validação básica de segurança (Opcional: verificar token no header se configurado no Asaas)
-    // const asaasToken = req.headers['asaas-access-token'];
-    // if (asaasToken !== process.env.ASAAS_WEBHOOK_TOKEN) return res.status(401).send();
+    // [FIX CRÍTICO] Verificação obrigatória do Token do Webhook do Asaas em Produção
+    const asaasToken = req.headers['asaas-access-token'];
+    if (!asaasToken || asaasToken !== process.env.ASAAS_WEBHOOK_TOKEN) {
+        console.error("🚨 [ALERTA DE SEGURANÇA] Tentativa de Webhook falso bloqueada.");
+        return res.status(401).json({ error: 'Token de Webhook inválido.' });
+    }
 
     // --- NOVOS EVENTOS DE NOTIFICAÇÃO PERSONALIZADA YELO ---
     // Captura eventos de cobrança para enviar e-mail com estética Yelo
@@ -386,22 +426,7 @@ exports.handleWebhook = async (req, res) => {
                     return res.json({received: true});
                 }
 
-                // --- LÓGICA DE DESCONTO ---
                 const currentPayments = (psi.subscription_payments_count || 0) + 1;
-
-                // A lógica de remover desconto (3 meses) agora é nativa do Asaas via 'cyclesCount: 3' na criação.
-                // FIX: Trava de segurança para forçar a remoção do desconto após o 3º pagamento,
-                // pois o Asaas costuma ignorar o 'cyclesCount' para assinaturas recorrentes.
-                if (currentPayments === 3 && payment.subscription) {
-                    try {
-                        console.log(`[ASAAS] 3º pagamento recebido! Removendo desconto da assinatura: ${payment.subscription}`);
-                        fetch(`${ASAAS_API_URL}/subscriptions/${payment.subscription}`, {
-                            method: 'POST', // Asaas usa POST para atualizações de assinatura
-                            headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
-                            body: JSON.stringify({ discount: { value: 0, type: 'PERCENTAGE' } })
-                        }).catch(e => console.error("Erro API Asaas remoção desconto:", e));
-                    } catch (e) { console.error("Erro interno ao remover desconto:", e); }
-                }
 
                 const hoje = new Date();
                 const novaValidade = new Date(hoje.setDate(hoje.getDate() + 30));

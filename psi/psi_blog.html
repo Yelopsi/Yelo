@@ -1,125 +1,117 @@
-<div class="comunidade-header">
-    <div>
-        <h2>Meus Artigos</h2>
-        <p>Compartilhe sua expertise. Artigos aumentam sua visibilidade e autoridade na plataforma.</p>
+<div class="main-header" style="border-radius: 16px;">
+    <div class="header-content">
+        <h1 style="margin: 0; font-family: var(--font-titulos); font-size: 2.2rem; color: white;">Meus Artigos ✍️</h1>
+        <p style="margin: 5px 0 0 0; color: rgba(255,255,255,0.85); font-size: 1.1rem; max-width: 600px;">Compartilhe sua expertise! Bons artigos aumentam sua visibilidade e autoridade na Yelo.</p>
     </div>
 </div>
 
 <div id="blog-container" style="max-width: 800px; margin: 0 auto; padding-bottom: 80px;">
 
     <!-- WIDGET DE SUGESTÕES DE TEMAS -->
-    <div class="sugestoes-temas-widget">
-        <h3>💡 Temas em Alta para Escrever</h3>
-        <p>Inspire-se nos assuntos mais buscados pelos pacientes na plataforma para criar seu próximo artigo.</p>
+    <div class="sugestoes-temas-widget" style="border-radius: 20px; box-shadow: 0 4px 15px rgba(245,158,11,0.05);">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+            <div style="width: 40px; height: 40px; background: #fef3c7; color: #d97706; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;">💡</div>
+            <h3 style="margin: 0; color: #b45309; font-family: var(--font-titulos); font-size: 1.3rem;">Temas em Alta</h3>
+        </div>
+        <p style="color: #92400e; font-size: 0.95rem; margin: 0 0 20px 0; line-height: 1.5;">Inspire-se nos assuntos mais buscados pelos pacientes na plataforma para criar seu próximo artigo.</p>
         <div id="lista-sugestoes-temas" class="sugestoes-grid">
             <!-- Skeleton Loaders -->
-            <div class="sugestao-item-skeleton"></div>
-            <div class="sugestao-item-skeleton"></div>
-            <div class="sugestao-item-skeleton"></div>
+            <div class="sugestao-item-skeleton" style="border-radius: 12px;"></div>
+            <div class="sugestao-item-skeleton" style="border-radius: 12px;"></div>
+            <div class="sugestao-item-skeleton" style="border-radius: 12px;"></div>
         </div>
     </div>
 
     <div id="view-lista-artigos">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h3 style="color: #1B4332; margin: 0;">Seus Publicados</h3>
-            <button id="btn-novo-artigo" style="background-color: #1B4332; color: #fff; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px;">
-                <span style="font-size: 1.2rem;">+</span> Escrever Novo
+        <div style="margin-bottom: 25px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                <div style="width: 35px; height: 35px; background: #e8f5e9; color: #1B4332; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">📚</div>
+                <h3 style="color: #1B4332; margin: 0; font-family: var(--font-titulos); font-size: 1.4rem;">Seus Publicados</h3>
+            </div>
+            <button id="btn-novo-artigo" class="btn btn-principal" style="border-radius: 50px; display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; font-size: 0.9rem; box-shadow: 0 4px 15px rgba(27,67,50,0.15); border: none; width: max-content; height: auto;">
+                <span style="font-size: 1.2rem; line-height: 0; margin-top: -2px;">+</span> Escrever Novo
             </button>
         </div>
 
         <div id="lista-artigos-render" style="display: flex; flex-direction: column; gap: 15px;">
-            <div style="text-align: center; color: #999; padding: 40px;">
+            <div style="text-align: center; color: #666; padding: 40px; background: #fff; border-radius: 16px; border: 1px solid #f0f0f0;">
+                <div class="loader-spinner" style="margin: 0 auto 15px auto;"></div>
                 Carregando seus artigos...
             </div>
         </div>
         <div style="text-align: center; margin-top: 30px;">
-            <button id="btn-load-more-articles" class="btn btn-secundario hidden">Mostrar mais</button>
+            <button id="btn-load-more-articles" class="btn btn-secundario hidden" style="border-radius: 50px; padding: 8px 24px;">Mostrar mais</button>
         </div>
     </div>
 
-    <div id="view-form-artigo" style="display: none; animation: fadeIn 0.3s;">
-        <div style="margin-bottom: 20px;">
-            <button id="btn-voltar-lista" style="background: none; border: none; color: #666; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 0.9rem;">
-                ← Voltar para lista
-            </button>
-        </div>
-
-        <div class="card-dashboard" style="padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-            <h3 id="form-titulo-acao" style="margin-top: 0; color: #1B4332;">Novo Artigo</h3>
+    <!-- MODAL: NOVO ARTIGO -->
+    <div id="view-form-artigo" class="custom-modal-overlay" style="display: none;">
+        <div class="custom-modal-box" style="max-width: 800px; padding: 25px 30px; box-sizing: border-box; overflow-x: hidden;">
+            <div class="sheet-drag-handle"></div>
+            <button type="button" class="modal-close-btn" id="btn-fechar-modal-artigo"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
             
-            <form id="form-blog">
-                <input type="hidden" id="blog-id" name="id">
-
-                <div class="form-group" style="margin-bottom: 15px;">
-                    <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #333;">Título do Artigo</label>
-                    <input type="text" id="blog-titulo" name="titulo" required placeholder="Ex: A importância da terapia..." 
-                        style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem;">
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                <div style="width: 50px; height: 50px; background: #f0fdf4; color: #1B4332; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; box-shadow: 0 4px 10px rgba(27,67,50,0.05);">📝</div>
+                <div>
+                    <h3 id="form-titulo-acao" style="margin: 0; color: #1B4332; font-family: var(--font-titulos); font-size: 1.5rem;">Novo Artigo</h3>
+                    <p style="color: #666; font-size: 0.9rem; margin: 2px 0 0 0;">Escreva sobre sua especialidade e conquiste pacientes.</p>
                 </div>
+            </div>
+            
+            <div class="modal-body">
+                <form id="form-blog">
+                    <input type="hidden" id="blog-id" name="id">
 
-                <div class="form-group" style="margin-bottom: 15px;">
-                    <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #333;">Link da Imagem (URL)</label>
-                    <input type="url" id="blog-imagem" name="imagem_url" placeholder="https://..." 
-                        style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px;">
-                    <small style="color: #666; font-size: 0.8rem;">Cole o link de uma imagem (ex: Pexels, Unsplash).</small>
-                </div>
+                    <!-- GRID DE CAMPOS: 2 COLUNAS -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: #495057; margin-bottom: 5px; display: block;">Título do Artigo *</label>
+                            <input type="text" id="blog-titulo" name="titulo" required placeholder="Ex: A importância da terapia..." style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #ccc; background-color: #f9fafb; font-size: 0.95rem;">
+                        </div>
 
-                <div class="form-group" style="margin-bottom: 15px;">
-                    <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #333;">Conteúdo</label>
-                    <!-- Container do Editor Quill -->
-                    <div id="editor-container" style="height: 350px; background: #fff; font-family: 'Mulish', sans-serif; font-size: 1rem;"></div>
-                </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: #495057; margin-bottom: 5px; display: block;">Link da Imagem de Capa (Opcional)</label>
+                            <input type="url" id="blog-imagem" name="imagem_url" placeholder="https://..." style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #ccc; background-color: #f9fafb; font-size: 0.95rem;">
+                        </div>
+                    </div>
 
-                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-                    <button type="button" id="btn-cancelar-artigo" style="padding: 10px 20px; background: #eee; border: none; border-radius: 6px; cursor: pointer;">Cancelar</button>
-                    <button type="submit" id="btn-salvar-artigo" style="padding: 10px 20px; background: #1B4332; color: #fff; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Publicar Artigo</button>
-                </div>
-            </form>
+                    <div class="form-group" style="margin-bottom: 25px;">
+                        <label style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: #495057; margin-bottom: 5px; display: block;">Conteúdo *</label>
+                        <!-- Container do Editor Quill -->
+                        <div id="editor-container" style="min-height: 150px; background: #fff; font-family: var(--font-principal); font-size: 1rem; border-radius: 0 0 12px 12px; border-color: #e0e0e0;"></div>
+                    </div>
+
+                    <div class="form-actions modal-footer" style="justify-content: flex-end; margin-top: 20px; display: flex; align-items: center; width: 100%; gap: 10px;">
+                        <button type="button" id="btn-cancelar-artigo" class="btn btn-secundario" style="padding: 10px 20px; border-radius: 50px; font-size: 0.95rem;">Cancelar</button>
+                        <button type="submit" id="btn-salvar-artigo" class="btn btn-principal" style="padding: 10px 24px; border-radius: 50px; font-size: 0.95rem; box-shadow: 0 4px 15px rgba(27,67,50,0.2);">Publicar Artigo</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
 </div>
 
 <style>
-    /* 1. Estilo do Banner Verde (NOVO) */
-    .comunidade-header {
-        background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%);
-        color: white;
-        padding: 30px;
-        border-radius: 12px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 4px 15px rgba(27, 67, 50, 0.15);
-        margin-bottom: 30px; /* Espaço para o conteúdo abaixo */
-    }
-    /* Adicionamos !important para garantir que fique branco */
-    .comunidade-header h2 { margin: 0 0 10px 0; font-family: var(--font-titulos); font-size: 2.2rem; color: #ffffff !important; }
-    .comunidade-header p { margin: 0; opacity: 0.9; font-size: 1.4rem; max-width: 600px; }
-
-    /* 2. Animação e Lista (MANTIDO) */
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    
     .artigo-item {
-        background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 20px;
+        background: #fff; border: 1px solid #e9ecef; border-radius: 16px; padding: 25px;
         display: flex; justify-content: space-between; align-items: center;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
     }
-    .artigo-item:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.08); border-color: #ccebe0; transform: translateY(-2px); }
+    .artigo-item:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.06); border-color: #1B4332; transform: translateY(-3px); }
     
     .btn-acoes-grupo { display: flex; gap: 10px; }
     .btn-acao { border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: background 0.2s; }
     
-    .btn-editar { background: #e9f5f0; color: #1B4332; }
-    .btn-editar:hover { background: #d0eadd; }
+    .btn-editar { background: #f0fdf4; color: #1B4332; }
+    .btn-editar:hover { background: #dcfce7; }
     
-    .btn-excluir { background: #fff0f0; color: #d32f2f; }
+    .btn-excluir { background: #ffebee; color: #d32f2f; }
     .btn-excluir:hover { background: #ffe0e0; }
 
     /* 3. Responsividade (Mobile) */
     @media (max-width: 768px) {
-        .comunidade-header { flex-direction: column; text-align: center; padding: 25px; }
-        
         .artigo-item { flex-direction: column; align-items: flex-start; gap: 15px; }
         .btn-acoes-grupo { width: 100%; justify-content: space-between; border-top: 1px solid #eee; padding-top: 15px; }
         .btn-acao { flex: 1; padding: 12px; }

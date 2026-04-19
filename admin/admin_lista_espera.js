@@ -30,7 +30,7 @@ window.initializePage = function() {
     // Função para enviar convite
     async function sendInvitation(candidateId, button) {
         button.disabled = true;
-        button.textContent = 'Enviando...';
+        button.innerHTML = '<span class="loading-spinner-sm"></span> Enviando...';
 
         try {
             const response = await fetch('/api/psychologists/waiting-list/invite', {
@@ -54,7 +54,7 @@ window.initializePage = function() {
         } catch (error) {
             showToast(`Erro ao enviar convite: ${error.message}`, 'error');
             button.disabled = false;
-            button.textContent = 'Convidar';
+            button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> Convidar`;
         }
     }
 
@@ -79,25 +79,37 @@ window.initializePage = function() {
 
             waitingList.forEach(candidate => {
                 const row = rowTemplate.content.cloneNode(true).querySelector('tr');
-                row.querySelector('[data-label="Nome"]').textContent = candidate.nome;
-                row.querySelector('[data-label="Email"]').textContent = candidate.email;
-                row.querySelector('[data-label="CRP"]').textContent = candidate.crp || 'N/A';
+                row.querySelector('[data-label="Nome"]').innerHTML = `
+                    <div style="font-weight: 600; color: var(--verde-escuro); display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 32px; height: 32px; border-radius: 50%; background-color: #f0fdf4; color: var(--verde-escuro); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem;">
+                            ${candidate.nome.charAt(0).toUpperCase()}
+                        </div>
+                        <span>${candidate.nome}</span>
+                    </div>
+                `;
+                row.querySelector('[data-label="Email"]').innerHTML = `<span style="color: #555;">${candidate.email}</span>`;
+                row.querySelector('[data-label="CRP"]').innerHTML = `<span style="color: #666; font-size: 0.9rem;">${candidate.crp || 'N/A'}</span>`;
                 
                 const statusBadge = row.querySelector('.status-badge');
-                statusBadge.textContent = candidate.status;
-                statusBadge.className = `status-badge status-${candidate.status}`;
+                statusBadge.textContent = candidate.status === 'pending' ? 'Pendente' : (candidate.status === 'invited' ? 'Convidado' : candidate.status);
+                statusBadge.className = `status status-${candidate.status === 'invited' ? 'ativo' : 'pendente'}`;
 
-                row.querySelector('[data-label="Data de Entrada"]').textContent = new Date(candidate.createdAt).toLocaleDateString('pt-BR');
+                row.querySelector('[data-label="Data de Entrada"]').innerHTML = `<span style="color: #666; font-size: 0.9rem;">${new Date(candidate.createdAt).toLocaleDateString('pt-BR')}</span>`;
 
                 const actionsCell = row.querySelector('[data-label="Ações"]');
                 if (candidate.status === 'pending' || candidate.status === 'invited') {
                     const inviteButton = document.createElement('button');
-                    inviteButton.className = 'btn btn-sm btn-principal';
-                    inviteButton.textContent = candidate.status === 'invited' ? 'Reenviar' : 'Convidar';
+                    inviteButton.className = 'btn-tabela btn-fixar';
+                    inviteButton.style.display = 'inline-flex';
+                    inviteButton.style.alignItems = 'center';
+                    inviteButton.style.gap = '5px';
+                    inviteButton.style.padding = '6px 12px';
+                    inviteButton.style.borderRadius = '20px';
+                    inviteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> ${candidate.status === 'invited' ? 'Reenviar Convite' : 'Convidar'}`;
                     inviteButton.onclick = () => sendInvitation(candidate.id, inviteButton);
                     actionsCell.appendChild(inviteButton);
                 } else {
-                    actionsCell.textContent = 'N/A';
+                    actionsCell.innerHTML = '<span style="color: #999; font-size: 0.85rem;">Já cadastrado</span>';
                 }
 
                 tableBody.appendChild(row);
@@ -105,7 +117,7 @@ window.initializePage = function() {
 
         } catch (error) {
             console.error(error);
-            tableBody.innerHTML = `<tr><td colspan="6" class="error-row">${error.message}</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--coral-quente);">${error.message}</td></tr>`;
         }
     }
 

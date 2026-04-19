@@ -1,19 +1,20 @@
-<div class="dashboard-home">
-    <!-- Cabeçalho da Página -->
-    <div class="welcome-section" style="background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%); color: white; padding: 40px; border-radius: 16px; margin-bottom: 40px; box-shadow: 0 10px 30px rgba(27, 67, 50, 0.15); position: relative; overflow: hidden;">
-        <h1 style="font-family: var(--font-titulos); font-size: 2.2rem; margin: 0 0 10px 0; color: #FFFFFF;">Minhas Avaliações</h1>
-        <p style="font-family: var(--font-principal); font-size: 1.1rem; opacity: 0.9; margin: 0; max-width: 600px;">Histórico das suas avaliações de profissionais.</p>
+<div class="modern-dashboard-layout">
+    <div class="main-header" style="padding: 20px 25px; margin-bottom: 25px;">
+        <div>
+            <h1 style="font-size: 1.8rem;">Minhas Avaliações</h1>
+            <p class="subtitulo-header">Histórico das suas avaliações de profissionais.</p>
+        </div>
     </div>
 
     <!-- Container Principal para as Avaliações -->
-    <div id="reviews-list-container" class="form-secao">
+    <div id="reviews-list-container" class="profile-block" style="padding: 20px; border: none; background: transparent; box-shadow: none;">
         <!-- O conteúdo será inserido aqui pelo JavaScript -->
     </div>
 
     <!-- Estado Vazio (quando não há avaliações) -->
-    <div id="reviews-empty-state" class="empty-state hidden" style="text-align: center; padding: 60px 20px;">
-        <span style="font-size: 3rem; display: block; margin-bottom: 15px; opacity: 0.5; color: #f39c12;">★</span>
-        <h3 style="color: #1B4332; margin-top: 0; font-family: var(--font-titulos);">Nenhuma avaliação encontrada</h3>
+    <div id="reviews-empty-state" class="hidden smart-empty-state" style="background: transparent; border: none;">
+        <span class="empty-state-icon" style="font-size: 3.5rem; color: #f39c12;">★</span>
+        <h3 class="empty-state-text" style="color: var(--verde-escuro); font-weight: bold; font-size: 1.2rem; margin-bottom: 5px;">Nenhuma avaliação encontrada</h3>
         <p style="color: #666; margin-bottom: 25px;">Você ainda não avaliou nenhum profissional.</p>
     </div>
 </div>

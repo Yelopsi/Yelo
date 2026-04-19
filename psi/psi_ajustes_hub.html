@@ -1,3 +1,11 @@
+<style>
+    @media (max-width: 991px) {
+        #ajustes-hub-grid {
+            padding-bottom: 80px; /* Garante que o último card não fique escondido pela navegação mobile */
+        }
+    }
+</style>
+
 <div class="main-header">
     <div class="header-content">
         <h1>Ajustes da Conta</h1>
@@ -5,7 +13,7 @@
     </div>
 </div>
 
-<div class="hub-grid fade-in-up">
+<div id="ajustes-hub-grid" class="hub-grid fade-in-up">
     <a href="#" onclick="window.loadPage('psi_meu_perfil.html')" class="hub-card">
         <div class="hub-icon">⚙️</div>
         <div class="hub-info">
@@ -20,14 +28,23 @@
             <p>Gerenciar plano e métodos de pagamento.</p>
         </div>
     </a>
-    <a href="#" onclick="window.loadPage('psi_caixa_de_entrada.html')" class="hub-card" style="animation-delay: 0.2s;">
+    <a href="#" id="hub-btn-public-profile" class="hub-card" target="_blank" style="animation-delay: 0.2s;">
+        <div class="hub-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+        </div>
+        <div class="hub-info">
+            <h3>Meu Perfil Público</h3>
+            <p>Veja como os pacientes visualizam sua página na Yelo.</p>
+        </div>
+    </a>
+    <a href="#" onclick="window.loadPage('psi_caixa_de_entrada.html')" class="hub-card" style="animation-delay: 0.3s;">
         <div class="hub-icon">🎧</div>
         <div class="hub-info">
             <h3>Fale com a Yelo</h3>
             <p>Suporte direto com nossa equipe.</p>
         </div>
     </a>
-    <a href="#" onclick="document.getElementById('btn-logout').click()" class="hub-card logout-card" style="animation-delay: 0.3s;">
+    <a href="#" onclick="document.getElementById('btn-logout').click()" class="hub-card logout-card" style="animation-delay: 0.4s;">
         <div class="hub-icon" style="background:#fff1f2; color:#e63946;">🚪</div>
         <div class="hub-info">
             <h3 style="color:#e63946;">Encerrar Sessão</h3>

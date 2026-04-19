@@ -9,7 +9,7 @@ const connectedUsers = new Map(); // Mapeia userId -> socketId
 function initSocket(server) {
     io = new Server(server, {
         cors: {
-            origin: "*",
+            origin: process.env.FRONTEND_URL || "*",
             methods: ["GET", "POST"]
         }
     });

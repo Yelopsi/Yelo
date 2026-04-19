@@ -151,6 +151,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    // --- CORREÇÃO GLOBAL: REDIRECIONAMENTO DA SEÇÃO DE CRISE ---
+    // Garante que os links da seção "Se você está em crise..." apontem corretamente para /ajuda
+    document.querySelectorAll('.aviso-crise a, .aviso-texto a').forEach(link => {
+        link.setAttribute('href', '/ajuda');
+    });
 });
 
 // --- FUNÇÃO PARA GERENCIAR ESTADO DE LOGIN NO HEADER ---
@@ -204,6 +210,7 @@ async function checkLoginState() {
                 const data = await res.json();
                 userName = data.nome;
                 userType = 'patient';
+                    if (data.fotoUrl) localStorage.setItem('Yelo_user_photo', data.fotoUrl);
             } else {
                 // 2. Tenta Psicólogo
                 res = await fetch(`${BASE_URL}/api/psychologists/me`, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -211,6 +218,7 @@ async function checkLoginState() {
                     const data = await res.json();
                     userName = data.nome;
                     userType = 'psychologist';
+                        if (data.fotoUrl) localStorage.setItem('Yelo_user_photo', data.fotoUrl);
                 } else {
                     // 3. Tenta Admin
                     res = await fetch(`${BASE_URL}/api/admin/me`, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -218,6 +226,7 @@ async function checkLoginState() {
                         const data = await res.json();
                         userName = data.nome;
                         userType = 'admin';
+                            if (data.fotoUrl) localStorage.setItem('Yelo_user_photo', data.fotoUrl);
                     }
                 }
             }
@@ -228,6 +237,7 @@ async function checkLoginState() {
     }
 
     // Prepara os dados
+    const userPhoto = localStorage.getItem('Yelo_user_photo');
     let firstName = userName ? userName.split(' ')[0] : 'Usuário';
     // Capitaliza (Primeira letra maiúscula)
     firstName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
@@ -237,9 +247,9 @@ async function checkLoginState() {
     if (userType === 'patient') {
         dashboardLink = '/patient/patient_dashboard';
     } else if (userType === 'psychologist' || userType === 'psi') {
-        dashboardLink = '/psi/psi_dashboard.html';
+        dashboardLink = '/psi/psi_dashboard';
     } else if (userType === 'admin') {
-        dashboardLink = '/admin/admin.html'; // CORREÇÃO: Aponta para o dashboard de admin correto.
+        dashboardLink = '/admin'; // CORREÇÃO: Aponta para o dashboard de admin correto.
         firstName = 'Admin'; // CORREÇÃO: Garante que o nome de exibição seja sempre "Admin".
     }
 
@@ -248,46 +258,77 @@ async function checkLoginState() {
         const style = document.createElement('style');
         style.id = 'user-header-style';
         style.innerHTML = `
-            .user-greeting {
-                color: #ffffff; /* Inicial: Branco (Fundo Verde) */
-                font-weight: 500;
-                margin-right: 10px;
-                transition: color 0.3s ease;
-            }
-            
-            /* Quando o header fica branco (rolagem) */
-            header.header-rolagem .user-greeting {
-                color: #1B4332 !important; /* Rolagem: Verde (Fundo Branco) */
-            }
-
-            /* Botão "Meu Painel" - Inicial (Fundo Verde -> Botão Branco) */
-            .user-logged-header .btn-painel {
-                background-color: #ffffff !important;
-                color: #1B4332 !important;
-                border: 2px solid #ffffff !important;
+            .user-logged-modern {
+                display: inline-flex;
+                align-items: center;
+                gap: 12px;
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                padding: 5px 18px 5px 5px;
+                border-radius: 50px;
                 text-decoration: none;
-                font-weight: bold;
-                padding: 8px 18px;
-                border-radius: 25px;
-                font-size: 15px;
+                color: #ffffff !important;
+                font-weight: 600;
+                font-size: 0.95rem;
                 transition: all 0.3s ease;
-                position: relative; /* Garante contexto de pilha */
-                z-index: 100002;    /* Fica acima de tudo no header */
-            }
-            .user-logged-header .btn-painel:hover {
-                background-color: #f0f0f0 !important;
-                transform: translateY(-2px);
+                backdrop-filter: blur(4px);
+                position: relative;
+                z-index: 100002;
             }
 
-            /* Botão "Meu Painel" - Rolagem (Fundo Branco -> Botão Verde) */
-            header.header-rolagem .user-logged-header .btn-painel {
-                background-color: #1B4332 !important;
-                color: #ffffff !important;
-                border: 2px solid #1B4332 !important;
+            .user-logged-modern:hover {
+                background: rgba(255, 255, 255, 0.2);
+                border-color: rgba(255, 255, 255, 0.4);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
+
+            .user-logged-modern .avatar-circle {
+                width: 32px;
+                height: 32px;
+                background-color: #ffffff;
+                color: #1B4332;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 800;
+                font-size: 0.9rem;
+                flex-shrink: 0;
+            }
+
+            header.header-rolagem .user-logged-modern {
+                background: rgba(27, 67, 50, 0.05);
+                border-color: rgba(27, 67, 50, 0.15);
+                color: #1B4332 !important;
+            }
+
+            header.header-rolagem .user-logged-modern:hover {
+                background: rgba(27, 67, 50, 0.1);
+                border-color: rgba(27, 67, 50, 0.25);
+            }
+
+            header.header-rolagem .user-logged-modern .avatar-circle {
+                background-color: #1B4332;
+                color: #ffffff;
             }
             
-            header.header-rolagem .user-logged-header .btn-painel:hover {
-                background-color: #2a624d !important;
+            .user-logged-modern span {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            
+            .user-logged-modern svg {
+                width: 16px;
+                height: 16px;
+                opacity: 0.6;
+                transition: transform 0.2s ease, opacity 0.2s ease;
+            }
+            
+            .user-logged-modern:hover svg {
+                transform: translateX(3px);
+                opacity: 1;
             }
         `;
         document.head.appendChild(style);
@@ -299,12 +340,21 @@ async function checkLoginState() {
     if (!isList) {
         userEl.style.display = 'flex';
         userEl.style.alignItems = 'center';
-        userEl.style.gap = '15px';
+    }
+
+    // Decide se renderiza a foto de perfil ou a inicial do nome
+    let avatarHtml = `<div class="avatar-circle" id="header-avatar-initial">${firstName.charAt(0)}</div>`;
+    if (userPhoto && userPhoto !== 'null' && userPhoto !== 'undefined' && !userPhoto.includes('placehold.co')) {
+        const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
+        const photoUrl = userPhoto.startsWith('http') || userPhoto.startsWith('data:') ? userPhoto : `${BASE_URL}/${userPhoto.replace(/^backend\/public\//, '').replace(/^\//, '')}`;
+        avatarHtml = `<img src="${photoUrl}" alt="Perfil" class="avatar-circle" id="header-avatar-initial" style="object-fit: cover; border: 2px solid #ffffff; padding: 0; box-sizing: border-box;">`;
     }
 
     userEl.innerHTML = `
-        <span class="user-greeting">Olá, ${firstName}</span>
-        <a href="${dashboardLink}" class="btn-painel" id="btn-meu-painel">Meu Painel</a>
+        <a href="${dashboardLink}" class="user-logged-modern" id="btn-meu-painel">
+            ${avatarHtml}
+            <span><span class="user-greeting-text">Painel de ${firstName}</span> <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></span>
+        </a>
     `;
 
     container.appendChild(userEl);

@@ -175,19 +175,5 @@
     </main>
 
     <%- include('partials/footer') %>
-
-    <script>
-        document.querySelectorAll('.acordeao-titulo').forEach(button => {
-            button.addEventListener('click', () => {
-                const content = button.nextElementSibling;
-                button.classList.toggle('ativo');
-                if (button.classList.contains('ativo')) {
-                    content.style.maxHeight = content.scrollHeight + "px";
-                } else {
-                    content.style.maxHeight = "0";
-                }
-            });
-        });
-    </script>
 </body>
 </html>

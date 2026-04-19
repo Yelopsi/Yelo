@@ -63,6 +63,14 @@
     </script>
 
     <style>
+        /* ==================================================================
+           MÉTODO FORÇA BRUTA (BYPASS DE CACHE)
+           Age exatamente como se o usuário apertasse "Ctrl -" 
+           ================================================================== */
+        body {
+            zoom: 0.88; /* Reduz toda a interface em 12%. Mude para 0.85 se quiser 15% */
+        }
+
         /* --- SEÇÃO VANTAGENS (ORGÂNICA) --- */
         .secao-vantagens {
             padding: 100px 20px;
@@ -152,7 +160,7 @@
         .doodle-bg.right { bottom: 5%; right: -50px; width: 250px; transform: rotate(-45deg); }
         
         /* --- SEÇÃO DEPOIMENTOS MODERNA --- */
-        .secao-depoimentos { padding: 100px 20px 40px 20px; background-color: #ffffff; position: relative; }
+        .secao-depoimentos { padding: 100px 20px 40px 20px; background-color: var(--off-white); position: relative; }
         .header-depoimentos { text-align: center; margin-bottom: 4rem; }
         
         /* Badge de Nota */
@@ -185,7 +193,7 @@
         .avatar-depoimento { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #1B4332; font-size: 1.1rem; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         
         /* --- SEÇÃO FAQ ORGÂNICA --- */
-        .faq-secao { padding: 40px 20px 100px 20px; background-color: #fdfaf6; position: relative; }
+        .faq-secao { padding: 40px 20px 100px 20px; background-color: #ffffff; position: relative; }
         
         .acordeao-container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
         
@@ -312,7 +320,7 @@
 
         /* --- SEÇÃO ORGÂNICA (COLLAGE) --- */
         .secao-organica {
-            background-color: #F8F3ED; /* Creme suave */
+            background-color: var(--off-white);
             padding: 100px 20px;
             overflow: hidden;
             position: relative;
@@ -741,7 +749,7 @@
     <%- include('partials/footer') %>
 
     <style>
-        /* --- PWA Modal Styles --- */
+        /* --- PWA Modal Styles Escalados --- */
         .app-install-modal-overlay {
             position: fixed;
             top: 0;
@@ -765,27 +773,27 @@
         .app-install-modal {
             background: white;
             width: 90%;
-            max-width: 400px;
-            border-radius: 16px;
-            padding: 25px;
+            max-width: calc(400px * var(--ui-scale, 1));
+            border-radius: calc(16px * var(--ui-scale, 1));
+            padding: calc(25px * var(--ui-scale, 1));
             position: relative;
             text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            box-shadow: 0 calc(10px * var(--ui-scale, 1)) calc(25px * var(--ui-scale, 1)) rgba(0,0,0,0.2);
             animation: slideUp 0.3s ease;
         }
 
         @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
+            from { transform: translateY(calc(20px * var(--ui-scale, 1))); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
 
         .modal-close-btn {
             position: absolute;
-            top: 10px;
-            right: 15px;
+            top: calc(10px * var(--ui-scale, 1));
+            right: calc(15px * var(--ui-scale, 1));
             background: none;
             border: none;
-            font-size: 24px;
+            font-size: calc(24px * var(--ui-scale, 1));
             cursor: pointer;
             color: #666;
         }
@@ -793,46 +801,46 @@
         .modal-title {
             font-family: var(--font-titulos, sans-serif);
             color: var(--verde-escuro, #1B4332);
-            margin-bottom: 10px;
-            font-size: 1.25rem;
+            margin-bottom: calc(10px * var(--ui-scale, 1));
+            font-size: calc(1.25rem * var(--ui-scale, 1));
         }
 
         .modal-desc {
-            font-size: 0.95rem;
+            font-size: calc(0.95rem * var(--ui-scale, 1));
             color: #555;
-            margin-bottom: 20px;
+            margin-bottom: calc(20px * var(--ui-scale, 1));
             line-height: 1.5;
         }
 
         .ios-instructions {
             display: none;
             background: #f9f9f9;
-            padding: 15px;
-            border-radius: 8px;
+            padding: calc(15px * var(--ui-scale, 1));
+            border-radius: calc(8px * var(--ui-scale, 1));
             text-align: left;
-            font-size: 0.9rem;
-            margin-bottom: 20px;
+            font-size: calc(0.9rem * var(--ui-scale, 1));
+            margin-bottom: calc(20px * var(--ui-scale, 1));
         }
 
         .modal-actions {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: calc(10px * var(--ui-scale, 1));
         }
 
         .btn-pwa-install {
             background-color: var(--verde-escuro, #1B4332);
             color: white;
             border: none;
-            padding: 12px;
-            border-radius: 8px;
+            padding: calc(12px * var(--ui-scale, 1));
+            border-radius: calc(8px * var(--ui-scale, 1));
             font-weight: bold;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            font-size: 1rem;
+            gap: calc(8px * var(--ui-scale, 1));
+            font-size: calc(1rem * var(--ui-scale, 1));
             transition: background-color 0.2s;
         }
 
@@ -845,7 +853,7 @@
             border: none;
             color: #666;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: calc(0.9rem * var(--ui-scale, 1));
             text-decoration: underline;
         }
     </style>
@@ -897,9 +905,17 @@
                 || (window.matchMedia('(display-mode: minimal-ui)').matches)
                 || (navigator.userAgent.toLowerCase().includes('wv')); // Detecta WebView (APK Android)
 
+            // 1. Constante de 7 dias em milissegundos e verificação de prazo
+            const DIAS_7_EM_MS = 7 * 24 * 60 * 60 * 1000;
+            const lastDismissed = localStorage.getItem('yelo_pwa_dismissed_at');
+            const now = new Date().getTime();
+            const shouldShowBanner = !lastDismissed || (now - parseInt(lastDismissed)) > DIAS_7_EM_MS;
+
             // Helper para fechar o modal
             const closeBanner = () => {
                 pwaBanner.classList.remove('visible');
+                // 2. Grava no cache o momento exato em que o banner foi fechado
+                localStorage.setItem('yelo_pwa_dismissed_at', new Date().getTime().toString());
             };
 
             // Função para registrar analytics
@@ -913,8 +929,8 @@
                 closeBanner();
             };
 
-            // Lógica de Exibição (Apenas Mobile e se não estiver instalado/standalone)
-            if (isMobile && !isInStandaloneMode) {
+            // Lógica de Exibição (Apenas Mobile, se não estiver instalado e respeitando a trava de 7 dias)
+            if (isMobile && !isInStandaloneMode && shouldShowBanner) {
                 if (isIos) {
                     // Configuração iOS
                     iosInstructions.style.display = 'block';
