@@ -771,7 +771,7 @@ app.get('/api/run-invite-all-waitlist', async (req, res) => {
 });
 
 // --- ROTA DE AUDITORIA: BLOQUEIA PERFIS QUE BURLARAM O PAGAMENTO ---
-app.get('/api/fix-inadimplentes', async (req, res) => {
+app.get('/api/run-inadimplentes', async (req, res) => {
     try {
         let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
         ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, '');
@@ -1515,6 +1515,7 @@ const startCronJobs = () => {
 
   let lastReminderHour = -1;
   let lastSummaryMinute = "";
+  let lastAuditDay = -1;
 
   setInterval(async () => {
     const now = new Date();
@@ -1582,8 +1583,29 @@ const startCronJobs = () => {
         } catch (e) { console.error("Erro no cron de resumo:", e); }
     }
 
-    // 2. LEMBRETES DE SESSÃO (A cada hora cheia)
+    // 1.5. AUDITORIA DE ASSINATURAS VENCIDAS (Diariamente às 03:00)
     const currentBrtHour = parseInt(now.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit' }), 10);
+    const currentDay = now.getDate();
+    
+    if (currentBrtHour === 3 && currentDay !== lastAuditDay) {
+        lastAuditDay = currentDay;
+        console.log("⏰ [CRON] Realizando auditoria diária de assinaturas vencidas...");
+        try {
+            const psisVencidos = await db.Psychologist.findAll({
+                where: {
+                    status: 'active',
+                    [Op.or]: [{ is_exempt: false }, { is_exempt: null }],
+                    planExpiresAt: { [Op.lt]: now }
+                }
+            });
+            if (psisVencidos.length > 0) {
+                console.log(`[CRON] Inativando ${psisVencidos.length} psicólogos com assinaturas vencidas.`);
+                for (const psi of psisVencidos) await psi.update({ status: 'inactive' });
+            }
+        } catch(e) { console.error("Erro na auditoria de vencidos:", e); }
+    }
+
+    // 2. LEMBRETES DE SESSÃO (A cada hora cheia)
     
     // Garante que rode apenas 1 vez por hora, mesmo que o setInterval atrase alguns segundos
     if (currentBrtHour !== lastReminderHour) {
