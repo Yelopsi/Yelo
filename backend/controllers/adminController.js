@@ -701,13 +701,17 @@ exports.updateAdminPassword = async (req, res) => {
  * Descrição: Atualiza a foto de perfil do administrador logado.
  */
 exports.updateAdminPhoto = async (req, res) => {
+    console.log("[DEBUG UPLOAD] Controlador 'updateAdminPhoto' acionado!");
     try {
         if (!req.file) {
+            console.log("❌ [DEBUG UPLOAD] A requisição chegou sem arquivo (req.file está vazio).");
             return res.status(400).json({ error: 'Nenhum arquivo de imagem foi enviado.' });
         }
+        console.log(`[DEBUG UPLOAD] Arquivo recebido na memória: ${req.file.originalname} | Mimetype: ${req.file.mimetype} | Tamanho: ${req.file.size} bytes`);
 
         const userId = (req.user && req.user.id) || (req.userDecoded && req.userDecoded.id);
         const userType = (req.user && req.user.type) || (req.userDecoded && req.userDecoded.type) || 'admin';
+        console.log(`[DEBUG UPLOAD] Identidade: ID = ${userId}, Tipo = ${userType}`);
 
         if (!userId) {
             return res.status(401).json({ error: 'Usuário não autenticado.' });
@@ -720,10 +724,12 @@ exports.updateAdminPhoto = async (req, res) => {
             api_key: process.env.CLOUDINARY_API_KEY,
             api_secret: process.env.CLOUDINARY_API_SECRET
         });
+        console.log(`[DEBUG UPLOAD] Cloudinary Configurado: ${!!process.env.CLOUDINARY_CLOUD_NAME}`);
 
         let fotoUrl = '';
         try {
             if (req.file.path) {
+                console.log(`[DEBUG UPLOAD] Iniciando envio para a nuvem via PATH local: ${req.file.path}`);
                 const result = await cloudinary.uploader.upload(req.file.path, {
                     folder: 'yelo/profiles',
                     public_id: `admin-profile-${userId}-${Date.now()}`,
@@ -731,10 +737,12 @@ exports.updateAdminPhoto = async (req, res) => {
                     transformation: [{ width: 500, height: 500, crop: 'fill', gravity: 'face' }, { quality: 'auto' }, { fetch_format: 'auto' }]
                 });
                 fotoUrl = result.secure_url;
+                console.log(`[DEBUG UPLOAD] Sucesso no Cloudinary: ${fotoUrl}`);
                 
                 const fs = require('fs').promises;
                 try { await fs.unlink(req.file.path); } catch (e) { console.warn("Erro ao deletar arquivo local:", e); }
             } else if (req.file.buffer) {
+                console.log(`[DEBUG UPLOAD] Iniciando envio para a nuvem via BUFFER de memória.`);
                 fotoUrl = await new Promise((resolve, reject) => {
                     cloudinary.uploader.upload_stream(
                         {
@@ -749,19 +757,23 @@ exports.updateAdminPhoto = async (req, res) => {
                         }
                     ).end(req.file.buffer);
                 });
+                console.log(`[DEBUG UPLOAD] Sucesso no Cloudinary: ${fotoUrl}`);
             } else {
                 throw new Error('Formato de arquivo não suportado');
             }
         } catch (uploadError) {
-            console.error('Erro no Cloudinary:', uploadError);
-            return res.status(500).json({ error: 'Erro ao enviar imagem para a nuvem.' });
+            console.error('❌ [DEBUG UPLOAD] Falha ao upar na nuvem:', uploadError);
+            return res.status(500).json({ error: `Falha no provedor de imagens (Cloudinary): ${uploadError.message}` });
         }
 
+        console.log(`[DEBUG UPLOAD] Checando existência do perfil de Admin no BD...`);
         const isModernAdmin = await db.Psychologist.findOne({ where: { id: userId, isAdmin: true } });
 
         if (isModernAdmin) {
+            console.log(`[DEBUG UPLOAD] Salvando foto na tabela Psychologists (Admin Moderno).`);
             await db.Psychologist.update({ fotoUrl }, { where: { id: userId } });
         } else {
+            console.log(`[DEBUG UPLOAD] Salvando foto na tabela Admins (Legado). Verificando coluna...`);
             try {
                 await db.sequelize.query('ALTER TABLE "Admins" ADD COLUMN IF NOT EXISTS "fotoUrl" VARCHAR(255);');
             } catch (colErr) {
@@ -772,10 +784,11 @@ exports.updateAdminPhoto = async (req, res) => {
                 replacements: { fotoUrl, id: userId }
             });
         }
+        console.log(`[DEBUG UPLOAD] Processo finalizado com sucesso!`);
         return res.status(200).json({ message: 'Foto atualizada!', fotoUrl });
     } catch (error) {
-        console.error('Erro ao atualizar foto do admin:', error);
-        return res.status(500).json({ error: `Erro interno ao processar a imagem: ${error.message}` });
+        console.error('❌ [DEBUG UPLOAD] Falha Fatal:', error);
+        return res.status(500).json({ error: `Erro fatal no servidor: ${error.message} - Veja o terminal do NodeJS.` });
     }
 };
 
