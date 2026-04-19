@@ -46,6 +46,12 @@
         .btn-app:hover { opacity: 0.9; transform: translateY(-2px); }
         .btn-primary { background-color: #1B4332; color: #fff; }
         .btn-secondary { background-color: #FFEE8C; color: #1B4332; }
+        
+        .editor-toolbar { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 5px; padding: 6px; background: #f9fafb; border: 1px solid #d1d5db; border-radius: 8px; }
+        .editor-btn { background: #ffffff; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; padding: 4px 8px; font-size: 13px; font-weight: bold; color: #374151; transition: background 0.2s; display: flex; align-items: center; justify-content: center; }
+        .editor-btn:hover { background: #e5e7eb; }
+        .editor-input { min-height: 120px; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; font-size: 14px; line-height: 1.5; outline: none; overflow-y: auto; font-family: inherit; }
+        .editor-input:focus { border-color: #1B4332; }
     </style>
 </head>
 <body>
@@ -75,13 +81,39 @@
 
             <div class="form-group">
                 <label>Mensagem Principal</label>
-                <textarea id="input-mensagem" rows="6">Olá! Este é um e-mail gerado automaticamente. Você pode preencher este campo com as boas-vindas, um link especial, ou instruções.</textarea>
+                <div class="editor-toolbar">
+                    <button type="button" class="editor-btn" onclick="document.execCommand('bold', false, null); updatePreview();" title="Negrito">B</button>
+                    <button type="button" class="editor-btn" onclick="document.execCommand('italic', false, null); updatePreview();" title="Itálico">I</button>
+                    <button type="button" class="editor-btn" onclick="document.execCommand('underline', false, null); updatePreview();" title="Sublinhado">U</button>
+                    <div style="width: 1px; background: #ccc; margin: 0 2px;"></div>
+                    <button type="button" class="editor-btn" onclick="document.execCommand('justifyLeft', false, null); updatePreview();" title="Alinhar à Esquerda">⬅</button>
+                    <button type="button" class="editor-btn" onclick="document.execCommand('justifyCenter', false, null); updatePreview();" title="Centralizar">➡⬅</button>
+                    <button type="button" class="editor-btn" onclick="document.execCommand('justifyRight', false, null); updatePreview();" title="Alinhar à Direita">➡</button>
+                    <div style="width: 1px; background: #ccc; margin: 0 2px;"></div>
+                    <button type="button" class="editor-btn" onclick="document.execCommand('insertUnorderedList', false, null); updatePreview();" title="Lista">• Lista</button>
+                </div>
+                <div id="input-mensagem" class="editor-input" contenteditable="true">Olá! Este é um e-mail gerado automaticamente. Você pode preencher este campo com as boas-vindas, um link especial, ou instruções.</div>
             </div>
 
-            <div class="form-group">
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
-                    <input type="checkbox" id="input-show-info" style="width: auto; cursor: pointer;">
-                    Mostrar Caixa Informativa (💡)
+            <div class="form-group" style="margin-top: 10px; background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                <label style="margin-bottom: 10px; font-size: 14px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px;">Visibilidade dos Elementos</label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; font-weight: normal; font-size: 13px;">
+                    <input type="checkbox" id="toggle-header" checked style="width: auto;" onchange="updatePreview()"> Mostrar Cabeçalho (Logo)
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; font-weight: normal; font-size: 13px;">
+                    <input type="checkbox" id="toggle-titulo" checked style="width: auto;" onchange="updatePreview()"> Mostrar Título
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; font-weight: normal; font-size: 13px;">
+                    <input type="checkbox" id="toggle-saudacao" checked style="width: auto;" onchange="updatePreview()"> Mostrar Saudação
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; font-weight: normal; font-size: 13px;">
+                    <input type="checkbox" id="toggle-cta" checked style="width: auto;" onchange="updatePreview()"> Mostrar Botão (CTA)
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; font-weight: normal; font-size: 13px;">
+                    <input type="checkbox" id="toggle-footer" checked style="width: auto;" onchange="updatePreview()"> Mostrar Rodapé
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; font-weight: normal; font-size: 13px; margin-top: 5px; padding-top: 10px; border-top: 1px solid #e5e7eb;">
+                    <input type="checkbox" id="input-show-info" style="width: auto;" onchange="updatePreview()"> Mostrar Caixa Informativa (💡)
                 </label>
             </div>
 
@@ -126,7 +158,7 @@
                             <table border="0" cellpadding="0" cellspacing="0" width="600" class="email-container" style="background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); border: 1px solid #e5e7eb;">
                                 
                                 <!-- HEADER (Logo Yelo) -->
-                                <tr>
+                                <tr id="preview-header">
                                     <td align="center" style="padding: 45px 0; background-color: #1B4332;">
                                         <a href="https://www.yelopsi.com.br" target="_blank">
                                             <!-- Fundo escuro (Verde Yelo) puxando a logo branca -->
@@ -145,14 +177,14 @@
                                         </h1>
 
                                         <!-- Saudação -->
-                                        <p style="margin: 0 0 20px 0;">
+                                        <p id="preview-saudacao" style="margin: 0 0 20px 0;">
                                             Olá, <strong id="preview-nome">Paciente</strong>!
                                         </p>
 
                                         <!-- Parágrafo de Mensagem -->
-                                        <p id="preview-mensagem" style="margin: 0 0 20px 0;">
+                                        <div id="preview-mensagem" style="margin: 0 0 20px 0; line-height: 1.6;">
                                             Olá! Este é um e-mail gerado automaticamente. Você pode preencher este campo com as boas-vindas, um link especial, ou instruções.
-                                        </p>
+                                        </div>
 
                                         <!-- Destaque / Caixa Informativa (Oculta por padrão no editor) -->
                                         <table id="preview-info-box" border="0" cellpadding="0" cellspacing="0" width="100%" style="display: none; margin: 35px 0; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px;">
@@ -165,7 +197,7 @@
                                         </table>
 
                                         <!-- BOTÃO CTA -->
-                                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px;">
+                                        <table id="preview-cta-container" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px;">
                                             <tr>
                                                 <td align="center">
                                                     <table border="0" cellpadding="0" cellspacing="0">
@@ -203,7 +235,7 @@
                                 </tr>
 
                                 <!-- FOOTER (Rodapé) -->
-                                <tr>
+                                <tr id="preview-footer">
                                     <td align="center" style="padding: 30px 40px 40px 40px; font-family: Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.5; color: #9ca3af; background-color: #ffffff;">
                                         
                                         <!-- REDES SOCIAIS -->
@@ -211,7 +243,22 @@
                                             <tr>
                                                 <td style="padding: 0 10px;">
                                                     <a href="https://instagram.com/yelopsi" target="_blank" style="text-decoration: none;">
-                                                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Instagram_logo_2016.svg/132px-Instagram_logo_2016.svg.png" width="24" height="24" style="display: block; filter: grayscale(100%) opacity(0.7);" alt="Instagram">
+                                                        <img src="https://img.icons8.com/ios-filled/50/1B4332/instagram-new.png" width="24" height="24" style="display: block; border: 0;" alt="Instagram">
+                                                    </a>
+                                                </td>
+                                                <td style="padding: 0 10px;">
+                                                    <a href="https://www.tiktok.com/@yelopsi" target="_blank" style="text-decoration: none;">
+                                                        <img src="https://img.icons8.com/ios-filled/50/1B4332/tiktok.png" width="24" height="24" style="display: block; border: 0;" alt="TikTok">
+                                                    </a>
+                                                </td>
+                                                <td style="padding: 0 10px;">
+                                                    <a href="https://linkedin.com/company/yelopsi" target="_blank" style="text-decoration: none;">
+                                                        <img src="https://img.icons8.com/ios-filled/50/1B4332/linkedin.png" width="24" height="24" style="display: block; border: 0;" alt="LinkedIn">
+                                                    </a>
+                                                </td>
+                                                <td style="padding: 0 10px;">
+                                                    <a href="https://open.spotify.com/playlist/1yAbHDCANAytRsd2qJRHiH?si=gFSLCMsAT2KopZkVdgNkxw&pi=SebJsvsYTwCEu" target="_blank" style="text-decoration: none;">
+                                                        <img src="https://img.icons8.com/ios-filled/50/1B4332/spotify.png" width="24" height="24" style="display: block; border: 0;" alt="Spotify">
                                                     </a>
                                                 </td>
                                             </tr>
@@ -250,7 +297,14 @@
             document.getElementById('preview-preheader').innerText = document.getElementById('input-preheader').value;
             document.getElementById('preview-titulo').innerText = document.getElementById('input-titulo').value;
             document.getElementById('preview-nome').innerText = document.getElementById('input-nome').value;
-            document.getElementById('preview-mensagem').innerHTML = document.getElementById('input-mensagem').value.replace(/\n/g, '<br>');
+            document.getElementById('preview-mensagem').innerHTML = document.getElementById('input-mensagem').innerHTML;
+            
+            // Toggles de Visibilidade
+            document.getElementById('preview-header').style.display = document.getElementById('toggle-header').checked ? 'table-row' : 'none';
+            document.getElementById('preview-titulo').style.display = document.getElementById('toggle-titulo').checked ? 'block' : 'none';
+            document.getElementById('preview-saudacao').style.display = document.getElementById('toggle-saudacao').checked ? 'block' : 'none';
+            document.getElementById('preview-cta-container').style.display = document.getElementById('toggle-cta').checked ? 'table' : 'none';
+            document.getElementById('preview-footer').style.display = document.getElementById('toggle-footer').checked ? 'table-row' : 'none';
             
             const showInfo = document.getElementById('input-show-info').checked;
             const infoBox = document.getElementById('preview-info-box');
@@ -278,6 +332,9 @@
             el.addEventListener('input', updatePreview);
             el.addEventListener('change', updatePreview);
         });
+        
+        // Ouve digitação na nova caixa de texto rica
+        document.getElementById('input-mensagem').addEventListener('input', updatePreview);
 
         // COPIA RICH TEXT: Permite colar perfeitamente direto no Outlook/Gmail
         function copiarRichText() {
