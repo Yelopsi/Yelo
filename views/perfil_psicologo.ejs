@@ -1238,6 +1238,13 @@
             const btnWhatsapp = document.getElementById('btn-agendar-whatsapp');
             if (btnWhatsapp) {
                 btnWhatsapp.addEventListener('click', () => {
+                    console.log('Botão WhatsApp clicado! Disparando conversão para o Ads...');
+                    
+                    // Disparo direto da conversão do Google Ads
+                    gtag('event', 'conversion', {
+                        'send_to': 'AW-11236864912/9EqNCMCjotEaEJDnk-4p'
+                    });
+
                     // 1. Extração mais segura do slug (evita erro com barra no final)
                     const pathParts = window.location.pathname.split('/').filter(p => p);
                     const slug = pathParts.length > 0 ? pathParts[pathParts.length - 1] : null;
@@ -1252,12 +1259,6 @@
                             // Log silencioso no console em caso de erro, não interfere com o usuário.
                             console.warn('Falha ao registrar clique no WhatsApp:', err);
                         });
-                    }
-                    // Removemos preventDefault() para o link abrir nativamente (melhor para mobile)
-                    
-                    // Disparo da conversão do Google Ads
-                    if (typeof gtag === 'function') {
-                        gtag('event', 'conversion', {'send_to': 'AW-11236864912/9EqNCMCjotEaEJDnk-4p'});
                     }
                 });
             }
