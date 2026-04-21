@@ -1235,33 +1235,17 @@
             });
 
             // Lógica de Rastreamento de KPI (Cliques no WhatsApp)
-            const btnWhatsapp = document.getElementById('btn-agendar-whatsapp');
-            if (btnWhatsapp) {
-                btnWhatsapp.addEventListener('click', () => {
-                    console.log('Botão WhatsApp clicado! Disparando conversão para o Ads...');
-                    
-                    // Disparo direto da conversão do Google Ads
-                    gtag('event', 'conversion', {
-                        'send_to': 'AW-11236864912/9EqNCMCjotEaEJDnk-4p'
-                    });
-
-                    // 1. Extração mais segura do slug (evita erro com barra no final)
-                    const pathParts = window.location.pathname.split('/').filter(p => p);
-                    const slug = pathParts.length > 0 ? pathParts[pathParts.length - 1] : null;
-                    
-                    if (slug && typeof API_BASE_URL !== 'undefined') {
-                        // 2. Usa keepalive: true para garantir o envio mesmo trocando de aba/app
-                        fetch(`${API_BASE_URL}/api/public/psychologists/${slug}/whatsapp-click`, { 
-                            method: 'POST',
-                            keepalive: true, // Mantém a requisição viva em background
-                            headers: { 'Content-Type': 'application/json' }
-                        }).catch(err => {
-                            // Log silencioso no console em caso de erro, não interfere com o usuário.
-                            console.warn('Falha ao registrar clique no WhatsApp:', err);
+            document.body.addEventListener('click', (e) => {
+                const btnWhatsapp = e.target.closest('#btn-agendar-whatsapp');
+                if (btnWhatsapp) {
+                    console.log('Botão WhatsApp clicado! Disparando conversão para o Ads via Delegação...');
+                    if (typeof gtag === 'function') {
+                        gtag('event', 'conversion', {
+                            'send_to': 'AW-11236864912/9EqNCMCjotEaEJDnk-4p'
                         });
                     }
-                });
-            }
+                }
+            });
 
             // Lógica para clicar nas estrelas e descer para avaliações
             const ratingDisplay = document.getElementById('hero-rating-display');
@@ -1295,7 +1279,7 @@
                 try {
                     const url = args[0] instanceof Request ? args[0].url : args[0];
                     // Fica escutando quando a API envia os dados do psicólogo para popular a página
-                    if (url.includes('/api/public/psychologists/')) {
+                    if (url.includes('/api/public/psychologists/') && !url.includes('whatsapp-click') && !url.includes('appearance')) {
                         response.clone().json().then(data => {
                             if (data && data.id) {
                                 const MAX_TRIAL_CLICKS = 3;
