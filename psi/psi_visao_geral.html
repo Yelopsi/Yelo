@@ -31,6 +31,21 @@
         <!-- COLUNA PRINCIPAL (ESQUERDA) -->
         <div class="dashboard-column-main">
             
+            <!-- BLOCO 0.5: LEMBRETE DE INTERAÇÃO (NOVO) -->
+            <div id="interaction-reminder-card" class="modern-checklist-card fade-in-up delay-1" style="display: none; margin-bottom: 24px; border-left: 4px solid #f59e0b; background: #fffbeb;">
+                <div class="checklist-header" style="margin-bottom: 15px;">
+                    <h3 class="checklist-title" style="color: #b45309; font-size: 1.2rem;">⚠️ Aumente sua visibilidade!</h3>
+                </div>
+                <p id="interaction-reminder-text" style="color: #92400e; font-size: 0.95rem; margin-bottom: 15px;">
+                    Faz <strong id="interaction-days-count">X dias</strong> que você não interage na comunidade.
+                    Faça um post ou comentário no fórum para aumentar as chances de aparecer no match.
+                </p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn-secondary-action" style="background: #fef3c7; border-color: #f59e0b; color: #b45309; padding: 10px 15px; width: auto;" onclick="window.loadPage('psi_forum.html')">Ir para o Fórum</button>
+                    <button class="btn-secondary-action" style="background: transparent; border-color: #fca5a5; color: #b91c1c; padding: 10px 15px; width: auto;" onclick="window.loadPage('psi_blog.html')">Escrever Artigo</button>
+                </div>
+            </div>
+
             <!-- BLOCO 1: O QUE FAZER AGORA (Checklist) -->
             <div class="modern-checklist-card fade-in-up delay-1">
                 <div class="checklist-header">
@@ -154,3 +169,105 @@
         
     </div>
 </div>
+
+<script>
+    (async function() {
+        try {
+            const token = localStorage.getItem('Yelo_token') || getCookie('token');
+            if (!token) return;
+
+            const response = await fetch('/api/psychologists/me/stats', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) return;
+            const stats = await response.json();
+
+            if (stats.lastInteractions) {
+                const dates = [
+                    stats.lastInteractions.blog ? new Date(stats.lastInteractions.blog) : null,
+                    stats.lastInteractions.forum ? new Date(stats.lastInteractions.forum) : null,
+                    stats.lastInteractions.comment ? new Date(stats.lastInteractions.comment) : null
+                ].filter(d => d !== null);
+
+                let lastInteractionDate = null;
+                if (dates.length > 0) {
+                    lastInteractionDate = new Date(Math.max.apply(null, dates));
+                }
+
+                const now = new Date();
+                const diffTime = lastInteractionDate ? Math.abs(now - lastInteractionDate) : null;
+                const diffDays = diffTime ? Math.floor(diffTime / (1000 * 60 * 60 * 24)) : null;
+
+                const reminderCard = document.getElementById('interaction-reminder-card');
+                const reminderText = document.getElementById('interaction-days-count');
+
+                // Mostra se nunca interagiu, ou se faz mais de 7 dias
+                if (diffDays === null || diffDays >= 7) {
+                    if (reminderCard) reminderCard.style.display = 'block';
+                    if (reminderText) {
+                        if (diffDays === null) {
+                            reminderText.parentElement.innerHTML = 'Você ainda não interagiu na comunidade. Faça um post no fórum ou escreva um artigo para aumentar suas chances de aparecer no match.';
+                        } else {
+                            reminderText.innerText = `${diffDays} dias`;
+                        }
+                    }
+                }
+
+                // Injeta dinamicamente a tarefa recorrente no checklist
+                const hasRecentForum = diffDays !== null && diffDays < 7;
+                
+                const injectTask = () => {
+                    const checklistContainer = document.querySelector('.modern-action-list');
+                    // Evita adicionar duas vezes ou enquanto o loader inicial estiver agindo
+                    if (checklistContainer && !checklistContainer.innerHTML.includes('Interação Semanal') && !checklistContainer.innerHTML.includes('Analisando seu perfil')) {
+                        const taskHTML = `
+                            <a href="#" onclick="window.loadPage('psi_forum.html'); return false;" class="modern-action-item ${hasRecentForum ? 'completed' : ''}" style="margin-top: 10px;">
+                                <div class="action-checkbox">${hasRecentForum ? '✓' : ''}</div>
+                                <div class="action-content">
+                                    <h4 class="action-title" style="margin: 0 0 4px 0; font-weight: 600; font-size: 1rem; ${hasRecentForum ? 'text-decoration: line-through; color: #888;' : 'color: #333;'}">Interação Semanal na Comunidade</h4>
+                                    <span class="action-impact" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; font-weight: 700; color: #059669; background: #d1fae5; padding: 2px 8px; border-radius: 6px;">🔥 Alto Impacto</span>
+                                    <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #666;">Aumenta seu ranqueamento no algoritmo de Match.</p>
+                                </div>
+                            </a>
+                        `;
+                        checklistContainer.insertAdjacentHTML('beforeend', taskHTML);
+                        
+                        // Atualiza a barra de progresso caso o item esteja completo ou a ser preenchido
+                        const progressText = document.querySelector('.checklist-progress-text');
+                        if (progressText) {
+                            const match = progressText.innerText.match(/(\d+)\/(\d+)/);
+                            if (match) {
+                                const current = hasRecentForum ? parseInt(match[1]) + 1 : parseInt(match[1]);
+                                const total = parseInt(match[2]) + 1;
+                                progressText.innerText = `${current}/${total}`;
+                                
+                                const fill = document.querySelector('.checklist-progress-fill');
+                                if (fill) fill.style.width = `${(current/total)*100}%`;
+                            }
+                        }
+                    }
+                };
+
+                // Tenta injetar periodicamente (Aguardando o script nativo carregar os passos iniciais)
+                const intervalId = setInterval(() => {
+                    const checklistContainer = document.querySelector('.modern-action-list');
+                    if (checklistContainer && !checklistContainer.innerHTML.includes('Analisando seu perfil')) {
+                        injectTask();
+                        clearInterval(intervalId);
+                    }
+                }, 1000);
+                
+                // Limpa o interval após 10 segundos caso algo dê errado
+                setTimeout(() => clearInterval(intervalId), 10000);
+            }
+        } catch (e) {
+            console.error("Erro ao processar lembrete de interação:", e);
+        }
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+    })();
+</script>

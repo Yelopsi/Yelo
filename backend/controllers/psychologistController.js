@@ -1944,6 +1944,25 @@ exports.getStats = async (req, res) => {
         `, { replacements: { myEngagement }, type: db.sequelize.QueryTypes.SELECT });
         const betterThanPercentage = Math.round(parseFloat(betterThanResult?.percentage || 0));
 
+        let lastPostDate = null, lastForumDate = null, lastCommentDate = null;
+        try {
+            const [postRes] = await db.sequelize.query(`SELECT MAX(COALESCE(created_at, "createdAt")) as last_date FROM posts WHERE psychologist_id = :psiId OR "psychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT });
+            lastPostDate = postRes?.last_date;
+        } catch(e) {
+            try {
+                const [postRes2] = await db.sequelize.query(`SELECT MAX("createdAt") as last_date FROM posts WHERE "psychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT });
+                lastPostDate = postRes2?.last_date;
+            } catch(e2) {}
+        }
+        try {
+            const [forumRes] = await db.sequelize.query(`SELECT MAX("createdAt") as last_date FROM "ForumPosts" WHERE "PsychologistId" = :psiId OR "psychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT });
+            lastForumDate = forumRes?.last_date;
+        } catch(e) {}
+        try {
+            const [commentRes] = await db.sequelize.query(`SELECT MAX("createdAt") as last_date FROM "ForumComments" WHERE "PsychologistId" = :psiId OR "psychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT });
+            lastCommentDate = commentRes?.last_date;
+        } catch(e) {}
+
         const stats = {
             whatsappClicks,
             profileViews,
@@ -1953,6 +1972,11 @@ exports.getStats = async (req, res) => {
             topDemands,
             betterThanPercentage,
             xpHistory: xpHistoryResult, // <--- NOVO: Envia para o frontend
+            lastInteractions: {
+                blog: lastPostDate,
+                forum: lastForumDate,
+                comment: lastCommentDate
+            },
             gamificationProgress: {
                 blogPostCount,
                 forumActivityCount: forumPostCount + forumCommentCount,
