@@ -98,7 +98,7 @@
             padding: 40px; /* Reduzi um pouco o padding para caber tudo */
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
         }
 
         /* TAG "MAIS RECENTE" (Blindada e Visível) */
@@ -158,6 +158,18 @@
             padding-top: 20px;
             margin-top: auto;
         }
+        .autor-click {
+            cursor: pointer;
+            position: relative;
+            z-index: 10;
+            transition: opacity 0.2s;
+        }
+        .autor-click:hover {
+            opacity: 0.8;
+        }
+        .autor-click:hover span {
+            text-decoration: underline;
+        }
         .autor-destaque img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
         .autor-destaque span { font-size: 0.9rem; font-weight: 600; color: #333; }
 
@@ -212,7 +224,7 @@
                     <h2><%= destaque.titulo %></h2>
                     <p><%= (destaque.conteudo || '').replace(/<[^>]*>/g, '').substring(0, 180) %>...</p>
                     
-                    <div class="autor-destaque">
+                    <div class="autor-destaque <%= destaque.autor && destaque.autor.slug ? 'autor-click' : '' %>" <%- destaque.autor && destaque.autor.slug ? `onclick="event.preventDefault(); window.location.href='/${destaque.autor.slug}';"` : '' %> <%- destaque.autor && destaque.autor.slug ? `title="Ver perfil de ${destaque.autor.nome}"` : '' %>>
                         <img src="<%= destaque.autor && destaque.autor.fotoUrl ? formatImageUrl(destaque.autor.fotoUrl) : 'https://placehold.co/40x40' %>" alt="Autor">
                         <span>Psi. <%= destaque.autor ? destaque.autor.nome.split(' ')[0] : 'Yelo' %></span>
                     </div>
@@ -237,7 +249,7 @@
                                     
                                     <div class="post-card-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 15px; border-top: 1px solid #eee;">
                                         
-                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                        <div class="<%= post.autor && post.autor.slug ? 'autor-click' : '' %>" style="display: flex; align-items: center; gap: 10px;" <%- post.autor && post.autor.slug ? `onclick="event.preventDefault(); window.location.href='/${post.autor.slug}';"` : '' %> <%- post.autor && post.autor.slug ? `title="Ver perfil de ${post.autor.nome}"` : '' %>>
                                             <img src="<%= post.autor && post.autor.fotoUrl ? formatImageUrl(post.autor.fotoUrl) : 'https://placehold.co/30x30' %>" alt="Autor" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;">
                                             <span style="font-size: 0.85rem; color: #555; font-weight: 600;">Psi. <%= post.autor ? post.autor.nome.split(' ')[0] : 'Yelo' %></span>
                                         </div>
