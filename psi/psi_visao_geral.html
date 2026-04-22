@@ -235,53 +235,6 @@
                         localStorage.setItem('Yelo_interaction_dismissed_at', Date.now().toString());
                     });
                 }
-
-                // Injeta dinamicamente a tarefa recorrente no checklist
-                const hasRecentForum = diffDays !== null && diffDays < 7;
-                
-                const injectTask = () => {
-                    const checklistContainer = document.querySelector('.modern-action-list');
-                    // Evita adicionar duas vezes ou enquanto o loader inicial estiver agindo
-                    if (checklistContainer && !checklistContainer.innerHTML.includes('Interação Semanal') && !checklistContainer.innerHTML.includes('Analisando seu perfil')) {
-                        const taskHTML = `
-                            <a href="#" onclick="window.loadPage('psi_forum.html'); return false;" class="modern-action-item ${hasRecentForum ? 'completed' : ''}" style="margin-top: 10px;">
-                                <div class="action-checkbox">${hasRecentForum ? '✓' : ''}</div>
-                                <div class="action-content">
-                                    <h4 class="action-title" style="margin: 0 0 4px 0; font-weight: 600; font-size: 1rem; ${hasRecentForum ? 'text-decoration: line-through; color: #888;' : 'color: #333;'}">Interação Semanal na Comunidade</h4>
-                                    <span class="action-impact" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; font-weight: 700; color: #059669; background: #d1fae5; padding: 2px 8px; border-radius: 6px;">🔥 Alto Impacto</span>
-                                    <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #666;">Aumenta seu ranqueamento no algoritmo de Match.</p>
-                                </div>
-                            </a>
-                        `;
-                        checklistContainer.insertAdjacentHTML('beforeend', taskHTML);
-                        
-                        // Atualiza a barra de progresso caso o item esteja completo ou a ser preenchido
-                        const progressText = document.querySelector('.checklist-progress-text');
-                        if (progressText) {
-                            const match = progressText.innerText.match(/(\d+)\/(\d+)/);
-                            if (match) {
-                                const current = hasRecentForum ? parseInt(match[1]) + 1 : parseInt(match[1]);
-                                const total = parseInt(match[2]) + 1;
-                                progressText.innerText = `${current}/${total}`;
-                                
-                                const fill = document.querySelector('.checklist-progress-fill');
-                                if (fill) fill.style.width = `${(current/total)*100}%`;
-                            }
-                        }
-                    }
-                };
-
-                // Tenta injetar periodicamente (Aguardando o script nativo carregar os passos iniciais)
-                const intervalId = setInterval(() => {
-                    const checklistContainer = document.querySelector('.modern-action-list');
-                    if (checklistContainer && !checklistContainer.innerHTML.includes('Analisando seu perfil')) {
-                        injectTask();
-                        clearInterval(intervalId);
-                    }
-                }, 1000);
-                
-                // Limpa o interval após 10 segundos caso algo dê errado
-                setTimeout(() => clearInterval(intervalId), 10000);
             }
         } catch (e) {
             console.error("Erro ao processar lembrete de interação:", e);
