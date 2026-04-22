@@ -440,6 +440,12 @@
 
 
     <script src="../config.js"></script>
+    <script>
+        // Força a página "Visão Geral" sempre que o Dashboard é recarregado (Acesso fresco ou F5)
+        const pageKeys = ['psi_current_page', 'activePage', 'lastPage', 'dashboardPage', 'yelo_psi_page', 'currentPage'];
+        pageKeys.forEach(k => localStorage.removeItem(k));
+        if (window.location.hash) window.location.hash = '';
+    </script>
     <script src="psi_dashboard.js"></script>
     
     <script>
