@@ -100,7 +100,11 @@ exports.registerPsychologist = async (req, res) => {
         if (existingUser) {
             // Retorna 409 (Conflict) para o frontend saber que deve redirecionar
             // FIX: Comparação case-insensitive para garantir que pegue duplicatas
-            if (existingUser.email.toLowerCase() === email.toLowerCase()) return res.status(409).json({ error: 'E-mail já cadastrado. Redirecionando para login...', redirect: true });
+            if (existingUser.email.toLowerCase() === email.toLowerCase()) {
+                // Se o usuário já existe, limpa ele da lista de espera caso ele tenha caído lá
+                try { if (db.WaitingList) await db.WaitingList.destroy({ where: { email: { [Op.iLike]: email } } }); } catch(e) {}
+                return res.status(409).json({ error: 'E-mail já cadastrado. Redirecionando para login...', redirect: true });
+            }
             if (crp && existingUser.crp === crp) return res.status(400).json({ error: 'CRP já cadastrado.' });
             if (cleanCpf && existingUser.cpf === cleanCpf) return res.status(400).json({ error: 'CPF já cadastrado.' });
         }
@@ -137,6 +141,14 @@ exports.registerPsychologist = async (req, res) => {
             utm_medium,
             utm_campaign
         });
+
+        // --- 6.1 LIMPEZA DA LISTA DE ESPERA ---
+        // Como o registro foi concluído com sucesso, removemos o e-mail da tabela de leads (espera)
+        try {
+            if (db.WaitingList) {
+                await db.WaitingList.destroy({ where: { email: { [Op.iLike]: email } } });
+            }
+        } catch (e) { console.warn("Falha ao remover lead da lista de espera:", e.message); }
 
         // --- 7. Token ---
         const token = generateToken(newPsychologist.id);
@@ -641,6 +653,12 @@ exports.addToWaitlist = async (req, res) => {
 
         if (!email) {
             return res.status(400).json({ error: 'O e-mail é obrigatório para entrar na lista de espera.' });
+        }
+
+        // Verifica se já é um Psicólogo cadastrado e ativo (Evita colocar quem já tem conta na lista)
+        const isRegistered = await db.Psychologist.findOne({ where: { email: { [Op.iLike]: email } } });
+        if (isRegistered) {
+            return res.status(200).json({ message: 'Usuário já registrado. Ignorando lista de espera.' });
         }
 
         let waitlistEntry = await db.WaitingList.findOne({ where: { email } });
