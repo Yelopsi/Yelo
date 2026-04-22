@@ -55,9 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
         checkButton.textContent = 'Verificando...';
         checkButton.disabled = true;
         await new Promise(resolve => setTimeout(resolve, 2000));
-        const hasVacancy = true; 
-        if (hasVacancy) { goToSlide('slide-vaga-disponivel'); } 
-        else { goToSlide('slide-lista-espera'); }
+        goToSlide('slide-vaga-disponivel');
     }
 
     document.querySelector('.questionario-container').addEventListener('click', (e) => {
