@@ -32,8 +32,9 @@
         <div class="dashboard-column-main">
             
             <!-- BLOCO 0.5: LEMBRETE DE INTERAÇÃO (NOVO) -->
-            <div id="interaction-reminder-card" class="modern-checklist-card fade-in-up delay-1" style="display: none; margin-bottom: 24px; border-left: 4px solid #f59e0b; background: #fffbeb;">
-                <div class="checklist-header" style="margin-bottom: 15px;">
+            <div id="interaction-reminder-card" class="modern-checklist-card fade-in-up delay-1" style="display: none; margin-bottom: 24px; border-left: 4px solid #f59e0b; background: #fffbeb; position: relative;">
+                <button id="btn-dismiss-interaction" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; cursor: pointer; font-size: 1.5rem; color: #b45309; opacity: 0.6; line-height: 1; padding: 0;" title="Ocultar por 7 dias">&times;</button>
+                <div class="checklist-header" style="margin-bottom: 15px; padding-right: 20px;">
                     <h3 class="checklist-title" style="color: #b45309; font-size: 1.2rem;">⚠️ Aumente sua visibilidade!</h3>
                 </div>
                 <p id="interaction-reminder-text" style="color: #92400e; font-size: 0.95rem; margin-bottom: 15px;">
@@ -200,9 +201,23 @@
 
                 const reminderCard = document.getElementById('interaction-reminder-card');
                 const reminderText = document.getElementById('interaction-days-count');
+                const btnDismiss = document.getElementById('btn-dismiss-interaction');
 
-                // Mostra se nunca interagiu, ou se faz mais de 7 dias
-                if (diffDays === null || diffDays >= 7) {
+                // Lógica de "Snooze" de 7 dias
+                const dismissedAt = localStorage.getItem('Yelo_interaction_dismissed_at');
+                let isSnoozed = false;
+                if (dismissedAt) {
+                    const daysSinceDismiss = Math.floor((now.getTime() - parseInt(dismissedAt)) / (1000 * 60 * 60 * 24));
+                    if (daysSinceDismiss < 7) {
+                        isSnoozed = true;
+                    } else {
+                        // Expirou o snooze, limpa
+                        localStorage.removeItem('Yelo_interaction_dismissed_at');
+                    }
+                }
+
+                // Mostra se nunca interagiu, ou se faz mais de 7 dias (E não estiver em "Snooze")
+                if ((diffDays === null || diffDays >= 7) && !isSnoozed) {
                     if (reminderCard) reminderCard.style.display = 'block';
                     if (reminderText) {
                         if (diffDays === null) {
@@ -211,6 +226,14 @@
                             reminderText.innerText = `${diffDays} dias`;
                         }
                     }
+                }
+
+                // Ação de Dispensar (Snooze por 7 dias)
+                if (btnDismiss && reminderCard) {
+                    btnDismiss.addEventListener('click', () => {
+                        reminderCard.style.display = 'none';
+                        localStorage.setItem('Yelo_interaction_dismissed_at', Date.now().toString());
+                    });
                 }
 
                 // Injeta dinamicamente a tarefa recorrente no checklist
