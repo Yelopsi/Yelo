@@ -967,6 +967,17 @@ app.get('/api/fix-add-is-exempt-column', async (req, res) => {
     }
 });
 
+// Rota para criar a coluna fotoUrl (EMERGÊNCIA)
+app.get('/api/fix-add-foto-url', async (req, res) => {
+    try {
+        await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "fotoUrl" VARCHAR(500);');
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "fotoUrl" VARCHAR(500);');
+        res.send("✅ Sucesso! Coluna 'fotoUrl' criada no banco de dados para Psicólogos e Pacientes.");
+    } catch (error) {
+        res.status(500).send("❌ Erro ao criar coluna: " + error.message);
+    }
+});
+
 // Rota para criar a coluna STATUS na tabela Conversations (CORREÇÃO DO CHAT)
 app.get('/api/fix-add-conversation-status', async (req, res) => {
     try {
@@ -3339,6 +3350,7 @@ const startServer = async () => {
             const schemaQueries = [
             // 1. Psychologists Table - ATUALIZAÇÃO MACIÇA AGRUPADA (Reduz de 30 queries para 1)
             `ALTER TABLE "Psychologists" 
+                ADD COLUMN IF NOT EXISTS "fotoUrl" VARCHAR(500),
                 ADD COLUMN IF NOT EXISTS "linkedin_url" VARCHAR(500),
                 ADD COLUMN IF NOT EXISTS "instagram_url" VARCHAR(500),
                 ADD COLUMN IF NOT EXISTS "facebook_url" VARCHAR(500),
@@ -3388,6 +3400,7 @@ const startServer = async () => {
 
             // 2. Patients Table - Grouped
             `ALTER TABLE "Patients" 
+                ADD COLUMN IF NOT EXISTS "fotoUrl" VARCHAR(500),
                 ADD COLUMN IF NOT EXISTS "faixa_etaria" VARCHAR(255),
                 ADD COLUMN IF NOT EXISTS "idade" VARCHAR(255),
                 ADD COLUMN IF NOT EXISTS "genero_profissional" VARCHAR(255),
@@ -3505,6 +3518,10 @@ const startServer = async () => {
         const queryInterface = db.sequelize.getQueryInterface();
         const patientAttributes = await queryInterface.describeTable('Patients');
 
+            if (!patientAttributes.fotoUrl) {
+                await queryInterface.addColumn('Patients', 'fotoUrl', { type: DataTypes.STRING(500) });
+                console.log("[FIX] Coluna fotoUrl adicionada em Patients.");
+            }
         if (!patientAttributes.observacoes) {
             await queryInterface.addColumn('Patients', 'observacoes', { type: DataTypes.TEXT });
         }
@@ -3514,6 +3531,11 @@ const startServer = async () => {
         if (!patientAttributes.recebe_mensagens) {
             await queryInterface.addColumn('Patients', 'recebe_mensagens', { type: DataTypes.BOOLEAN, defaultValue: true });
         }
+        const psyAttributes = await queryInterface.describeTable('Psychologists');
+            if (!psyAttributes.fotoUrl) {
+                await queryInterface.addColumn('Psychologists', 'fotoUrl', { type: DataTypes.STRING(500) });
+                console.log("[FIX] Coluna fotoUrl adicionada em Psychologists.");
+            }
         // Adicione outras colunas do 'colsToAdd' aqui se necessário no futuro
         // --------------------------------------------------------------------------------
 
