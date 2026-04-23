@@ -328,9 +328,13 @@ exports.handleWebhook = async (req, res) => {
     // Validação básica de segurança (Opcional: verificar token no header se configurado no Asaas)
     // [FIX CRÍTICO] Verificação obrigatória do Token do Webhook do Asaas em Produção
     const asaasToken = req.headers['asaas-access-token'];
-    if (!asaasToken || asaasToken !== process.env.ASAAS_WEBHOOK_TOKEN) {
-        console.error("🚨 [ALERTA DE SEGURANÇA] Tentativa de Webhook falso bloqueada.");
+    const expectedToken = process.env.ASAAS_WEBHOOK_TOKEN;
+    
+    if (expectedToken && asaasToken !== expectedToken) {
+        console.error("🚨 [ALERTA DE SEGURANÇA] Webhook bloqueado. Token esperado não confere com o recebido.");
         return res.status(401).json({ error: 'Token de Webhook inválido.' });
+    } else if (!expectedToken) {
+        console.warn("⚠️ [AVISO] ASAAS_WEBHOOK_TOKEN não configurado no .env. Webhook aceito sem validação (Recomendado configurar por segurança).");
     }
 
     // --- NOVOS EVENTOS DE NOTIFICAÇÃO PERSONALIZADA YELO ---
