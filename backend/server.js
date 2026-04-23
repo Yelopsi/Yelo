@@ -2551,9 +2551,14 @@ app.put('/api/admin/messages/conversation/:id/status', async (req, res) => {
 // --- ROTA DE EXCLUSÃO DE PSICÓLOGO (ADMIN) ---
 app.delete('/api/admin/psychologists/:id', async (req, res) => {
     try {
-        // Verificação básica de token (Admin)
-        const token = req.headers.authorization?.split(' ')[1];
+        // Verificação básica de token (Admin) com suporte a Cookie
+        let token = req.headers.authorization?.split(' ')[1];
+        if (!token || token === 'null' || token === 'undefined' || token === 'cookie_auth_active') {
+            token = req.cookies?.token;
+        }
+        
         if (!token) return res.status(401).json({ error: 'Não autorizado' });
+        
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         if (decoded.role !== 'admin' && decoded.type !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
 
@@ -2625,8 +2630,12 @@ app.post('/api/admin/push/subscribe', async (req, res) => {
 
 // --- ROTAS DE CONFIGURAÇÕES DO SISTEMA ---
 const checkAdminToken = (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1];
+    let token = req.headers.authorization?.split(' ')[1];
+    if (!token || token === 'null' || token === 'undefined' || token === 'cookie_auth_active') {
+        token = req.cookies?.token;
+    }
     if (!token) return res.status(401).json({ error: 'Não autorizado' });
+    
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         if (decoded.role !== 'admin' && decoded.type !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
