@@ -770,6 +770,37 @@ app.get('/api/run-invite-all-waitlist', async (req, res) => {
     } catch (error) { res.status(500).send("Erro: " + error.message); }
 });
 
+// --- ROTA DE CORREÇÃO: VER QUEM FOI CONVIDADO MAS O E-MAIL FALHOU E RESETAR ---
+app.get('/api/fix-reset-failed-invites', async (req, res) => {
+    try {
+        const failedInvites = await db.WaitingList.findAll({ where: { status: 'invited' } });
+        
+        if (failedInvites.length === 0) {
+            return res.send("<div style='font-family: sans-serif; padding: 20px;'><h2>Tudo limpo!</h2><p>Não há ninguém com status 'invited' precisando de reenvio.</p></div>");
+        }
+
+        const details = failedInvites.map(u => `<li>${u.nome || 'Sem Nome'} - <b>${u.email}</b></li>`).join('');
+
+        // Reseta eles para 'pending'
+        await db.WaitingList.update(
+            { status: 'pending' },
+            { where: { status: 'invited' } }
+        );
+
+        res.send(`
+            <div style="font-family: sans-serif; padding: 20px; line-height: 1.6;">
+                <h2 style="color:#1B4332;">✅ Sucesso! ${failedInvites.length} psicólogos foram resetados.</h2>
+                <p>Eles estavam marcados como "Convidados" no banco de dados, mas o e-mail de convite havia falhado por conta daquele erro antigo de senha. Agora eles voltaram para o status <b>Pendente</b>.</p>
+                <h3>Quem são eles?</h3>
+                <ul>${details}</ul>
+                <br>
+                <p>Como a senha do e-mail já foi corrigida, você pode clicar no botão abaixo para disparar os e-mails novamente (agora com sucesso):</p>
+                <a href="/api/run-invite-all-waitlist" style="display:inline-block; padding:12px 24px; background:#1B4332; color:#fff; text-decoration:none; border-radius:5px; font-weight: bold; margin-top: 10px;">Reenviar Convites Agora</a>
+            </div>
+        `);
+    } catch (error) { res.status(500).send("Erro: " + error.message); }
+});
+
 // --- ROTA DE AUDITORIA: BLOQUEIA PERFIS QUE BURLARAM O PAGAMENTO ---
 app.get('/api/run-inadimplentes', async (req, res) => {
     try {
