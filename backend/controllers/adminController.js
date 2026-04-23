@@ -253,16 +253,18 @@ exports.getPsychologistFullDetails = async (req, res) => {
             order: [['createdAt', 'DESC']]
         });
 
+        const numericId = parseInt(id, 10);
+
         // 5. Matches (Tabela MatchEvents - Raw Query para robustez)
         const [matches] = await db.sequelize.query(
                 `SELECT * FROM "MatchEvents" WHERE "psychologistId" = :id OR "PsychologistId" = :id ORDER BY "createdAt" DESC`,
-            { replacements: { id } }
+            { replacements: { id: numericId } }
         ).catch(() => [[], null]);
 
         // 6. Stats (Whatsapp Clicks - Raw Query)
         const [whatsappStats] = await db.sequelize.query(
                 `SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "psychologistId" = :id OR "PsychologistId" = :id`,
-            { replacements: { id } }
+            { replacements: { id: numericId } }
         ).catch(() => [[{ count: 0 }]]);
 
         res.json({
