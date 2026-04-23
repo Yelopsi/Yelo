@@ -104,7 +104,11 @@ exports.createPreference = async (req, res) => {
         }
         
         // Verifica se a resposta JSON contém erros lógicos da API
-        if (customerSearch.errors) throw new Error(customerSearch.errors[0].description);
+        if (customerSearch.errors) {
+            const err = new Error(customerSearch.errors[0].description);
+            err.asaasErrors = customerSearch.errors;
+            throw err;
+        }
 
         if (customerSearch.data && customerSearch.data.length > 0) {
             customerIdAsaas = customerSearch.data[0].id;
@@ -136,7 +140,11 @@ exports.createPreference = async (req, res) => {
                 })
             }).then(r => r.json());
 
-            if (newCustomer.errors) throw new Error(newCustomer.errors[0].description);
+            if (newCustomer.errors) {
+                const err = new Error(newCustomer.errors[0].description);
+                err.asaasErrors = newCustomer.errors;
+                throw err;
+            }
             customerIdAsaas = newCustomer.id;
         }
 
@@ -193,7 +201,11 @@ exports.createPreference = async (req, res) => {
                 try { subscriptionData = JSON.parse(subResponseText); } catch(e) { throw new Error("Erro Asaas Fallback: " + subResponseText); }
             }
             
-            if (subscriptionData.errors) throw new Error(subscriptionData.errors[0].description);
+            if (subscriptionData.errors) {
+                const err = new Error(subscriptionData.errors[0].description);
+                err.asaasErrors = subscriptionData.errors;
+                throw err;
+            }
             
             // Busca a primeira cobrança para pegar o QR Code
             const paymentsRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subscriptionData.id}/payments`, {
@@ -281,7 +293,9 @@ exports.createPreference = async (req, res) => {
         }
 
         if (subscriptionData.errors) {
-            throw new Error(subscriptionData.errors[0].description);
+            const err = new Error(subscriptionData.errors[0].description);
+            err.asaasErrors = subscriptionData.errors;
+            throw err;
         }
 
         if (isTrial) {
@@ -309,9 +323,19 @@ exports.createPreference = async (req, res) => {
         // GRAVA O ERRO NO SISTEMA PARA O DASHBOARD VER
         try {
             if (db.SystemLog) {
+                let logMessage = `Erro ao criar pagamento Asaas: ${error.message}`;
+                let logMeta = null;
+
+                if (error.asaasErrors && error.asaasErrors.length > 0) {
+                    const firstErr = error.asaasErrors[0];
+                    logMessage = `[Asaas] Falha no Pagamento (${firstErr.code || 'unknown'}): ${firstErr.description || error.message}`;
+                    logMeta = { asaasResponse: error.asaasErrors };
+                }
+
                 await db.SystemLog.create({
                     level: 'error',
-                    message: `Erro ao criar pagamento Asaas: ${error.message}`
+                    message: logMessage,
+                    meta: logMeta
                 });
             }
         } catch (logErr) { console.error("Falha ao gravar log:", logErr.message); }
