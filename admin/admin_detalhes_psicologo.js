@@ -71,6 +71,24 @@ function renderDetails(data) {
     planEl.textContent = p.plano || 'Sem Plano';
     if(p.is_exempt) planEl.textContent += ' (VIP)';
 
+    // Vencimento da Assinatura
+    const vencimentoEl = document.getElementById('detail-vencimento');
+    if (vencimentoEl) {
+        if (p.is_exempt) {
+            vencimentoEl.innerHTML = '<span class="status-badge" style="background:#FFD700; color:#000;">Isento (VIP)</span>';
+        } else if (p.planExpiresAt) {
+            const vencimento = new Date(p.planExpiresAt);
+            const dataFormatada = vencimento.toLocaleDateString('pt-BR');
+            if (vencimento < new Date()) {
+                vencimentoEl.innerHTML = `<span style="color:#d32f2f; font-weight:bold;">${dataFormatada} (Vencida)</span>`;
+            } else {
+                vencimentoEl.textContent = dataFormatada;
+            }
+        } else {
+            vencimentoEl.textContent = 'Sem assinatura';
+        }
+    }
+
     // Botão de Ver Perfil Público
     const btnVerPerfil = document.getElementById('btn-ver-perfil-publico');
     if (btnVerPerfil) {
@@ -86,7 +104,7 @@ function renderDetails(data) {
     document.getElementById('stat-matches').textContent = stats.matches || 0;
     document.getElementById('stat-whatsapp').textContent = stats.whatsappClicks || 0;
     document.getElementById('stat-blog').textContent = data.blogPosts?.length || 0;
-    document.getElementById('stat-forum').textContent = (data.forumPosts?.length || 0) + (data.forumComments?.length || 0);
+    document.getElementById('stat-forum').textContent = stats.forumActivities || ((data.forumPosts?.length || 0) + (data.forumComments?.length || 0));
 
     // 3. Timeline (Juntando tudo e ordenando)
     renderTimeline(data);
