@@ -255,16 +255,19 @@ exports.getPsychologistFullDetails = async (req, res) => {
 
         const numericId = parseInt(id, 10);
 
-        // 5. Matches (Try/Catch simulando o psychologistController)
-        const matches = await db.sequelize.query(
-            `SELECT * FROM "MatchEvents" WHERE "psychologistId" = :id ORDER BY "createdAt" DESC`,
+        // 5. Matches (Sem ORDER BY no SQL para evitar erro se a coluna for created_at)
+        let matches = await db.sequelize.query(
+            `SELECT * FROM "MatchEvents" WHERE "psychologistId" = :id`,
             { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => 
             db.sequelize.query(
-                `SELECT * FROM "MatchEvents" WHERE "PsychologistId" = :id ORDER BY "createdAt" DESC`,
+                `SELECT * FROM "MatchEvents" WHERE "PsychologistId" = :id`,
                 { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
             )
         ).catch(() => []);
+
+        // Ordenação garantida via JS
+        matches.sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0));
 
         // 6. Stats (Whatsapp Clicks - Try/Catch simulando o psychologistController)
         const whatsappStats = await db.sequelize.query(
@@ -288,7 +291,7 @@ exports.getPsychologistFullDetails = async (req, res) => {
             forumPosts,
             forumComments: forumComments.map(c => c.toJSON ? { ...c.toJSON(), postTitle: c.ForumPost?.titulo } : c),
             reviews,
-            matches: matches || []
+            matches: matches.map(m => ({ ...m, createdAt: m.createdAt || m.created_at })) || []
         });
 
     } catch (error) {
