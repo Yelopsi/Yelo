@@ -2975,3 +2975,37 @@ input:checked + .slider:before { transform: translateX(22px); }
         gap: 8px !important; /* Mantém o gap compacto para evitar rolagem na versão desktop */
     }
 }
+
+/* ==========================================================================
+   AJUSTE DE TABELA DESKTOP (admin_gerenciar_psicologos)
+   Reduz tamanho do texto e paddings para evitar rolagem horizontal
+   ========================================================================== */
+@media (min-width: 1025px) {
+    .tabela-gerenciamento th, 
+    .tabela-gerenciamento td {
+        padding: 10px 8px !important; /* Reduz os espaços laterais e verticais */
+        font-size: 13px !important;   /* Tamanho de fonte reduzido para o conteúdo */
+    }
+    
+    .tabela-gerenciamento th {
+        font-size: 12px !important;   /* Cabeçalho levemente menor */
+    }
+
+    .tabela-gerenciamento .status {
+        padding: 4px 8px !important;
+        font-size: 11px !important;   /* Reduz pílulas de status */
+    }
+
+    .tabela-gerenciamento .btn-tabela {
+        padding: 6px 8px !important;
+        font-size: 12px !important;   /* Reduz botões de ações */
+    }
+    
+    /* Garante que e-mails muito longos não estiquem a tabela */
+    .tabela-gerenciamento td:nth-child(2) {
+        max-width: 180px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
