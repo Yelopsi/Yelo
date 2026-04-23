@@ -148,7 +148,7 @@ function renderTimeline(data) {
                 break;
             case 'forum_post':
                 icon = '💬'; title = 'Criou Tópico no Fórum'; 
-                desc = e.data.titulo; colorClass = 'evt-forum';
+                desc = e.data.title || 'Sem título'; colorClass = 'evt-forum';
                 break;
             case 'forum_comment':
                 icon = '↩️'; title = 'Respondeu no Fórum'; 
@@ -156,11 +156,16 @@ function renderTimeline(data) {
                 break;
             case 'review':
                 icon = '⭐'; title = 'Recebeu Avaliação'; 
-                desc = `Nota: ${e.data.nota}`; colorClass = 'evt-review';
+                desc = `Nota: ${e.data.rating || e.data.nota}`; colorClass = 'evt-review';
                 break;
             case 'match':
                 icon = '🎯'; title = 'Apareceu em Busca (Match)'; 
-                desc = `Tags: ${e.data.tags || 'N/A'}`; colorClass = 'evt-match';
+                let tags = 'N/A';
+                if (e.data.matchTags) {
+                    if (Array.isArray(e.data.matchTags)) tags = e.data.matchTags.join(', ');
+                    else if (typeof e.data.matchTags === 'string') tags = e.data.matchTags;
+                }
+                desc = `Tags: ${tags}`; colorClass = 'evt-match';
                 break;
         }
 
@@ -194,22 +199,28 @@ function renderBlogItem(post) {
 }
 
 function renderForumItem(item) {
-    const isPost = !!item.titulo;
+    const isPost = item.hasOwnProperty('title');
+    const titulo = item.title || item.postTitle || 'Fórum';
+    const conteudo = item.content || item.texto || '';
+    const resumo = conteudo.length > 100 ? conteudo.substring(0, 100) + '...' : conteudo;
     return `
         <div class="content-card">
-            <h4>${isPost ? 'Tópico: ' + item.titulo : 'Comentário'}</h4>
-            <p>${isPost ? item.conteudo.substring(0, 100) + '...' : item.texto}</p>
+            <h4>${isPost ? 'Tópico: ' + titulo : 'Comentário em: ' + titulo}</h4>
+            <p>${resumo}</p>
             <small>${new Date(item.createdAt).toLocaleDateString()}</small>
         </div>
     `;
 }
 
 function renderReviewItem(review) {
+    const nota = review.rating || review.nota || 0;
+    const comentario = review.comment || review.comentario || 'Sem comentário';
+    const autor = review.patient?.nome || review.autor || 'Anônimo';
     return `
         <div class="content-card">
-            <div class="review-stars">${'★'.repeat(review.nota)}${'☆'.repeat(5-review.nota)}</div>
-            <p>"${review.comentario || 'Sem comentário'}"</p>
-            <small>Por: ${review.autor || 'Anônimo'} em ${new Date(review.createdAt).toLocaleDateString()}</small>
+            <div class="review-stars">${'★'.repeat(nota)}${'☆'.repeat(5-nota)}</div>
+            <p>"${comentario}"</p>
+            <small>Por: ${autor} em ${new Date(review.createdAt).toLocaleDateString()}</small>
         </div>
     `;
 }
