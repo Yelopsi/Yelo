@@ -675,9 +675,9 @@ app.get('/api/admin/stats/pwa', async (req, res) => {
  // COMENTE TUDO ISTO AQUI PARA NINGUÉM ACESSAR:
 
 // Bloqueio global para as rotas de correção em produção
-// if (process.env.NODE_ENV === 'production') {
-//     app.use([/^\/api\/fix-.*/, /^\/fix-.*/], (req, res) => res.status(403).json({ error: 'Rotas de manutenção desativadas em produção.' }));
-// }
+if (process.env.NODE_ENV === 'production') {
+    app.use([/^\/api\/fix-.*/, /^\/fix-.*/], (req, res) => res.status(403).json({ error: 'Rotas de manutenção desativadas em produção.' }));
+}
 
 app.get('/api/fix-activate-psis', async (req, res) => { /* ... */ });
 
@@ -768,6 +768,17 @@ app.get('/api/run-invite-all-waitlist', async (req, res) => {
         }
         res.send(`<h2>✅ Sucesso!</h2><p>${sentCount} psicólogos foram convidados e a lista de espera foi esvaziada.</p>`);
     } catch (error) { res.status(500).send("Erro: " + error.message); }
+});
+
+// --- ROTA DE CORREÇÃO: LIMPAR TODA A LISTA DE ESPERA ---
+app.get('/api/run-clear-waitlist', async (req, res) => {
+    try {
+        const count = await db.WaitingList.count();
+        await db.WaitingList.destroy({ where: {} });
+        res.send(`<div style="font-family: sans-serif; padding: 20px;"><h2>✅ Sucesso!</h2><p>A lista de espera foi completamente esvaziada. <b>${count}</b> registros foram removidos do banco de dados.</p></div>`);
+    } catch (error) { 
+        res.status(500).send("Erro ao limpar a lista: " + error.message); 
+    }
 });
 
 // --- ROTA DE CORREÇÃO: VER QUEM FOI CONVIDADO MAS O E-MAIL FALHOU E RESETAR ---
