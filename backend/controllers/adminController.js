@@ -255,17 +255,27 @@ exports.getPsychologistFullDetails = async (req, res) => {
 
         const numericId = parseInt(id, 10);
 
-        // 5. Matches (Tabela MatchEvents - Raw Query para robustez)
-        const [matches] = await db.sequelize.query(
-                `SELECT * FROM "MatchEvents" WHERE "psychologistId" = :id OR "PsychologistId" = :id ORDER BY "createdAt" DESC`,
-            { replacements: { id: numericId } }
-        ).catch(() => [[], null]);
+        // 5. Matches (Try/Catch simulando o psychologistController)
+        const matches = await db.sequelize.query(
+            `SELECT * FROM "MatchEvents" WHERE "psychologistId" = :id ORDER BY "createdAt" DESC`,
+            { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => 
+            db.sequelize.query(
+                `SELECT * FROM "MatchEvents" WHERE "PsychologistId" = :id ORDER BY "createdAt" DESC`,
+                { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+            )
+        ).catch(() => []);
 
-        // 6. Stats (Whatsapp Clicks - Raw Query)
-        const [whatsappStats] = await db.sequelize.query(
-                `SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "psychologistId" = :id OR "PsychologistId" = :id`,
-            { replacements: { id: numericId } }
-        ).catch(() => [[{ count: 0 }]]);
+        // 6. Stats (Whatsapp Clicks - Try/Catch simulando o psychologistController)
+        const whatsappStats = await db.sequelize.query(
+            `SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "psychologistId" = :id`,
+            { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => 
+            db.sequelize.query(
+                `SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "PsychologistId" = :id`,
+                { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+            )
+        ).catch(() => [{ count: 0 }]);
 
         res.json({
             psychologist,
