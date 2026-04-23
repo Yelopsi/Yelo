@@ -2558,7 +2558,34 @@ app.delete('/api/admin/psychologists/:id', async (req, res) => {
         if (decoded.role !== 'admin' && decoded.type !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
 
         const { id } = req.params;
-        const deleted = await db.Psychologist.destroy({ where: { id } });
+        const ids = [id];
+
+        // 1. Apaga os registros dependentes em massa (limpa rastros) para não quebrar a chave estrangeira
+        const tabelasComPsychologistId = [
+            '"GamificationLogs"', '"WhatsappClickLogs"', '"ProfileAppearanceLogs"',
+            '"MatchEvents"', '"Appointments"', '"Expenses"', '"ExitSurveys"',
+            '"Reviews"', '"Conversations"', '"Answers"', '"QuestionIgnores"'
+        ];
+        for (const tabela of tabelasComPsychologistId) {
+            try { await db.sequelize.query(`DELETE FROM ${tabela} WHERE "psychologistId" IN (:ids)`, { replacements: { ids } }); } catch(e) { }
+        }
+
+        // Tabelas com nome de coluna em Maiúsculo
+        const tabelasComPsychologistIdMaiusculo = [
+            '"ForumVotes"', '"ForumCommentVotes"', '"ForumComments"', '"ForumPosts"'
+        ];
+        for (const tabela of tabelasComPsychologistIdMaiusculo) {
+            try { await db.sequelize.query(`DELETE FROM ${tabela} WHERE "PsychologistId" IN (:ids)`, { replacements: { ids } }); } catch(e) { }
+        }
+
+        // Casos com nomenclaturas específicas
+        try { await db.sequelize.query(`DELETE FROM posts WHERE psychologist_id IN (:ids)`, { replacements: { ids } }); } catch(e) {}
+        try { await db.sequelize.query(`DELETE FROM "ForumReports" WHERE "reporterId" IN (:ids)`, { replacements: { ids } }); } catch(e) {}
+        try { await db.sequelize.query(`DELETE FROM "Messages" WHERE "senderId" IN (:ids) AND "senderType" = 'psychologist'`, { replacements: { ids } }); } catch(e) {}
+        try { await db.sequelize.query(`DELETE FROM "Messages" WHERE "recipientId" IN (:ids) AND "recipientType" = 'psychologist'`, { replacements: { ids } }); } catch(e) {}
+
+        // 2. Exclui o psicólogo (forçando hard delete se necessário)
+        const deleted = await db.Psychologist.destroy({ where: { id }, force: true });
 
         if (!deleted) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
         res.json({ message: 'Psicólogo excluído com sucesso.' });
