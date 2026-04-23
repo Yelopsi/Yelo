@@ -255,13 +255,13 @@ exports.getPsychologistFullDetails = async (req, res) => {
 
         // 5. Matches (Tabela MatchEvents - Raw Query para robustez)
         const [matches] = await db.sequelize.query(
-            `SELECT * FROM "MatchEvents" WHERE "psychologistId" = :id ORDER BY "createdAt" DESC`,
+                `SELECT * FROM "MatchEvents" WHERE "psychologistId" = :id OR "PsychologistId" = :id ORDER BY "createdAt" DESC`,
             { replacements: { id } }
         ).catch(() => [[], null]);
 
         // 6. Stats (Whatsapp Clicks - Raw Query)
         const [whatsappStats] = await db.sequelize.query(
-            `SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "psychologistId" = :id`,
+                `SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "psychologistId" = :id OR "PsychologistId" = :id`,
             { replacements: { id } }
         ).catch(() => [[{ count: 0 }]]);
 
@@ -269,7 +269,8 @@ exports.getPsychologistFullDetails = async (req, res) => {
             psychologist,
             stats: {
                 matches: matches ? matches.length : 0,
-                whatsappClicks: whatsappStats[0] ? parseInt(whatsappStats[0].count) : 0
+                    whatsappClicks: whatsappStats[0] ? parseInt(whatsappStats[0].count) : 0,
+                    forumActivities: forumPosts.length + forumComments.length
             },
             blogPosts,
             forumPosts,
