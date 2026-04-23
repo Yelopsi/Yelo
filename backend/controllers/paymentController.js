@@ -165,6 +165,45 @@ exports.createPreference = async (req, res) => {
             console.log(`[ASAAS] Nova Assinatura: Trial de 14 dias. Primeira cobrança em ${nextDueDate}`);
         }
 
+        // --- LÓGICA INTELIGENTE DE ATUALIZAÇÃO OU CRIAÇÃO ---
+        let existingSubId = psychologist.stripeSubscriptionId || psychologist.subscriptionId;
+
+        const saveAsaasSubscription = async (payload) => {
+            payload.updatePendingPayments = true; // Garante que faturas em aberto adotem o novo valor/forma de pagamento
+            
+            if (existingSubId) {
+                let res = await fetch(`${ASAAS_API_URL}/subscriptions/${existingSubId}`, {
+                    method: 'POST', // O Asaas usa POST para atualizar assinaturas
+                    headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                    body: JSON.stringify(payload)
+                });
+                let text = await res.text();
+                let data;
+                try { data = JSON.parse(text); } catch(e) { throw new Error(`Erro Asaas Update Parse: ${text}`); }
+                
+                // Se a assinatura não pode ser atualizada (foi removida, está inativa ou não encontrada)
+                if (res.status === 404 || (res.status === 400 && data.errors && data.errors.some(e => e.code === 'invalid_action' || e.code === 'deleted'))) {
+                    console.log(`[ASAAS] Assinatura antiga (${existingSubId}) inválida para update. Criando nova...`);
+                    existingSubId = null; // Reseta o ID para forçar a criação abaixo
+                } else {
+                    return { res, data };
+                }
+            }
+
+            // Se não existia ou falhou o update, cria uma nova
+            if (!existingSubId) {
+                let res = await fetch(`${ASAAS_API_URL}/subscriptions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                    body: JSON.stringify(payload)
+                });
+                let text = await res.text();
+                let data;
+                try { data = JSON.parse(text); } catch(e) { throw new Error(`Erro Asaas Create Parse: ${text}`); }
+                return { res, data };
+            }
+        };
+
         // --- FLUXO PIX ---
         if (billingType === 'PIX') {
             const subscriptionPayload = {
@@ -177,28 +216,16 @@ exports.createPreference = async (req, res) => {
                 externalReference: String(psychologistId),
             };
             
-            let subscriptionRes = await fetch(`${ASAAS_API_URL}/subscriptions`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
-                body: JSON.stringify(subscriptionPayload)
-            });
-            
-            let subResponseText = await subscriptionRes.text();
-            let subscriptionData;
-            try { subscriptionData = JSON.parse(subResponseText); } catch(e) { throw new Error("Erro Asaas PIX: " + subResponseText); }
+            let { res: subscriptionRes, data: subscriptionData } = await saveAsaasSubscription(subscriptionPayload);
             
             // --- FALLBACK: Se PIX não for permitido para assinatura, tenta BOLETO (que tem PIX embutido) ---
             if (subscriptionRes.status === 400 && subscriptionData.errors && subscriptionData.errors[0].description.includes('forma de pagamento')) {
                 console.warn("[ASAAS] PIX direto recusado (Verifique se 'Pix' está ativo para assinaturas no painel Asaas). Tentando fallback para BOLETO.");
                 subscriptionPayload.billingType = 'BOLETO';
                 
-                subscriptionRes = await fetch(`${ASAAS_API_URL}/subscriptions`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
-                    body: JSON.stringify(subscriptionPayload)
-                });
-                subResponseText = await subscriptionRes.text();
-                try { subscriptionData = JSON.parse(subResponseText); } catch(e) { throw new Error("Erro Asaas Fallback: " + subResponseText); }
+                const fallbackResult = await saveAsaasSubscription(subscriptionPayload);
+                subscriptionRes = fallbackResult.res;
+                subscriptionData = fallbackResult.data;
             }
             
             if (subscriptionData.errors) {
@@ -208,13 +235,14 @@ exports.createPreference = async (req, res) => {
             }
             
             // Busca a primeira cobrança para pegar o QR Code
-            const paymentsRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subscriptionData.id}/payments`, {
+            // FIX: Filtro ?status=PENDING garante que estamos pegando a fatura em aberto, e não uma velha já paga (caso seja update)
+            const paymentsRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subscriptionData.id}/payments?status=PENDING`, {
                 headers: { 'access_token': ASAAS_API_KEY }
             });
             const paymentsData = await paymentsRes.json();
             
             if (!paymentsData.data || paymentsData.data.length === 0) {
-                throw new Error("Assinatura criada, mas cobrança não gerada imediatamente.");
+                throw new Error("Assinatura criada/atualizada, mas cobrança pendente não encontrada.");
             }
             
             const firstPayment = paymentsData.data[0];
@@ -255,15 +283,15 @@ exports.createPreference = async (req, res) => {
             cycle: 'MONTHLY', // Adicionado: Ciclo mensal obrigatório
             description: `Assinatura Yelo - Plano ${planType}`,
             externalReference: String(psychologistId),
-            softDescriptor: 'Yelo Saúde Mental', // Texto na fatura (Max 13 chars)
-            creditCard: billingType === 'PIX' ? undefined : {
+            softDescriptor: 'Yelo Saude', // Texto na fatura (O Asaas permite no máximo 13 caracteres)
+            creditCard: {
                 holderName: creditCard.holderName,
                 number: creditCard.number,
                 expiryMonth: expiryMonth,
                 expiryYear: expiryYear.length === 2 ? `20${expiryYear}` : expiryYear,
                 ccv: creditCard.ccv
             },
-            creditCardHolderInfo: billingType === 'PIX' ? undefined : {
+            creditCardHolderInfo: {
                 name: creditCard.holderName,
                 email: psychologist.email,
                 cpfCnpj: creditCard.holderCpf,
@@ -274,23 +302,7 @@ exports.createPreference = async (req, res) => {
             }
         };
 
-        const subscriptionRes = await fetch(`${ASAAS_API_URL}/subscriptions`, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'access_token': ASAAS_API_KEY 
-            },
-            body: JSON.stringify(subscriptionPayload)
-        });
-
-        const subResponseText = await subscriptionRes.text();
-        let subscriptionData;
-        try {
-            subscriptionData = JSON.parse(subResponseText);
-        } catch (e) {
-            console.error(`[ASAAS FATAL] Erro ao criar assinatura. Conteúdo:\n${subResponseText}`);
-            throw new Error("Erro ao processar resposta da assinatura.");
-        }
+        const { res: subscriptionRes, data: subscriptionData } = await saveAsaasSubscription(subscriptionPayload);
 
         if (subscriptionData.errors) {
             const err = new Error(subscriptionData.errors[0].description);
