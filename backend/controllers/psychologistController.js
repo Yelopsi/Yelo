@@ -454,10 +454,19 @@ async function calculateMatches(preferences) {
         attributes: { exclude: ['senha', 'resetPasswordToken'] }
     });
 
+    // --- FILTRO DE BLINDAGEM JS (Garante que bugs de banco ou fuso horário não passem) ---
+    const agora = new Date();
+    const validCandidates = candidates.filter(psy => {
+        const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
+        if (isVip) return true;
+        if (!psy.planExpiresAt) return false;
+        return new Date(psy.planExpiresAt) > agora;
+    });
+
     const { min, max } = parsePriceRange(valor_sessao_faixa);
 
     // 2. Pontuação e Filtragem
-    const scoredCandidates = candidates.map(psi => {
+    const scoredCandidates = validCandidates.map(psi => {
         let score = 0;
         let details = [];
         let isViable = true;
@@ -1278,15 +1287,23 @@ exports.getShowcasePsychologists = async (req, res) => {
             attributes: ['id', 'nome', 'fotoUrl'] 
         });
 
-        while (psychologists.length < 4) {
-            psychologists.push({
+        const agora = new Date();
+        const validPsychologists = psychologists.filter(psy => {
+            const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
+            if (isVip) return true;
+            if (!psy.planExpiresAt) return false;
+            return new Date(psy.planExpiresAt) > agora;
+        });
+
+        while (validPsychologists.length < 4) {
+            validPsychologists.push({
                 id: 0,
                 nome: "Em breve",
                 fotoUrl: "https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
             });
         }
 
-        res.status(200).json(psychologists);
+        res.status(200).json(validPsychologists);
     } catch (error) {
         console.error('Erro ao buscar psicólogos para vitrine:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
@@ -1328,7 +1345,7 @@ exports.getProfileBySlug = async (req, res) => {
     // FIX: Usa a coluna correta 'planExpiresAt'
     const validade = psychologist.planExpiresAt ? new Date(psychologist.planExpiresAt) : null;
     const status = psychologist.status;
-        const isVip = Boolean(psychologist.is_exempt);
+    const isVip = psychologist.is_exempt === true || String(psychologist.is_exempt).toLowerCase() === 'true' || psychologist.is_exempt === 1;
 
     // Log para você saber a saúde do perfil
         console.log(`🔎 Status: ${status} | VIP: ${isVip ? 'Sim' : 'Não'} | Validade: ${validade ? validade.toLocaleDateString() : 'NENHUMA'}`);
@@ -1392,6 +1409,17 @@ exports.getPsychologistProfile = async (req, res) => {
 
         if (!psychologist) {
             return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+        }
+
+        // --- BLOQUEIO ATIVADO (Travas de Vencimento Faltantes) ---
+        const isVip = psychologist.is_exempt === true || String(psychologist.is_exempt).toLowerCase() === 'true' || psychologist.is_exempt === 1;
+        const hoje = new Date();
+        const validade = psychologist.planExpiresAt ? new Date(psychologist.planExpiresAt) : null;
+        if (!isVip && (!validade || validade <= hoje)) {
+            return res.status(404).json({ error: 'Perfil indisponível (Assinatura inativa).' });
+        }
+        if (psychologist.status !== 'active') {
+            return res.status(404).json({ error: 'Perfil indisponível no momento.' });
         }
 
         // 2. Busca as avaliações (reviews) SEPARADAMENTE
