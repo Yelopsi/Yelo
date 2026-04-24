@@ -276,4 +276,47 @@ router.get('/stats/pwa', async (req, res) => {
     }
 });
 
+// --- ROTA RÁPIDA: RAIO-X DO REMARKETING (FUNIL EM TEMPO REAL) ---
+router.get('/remarketing-status', async (req, res) => {
+    try {
+        const pendingPsis = await db.Psychologist.findAll({
+            where: {
+                status: { [db.Sequelize.Op.ne]: 'active' },
+                is_exempt: { [db.Sequelize.Op.not]: true }
+            },
+            attributes: ['id', 'nome', 'email', 'createdAt', 'whatsapp_clicks']
+        });
+
+        const now = new Date();
+        const funnel = { passo1_hoje: [], passo2_hoje: [], passo3_hoje: [], passo4_hoje: [], aguardando_proxima_janela: [] };
+
+        pendingPsis.forEach(p => {
+            // Calcula quantas horas se passaram desde o cadastro
+            const hoursSince = (now - new Date(p.createdAt)) / (1000 * 60 * 60);
+            const psiData = { id: p.id, nome: p.nome, email: p.email, horas_desde_cadastro: Math.round(hoursSince), cliques: p.whatsapp_clicks || 0 };
+
+            // Encaixa o psicólogo na regra exata do seu remarketingCron.js
+            if (hoursSince >= 24 && hoursSince <= 48) funnel.passo1_hoje.push(psiData);
+            else if (hoursSince >= 72 && hoursSince <= 96) funnel.passo2_hoje.push(psiData);
+            else if (hoursSince >= 168 && hoursSince <= 192) funnel.passo3_hoje.push(psiData);
+            else if (hoursSince >= 336 && hoursSince <= 360 && psiData.cliques > 0) funnel.passo4_hoje.push(psiData);
+            else funnel.aguardando_proxima_janela.push(psiData);
+        });
+
+        res.json({
+            resumo_envios_de_hoje: {
+                total_cadastros_inativos: pendingPsis.length,
+                recebem_passo_1_hoje: funnel.passo1_hoje.length,
+                recebem_passo_2_hoje: funnel.passo2_hoje.length,
+                recebem_passo_3_hoje: funnel.passo3_hoje.length,
+                recebem_passo_4_hoje: funnel.passo4_hoje.length,
+            },
+            detalhes: funnel
+        });
+    } catch (error) {
+        console.error("Erro ao gerar relatório de remarketing:", error);
+        res.status(500).json({ error: "Erro ao gerar relatório" });
+    }
+});
+
 module.exports = router;

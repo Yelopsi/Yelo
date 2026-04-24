@@ -674,10 +674,10 @@ app.get('/api/admin/stats/pwa', async (req, res) => {
 
  // COMENTE TUDO ISTO AQUI PARA NINGUÉM ACESSAR:
 
-// Bloqueio global para as rotas de correção em produção
-if (process.env.NODE_ENV === 'production') {
-    app.use([/^\/api\/fix-.*/, /^\/fix-.*/], (req, res) => res.status(403).json({ error: 'Rotas de manutenção desativadas em produção.' }));
-}
+// Bloqueio global para as rotas de correção em produção (Desativado temporariamente)
+// if (process.env.NODE_ENV === 'production') {
+//     app.use([/^\/api\/fix-.*/, /^\/fix-.*/], (req, res) => res.status(403).json({ error: 'Rotas de manutenção desativadas em produção.' }));
+// }
 
 app.get('/api/fix-activate-psis', async (req, res) => { /* ... */ });
 
