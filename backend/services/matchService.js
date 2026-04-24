@@ -132,7 +132,12 @@ exports.findMatches = async (preferences) => {
     // Como é MVP e base pequena (<1000), trazemos tudo e filtramos em memória pela complexidade do algoritmo.
     const allPsychologists = await db.Psychologist.findAll({
         where: {
-            status: { [Op.in]: ['active', 'pending'] }, // Traz também quem está no trial (pending)
+            status: { [Op.in]: ['active', 'pending'] },
+            [Op.or]: [
+                { is_exempt: true },
+                { planExpiresAt: { [Op.gt]: new Date() } },
+                { status: 'pending' } // Mantém pending solto para a checagem JS dos 14 dias
+            ]
             // fotoUrl: { [Op.ne]: null } // Opcional: só mostrar quem tem foto
         },
         attributes: { exclude: ['senha', 'cpf', 'cnpj', 'resetPasswordToken'] }
@@ -145,11 +150,16 @@ exports.findMatches = async (preferences) => {
 
     // 2. Calcula Score para cada um
     for (const psy of allPsychologists) {
-        // --- CONTROLE DE EXIBIÇÃO (TRIAL EXPIRADO) ---
-        if (psy.status === 'pending' && !psy.is_exempt) {
-            const daysSinceCreation = (new Date() - new Date(psy.createdAt)) / (1000 * 60 * 60 * 24);
-            // Se já passou de 14 dias e ele não assinou (continua pending), oculta dos resultados
-            if (daysSinceCreation > TRIAL_DAYS) continue; 
+        // --- CONTROLE DE EXIBIÇÃO (TRIAL EXPIRADO OU ASSINATURA VENCIDA) ---
+        if (!psy.is_exempt) {
+            if (psy.status === 'pending') {
+                const daysSinceCreation = (new Date() - new Date(psy.createdAt)) / (1000 * 60 * 60 * 24);
+                if (daysSinceCreation > TRIAL_DAYS) continue; 
+            } else if (psy.status === 'active') {
+                if (!psy.planExpiresAt || new Date(psy.planExpiresAt) <= new Date()) {
+                    continue; // Pula no exato segundo do vencimento
+                }
+            }
         }
 
         const { score, matchDetails } = calculateScore(psy, preferences, priceRange);

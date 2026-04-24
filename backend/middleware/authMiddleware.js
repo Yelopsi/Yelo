@@ -32,6 +32,17 @@ const protect = async (req, res, next) => {
                 if (user) req.patient = user;
             } else if (userType === 'psychologist') {
                 user = await db.Psychologist.findByPk(decoded.id, { attributes: { exclude: ['senha'] } });
+                if (user) {
+                    // BLOQUEIO EM TEMPO REAL: Inativa acesso no exato segundo se vencido
+                    if (user.status === 'active' && !user.is_exempt) {
+                        const validade = user.planExpiresAt ? new Date(user.planExpiresAt) : null;
+                        if (!validade || validade <= new Date()) {
+                            console.log(`[AUTH] ⏰ Assinatura expirada. Inativando perfil em tempo real: ${user.email}`);
+                            await user.update({ status: 'inactive' });
+                            user.status = 'inactive';
+                        }
+                    }
+                }
                 if (user) req.psychologist = user;
             } else if (userType === 'admin') {
                 // 1. Tenta buscar na tabela nova de Psicólogos (novo padrão unificado)

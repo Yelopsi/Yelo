@@ -447,7 +447,10 @@ async function calculateMatches(preferences) {
 
     // 1. Busca todos os psicólogos ativos
     const candidates = await db.Psychologist.findAll({
-        where: { status: 'active' },
+        where: { 
+            status: 'active',
+            [Op.or]: [ { is_exempt: true }, { planExpiresAt: { [Op.gt]: new Date() } } ]
+        },
         attributes: { exclude: ['senha', 'resetPasswordToken'] }
     });
 
@@ -1267,7 +1270,8 @@ exports.getShowcasePsychologists = async (req, res) => {
         const psychologists = await db.Psychologist.findAll({
             where: {
                 status: 'active',
-                fotoUrl: { [Op.ne]: null } 
+                fotoUrl: { [Op.ne]: null },
+                [Op.or]: [ { is_exempt: true }, { planExpiresAt: { [Op.gt]: new Date() } } ]
             },
             order: db.sequelize.random(), 
             limit: 4, 
@@ -1329,16 +1333,16 @@ exports.getProfileBySlug = async (req, res) => {
     // Log para você saber a saúde do perfil
         console.log(`🔎 Status: ${status} | VIP: ${isVip ? 'Sim' : 'Não'} | Validade: ${validade ? validade.toLocaleDateString() : 'NENHUMA'}`);
 
-    // [DESATIVADO PARA TESTES] Descomente isso em Produção para bloquear inadimplentes
-    // if (!isVip && (!validade || validade < hoje)) {
-    //    console.log(`🚫 [BLOQUEIO] Pagamento vencido ou inexistente.`);
-    //    return res.status(404).json({ error: 'Perfil indisponível (Assinatura inativa).' });
-    // }
-    //
-    // if (status !== 'active') {
-    //    console.log(`🚫 [BLOQUEIO] Status não é active (${status}).`);
-    //    return res.status(404).json({ error: 'Perfil em análise.' });
-    // }
+    // BLOQUEIO ATIVADO: Inadimplentes e inativos não podem ser acessados publicamente
+    if (!isVip && (!validade || validade <= hoje)) {
+        console.log(`🚫 [BLOQUEIO] Pagamento vencido. Ocultando perfil.`);
+        return res.status(404).json({ error: 'Perfil indisponível (Assinatura inativa).' });
+    }
+    
+    if (status !== 'active') {
+        console.log(`🚫 [BLOQUEIO] Status não é active (${status}).`);
+        return res.status(404).json({ error: 'Perfil indisponível no momento.' });
+    }
    
     // ------------------------------------------------------------------
 

@@ -674,10 +674,10 @@ app.get('/api/admin/stats/pwa', async (req, res) => {
 
  // COMENTE TUDO ISTO AQUI PARA NINGUÉM ACESSAR:
 
-// Bloqueio global para as rotas de correção em produção (Desativado temporariamente)
-// if (process.env.NODE_ENV === 'production') {
-//     app.use([/^\/api\/fix-.*/, /^\/fix-.*/], (req, res) => res.status(403).json({ error: 'Rotas de manutenção desativadas em produção.' }));
-// }
+// Bloqueio global para as rotas de correção em produção
+if (process.env.NODE_ENV === 'production') {
+    app.use([/^\/api\/fix-.*/, /^\/fix-.*/], (req, res) => res.status(403).json({ error: 'Rotas de manutenção desativadas em produção.' }));
+}
 
 app.get('/api/fix-activate-psis', async (req, res) => { /* ... */ });
 
@@ -2745,7 +2745,11 @@ app.post('/api/public/psychologists/:id/appearance', async (req, res) => {
 app.get('/api/public/psychologists/list', async (req, res) => {
     try {
         const psis = await db.Psychologist.findAll({
-            where: { status: 'active', fotoUrl: { [Op.ne]: null } },
+            where: { 
+                status: 'active', 
+                fotoUrl: { [Op.ne]: null },
+                [Op.or]: [ { is_exempt: true }, { planExpiresAt: { [Op.gt]: new Date() } } ]
+            },
             attributes: ['id', 'nome', 'fotoUrl'],
             limit: 50,
             order: db.sequelize.random()
@@ -3014,7 +3018,11 @@ app.get('/', async (req, res) => {
         const psicologos = await db.Psychologist.findAll({
             where: {
                 status: 'active',
-                fotoUrl: { [Op.ne]: null } // Garante que só venham perfis com foto
+                fotoUrl: { [Op.ne]: null }, // Garante que só venham perfis com foto
+                [Op.or]: [
+                    { is_exempt: true },
+                    { planExpiresAt: { [Op.gt]: new Date() } }
+                ]
             },
             order: db.sequelize.random(), // Pega de forma aleatória
             limit: 10, // Um pouco a mais para garantir variedade
@@ -3215,7 +3223,11 @@ app.post('/api/auth/identify-user', async (req, res) => {
 app.get('/terapia-online', async (req, res) => {
     try {
         const psicologos = await db.Psychologist.findAll({
-            where: { status: 'active', fotoUrl: { [Op.ne]: null } },
+            where: { 
+                status: 'active', 
+                fotoUrl: { [Op.ne]: null },
+                [Op.or]: [ { is_exempt: true }, { planExpiresAt: { [Op.gt]: new Date() } } ]
+            },
             order: db.sequelize.random(),
             limit: 10,
             attributes: ['nome', 'fotoUrl', 'slug']
