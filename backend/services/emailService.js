@@ -20,7 +20,7 @@ if (!user || !pass) {
 const transporter = nodemailer.createTransport({
     host: host,
     port: port,
-    secure: false, // true para 465, false para outras portas
+    secure: parseInt(port) === 465, // true para 465, false para outras portas
     auth: {
         // Usa string vazia como fallback para evitar o erro "Missing credentials for PLAIN"
         user: user || '',
