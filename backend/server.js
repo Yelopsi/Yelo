@@ -1403,10 +1403,13 @@ app.get('/api/fix-test-email', async (req, res) => {
             );
             res.send(`✅ E-mail de LINHA DIGITÁVEL enviado para: ${emailDestino}.`);
         } else if (type === 'remarketing') {
+            const step = parseInt(req.query.step) || 1; // Pega o passo da URL, padrão é 1
             await emailService.sendRemarketingEmail(
-                { email: emailDestino, nome: 'Usuário Teste' }, 1
+                // Adicionamos whatsapp_clicks para garantir que o Passo 4 funcione
+                { email: emailDestino, nome: 'Usuário Teste', whatsapp_clicks: 2 },
+                step
             );
-            res.send(`✅ E-mail de REMARKETING enviado para: ${emailDestino}.`);
+            res.send(`✅ E-mail de REMARKETING (Passo ${step}) enviado para: ${emailDestino}.`);
         } else if (type === 'first_lead') {
             await emailService.sendFirstLeadEmail(
                 { email: emailDestino, nome: 'Usuário Teste' }
