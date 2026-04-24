@@ -34,7 +34,8 @@ const protect = async (req, res, next) => {
                 user = await db.Psychologist.findByPk(decoded.id, { attributes: { exclude: ['senha'] } });
                 if (user) {
                     // BLOQUEIO EM TEMPO REAL: Inativa acesso no exato segundo se vencido
-                    if (user.status === 'active' && !user.is_exempt) {
+                    const isVip = user.is_exempt === true || String(user.is_exempt).toLowerCase() === 'true' || user.is_exempt === 1;
+                    if (user.status === 'active' && !isVip) {
                         const validade = user.planExpiresAt ? new Date(user.planExpiresAt) : null;
                         if (!validade || validade <= new Date()) {
                             console.log(`[AUTH] ⏰ Assinatura expirada. Inativando perfil em tempo real: ${user.email}`);

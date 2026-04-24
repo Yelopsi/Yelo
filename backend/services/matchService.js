@@ -151,7 +151,8 @@ exports.findMatches = async (preferences) => {
     // 2. Calcula Score para cada um
     for (const psy of allPsychologists) {
         // --- CONTROLE DE EXIBIÇÃO (TRIAL EXPIRADO OU ASSINATURA VENCIDA) ---
-        if (!psy.is_exempt) {
+        const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
+        if (!isVip) {
             if (psy.status === 'pending') {
                 const daysSinceCreation = (new Date() - new Date(psy.createdAt)) / (1000 * 60 * 60 * 24);
                 if (daysSinceCreation > TRIAL_DAYS) continue; 
@@ -159,6 +160,8 @@ exports.findMatches = async (preferences) => {
                 if (!psy.planExpiresAt || new Date(psy.planExpiresAt) <= new Date()) {
                     continue; // Pula no exato segundo do vencimento
                 }
+            } else {
+                continue; // Pula inativos e rejeitados
             }
         }
 

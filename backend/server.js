@@ -2754,7 +2754,15 @@ app.get('/api/public/psychologists/list', async (req, res) => {
             limit: 50,
             order: db.sequelize.random()
         });
-        res.json(psis);
+        
+        const agora = new Date();
+        const psisFiltrados = psis.filter(psy => {
+            const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
+            if (isVip) return true;
+            return psy.planExpiresAt && new Date(psy.planExpiresAt) > agora;
+        });
+        
+        res.json(psisFiltrados);
     } catch (error) {
         res.status(500).json({ error: 'Erro ao buscar psicólogos.' });
     }
@@ -3029,6 +3037,14 @@ app.get('/', async (req, res) => {
             attributes: ['nome', 'fotoUrl', 'slug'] // Apenas os dados necessários
         });
 
+        // --- FILTRO JS BLINDADO ---
+        const agora = new Date();
+        const psicologosFiltrados = psicologos.filter(psy => {
+            const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
+            if (isVip) return true;
+            return psy.planExpiresAt && new Date(psy.planExpiresAt) > agora;
+        });
+
         // --- NOVO: Busca Média de Avaliações (Prova Social) ---
         let mediaAvaliacao = '4.9';
         let totalAvaliacoes = '150+';
@@ -3092,7 +3108,7 @@ app.get('/', async (req, res) => {
         }
 
         // Renderiza a página inicial, passando a variável 'profissionais' para o EJS
-        res.render('index', { profissionais: psicologos, mediaAvaliacao, totalAvaliacoes, depoimentos });
+        res.render('index', { profissionais: psicologosFiltrados, mediaAvaliacao, totalAvaliacoes, depoimentos });
 
     } catch (error) {
         console.error("Erro ao buscar profissionais para a home:", error);
@@ -3233,6 +3249,13 @@ app.get('/terapia-online', async (req, res) => {
             attributes: ['nome', 'fotoUrl', 'slug']
         });
 
+        const agora = new Date();
+        const psicologosFiltrados = psicologos.filter(psy => {
+            const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
+            if (isVip) return true;
+            return psy.planExpiresAt && new Date(psy.planExpiresAt) > agora;
+        });
+
         let mediaAvaliacao = '4.9';
         let totalAvaliacoes = '150+';
         let depoimentos = [];
@@ -3273,7 +3296,7 @@ app.get('/terapia-online', async (req, res) => {
             ];
             depoimentos = [...depoimentos, ...mocks.slice(0, 4 - depoimentos.length)];
         }
-        res.render('terapia-online', { profissionais: psicologos, mediaAvaliacao, totalAvaliacoes, depoimentos });
+        res.render('terapia-online', { profissionais: psicologosFiltrados, mediaAvaliacao, totalAvaliacoes, depoimentos });
     } catch (error) {
         console.error("Erro ao buscar dados para a landing page:", error);
         res.render('terapia-online', { profissionais: [], mediaAvaliacao: '4.9', totalAvaliacoes: '100+', depoimentos: [] });
