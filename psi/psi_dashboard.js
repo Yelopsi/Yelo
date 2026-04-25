@@ -351,6 +351,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 2. Remove o "crachá" de acesso (Token)
             localStorage.removeItem('Yelo_token');
+            localStorage.removeItem('yelo_last_psi_page'); // Limpa a última página visitada no logout
             
             // 3. Redireciona imediatamente para o Login
             window.location.href = '/';
