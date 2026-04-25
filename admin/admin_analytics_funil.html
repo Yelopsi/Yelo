@@ -1,12 +1,16 @@
 <div class="modern-dashboard-layout">
-    <div class="main-header" style="background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%); padding: 25px 30px; margin-bottom: 25px; border-radius: 16px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-            <div>
-                <h1 style="color: white; margin: 0 0 5px 0; font-size: 1.8rem; font-family: 'New Kansas', serif;">Análise de Funil & Questionário</h1>
-                <p style="color: rgba(255,255,255,0.8); margin: 0;">Métricas de acesso, desistência e conversão dos pacientes.</p>
-            </div>
-            <button onclick="carregarDadosFunil()" class="btn-primario" style="background: var(--cor-Yelo); color: var(--verde-escuro); border: none; padding: 10px 20px; font-weight: bold; border-radius: 50px; cursor: pointer;">Atualizar Dados</button>
+    <div class="main-header" style="background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%); padding: 25px 30px; margin-bottom: 15px; border-radius: 16px;">
+        <div>
+            <h1 style="color: white; margin: 0 0 5px 0; font-size: 1.8rem; font-family: 'New Kansas', serif;">Análise de Funil & Questionário</h1>
+            <p style="color: rgba(255,255,255,0.8); margin: 0;">Métricas de acesso, desistência e conversão dos pacientes.</p>
         </div>
+    </div>
+
+    <div class="dashboard-header-actions">
+        <button id="btn-atualizar-funil" class="btn-tabela" style="display: flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 50px; border: 1px solid var(--cinza-borda); background: var(--branco-puro); cursor: pointer; color: var(--verde-escuro); font-weight: 600;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-10.09l5.67-5.67"/></svg>
+            Atualizar Dados
+        </button>
     </div>
 
     <div id="loading-funil" style="text-align: center; padding: 50px;">
@@ -76,86 +80,3 @@
         </div>
     </div>
 </div>
-
-<script>
-    async function carregarDadosFunil() {
-        document.getElementById('loading-funil').style.display = 'block';
-        document.getElementById('content-funil').style.display = 'none';
-
-        try {
-            const token = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : localStorage.getItem('Yelo_token');
-            
-            const res = await fetch('/api/admin/analytics/funnel', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (!res.ok) throw new Error("Falha ao buscar dados de funil");
-            const data = await res.json();
-
-            // 1. Popula KPIs Superiores
-            document.getElementById('kpi-visitas').textContent = data.visitas.toLocaleString();
-            
-            const min = Math.floor(data.tempoMedio / 60);
-            const sec = data.tempoMedio % 60;
-            document.getElementById('kpi-tempo').textContent = `${min}m ${sec}s`;
-
-            document.getElementById('kpi-iniciaram').textContent = data.iniciaram.toLocaleString();
-            document.getElementById('kpi-completaram').textContent = data.completaram.toLocaleString();
-
-            // Taxas de conversão
-            const taxaInicio = data.visitas > 0 ? ((data.iniciaram / data.visitas) * 100).toFixed(1) : 0;
-            document.getElementById('taxa-inicio').textContent = `${taxaInicio}% dos acessos`;
-
-            const taxaFim = data.iniciaram > 0 ? ((data.completaram / data.iniciaram) * 100).toFixed(1) : 0;
-            document.getElementById('taxa-conclusao').textContent = `${taxaFim}% de conclusão`;
-            document.getElementById('taxa-conclusao').style.color = taxaFim > 50 ? '#10b981' : '#f59e0b';
-
-            // 2. Popula Conversão Pós-Questionário
-            document.getElementById('kpi-perfis').textContent = data.profileViews.toLocaleString();
-            document.getElementById('kpi-whatsapp').textContent = data.whatsappClicks.toLocaleString();
-
-            // 3. Popula Barras de Desistência (Ranking)
-            const containerAbandonos = document.getElementById('lista-abandonos');
-            containerAbandonos.innerHTML = '';
-            
-            if (data.abandonos && data.abandonos.length > 0) {
-                const maxAbandono = Math.max(...data.abandonos.map(a => parseInt(a.count)));
-                data.abandonos.forEach(item => {
-                    const pct = ((item.count / maxAbandono) * 100).toFixed(0);
-                    const labelName = item.step ? (item.step.charAt(0).toUpperCase() + item.step.slice(1)).replace(/_/g, ' ') : 'Sessão Perdida';
-                    
-                    containerAbandonos.innerHTML += `
-                        <div>
-                            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; color: #444;">
-                                <span>${labelName}</span>
-                                <span style="color: #E63946;">${item.count} saídas</span>
-                            </div>
-                            <div style="width: 100%; background-color: #f1f3f5; border-radius: 10px; height: 12px; overflow: hidden;">
-                                <div style="width: ${pct}%; background-color: #E63946; height: 100%; border-radius: 10px;"></div>
-                            </div>
-                        </div>
-                    `;
-                });
-            } else {
-                containerAbandonos.innerHTML = '<p style="color: #888; text-align: center; padding: 20px;">Nenhum dado de desistência mapeado ainda.</p>';
-            }
-
-            // 4. Popula Origens UTM
-            const containerOrigens = document.getElementById('lista-origens');
-            containerOrigens.innerHTML = '';
-            if (data.origens && data.origens.length > 0) {
-                data.origens.forEach((o, index) => {
-                    containerOrigens.innerHTML += `<li><span class="acao-numero" style="background:#e0e0e0; color:#333;">${index+1}</span><span class="acao-texto" style="text-transform: capitalize;">${o.source}</span><span style="font-weight:bold; color:var(--verde-escuro);">${o.count}</span></li>`;
-                });
-            } else {
-                containerOrigens.innerHTML = '<li style="justify-content:center; color:#888;">Sem rastreamento UTM capturado.</li>';
-            }
-
-            document.getElementById('loading-funil').style.display = 'none';
-            document.getElementById('content-funil').style.display = 'block';
-        } catch(e) { console.error(e); alert('Erro ao carregar dados do Funil.'); }
-    }
-
-    // Executa assim que a view injetada no admin carregar
-    carregarDadosFunil();
-</script>
