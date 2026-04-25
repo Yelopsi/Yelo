@@ -484,6 +484,14 @@ exports.handleWebhook = async (req, res) => {
                 // --- GAMIFICATION: Tenta atribuir a badge de Pioneiro ---
                 gamificationService.assignPioneerBadge(psi.id).catch(e => console.error("Erro no hook de badge Pioneiro (Pagamento):", e));
 
+                // [LOG DE SUCESSO PARA RASTREAMENTO NO DASHBOARD]
+                if (db.SystemLog) {
+                    db.SystemLog.create({
+                        level: 'info',
+                        message: `[ASAAS] Pagamento Confirmado: ${psi.email} (Plano ${planType})`
+                    }).catch(() => {});
+                }
+
                 // --- ENVIA E-MAIL PERSONALIZADO YELO ---
                 // [OTIMIZAÇÃO] Não espera o envio de e-mail (evita Timeout do Webhook)
                 emailService.sendPaymentConfirmationEmail(psi, planType, payment.value)
