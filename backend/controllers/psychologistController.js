@@ -309,14 +309,10 @@ exports.loginPsychologist = async (req, res) => {
         }
 
         // [LOG DE SUCESSO PARA RASTREAMENTO NO DASHBOARD]
-        try {
-            if (db.SystemLog && userType !== 'admin') {
-                await db.SystemLog.create({
-                    level: 'info',
-                    message: `Login de Psicólogo bem-sucedido: ${email}`
-                });
-            }
-        } catch(e) {}
+        await db.SystemLog.create({
+            level: 'info',
+            message: `Login de Psicólogo bem-sucedido: ${email}`
+        });
 
         const token = generateToken(psychologist.id, userType);
 

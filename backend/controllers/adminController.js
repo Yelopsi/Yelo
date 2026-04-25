@@ -43,7 +43,13 @@ exports.loginAdmin = async (req, res) => {
             }
         }
 
-        if (adminUser && (await bcrypt.compare(senha, adminUser.senha))) {
+        if (!adminUser) {
+            // Usuário não é admin ou não existe. 
+            // NÃO geramos log de erro aqui, pois a rota de fallback (login.js) testa essa porta para todos.
+            return res.status(401).json({ error: 'Credenciais de administrador inválidas.' });
+        }
+
+        if (await bcrypt.compare(senha, adminUser.senha)) {
             console.log(`[LOGIN ADMIN] Sucesso para: ${email}. Gerando token e cookie...`);
             // --- GERAÇÃO DE LOG REAL ---
             await db.SystemLog.create({
@@ -70,6 +76,15 @@ exports.loginAdmin = async (req, res) => {
                 }
             });
         } else {
+            // O usuário É um admin, mas errou a senha. Aqui sim geramos o log de falha.
+            try {
+                if (db.SystemLog) {
+                    await db.SystemLog.create({
+                        level: 'warning',
+                        message: `Falha de login Admin (Senha incorreta): ${email}`
+                    });
+                }
+            } catch(e) {}
             res.status(401).json({ error: 'Credenciais de administrador inválidas.' });
         }
     } catch (error) {

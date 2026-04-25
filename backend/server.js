@@ -3015,6 +3015,14 @@ app.post('/api/login-admin-check', async (req, res) => {
         const senhaValida = await bcrypt.compare(senha, adminUser.senha);
 
         if (!senhaValida) {
+            try {
+                if (db.SystemLog) {
+                    await db.SystemLog.create({
+                        level: 'warning',
+                        message: `Falha de login (Senha incorreta): ${email}`
+                    });
+                }
+            } catch(e) {}
             return res.status(401).json({ success: false, message: 'Senha de Admin incorreta' });
         }
 
@@ -3031,6 +3039,16 @@ app.post('/api/login-admin-check', async (req, res) => {
             secure: process.env.NODE_ENV === 'production',
             maxAge: 24 * 60 * 60 * 1000 // 24 horas
         });
+
+        // [LOG DE SUCESSO]
+        try {
+            if (db.SystemLog) {
+                await db.SystemLog.create({
+                    level: 'info',
+                    message: `Login de Administrador bem-sucedido: ${email}`
+                });
+            }
+        } catch(e) {}
 
         // E) Sucesso! Envia o token junto
         return res.json({ 
