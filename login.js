@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.removeItem('Yelo_user_type');
     localStorage.removeItem('Yelo_user_name');
     localStorage.removeItem('Yelo_token_admin');
+    localStorage.removeItem('yelo_last_psi_page'); // Garante que a visão geral seja carregada após o login
 
     // --- CORREÇÃO DE LINKS (Remove .html para compatibilidade com rotas do servidor) ---
     // Isso impede que o clique leve para uma página 404 que redireciona para a Home
