@@ -3259,6 +3259,63 @@ app.get(['/admin/login', '/psi/login', '/patient/login'], (req, res) => {
     res.redirect('/logout');
 });
 
+// --- ROTA PARA SITEMAP.XML (SEO) ---
+app.get('/sitemap.xml', async (req, res) => {
+    try {
+        const baseUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
+        
+        // Rotas estáticas principais
+        const staticPaths = [
+            '',
+            '/profissionais',
+            '/faq',
+            '/login',
+            '/ajuda'
+        ];
+
+        let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+
+        // 1. Injeta páginas estáticas
+        staticPaths.forEach(path => {
+            xml += '  <url>\n';
+            xml += `    <loc>${baseUrl}${path}</loc>\n`;
+            xml += `    <changefreq>weekly</changefreq>\n`;
+            xml += `    <priority>${path === '' ? '1.0' : '0.8'}</priority>\n`;
+            xml += '  </url>\n';
+        });
+
+        // 2. Injeta perfis dinâmicos (Psicólogos Ativos)
+        const psicologos = await db.Psychologist.findAll({
+            where: { status: 'active' },
+            attributes: ['slug', 'updatedAt']
+        });
+
+        psicologos.forEach(psi => {
+            if (psi.slug) {
+                xml += '  <url>\n';
+                xml += `    <loc>${baseUrl}/${psi.slug}</loc>\n`;
+                if (psi.updatedAt) {
+                    const date = new Date(psi.updatedAt).toISOString().split('T')[0];
+                    xml += `    <lastmod>${date}</lastmod>\n`;
+                }
+                xml += `    <changefreq>daily</changefreq>\n`;
+                xml += `    <priority>0.9</priority>\n`;
+                xml += '  </url>\n';
+            }
+        });
+
+        xml += '</urlset>';
+
+        res.header('Content-Type', 'application/xml');
+        res.send(xml);
+
+    } catch (error) {
+        console.error('Erro ao gerar sitemap:', error);
+        res.status(500).end();
+    }
+});
+
 // --- ROTA PARA ROBOTS.TXT (SEO) ---
 // Bloqueia o rastreamento de pastas de API e de usuários logados.
 app.get('/robots.txt', (req, res) => {
@@ -3268,7 +3325,8 @@ app.get('/robots.txt', (req, res) => {
 Disallow: /api/
 Disallow: /admin/
 Disallow: /psi/
-Disallow: /patient/`
+Disallow: /patient/
+Sitemap: https://www.yelopsi.com.br/sitemap.xml`
     );
 });
 
