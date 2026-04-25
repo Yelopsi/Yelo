@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <title>Yelo | Terapia Online Especializada</title>
+    <title>Psicólogo Online | Encontre seu Terapeuta Ideal na Yelo</title>
     
     <meta name="description" content="Encontre o psicólogo ideal para você. Conectamos pacientes a profissionais qualificados para terapia online ou presencial.">
     <meta property="og:title" content="Yelo | Encontre seu Psicólogo Ideal">
@@ -121,14 +121,30 @@
             left: 0;
             width: 100%;
             background-color: #1B4332;
-            padding: 15px 0;
+            padding: 12px 0;
             z-index: 1000;
-            display: flex;
-            justify-content: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 15px rgba(0,0,0,0.15);
+        }
+        .header-container {
+            max-width: 1200px; margin: 0 auto; padding: 0 20px;
+            display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;
+        }
+        .header-trust { display: flex; align-items: center; gap: 15px; }
+        .trust-badge-header { color: rgba(255,255,255,0.7); font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+        .btn-header-cta {
+            background-color: #FFEE8C; color: #1B4332; padding: 8px 20px;
+            border-radius: 50px; font-weight: 700; font-size: 0.9rem;
+            text-decoration: none; transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-header-cta:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(255, 238, 140, 0.2); }
+        @media (max-width: 600px) {
+            .trust-badge-header { display: none; }
+            .header-landing img { height: 28px; }
+            .btn-header-cta { padding: 6px 16px; font-size: 0.85rem; }
         }
         .header-landing img {
             height: 35px;
+            display: block;
         }
         body {
             padding-top: 65px; /* Compensa o header fixo */
@@ -136,9 +152,9 @@
 
         /* Ajuste do Footer Clean para Landing */
         .footer-landing {
-            background-color: var(--verde-escuro);
+            background-color: #122d21;
             color: #adb5bd;
-            padding: 30px 20px;
+            padding: 40px 20px;
             text-align: center;
             font-size: 12px;
             font-family: var(--font-principal);
@@ -158,14 +174,24 @@
 
     <!-- HEADER CLEAN EXCLUSIVO B2C -->
     <header class="header-landing">
-        <a href="/" class="logo">
-            <img src="/assets/logos/logo-branca.png" alt="Yelo">
-        </a>
+        <div class="header-container">
+            <a href="/" class="logo" title="Ir para a página inicial">
+                <img src="/assets/logos/logo-branca.png" alt="Yelo">
+            </a>
+            <div class="header-trust">
+                <span class="trust-badge-header"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Ambiente Seguro</span>
+                <a href="/questionario.html" class="btn-header-cta">Encontrar Psicólogo</a>
+            </div>
+        </div>
     </header>
 
     <main>
         <section class="hero hero-fundo-escuro" style="margin-top: 0; padding-top: 80px;">
             <div class="hero-texto">
+                <span class="tag-destaque-organica" style="background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); margin-bottom: 15px;">
+                    Psicologia Online e Presencial
+                </span>
+                
                 <% 
                     const frases = [
                         "ficar bem.",
@@ -183,10 +209,15 @@
                     const fraseAleatoria = frases[Math.floor(Math.random() * frases.length)];
                 %>
                 <h1>Você merece <%= fraseAleatoria %></h1>
-                <p>Encontrar a pessoa certa para te acompanhar nessa jornada é o primeiro passo.</p>
+                <p>Encontre o psicólogo ideal para a sua jornada. Conecte-se com profissionais verificados de forma segura e acolhedora.</p>
+                
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 15px;">
+                    <span style="color: #FFC107; font-size: 1.1rem; letter-spacing: 2px;">★★★★★</span>
+                    <span style="color: rgba(255,255,255,0.8); font-size: 0.9rem;"><strong>4.9/5</strong> (2.000+ pacientes)</span>
+                </div>
             </div>
             <!-- CTAS APONTAM TODOS PARA O QUESTIONÁRIO -->
-            <a href="/questionario.html" class="btn-cta-principal">Começar</a>
+            <a href="/questionario.html" class="btn-cta-principal">Começar agora</a>
             
             <div class="wave-divider">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
@@ -276,12 +307,12 @@
                         <svg class="doodle doodle-sparkle" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
                         </svg>
-                        <img src="https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Psicóloga" class="collage-img img-central">
-                        <img src="https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Paciente" class="collage-img img-sat-1">
-                        <img src="https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Paciente" class="collage-img img-sat-2">
-                        <img src="https://images.pexels.com/photos/1121796/pexels-photo-1121796.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Paciente" class="collage-img img-sat-3">
-                        <img src="https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Paciente" class="collage-img img-sat-4">
-                        <img src="https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Paciente" class="collage-img img-sat-5">
+                        <img src="https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Psicóloga" loading="lazy" class="collage-img img-central">
+                        <img src="https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Paciente" loading="lazy" class="collage-img img-sat-1">
+                        <img src="https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Paciente" loading="lazy" class="collage-img img-sat-2">
+                        <img src="https://images.pexels.com/photos/1121796/pexels-photo-1121796.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Paciente" loading="lazy" class="collage-img img-sat-3">
+                        <img src="https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Paciente" loading="lazy" class="collage-img img-sat-4">
+                        <img src="https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Paciente" loading="lazy" class="collage-img img-sat-5">
                     </div>
                 </div>
             </div>
@@ -427,15 +458,25 @@
 
     <!-- FOOTER CLEAN EXCLUSIVO B2C -->
     <footer class="footer-landing">
-        <div style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; align-items: center;">
-            <img src="/assets/logos/logo-branca.png" alt="Yelo" style="width: 100px; opacity: 0.5; margin-bottom: 10px;">
-            <p style="margin: 0; opacity: 0.8;">Yelo Terapia Online &copy; <%= new Date().getFullYear() %> | CNPJ: 54.512.449/0001-38</p>
-            <p style="margin: 0; opacity: 0.8;">Responsável Técnico: Anderson Costa - CRP 06/203403</p>
-            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 10px; flex-wrap: wrap;">
-                <a href="/termos-de-uso">Termos de Uso</a>
-                <span>|</span>
-                <a href="/politica-de-privacidade">Política de Privacidade</a>
+        <div style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px; align-items: center;">
+            <img src="/assets/logos/logo-branca.png" alt="Yelo" style="width: 110px; opacity: 0.8; margin-bottom: 5px;">
+            
+            <div style="display: flex; gap: 20px; justify-content: center; margin-top: 5px; flex-wrap: wrap; font-size: 0.95rem;">
+                <a href="/termos" style="color: #fff; font-weight: bold;">Termos de Uso</a>
+                <span style="color: rgba(255,255,255,0.3)">|</span>
+                <a href="/privacidade" style="color: #fff; font-weight: bold;">Política de Privacidade</a>
+                <span style="color: rgba(255,255,255,0.3)">|</span>
+                <a href="/ajuda" style="color: #fff; font-weight: bold;">Ajuda / Contato</a>
             </div>
+
+            <p style="margin: 15px 0 0 0; opacity: 0.6; line-height: 1.6;">
+                Yelo Terapia Online &copy; <%= new Date().getFullYear() %> | CNPJ: 54.512.449/0001-38<br>
+                Responsável Técnico: Anderson Costa - CRP 06/203403
+            </p>
+            
+            <p style="margin: 10px 0 0 0; opacity: 0.5; font-size: 0.75rem; max-width: 600px;">
+                Atenção: A Yelo não oferece tratamento para crises suicidas ou emergências psiquiátricas. Se você está em crise, ligue para o CVV (188) ou acesse nossa página de <a href="/ajuda" style="text-decoration: underline; color: #fff;">recursos de emergência</a>.
+            </p>
         </div>
     </footer>
 

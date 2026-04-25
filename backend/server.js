@@ -640,6 +640,80 @@ app.post('/api/tracking/uso-feature', verifyTokenLocal, async (req, res) => {
     }
 });
 
+// =============================================================
+// ROTA DE ANÁLISE DE FUNIL E QUESTIONÁRIO (ADMIN)
+// =============================================================
+app.post('/api/tracking/questionario-step', async (req, res) => {
+    try {
+        const { searchId, step, utms } = req.body;
+        if (searchId) {
+            const search = await db.DemandSearch.findByPk(searchId);
+            if (search) {
+                const currentParams = search.searchParams || {};
+                currentParams.lastStep = step;
+                if (utms && Object.keys(utms).length > 0) {
+                    currentParams.utm_source = utms.utm_source;
+                    currentParams.utm_medium = utms.utm_medium;
+                    currentParams.utm_campaign = utms.utm_campaign;
+                }
+                search.searchParams = currentParams;
+                search.changed('searchParams', true); // Força a atualização do JSONB
+                await search.save();
+            }
+        }
+        res.status(200).send('OK');
+    } catch (e) {
+        res.status(500).send('Erro');
+    }
+});
+
+app.get('/api/admin/analytics/funnel', async (req, res) => {
+    try {
+        // Validação de Token Admin (mesma lógica do checkAdminToken)
+        const token = req.headers.authorization?.split(' ')[1] || req.cookies?.token;
+        if (!token) return res.status(401).json({ error: 'Não autorizado' });
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (decoded.role !== 'admin' && decoded.type !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
+
+        // 1. Visitas e Tempo Médio
+        const visitas = await db.sequelize.query(`SELECT COUNT(*) as count FROM "SiteVisits" WHERE url ILIKE '%questionario%'`, {type: db.sequelize.QueryTypes.SELECT});
+        const tempo = await db.sequelize.query(`SELECT AVG("durationInSeconds") as avg_time FROM "AnonymousSessions" WHERE "durationInSeconds" < 3600`, {type: db.sequelize.QueryTypes.SELECT});
+        
+        // 2. Funil Principal
+        const funil = await db.sequelize.query(`
+            SELECT COUNT(*) as iniciaram, SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completaram
+            FROM "DemandSearches"
+        `, {type: db.sequelize.QueryTypes.SELECT});
+
+        // 3. Onde as pessoas param (Desistências)
+        const abandonos = await db.sequelize.query(`
+            SELECT "searchParams"->>'lastStep' as step, COUNT(*) as count 
+            FROM "DemandSearches" 
+            WHERE status = 'started' AND "searchParams"->>'lastStep' IS NOT NULL
+            GROUP BY step ORDER BY count DESC
+        `, {type: db.sequelize.QueryTypes.SELECT});
+
+        // 4. Origens e Eventos Finais
+        const origens = await db.sequelize.query(`SELECT "searchParams"->>'utm_source' as source, COUNT(*) as count FROM "DemandSearches" WHERE "searchParams"->>'utm_source' IS NOT NULL AND "searchParams"->>'utm_source' != '' GROUP BY source ORDER BY count DESC LIMIT 5`, {type: db.sequelize.QueryTypes.SELECT});
+        const profileViews = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs"`, {type: db.sequelize.QueryTypes.SELECT});
+        const whatsappClicks = await db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsappClickLogs"`, {type: db.sequelize.QueryTypes.SELECT});
+
+        res.json({
+            visitas: parseInt(visitas[0]?.count || 0),
+            tempoMedio: parseInt(tempo[0]?.avg_time || 0),
+            iniciaram: parseInt(funil[0]?.iniciaram || 0),
+            completaram: parseInt(funil[0]?.completaram || 0),
+            abandonos: abandonos,
+            origens: origens,
+            profileViews: parseInt(profileViews[0]?.count || 0),
+            whatsappClicks: parseInt(whatsappClicks[0]?.count || 0)
+        });
+    } catch (error) {
+        console.error('Erro no Relatório de Funil:', error);
+        res.status(500).json({ error: 'Erro interno' });
+    }
+});
+
 // ROTA DE ESTATÍSTICAS PWA (ADMIN) - Leitura para o Relatório
 app.get('/api/admin/stats/pwa', async (req, res) => {
     try {

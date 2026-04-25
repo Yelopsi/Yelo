@@ -1,0 +1,161 @@
+<div class="modern-dashboard-layout">
+    <div class="main-header" style="background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%); padding: 25px 30px; margin-bottom: 25px; border-radius: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div>
+                <h1 style="color: white; margin: 0 0 5px 0; font-size: 1.8rem; font-family: 'New Kansas', serif;">Análise de Funil & Questionário</h1>
+                <p style="color: rgba(255,255,255,0.8); margin: 0;">Métricas de acesso, desistência e conversão dos pacientes.</p>
+            </div>
+            <button onclick="carregarDadosFunil()" class="btn-primario" style="background: var(--cor-Yelo); color: var(--verde-escuro); border: none; padding: 10px 20px; font-weight: bold; border-radius: 50px; cursor: pointer;">Atualizar Dados</button>
+        </div>
+    </div>
+
+    <div id="loading-funil" style="text-align: center; padding: 50px;">
+        <span class="loading-spinner-sm" style="width: 30px; height: 30px; border-width: 3px;"></span>
+        <p style="margin-top: 15px; color: #666;">Buscando métricas completas...</p>
+    </div>
+
+    <div id="content-funil" style="display: none;">
+        <!-- KPIs GERAIS -->
+        <div class="kpi-grid">
+            <div class="kpi-card" style="border-top-color: #3b82f6;">
+                <h4>Acessos na Página</h4>
+                <p class="kpi-numero" id="kpi-visitas">0</p>
+                <span class="kpi-delta" style="color: #666;">Visualizações Totais</span>
+            </div>
+            <div class="kpi-card" style="border-top-color: #8b5cf6;">
+                <h4>Tempo Médio</h4>
+                <p class="kpi-numero" id="kpi-tempo">0s</p>
+                <span class="kpi-delta" style="color: #666;">Por Sessão</span>
+            </div>
+            <div class="kpi-card" style="border-top-color: #f59e0b;">
+                <h4>Iniciaram o Quiz</h4>
+                <p class="kpi-numero" id="kpi-iniciaram">0</p>
+                <span class="kpi-delta" style="color: #666;" id="taxa-inicio">0% dos acessos</span>
+            </div>
+            <div class="kpi-card" style="border-top-color: #10b981;">
+                <h4>Completaram (Leads)</h4>
+                <p class="kpi-numero" id="kpi-completaram">0</p>
+                <span class="kpi-delta" id="taxa-conclusao">0% de conclusão</span>
+            </div>
+        </div>
+
+        <div class="modern-dashboard-grid" style="grid-template-columns: 2fr 1fr;">
+            <!-- DESISTÊNCIAS POR PERGUNTA -->
+            <div class="widget">
+                <h3>Onde as pessoas desistem?</h3>
+                <p style="color: #666; font-size: 0.9rem; margin-top: -15px; margin-bottom: 20px;">Ranking das perguntas onde os usuários fecham a página antes de concluir.</p>
+                
+                <div id="lista-abandonos" style="display: flex; flex-direction: column; gap: 15px;">
+                    <!-- Barras injetadas via JS -->
+                </div>
+            </div>
+
+            <!-- CONVERSÕES E ORIGENS -->
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+                <!-- Pós-Questionário -->
+                <div class="widget" style="background-color: #f0fdf4; border: 1px solid #bbf7d0;">
+                    <h3 style="color: #166534; font-size: 1.3rem;">Pós-Questionário</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; border-bottom: 1px dashed #bbf7d0; padding-bottom: 15px;">
+                        <span style="color: #155724; font-weight: 500;">Perfis Abertos</span>
+                        <span style="font-size: 1.8rem; font-weight: bold; color: #14532d;" id="kpi-perfis">0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                        <span style="color: #155724; font-weight: 500;">Cliques WhatsApp</span>
+                        <span style="font-size: 1.8rem; font-weight: bold; color: #14532d;" id="kpi-whatsapp">0</span>
+                    </div>
+                </div>
+
+                <!-- UTM Sources -->
+                <div class="widget">
+                    <h3 style="font-size: 1.3rem;">Origem de Tráfego</h3>
+                    <ul id="lista-origens" class="lista-acoes" style="margin-top: 15px;">
+                        <!-- Origens injetadas via JS -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function carregarDadosFunil() {
+        document.getElementById('loading-funil').style.display = 'block';
+        document.getElementById('content-funil').style.display = 'none';
+
+        try {
+            const token = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : localStorage.getItem('Yelo_token');
+            
+            const res = await fetch('/api/admin/analytics/funnel', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!res.ok) throw new Error("Falha ao buscar dados de funil");
+            const data = await res.json();
+
+            // 1. Popula KPIs Superiores
+            document.getElementById('kpi-visitas').textContent = data.visitas.toLocaleString();
+            
+            const min = Math.floor(data.tempoMedio / 60);
+            const sec = data.tempoMedio % 60;
+            document.getElementById('kpi-tempo').textContent = `${min}m ${sec}s`;
+
+            document.getElementById('kpi-iniciaram').textContent = data.iniciaram.toLocaleString();
+            document.getElementById('kpi-completaram').textContent = data.completaram.toLocaleString();
+
+            // Taxas de conversão
+            const taxaInicio = data.visitas > 0 ? ((data.iniciaram / data.visitas) * 100).toFixed(1) : 0;
+            document.getElementById('taxa-inicio').textContent = `${taxaInicio}% dos acessos`;
+
+            const taxaFim = data.iniciaram > 0 ? ((data.completaram / data.iniciaram) * 100).toFixed(1) : 0;
+            document.getElementById('taxa-conclusao').textContent = `${taxaFim}% de conclusão`;
+            document.getElementById('taxa-conclusao').style.color = taxaFim > 50 ? '#10b981' : '#f59e0b';
+
+            // 2. Popula Conversão Pós-Questionário
+            document.getElementById('kpi-perfis').textContent = data.profileViews.toLocaleString();
+            document.getElementById('kpi-whatsapp').textContent = data.whatsappClicks.toLocaleString();
+
+            // 3. Popula Barras de Desistência (Ranking)
+            const containerAbandonos = document.getElementById('lista-abandonos');
+            containerAbandonos.innerHTML = '';
+            
+            if (data.abandonos && data.abandonos.length > 0) {
+                const maxAbandono = Math.max(...data.abandonos.map(a => parseInt(a.count)));
+                data.abandonos.forEach(item => {
+                    const pct = ((item.count / maxAbandono) * 100).toFixed(0);
+                    const labelName = item.step ? (item.step.charAt(0).toUpperCase() + item.step.slice(1)).replace(/_/g, ' ') : 'Sessão Perdida';
+                    
+                    containerAbandonos.innerHTML += `
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; color: #444;">
+                                <span>${labelName}</span>
+                                <span style="color: #E63946;">${item.count} saídas</span>
+                            </div>
+                            <div style="width: 100%; background-color: #f1f3f5; border-radius: 10px; height: 12px; overflow: hidden;">
+                                <div style="width: ${pct}%; background-color: #E63946; height: 100%; border-radius: 10px;"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                containerAbandonos.innerHTML = '<p style="color: #888; text-align: center; padding: 20px;">Nenhum dado de desistência mapeado ainda.</p>';
+            }
+
+            // 4. Popula Origens UTM
+            const containerOrigens = document.getElementById('lista-origens');
+            containerOrigens.innerHTML = '';
+            if (data.origens && data.origens.length > 0) {
+                data.origens.forEach((o, index) => {
+                    containerOrigens.innerHTML += `<li><span class="acao-numero" style="background:#e0e0e0; color:#333;">${index+1}</span><span class="acao-texto" style="text-transform: capitalize;">${o.source}</span><span style="font-weight:bold; color:var(--verde-escuro);">${o.count}</span></li>`;
+                });
+            } else {
+                containerOrigens.innerHTML = '<li style="justify-content:center; color:#888;">Sem rastreamento UTM capturado.</li>';
+            }
+
+            document.getElementById('loading-funil').style.display = 'none';
+            document.getElementById('content-funil').style.display = 'block';
+        } catch(e) { console.error(e); alert('Erro ao carregar dados do Funil.'); }
+    }
+
+    // Executa assim que a view injetada no admin carregar
+    carregarDadosFunil();
+</script>
