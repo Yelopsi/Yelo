@@ -560,6 +560,13 @@ exports.handleWebhook = async (req, res) => {
             }
 
             if (psi) {
+                // REVOGAÇÃO IMEDIATA DO ACESSO POR INADIMPLÊNCIA
+                await psi.update({
+                    status: 'inactive',
+                    planExpiresAt: new Date(0) // Joga a validade para o passado (1970)
+                });
+                console.log(`🚫 [ASAAS] Acesso bloqueado para Psi ${psi.email} por inadimplência (${event.event}).`);
+
                 // Envia e-mail de falha
                 // O Asaas geralmente manda invoiceUrl no objeto payment
                 // [OTIMIZAÇÃO] Background

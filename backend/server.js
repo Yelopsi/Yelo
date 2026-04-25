@@ -893,12 +893,16 @@ app.get('/api/run-inadimplentes', async (req, res) => {
                             const statuses = paymentsData.data.map(p => p.status).join(', ');
                             asaasInfo = `Encontrados: <b>${statuses}</b>`;
 
-                            // Tem que ter pelo menos 1 pago ou confirmado
+                            // Verifica inadimplência: Fatura vencida ou nenhum pagamento
+                            const hasOverdue = paymentsData.data.some(p => p.status === 'OVERDUE');
                             const hasPaid = paymentsData.data.some(p => ['CONFIRMED', 'RECEIVED'].includes(p.status));
 
-                            if (!hasPaid) {
+                            if (hasOverdue) {
+                                await psi.update({ status: 'inactive', planExpiresAt: new Date(0) });
+                                acao = '<span style="color:red; font-weight:bold;">Revogado (Fatura Vencida)</span>';
+                            } else if (!hasPaid) {
                                 await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0), stripeSubscriptionId: null });
-                                acao = '<span style="color:red; font-weight:bold;">Revogado (Pagamento Pendente/Falho)</span>';
+                                acao = '<span style="color:red; font-weight:bold;">Revogado (Nenhum pagamento)</span>';
                             } else {
                                 // Se pagou mas estava pending (erro antigo de sincronia), já corrige pra active
                                 if (psi.status !== 'active') {
@@ -915,7 +919,12 @@ app.get('/api/run-inadimplentes', async (req, res) => {
                         }
                     } else {
                         asaasInfo = `<span style="color:red;">Erro API Asaas: ${asaasRes.status}</span>`;
-                        acao = 'Pulado (Falha de comunicação)';
+                        if (asaasRes.status === 404) {
+                            await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0), stripeSubscriptionId: null });
+                            acao = '<span style="color:red; font-weight:bold;">Revogado (Assinatura Excluída no Asaas)</span>';
+                        } else {
+                            acao = 'Pulado (Falha de comunicação)';
+                        }
                     }
                 }
             } else {
