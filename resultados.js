@@ -174,6 +174,24 @@ document.addEventListener('DOMContentLoaded', () => {
             loadingScreen.style.display = 'none';
             resultsContent.style.display = 'block';
             
+            // --- RASTREAMENTO DE FUNIL (PASSO 4: CLIQUE NO PERFIL) ---
+            grid.addEventListener('click', (e) => {
+                // Monitora cliques em qualquer parte que leve ao perfil (Foto, Nome ou Botão)
+                if (e.target.closest('.btn-profile') || e.target.closest('.match-header-img') || e.target.closest('.match-name')) {
+                    const card = e.target.closest('.match-card');
+                    const btnFav = card.querySelector('.heart-icon');
+                    const profileId = btnFav ? btnFav.dataset.id : null;
+                    
+                    if (profileId) {
+                        fetch(`${BASE_URL}/api/public/psychologists/${profileId}/appearance`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ type: 'profile_click_funnel' })
+                        }).catch(() => {});
+                    }
+                }
+            });
+            
         }, 1500);
     }
 

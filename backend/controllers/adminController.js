@@ -2430,3 +2430,65 @@ exports.deleteFollowUp = async (req, res) => {
         res.status(500).json({ error: "Erro ao excluir." });
     }
 };
+
+/**
+ * Rota: GET /api/admin/analytics/funnel
+ * Descrição: Retorna todas as métricas do Funil End-to-End de Pacientes (UTMs, Visitas, Questionário, WhatsApp)
+ */
+exports.getFunnelAnalytics = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        let start = startDate ? new Date(startDate) : new Date(new Date().setDate(new Date().getDate() - 30));
+        let end = endDate ? new Date(endDate) : new Date();
+        start.setHours(0,0,0,0);
+        end.setHours(23,59,59,999);
+
+        // 1. Visitas Totais (Landing Pages)
+        const visitsResult = await db.sequelize.query(
+            `SELECT COUNT(*) as count FROM "LandingVisits" WHERE "createdAt" BETWEEN :start AND :end`,
+            { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => [{ count: 0 }]);
+        const visitas = parseInt(visitsResult[0]?.count || 0);
+
+        // 2. Iniciaram Questionário (Qualquer status)
+        const iniciaram = await db.DemandSearch.count({
+            where: { createdAt: { [Op.between]: [start, end] } }
+        }).catch(() => 0);
+
+        // 3. Completaram Questionário (Chegaram aos Resultados)
+        const completaram = await db.DemandSearch.count({
+            where: { status: 'completed', createdAt: { [Op.between]: [start, end] } }
+        }).catch(() => 0);
+
+        // 4. Visualizações de Perfil e 5. WhatsApp (Aproveitando as tabelas de Log existentes)
+        const profileViewsResult = await db.sequelize.query(
+            `SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "createdAt" BETWEEN :start AND :end`,
+            { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => [{ count: 0 }]);
+        const profileViews = parseInt(profileViewsResult[0]?.count || 0);
+
+        const whatsappClicksResult = await db.sequelize.query(
+            `SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "createdAt" BETWEEN :start AND :end`,
+            { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => [{ count: 0 }]);
+        const whatsappClicks = parseInt(whatsappClicksResult[0]?.count || 0);
+
+        // 6. Abandonos por Etapa (Drop-offs) - Consulta da nova tabela inteligente
+        const abandonos = await db.sequelize.query(
+            `SELECT step, COUNT(*) as count FROM "TrackingLogs" WHERE "type" = 'questionario_dropoff' AND "createdAt" BETWEEN :start AND :end GROUP BY step ORDER BY count DESC`,
+            { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => []);
+
+        // 7. Origens de Tráfego (Google, Meta, Orgânico, etc.)
+        const origens = await db.sequelize.query(
+            `SELECT utm_source as source, COUNT(*) as count FROM "LandingVisits" WHERE "createdAt" BETWEEN :start AND :end AND utm_source IS NOT NULL AND utm_source != '' GROUP BY utm_source ORDER BY count DESC`,
+            { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => []);
+
+        res.json({ visitas, iniciaram, completaram, profileViews, whatsappClicks, abandonos, origens });
+
+    } catch (error) {
+        console.error('Erro em getFunnelAnalytics:', error);
+        res.status(500).json({ error: 'Erro ao gerar dados do funil' });
+    }
+};

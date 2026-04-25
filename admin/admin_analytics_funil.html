@@ -1,84 +1,150 @@
+<style>
+    /* Estilos Específicos do Funil */
+    .funnel-stage {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 15px 20px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        margin-bottom: 10px;
+        position: relative;
+        border: 1px solid #e9ecef;
+        transition: transform 0.2s;
+    }
+    .funnel-stage:hover { transform: translateX(5px); border-color: var(--verde-escuro); }
+    .funnel-stage-info { display: flex; align-items: center; gap: 15px; z-index: 2; }
+    .funnel-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+    .funnel-stage h4 { margin: 0; font-size: 1.05rem; color: #333; }
+    .funnel-stage p { margin: 0; font-size: 0.85rem; color: #666; }
+    .funnel-metrics { text-align: right; z-index: 2; }
+    .funnel-count { font-size: 1.4rem; font-weight: 700; color: var(--verde-escuro); font-family: var(--font-titulos); display: block; line-height: 1; }
+    .funnel-rate { font-size: 0.85rem; font-weight: 600; padding: 3px 8px; border-radius: 20px; display: inline-block; margin-top: 5px; }
+    .rate-good { background: #d1fae5; color: #059669; }
+    .rate-warn { background: #fef3c7; color: #d97706; }
+    .rate-bad { background: #fee2e2; color: #dc2626; }
+    
+    /* Barra de preenchimento de fundo para dar aspecto de funil */
+    .funnel-bg-fill {
+        position: absolute; top: 0; left: 0; height: 100%;
+        background-color: rgba(27, 67, 50, 0.05);
+        border-radius: 12px; z-index: 1;
+    }
+
+    /* Caixa de Sugestões (Insights) */
+    .insights-box {
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+        border: 1px solid #fde68a;
+        border-left: 6px solid #f59e0b;
+        padding: 25px; border-radius: 16px;
+        margin-top: 25px;
+    }
+    .insights-box h3 { color: #b45309; margin-top: 0; display: flex; align-items: center; gap: 10px; }
+    .insight-item { display: flex; gap: 12px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #fcd34d; }
+    .insight-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+    .insight-icon { font-size: 1.5rem; }
+    .insight-text h5 { margin: 0 0 5px 0; color: #92400e; font-size: 1rem; }
+    .insight-text p { margin: 0; color: #b45309; font-size: 0.95rem; line-height: 1.5; }
+
+    @media (max-width: 768px) {
+        .funnel-stage { flex-direction: column; align-items: flex-start; gap: 15px; }
+        .funnel-metrics { text-align: left; display: flex; align-items: center; gap: 15px; width: 100%; justify-content: space-between; }
+    }
+</style>
+
 <div class="modern-dashboard-layout">
-    <div class="main-header" style="background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%); padding: 25px 30px; margin-bottom: 15px; border-radius: 16px;">
+    <div class="main-header" style="background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%); padding: 25px 30px; margin-bottom: 15px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
         <div>
-            <h1 style="color: white; margin: 0 0 5px 0; font-size: 1.8rem; font-family: 'New Kansas', serif;">Análise de Funil & Questionário</h1>
-            <p style="color: rgba(255,255,255,0.8); margin: 0;">Métricas de acesso, desistência e conversão dos pacientes.</p>
+            <h1 style="color: white; margin: 0 0 5px 0; font-size: 1.8rem; font-family: var(--font-titulos);">Comportamento e Funil (Pacientes)</h1>
+            <p style="color: rgba(255,255,255,0.8); margin: 0;">Rastreamento End-to-End: De onde vêm, onde desistem e como otimizar.</p>
+        </div>
+        <div class="dashboard-header-actions" style="margin: 0;">
+            <button id="btn-export-csv" class="btn-export-csv" style="display: flex; align-items: center; gap: 8px; background: white; color: var(--verde-escuro); border: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> 
+                Exportar Dados (CSV)
+            </button>
         </div>
     </div>
 
     <div class="dashboard-header-actions">
-        <div class="date-filter">
+        <div class="date-filter" style="width: 100%; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
             <input type="date" id="funil-start">
             <span>até</span>
             <input type="date" id="funil-end">
             <button id="btn-atualizar-funil" class="btn-filter" style="display: flex; align-items: center; gap: 8px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-10.09l5.67-5.67"/></svg> Atualizar
             </button>
+            </div>
         </div>
     </div>
 
     <div id="loading-funil" style="text-align: center; padding: 50px;">
         <span class="loading-spinner-sm" style="width: 30px; height: 30px; border-width: 3px;"></span>
-        <p style="margin-top: 15px; color: #666;">Buscando métricas completas...</p>
+        <p style="margin-top: 15px; color: #666;">Analisando comportamento dos pacientes...</p>
     </div>
 
     <div id="content-funil" style="display: none;">
         <!-- KPIs GERAIS -->
         <div class="kpi-grid">
             <div class="kpi-card" style="border-top-color: #3b82f6;">
-                <h4>Acessos na Página</h4>
+                <h4>Total de Visitantes</h4>
                 <p class="kpi-numero" id="kpi-visitas">0</p>
-                <span class="kpi-delta" style="color: #666;">Visualizações Totais</span>
+                <span class="kpi-delta" style="color: #666;">No período selecionado</span>
             </div>
             <div class="kpi-card" style="border-top-color: #8b5cf6;">
-                <h4>Tempo Médio</h4>
-                <p class="kpi-numero" id="kpi-tempo">0s</p>
-                <span class="kpi-delta" style="color: #666;">Por Sessão</span>
-            </div>
-            <div class="kpi-card" style="border-top-color: #f59e0b;">
-                <h4>Iniciaram o Quiz</h4>
-                <p class="kpi-numero" id="kpi-iniciaram">0</p>
-                <span class="kpi-delta" style="color: #666;" id="taxa-inicio">0% dos acessos</span>
+                <h4>Custo Médio Est. (Ads)</h4>
+                <p class="kpi-numero" id="kpi-cpa">R$ --</p>
+                <span class="kpi-delta" style="color: #666;">Por novo paciente final</span>
             </div>
             <div class="kpi-card" style="border-top-color: #10b981;">
-                <h4>Completaram (Leads)</h4>
-                <p class="kpi-numero" id="kpi-completaram">0</p>
-                <span class="kpi-delta" id="taxa-conclusao">0% de conclusão</span>
+                <h4>Pacientes Conquistados</h4>
+                <p class="kpi-numero" id="kpi-whatsapp">0</p>
+                <span class="kpi-delta" id="taxa-conclusao-final" style="color: #10b981;">0% do tráfego total</span>
+            </div>
+        </div>
+
+        <!-- FUNIL VISUAL DE ALTA CONVERSÃO -->
+        <div class="widget" style="margin-bottom: 24px;">
+            <h3>Jornada do Paciente (Funil End-to-End)</h3>
+            <p style="color: #666; font-size: 0.9rem; margin-top: -15px; margin-bottom: 20px;">Acompanhe a retenção em cada etapa. Entenda onde estamos perdendo dinheiro de anúncios.</p>
+            
+            <div id="funnel-visual-container" style="display: flex; flex-direction: column;">
+                <!-- Injetado via JS -->
+            </div>
+        </div>
+
+        <!-- CAIXA DE INSIGHTS E SUGESTÕES DA YELO -->
+        <div class="insights-box">
+            <h3>💡 Diagnóstico e Otimizações Recomendadas</h3>
+            <div id="ai-insights-list">
+                <!-- Injetado via JS dependendo das porcentagens -->
             </div>
         </div>
 
         <div class="modern-dashboard-grid" style="grid-template-columns: 2fr 1fr;">
             <!-- DESISTÊNCIAS POR PERGUNTA -->
             <div class="widget">
-                <h3>Onde as pessoas desistem?</h3>
-                <p style="color: #666; font-size: 0.9rem; margin-top: -15px; margin-bottom: 20px;">Ranking das perguntas onde os usuários fecham a página antes de concluir.</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <h3 style="margin: 0;">Onde eles desistem? (Drop-offs)</h3>
+                    <span style="font-size: 0.8rem; background: #fee2e2; color: #dc2626; padding: 4px 10px; border-radius: 20px; font-weight: bold;">Atenção Redobrada</span>
+                </div>
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Ranking das perguntas do questionário onde os usuários fecham a página.</p>
                 
                 <div id="lista-abandonos" style="display: flex; flex-direction: column; gap: 15px;">
                     <!-- Barras injetadas via JS -->
                 </div>
             </div>
 
-            <!-- CONVERSÕES E ORIGENS -->
+            <!-- ORIGENS DE TRÁFEGO -->
             <div style="display: flex; flex-direction: column; gap: 24px;">
-                <!-- Pós-Questionário -->
-                <div class="widget" style="background-color: #f0fdf4; border: 1px solid #bbf7d0;">
-                    <h3 style="color: #166534; font-size: 1.3rem;">Pós-Questionário</h3>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; border-bottom: 1px dashed #bbf7d0; padding-bottom: 15px;">
-                        <span style="color: #155724; font-weight: 500;">Perfis Abertos</span>
-                        <span style="font-size: 1.8rem; font-weight: bold; color: #14532d;" id="kpi-perfis">0</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-                        <span style="color: #155724; font-weight: 500;">Cliques WhatsApp</span>
-                        <span style="font-size: 1.8rem; font-weight: bold; color: #14532d;" id="kpi-whatsapp">0</span>
-                    </div>
-                </div>
-
-                <!-- UTM Sources -->
                 <div class="widget">
-                    <h3 style="font-size: 1.3rem;">Origem de Tráfego</h3>
-                    <ul id="lista-origens" class="lista-acoes" style="margin-top: 15px;">
-                        <!-- Origens injetadas via JS -->
-                    </ul>
+                    <h3 style="font-size: 1.3rem; margin-bottom: 5px;">Canais de Aquisição</h3>
+                    <p style="color: #666; font-size: 0.85rem; margin-bottom: 20px;">De onde vêm os pacientes?</p>
+                    
+                    <div id="traffic-channels" style="display: flex; flex-direction: column; gap: 15px;">
+                        <!-- Injetado via JS -->
+                    </div>
                 </div>
             </div>
         </div>
