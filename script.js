@@ -157,6 +157,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.aviso-crise a, .aviso-texto a').forEach(link => {
         link.setAttribute('href', '/ajuda');
     });
+
+    // --- CORREÇÃO GLOBAL: LINKS LEGAIS DO RODAPÉ ---
+    // Remove a extensão .html dos links de termos e privacidade visualmente
+    document.querySelectorAll('a[href$=".html"]').forEach(link => {
+        const href = link.getAttribute('href');
+        if (href && (href.includes('termos') || href.includes('privacidade'))) {
+            link.setAttribute('href', href.replace('.html', ''));
+        }
+    });
 });
 
 // --- FUNÇÃO PARA GERENCIAR ESTADO DE LOGIN NO HEADER ---
