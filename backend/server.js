@@ -675,9 +675,10 @@ app.get('/api/admin/stats/pwa', async (req, res) => {
  // COMENTE TUDO ISTO AQUI PARA NINGUÉM ACESSAR:
 
 // Bloqueio global para as rotas de correção em produção
-if (process.env.NODE_ENV === 'production') {
-    app.use([/^\/api\/fix-.*/, /^\/fix-.*/], (req, res) => res.status(403).json({ error: 'Rotas de manutenção desativadas em produção.' }));
-}
+// [DESATIVADO TEMPORARIAMENTE PARA DEBUG]
+// if (process.env.NODE_ENV === 'production') {
+//     app.use([/^\/api\/fix-.*/, /^\/fix-.*/], (req, res) => res.status(403).json({ error: 'Rotas de manutenção desativadas em produção.' }));
+// }
 
 app.get('/api/fix-activate-psis', async (req, res) => { /* ... */ });
 
@@ -686,6 +687,31 @@ app.get('/fix-db-columns', async (req, res) => { /* ... */ });
 app.get('/api/fix-vip-all', async (req, res) => { /* ... */ });
 
 app.get('/api/fix-reset-payment', async (req, res) => { /* ... */ });
+
+// --- ROTA DE DIAGNÓSTICO PROFUNDO (DEBUG) ---
+app.get('/api/debug-juliana', async (req, res) => {
+    try {
+        const email = req.query.email || 'psijulianachumbo@gmail.com';
+        const psy = await db.Psychologist.findOne({ where: { email } });
+        if (!psy) return res.json({ error: 'Conta não encontrada no banco.' });
+        
+        const agora = new Date();
+        const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
+        const validade = psy.planExpiresAt ? new Date(psy.planExpiresAt) : null;
+        const daysSinceCreation = (agora - new Date(psy.createdAt)) / (1000 * 60 * 60 * 24);
+        
+        let motivo = "NÃO DEVERIA APARECER";
+        if (isVip) motivo = "PASSOU PORQUE É VIP (is_exempt = true)";
+        else if (psy.status === 'pending' && daysSinceCreation <= 14) motivo = "PASSOU PORQUE ESTÁ NO TRIAL (pending <= 14 dias)";
+        else if (validade && validade > agora) motivo = "PASSOU PORQUE A DATA DE VENCIMENTO ESTÁ NO FUTURO";
+        
+        res.json({
+            DADOS_DO_BANCO: { email: psy.email, status: psy.status, is_exempt: psy.is_exempt, planExpiresAt: psy.planExpiresAt, createdAt: psy.createdAt, stripeSubscriptionId: psy.stripeSubscriptionId, plano: psy.plano },
+            LEITURA_DO_SISTEMA: { considerado_vip: isVip, dias_desde_criacao: daysSinceCreation, vencimento_maior_que_hoje: validade && validade > agora },
+            CONCLUSAO: motivo
+        });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
 // --- ROTA DE LIMPEZA: APAGA PERMANENTEMENTE OS SOFT DELETES ---
 app.get('/api/fix-clean-soft-deleted', async (req, res) => {
@@ -3638,6 +3664,12 @@ const startServer = async () => {
                 UPDATE "Psychologists" SET status = 'inactive'
                 WHERE "planExpiresAt" <= NOW()
                 AND ("is_exempt" IS NULL OR "is_exempt" = false) AND status = 'active';
+            `);
+            // 4. Remove VIP Fantasma (Contas que ganharam VIP por bug antigo e não têm plano VIP associado)
+            await db.sequelize.query(`
+                UPDATE "Psychologists" SET "is_exempt" = false, status = 'inactive'
+                WHERE "is_exempt" = true 
+                AND ("plano" IS NULL OR "plano" = '');
             `);
             console.log('✅ [BLINDAGEM] Inadimplentes e Falsos VIPs limpos da base com sucesso.');
         } catch (e) { console.error('⚠️ [BLINDAGEM] Erro ao limpar base:', e.message); }
