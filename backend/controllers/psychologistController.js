@@ -308,6 +308,16 @@ exports.loginPsychologist = async (req, res) => {
             redirectUrl = '/admin/admin.html';
         }
 
+        // [LOG DE SUCESSO PARA RASTREAMENTO NO DASHBOARD]
+        try {
+            if (db.SystemLog && userType !== 'admin') {
+                await db.SystemLog.create({
+                    level: 'info',
+                    message: `Login de Psicólogo bem-sucedido: ${email}`
+                });
+            }
+        } catch(e) {}
+
         const token = generateToken(psychologist.id, userType);
 
         // --- GAMIFICATION: LOGIN DIÁRIO (1 pt) ---

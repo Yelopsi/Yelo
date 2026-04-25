@@ -213,6 +213,16 @@ exports.loginPatient = async (req, res) => {
                 accountRestored = true;
             }
 
+            // [LOG DE SUCESSO PARA RASTREAMENTO NO DASHBOARD]
+            try {
+                if (db.SystemLog) {
+                    await db.SystemLog.create({
+                        level: 'info',
+                        message: `Login de Paciente bem-sucedido: ${email}`
+                    });
+                }
+            } catch(e) {}
+
             const token = generateToken(patient.id);
             
             // --- MIGRAÇÃO GRADUAL: Definindo Cookie HttpOnly ---
