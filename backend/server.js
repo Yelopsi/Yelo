@@ -3373,6 +3373,11 @@ app.get('/patient/patient_dashboard', (req, res) => {
 app.get('/:slug', (req, res, next) => {
     const slug = req.params.slug; // Removemos o replace aqui para verificar a extensão primeiro
     
+    // --- CORREÇÃO SEO: Redirecionamento de .html para URL limpa ---
+    if (slug.endsWith('.html')) {
+        return res.redirect(301, '/' + slug.replace('.html', ''));
+    }
+    
     // 1. PROTEÇÃO DE ARQUIVOS (NOVO): 
     // Se o link tiver um ponto (ex: script.js, estilo.css, imagem.png), 
     // o servidor entende que NÃO é um perfil de usuário e deixa passar para o download.
