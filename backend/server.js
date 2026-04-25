@@ -901,8 +901,14 @@ app.get('/api/run-inadimplentes', async (req, res) => {
                                 await psi.update({ status: 'inactive', planExpiresAt: new Date(0) });
                                 acao = '<span style="color:red; font-weight:bold;">Revogado (Fatura Vencida)</span>';
                             } else if (!hasPaid) {
-                                await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0), stripeSubscriptionId: null });
-                                acao = '<span style="color:red; font-weight:bold;">Revogado (Nenhum pagamento)</span>';
+                                // Verifica se está no período de Trial (planExpiresAt no futuro)
+                                const isTrial = psi.planExpiresAt && new Date(psi.planExpiresAt) > new Date();
+                                if (isTrial) {
+                                    acao = '<span style="color:blue; font-weight:bold;">Mantido (Trial / Aguardando 1ª Cobrança)</span>';
+                                } else {
+                                    await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0), stripeSubscriptionId: null });
+                                    acao = '<span style="color:red; font-weight:bold;">Revogado (Nenhum pagamento e Trial Expirado)</span>';
+                                }
                             } else {
                                 // Se pagou mas estava pending (erro antigo de sincronia), já corrige pra active
                                 if (psi.status !== 'active') {
@@ -974,6 +980,8 @@ app.get('/api/fix-extend-plan', async (req, res) => {
     try {
         const email = req.query.email;
         const dias = parseInt(req.query.dias) || 30; // Padrão: 30 dias a partir de hoje
+        const subId = req.query.subId; // Opcional
+        const plano = req.query.plano || 'ESSENTIAL';
 
         if (!email) return res.status(400).send("Informe o email na URL: ?email=psicologa@email.com&dias=30");
 
@@ -984,7 +992,10 @@ app.get('/api/fix-extend-plan', async (req, res) => {
         const novaData = new Date();
         novaData.setDate(novaData.getDate() + dias);
 
-        await psychologist.update({ planExpiresAt: novaData, status: 'active' });
+        const updateData = { planExpiresAt: novaData, status: 'active', plano };
+        if (subId) updateData.stripeSubscriptionId = subId;
+
+        await psychologist.update(updateData);
         
         res.send(`✅ Sucesso! Assinatura de ${email} estendida para ${novaData.toLocaleDateString('pt-BR')}.`);
     } catch (error) {
