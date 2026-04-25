@@ -262,6 +262,36 @@ document.addEventListener('DOMContentLoaded', () => {
         
         updateProgressBar(); 
         
+        // --- RASTREAMENTO DE FUNIL E DESISTÊNCIAS (Google e Meta) ---
+        const currentQuestion = questions[currentStep];
+        if (currentQuestion) {
+            // 1. Envia o passo atual para o Google Analytics (GA4/Ads)
+            if (typeof gtag === 'function') {
+                gtag('event', 'passo_questionario', {
+                    'step_number': currentStep,
+                    'step_name': currentQuestion.id
+                });
+            }
+            // 2. Envia o passo atual para o Facebook/Meta Pixel
+            if (typeof fbq === 'function') {
+                fbq('trackCustom', 'PassoQuestionario', { passo: currentStep, nome_pergunta: currentQuestion.id });
+            }
+            
+            // 3. Envia o passo atual para o Banco de Dados da Yelo (Painel Admin)
+            if (currentSearchId) {
+                const globalUtms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{}');
+                fetch(`${BASE_URL}/api/tracking/questionario-step`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        searchId: currentSearchId, 
+                        step: currentQuestion.id,
+                        utms: globalUtms
+                    })
+                }).catch(() => {});
+            }
+        }
+
         // --- PROTEÇÃO OFFLINE (IMask) ---
         // Só tenta criar máscaras se a biblioteca IMask tiver carregado
         if (typeof IMask !== 'undefined') {
