@@ -3,6 +3,17 @@
 window.initializePage = function() {
     const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
 
+    // Inicializa as datas de filtro (últimos 30 dias por padrão)
+    const startInput = document.getElementById('funil-start');
+    const endInput = document.getElementById('funil-end');
+    if (startInput && endInput && !startInput.value) {
+        const today = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+        startInput.value = thirtyDaysAgo.toISOString().split('T')[0];
+        endInput.value = today.toISOString().split('T')[0];
+    }
+
     async function carregarDadosFunil() {
         const loadingEl = document.getElementById('loading-funil');
         const contentEl = document.getElementById('content-funil');
@@ -19,7 +30,11 @@ window.initializePage = function() {
         try {
             const token = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : localStorage.getItem('Yelo_token');
             
-            const res = await fetch(`${API_BASE_URL}/api/admin/analytics/funnel`, {
+            const queryParams = new URLSearchParams();
+            if (startInput && startInput.value) queryParams.append('startDate', startInput.value);
+            if (endInput && endInput.value) queryParams.append('endDate', endInput.value);
+
+            const res = await fetch(`${API_BASE_URL}/api/admin/analytics/funnel?${queryParams.toString()}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -97,7 +112,7 @@ window.initializePage = function() {
         } finally {
             if(btnAtualizar) {
                 btnAtualizar.disabled = false;
-                btnAtualizar.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-10.09l5.67-5.67"/></svg> Atualizar Dados`;
+                btnAtualizar.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-10.09l5.67-5.67"/></svg> Atualizar`;
             }
         }
     }

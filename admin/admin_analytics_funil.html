@@ -7,10 +7,14 @@
     </div>
 
     <div class="dashboard-header-actions">
-        <button id="btn-atualizar-funil" class="btn-tabela" style="display: flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 50px; border: 1px solid var(--cinza-borda); background: var(--branco-puro); cursor: pointer; color: var(--verde-escuro); font-weight: 600;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-10.09l5.67-5.67"/></svg>
-            Atualizar Dados
-        </button>
+        <div class="date-filter">
+            <input type="date" id="funil-start">
+            <span>até</span>
+            <input type="date" id="funil-end">
+            <button id="btn-atualizar-funil" class="btn-filter" style="display: flex; align-items: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-10.09l5.67-5.67"/></svg> Atualizar
+            </button>
+        </div>
     </div>
 
     <div id="loading-funil" style="text-align: center; padding: 50px;">
