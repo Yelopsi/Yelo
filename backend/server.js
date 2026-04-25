@@ -675,28 +675,33 @@ app.get('/api/admin/analytics/funnel', async (req, res) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         if (decoded.role !== 'admin' && decoded.type !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
 
-        // 1. Visitas e Tempo Médio
-        const visitas = await db.sequelize.query(`SELECT COUNT(*) as count FROM "SiteVisits" WHERE url ILIKE '%questionario%'`, {type: db.sequelize.QueryTypes.SELECT});
-        const tempo = await db.sequelize.query(`SELECT AVG("durationInSeconds") as avg_time FROM "AnonymousSessions" WHERE "durationInSeconds" < 3600`, {type: db.sequelize.QueryTypes.SELECT});
+        // Variáveis seguras com valor inicial zero
+        let visitas = [{ count: 0 }], tempo = [{ avg_time: 0 }], funil = [{ iniciaram: 0, completaram: 0 }];
+        let abandonos = [], origens = [], profileViews = [{ count: 0 }], whatsappClicks = [{ count: 0 }];
+
+        // Consultas isoladas para que a falha de uma não derrube o relatório todo
+        try { visitas = await db.sequelize.query(`SELECT COUNT(*) as count FROM "SiteVisits" WHERE url ILIKE '%questionario%'`, {type: db.sequelize.QueryTypes.SELECT}); } catch(e) { console.error("Aviso Visitas:", e.message); }
         
-        // 2. Funil Principal
-        const funil = await db.sequelize.query(`
-            SELECT COUNT(*) as iniciaram, SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completaram
-            FROM "DemandSearches"
-        `, {type: db.sequelize.QueryTypes.SELECT});
+        try { tempo = await db.sequelize.query(`SELECT AVG("durationInSeconds") as avg_time FROM "AnonymousSessions" WHERE "durationInSeconds" < 3600`, {type: db.sequelize.QueryTypes.SELECT}); } catch(e) { console.error("Aviso Tempo:", e.message); }
+        
+        try { funil = await db.sequelize.query(`SELECT COUNT(*) as iniciaram, SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completaram FROM "DemandSearches"`, {type: db.sequelize.QueryTypes.SELECT}); } catch(e) { console.error("Aviso Funil:", e.message); }
 
-        // 3. Onde as pessoas param (Desistências)
-        const abandonos = await db.sequelize.query(`
-            SELECT "searchParams"->>'lastStep' as step, COUNT(*) as count 
-            FROM "DemandSearches" 
-            WHERE status = 'started' AND "searchParams"->>'lastStep' IS NOT NULL
-            GROUP BY step ORDER BY count DESC
-        `, {type: db.sequelize.QueryTypes.SELECT});
+        try { 
+            abandonos = await db.sequelize.query(`
+                SELECT CAST("searchParams" AS TEXT)::JSONB->>'lastStep' as step, COUNT(*) as count 
+                FROM "DemandSearches" 
+                WHERE status = 'started' AND CAST("searchParams" AS TEXT)::JSONB->>'lastStep' IS NOT NULL
+                GROUP BY step ORDER BY count DESC
+            `, {type: db.sequelize.QueryTypes.SELECT}); 
+        } catch(e) { console.error("Aviso Abandonos:", e.message); }
 
-        // 4. Origens e Eventos Finais
-        const origens = await db.sequelize.query(`SELECT "searchParams"->>'utm_source' as source, COUNT(*) as count FROM "DemandSearches" WHERE "searchParams"->>'utm_source' IS NOT NULL AND "searchParams"->>'utm_source' != '' GROUP BY source ORDER BY count DESC LIMIT 5`, {type: db.sequelize.QueryTypes.SELECT});
-        const profileViews = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs"`, {type: db.sequelize.QueryTypes.SELECT});
-        const whatsappClicks = await db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsappClickLogs"`, {type: db.sequelize.QueryTypes.SELECT});
+        try { 
+            origens = await db.sequelize.query(`SELECT CAST("searchParams" AS TEXT)::JSONB->>'utm_source' as source, COUNT(*) as count FROM "DemandSearches" WHERE CAST("searchParams" AS TEXT)::JSONB->>'utm_source' IS NOT NULL AND CAST("searchParams" AS TEXT)::JSONB->>'utm_source' != '' GROUP BY source ORDER BY count DESC LIMIT 5`, {type: db.sequelize.QueryTypes.SELECT}); 
+        } catch(e) { console.error("Aviso Origens:", e.message); }
+        
+        try { profileViews = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs"`, {type: db.sequelize.QueryTypes.SELECT}); } catch(e) { console.error("Aviso Views:", e.message); }
+        
+        try { whatsappClicks = await db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsappClickLogs"`, {type: db.sequelize.QueryTypes.SELECT}); } catch(e) { console.error("Aviso Clicks:", e.message); }
 
         res.json({
             visitas: parseInt(visitas[0]?.count || 0),
