@@ -667,13 +667,11 @@ app.post('/api/tracking/questionario-step', async (req, res) => {
     }
 });
 
-app.get('/api/admin/analytics/funnel', async (req, res) => {
+app.get('/api/admin/analytics/funnel', verifyTokenLocal, async (req, res) => {
     try {
-        // Validação de Token Admin (mesma lógica do checkAdminToken)
-        const token = req.headers.authorization?.split(' ')[1] || req.cookies?.token;
-        if (!token) return res.status(401).json({ error: 'Não autorizado' });
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        if (decoded.role !== 'admin' && decoded.type !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
+        if (req.userDecoded.role !== 'admin' && req.userDecoded.type !== 'admin') {
+            return res.status(403).json({ error: 'Acesso negado' });
+        }
 
         // Variáveis seguras com valor inicial zero
         let visitas = [{ count: 0 }], tempo = [{ avg_time: 0 }], funil = [{ iniciaram: 0, completaram: 0 }];
@@ -720,10 +718,11 @@ app.get('/api/admin/analytics/funnel', async (req, res) => {
 });
 
 // ROTA DE ESTATÍSTICAS PWA (ADMIN) - Leitura para o Relatório
-app.get('/api/admin/stats/pwa', async (req, res) => {
+app.get('/api/admin/stats/pwa', verifyTokenLocal, async (req, res) => {
     try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) return res.status(401).json({ error: 'Não autorizado' });
+        if (req.userDecoded.role !== 'admin' && req.userDecoded.type !== 'admin') {
+            return res.status(403).json({ error: 'Acesso negado' });
+        }
         
         // Total Geral
         const [totalResult] = await db.sequelize.query(
