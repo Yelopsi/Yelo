@@ -2746,12 +2746,11 @@ app.get('/api/public/psychologists/list', async (req, res) => {
     try {
         const psis = await db.Psychologist.findAll({
             where: { 
-                status: 'active', 
-                fotoUrl: { [Op.ne]: null },
-                [Op.or]: [ { is_exempt: true }, { planExpiresAt: { [Op.gt]: new Date() } } ]
+                status: { [Op.in]: ['active', 'pending'] }, 
+                fotoUrl: { [Op.ne]: null }
             },
-            attributes: ['id', 'nome', 'fotoUrl'],
-            limit: 50,
+            attributes: ['id', 'nome', 'fotoUrl', 'status', 'createdAt', 'planExpiresAt', 'is_exempt'],
+            limit: 100,
             order: db.sequelize.random()
         });
         
@@ -2759,8 +2758,12 @@ app.get('/api/public/psychologists/list', async (req, res) => {
         const psisFiltrados = psis.filter(psy => {
             const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
             if (isVip) return true;
+            if (psy.status === 'pending') {
+                const daysSinceCreation = (agora - new Date(psy.createdAt)) / (1000 * 60 * 60 * 24);
+                return daysSinceCreation <= 14;
+            }
             return psy.planExpiresAt && new Date(psy.planExpiresAt) > agora;
-        });
+        }).slice(0, 50);
         
         res.json(psisFiltrados);
     } catch (error) {
@@ -3025,16 +3028,12 @@ app.get('/', async (req, res) => {
         // Busca até 10 psicólogos aleatórios que estejam ativos e tenham foto
         const psicologos = await db.Psychologist.findAll({
             where: {
-                status: 'active',
-                fotoUrl: { [Op.ne]: null }, // Garante que só venham perfis com foto
-                [Op.or]: [
-                    { is_exempt: true },
-                    { planExpiresAt: { [Op.gt]: new Date() } }
-                ]
+                status: { [Op.in]: ['active', 'pending'] },
+                fotoUrl: { [Op.ne]: null }
             },
             order: db.sequelize.random(), // Pega de forma aleatória
-            limit: 10, // Um pouco a mais para garantir variedade
-            attributes: ['nome', 'fotoUrl', 'slug'] // Apenas os dados necessários
+            limit: 30, // Pega mais para o filtro JS
+            attributes: ['nome', 'fotoUrl', 'slug', 'status', 'createdAt', 'planExpiresAt', 'is_exempt']
         });
 
         // --- FILTRO JS BLINDADO ---
@@ -3042,8 +3041,12 @@ app.get('/', async (req, res) => {
         const psicologosFiltrados = psicologos.filter(psy => {
             const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
             if (isVip) return true;
+            if (psy.status === 'pending') {
+                const daysSinceCreation = (agora - new Date(psy.createdAt)) / (1000 * 60 * 60 * 24);
+                return daysSinceCreation <= 14;
+            }
             return psy.planExpiresAt && new Date(psy.planExpiresAt) > agora;
-        });
+        }).slice(0, 10);
 
         // --- NOVO: Busca Média de Avaliações (Prova Social) ---
         let mediaAvaliacao = '4.9';
@@ -3240,21 +3243,24 @@ app.get('/terapia-online', async (req, res) => {
     try {
         const psicologos = await db.Psychologist.findAll({
             where: { 
-                status: 'active', 
-                fotoUrl: { [Op.ne]: null },
-                [Op.or]: [ { is_exempt: true }, { planExpiresAt: { [Op.gt]: new Date() } } ]
+                status: { [Op.in]: ['active', 'pending'] }, 
+                fotoUrl: { [Op.ne]: null }
             },
             order: db.sequelize.random(),
-            limit: 10,
-            attributes: ['nome', 'fotoUrl', 'slug']
+            limit: 30,
+            attributes: ['nome', 'fotoUrl', 'slug', 'status', 'createdAt', 'planExpiresAt', 'is_exempt']
         });
 
         const agora = new Date();
         const psicologosFiltrados = psicologos.filter(psy => {
             const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
             if (isVip) return true;
+            if (psy.status === 'pending') {
+                const daysSinceCreation = (agora - new Date(psy.createdAt)) / (1000 * 60 * 60 * 24);
+                return daysSinceCreation <= 14;
+            }
             return psy.planExpiresAt && new Date(psy.planExpiresAt) > agora;
-        });
+        }).slice(0, 10);
 
         let mediaAvaliacao = '4.9';
         let totalAvaliacoes = '150+';
@@ -3611,6 +3617,30 @@ const startServer = async () => {
         } else {
             console.log('⏩ [DB SYNC] Verificação de schema pulada (SKIP_SCHEMA_SYNC ativado).');
         }
+
+        // --- UNIVERSAL INTEGRITY FIX (Saneamento Definitivo) ---
+        console.log('🛡️ [BLINDAGEM] Aplicando regras de negócio definitivas no banco de dados...');
+        try {
+            // 1. Remove Falso VIP de quem tem assinatura Asaas (Quem paga não é VIP)
+            await db.sequelize.query(`
+                UPDATE "Psychologists" SET "is_exempt" = false 
+                WHERE ("stripeSubscriptionId" IS NOT NULL OR "subscriptionId" IS NOT NULL) 
+                AND "is_exempt" = true;
+            `);
+            // 2. Inativa quem não tem assinatura nem é VIP (limpa contas fantasmas)
+            await db.sequelize.query(`
+                UPDATE "Psychologists" SET status = 'inactive', "planExpiresAt" = '1970-01-01'
+                WHERE ("stripeSubscriptionId" IS NULL AND "subscriptionId" IS NULL)
+                AND ("is_exempt" IS NULL OR "is_exempt" = false) AND status = 'active';
+            `);
+            // 3. Inativa quem está com a data vencida e não é VIP
+            await db.sequelize.query(`
+                UPDATE "Psychologists" SET status = 'inactive'
+                WHERE "planExpiresAt" <= NOW()
+                AND ("is_exempt" IS NULL OR "is_exempt" = false) AND status = 'active';
+            `);
+            console.log('✅ [BLINDAGEM] Inadimplentes e Falsos VIPs limpos da base com sucesso.');
+        } catch (e) { console.error('⚠️ [BLINDAGEM] Erro ao limpar base:', e.message); }
 
          // --- FIX DEFINITIVO: Adiciona colunas faltantes em Patients via queryInterface ---
         const queryInterface = db.sequelize.getQueryInterface();
