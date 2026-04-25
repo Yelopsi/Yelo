@@ -2791,7 +2791,7 @@ app.get('/api/public/psychologists/list', async (req, res) => {
     try {
         const psis = await db.Psychologist.findAll({
             where: { 
-                status: { [Op.in]: ['active', 'pending'] }, 
+                status: 'active', 
                 fotoUrl: { [Op.ne]: null }
             },
             attributes: ['id', 'nome', 'fotoUrl', 'status', 'createdAt', 'planExpiresAt', 'is_exempt'],
@@ -2803,10 +2803,6 @@ app.get('/api/public/psychologists/list', async (req, res) => {
         const psisFiltrados = psis.filter(psy => {
             const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
             if (isVip) return true;
-            if (psy.status === 'pending') {
-                const daysSinceCreation = (agora - new Date(psy.createdAt)) / (1000 * 60 * 60 * 24);
-                return daysSinceCreation <= 14;
-            }
             return psy.planExpiresAt && new Date(psy.planExpiresAt) > agora;
         }).slice(0, 50);
         
@@ -3073,7 +3069,7 @@ app.get('/', async (req, res) => {
         // Busca até 10 psicólogos aleatórios que estejam ativos e tenham foto
         const psicologos = await db.Psychologist.findAll({
             where: {
-                status: { [Op.in]: ['active', 'pending'] },
+                status: 'active',
                 fotoUrl: { [Op.ne]: null }
             },
             order: db.sequelize.random(), // Pega de forma aleatória
@@ -3086,10 +3082,6 @@ app.get('/', async (req, res) => {
         const psicologosFiltrados = psicologos.filter(psy => {
             const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
             if (isVip) return true;
-            if (psy.status === 'pending') {
-                const daysSinceCreation = (agora - new Date(psy.createdAt)) / (1000 * 60 * 60 * 24);
-                return daysSinceCreation <= 14;
-            }
             return psy.planExpiresAt && new Date(psy.planExpiresAt) > agora;
         }).slice(0, 10);
 
@@ -3288,7 +3280,7 @@ app.get('/terapia-online', async (req, res) => {
     try {
         const psicologos = await db.Psychologist.findAll({
             where: { 
-                status: { [Op.in]: ['active', 'pending'] }, 
+                status: 'active', 
                 fotoUrl: { [Op.ne]: null }
             },
             order: db.sequelize.random(),
@@ -3300,10 +3292,6 @@ app.get('/terapia-online', async (req, res) => {
         const psicologosFiltrados = psicologos.filter(psy => {
             const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
             if (isVip) return true;
-            if (psy.status === 'pending') {
-                const daysSinceCreation = (agora - new Date(psy.createdAt)) / (1000 * 60 * 60 * 24);
-                return daysSinceCreation <= 14;
-            }
             return psy.planExpiresAt && new Date(psy.planExpiresAt) > agora;
         }).slice(0, 10);
 

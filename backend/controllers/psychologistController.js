@@ -448,35 +448,17 @@ async function calculateMatches(preferences) {
     // 1. Busca todos os psicólogos ativos ou no Trial
     const candidates = await db.Psychologist.findAll({
         where: { 
-            status: { [Op.in]: ['active', 'pending'] }
+            status: 'active'
         },
         attributes: { exclude: ['senha', 'resetPasswordToken'] }
     });
 
     // --- FILTRO DE BLINDAGEM JS (Garante que bugs de banco ou fuso horário não passem) ---
     const agora = new Date();
-    const TRIAL_DAYS = 14;
     const validCandidates = candidates.filter(psy => {
         const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
 
-        // --- DEBUG DA JULIANA (Visível no Terminal) ---
-        if (psy.email === 'psijulianachumbo@gmail.com') {
-            console.log("\n=== 🐛 DEBUG MATCH: JULIANA CHUMBO ===");
-            console.log(`Status: ${psy.status} | is_exempt DB: ${psy.is_exempt} -> isVip JS: ${isVip}`);
-            console.log(`planExpiresAt DB: ${psy.planExpiresAt} | Validade > Agora? ${psy.planExpiresAt && new Date(psy.planExpiresAt) > agora}`);
-            if (psy.status === 'pending') {
-                console.log(`Dias de conta: ${(agora - new Date(psy.createdAt)) / (1000 * 60 * 60 * 24)}`);
-            }
-            console.log("======================================\n");
-        }
-        // ----------------------------------------------
-
         if (isVip) return true;
-        
-        if (psy.status === 'pending') {
-            const daysSinceCreation = (agora - new Date(psy.createdAt)) / (1000 * 60 * 60 * 24);
-            return daysSinceCreation <= TRIAL_DAYS;
-        }
         
         if (!psy.planExpiresAt) return false;
         return new Date(psy.planExpiresAt) > agora;
@@ -1297,7 +1279,7 @@ exports.getShowcasePsychologists = async (req, res) => {
     try {
         const psychologists = await db.Psychologist.findAll({
             where: {
-                status: { [Op.in]: ['active', 'pending'] },
+                status: 'active',
                 fotoUrl: { [Op.ne]: null }
             },
             order: db.sequelize.random(), 
@@ -1309,11 +1291,6 @@ exports.getShowcasePsychologists = async (req, res) => {
         const validPsychologists = psychologists.filter(psy => {
             const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
             if (isVip) return true;
-            
-            if (psy.status === 'pending') {
-                const daysSinceCreation = (agora - new Date(psy.createdAt)) / (1000 * 60 * 60 * 24);
-                return daysSinceCreation <= 14;
-            }
             
             if (!psy.planExpiresAt) return false;
             return new Date(psy.planExpiresAt) > agora;
@@ -1371,36 +1348,18 @@ exports.getProfileBySlug = async (req, res) => {
     const status = psychologist.status;
     const isVip = psychologist.is_exempt === true || String(psychologist.is_exempt).toLowerCase() === 'true' || psychologist.is_exempt === 1;
 
-    // --- DEBUG DA JULIANA (Visível no Terminal) ---
-    if (psychologist.email === 'psijulianachumbo@gmail.com') {
-        console.log("\n=== 🐛 DEBUG PERFIL: JULIANA CHUMBO ===");
-        console.log(`Status: ${status} | is_exempt DB: ${psychologist.is_exempt} -> isVip JS: ${isVip}`);
-        console.log(`planExpiresAt DB: ${psychologist.planExpiresAt} | Validade > Hoje? ${validade && validade > hoje}`);
-        if (status === 'pending') {
-            console.log(`Dias de conta: ${(hoje - new Date(psychologist.createdAt)) / (1000 * 60 * 60 * 24)}`);
-        }
-        console.log("=======================================\n");
-    }
-    // ----------------------------------------------
-
     // Log para você saber a saúde do perfil
         console.log(`🔎 Status: ${status} | VIP: ${isVip ? 'Sim' : 'Não'} | Validade: ${validade ? validade.toLocaleDateString() : 'NENHUMA'}`);
 
     // BLOQUEIO ATIVADO: Inadimplentes e inativos não podem ser acessados publicamente
     if (!isVip) {
-        if (status === 'pending') {
-            const diasTrial = (hoje - new Date(psychologist.createdAt)) / (1000 * 60 * 60 * 24);
-            if (diasTrial > 14) {
-                console.log(`🚫 [BLOQUEIO] Trial vencido. Ocultando perfil.`);
-                return res.status(404).json({ error: 'Perfil indisponível (Trial expirado).' });
-            }
-        } else if (!validade || validade <= hoje) {
+        if (!validade || validade <= hoje) {
             console.log(`🚫 [BLOQUEIO] Pagamento vencido. Ocultando perfil.`);
             return res.status(404).json({ error: 'Perfil indisponível (Assinatura inativa).' });
         }
     }
     
-    if (status !== 'active' && status !== 'pending') {
+    if (status !== 'active') {
         console.log(`🚫 [BLOQUEIO] Status inválido (${status}).`);
         return res.status(404).json({ error: 'Perfil indisponível no momento.' });
     }
@@ -1461,15 +1420,12 @@ exports.getPsychologistProfile = async (req, res) => {
         const validade = psychologist.planExpiresAt ? new Date(psychologist.planExpiresAt) : null;
         
         if (!isVip) {
-            if (psychologist.status === 'pending') {
-                const diasTrial = (hoje - new Date(psychologist.createdAt)) / (1000 * 60 * 60 * 24);
-                if (diasTrial > 14) return res.status(404).json({ error: 'Perfil indisponível (Trial expirado).' });
-            } else if (!validade || validade <= hoje) {
+            if (!validade || validade <= hoje) {
                 return res.status(404).json({ error: 'Perfil indisponível (Assinatura inativa).' });
             }
         }
         
-        if (psychologist.status !== 'active' && psychologist.status !== 'pending') {
+        if (psychologist.status !== 'active') {
             return res.status(404).json({ error: 'Perfil indisponível no momento.' });
         }
 
