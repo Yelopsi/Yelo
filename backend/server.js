@@ -234,6 +234,7 @@ const blogRoutes = require('./routes/blogRoutes');
 const newsletterRoutes = require('./routes/newsletterRoutes'); // <-- ADICIONADO
 const forumRoutes = require('./routes/forumRoutes'); // <--- ADICIONADO
 const authRoutes = require('./routes/authRoutes');
+const trackingRoutes = require('./routes/trackingRoutes');
 
 // Controllers
 const demandController = require('./controllers/demandController');
@@ -643,89 +644,7 @@ app.post('/api/tracking/uso-feature', verifyTokenLocal, async (req, res) => {
 // =============================================================
 // ROTA DE ANÁLISE DE FUNIL E QUESTIONÁRIO (ADMIN)
 // =============================================================
-app.post('/api/tracking/questionario-step', async (req, res) => {
-    try {
-        const { searchId, step, utms } = req.body;
-        if (searchId) {
-            const search = await db.DemandSearch.findByPk(searchId);
-            if (search) {
-                const currentParams = search.searchParams || {};
-                currentParams.lastStep = step;
-                if (utms && Object.keys(utms).length > 0) {
-                    currentParams.utm_source = utms.utm_source;
-                    currentParams.utm_medium = utms.utm_medium;
-                    currentParams.utm_campaign = utms.utm_campaign;
-                }
-                search.searchParams = currentParams;
-                search.changed('searchParams', true); // Força a atualização do JSONB
-                await search.save();
-            }
-        }
-        res.status(200).send('OK');
-    } catch (e) {
-        res.status(500).send('Erro');
-    }
-});
-
-app.get('/api/admin/analytics/funnel', verifyTokenLocal, async (req, res) => {
-    try {
-        if (req.userDecoded.role !== 'admin' && req.userDecoded.type !== 'admin') {
-            return res.status(403).json({ error: 'Acesso negado' });
-        }
-
-        // Variáveis seguras com valor inicial zero
-        let visitas = [{ count: 0 }], tempo = [{ avg_time: 0 }], funil = [{ iniciaram: 0, completaram: 0 }];
-        let abandonos = [], origens = [], profileViews = [{ count: 0 }], whatsappClicks = [{ count: 0 }];
-
-        // Filtro de Datas
-        let dateFilter = '';
-        let replacements = {};
-        if (req.query.startDate && req.query.endDate) {
-            dateFilter = ' AND "createdAt" >= :startDate AND "createdAt" <= :endDate';
-            replacements.startDate = req.query.startDate + ' 00:00:00';
-            replacements.endDate = req.query.endDate + ' 23:59:59';
-        }
-        const qOpts = { type: db.sequelize.QueryTypes.SELECT, replacements };
-
-        // Consultas isoladas para que a falha de uma não derrube o relatório todo
-        try { visitas = await db.sequelize.query(`SELECT COUNT(*) as count FROM "SiteVisits" WHERE url ILIKE '%questionario%'${dateFilter}`, qOpts); } catch(e) { console.error("Aviso Visitas:", e.message); }
-        
-        try { tempo = await db.sequelize.query(`SELECT AVG("durationInSeconds") as avg_time FROM "AnonymousSessions" WHERE "durationInSeconds" < 3600${dateFilter}`, qOpts); } catch(e) { console.error("Aviso Tempo:", e.message); }
-        
-        try { funil = await db.sequelize.query(`SELECT COUNT(*) as iniciaram, SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completaram FROM "DemandSearches" WHERE 1=1${dateFilter}`, qOpts); } catch(e) { console.error("Aviso Funil:", e.message); }
-
-        try { 
-            abandonos = await db.sequelize.query(`
-                SELECT CAST("searchParams" AS TEXT)::JSONB->>'lastStep' as step, COUNT(*) as count 
-                FROM "DemandSearches" 
-                WHERE status = 'started' AND CAST("searchParams" AS TEXT)::JSONB->>'lastStep' IS NOT NULL${dateFilter}
-                GROUP BY step ORDER BY count DESC
-            `, qOpts); 
-        } catch(e) { console.error("Aviso Abandonos:", e.message); }
-
-        try { 
-            origens = await db.sequelize.query(`SELECT CAST("searchParams" AS TEXT)::JSONB->>'utm_source' as source, COUNT(*) as count FROM "DemandSearches" WHERE CAST("searchParams" AS TEXT)::JSONB->>'utm_source' IS NOT NULL AND CAST("searchParams" AS TEXT)::JSONB->>'utm_source' != ''${dateFilter} GROUP BY source ORDER BY count DESC LIMIT 5`, qOpts); 
-        } catch(e) { console.error("Aviso Origens:", e.message); }
-        
-        try { profileViews = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE 1=1${dateFilter}`, qOpts); } catch(e) { console.error("Aviso Views:", e.message); }
-        
-        try { whatsappClicks = await db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE 1=1${dateFilter}`, qOpts); } catch(e) { console.error("Aviso Clicks:", e.message); }
-
-        res.json({
-            visitas: parseInt(visitas[0]?.count || 0),
-            tempoMedio: parseInt(tempo[0]?.avg_time || 0),
-            iniciaram: parseInt(funil[0]?.iniciaram || 0),
-            completaram: parseInt(funil[0]?.completaram || 0),
-            abandonos: abandonos.map(a => ({ step: a.step, count: parseInt(a.count || 0) })),
-            origens: origens.map(o => ({ source: o.source, count: parseInt(o.count || 0) })),
-            profileViews: parseInt(profileViews[0]?.count || 0),
-            whatsappClicks: parseInt(whatsappClicks[0]?.count || 0)
-        });
-    } catch (error) {
-        console.error('Erro no Relatório de Funil:', error);
-        res.status(500).json({ error: 'Erro interno' });
-    }
-});
+app.get('/api/admin/analytics/funnel', verifyTokenLocal, adminController.getFunnelAnalytics);
 
 // ROTA DE ESTATÍSTICAS PWA (ADMIN) - Leitura para o Relatório
 app.get('/api/admin/stats/pwa', verifyTokenLocal, async (req, res) => {
@@ -2339,6 +2258,7 @@ app.delete('/api/financials/expenses/:id', verifyTokenLocal, async (req, res) =>
 
 app.use('/api/auth', authRoutes);
 app.use('/api/newsletter', newsletterRoutes); // <-- MOVIDO PARA O TOPO
+app.use('/api/tracking', trackingRoutes);
 
 // --- ROTA DE RESGATE DE IMAGENS (SOLUÇÃO DEFINITIVA) ---
 

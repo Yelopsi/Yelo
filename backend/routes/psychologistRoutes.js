@@ -26,6 +26,10 @@ router.post('/forgot-password', psychologistController.requestPasswordReset);
 // Rota para o usuário ENVIAR a nova senha com o token (PÚBLICA)
 router.post('/reset-password/:token', psychologistController.resetPassword); 
 
+// Rotas de Tracking/Analytics de Conversão (PÚBLICAS)
+router.post('/:slug/whatsapp-click', psychologistController.incrementWhatsappClick);
+router.post('/:id/appearance', psychologistController.incrementProfileAppearance);
+
 // ===============================================
 // ROTAS PROTEGIDAS (Exigem login)
 // ===============================================

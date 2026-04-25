@@ -2,6 +2,7 @@
 
 window.initializePage = function() {
     const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
+    let exportData = null; // Armazena dados globais para o CSV
 
     // Inicializa as datas de filtro (últimos 30 dias por padrão)
     const startInput = document.getElementById('funil-start');
@@ -13,6 +14,18 @@ window.initializePage = function() {
         startInput.value = thirtyDaysAgo.toISOString().split('T')[0];
         endInput.value = today.toISOString().split('T')[0];
     }
+
+    // Dicionário amigável para traduzir as "chaves" do questionário
+    const stepNames = {
+        'intro': 'Página Inicial (Introdução)',
+        'motivo': 'Motivo da Busca',
+        'abordagem': 'Estilo de Terapia',
+        'publico': 'Perfil/Público Alvo',
+        'valor': 'Faixa de Preço',
+        'identidade': 'Preferência de Profissional',
+        'nome': 'Preenchimento do Nome',
+        'contato': 'Preenchimento do Contato (Fim)'
+    };
 
     async function carregarDadosFunil() {
         const loadingEl = document.getElementById('loading-funil');
@@ -40,30 +53,58 @@ window.initializePage = function() {
 
             if (!res.ok) throw new Error("Falha ao buscar dados de funil");
             const data = await res.json();
+            exportData = data; // Salva para exportação
 
-            // 1. Popula KPIs Superiores
+            // --- 1. POPULA KPIs SUPERIORES ---
             document.getElementById('kpi-visitas').textContent = data.visitas.toLocaleString();
-            
-            const min = Math.floor(data.tempoMedio / 60);
-            const sec = Math.floor(data.tempoMedio % 60); // Math.floor adicionado para remover casas decimais
-            document.getElementById('kpi-tempo').textContent = `${min}m ${sec}s`;
-
-            document.getElementById('kpi-iniciaram').textContent = data.iniciaram.toLocaleString();
-            document.getElementById('kpi-completaram').textContent = data.completaram.toLocaleString();
-
-            // Taxas de conversão
-            const taxaInicio = data.visitas > 0 ? ((data.iniciaram / data.visitas) * 100).toFixed(1) : 0;
-            document.getElementById('taxa-inicio').textContent = `${taxaInicio}% dos acessos`;
-
-            const taxaFim = data.iniciaram > 0 ? ((data.completaram / data.iniciaram) * 100).toFixed(1) : 0;
-            document.getElementById('taxa-conclusao').textContent = `${taxaFim}% de conclusão`;
-            document.getElementById('taxa-conclusao').style.color = taxaFim > 50 ? '#10b981' : '#f59e0b';
-
-            // 2. Popula Conversão Pós-Questionário
-            document.getElementById('kpi-perfis').textContent = data.profileViews.toLocaleString();
             document.getElementById('kpi-whatsapp').textContent = data.whatsappClicks.toLocaleString();
+            
+            const taxaGlobal = data.visitas > 0 ? ((data.whatsappClicks / data.visitas) * 100).toFixed(2) : 0;
+            document.getElementById('taxa-conclusao-final').textContent = `${taxaGlobal}% do tráfego total`;
 
-            // 3. Popula Barras de Desistência (Ranking)
+            // Custo Estimado Básico (Exemplo: Assumindo CPC médio de R$ 1.50 para gerar Insight visual)
+            const cpaEstimado = data.whatsappClicks > 0 ? ((data.visitas * 1.50) / data.whatsappClicks).toFixed(2) : '--';
+            document.getElementById('kpi-cpa').textContent = cpaEstimado !== '--' ? `R$ ${cpaEstimado}` : 'R$ --';
+
+            // --- 2. RENDERIZA FUNIL VISUAL END-TO-END ---
+            const maxFunnel = data.visitas > 0 ? data.visitas : 1; // Previne divisão por zero
+            const funilHtml = [
+                { id: 'step-1', icon: '👁️', bg: '#e0f2fe', color: '#0284c7', label: '1. Acessaram o Site', value: data.visitas, parent: data.visitas, desc: 'Visualizações no Período' },
+                { id: 'step-2', icon: '🚀', bg: '#f3e8ff', color: '#7e22ce', label: '2. Iniciaram o Questionário', value: data.iniciaram, parent: data.visitas, desc: 'Clicaram em Começar' },
+                { id: 'step-3', icon: '📋', bg: '#fef3c7', color: '#d97706', label: '3. Finalizaram Questionário (Leads)', value: data.completaram, parent: data.iniciaram, desc: 'Chegaram aos Resultados' },
+                { id: 'step-4', icon: '👤', bg: '#e8f5e9', color: '#166534', label: '4. Clicaram em um Perfil', value: data.profileViews, parent: data.completaram, desc: 'Visualizaram Psicólogo' },
+                { id: 'step-5', icon: '💬', bg: '#dcfce7', color: '#15803d', label: '5. Clicaram no WhatsApp (Pacientes)', value: data.whatsappClicks, parent: data.profileViews, desc: 'Conversão Final Efetiva' }
+            ].map((step, i, arr) => {
+                const rateToParent = step.parent > 0 ? ((step.value / step.parent) * 100).toFixed(1) : 0;
+                const absoluteFill = ((step.value / maxFunnel) * 100).toFixed(1);
+                
+                let rateClass = 'rate-good';
+                if (rateToParent < 40) rateClass = 'rate-bad';
+                else if (rateToParent < 70) rateClass = 'rate-warn';
+
+                const rateHtml = i === 0 ? '' : `<span class="funnel-rate ${rateClass}">${rateToParent}% da etapa anterior</span>`;
+
+                return `
+                    <div class="funnel-stage">
+                        <div class="funnel-bg-fill" style="width: ${absoluteFill}%;"></div>
+                        <div class="funnel-stage-info">
+                            <div class="funnel-icon" style="background: ${step.bg}; color: ${step.color};">${step.icon}</div>
+                            <div>
+                                <h4>${step.label}</h4>
+                                <p>${step.desc}</p>
+                            </div>
+                        </div>
+                        <div class="funnel-metrics">
+                            <span class="funnel-count">${step.value.toLocaleString()}</span>
+                            ${rateHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('funnel-visual-container').innerHTML = funilHtml;
+
+            // --- 3. RANKING DE ABANDONO (DROP-OFFS) ---
             const containerAbandonos = document.getElementById('lista-abandonos');
             if(containerAbandonos) {
                 containerAbandonos.innerHTML = '';
@@ -71,13 +112,13 @@ window.initializePage = function() {
                     const maxAbandono = Math.max(...data.abandonos.map(a => parseInt(a.count)));
                     data.abandonos.forEach(item => {
                         const pct = ((item.count / maxAbandono) * 100).toFixed(0);
-                        const labelName = item.step ? (item.step.charAt(0).toUpperCase() + item.step.slice(1)).replace(/_/g, ' ') : 'Sessão Perdida';
+                        const labelName = stepNames[item.step] || (item.step ? (item.step.charAt(0).toUpperCase() + item.step.slice(1)).replace(/_/g, ' ') : 'Saída Imediata');
                         
                         containerAbandonos.innerHTML += `
                             <div>
                                 <div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; color: #444;">
                                     <span>${labelName}</span>
-                                    <span style="color: #E63946;">${item.count} saídas</span>
+                                    <span style="color: #E63946;">${item.count} perdas</span>
                                 </div>
                                 <div style="width: 100%; background-color: #f1f3f5; border-radius: 10px; height: 12px; overflow: hidden;">
                                     <div style="width: ${pct}%; background-color: #E63946; height: 100%; border-radius: 10px;"></div>
@@ -86,21 +127,75 @@ window.initializePage = function() {
                         `;
                     });
                 } else {
-                    containerAbandonos.innerHTML = '<p style="color: #888; text-align: center; padding: 20px;">Nenhum dado de desistência mapeado ainda.</p>';
+                    containerAbandonos.innerHTML = '<p style="color: #888; text-align: center; padding: 20px; font-style: italic;">Dados insuficientes para traçar abandonos.</p>';
                 }
             }
 
-            // 4. Popula Origens UTM
-            const containerOrigens = document.getElementById('lista-origens');
+            // --- 4. ORIGENS DE TRÁFEGO (CANAIS) ---
+            const containerOrigens = document.getElementById('traffic-channels');
             if(containerOrigens) {
-                containerOrigens.innerHTML = '';
+                // Agrupa as origens inteligentemente
+                let canais = { 'Google Ads': 0, 'Meta/Insta Ads': 0, 'Orgânico/Direto': 0, 'Outros': 0 };
+                let totalOrigens = 0;
+                
                 if (data.origens && data.origens.length > 0) {
-                    data.origens.forEach((o, index) => {
-                        containerOrigens.innerHTML += `<li><span class="acao-numero" style="background:#e0e0e0; color:#333;">${index+1}</span><span class="acao-texto" style="text-transform: capitalize;">${o.source}</span><span style="font-weight:bold; color:var(--verde-escuro);">${o.count}</span></li>`;
+                    data.origens.forEach(o => {
+                        const src = (o.source || '').toLowerCase();
+                        const count = parseInt(o.count);
+                        totalOrigens += count;
+                        
+                        if (src.includes('google')) canais['Google Ads'] += count;
+                        else if (src.includes('fb') || src.includes('facebook') || src.includes('ig') || src.includes('instagram') || src.includes('meta')) canais['Meta/Insta Ads'] += count;
+                        else if (src === 'direto' || src === 'organico' || src === '') canais['Orgânico/Direto'] += count;
+                        else canais['Outros'] += count;
                     });
+
+                    containerOrigens.innerHTML = Object.entries(canais).sort((a,b) => b[1] - a[1]).map(([nome, count]) => {
+                        if (count === 0) return '';
+                        const pct = ((count / totalOrigens) * 100).toFixed(1);
+                        return `
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f8f9fa; border-radius: 8px; border: 1px solid #eee;">
+                            <span style="font-weight: 600; color: #333;">${nome}</span>
+                            <div style="text-align: right;">
+                                <span style="font-size: 1.1rem; font-weight: bold; color: var(--verde-escuro);">${count}</span>
+                                <span style="font-size: 0.8rem; color: #888; margin-left: 5px;">(${pct}%)</span>
+                            </div>
+                        </div>`;
+                    }).join('');
                 } else {
-                    containerOrigens.innerHTML = '<li style="justify-content:center; color:#888;">Sem rastreamento UTM capturado.</li>';
+                    containerOrigens.innerHTML = '<p style="color: #888; text-align: center; padding: 20px; font-style: italic;">Sem rastreamento UTM mapeado.</p>';
                 }
+            }
+
+            // --- 5. INTELIGÊNCIA ARTIFICIAL (INSIGHTS AUTOMÁTICOS) ---
+            const insightsList = document.getElementById('ai-insights-list');
+            if (insightsList) {
+                let insightsHtml = '';
+                
+                // Top Funnel Insight (Tráfego -> Início)
+                const tInicio = data.visitas > 0 ? (data.iniciaram / data.visitas) : 0;
+                if (tInicio < 0.25) {
+                    insightsHtml += `<div class="insight-item"><div class="insight-icon">⚠️</div><div class="insight-text"><h5>Baixa adesão na Landing Page</h5><p>Menos de 25% do seu tráfego inicia o questionário. Revise o copy da sua página principal e o apelo (Call-to-Action) dos seus anúncios.</p></div></div>`;
+                } else {
+                    insightsHtml += `<div class="insight-item"><div class="insight-icon">🔥</div><div class="insight-text"><h5>Landing Page Saudável</h5><p>O engajamento inicial está ótimo! As pessoas que chegam ao site estão se interessando pela proposta.</p></div></div>`;
+                }
+
+                // Mid Funnel Insight (Início -> Fim Questionário)
+                const tFim = data.iniciaram > 0 ? (data.completaram / data.iniciaram) : 0;
+                if (tFim < 0.40) {
+                    const worstStep = (data.abandonos && data.abandonos[0]) ? (stepNames[data.abandonos[0].step] || data.abandonos[0].step) : 'no meio do formulário';
+                    insightsHtml += `<div class="insight-item"><div class="insight-icon">📉</div><div class="insight-text"><h5>Atrito no Questionário</h5><p>Muitas pessoas abandonam em: <strong>${worstStep}</strong>. Considere remover esta pergunta, torná-la opcional ou simplificar as opções de resposta.</p></div></div>`;
+                }
+
+                // Bottom Funnel Insight (Fim Questionário -> Clique WhatsApp)
+                const tWhats = data.completaram > 0 ? (data.whatsappClicks / data.completaram) : 0;
+                if (tWhats < 0.15) {
+                    insightsHtml += `<div class="insight-item"><div class="insight-icon">👀</div><div class="insight-text"><h5>Falta de Conexão Final</h5><p>Eles completam o quiz, mas não chamam o psicólogo. Pode ser que os resultados sugeridos sejam caros demais ou as fotos dos perfis não estejam transmitindo confiança.</p></div></div>`;
+                } else if (tWhats > 0.3) {
+                    insightsHtml += `<div class="insight-item"><div class="insight-icon">💸</div><div class="insight-text"><h5>Excelente Conversão Final!</h5><p>Os psicólogos recomendados estão fazendo match perfeito com o público. Escale suas campanhas no Google Ads.</p></div></div>`;
+                }
+
+                insightsList.innerHTML = insightsHtml || '<p>Sem insights críticos no momento. Tudo operando dentro do esperado.</p>';
             }
 
             if(loadingEl) loadingEl.style.display = 'none';
@@ -117,10 +212,45 @@ window.initializePage = function() {
         }
     }
 
+    // --- 6. EXPORTAÇÃO CSV ---
+    function exportarCSV() {
+        if (!exportData) return alert("Nenhum dado para exportar. Atualize a página.");
+        
+        // Constrói cabecalho CSV
+        let csvContent = "Métrica,Valor\n";
+        csvContent += `Visitantes Totais,${exportData.visitas}\n`;
+        csvContent += `Iniciaram Quiz,${exportData.iniciaram}\n`;
+        csvContent += `Completaram Quiz,${exportData.completaram}\n`;
+        csvContent += `Acessaram Perfis,${exportData.profileViews}\n`;
+        csvContent += `Clicaram WhatsApp,${exportData.whatsappClicks}\n`;
+        csvContent += `\nAbandono por Etapa,Qtd\n`;
+        
+        if (exportData.abandonos) {
+            exportData.abandonos.forEach(a => {
+                csvContent += `${stepNames[a.step] || a.step || 'Sessão Perdida'},${a.count}\n`;
+            });
+        }
+
+        // Download
+        const blob = new Blob(["\uFEFF"+csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `yelo_funil_export_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
     // Acopla o botão
     const btnAtualizar = document.getElementById('btn-atualizar-funil');
     if (btnAtualizar) {
         btnAtualizar.addEventListener('click', carregarDadosFunil);
+    }
+
+    const btnExportar = document.getElementById('btn-export-csv');
+    if (btnExportar) {
+        btnExportar.addEventListener('click', exportarCSV);
     }
 
     // Executa assim que a view injetada carregar
