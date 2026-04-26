@@ -2504,6 +2504,9 @@ exports.getFunnelAnalytics = async (req, res) => {
 // 1. Busca os leads cadastrados
 exports.getLeads = async (req, res) => {
     try {
+        // AUTO-SYNC: Garante que a tabela existe no banco de dados de produção (Render)
+        if (db.Lead) await db.Lead.sync();
+
         const { filtro } = req.query;
         let whereClause = {};
 
@@ -2514,10 +2517,10 @@ exports.getLeads = async (req, res) => {
 
             whereClause = {
                 status_funil: {
-                    [db.Sequelize.Op.in]: ['Contatado', 'Aguardando']
+                    [Op.in]: ['Contatado', 'Aguardando']
                 },
                 data_proximo_followup: {
-                    [db.Sequelize.Op.lte]: hojeFim
+                    [Op.lte]: hojeFim
                 }
             };
         } else if (filtro === 'pendentes') {
@@ -2532,13 +2535,15 @@ exports.getLeads = async (req, res) => {
         res.json(leads);
     } catch (error) {
         console.error('[Admin] Erro ao buscar leads:', error);
-        res.status(500).json({ error: 'Erro interno ao buscar leads.' });
+        res.status(500).json({ error: 'Erro interno ao buscar leads: ' + error.message });
     }
 };
 
 // 2. Atualiza o status do lead após clique no WhatsApp
 exports.registrarContatoLead = async (req, res) => {
     try {
+        if (db.Lead) await db.Lead.sync(); // Garante que a tabela existe
+
         const { id } = req.params;
         const lead = await db.Lead.findByPk(id);
 
