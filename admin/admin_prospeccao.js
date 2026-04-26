@@ -14,6 +14,54 @@ window.copysOutbound = {
 // Guarda o lead selecionado para o Modal
 window.leadAlvoAtual = null;
 
+// Injetando estilos modernos para os botões de ação (App-Like / Mobile-First)
+if (!document.getElementById('lead-actions-style')) {
+    const style = document.createElement('style');
+    style.id = 'lead-actions-style';
+    style.innerHTML = `
+        .lead-actions-wrapper {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .lead-action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            flex-shrink: 0;
+        }
+        .lead-action-btn:hover { transform: scale(1.15) translateY(-2px); }
+        
+        .lead-action-btn.btn-zap {
+            background-color: #dcfce7; color: #166534;
+            padding: 8px 16px; border-radius: 50px;
+            font-weight: 700; font-size: 0.85rem; gap: 6px;
+            box-shadow: 0 2px 5px rgba(22, 101, 52, 0.1);
+        }
+        .lead-action-btn.btn-zap:hover { background-color: #bbf7d0; box-shadow: 0 6px 12px rgba(22, 101, 52, 0.2); }
+        
+        .lead-action-btn.btn-pause { background-color: #fef3c7; color: #d97706; width: 38px; height: 38px; border-radius: 50%; box-shadow: 0 2px 5px rgba(217, 119, 6, 0.1); }
+        .lead-action-btn.btn-pause:hover { background-color: #fde68a; box-shadow: 0 6px 12px rgba(217, 119, 6, 0.2); }
+        
+        .lead-action-btn.btn-convert { background-color: #e0f2fe; color: #0369a1; width: 38px; height: 38px; border-radius: 50%; box-shadow: 0 2px 5px rgba(3, 105, 161, 0.1); }
+        .lead-action-btn.btn-convert:hover { background-color: #bae6fd; box-shadow: 0 6px 12px rgba(3, 105, 161, 0.2); }
+        
+        .lead-action-btn.btn-delete { background-color: #fee2e2; color: #b91c1c; width: 38px; height: 38px; border-radius: 50%; box-shadow: 0 2px 5px rgba(185, 28, 28, 0.1); }
+        .lead-action-btn.btn-delete:hover { background-color: #fecaca; box-shadow: 0 6px 12px rgba(185, 28, 28, 0.2); }
+        
+        @media (max-width: 1024px) {
+            .lead-actions-wrapper { justify-content: flex-end; }
+            .lead-action-btn.btn-zap { flex-grow: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
 window.allLeads = [];
 window.currentLeadPage = 1;
 const LEADS_PER_PAGE = 20;
@@ -116,6 +164,9 @@ window.renderizarLeads = function(leads) {
         let origemCurta = lead.origem_url;
         try { origemCurta = new URL(lead.origem_url).hostname; } catch(e) {}
 
+        // FIX: Evita quebra do HTML caso o nome do psicólogo contenha aspas simples (ex: D'Avila)
+        const safeNome = lead.nome ? lead.nome.replace(/'/g, "\\'").replace(/"/g, "&quot;") : 'Colega';
+
         let badgeStatus = `<span class="status status-pending">Pendente</span>`;
         if (lead.status_funil === 'Contatado') badgeStatus = `<span class="status" style="background: #e0f2fe; color: #0284c7;">Contatado</span>`;
         else if (lead.status_funil === 'Aguardando') badgeStatus = `<span class="status status-aviso">Aguardando</span>`;
@@ -145,22 +196,22 @@ window.renderizarLeads = function(leads) {
                     </a>
                 </td>
                 <td data-label="Ações">
-                    <div style="display: flex; gap: 5px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                    <div class="lead-actions-wrapper">
                         <!-- Botão Principal: Whatsapp -->
-                        <button class="btn btn-primario btn-sm" onclick="abrirModalZap('${lead.id}', '${lead.telefone}', '${lead.nome}')" title="Enviar Mensagem">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                            Zap
+                        <button class="lead-action-btn btn-zap" onclick="window.abrirModalZap('${lead.id}', '${lead.telefone}', '${safeNome}')" title="Enviar Mensagem">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                            <span>Chamar</span>
                         </button>
                         
                         <!-- Botões Rápidos de Gestão -->
-                        <button class="btn-tabela btn-tabela-aviso btn-sm" onclick="alterarStatusLead('${lead.id}', 'Aguardando')" title="Pausar / Colocar em Espera" style="padding: 6px 10px;">
-                            ⏳
+                        <button class="lead-action-btn btn-pause" onclick="window.alterarStatusLead('${lead.id}', 'Aguardando')" title="Colocar em Espera">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                         </button>
-                        <button class="btn-tabela btn-aprovar btn-sm" onclick="alterarStatusLead('${lead.id}', 'Cadastrado')" title="Marcar como Convertido" style="padding: 6px 10px;">
-                            ✅
+                        <button class="lead-action-btn btn-convert" onclick="window.alterarStatusLead('${lead.id}', 'Cadastrado')" title="Marcar como Convertido">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
                         </button>
-                        <button class="btn-tabela btn-tabela-perigo btn-sm" onclick="excluirLead('${lead.id}', '${lead.nome}')" title="Remover / Recusou" style="padding: 6px 10px;">
-                            ❌
+                        <button class="lead-action-btn btn-delete" onclick="window.excluirLead('${lead.id}', '${safeNome}')" title="Remover / Recusou">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18"></path><path d="M6 6l12 12"></path></svg>
                         </button>
                     </div>
                 </td>
@@ -171,12 +222,21 @@ window.renderizarLeads = function(leads) {
 
 window.abrirModalZap = function(id, telefone, nome) {
     window.leadAlvoAtual = { id, telefone, nome };
-    document.getElementById('modal-zap-nome').textContent = nome.split(' ')[0];
-    document.getElementById('modal-copy-whatsapp').classList.add('is-visible');
+    document.getElementById('modal-zap-nome').textContent = (nome || 'Colega').split(' ')[0];
+    
+    const modal = document.getElementById('modal-copy-whatsapp');
+    if (modal) {
+        modal.classList.add('is-visible');
+        modal.style.display = 'flex'; // Garantia para sobrepor outras classes
+    }
 };
 
 window.fecharModalZap = function() {
-    document.getElementById('modal-copy-whatsapp').classList.remove('is-visible');
+    const modal = document.getElementById('modal-copy-whatsapp');
+    if (modal) {
+        modal.classList.remove('is-visible');
+        setTimeout(() => { modal.style.display = 'none'; }, 300); // Aguarda o fade out visual
+    }
     window.leadAlvoAtual = null;
 };
 
