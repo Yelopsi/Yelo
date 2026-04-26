@@ -13,6 +13,10 @@ Por ter passado por isso, criei a *Yelo*, uma plataforma pensada para criar uma 
 
 Se fizer sentido pra você, te explico rapidamente por aqui mesmo como funciona. Pode ser?`;
 
+window.allLeads = [];
+window.currentLeadPage = 1;
+const LEADS_PER_PAGE = 20;
+
 window.carregarLeads = async function() {
     const filtroFunil = document.getElementById('filtro-funil');
     const listaLeadsBody = document.getElementById('lista-leads-body');
@@ -40,11 +44,56 @@ window.carregarLeads = async function() {
         }
         
         const leads = await response.json();
-        window.renderizarLeads(leads);
+        window.allLeads = leads;
+        window.currentLeadPage = 1;
+        window.renderizarPaginaAtual();
 
     } catch (error) {
         console.error('Erro ao carregar leads:', error);
         listaLeadsBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #E63946;">${error.message || 'Erro ao carregar leads. Tente novamente.'}</td></tr>`;
+    }
+};
+
+window.renderizarPaginaAtual = function() {
+    const start = (window.currentLeadPage - 1) * LEADS_PER_PAGE;
+    const end = start + LEADS_PER_PAGE;
+    const leadsPage = window.allLeads.slice(start, end);
+    
+    window.renderizarLeads(leadsPage);
+    window.renderizarPaginacao();
+};
+
+window.renderizarPaginacao = function() {
+    const paginationContainer = document.getElementById('leads-pagination');
+    if (!paginationContainer) return;
+
+    const totalPages = Math.ceil(window.allLeads.length / LEADS_PER_PAGE);
+    
+    if (totalPages <= 1) {
+        paginationContainer.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+    html += `<button class="pagination-btn" ${window.currentLeadPage === 1 ? 'disabled' : ''} onclick="window.mudarPaginaLeads(${window.currentLeadPage - 1})">Anterior</button>`;
+    
+    let startPage = Math.max(1, window.currentLeadPage - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+    if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+
+    for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="pagination-btn ${i === window.currentLeadPage ? 'active' : ''}" onclick="window.mudarPaginaLeads(${i})">${i}</button>`;
+    }
+
+    html += `<button class="pagination-btn" ${window.currentLeadPage === totalPages ? 'disabled' : ''} onclick="window.mudarPaginaLeads(${window.currentLeadPage + 1})">Próxima</button>`;
+    paginationContainer.innerHTML = html;
+};
+
+window.mudarPaginaLeads = function(newPage) {
+    const totalPages = Math.ceil(window.allLeads.length / LEADS_PER_PAGE);
+    if (newPage >= 1 && newPage <= totalPages) {
+        window.currentLeadPage = newPage;
+        window.renderizarPaginaAtual();
     }
 };
 
@@ -110,8 +159,14 @@ window.enviarWhatsApp = async function(id, telefoneRaw, nome) {
         if (req.ok) {
             const row = document.getElementById(`lead-row-${id}`);
             if (row && document.getElementById('filtro-funil').value === 'pendentes') {
-                row.style.opacity = '0'; row.style.transition = 'opacity 0.3s ease'; setTimeout(() => row.remove(), 300);
-            } else { window.carregarLeads(); }
+                // Remove o lead da memória e recarrega a página atual suavemente
+                window.allLeads = window.allLeads.filter(l => String(l.id) !== String(id));
+                row.style.opacity = '0'; 
+                row.style.transition = 'opacity 0.3s ease'; 
+                setTimeout(() => window.renderizarPaginaAtual(), 300);
+            } else { 
+                window.carregarLeads(); 
+            }
         }
     } catch (error) { console.error("Erro:", error); alert("Erro ao atualizar status do lead no sistema."); }
 };
