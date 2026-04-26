@@ -2336,6 +2336,24 @@ input:checked + .slider:before { transform: translateX(22px); }
     align-items: center;
     gap: 8px;
 }
+
+/* Barra de Ações Scrollable (Mobile/App-like) */
+.action-bar-scrollable {
+    display: flex;
+    align-items: center;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+    padding-bottom: 5px;
+}
+.action-bar-scrollable::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+}
+.action-bar-scrollable .btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
 .spin-anim {
     animation: spin 1s linear infinite;
 }

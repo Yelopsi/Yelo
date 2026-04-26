@@ -443,68 +443,7 @@ window.exportarLeadsCSV = function() {
     document.body.removeChild(link);
 };
 
-// --- PULL TO REFRESH (PWA / MOBILE) ---
-function setupPullToRefreshLeads() {
-    const scrollArea = document.querySelector('.dashboard-main') || document.body;
-    let startY = 0;
-    let currentY = 0;
-    let isPulling = false;
-    let ptrElement = document.getElementById('ptr-indicator-leads');
-
-    if (!ptrElement) {
-        ptrElement = document.createElement('div');
-        ptrElement.id = 'ptr-indicator-leads';
-        ptrElement.innerHTML = '<span class="loading-spinner-sm" style="border-color: rgba(27,67,50,0.2); border-top-color: var(--verde-escuro); width: 24px; height: 24px; border-width: 3px;"></span>';
-        ptrElement.style.cssText = "position: absolute; top: -60px; left: 50%; transform: translateX(-50%); z-index: 1000; transition: top 0.3s, opacity 0.3s; opacity: 0; background: white; padding: 10px; border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center;";
-        
-        const mainLayout = document.querySelector('.modern-dashboard-layout');
-        if (mainLayout) {
-            mainLayout.style.position = 'relative';
-            mainLayout.appendChild(ptrElement);
-        }
-    }
-
-    scrollArea.addEventListener('touchstart', (e) => {
-        if (scrollArea.scrollTop === 0) {
-            startY = e.touches[0].clientY;
-            isPulling = true;
-            ptrElement.style.transition = 'none'; // Segue o dedo sem delay
-        }
-    }, {passive: true});
-
-    scrollArea.addEventListener('touchmove', (e) => {
-        if (!isPulling) return;
-        currentY = e.touches[0].clientY;
-        const pullDistance = currentY - startY;
-
-        if (pullDistance > 0 && scrollArea.scrollTop === 0) {
-            if (e.cancelable) e.preventDefault(); // Previne o overscroll elástico nativo
-            
-            let move = pullDistance * 0.4; // Fator de resistência para parecer um elástico
-            if (move > 80) move = 80 + (move - 80) * 0.2; 
-            
-            ptrElement.style.top = `${move - 60}px`;
-            ptrElement.style.opacity = Math.min(1, pullDistance / 100);
-        }
-    }, {passive: false});
-
-    scrollArea.addEventListener('touchend', () => {
-        if (!isPulling) return;
-        isPulling = false;
-        ptrElement.style.transition = 'top 0.3s ease, opacity 0.3s ease';
-        
-        if (currentY - startY > 100) {
-            ptrElement.style.top = '20px'; // Fica visível carregando
-            if (window.carregarLeads) window.carregarLeads().finally(() => setTimeout(() => { ptrElement.style.top = '-60px'; ptrElement.style.opacity = '0'; }, 500));
-        } else {
-            ptrElement.style.top = '-60px';
-            ptrElement.style.opacity = '0';
-        }
-    }, {passive: true});
-}
-
 // Inicia automaticamente ao carregar
 setTimeout(() => { 
     if (document.getElementById('lista-leads-body')) window.carregarLeads(); 
-    if (window.innerWidth <= 992) setupPullToRefreshLeads(); // Ativa apenas no Mobile/PWA
 }, 100);

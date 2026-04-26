@@ -3508,6 +3508,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, { passive: true });
             }
             setupSmartScroll();
+        setupGlobalPullToRefresh();
 
             // --- NOVO: INICIA A LÓGICA DE TOOLTIPS MOBILE ---
             setupMobileBadgeTooltips();
@@ -3531,6 +3532,73 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+// --- PULL-TO-REFRESH GLOBAL (APP-LIKE MOBILE) ---
+function setupGlobalPullToRefresh() {
+    if (window.innerWidth > 992) return; // Apenas no Mobile
+    const scrollArea = document.querySelector('.dashboard-main');
+    if (!scrollArea) return;
+    
+    let startY = 0;
+    let currentY = 0;
+    let isPulling = false;
+    let ptrElement = document.getElementById('global-ptr-indicator');
+
+    if (!ptrElement) {
+        ptrElement = document.createElement('div');
+        ptrElement.id = 'global-ptr-indicator';
+        ptrElement.innerHTML = '<span class="loading-spinner-sm" style="border-color: rgba(27,67,50,0.2); border-top-color: var(--verde-escuro); width: 24px; height: 24px; border-width: 3px;"></span>';
+        ptrElement.style.cssText = "position: fixed; top: -60px; left: 50%; transform: translateX(-50%); z-index: 10000; transition: top 0.3s, opacity 0.3s; opacity: 0; background: white; padding: 10px; border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center;";
+        document.body.appendChild(ptrElement);
+    }
+
+    scrollArea.addEventListener('touchstart', (e) => {
+        if (scrollArea.scrollTop <= 0) {
+            startY = e.touches[0].clientY;
+            isPulling = true;
+            ptrElement.style.transition = 'none';
+        }
+    }, {passive: true});
+
+    scrollArea.addEventListener('touchmove', (e) => {
+        if (!isPulling) return;
+        currentY = e.touches[0].clientY;
+        const pullDistance = currentY - startY;
+
+        if (pullDistance > 0 && scrollArea.scrollTop <= 0) {
+            if (e.cancelable) e.preventDefault(); 
+            let move = pullDistance * 0.4;
+            if (move > 80) move = 80 + (move - 80) * 0.2; 
+            ptrElement.style.top = `${move - 60}px`;
+            ptrElement.style.opacity = Math.min(1, pullDistance / 100).toString();
+        } else if (pullDistance < 0) {
+            isPulling = false;
+        }
+    }, {passive: false});
+
+    scrollArea.addEventListener('touchend', () => {
+        if (!isPulling) return;
+        isPulling = false;
+        ptrElement.style.transition = 'top 0.3s ease, opacity 0.3s ease';
+        
+        if (currentY - startY > 100) {
+            ptrElement.style.top = '20px';
+            ptrElement.style.opacity = '1';
+            
+            setTimeout(() => {
+                if (currentPageUrl && typeof window.loadPage === 'function') {
+                    window.loadPage(currentPageUrl);
+                } else {
+                    window.location.reload();
+                }
+                setTimeout(() => { ptrElement.style.top = '-60px'; ptrElement.style.opacity = '0'; }, 500);
+            }, 100);
+        } else {
+            ptrElement.style.top = '-60px';
+            ptrElement.style.opacity = '0';
+        }
+    }, {passive: true});
+}
 
      // --- FUNÇÃO GLOBAL PARA TOOLTIPS DE BADGES NO MOBILE E DESKTOP ---
     function setupMobileBadgeTooltips() {
