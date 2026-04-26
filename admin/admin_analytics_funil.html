@@ -89,6 +89,15 @@
     @media (max-width: 768px) {
         .funnel-stage { flex-direction: column; align-items: flex-start; gap: 15px; }
         .funnel-metrics { text-align: left; display: flex; align-items: center; gap: 15px; width: 100%; justify-content: space-between; }
+        
+        /* Ajustes adicionais para Mobile */
+        .modern-dashboard-grid { grid-template-columns: 1fr !important; }
+        .date-filter > div { flex-direction: column; align-items: stretch !important; width: 100%; }
+        .date-filter input[type="date"], .date-filter button { width: 100%; justify-content: center; }
+        .date-filter span { text-align: center; margin: 5px 0; }
+        .main-header { flex-direction: column; align-items: flex-start !important; }
+        .main-header .dashboard-header-actions { width: 100%; margin-top: 10px; margin-left: 0 !important; }
+        .main-header .btn-export-csv { width: 100%; justify-content: center; }
     }
 </style>
 
@@ -162,7 +171,7 @@
             </div>
         </div>
 
-        <div class="modern-dashboard-grid" style="grid-template-columns: 2fr 1fr;">
+        <div class="modern-dashboard-grid">
             <!-- DESISTÊNCIAS POR PERGUNTA -->
             <div class="widget">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
