@@ -26,14 +26,17 @@ window.carregarLeads = async function() {
             }
         });
 
-        if (!response.ok) throw new Error('Falha ao buscar leads');
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Falha ao buscar leads');
+        }
         
         const leads = await response.json();
         window.renderizarLeads(leads);
 
     } catch (error) {
         console.error('Erro ao carregar leads:', error);
-        listaLeadsBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #E63946;">Erro ao carregar leads. Tente novamente.</td></tr>`;
+        listaLeadsBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #E63946;">${error.message || 'Erro ao carregar leads. Tente novamente.'}</td></tr>`;
     }
 };
 
