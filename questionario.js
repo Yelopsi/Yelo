@@ -202,10 +202,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const matchData = await matchResponse.json();
 
-        // --- DISPARO DE CONVERSÃO DO GOOGLE ADS ---
-        if (typeof gtag === 'function') {
-            gtag('event', 'conversion', {'send_to': 'AW-783735995/HeKSCMfQlIwcELu52_UC'});
-        }
+            // --- DISPARO DE CONVERSÃO DO GOOGLE ADS E GA4 ---
+            if (typeof window.gtag === 'function') {
+                console.log('[GA4 Debug] Conversão final do questionário disparada.');
+                window.gtag('event', 'conversion', {'send_to': 'AW-783735995/HeKSCMfQlIwcELu52_UC'});
+            }
 
             // Pequena pausa dramática (UX)
             await new Promise(r => setTimeout(r, 1500));
@@ -266,15 +267,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentQuestion = questions[currentStep];
         if (currentQuestion) {
             // 1. Envia o passo atual para o Google Analytics (GA4/Ads)
-            if (typeof gtag === 'function') {
-                gtag('event', 'passo_questionario', {
+            if (typeof window.gtag === 'function') {
+                console.log(`[GA4 Debug] Disparando evento 'passo_questionario' | Passo: ${currentStep} | Pergunta: ${currentQuestion.id}`);
+                window.gtag('event', 'passo_questionario', {
                     'step_number': currentStep,
                     'step_name': currentQuestion.id
                 });
+            } else {
+                console.warn('[GA4 Debug] window.gtag não está definido no momento da chamada.');
             }
             // 2. Envia o passo atual para o Facebook/Meta Pixel
-            if (typeof fbq === 'function') {
-                fbq('trackCustom', 'PassoQuestionario', { passo: currentStep, nome_pergunta: currentQuestion.id });
+            if (typeof window.fbq === 'function') {
+                window.fbq('trackCustom', 'PassoQuestionario', { passo: currentStep, nome_pergunta: currentQuestion.id });
             }
             
             // 3. Envia o passo atual para o Banco de Dados da Yelo (Painel Admin)
