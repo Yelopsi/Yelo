@@ -2608,3 +2608,36 @@ exports.excluirLead = async (req, res) => {
         res.status(500).json({ error: 'Erro ao excluir contato.' });
     }
 };
+
+// 5. Dispara o robô (Scraper) em background
+exports.runScraper = async (req, res) => {
+    try {
+        const { exec } = require('child_process');
+        const path = require('path');
+        const scriptPath = path.join(__dirname, '..', 'scripts', 'scraper.js');
+        
+        // Roda o processo desvinculado da thread HTTP principal
+        exec(`node "${scriptPath}"`, (error, stdout, stderr) => {
+            let totalSalvos = 0;
+            if (stdout) {
+                // Expressão regular para encontrar o número de leads salvos no log do robô
+                const match = stdout.match(/Total de (\d+) novos leads adicionados/);
+                if (match) totalSalvos = parseInt(match[1], 10);
+            }
+            
+            if (req.io) {
+                req.io.to('admins').emit('scraper_finished', {
+                    success: !error,
+                    total: totalSalvos,
+                    message: error ? error.message : `Robô finalizado! ${totalSalvos} novos leads capturados.`
+                });
+            }
+        });
+        
+        // Responde de imediato para não dar Timeout no Render (que cai após 60 seg)
+        res.json({ message: 'Robô ativado em segundo plano! Você será avisado quando ele terminar a busca.' });
+    } catch (error) {
+        console.error('[Admin] Erro ao iniciar scraper:', error);
+        res.status(500).json({ error: 'Erro ao iniciar robô de prospecção.' });
+    }
+};
