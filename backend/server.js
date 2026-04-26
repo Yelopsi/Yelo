@@ -646,6 +646,40 @@ app.post('/api/tracking/uso-feature', verifyTokenLocal, async (req, res) => {
 // =============================================================
 app.get('/api/admin/analytics/funnel', verifyTokenLocal, adminController.getFunnelAnalytics);
 
+// ROTA DE ACESSOS DIRETOS (HOME E TERAPIA ONLINE)
+app.get('/api/admin/analytics/visits', verifyTokenLocal, async (req, res) => {
+    try {
+        if (req.userDecoded.role !== 'admin' && req.userDecoded.type !== 'admin') {
+            return res.status(403).json({ error: 'Acesso negado' });
+        }
+        
+        const { startDate, endDate } = req.query;
+        let dateFilter = '';
+        const replacements = {};
+        
+        if (startDate) {
+            dateFilter += ' AND "createdAt" >= :startDate';
+            replacements.startDate = startDate;
+        }
+        if (endDate) {
+            dateFilter += ' AND "createdAt" <= :endDate';
+            replacements.endDate = new Date(endDate + 'T23:59:59.999Z').toISOString();
+        }
+
+        const results = await db.sequelize.query(`
+            SELECT COUNT(*) as total 
+            FROM "SiteVisits" 
+            WHERE (url = '/' OR url LIKE '/?%' OR url = '/terapia-online' OR url LIKE '/terapia-online?%')
+            ${dateFilter}
+        `, { type: db.sequelize.QueryTypes.SELECT, replacements });
+
+        res.json({ total: parseInt(results[0]?.total || 0) });
+    } catch (error) {
+        console.error("Erro ao buscar visitas:", error);
+        res.status(500).json({ error: 'Erro interno' });
+    }
+});
+
 // ROTA DE ESTATÍSTICAS PWA (ADMIN) - Leitura para o Relatório
 app.get('/api/admin/stats/pwa', verifyTokenLocal, async (req, res) => {
     try {
