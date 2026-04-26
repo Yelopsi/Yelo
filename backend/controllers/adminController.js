@@ -2492,3 +2492,76 @@ exports.getFunnelAnalytics = async (req, res) => {
         res.status(500).json({ error: 'Erro ao gerar dados do funil' });
     }
 };
+// backend/controllers/adminController.js
+// (Certifique-se de que db e Op já estão importados no topo do arquivo)
+// const { Op } = require('sequelize');
+// const db = require('../models');
+
+// ... (suas funções existentes)
+
+// --- PROSPECÇÃO DE LEADS (OUTBOUND) ---
+
+// 1. Busca os leads cadastrados
+exports.getLeads = async (req, res) => {
+    try {
+        const { filtro } = req.query;
+        let whereClause = {};
+
+        if (filtro === 'followup_hoje') {
+            // Filtra contatos cuja data de próximo follow-up seja <= hoje (ou seja, vence hoje ou está atrasado)
+            const hojeFim = new Date();
+            hojeFim.setHours(23, 59, 59, 999);
+
+            whereClause = {
+                status_funil: {
+                    [db.Sequelize.Op.in]: ['Contatado', 'Aguardando']
+                },
+                data_proximo_followup: {
+                    [db.Sequelize.Op.lte]: hojeFim
+                }
+            };
+        } else if (filtro === 'pendentes') {
+            whereClause = { status_funil: 'Pendente' };
+        }
+
+        const leads = await db.Lead.findAll({
+            where: whereClause,
+            order: [['createdAt', 'DESC']]
+        });
+
+        res.json(leads);
+    } catch (error) {
+        console.error('[Admin] Erro ao buscar leads:', error);
+        res.status(500).json({ error: 'Erro interno ao buscar leads.' });
+    }
+};
+
+// 2. Atualiza o status do lead após clique no WhatsApp
+exports.registrarContatoLead = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const lead = await db.Lead.findByPk(id);
+
+        if (!lead) {
+            return res.status(404).json({ error: 'Lead não encontrado.' });
+        }
+
+        // Calcula a data para o próximo follow-up (+3 dias)
+        const proximoFollowup = new Date();
+        proximoFollowup.setDate(proximoFollowup.getDate() + 3);
+
+        await lead.update({
+            status_funil: 'Contatado',
+            data_ultimo_contato: new Date(),
+            data_proximo_followup: proximoFollowup
+        });
+
+        res.json({ 
+            message: 'Contato registrado com sucesso!', 
+            lead 
+        });
+    } catch (error) {
+        console.error('[Admin] Erro ao registrar contato com lead:', error);
+        res.status(500).json({ error: 'Erro interno ao registrar contato.' });
+    }
+};

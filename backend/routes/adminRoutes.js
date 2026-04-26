@@ -252,6 +252,10 @@ router.put('/forum/posts/:id/pin', adminController.pinForumPost);
 // Rota para listar todos os posts do fórum para o admin (NOVO)
 router.get('/forum/posts', adminController.getAllForumPosts);
 
+// --- ROTAS DE PROSPECÇÃO DE LEADS (OUTBOUND) ---
+router.get('/leads', adminController.getLeads);
+router.put('/leads/:id/contato', adminController.registrarContatoLead);
+
 // --- ROTAS DE EDIÇÃO DA COMUNIDADE (Apenas Admin pode alterar) ---
 router.put('/community-event', adminController.updateCommunityEvent);
 router.put('/community-resources', adminController.updateCommunityResources);
