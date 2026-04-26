@@ -73,21 +73,24 @@ async function scrapeLeadsPuppeteer(url) {
                 }
                 if (telefone) telefone = telefone.replace(/\D/g, ''); 
 
-                // Encontra o card do psicólogo subindo na árvore DOM
-                let card = link.closest('div[class*="card"], div[class*="Card"], div[class*="paper"], article') || link.parentElement.parentElement.parentElement;
+                // NOVO MÉTODO INFALÍVEL DE PEGAR O NOME:
+                // Sobe na árvore DOM a partir do botão do WhatsApp nível a nível (até 10 níveis)
+                let currentElement = link;
                 let nome = 'Psicólogo(a) Prospectado(a)';
                 
-                if (card) {
-                    // Busca especificamente pela classe fornecida do PsyMeet
-                    const nameElement = card.querySelector('p[class*="name"] a, p[class*="name"], h2, h3, strong');
+                for (let i = 0; i < 10; i++) {
+                    if (!currentElement) break;
+                    
+                    const nameElement = currentElement.querySelector('p[class*="name"] a, p[class*="Name"] a, p[class*="name"], p[class*="Name"], h2, h3, strong');
+                    
                     if (nameElement && nameElement.innerText.trim().length > 0) {
-                        nome = nameElement.innerText.trim();
+                        let tempNome = nameElement.innerText.trim();
+                        if (tempNome.length < 50 && !tempNome.toLowerCase().includes('comece agora') && !tempNome.toLowerCase().includes('atendimento')) {
+                            nome = tempNome;
+                            break;
+                        }
                     }
-                }
-
-                // Proteção contra textos de botões capturados por engano
-                if (nome.length > 50 || nome.toLowerCase().includes('comece agora') || nome.toLowerCase().includes('atendimento')) {
-                    nome = 'Psicólogo(a) Prospectado(a)';
+                    currentElement = currentElement.parentElement;
                 }
 
                 if (telefone && telefone.length >= 10) {
