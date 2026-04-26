@@ -1382,6 +1382,16 @@ app.get('/api/fix-add-newsletter-table', async (req, res) => {
     }
 });
 
+// Rota para criar a tabela de Leads (Prospecção Outbound)
+app.get('/api/fix-create-leads-table', async (req, res) => {
+    try {
+        await db.Lead.sync({ alter: true });
+        res.send("✅ Sucesso! Tabela 'Leads' criada/atualizada no banco de produção.");
+    } catch (error) {
+        res.status(500).send("Erro ao criar tabela Leads: " + error.message);
+    }
+});
+
 // Rota para criar índice na tabela de posts (acelera "Meus Artigos")
 app.get('/api/fix-add-post-index', async (req, res) => {
     try {

@@ -16,10 +16,14 @@ window.carregarLeads = async function() {
         
         const filtro = filtroFunil.value;
         const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
+        const token = localStorage.getItem('Yelo_token');
         
         const response = await fetch(`${BASE_URL}/api/admin/leads?filtro=${filtro}`, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
         });
 
         if (!response.ok) throw new Error('Falha ao buscar leads');
@@ -77,7 +81,15 @@ window.enviarWhatsApp = async function(id, telefoneRaw, nome) {
         window.open(`https://wa.me/${telefoneNum}?text=${window.mensagemPadrao}`, '_blank');
 
         const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
-        const req = await fetch(`${BASE_URL}/api/admin/leads/${id}/contato`, { method: 'PUT', headers: { 'Content-Type': 'application/json' } });
+        const token = localStorage.getItem('Yelo_token');
+        
+        const req = await fetch(`${BASE_URL}/api/admin/leads/${id}/contato`, { 
+            method: 'PUT', 
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            } 
+        });
 
         if (req.ok) {
             const row = document.getElementById(`lead-row-${id}`);
