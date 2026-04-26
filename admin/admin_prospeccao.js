@@ -1,17 +1,18 @@
 // admin/admin_prospeccao.js
 
-// Mensagem padrão de prospecção
-window.mensagemPadrao = `Olá, [PRIMEIRO NOME], como vai? 🙂
+// Dicionário Inteligente de Copys
+window.copysOutbound = {
+    intro: `Olá, [PRIMEIRO NOME], como vai? 🙂\n\nMeu nome é *Anderson Costa*, também atuo como Psicólogo Clínico.\n\nVi que você faz atendimentos clínicos e fiquei curioso: como você tem sido a captação de clientes e a organização das burocracias da clínica no dia a dia?\n\nPergunto porque sei o quanto é desgastante equilibrar os atendimentos com a gestão da agenda, confirmações das sessões, a busca por novos pacientes, ter a formação em dia — coisas que a gente não aprende direito na graduação e acabam tomando tempo precioso do que mais gostamos: _clinicar_.\n\nPor ter passado por isso, criei a *Yelo*, uma plataforma pensada para criar uma *comunidade* e ajudar colegas psicólogos/as a atrair mais pacientes, organizar melhor a rotina e trocar mais experiências valiosas.\n\nSe fizer sentido pra você, te explico rapidamente por aqui mesmo como funciona. Pode ser?`,
+    
+    pitch: `Maravilha, [PRIMEIRO NOME]! \n\nBom, serei bem direto, porque eu sei que a vida é corrida. A Yelo não é uma daquelas listas genéricas de profissionais.\n\nNós construímos um Hub completo: O paciente responde a um questionário simplificado e nosso algoritmo faz o Match Inteligente direcionando-o para a sua especialidade.\n\nAlém disso, a plataforma também oferece várias ferramentas de gestão e troca de saberes 🤝\n\nAlgumas funcionalidades:\n🧠 Fórum privado para discussões\n✍️ Blog para escrever aos usuários\n❓ Espaço de dúvidas para interação com o público\n📊 Gestão financeira\n📈 Métricas de mercado\n🌐 Página pública com endereço personalizado (tipo site pessoal)\n\nE ainda estamos finalizando:\n📩 Envio de mensagens automáticas\n👥 Criação de grupos de supervisão e intervisão\n\nNa Yelo você tem total autonomia: você define seus horários, valores, edita seu perfil, usa as ferramentas de análise para se posicionar melhor no mercado, etc.\n\nDá uma olhada no nosso site. Como estamos selecionando profissionais referência para esta fase, liberei 14 dias de acesso gratuito para você testar na prática. O que acha?\n\nwww.yelopsi.com.br/profissionais`,
+    
+    followup1: `Oi, [PRIMEIRO NOME], tudo bem?\n\nConseguiu dar uma olhada no link da Yelo que te enviei recentemente?\n\nGostaria muito de ter um colega com a sua visão na nossa rede. Nossos primeiros 14 dias são totalmente sem custo justamente para você sentir como a nossa gestão e o nosso algoritmo podem te ajudar na prática, além de participar do nosso fórum de intervisão.\n\nQualquer dúvida na configuração, estou à disposição!`,
+    
+    followup2: `Olá, [PRIMEIRO NOME]!\n\nSei perfeitamente como a rotina de consultório é engolida por sessões, então não quero tomar seu tempo.\n\nEstou passando rapidinho só para deixar nosso convite em aberto. Nosso objetivo com a Yelo é eliminar o ruído burocrático para você.\nSe fizer sentido conversar depois e testar a plataforma, me dá um alô por aqui ou vem nos conhecer em www.yelopsi.com.br/profissionais\n\nBons atendimentos!`
+};
 
-Meu nome é *Anderson Costa*, também atuo como Psicólogo Clínico.
-
-Vi que você faz atendimentos clínicos e fiquei curioso: como você tem sido a captação de clientes e a organização das burocracias da clínica no dia a dia?
-
-Pergunto porque sei o quanto é desgastante equilibrar os atendimentos com a gestão da agenda, confirmações das sessões, a busca por novos pacientes, ter a formação em dia — coisas que a gente não aprende direito na graduação e acabam tomando tempo precioso do que mais gostamos: _clinicar_.
-
-Por ter passado por isso, criei a *Yelo*, uma plataforma pensada para criar uma *comunidade* e ajudar colegas psicólogos/as a atrair mais pacientes, organizar melhor a rotina e trocar mais experiências valiosas.
-
-Se fizer sentido pra você, te explico rapidamente por aqui mesmo como funciona. Pode ser?`;
+// Guarda o lead selecionado para o Modal
+window.leadAlvoAtual = null;
 
 window.allLeads = [];
 window.currentLeadPage = 1;
@@ -43,8 +44,15 @@ window.carregarLeads = async function() {
             throw new Error(errorData.error || 'Falha ao buscar leads');
         }
         
-        const leads = await response.json();
-        window.allLeads = leads;
+        const result = await response.json();
+        
+        // Atualiza os KPIs
+        document.getElementById('kpi-pendentes').textContent = result.kpis.pendentes;
+        document.getElementById('kpi-contatados').textContent = result.kpis.contatados;
+        document.getElementById('kpi-aguardando').textContent = result.kpis.aguardando;
+        document.getElementById('kpi-cadastrados').textContent = result.kpis.cadastrados;
+
+        window.allLeads = result.leads || [];
         window.currentLeadPage = 1;
         window.renderizarPaginaAtual();
 
@@ -123,26 +131,59 @@ window.renderizarLeads = function(leads) {
                     </a>
                 </td>
                 <td data-label="Ações">
-                    <button class="btn btn-primario btn-sm" onclick="enviarWhatsApp('${lead.id}', '${lead.telefone}', '${lead.nome}')" style="display: flex; align-items: center; gap: 5px; margin: 0 auto;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                        Enviar WhatsApp
-                    </button>
+                    <div style="display: flex; gap: 5px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                        <!-- Botão Principal: Whatsapp -->
+                        <button class="btn btn-primario btn-sm" onclick="abrirModalZap('${lead.id}', '${lead.telefone}', '${lead.nome}')" title="Enviar Mensagem">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                            Zap
+                        </button>
+                        
+                        <!-- Botões Rápidos de Gestão -->
+                        <button class="btn-tabela btn-tabela-aviso btn-sm" onclick="alterarStatusLead('${lead.id}', 'Aguardando')" title="Pausar / Colocar em Espera" style="padding: 6px 10px;">
+                            ⏳
+                        </button>
+                        <button class="btn-tabela btn-aprovar btn-sm" onclick="alterarStatusLead('${lead.id}', 'Cadastrado')" title="Marcar como Convertido" style="padding: 6px 10px;">
+                            ✅
+                        </button>
+                        <button class="btn-tabela btn-tabela-perigo btn-sm" onclick="excluirLead('${lead.id}', '${lead.nome}')" title="Remover / Recusou" style="padding: 6px 10px;">
+                            ❌
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
     }).join('');
 };
 
-window.enviarWhatsApp = async function(id, telefoneRaw, nome) {
+window.abrirModalZap = function(id, telefone, nome) {
+    window.leadAlvoAtual = { id, telefone, nome };
+    document.getElementById('modal-zap-nome').textContent = nome.split(' ')[0];
+    document.getElementById('modal-copy-whatsapp').classList.add('is-visible');
+};
+
+window.fecharModalZap = function() {
+    document.getElementById('modal-copy-whatsapp').classList.remove('is-visible');
+    window.leadAlvoAtual = null;
+};
+
+window.enviarWhatsAppCopy = async function(tipoCopy) {
+    if (!window.leadAlvoAtual) return;
+    
+    const { id, telefone, nome } = window.leadAlvoAtual;
+    window.fecharModalZap(); // Fecha o modal imediatamente
+
     try {
-        let telefoneNum = telefoneRaw.replace(/\D/g, '');
+        let telefoneNum = telefone.replace(/\D/g, '');
         if (telefoneNum.length === 10 || telefoneNum.length === 11) { telefoneNum = '55' + telefoneNum; }
 
         // Pega apenas o primeiro nome e evita que a variável fique "Psicólogo(a)"
         let primeiroNome = nome.trim().split(' ')[0];
         if (primeiroNome.includes('Psicólogo')) primeiroNome = 'colega';
         
-        const msgFinal = window.mensagemPadrao.replace('[PRIMEIRO NOME]', primeiroNome);
+        // Pega a copy exata selecionada e injeta o nome
+        const msgSelecionada = window.copysOutbound[tipoCopy];
+        const msgFinal = msgSelecionada.replace(/\[PRIMEIRO NOME\]/g, primeiroNome).replace(/\[Nome\]/g, primeiroNome).replace(/\[NOME\]/g, primeiroNome);
+        
         window.open(`https://wa.me/${telefoneNum}?text=${encodeURIComponent(msgFinal)}`, '_blank');
 
         const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
@@ -169,6 +210,47 @@ window.enviarWhatsApp = async function(id, telefoneRaw, nome) {
             }
         }
     } catch (error) { console.error("Erro:", error); alert("Erro ao atualizar status do lead no sistema."); }
+};
+
+// Função para Mudar o Status Manualmente (Espera / Sucesso)
+window.alterarStatusLead = async function(id, novoStatus) {
+    try {
+        const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
+        const req = await fetch(`${BASE_URL}/api/admin/leads/${id}/status`, { 
+            method: 'PUT', 
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('Yelo_token')}` },
+            body: JSON.stringify({ status: novoStatus })
+        });
+
+        if (req.ok) {
+            if (window.showToast) window.showToast(`Lead movido para: ${novoStatus}`);
+            window.carregarLeads(); // Recarrega para atualizar tabela e KPIs
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Erro ao atualizar o status do Lead.");
+    }
+};
+
+// Função para Excluir Lead (Recusa / Lixeira)
+window.excluirLead = async function(id, nome) {
+    if (!confirm(`Tem certeza que deseja excluir o lead de ${nome}?\nUse isso para casos de recusa ou dados inválidos.`)) return;
+
+    try {
+        const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
+        const req = await fetch(`${BASE_URL}/api/admin/leads/${id}`, { 
+            method: 'DELETE', 
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('Yelo_token')}` }
+        });
+
+        if (req.ok) {
+            if (window.showToast) window.showToast('Lead removido da base.', 'success');
+            window.carregarLeads(); // Recarrega para atualizar tabela e KPIs
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Erro ao excluir o Lead.");
+    }
 };
 
 window.mascaraTelefoneLeads = function(tel) {

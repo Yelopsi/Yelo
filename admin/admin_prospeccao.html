@@ -16,6 +16,26 @@
         </div>
     </div>
 
+    <!-- Dashboard de Conversão (KPIs) -->
+    <div class="kpi-grid" style="margin-bottom: 25px;">
+        <div class="kpi-card" style="border-top-color: #f59e0b;">
+            <h4>Novos Leads</h4>
+            <p class="kpi-numero" id="kpi-pendentes">--</p>
+        </div>
+        <div class="kpi-card" style="border-top-color: #0284c7;">
+            <h4>Em Negociação</h4>
+            <p class="kpi-numero" id="kpi-contatados">--</p>
+        </div>
+        <div class="kpi-card" style="border-top-color: #8b5cf6;">
+            <h4>Em Espera</h4>
+            <p class="kpi-numero" id="kpi-aguardando">--</p>
+        </div>
+        <div class="kpi-card" style="border-top-color: #10b981;">
+            <h4>Convertidos</h4>
+            <p class="kpi-numero" id="kpi-cadastrados">--</p>
+        </div>
+    </div>
+
     <div class="tabela-container">
         <div class="filtros-container">
             <select id="filtro-funil" class="filtro-select" style="max-width: 250px;" onchange="carregarLeads()">
@@ -47,5 +67,24 @@
 
         <!-- Paginação -->
         <div id="leads-pagination" class="pagination-container"></div>
+    </div>
+</div>
+
+<!-- Modal de Escolha da Mensagem de WhatsApp -->
+<div id="modal-copy-whatsapp" class="modal-overlay">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h2>Enviar Mensagem</h2>
+            <button class="modal-close" onclick="fecharModalZap()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom: 20px;">Qual roteiro deseja enviar para <strong id="modal-zap-nome"></strong>?</p>
+            <div style="display:flex; flex-direction:column; gap:12px;">
+                <button class="btn btn-secundario" style="text-align:left; height:auto; line-height:1.4; padding:15px; border-color:#e2e8f0; color:#333;" onclick="enviarWhatsAppCopy('intro')" onmouseover="this.style.backgroundColor='#f0fdf4'; this.style.borderColor='var(--verde-escuro)'" onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#e2e8f0'"><strong>1. Abordagem Inicial</strong><br><small style="color:#666;">Apresentação da Yelo e dor do consultório.</small></button>
+                <button class="btn btn-secundario" style="text-align:left; height:auto; line-height:1.4; padding:15px; border-color:#e2e8f0; color:#333;" onclick="enviarWhatsAppCopy('pitch')" onmouseover="this.style.backgroundColor='#f0fdf4'; this.style.borderColor='var(--verde-escuro)'" onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#e2e8f0'"><strong>2. Pitch / Convite</strong><br><small style="color:#666;">Explicação do Hub, ferramentas e Trial de 14 dias.</small></button>
+                <button class="btn btn-secundario" style="text-align:left; height:auto; line-height:1.4; padding:15px; border-color:#e2e8f0; color:#333;" onclick="enviarWhatsAppCopy('followup1')" onmouseover="this.style.backgroundColor='#f0fdf4'; this.style.borderColor='var(--verde-escuro)'" onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#e2e8f0'"><strong>3. Follow-up 1 (Lembrete)</strong><br><small style="color:#666;">Perguntando se conseguiu olhar a plataforma.</small></button>
+                <button class="btn btn-secundario" style="text-align:left; height:auto; line-height:1.4; padding:15px; border-color:#e2e8f0; color:#333;" onclick="enviarWhatsAppCopy('followup2')" onmouseover="this.style.backgroundColor='#f0fdf4'; this.style.borderColor='var(--verde-escuro)'" onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#e2e8f0'"><strong>4. Follow-up 2 (Despedida)</strong><br><small style="color:#666;">Mensagem rápida sem pressão, deixando portas abertas.</small></button>
+            </div>
+        </div>
     </div>
 </div>
