@@ -4,6 +4,8 @@ const cron = require('node-cron');
 const { findDemandGaps } = require('./demandMonitor');
 const { manageExpiredInvitations } = require('./invitationManager');
 const { sendPendingSubscriptionEmails } = require('./remarketingCron.js');
+const { exec } = require('child_process');
+const path = require('path');
 
 console.log('Scheduler iniciado. Aguardando tarefas agendadas...');
 
@@ -39,6 +41,27 @@ cron.schedule('0 2 * * *', () => {
 cron.schedule('0 10 * * *', () => {
     console.log('Executando tarefa agendada: sendPendingSubscriptionEmails');
     sendPendingSubscriptionEmails();
+}, {
+    scheduled: true,
+    timezone: "America/Sao_Paulo"
+});
+
+/**
+ * Tarefa 4: Bot de Prospecção Ativa (Scraper)
+ * Roda todos os dias às 4h da manhã.
+ */
+cron.schedule('0 4 * * *', () => {
+    console.log('Executando tarefa agendada: Bot de Scraping (Outbound)');
+    const scriptPath = path.join(__dirname, 'backend', 'scripts', 'scraper.js');
+    
+    // Executa o script em um processo isolado para não afetar o banco principal
+    exec(`node "${scriptPath}"`, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`[CRON SCRAPER] Erro ao executar: ${error.message}`);
+            return;
+        }
+        console.log(`[CRON SCRAPER] Concluído:\n${stdout}`);
+    });
 }, {
     scheduled: true,
     timezone: "America/Sao_Paulo"

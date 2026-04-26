@@ -219,6 +219,31 @@ if (db.Message && db.Conversation) {
     });
 }
 
+// --- HOOK GLOBAL: CONVERSÃO DE LEADS (OUTBOUND) ---
+// Se um psicólogo se cadastrar e o telefone bater com um Lead prospectado, marca como Cadastrado.
+if (db.Psychologist) {
+    db.Psychologist.addHook('afterCreate', async (psychologist, options) => {
+        try {
+            if (psychologist.telefone) {
+                const telefoneLimpo = psychologist.telefone.replace(/\D/g, '');
+                
+                // Pega os últimos 10/11 dígitos para ignorar inconsistências de digitação do DDI '55'
+                const phoneSuffix = telefoneLimpo.length > 10 && telefoneLimpo.startsWith('55') 
+                    ? telefoneLimpo.substring(2) 
+                    : telefoneLimpo;
+
+                await db.sequelize.query(
+                    `UPDATE "Leads" SET "status_funil" = 'Cadastrado', "updatedAt" = NOW() WHERE "telefone" LIKE :phone`,
+                    { replacements: { phone: `%${phoneSuffix}%` } }
+                );
+                console.log(`[OUTBOUND] Hook executado: Verificação de conversão para Lead terminando em ${phoneSuffix}`);
+            }
+        } catch (e) {
+            console.error("Erro no hook de conversão de Lead:", e.message);
+        }
+    });
+}
+
 // Importação de Rotas
 const patientRoutes = require('./routes/patientRoutes');
 const psychologistRoutes = require('./routes/psychologistRoutes');
