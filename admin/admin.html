@@ -93,16 +93,43 @@
         </div>
 
     <section id="relatorios" class="content-section" style="display: none;">
-        <div class="header-flex">
+        <div class="main-header">
+            <div>
+                <h1 style="font-size: 1.8rem; margin: 0 0 5px 0; font-family: var(--font-titulos); color: white;">Relatórios e Gráficos</h1>
+                <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 1.1rem;">Acompanhe o desempenho da plataforma no período.</p>
+            </div>
             <div class="date-filter">
                 <input type="date" id="report-start" aria-label="Data Inicial">
                 <span>até</span>
                 <input type="date" id="report-end" aria-label="Data Final">
-                <button onclick="loadReports()" class="btn-filter">Filtrar Resultados</button>
+                <button onclick="loadReports()" class="btn-filter">Filtrar</button>
             </div>
         </div>
 
         <div class="kpi-grid">
+            
+            <!-- KPIs Questionário -->
+            <div class="kpi-card" style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #2E7D32; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <div class="kpi-skeleton">
+                    <div class="skeleton-line title"></div>
+                    <div class="skeleton-line value"></div>
+                </div>
+                <div class="kpi-content" style="display: none;">
+                    <h4 style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Questionários Feitos</h4>
+                    <span id="kpi-quest-concluidos" style="font-size: 1.6rem; font-weight: bold; color: #2E7D32;">0</span>
+                </div>
+            </div>
+
+            <div class="kpi-card" style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #e74c3c; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <div class="kpi-skeleton">
+                    <div class="skeleton-line title"></div>
+                    <div class="skeleton-line value"></div>
+                </div>
+                <div class="kpi-content" style="display: none;">
+                    <h4 style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Questionários Abandonados</h4>
+                    <span id="kpi-quest-abandonados" style="font-size: 1.6rem; font-weight: bold; color: #e74c3c;">0</span>
+                </div>
+            </div>
             
             <div class="kpi-card" style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #3498db; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
                 <div class="kpi-skeleton">
