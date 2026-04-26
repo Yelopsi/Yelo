@@ -46,6 +46,46 @@
     .insight-text h5 { margin: 0 0 5px 0; color: #92400e; font-size: 1rem; }
     .insight-text p { margin: 0; color: #b45309; font-size: 0.95rem; line-height: 1.5; }
 
+    /* Tooltip de Informação (i) */
+    .info-tooltip {
+        cursor: help;
+        color: #9ca3af;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        transition: all 0.2s;
+        flex-shrink: 0;
+        position: relative;
+        font-weight: bold;
+        font-family: monospace;
+    }
+    .info-tooltip:hover { color: var(--verde-escuro); border-color: var(--verde-escuro); background-color: #f0fdf4; }
+    .info-tooltip::after {
+        content: attr(data-tooltip); position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%) translateY(5px);
+        background-color: #1f2937; color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 0.75rem;
+        width: 220px; text-align: center; opacity: 0; visibility: hidden; transition: all 0.2s ease;
+        pointer-events: none; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        font-weight: 500; line-height: 1.4; font-family: var(--font-principal); white-space: normal;
+    }
+    .info-tooltip::before {
+        content: ''; position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%) translateY(5px);
+        border: 6px solid transparent; border-top-color: #1f2937; opacity: 0; visibility: hidden;
+        transition: all 0.2s ease; z-index: 100; margin-bottom: -11px;
+    }
+    .info-tooltip:hover::after, .info-tooltip:hover::before { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+    
+    @media (max-width: 768px) {
+        .info-tooltip::after { width: 180px; left: auto; right: -10px; transform: translateY(5px); }
+        .info-tooltip::before { left: auto; right: 5px; transform: translateY(5px); }
+        .info-tooltip:hover::after, .info-tooltip:hover::before { transform: translateY(0); }
+    }
+
     @media (max-width: 768px) {
         .funnel-stage { flex-direction: column; align-items: flex-start; gap: 15px; }
         .funnel-metrics { text-align: left; display: flex; align-items: center; gap: 15px; width: 100%; justify-content: space-between; }
@@ -88,17 +128,17 @@
         <!-- KPIs GERAIS -->
         <div class="kpi-grid">
             <div class="kpi-card" style="border-top-color: #3b82f6;">
-                <h4>Total de Visitantes</h4>
+                <h4 style="display: flex; align-items: center; gap: 5px;">Total de Visitantes <span class="info-tooltip" data-tooltip="Total de pessoas que acessaram as páginas de conversão do site no período.">i</span></h4>
                 <p class="kpi-numero" id="kpi-visitas">0</p>
                 <span class="kpi-delta" style="color: #666;">No período selecionado</span>
             </div>
             <div class="kpi-card" style="border-top-color: #8b5cf6;">
-                <h4>Custo Médio Est. (Ads)</h4>
+                <h4 style="display: flex; align-items: center; gap: 5px;">Custo Médio Est. (Ads) <span class="info-tooltip" data-tooltip="Estimativa ilustrativa do custo por paciente assumindo um CPC (Custo por Clique) médio.">i</span></h4>
                 <p class="kpi-numero" id="kpi-cpa">R$ --</p>
                 <span class="kpi-delta" style="color: #666;">Por novo paciente final</span>
             </div>
             <div class="kpi-card" style="border-top-color: #10b981;">
-                <h4>Pacientes Conquistados</h4>
+                <h4 style="display: flex; align-items: center; gap: 5px;">Pacientes Conquistados <span class="info-tooltip" data-tooltip="Pacientes que completaram o quiz e clicaram para chamar um profissional no WhatsApp.">i</span></h4>
                 <p class="kpi-numero" id="kpi-whatsapp">0</p>
                 <span class="kpi-delta" id="taxa-conclusao-final" style="color: #10b981;">0% do tráfego total</span>
             </div>
@@ -106,7 +146,7 @@
 
         <!-- FUNIL VISUAL DE ALTA CONVERSÃO -->
         <div class="widget" style="margin-bottom: 24px;">
-            <h3>Jornada do Paciente (Funil End-to-End)</h3>
+            <h3 style="display: flex; align-items: center; gap: 8px;">Jornada do Paciente (Funil End-to-End) <span class="info-tooltip" data-tooltip="Mostra as 5 etapas da conversão. Acompanhe a retenção para saber onde os usuários desistem.">i</span></h3>
             <p style="color: #666; font-size: 0.9rem; margin-top: -15px; margin-bottom: 20px;">Acompanhe a retenção em cada etapa. Entenda onde estamos perdendo dinheiro de anúncios.</p>
             
             <div id="funnel-visual-container" style="display: flex; flex-direction: column;">
@@ -126,7 +166,7 @@
             <!-- DESISTÊNCIAS POR PERGUNTA -->
             <div class="widget">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                    <h3 style="margin: 0;">Onde eles desistem? (Drop-offs)</h3>
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">Onde eles desistem? <span class="info-tooltip" data-tooltip="Ranking de onde as pessoas fecham a aba do navegador antes de concluir o questionário.">i</span></h3>
                     <span style="font-size: 0.8rem; background: #fee2e2; color: #dc2626; padding: 4px 10px; border-radius: 20px; font-weight: bold;">Atenção Redobrada</span>
                 </div>
                 <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Ranking das perguntas do questionário onde os usuários fecham a página.</p>
@@ -139,7 +179,7 @@
             <!-- ORIGENS DE TRÁFEGO -->
             <div style="display: flex; flex-direction: column; gap: 24px;">
                 <div class="widget">
-                    <h3 style="font-size: 1.3rem; margin-bottom: 5px;">Canais de Aquisição</h3>
+                    <h3 style="font-size: 1.3rem; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;">Canais de Aquisição <span class="info-tooltip" data-tooltip="As origens de tráfego (UTMs) coletadas quando o usuário entrou no site.">i</span></h3>
                     <p style="color: #666; font-size: 0.85rem; margin-bottom: 20px;">De onde vêm os pacientes?</p>
                     
                     <div id="traffic-channels" style="display: flex; flex-direction: column; gap: 15px;">
