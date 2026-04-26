@@ -23,7 +23,12 @@ exports.registerVisit = async (req, res) => {
 
         await db.sequelize.query(
             `INSERT INTO "LandingVisits" (page, utm_source, utm_medium, utm_campaign) VALUES (:page, :utm_source, :utm_medium, :utm_campaign)`,
-            { replacements: { page, utm_source: utm_source || 'direto', utm_medium, utm_campaign } }
+            { replacements: { 
+                page: page || 'home', 
+                utm_source: utm_source || 'direto', 
+                utm_medium: utm_medium || null, 
+                utm_campaign: utm_campaign || null 
+            } }
         );
 
         res.status(200).json({ success: true });
@@ -62,7 +67,7 @@ exports.registerQuestionnaireStep = async (req, res) => {
             );
         }
 
-        const source = (utms && utms.source) ? utms.source : 'direto';
+        const source = (utms && utms.utm_source) ? utms.utm_source : 'direto';
 
         await db.sequelize.query(
             `INSERT INTO "TrackingLogs" ("searchId", step, type, utm_source) VALUES (:searchId, :step, 'questionario_dropoff', :utm_source)`,
