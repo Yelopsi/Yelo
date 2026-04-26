@@ -897,6 +897,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
             console.log("Dados recebidos do Relatório:", data); // <--- OLHE O CONSOLE (F12)
 
+            // --- NOVOS KPIs: Questionários ---
+            let totalConcluidos = 0;
+            let totalAbandonados = 0;
+            if (data.demand && Array.isArray(data.demand)) {
+                totalConcluidos = data.demand.reduce((acc, curr) => acc + (parseInt(curr.concluidos, 10) || 0), 0);
+                totalAbandonados = data.demand.reduce((acc, curr) => acc + (parseInt(curr.desistencias, 10) || 0), 0);
+            }
+            
+            const questConcluidosEl = document.getElementById('kpi-quest-concluidos');
+            if (questConcluidosEl) questConcluidosEl.innerText = totalConcluidos.toLocaleString('pt-BR');
+            
+            const questAbandonadosEl = document.getElementById('kpi-quest-abandonados');
+            if (questAbandonadosEl) questAbandonadosEl.innerText = totalAbandonados.toLocaleString('pt-BR');
+
             // Renderiza Gráficos
             if (typeof renderUsersChart === "function") renderUsersChart(data.users, data.visits || []);
             if (typeof renderDemandChart === "function") renderDemandChart(data.demand);
