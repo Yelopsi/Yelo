@@ -27,114 +27,101 @@ async function scrapeLeadsPuppeteer(url) {
         // Espera uns segundos a mais para garantir que os cards em React carregaram
         await new Promise(r => setTimeout(r, 5000));
 
-        let salvosTotais = 0;
-        let paginaAtual = 1;
-        const MAX_PAGINAS = 5; // Limite de páginas por madrugada para não sobrecarregar
+        let cliques = 0;
+        const MAX_CLIQUES = 5; // Quantas vezes ele vai clicar em "Ver mais!" por madrugada
 
-        while (paginaAtual <= MAX_PAGINAS) {
-            console.log(`\n[SCRAPER] --- Lendo perfis na Página ${paginaAtual} ---`);
+        console.log(`\n[SCRAPER] --- Carregando lista de profissionais... ---`);
+        while (cliques < MAX_CLIQUES) {
+            // Rola até o final para forçar o botão a aparecer
+            await page.evaluate(() => window.scrollBy(0, document.body.scrollHeight));
+            await new Promise(r => setTimeout(r, 1500));
 
-            // Rola a página para baixo em etapas para forçar o Lazy Load do React
-            for (let i = 0; i < 3; i++) {
-                await page.evaluate(() => window.scrollBy(0, document.body.scrollHeight / 3));
-                await new Promise(r => setTimeout(r, 1000));
-            }
-
-            // Injeta código no navegador alvo para buscar os botões de WhatsApp
-            const leadsEncontrados = await page.evaluate(() => {
-                const resultados = [];
-                
-                // Busca todos os links que contém "wa.me" ou "api.whatsapp.com"
-                const linksWhatsapp = document.querySelectorAll('a[href*="wa.me"], a[href*="api.whatsapp.com"]');
-
-                linksWhatsapp.forEach(link => {
-                    const urlWa = link.href;
-                    let telefone = '';
-                    
-                    // Extrai o telefone da URL do Whatsapp
-                    if (urlWa.includes('phone=')) {
-                        telefone = new URL(urlWa).searchParams.get('phone');
-                    } else {
-                        telefone = urlWa.split('/').pop().split('?')[0]; 
-                    }
-                    if (telefone) telefone = telefone.replace(/\D/g, ''); 
-
-                    // Tenta encontrar o card do psicólogo subindo na árvore DOM (Material UI usa classes como MuiPaper)
-                    const card = link.closest('div[class*="card"], div[class*="Card"], div[class*="paper"], div[class*="MuiPaper"]') || link.parentElement.parentElement.parentElement;
-                    
-                    // Procura o nome (Geralmente em h4, h5 ou h6 no Material UI)
-                    const nameElement = card ? card.querySelector('h2, h3, h4, h5, h6, p[class*="name"], strong') : null;
-                    let nome = nameElement ? nameElement.innerText.trim() : 'Psicólogo(a) Prospectado(a)';
-
-                    // Limpa textos de botões genéricos que podem ter sido pegos por engano
-                    if (nome.length > 40 || nome.toLowerCase().includes('comece agora') || nome.toLowerCase().includes('atendimento')) {
-                        nome = 'Psicólogo(a) Prospectado(a)';
-                    }
-
-                    if (telefone && telefone.length >= 10) {
-                        resultados.push({ nome, telefone });
-                    }
-                });
-
-                return resultados;
+            const clicou = await page.evaluate(() => {
+                const botoes = Array.from(document.querySelectorAll('button'));
+                const verMaisBtn = botoes.find(b => b.innerText && b.innerText.includes('Ver mais!'));
+                if (verMaisBtn && !verMaisBtn.disabled) {
+                    verMaisBtn.click();
+                    return true;
+                }
+                return false;
             });
 
-            console.log(`[SCRAPER] Encontrados ${leadsEncontrados.length} contatos nesta página.`);
-            
-            let salvosNaPagina = 0;
-            for (const lead of leadsEncontrados) {
-                const [registro, created] = await db.Lead.findOrCreate({
-                    where: { telefone: lead.telefone },
-                    defaults: {
-                        nome: lead.nome,
-                        telefone: lead.telefone,
-                        origem_url: url,
-                        status_funil: 'Pendente'
-                    }
-                });
-                
-                // Se ele já existia, mas estava sem nome, atualizamos com o nome correto
-                if (!created && registro.nome === 'Psicólogo(a) Prospectado(a)' && lead.nome !== 'Psicólogo(a) Prospectado(a)') {
-                    await registro.update({ nome: lead.nome });
-                }
-
-                if (created) {
-                    salvosNaPagina++;
-                    salvosTotais++;
-                }
-            }
-
-            console.log(`[SCRAPER] Salvos ${salvosNaPagina} novos leads da Página ${paginaAtual}.`);
-
-            // Tenta ir para a próxima página
-            if (paginaAtual < MAX_PAGINAS) {
-                console.log(`[SCRAPER] Tentando avançar para a próxima página...`);
-                // Procura botão padrão de paginação do Material UI
-                const avançou = await page.evaluate(() => {
-                    const btns = Array.from(document.querySelectorAll('button, a, div[role="button"]'));
-                    const nextBtn = btns.find(b => {
-                        const aria = (b.getAttribute('aria-label') || '').toLowerCase();
-                        return aria.includes('next page') || aria.includes('próxima') || aria.includes('next');
-                    });
-                    if (nextBtn && !nextBtn.disabled && !nextBtn.classList.contains('Mui-disabled')) {
-                        nextBtn.click();
-                        return true;
-                    }
-                    return false;
-                });
-
-                if (avançou) {
-                    await new Promise(r => setTimeout(r, 4000)); // Espera carregar a nova página
-                    paginaAtual++;
-                } else {
-                    console.log(`[SCRAPER] Botão de próxima página não encontrado ou desabilitado. Parando por aqui.`);
-                    break;
-                }
+            if (clicou) {
+                console.log(`[SCRAPER] Clicou em "Ver mais!" (${cliques + 1}/${MAX_CLIQUES}). Aguardando novos perfis...`);
+                await new Promise(r => setTimeout(r, 3000)); // Espera os novos cards aparecerem na tela
+                cliques++;
             } else {
+                console.log(`[SCRAPER] Botão "Ver mais!" não encontrado ou fim da lista alcançado.`);
                 break;
             }
         }
 
+        console.log(`[SCRAPER] Lendo todos os perfis carregados na página...`);
+        const leadsEncontrados = await page.evaluate(() => {
+            const resultados = [];
+            const linksWhatsapp = document.querySelectorAll('a[href*="wa.me"], a[href*="api.whatsapp.com"]');
+
+            linksWhatsapp.forEach(link => {
+                let telefone = '';
+                const urlWa = link.href;
+                
+                // Extrai o telefone da URL do Whatsapp
+                if (urlWa.includes('phone=')) {
+                    telefone = new URL(urlWa).searchParams.get('phone');
+                } else {
+                    telefone = urlWa.split('/').pop().split('?')[0]; 
+                }
+                if (telefone) telefone = telefone.replace(/\D/g, ''); 
+
+                // Encontra o card do psicólogo subindo na árvore DOM
+                let card = link.closest('div[class*="card"], div[class*="Card"], div[class*="paper"], article') || link.parentElement.parentElement.parentElement;
+                let nome = 'Psicólogo(a) Prospectado(a)';
+                
+                if (card) {
+                    // Busca especificamente pela classe fornecida do PsyMeet
+                    const nameElement = card.querySelector('p[class*="name"] a, p[class*="name"], h2, h3, strong');
+                    if (nameElement && nameElement.innerText.trim().length > 0) {
+                        nome = nameElement.innerText.trim();
+                    }
+                }
+
+                // Proteção contra textos de botões capturados por engano
+                if (nome.length > 50 || nome.toLowerCase().includes('comece agora') || nome.toLowerCase().includes('atendimento')) {
+                    nome = 'Psicólogo(a) Prospectado(a)';
+                }
+
+                if (telefone && telefone.length >= 10) {
+                    resultados.push({ nome, telefone });
+                }
+            });
+
+            return resultados;
+        });
+
+        console.log(`[SCRAPER] Encontrados ${leadsEncontrados.length} contatos válidos. Salvando no banco...`);
+            
+        let salvosTotais = 0;
+        for (const lead of leadsEncontrados) {
+            const [registro, created] = await db.Lead.findOrCreate({
+                where: { telefone: lead.telefone },
+                defaults: {
+                    nome: lead.nome,
+                    telefone: lead.telefone,
+                    origem_url: url,
+                    status_funil: 'Pendente'
+                }
+            });
+                
+            // Se o lead já existia mas estava com o nome genérico, nós atualizamos agora que o nome funciona!
+            if (!created && registro.nome === 'Psicólogo(a) Prospectado(a)' && lead.nome !== 'Psicólogo(a) Prospectado(a)') {
+                await registro.update({ nome: lead.nome });
+            }
+
+            if (created) {
+                salvosTotais++;
+            }
+        }
+         
         console.log(`\n[SCRAPER] Prospecção Concluída! Total de ${salvosTotais} novos leads adicionados com sucesso.`);
 
     } catch (error) {
