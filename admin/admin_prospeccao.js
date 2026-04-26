@@ -119,10 +119,24 @@ window.renderizarLeads = function(leads) {
         let badgeStatus = `<span class="status status-pending">Pendente</span>`;
         if (lead.status_funil === 'Contatado') badgeStatus = `<span class="status" style="background: #e0f2fe; color: #0284c7;">Contatado</span>`;
         else if (lead.status_funil === 'Aguardando') badgeStatus = `<span class="status status-aviso">Aguardando</span>`;
+        else if (lead.status_funil === 'Cadastrado') badgeStatus = `<span class="status" style="background: #d1fae5; color: #059669;">Cadastrado</span>`;
+
+        // BÔNUS: Semáforo Inteligente de Follow-up (SLA)
+        let semaforo = '';
+        if (lead.status_funil === 'Contatado' && lead.data_ultimo_contato) {
+            const diasAtraso = Math.floor((new Date() - new Date(lead.data_ultimo_contato)) / (1000 * 60 * 60 * 24));
+            if (diasAtraso >= 5) {
+                semaforo = `<span title="Mais de 5 dias sem contato! Mande a Despedida." style="display:inline-block; width:10px; height:10px; border-radius:50%; background-color:#ef4444; box-shadow:0 0 5px #ef4444; margin-right:8px; animation: pulse 2s infinite;"></span>`;
+            } else if (diasAtraso >= 2) {
+                semaforo = `<span title="Passou de 2 dias! Mande o Follow-up 1." style="display:inline-block; width:10px; height:10px; border-radius:50%; background-color:#f59e0b; margin-right:8px;"></span>`;
+            } else {
+                semaforo = `<span title="Contato recente (Menos de 2 dias)." style="display:inline-block; width:10px; height:10px; border-radius:50%; background-color:#10b981; margin-right:8px;"></span>`;
+            }
+        }
 
         return `
             <tr id="lead-row-${lead.id}">
-                <td data-label="Nome" style="font-weight: 600; color: #333;">${lead.nome}</td>
+                <td data-label="Nome" style="font-weight: 600; color: #333; display: flex; align-items: center;">${semaforo}${lead.nome}</td>
                 <td data-label="Telefone">${window.mascaraTelefoneLeads(lead.telefone)}</td>
                 <td data-label="Status">${badgeStatus}</td>
                 <td data-label="Origem">
@@ -180,9 +194,17 @@ window.enviarWhatsAppCopy = async function(tipoCopy) {
         let primeiroNome = nome.trim().split(' ')[0];
         if (primeiroNome.includes('Psicólogo')) primeiroNome = 'colega';
         
-        // Pega a copy exata selecionada e injeta o nome
+        // Cria o Link Mágico Rastreável (UTMs para o Funil de Marketing)
+        // Passamos o telefone como Campanha para que o painel de Ads saiba exatamente de qual Lead veio a conversão
+        const linkMagico = `yelopsi.com.br/profissionais?utm_source=outbound&utm_medium=whatsapp&utm_campaign=${telefoneNum}`;
+
+        // Pega a copy exata selecionada, injeta o nome e substitui a URL genérica pelo Link Mágico
         const msgSelecionada = window.copysOutbound[tipoCopy];
-        const msgFinal = msgSelecionada.replace(/\[PRIMEIRO NOME\]/g, primeiroNome).replace(/\[Nome\]/g, primeiroNome).replace(/\[NOME\]/g, primeiroNome);
+        const msgFinal = msgSelecionada
+            .replace(/\[PRIMEIRO NOME\]/g, primeiroNome)
+            .replace(/\[Nome\]/g, primeiroNome)
+            .replace(/\[NOME\]/g, primeiroNome)
+            .replace(/www\.yelopsi\.com\.br\/profissionais/g, linkMagico);
         
         window.open(`https://wa.me/${telefoneNum}?text=${encodeURIComponent(msgFinal)}`, '_blank');
 
