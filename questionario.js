@@ -103,6 +103,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>`;
                 break;
+            case 'welcome':
+            case 'thank-you':
+            case 'final':
+            case 'error':
+                contentHTML = ''; // Slides informativos, sem campos de input
+                break;
             default: 
                 console.warn("Tipo de pergunta desconhecido:", questionData.type); 
                 contentHTML = ''; 
@@ -203,9 +209,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const matchData = await matchResponse.json();
 
             // --- DISPARO DE CONVERSÃO DO GOOGLE ADS E GA4 ---
-            if (typeof window.gtag === 'function') {
-                console.log('[GA4 Debug] Conversão final do questionário disparada.');
-                window.gtag('event', 'conversion', {'send_to': 'AW-783735995/HeKSCMfQlIwcELu52_UC'});
+            try {
+                if (typeof window.gtag === 'function') {
+                    console.log('[GA4 Debug] Conversão final do questionário disparada.');
+                    window.gtag('event', 'conversion', {'send_to': 'AW-783735995/HeKSCMfQlIwcELu52_UC'});
+                }
+            } catch (trackingError) {
+                console.warn('[Tracking Debug] AdBlocker impediu o disparo da conversão final:', trackingError);
             }
 
             // Pequena pausa dramática (UX)
@@ -266,19 +276,23 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- RASTREAMENTO DE FUNIL E DESISTÊNCIAS (Google e Meta) ---
         const currentQuestion = questions[currentStep];
         if (currentQuestion) {
-            // 1. Envia o passo atual para o Google Analytics (GA4/Ads)
-            if (typeof window.gtag === 'function') {
-                console.log(`[GA4 Debug] Disparando evento 'passo_questionario' | Passo: ${currentStep} | Pergunta: ${currentQuestion.id}`);
-                window.gtag('event', 'passo_questionario', {
-                    'step_number': currentStep,
-                    'step_name': currentQuestion.id
-                });
-            } else {
-                console.warn('[GA4 Debug] window.gtag não está definido no momento da chamada.');
-            }
-            // 2. Envia o passo atual para o Facebook/Meta Pixel
-            if (typeof window.fbq === 'function') {
-                window.fbq('trackCustom', 'PassoQuestionario', { passo: currentStep, nome_pergunta: currentQuestion.id });
+            try {
+                // 1. Envia o passo atual para o Google Analytics (GA4/Ads)
+                if (typeof window.gtag === 'function') {
+                    console.log(`[GA4 Debug] Disparando evento 'passo_questionario' | Passo: ${currentStep} | Pergunta: ${currentQuestion.id}`);
+                    window.gtag('event', 'passo_questionario', {
+                        'step_number': currentStep,
+                        'step_name': currentQuestion.id
+                    });
+                } else {
+                    console.warn('[GA4 Debug] window.gtag não está definido no momento da chamada.');
+                }
+                // 2. Envia o passo atual para o Facebook/Meta Pixel
+                if (typeof window.fbq === 'function') {
+                    window.fbq('trackCustom', 'PassoQuestionario', { passo: currentStep, nome_pergunta: currentQuestion.id });
+                }
+            } catch (trackingError) {
+                console.warn('[Tracking Debug] AdBlocker impediu o disparo dos eventos de passo:', trackingError);
             }
             
             // 3. Envia o passo atual para o Banco de Dados da Yelo (Painel Admin)
