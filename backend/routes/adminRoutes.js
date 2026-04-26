@@ -255,6 +255,8 @@ router.get('/forum/posts', adminController.getAllForumPosts);
 // --- ROTAS DE PROSPECÇÃO DE LEADS (OUTBOUND) ---
 router.get('/leads', adminController.getLeads);
 router.put('/leads/:id/contato', adminController.registrarContatoLead);
+router.put('/leads/:id/status', adminController.atualizarStatusLead);
+router.delete('/leads/:id', adminController.excluirLead);
 
 // --- ROTAS DE EDIÇÃO DA COMUNIDADE (Apenas Admin pode alterar) ---
 router.put('/community-event', adminController.updateCommunityEvent);

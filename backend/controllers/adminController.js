@@ -2507,6 +2507,12 @@ exports.getLeads = async (req, res) => {
         // AUTO-SYNC: Garante que a tabela existe no banco de dados de produção (Render)
         if (db.Lead) await db.Lead.sync();
 
+        // CALCULANDO KPIs (MÉTRICAS DO FUNIL)
+        const pendentes = await db.Lead.count({ where: { status_funil: 'Pendente' } });
+        const contatados = await db.Lead.count({ where: { status_funil: 'Contatado' } });
+        const aguardando = await db.Lead.count({ where: { status_funil: 'Aguardando' } });
+        const cadastrados = await db.Lead.count({ where: { status_funil: 'Cadastrado' } });
+
         const { filtro } = req.query;
         let whereClause = {};
 
@@ -2532,7 +2538,10 @@ exports.getLeads = async (req, res) => {
             order: [['createdAt', 'DESC']]
         });
 
-        res.json(leads);
+        res.json({
+            leads: leads,
+            kpis: { pendentes, contatados, aguardando, cadastrados }
+        });
     } catch (error) {
         console.error('[Admin] Erro ao buscar leads:', error);
         res.status(500).json({ error: 'Erro interno ao buscar leads: ' + error.message });
@@ -2568,5 +2577,34 @@ exports.registrarContatoLead = async (req, res) => {
     } catch (error) {
         console.error('[Admin] Erro ao registrar contato com lead:', error);
         res.status(500).json({ error: 'Erro interno ao registrar contato.' });
+    }
+};
+
+// 3. Atualiza o status do lead manualmente (Aguardando / Cadastrado)
+exports.atualizarStatusLead = async (req, res) => {
+    try {
+        const { status } = req.body;
+        const lead = await db.Lead.findByPk(req.params.id);
+        if (!lead) return res.status(404).json({ error: 'Lead não encontrado.' });
+        
+        await lead.update({ status_funil: status });
+        res.json({ success: true, message: 'Status atualizado com sucesso!' });
+    } catch (error) {
+        console.error('[Admin] Erro ao atualizar status do lead:', error);
+        res.status(500).json({ error: 'Erro ao atualizar status.' });
+    }
+};
+
+// 4. Remove o lead permanentemente (Recusa / Opt-out)
+exports.excluirLead = async (req, res) => {
+    try {
+        const lead = await db.Lead.findByPk(req.params.id);
+        if (!lead) return res.status(404).json({ error: 'Lead não encontrado.' });
+
+        await lead.destroy();
+        res.json({ success: true, message: 'Lead excluído da prospecção.' });
+    } catch (error) {
+        console.error('[Admin] Erro ao excluir lead:', error);
+        res.status(500).json({ error: 'Erro ao excluir contato.' });
     }
 };
