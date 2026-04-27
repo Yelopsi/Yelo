@@ -424,6 +424,24 @@ body.pagina-dashboard {
 .btn-tabela.btn-fixar.pinned:hover {
     background-color: #fde468; /* Amarelo mais claro */
 }
+
+/* --- Botão WhatsApp (WPP) Tabela --- */
+.btn-wpp-tabela {
+    background-color: #25D366;
+    color: #ffffff !important;
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.2s ease;
+}
+.btn-wpp-tabela:hover {
+    background-color: #128C7E;
+}
 /* --- Página de Gestão de Conteúdo --- */
 .lista-moderacao {
     list-style: none;
