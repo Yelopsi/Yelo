@@ -748,36 +748,44 @@ document.addEventListener('DOMContentLoaded', function() {
     function verificarBloqueioGeral(url) {
         if (!psychologistData) return;
 
-        // Páginas permitidas mesmo sem plano (para o usuário poder pagar ou acessar os ajustes gerais)
-        const paginasPermitidas = ['psi_assinatura.html', 'psi_ajustes_hub.html']; 
+        // Páginas permitidas mesmo com o status inativo (para assinar, ajustar perfil, suporte ou exclusão)
+        const paginasPermitidas = ['psi_assinatura.html', 'psi_ajustes_hub.html', 'psi_caixa_de_entrada.html', 'psi_excluir_conta.html']; 
 
-        // Verifica se tem plano válido (se plano for null/vazio, considera inativo)
-        const temPlano = psychologistData.plano && psychologistData.plano.trim().length > 0;
+        // O Paywall de fim de teste é acionado quando o status muda para inactive
+        const estaInativo = psychologistData.status === 'inactive';
         
         const mainEl = document.querySelector('.dashboard-main');
+        const paywallOverlay = document.getElementById('paywall-overlay');
+        const bannerAnterior = document.querySelector('.restriction-floating-banner');
+
         if (!mainEl) return;
         
-        // 1. Limpa bloqueios anteriores (para quando navegar para página permitida)
+        // 1. Limpa os bloqueios visuais da tela anterior
         mainEl.classList.remove('blocked-view');
         mainEl.classList.remove('restricted-mode');
-        
-        const existingOverlay = document.querySelector('.dashboard-lock-overlay');
-        if (existingOverlay) existingOverlay.remove();
-        
-        const existingBanner = document.querySelector('.restriction-floating-banner');
-        if (existingBanner) existingBanner.remove();
+        if (paywallOverlay) paywallOverlay.style.display = 'none';
+        if (bannerAnterior) bannerAnterior.remove();
 
-        // 2. Aplica bloqueio se NÃO tem plano e NÃO está na página de assinatura
-        if (!temPlano && !paginasPermitidas.includes(url)) {
-            mainEl.classList.add('restricted-mode');
+        // Usuários VIP/Isentos nunca são bloqueados
+        if (psychologistData.is_exempt) return;
+
+        // 2. Aplica o Paywall se estiver inativo e em página restrita
+        if (estaInativo && !paginasPermitidas.includes(url)) {
+            mainEl.classList.add('blocked-view');
             
-            const banner = document.createElement('div');
-            banner.className = 'restriction-floating-banner';
-            banner.innerHTML = `
-                <span>🔒 Modo de visualização. Ative seu plano para interagir.</span>
-                <button onclick="window.loadPage('psi_assinatura.html')">Ver Planos</button>
-            `;
-            document.body.appendChild(banner);
+            if (paywallOverlay) {
+                paywallOverlay.style.display = 'flex';
+            } else {
+                // Fallback caso o paywall HTML fixo não exista na página
+                mainEl.classList.add('restricted-mode');
+                const banner = document.createElement('div');
+                banner.className = 'restriction-floating-banner';
+                banner.innerHTML = `
+                    <span>🔒 Seu período de teste expirou. Ative o Premium para continuar.</span>
+                    <button onclick="window.loadPage('psi_assinatura.html')">Assinar Agora</button>
+                `;
+                document.body.appendChild(banner);
+            }
         }
     }
 

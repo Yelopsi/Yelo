@@ -481,6 +481,36 @@ exports.getAllForumPosts = async (req, res) => {
     }
 };
 
+/**
+ * Rota: POST /api/admin/psychologists/grant-trial-all
+ * Descrição: Libera 14 dias de teste (Premium) para todos os psicólogos pendentes/inativos.
+ */
+exports.grantTrialToAll = async (req, res) => {
+    try {
+        const trialEndDate = new Date();
+        trialEndDate.setDate(trialEndDate.getDate() + 14);
+
+        const [updatedRows] = await db.Psychologist.update({
+            status: 'active',
+            plano: 'Essencial',
+            planExpiresAt: trialEndDate
+        }, {
+            where: {
+                status: { [Op.in]: ['pending', 'inactive'] },
+                is_exempt: { [Op.not]: true },
+                stripeSubscriptionId: { [Op.is]: null } // Não mexe em quem já assinou o Asaas
+            }
+        });
+
+        console.log(`[Admin] 14 dias de teste liberados para ${updatedRows} psicólogos.`);
+        res.status(200).json({ message: `Sucesso! 14 dias liberados para ${updatedRows} profissionais.` });
+
+    } catch (error) {
+        console.error('Erro ao conceder 14 dias para todos:', error);
+        res.status(500).json({ error: 'Erro interno ao processar a liberação em massa.' });
+    }
+};
+
 // =====================================================================
 // (O RESTANTE DO SEU ARQUIVO PERMANECE IDÊNTICO)
 // =====================================================================
