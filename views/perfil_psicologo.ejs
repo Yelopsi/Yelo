@@ -2,12 +2,13 @@
 <html lang="pt-br">
 <head>
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-11236864912"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-5NFD83MGSM"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
     
+      gtag('config', 'G-5NFD83MGSM');
       gtag('config', 'AW-11236864912');
     </script>
     <meta charset="UTF-8">
@@ -1238,10 +1239,16 @@
             document.body.addEventListener('click', (e) => {
                 const btnWhatsapp = e.target.closest('#btn-agendar-whatsapp');
                 if (btnWhatsapp) {
-                    console.log('Botão WhatsApp clicado! Disparando conversão para o Ads via Delegação...');
+                    console.log('Botão WhatsApp clicado! Disparando eventos para GA4 e Ads...');
                     if (typeof gtag === 'function') {
+                        // 1. Conversão do Google Ads (já existente)
                         gtag('event', 'conversion', {
                             'send_to': 'AW-11236864912/9EqNCMCjotEaEJDnk-4p'
+                        });
+                        // 2. Novo evento de interação para o GA4
+                        gtag('event', 'clique_whatsapp_perfil', {
+                            'event_category': 'Lead',
+                            'event_label': 'Botão WhatsApp'
                         });
                     }
                 }
