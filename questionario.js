@@ -212,11 +212,13 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 if (typeof window.gtag === 'function') {
                     console.log('[GA4 Debug] Conversão final do questionário disparada.');
-                    window.gtag('event', 'conversion', {'send_to': 'AW-783735995/HeKSCMfQlIwcELu52_UC'});
+                    // Disparo para a conta oficial do Google Ads
+                    window.gtag('event', 'conversion', {'send_to': 'AW-11236864912/hOYjCPO1lqAcEJDnk-4p'});
+                    // Disparo para o funil do GA4
                     window.gtag('event', 'match_concluido');
                 }
             } catch (trackingError) {
-                console.warn('[Tracking Debug] AdBlocker impediu o disparo da conversão final:', trackingError);
+                console.warn('[Tracking Debug] Erro ao disparar conversão:', trackingError);
             }
 
             // Pequena pausa dramática (UX)
