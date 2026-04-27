@@ -851,6 +851,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+    // --- CONTROLE DE MENSAGENS DE WHATSAPP ENVIADAS (MEMÓRIA LOCAL) ---
+    window.registrarEnvioWpp = function(psiId, link, event) {
+        if (event) event.preventDefault();
+        
+        let sent = JSON.parse(localStorage.getItem('yelo_wpp_sent_pending') || '[]');
+        if (!sent.includes(psiId)) {
+            sent.push(psiId);
+            localStorage.setItem('yelo_wpp_sent_pending', JSON.stringify(sent));
+        }
+        
+        // Atualiza visualmente o botão que foi clicado imediatamente
+        if (event && event.currentTarget) {
+            event.currentTarget.classList.add('wpp-enviado');
+            event.currentTarget.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Enviado';
+        }
+        
+        window.open(link, '_blank');
+    };
+
+    window.verificarWppEnviado = function(psiId) {
+        let sent = JSON.parse(localStorage.getItem('yelo_wpp_sent_pending') || '[]');
+        return sent.includes(psiId);
+    };
+
     initializeAndProtect();
     setupConfirmationModal();
     setupVipModal();

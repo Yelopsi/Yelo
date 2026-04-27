@@ -13,7 +13,7 @@ window.initializePage = function() {
     // Função para buscar e renderizar os dados
     async function fetchAndRenderPsychologists(page = 1) {
         if (!tableBody) return;
-        tableBody.innerHTML = `<tr><td colspan="7" class="loading-row" style="text-align: center; padding: 40px; color: var(--cinza-texto);"><span class="loading-spinner-sm"></span> Carregando profissionais...</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="8" class="loading-row" style="text-align: center; padding: 40px; color: var(--cinza-texto);"><span class="loading-spinner-sm"></span> Carregando profissionais...</td></tr>`;
 
         const searchTerm = searchInput.value;
         const status = statusFilter.value;
@@ -42,7 +42,7 @@ window.initializePage = function() {
             }
         } catch (error) {
             console.error("Erro ao buscar psicólogos:", error);
-            tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 40px; color: var(--coral-quente);">Erro ao carregar dados.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 40px; color: var(--coral-quente);">Erro ao carregar dados.</td></tr>`;
         }
     }
 
@@ -50,7 +50,7 @@ window.initializePage = function() {
     function renderTable(psychologists) {
         tableBody.innerHTML = '';
         if (psychologists.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 40px; color: var(--cinza-texto);">Nenhum profissional encontrado.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 40px; color: var(--cinza-texto);">Nenhum profissional encontrado.</td></tr>`;
             return;
         }
 
@@ -63,6 +63,32 @@ window.initializePage = function() {
             
             const planoName = psy.plano ? (psy.plano.charAt(0).toUpperCase() + psy.plano.slice(1).toLowerCase()) : 'Nenhum';
             
+            let wppCell = '<td data-label="WPP" style="text-align: center;">-</td>';
+            if (psy.status === 'pending' && psy.telefone) {
+                const wppLink = window.gerarLinkWhatsAppPending(psy.telefone, psy.nome);
+                const jaEnviado = window.verificarWppEnviado(psy.id);
+                
+                if (jaEnviado) {
+                    wppCell = `
+                        <td data-label="WPP">
+                            <a href="${wppLink}" onclick="window.registrarEnvioWpp(${psy.id}, this.href, event)" class="btn-wpp-tabela wpp-enviado">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                Enviado
+                            </a>
+                        </td>
+                    `;
+                } else {
+                    wppCell = `
+                        <td data-label="WPP">
+                            <a href="${wppLink}" onclick="window.registrarEnvioWpp(${psy.id}, this.href, event)" class="btn-wpp-tabela">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                Enviar
+                            </a>
+                        </td>
+                    `;
+                }
+            }
+
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td data-label="Nome">
@@ -82,6 +108,7 @@ window.initializePage = function() {
                         ${isVip ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9Z"></path><path d="M11 3 8 9l4 13"></path><path d="M13 3l3 6-4 13"></path><path d="M2 9h20"></path></svg> VIP' : (isDeleted ? 'Inativo' : 'Tornar VIP')}
                     </button>
                 </td>
+                ${wppCell}
                 <td data-label="Ações" style="white-space: nowrap;">
                     <button class="btn-tabela" onclick="navigateToPage('admin_detalhes_psicologo.html?id=${psy.id}')" style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 20px;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
