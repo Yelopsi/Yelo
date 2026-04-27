@@ -233,6 +233,21 @@
             </div>
 
             <div id="main-content"></div>
+
+            <!-- PAYWALL / LOCK OVERLAY (Oculto por padrão) -->
+            <div id="paywall-overlay" class="dashboard-lock-overlay" style="display: none;">
+                <div class="lock-message-card">
+                    <div class="lock-icon-large">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0"></path></svg>
+                    </div>
+                    <h2 style="margin-top: 0; font-family: var(--font-titulos); color: #1B4332; font-size: 1.6rem;">Seu período de teste terminou 💛</h2>
+                    <p style="color: #666; font-size: 1rem; line-height: 1.6; margin-bottom: 25px;">Esperamos que você tenha aproveitado os 14 dias gratuitos para conhecer a Yelo! Para continuar recebendo contatos de pacientes e ter acesso a todas as ferramentas da nossa comunidade, ative sua assinatura Premium agora mesmo.</p>
+                    
+                    <button class="btn btn-principal" onclick="document.getElementById('paywall-overlay').style.display='none'; document.querySelector('.dashboard-main').classList.remove('blocked-view'); if(window.loadPage) window.loadPage('psi_assinatura.html');" style="width: 100%; padding: 14px; font-size: 1.05rem; border-radius: 50px; box-shadow: 0 4px 15px rgba(27,67,50,0.2);">
+                        Ativar meu Consultório
+                    </button>
+                </div>
+            </div>
         </main>
     </div>
 

@@ -128,6 +128,10 @@ exports.registerPsychologist = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(passwordInput, salt);
 
+        // --- Define o Trial Automático de 14 Dias ---
+        const trialEndDate = new Date();
+        trialEndDate.setDate(trialEndDate.getDate() + 14);
+
         // --- 6. CRIAÇÃO NO BANCO (USANDO COLUNAS REAIS) ---
         const newPsychologist = await db.Psychologist.create({
             nome,
@@ -135,7 +139,9 @@ exports.registerPsychologist = async (req, res) => {
             senha: hashedPassword,
             crp,
             slug: generatedSlug,
-            status: 'pending', // Status inicial pendente até completar onboarding
+            status: 'active', // Status já nasce ativo liberando o acesso
+            plano: 'Essencial', // Plano de teste padrão
+            planExpiresAt: trialEndDate, // +14 dias de acesso grátis
             cpf: cleanCpf, // Salva na coluna CPF
             utm_source,
             utm_medium,

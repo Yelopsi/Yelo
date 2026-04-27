@@ -149,20 +149,14 @@ exports.createPreference = async (req, res) => {
         }
 
         // --- LÓGICA INTELIGENTE DE DATA DE COBRANÇA ---
-        let isTrial = false;
         let nextDueDate = new Date(Date.now() - 10800000).toISOString().split('T')[0];
 
-        // Se for reativação (usuário tem plano pago no futuro), agenda para o fim do ciclo
+        // Se o psicólogo ainda está dentro do trial ou plano vigente, agenda para quando acabar
         if (psychologist.planExpiresAt && new Date(psychologist.planExpiresAt) > new Date()) {
             nextDueDate = new Date(psychologist.planExpiresAt).toISOString().split('T')[0];
-            console.log(`[ASAAS] Reativação: Cobrança agendada para ${nextDueDate} (Fim do período pago)`);
-        } else if (billingType !== 'PIX') {
-            // TRIAL DE 14 DIAS PARA NOVAS ASSINATURAS NO CARTÃO
-            const dueDate = new Date(Date.now() - 10800000);
-            dueDate.setDate(dueDate.getDate() + 14);
-            nextDueDate = dueDate.toISOString().split('T')[0];
-            isTrial = true;
-            console.log(`[ASAAS] Nova Assinatura: Trial de 14 dias. Primeira cobrança em ${nextDueDate}`);
+            console.log(`[ASAAS] Cartão adicionado com plano ativo/trial: Cobrança agendada para ${nextDueDate}`);
+        } else {
+            console.log(`[ASAAS] Plano expirado ou sem data: Cobrança Imediata.`);
         }
 
         // --- LÓGICA INTELIGENTE DE ATUALIZAÇÃO OU CRIAÇÃO ---
@@ -310,23 +304,13 @@ exports.createPreference = async (req, res) => {
             throw err;
         }
 
-        if (isTrial) {
-            const trialEndDate = new Date();
-            trialEndDate.setDate(trialEndDate.getDate() + 14);
-
-            await psychologist.update({
-                stripeSubscriptionId: subscriptionData.id,
-                status: 'active',
-                plano: planType,
-                planExpiresAt: trialEndDate
-            });
-
-            gamificationService.assignPioneerBadge(psychologistId).catch(e => console.error("Erro no hook de badge Pioneiro (Trial):", e));
-        } else {
-            await psychologist.update({
-                stripeSubscriptionId: subscriptionData.id // Salva apenas a referência (Aguardando Webhook)
-            });
-        }
+        // Atualiza salvando a referência da assinatura e o plano selecionado.
+        // A data de expiração não é aumentada aqui; o webhook atualizará o planExpiresAt 
+        // quando o pagamento for de fato confirmado (se a cobrança for imediata).
+        await psychologist.update({
+            stripeSubscriptionId: subscriptionData.id,
+            plano: planType
+        });
 
         res.json({ success: true, subscriptionId: subscriptionData.id });
 
