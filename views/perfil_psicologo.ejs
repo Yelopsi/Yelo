@@ -1239,18 +1239,18 @@
             document.body.addEventListener('click', (e) => {
                 const btnWhatsapp = e.target.closest('#btn-agendar-whatsapp');
                 if (btnWhatsapp) {
-                    console.log('Botão WhatsApp clicado! Disparando eventos para GA4 e Ads...');
-                    if (typeof gtag === 'function') {
-                        // 1. Conversão do Google Ads (já existente)
-                        gtag('event', 'conversion', {
-                            'send_to': 'AW-11236864912/9EqNCMCjotEaEJDnk-4p'
-                        });
-                        // 2. Novo evento de interação para o GA4
-                        gtag('event', 'clique_whatsapp_perfil', {
-                            'event_category': 'Lead',
-                            'event_label': 'Botão WhatsApp'
-                        });
-                    }
+                    try {
+                        if (typeof gtag === 'function') {
+                            // 1. Conversão do Google Ads (já existente)
+                            gtag('event', 'conversion', {
+                                'send_to': 'AW-11236864912/9EqNCMCjotEaEJDnk-4p'
+                            });
+                            // 2. Novo evento de funil para o GA4
+                            gtag('event', 'clique_whatsapp', {
+                                'origem': 'perfil'
+                            });
+                        }
+                    } catch (trackingError) { console.warn(trackingError); }
                 }
             });
 

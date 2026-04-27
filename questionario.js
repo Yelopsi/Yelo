@@ -213,6 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (typeof window.gtag === 'function') {
                     console.log('[GA4 Debug] Conversão final do questionário disparada.');
                     window.gtag('event', 'conversion', {'send_to': 'AW-783735995/HeKSCMfQlIwcELu52_UC'});
+                    window.gtag('event', 'match_concluido');
                 }
             } catch (trackingError) {
                 console.warn('[Tracking Debug] AdBlocker impediu o disparo da conversão final:', trackingError);
@@ -281,8 +282,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (typeof window.gtag === 'function') {
                     console.log(`[GA4 Debug] Disparando evento 'passo_questionario' | Passo: ${currentStep} | Pergunta: ${currentQuestion.id}`);
                     window.gtag('event', 'passo_questionario', {
-                        'step_number': currentStep,
-                        'step_name': currentQuestion.id
+                        'numero_pergunta': currentStep,
+                        'nome_pergunta': currentQuestion.id
                     });
                 } else {
                     console.warn('[GA4 Debug] window.gtag não está definido no momento da chamada.');

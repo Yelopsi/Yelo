@@ -6,7 +6,13 @@
     
     <!-- Event snippet for Match Concluído conversion page -->
     <script>
-      gtag('event', 'conversion', {'send_to': 'AW-11236864912/hOYjCPO1lqAcEJDnk-4p'});
+      document.addEventListener('DOMContentLoaded', () => {
+          try {
+              if (typeof gtag === 'function') {
+                  gtag('event', 'conversion', {'send_to': 'AW-11236864912/hOYjCPO1lqAcEJDnk-4p'});
+              }
+          } catch(e) {}
+      });
     </script>
 
     <!-- Estilos Exclusivos desta Página -->
@@ -227,5 +233,7 @@
     <div id="toast-container"></div>
     
     <script src="/config.js"></script>
-    <script src="/resultados.js"></script> </body>
+    <script src="/resultados.js"></script> 
+
+</body>
 </html>
