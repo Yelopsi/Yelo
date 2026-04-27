@@ -987,5 +987,21 @@
             } catch(e) {}
         });
     </script>
+
+    <!-- RASTREAMENTO YELO FUNIL: Iniciar Questionário -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const ctaButtons = document.querySelectorAll('.btn-cta-principal');
+            ctaButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    try {
+                        if (typeof gtag === 'function') {
+                            gtag('event', 'iniciar_questionario');
+                        }
+                    } catch(trackingError) { console.warn('AdBlocker detectado', trackingError); }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
