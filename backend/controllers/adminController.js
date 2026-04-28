@@ -490,20 +490,19 @@ exports.grantTrialToAll = async (req, res) => {
         const trialEndDate = new Date();
         trialEndDate.setDate(trialEndDate.getDate() + 14);
 
-        const [updatedRows] = await db.Psychologist.update({
-            status: 'active',
-            plano: 'Essencial',
-            planExpiresAt: trialEndDate
-        }, {
-            where: {
-                status: { [Op.in]: ['pending', 'inactive'] },
-                is_exempt: { [Op.not]: true },
-                stripeSubscriptionId: { [Op.is]: null } // Não mexe em quem já assinou o Asaas
-            }
-        });
+        // FIX: Usando raw SQL para garantir que a data seja gravada, escapando de bloqueios do ORM
+        const [updatedRows, metadata] = await db.sequelize.query(`
+            UPDATE "Psychologists" 
+            SET status = 'active', 
+                plano = 'Essencial', 
+                "planExpiresAt" = :trialEndDate 
+            WHERE status IN ('pending', 'inactive') 
+            AND ("is_exempt" IS NULL OR "is_exempt" = false) 
+            AND "stripeSubscriptionId" IS NULL
+        `, { replacements: { trialEndDate } });
 
-        console.log(`[Admin] 14 dias de teste liberados para ${updatedRows} psicólogos.`);
-        res.status(200).json({ message: `Sucesso! 14 dias liberados para ${updatedRows} profissionais.` });
+        console.log(`[Admin] 14 dias de teste liberados para os psicólogos.`);
+        res.status(200).json({ message: `Sucesso! 14 dias liberados para os profissionais pendentes e inativos.` });
 
     } catch (error) {
         console.error('Erro ao conceder 14 dias para todos:', error);

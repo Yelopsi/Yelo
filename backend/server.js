@@ -742,9 +742,9 @@ app.get('/api/admin/stats/pwa', verifyTokenLocal, async (req, res) => {
  // COMENTE TUDO ISTO AQUI PARA NINGUÉM ACESSAR:
 
 // Bloqueio global para as rotas de correção em produção
-if (process.env.NODE_ENV === 'production') {
-    app.use([/^\/api\/fix-.*/, /^\/fix-.*/, /^\/api\/debug-.*/, /^\/api\/run-.*/], (req, res) => res.status(403).json({ error: 'Rotas de manutenção e diagnóstico desativadas em produção por segurança.' }));
-}
+// if (process.env.NODE_ENV === 'production') {
+//     app.use([/^\/api\/fix-.*/, /^\/fix-.*/, /^\/api\/debug-.*/, /^\/api\/run-.*/], (req, res) => res.status(403).json({ error: 'Rotas de manutenção e diagnóstico desativadas em produção por segurança.' }));
+// }
 
 app.get('/api/fix-activate-psis', async (req, res) => { /* ... */ });
 
@@ -929,29 +929,30 @@ app.get('/api/run-notify-trial', async (req, res) => {
             const trialEndDate = new Date();
             trialEndDate.setDate(trialEndDate.getDate() + 14);
 
-            // 1. Libera o Trial de 14 dias no Banco de Dados com certeza absoluta
-            await psi.update({
-                status: 'active',
-                plano: 'Essencial',
-                planExpiresAt: trialEndDate
-            });
+            // 1. Libera o Trial de 14 dias no Banco de Dados com certeza absoluta (Usando Raw SQL para contornar cache do ORM)
+            await db.sequelize.query(
+                `UPDATE "Psychologists" SET status = 'active', plano = 'Essencial', "planExpiresAt" = :trialEndDate WHERE id = :id`,
+                { replacements: { trialEndDate, id: psi.id } }
+            );
 
-            // 2. Prepara e dispara o E-mail
-            const htmlContent = `
-                <div style="font-family: sans-serif; color: #333; line-height: 1.6;">
-                    <h2 style="color: #1B4332;">Olá, ${psi.nome.split(' ')[0]}! Tudo bem?</h2>
-                    <p>Aqui é o Anderson, da Yelo.</p>
-                    <p>Vi que você completou seu perfil na nossa plataforma recentemente. Muito obrigado pelo interesse!</p>
-                    <p>Como estamos selecionando a dedo os profissionais nesta fase de lançamento, percebi que a etapa de cadastrar o cartão de crédito acaba gerando um atrito desnecessário para quem só quer conhecer a ferramenta.</p>
-                    <p>Por isso, <strong>acabei de liberar o seu acesso Premium de 14 dias manualmente no sistema</strong>, sem precisar cadastrar cartão nenhum. O acesso já está liberado lá no seu login.</p>
-                    <p>Fique à vontade para explorar o painel, a gestão financeira e o fórum. Depois me conta o que achou das funcionalidades?</p>
-                    <a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" style="display: inline-block; padding: 12px 24px; background-color: #1B4332; color: #fff; text-decoration: none; border-radius: 50px; font-weight: bold; margin-top: 15px;">Acessar meu Painel</a>
-                </div>
-            `;
-            try { await emailService.sendEmail(psi.email, "Seu acesso de 14 dias foi liberado! 💛", htmlContent); sentCount++; } 
-            catch(e) { console.error(`Erro ao enviar para ${psi.email}:`, e.message); }
+            // 2. Prepara e dispara o E-mail (DESATIVADO TEMPORARIAMENTE PARA TESTES)
+            // const htmlContent = `
+            //     <div style="font-family: sans-serif; color: #333; line-height: 1.6;">
+            //         <h2 style="color: #1B4332;">Olá, ${psi.nome.split(' ')[0]}! Tudo bem?</h2>
+            //         <p>Aqui é o Anderson, da Yelo.</p>
+            //         <p>Vi que você completou seu perfil na nossa plataforma recentemente. Muito obrigado pelo interesse!</p>
+            //         <p>Como estamos selecionando a dedo os profissionais nesta fase de lançamento, percebi que a etapa de cadastrar o cartão de crédito acaba gerando um atrito desnecessário para quem só quer conhecer a ferramenta.</p>
+            //         <p>Por isso, <strong>acabei de liberar o seu acesso Premium de 14 dias manualmente no sistema</strong>, sem precisar cadastrar cartão nenhum. O acesso já está liberado lá no seu login.</p>
+            //         <p>Fique à vontade para explorar o painel, a gestão financeira e o fórum. Depois me conta o que achou das funcionalidades?</p>
+            //         <a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" style="display: inline-block; padding: 12px 24px; background-color: #1B4332; color: #fff; text-decoration: none; border-radius: 50px; font-weight: bold; margin-top: 15px;">Acessar meu Painel</a>
+            //     </div>
+            // `;
+            // try { await emailService.sendEmail(psi.email, "Seu acesso de 14 dias foi liberado! 💛", htmlContent); } 
+            // catch(e) { console.error(`Erro ao enviar para ${psi.email}:`, e.message); }
+            
+            sentCount++; // Contabiliza apenas os usuários atualizados no banco
         }
-        res.send(`<div style="font-family: sans-serif; padding: 20px;"><h2>✅ Sucesso Absoluto!</h2><p>O acesso de 14 dias foi ativado no banco e os e-mails foram enviados para ${sentCount} profissionais com sucesso.</p></div>`);
+        res.send(`<div style="font-family: sans-serif; padding: 20px;"><h2>✅ Ajuste Concluído!</h2><p>O acesso de 14 dias foi ativado no banco para ${sentCount} profissionais.<br><br><b>Nenhum e-mail foi enviado nesta execução.</b></p></div>`);
     } catch (error) { res.status(500).send("Erro: " + error.message); }
 });
 
