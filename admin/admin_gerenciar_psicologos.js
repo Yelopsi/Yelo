@@ -69,10 +69,10 @@ window.initializePage = function() {
                 if (isVip) {
                     statusLabel = 'VIP';
                 } else if (!psy.stripeSubscriptionId && psy.planExpiresAt && new Date(psy.planExpiresAt) > new Date()) {
-                    statusLabel = 'Trial (14d)';
+                    statusLabel = 'Trial';
                     statusClass = 'status-pending'; // Fica amarelo para destacar que ainda não assinou
                 } else {
-                    statusLabel = 'Ativo (Pago)';
+                    statusLabel = 'Ativo';
                 }
             } else if (psy.status === 'pending') {
                 statusLabel = 'Incompleto'; // CPF não preenchido
