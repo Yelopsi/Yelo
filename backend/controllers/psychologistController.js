@@ -57,6 +57,7 @@ exports.registerPsychologist = async (req, res) => {
         const crp = req.body.crp || null; // Agora é opcional na entrada
         // REVERTIDO: Volta a ler apenas o CPF
         const cpf = req.body.cpf || req.body.documento || null; // Agora é opcional na entrada
+        const telefone = req.body.telefone || null; // Captura o telefone vindo do formulário
         const { googleToken, utm_source, utm_medium, utm_campaign } = req.body;
 
         // --- Lógica de Registro via Google ---
@@ -143,6 +144,7 @@ exports.registerPsychologist = async (req, res) => {
             plano: 'Essencial', // Plano de teste padrão
             planExpiresAt: trialEndDate, // +14 dias de acesso grátis
             cpf: cleanCpf, // Salva na coluna CPF
+            telefone, // Salva o número de telefone no banco
             utm_source,
             utm_medium,
             utm_campaign

@@ -64,7 +64,8 @@ window.initializePage = function() {
             const planoName = psy.plano ? (psy.plano.charAt(0).toUpperCase() + psy.plano.slice(1).toLowerCase()) : 'Nenhum';
             
             let wppCell = '<td data-label="WPP" style="text-align: center;">-</td>';
-            if (psy.status === 'pending' && psy.telefone) {
+            // Agora exibe o botão sempre que o profissional tiver um telefone cadastrado
+            if (psy.telefone && !isDeleted) {
                 const wppLink = window.gerarLinkWhatsAppPending(psy.telefone, psy.nome);
                 const jaEnviado = window.verificarWppEnviado(psy.id);
                 
