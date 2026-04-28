@@ -155,7 +155,11 @@ module.exports = {
             // ignorando qualquer escopo padrão do modelo que possa o estar excluindo.
             const post = await Post.scope(null).findByPk(id, queryOptions);
 
-            if (!post) return res.redirect('/blog');
+            if (!post) {
+                // CORREÇÃO DE SOFT 404: Renderizar a página oficial 404 em vez de redirecionar para a home do blog
+                res.status(404);
+                return res.render('404', { url: req.originalUrl });
+            }
 
             // 2. Busca posts recentes para a Sidebar (excluindo o atual)
             // Usamos db.Sequelize.Op para fazer a exclusão "Not Equal" (ne)

@@ -3368,10 +3368,26 @@ app.get('/comunidade', (req, res) => {
     res.render('perguntas'); 
 });
 
-// [NOVO] Redireciona a antiga página /jornada para a home para evitar erro 404.
-app.get('/jornada', (req, res) => {
-    // O código 301 indica um redirecionamento permanente, o que é ideal para SEO.
-    res.redirect(301, '/');
+// =============================================================
+// REDIRECIONAMENTOS 301 (CORREÇÃO DE ERROS DO GOOGLE SEARCH CONSOLE)
+// =============================================================
+const seoRedirects = {
+    '/jornada': '/',
+    '/registro': '/cadastro',
+    '/index.html': '/',
+    '/index': '/',
+    '/perguntas': '/comunidade', // Resolve o erro de Conteúdo Duplicado e falta de Canonical Tag
+    '/questionario.html': '/questionario' // Reforça a exclusão do arquivo físico dos rastreios
+    // Para limpar erros do Search Console, basta adicionar as URLs aqui. Exemplo:
+    // '/psicologos-antigos': '/profissionais',
+};
+
+app.use((req, res, next) => {
+    const checkPath = req.path.length > 1 && req.path.endsWith('/') ? req.path.slice(0, -1) : req.path;
+    if (seoRedirects[checkPath]) {
+        return res.redirect(301, seoRedirects[checkPath]);
+    }
+    next();
 });
 
 // Garante que "Profissionais" abra o arquivo correto (se existir profissionais.ejs)
@@ -3444,7 +3460,12 @@ app.get('/sitemap.xml', async (req, res) => {
             '/profissionais',
             '/faq',
             '/login',
-            '/ajuda'
+            '/cadastro',
+            '/comunidade',
+            '/terapia-online',
+            '/ajuda-mulher',
+            '/sobre_psis',
+            '/blog'
         ];
 
         let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
@@ -3623,15 +3644,32 @@ app.get('/:slug', (req, res, next) => {
     // 3. Tenta renderizar
     const paginaLimpa = slug.replace('.html', ''); // Limpa apenas para renderizar
     
-    res.render(paginaLimpa, (err, html) => {
+    res.render(paginaLimpa, async (err, html) => {
         if (err) {
-            // Se não achar o arquivo físico, assume que é o SLUG DO PSICÓLOGO
+            // Se não achar o arquivo físico, pode ser um slug de psicólogo
             if (err.message.includes('Failed to lookup view')) {
-                return res.render('perfil_psicologo');
-            }
+                try {
+                    const psychologist = await db.Psychologist.findOne({
+                        where: { slug: { [Op.iLike]: paginaLimpa } },
+                        attributes: ['id', 'status', 'is_exempt', 'planExpiresAt']
+                    });
 
-            console.error(`Erro ao abrir ${slug}:`, err);
-            return res.status(500).send('Erro interno no servidor');
+                    // Se o psicólogo existe e está ativo, renderiza a tela de perfil
+                    if (psychologist && (psychologist.status === 'active' || psychologist.status === 'content_creator')) {
+                        return res.render('perfil_psicologo');
+                    } else {
+                        // Se não existe ou está inativo -> Segue para o Hard 404 no rodapé
+                        return next();
+                    }
+                } catch (dbErr) {
+                    console.error(`Erro ao verificar slug ${paginaLimpa} para 404:`, dbErr);
+                    return next(); // Segue para o 404 em caso de erro no banco
+                }
+            } else {
+                // Se for outro tipo de erro de renderização (ex: erro no EJS)
+                console.error(`Erro ao renderizar a página ${slug}:`, err);
+                return res.status(500).send('Erro interno no servidor');
+            }
         }
         
         res.send(html);
