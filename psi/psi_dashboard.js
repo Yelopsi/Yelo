@@ -786,6 +786,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
                 document.body.appendChild(banner);
             }
+        } else if (psychologistData.status === 'pending' && url !== 'psi_meu_perfil.html') {
+            // Aviso Laranja para quem não tem o CPF preenchido ainda (Modo Anti-abuso)
+            const banner = document.createElement('div');
+            banner.className = 'restriction-floating-banner';
+            banner.style.backgroundColor = '#f59e0b';
+            banner.style.borderColor = '#fde68a';
+            banner.innerHTML = `
+                <span>🎁 Complete seu CPF no perfil para liberar seus 14 dias Premium Grátis!</span>
+                <button onclick="window.loadPage('psi_meu_perfil.html')" style="background:#fff; color:#b45309;">Completar Agora</button>
+            `;
+            document.body.appendChild(banner);
         }
     }
 
