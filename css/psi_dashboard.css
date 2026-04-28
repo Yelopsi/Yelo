@@ -10,6 +10,7 @@
 html {
     overflow-x: clip; /* Impede rolagem horizontal sem quebrar o sticky */
     font-size: 70%; /* A pedido: Reduz globalmente elementos e textos baseados em rem (~30%) */
+    overscroll-behavior-y: none; /* Bloqueia o 'arrastar para atualizar' (pull-to-refresh) nativo no mobile */
 }
 
 body.pagina-dashboard {
@@ -27,6 +28,7 @@ body.pagina-dashboard {
     max-width: 100%;
     overflow: hidden; /* Impede a rolagem do body, transferindo para .dashboard-main */
     position: relative;
+    overscroll-behavior-y: none; /* Reforça o bloqueio do pull-to-refresh */
 }
 
 /* Correção para Modais (Garante que fiquem escondidos e sobrepostos) */
@@ -103,6 +105,7 @@ body.pagina-dashboard {
     -webkit-overflow-scrolling: touch; /* Rolagem suave no iOS */
     margin-left: 0; /* Removido o !important para permitir sobreposição pelo media query */
     width: 100%;
+    overscroll-behavior-y: none; /* Bloqueia o pull-to-refresh na área com rolagem */
 }
 
 /* ==========================================================================

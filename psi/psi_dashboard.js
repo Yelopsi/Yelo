@@ -3574,6 +3574,7 @@ function setupGlobalPullToRefresh() {
     scrollArea.addEventListener('touchstart', (e) => {
         if (scrollArea.scrollTop <= 0) {
             startY = e.touches[0].clientY;
+            currentY = startY; // FIX: Zera o currentY para evitar que um clique simples puxe o valor de um arrasto anterior
             isPulling = true;
             ptrElement.style.transition = 'none';
         }
@@ -3600,7 +3601,7 @@ function setupGlobalPullToRefresh() {
         isPulling = false;
         ptrElement.style.transition = 'top 0.3s ease, opacity 0.3s ease';
         
-        if (currentY - startY > 100) {
+        if (currentY - startY > 120) { // FIX: Aumenta a distância necessária para dificultar atualizações acidentais
             ptrElement.style.top = '20px';
             ptrElement.style.opacity = '1';
             
