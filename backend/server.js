@@ -106,6 +106,7 @@ if (db.Patient) {
         sessionValue: DataTypes.FLOAT,
         status: DataTypes.STRING,
         observacoes: DataTypes.TEXT,
+        psychologistId: DataTypes.INTEGER,
         valor_sessao_faixa: DataTypes.STRING,
         temas_buscados: DataTypes.JSONB,
         identidade_genero: DataTypes.STRING,
@@ -900,6 +901,41 @@ app.get('/api/fix-reset-failed-invites', async (req, res) => {
                 <a href="/api/run-invite-all-waitlist" style="display:inline-block; padding:12px 24px; background:#1B4332; color:#fff; text-decoration:none; border-radius:5px; font-weight: bold; margin-top: 10px;">Reenviar Convites Agora</a>
             </div>
         `);
+    } catch (error) { res.status(500).send("Erro: " + error.message); }
+});
+
+// --- ROTA DE DISPARO DE E-MAIL (14 DIAS) PARA PSICÓLOGOS ANTIGOS ---
+app.get('/api/run-notify-trial', async (req, res) => {
+    try {
+        const psis = await db.Psychologist.findAll({
+            where: {
+                status: 'active',
+                plano: 'Essencial',
+                stripeSubscriptionId: { [db.Sequelize.Op.is]: null }
+            }
+        });
+
+        if (psis.length === 0) return res.send("Nenhum psicólogo encontrado nestas condições.");
+
+        const emailService = require('./services/emailService');
+        let sentCount = 0;
+
+        for (const psi of psis) {
+            const htmlContent = `
+                <div style="font-family: sans-serif; color: #333; line-height: 1.6;">
+                    <h2 style="color: #1B4332;">Olá, ${psi.nome.split(' ')[0]}! Tudo bem?</h2>
+                    <p>Aqui é o Anderson, da Yelo.</p>
+                    <p>Vi que você completou seu perfil na nossa plataforma recentemente. Muito obrigado pelo interesse!</p>
+                    <p>Como estamos selecionando a dedo os profissionais nesta fase de lançamento, percebi que a etapa de cadastrar o cartão de crédito acaba gerando um atrito desnecessário para quem só quer conhecer a ferramenta.</p>
+                    <p>Por isso, <strong>acabei de liberar o seu acesso Premium de 14 dias manualmente no sistema</strong>, sem precisar cadastrar cartão nenhum. O acesso já está liberado lá no seu login.</p>
+                    <p>Fique à vontade para explorar o painel, a gestão financeira e o fórum. Depois me conta o que achou das funcionalidades?</p>
+                    <a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" style="display: inline-block; padding: 12px 24px; background-color: #1B4332; color: #fff; text-decoration: none; border-radius: 50px; font-weight: bold; margin-top: 15px;">Acessar meu Painel</a>
+                </div>
+            `;
+            try { await emailService.sendEmail(psi.email, "Seu acesso de 14 dias foi liberado! 💛", htmlContent); sentCount++; } 
+            catch(e) { console.error(`Erro ao enviar para ${psi.email}:`, e.message); }
+        }
+        res.send(`<div style="font-family: sans-serif; padding: 20px;"><h2>✅ Sucesso!</h2><p>E-mails enviados para ${sentCount} profissionais com sucesso.</p></div>`);
     } catch (error) { res.status(500).send("Erro: " + error.message); }
 });
 
@@ -1853,13 +1889,10 @@ app.get('/api/my-patients', verifyTokenLocal, async (req, res) => {
             return res.status(500).json({ error: 'Modelo de pacientes não encontrado.' });
         }
 
-        // Busca pacientes vinculados a este psicólogo (Lógica simplificada: busca todos por enquanto ou cria tabela de vínculo)
-        // Para este MVP, vamos buscar na tabela Patients onde o psicólogo criou (se houver coluna) 
-        // OU vamos assumir que o frontend filtra. 
-        // *Melhor abordagem:* Criar uma tabela "PsychologistPatients" ou usar um campo "psychologistId" em Patients se for 1:N.
-        // Vou usar uma busca genérica na tabela Patients para o exemplo, filtrando se tiver coluna.
-        
-        const patients = await db.Patient.findAll(); 
+        // Busca pacientes vinculados estritamente a este psicólogo
+        const patients = await db.Patient.findAll({
+            where: { psychologistId: decoded.id }
+        }); 
         res.json(patients);
     } catch (error) {
         console.error("Erro em GET /api/my-patients:", error);
@@ -1870,8 +1903,9 @@ app.get('/api/my-patients', verifyTokenLocal, async (req, res) => {
 // --- ROTA: Buscar Detalhes do Paciente (CORREÇÃO DO ERRO 404) ---
 app.get('/api/my-patients/:id', verifyTokenLocal, async (req, res) => {
     try {
+        const decoded = req.userDecoded;
         const { id } = req.params;
-        const patient = await db.Patient.findByPk(id);
+        const patient = await db.Patient.findOne({ where: { id, psychologistId: decoded.id } });
         
         if (!patient) return res.status(404).json({ error: 'Paciente não encontrado' });
         
@@ -1884,6 +1918,7 @@ app.get('/api/my-patients/:id', verifyTokenLocal, async (req, res) => {
 
 app.post('/api/my-patients', verifyTokenLocal, async (req, res) => {
     try {
+        const decoded = req.userDecoded;
         const { name, phone, email, status, sessionValue, observacoes, recebeMensagens } = req.body;
         // Cria paciente (simplificado)
         const patient = await db.Patient.create({
@@ -1894,7 +1929,8 @@ app.post('/api/my-patients', verifyTokenLocal, async (req, res) => {
             sessionValue: sessionValue || 0,
             observacoes: observacoes, // Salva observações na criação
             recebe_mensagens: recebeMensagens !== undefined ? recebeMensagens : true,
-            senha: await bcrypt.hash('temp123', 8) // FIX: Senha obrigatória
+            senha: await bcrypt.hash('temp123', 8), // FIX: Senha obrigatória
+            psychologistId: decoded.id
         });
         res.json(patient);
     } catch (error) {
@@ -1906,10 +1942,11 @@ app.post('/api/my-patients', verifyTokenLocal, async (req, res) => {
 
 app.put('/api/my-patients/:id', verifyTokenLocal, async (req, res) => {
     try {
+        const decoded = req.userDecoded;
         const { id } = req.params;
         const { name, phone, email, status, sessionValue, observacoes, recebeMensagens } = req.body;
         
-        const patient = await db.Patient.findByPk(id);
+        const patient = await db.Patient.findOne({ where: { id, psychologistId: decoded.id } });
         if (!patient) return res.status(404).json({ error: 'Paciente não encontrado' });
         
         const updateData = {
@@ -1937,8 +1974,9 @@ app.put('/api/my-patients/:id', verifyTokenLocal, async (req, res) => {
 
 app.delete('/api/my-patients/:id', verifyTokenLocal, async (req, res) => {
     try {
+        const decoded = req.userDecoded;
         const { id } = req.params;
-        const patient = await db.Patient.findByPk(id);
+        const patient = await db.Patient.findOne({ where: { id, psychologistId: decoded.id } });
         
         if (!patient) return res.status(404).json({ error: 'Paciente não encontrado' });
         
@@ -3696,6 +3734,7 @@ const startServer = async () => {
             // 2. Patients Table - Grouped
             `ALTER TABLE "Patients" 
                 ADD COLUMN IF NOT EXISTS "fotoUrl" VARCHAR(500),
+                ADD COLUMN IF NOT EXISTS "psychologistId" INTEGER,
                 ADD COLUMN IF NOT EXISTS "faixa_etaria" VARCHAR(255),
                 ADD COLUMN IF NOT EXISTS "idade" VARCHAR(255),
                 ADD COLUMN IF NOT EXISTS "genero_profissional" VARCHAR(255),
