@@ -925,10 +925,10 @@ app.get('/api/run-notify-trial', async (req, res) => {
         const emailService = require('./services/emailService');
         let sentCount = 0;
         
-        const trialEndDate = new Date();
-        trialEndDate.setDate(trialEndDate.getDate() + 14);
-
         for (const psi of psis) {
+            const trialEndDate = new Date();
+            trialEndDate.setDate(trialEndDate.getDate() + 14);
+
             // 1. Libera o Trial de 14 dias no Banco de Dados com certeza absoluta
             await psi.update({
                 status: 'active',
