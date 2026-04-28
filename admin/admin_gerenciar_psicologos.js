@@ -57,9 +57,28 @@ window.initializePage = function() {
         psychologists.forEach(psy => {
             const isVip = psy.is_exempt === true;
             const isDeleted = psy.deletedAt !== null && psy.deletedAt !== undefined;
-            const statusLabel = isDeleted ? 'excluído' : (psy.status || 'inativo');
-            const statusClass = isDeleted ? 'status-cancelada' : `status-${psy.status || 'inactive'}`;
             const dataCadastro = new Date(psy.createdAt).toLocaleDateString('pt-BR');
+            
+            let statusLabel = psy.status || 'inativo';
+            let statusClass = `status-${psy.status || 'inactive'}`;
+
+            if (isDeleted) {
+                statusLabel = 'excluído';
+                statusClass = 'status-cancelada';
+            } else if (psy.status === 'active') {
+                if (isVip) {
+                    statusLabel = 'VIP';
+                } else if (!psy.stripeSubscriptionId && psy.planExpiresAt && new Date(psy.planExpiresAt) > new Date()) {
+                    statusLabel = 'Trial (14d)';
+                    statusClass = 'status-pending'; // Fica amarelo para destacar que ainda não assinou
+                } else {
+                    statusLabel = 'Ativo (Pago)';
+                }
+            } else if (psy.status === 'pending') {
+                statusLabel = 'Incompleto'; // CPF não preenchido
+            } else if (psy.status === 'inactive') {
+                statusLabel = 'Expirado';
+            }
             
             const planoName = psy.plano ? (psy.plano.charAt(0).toUpperCase() + psy.plano.slice(1).toLowerCase()) : 'Nenhum';
             

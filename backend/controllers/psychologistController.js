@@ -140,9 +140,9 @@ exports.registerPsychologist = async (req, res) => {
             senha: hashedPassword,
             crp,
             slug: generatedSlug,
-            status: 'active', // Status já nasce ativo liberando o acesso
-            plano: 'Essencial', // Plano de teste padrão
-            planExpiresAt: trialEndDate, // +14 dias de acesso grátis
+            status: cleanCpf ? 'active' : 'pending', // Só ativa e aparece nas buscas se tiver CPF
+            plano: cleanCpf ? 'Essencial' : null,
+            planExpiresAt: cleanCpf ? trialEndDate : null,
             cpf: cleanCpf, // Salva na coluna CPF
             telefone, // Salva o número de telefone no banco
             utm_source,
@@ -864,6 +864,18 @@ exports.updatePsychologistProfile = async (req, res) => {
             praticas_inclusivas, 
             disponibilidade_periodo
         });
+
+        // --- ATIVAÇÃO DO TRIAL PÓS-CADASTRO (ANTI-ABUSO) ---
+        // Se o perfil estava pendente e o profissional preencheu um CPF válido agora, ativa os 14 dias
+        if (psychologist.status === 'pending' && cpf && cpf.replace(/\D/g, '').length >= 11) {
+            const trialEndDate = new Date();
+            trialEndDate.setDate(trialEndDate.getDate() + 14);
+            await psychologist.update({
+                status: 'active',
+                plano: 'Essencial',
+                planExpiresAt: trialEndDate
+            });
+        }
 
         // --- GAMIFICATION HOOK (BADGE AUTÊNTICO) ---
         await gamificationService.checkProfileCompletion(psychologist.id);
