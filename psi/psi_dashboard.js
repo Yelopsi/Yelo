@@ -1161,7 +1161,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 creditSection.style.display = 'flex';
                 securityBadges.style.display = 'block';
                 if (elCepRow) elCepRow.style.display = 'flex';
-                btnSubmit.innerHTML = `Iniciar Teste Grátis <span style="display:block;font-size:0.75rem;font-weight:normal;opacity:0.8;margin-top:2px;">Primeira cobrança em 14 dias</span>`;
+                btnSubmit.innerHTML = `Ativar Assinatura <span style="display:block;font-size:0.75rem;font-weight:normal;opacity:0.8;margin-top:2px;">Acesso Premium Ilimitado</span>`;
                 document.getElementById('card-holder-name').placeholder = "Nome impresso no cartão";
                 // Torna campos obrigatórios
                 document.getElementById('card-number').required = true;
@@ -1414,7 +1414,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } finally {
                 btnSubmit.disabled = false;
-                btnSubmit.innerHTML = currentMethod === 'CREDIT_CARD' ? `Iniciar Teste Grátis <span style="display:block;font-size:0.75rem;font-weight:normal;opacity:0.8;margin-top:2px;">Primeira cobrança em 14 dias</span>` : "Gerar PIX";
+                btnSubmit.innerHTML = currentMethod === 'CREDIT_CARD' ? `Ativar Assinatura <span style="display:block;font-size:0.75rem;font-weight:normal;opacity:0.8;margin-top:2px;">Acesso Premium Ilimitado</span>` : "Gerar PIX";
             }
         };
     }
