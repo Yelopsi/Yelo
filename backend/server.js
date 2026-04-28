@@ -909,9 +909,14 @@ app.get('/api/run-notify-trial', async (req, res) => {
     try {
         const psis = await db.Psychologist.findAll({
             where: {
-                status: 'active',
-                plano: 'Essencial',
-                stripeSubscriptionId: { [db.Sequelize.Op.is]: null }
+                [db.Sequelize.Op.or]: [
+                    { status: 'pending' },
+                    { status: 'inactive' },
+                    { status: 'active', plano: 'Essencial' }
+                ],
+                is_exempt: { [db.Sequelize.Op.not]: true },
+                stripeSubscriptionId: null, // Garante que não é assinante pago
+                subscriptionId: null // Segurança adicional
             }
         });
 
@@ -919,8 +924,19 @@ app.get('/api/run-notify-trial', async (req, res) => {
 
         const emailService = require('./services/emailService');
         let sentCount = 0;
+        
+        const trialEndDate = new Date();
+        trialEndDate.setDate(trialEndDate.getDate() + 14);
 
         for (const psi of psis) {
+            // 1. Libera o Trial de 14 dias no Banco de Dados com certeza absoluta
+            await psi.update({
+                status: 'active',
+                plano: 'Essencial',
+                planExpiresAt: trialEndDate
+            });
+
+            // 2. Prepara e dispara o E-mail
             const htmlContent = `
                 <div style="font-family: sans-serif; color: #333; line-height: 1.6;">
                     <h2 style="color: #1B4332;">Olá, ${psi.nome.split(' ')[0]}! Tudo bem?</h2>
@@ -935,7 +951,7 @@ app.get('/api/run-notify-trial', async (req, res) => {
             try { await emailService.sendEmail(psi.email, "Seu acesso de 14 dias foi liberado! 💛", htmlContent); sentCount++; } 
             catch(e) { console.error(`Erro ao enviar para ${psi.email}:`, e.message); }
         }
-        res.send(`<div style="font-family: sans-serif; padding: 20px;"><h2>✅ Sucesso!</h2><p>E-mails enviados para ${sentCount} profissionais com sucesso.</p></div>`);
+        res.send(`<div style="font-family: sans-serif; padding: 20px;"><h2>✅ Sucesso Absoluto!</h2><p>O acesso de 14 dias foi ativado no banco e os e-mails foram enviados para ${sentCount} profissionais com sucesso.</p></div>`);
     } catch (error) { res.status(500).send("Erro: " + error.message); }
 });
 
