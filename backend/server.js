@@ -742,9 +742,9 @@ app.get('/api/admin/stats/pwa', verifyTokenLocal, async (req, res) => {
  // COMENTE TUDO ISTO AQUI PARA NINGUÉM ACESSAR:
 
 // Bloqueio global para as rotas de correção em produção
-// if (process.env.NODE_ENV === 'production') {
-//     app.use([/^\/api\/fix-.*/, /^\/fix-.*/, /^\/api\/debug-.*/, /^\/api\/run-.*/], (req, res) => res.status(403).json({ error: 'Rotas de manutenção e diagnóstico desativadas em produção por segurança.' }));
-// }
+if (process.env.NODE_ENV === 'production') {
+    app.use([/^\/api\/fix-.*/, /^\/fix-.*/, /^\/api\/debug-.*/, /^\/api\/run-.*/], (req, res) => res.status(403).json({ error: 'Rotas de manutenção e diagnóstico desativadas em produção por segurança.' }));
+}
 
 app.get('/api/fix-activate-psis', async (req, res) => { /* ... */ });
 
@@ -953,6 +953,42 @@ app.get('/api/run-notify-trial', async (req, res) => {
             sentCount++; // Contabiliza apenas os usuários atualizados no banco
         }
         res.send(`<div style="font-family: sans-serif; padding: 20px;"><h2>✅ Ajuste Concluído!</h2><p>O acesso de 14 dias foi ativado no banco para ${sentCount} profissionais.<br><br><b>Nenhum e-mail foi enviado nesta execução.</b></p></div>`);
+    } catch (error) { res.status(500).send("Erro: " + error.message); }
+});
+
+// --- ROTA DE ERRATA: AVISO DE CORREÇÃO DO BUG "EXPIRADO" ---
+app.get('/api/disparar-errata-trial', async (req, res) => {
+    try {
+        const psis = await db.Psychologist.findAll({
+            where: {
+                status: 'active',
+                plano: 'Essencial',
+                is_exempt: { [db.Sequelize.Op.not]: true },
+                stripeSubscriptionId: null
+            }
+        });
+
+        if (psis.length === 0) return res.send("Nenhum psicólogo elegível para receber a errata.");
+
+        const emailService = require('./services/emailService');
+        let sentCount = 0;
+        
+        for (const psi of psis) {
+            const htmlContent = `
+                <div style="font-family: sans-serif; color: #333; line-height: 1.6;">
+                    <h2 style="color: #1B4332;">Oops! Corrigimos um pequeno bug, ${psi.nome.split(' ')[0]}! 🛠️</h2>
+                    <p>Aqui é o Anderson, da Yelo.</p>
+                    <p>Recentemente, liberamos o seu acesso Premium de 14 dias. Porém, devido a uma falha no nosso sistema, o seu painel pode ter exibido a mensagem de "Expirado" ou "Bloqueado" de forma incorreta logo após o seu login.</p>
+                    <p><strong>A boa notícia: já resolvemos isso! ✅</strong></p>
+                    <p>O seu período de teste de 14 dias está 100% ativo a partir de agora. Você já pode acessar a plataforma normalmente, configurar seu perfil completo e explorar todas as ferramentas sem nenhum bloqueio.</p>
+                    <p>Pedimos desculpas pela confusão e agradecemos imensamente a paciência!</p>
+                    <a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" style="display: inline-block; padding: 12px 24px; background-color: #1B4332; color: #fff; text-decoration: none; border-radius: 50px; font-weight: bold; margin-top: 15px;">Acessar meu Painel</a>
+                </div>
+            `;
+            try { await emailService.sendEmail(psi.email, "Correção: Seu acesso de 14 dias está liberado! ✅", htmlContent); sentCount++; } 
+            catch(e) { console.error(`Erro ao enviar errata para ${psi.email}:`, e.message); }
+        }
+        res.send(`<div style="font-family: sans-serif; padding: 20px;"><h2>✅ Errata Enviada!</h2><p>E-mails de correção enviados com sucesso para ${sentCount} profissionais.</p></div>`);
     } catch (error) { res.status(500).send("Erro: " + error.message); }
 });
 

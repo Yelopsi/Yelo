@@ -64,7 +64,23 @@ function renderDetails(data) {
 
     // Status e Plano
     const statusEl = document.getElementById('detail-status');
-    statusEl.textContent = (p.status || 'inativo').toUpperCase();
+    
+    let detailStatusLabel = (p.status || 'inativo').toUpperCase();
+    if (p.status === 'active') {
+        if (p.is_exempt) {
+            detailStatusLabel = 'VIP';
+        } else if (!p.stripeSubscriptionId && p.planExpiresAt && new Date(p.planExpiresAt) > new Date()) {
+            detailStatusLabel = 'TRIAL';
+        } else {
+            detailStatusLabel = 'ATIVO';
+        }
+    } else if (p.status === 'pending') {
+        detailStatusLabel = 'INCOMPLETO';
+    } else if (p.status === 'inactive') {
+        detailStatusLabel = 'EXPIRADO';
+    }
+    
+    statusEl.textContent = detailStatusLabel;
     statusEl.className = `status-badge status-${p.status || 'inactive'}`;
 
     const planEl = document.getElementById('detail-plano');
