@@ -994,8 +994,14 @@ app.get('/api/run-inadimplentes', async (req, res) => {
             // Vamos "atacar" quem está como ACTIVE OU que tem a coluna PLANO preenchida indevidamente, e não é VIP
             if ((psi.status === 'active' || (psi.plano && psi.plano.trim() !== '')) && psi.is_exempt !== true) {
                 if (!subId) {
-                    await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0) });
-                    acao = '<span style="color:red; font-weight:bold;">Revogado (Sem ID de Assinatura)</span>';
+                    // Verifica se está no período de Trial (planExpiresAt no futuro)
+                    const isTrial = psi.planExpiresAt && new Date(psi.planExpiresAt) > new Date();
+                    if (isTrial) {
+                        acao = '<span style="color:blue; font-weight:bold;">Mantido (Trial de 14 dias ativo)</span>';
+                    } else {
+                        await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0) });
+                        acao = '<span style="color:red; font-weight:bold;">Revogado (Sem ID de Assinatura e Trial Vencido)</span>';
+                    }
                 } else {
                     // Consulta a API do Asaas
                     const asaasRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}/payments`, {
@@ -3873,11 +3879,12 @@ const startServer = async () => {
                 WHERE ("stripeSubscriptionId" IS NOT NULL OR "subscriptionId" IS NOT NULL) 
                 AND "is_exempt" = true;
             `);
-            // 2. Inativa quem não tem assinatura nem é VIP (limpa contas fantasmas)
+            // 2. Inativa quem não tem assinatura nem é VIP e cujo Trial expirou (limpa contas fantasmas)
             await db.sequelize.query(`
                 UPDATE "Psychologists" SET status = 'inactive', "planExpiresAt" = '1970-01-01'
                 WHERE ("stripeSubscriptionId" IS NULL AND "subscriptionId" IS NULL)
-                AND ("is_exempt" IS NULL OR "is_exempt" = false) AND status = 'active';
+                AND ("is_exempt" IS NULL OR "is_exempt" = false) AND status = 'active'
+                AND ("planExpiresAt" IS NULL OR "planExpiresAt" <= NOW());
             `);
             // 3. Inativa quem está com a data vencida e não é VIP
             await db.sequelize.query(`
