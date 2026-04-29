@@ -9,6 +9,7 @@ const fs = require('fs').promises;
 const gamificationService = require('../services/gamificationService'); // Importa o serviço
 const { verifyGoogleToken } = require('./authController');
 const metaService = require('../services/metaService'); // Importa o rastreador
+const matchService = require('../services/matchService'); // Algoritmo unificado de Match
 
 // Configurações do Asaas
 let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
@@ -444,141 +445,6 @@ const parsePriceRange = (rangeString) => {
     const max = numbers.length > 1 ? parseInt(numbers[1], 10) : min;
     return { min, max };
 };
-
-// ==============================================================================
-// ALGORITMO DE MATCH (INTELIGÊNCIA YELO)
-// ==============================================================================
-async function calculateMatches(preferences) {
-    const {
-        valor_sessao_faixa,
-        temas_buscados = [],
-        estilo_desejado = [], // Antigo 'abordagem_desejada' / 'experiencia_desejada'
-        genero_profissional,
-        praticas_desejadas = [], // Antigo 'praticas_afirmativas' / 'caracteristicas_prof'
-        idade_paciente,
-        modalidade_preferida
-    } = preferences;
-
-    // 1. Busca todos os psicólogos ativos ou no Trial
-    const candidates = await db.Psychologist.findAll({
-        where: { 
-            status: 'active'
-        },
-        attributes: { exclude: ['senha', 'resetPasswordToken'] }
-    });
-
-    // --- FILTRO DE BLINDAGEM JS (Garante que bugs de banco ou fuso horário não passem) ---
-    const agora = new Date();
-    const validCandidates = candidates.filter(psy => {
-        const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
-
-        if (isVip) return true;
-        
-        if (!psy.planExpiresAt) return false;
-        return new Date(psy.planExpiresAt) > agora;
-    });
-
-    const { min, max } = parsePriceRange(valor_sessao_faixa);
-
-    // 2. Pontuação e Filtragem
-    const scoredCandidates = validCandidates.map(psi => {
-        let score = 0;
-        let details = [];
-        let isViable = true;
-
-        // A. FILTRO RÍGIDO: Modalidade (Se o paciente escolheu Online, o Psi tem que atender Online)
-        // Se modalidade_preferida for indefinido, assume que aceita tudo.
-        if (modalidade_preferida && modalidade_preferida !== 'Indiferente') {
-            const psiMods = Array.isArray(psi.modalidade) ? psi.modalidade : [];
-            if (!psiMods.includes(modalidade_preferida) && !psiMods.includes('Indiferente')) {
-                // Penalidade leve em vez de exclusão total para não zerar resultados
-                score -= 50; 
-            }
-        }
-
-        // B. PREÇO (Peso: 20)
-        const psiPrice = psi.valor_sessao_numero || 0;
-        if (psiPrice >= min && psiPrice <= max) {
-            score += 20;
-            details.push("Dentro do orçamento");
-        } else if (psiPrice < min) {
-            score += 20; // Mais barato também serve
-            details.push("Valor acessível");
-        } else if (psiPrice < max * 1.3) {
-            score += 10; // Até 30% acima do orçamento ganha alguns pontos
-        }
-
-        // C. TEMAS (Peso: 25)
-        const psiTemas = psi.temas_atuacao || [];
-        
-        // --- MAPA DE TEMAS (Nova UI para Tags do Banco) ---
-        const mapaTemas = {
-            "Ansiedade ou Estresse": ["Ansiedade", "Estresse"],
-            "Depressão ou Tristeza": ["Depressão", "Tristeza"],
-            "Relacionamentos": ["Relacionamentos"],
-            "Carreira e Trabalho": ["Carreira", "Trabalho"],
-            "Autoestima": ["Autoestima"],
-            "Luto ou Traumas": ["Luto", "Traumas"],
-            "Autoconhecimento": ["Autoconhecimento"]
-        };
-        
-        let temasNormalizados = [];
-        temas_buscados.forEach(t => {
-            if (mapaTemas[t]) temasNormalizados.push(...mapaTemas[t]);
-            else temasNormalizados.push(t);
-        });
-
-        const commonTemas = temasNormalizados.filter(t => psiTemas.includes(t));
-        if (commonTemas.length > 0) {
-            score += 25;
-            details.push(`Especialista em ${commonTemas[0]}`);
-        }
-
-        // D. IDENTIDADE E PRÁTICAS (Peso: 30 - O "Fit" Cultural)
-        const psiPraticas = psi.praticas_inclusivas || [];
-        
-        // --- MAPA DE PRÁTICAS (Nova UI para Tags do Banco) ---
-        const mapaCaracteristicas = {
-            "LGBTQIAPN+ Friendly 🏳️‍🌈": ["LGBTQIAPN+ Friendly 🏳️‍🌈", "LGBTQIAPN+ friendly", "Afirmativa"],
-            "Que faça parte da comunidade LGBTQIAPN+": ["Faz parte da comunidade LGBTQIAPN+ / Afirmativa", "Comunidade LGBTQIAPN+", "Que faça parte da comunidade LGBTQIAPN+"],
-            "Pessoa não-branca ou com prática antirracista": ["Pessoa não-branca / Prática Antirracista", "Antirracista", "Negritude", "Pessoa não-branca / Antirracista", "Que seja uma pessoa não-branca (racializada) / prática antirracista"],
-            "Que tenha uma perspectiva feminista": ["Perspectiva Feminista", "Feminista", "Perspetiva feminista", "Que tenha uma perspectiva feminista"],
-            "Especialista em Neurodiversidade (TDAH, Autismo)": ["Neurodiversidade (TDAH, Autismo)", "Neurodiversidade", "TDAH", "Autismo", "Que entenda de neurodiversidade (TDAH, Autismo, etc.)"]
-        };
-        
-        let praticasNormalizadas = [];
-        praticas_desejadas.forEach(p => {
-            if (mapaCaracteristicas[p]) praticasNormalizadas.push(...mapaCaracteristicas[p]);
-            else praticasNormalizadas.push(p);
-        });
-
-        const commonPraticas = praticasNormalizadas.filter(p => psiPraticas.includes(p));
-        if (commonPraticas.length > 0) {
-            score += 30;
-            details.push("Identidade compatível");
-        }
-
-        // F. GÊNERO (Peso: 10)
-        if (genero_profissional && genero_profissional !== 'Indiferente') {
-            if (psi.genero_identidade === genero_profissional) score += 10;
-        } else {
-            score += 10;
-        }
-
-        return {
-            ...psi.toJSON(),
-            matchScore: Math.max(0, Math.min(score, 99)), // Garante entre 0 e 99
-            matchDetails: details
-        };
-    });
-
-    // 3. Ordenação e Retorno
-    scoredCandidates.sort((a, b) => b.matchScore - a.matchScore);
-    const topResults = scoredCandidates.slice(0, 3); // Top 3
-    const matchTier = topResults.length > 0 && topResults[0].matchScore > 75 ? 'ideal' : 'near';
-
-    return { matchTier, results: topResults };
-}
 
 // ----------------------------------------------------------------------
 // Rota: GET /api/psychologists/me (Rota Protegida)
@@ -1224,7 +1090,7 @@ exports.getPatientMatches = async (req, res) => {
         }
 
         // --- A MÁGICA ACONTECE AQUI ---
-        const matchResult = await calculateMatches(patientPreferences);
+        const matchResult = await matchService.calculateMatches(patientPreferences);
 
         // --- LOG DE EVENTO DE MATCH ---
         if (matchResult && matchResult.results && matchResult.results.length > 0) {
@@ -1284,7 +1150,7 @@ exports.getAnonymousMatches = async (req, res) => {
         }
 
         // Reutiliza a MESMA lógica do usuário logado
-        const matchResult = await calculateMatches(patientPreferences);
+        const matchResult = await matchService.calculateMatches(patientPreferences);
 
         // --- SUPER DEBUG ---
         console.log('[MATCH SUPER DEBUG] Reached getAnonymousMatches after calculateMatches.');
