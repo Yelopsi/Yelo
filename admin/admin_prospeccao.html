@@ -1,4 +1,72 @@
 <div class="modern-dashboard-layout">
+    <style>
+        /* Override para remover o overflow horizontal que quebra o layout responsivo */
+        .tabela-wrapper {
+            overflow-x: visible !important;
+        }
+
+        /* Estilos responsivos para a tabela (copiado de admin.css) */
+        @media (max-width: 1024px) {
+            .tabela-gerenciamento {
+                min-width: 0;
+            }
+            .tabela-gerenciamento thead {
+                display: none;
+            }
+            .tabela-gerenciamento tbody, .tabela-gerenciamento tr, .tabela-gerenciamento td {
+                display: block;
+                width: 100%;
+                box-sizing: border-box;
+            }
+            .tabela-gerenciamento tr {
+                margin-bottom: 25px;
+                border: 1px solid var(--cinza-borda);
+                border-radius: 12px;
+                padding: 15px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            }
+            .tabela-gerenciamento td {
+                border: none;
+                padding: 10px 0 10px 45%;
+                text-align: right;
+                white-space: normal;
+                word-break: break-word;
+                overflow-wrap: break-word;
+                position: relative;
+            }
+            .tabela-gerenciamento td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 0;
+                top: 10px;
+                width: 40%;
+                padding-right: 10px;
+                font-weight: bold;
+                text-align: left;
+                color: var(--verde-escuro);
+            }
+            .tabela-gerenciamento td:last-child {
+                padding: 15px 0 0 0;
+                margin-top: 10px;
+                border-top: 1px solid var(--cinza-borda);
+                text-align: center;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                justify-content: center;
+            }
+            .tabela-gerenciamento td:last-child::before {
+                display: none;
+            }
+            .tabela-gerenciamento .btn-tabela {
+                width: auto;
+                flex: 1 1 calc(50% - 8px);
+                margin: 0;
+                padding: 10px 8px;
+            }
+        }
+    </style>
+
     <div class="main-header" style="padding: 20px 25px; margin-bottom: 15px;">
         <div>
             <h1 style="font-size: 1.8rem;">Prospecção de Psicólogos</h1>
@@ -46,6 +114,8 @@
         <div class="filtros-container">
             <select id="filtro-funil" class="filtro-select" style="max-width: 250px;" onchange="carregarLeads()">
                 <option value="pendentes">Leads Pendentes (Novos)</option>
+                <option value="contatados">Em Negociação (Contatados)</option>
+                <option value="aguardando">Em Espera (Aguardando)</option>
                 <option value="followup_hoje">Follow-ups do Dia</option>
             </select>
         </div>
@@ -86,10 +156,9 @@
         <div class="modal-body">
             <p style="margin-bottom: 20px;">Qual roteiro deseja enviar para <strong id="modal-zap-nome"></strong>?</p>
             <div style="display:flex; flex-direction:column; gap:12px;">
-                <button class="btn btn-secundario" style="text-align:left; height:auto; line-height:1.4; padding:15px; border-color:#e2e8f0; color:#333;" onclick="enviarWhatsAppCopy('intro')" onmouseover="this.style.backgroundColor='#f0fdf4'; this.style.borderColor='var(--verde-escuro)'" onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#e2e8f0'"><strong>1. Abordagem Inicial</strong><br><small style="color:#666;">Apresentação da Yelo e dor do consultório.</small></button>
-                <button class="btn btn-secundario" style="text-align:left; height:auto; line-height:1.4; padding:15px; border-color:#e2e8f0; color:#333;" onclick="enviarWhatsAppCopy('pitch')" onmouseover="this.style.backgroundColor='#f0fdf4'; this.style.borderColor='var(--verde-escuro)'" onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#e2e8f0'"><strong>2. Pitch / Convite</strong><br><small style="color:#666;">Explicação do Hub, ferramentas e Trial de 14 dias.</small></button>
-                <button class="btn btn-secundario" style="text-align:left; height:auto; line-height:1.4; padding:15px; border-color:#e2e8f0; color:#333;" onclick="enviarWhatsAppCopy('followup1')" onmouseover="this.style.backgroundColor='#f0fdf4'; this.style.borderColor='var(--verde-escuro)'" onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#e2e8f0'"><strong>3. Follow-up 1 (Lembrete)</strong><br><small style="color:#666;">Perguntando se conseguiu olhar a plataforma.</small></button>
-                <button class="btn btn-secundario" style="text-align:left; height:auto; line-height:1.4; padding:15px; border-color:#e2e8f0; color:#333;" onclick="enviarWhatsAppCopy('followup2')" onmouseover="this.style.backgroundColor='#f0fdf4'; this.style.borderColor='var(--verde-escuro)'" onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#e2e8f0'"><strong>4. Follow-up 2 (Despedida)</strong><br><small style="color:#666;">Mensagem rápida sem pressão, deixando portas abertas.</small></button>
+                <button class="btn btn-secundario" style="text-align:left; height:auto; line-height:1.4; padding:15px; border-color:#e2e8f0; color:#333;" onclick="enviarCopiaDoModal('pitch')" onmouseover="this.style.backgroundColor='#f0fdf4'; this.style.borderColor='var(--verde-escuro)'" onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#e2e8f0'"><strong>1. Pitch / Convite</strong><br><small style="color:#666;">Explicação do Hub, ferramentas e Trial de 14 dias.</small></button>
+                <button class="btn btn-secundario" style="text-align:left; height:auto; line-height:1.4; padding:15px; border-color:#e2e8f0; color:#333;" onclick="enviarCopiaDoModal('followup1')" onmouseover="this.style.backgroundColor='#f0fdf4'; this.style.borderColor='var(--verde-escuro)'" onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#e2e8f0'"><strong>2. Follow-up 1 (Lembrete)</strong><br><small style="color:#666;">Perguntando se conseguiu olhar a plataforma.</small></button>
+                <button class="btn btn-secundario" style="text-align:left; height:auto; line-height:1.4; padding:15px; border-color:#e2e8f0; color:#333;" onclick="enviarCopiaDoModal('followup2')" onmouseover="this.style.backgroundColor='#f0fdf4'; this.style.borderColor='var(--verde-escuro)'" onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#e2e8f0'"><strong>3. Follow-up 2 (Despedida)</strong><br><small style="color:#666;">Mensagem rápida sem pressão, deixando portas abertas.</small></button>
             </div>
         </div>
     </div>

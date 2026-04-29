@@ -2,11 +2,11 @@
 
 // Dicionário Inteligente de Copys
 window.copysOutbound = {
-    intro: `Olá, [PRIMEIRO NOME], como vai? ${String.fromCodePoint(0x1F642)}\n\nMeu nome é *Anderson Costa*, também atuo como Psicólogo Clínico.\n\nVi que você faz atendimentos clínicos e fiquei curioso: como você tem sido a captação de clientes e a organização das burocracias da clínica no dia a dia?\n\nPergunto porque sei o quanto é desgastante equilibrar os atendimentos com a gestão da agenda, confirmações das sessões, a busca por novos pacientes, ter a formação em dia — coisas que a gente não aprende direito na graduação e acabam tomando tempo precioso do que mais gostamos: _clinicar_.\n\nPor ter passado por isso, criei a *Yelo*, uma plataforma pensada para criar uma *comunidade* e ajudar colegas psicólogos/as a atrair mais pacientes, organizar melhor a rotina e trocar mais experiências valiosas.\n\nSe fizer sentido pra você, te explico rapidamente por aqui mesmo como funciona. Pode ser?`,
+    intro: `Olá, [PRIMEIRO NOME], como vai? Meu nome é *Anderson Costa*, também sou Psicólogo Clínico.\n\nVi que você faz atendimentos e fiquei curioso: como tem sido a captação de novos pacientes e a organização da sua rotina?\n\nPergunto porque sei o quanto é desgastante equilibrar os atendimentos com a gestão da agenda, a busca por pacientes, ter a formação em dia — coisas que a gente não aprende na graduação e que tomam um tempo precioso do que mais gostamos: _clinicar_.\n\nPor ter passado por isso, criei a *Yelo*, uma plataforma pensada para criar uma *comunidade* e ajudar colegas psicólogos/as a atrair mais pacientes e organizar melhor a rotina.\n\nSe fizer sentido pra você, te explico rapidamente por aqui mesmo como funciona. Pode ser?`,
     
-    pitch: `Maravilha, [PRIMEIRO NOME]! \n\nBom, serei bem direto, porque eu sei que a vida é corrida. A Yelo não é uma daquelas listas genéricas de profissionais.\n\nNós construímos um Hub completo: O paciente responde a um questionário simplificado e nosso algoritmo faz o Match Inteligente direcionando-o para a sua especialidade.\n\nAlém disso, a plataforma também oferece várias ferramentas de gestão e troca de saberes ${String.fromCodePoint(0x1F91D)}\n\nAlgumas funcionalidades:\n${String.fromCodePoint(0x1F9E0)} Fórum privado para discussões\n${String.fromCodePoint(0x270D, 0xFE0F)} Blog para escrever aos usuários\n${String.fromCodePoint(0x2753)} Espaço de dúvidas para interação com o público\n${String.fromCodePoint(0x1F4CA)} Gestão financeira\n${String.fromCodePoint(0x1F4C8)} Métricas de mercado\n${String.fromCodePoint(0x1F310)} Página pública com endereço personalizado (tipo site pessoal)\n\nE ainda estamos finalizando:\n${String.fromCodePoint(0x1F4E9)} Envio de mensagens automáticas\n${String.fromCodePoint(0x1F465)} Criação de grupos de supervisão e intervisão\n\nNa Yelo você tem total autonomia: você define seus horários, valores, edita seu perfil, usa as ferramentas de análise para se posicionar melhor no mercado, etc.\n\nDá uma olhada no nosso site. Como estamos selecionando profissionais referência para esta fase, liberei 14 dias de acesso gratuito para você testar na prática. O que acha?\n\nwww.yelopsi.com.br/profissionais`,
+    pitch: `Maravilha, [PRIMEIRO NOME]! Serei bem direto, porque sei que a vida é corrida.\n\nA Yelo não é uma daquelas listas genéricas de profissionais. Nós construímos um Hub completo: o paciente responde a um questionário e nosso algoritmo faz o Match Inteligente, direcionando-o para a sua especialidade.\n\nAlém disso, a plataforma oferece ferramentas de gestão e troca de saberes ${String.fromCodePoint(0x1F91D)}:\n${String.fromCodePoint(0x1F9E0)} Fórum privado para discussões\n${String.fromCodePoint(0x270D, 0xFE0F)} Blog para escrever aos usuários\n${String.fromCodePoint(0x1F4CA)} Gestão financeira\n${String.fromCodePoint(0x1F310)} Página pública com endereço personalizado\n\nNa Yelo você tem total autonomia: define seus horários, valores, edita seu perfil, etc.\n\nComo estamos selecionando profissionais referência para esta fase, liberei **14 dias de acesso gratuito para você testar na prática, sem precisar cadastrar nenhum cartão**. O que acha?\n\nwww.yelopsi.com.br/profissionais`,
     
-    followup1: `Oi, [PRIMEIRO NOME], tudo bem?\n\nConseguiu dar uma olhada no link da Yelo que te enviei recentemente?\n\nGostaria muito de ter um colega com a sua visão na nossa rede. Nossos primeiros 14 dias são totalmente sem custo justamente para você sentir como a nossa gestão e o nosso algoritmo podem te ajudar na prática, além de participar do nosso fórum de intervisão.\n\nQualquer dúvida na configuração, estou à disposição!`,
+    followup1: `Oi, [PRIMEIRO NOME], tudo bem?\n\nConseguiu dar uma olhada no link da Yelo que te enviei?\n\nGostaria muito de ter um colega com a sua visão na nossa rede. Nossos primeiros 14 dias são totalmente sem custo **(e sem pedir cartão)** para você sentir como nossa gestão e nosso algoritmo podem te ajudar na prática, além de participar do nosso fórum de intervisão.\n\nQualquer dúvida, estou à disposição!`,
     
     followup2: `Olá, [PRIMEIRO NOME]!\n\nSei perfeitamente como a rotina de consultório é engolida por sessões, então não quero tomar seu tempo.\n\nEstou passando rapidinho só para deixar nosso convite em aberto. Nosso objetivo com a Yelo é eliminar o ruído burocrático para você.\nSe fizer sentido conversar depois e testar a plataforma, me dá um alô por aqui ou vem nos conhecer em www.yelopsi.com.br/profissionais\n\nBons atendimentos!`
 };
@@ -185,6 +185,13 @@ window.renderizarLeads = function(leads) {
             }
         }
 
+        const isPendente = lead.status_funil === 'Pendente';
+        const mainAction = isPendente 
+            ? `window.enviarWhatsAppCopy('${lead.id}', '${lead.telefone}', '${safeNome}', 'intro')`
+            : `window.abrirModalZap('${lead.id}', '${lead.telefone}', '${safeNome}')`;
+        const buttonText = isPendente ? 'Chamar' : 'Follow-up';
+        const buttonTitle = isPendente ? 'Enviar 1º Contato (Intro)' : 'Enviar Follow-up';
+
         return `
             <tr id="lead-row-${lead.id}">
                 <td data-label="Nome" style="font-weight: 600; color: #333; display: flex; align-items: center;">${semaforo}${lead.nome}</td>
@@ -197,10 +204,9 @@ window.renderizarLeads = function(leads) {
                 </td>
                 <td data-label="Ações">
                     <div class="lead-actions-wrapper">
-                        <!-- Botão Principal: Whatsapp -->
-                        <button class="lead-action-btn btn-zap" onclick="window.abrirModalZap('${lead.id}', '${lead.telefone}', '${safeNome}')" title="Enviar Mensagem">
+                        <button class="lead-action-btn btn-zap" onclick="${mainAction}" title="${buttonTitle}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                            <span>Chamar</span>
+                            <span>${buttonText}</span>
                         </button>
                         
                         <!-- Botões Rápidos de Gestão -->
@@ -240,11 +246,15 @@ window.fecharModalZap = function() {
     window.leadAlvoAtual = null;
 };
 
-window.enviarWhatsAppCopy = async function(tipoCopy) {
+window.enviarCopiaDoModal = function(tipoCopy) {
     if (!window.leadAlvoAtual) return;
-    
     const { id, telefone, nome } = window.leadAlvoAtual;
-    window.fecharModalZap(); // Fecha o modal imediatamente
+    window.enviarWhatsAppCopy(id, telefone, nome, tipoCopy);
+    window.fecharModalZap();
+};
+
+window.enviarWhatsAppCopy = async function(id, telefone, nome, tipoCopy) {
+    if (!id || !telefone || !nome || !tipoCopy) return;
 
     try {
         let telefoneNum = telefone.replace(/\D/g, '');
@@ -280,18 +290,12 @@ window.enviarWhatsAppCopy = async function(tipoCopy) {
         });
 
         if (req.ok) {
-            const row = document.getElementById(`lead-row-${id}`);
-            if (row && document.getElementById('filtro-funil').value === 'pendentes') {
-                // Remove o lead da memória e recarrega a página atual suavemente
-                window.allLeads = window.allLeads.filter(l => String(l.id) !== String(id));
-                row.style.opacity = '0'; 
-                row.style.transition = 'opacity 0.3s ease'; 
-                setTimeout(() => window.renderizarPaginaAtual(), 300);
-            } else { 
-                window.carregarLeads(); 
-            }
+            if (window.showToast) window.showToast(`Mensagem para ${nome.split(' ')[0]} aberta no WhatsApp.`, 'success');
+            window.carregarLeads(); // Recarrega a lista para refletir o novo status
+        } else {
+            if (window.showToast) window.showToast("Erro ao atualizar status do lead no sistema.", "error");
         }
-    } catch (error) { console.error("Erro:", error); alert("Erro ao atualizar status do lead no sistema."); }
+    } catch (error) { console.error("Erro:", error); if (window.showToast) window.showToast("Erro ao abrir WhatsApp.", "error"); }
 };
 
 // Função para Mudar o Status Manualmente (Otimista - Sem Pop-up)
