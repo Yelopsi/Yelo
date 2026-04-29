@@ -23,24 +23,44 @@ const parsePriceRange = (rangeString) => {
     return { min, max };
 };
 
+// --- FUNÇÃO AUXILIAR: Mapear Idade para Público Alvo ---
+const mapAgeToTarget = (idadeStr) => {
+    if (!idadeStr) return [];
+    if (idadeStr.includes("Menor de 18")) return ["Crianças", "Adolescentes"];
+    if (idadeStr.includes("55+")) return ["Idosos", "Adultos"];
+    // Para "18-24", "25-34", "35-44", "45-54"
+    return ["Adultos"];
+};
+
 // --- ALGORITMO DE PONTUAÇÃO ---
 const calculateScore = (psychologist, preferences, priceRange) => {
     let score = 0;
     let matchDetails = [];
 
-    // 1. FILTRO RÍGIDO: Preço (Peso Alto)
-    // Se o psicólogo for muito mais caro que o budget, pontua pouco ou zero.
-    // Aqui somos flexíveis: se passar até 20% do valor máximo, ainda aceita, mas pontua menos.
-    const valorPsi = parseFloat(psychologist.valor_sessao_numero || 0);
-    if (valorPsi <= priceRange.max) {
-        score += 25; // Dentro do orçamento
-        matchDetails.push("Dentro do orçamento");
-    } else if (valorPsi <= priceRange.max * 1.2) {
-        score += 10; // Um pouco acima, mas aceitável
-        matchDetails.push("Valor próximo");
+    // 1. FILTRO RÍGIDO: Modalidade (Online vs Presencial)
+    const prefModalidade = preferences.modalidade_preferida;
+    if (prefModalidade && prefModalidade !== 'Indiferente' && prefModalidade !== 'Indiferente (Online ou Presencial)') {
+        const psiMods = Array.isArray(psychologist.modalidade) ? psychologist.modalidade : [];
+        if (!psiMods.includes(prefModalidade) && !psiMods.includes('Indiferente')) {
+            score -= 50; // Penalidade forte para evitar frustração do paciente
+        } else {
+            score += 10;
+        }
     }
 
-    // 2. GÊNERO (Peso Médio)
+    // 2. PREÇO (Peso: 25)
+    const valorPsi = parseFloat(psychologist.valor_sessao_numero || 0);
+    if (valorPsi >= priceRange.min && valorPsi <= priceRange.max) {
+        score += 25; // Dentro do orçamento
+        matchDetails.push("Dentro do orçamento");
+    } else if (valorPsi < priceRange.min) {
+        score += 20; // Mais barato também serve
+        matchDetails.push("Valor acessível");
+    } else if (valorPsi <= priceRange.max * 1.3) {
+        score += 10; // Um pouco acima, mas aceitável
+    }
+
+    // 3. GÊNERO (Peso: 15)
     if (preferences.genero_profissional && preferences.genero_profissional !== "Indiferente") {
         if (psychologist.genero_identidade === preferences.genero_profissional) {
             score += 15;
@@ -50,8 +70,7 @@ const calculateScore = (psychologist, preferences, priceRange) => {
         score += 5; // Indiferente ganha ponto base
     }
 
-    // 3. TEMAS (A Dor do Paciente) - Peso Muito Alto
-    // Ex: Paciente tem "Ansiedade". Psi tem "Ansiedade".
+    // 4. TEMAS E DOR DO PACIENTE (Peso Cumulativo: 10 pts por tema)
     if (preferences.temas_buscados && preferences.temas_buscados.length > 0) {
         const temasPsi = psychologist.temas_atuacao || [];
         
@@ -77,39 +96,53 @@ const calculateScore = (psychologist, preferences, priceRange) => {
 
         const matches = temasParaBuscar.filter(tema => temasPsi.includes(tema));
         
-        // Bônus especial para Neurodiversidade/TDAH se solicitado
+        // Boost Especial (Neurodiversidade)
         const pedeNeurodiversidade = temasParaBuscar.includes("TDAH") || 
-                                     (preferences.praticas_afirmativas && preferences.praticas_afirmativas.some(p => p.includes("Neurodiversidade")));
+            (preferences.praticas_desejadas && preferences.praticas_desejadas.some(p => p.includes("Neurodiversidade")));
 
         if (pedeNeurodiversidade) {
-             if (temasPsi.includes("TDAH") || temasPsi.includes("Neurodiversidade")) {
+             if (temasPsi.includes("TDAH") || temasPsi.includes("Autismo") || temasPsi.includes("Neurodiversidade")) {
                  score += 15; // Boost de match
                  matchDetails.push("Especialista em Neurodiversidade/TDAH");
              }
         }
 
         if (matches.length > 0) {
-            score += matches.length * 10; // 10 pontos por tema coincidente
+            score += matches.length * 10;
             matchDetails.push(`Especialista em ${matches[0]}`);
+        }
     }
 
-    // 5. PRÁTICAS AFIRMATIVAS (Identidade) - Peso Crítico (Pode definir a escolha)
-    if (preferences.praticas_afirmativas && preferences.praticas_afirmativas.length > 0) {
-        const vivenciasPsi = psychologist.praticas_vivencias || [];
+    // 5. PRÁTICAS INCLUSIVAS / AFIRMATIVAS (Identidade) (Peso: 20 pts por prática)
+    if (preferences.praticas_desejadas && preferences.praticas_desejadas.length > 0) {
+        const praticasPsi = psychologist.praticas_inclusivas || [];
+        let patricasMatches = 0;
         
-        preferences.praticas_afirmativas.forEach(pref => {
+        preferences.praticas_desejadas.forEach(pref => {
             const termosTecnicos = MAPA_CARACTERISTICAS[pref];
             if (termosTecnicos) {
-                const deuMatch = termosTecnicos.some(termo => vivenciasPsi.includes(termo));
-                if (deuMatch) {
-                    score += 20;
-                    matchDetails.push("Identidade/Vivência compatível");
-                }
+                const deuMatch = termosTecnicos.some(termo => praticasPsi.includes(termo));
+                if (deuMatch) patricasMatches++;
             }
         });
+
+        if (patricasMatches > 0) {
+            score += patricasMatches * 20;
+            matchDetails.push("Identidade/Vivência compatível");
+        }
     }
 
-    // 6. BOOST DE NOVOS USUÁRIOS (TRIAL 14 DIAS) - PLG Strategy
+    // 6. PÚBLICO ALVO (Idade do Paciente) (Peso: 10 pts)
+    if (preferences.idade_paciente) {
+        const targetsEsperados = mapAgeToTarget(preferences.idade_paciente);
+        const alvoPsi = psychologist.publico_alvo || [];
+        const atendeIdade = targetsEsperados.some(t => alvoPsi.includes(t));
+        if (atendeIdade) {
+            score += 10;
+        }
+    }
+
+    // 7. ESTRATÉGIA PLG: Boost de Novos Profissionais (Trial 14 Dias)
     const TRIAL_DAYS = 14;
     const MAX_TRIAL_CLICKS = 3; // Limite de leads (cliques) para não prejudicar os assinantes antigos
     
@@ -121,62 +154,56 @@ const calculateScore = (psychologist, preferences, priceRange) => {
         // Nota: Não inserimos no 'matchDetails' para não transparecer ao paciente que é um impulsionamento artificial.
     }
 
-    return { score, matchDetails };
+    return { 
+        score: Math.max(0, Math.min(score, 99)), // Garante que a pontuação fique entre 0 e 99
+        matchDetails: [...new Set(matchDetails)] // Remove detalhes duplicados
+    };
 };
 
 // --- FUNÇÃO PRINCIPAL EXPORTADA ---
-exports.findMatches = async (preferences) => {
-    // 1. Busca todos os psis ativos e com foto (Requisito básico de qualidade)
-    // Otimização: Em produção, faríamos filtros de banco SQL aqui. 
-    // Como é MVP e base pequena (<1000), trazemos tudo e filtramos em memória pela complexidade do algoritmo.
+exports.calculateMatches = async (preferences) => {
+    // 1. Busca os candidatos base (ativos)
     const allPsychologists = await db.Psychologist.findAll({
         where: {
             status: 'active',
-            [Op.or]: [
-                { is_exempt: true },
-                { planExpiresAt: { [Op.gt]: new Date() } }
-            ]
-            // fotoUrl: { [Op.ne]: null } // Opcional: só mostrar quem tem foto
         },
-        attributes: { exclude: ['senha', 'cpf', 'cnpj', 'resetPasswordToken'] }
+        attributes: { exclude: ['senha', 'cpf', 'cnpj', 'resetPasswordToken', 'resetPasswordExpires'] }
+    });
+
+    // 2. Blindagem de Assinatura
+    const agora = new Date();
+    const validCandidates = allPsychologists.filter(psy => {
+        const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
+        if (isVip) return true;
+        if (!psy.planExpiresAt) return false;
+        return new Date(psy.planExpiresAt) > agora;
     });
 
     const priceRange = parsePriceRange(preferences.valor_sessao_faixa);
     const scoredPsychologists = [];
     
-    const TRIAL_DAYS = 14;
-
-    // 2. Calcula Score para cada um
-    for (const psy of allPsychologists) {
-        // --- CONTROLE DE EXIBIÇÃO (ASSINATURA VENCIDA) ---
-        const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
-        if (!isVip) {
-            if (!psy.planExpiresAt || new Date(psy.planExpiresAt) <= new Date()) {
-                continue; // Pula no exato segundo do vencimento
-            }
-        }
-
+    // 3. Aplica o cálculo
+    for (const psy of validCandidates) {
         const { score, matchDetails } = calculateScore(psy, preferences, priceRange);
         
-        // Só adiciona se tiver um mínimo de compatibilidade
-        if (score > 10) {
-            // Adiciona propriedades virtuais para o frontend ler
+        // Filtro mínimo para não exibir resultados totalmente incompatíveis
+        if (score >= 0) { 
             const psyJSON = psy.toJSON();
-            psyJSON.matchScore = score; // Usado para debug ou ordenação
-            psyJSON.matchDetails = matchDetails; // Para mostrar "Por que esse match?"
-            
-            // Flag de "Favorito" viria aqui se tivéssemos o ID do usuário logado
+            psyJSON.matchScore = score; 
+            psyJSON.matchDetails = matchDetails; 
             
             scoredPsychologists.push(psyJSON);
         }
     }
 
-    // 3. Ordena pelo Score (Do maior para o menor)
+    // 4. Ordena do mais compatível pro menos compatível
     scoredPsychologists.sort((a, b) => b.matchScore - a.matchScore);
 
-    // 4. Categoriza (Ideal vs Próximo)
+    // 5. Categoriza (Ideal vs Próximo)
     const IDEAL_THRESHOLD = 70; // Pontuação alta
-    const results = scoredPsychologists.slice(0, 6); // Top 6
+    
+    // Retorna até 6 opções para preencher o carrossel do Frontend
+    const results = scoredPsychologists.slice(0, 6); 
 
     if (results.length === 0) {
         return { matchTier: 'none', results: [] };
