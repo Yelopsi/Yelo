@@ -1,22 +1,15 @@
 const db = require('../models');
 const { Op } = require('sequelize');
 
-// --- DICIONÁRIO DE TRADUÇÃO (A "PEDRA DE ROSETA") ---
-// Conecta a linguagem do paciente (Chave) à linguagem técnica do Psicólogo (Valor)
-const MAPA_ABORDAGENS = {
-    "Um espaço de escuta e acolhimento para me encontrar": ["Psicanálise", "Humanista / Centrada na Pessoa", "Gestalt-terapia", "Jungiana"],
-    "Ferramentas e tarefas práticas para aplicar no dia a dia": ["Terapia Cognitivo-Comportamental (TCC)", "Análise do Comportamento (ABA)"],
-    "Entender meu passado e a raiz das minhas emoções": ["Psicanálise", "Jungiana", "Sistêmica"],
-    "Focar em soluções para problemas específicos": ["Terapia Cognitivo-Comportamental (TCC)", "Breve / Focal"],
-    "Não sei / Indiferente": [] // Dá match com tudo levemente
-};
-
 // Conecta demandas de identidade do paciente com vivências do psicólogo
 const MAPA_CARACTERISTICAS = {
-    "Que faça parte da comunidade LGBTQIAPN+": ["LGBTQIAPN+ friendly", "Afirmativa"], // Ajuste conforme seu cadastro de Psi
-    "Que seja uma pessoa não-branca (racializada) / prática antirracista": ["Antirracista", "Negritude"],
-    "Que tenha uma perspectiva feminista": ["Feminista"],
-    "Que entenda de neurodiversidade (TDAH, Autismo, etc.)": ["Neurodiversidade", "TDAH", "Autismo"] // Mapeia para temas ou práticas
+    "Que faça parte da comunidade LGBTQIAPN+": ["Faz parte da comunidade LGBTQIAPN+ / Afirmativa", "LGBTQIAPN+ friendly", "Afirmativa", "Comunidade LGBTQIAPN+", "Que faça parte da comunidade LGBTQIAPN+"],
+    
+    "Pessoa não-branca ou com prática antirracista": ["Pessoa não-branca / Prática Antirracista", "Antirracista", "Negritude", "Pessoa não-branca / Antirracista", "Que seja uma pessoa não-branca (racializada) / prática antirracista"],
+    
+    "Que tenha uma perspectiva feminista": ["Perspectiva Feminista", "Feminista", "Perspetiva feminista", "Que tenha uma perspectiva feminista"],
+    
+    "Especialista em Neurodiversidade (TDAH, Autismo)": ["Neurodiversidade (TDAH, Autismo)", "Neurodiversidade", "TDAH", "Autismo", "Que entenda de neurodiversidade (TDAH, Autismo, etc.)"]
 };
 
 // --- FUNÇÃO AUXILIAR: Parse de Preço ---
@@ -60,10 +53,34 @@ const calculateScore = (psychologist, preferences, priceRange) => {
     // Ex: Paciente tem "Ansiedade". Psi tem "Ansiedade".
     if (preferences.temas_buscados && preferences.temas_buscados.length > 0) {
         const temasPsi = psychologist.temas_atuacao || [];
-        const matches = preferences.temas_buscados.filter(tema => temasPsi.includes(tema));
+        
+        // Mapa para traduzir as novas opções combinadas do frontend
+        const mapaTemas = {
+            "Ansiedade ou Estresse": ["Ansiedade", "Estresse"],
+            "Depressão ou Tristeza": ["Depressão", "Tristeza"],
+            "Relacionamentos": ["Relacionamentos"],
+            "Carreira e Trabalho": ["Carreira", "Trabalho"],
+            "Autoestima": ["Autoestima"],
+            "Luto ou Traumas": ["Luto", "Traumas"],
+            "Autoconhecimento": ["Autoconhecimento"]
+        };
+
+        let temasParaBuscar = [];
+        preferences.temas_buscados.forEach(t => {
+            if (mapaTemas[t]) {
+                temasParaBuscar.push(...mapaTemas[t]);
+            } else {
+                temasParaBuscar.push(t);
+            }
+        });
+
+        const matches = temasParaBuscar.filter(tema => temasPsi.includes(tema));
         
         // Bônus especial para Neurodiversidade/TDAH se solicitado
-        if (preferences.temas_buscados.includes("TDAH") || preferences.praticas_afirmativas.includes("Que entenda de neurodiversidade (TDAH, Autismo, etc.)")) {
+        const pedeNeurodiversidade = temasParaBuscar.includes("TDAH") || 
+                                     (preferences.praticas_afirmativas && preferences.praticas_afirmativas.some(p => p.includes("Neurodiversidade")));
+
+        if (pedeNeurodiversidade) {
              if (temasPsi.includes("TDAH") || temasPsi.includes("Neurodiversidade")) {
                  score += 15; // Boost de match
                  matchDetails.push("Especialista em Neurodiversidade/TDAH");
@@ -73,25 +90,6 @@ const calculateScore = (psychologist, preferences, priceRange) => {
         if (matches.length > 0) {
             score += matches.length * 10; // 10 pontos por tema coincidente
             matchDetails.push(`Especialista em ${matches[0]}`);
-        }
-    }
-
-    // 4. ABORDAGEM (A Tradução Técnica) - Peso Alto
-    // Usa o MAPA_ABORDAGENS para traduzir
-    if (preferences.abordagem_desejada && preferences.abordagem_desejada.length > 0) {
-        const abordagensPsi = psychologist.abordagens_tecnicas || []; // Ex: ["TCC"]
-        
-        preferences.abordagem_desejada.forEach(desejoPaciente => { // Ex: "Ferramentas práticas..."
-            const traducoesTecnicas = MAPA_ABORDAGENS[desejoPaciente] || [];
-            
-            // Verifica se alguma das traduções está na lista do Psi
-            const deuMatch = traducoesTecnicas.some(tec => abordagensPsi.includes(tec));
-            
-            if (deuMatch) {
-                score += 20;
-                matchDetails.push("Estilo terapêutico compatível");
-            }
-        });
     }
 
     // 5. PRÁTICAS AFIRMATIVAS (Identidade) - Peso Crítico (Pode definir a escolha)
