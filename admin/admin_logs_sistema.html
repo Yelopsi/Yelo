@@ -1,4 +1,14 @@
 <div class="dashboard-header-actions" style="margin-bottom: 20px;">
+    <div class="filtros-container" style="flex-grow: 1; margin-right: 20px; max-width: 600px;">
+        <input type="text" id="log-search" class="campo-busca" placeholder="Buscar por email, mensagem...">
+        <select id="log-filter" class="filtro-select">
+            <option value="error">Apenas Erros</option>
+            <option value="all">Todos os Logs</option>
+            <option value="info">Apenas Informações</option>
+            <option value="payment">Apenas Pagamentos</option>
+        </select>
+    </div>
+
     <button id="btn-refresh-logs" class="btn-refresh">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
         Atualizar Agora
@@ -16,7 +26,8 @@
 <div class="logs-table-container">
     <h3 style="margin-bottom: 15px; color: #444;">Logs Recentes</h3>
     <div id="logs-list">
-        <p style="color:#999;">Aguardando dados...</p>
+        <div id="logs-loading"><p>Carregando logs...</p></div>
+        <div id="logs-empty" style="display: none; text-align: center; padding: 20px;"><p>Nenhum log encontrado.</p></div>
     </div>
 </div>
 
