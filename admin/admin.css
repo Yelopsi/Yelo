@@ -30,8 +30,8 @@ body.pagina-dashboard {
     background-repeat: repeat !important;
     /* CORREÇÃO: Garante que a rolagem da página principal funcione. */
     /* Remove qualquer 'overflow: hidden' que possa estar vindo de outros arquivos. */
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
+    overflow-y: auto !important; /* Permite rolagem vertical no body */
+    overflow-x: hidden !important; /* Impede rolagem horizontal no body */
 }
 .pagina-dashboard h1, .pagina-dashboard h2, .pagina-dashboard h3, .pagina-dashboard h4 {
     font-family: var(--font-titulos); /* Padronizado: New Kansas */
@@ -41,6 +41,7 @@ body.pagina-dashboard {
 #main-content {
     flex-grow: 1;
 }
+
 
 /* Garante que os títulos e subtítulos dos headers internos sejam brancos */
 .header-flex h1, .header-title-group h1 { color: var(--branco-puro) !important; }
@@ -287,6 +288,10 @@ body.pagina-dashboard {
     padding: 30px;
     border-radius: 16px;
     box-shadow: 0 4px 25px rgba(0, 0, 0, 0.06);
+}
+
+.dashboard-main {
+    overflow-y: visible !important; /* Permite que o conteúdo do main flua para o body */
 }
 
 .tabela-container h3 {

@@ -65,7 +65,7 @@ window.initializePage = async function() {
             renderHealthCards(health);
             
             allLogs = logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            processedLogs = processAndCorrelateLogs([...allLogs]);
+            processedLogs = processAndCorrelateLogs([...allLogs]).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Garante que os logs processados também estejam ordenados
             applyFilters();
 
         } catch (error) {
@@ -276,16 +276,22 @@ window.initializePage = async function() {
         const searchTerm = searchInput.value.toLowerCase();
         const filterType = filterSelect.value;
 
-        // CORREÇÃO: Usa sempre a lista processada para manter os dados de correlação.
-        // Apenas filtra por nível se não for "all".
-        let baseList = processedLogs.filter(log => {
+        let filteredByLevelAndType = processedLogs.filter(log => {
             if (filterType === 'all') return true; // Mostra todos
             if (filterType === 'payment') return (log.message || '').toLowerCase().includes('pagamento');
-            return log.level === filterType;
+            // Garante que log.level exista antes de comparar
+            return (log.level && log.level === filterType);
         });
 
-        const filtered = baseList.filter(log => JSON.stringify(log).toLowerCase().includes(searchTerm));
-        renderLogsList(filtered);
+        const finalFilteredList = filteredByLevelAndType.filter(log => {
+            if (searchTerm === '') return true; // Se não há termo de busca, não filtra por ele
+            const logMessage = (log.message || '').toLowerCase();
+            const userEmail = (log.meta?.userEmail || '').toLowerCase();
+            // Verifica se o termo de busca está na mensagem ou no e-mail do usuário
+            return logMessage.includes(searchTerm) || userEmail.includes(searchTerm);
+        });
+
+        renderLogsList(finalFilteredList);
     };
 
     // Inicia
