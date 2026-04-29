@@ -28,6 +28,10 @@ body.pagina-dashboard {
     background-image: var(--ruido-global) !important;
     background-attachment: fixed !important;
     background-repeat: repeat !important;
+    /* CORREÇÃO: Garante que a rolagem da página principal funcione. */
+    /* Remove qualquer 'overflow: hidden' que possa estar vindo de outros arquivos. */
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
 }
 .pagina-dashboard h1, .pagina-dashboard h2, .pagina-dashboard h3, .pagina-dashboard h4 {
     font-family: var(--font-titulos); /* Padronizado: New Kansas */

@@ -276,7 +276,10 @@ window.initializePage = async function() {
         const searchTerm = searchInput.value.toLowerCase();
         const filterType = filterSelect.value;
 
-        let baseList = (filterType === 'all') ? allLogs : processedLogs.filter(log => {
+        // CORREÇÃO: Usa sempre a lista processada para manter os dados de correlação.
+        // Apenas filtra por nível se não for "all".
+        let baseList = processedLogs.filter(log => {
+            if (filterType === 'all') return true; // Mostra todos
             if (filterType === 'payment') return (log.message || '').toLowerCase().includes('pagamento');
             return log.level === filterType;
         });
