@@ -786,7 +786,9 @@ exports.updatePsychologistProfile = async (req, res) => {
             slug: finalSlug, // Retorna o novo slug para atualizar a tela
             nome: psychologist.nome,
             email: psychologist.email,
+            status: psychologist.status, // Adicionado
             modalidade: psychologist.modalidade,
+            plano: psychologist.plano, // Adicionado
             fotoUrl: psychologist.fotoUrl
         });
 
