@@ -279,7 +279,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Novos campos adicionados
         const publico = ensureArray(profile.publico_alvo);
         const estilo = ensureArray(profile.estilo_terapia);
-        const inclusivas = ensureArray(profile.praticas_inclusivas || profile.praticas_vivencias || profile.praticas);
+        const inclusivasRaw = ensureArray(profile.praticas_inclusivas || profile.praticas_vivencias || profile.praticas);
+
+        // Traduz as tags antigas do banco para a linguagem moderna visualmente
+        const mapPraticas = {
+            "Que faça parte da comunidade LGBTQIAPN+": "Faz parte da comunidade LGBTQIAPN+ / Afirmativa",
+            "Comunidade LGBTQIAPN+": "Faz parte da comunidade LGBTQIAPN+ / Afirmativa",
+            "Que seja uma pessoa não-branca (racializada) / prática antirracista": "Pessoa não-branca / Prática Antirracista",
+            "Pessoa não-branca ou com prática antirracista": "Pessoa não-branca / Prática Antirracista",
+            "Que tenha uma perspectiva feminista": "Perspectiva Feminista",
+            "Que entenda de neurodiversidade (TDAH, Autismo, etc.)": "Neurodiversidade (TDAH, Autismo)",
+            "Especialista em Neurodiversidade (TDAH, Autismo)": "Neurodiversidade (TDAH, Autismo)"
+        };
+        
+        const inclusivas = inclusivasRaw.map(p => mapPraticas[p] || p);
 
         // Helper para criar grupos separados com título
         const createGroup = (title, items, cssClass) => {
@@ -581,11 +594,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             const gerarResumoProfissional = (especialidadesPsi, demandasPaciente = []) => {
                 const dicionario = {
                     "que faça parte da comunidade lgbtqiapn+": "questões LGBTQIAPN+",
+                    "faz parte da comunidade lgbtqiapn+ / afirmativa": "questões LGBTQIAPN+",
+                    "comunidade lgbtqiapn+": "questões LGBTQIAPN+",
                     "que seja uma pessoa não-branca (racializada) / prática antirracista": "práticas antirracistas",
+                    "pessoa não-branca / prática antirracista": "práticas antirracistas",
+                    "pessoa não-branca ou com prática antirracista": "práticas antirracistas",
                     "que tenha uma perspectiva feminista": "perspectiva feminista",
+                    "perspectiva feminista": "perspectiva feminista",
                     "que entenda de neurodiversidade (tdah, autismo, etc.)": "neurodiversidade",
+                    "neurodiversidade (tdah, autismo)": "neurodiversidade",
+                    "especialista em neurodiversidade (tdah, autismo)": "neurodiversidade",
                     "relacionamentos": "conflitos de relacionamento",
                     "carreira": "transição de carreira",
+                    "trabalho": "transição de carreira",
+                    "autoconhecimento": "autoconhecimento",
+                    "tristeza": "tristeza e depressão",
                     "luto": "processos de luto",
                     "traumas": "superação de traumas"
                 };
