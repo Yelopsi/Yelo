@@ -173,6 +173,9 @@ exports.calculateMatches = async (preferences) => {
     // 2. Blindagem de Assinatura
     const agora = new Date();
     const validCandidates = allPsychologists.filter(psy => {
+        // Blindagem de Qualidade: Oculta perfis em branco (Mesmo que estejam no Trial)
+        if (!psy.fotoUrl || !psy.bio || psy.bio.trim().length < 10) return false;
+
         const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
         if (isVip) return true;
         if (!psy.planExpiresAt) return false;
@@ -202,8 +205,8 @@ exports.calculateMatches = async (preferences) => {
     // 5. Categoriza (Ideal vs Próximo)
     const IDEAL_THRESHOLD = 70; // Pontuação alta
     
-    // Retorna até 6 opções para preencher o carrossel do Frontend
-    const results = scoredPsychologists.slice(0, 6); 
+    // Retorna no máximo 3 opções para garantir a premissa de escassez e foco
+    const results = scoredPsychologists.slice(0, 3); 
 
     if (results.length === 0) {
         return { matchTier: 'none', results: [] };
