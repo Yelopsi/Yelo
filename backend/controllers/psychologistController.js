@@ -510,7 +510,25 @@ async function calculateMatches(preferences) {
 
         // C. TEMAS (Peso: 25)
         const psiTemas = psi.temas_atuacao || [];
-        const commonTemas = temas_buscados.filter(t => psiTemas.includes(t));
+        
+        // --- MAPA DE TEMAS (Nova UI para Tags do Banco) ---
+        const mapaTemas = {
+            "Ansiedade ou Estresse": ["Ansiedade", "Estresse"],
+            "Depressão ou Tristeza": ["Depressão", "Tristeza"],
+            "Relacionamentos": ["Relacionamentos"],
+            "Carreira e Trabalho": ["Carreira", "Trabalho"],
+            "Autoestima": ["Autoestima"],
+            "Luto ou Traumas": ["Luto", "Traumas"],
+            "Autoconhecimento": ["Autoconhecimento"]
+        };
+        
+        let temasNormalizados = [];
+        temas_buscados.forEach(t => {
+            if (mapaTemas[t]) temasNormalizados.push(...mapaTemas[t]);
+            else temasNormalizados.push(t);
+        });
+
+        const commonTemas = temasNormalizados.filter(t => psiTemas.includes(t));
         if (commonTemas.length > 0) {
             score += 25;
             details.push(`Especialista em ${commonTemas[0]}`);
@@ -518,18 +536,25 @@ async function calculateMatches(preferences) {
 
         // D. IDENTIDADE E PRÁTICAS (Peso: 30 - O "Fit" Cultural)
         const psiPraticas = psi.praticas_inclusivas || [];
-        const commonPraticas = praticas_desejadas.filter(p => psiPraticas.includes(p));
+        
+        // --- MAPA DE PRÁTICAS (Nova UI para Tags do Banco) ---
+        const mapaCaracteristicas = {
+            "Que faça parte da comunidade LGBTQIAPN+": ["Faz parte da comunidade LGBTQIAPN+ / Afirmativa", "LGBTQIAPN+ friendly", "Afirmativa", "Comunidade LGBTQIAPN+", "Que faça parte da comunidade LGBTQIAPN+"],
+            "Pessoa não-branca ou com prática antirracista": ["Pessoa não-branca / Prática Antirracista", "Antirracista", "Negritude", "Pessoa não-branca / Antirracista", "Que seja uma pessoa não-branca (racializada) / prática antirracista"],
+            "Que tenha uma perspectiva feminista": ["Perspectiva Feminista", "Feminista", "Perspetiva feminista", "Que tenha uma perspectiva feminista"],
+            "Especialista em Neurodiversidade (TDAH, Autismo)": ["Neurodiversidade (TDAH, Autismo)", "Neurodiversidade", "TDAH", "Autismo", "Que entenda de neurodiversidade (TDAH, Autismo, etc.)"]
+        };
+        
+        let praticasNormalizadas = [];
+        praticas_desejadas.forEach(p => {
+            if (mapaCaracteristicas[p]) praticasNormalizadas.push(...mapaCaracteristicas[p]);
+            else praticasNormalizadas.push(p);
+        });
+
+        const commonPraticas = praticasNormalizadas.filter(p => psiPraticas.includes(p));
         if (commonPraticas.length > 0) {
             score += 30;
             details.push("Identidade compatível");
-        }
-
-        // E. ESTILO DE TERAPIA (Peso: 15)
-        const psiEstilo = psi.estilo_terapia || [];
-        const commonEstilo = estilo_desejado.filter(e => psiEstilo.includes(e));
-        if (commonEstilo.length > 0) {
-            score += 15;
-            details.push("Estilo alinhado");
         }
 
         // F. GÊNERO (Peso: 10)

@@ -10,6 +10,23 @@ const MINIMUM_SEARCHES_FOR_NICHE = 5; // Um nicho só é considerado relevante s
 const MAX_INVITATIONS_PER_RUN = 3; // Limite de convites a serem enviados por execução do CRON.
 const SENIORITY_THRESHOLD_DAYS = 90; // Profissionais esperando há mais de 90 dias são priorizados.
 
+const MAPA_TEMAS = {
+    "Ansiedade ou Estresse": ["Ansiedade", "Estresse"],
+    "Depressão ou Tristeza": ["Depressão", "Tristeza"],
+    "Relacionamentos": ["Relacionamentos"],
+    "Carreira e Trabalho": ["Carreira", "Trabalho"],
+    "Autoestima": ["Autoestima"],
+    "Luto ou Traumas": ["Luto", "Traumas"],
+    "Autoconhecimento": ["Autoconhecimento"]
+};
+
+const MAPA_CARACTERISTICAS = {
+    "Que faça parte da comunidade LGBTQIAPN+": ["Faz parte da comunidade LGBTQIAPN+ / Afirmativa", "LGBTQIAPN+ friendly", "Afirmativa", "Comunidade LGBTQIAPN+", "Que faça parte da comunidade LGBTQIAPN+"],
+    "Pessoa não-branca ou com prática antirracista": ["Pessoa não-branca / Prática Antirracista", "Antirracista", "Negritude", "Pessoa não-branca / Antirracista", "Que seja uma pessoa não-branca (racializada) / prática antirracista"],
+    "Que tenha uma perspectiva feminista": ["Perspectiva Feminista", "Feminista", "Perspetiva feminista", "Que tenha uma perspectiva feminista"],
+    "Especialista em Neurodiversidade (TDAH, Autismo)": ["Neurodiversidade (TDAH, Autismo)", "Neurodiversidade", "TDAH", "Autismo", "Que entenda de neurodiversidade (TDAH, Autismo, etc.)"]
+};
+
 /**
  * NOVA LÓGICA: Identifica os "bolsões de demanda" com base nas buscas reais dos pacientes.
  */
@@ -62,17 +79,23 @@ async function findDemandGaps() {
         const temas = temas_str ? temas_str.split(',') : [];
         const caracteristicas_prof = caracteristicas_prof_str ? caracteristicas_prof_str.split(',') : [];
 
+        let temasTraduzidos = [];
+        temas.forEach(t => { if (MAPA_TEMAS[t]) temasTraduzidos.push(...MAPA_TEMAS[t]); else temasTraduzidos.push(t); });
+
+        let praticasTraduzidas = [];
+        caracteristicas_prof.forEach(c => { if (MAPA_CARACTERISTICAS[c]) praticasTraduzidas.push(...MAPA_CARACTERISTICAS[c]); else praticasTraduzidas.push(c); });
+
         // Constrói a query para encontrar psicólogos que atendem a este nicho
         const whereClause = {
             status: 'active',
             valor_sessao_faixa: faixa_valor,
-            temas_atuacao: { [Op.overlap]: temas }
+            temas_atuacao: { [Op.overlap]: temasTraduzidos.length > 0 ? temasTraduzidos : temas }
         };
         if (pref_genero_prof !== 'Indiferente') {
             whereClause.genero_identidade = pref_genero_prof;
         }
-        if (caracteristicas_prof.length > 0) {
-            whereClause.praticas_vivencias = { [Op.overlap]: caracteristicas_prof };
+        if (praticasTraduzidas.length > 0) {
+            whereClause.praticas_vivencias = { [Op.overlap]: praticasTraduzidas };
         }
 
         const activePsychologistsCount = await db.Psychologist.count({
@@ -142,17 +165,23 @@ async function findDemandGaps() {
  * @param {number} [specificCandidateId=null] - O ID de um candidato específico a ser convidado (usado pela lógica de senioridade).
  */
 async function inviteNextInLine(nicheCriteria, specificCandidateId = null) {
+    let temasTraduzidos = [];
+    nicheCriteria.temas.forEach(t => { if (MAPA_TEMAS[t]) temasTraduzidos.push(...MAPA_TEMAS[t]); else temasTraduzidos.push(t); });
+
+    let praticasTraduzidas = [];
+    nicheCriteria.caracteristicas_prof.forEach(c => { if (MAPA_CARACTERISTICAS[c]) praticasTraduzidas.push(...MAPA_CARACTERISTICAS[c]); else praticasTraduzidas.push(c); });
+
     // Constrói a query para encontrar o melhor candidato na lista de espera
     const whereClause = {
         status: 'pending',
         valor_sessao_faixa: nicheCriteria.faixa_valor,
-        temas_atuacao: { [Op.overlap]: nicheCriteria.temas },
+        temas_atuacao: { [Op.overlap]: temasTraduzidos.length > 0 ? temasTraduzidos : nicheCriteria.temas },
     };
     if (nicheCriteria.pref_genero_prof !== 'Indiferente') {
         whereClause.genero_identidade = nicheCriteria.pref_genero_prof;
     }
-    if (nicheCriteria.caracteristicas_prof.length > 0) {
-        whereClause.praticas_afirmativas = { [Op.overlap]: nicheCriteria.caracteristicas_prof };
+    if (praticasTraduzidas.length > 0) {
+        whereClause.praticas_afirmativas = { [Op.overlap]: praticasTraduzidas };
     }
 
     // Se um ID específico foi passado (pela lógica de senioridade), adiciona à query.
