@@ -20,6 +20,7 @@ html {
 }
 
 body.pagina-dashboard {
+    height: 100%; /* Garante que o body ocupe 100% da altura do html */
     font-family: var(--font-principal);
     zoom: 0.88; /* Zoom out de 12% para o painel administrativo */
     position: relative;
@@ -32,6 +33,9 @@ body.pagina-dashboard {
     /* Remove qualquer 'overflow: hidden' que possa estar vindo de outros arquivos. */
     overflow-y: auto !important; /* Permite rolagem vertical no body */
     overflow-x: hidden !important; /* Impede rolagem horizontal no body */
+}
+html {
+    height: 100%; /* Garante que o html ocupe 100% da altura do viewport */
 }
 .pagina-dashboard h1, .pagina-dashboard h2, .pagina-dashboard h3, .pagina-dashboard h4 {
     font-family: var(--font-titulos); /* Padronizado: New Kansas */
