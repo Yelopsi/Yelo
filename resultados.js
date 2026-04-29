@@ -138,8 +138,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const parsed = JSON.parse(stored);
                     if (parsed.results && parsed.results.length > 0) {
+                        // Garante máximo de 3 resultados (Proteção contra cache de sessões antigas)
+                        const top3Results = parsed.results.slice(0, 3);
                         // Mapeia os dados reais para o formato do card novo
-                        dataToRender = parsed.results.map(p => ({
+                        dataToRender = top3Results.map(p => ({
                             id: p.id,
                             nome: p.nome,
                             crp: p.crp,

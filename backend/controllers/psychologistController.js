@@ -482,6 +482,15 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
 
         // Monta o objeto de resposta
         const responseData = psychologist.toJSON();
+
+        // --- AVISO DE QUALIDADE (PERFIL EM BRANCO) ---
+        const hasPhoto = !!psychologist.fotoUrl;
+        const hasBio = !!(psychologist.bio && psychologist.bio.trim().length >= 10);
+        responseData.isProfileComplete = hasPhoto && hasBio;
+        responseData.profileWarning = responseData.isProfileComplete 
+            ? null 
+            : "⚠️ Atenção: Seu perfil não aparecerá nos Matches para os pacientes enquanto não tiver uma Foto de Perfil e uma Biografia. Complete seus dados para receber contatos.";
+
         responseData.gamificationProgress = {
             blogPostCount, // Para Semeador
             forumActivityCount: forumPostCount + forumCommentCount, // Para Voz Ativa
