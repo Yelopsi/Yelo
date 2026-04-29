@@ -3,7 +3,8 @@ const { Op } = require('sequelize');
 
 // Conecta demandas de identidade do paciente com vivências do psicólogo
 const MAPA_CARACTERISTICAS = {
-    "Que faça parte da comunidade LGBTQIAPN+": ["Faz parte da comunidade LGBTQIAPN+ / Afirmativa", "LGBTQIAPN+ friendly", "Afirmativa", "Comunidade LGBTQIAPN+", "Que faça parte da comunidade LGBTQIAPN+"],
+    "LGBTQIAPN+ Friendly 🏳️‍🌈": ["LGBTQIAPN+ Friendly 🏳️‍🌈", "LGBTQIAPN+ friendly", "Afirmativa"],
+    "Que faça parte da comunidade LGBTQIAPN+": ["Faz parte da comunidade LGBTQIAPN+ / Afirmativa", "Comunidade LGBTQIAPN+", "Que faça parte da comunidade LGBTQIAPN+"],
     
     "Pessoa não-branca ou com prática antirracista": ["Pessoa não-branca / Prática Antirracista", "Antirracista", "Negritude", "Pessoa não-branca / Antirracista", "Que seja uma pessoa não-branca (racializada) / prática antirracista"],
     

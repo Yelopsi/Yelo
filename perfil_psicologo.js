@@ -283,8 +283,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Traduz as tags antigas do banco para a linguagem moderna visualmente
         const mapPraticas = {
-            "Que faça parte da comunidade LGBTQIAPN+": "Faz parte da comunidade LGBTQIAPN+ / Afirmativa",
-            "Comunidade LGBTQIAPN+": "Faz parte da comunidade LGBTQIAPN+ / Afirmativa",
+            "Que faça parte da comunidade LGBTQIAPN+": "🏳️‍🌈",
+            "LGBTQIAPN+ Friendly 🏳️‍🌈": "LGBTQIAPN+ Friendly 🏳️‍🌈",
             "Que seja uma pessoa não-branca (racializada) / prática antirracista": "Pessoa não-branca / Prática Antirracista",
             "Pessoa não-branca ou com prática antirracista": "Pessoa não-branca / Prática Antirracista",
             "Que tenha uma perspectiva feminista": "Perspectiva Feminista",
@@ -596,6 +596,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     "que faça parte da comunidade lgbtqiapn+": "questões LGBTQIAPN+",
                     "faz parte da comunidade lgbtqiapn+ / afirmativa": "questões LGBTQIAPN+",
                     "comunidade lgbtqiapn+": "questões LGBTQIAPN+",
+                    "lgbtqiapn+ friendly 🏳️‍🌈": "questões LGBTQIAPN+",
                     "que seja uma pessoa não-branca (racializada) / prática antirracista": "práticas antirracistas",
                     "pessoa não-branca / prática antirracista": "práticas antirracistas",
                     "pessoa não-branca ou com prática antirracista": "práticas antirracistas",

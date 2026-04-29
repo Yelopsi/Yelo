@@ -539,7 +539,8 @@ async function calculateMatches(preferences) {
         
         // --- MAPA DE PRÁTICAS (Nova UI para Tags do Banco) ---
         const mapaCaracteristicas = {
-            "Que faça parte da comunidade LGBTQIAPN+": ["Faz parte da comunidade LGBTQIAPN+ / Afirmativa", "LGBTQIAPN+ friendly", "Afirmativa", "Comunidade LGBTQIAPN+", "Que faça parte da comunidade LGBTQIAPN+"],
+            "LGBTQIAPN+ Friendly 🏳️‍🌈": ["LGBTQIAPN+ Friendly 🏳️‍🌈", "LGBTQIAPN+ friendly", "Afirmativa"],
+            "Que faça parte da comunidade LGBTQIAPN+": ["Faz parte da comunidade LGBTQIAPN+ / Afirmativa", "Comunidade LGBTQIAPN+", "Que faça parte da comunidade LGBTQIAPN+"],
             "Pessoa não-branca ou com prática antirracista": ["Pessoa não-branca / Prática Antirracista", "Antirracista", "Negritude", "Pessoa não-branca / Antirracista", "Que seja uma pessoa não-branca (racializada) / prática antirracista"],
             "Que tenha uma perspectiva feminista": ["Perspectiva Feminista", "Feminista", "Perspetiva feminista", "Que tenha uma perspectiva feminista"],
             "Especialista em Neurodiversidade (TDAH, Autismo)": ["Neurodiversidade (TDAH, Autismo)", "Neurodiversidade", "TDAH", "Autismo", "Que entenda de neurodiversidade (TDAH, Autismo, etc.)"]
