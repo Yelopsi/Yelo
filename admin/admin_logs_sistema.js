@@ -3,12 +3,22 @@ window.initializePage = async function() {
     
     const localApiUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : 'http://localhost:3001';
     const token = localStorage.getItem('Yelo_token');
+    
+    // Elementos da UI de Logs
+    const logsList = document.getElementById('logs-list');
+    const loadingEl = document.getElementById('logs-loading');
+    const emptyEl = document.getElementById('logs-empty');
+    const searchInput = document.getElementById('log-search');
+    const filterSelect = document.getElementById('log-filter');
+
+    let allLogs = [];
+    let processedLogs = [];
 
     // --- LÓGICA DE CARREGAMENTO ---
     async function fetchSystemData() {
-        const logsList = document.getElementById('logs-list');
         if (!logsList) return; // Segurança caso a página não tenha carregado
 
+        if(loadingEl) loadingEl.style.display = 'block';
         try {
             // Adiciona timestamp para evitar cache e garantir dados frescos sempre que abrir
             const startTime = performance.now(); // Inicia cronômetro
@@ -53,11 +63,14 @@ window.initializePage = async function() {
             health.socket = { connected: window.adminSocket && window.adminSocket.connected };
 
             renderHealthCards(health);
-            renderLogsList(logs);
+            
+            allLogs = logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            processedLogs = processAndCorrelateLogs([...allLogs]);
+            applyFilters();
 
         } catch (error) {
             console.error(error);
-            logsList.innerHTML = `<p style="color:red;">Erro: ${error.message}</p>`;
+            if(logsList) logsList.innerHTML = `<p style="color:red;">Erro: ${error.message}</p>`;
         }
     }
 
@@ -143,32 +156,104 @@ window.initializePage = async function() {
         `).join('');
     }
 
-    function renderLogsList(logs) {
-        const container = document.getElementById('logs-list');
-        
-        // FILTRO: Remove logs de "info" (acessos) e mostra apenas Erros/Warnings
-        const filteredLogs = logs.filter(log => log.level === 'error' || log.level === 'warning' || log.level === 'warn');
+    /**
+     * Renderiza a lista de logs processados na tela.
+     */
+    function renderLogsList(logsToRender) {
+        if (!logsList || !loadingEl || !emptyEl) return;
 
-        if (!filteredLogs || filteredLogs.length === 0) {
-            container.innerHTML = '<p style="color:#999;">Nenhum erro crítico ou aviso recente.</p>';
+        logsList.innerHTML = '';
+        loadingEl.style.display = 'none';
+
+        if (logsToRender.length === 0) {
+            emptyEl.style.display = 'block';
             return;
         }
+        emptyEl.style.display = 'none';
 
-        container.innerHTML = filteredLogs.map(log => {
-            const date = new Date(log.createdAt).toLocaleString('pt-BR');
-            const levelClass = `level-${log.level || 'info'}`;
-            return `
-                <div class="log-row">
-                    <div style="flex: 1;">
-                        <span class="log-level ${levelClass}">${log.level || 'INFO'}</span>
-                        <span style="margin-left: 10px; color: #333;">${log.message}</span>
-                    </div>
-                    <div style="color: #999; font-size: 0.8rem; min-width: 140px; text-align: right;">
-                        ${date}
-                    </div>
+        logsToRender.forEach(log => {
+            const li = document.createElement('li');
+            li.classList.add('log-item', `log-level-${log.level}`);
+
+            const icon = log.level === 'error' ? '❌' : (log.level === 'info' ? '✅' : 'ℹ️');
+            const userIdentifier = log.meta?.userEmail || 'Sistema';
+            const message = log.message;
+
+            let attemptStatusHTML = '';
+            if (log.subsequentAttempt) {
+                const status = log.subsequentAttempt;
+                let statusClass = '';
+                let statusText = '';
+
+                if (status.type === 'success') {
+                    statusClass = 'status-success';
+                    statusText = `<strong>Resultado:</strong> SUCESSO na tentativa seguinte.`;
+                } else if (status.type === 'failure') {
+                    statusClass = 'status-failure';
+                    statusText = `<strong>Resultado:</strong> FALHA na tentativa seguinte.`;
+                } else if (status.type === 'gave_up') {
+                    statusClass = 'status-gave-up';
+                    statusText = `<strong>Resultado:</strong> DESISTÊNCIA (nenhuma nova tentativa detectada).`;
+                }
+                
+                attemptStatusHTML = `<div class="subsequent-attempt ${statusClass}">${statusText}</div>`;
+            }
+
+            li.innerHTML = `
+                <div class="log-header">
+                    <span class="log-icon">${icon}</span>
+                    <strong class="log-user">${userIdentifier}</strong>
+                    <span class="log-message">${message}</span>
+                    <span class="log-timestamp">${new Date(log.createdAt).toLocaleString('pt-BR')}</span>
                 </div>
+                ${attemptStatusHTML}
             `;
-        }).join('');
+            logsList.appendChild(li);
+        });
+    }
+
+    /**
+     * Processa os logs brutos para correlacionar erros e tentativas subsequentes.
+     */
+    const processAndCorrelateLogs = (logs) => {
+        const logsByUser = logs.reduce((acc, log) => {
+            const userId = log.meta?.userEmail;
+            if (userId) {
+                if (!acc[userId]) acc[userId] = [];
+                acc[userId].push(log);
+            }
+            return acc;
+        }, {});
+
+        for (const userId in logsByUser) {
+            logsByUser[userId].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        }
+
+        return logs.map(log => {
+            const newLog = { ...log };
+            if (newLog.level !== 'error') return newLog;
+
+            const userId = newLog.meta?.userEmail;
+            if (!userId || !logsByUser[userId]) return newLog;
+
+            const userActions = logsByUser[userId];
+            const currentActionIndex = userActions.findIndex(action => action.id === newLog.id);
+            
+            if (currentActionIndex > -1 && currentActionIndex < userActions.length - 1) {
+                const nextAction = userActions[currentActionIndex + 1];
+                const timeDiff = new Date(nextAction.createdAt) - new Date(newLog.createdAt);
+                const minutesDiff = timeDiff / (1000 * 60);
+
+                if (minutesDiff < 30) { // Janela de 30 minutos
+                    const msgA = (newLog.message || '').toLowerCase();
+                    const msgB = (nextAction.message || '').toLowerCase();
+                    const isSameAction = (msgA.includes('login') && msgB.includes('login')) || (msgA.includes('pagamento') && msgB.includes('pagamento'));
+                    
+                    newLog.subsequentAttempt = isSameAction ? { type: nextAction.level === 'error' ? 'failure' : 'success' } : { type: 'gave_up' };
+                } else { newLog.subsequentAttempt = { type: 'gave_up' }; }
+            } else { newLog.subsequentAttempt = { type: 'gave_up' }; }
+            return newLog;
+        });
     }
 
     const btnRefresh = document.getElementById('btn-refresh-logs');
@@ -183,6 +268,25 @@ window.initializePage = async function() {
         });
     }
 
+    /**
+     * Aplica os filtros de busca e tipo de log.
+     */
+    const applyFilters = () => {
+        if (!searchInput || !filterSelect) return;
+        const searchTerm = searchInput.value.toLowerCase();
+        const filterType = filterSelect.value;
+
+        let baseList = (filterType === 'all') ? allLogs : processedLogs.filter(log => {
+            if (filterType === 'payment') return (log.message || '').toLowerCase().includes('pagamento');
+            return log.level === filterType;
+        });
+
+        const filtered = baseList.filter(log => JSON.stringify(log).toLowerCase().includes(searchTerm));
+        renderLogsList(filtered);
+    };
+
     // Inicia
     fetchSystemData();
+    if(searchInput) searchInput.addEventListener('input', applyFilters);
+    if(filterSelect) filterSelect.addEventListener('change', applyFilters);
 };

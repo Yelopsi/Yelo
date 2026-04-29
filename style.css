@@ -3170,28 +3170,6 @@ body.pagina-dashboard {
     font-size: 1.1rem; /* Ajusta o tamanho do emoji */
     vertical-align: middle;
 }
-
-
-/* =============================================================
-   FÓRUM: ESTILOS PARA POSTS FIXADOS
-   ============================================================= */
-
-.forum-post-card.pinned {
-    background-color: #fffbeb; /* Amarelo bem claro para destaque sutil */
-    border-left: 4px solid var(--cor-Yelo);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-}
-
-/* Ícone de Alfinete antes do título do post fixado */
-.forum-post-card .pinned-icon {
-    display: inline-block;
-    margin-right: 8px;
-    transform: rotate(-15deg);
-    font-size: 1.1rem; /* Ajusta o tamanho do emoji */
-    vertical-align: middle;
-}
-
-
 /* Mensagens de erro/sucesso */
 .mensagem-oculta {
     display: none;
@@ -4133,45 +4111,6 @@ label { font-weight: 700; }
 #review-form button[type="submit"] {
     width: auto;
     display: inline-block;
-}
-/* =============================================================
-   PERFIL PÚBLICO: ÍCONES DE AÇÃO (SOCIAL, SHARE, BLOG)
-   ============================================================= */
-
-.profile-action-icons {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-top: 20px;
-    padding: 15px 0;
-    border-top: 1px solid #eee;
-    border-bottom: 1px solid #eee;
-}
-
-.icon-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background-color: #f1f3f5; /* Cinza claro */
-    color: var(--cinza-texto);
-    text-decoration: none;
-    transition: all 0.2s ease;
-    border: none;
-    cursor: pointer;
-}
-
-.icon-btn:hover {
-    background-color: #e9ecef;
-    color: var(--verde-escuro);
-    transform: scale(1.1);
-}
-
-.icon-btn svg {
-    width: 24px;
-    height: 24px;
 }
 
 /* Container dos links sociais (para o caso de 5 ícones) */

@@ -325,13 +325,21 @@ exports.createPreference = async (req, res) => {
                 if (error.asaasErrors && error.asaasErrors.length > 0) {
                     const firstErr = error.asaasErrors[0];
                     logMessage = `[Asaas] Falha no Pagamento (${firstErr.code || 'unknown'}): ${firstErr.description || error.message}`;
-                    logMeta = { asaasResponse: error.asaasErrors };
+                    logMeta = { 
+                        asaasResponse: error.asaasErrors,
+                        psychologistId: req.psychologist ? req.psychologist.id : null, // Adiciona o ID do psicólogo
+                        userEmail: psychologist ? psychologist.email : null // Adiciona o email para correlação
+                    };
                 }
 
                 await db.SystemLog.create({
                     level: 'error',
                     message: logMessage,
-                    meta: logMeta
+                    meta: logMeta || { 
+                        level: 'error',
+                        psychologistId: req.psychologist ? req.psychologist.id : null, 
+                        userEmail: psychologist ? psychologist.email : null 
+                    }
                 });
             }
         } catch (logErr) { console.error("Falha ao gravar log:", logErr.message); }
@@ -472,7 +480,11 @@ exports.handleWebhook = async (req, res) => {
                 if (db.SystemLog) {
                     db.SystemLog.create({
                         level: 'info',
-                        message: `[ASAAS] Pagamento Confirmado: ${psi.email} (Plano ${planType})`
+                        message: `[ASAAS] Pagamento Confirmado: ${psi.email} (Plano ${planType})`,
+                        meta: {
+                            userEmail: psi.email,
+                            psychologistId: psi.id
+                        }
                     }).catch(() => {});
                 }
 
