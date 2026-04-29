@@ -297,7 +297,7 @@ body.pagina-dashboard {
 }
 
 .tabela-wrapper {
-    overflow-x: auto;
+    overflow-x: visible;
 }
 
 .tabela-gerenciamento {
