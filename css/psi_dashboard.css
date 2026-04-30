@@ -5916,6 +5916,38 @@ input:checked + .slider:before { transform: translateX(20px); }
     margin-bottom: 0;
 }
 
+/* --- Segmented Control for Radio Buttons --- */
+.segmented-control {
+    display: flex;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    overflow: hidden;
+    width: fit-content;
+    background-color: #f8f9fa;
+}
+
+.segmented-control input[type="radio"] {
+    display: none; /* Hide the actual radio button */
+}
+
+.segmented-control label {
+    padding: 10px 20px;
+    cursor: pointer;
+    color: #555;
+    font-weight: 500;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-right: 1px solid #ced4da;
+}
+
+.segmented-control label:last-of-type { border-right: none; }
+
+.segmented-control input[type="radio"]:checked + label {
+    background-color: var(--verde-escuro);
+    color: white;
+    font-weight: 600;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
 /* Botão Like nos Comentários */
 .comment-like-btn.liked.reddit-pill {
     color: var(--coral-quente); background-color: #fff5f5;
