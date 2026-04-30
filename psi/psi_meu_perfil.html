@@ -134,11 +134,33 @@
                     <textarea id="bio" name="bio" rows="6" placeholder="Escreva um texto acolhedor contando sua experiência, abordagem e como você pode ajudar o paciente..." required></textarea>
                     <div style="text-align: right; font-size: 0.8rem; color: #999; margin-top: 5px;">Recomendado: 300-500 caracteres</div>
                 </div>
-                <div class="form-group" style="max-width: 200px;">
-                    <label for="valor_sessao_numero">Valor da Sessão *</label>
+                <div class="form-group">
+                    <label>Modelo de Cobrança *</label>
+                    <div style="display: flex; gap: 20px; align-items: center;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                            <input type="radio" id="tipo_cobranca_sessao" name="tipo_cobranca" value="sessao" checked>
+                            <span>Valor por Sessão</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                            <input type="radio" id="tipo_cobranca_mensal" name="tipo_cobranca" value="mensal">
+                            <span>Valor Mensal Fixo</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="valor_sessao_container" class="form-group" style="max-width: 250px;">
+                    <label for="valor_sessao_numero">Valor da Sessão (R$)</label>
                     <div class="input-prefix-group">
                         <span class="prefix">R$</span>
-                        <input type="number" id="valor_sessao_numero" name="valor_sessao_numero" step="0.01" placeholder="0,00" required>
+                        <input type="number" id="valor_sessao_numero" name="valor_sessao_numero" step="0.01" placeholder="120,00" required>
+                    </div>
+                </div>
+
+                <div id="valor_mensal_container" class="form-group hidden" style="max-width: 250px;">
+                    <label for="valor_mensal_numero">Valor Mensal (R$)</label>
+                    <div class="input-prefix-group">
+                        <span class="prefix">R$</span>
+                        <input type="number" id="valor_mensal_numero" name="valor_mensal_numero" step="0.01" placeholder="500,00">
                     </div>
                 </div>
             </div>

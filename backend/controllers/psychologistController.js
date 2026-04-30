@@ -659,7 +659,8 @@ exports.updatePsychologistProfile = async (req, res) => {
             linkedin_url, instagram_url, facebook_url, tiktok_url, x_url,
             slug, // <--- AGORA ESTAMOS LENDO O CAMPO SLUG QUE VEM DO FORMULÁRIO
         cpf, // <--- ADICIONADO: Extraindo o CPF enviado pelo frontend
-        formacao_nivel, formacao_desc
+        formacao_nivel, formacao_desc,
+        tipo_cobranca, valor_mensal_numero
         } = req.body;
 
         // --- FALLBACK PARA CAMPOS LEGADOS (Especialidades/Temas) ---
@@ -755,6 +756,8 @@ exports.updatePsychologistProfile = async (req, res) => {
             slug: finalSlug,
             nome, telefone, bio, crp, cep, cidade, estado,
         formacao_nivel, formacao_desc,
+            tipo_cobranca,
+            valor_mensal_numero: valor_mensal_numero !== undefined ? (valor_mensal_numero ? parseFloat(valor_mensal_numero) : null) : undefined,
             valor_sessao_numero: valor_sessao_numero !== undefined ? (valor_sessao_numero ? parseFloat(valor_sessao_numero) : null) : undefined,
             genero_identidade,
             cpf, // <--- ADICIONADO: Salvando o CPF no banco de dados

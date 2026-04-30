@@ -3684,8 +3684,8 @@ app.get('/:slug', async (req, res, next) => {
 
             if (isVisible) {
                 // 4. Renderiza a página de perfil com os dados (SSR)
-                // O arquivo deve se chamar 'psi_perfil_publico.ejs' e estar na pasta /views
-                return res.render('psi_perfil_publico', { psicologo: psychologist });
+                // O arquivo deve se chamar 'perfil_psicologo.ejs' e estar na pasta /views
+                return res.render('perfil_psicologo', { psicologo: psychologist });
             }
         }
 
