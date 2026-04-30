@@ -102,22 +102,25 @@
 
         // --- LÓGICA DO MODELO DE COBRANÇA (INTEGRADA) ---
         const tipoCobrancaRadios = document.querySelectorAll('input[name="tipo_cobranca"]');
-        const valorSessaoContainer = document.getElementById('valor_sessao_container');
-        const valorMensalContainer = document.getElementById('valor_mensal_container');
-        const valorSessaoInput = document.getElementById('valor_sessao_numero');
-        const valorMensalInput = document.getElementById('valor_mensal_numero');
+        const valorDinamicoLabel = document.getElementById('valor_dinamico_label');
+        const valorDinamicoInput = document.getElementById('valor_dinamico_input');
 
         function alternarCamposDeValor() {
             if (!tipoCobrancaRadios.length) return;
             const tipoSelecionado = document.querySelector('input[name="tipo_cobranca"]:checked')?.value;
             if (!tipoSelecionado) return;
 
-            const isSessao = tipoSelecionado === 'sessao';
-            valorSessaoContainer.classList.toggle('hidden', !isSessao);
-            valorMensalContainer.classList.toggle('hidden', isSessao);
-            valorSessaoInput.required = isSessao;
-            valorMensalInput.required = !isSessao;
-            if (isSessao) valorMensalInput.value = ''; else valorSessaoInput.value = '';
+            if (tipoSelecionado === 'sessao') {
+                valorDinamicoLabel.textContent = 'Valor da Sessão (R$)';
+                valorDinamicoInput.name = 'valor_sessao_numero';
+                valorDinamicoInput.placeholder = '120,00';
+                valorDinamicoInput.value = originalProfileData.valor_sessao_numero || '';
+            } else { // mensal
+                valorDinamicoLabel.textContent = 'Valor Mensal (R$)';
+                valorDinamicoInput.name = 'valor_mensal_numero';
+                valorDinamicoInput.placeholder = '500,00';
+                valorDinamicoInput.value = originalProfileData.valor_mensal_numero || '';
+            }
         }
 
         if (tipoCobrancaRadios.length) {
@@ -132,7 +135,7 @@
 
         function populateBlockForm(data) {
             // Campos simples
-            ['nome', 'email', 'crp', 'telefone', 'bio', 'valor_sessao_numero', 'slug', 'cep', 'cidade', 'estado', 'razao_social', 'formacao_desc', 'valor_mensal_numero'].forEach(id => {
+            ['nome', 'email', 'crp', 'telefone', 'bio', 'slug', 'cep', 'cidade', 'estado', 'razao_social', 'formacao_desc'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = data[id] || '';
             });
@@ -165,8 +168,8 @@
         function getBlockData(block) {
             const data = {};
             block.querySelectorAll('input, textarea, select').forEach(input => {
-                if (input.name && input.type !== 'radio') { // Ignora radios para tratar separado
-                    if (input.type === 'number') {
+                if (input.name && input.type !== 'radio') {
+                    if (input.type === 'number' || input.id === 'valor_dinamico_input') {
                         data[input.name] = parseFloat(input.value.toString().replace(',', '.')) || null;
                     } else if (input.id === 'cpf' || input.id === 'telefone') {
                         data[input.name] = input.value.replace(/\D/g, '');
@@ -177,7 +180,15 @@
             });
             // Trata o radio de cobrança
             const tipoCobrancaRadio = block.querySelector('input[name="tipo_cobranca"]:checked');
-            if (tipoCobrancaRadio) data.tipo_cobranca = tipoCobrancaRadio.value;
+            if (tipoCobrancaRadio) {
+                data.tipo_cobranca = tipoCobrancaRadio.value;
+                // Garante que o valor do outro modelo seja zerado no payload
+                if (data.tipo_cobranca === 'sessao') {
+                    data.valor_mensal_numero = null;
+                } else {
+                    data.valor_sessao_numero = null;
+                }
+            }
 
             // ... (lógica para pegar dados de multiselects seria inserida aqui)
             return data;
