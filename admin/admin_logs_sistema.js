@@ -11,6 +11,9 @@ window.initializePage = async function() {
     const searchInput = document.getElementById('log-search');
     const filterSelect = document.getElementById('log-filter');
 
+    // Define o filtro padrão para "Apenas Erros" ao carregar
+    if(filterSelect) filterSelect.value = 'error';
+
     let allLogs = [];
     let processedLogs = [];
 
@@ -297,5 +300,6 @@ window.initializePage = async function() {
     // Inicia
     fetchSystemData();
     if(searchInput) searchInput.addEventListener('input', applyFilters);
-    if(filterSelect) filterSelect.addEventListener('change', applyFilters);
+    // CORREÇÃO: O filtro deve apenas aplicar o filtro, não refazer o fetch. O botão de refresh faz o fetch.
+    if(filterSelect) filterSelect.addEventListener('change', applyFilters); 
 };
