@@ -88,8 +88,16 @@
                         
                         <h1><%= psicologo.nome %> <span class="verification-badge" title="Profissional Verificado">✓</span></h1>
                         <span class="crp">CRP: <%= psicologo.crp %></span>
-                        
+
                         <div class="social-links-profile">
+                            <!-- BOTÃO DE FAVORITAR (para o JS controlar) -->
+                            <button id="btn-favorite" class="icon-btn-modern" title="Adicionar aos Favoritos">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                </svg>
+                            </button>
+
+                            <!-- ÍCONES DE REDES SOCIAIS (Renderizados no Servidor) -->
                             <% if (psicologo.instagram_url) { %>
                                 <a href="https://instagram.com/<%= psicologo.instagram_url.replace('@', '') %>" target="_blank" class="icon-social" title="Instagram">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
@@ -106,6 +114,7 @@
                     <div class="profile-body-tabs">
                         <nav class="tabs-nav">
                             <button class="tab-link active" data-tab="sobre">Sobre Mim</button>
+                            <button class="tab-link" data-tab="avaliacoes">Avaliações</button>
                             <button class="tab-link" data-tab="especialidades">Especialidades</button>
                         </nav>
                         <div id="tab-sobre" class="tab-content active">
@@ -125,6 +134,38 @@
                             <% } else { %>
                                 <p>Nenhuma especialidade informada.</p>
                             <% } %>
+                        </div>
+                        <!-- ESTRUTURA DA ABA DE AVALIAÇÕES (para o JS popular) -->
+                        <div id="tab-avaliacoes" class="tab-content">
+                            <div id="reviews-summary-container">
+                                <!-- O sumário de estrelas será injetado aqui pelo JS -->
+                            </div>
+                            <div id="reviews-list-container">
+                                <!-- A lista de avaliações será injetada aqui pelo JS -->
+                            </div>
+                            <div id="load-more-container" style="text-align: center; margin-top: 20px; display: none;">
+                                <button id="btn-show-more" class="btn btn-secundario">Mostrar mais</button>
+                            </div>
+
+                            <!-- Formulário para Nova Avaliação (controlado pelo JS) -->
+                            <div id="login-wall-box" class="login-wall-box" style="display: none; margin-top: 40px;">
+                                <h4>Deixe sua avaliação</h4>
+                                <p>Para avaliar, você precisa estar logado. Isso garante a autenticidade dos depoimentos.</p>
+                                <div class="login-wall-actions">
+                                    <a href="/login?redirect=<%= psicologo.slug %>" class="btn btn-principal">Fazer Login para Avaliar</a>
+                                </div>
+                            </div>
+
+                            <form id="form-nova-avaliacao" class="review-form-box" style="display: none; margin-top: 40px;">
+                                <h4>Deixe sua avaliação</h4>
+                                <div class="form-group">
+                                    <div class="star-rating-input" id="rating-input-stars">
+                                        <!-- Estrelas serão geradas aqui ou podem ser HTML estático -->
+                                    </div>
+                                </div>
+                                <textarea name="comentario" class="form-control" rows="4" placeholder="Conte como foi sua experiência..."></textarea>
+                                <button type="submit" class="btn btn-principal" style="margin-top: 15px;">Enviar Avaliação</button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -162,6 +203,11 @@
         <% } %>
         <a href="https://wa.me/<%= psicologo.telefone %>" target="_blank" id="btn-agendar-whatsapp-mobile" class="btn btn-principal">Agendar Consulta</a>
     </div>
+
+    <!-- INJEÇÃO DE DADOS PARA O CLIENT-SIDE SCRIPT -->
+    <script>
+        window.YELO_PROFILE_DATA = <%- JSON.stringify(psicologo) %>;
+    </script>
 
     <!-- Seus scripts JS que operam no HTML pré-renderizado -->
     <script src="/js/perfil_publico.js"></script>
