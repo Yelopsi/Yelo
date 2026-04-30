@@ -2188,8 +2188,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function getBlockData(block) {
             const data = {};
-            block.querySelectorAll('input, textarea, select').forEach(input => {
-            // Pega apenas inputs de texto e textareas, os selects serão tratados abaixo
+            // Pega apenas inputs de texto e textareas
             block.querySelectorAll('input, textarea').forEach(input => {
                 if (input.name) {
                     if (input.type === 'number' || input.id === 'valor_sessao_numero') {
@@ -2204,41 +2203,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Lógica unificada para dropdowns (customizados no desktop, nativos no mobile)
             block.querySelectorAll('.multiselect-tag').forEach(multi => {
-                const id = multi.id.replace('_multiselect', '');
-                data[id] = getMultiselectValues(multi.id);
-            });
                 const idKey = multi.id.replace('_multiselect', '');
                 const nativeSelect = document.getElementById(idKey + '_native');
-
-            // Select único
-            const elGenero = block.querySelector('#genero_identidade_multiselect');
-            if (elGenero) {
-                const generoArr = getMultiselectValues('genero_identidade_multiselect');
-                data.genero_identidade = generoArr.length > 0 ? generoArr[0] : '';
-                if (window.innerWidth <= 992 && nativeSelect) {
-                    // MODO MOBILE: Lê dos selects nativos
-                    if (nativeSelect.multiple) {
-                        data[idKey] = Array.from(nativeSelect.selectedOptions).map(opt => opt.value);
-                    } else {
-                        data[idKey] = nativeSelect.value;
-                    }
+                const values = getMultiselectValues(multi.id);
+                if (multi.dataset.singleSelect === 'true') {
+                    data[idKey] = values.length > 0 ? values[0] : '';
                 } else {
-                    // MODO DESKTOP: Lê dos componentes customizados
-                    const values = getMultiselectValues(multi.id);
-                    if (multi.dataset.singleSelect === 'true') {
-                        data[idKey] = values.length > 0 ? values[0] : '';
-                    } else {
-                        data[idKey] = values;
-                    }
+                    data[idKey] = values;
                 }
-            }
-
-            // Select único
-            const elFormacao = block.querySelector('#formacao_nivel_multiselect');
-            if (elFormacao) {
-                const formacaoArr = getMultiselectValues('formacao_nivel_multiselect');
-                data.formacao_nivel = formacaoArr.length > 0 ? formacaoArr[0] : '';
-            }
+            });
 
             return data;
         }
