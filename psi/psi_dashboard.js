@@ -757,6 +757,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const mainEl = document.querySelector('.dashboard-main');
         const paywallOverlay = document.getElementById('paywall-overlay');
         const bannerAnterior = document.querySelector('.restriction-floating-banner');
+        const trialPremiumBanner = document.getElementById('trial-premium-banner');
+
 
         if (!mainEl) return;
         
@@ -764,6 +766,7 @@ document.addEventListener('DOMContentLoaded', function() {
         mainEl.classList.remove('blocked-view');
         mainEl.classList.remove('restricted-mode');
         if (paywallOverlay) paywallOverlay.style.display = 'none';
+        if (trialPremiumBanner) trialPremiumBanner.style.display = 'none'; // Esconde o banner de trial por padrão
         if (bannerAnterior) bannerAnterior.remove();
 
         // Usuários VIP/Isentos nunca são bloqueados
@@ -780,23 +783,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 mainEl.classList.add('restricted-mode');
                 const banner = document.createElement('div');
                 banner.className = 'restriction-floating-banner';
-                banner.innerHTML = `
-                    <span>🔒 Seu período de teste expirou. Ative o Premium para continuar.</span>
-                    <button onclick="window.loadPage('psi_assinatura.html')">Assinar Agora</button>
-                `;
+                banner.innerHTML = `<span>🔒 Seu período de teste expirou. Ative o Premium para continuar.</span><button onclick="window.loadPage('psi_assinatura.html')">Assinar Agora</button>`;
                 document.body.appendChild(banner);
             }
-        } else if (psychologistData.status === 'pending' && url !== 'psi_meu_perfil.html') {
-            // Aviso Laranja para quem não tem o CPF preenchido ainda (Modo Anti-abuso)
-            const banner = document.createElement('div');
-            banner.className = 'restriction-floating-banner';
-            banner.style.backgroundColor = '#f59e0b';
-            banner.style.borderColor = '#fde68a';
-            banner.innerHTML = `
-                <span>🎁 Complete seu CPF no perfil para liberar seus 14 dias Premium Grátis!</span>
-                <button onclick="window.loadPage('psi_meu_perfil.html')" style="background:#fff; color:#b45309;">Completar Agora</button>
-            `;
-            document.body.appendChild(banner);
+         } else if (psychologistData.showTrialBanner && trialPremiumBanner) {
+            // Exibe o banner de trial premium se a flag do backend for true
+            trialPremiumBanner.style.display = 'flex';
+            const titleEl = document.getElementById('trial-premium-title');
+            const messageEl = document.getElementById('trial-premium-message');
+            if (titleEl) titleEl.textContent = psychologistData.trialBannerMessage || "Complete seu CPF para liberar o Premium!";
+            if (messageEl) messageEl.textContent = "Seu perfil está quase pronto! Adicione seu CPF para ativar seus 14 dias Premium grátis e começar a receber pacientes.";
         }
     }
 
