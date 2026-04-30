@@ -3655,57 +3655,59 @@ app.get('/patient/patient_dashboard', (req, res) => {
 // ROTEAMENTO INTELIGENTE (PÁGINAS ESTÁTICAS vs PERFIL PÚBLICO)
 // =============================================================
 
-app.get('/:slug', (req, res, next) => {
-    const slug = req.params.slug; // Removemos o replace aqui para verificar a extensão primeiro
+app.get('/:slug', async (req, res, next) => {
+    const slug = req.params.slug;
     
     // --- CORREÇÃO SEO: Redirecionamento de .html para URL limpa ---
     if (slug.endsWith('.html')) {
         return res.redirect(301, '/' + slug.replace('.html', ''));
     }
     
-    // 1. PROTEÇÃO DE ARQUIVOS (NOVO): 
-    // Se o link tiver um ponto (ex: script.js, estilo.css, imagem.png), 
-    // o servidor entende que NÃO é um perfil de usuário e deixa passar para o download.
+    // 1. Proteção de arquivos estáticos e rotas reservadas
     if (slug.includes('.')) return next();
-
-    // 2. Lista de palavras reservadas
     const reservado = ['api', 'assets', 'css', 'js', 'uploads', 'favicon.ico', 'admin', 'login', 'cadastro', 'dashboard'];
-    
     if (reservado.some(p => slug.startsWith(p))) return next();
 
-    // 3. Tenta renderizar
-    const paginaLimpa = slug.replace('.html', ''); // Limpa apenas para renderizar
-    
-    res.render(paginaLimpa, async (err, html) => {
-        if (err) {
-            // Se não achar o arquivo físico, pode ser um slug de psicólogo
-            if (err.message.includes('Failed to lookup view')) {
-                try {
-                    const psychologist = await db.Psychologist.findOne({
-                        where: { slug: { [Op.iLike]: paginaLimpa } },
-                        attributes: ['id', 'status', 'is_exempt', 'planExpiresAt']
-                    });
+    try {
+        // 2. Prioriza a busca por perfil de psicólogo
+        const psychologist = await db.Psychologist.findOne({
+            where: { slug: { [Op.iLike]: slug } },
+            attributes: { exclude: ['senha', 'resetPasswordToken', 'resetPasswordExpires', 'cpf'] }
+        });
 
-                    // Se o psicólogo existe e está ativo, renderiza a tela de perfil
-                    if (psychologist && (psychologist.status === 'active' || psychologist.status === 'content_creator')) {
-                        return res.render('perfil_psicologo');
-                    } else {
-                        // Se não existe ou está inativo -> Segue para o Hard 404 no rodapé
-                        return next();
-                    }
-                } catch (dbErr) {
-                    console.error(`Erro ao verificar slug ${paginaLimpa} para 404:`, dbErr);
-                    return next(); // Segue para o 404 em caso de erro no banco
+        if (psychologist) {
+            // 3. Verifica se o perfil deve ser visível publicamente (regra de negócio)
+            const hoje = new Date();
+            const validade = psychologist.planExpiresAt ? new Date(psychologist.planExpiresAt) : null;
+            const isVip = psychologist.is_exempt === true;
+            const isVisible = (psychologist.status === 'active' && (isVip || (validade && validade > hoje)));
+
+            if (isVisible) {
+                // 4. Renderiza a página de perfil com os dados (SSR)
+                // O arquivo deve se chamar 'perfil_psicologo.ejs' e estar na pasta /views
+                return res.render('perfil_psicologo', { psicologo: psychologist });
+            }
+        }
+
+        // 5. Se não for um perfil de psicólogo válido, tenta renderizar uma página estática com o mesmo nome
+        res.render(slug, (err, html) => {
+            if (err) {
+                // Se a página estática também não existe, encaminha para o 404
+                if (err.message.includes('Failed to lookup view')) {
+                    return next();
                 }
-            } else {
-                // Se for outro tipo de erro de renderização (ex: erro no EJS)
+                // Para outros erros de renderização (ex: erro de sintaxe no EJS)
                 console.error(`Erro ao renderizar a página ${slug}:`, err);
                 return res.status(500).send('Erro interno no servidor');
             }
-        }
-        
-        res.send(html);
-    });
+            // Se a página estática existe, envia o HTML renderizado
+            res.send(html);
+        });
+
+    } catch (dbErr) {
+        console.error(`Erro de banco de dados ao buscar slug ${slug}:`, dbErr);
+        return next(); // Encaminha para o handler de erro 500
+    }
 });
 
 // 4º: Catch-All (Se nada acima funcionar)
