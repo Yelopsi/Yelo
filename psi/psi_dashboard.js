@@ -1989,6 +1989,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 mobileImgEl.onerror = function() { this.src = 'https://placehold.co/120x120/1B4332/FFFFFF?text=Psi'; };
             }
 
+            // Helper para popular selects nativos
+            function populateNativeSelect(selectId, values) {
+                const select = document.getElementById(selectId);
+                if (!select) return;
+                const valuesArray = Array.isArray(values) ? values : (values ? [values] : []);
+                Array.from(select.options).forEach(option => {
+                    option.selected = valuesArray.includes(option.value);
+                });
+            }
+
             // Campos Simples
         ['nome', 'email', 'crp', 'telefone', 'bio', 'valor_sessao_numero', 'slug', 'cep', 'cidade', 'estado', 'razao_social', 'formacao_desc'].forEach(id => {
                 const el = document.getElementById(id);
@@ -2024,16 +2034,28 @@ document.addEventListener('DOMContentLoaded', function() {
             // Multiselects
             const temasData = data.temas_atuacao || data.temas || data.especialidades || [];
             updateMultiselect('temas_atuacao_multiselect', temasData);
+            populateNativeSelect('temas_atuacao_native', temasData);
             
             const abordagensData = data.abordagens_tecnicas || data.abordagens || [];
             updateMultiselect('abordagens_tecnicas_multiselect', abordagensData);
+            populateNativeSelect('abordagens_tecnicas_native', abordagensData);
             
             updateMultiselect('genero_identidade_multiselect', data.genero_identidade ? [data.genero_identidade] : []);
+            populateNativeSelect('genero_identidade_native', data.genero_identidade);
+
             updateMultiselect('publico_alvo_multiselect', data.publico_alvo || []);
+            populateNativeSelect('publico_alvo_native', data.publico_alvo);
+
             updateMultiselect('estilo_terapia_multiselect', data.estilo_terapia || []);
+
             updateMultiselect('praticas_inclusivas_multiselect', data.praticas_inclusivas || []);
+            populateNativeSelect('praticas_inclusivas_native', data.praticas_inclusivas);
+
             updateMultiselect('disponibilidade_periodo_multiselect', data.disponibilidade_periodo || []);
+            populateNativeSelect('disponibilidade_periodo_native', data.disponibilidade_periodo);
+
             updateMultiselect('formacao_nivel_multiselect', data.formacao_nivel ? [data.formacao_nivel] : []);
+            populateNativeSelect('formacao_nivel_native', data.formacao_nivel);
 
             let modData = data.modalidade || [];
             if (typeof modData === 'string') { try { modData = JSON.parse(modData); } catch(e) { modData = [modData]; } }
@@ -2045,6 +2067,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
             updateMultiselect('modalidade_atendimento_multiselect', modData);
+            updateMultiselect('modalidade_multiselect', modData);
+            populateNativeSelect('modalidade_native', modData);
         }
         
         // --- Eventos de Edição (Delegação por Bloco) ---
@@ -2165,6 +2189,8 @@ document.addEventListener('DOMContentLoaded', function() {
         function getBlockData(block) {
             const data = {};
             block.querySelectorAll('input, textarea, select').forEach(input => {
+            // Pega apenas inputs de texto e textareas, os selects serão tratados abaixo
+            block.querySelectorAll('input, textarea').forEach(input => {
                 if (input.name) {
                     if (input.type === 'number' || input.id === 'valor_sessao_numero') {
                         data[input.name] = parseFloat(input.value.toString().replace(',', '.')) || null;
@@ -2176,16 +2202,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
+            // Lógica unificada para dropdowns (customizados no desktop, nativos no mobile)
             block.querySelectorAll('.multiselect-tag').forEach(multi => {
                 const id = multi.id.replace('_multiselect', '');
                 data[id] = getMultiselectValues(multi.id);
             });
+                const idKey = multi.id.replace('_multiselect', '');
+                const nativeSelect = document.getElementById(idKey + '_native');
 
             // Select único
             const elGenero = block.querySelector('#genero_identidade_multiselect');
             if (elGenero) {
                 const generoArr = getMultiselectValues('genero_identidade_multiselect');
                 data.genero_identidade = generoArr.length > 0 ? generoArr[0] : '';
+                if (window.innerWidth <= 992 && nativeSelect) {
+                    // MODO MOBILE: Lê dos selects nativos
+                    if (nativeSelect.multiple) {
+                        data[idKey] = Array.from(nativeSelect.selectedOptions).map(opt => opt.value);
+                    } else {
+                        data[idKey] = nativeSelect.value;
+                    }
+                } else {
+                    // MODO DESKTOP: Lê dos componentes customizados
+                    const values = getMultiselectValues(multi.id);
+                    if (multi.dataset.singleSelect === 'true') {
+                        data[idKey] = values.length > 0 ? values[0] : '';
+                    } else {
+                        data[idKey] = values;
+                    }
+                }
             }
 
             // Select único
