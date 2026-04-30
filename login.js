@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             // Se tiver um redirect na URL (ex: veio do perfil), volta pra lá
                             window.location.href = decodeURIComponent(redirectParam);
                         } else if (finalUserType === 'psychologist') {
-                            window.location.href = '/psi/psi_dashboard'; 
+                            window.location.href = '/psi/psi_dashboard.html'; 
                         } else {
                             window.location.href = '/patient/patient_dashboard';
                         }

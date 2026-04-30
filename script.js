@@ -256,7 +256,7 @@ async function checkLoginState() {
     if (userType === 'patient') {
         dashboardLink = '/patient/patient_dashboard';
     } else if (userType === 'psychologist' || userType === 'psi') {
-        dashboardLink = '/psi/psi_dashboard';
+        dashboardLink = '/psi/psi_dashboard.html';
     } else if (userType === 'admin') {
         dashboardLink = '/admin'; // CORREÇÃO: Aponta para o dashboard de admin correto.
         firstName = 'Admin'; // CORREÇÃO: Garante que o nome de exibição seja sempre "Admin".

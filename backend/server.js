@@ -517,11 +517,11 @@ app.use(cookieParser()); // <-- Adicionado para ler cookies de sessão
 app.use((req, res, next) => {
     const csp = [
         "default-src 'self'",
-        // script-src: Permite scripts do próprio domínio, inline, eval (GTM) e todos os domínios do Google e libs externas.
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://*.google.com https://tagmanager.google.com https://connect.facebook.net https://unpkg.com https://cdn.jsdelivr.net https://accounts.google.com",
+        // script-src: Permite scripts do próprio domínio, inline, eval (GTM) e todos os domínios do Google e CDNs de libs externas.
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://*.google.com https://tagmanager.google.com https://connect.facebook.net https://unpkg.com https://cdn.jsdelivr.net https://accounts.google.com https://cdnjs.cloudflare.com https://cdn.quilljs.com https://npmcdn.com",
         
-        // Permite estilos do próprio domínio, inline e das fontes/serviços do Google.
-        "style-src 'self' 'unsafe-inline' https://tagmanager.google.com https://fonts.googleapis.com https://accounts.google.com",
+        // Permite estilos do próprio domínio, inline e das fontes/serviços do Google e CDNs.
+        "style-src 'self' 'unsafe-inline' https://tagmanager.google.com https://fonts.googleapis.com https://accounts.google.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.quilljs.com",
         
         // Permite imagens do próprio domínio, inline (data:), de qualquer fonte HTTPS, e dos pixels de rastreamento.
         "img-src 'self' data: https: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://googleads.g.doubleclick.net https://www.google.com https://*.google.com.br https://www.facebook.com https://ade.googlesyndication.com https://ssl.gstatic.com https://www.gstatic.com",
@@ -529,8 +529,8 @@ app.use((req, res, next) => {
         // font-src: Permite fontes do Google.
         "font-src 'self' https://fonts.gstatic.com data:",
         
-        // Permite conexões (XHR/Fetch) para a própria API e para os serviços de analytics do Google.
-        "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://googleads.g.doubleclick.net https://*.g.doubleclick.net https://www.googleadservices.com https://*.google.com " + (process.env.FRONTEND_URL || 'http://localhost:3001'),
+        // Permite conexões (XHR/Fetch) para a própria API, serviços de analytics e CDNs (para sourcemaps).
+        "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://googleads.g.doubleclick.net https://*.g.doubleclick.net https://www.googleadservices.com https://*.google.com https://cdn.jsdelivr.net https://unpkg.com " + (process.env.FRONTEND_URL || 'http://localhost:3001'),
         
         // frame-src: Permite iframes do Google (Login, Ads Remarketing, etc).
         "frame-src 'self' https://accounts.google.com https://bid.g.doubleclick.net",
