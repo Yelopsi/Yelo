@@ -14,17 +14,16 @@
     <meta name="description" content="<%= bioSnippet %>">
     
     <!-- Links para seus arquivos CSS -->
-    <link rel="stylesheet" href="/css/05-pages.css">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/psi_dashboard.css">
 
     <!-- Adicione aqui outros links de fontes, favicons, etc. -->
 
 </head>
 <body>
-    <%# Inclua seu header/menu principal aqui, se for um parcial %>
-    <% if (typeof include !== 'undefined') { %>
-        <%- include('partials/header') %>
-    <% } %>
+    <!-- Inclua seu header/menu principal aqui, se for um parcial -->
+    <%- include('partials/header') %>
 
     <main class="profile-page-main">
         <div class="container">
@@ -83,7 +82,7 @@
                 </div>
             </div>
 
-            <!-- Abas de Detalhes e Avaliações -->
+            <!-- Abas de Detalhes e Avaliações (a lógica JS continua funcionando) -->
             <div class="profile-body-tabs">
                 <nav class="tabs-nav">
                     <button class="tab-link active" data-tab="sobre">Sobre Mim</button>
