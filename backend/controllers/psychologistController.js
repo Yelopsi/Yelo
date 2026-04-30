@@ -491,6 +491,12 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
             ? null 
             : "⚠️ Atenção: Seu perfil não aparecerá nos Matches para os pacientes enquanto não tiver uma Foto de Perfil e uma Biografia. Complete seus dados para receber contatos.";
 
+        // --- NOVO: LÓGICA PARA O BANNER DE TRIAL PREMIUM (CPF) ---
+        const hasValidCpf = !!(psychologist.cpf && psychologist.cpf.replace(/\D/g, '').length >= 11);
+        responseData.showTrialBanner = (psychologist.status === 'pending' && !hasValidCpf);
+        responseData.trialBannerMessage = responseData.showTrialBanner
+            ? "Complete seu CPF no perfil para liberar seus 14 dias Premium grátis."
+            : null;
         responseData.gamificationProgress = {
             blogPostCount, // Para Semeador
             forumActivityCount: forumPostCount + forumCommentCount, // Para Voz Ativa
