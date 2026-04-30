@@ -1,11 +1,18 @@
 // Arquivo: public/js/perfil_psicologo.js
 
+const initProfilePage = async () => {
+    let visibleReviewCount = 5;
+
     // --- 1. CONFIGURAÇÃO INICIAL ---
     const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') 
         ? window.API_BASE_URL 
         : 'http://localhost:3001';
 
-    const profileContainer = document.getElementById('profile-container');
+    // FIX: Esconde a navegação inferior mobile em páginas públicas
+    const mobileNavs = document.querySelectorAll('.mobile-bottom-nav, .bottom-nav');
+    mobileNavs.forEach(nav => nav.style.display = 'none');
+
+    // --- 2. FUNÇÕES AUXILIARES DE UI ---
     const showToast = (message, type = 'success') => {
         let container = document.getElementById('pill-notification-container');
         if (!container) {
@@ -214,20 +221,7 @@
         // Novos campos adicionados
         const publico = ensureArray(profile.publico_alvo);
         const estilo = ensureArray(profile.estilo_terapia);
-        const inclusivasRaw = ensureArray(profile.praticas_inclusivas || profile.praticas_vivencias || profile.praticas);
-
-        // Traduz as tags antigas do banco para a linguagem moderna visualmente
-        const mapPraticas = {
-            "Que faça parte da comunidade LGBTQIAPN+": "🏳️‍🌈",
-            "LGBTQIAPN+ Friendly 🏳️‍🌈": "LGBTQIAPN+ Friendly 🏳️‍🌈",
-            "Que seja uma pessoa não-branca (racializada) / prática antirracista": "Pessoa não-branca / Prática Antirracista",
-            "Pessoa não-branca ou com prática antirracista": "Pessoa não-branca / Prática Antirracista",
-            "Que tenha uma perspectiva feminista": "Perspectiva Feminista",
-            "Que entenda de neurodiversidade (TDAH, Autismo, etc.)": "Neurodiversidade (TDAH, Autismo)",
-            "Especialista em Neurodiversidade (TDAH, Autismo)": "Neurodiversidade (TDAH, Autismo)"
-        };
-        
-        const inclusivas = inclusivasRaw.map(p => mapPraticas[p] || p);
+        const inclusivas = ensureArray(profile.praticas_inclusivas || profile.praticas_vivencias || profile.praticas);
 
         // Helper para criar grupos separados com título
         const createGroup = (title, items, cssClass) => {
@@ -506,6 +500,61 @@
             // Insere o botão DEPOIS da lista de reviews
             reviewsSection.appendChild(showMoreBtn);
         }
+    };
+
+    // --- 5. LÓGICA DO BOTÃO DE WHATSAPP ---
+    // A URL já é renderizada no servidor, mas o JS adiciona o rastreamento de clique.
+            const setupZapButton = (btnId) => {
+                const btnZap = document.getElementById(btnId);
+                if (!btnZap) return;
+
+                if (profile.telefone) {
+                    const cleanPhone = profile.telefone.replace(/\D/g, '');
+                    btnZap.href = `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=Olá, ${profile.nome.split(' ')[0]}! Vi seu perfil na Yelo e gostaria de verificar horários disponíveis para agendamento.`;
+                    btnZap.target = '_blank';
+                    btnZap.classList.remove('disabled');
+
+                    // --- NOVO: RASTREAMENTO DE CLIQUE ---
+                    // Remove event listeners antigos para evitar duplicação
+                    const newBtnZap = btnZap.cloneNode(true);
+                    btnZap.parentNode.replaceChild(newBtnZap, btnZap);
+                    
+                    newBtnZap.addEventListener('click', async () => {
+                        try {
+                            let patientId = null;
+                            const token = localStorage.getItem('Yelo_token');
+                            if (token && token !== 'cookie_auth_active') {
+                                try {
+                                    const payload = JSON.parse(atob(token.split('.')[1]));
+                                    if (payload.type === 'patient') patientId = payload.id;
+                                } catch(e) {}
+                            }
+
+                            // Recupera dados do visitante se houver
+                            const guestPhone = localStorage.getItem('yelo_guest_phone');
+                            const guestName = localStorage.getItem('yelo_guest_name');
+
+                            // Não esperamos o fetch terminar para não atrasar o usuário
+                            // A rota foi movida para /api/public/...
+                            await fetch(`${BASE_URL}/api/public/psychologists/${profile.slug}/whatsapp-click`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ patientId, guestPhone, guestName })
+                            });
+                        } catch (err) {
+                            console.error("Erro ao registrar clique:", err);
+                        }
+                    });
+                } else {
+                    btnZap.classList.add('disabled');
+                    btnZap.href = "#";
+                }
+            };
+
+            // Configura o botão do card lateral e o do CTA flutuante mobile (se existir)
+            setupZapButton('btn-agendar-whatsapp');
+            setupZapButton('btn-agendar-whatsapp-mobile');
+        };
     };
 
     // --- 6. LÓGICA DE AVALIAÇÃO ---
@@ -831,28 +880,52 @@
         });
     };
 
-    // --- 8. INICIALIZAÇÃO OTIMIZADA ---
+    // --- 8. INICIALIZAÇÃO OTIMIZADA (PÓS-SSR) ---
     const init = async () => {
         // Os dados do perfil agora são injetados pelo EJS em `window.YELO_PROFILE_DATA`
         const profileData = window.YELO_PROFILE_DATA;
 
         if (!profileData) {
             console.error("Dados do perfil não encontrados. O SSR pode ter falhado.");
-            // Oculta o container do perfil e mostra uma mensagem de erro genérica.
-            const profileContainer = document.getElementById('profile-container');
-            const errorElement = document.getElementById('error-state');
-            if (profileContainer) profileContainer.style.display = 'none';
-            if (errorElement) {
-                errorElement.style.display = 'block';
-                errorElement.classList.remove('hidden');
-            }
             return;
         }
 
         // A página já foi renderizada no servidor.
-        // Apenas inicializamos os componentes dinâmicos.
+        // Apenas inicializamos os componentes dinâmicos que o JS controla.
         try {
-            // A. Lógica de Horários Disponíveis
+            // A. Lógica de Auto-Favoritar (se aplicável, vindo de um redirect)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('autoFavorite') === 'true') {
+                const token = localStorage.getItem('Yelo_token');
+                const userType = localStorage.getItem('Yelo_user_type');
+                if (token && userType === 'patient') {
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('autoFavorite');
+                    window.history.replaceState({}, document.title, url.toString());
+                    try {
+                        await fetch(`${BASE_URL}/api/patients/favorites`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify({ psychologistId: profileData.id })
+                        });
+                        showToast("Adicionado aos favoritos!", "success");
+                        const btn = document.getElementById('btn-favorite');
+                        if (btn) btn.classList.add('active');
+                    } catch (e) { console.error("Erro no auto-favorite:", e); }
+                }
+            }
+
+            // B. Inicializa os componentes interativos que dependem de JS
+            // O HTML principal já foi renderizado no servidor.
+            if(typeof renderTagsSection === 'function') renderTagsSection(profileData);
+            if(typeof renderSocialLinks === 'function') renderSocialLinks(profileData);
+            if(typeof renderHeroRating === 'function') renderHeroRating(profileData.reviews);
+            if(typeof renderReviewsList === 'function') renderReviewsList(profileData.reviews);
+            if(typeof setupReviewForm === 'function') setupReviewForm(profileData.id);
+            if(typeof setupFavoriteButton === 'function') setupFavoriteButton(profileData.id);
+            if(typeof setupZapButton === 'function') setupZapButton(profileData);
+
+            // C. Lógica de Horários Disponíveis (se houver)
             try {
                 let nextSlot = null;
 
@@ -893,46 +966,12 @@
                 }
             } catch (e) { console.warn("Aviso de próximo horário ignorado: Rota pendente no backend.", e); }
 
-            // B. Lógica de Auto-Favoritar (se aplicável)
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('autoFavorite') === 'true') {
-                const token = localStorage.getItem('Yelo_token');
-                const userType = localStorage.getItem('Yelo_user_type');
-                if (token && userType === 'patient') {
-                    const url = new URL(window.location.href);
-                    url.searchParams.delete('autoFavorite');
-                    window.history.replaceState({}, document.title, url.toString());
-                    try {
-                        await fetch(`${BASE_URL}/api/patients/favorites`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                            body: JSON.stringify({ psychologistId: profileData.id })
-                        });
-                        showToast("Adicionado aos favoritos!", "success");
-                        const btn = document.getElementById('btn-favorite');
-                        if (btn) btn.classList.add('active');
-                    } catch (e) { console.error("Erro no auto-favorite:", e); }
-                }
-            }
-
-            // C. Inicializa os componentes interativos
-            // A renderização de tags e social links agora é feita no servidor.
-            // O JS só precisa cuidar do que é realmente dinâmico.
-            if(typeof renderHeroRating === 'function') renderHeroRating(profileData.reviews);
-            if(typeof renderReviewsList === 'function') renderReviewsList(profileData.reviews);
-            if(typeof setupReviewForm === 'function') setupReviewForm(profileData.id);
-            if(typeof setupFavoriteButton === 'function') setupFavoriteButton(profileData.id);
-
         } catch (dynamicInitError) {
             console.error("Erro ao inicializar componentes dinâmicos:", dynamicInitError);
         }
     };
 
     // --- INICIALIZAÇÃO GERAL ---
-    // Esconde a navegação inferior mobile em páginas públicas
-    document.querySelectorAll('.mobile-bottom-nav, .bottom-nav').forEach(nav => nav.style.display = 'none');
-
-    // Inicia a lógica da página
     init();
 
     // Configura as abas
@@ -946,5 +985,6 @@
             document.getElementById(`tab-${tabId}`).classList.add('active');
         });
     });
+};
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', initProfilePage);
