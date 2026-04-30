@@ -46,13 +46,14 @@ body.pagina-dashboard {
     background-image: var(--ruido-global) !important;
     background-attachment: fixed !important;
     background-repeat: repeat !important;
-    color: var(--cinza-texto);
     margin: 0;
     padding: 0;
     min-height: calc(100vh / 0.88);
+    color: var(--cinza-texto);
     width: 100%;
     max-width: 100%;
-    overflow: hidden; /* Impede a rolagem do body, transferindo para .dashboard-main */
+    overflow-y: auto !important; /* CORREÇÃO: Permite que o body seja o elemento de scroll principal */
+    overflow-x: hidden !important;
     position: relative;
     overscroll-behavior-y: none; /* Reforça o bloqueio do pull-to-refresh */
 }
@@ -124,8 +125,8 @@ body.pagina-dashboard {
     flex-direction: column;
     padding: 20px; /* Padding reduzido para economia de tela */
     background-color: transparent !important; /* Fundo transparente para ver o ruído global */
-    overflow-y: auto;
-    overflow-x: clip; /* FUNDAMENTAL: Destrava o eixo X para permitir cards fixos */
+    overflow-y: visible !important; /* CORREÇÃO: Permite que o conteúdo flua para o body, que agora tem o scroll */
+    overflow-x: clip;
     position: relative;
     box-sizing: border-box;
     -webkit-overflow-scrolling: touch; /* Rolagem suave no iOS */
