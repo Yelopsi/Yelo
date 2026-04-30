@@ -834,22 +834,31 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            // 7. WhatsApp
+            // 7. WhatsApp (MODIFICADO PARA NOVA CONVERSÃO)
             const setupZapButton = (btnId) => {
                 const btnZap = document.getElementById(btnId);
                 if (!btnZap) return;
 
                 if (profile.telefone) {
                     const cleanPhone = profile.telefone.replace(/\D/g, '');
-                    btnZap.href = `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=Olá, ${profile.nome.split(' ')[0]}! Vi seu perfil na Yelo e gostaria de verificar horários disponíveis para agendamento.`;
-                    btnZap.target = '_blank'; // Garante abertura em nova aba
+                    const whatsappUrl = `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=Olá, ${profile.nome.split(' ')[0]}! Vi seu perfil na Yelo e gostaria de verificar horários disponíveis para agendamento.`;
+                    
+                    // Em vez de href, usamos data-attribute para controlar o clique via JS
+                    btnZap.setAttribute('data-whatsapp-url', whatsappUrl);
+                    btnZap.removeAttribute('href');
+                    btnZap.removeAttribute('target');
+                    btnZap.style.cursor = 'pointer';
                     btnZap.classList.remove('disabled');
 
-                    // --- NOVO: RASTREAMENTO DE CLIQUE ---
+                    // --- RASTREAMENTO UNIFICADO ---
+                    // Remove event listeners antigos para evitar duplicação
                     const newBtnZap = btnZap.cloneNode(true);
                     btnZap.parentNode.replaceChild(newBtnZap, btnZap);
                     
-                    newBtnZap.addEventListener('click', async () => {
+                    newBtnZap.addEventListener('click', async (event) => {
+                        event.preventDefault(); // Previne qualquer ação padrão
+
+                        // 1. Rastreamento interno da Yelo (gamificação, etc.)
                         try {
                             let patientId = null;
                             const token = localStorage.getItem('Yelo_token');
@@ -859,23 +868,34 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     if (payload.type === 'patient') patientId = payload.id;
                                 } catch(e) {}
                             }
-
-                            // [NOVO] Recupera o telefone do questionário (se houver)
                             const guestPhone = localStorage.getItem('yelo_guest_phone');
                             const guestName = localStorage.getItem('yelo_guest_name');
 
-                            await fetch(`${BASE_URL}/api/public/psychologists/${profile.slug}/whatsapp-click`, {
+                            // Não esperamos o fetch terminar para não atrasar o usuário
+                            fetch(`${BASE_URL}/api/public/psychologists/${profile.slug}/whatsapp-click`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ patientId, guestPhone, guestName })
                             });
                         } catch (err) {
-                            console.error("Erro ao registrar clique:", err);
+                            console.error("Erro ao registrar clique interno:", err);
                         }
+
+                        // 2. Dispara a nova conversão do Google Ads
+                        if (typeof gtag_report_conversion === 'function') {
+                            gtag_report_conversion(); 
+                        }
+
+                        // 3. Aguarda 300ms para garantir que os scripts de rastreamento sejam enviados
+                        setTimeout(() => {
+                            // 4. Redireciona o usuário para o WhatsApp
+                            window.open(whatsappUrl, '_blank');
+                        }, 300);
                     });
                 } else {
                     btnZap.classList.add('disabled');
-                    btnZap.href = "#";
+                    btnZap.removeAttribute('data-whatsapp-url');
+                    btnZap.style.cursor = 'not-allowed';
                 }
             };
 

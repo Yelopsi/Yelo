@@ -512,6 +512,31 @@ app.use(cors({
 }));
 app.use(cookieParser()); // <-- Adicionado para ler cookies de sessão
 
+// --- MIDDLEWARE DE SEGURANÇA: CONTENT SECURITY POLICY (CSP) ---
+// Adicionado para resolver o bloqueio de scripts do Google (GTM, Analytics, Ads)
+app.use((req, res, next) => {
+    const csp = [
+        "default-src 'self'", // Padrão: permite apenas do próprio domínio
+        // Permite scripts do próprio domínio, inline, e dos serviços de tracking e libs externas
+        "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://connect.facebook.net https://unpkg.com https://cdn.jsdelivr.net https://accounts.google.com",
+        // Permite estilos do próprio domínio, inline e das fontes do Google
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        // Permite imagens do próprio domínio, em base64 (data:), de qualquer fonte https e do facebook (pixel)
+        "img-src 'self' data: https: https://www.facebook.com",
+        // Permite fontes do Google
+        "font-src 'self' https://fonts.gstatic.com",
+        // Permite conexões (API, Analytics) para o próprio domínio e para o Google
+        "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com http://localhost:3001 " + (process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'),
+        // Permite iframes do Google (para o Login)
+        "frame-src 'self' https://accounts.google.com",
+        // Bloqueia plugins como Flash
+        "object-src 'none'",
+    ].join('; ');
+
+    res.setHeader('Content-Security-Policy', csp);
+    next();
+});
+
 // --- MIDDLEWARE DE SESSÃO ATIVA (NOVO) ---
 // Rastreia todos os visitantes (logados ou não) para o card "Acessos Simultâneos"
 app.use(async (req, res, next) => {

@@ -159,7 +159,7 @@
                 <div class="form-row">
                     <div class="form-group" style="flex: 1; min-width: 250px; max-width: 400px;">
                         <label>Nível de Formação Principal</label>
-                        <div class="multiselect-tag disabled" id="formacao_nivel_multiselect" data-single-select="true">
+                        <div class="multiselect-tag disabled desktop-only" id="formacao_nivel_multiselect" data-single-select="true">
                             <div class="multiselect-display"></div>
                             <div class="multiselect-options">
                                 <div class="option" data-value="Graduação">Graduação</div>
@@ -169,6 +169,14 @@
                                 <div class="option" data-value="Pós-Doutorado">Pós-Doutorado</div>
                             </div>
                         </div>
+                        <select id="formacao_nivel_native" name="formacao_nivel" class="native-select-mobile">
+                            <option value="">Selecione...</option>
+                            <option value="Graduação">Graduação</option>
+                            <option value="Especialização">Especialização / Pós-Graduação</option>
+                            <option value="Mestrado">Mestrado</option>
+                            <option value="Doutorado">Doutorado</option>
+                            <option value="Pós-Doutorado">Pós-Doutorado</option>
+                        </select>
                     </div>
                 </div>
                 <div class="form-row">
@@ -249,10 +257,25 @@
                         <div class="option" data-value="Sexualidade">Sexualidade</div>
                     </div>
                 </div>
+                <select id="temas_atuacao_native" name="temas_atuacao" class="native-select-mobile" multiple>
+                    <option value="Ansiedade">Ansiedade</option>
+                    <option value="Estresse">Estresse</option>
+                    <option value="Depressão">Depressão</option>
+                    <option value="Relacionamentos">Relacionamentos</option>
+                    <option value="Carreira">Carreira</option>
+                    <option value="Autoestima">Autoestima</option>
+                    <option value="Luto">Luto</option>
+                    <option value="Traumas">Traumas</option>
+                    <option value="TDAH">TDAH</option>
+                    <option value="Autoconhecimento">Autoconhecimento</option>
+                    <option value="Trabalho">Trabalho</option>
+                    <option value="Tristeza">Tristeza</option>
+                    <option value="Sexualidade">Sexualidade</option>
+                </select>
             </div>
             <div class="form-group">
                 <label>Público-Alvo Principal *</label>
-                <div class="multiselect-tag disabled" id="publico_alvo_multiselect">
+                <div class="multiselect-tag disabled desktop-only" id="publico_alvo_multiselect">
                     <div class="multiselect-display"></div>
                     <div class="multiselect-options">
                         <div class="option" data-value="Adolescentes">Adolescentes (18+)</div>
@@ -261,10 +284,16 @@
                         <div class="option" data-value="Casais">Casais</div>
                     </div>
                 </div>
+                <select id="publico_alvo_native" name="publico_alvo" class="native-select-mobile" multiple>
+                    <option value="Adolescentes">Adolescentes (18+)</option>
+                    <option value="Adultos">Adultos</option>
+                    <option value="Idosos">Idosos</option>
+                    <option value="Casais">Casais</option>
+                </select>
             </div>
             <div class="form-group">
                 <label>Identificadores e Práticas Inclusivas *</label>
-                <div class="multiselect-tag disabled" id="praticas_inclusivas_multiselect">
+                <div class="multiselect-tag disabled desktop-only" id="praticas_inclusivas_multiselect">
                     <div class="multiselect-display"></div>
                     <div class="multiselect-options">
                         <div class="option" data-value="Faz parte da comunidade LGBTQIAPN+ / Afirmativa">Faz parte da comunidade LGBTQIAPN+ / Afirmativa</div>
@@ -274,10 +303,16 @@
                         <div class="option" data-value="Neurodiversidade (TDAH, Autismo)">Neurodiversidade (TDAH, Autismo)</div>
                     </div>
                 </div>
+                <select id="praticas_inclusivas_native" name="praticas_inclusivas" class="native-select-mobile" multiple>
+                    <option value="Faz parte da comunidade LGBTQIAPN+ / Afirmativa">Faz parte da comunidade LGBTQIAPN+ / Afirmativa</option>
+                    <option value="Pessoa não-branca / Prática Antirracista">Pessoa não-branca / Prática Antirracista</option>
+                    <option value="Perspectiva Feminista">Perspectiva Feminista</option>
+                    <option value="Neurodiversidade (TDAH, Autismo)">Neurodiversidade (TDAH, Autismo)</option>
+                </select>
             </div>
             <div class="form-group">
                 <label>Abordagens e Técnicas *</label>
-                <div class="multiselect-tag disabled" id="abordagens_tecnicas_multiselect" data-single-select="true">
+                <div class="multiselect-tag disabled desktop-only" id="abordagens_tecnicas_multiselect" data-single-select="true">
                     <div class="multiselect-display"></div>
                     <div class="multiselect-options">
                         <div class="option" data-value="Psicanálise">Psicanálise</div>
@@ -288,10 +323,19 @@
                         <div class="option" data-value="Jungiana">Jungiana</div>
                     </div>
                 </div>
+                <select id="abordagens_tecnicas_native" name="abordagens_tecnicas" class="native-select-mobile">
+                    <option value="">Selecione...</option>
+                    <option value="Psicanálise">Psicanálise</option>
+                    <option value="TCC">TCC</option>
+                    <option value="Humanista">Humanista</option>
+                    <option value="Gestalt-terapia">Gestalt-terapia</option>
+                    <option value="Sistêmica">Sistêmica</option>
+                    <option value="Jungiana">Jungiana</option>
+                </select>
             </div>
             <div class="form-group">
                 <label>Gênero de Identidade *</label>
-                <div class="multiselect-tag disabled" id="genero_identidade_multiselect" data-single-select="true">
+                <div class="multiselect-tag disabled desktop-only" id="genero_identidade_multiselect" data-single-select="true">
                     <div class="multiselect-display"></div>
                     <div class="multiselect-options">
                         <div class="option" data-value="Feminino">Feminino</div>
@@ -300,21 +344,31 @@
                         <div class="option" data-value="Outro">Outro</div>
                     </div>
                 </div>
+                <select id="genero_identidade_native" name="genero_identidade" class="native-select-mobile">
+                    <option value="">Selecione...</option>
+                    <option value="Feminino">Feminino</option>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Não-binário">Não-binário</option>
+                    <option value="Outro">Outro</option>
+                </select>
             </div>
             <div class="form-group">
                 <label>Modalidade de Atendimento *</label>
-                <div class="multiselect-tag disabled" id="modalidade_atendimento_multiselect" data-input-id="modalidade_input">
-                    <div class="multiselect-display">Selecionar...</div>
+                <div class="multiselect-tag disabled desktop-only" id="modalidade_multiselect">
+                    <div class="multiselect-display"></div>
                     <div class="multiselect-options">
                         <div class="option" data-value="Online">Online</div>
                         <div class="option" data-value="Presencial">Presencial</div>
                     </div>
-                    <input type="hidden" id="modalidade_input" name="modalidade">
                 </div>
+                <select id="modalidade_native" name="modalidade" class="native-select-mobile" multiple>
+                    <option value="Online">Online</option>
+                    <option value="Presencial">Presencial</option>
+                </select>
             </div>
             <div class="form-group">
                 <label>Disponibilidade *</label>
-                <div class="multiselect-tag disabled" id="disponibilidade_periodo_multiselect">
+                <div class="multiselect-tag disabled desktop-only" id="disponibilidade_periodo_multiselect">
                     <div class="multiselect-display"></div>
                     <div class="multiselect-options">
                         <div class="option" data-value="Manhã">Manhã</div>
@@ -322,6 +376,11 @@
                         <div class="option" data-value="Noite">Noite</div>
                     </div>
                 </div>
+                <select id="disponibilidade_periodo_native" name="disponibilidade_periodo" class="native-select-mobile" multiple>
+                    <option value="Manhã">Manhã</option>
+                    <option value="Tarde">Tarde</option>
+                    <option value="Noite">Noite</option>
+                </select>
             </div>
             </div>
         </div>
