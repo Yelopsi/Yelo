@@ -530,7 +530,7 @@ app.use((req, res, next) => {
         "font-src 'self' https://fonts.gstatic.com data:",
         
         // Permite conexões (XHR/Fetch) para a própria API, serviços de analytics e CDNs (para sourcemaps).
-        "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://googleads.g.doubleclick.net https://*.g.doubleclick.net https://www.googleadservices.com https://*.google.com https://cdn.jsdelivr.net https://unpkg.com " + (process.env.FRONTEND_URL || 'http://localhost:3001'),
+        "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://googleads.g.doubleclick.net https://*.g.doubleclick.net https://www.googleadservices.com https://*.google.com https://cdn.jsdelivr.net https://unpkg.com https://cdn.quilljs.com " + (process.env.FRONTEND_URL || 'http://localhost:3001'),
         
         // frame-src: Permite iframes do Google (Login, Ads Remarketing, etc).
         "frame-src 'self' https://accounts.google.com https://bid.g.doubleclick.net",
