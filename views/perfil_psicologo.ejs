@@ -14,15 +14,17 @@
     <meta name="description" content="<%= bioSnippet %>">
     
     <!-- Links para seus arquivos CSS -->
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/05-pages.css">
     <link rel="stylesheet" href="/css/psi_dashboard.css">
 
     <!-- Adicione aqui outros links de fontes, favicons, etc. -->
 
 </head>
 <body>
-    <!-- Inclua seu header/menu principal aqui, se for um parcial -->
-    <%- include('partials/header') %>
+    <%# Inclua seu header/menu principal aqui, se for um parcial %>
+    <% if (typeof include !== 'undefined') { %>
+        <%- include('partials/header') %>
+    <% } %>
 
     <main class="profile-page-main">
         <div class="container">
@@ -30,30 +32,89 @@
                 <!-- Coluna da Esquerda: Informações do Perfil -->
                 <div class="profile-info">
                     <div class="profile-photo-wrapper">
-                        <!-- A fotoUrl é injetada no 'src' -->
-                        <img src="<%= psicologo.fotoUrl || '/assets/images/placeholder-avatar.png' %>" alt="Foto de <%= psicologo.nome %>" class="profile-avatar-lg">
+                        <img src="<%= psicologo.fotoUrl || '/assets/images/placeholder-avatar.png' %>" alt="Foto de <%= psicologo.nome %>" class="profile-avatar-lg" />
                     </div>
                     
                     <!-- CONTEÚDO INJETADO NO SERVIDOR -->
                     <h1><%= psicologo.nome %></h1>
                     <span class="crp">CRP: <%= psicologo.crp %></span>
                     
-                    <div class="profile-bio-hero">
-                        <p id="psi-bio-text"><%- psicologo.bio %></p>
+                    <!-- Ícones Sociais -->
+                    <div class="social-links-profile">
+                        <% if (psicologo.instagram_url) { %>
+                            <a href="https://instagram.com/<%= psicologo.instagram_url %>" target="_blank" class="icon-social" title="Instagram">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                            </a>
+                        <% } %>
+                        <% if (psicologo.linkedin_url) { %>
+                            <a href="https://linkedin.com/in/<%= psicologo.linkedin_url %>" target="_blank" class="icon-social" title="LinkedIn">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                            </a>
+                        <% } %>
                     </div>
-                    
-                    <!-- O restante do conteúdo (tags, etc.) pode ser preenchido aqui ou via JS -->
                 </div>
                 
                 <!-- Coluna da Direita: Card de Conversão -->
                 <div class="conversion-card-wrapper">
-                    <!-- Seu card de preço e botão de agendar, que pode continuar sendo client-side -->
+                    <div class="conversion-card-modern">
+                        <% if (psicologo.valor_sessao_numero) { %>
+                            <div class="price-display">
+                                R$ <%= psicologo.valor_sessao_numero.toFixed(2).replace('.', ',') %>
+                            </div>
+                            <span class="price-suffix">/ sessão de 50 min</span>
+                        <% } %>
+                        
+                        <a href="https://wa.me/<%= psicologo.telefone %>" target="_blank" id="btn-agendar-whatsapp" class="btn-pulse">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                            Agendar via WhatsApp
+                        </a>
+
+                        <div class="trust-badges-row">
+                            <div class="trust-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                <span>Pagto. Seguro</span>
+                            </div>
+                            <div class="trust-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                <span>Sigilo Garantido</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Abas de Detalhes e Avaliações (a lógica JS continua funcionando) -->
+            <!-- Abas de Detalhes e Avaliações -->
             <div class="profile-body-tabs">
-                <!-- ... -->
+                <nav class="tabs-nav">
+                    <button class="tab-link active" data-tab="sobre">Sobre Mim</button>
+                    <button class="tab-link" data-tab="avaliacoes">Avaliações</button>
+                </nav>
+                
+                <div id="tab-sobre" class="tab-content active">
+                    <div class="about-section-modern">
+                        <div class="bio-card">
+                            <p class="bio-text"><%- psicologo.bio %></p>
+                        </div>
+                        
+                        <% if (psicologo.temas_atuacao && psicologo.temas_atuacao.length > 0) { %>
+                            <h3 class="practices-title">Especialidades</h3>
+                            <div class="practices-container">
+                                <% psicologo.temas_atuacao.forEach(tema => { %>
+                                    <span class="practice-tag"><%= tema %></span>
+                                <% }); %>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+                
+                <div id="tab-avaliacoes" class="tab-content">
+                    <h2>Avaliações de Pacientes</h2>
+                    <p>Veja o que outros pacientes dizem sobre o trabalho de <%= psicologo.nome.split(' ')[0] %>.</p>
+                    <!-- A lógica de carregar e exibir as avaliações pode continuar no seu JS -->
+                    <div id="reviews-list-container">
+                        <p>Nenhuma avaliação ainda.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
