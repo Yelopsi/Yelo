@@ -802,7 +802,19 @@ exports.updatePsychologistProfile = async (req, res) => {
         console.error('Erro ao atualizar perfil:', error);
         console.error('Detalhes do erro (Message):', error.message);
         if (error.name === 'SequelizeUniqueConstraintError') {
-             return res.status(400).json({ error: 'Dados duplicados (Link ou CRP já existem).' });
+            // Mapeia o campo técnico para uma mensagem amigável
+            const field = error.fields ? Object.keys(error.fields)[0] : 'desconhecido';
+            let userMessage = 'Este dado já está em uso por outra conta.';
+            if (field === 'slug') {
+                userMessage = 'Este link personalizado já está em uso. Por favor, escolha outro.';
+            } else if (field === 'crp') {
+                userMessage = 'Este CRP já está cadastrado em outra conta.';
+            } else if (field === 'cpf') {
+                userMessage = 'Este CPF já está cadastrado em outra conta.';
+            } else if (field === 'email') {
+                userMessage = 'Este e-mail já está em uso por outra conta.';
+            }
+            return res.status(400).json({ error: userMessage });
         }
         res.status(500).json({ error: 'Erro ao atualizar perfil' });
     }
