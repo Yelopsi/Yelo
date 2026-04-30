@@ -512,25 +512,32 @@ app.use(cors({
 }));
 app.use(cookieParser()); // <-- Adicionado para ler cookies de sessão
 
-// --- MIDDLEWARE DE SEGURANÇA: CONTENT SECURITY POLICY (CSP) ---
-// Adicionado para resolver o bloqueio de scripts do Google (GTM, Analytics, Ads)
+// --- MIDDLEWARE DE SEGURANÇA: CONTENT SECURITY POLICY (CSP) - ATUALIZADO ---
+// Adicionado para resolver o bloqueio de scripts do Google (GTM, Analytics, Ads) e outros serviços.
 app.use((req, res, next) => {
     const csp = [
-        "default-src 'self'", // Padrão: permite apenas do próprio domínio
-        // Permite scripts do próprio domínio, inline, e dos serviços de tracking e libs externas
-        "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://connect.facebook.net https://unpkg.com https://cdn.jsdelivr.net https://accounts.google.com",
-        // Permite estilos do próprio domínio, inline e das fontes do Google
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-        // Permite imagens do próprio domínio, em base64 (data:), de qualquer fonte https e do facebook (pixel)
-        "img-src 'self' data: https: https://www.facebook.com",
-        // Permite fontes do Google
+        "default-src 'self'",
+        // script-src: Permite scripts do próprio domínio, inline, eval (necessário para algumas variáveis do GTM), e todos os domínios do Google e libs externas.
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://*.google.com https://tagmanager.google.com https://connect.facebook.net https://unpkg.com https://cdn.jsdelivr.net https://accounts.google.com",
+        
+        // Permite estilos do próprio domínio, inline e das fontes/serviços do Google.
+        "style-src 'self' 'unsafe-inline' https://tagmanager.google.com https://fonts.googleapis.com https://accounts.google.com",
+        
+        // Permite imagens do próprio domínio, inline (data:), de qualquer fonte HTTPS, e dos pixels de rastreamento.
+        "img-src 'self' data: https: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://googleads.g.doubleclick.net https://www.google.com https://*.google.com.br https://www.facebook.com https://ade.googlesyndication.com https://ssl.gstatic.com https://www.gstatic.com",
+        
+        // font-src: Permite fontes do Google e inline.
         "font-src 'self' https://fonts.gstatic.com",
-        // Permite conexões (API, Analytics) para o próprio domínio e para o Google
-        "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com http://localhost:3001 " + (process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'),
-        // Permite iframes do Google (para o Login)
+        
+        // Permite conexões (XHR/Fetch) para a própria API e para os serviços de analytics do Google.
+        "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.g.doubleclick.net https://*.google.com " + (process.env.FRONTEND_URL || 'http://localhost:3001'),
+        
+        // frame-src: Permite iframes do Google (Login, Ads Remarketing).
         "frame-src 'self' https://accounts.google.com",
-        // Bloqueia plugins como Flash
+        
         "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
     ].join('; ');
 
     res.setHeader('Content-Security-Policy', csp);
