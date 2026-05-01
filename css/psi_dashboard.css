@@ -5422,7 +5422,7 @@ input:checked + .slider:before { transform: translateX(20px); }
     display: flex !important;
     flex-direction: column !important;
     width: 100%;
-    min-height: calc(100vh / 0.88);
+    height: calc(100vh / 0.88) !important;
     overflow-x: hidden;
 }
 
