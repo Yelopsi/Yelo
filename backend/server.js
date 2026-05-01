@@ -97,6 +97,19 @@ if (db.Appointment && db.Psychologist) {
     }
 }
 
+// --- FIX: Define Association between Appointment and Psychologist ---
+if (db.Appointment && db.Psychologist) {
+    // Check if association already exists to avoid errors on restart
+    if (!db.Appointment.associations.psychologist) {
+        console.log("[FIX] Defining Appointment -> Psychologist association.");
+        db.Appointment.belongsTo(db.Psychologist, { as: 'psychologist', foreignKey: 'psychologistId' });
+    }
+    if (!db.Psychologist.associations.appointments) {
+        console.log("[FIX] Defining Psychologist -> Appointment association.");
+        db.Psychologist.hasMany(db.Appointment, { as: 'appointments', foreignKey: 'psychologistId' });
+    }
+}
+
 // --- FIX: Patch Patient Model (Garante leitura de campos novos) ---
 if (db.Patient) {
     const attrs = db.Patient.rawAttributes;
@@ -204,6 +217,32 @@ if (!db.SystemSetting) {
     });
 }
 
+// --- FIX: Definir Modelo de Avisos (Broadcast) ---
+if (!db.Aviso) {
+    console.log("[FIX] Defining Aviso model manually.");
+    db.Aviso = db.sequelize.define('Aviso', {
+        title: DataTypes.STRING,
+        content: DataTypes.TEXT,
+        author: DataTypes.STRING, // Nome do admin que enviou
+        status: { type: DataTypes.STRING, defaultValue: 'published' } // published, archived
+    });
+}
+
+// --- FIX: Definir Modelo de Leitura de Avisos ---
+if (!db.AvisoLido) {
+    console.log("[FIX] Defining AvisoLido model manually.");
+    db.AvisoLido = db.sequelize.define('AvisoLido', {
+        psychologistId: {
+            type: DataTypes.INTEGER,
+            references: { model: 'Psychologists', key: 'id' }
+        },
+        avisoId: {
+            type: DataTypes.INTEGER,
+            references: { model: 'Avisos', key: 'id' }
+        }
+    });
+}
+
 // --- HOOK GLOBAL: DESARQUIVAMENTO AUTOMÁTICO ---
 // Se um psicólogo ou paciente enviar mensagem, a conversa é desarquivada (status = 'active')
 if (db.Message && db.Conversation) {
@@ -275,25 +314,22 @@ const app = express();
 
 // --- FIX: FLAG DE INICIALIZAÇÃO (EARLY BINDING) ---
 // Permite que o servidor inicie a porta imediatamente para passar no health check do Render,
-// mesmo que o banco de dados ainda esteja sincronizando.
+// mesmo que o banco de dados ainda esteja sincronizando. Reativado para estabilidade.
 let isDbSynced = false;
 app.use((req, res, next) => {
-    // Permite assets e health checks, bloqueia API/Páginas até o DB estar pronto
-    if (!isDbSynced && !req.path.startsWith('/assets') && !req.path.startsWith('/css') && !req.path.startsWith('/js')) {
+    if (isDbSynced) {
+        return next();
+    }
+    // Bloqueia requisições de API/Páginas até o DB estar pronto, mas permite assets.
+    if (!req.path.startsWith('/assets') && !req.path.startsWith('/css') && !req.path.startsWith('/js')) {
         // Retorna uma página HTML com auto-refresh em vez de texto puro
         return res.status(503).send(`
-            <html>
-                <head><meta http-equiv="refresh" content="3"></head>
-                <body style="font-family:sans-serif; text-align:center; padding:50px; color:#1B4332; background-color:#f8f9fa;">
-                    <h1 style="margin-bottom:10px;">Iniciando Sistema...</h1>
-                    <p>Estamos finalizando a sincronização do banco de dados.</p>
-                    <p style="color:#666; font-size:0.9rem;">A página atualizará automaticamente em instantes.</p>
-                </body>
-            </html>
+            <!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Serviço Indisponível</title><meta http-equiv="refresh" content="5"><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#f0f2f5;color:#333;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;}.container{max-width:400px;padding:20px;}h1{color:#1B4332;}</style></head><body><div class="container"><h1>Iniciando Sistema...</h1><p>Estamos finalizando a sincronização do banco de dados.</p><p style="color:#666;font-size:0.9rem;">A página atualizará automaticamente em 5 segundos.</p></div></body></html>
         `);
     }
     next();
 });
+
 
 // --- FIX: Confia no proxy (Render/Heroku/AWS) ---
 // Isso é essencial para que req.hostname e req.protocol funcionem corretamente atrás de um load balancer.
@@ -329,7 +365,7 @@ app.use('/assets', express.static(path.join(__dirname, '../assets')));
 app.use('/css', express.static(path.join(__dirname, '../css')));
 
 // 3. [NOVO] Libera a pasta 'js' (CRUCIAL PARA O PERFIL FUNCIONAR)
-app.use('/js', express.static(path.join(__dirname, '../js')));
+app.use('/js', express.static(path.join(__dirname, '..', 'public', 'js')));
 
 // 1. LIBERA A PASTA ADMIN PARA O NAVEGADOR ACESSAR OS ARQUIVOS (CSS, JS, Imagens do Admin)
 app.use('/admin', express.static(path.join(__dirname, '../admin')));
@@ -517,20 +553,20 @@ app.use(cookieParser()); // <-- Adicionado para ler cookies de sessão
 app.use((req, res, next) => {
     const csp = [
         "default-src 'self'",
-        // script-src: Permite scripts do próprio domínio, inline, eval (GTM) e todos os domínios do Google e CDNs de libs externas.
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://*.google.com https://tagmanager.google.com https://connect.facebook.net https://unpkg.com https://cdn.jsdelivr.net https://accounts.google.com https://cdnjs.cloudflare.com https://cdn.quilljs.com https://npmcdn.com",
+        // script-src: Adicionado clarity.ms (analytics) e vlibras.gov.br (acessibilidade)
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://*.google.com https://tagmanager.google.com https://connect.facebook.net https://unpkg.com https://cdn.jsdelivr.net https://accounts.google.com https://cdnjs.cloudflare.com https://cdn.quilljs.com https://npmcdn.com https://*.clarity.ms https://vlibras.gov.br",
         
         // Permite estilos do próprio domínio, inline e das fontes/serviços do Google e CDNs.
         "style-src 'self' 'unsafe-inline' https://tagmanager.google.com https://fonts.googleapis.com https://accounts.google.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.quilljs.com",
         
         // Permite imagens do próprio domínio, inline (data:), de qualquer fonte HTTPS, e dos pixels de rastreamento.
-        "img-src 'self' data: https: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://googleads.g.doubleclick.net https://www.google.com https://*.google.com.br https://www.facebook.com https://ade.googlesyndication.com https://ssl.gstatic.com https://www.gstatic.com",
+        "img-src 'self' data: https: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://googleads.g.doubleclick.net https://www.google.com https://*.google.com.br https://www.facebook.com https://ade.googlesyndication.com https://ssl.gstatic.com https://www.gstatic.com https://*.clarity.ms",
         
         // font-src: Permite fontes do Google.
         "font-src 'self' https://fonts.gstatic.com data:",
         
         // Permite conexões (XHR/Fetch) para a própria API, serviços de analytics e CDNs (para sourcemaps).
-        "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://googleads.g.doubleclick.net https://*.g.doubleclick.net https://www.googleadservices.com https://*.google.com https://cdn.jsdelivr.net https://unpkg.com https://cdn.quilljs.com " + (process.env.FRONTEND_URL || 'http://localhost:3001'),
+        "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://googleads.g.doubleclick.net https://*.g.doubleclick.net https://www.googleadservices.com https://*.google.com https://cdn.jsdelivr.net https://unpkg.com https://cdn.quilljs.com https://*.clarity.ms " + (process.env.FRONTEND_URL || 'http://localhost:3001'),
         
         // frame-src: Permite iframes do Google (Login, Ads Remarketing, etc).
         "frame-src 'self' https://accounts.google.com https://bid.g.doubleclick.net",
@@ -1893,20 +1929,8 @@ const startCronJobs = () => {
     
     if (currentBrtHour === 3 && currentDay !== lastAuditDay) {
         lastAuditDay = currentDay;
-        console.log("⏰ [CRON] Realizando auditoria diária de assinaturas vencidas...");
-        try {
-            const psisVencidos = await db.Psychologist.findAll({
-                where: {
-                    status: 'active',
-                    [Op.or]: [{ is_exempt: false }, { is_exempt: null }],
-                    planExpiresAt: { [Op.lt]: now }
-                }
-            });
-            if (psisVencidos.length > 0) {
-                console.log(`[CRON] Inativando ${psisVencidos.length} psicólogos com assinaturas vencidas.`);
-                for (const psi of psisVencidos) await psi.update({ status: 'inactive' });
-            }
-        } catch(e) { console.error("Erro na auditoria de vencidos:", e); }
+        // A nova função de auditoria já cobre a verificação de vencidos e muito mais.
+        await runIntegrityAudit();
     }
 
     // 2. LEMBRETES DE SESSÃO (A cada hora cheia)
@@ -1968,6 +1992,43 @@ const startCronJobs = () => {
     }
   }, 60000); // Roda a cada minuto
 };
+
+// --- FUNÇÃO DE AUDITORIA DE INTEGRIDADE (CRON) ---
+// Agrupa todas as verificações de sanidade da base que antes rodavam no startup.
+// Agora, roda apenas uma vez por dia para não impactar o desenvolvimento.
+async function runIntegrityAudit() {
+    console.log('🛡️ [CRON AUDIT] Executando auditoria de integridade da base de dados...');
+    try {
+        // 1. Remove Falso VIP de quem tem assinatura Asaas (Quem paga não é VIP)
+        await db.sequelize.query(`
+            UPDATE "Psychologists" SET "is_exempt" = false 
+            WHERE ("stripeSubscriptionId" IS NOT NULL OR "subscriptionId" IS NOT NULL) 
+            AND "is_exempt" = true;
+        `);
+        // 2. Inativa quem não tem assinatura nem é VIP e cujo Trial expirou (limpa contas fantasmas)
+        await db.sequelize.query(`
+            UPDATE "Psychologists" SET status = 'inactive', "planExpiresAt" = '1970-01-01'
+            WHERE ("stripeSubscriptionId" IS NULL AND "subscriptionId" IS NULL)
+            AND ("is_exempt" IS NULL OR "is_exempt" = false) AND status = 'active'
+            AND ("planExpiresAt" IS NULL OR "planExpiresAt" <= NOW());
+        `);
+        // 3. Inativa quem está com a data vencida e não é VIP (COBRE A AUDITORIA ANTIGA)
+        await db.sequelize.query(`
+            UPDATE "Psychologists" SET status = 'inactive'
+            WHERE "planExpiresAt" <= NOW()
+            AND ("is_exempt" IS NULL OR "is_exempt" = false) AND status = 'active';
+        `);
+        // 4. Remove VIP Fantasma (Contas que ganharam VIP por bug antigo e não têm plano VIP associado)
+        await db.sequelize.query(`
+            UPDATE "Psychologists" SET "is_exempt" = false, status = 'inactive'
+            WHERE "is_exempt" = true 
+            AND ("plano" IS NULL OR "plano" = '');
+        `);
+        console.log('✅ [CRON AUDIT] Auditoria de integridade e limpeza de inadimplentes concluída.');
+    } catch (e) { 
+        console.error('⚠️ [CRON AUDIT] Erro durante a auditoria de integridade:', e.message); 
+    }
+}
 
 // --- ROTAS DE PACIENTES (CRUD) ---
 app.get('/api/my-patients', verifyTokenLocal, async (req, res) => {
@@ -2591,6 +2652,10 @@ app.use('/api/psychologists/me/posts', blogRoutes);
 
 // ROTA DE ANALYTICS (NOVA)
 app.get('/api/psychologists/me/analytics', protect, psychologistController.getAnalyticsData);
+
+// --- ROTAS DE AVISOS (ANNOUNCEMENTS) ---
+app.get('/api/psychologists/me/announcements', verifyTokenLocal, psychologistController.getAnnouncements);
+app.post('/api/psychologists/me/announcements/:avisoId/read', verifyTokenLocal, psychologistController.markAnnouncementAsRead);
 
 // ROTA DE FAVORITOS (DADOS REAIS)
 app.get('/api/psychologists/me/favorites-profile', verifyTokenLocal, async (req, res) => {
@@ -3747,7 +3812,7 @@ const startServer = async () => {
     // [OTIMIZAÇÃO] Inicia o servidor IMEDIATAMENTE para o Render detectar a porta aberta
     // Isso evita timeouts de deploy se o banco demorar alguns segundos para conectar.
     if (!server.listening) {
-        server.listen(PORT, () => {
+        server.listen(PORT, '0.0.0.0', () => {
             console.log(`🚀 [FAST BOOT] Servidor ouvindo na porta ${PORT} (Inicializando conexões...)`);
         });
     }
@@ -3806,9 +3871,14 @@ const startServer = async () => {
 
     // --- BLOCO DE SINCRONIZAÇÃO E CORREÇÃO DE SCHEMA (RODA EM TODOS OS AMBIENTES) ---
     try {
-        // [OTIMIZAÇÃO] Se a variável SKIP_SCHEMA_SYNC estiver definida, pula a verificação pesada
-        if (!process.env.SKIP_SCHEMA_SYNC) {
-            console.log('🔧 [DB SYNC] Verificando e aplicando correções de schema...');
+        // --- OTIMIZAÇÃO DE STARTUP (DEV) ---
+        // Em desenvolvimento, pular a verificação de schema acelera drasticamente o reinício do nodemon.
+        // Para pular, adicione SKIP_SCHEMA_SYNC=true no seu arquivo .env
+        if (process.env.SKIP_SCHEMA_SYNC === 'true' || process.env.SKIP_SCHEMA_SYNC === true) {
+            console.log('⏩ [DB SYNC] Verificação de schema pulada (SKIP_SCHEMA_SYNC=true). O servidor iniciará mais rápido.');
+            console.log('💡 [Dica] Remova a flag do .env para forçar a verificação se precisar aplicar novas colunas.');
+        } else {
+            console.log('🔧 [DB SYNC] Verificando e aplicando correções de schema... (Pode demorar na primeira vez)');
 
             // --- OTIMIZAÇÃO: Agrupa todas as queries de schema para rodar em paralelo ---
             const schemaQueries = [
@@ -3975,66 +4045,32 @@ const startServer = async () => {
 
             console.log('🔧 [DB FIX] Colunas de lista verificadas e convertidas para JSONB.');
             console.log('✅ [DB SYNC] Correções de schema aplicadas com sucesso.');
-        } else {
-            console.log('⏩ [DB SYNC] Verificação de schema pulada (SKIP_SCHEMA_SYNC ativado).');
-        }
 
-        // --- UNIVERSAL INTEGRITY FIX (Saneamento Definitivo) ---
-        console.log('🛡️ [BLINDAGEM] Aplicando regras de negócio definitivas no banco de dados...');
-        try {
-            // 1. Remove Falso VIP de quem tem assinatura Asaas (Quem paga não é VIP)
-            await db.sequelize.query(`
-                UPDATE "Psychologists" SET "is_exempt" = false 
-                WHERE ("stripeSubscriptionId" IS NOT NULL OR "subscriptionId" IS NOT NULL) 
-                AND "is_exempt" = true;
-            `);
-            // 2. Inativa quem não tem assinatura nem é VIP e cujo Trial expirou (limpa contas fantasmas)
-            await db.sequelize.query(`
-                UPDATE "Psychologists" SET status = 'inactive', "planExpiresAt" = '1970-01-01'
-                WHERE ("stripeSubscriptionId" IS NULL AND "subscriptionId" IS NULL)
-                AND ("is_exempt" IS NULL OR "is_exempt" = false) AND status = 'active'
-                AND ("planExpiresAt" IS NULL OR "planExpiresAt" <= NOW());
-            `);
-            // 3. Inativa quem está com a data vencida e não é VIP
-            await db.sequelize.query(`
-                UPDATE "Psychologists" SET status = 'inactive'
-                WHERE "planExpiresAt" <= NOW()
-                AND ("is_exempt" IS NULL OR "is_exempt" = false) AND status = 'active';
-            `);
-            // 4. Remove VIP Fantasma (Contas que ganharam VIP por bug antigo e não têm plano VIP associado)
-            await db.sequelize.query(`
-                UPDATE "Psychologists" SET "is_exempt" = false, status = 'inactive'
-                WHERE "is_exempt" = true 
-                AND ("plano" IS NULL OR "plano" = '');
-            `);
-            console.log('✅ [BLINDAGEM] Inadimplentes e Falsos VIPs limpos da base com sucesso.');
-        } catch (e) { console.error('⚠️ [BLINDAGEM] Erro ao limpar base:', e.message); }
+            // --- FIX DEFINITIVO: Adiciona colunas faltantes em Patients via queryInterface ---
+            const queryInterface = db.sequelize.getQueryInterface();
+            const patientAttributes = await queryInterface.describeTable('Patients');
 
-         // --- FIX DEFINITIVO: Adiciona colunas faltantes em Patients via queryInterface ---
-        const queryInterface = db.sequelize.getQueryInterface();
-        const patientAttributes = await queryInterface.describeTable('Patients');
-
-            if (!patientAttributes.fotoUrl) {
-                await queryInterface.addColumn('Patients', 'fotoUrl', { type: DataTypes.STRING(500) });
-                console.log("[FIX] Coluna fotoUrl adicionada em Patients.");
+                if (!patientAttributes.fotoUrl) {
+                    await queryInterface.addColumn('Patients', 'fotoUrl', { type: DataTypes.STRING(500) });
+                    console.log("[FIX] Coluna fotoUrl adicionada em Patients.");
+                }
+            if (!patientAttributes.observacoes) {
+                await queryInterface.addColumn('Patients', 'observacoes', { type: DataTypes.TEXT });
             }
-        if (!patientAttributes.observacoes) {
-            await queryInterface.addColumn('Patients', 'observacoes', { type: DataTypes.TEXT });
-        }
-        if (!patientAttributes.sessionValue) {
-            await queryInterface.addColumn('Patients', 'sessionValue', { type: DataTypes.FLOAT, defaultValue: 0 });
-        }
-        if (!patientAttributes.recebe_mensagens) {
-            await queryInterface.addColumn('Patients', 'recebe_mensagens', { type: DataTypes.BOOLEAN, defaultValue: true });
-        }
-        const psyAttributes = await queryInterface.describeTable('Psychologists');
-            if (!psyAttributes.fotoUrl) {
-                await queryInterface.addColumn('Psychologists', 'fotoUrl', { type: DataTypes.STRING(500) });
-                console.log("[FIX] Coluna fotoUrl adicionada em Psychologists.");
+            if (!patientAttributes.sessionValue) {
+                await queryInterface.addColumn('Patients', 'sessionValue', { type: DataTypes.FLOAT, defaultValue: 0 });
             }
-        // Adicione outras colunas do 'colsToAdd' aqui se necessário no futuro
-        // --------------------------------------------------------------------------------
-
+            if (!patientAttributes.recebe_mensagens) {
+                await queryInterface.addColumn('Patients', 'recebe_mensagens', { type: DataTypes.BOOLEAN, defaultValue: true });
+            }
+            const psyAttributes = await queryInterface.describeTable('Psychologists');
+                if (!psyAttributes.fotoUrl) {
+                    await queryInterface.addColumn('Psychologists', 'fotoUrl', { type: DataTypes.STRING(500) });
+                    console.log("[FIX] Coluna fotoUrl adicionada em Psychologists.");
+                }
+            // Adicione outras colunas do 'colsToAdd' aqui se necessário no futuro
+            // --------------------------------------------------------------------------------
+        }
         
         // [FIX] Libera o acesso APENAS quando tudo estiver pronto
         isDbSynced = true;
@@ -4062,7 +4098,7 @@ const startServer = async () => {
 
     // Se o servidor ainda não estiver ouvindo (caso o DB sync tenha sido muito rápido ou falhado)
     if (!server.listening) {
-        server.listen(PORT, () => {
+        server.listen(PORT, '0.0.0.0', () => {
             console.log(`Servidor rodando na porta ${PORT}.`);
             console.timeEnd('⏱️ Tempo Total de Inicialização');
         });
