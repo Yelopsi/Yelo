@@ -127,7 +127,7 @@
             if (itemElement) {
                 itemElement.classList.remove('unread');
             }
-            // Update unread count if necessary
+            if (window.carregarAvisosBackground) window.carregarAvisosBackground(); // Atualiza a bolinha vermelha
         } catch (error) {
             console.error('Erro ao marcar como lido:', error);
         }
@@ -156,6 +156,7 @@
             if (window.showToast) window.showToast('Todos os avisos foram marcados como lidos.', 'success');
             
             if (currentFilter === 'unread') filterAndRender();
+            if (window.carregarAvisosBackground) window.carregarAvisosBackground(); // Remove a bolinha vermelha
         } catch (error) {
             console.error('Erro ao marcar todos como lidos:', error);
             if (window.showToast) window.showToast('Ocorreu um erro. Tente novamente.', 'error');
