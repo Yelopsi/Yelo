@@ -5915,37 +5915,35 @@ input:checked + .slider:before { transform: translateX(20px); }
 .aviso-card-psi .aviso-conteudo p:last-child {
     margin-bottom: 0;
 }
-
-/* --- Segmented Control for Radio Buttons --- */
+/* --- Segmented Control (App-like) --- */
 .segmented-control {
-    display: flex;
-    border: 1px solid #ced4da;
-    border-radius: 8px;
-    overflow: hidden;
-    width: fit-content;
-    background-color: #f8f9fa;
+    display: inline-flex;
+    background-color: #e9ecef;
+    border-radius: 12px;
+    padding: 4px;
+    gap: 4px;
+    border: none;
 }
 
 .segmented-control input[type="radio"] {
-    display: none; /* Hide the actual radio button */
+    display: none;
 }
 
 .segmented-control label {
-    padding: 10px 20px;
+    padding: 8px 16px;
     cursor: pointer;
     color: #555;
-    font-weight: 500;
-    transition: background-color 0.2s ease, color 0.2s ease;
-    border-right: 1px solid #ced4da;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    border: none;
 }
 
-.segmented-control label:last-of-type { border-right: none; }
-
 .segmented-control input[type="radio"]:checked + label {
-    background-color: var(--verde-escuro);
-    color: white;
-    font-weight: 600;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    background-color: white;
+    color: var(--verde-escuro);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 /* Botão Like nos Comentários */
