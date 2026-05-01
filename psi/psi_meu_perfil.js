@@ -45,9 +45,93 @@
     }
 
     // --- COMPONENTES ---
-    function setupMultiselects() { /* Implementação omitida por ser idêntica à do psi_dashboard.js */ }
-    function updateMultiselect(containerId, rawValues) { /* Implementação omitida */ }
-    function getMultiselectValues(containerId) { /* Implementação omitida */ }
+    function setupMultiselects() {
+        // Handler to close any open multiselect when clicking outside
+        document.body.addEventListener('click', (e) => {
+            document.querySelectorAll('.multiselect-tag.open').forEach(container => {
+                if (!container.contains(e.target)) {
+                    container.classList.remove('open');
+                }
+            });
+        });
+
+        document.querySelectorAll('.multiselect-tag').forEach(container => {
+            const display = container.querySelector('.multiselect-display');
+            const optionsContainer = container.querySelector('.multiselect-options');
+            const nativeSelect = document.getElementById(container.id.replace('_multiselect', '_native'));
+            const isSingleSelect = container.dataset.singleSelect === 'true';
+
+            // Open/close the dropdown
+            display.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (container.classList.contains('disabled')) return;
+                // Close other open dropdowns
+                document.querySelectorAll('.multiselect-tag.open').forEach(other => {
+                    if (other !== container) other.classList.remove('open');
+                });
+                container.classList.toggle('open');
+            });
+
+            // Handle clicks on each custom option
+            optionsContainer.querySelectorAll('.option').forEach(optionEl => {
+                optionEl.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const value = optionEl.dataset.value;
+                    const nativeOption = nativeSelect.querySelector(`option[value="${value}"]`);
+                    if (!nativeOption) return;
+
+                    if (isSingleSelect) {
+                        Array.from(nativeSelect.options).forEach(o => o.selected = (o.value === value));
+                        container.classList.remove('open');
+                    } else {
+                        nativeOption.selected = !nativeOption.selected;
+                    }
+                    nativeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+            });
+
+            // Listen for changes on the native select to update the UI
+            nativeSelect.addEventListener('change', () => {
+                updateMultiselect(container.id, getMultiselectValues(container.id));
+                container.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+        });
+    }
+
+    function updateMultiselect(containerId, values) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const display = container.querySelector('.multiselect-display');
+        const optionsContainer = container.querySelector('.multiselect-options');
+        const valueSet = new Set(Array.isArray(values) ? values.map(String) : (values ? [String(values)] : []));
+
+        display.innerHTML = ''; // Clear display
+        optionsContainer.querySelectorAll('.option').forEach(opt => {
+            const isSelected = valueSet.has(opt.dataset.value);
+            opt.classList.toggle('selected', isSelected);
+            if (isSelected) {
+                const tag = document.createElement('div');
+                tag.className = 'tag';
+                tag.textContent = opt.textContent;
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'remove-tag';
+                removeBtn.innerHTML = '&times;';
+                tag.appendChild(removeBtn);
+                display.appendChild(tag);
+            }
+        });
+
+        if (display.innerHTML === '') {
+            display.innerHTML = '<span class="multiselect-placeholder">Selecione...</span>';
+        }
+    }
+
+    function getMultiselectValues(containerId) {
+        const nativeSelect = document.getElementById(containerId.replace('_multiselect', '_native'));
+        if (!nativeSelect) return [];
+        return Array.from(nativeSelect.options).filter(o => o.selected).map(o => o.value);
+    }
     function setupDocumentMask() {
         if (typeof IMask === 'undefined') return;
         const inputDoc = document.getElementById('cpf');
@@ -142,6 +226,9 @@
 
             // Documento (CPF/CNPJ)
             const inputDoc = document.getElementById('cpf');
+            if (inputDoc) { // Fallback if IMask is not loaded
+                inputDoc.value = data.cpf || data.cnpj || data.document_number || '';
+            }
             if (inputDoc && documentMaskInstance) {
                 documentMaskInstance.value = data.cpf || data.cnpj || data.document_number || '';
                 documentMaskInstance.emit('accept'); // Força a checagem da razão social
@@ -161,8 +248,21 @@
                 if (el && data[key]) el.value = data[key].replace(/https?:\/\/(www\.)?/, '').replace(/linkedin\.com\/in\//, '').replace(/instagram\.com\//, '');
             });
 
-            // Multiselects (lógica simplificada)
-            // ... (a lógica de popular multiselects e selects nativos seria inserida aqui)
+            // Multiselects e Selects
+            const multiSelectIds = ['temas_atuacao', 'publico_alvo', 'praticas_inclusivas', 'abordagens_tecnicas', 'genero_identidade', 'modalidade', 'disponibilidade_periodo', 'formacao_nivel'];
+            multiSelectIds.forEach(id => {
+                const desktopId = `${id}_multiselect`;
+                const nativeId = `${id}_native`;
+                const nativeEl = document.getElementById(nativeId);
+                const values = data[id] || [];
+
+                if (document.getElementById(desktopId)) {
+                    updateMultiselect(desktopId, values);
+                }
+                if (nativeEl) {
+                    Array.from(nativeEl.options).forEach(opt => opt.selected = values.includes(opt.value));
+                }
+            });
         }
 
         function getBlockData(block) {
@@ -190,7 +290,12 @@
                 }
             }
 
-            // ... (lógica para pegar dados de multiselects seria inserida aqui)
+            // Multiselects
+            block.querySelectorAll('.multiselect-tag').forEach(container => {
+                const fieldName = container.id.replace('_multiselect', '');
+                data[fieldName] = getMultiselectValues(container.id);
+            });
+
             return data;
         }
 
@@ -308,7 +413,7 @@
         // --- Inicialização ---
         setupMasks();
         setupCepSearch();
-        // setupMultiselects(); // Descomente quando a função for portada
+        setupMultiselects(); // Habilita os componentes de multiselect
         if (psychologistData) {
             populateBlockForm(psychologistData);
             profileContainer.querySelectorAll('input, textarea, select').forEach(el => { el.disabled = true; });
