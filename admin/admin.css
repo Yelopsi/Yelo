@@ -20,7 +20,7 @@ html {
 }
 
 body.pagina-dashboard {
-    height: 100%; /* Garante que o body ocupe 100% da altura do html */
+    height: calc(100vh / 0.88); /* FIX: Altura fixa para o layout app-like */
     font-family: var(--font-principal);
     zoom: 0.88; /* Zoom out de 12% para o painel administrativo */
     position: relative;
@@ -29,10 +29,7 @@ body.pagina-dashboard {
     background-image: var(--ruido-global) !important;
     background-attachment: fixed !important;
     background-repeat: repeat !important;
-    /* CORREÇÃO: Garante que a rolagem da página principal funcione. */
-    /* Remove qualquer 'overflow: hidden' que possa estar vindo de outros arquivos. */
-    overflow-y: auto !important; /* Permite rolagem vertical no body */
-    overflow-x: hidden !important; /* Impede rolagem horizontal no body */
+    overflow: hidden !important; /* FIX: Trava o scroll no body, passando a responsabilidade para .dashboard-main */
 }
 html {
     height: 100%; /* Garante que o html ocupe 100% da altura do viewport */
@@ -295,7 +292,7 @@ html {
 }
 
 .dashboard-main {
-    overflow-y: visible !important; /* Permite que o conteúdo do main flua para o body */
+    overflow-y: auto !important; /* FIX: Torna esta a área de scroll principal */
 }
 
 .tabela-container h3 {

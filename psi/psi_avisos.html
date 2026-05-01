@@ -22,3 +22,166 @@
         <div class="loader-wrapper"><div class="loader-spinner"></div></div>
     </div>
 </div>
+
+<template id="aviso-item-template">
+    <div class="aviso-feed-item">
+        <div class="aviso-icon-wrapper">
+            <!-- Icon will be set by JS -->
+        </div>
+        <div class="aviso-title-group">
+            <h4 class="aviso-title"></h4>
+            <span class="aviso-meta"></span>
+        </div>
+        <div class="aviso-full-content"></div>
+    </div>
+</template>
+
+<script>
+(function() {
+    const container = document.getElementById('avisos-feed-container');
+    const template = document.getElementById('aviso-item-template');
+    const token = localStorage.getItem('Yelo_token');
+    let allAvisos = [];
+    let currentFilter = 'all';
+
+    function renderAvisos(avisos) {
+        container.innerHTML = '';
+        if (avisos.length === 0) {
+            container.innerHTML = `<div class="smart-empty-state" style="margin: 0; padding: 30px;">
+                <div class="empty-state-icon">✨</div>
+                <p class="empty-state-text">Nenhum aviso por aqui. Tudo em ordem!</p>
+            </div>`;
+            return;
+        }
+
+        avisos.forEach(aviso => {
+            const clone = template.content.cloneNode(true);
+            const item = clone.querySelector('.aviso-feed-item');
+            const iconWrapper = item.querySelector('.aviso-icon-wrapper');
+            const title = item.querySelector('.aviso-title');
+            const meta = item.querySelector('.aviso-meta');
+            const fullContent = item.querySelector('.aviso-full-content');
+
+            if (!aviso.read) {
+                item.classList.add('unread');
+            }
+
+            // Define icon based on title keywords
+            const lowerTitle = aviso.title.toLowerCase();
+            if (lowerTitle.includes('instabilidade') || lowerTitle.includes('manutenção') || lowerTitle.includes('importante')) {
+                iconWrapper.innerHTML = '⚠️';
+                iconWrapper.style.backgroundColor = '#fffbeb';
+                iconWrapper.style.color = '#b45309';
+            } else if (lowerTitle.includes('novidade') || lowerTitle.includes('lançamento')) {
+                iconWrapper.innerHTML = '🎉';
+                iconWrapper.style.backgroundColor = '#ecfdf5';
+                iconWrapper.style.color = '#047857';
+            } else {
+                iconWrapper.innerHTML = '🔔';
+            }
+
+            title.textContent = aviso.title;
+            const date = new Date(aviso.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+            meta.textContent = `Enviado por ${aviso.author || 'Equipe Yelo'} em ${date}`;
+            
+            // Replace [nome] with the user's name
+            const userName = localStorage.getItem('Yelo_user_name') || 'Psi';
+            const personalizedContent = aviso.content.replace(/\[nome\]/g, userName);
+            fullContent.innerHTML = personalizedContent.replace(/\n/g, '<br>');
+
+            item.addEventListener('click', () => {
+                const isExpanded = item.classList.toggle('expanded');
+                if (isExpanded && !aviso.read) {
+                    markAsRead(aviso.id, item);
+                    aviso.read = true; // Update local state
+                }
+            });
+
+            container.appendChild(item);
+        });
+    }
+
+    async function fetchAvisos() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/psychologists/me/announcements`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                allAvisos = await response.json();
+                filterAndRender();
+            } else {
+                container.innerHTML = '<p>Erro ao carregar avisos.</p>';
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            container.innerHTML = '<p>Erro de conexão ao carregar avisos.</p>';
+        }
+    }
+
+    async function markAsRead(avisoId, itemElement) {
+        try {
+            await fetch(`${API_BASE_URL}/api/psychologists/me/announcements/${avisoId}/read`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (itemElement) {
+                itemElement.classList.remove('unread');
+            }
+            // Update unread count if necessary
+        } catch (error) {
+            console.error('Erro ao marcar como lido:', error);
+        }
+    }
+    
+    async function markAllAsRead() {
+        const unreadAvisos = allAvisos.filter(a => !a.read);
+        if (unreadAvisos.length === 0) return;
+
+        const btn = document.getElementById('btn-marcar-todos-lidos');
+        btn.textContent = 'Marcando...';
+        btn.disabled = true;
+
+        try {
+            const promises = unreadAvisos.map(aviso => 
+                fetch(`${API_BASE_URL}/api/psychologists/me/announcements/${aviso.id}/read`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+            );
+            await Promise.all(promises);
+            
+            allAvisos.forEach(a => a.read = true);
+            document.querySelectorAll('.aviso-feed-item.unread').forEach(item => item.classList.remove('unread'));
+            
+            if (window.showToast) window.showToast('Todos os avisos foram marcados como lidos.', 'success');
+            
+            if (currentFilter === 'unread') filterAndRender();
+        } catch (error) {
+            console.error('Erro ao marcar todos como lidos:', error);
+            if (window.showToast) window.showToast('Ocorreu um erro. Tente novamente.', 'error');
+        } finally {
+            btn.textContent = 'Marcar todos como lidos';
+            btn.disabled = false;
+        }
+    }
+
+    function filterAndRender() {
+        let avisosToRender = allAvisos;
+        if (currentFilter === 'unread') avisosToRender = allAvisos.filter(a => !a.read);
+        renderAvisos(avisosToRender);
+    }
+
+    document.querySelectorAll('.aviso-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.aviso-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter = btn.dataset.filter;
+            filterAndRender();
+        });
+    });
+    
+    document.getElementById('btn-marcar-todos-lidos').addEventListener('click', markAllAsRead);
+
+    fetchAvisos();
+})();
+</script>

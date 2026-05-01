@@ -2171,3 +2171,55 @@ exports.getAnalyticsData = async (req, res) => {
         res.status(500).json({ error: 'Erro interno ao buscar dados de análise.' });
     }
 };
+
+/**
+ * Busca todos os avisos e o status de leitura para o psicólogo logado.
+ */
+exports.getAnnouncements = async (req, res) => {
+    try {
+        const psychologistId = req.psychologist.id;
+
+        // Busca todos os avisos publicados
+        const avisos = await db.Aviso.findAll({
+            where: { status: 'published' },
+            order: [['createdAt', 'DESC']]
+        });
+
+        // Busca os IDs dos avisos que o psicólogo já leu
+        const avisosLidos = await db.AvisoLido.findAll({
+            where: { psychologistId },
+            attributes: ['avisoId']
+        });
+        const lidosIds = new Set(avisosLidos.map(l => l.avisoId));
+
+        // Mapeia os avisos adicionando o status 'read'
+        const responseData = avisos.map(aviso => ({
+            ...aviso.toJSON(),
+            read: lidosIds.has(aviso.id)
+        }));
+
+        res.status(200).json(responseData);
+
+    } catch (error) {
+        console.error('Erro ao buscar avisos:', error);
+        res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};
+
+/**
+ * Marca um aviso como lido para o psicólogo logado.
+ */
+exports.markAnnouncementAsRead = async (req, res) => {
+    try {
+        const psychologistId = req.psychologist.id;
+        const { avisoId } = req.params;
+
+        // Usa findOrCreate para evitar erro de constraint se já existir
+        await db.AvisoLido.findOrCreate({ where: { psychologistId, avisoId } });
+
+        res.status(200).json({ message: 'Aviso marcado como lido.' });
+    } catch (error) {
+        console.error('Erro ao marcar aviso como lido:', error);
+        res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};

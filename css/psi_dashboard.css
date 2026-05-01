@@ -48,12 +48,11 @@ body.pagina-dashboard {
     background-repeat: repeat !important;
     margin: 0;
     padding: 0;
-    min-height: calc(100vh / 0.88);
+    height: calc(100vh / 0.88); /* FIX: Altura fixa para o layout app-like */
     color: var(--cinza-texto);
     width: 100%;
     max-width: 100%;
-    overflow-y: auto !important; /* CORREÇÃO: Permite que o body seja o elemento de scroll principal */
-    overflow-x: hidden !important;
+    overflow: hidden !important; /* FIX: Trava o scroll no body, passando a responsabilidade para .dashboard-main */
     position: relative;
     overscroll-behavior-y: none; /* Reforça o bloqueio do pull-to-refresh */
 }
@@ -106,7 +105,7 @@ body.pagina-dashboard {
 }
 .dashboard-container { 
     display: flex; 
-    min-height: calc(100vh / 0.88);
+    height: 100%; /* FIX: Ocupa a altura total do body */
     width: 100%;
 }
 
@@ -123,16 +122,16 @@ body.pagina-dashboard {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    padding: 20px; /* Padding reduzido para economia de tela */
-    background-color: transparent !important; /* Fundo transparente para ver o ruído global */
-    overflow-y: visible !important; /* CORREÇÃO: Permite que o conteúdo flua para o body, que agora tem o scroll */
+    padding: 20px;
+    background-color: transparent !important;
+    overflow-y: auto !important; /* FIX: Torna esta a área de scroll principal */
     overflow-x: clip;
     position: relative;
     box-sizing: border-box;
     -webkit-overflow-scrolling: touch; /* Rolagem suave no iOS */
     margin-left: 0; /* Removido o !important para permitir sobreposição pelo media query */
     width: 100%;
-    overscroll-behavior-y: none; /* Bloqueia o pull-to-refresh na área com rolagem */
+    overscroll-behavior-y: contain; /* FIX: Impede que o scroll "vaze" para o body */
 }
 
 /* ==========================================================================
