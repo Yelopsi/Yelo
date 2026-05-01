@@ -1060,7 +1060,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 else if (url.includes('psi_favoritos_analytics.html')) {
                     // A página se auto-inicializa, mas garantimos que o cleanup de outras páginas rode.
                 }
-                else if (url.includes('psi_avisos.html')) window.inicializarAvisos();
+                else if (url.includes('psi_avisos.html')) {
+                    window.carregarAvisosBackground(); // Atualiza a bolinha vermelha no menu
+                }
                 // Adicione outras inicializações de página aqui
             })
             .catch(e => mainContent.innerHTML = `<p>Erro ao carregar: ${e}</p>`);
@@ -3171,181 +3173,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- FEED DE COMUNICADOS (MÓDULO SEPARADO) ---
-    let avisosCache = [];
     
     // Função de background para contar não lidos e atualizar a Badge no Menu Lateral
     window.carregarAvisosBackground = async function() {
         try {
-            const res = await apiFetch(`${API_BASE_URL}/api/messages?contactType=admin`);
+            const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/announcements`);
             if (res.ok) {
-                const mensagens = await res.json();
-                
-                const avisosLidos = JSON.parse(localStorage.getItem('yelo_avisos_lidos') || '[]').map(String);
-                let unread = 0;
-                
-                // --- CORREÇÃO: Diferencia Avisos (Broadcast) de Chat Direto ---
-                // 1. Agrupa todas as mensagens por conversa para análise
-                const conversations = mensagens.reduce((acc, msg) => {
-                    acc[msg.conversationId] = acc[msg.conversationId] || [];
-                    acc[msg.conversationId].push(msg);
-                    return acc;
-                }, {});
-
-                // 2. Identifica quais conversas são "puras" de avisos (só contêm mensagens do admin)
-                const broadcastConversationIds = new Set();
-                for (const convoId in conversations) {
-                    // Se TODAS as mensagens na conversa não foram enviadas por um psicólogo, é um aviso.
-                    const isPurelyAdmin = conversations[convoId].every(m => m.senderType !== 'psychologist');
-                    if (isPurelyAdmin) {
-                        broadcastConversationIds.add(parseInt(convoId, 10));
-                    }
-                }
-
-                // 3. Filtra a lista de avisos para conter apenas mensagens de conversas de broadcast
-                avisosCache = mensagens.filter(msg => broadcastConversationIds.has(msg.conversationId));
-                
-                avisosCache.forEach(msg => {
-                    if (!avisosLidos.includes(String(msg.id)) && msg.status !== 'read') unread++;
-                });
+                const avisos = await res.json();
+                const unread = avisos.filter(a => !a.read).length;
                 
                 // Atualiza a badge do menu passando o número diretamente
                 updateSidebarBadge('psi_avisos.html', unread);
             }
         } catch (error) {
             console.error("Fundo: Erro ao carregar avisos", error);
-        }
-    };
-
-    window.inicializarAvisos = function() {
-        const container = document.getElementById('avisos-feed-container');
-        const btnMarcarLido = document.getElementById('btn-marcar-todos-lidos');
-        const filterBtns = document.querySelectorAll('.aviso-filter-btn');
-        let currentFilter = 'all'; // all, unread
-        
-        if (!container) return;
-        
-        const renderFeed = () => {
-            let avisosLidos = JSON.parse(localStorage.getItem('yelo_avisos_lidos') || '[]').map(String);
-            container.innerHTML = '';
-            
-            let displayAvisos = avisosCache;
-            if (currentFilter === 'unread') {
-                displayAvisos = avisosCache.filter(msg => !avisosLidos.includes(String(msg.id)) && msg.status !== 'read');
-            }
-            
-            if (displayAvisos.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding:50px 20px; color:#888;">Nenhum comunicado encontrado.</div>`;
-                return;
-            }
-
-            displayAvisos.forEach(msg => {
-                const isLido = avisosLidos.includes(String(msg.id)) || msg.status === 'read';
-                const data = new Date(msg.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
-                const title = msg.title || 'Comunicado Yelo';
-                
-                const item = document.createElement('div');
-                item.className = `aviso-feed-item ${!isLido ? 'unread' : ''}`;
-                
-                // Extrai texto puro para o preview (remove HTML tags)
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = msg.content || msg.message;
-                const plainText = tempDiv.textContent || tempDiv.innerText || "";
-
-                item.innerHTML = `
-                    <div class="aviso-feed-header">
-                        <div class="aviso-icon-wrapper">📢</div>
-                        <div class="aviso-title-group">
-                            <h4 class="aviso-title">${title}</h4>
-                            <span class="aviso-meta">${data}</span>
-                        </div>
-                    </div>
-                    <div class="aviso-preview">${plainText}</div>
-                    <div class="aviso-full-content">
-                        ${msg.content || msg.message}
-                        <div class="aviso-feed-actions">
-                            <button class="btn btn-secundario btn-sm btn-delete-aviso" style="border-radius: 8px; border-color: #E63946; color: #E63946;">Ocultar</button>
-                            ${!isLido ? '<button class="btn btn-principal btn-sm btn-read-aviso" style="border-radius: 8px;">Entendido</button>' : ''}
-                        </div>
-                    </div>
-                `;
-                
-                // Lógica de Expandir
-                item.onclick = (e) => {
-                    // Ignora cliques nos botões internos
-                    if (e.target.closest('.btn')) return;
-                    
-                    const isExpanded = item.classList.contains('expanded');
-                    
-                    // Retrai os outros
-                    document.querySelectorAll('.aviso-feed-item.expanded').forEach(other => {
-                        if(other !== item) other.classList.remove('expanded');
-                    });
-                    
-                    if (!isExpanded) {
-                        item.classList.add('expanded');
-                        // Marca como lido ao expandir
-                        if (!isLido) marcarComoLidoLocal(msg.id, item);
-                    } else {
-                        item.classList.remove('expanded');
-                    }
-                };
-                
-                // Ações do botão
-                const btnDel = item.querySelector('.btn-delete-aviso');
-                if (btnDel) {
-                    btnDel.onclick = () => {
-                        item.style.opacity = 0;
-                        setTimeout(() => item.remove(), 300);
-                        avisosCache = avisosCache.filter(m => m.id !== msg.id);
-                        carregarAvisosBackground(); // atualiza badge
-                    };
-                }
-                
-                const btnRead = item.querySelector('.btn-read-aviso');
-                if (btnRead) {
-                    btnRead.onclick = () => marcarComoLidoLocal(msg.id, item);
-                }
-
-                container.appendChild(item);
-            });
-        };
-        
-        function marcarComoLidoLocal(id, element) {
-            let lidos = JSON.parse(localStorage.getItem('yelo_avisos_lidos') || '[]').map(String);
-            if(!lidos.includes(String(id))) {
-                lidos.push(String(id));
-                localStorage.setItem('yelo_avisos_lidos', JSON.stringify(lidos));
-                element.classList.remove('unread');
-                const btnRead = element.querySelector('.btn-read-aviso');
-                if(btnRead) btnRead.remove();
-                element.querySelector('.aviso-icon-wrapper').style = ""; // Reseta styles inline se houver
-                carregarAvisosBackground(); // Re-calcula e reduz a badge sidebar
-            }
-        }
-        
-        filterBtns.forEach(btn => {
-            btn.onclick = () => {
-                filterBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentFilter = btn.dataset.filter;
-                renderFeed();
-            };
-        });
-        
-        if (btnMarcarLido) {
-            btnMarcarLido.onclick = () => {
-                let lidos = JSON.parse(localStorage.getItem('yelo_avisos_lidos') || '[]').map(String);
-                avisosCache.forEach(msg => { if(!lidos.includes(String(msg.id))) lidos.push(String(msg.id)); });
-                localStorage.setItem('yelo_avisos_lidos', JSON.stringify(lidos));
-                renderFeed();
-                carregarAvisosBackground();
-            };
-        }
-
-        // Renderiza com os dados já cacheados (ou espera cachear)
-        if (avisosCache.length > 0) renderFeed();
-        else {
-            window.carregarAvisosBackground().then(() => renderFeed());
         }
     };
 

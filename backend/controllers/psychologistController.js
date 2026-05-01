@@ -2177,7 +2177,7 @@ exports.getAnalyticsData = async (req, res) => {
  */
 exports.getAnnouncements = async (req, res) => {
     try {
-        const psychologistId = req.psychologist.id;
+        const psychologistId = req.psychologist?.id || req.userDecoded?.id || req.user?.id;
 
         // Busca todos os avisos publicados
         const avisos = await db.Aviso.findAll({
@@ -2211,7 +2211,7 @@ exports.getAnnouncements = async (req, res) => {
  */
 exports.markAnnouncementAsRead = async (req, res) => {
     try {
-        const psychologistId = req.psychologist.id;
+        const psychologistId = req.psychologist?.id || req.userDecoded?.id || req.user?.id;
         const { avisoId } = req.params;
 
         // Usa findOrCreate para evitar erro de constraint se já existir
