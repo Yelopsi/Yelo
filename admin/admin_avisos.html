@@ -1,128 +1,78 @@
-<div class="modern-dashboard-layout">
-    
-    <!-- Hero Destacado -->
-    <div class="modern-hero-card" style="background: linear-gradient(135deg, #1B4332 0%, #059669 100%); padding: 35px 30px; border-radius: 24px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(5, 150, 105, 0.15);">
-        <div class="hero-content">
-            <h1 class="modern-hero-title" style="color: white; margin-bottom: 5px;">Avisos em Massa 📢</h1>
-            <p class="modern-hero-subtitle" style="color: rgba(255,255,255,0.9); font-size: 1.1rem;">Comunique-se instantaneamente com toda a base de profissionais ou segmente por plano.</p>
+<div class="main-header">
+    <h1>Enviar Comunicado</h1>
+    <p>Envie uma mensagem para todos os psicólogos da plataforma.</p>
+</div>
+
+<div class="widget">
+    <form id="form-comunicado">
+        <div class="form-group">
+            <label for="comunicado-titulo">Título do Comunicado</label>
+            <input type="text" id="comunicado-titulo" class="form-control" value="Instabilidade na Plataforma" required>
         </div>
-    </div>
+        <div class="form-group">
+            <label for="comunicado-conteudo">Conteúdo da Mensagem</label>
+            <textarea id="comunicado-conteudo" class="form-control" rows="12" required>Olá, [nome]
 
-    <div class="dashboard-column-main">
-        <div class="profile-block" style="border: none; box-shadow: 0 8px 30px rgba(0,0,0,0.04); border-radius: 24px;">
-            <div class="block-content" style="padding: 35px;">
-                <form id="form-broadcast" style="margin: 0;">
-                    
-                    <div class="form-group" style="margin-bottom: 25px;">
-                        <label for="aviso-titulo" style="font-size: 1.05rem; color: var(--verde-escuro); font-weight: 700; margin-bottom: 10px;">Título do Aviso <span style="color: #E63946;">*</span></label>
-                        <input type="text" id="aviso-titulo" class="form-control" required placeholder="Ex: Novidade: Nova funcionalidade liberada!" style="padding: 16px 20px; font-size: 1.05rem; border-radius: 12px; background: #f8f9fa; border: 1px solid #e0e0e0;">
-                    </div>
+Estamos enfrentando uma instabilidade pontual na plataforma, que já está sendo tratada pela equipe técnica. A orientação, por ora, é aguardar a normalização.
 
-                    <div class="form-group" style="margin-bottom: 25px;">
-                        <label for="aviso-publico" style="font-size: 1.05rem; color: var(--verde-escuro); font-weight: 700; margin-bottom: 10px;">Público-Alvo <span style="color: #E63946;">*</span></label>
-                        <select id="aviso-publico" class="form-control" required style="width: 100%; padding: 16px 20px; font-size: 1.05rem; border-radius: 12px; background: #f8f9fa; border: 1px solid #e0e0e0;">
-                            <option value="ativos">Psicólogos com Assinatura Ativa (Recomendado)</option>
-                            <option value="todos">Todos os Psicólogos Cadastrados</option>
-                            <option value="inativos">Apenas Psicólogos Inativos/Sem Plano</option>
-                        </select>
-                        <small style="color: #666; display: block; margin-top: 8px; font-size: 0.9rem;">🔔 A mensagem chegará diretamente na caixa de entrada da plataforma.</small>
-                    </div>
+Para compensar o período de indisponibilidade:
+– Usuários ainda no período gratuito terão os 14 dias restituídos
+– Assinantes ativos receberão 50% de desconto na mensalidade
 
-                    <div class="form-group" style="margin-bottom: 25px;">
-                        <label style="font-size: 1.05rem; color: var(--verde-escuro); font-weight: 700; margin-bottom: 10px;">Mensagem <span style="color: #E63946;">*</span></label>
-                        <div class="editor-container" style="border: 1px solid #e0e0e0; border-radius: 16px; overflow: hidden; background-color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
-                            <div class="editor-toolbar" style="background-color: #f8f9fa; padding: 12px; border-bottom: 1px solid #e0e0e0; display: flex; gap: 8px;">
-                                <button type="button" class="editor-btn" onclick="document.execCommand('bold', false, null)" title="Negrito" style="background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);"><b>B</b></button>
-                                <button type="button" class="editor-btn" onclick="document.execCommand('italic', false, null)" title="Itálico" style="background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);"><i>I</i></button>
-                                <button type="button" class="editor-btn" onclick="document.execCommand('underline', false, null)" title="Sublinhado" style="background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);"><u>U</u></button>
-                                <div style="width: 1px; background: #ddd; margin: 0 5px;"></div>
-                                <button type="button" class="editor-btn" onclick="document.execCommand('insertUnorderedList', false, null)" title="Lista" style="background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">• Lista</button>
-                            </div>
-                            <div id="aviso-mensagem" class="rich-text-editor" contenteditable="true" data-placeholder="Escreva seu comunicado detalhado aqui..." style="padding: 20px; min-height: 250px; background-color: #fff; outline: none; font-size: 1.05rem; line-height: 1.6;"></div>
-                        </div>
-                    </div>
+Seguimos trabalhando para resolver isso o mais rápido possível.
 
-                    <!-- Toggle App-Like para E-mail -->
-                    <div style="display: flex; align-items: center; gap: 15px; margin-top: 30px; padding: 20px; background: #f0fdf4; border-radius: 16px; border: 1px solid #bbf7d0;">
-                        <div style="width: 45px; height: 45px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                            📧
-                        </div>
-                        <div style="flex-grow: 1;">
-                            <strong style="display: block; font-size: 1.05rem; color: var(--verde-escuro);">Disparar também por E-mail</strong>
-                            <span style="font-size: 0.9rem; color: #166534; opacity: 0.8;">Uma cópia será enviada para a caixa de e-mail (Gmail, Hotmail...) de todos os usuários.</span>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" id="aviso-email" checked>
-                            <span class="slider" style="box-shadow: 0 2px 5px rgba(0,0,0,0.1);"></span>
-                        </label>
-                    </div>
-
-                    <div style="margin-top: 35px; display: flex; justify-content: flex-end;">
-                        <button type="submit" id="btn-enviar-aviso" class="btn btn-principal" style="border-radius: 50px; width: max-content; padding: 15px 35px; font-size: 1.05rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(27,67,50,0.2);">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                            Disparar Mensagem em Massa
-                        </button>
-                    </div>
-                </form>
-            </div>
+Agradecemos a compreensão.</textarea>
+            <small style="color: #666; margin-top: 5px; display: block;">A tag `[nome]` será substituída automaticamente pelo nome de cada psicólogo.</small>
         </div>
-    </div>
+        <div class="form-actions" style="justify-content: flex-end; margin-top: 20px;">
+            <button type="submit" id="btn-enviar-comunicado" class="btn btn-primario">Enviar para todos os psicólogos</button>
+        </div>
+    </form>
 </div>
 
 <script>
-    document.getElementById('form-broadcast').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const btn = document.getElementById('btn-enviar-aviso');
-        const titulo = document.getElementById('aviso-titulo').value;
-        const publico = document.getElementById('aviso-publico').value;
-        const mensagem = document.getElementById('aviso-mensagem').innerHTML;
-        const enviarEmail = document.getElementById('aviso-email').checked;
+(function() {
+    const form = document.getElementById('form-comunicado');
+    const btnSubmit = document.getElementById('btn-enviar-comunicado');
+    const token = localStorage.getItem('Yelo_token') || localStorage.getItem('YeloAdmin_token') || (document.cookie.split('; ').find(row => row.startsWith('token=')) || '').split('=')[1];
 
-        if (!mensagem.trim() || mensagem === '<br>') {
-            alert('A mensagem não pode estar vazia.');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = document.getElementById('comunicado-titulo').value;
+        const content = document.getElementById('comunicado-conteudo').value;
+
+        if (!title || !content) {
+            showToast('Por favor, preencha o título e o conteúdo.', 'error');
             return;
         }
 
-        if (!confirm(`Tem certeza que deseja disparar este aviso para o público selecionado?`)) return;
-
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<span class="spin-anim" style="display:inline-block;">⏳</span> Enviando...';
-        btn.disabled = true;
+        const originalText = btnSubmit.innerHTML;
+        btnSubmit.innerHTML = 'Enviando...';
+        btnSubmit.disabled = true;
 
         try {
-            const token = localStorage.getItem('YeloAdmin_token') || localStorage.getItem('Yelo_token');
-            const BASE_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '';
-            
-            // O backend já possui a rota adminController.sendBroadcastMessage ativa!
-            const res = await fetch(`${BASE_URL}/api/admin/broadcast`, {
+            const response = await fetch(`${API_BASE_URL}/api/admin/broadcast`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({
-                    title: titulo,
-                    message: mensagem,
-                    target: publico,
-                    sendEmail: enviarEmail
-                })
+                body: JSON.stringify({ title, content })
             });
 
-            if (res.ok) {
-                alert('Aviso disparado com sucesso!');
-                document.getElementById('form-broadcast').reset();
-                document.getElementById('aviso-mensagem').innerHTML = '';
+            const data = await response.json();
+
+            if (response.ok) {
+                showToast('Comunicado enviado com sucesso!', 'success');
             } else {
-                const err = await res.json();
-                alert(err.error || 'Erro ao disparar mensagens.');
+                showToast(data.error || 'Ocorreu um erro ao enviar.', 'error');
             }
-        } catch (err) {
-            console.error(err);
-            alert('Erro de conexão ao enviar aviso.');
+        } catch (error) {
+            showToast('Erro de conexão. Tente novamente.', 'error');
         } finally {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
+            btnSubmit.innerHTML = originalText;
+            btnSubmit.disabled = false;
         }
     });
+})();
 </script>
