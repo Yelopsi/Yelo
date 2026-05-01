@@ -1603,64 +1603,30 @@ exports.getAllMessages = async (req, res) => {
  * Descrição: Envia uma mensagem em massa para todos os psicólogos ou pacientes.
  */
 exports.sendBroadcastMessage = async (req, res) => {
-    // ... (seu código existente)
-    const transaction = await db.sequelize.transaction();
     try {
-        const { target, content } = req.body;
-        const adminId = req.psychologist.id;
-        if (!target || !content) {
-            return res.status(400).json({ error: 'Público-alvo e conteúdo são obrigatórios.' });
+        const { title, content } = req.body;
+        const adminName = req.psychologist?.nome || req.user?.nome || 'Equipe Yelo';
+
+        if (!title || !content) {
+            return res.status(400).json({ error: 'Título e conteúdo são obrigatórios.' });
         }
-        let recipients;
-        let recipientType;
-        if (target.startsWith('psychologists')) {
-            const whereClause = { id: { [Op.ne]: adminId } }; 
-            if (target.includes('-')) {
-                const plan = target.split('-')[1]; 
-                whereClause.plano = plan;
-            }
-            recipients = await db.Psychologist.findAll({ where: whereClause });
-            recipientType = 'psychologist';
-        } else if (target === 'patients') {
-            recipients = await db.Patient.findAll();
-            recipientType = 'patient';
-        } else {
-            return res.status(400).json({ error: 'Público-alvo inválido.' });
-        }
-        if (recipients.length === 0) {
-            return res.status(200).json({ message: 'Nenhum destinatário encontrado para este público-alvo.' });
-        }
-        const messagePromises = recipients.map(async (recipient) => {
-            const whereClause = {
-                [Op.or]: [
-                    { psychologistId: adminId, patientId: recipient.id },
-                    { psychologistId: recipient.id, patientId: adminId }
-                ]
-            };
-            const defaults = recipientType === 'psychologist' 
-                ? { psychologistId: recipient.id, patientId: adminId }
-                : { psychologistId: adminId, patientId: recipient.id };
-            const [conversation] = await db.Conversation.findOrCreate({
-                where: whereClause,
-                defaults: defaults,
-                transaction
-            });
-            await db.Message.create({
-                conversationId: conversation.id,
-                senderId: adminId,
-                senderType: 'psychologist', 
-                recipientId: recipient.id,
-                recipientType: recipientType,
-                content: content
-            }, { transaction });
+
+        const aviso = await db.Aviso.create({
+            title,
+            content,
+            author: adminName,
+            status: 'published'
         });
-        await Promise.all(messagePromises);
-        await transaction.commit();
-        res.status(200).json({ message: `Mensagem enviada para ${recipients.length} destinatários.` });
+
+        if (req.io) {
+            req.io.emit('new_announcement', aviso.toJSON());
+        }
+
+        res.status(201).json({ message: 'Aviso enviado com sucesso para todos os psicólogos.', aviso });
+
     } catch (error) {
-        console.error('Erro ao enviar mensagem em massa:', error);
-        await transaction.rollback();
-        res.status(500).json({ error: 'Erro interno no servidor ao enviar a mensagem.' });
+        console.error('Erro ao enviar broadcast:', error);
+        res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };
 
