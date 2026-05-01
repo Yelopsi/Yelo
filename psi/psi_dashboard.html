@@ -441,6 +441,29 @@
         </div>
     </div>
 
+    <!-- MODAL DE AVISO DE INSTABILIDADE (TEMPORÁRIO) -->
+    <div id="modal-aviso-instabilidade" class="custom-modal-overlay" style="display: none; z-index: 200000;">
+        <div class="custom-modal-box" style="text-align: center; padding: 30px; max-width: 500px;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px; background: #fffbeb; border-radius: 50%; color: #b45309; font-size: 1.8rem; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">⚠️</div>
+                <h3 style="margin: 0; color: #b45309; font-family: var(--font-titulos); font-size: 1.6rem;">Aviso Importante</h3>
+            </div>
+            
+            <p style="color:#444; line-height: 1.6; margin-bottom: 20px; font-size: 1.05rem; text-align: left;">
+                Olá, <strong id="aviso-instabilidade-nome">Psi</strong>!<br><br>
+                Estamos enfrentando uma instabilidade pontual na plataforma, que já está sendo tratada pela equipe técnica. A orientação, por ora, é aguardar a normalização.<br><br>
+                Para compensar o período de indisponibilidade:<br>
+                – Usuários ainda no período gratuito terão os 14 dias restituídos<br>
+                – Assinantes ativos receberão 50% de desconto na mensalidade<br><br>
+                Seguimos trabalhando para resolver isso o mais rápido possível.<br><br>
+                Agradecemos a compreensão.
+            </p>
+            <div style="margin-top: 25px;">
+                <button id="btn-entendi-instabilidade" class="btn btn-principal" style="width: 100%; padding: 14px; border-radius: 50px; font-size: 1rem; box-shadow: 0 4px 15px rgba(27,67,50,0.2);">Entendi</button>
+            </div>
+        </div>
+    </div>
+
     <!-- BOTTOM NAVIGATION (MOBILE ONLY) -->
     <nav class="mobile-bottom-nav">
         <div class="bottom-nav-wave">

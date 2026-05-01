@@ -3322,6 +3322,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (ok) {
+            // Lógica do Modal de Instabilidade
+            if (!localStorage.getItem('Yelo_aviso_instabilidade_lido')) {
+                const modalInstabilidade = document.getElementById('modal-aviso-instabilidade');
+                const btnEntendi = document.getElementById('btn-entendi-instabilidade');
+                const nomeEl = document.getElementById('aviso-instabilidade-nome');
+                
+                if (modalInstabilidade) {
+                    if (nomeEl && psychologistData && psychologistData.nome) {
+                        nomeEl.textContent = psychologistData.nome.split(' ')[0];
+                    }
+                    modalInstabilidade.style.display = 'flex';
+                    
+                    if (btnEntendi) {
+                        btnEntendi.onclick = () => {
+                            modalInstabilidade.style.display = 'none';
+                            localStorage.setItem('Yelo_aviso_instabilidade_lido', 'true');
+                        };
+                    }
+                }
+            }
+
             document.getElementById('dashboard-container').style.display = 'flex';
             document.querySelectorAll('.sidebar-nav a').forEach(l => {
                 l.onclick = (e) => { 
