@@ -4742,7 +4742,8 @@ async function inicializarForum(preFetchedData = null) {
             </form>
         `;
         
-        parentElement.querySelector('.comment-replies-container').prepend(formContainer);
+        const repliesContainer = parentElement.querySelector('.comment-replies-container');
+        repliesContainer.parentNode.insertBefore(formContainer, repliesContainer);
         const textarea = formContainer.querySelector('textarea');
         
         // Aplica o auto-resize no textarea de resposta

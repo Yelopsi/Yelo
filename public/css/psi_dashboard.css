@@ -3113,8 +3113,14 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 /* View de Post Completo (App Header) */
 .reddit-app-header {
     display: flex; align-items: center; gap: 12px;
-    padding: 12px 0; border-bottom: 1px solid #edeff1;
+    padding: 15px 20px; border-bottom: 1px solid #edeff1;
     position: sticky; top: 0; background: var(--cinza-fundo); z-index: 100;
+    margin: -20px -20px 20px -20px; /* Estica a barra para ignorar o padding do container pai */
+}
+@media (max-width: 992px) {
+    .reddit-app-header {
+        top: calc(var(--mobile-header-h, 70px) - 1px); /* No mobile, cola logo abaixo do cabeçalho fixo do app */
+    }
 }
 .app-back-btn {
     background: none; border: none; color: #1c1c1c; cursor: pointer;
@@ -3361,6 +3367,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     /* Garante que a sidebar do post ocupe a largura total no mobile */
     .forum-post-sidebar {
         width: 100%;
+        padding-bottom: 80px; /* Cria uma 'almofada' para não ser coberta pelo Menu Mobile (Bottom Nav) */
     }
 
     /* 2. Ajuste da View de Post Completo (Evita "dança" lateral) */
