@@ -4300,7 +4300,12 @@ async function inicializarForum(preFetchedData = null) {
         // CORREÇÃO: Define o avatar e o nome em elementos separados para evitar quebra
         const authorAvatarEl = card.querySelector('.post-author-avatar');
         if (authorAvatarEl) authorAvatarEl.src = formatImageUrl(post.authorPhoto);
-        card.querySelector('.post-author').textContent = `por ${authorName}`;
+        
+        const authorHtml = (post.isAnonymous || !post.authorSlug) 
+            ? `por ${authorName}` 
+            : `por <a href="/${post.authorSlug}" target="_blank" class="author-link" title="Ver perfil público">${authorName}</a>`;
+        card.querySelector('.post-author').innerHTML = authorHtml;
+
         if (post.isAnonymous) card.querySelector('.post-author').style.fontStyle = 'italic';
 
         const badgesContainer = card.querySelector('.author-badges');
@@ -4387,14 +4392,18 @@ async function inicializarForum(preFetchedData = null) {
             // CORREÇÃO: Define o avatar e o nome em elementos separados
             const authorAvatarEl = postEl.querySelector('.full-post-avatar');
             if (authorAvatarEl) authorAvatarEl.src = formatImageUrl(post.authorPhoto);
-            postEl.querySelector('.full-post-author').textContent = post.isAnonymous ? 'Anônimo' : post.authorName;
+            
+            const authorHtml = (post.isAnonymous || !post.authorSlug) 
+                ? (post.isAnonymous ? 'Anônimo' : post.authorName)
+                : `<a href="/${post.authorSlug}" target="_blank" class="author-link" title="Ver perfil público">${post.authorName}</a>`;
+            postEl.querySelector('.full-post-author').innerHTML = authorHtml;
             
             const badgesContainer = postEl.querySelector('.author-badges-full');
             if (badgesContainer) {
                 badgesContainer.innerHTML = renderInlineAuthorBadges(post.authorBadges, post.authorLevel);
             }
 
-            postEl.querySelector('.full-post-content').textContent = post.content; // O conteúdo já vem sanitizado do backend
+            postEl.querySelector('.full-post-content').textContent = post.content;
             postEl.querySelector('.post-votes-count').textContent = post.votes;
 
             // Botão de voltar
@@ -4574,7 +4583,11 @@ async function inicializarForum(preFetchedData = null) {
         // CORREÇÃO: Define o avatar e o nome em elementos separados
         const authorAvatarEl = commentEl.querySelector('.comment-avatar');
         if (authorAvatarEl) authorAvatarEl.src = formatImageUrl(comment.authorPhoto);
-        commentEl.querySelector('.comment-author').textContent = authorName;
+        
+        const authorHtml = (comment.isAnonymous || !comment.authorSlug) 
+            ? authorName
+            : `<a href="/${comment.authorSlug}" target="_blank" class="author-link" title="Ver perfil público">${authorName}</a>`;
+        commentEl.querySelector('.comment-author').innerHTML = authorHtml;
         
         if (comment.isAnonymous) commentEl.querySelector('.comment-author').style.fontStyle = 'italic';
         

@@ -895,18 +895,18 @@ exports.getDashboardStats = async (req, res) => {
         const patientStatsQuery = `
             SELECT
                 COUNT(*) AS total,
-                COUNT(*) FILTER (WHERE status != 'inactive' OR status IS NULL) as active,
-                COUNT(*) FILTER (WHERE status = 'inactive') as deleted,
-                COUNT(*) FILTER (WHERE "createdAt" >= :thirtyDaysAgo) as new30d
+                COALESCE(COUNT(*) FILTER (WHERE status != 'inactive' OR status IS NULL), 0) as active,
+                COALESCE(COUNT(*) FILTER (WHERE status = 'inactive'), 0) as deleted,
+                COALESCE(COUNT(*) FILTER (WHERE "createdAt" >= :thirtyDaysAgo), 0) as new30d
             FROM "Patients"
         `;
 
         const psychologistStatsQuery = `
             SELECT
                 COUNT(*) AS total,
-                COUNT(*) FILTER (WHERE "deletedAt" IS NULL AND status = 'active') as active,
-                COUNT(*) FILTER (WHERE "deletedAt" IS NOT NULL) as deleted,
-                COUNT(*) FILTER (WHERE "createdAt" >= :thirtyDaysAgo AND "deletedAt" IS NULL) as new30d
+                COALESCE(COUNT(*) FILTER (WHERE "deletedAt" IS NULL AND status = 'active'), 0) as active,
+                COALESCE(COUNT(*) FILTER (WHERE "deletedAt" IS NOT NULL), 0) as deleted,
+                COALESCE(COUNT(*) FILTER (WHERE "createdAt" >= :thirtyDaysAgo AND "deletedAt" IS NULL), 0) as new30d
             FROM "Psychologists"
         `;
 
@@ -926,7 +926,6 @@ exports.getDashboardStats = async (req, res) => {
             pendingReviewsCount,
             psisByPlan,
             emailErrors, // <--- KPI de E-mail
-            totalMatchesResult,
             totalClicksResult
         ] = await Promise.all([
             db.sequelize.query(patientStatsQuery, { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }).catch(e => { console.error("Erro KPI Pacientes:", e.message); return [{total:0, active:0, deleted:0, new30d:0}]; }),
@@ -941,7 +940,6 @@ exports.getDashboardStats = async (req, res) => {
             // Contagem de falhas de e-mail nas últimas 24h
             db.SystemLog.count({ where: { message: { [Op.iLike]: '%[EMAIL_FAIL]%' }, createdAt: { [Op.gte]: oneDayAgo } } }).catch(() => 0),
             // NOVAS QUERIES GERAIS
-            db.sequelize.query(`SELECT COUNT(*) as count FROM "MatchEvents"`, { type: db.sequelize.QueryTypes.SELECT }).catch(e => { console.error("Erro KPI Match:", e.message); return [{ count: 0 }]; }),
             db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsappClickLogs"`, { type: db.sequelize.QueryTypes.SELECT }).catch(e => { console.error("Erro KPI Cliques:", e.message); return [{ count: 0 }]; })
         ]);
 
@@ -987,7 +985,8 @@ exports.getDashboardStats = async (req, res) => {
         const emailStatus = emailErrors === 0 ? 'healthy' : (emailErrors > 5 ? 'critical' : 'warning');
 
         // --- NOVO: Cálculo da Conversão Geral ---
-        const totalMatches = parseInt(totalMatchesResult?.[0]?.count || 0, 10);
+        // Definição UX: Aparições = Quantidade de vezes que a página resultados foi gerada (Questionários concluídos)
+        const totalMatches = parseInt(demandStats.total || 0, 10);
         const totalClicks = parseInt(totalClicksResult?.[0]?.count || 0, 10);
         const overallConversionRate = totalMatches > 0 ? ((totalClicks / totalMatches) * 100).toFixed(1) : 0;
 

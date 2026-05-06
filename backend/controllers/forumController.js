@@ -3,6 +3,7 @@ const { ForumPost, ForumComment, ForumCommentVote, ForumVote, ForumReport, Psych
 const { Op } = require('sequelize');
 
 const gamificationService = require('../services/gamificationService');
+const emailService = require('../services/emailService'); // Importação do serviço de e-mail
 exports.getAllPosts = async (req, res) => {
     try {
         const psychologistId = req.user.id;
@@ -52,7 +53,7 @@ exports.getAllPosts = async (req, res) => {
             include: [
                 {
                     model: Psychologist, // Adiciona badges e nível para exibição
-                    attributes: ['nome', 'fotoUrl', 'badges', 'authority_level'],
+                    attributes: ['nome', 'fotoUrl', 'badges', 'authority_level', 'slug'],
                     required: false // Garante LEFT JOIN
                 },
                 {
@@ -81,6 +82,7 @@ exports.getAllPosts = async (req, res) => {
             authorLevel: post.isAnonymous ? null : post.Psychologist?.authority_level, // Passa o nível
             authorName: post.isAnonymous ? 'Anônimo' : post.Psychologist?.nome,
             authorPhoto: post.isAnonymous ? null : post.Psychologist?.fotoUrl,
+            authorSlug: post.isAnonymous ? null : post.Psychologist?.slug,
             commentCount: parseInt(post.dataValues.commentCount, 10) || 0,
             supportedByMe: post.dataValues.supportedByMe,
             isMine: post.dataValues.isMine
@@ -114,7 +116,7 @@ exports.createPost = async (req, res) => {
 exports.getPostDetails = async (req, res) => {
     try {
         const post = await ForumPost.findByPk(req.params.id, {
-            include: [{ model: Psychologist, attributes: ['nome', 'fotoUrl', 'badges', 'authority_level'] }]
+            include: [{ model: Psychologist, attributes: ['nome', 'fotoUrl', 'badges', 'authority_level', 'slug'] }]
         });
         
         if (!post) return res.status(404).json({ error: 'Post não encontrado' });
@@ -136,6 +138,7 @@ exports.getPostDetails = async (req, res) => {
             authorPhoto: post.isAnonymous ? null : (post.Psychologist ? post.Psychologist.fotoUrl : null),
             authorBadges: post.isAnonymous ? {} : (post.Psychologist ? post.Psychologist.badges : {}),
             authorLevel: post.isAnonymous ? null : (post.Psychologist ? post.Psychologist.authority_level : null),
+            authorSlug: post.isAnonymous ? null : (post.Psychologist ? post.Psychologist.slug : null),
             supportedByMe: !!supported,
             isMine: post.PsychologistId === req.user.id
         });
@@ -159,12 +162,12 @@ exports.getComments = async (req, res) => {
                 parentId: null 
             },
             include: [
-                { model: Psychologist, attributes: ['nome', 'fotoUrl', 'badges', 'authority_level'], required: false },
+                { model: Psychologist, attributes: ['nome', 'fotoUrl', 'badges', 'authority_level', 'slug'], required: false },
                 // Inclui as respostas aninhadas
                 { 
                     model: ForumComment, 
                     as: 'Replies', 
-                    include: [{ model: Psychologist, attributes: ['nome', 'fotoUrl'], required: false }],
+                    include: [{ model: Psychologist, attributes: ['nome', 'fotoUrl', 'badges', 'authority_level', 'slug'], required: false }],
                     required: false
                 }
             ],
@@ -205,6 +208,7 @@ exports.getComments = async (req, res) => {
             const authorPhoto = c.isAnonymous ? null : (c.Psychologist ? c.Psychologist.fotoUrl : null);
             const authorBadges = c.isAnonymous ? {} : c.Psychologist?.badges;
             const authorLevel = c.isAnonymous ? null : c.Psychologist?.authority_level;
+            const authorSlug = c.isAnonymous ? null : c.Psychologist?.slug;
 
             // Processa as respostas (Replies) para incluir authorName e likedByMe
             let processedReplies = [];
@@ -214,6 +218,7 @@ exports.getComments = async (req, res) => {
                     const rAuthorPhoto = r.isAnonymous ? null : (r.Psychologist ? r.Psychologist.fotoUrl : null);
                     const rAuthorBadges = r.isAnonymous ? {} : r.Psychologist?.badges;
                     const rAuthorLevel = r.isAnonymous ? null : r.Psychologist?.authority_level;
+                    const rAuthorSlug = r.isAnonymous ? null : r.Psychologist?.slug;
                     return {
                         id: r.id,
                         content: r.content,
@@ -223,6 +228,7 @@ exports.getComments = async (req, res) => {
                         authorPhoto: rAuthorPhoto,
                         authorBadges: rAuthorBadges,
                         authorLevel: rAuthorLevel,
+                        authorSlug: rAuthorSlug,
                         likes: r.likes,
                         likedByMe: likedCommentIds.has(r.id), // Checagem O(1)
                         isMine: r.PsychologistId === userId, // Verifica autoria da resposta
@@ -242,6 +248,7 @@ exports.getComments = async (req, res) => {
                 authorPhoto: authorPhoto,
                 authorBadges: authorBadges,
                 authorLevel: authorLevel,
+                authorSlug: authorSlug,
                 likes: c.likes,
                 likedByMe: likedCommentIds.has(c.id), // Checagem O(1)
                 isMine: c.PsychologistId === userId, // Verifica autoria do comentário
@@ -268,6 +275,47 @@ exports.createComment = async (req, res) => {
         // --- GAMIFICATION HOOK ---
         // Responder Pergunta (20 pts, max 5/dia)
         gamificationService.processAction(req.user.id, 'forum_reply').catch(err => console.error("Gamification hook error:", err));
+
+        // --- INÍCIO: SISTEMA DE NOTIFICAÇÕES E MENÇÕES ---
+        // Rodamos de forma assíncrona (não usa await bloqueante) para não atrasar a resposta no Frontend
+        (async () => {
+            try {
+                const user = await Psychologist.findByPk(req.user.id);
+                const senderName = isAnonymous ? 'Um colega (Anônimo)' : user.nome;
+
+                // Notificar o dono do Post ou do Comentário Pai (Apenas emails de respostas)
+                if (parentId) {
+                    // É uma resposta a um comentário específico
+                    const parentComment = await ForumComment.findByPk(parentId, { include: [Psychologist] });
+                    if (parentComment && parentComment.PsychologistId !== req.user.id && parentComment.Psychologist) {
+                        const parentOwner = parentComment.Psychologist;
+                        if (parentOwner.email && emailService.sendEmail) {
+                            await emailService.sendEmail(
+                                parentOwner.email, 
+                                "Nova resposta ao seu comentário! 💬", 
+                                `Olá ${parentOwner.nome},<br><br>O psicólogo <strong>${senderName}</strong> respondeu ao seu comentário no fórum da Yelo:<br><br><em>"${content.substring(0, 100)}..."</em><br><br>Acesse a plataforma para continuar a discussão.`
+                            ).catch(e => console.error("Erro ao enviar email de resposta ao comentário:", e));
+                        }
+                    }
+                } else {
+                    // É uma resposta direta ao Tópico (Post) original
+                    const postInfo = await ForumPost.findByPk(req.params.id, { include: [Psychologist] });
+                    if (postInfo && postInfo.PsychologistId !== req.user.id && postInfo.Psychologist) {
+                        const postOwner = postInfo.Psychologist;
+                        if (postOwner.email && emailService.sendEmail) {
+                            await emailService.sendEmail(
+                                postOwner.email, 
+                                "Nova resposta no seu tópico! 💬", 
+                                `Olá ${postOwner.nome},<br><br>O psicólogo <strong>${senderName}</strong> respondeu ao seu tópico "<strong>${postInfo.title}</strong>".<br><br><em>"${content.substring(0, 100)}..."</em><br><br>Acesse a plataforma para interagir.`
+                            ).catch(e => console.error("Erro ao enviar email de resposta ao post:", e));
+                        }
+                    }
+                }
+            } catch (notifyErr) {
+                console.error("Erro ao processar notificações do Fórum:", notifyErr);
+            }
+        })();
+        // --- FIM: SISTEMA DE NOTIFICAÇÕES E MENÇÕES ---
 
         // Retorna dados formatados para o frontend adicionar na lista imediatamente
         const user = await Psychologist.findByPk(req.user.id);

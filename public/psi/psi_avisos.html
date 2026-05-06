@@ -82,7 +82,11 @@
 
             title.textContent = aviso.title;
             const date = new Date(aviso.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
-            meta.textContent = `Enviado por ${aviso.author || 'Equipe Yelo'} em ${date}`;
+            if (!aviso.read) {
+                meta.innerHTML = `Enviado por ${aviso.author || 'Equipe Yelo'} em ${date} <span class="aviso-click-hint">🔔 Clique para ler</span>`;
+            } else {
+                meta.innerHTML = `Enviado por ${aviso.author || 'Equipe Yelo'} em ${date}`;
+            }
             
             // Replace [nome] with the user's name
             const userName = localStorage.getItem('Yelo_user_name') || 'Psi';
