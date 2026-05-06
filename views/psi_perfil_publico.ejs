@@ -16,6 +16,19 @@
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/css/05-pages.css">
     <link rel="stylesheet" href="/css/psi_dashboard.css">
+    <style>
+        /* Ajuste do selo de verificado no mobile para flutuar sem empurrar o texto */
+        .mobile-only-badge { display: none !important; }
+        @media (max-width: 768px) {
+            .desktop-only-badge { display: none !important; }
+            .mobile-only-badge { 
+                display: inline-flex !important; 
+                position: absolute !important;
+                right: -32px !important;
+                top: -8px !important;
+            }
+        }
+    </style>
 </head>
 <body class="pagina-publica">
 
@@ -26,126 +39,233 @@
             <div class="profile-header-grid">
                 <!-- Coluna Principal (Esquerda no Desktop) -->
                 <div class="profile-info-column">
-                    <div class="profile-info-card" style="background: #ffffff; padding: 40px; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #f0f0f0; margin-bottom: 30px;">
+                    <div class="profile-info-card">
                         
                         <!-- Cabeçalho (Foto, Nome, CRP, Avaliações) -->
-                        <div class="profile-hero-info" style="text-align: center; margin-bottom: 40px;">
-                            <div class="profile-photo-wrapper" style="width: 180px; height: 180px; margin: 0 auto 20px auto; border-radius: 50%; padding: 5px; border: 2px dashed var(--verde-escuro);">
-                                <img id="psi-photo" src="<%= psicologo.fotoUrl || 'https://placehold.co/180x180/e8f5e9/1B4332?text=Psi' %>" alt="Foto de <%= psicologo.nome %>" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                        <div class="hero-card-modern">
+                            <div class="hero-photo-container">
+                                <img id="psi-photo" src="<%= psicologo.fotoUrl || 'https://placehold.co/240x240/e8f5e9/1B4332?text=Psi' %>" alt="Foto de <%= psicologo.nome %>">
                             </div>
-                            <div class="profile-name-block">
-                                <h1 id="psi-name" style="font-family: var(--font-titulos); font-size: 2.2rem; color: var(--verde-escuro); margin: 10px 0 5px 0;"><%= psicologo.nome %></h1>
-                                <div class="badge-group" style="margin-bottom: 15px;">
-                                    <span id="psi-crp" class="crp-badge" style="background: #f0fdf4; padding: 5px 15px; border-radius: 20px; color: var(--verde-escuro); font-weight: 600; font-size: 0.95rem;">CRP: <%= psicologo.crp %></span>
-                                    <span id="verification-badge" class="verification-badge" title="Psicólogo Verificado" style="display: inline-block; background-color: var(--verde-escuro); color: white; border-radius: 50%; width: 20px; height: 20px; line-height: 20px; text-align: center; font-size: 0.8rem; margin-left: 5px; vertical-align: middle;">✓</span>
-                                </div>
+                            <div class="hero-details-container">
+                                <h1 id="psi-name" class="hero-name-title">
+                                    <% 
+                                        if (psicologo.nome) {
+                                            const nameParts = psicologo.nome.trim().split(' ');
+                                            const verifiedSvg = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.79-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.758 2.746 1.9 3.42-.047.19-.074.385-.074.58 0 2.21 1.71 4.002 3.918 4.002.47 0 .92-.086 1.336-.25.52 1.335 1.828 2.25 3.337 2.25s2.816-.915 3.337-2.25c.416.164.866.25 1.336.25 2.21 0 3.918-1.792 3.918-4 0-.195-.027-.39-.074-.58 1.14-.675 1.9-1.96 1.9-3.42z" fill="#1B4332"/><path d="M16.97 8.47a1.5 1.5 0 0 1 0 2.12l-6.5 6.5a1.5 1.5 0 0 1-2.12 0l-3.5-3.5a1.5 1.5 0 1 1 2.12-2.12l2.44 2.44 5.44-5.44a1.5 1.5 0 0 1 2.12 0z" fill="white"/></svg>`;
+                                    %>
+                                        <% if (nameParts.length > 1) { %>
+                                            <span class="first-name-wrapper" style="position: relative; display: inline-block;"><%= nameParts[0] %><span title="Psicólogo Verificado" class="hero-verified-badge mobile-only-badge"><%- verifiedSvg %></span></span>
+                                            <span class="name-break-mobile"><%= nameParts.slice(1).join(' ') %></span>
+                                            <span title="Psicólogo Verificado" class="hero-verified-badge desktop-only-badge"><%- verifiedSvg %></span>
+                                        <% } else { %>
+                                            <span class="first-name-wrapper" style="position: relative; display: inline-block;"><%= psicologo.nome %><span title="Psicólogo Verificado" class="hero-verified-badge mobile-only-badge"><%- verifiedSvg %></span></span>
+                                            <span title="Psicólogo Verificado" class="hero-verified-badge desktop-only-badge"><%- verifiedSvg %></span>
+                                        <% } %>
+                                    <% } %>
+                                </h1>
+                                <p id="psi-hero-subtitle" class="hero-subtitle-text">Psicólogo Clínico</p>
+                                
                                 <!-- Resumo clicável das avaliações -->
-                                <div id="psi-rating-summary" class="rating-display-hero" style="cursor: pointer; display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: #f8f9fa; border-radius: 50px; border: 1px solid #eee; transition: all 0.2s;" onclick="document.getElementById('reviews-section').scrollIntoView({behavior: 'smooth'})" onmouseover="this.style.background='#f0fdf4'; this.style.borderColor='#bbf7d0'" onmouseout="this.style.background='#f8f9fa'; this.style.borderColor='#eee'">
+                                <div id="psi-rating-summary" class="hero-rating-clickable" onclick="document.getElementById('reviews-section').scrollIntoView({behavior: 'smooth'})">
                                     <!-- Preenchido via JS -->
                                 </div>
+                                <% 
+                                    let expTextSSR = '';
+                                    let showExp = false;
+                                    if (psicologo.ano_inicio_experiencia) {
+                                        const currentYear = new Date().getFullYear();
+                                        const anosExp = currentYear - parseInt(psicologo.ano_inicio_experiencia);
+                                        if (anosExp >= 0) {
+                                            showExp = true;
+                                            expTextSSR = anosExp === 0 ? 'Menos de 1 ano de experiência' : `Profissional com ${anosExp} ano${anosExp > 1 ? 's' : ''} de experiência`;
+                                        }
+                                    }
+                                %>
+                                <!-- Bloco de Autoridade -->
+                                <div class="hero-authority-block">
+                                    <div class="auth-item"><span class="auth-icon green">✓</span> <span id="psi-crp">CRP: <%= psicologo.crp %></span></div>
+                                    <div class="auth-item"><span class="auth-icon blue">🔒</span> <span>Sigilo Garantido</span></div>
+                                    <div id="auth-experiencia" class="auth-item" style="display: <%= showExp ? 'flex' : 'none' %>;"><span class="auth-icon gold">⭐</span> <span id="psi-experiencia-text"><%= expTextSSR %></span></div>
+                                </div>
                             </div>
+                            <!-- INFORMAÇÕES RÁPIDAS (APENAS MOBILE) -->
+                            <div class="mobile-quick-info">
+                                <div class="mq-trust-row">
+                                    <div class="mq-trust-item verified"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> <span>Verificado</span></div>
+                                    <div class="mq-trust-item crp"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> <span>CRP Ativo</span></div>
+                                    <div id="mq-experiencia" class="mq-trust-item" style="display: <%= showExp ? 'flex' : 'none' %>; color: #f59e0b;">⭐ <span id="mq-experiencia-text"><%= expTextSSR.replace('Profissional com ', '').replace(' de experiência', '') %></span></div>
+                                </div>
+                                <div class="mq-info-grid">
+                                    <div class="mq-info-row">
+                                        <div class="mq-icon" style="background: #e8f5e9; color: #16a34a;">📍</div>
+                                        <div class="mq-text-group">
+                                            <span class="mq-label">Localização</span>
+                                            <% const locSSR = (psicologo.cidade && psicologo.estado) ? `${psicologo.cidade}, ${psicologo.estado}` : 'Não informado'; %>
+                                            <span id="psi-location-mobile" class="mq-value"><%= locSSR %></span>
+                                        </div>
+                                    </div>
+                                    <div class="mq-info-row">
+                                        <div class="mq-icon" style="background: #e0f2fe; color: #0284c7;">💻</div>
+                                        <div class="mq-text-group">
+                                            <span class="mq-label">Atendimento</span>
+                                            <% 
+                                                let modSSR = 'Não informado';
+                                                if (Array.isArray(psicologo.modalidade) && psicologo.modalidade.length > 0) {
+                                                    modSSR = psicologo.modalidade.join(' // ');
+                                                } else if (typeof psicologo.modalidade === 'string' && psicologo.modalidade.trim().length > 0) {
+                                                    try {
+                                                        const p = JSON.parse(psicologo.modalidade);
+                                                        modSSR = (Array.isArray(p) && p.length > 0) ? p.join(' // ') : psicologo.modalidade;
+                                                    } catch(e) {
+                                                        modSSR = psicologo.modalidade;
+                                                    }
+                                                }
+                                                if (modSSR === '[]' || modSSR === '') modSSR = 'Não informado';
+                                            %>
+                                            <span id="psi-modalidade-mobile" class="mq-value"><%= modSSR %></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- FIM INFORMAÇÕES RÁPIDAS MOBILE -->
+                            
                         </div>
 
                         <!-- Bio -->
                         <div class="profile-section-modern" style="margin-bottom: 40px;">
-                            <h3 style="font-family: var(--font-titulos); font-size: 1.5rem; color: var(--verde-escuro); margin: 0 0 15px 0; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px;">Sobre Mim</h3>
-                            <div class="bio-card" style="background-color: #f8f9fa; border-left: 4px solid var(--verde-escuro); padding: 20px 30px; border-radius: 0 12px 12px 0;">
-                                <p id="psi-bio-text" class="bio-text" style="font-size: 1.05rem; line-height: 1.8; color: #444; margin: 0; text-align: justify; white-space: pre-wrap;"></p>
+                            <h3 class="profile-section-title">Sobre Mim</h3>
+                            <p class="profile-section-subtitle">Conheça um pouco mais sobre minha trajetória e como posso te ajudar.</p>
+                            <div class="bio-card">
+                                <p id="psi-bio-text" class="bio-text"></p>
                             </div>
                         </div>
 
                         <!-- Formação Acadêmica -->
-                        <div class="profile-section-modern" id="formacao-section" style="margin-bottom: 40px;">
-                            <h3 style="font-family: var(--font-titulos); font-size: 1.5rem; color: var(--verde-escuro); margin: 0 0 15px 0; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px;">Formação Acadêmica</h3>
+                        <div class="profile-section-modern" id="formacao-section" style="margin-bottom: 40px; display: <%= (psicologo.formacao_nivel || psicologo.formacao_desc) ? 'block' : 'none' %>;">
+                            <h3 class="profile-section-title">Formação Acadêmica</h3>
+                            <p class="profile-section-subtitle">Minha base de conhecimento e especializações.</p>
                             <div style="display: flex; gap: 15px; align-items: flex-start;">
-                                <div style="width: 45px; height: 45px; background: #e0f2fe; color: #0284c7; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">🎓</div>
+                                <div class="education-icon">🎓</div>
                                 <div>
-                                    <strong id="psi-formacao-nivel" style="display: block; font-size: 1.1rem; color: #333; margin-bottom: 5px;">Carregando...</strong>
-                                    <p id="psi-formacao-desc" style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.6;">Aguardando informações do perfil...</p>
+                                    <strong id="psi-formacao-nivel" style="display: block; font-size: 1.1rem; color: #333; margin-bottom: 5px;"><%= psicologo.formacao_nivel || 'Formação Superior' %></strong>
+                                    <p id="psi-formacao-desc" style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.6;"><%= psicologo.formacao_desc || 'Sem detalhes adicionais informados.' %></p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Especialidades e Atuação -->
                         <div class="profile-section-modern" style="margin-bottom: 40px;">
-                            <h3 style="font-family: var(--font-titulos); font-size: 1.5rem; color: var(--verde-escuro); margin: 0 0 20px 0; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px;">Especialidades e Atuação</h3>
+                            <h3 class="profile-section-title">Especialidades e Atuação</h3>
+                            <p class="profile-section-subtitle">Áreas em que tenho maior experiência e foco de estudo.</p>
                             
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px;">
                                 <div>
-                                    <span style="font-size: 0.85rem; color: #888; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; display: block; margin-bottom: 10px;">Temas de Atuação</span>
+                                    <span class="tag-category-title">Temas de Atuação</span>
                                     <div id="psi-temas-container" class="practices-container" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
                                 </div>
                                 <div>
-                                    <span style="font-size: 0.85rem; color: #888; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; display: block; margin-bottom: 10px;">Público-Alvo</span>
+                                    <span class="tag-category-title">Público-Alvo</span>
                                     <div id="psi-publico-container" class="practices-container" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
                                 </div>
                                 <div>
-                                    <span style="font-size: 0.85rem; color: #888; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; display: block; margin-bottom: 10px;">Abordagem Técnica</span>
+                                    <span class="tag-category-title">Abordagem Técnica</span>
                                     <div id="psi-abordagem-container" class="practices-container" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
                                 </div>
                                 <div>
-                                    <span style="font-size: 0.85rem; color: #888; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; display: block; margin-bottom: 10px;">Práticas Afirmativas</span>
+                                    <span class="tag-category-title">Práticas Afirmativas</span>
                                     <div id="psi-praticas-container" class="practices-container" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Redes Sociais -->
-                        <div class="profile-section-modern" id="redes-sociais-section">
-                            <h3 style="font-family: var(--font-titulos); font-size: 1.5rem; color: var(--verde-escuro); margin: 0 0 15px 0; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px;">Redes Sociais</h3>
-                            <div id="psi-social-links" class="social-share-row" style="display: flex; gap: 12px; flex-wrap: wrap;">
-                                <!-- Ícones das redes injetados via JS -->
                             </div>
                         </div>
                     </div>
                     
                     <!-- SEÇÃO DE AVALIAÇÕES (Movido para fora do card, mas ainda na coluna esquerda) -->
-                    <div id="reviews-section" class="profile-info-card" style="background: #fff; padding: 40px; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #f0f0f0;">
-                        <h3 style="font-family: var(--font-titulos); font-size: 1.8rem; color: var(--verde-escuro); margin: 0 0 20px 0;">Avaliações dos Pacientes (<span id="review-count">0</span>)</h3>
+                    <div id="reviews-section" class="profile-info-card">
+                        <h3 class="profile-section-title" style="font-size: 1.8rem;">Avaliações dos Pacientes (<span id="review-count">0</span>)</h3>
+                        <p style="color: #666; font-size: 0.95rem; margin: 0 0 20px 0;">Experiências e relatos de pessoas que acompanhei.</p>
                         
                         <div id="reviews-list-container" style="display: flex; flex-direction: column; gap: 15px;">
                             <!-- Lista de avaliações será inserida aqui via JS -->
                         </div>
 
-                        <div id="review-form-container" class="review-form-box" style="margin-top: 40px; background: #f8f9fa; padding: 25px; border-radius: 16px; border: 1px solid #e9ecef;">
-                            <!-- Formulário de avaliação será inserido aqui via JS -->
+                        <div id="review-form-container" class="review-form-box">
+                            <div class="review-form-header">
+                                <h4 class="review-form-title">Deixe sua avaliação</h4>
+                                <div class="google-validation-badge" title="Para evitar perfis falsos, todas as avaliações exigem validação do Google."><svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="16" height="16"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path></svg><span>Validadas pelo <strong>Google</strong></span></div>
+                            </div>
+                            <form id="form-nova-avaliacao">
+                                <div class="star-rating-input" style="justify-content: flex-end; width: fit-content;">
+                                    <input type="radio" id="star5" name="rating" value="5" /><label for="star5" title="5 estrelas">★</label>
+                                    <input type="radio" id="star4" name="rating" value="4" /><label for="star4" title="4 estrelas">★</label>
+                                    <input type="radio" id="star3" name="rating" value="3" /><label for="star3" title="3 estrelas">★</label>
+                                    <input type="radio" id="star2" name="rating" value="2" /><label for="star2" title="2 estrelas">★</label>
+                                    <input type="radio" id="star1" name="rating" value="1" /><label for="star1" title="1 estrela">★</label>
+                                </div>
+                                <textarea name="comentario" placeholder="Escreva como foi sua experiência (opcional)" style="width: 100%; border: 1px solid #ddd; border-radius: 12px; padding: 15px; font-family: var(--font-principal); margin-top: 15px; resize: vertical; min-height: 80px;"></textarea>
+                                <button type="submit" style="margin: 15px auto 0 auto; display: block; width: fit-content; background: var(--verde-escuro); color: white; border: none; padding: 14px 32px; border-radius: 50px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(27,67,50,0.1);">Avaliar Profissional</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Redes Sociais (Isolado no fim da página) -->
+                    <div id="redes-sociais-section" class="profile-info-card" style="margin-top: 30px;">
+                        <h3 class="profile-section-title">Redes Sociais</h3>
+                        <p class="profile-section-subtitle">Acompanhe meus conteúdos e dicas diárias.</p>
+                        <div id="psi-social-links" class="social-share-row" style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <!-- Ícones das redes injetados via JS -->
                         </div>
                     </div>
                 </div>
 
                 <!-- Coluna de Conversão (Direita no Desktop, Sticky) -->
                 <div class="conversion-card-wrapper" style="position: sticky; top: 100px; align-self: start;">
-                    <div class="conversion-card-modern" style="background: #ffffff; padding: 30px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.06); border: 1px solid #f0f0f0; text-align: center;">
+                    <div class="conversion-card-modern">
                         
                         <h3 style="font-size: 0.95rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px 0; font-family: var(--font-principal);">Investimento</h3>
                         
                         <div id="price-display-container">
-                            <!-- Preço inserido via JS -->
+                            <% if (psicologo.tipo_cobranca === 'mensal') { %>
+                                <% if (psicologo.valor_mensal_numero && parseFloat(psicologo.valor_mensal_numero) > 0) { %>
+                                    <div class="price-display" style="font-family: var(--font-titulos); font-size: 2.8rem; font-weight: 700; color: var(--verde-escuro); margin: 10px 0 0 0; line-height: 1;">R$ <%= parseFloat(psicologo.valor_mensal_numero).toFixed(2).replace('.', ',') %></div>
+                                    <div class="price-suffix" style="font-size: 0.9rem; color: #999; font-weight: 500;">por mês</div>
+                                <% } else { %>
+                                    <div class="price-display" style="font-family: var(--font-titulos); font-size: 2.2rem; font-weight: 700; color: var(--verde-escuro); margin: 10px 0 0 0; line-height: 1;">A combinar</div>
+                                    <div class="price-suffix" style="font-size: 0.9rem; color: #999; font-weight: 500;">por mês</div>
+                                <% } %>
+                            <% } else { %>
+                                <% if (psicologo.valor_sessao_numero && parseFloat(psicologo.valor_sessao_numero) > 0) { %>
+                                    <div class="price-display" style="font-family: var(--font-titulos); font-size: 2.8rem; font-weight: 700; color: var(--verde-escuro); margin: 10px 0 0 0; line-height: 1;">R$ <%= parseFloat(psicologo.valor_sessao_numero).toFixed(2).replace('.', ',') %></div>
+                                    <div class="price-suffix" style="font-size: 0.9rem; color: #999; font-weight: 500;">por sessão</div>
+                                <% } else { %>
+                                    <div class="price-display" style="font-family: var(--font-titulos); font-size: 2.2rem; font-weight: 700; color: var(--verde-escuro); margin: 10px 0 0 0; line-height: 1;">A combinar</div>
+                                    <div class="price-suffix" style="font-size: 0.9rem; color: #999; font-weight: 500;">por sessão</div>
+                                <% } %>
+                            <% } %>
                         </div>
 
-                        <div class="conversion-card-details" style="margin: 25px 0; background: #f8f9fa; padding: 20px; border-radius: 16px; text-align: left; display: flex; flex-direction: column; gap: 15px;">
+                        <div class="conversion-card-details" style="margin: 25px 0; background: #f8f9fa; padding: 20px; border-radius: 16px; display: flex; flex-direction: row; justify-content: center; gap: 15px; flex-wrap: wrap;">
                             
-                            <div class="info-row" style="display: flex; align-items: flex-start; gap: 12px;">
-                                <div style="width: 32px; height: 32px; background: #e8f5e9; color: #16a34a; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">📍</div>
-                                <div style="display: flex; flex-direction: column; gap: 2px;">
-                                    <span style="font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Localização</span>
-                                    <span id="psi-location" style="font-size: 0.95rem; color: #333; font-weight: 600;">Carregando...</span>
+                            <div class="info-row" style="display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; flex: 1; min-width: 100px;">
+                                <div style="width: 40px; height: 40px; background: #e8f5e9; color: #16a34a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">📍</div>
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <span style="font-size: 0.7rem; color: #888; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Localização</span>
+                                    <span id="psi-location" style="font-size: 0.95rem; color: #333; font-weight: 600; line-height: 1.2;"><%= locSSR %></span>
                                 </div>
                             </div>
 
-                            <div class="info-row" style="display: flex; align-items: flex-start; gap: 12px;">
-                                <div style="width: 32px; height: 32px; background: #e0f2fe; color: #0284c7; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">💻</div>
-                                <div style="display: flex; flex-direction: column; gap: 2px;">
-                                    <span style="font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Atendimento</span>
-                                    <span id="psi-modalidade" style="font-size: 0.95rem; color: #333; font-weight: 600;">Carregando...</span>
+                            <div class="info-row" style="display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; flex: 1; min-width: 100px;">
+                                <div style="width: 40px; height: 40px; background: #e0f2fe; color: #0284c7; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">💻</div>
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <span style="font-size: 0.7rem; color: #888; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Atendimento</span>
+                                    <span id="psi-modalidade" style="font-size: 0.95rem; color: #333; font-weight: 600; line-height: 1.2;"><%= modSSR %></span>
                                 </div>
                             </div>
 
                         </div>
 
-                        <a id="btn-agendar-whatsapp" href="#" class="btn btn-principal btn-pulse" target="_blank" rel="noopener noreferrer" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 16px; border-radius: 50px; font-size: 1.1rem; box-shadow: 0 6px 20px rgba(27,67,50,0.25); text-decoration: none; font-weight: 700; color: #fff;">
+                        <a id="btn-agendar-whatsapp" href="#" class="btn btn-principal btn-pulse" target="_blank" rel="noopener noreferrer" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 16px; border-radius: 50px; font-size: 1.05rem; box-shadow: 0 6px 20px rgba(27,67,50,0.25); text-decoration: none; font-weight: 700; color: #fff;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                            Falar no WhatsApp
+                            Agendar primeira conversa
                         </a>
                         <p class="cta-subtitle" style="font-size: 0.85rem; color: #888; margin-top: 15px; line-height: 1.4;">Clique para iniciar uma conversa direta e tirar suas dúvidas.</p>
                         
@@ -162,6 +282,31 @@
                     </div>
                 </div>
             </div>
+        </div>
+        
+        <!-- STICKY BOTTOM BAR (Apenas Mobile) -->
+        <div class="mobile-sticky-cta">
+            <div class="mobile-sticky-price" id="price-display-mobile">
+                <% if (psicologo.tipo_cobranca === 'mensal') { %>
+                    <span class="label">Mensal</span>
+                    <% if (psicologo.valor_mensal_numero && parseFloat(psicologo.valor_mensal_numero) > 0) { %>
+                        <span class="value">R$ <%= parseFloat(psicologo.valor_mensal_numero).toFixed(2).replace('.', ',') %></span>
+                    <% } else { %>
+                        <span class="value" style="font-size: 1.5rem;">A combinar</span>
+                    <% } %>
+                <% } else { %>
+                    <span class="label">Por Sessão</span>
+                    <% if (psicologo.valor_sessao_numero && parseFloat(psicologo.valor_sessao_numero) > 0) { %>
+                        <span class="value">R$ <%= parseFloat(psicologo.valor_sessao_numero).toFixed(2).replace('.', ',') %></span>
+                    <% } else { %>
+                        <span class="value" style="font-size: 1.5rem;">A combinar</span>
+                    <% } %>
+                <% } %>
+            </div>
+            <a id="btn-agendar-whatsapp-mobile" href="#" class="btn btn-principal" target="_blank" rel="noopener noreferrer">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                Agendar conversa
+            </a>
         </div>
     </main>
 

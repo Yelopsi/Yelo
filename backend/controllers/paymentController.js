@@ -100,7 +100,7 @@ exports.createPreference = async (req, res) => {
             customerSearch = JSON.parse(responseText);
         } catch (e) {
             console.error(`[ASAAS FATAL] Resposta inválida (${customerResponse.status}). Conteúdo recebido:\n${responseText.substring(0, 500)}`);
-            throw new Error(`Erro de comunicação com Asaas (Resposta não é JSON). Verifique os logs do servidor.`);
+            throw Object.assign(new Error(`Erro de comunicação com Asaas (Resposta não é JSON). Verifique os logs do servidor.`), { cause: e });
         }
         
         // Verifica se a resposta JSON contém erros lógicos da API
@@ -173,7 +173,7 @@ exports.createPreference = async (req, res) => {
                 });
                 let text = await res.text();
                 let data;
-                try { data = JSON.parse(text); } catch(e) { throw new Error(`Erro Asaas Update Parse: ${text}`); }
+                try { data = JSON.parse(text); } catch(e) { throw Object.assign(new Error(`Erro Asaas Update Parse: ${text}`), { cause: e }); }
                 
                 // Se a assinatura não pode ser atualizada (foi removida, está inativa ou não encontrada)
                 if (res.status === 404 || (res.status === 400 && data.errors && data.errors.some(e => e.code === 'invalid_action' || e.code === 'deleted'))) {
@@ -193,7 +193,7 @@ exports.createPreference = async (req, res) => {
                 });
                 let text = await res.text();
                 let data;
-                try { data = JSON.parse(text); } catch(e) { throw new Error(`Erro Asaas Create Parse: ${text}`); }
+                try { data = JSON.parse(text); } catch(e) { throw Object.assign(new Error(`Erro Asaas Create Parse: ${text}`), { cause: e }); }
                 return { res, data };
             }
         };
@@ -305,7 +305,7 @@ exports.createPreference = async (req, res) => {
         }
 
         // Atualiza salvando a referência da assinatura e o plano selecionado.
-        // A data de expiração não é aumentada aqui; o webhook atualizará o planExpiresAt 
+        /// a data de expiração não é aumentada aqui; o webhook atualizará o planExpiresAt 
         // quando o pagamento for de fato confirmado (se a cobrança for imediata).
         await psychologist.update({
             stripeSubscriptionId: subscriptionData.id,
@@ -346,240 +346,4 @@ exports.createPreference = async (req, res) => {
         
         res.status(500).json({ error: error.message || 'Erro ao processar pagamento' });
     }
-};
-
-// 2. WEBHOOK ASAAS
-exports.handleWebhook = async (req, res) => {
-    // O Asaas envia o evento no corpo do request (JSON)
-    const event = req.body;
-    
-    // Validação básica de segurança (Opcional: verificar token no header se configurado no Asaas)
-    // [FIX CRÍTICO] Verificação obrigatória do Token do Webhook do Asaas em Produção
-    const asaasToken = req.headers['asaas-access-token'];
-    const expectedToken = process.env.ASAAS_WEBHOOK_TOKEN;
-    
-    if (expectedToken && asaasToken !== expectedToken) {
-        console.error("🚨 [ALERTA DE SEGURANÇA] Webhook bloqueado. Token esperado não confere com o recebido.");
-        return res.status(401).json({ error: 'Token de Webhook inválido.' });
-    } else if (!expectedToken) {
-        console.warn("⚠️ [AVISO] ASAAS_WEBHOOK_TOKEN não configurado no .env. Webhook aceito sem validação (Recomendado configurar por segurança).");
-    }
-
-    // --- NOVOS EVENTOS DE NOTIFICAÇÃO PERSONALIZADA YELO ---
-    // Captura eventos de cobrança para enviar e-mail com estética Yelo
-    const notificationEvents = [
-        'PAYMENT_CREATED',          // Cobrança criada
-        'PAYMENT_DUEDATE_WARNING',  // Aviso de vencimento (e 10 dias antes)
-        'SEND_LINHA_DIGITAVEL',     // Linha digitável no dia
-        'PAYMENT_OVERDUE',          // Vencida (e a cada 7 dias)
-        'PAYMENT_UPDATED'           // Atualizada
-    ];
-
-    if (notificationEvents.includes(event.event)) {
-        const payment = event.payment;
-        const externalId = payment.externalReference; // Pode ser ID de Psi ou Paciente
-        
-        try {
-            let user = null;
-            
-            // 1. Tenta buscar Psicólogo
-            if (externalId) {
-                user = await db.Psychologist.findByPk(externalId);
-            }
-            // Fallback: busca por assinatura (Psi)
-            if (!user && payment.subscription) {
-                user = await db.Psychologist.findOne({ where: { stripeSubscriptionId: payment.subscription } });
-            }
-
-            if (user) {
-                console.log(`📧 [YELO MAIL] Disparando notificação personalizada: ${event.event} para ${user.email}`);
-                
-                switch (event.event) {
-                    case 'PAYMENT_CREATED':
-                        if (payment.billingType !== 'CREDIT_CARD') {
-                            await emailService.sendBillCreatedEmail(user, payment);
-                        }
-                        break;
-                    case 'PAYMENT_DUEDATE_WARNING':
-                        await emailService.sendDueDateWarningEmail(user, payment);
-                        break;
-                    case 'SEND_LINHA_DIGITAVEL':
-                        // Apenas se for boleto/pix
-                        if (payment.billingType === 'BOLETO' || payment.billingType === 'PIX') {
-                            await emailService.sendDigitableLineEmail(user, payment);
-                        }
-                        break;
-                    case 'PAYMENT_OVERDUE':
-                        await emailService.sendOverdueEmail(user, payment);
-                        break;
-                    case 'PAYMENT_UPDATED':
-                        // Evita spam: só avisa se mudou valor ou vencimento e não está paga
-                        if (payment.status === 'PENDING' || payment.status === 'OVERDUE') {
-                            await emailService.sendBillUpdatedEmail(user, payment);
-                        }
-                        break;
-                }
-            }
-        } catch (err) {
-            console.error(`❌ [YELO MAIL ERROR] Falha ao enviar notificação ${event.event}:`, err.message);
-        }
-    }
-    // -------------------------------------------------------
-
-    if (event.event === 'PAYMENT_CONFIRMED' || event.event === 'PAYMENT_RECEIVED') {
-        const payment = event.payment;
-        // O Asaas retorna o externalReference que enviamos na criação (ID do Psicólogo)
-        const psychologistId = payment.externalReference;
-        
-        // Tenta extrair o plano da descrição (ex: "Assinatura Yelo - Plano CLINICAL")
-        const description = payment.description || "";
-        let planType = 'ESSENTIAL'; // Default
-        if (description.includes('CLINICAL')) planType = 'CLINICAL';
-        if (description.includes('REFERENCE')) planType = 'REFERENCE';
-
-        try {
-            const psi = await db.Psychologist.findByPk(psychologistId);
-            if (psi) {
-                // --- FIX: RELOAD PARA EVITAR RACE CONDITION ---
-                // Garante que temos o status mais recente do banco (caso tenha sido cancelado milissegundos antes)
-                await psi.reload();
-
-                // --- PROTEÇÃO CONTRA RACE CONDITION / WEBHOOKS ANTIGOS ---
-                // 1. Se já existe uma assinatura NOVA salva no banco, ignora webhooks da VELHA.
-                // [CORREÇÃO] Só ignora se o usuário já estiver ATIVO. Se estiver inativo/pendente, 
-                // aceitamos o pagamento da assinatura antiga (pois o usuário pode ter pago um boleto gerado anteriormente).
-                if (psi.status === 'active' && payment.subscription && psi.stripeSubscriptionId && psi.stripeSubscriptionId !== payment.subscription) {
-                     return res.json({received: true});
-                }
-                
-                // 2. PROTEÇÃO CRÍTICA: Se o usuário cancelou (está inativo e sem ID), ignora webhooks de ativação atrasados.
-                // Isso impede que o plano volte a ficar ativo sozinho após o cancelamento.
-                if (psi.status === 'inactive' && !psi.stripeSubscriptionId) {
-                    return res.json({received: true});
-                }
-
-                const currentPayments = (psi.subscription_payments_count || 0) + 1;
-
-                const hoje = new Date();
-                const novaValidade = new Date(hoje.setDate(hoje.getDate() + 30));
-
-                await psi.update({
-                    status: 'active',
-                    planExpiresAt: novaValidade, 
-                    plano: planType,
-                    // Salva o ID da assinatura do Asaas para cancelamentos futuros
-                    stripeSubscriptionId: payment.subscription,
-                    // cancelAtPeriodEnd: false, // REMOVIDO: Não sobrescreve decisão de cancelamento do usuário
-                    subscription_payments_count: currentPayments // Atualiza o contador de pagamentos
-                });
-
-                // --- GAMIFICATION: Tenta atribuir a badge de Pioneiro ---
-                gamificationService.assignPioneerBadge(psi.id).catch(e => console.error("Erro no hook de badge Pioneiro (Pagamento):", e));
-
-                // [LOG DE SUCESSO PARA RASTREAMENTO NO DASHBOARD]
-                if (db.SystemLog) {
-                    db.SystemLog.create({
-                        level: 'info',
-                        message: `[ASAAS] Pagamento Confirmado: ${psi.email} (Plano ${planType})`,
-                        meta: {
-                            userEmail: psi.email,
-                            psychologistId: psi.id
-                        }
-                    }).catch(() => {});
-                }
-
-                // --- ENVIA E-MAIL PERSONALIZADO YELO ---
-                // [OTIMIZAÇÃO] Não espera o envio de e-mail (evita Timeout do Webhook)
-                emailService.sendPaymentConfirmationEmail(psi, planType, payment.value)
-                    .catch(err => console.error("Erro ao enviar email de confirmação (background):", err.message));
-            }
-        } catch (err) {
-            console.error('Erro ao atualizar banco:', err);
-            // [CORREÇÃO] Log seguro: Se o banco estiver fora, não quebra o webhook com erro 500
-            if (db.SystemLog) {
-                db.SystemLog.create({ level: 'error', message: `Falha webhook Asaas (Psi ${psychologistId}): ${err.message}` }).catch(() => {});
-            }
-            return res.json({received: true}); 
-        }
-    }
-    
-    // --- LÓGICA DE ESTORNO / CANCELAMENTO IMEDIATO ---
-    // Captura eventos de reembolso ou chargeback para revogar o acesso
-    // ADICIONADO: Verifica também PAYMENT_UPDATED com status REFUNDED
-    if (['PAYMENT_REFUNDED', 'PAYMENT_REVERSED', 'PAYMENT_CHARGEBACK_REQUESTED', 'PAYMENT_DELETED', 'PAYMENT_REFUND_IN_PROGRESS'].includes(event.event) || 
-       (event.event === 'PAYMENT_UPDATED' && event.payment && ['REFUNDED', 'REFUND_IN_PROGRESS'].includes(event.payment.status))) {
-        const payment = event.payment;
-        let psychologistId = payment.externalReference;
-
-        console.log(`🛑 [ASAAS] Estorno/Cancelamento detectado! Evento: ${event.event}, Status: ${payment.status}, Ref: ${psychologistId}`);
-
-        try {
-            let psi = null;
-
-            // 1. Tenta buscar pelo ID direto (externalReference)
-            if (psychologistId) {
-                psi = await db.Psychologist.findByPk(psychologistId);
-            }
-
-            // 2. Fallback: Se não achou (ou não veio ref), tenta pelo ID da assinatura
-            if (!psi && payment.subscription) {
-                console.log(`🔍 [ASAAS] Buscando psicólogo pela assinatura: ${payment.subscription}`);
-                psi = await db.Psychologist.findOne({ where: { stripeSubscriptionId: payment.subscription } });
-            }
-
-            if (psi) {
-                // Revoga o acesso imediatamente e força status inactive
-                await psi.update({
-                    status: 'inactive', // Define como inativo para bloquear acesso
-                    plano: null,       // Remove o plano
-                    planExpiresAt: new Date(0), // Expira imediatamente (define data no passado)
-                    cancelAtPeriodEnd: false
-                });
-                console.log(`✅ [ASAAS] Acesso revogado para Psi ${psi.id} (${psi.email}) devido a estorno.`);
-                
-                // --- ENVIA E-MAIL DE CANCELAMENTO ---
-                // [OTIMIZAÇÃO] Background
-                emailService.sendSubscriptionCancelledEmail(psi).catch(e => console.error("Erro email cancelamento:", e));
-            } else {
-                console.warn(`⚠️ [ASAAS] FALHA NO ESTORNO: Psicólogo não encontrado. Ref: ${psychologistId}, Sub: ${payment.subscription}`);
-            }
-        } catch (err) {
-            console.error('❌ [ASAAS] Erro ao processar estorno no banco:', err);
-        }
-    }
-
-    // --- LÓGICA DE FALHA NO PAGAMENTO (NOVO) ---
-    if (['PAYMENT_OVERDUE', 'PAYMENT_CREDIT_CARD_CAPTURE_REFUSED', 'PAYMENT_REPROVED_BY_RISK_ANALYSIS'].includes(event.event)) {
-        const payment = event.payment;
-        let psychologistId = payment.externalReference;
-        console.log(`[ASAAS] Falha de Pagamento (${event.event}). Ref: ${psychologistId}`);
-
-        try {
-            let psi = null;
-            if (psychologistId) {
-                psi = await db.Psychologist.findByPk(psychologistId);
-            }
-            if (!psi && payment.subscription) {
-                psi = await db.Psychologist.findOne({ where: { stripeSubscriptionId: payment.subscription } });
-            }
-
-            if (psi) {
-                // REVOGAÇÃO IMEDIATA DO ACESSO POR INADIMPLÊNCIA
-                await psi.update({
-                    status: 'inactive',
-                    planExpiresAt: new Date(0) // Joga a validade para o passado (1970)
-                });
-                console.log(`🚫 [ASAAS] Acesso bloqueado para Psi ${psi.email} por inadimplência (${event.event}).`);
-
-                // Envia e-mail de falha
-                // O Asaas geralmente manda invoiceUrl no objeto payment
-                // [OTIMIZAÇÃO] Background
-                emailService.sendPaymentFailedEmail(psi, payment.invoiceUrl).catch(e => console.error("Erro email falha:", e));
-            }
-        } catch (err) {
-            console.error('Erro ao processar falha de pagamento:', err);
-        }
-    }
-
-    res.json({received: true});
 };

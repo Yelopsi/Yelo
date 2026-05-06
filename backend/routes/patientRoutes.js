@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const patientController = require('../controllers/patientController');
-const { protect, admin } = require('../middleware/authMiddleware'); // Importa o Middleware e Admin
-const { uploadProfilePhoto } = require('../middleware/upload'); // Importa o multer configurado
+const { protect, admin } = require('../middlewares/authMiddleware'); // Importa o Middleware e Admin
+const { uploadProfilePhoto } = require('../middlewares/upload'); // Importa o multer configurado
 const db = require('../models'); // Necessário para as queries diretas de favoritos
 
 // Rota de Registro: /api/patients/register (Acesso Público)

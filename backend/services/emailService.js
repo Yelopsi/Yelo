@@ -1,8 +1,6 @@
 // backend/services/emailService.js
 const db = require('../models');
 const nodemailer = require('nodemailer');
-const fs = require('fs').promises;
-const path = require('path');
 
 // Mapeamento de variáveis (Suporta tanto EMAIL_ quanto SMTP_)
 const host = process.env.EMAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com';
@@ -10,19 +8,15 @@ const port = process.env.EMAIL_PORT || process.env.SMTP_PORT || 587;
 const user = process.env.EMAIL_USER || process.env.SMTP_USER;
 const pass = process.env.EMAIL_PASS || process.env.SMTP_PASS;
 
-// --- DIAGNÓSTICO: Verifica se as variáveis existem ---
 if (!user || !pass) {
     console.error("⚠️ [EMAIL] ATENÇÃO: Credenciais de e-mail (SMTP_USER/PASS) não estão definidas no .env");
 }
 
-// Configuração do Transporter (Use suas credenciais reais aqui)
-// Se usar Gmail, precisa de "Senha de App". Se usar Resend/SendGrid, use as credenciais SMTP deles.
 const transporter = nodemailer.createTransport({
     host: host,
     port: port,
     secure: parseInt(port) === 465, // true para 465, false para outras portas
     auth: {
-        // Usa string vazia como fallback para evitar o erro "Missing credentials for PLAIN"
         user: user || '',
         pass: pass || ''
     },
@@ -30,36 +24,46 @@ const transporter = nodemailer.createTransport({
     logger: process.env.NODE_ENV !== 'production' // Desativa em produção
 });
 
-const templateCache = {};
-
-/**
- * Lê e renderiza um template HTML substituindo as tags.
- */
-async function renderTemplate(templateName, variables) {
-    if (!templateCache[templateName] || process.env.NODE_ENV !== 'production') {
-        // Como os arquivos HTML foram salvos na mesma pasta deste serviço (backend/services)
-        const filePath = path.join(__dirname, `${templateName}.html`);
-        try {
-            templateCache[templateName] = await fs.readFile(filePath, 'utf-8');
-        } catch (error) {
-            console.error(`[EMAIL] Erro ao ler template ${templateName}:`, error);
-            return `<p>Aviso da plataforma Yelo</p>`;
-        }
-    }
-
-    let html = templateCache[templateName];
-    for (const [key, value] of Object.entries(variables)) {
-        const regex = new RegExp(`{{${key}}}`, 'g');
-        html = html.replace(regex, value || '');
-    }
-    return html;
-};
+// ============================================================================
+// O SEGREDO: TEMPLATE BASE ÚNICO (Evita a necessidade de arquivos .html)
+// ============================================================================
+const getBaseTemplate = (title, content) => `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f8f9fa; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .header { background-color: #1B4332; padding: 30px 20px; text-align: center; }
+        .header img { max-width: 150px; }
+        .content { padding: 40px 30px; color: #333333; line-height: 1.6; font-size: 16px; }
+        .footer { background-color: #f1f1f1; padding: 20px; text-align: center; color: #777777; font-size: 12px; }
+        .btn { display: inline-block; padding: 14px 28px; background-color: #1B4332; color: #ffffff !important; text-decoration: none; border-radius: 50px; font-weight: bold; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/assets/logos/logo-clara.png" alt="Yelo">
+        </div>
+        <div class="content">
+            <h2 style="color: #1B4332; margin-top: 0;">${title}</h2>
+            ${content}
+        </div>
+        <div class="footer">
+            <p>Você está recebendo este e-mail porque está cadastrado na Yelo.</p>
+            <p>© ${new Date().getFullYear()} Yelo - Apoio Psicológico. Todos os direitos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
 
 // Função genérica de envio
 const sendEmail = async (to, subject, html) => {
     try {
         await transporter.sendMail({
-            // Usa variável de ambiente ou fallback, garantindo que o remetente bata com a autenticação se necessário
             from: process.env.EMAIL_FROM || '"Yelo Saúde Mental" <nao-responda@yelopsi.com.br>', 
             to,
             subject,
@@ -68,8 +72,6 @@ const sendEmail = async (to, subject, html) => {
         console.log(`📧 E-mail enviado para ${to}: ${subject}`);
     } catch (error) {
         console.error(`❌ Erro ao enviar e-mail para ${to}:`, error.message);
-        
-        // Loga o erro no banco para o KPI do Dashboard
         try {
             if (db.SystemLog) {
                 await db.SystemLog.create({
@@ -80,128 +82,145 @@ const sendEmail = async (to, subject, html) => {
             }
         } catch (e) { console.error("Falha ao salvar log de email:", e.message); }
 
-        throw error; // Relança para que o controller saiba que falhou
+        throw error;
     }
 };
 
-// Exporta a função genérica para poder ser usada na nova rota de suporte
 exports.sendEmail = sendEmail;
 
-// --- FUNÇÕES DE NOTIFICAÇÃO (Mapeadas do Asaas) ---
-
 exports.sendBillCreatedEmail = async (user, payment) => {
-    const html = await renderTemplate('fatura_gerada', {
-        nome: user.nome,
-        valor: parseFloat(payment.value).toFixed(2).replace('.', ','),
-        vencimento: payment.dueDate.split('-').reverse().join('/'),
-        linkAcao: payment.invoiceUrl
-    });
-    await sendEmail(user.email, 'Nova Fatura Disponível - Yelo', html);
+    const valor = parseFloat(payment.value).toFixed(2).replace('.', ',');
+    const vencimento = payment.dueDate.split('-').reverse().join('/');
+    const title = 'Nova Fatura Disponível';
+    const content = `
+        <p>Olá, <strong>${user.nome}</strong>!</p>
+        <p>Uma nova fatura no valor de <strong>R$ ${valor}</strong> foi gerada e o vencimento é dia <strong>${vencimento}</strong>.</p>
+        <center><a href="${payment.invoiceUrl}" class="btn">Visualizar Fatura</a></center>
+    `;
+    await sendEmail(user.email, 'Nova Fatura Disponível - Yelo', getBaseTemplate(title, content));
 };
 
 exports.sendDueDateWarningEmail = async (user, payment) => {
-    const html = await renderTemplate('vencimento_proximo', {
-        nome: user.nome,
-        valor: parseFloat(payment.value).toFixed(2).replace('.', ','),
-        vencimento: payment.dueDate.split('-').reverse().join('/'),
-        linkAcao: payment.invoiceUrl
-    });
-    await sendEmail(user.email, 'Lembrete: Sua fatura vence em breve', html);
+    const valor = parseFloat(payment.value).toFixed(2).replace('.', ',');
+    const vencimento = payment.dueDate.split('-').reverse().join('/');
+    const title = 'Sua fatura vence em breve';
+    const content = `
+        <p>Olá, <strong>${user.nome}</strong>!</p>
+        <p>Apenas um lembrete de que sua fatura de <strong>R$ ${valor}</strong> vence no dia <strong>${vencimento}</strong>.</p>
+        <center><a href="${payment.invoiceUrl}" class="btn">Pagar Fatura</a></center>
+    `;
+    await sendEmail(user.email, 'Lembrete: Sua fatura vence em breve', getBaseTemplate(title, content));
 };
 
 exports.sendDigitableLineEmail = async (user, payment) => {
     const linha = payment.nossoNumero || "Acesse sua fatura para ver o código copia e cola"; 
-    const html = await renderTemplate('linha_digitavel', {
-        nome: user.nome,
-        valor: parseFloat(payment.value).toFixed(2).replace('.', ','),
-        linhaDigitavel: linha,
-        linkAcao: payment.invoiceUrl
-    });
-    await sendEmail(user.email, 'Sua fatura vence hoje - Yelo', html);
+    const valor = parseFloat(payment.value).toFixed(2).replace('.', ',');
+    const title = 'Sua fatura vence hoje';
+    const content = `
+        <p>Olá, <strong>${user.nome}</strong>.</p>
+        <p>Sua fatura no valor de <strong>R$ ${valor}</strong> vence hoje. Para facilitar, aqui está o código copia e cola:</p>
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 14px; margin: 15px 0; word-break: break-all; text-align: center; border: 1px dashed #ccc;">
+            <strong>${linha}</strong>
+        </div>
+        <center><a href="${payment.invoiceUrl}" class="btn">Visualizar Fatura</a></center>
+    `;
+    await sendEmail(user.email, 'Sua fatura vence hoje - Yelo', getBaseTemplate(title, content));
 };
 
 exports.sendOverdueEmail = async (user, payment) => {
-    // Usando o modelo de falha de pagamento para fatura atrasada também
-    const html = await renderTemplate('falha_pagamento', {
-        nome: user.nome,
-        linkAcao: payment.invoiceUrl
-    });
-    await sendEmail(user.email, 'Aviso de Fatura em Aberto', html);
+    const title = 'Aviso de Fatura em Aberto';
+    const content = `
+        <p>Olá, <strong>${user.nome}</strong>.</p>
+        <p>Não identificamos o pagamento da sua última fatura. Para evitar a suspensão do seu perfil nas buscas da plataforma, regularize sua situação o quanto antes.</p>
+        <center><a href="${payment.invoiceUrl}" class="btn">Regularizar Pagamento</a></center>
+    `;
+    await sendEmail(user.email, 'Aviso de Fatura em Aberto - Yelo', getBaseTemplate(title, content));
 };
 
 exports.sendBillUpdatedEmail = async (user, payment) => {
-    // Reutilizando fatura_gerada para atualização
-    const html = await renderTemplate('fatura_gerada', {
-        nome: user.nome,
-        valor: parseFloat(payment.value).toFixed(2).replace('.', ','),
-        vencimento: payment.dueDate.split('-').reverse().join('/'),
-        linkAcao: payment.invoiceUrl
-    });
-    await sendEmail(user.email, 'Atualização na sua Fatura', html);
+    const valor = parseFloat(payment.value).toFixed(2).replace('.', ',');
+    const title = 'Atualização na sua Fatura';
+    const content = `
+        <p>Sua fatura foi atualizada para o valor de <strong>R$ ${valor}</strong>.</p>
+        <center><a href="${payment.invoiceUrl}" class="btn">Visualizar Alterações</a></center>
+    `;
+    await sendEmail(user.email, 'Atualização na sua Fatura - Yelo', getBaseTemplate(title, content));
 };
 
 exports.sendInvitationEmail = async (candidate, invitationLink) => {
-    const html = await renderTemplate('convite_lista_espera', {
-        nome: candidate.nome || 'Profissional',
-        linkAcao: invitationLink
-    });
-    await sendEmail(candidate.email, 'Seu convite para a Yelo chegou!', html);
+    const title = 'Seu convite chegou! 🎉';
+    const content = `
+        <p>Olá, <strong>${candidate.nome || 'Profissional'}</strong>!</p>
+        <p>Uma vaga foi liberada para você na plataforma Yelo. Clique no botão abaixo para concluir o seu cadastro e preparar seu consultório.</p>
+        <center><a href="${invitationLink}" class="btn">Concluir Cadastro</a></center>
+    `;
+    await sendEmail(candidate.email, 'Seu convite para a Yelo chegou!', getBaseTemplate(title, content));
 };
 
 exports.sendPaymentConfirmationEmail = async (user, planType, value) => {
-    const html = await renderTemplate('pagamento_confirmado', {
-        nome: user.nome,
-        plano: planType || 'Ecossistema Yelo',
-        valor: parseFloat(value).toFixed(2).replace('.', ','),
-        linkAcao: (process.env.FRONTEND_URL || 'https://www.yelopsi.com.br') + '/login'
-    });
-    await sendEmail(user.email, 'Pagamento Confirmado - Yelo', html);
+    const valor = parseFloat(value).toFixed(2).replace('.', ',');
+    const plano = planType || 'Ecossistema Yelo';
+    const title = 'Pagamento Confirmado! ✅';
+    const content = `
+        <p>Olá, <strong>${user.nome}</strong>!</p>
+        <p>Seu pagamento de <strong>R$ ${valor}</strong> referente ao plano <strong>${plano}</strong> foi confirmado com sucesso.</p>
+        <p>Seu perfil já está ativo e visível nas buscas de pacientes da Yelo.</p>
+        <center><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" class="btn">Acessar Meu Painel</a></center>
+    `;
+    await sendEmail(user.email, 'Pagamento Confirmado - Yelo', getBaseTemplate(title, content));
 };
 
 exports.sendPaymentFailedEmail = async (user, invoiceUrl) => {
-    const html = await renderTemplate('falha_pagamento', {
-        nome: user.nome,
-        linkAcao: invoiceUrl || ((process.env.FRONTEND_URL || 'https://www.yelopsi.com.br') + '/login')
-    });
-    await sendEmail(user.email, 'Ação Necessária: Falha no Pagamento', html);
+    const link = invoiceUrl || ((process.env.FRONTEND_URL || 'https://www.yelopsi.com.br') + '/login');
+    const title = 'Ação Necessária: Falha no Pagamento';
+    const content = `
+        <p>Olá, <strong>${user.nome}</strong>.</p>
+        <p>Infelizmente, houve uma falha ao processar o pagamento da sua assinatura. O seu perfil foi temporariamente pausado.</p>
+        <p>Por favor, acesse o link abaixo para atualizar sua forma de pagamento ou tentar novamente.</p>
+        <center><a href="${link}" class="btn">Tentar Novamente</a></center>
+    `;
+    await sendEmail(user.email, 'Ação Necessária: Falha no Pagamento', getBaseTemplate(title, content));
 };
 
 exports.sendSubscriptionCancelledEmail = async (user) => {
-    const html = await renderTemplate('remarketing', {
-        titulo: 'Assinatura Cancelada 😢',
-        nome: user.nome,
-        mensagem: 'Sua assinatura foi cancelada com sucesso e seu perfil não aparecerá mais nas buscas. Se quiser voltar a expandir seus atendimentos, estamos de portas abertas.',
-        linkAcao: (process.env.FRONTEND_URL || 'https://www.yelopsi.com.br') + '/login'
-    });
-    await sendEmail(user.email, 'Assinatura Cancelada - Yelo', html);
+    const title = 'Assinatura Cancelada 😢';
+    const content = `
+        <p>Olá, <strong>${user.nome}</strong>,</p>
+        <p>Sua assinatura foi cancelada com sucesso e seu perfil não aparecerá mais nas buscas. Se quiser voltar a expandir seus atendimentos, estamos de portas abertas.</p>
+        <center><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" class="btn">Reativar Assinatura</a></center>
+    `;
+    await sendEmail(user.email, 'Assinatura Cancelada - Yelo', getBaseTemplate(title, content));
 };
 
 exports.sendWelcomeEmail = async (user, type) => {
     if (type === 'psychologist') {
-        const html = await renderTemplate('boas_vindas_psicologo', {
-            nome: user.nome,
-            linkAcao: (process.env.FRONTEND_URL || 'https://www.yelopsi.com.br') + '/login',
-            textoBotao: 'Acessar meu Consultório'
-        });
-        await sendEmail(user.email, 'Bem-vindo(a) à Yelo Psi! 💛', html);
+        const title = 'Bem-vindo(a) à Yelo Psi! 💛';
+        const content = `
+            <p>Olá, <strong>${user.nome.split(' ')[0]}</strong>!</p>
+            <p>Estamos muito felizes em ter você conosco. Sua conta está criada. Agora, configure seu perfil completo para começar a receber pacientes na plataforma.</p>
+            <center><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" class="btn">Acessar meu Consultório</a></center>
+        `;
+        await sendEmail(user.email, title, getBaseTemplate(title, content));
     } else {
-        const html = await renderTemplate('boas_vindas_paciente', {
-            nome: user.nome,
-            linkAcao: (process.env.FRONTEND_URL || 'https://www.yelopsi.com.br') + '/questionario',
-            textoBotao: 'Encontrar meu Psicólogo'
-        });
-        await sendEmail(user.email, 'Bem-vindo(a) à Yelo! 💛', html);
+        const title = 'Bem-vindo(a) à Yelo! 💛';
+        const content = `
+            <p>Olá, <strong>${user.nome.split(' ')[0]}</strong>!</p>
+            <p>Criamos um espaço seguro e sigiloso para você. Acesse seu painel e responda ao questionário rápido para encontrarmos o psicólogo ideal para o seu momento.</p>
+            <center><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/questionario" class="btn">Encontrar meu Psicólogo</a></center>
+        `;
+        await sendEmail(user.email, title, getBaseTemplate(title, content));
     }
 };
 
 exports.sendPasswordResetEmail = async (user, resetLink) => {
-    // Como podemos enviar para psicólogos ou pacientes, podemos checar se o resetLink contém "type=psychologist"
-    const templateName = resetLink.includes('type=psychologist') ? 'recuperacao_senha_psicologo' : 'recuperacao_senha_paciente';
-    const html = await renderTemplate(templateName, {
-        nome: user.nome,
-        linkAcao: resetLink
-    });
-    await sendEmail(user.email, 'Redefinição de Senha - Yelo', html);
+    const title = 'Redefinição de Senha';
+    const content = `
+        <p>Olá, <strong>${user.nome}</strong>!</p>
+        <p>Recebemos um pedido para redefinir a sua senha na Yelo. Se não foi você, ignore este e-mail.</p>
+        <p>Para criar uma nova senha, clique no botão abaixo:</p>
+        <center><a href="${resetLink}" class="btn">Redefinir Minha Senha</a></center>
+    `;
+    await sendEmail(user.email, 'Redefinição de Senha - Yelo', getBaseTemplate(title, content));
 };
 
 exports.sendRemarketingEmail = async (user, step) => {
@@ -222,31 +241,31 @@ exports.sendRemarketingEmail = async (user, step) => {
         msg = `Notamos que o seu perfil atraiu interessados e você recebeu cliques no seu WhatsApp recentemente! Como seu período de teste terminou e sua assinatura está inativa, sua agenda pública foi bloqueada e os pacientes não conseguem mais entrar em contato. Ative sua assinatura Premium agora para desbloquear seu WhatsApp e voltar a receber novos pacientes sem limites.`;
     }
 
-    const html = await renderTemplate('remarketing', {
-        titulo: titulo,
-        nome: user.nome,
-        mensagem: msg,
-        linkAcao: (process.env.FRONTEND_URL || 'https://www.yelopsi.com.br') + '/login'
-    });
-    await sendEmail(user.email, titulo, html);
+    const content = `
+        <p>Olá, <strong>${user.nome.split(' ')[0]}</strong>!</p>
+        <p>${msg}</p>
+        <center><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" class="btn">Acessar Plataforma</a></center>
+    `;
+    await sendEmail(user.email, titulo, getBaseTemplate(titulo, content));
 };
 
 exports.sendFirstLeadEmail = async (user) => {
-    const html = await renderTemplate('remarketing', {
-        titulo: '🎉 Você recebeu seu primeiro contato!',
-        nome: user.nome,
-        mensagem: 'Ótimas notícias! Um paciente acabou de clicar no botão de WhatsApp no seu perfil da Yelo. Isso significa que sua apresentação está atraindo interessados. Acesse sua conta agora para acompanhar seus acessos e aproveitar ao máximo a plataforma.',
-        linkAcao: (process.env.FRONTEND_URL || 'https://www.yelopsi.com.br') + '/login'
-    });
-    await sendEmail(user.email, 'Você recebeu um novo contato! 🎉', html);
+    const title = '🎉 Você recebeu seu primeiro contato!';
+    const content = `
+        <p>Ótimas notícias, <strong>${user.nome.split(' ')[0]}</strong>!</p>
+        <p>Um paciente acabou de clicar no botão de WhatsApp no seu perfil da Yelo. Isso significa que sua apresentação está atraindo interessados. Acesse sua conta agora para acompanhar seus acessos e aproveitar ao máximo a plataforma.</p>
+        <center><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" class="btn">Acessar meu Painel</a></center>
+    `;
+    await sendEmail(user.email, title, getBaseTemplate(title, content));
 };
 
 exports.sendLimitReachedEmail = async (user, maxClicks) => {
-    const html = await renderTemplate('remarketing', {
-        titulo: '⚠️ Seu limite de contatos gratuitos foi atingido!',
-        nome: user.nome,
-        mensagem: `Incrível! Você acabou de receber seu ${maxClicks}º contato através da Yelo. Isso mostra que seu perfil atrai muito interesse. Como seu limite de contatos gratuitos do período de teste foi atingido, seu botão de WhatsApp ficará indisponível para novos pacientes a partir de agora. Assine o plano Premium para desbloquear seu perfil e continuar recebendo pacientes!`,
-        linkAcao: (process.env.FRONTEND_URL || 'https://www.yelopsi.com.br') + '/login'
-    });
-    await sendEmail(user.email, 'Seu limite de contatos gratuitos foi atingido! 🚀', html);
+    const title = '⚠️ Seu limite de contatos gratuitos foi atingido!';
+    const content = `
+        <p>Incrível, <strong>${user.nome.split(' ')[0]}</strong>!</p>
+        <p>Você acabou de receber seu <strong>${maxClicks}º contato</strong> através da Yelo. Isso mostra que seu perfil atrai muito interesse.</p>
+        <p>Como seu limite de contatos gratuitos do período de teste foi atingido, seu botão de WhatsApp ficará indisponível para novos pacientes a partir de agora. Assine o plano Premium para desbloquear seu perfil e continuar recebendo pacientes!</p>
+        <center><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" class="btn">Desbloquear meu Perfil</a></center>
+    `;
+    await sendEmail(user.email, 'Seu limite de contatos gratuitos foi atingido! 🚀', getBaseTemplate(title, content));
 };

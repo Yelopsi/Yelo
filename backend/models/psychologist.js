@@ -49,6 +49,13 @@ module.exports = (sequelize, DataTypes) => {
               foreignKey: 'PsychologistId'
           });
       }
+      // Associação com Agendamentos
+      if (models.Appointment) {
+          this.hasMany(models.Appointment, {
+              foreignKey: 'psychologistId',
+              as: 'appointments'
+          });
+      }
       // ------------------------------------
     }
   }
@@ -106,6 +113,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true, // Aceita nulo (pois pode ser PF)
       unique: true
     },
+    razao_social: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     bio: {
       type: DataTypes.TEXT, // Usar TEXT para biografias mais longas
       allowNull: true
@@ -120,7 +131,7 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: false,
       allowNull: false
     },
-    // --- STATUS VIP / ISENTO ---
+    // --- STATUS VIP // ISENTO ---
     is_exempt: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
@@ -156,6 +167,27 @@ module.exports = (sequelize, DataTypes) => {
     // (Os campos 'abordagem', 'especialidades', 'cidade', 'online' foram removidos)
     valor_sessao_numero: {
       type: DataTypes.FLOAT,
+      allowNull: true
+    },
+    tipo_cobranca: {
+      type: DataTypes.STRING,
+      defaultValue: 'sessao',
+      allowNull: true
+    },
+    valor_mensal_numero: {
+      type: DataTypes.FLOAT,
+      allowNull: true
+    },
+    ano_inicio_experiencia: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    formacao_nivel: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    formacao_desc: {
+      type: DataTypes.TEXT,
       allowNull: true
     },
     temas_atuacao: {
@@ -295,6 +327,8 @@ module.exports = (sequelize, DataTypes) => {
     paranoid: true, // <--- ISSO É O SEGREDO! Ativa o soft delete (deletedAt)
     timestamps: true, // Garante que createdAt e updatedAt existam
     indexes: [
+        { name: 'idx_psychologists_slug', fields: ['slug'] },
+        { name: 'idx_psychologists_email', fields: ['email'] },
         { name: 'idx_psychologists_status_plano', fields: ['status', 'plano'] },
         { name: 'idx_psychologists_status_created_at', fields: ['status', 'createdAt'] }
     ]

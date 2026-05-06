@@ -175,6 +175,7 @@ function renderTimeline(data) {
                 desc = `Nota: ${e.data.rating || e.data.nota}`; colorClass = 'evt-review';
                 break;
             case 'match':
+            {
                 icon = '🎯'; title = 'Apareceu em Busca (Match)'; 
                 let tags = 'N/A';
                 if (e.data.matchTags) {
@@ -183,6 +184,7 @@ function renderTimeline(data) {
                 }
                 desc = `Tags: ${tags}`; colorClass = 'evt-match';
                 break;
+            }
         }
 
         return `
@@ -215,7 +217,7 @@ function renderBlogItem(post) {
 }
 
 function renderForumItem(item) {
-    const isPost = item.hasOwnProperty('title');
+    const isPost = Object.prototype.hasOwnProperty.call(item, 'title');
     const titulo = item.title || item.postTitle || 'Fórum';
     const conteudo = item.content || item.texto || '';
     const resumo = conteudo.length > 100 ? conteudo.substring(0, 100) + '...' : conteudo;

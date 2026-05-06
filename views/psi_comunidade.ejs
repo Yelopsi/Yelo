@@ -25,15 +25,35 @@
                 <form id="qna-answer-form">
                     <div class="modal-body">
                         <textarea id="qna-answer-textarea" minlength="50" required placeholder="Sua resposta..."></textarea>
+                        <div id="qna-char-counter" style="text-align: right; font-size: 0.85rem; color: #888; margin-top: 5px;">0/50 caracteres mínimos</div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secundario modal-cancel">Cancelar</button>
-                        <button type="submit" class="btn btn-principal">Enviar</button>
+                        <button type="submit" id="btn-enviar-resposta" class="btn btn-principal" disabled>Enviar</button>
                     </div>
                 </form>
             </div>
         </div>
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const textarea = document.getElementById('qna-answer-textarea');
+            const counter = document.getElementById('qna-char-counter');
+            const btnSubmit = document.getElementById('btn-enviar-resposta');
+
+            if (textarea && counter && btnSubmit) {
+                textarea.addEventListener('input', function() {
+                    const len = this.value.length;
+                    counter.textContent = `${len}/50 caracteres mínimos`;
+                    
+                    // Habilita o botão apenas se atingir o mínimo de 50 caracteres
+                    btnSubmit.disabled = len < 50;
+                    counter.style.color = len >= 50 ? '#1B4332' : '#888';
+                });
+            }
+        });
+    </script>
 
     <%- include('partials/footer') %>
 </body>

@@ -1,0 +1,152 @@
+<div class="main-header" style="border-radius: 16px;">
+    <div class="header-content">
+        <h1 style="margin: 0; font-family: var(--font-titulos); font-size: 2.2rem; color: white;">Sua Jornada 🚀</h1>
+        <p style="margin: 5px 0 0 0; color: rgba(255,255,255,0.85); font-size: 1.1rem; max-width: 600px;">Acompanhe seu crescimento, desbloqueie conquistas e destaque-se na plataforma!</p>
+    </div>
+</div>
+
+<!-- --- INÍCIO DO WIDGET DE GAMIFICAÇÃO --- -->
+<div class="gamification-panel" style="border-radius: 24px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #f0f0f0;">
+    <div class="gami-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 45px; height: 45px; background: #e8f5e9; color: #1B4332; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;">📈</div>
+            <h3 class="gami-title" style="margin: 0; font-size: 1.4rem; color: #1B4332; border: none;">Sua Evolução</h3>
+        </div>
+        <div>
+            <span id="current-level-display" class="gami-level-badge" style="font-size: 0.95rem; padding: 8px 16px;">Iniciante</span>
+        </div>
+    </div>
+
+    <!-- Barra de Progresso de XP -->
+    <div class="xp-progress-container" style="margin-bottom: 30px;">
+        <div class="xp-bar-wrapper" style="height: 18px; border-radius: 20px;">
+            <div id="xp-bar-fill" class="xp-bar-fill" style="border-radius: 20px;"></div>
+        </div>
+        <div class="xp-labels">
+            <span id="xp-current-level-label">Nível 1</span>
+            <span id="xp-progress-text" style="color: #1B4332; font-weight: 800;">0 // 500 XP</span>
+            <span id="xp-next-level-label">Nível 2</span>
+        </div>
+    </div>
+
+    <!-- Painel de Próximo Objetivo -->
+    <div id="next-level-info" style="margin-top: 30px; background: #f0fdf4; padding: 20px 25px; border-radius: 16px; border: 1px solid #bbf7d0; color: #166534; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 15px rgba(22,101,52,0.05);">
+        <div style="font-size: 2.2rem; flex-shrink: 0;">🎯</div>
+        <div style="flex-grow: 1;">
+            <strong style="display: block; margin-bottom: 6px; font-size: 1.05rem; color: #1B4332;">Seu próximo marco:</strong>
+            <span id="next-level-text" style="font-size: 0.95rem; line-height: 1.5; color: #166534;">Calculando jornada...</span>
+        </div>
+    </div>
+
+    <div style="margin-top: 35px; border-top: 1px solid #eee; padding-top: 25px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+            <div style="width: 35px; height: 35px; background: #fff3e0; color: #f59e0b; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">⭐</div>
+            <h4 style="font-size: 1.1rem; color: #1B4332; margin: 0; font-family: var(--font-titulos);">Como ganhar XP?</h4>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; font-size: 0.9rem; color: #555;">
+            <div style="background: #fff; border: 1px solid #e9ecef; padding: 15px; border-radius: 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: transform 0.2s;"><span style="font-size: 1.5rem;">📝</span> <div><strong style="color:#333;">Completar Perfil</strong><br><span style="color:#16a34a; font-weight:700;">+500 XP</span> <span style="font-size:0.8rem; color:#888;">(Único)</span></div></div>
+            <div style="background: #fff; border: 1px solid #e9ecef; padding: 15px; border-radius: 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: transform 0.2s;"><span style="font-size: 1.5rem;">✍️</span> <div><strong style="color:#333;">Artigo no Blog</strong><br><span style="color:#16a34a; font-weight:700;">+50 XP</span> <span style="font-size:0.8rem; color:#888;">(1x/dia)</span></div></div>
+            <div style="background: #fff; border: 1px solid #e9ecef; padding: 15px; border-radius: 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: transform 0.2s;"><span style="font-size: 1.5rem;">💡</span> <div><strong style="color:#333;">Iniciar Discussão</strong><br><span style="color:#16a34a; font-weight:700;">+25 XP</span> <span style="font-size:0.8rem; color:#888;">(2x/dia)</span></div></div>
+            <div style="background: #fff; border: 1px solid #e9ecef; padding: 15px; border-radius: 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: transform 0.2s;"><span style="font-size: 1.5rem;">🗣️</span> <div><strong style="color:#333;">Comentar no Fórum</strong><br><span style="color:#16a34a; font-weight:700;">+20 XP</span> <span style="font-size:0.8rem; color:#888;">(5x/dia)</span></div></div>
+            <div style="background: #fff; border: 1px solid #e9ecef; padding: 15px; border-radius: 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: transform 0.2s;"><span style="font-size: 1.5rem;">❓</span> <div><strong style="color:#333;">Responder Pergunta</strong><br><span style="color:#16a34a; font-weight:700;">+15 XP</span> <span style="font-size:0.8rem; color:#888;">(5x/dia)</span></div></div>
+            <div style="background: #fff; border: 1px solid #e9ecef; padding: 15px; border-radius: 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: transform 0.2s;"><span style="font-size: 1.5rem;">📲</span> <div><strong style="color:#333;">Clique WhatsApp</strong><br><span style="color:#16a34a; font-weight:700;">+10 XP</span></div></div>
+            <div style="background: #fff; border: 1px solid #e9ecef; padding: 15px; border-radius: 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: transform 0.2s;"><span style="font-size: 1.5rem;">❤️</span> <div><strong style="color:#333;">Receber Like</strong><br><span style="color:#16a34a; font-weight:700;">+5 XP</span></div></div>
+            <div style="background: #fff; border: 1px solid #e9ecef; padding: 15px; border-radius: 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: transform 0.2s;"><span style="font-size: 1.5rem;">🔑</span> <div><strong style="color:#333;">Login Diário</strong><br><span style="color:#16a34a; font-weight:700;">+1 XP</span> <span style="font-size:0.8rem; color:#888;">(1x/dia)</span></div></div>
+        </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px; margin-top: 40px; margin-bottom: 20px;">
+        <div style="width: 35px; height: 35px; background: #f3e8ff; color: #7e22ce; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">🏆</div>
+        <h4 style="font-size: 1.1rem; color: #1B4332; margin: 0; font-family: var(--font-titulos);">Conquistas</h4>
+    </div>
+    <div class="badges-grid">
+        <!-- Semeador -->
+        <div id="badge-semeador" class="badge-card locked" style="border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);" title="Escreva artigos no Blog. Bronze: 1 artigo | Prata: 5 | Ouro: 15">
+            <div class="badge-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                <div style="width: 45px; height: 45px; background: #f0fdf4; color: #16a34a; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;">🌱</div>
+                <div class="badge-info">
+                    <span class="badge-name" style="font-size: 1.1rem; color: #1B4332; font-weight: 700;">Semeador</span>
+                    <span class="badge-status" style="font-size: 0.8rem; padding: 3px 10px; background: #f1f3f5; border-radius: 12px; color: #666; margin-top: 5px; display: inline-block; font-weight: 600;">Bloqueado</span>
+                </div>
+            </div>
+            <div class="badge-progress-container">
+                <div class="badge-progress-bar-wrapper" style="border-radius: 10px; height: 8px;">
+                    <div class="badge-progress-bar" style="border-radius: 10px;"></div>
+                </div>
+                <div class="badge-progress-text" style="font-weight: 600; margin-top: 8px;">0/1</div>
+            </div>
+        </div>
+        <!-- Voz Ativa -->
+        <div id="badge-voz-ativa" class="badge-card locked" style="border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);" title="Participe de discussões no Fórum (posts ou comentários). Bronze: 10 atividades | Prata: 50 | Ouro: 200">
+            <div class="badge-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                <div style="width: 45px; height: 45px; background: #e0f2fe; color: #0284c7; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;">💬</div>
+                <div class="badge-info">
+                    <span class="badge-name" style="font-size: 1.1rem; color: #1B4332; font-weight: 700;">Voz Ativa</span>
+                    <span class="badge-status" style="font-size: 0.8rem; padding: 3px 10px; background: #f1f3f5; border-radius: 12px; color: #666; margin-top: 5px; display: inline-block; font-weight: 600;">Bloqueado</span>
+                </div>
+            </div>
+            <div class="badge-progress-container">
+                <div class="badge-progress-bar-wrapper" style="border-radius: 10px; height: 8px;">
+                    <div class="badge-progress-bar" style="border-radius: 10px;"></div>
+                </div>
+                <div class="badge-progress-text" style="font-weight: 600; margin-top: 8px;">0/10</div>
+            </div>
+        </div>
+        <!-- Conselheiro (NOVO) -->
+        <div id="badge-conselheiro" class="badge-card locked" style="border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);" title="Responda perguntas na Comunidade. Bronze: 10 respostas | Prata: 50 | Ouro: 150">
+            <div class="badge-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                <div style="width: 45px; height: 45px; background: #fef3c7; color: #d97706; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;">💡</div>
+                <div class="badge-info">
+                    <span class="badge-name" style="font-size: 1.1rem; color: #1B4332; font-weight: 700;">Conselheiro</span>
+                    <span class="badge-status" style="font-size: 0.8rem; padding: 3px 10px; background: #f1f3f5; border-radius: 12px; color: #666; margin-top: 5px; display: inline-block; font-weight: 600;">Bloqueado</span>
+                </div>
+            </div>
+            <div class="badge-progress-container">
+                <div class="badge-progress-bar-wrapper" style="border-radius: 10px; height: 8px;">
+                    <div class="badge-progress-bar" style="border-radius: 10px;"></div>
+                </div>
+                <div class="badge-progress-text" style="font-weight: 600; margin-top: 8px;">0/10</div>
+            </div>
+        </div>
+        <!-- Autêntico -->
+        <div id="badge-autentico" class="badge-card locked" style="border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);" title="Preencha todos os campos obrigatórios do seu perfil.">
+            <div class="badge-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                <div style="width: 45px; height: 45px; background: #fce7f3; color: #db2777; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;">🛡️</div>
+                <div class="badge-info">
+                    <span class="badge-name" style="font-size: 1.1rem; color: #1B4332; font-weight: 700;">Autêntico</span>
+                    <span class="badge-status" style="font-size: 0.8rem; padding: 3px 10px; background: #f1f3f5; border-radius: 12px; color: #666; margin-top: 5px; display: inline-block; font-weight: 600;">Bloqueado</span>
+                </div>
+            </div>
+            <div class="badge-progress-container">
+                <div class="badge-progress-bar-wrapper" style="border-radius: 10px; height: 8px;">
+                    <div class="badge-progress-bar" style="border-radius: 10px;"></div>
+                </div>
+                <div class="badge-progress-text" style="font-weight: 600; margin-top: 8px;">0/1</div>
+            </div>
+        </div>
+        <!-- Pioneiro -->
+        <div id="badge-pioneiro" class="badge-card locked" style="border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);" title="Cadastre-se durante a fase de lançamento da plataforma.">
+            <div class="badge-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                <div style="width: 45px; height: 45px; background: #e0e7ff; color: #4f46e5; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;">🏅</div>
+                <div class="badge-info">
+                    <span class="badge-name" style="font-size: 1.1rem; color: #1B4332; font-weight: 700;">Pioneiro</span>
+                    <span class="badge-status" style="font-size: 0.8rem; padding: 3px 10px; background: #f1f3f5; border-radius: 12px; color: #666; margin-top: 5px; display: inline-block; font-weight: 600;">Legado</span>
+                </div>
+            </div>
+            <div class="badge-progress-container">
+                <div class="badge-progress-bar-wrapper" style="border-radius: 10px; height: 8px;">
+                    <div class="badge-progress-bar" style="border-radius: 10px;"></div>
+                </div>
+                <div class="badge-progress-text" style="font-weight: 600; margin-top: 8px;">0/1</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SCRIPT DE GAMIFICAÇÃO (AGORA EM ARQUIVO SEPARADO) -->
+<script src="/psi/psi_jornada.js"></script>
+<script>
+    if (typeof window.inicializarPaginaJornada === 'function') {
+        window.inicializarPaginaJornada();
+    }
+</script>

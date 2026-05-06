@@ -248,6 +248,15 @@
             font-family: var(--font-principal);
         }
 
+        /* --- ESTILOS RESPONSIVOS PARA IMAGENS MOBILE --- */
+        .step-img-frame img {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            display: block;
+            object-fit: contain;
+        }
+
         @media (max-width: 600px) {
             .rating-badge {
                 flex-wrap: wrap;
@@ -460,10 +469,10 @@
                     ];
                     const fraseAleatoria = frases[Math.floor(Math.random() * frases.length)];
                 %>
-                <h1>Você merece <%= fraseAleatoria %></h1>
+                <h1 style="font-weight: 800;">Você merece <%= fraseAleatoria %></h1>
                 <p>Encontrar a pessoa certa para te acompanhar nessa jornada é o primeiro passo.</p>
             </div>
-            <a href="/questionario.html" class="btn-cta-principal">Começar</a>
+            <a href="/questionario" class="btn-cta-principal">Começar</a>
             <div class="wave-divider">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
                     <path fill="#ffffff" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
@@ -541,7 +550,7 @@
                     </div>
 
                     <div style="margin-top: 40px;">
-                        <a href="/questionario.html" class="btn-cta-principal">Encontrar meu terapeuta</a>
+                        <a href="/questionario" class="btn-cta-principal">Encontrar meu terapeuta</a>
                     </div>
                 </div>
 
@@ -574,7 +583,7 @@
             </div>
             <div class="wave-divider">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
-                    <path fill="#fdfaf6" fill-opacity="1" d="M0,64L48,80C96,96,192,128,288,128C384,128,480,96,576,90.7C672,85,768,107,864,122.7C960,139,1056,149,1152,133.3C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                    <path fill="#ffffff" fill-opacity="1" d="M0,64L48,80C96,96,192,128,288,128C384,128,480,96,576,90.7C672,85,768,107,864,122.7C960,139,1056,149,1152,133.3C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
                 </svg>
             </div>
         </section>
@@ -640,12 +649,12 @@
                 </div>
             <div class="container">
                 <div style="margin-top: 40px; margin-bottom: 60px; text-align: center; position: relative; z-index: 2;">
-                    <a href="/questionario.html" class="btn-cta-principal">Quero começar agora</a>
+                    <a href="/questionario" class="btn-cta-principal">Quero começar agora</a>
                 </div>
             </div>
             <div class="wave-divider">
-                <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-                    <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z" class="shape-fill" style="fill:#ffffff;"></path>
+                <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" style="display: block; width: 100%; height: auto;">
+                    <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z" class="shape-fill" style="fill:#fdfaf6;"></path>
                 </svg>
             </div>
         </section>
@@ -716,7 +725,7 @@
                 </div>
             </div>
             <div style="text-align: center; margin-top: 40px;">
-                <a href="/faq.html" class="faq-ver-mais">Ver todas as perguntas frequentes</a>
+                <a href="/faq" class="faq-ver-mais">Ver todas as perguntas frequentes</a>
             </div>
             <div class="wave-divider">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
@@ -1000,6 +1009,24 @@
                         }
                     } catch(trackingError) { console.warn('AdBlocker detectado', trackingError); }
                 });
+            });
+        });
+    </script>
+
+    <!-- ANIMACÃO DE SCROLL: Revelar seções ao descer a página -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visivel');
+                        observer.unobserve(entry.target); // Anima apenas na primeira vez que aparece
+                    }
+                });
+            }, { threshold: 0.1 }); // 10% da seção precisa estar visível para iniciar a animação
+
+            document.querySelectorAll('section.hidden').forEach((section) => {
+                observer.observe(section);
             });
         });
     </script>

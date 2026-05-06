@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https:///www.googletagmanager.com/gtag/js?id=AW-11236864912"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+    
+      gtag('config', 'AW-11236864912');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Roda da Vida - Autoavaliação | Yelo</title>
+    <link rel="preconnect" href="https:///fonts.googleapis.com">
+    <link rel="preconnect" href="https:///fonts.gstatic.com" crossorigin>
+    <link href="https:///fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/01-variables.css">
+    <link rel="stylesheet" href="/style.css">
+    <script src="https:///cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: var(--off-white); margin: 0; padding-top: 60px; /* Compensa o header fixo */ }
+        
+        /* Header Fixo App-like */
+        .app-tool-header {
+            position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; box-sizing: border-box !important;
+            background: var(--verde-escuro) !important; padding: 18px 20px !important; margin: 0 !important;
+            display: flex !important; justify-content: space-between !important; align-items: center !important;
+            z-index: 10000 !important; border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+        }
+        .app-tool-header a { color: rgba(255,255,255,0.7); text-decoration: none; font-weight: 600; font-size: 0.95rem; transition: color 0.2s; }
+        .app-tool-header a:hover { color: white; }
+        
+        /* Hero Section */
+        .tool-hero { background: var(--verde-escuro); color: white; padding: 40px 20px 80px 20px; text-align: center; }
+        .tool-hero h1 { font-family: var(--font-titulos); font-size: 2.2rem; margin: 0 0 10px 0; color: white; }
+        .tool-hero p { color: rgba(255,255,255,0.8); max-width: 500px; margin: 0 auto; font-size: 1rem; line-height: 1.5; }
+        
+        .layout-grid { max-width: 1000px; margin: -40px auto 100px auto; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; padding: 0 20px; position: relative; z-index: 10; }
+        @media (max-width: 768px) { .layout-grid { grid-template-columns: 1fr; } }
+
+        .card-box { background: white; border-radius: 24px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.06); border: 1px solid #f0f0f0; }
+        
+        .slider-group { margin-bottom: 25px; }
+        .slider-group label { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 8px; color: #333; }
+        .slider-group span { color: var(--verde-escuro); font-weight: 700; background: var(--cor-Yelo); padding: 2px 10px; border-radius: 12px; font-size: 0.9rem; }
+        
+        .custom-range { -webkit-appearance: none; width: 100%; height: 10px; border-radius: 5px; background: #e9ecef; outline: none; margin-top: 5px; }
+        .custom-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 26px; height: 26px; border-radius: 50%; background: var(--cor-Yelo); border: 3px solid var(--verde-escuro); cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: transform 0.1s; }
+        .custom-range::-webkit-slider-thumb:active { transform: scale(1.15); }
+
+        .chart-container { position: relative; width: 100%; height: 350px; display: flex; justify-content: center; margin-bottom: 20px; }
+        
+        .cta-banner { background: #fffbeb; border: 1px solid #fde68a; padding: 25px; border-radius: 16px; text-align: center; }
+        .cta-banner h3 { margin: 0 0 10px 0; color: #b45309; font-family: var(--font-titulos); font-size: 1.4rem; }
+        .cta-banner .btn-cta { display: block; width: 100%; box-sizing: border-box; background: var(--verde-escuro); color: white; padding: 16px; border-radius: 50px; font-weight: bold; text-decoration: none; margin-top: 15px; box-shadow: 0 4px 10px rgba(27,67,50,0.3); transition: transform 0.2s; font-size: 1.05rem; }
+        .cta-banner .btn-cta:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+    <header class="app-tool-header">
+        <a href="ferramentas.html">&larr; Voltar</a>
+        <img src="/assets/logos/logo-branca.png" alt="Logo Yelo" style="height: 26px; width: auto;">
+    </header>
+
+    <div class="tool-hero">
+        <h1>Sua Roda da Vida</h1>
+        <p>Avalie de 1 a 10 como estão as áreas da sua vida e visualize seu equilíbrio atual.</p>
+    </div>
+
+    <main class="layout-grid">
+        <!-- Coluna de Sliders -->
+        <div class="card-box">
+            <h3 style="margin: 0 0 20px 0; color: var(--verde-escuro); font-family: var(--font-titulos); font-size: 1.4rem;">Avalie seu momento</h3>
+            
+            <div class="slider-group">
+                <label>Saúde Física e Disposição <span id="val-saude">5</span></label>
+                <input type="range" id="inp-saude" min="1" max="10" value="5" class="custom-range" oninput="updateChart()">
+            </div>
+            <div class="slider-group">
+                <label>Saúde Mental e Emocional <span id="val-mental">5</span></label>
+                <input type="range" id="inp-mental" min="1" max="10" value="5" class="custom-range" oninput="updateChart()">
+            </div>
+            <div class="slider-group">
+                <label>Relacionamentos e Família <span id="val-rel">5</span></label>
+                <input type="range" id="inp-rel" min="1" max="10" value="5" class="custom-range" oninput="updateChart()">
+            </div>
+            <div class="slider-group">
+                <label>Carreira e Estudos <span id="val-carreira">5</span></label>
+                <input type="range" id="inp-carreira" min="1" max="10" value="5" class="custom-range" oninput="updateChart()">
+            </div>
+            <div class="slider-group">
+                <label>Finanças <span id="val-financas">5</span></label>
+                <input type="range" id="inp-financas" min="1" max="10" value="5" class="custom-range" oninput="updateChart()">
+            </div>
+            <div class="slider-group">
+                <label>Lazer e Hobbies <span id="val-lazer">5</span></label>
+                <input type="range" id="inp-lazer" min="1" max="10" value="5" class="custom-range" oninput="updateChart()">
+            </div>
+        </div>
+
+        <!-- Coluna do Gráfico e Resultado -->
+        <div>
+            <div class="card-box" style="margin-bottom: 20px;">
+                <div class="chart-container">
+                    <canvas id="rodaChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Caixa de Resumo Dinâmico -->
+            <div id="summary-box" style="background: #ffffff; border-radius: 16px; padding: 20px; margin-bottom: 20px; text-align: left; border-left: 4px solid var(--cor-Yelo); box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+                <h4 style="margin: 0 0 10px 0; color: var(--verde-escuro); font-family: var(--font-titulos); font-size: 1.5rem;">Análise do seu momento</h4>
+                <p id="summary-text" style="margin: 0; color: #555; font-size: 0.7rem; line-height: 1.5;"></p>
+            </div>
+
+            <div class="cta-banner">
+                <h3>Precisa de mais equilíbrio?</h3>
+                <p style="color: #92400e; margin: 0; font-size: 0.95rem;">A terapia é o melhor caminho para entender e equilibrar as áreas que estão puxando sua nota para baixo.</p>
+                <a href="questionario.html" class="btn-cta">Encontrar meu Psicólogo</a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const ctx = document.getElementById('rodaChart').getContext('2d');
+        let radarChart;
+
+        function updateChart() {
+            const saude = parseInt(document.getElementById('inp-saude').value);
+            const mental = parseInt(document.getElementById('inp-mental').value);
+            const rel = parseInt(document.getElementById('inp-rel').value);
+            const carreira = parseInt(document.getElementById('inp-carreira').value);
+            const financas = parseInt(document.getElementById('inp-financas').value);
+            const lazer = parseInt(document.getElementById('inp-lazer').value);
+
+            document.getElementById('val-saude').innerText = saude;
+            document.getElementById('val-mental').innerText = mental;
+            document.getElementById('val-rel').innerText = rel;
+            document.getElementById('val-carreira').innerText = carreira;
+            document.getElementById('val-financas').innerText = financas;
+            document.getElementById('val-lazer').innerText = lazer;
+
+            const dataValues = [saude, mental, rel, carreira, financas, lazer];
+            const labels = ['Saúde Física', 'Saúde Mental', 'Relacionamentos', 'Carreira', 'Finanças', 'Lazer'];
+
+            // Lógica do Resumo Dinâmico
+            let minVal = Math.min(...dataValues);
+            let maxVal = Math.max(...dataValues);
+            let avg = dataValues.reduce((a, b) => a + b, 0) / dataValues.length;
+            
+            let minAreas = labels.filter((_, i) => dataValues[i] === minVal);
+            let maxAreas = labels.filter((_, i) => dataValues[i] === maxVal);
+
+            let summaryHtml = `Sua média geral de satisfação é <strong>${avg.toFixed(1)}</strong>. `;
+
+            if (maxVal === minVal) {
+                if (avg >= 8) summaryHtml += "Impressionante! Sua vida está em grande equilíbrio e com pontuações altas em todos os pilares avaliados.";
+                else if (avg >= 5) summaryHtml += "Você possui um equilíbrio mediano no momento. Tente identificar qual pequena ação faria todos os níveis subirem um pouco mais.";
+                else summaryHtml += "Atenção: todas as áreas refletem um grau alto de insatisfação. Este pode ser um momento crucial para buscar apoio especializado e reorganizar as prioridades.";
+            } else {
+                summaryHtml += `Você está indo muito bem em <strong>${maxAreas.join(' e ')}</strong>. `;
+                summaryHtml += `No entanto, <strong>${minAreas.join(' e ')}</strong> ${minAreas.length > 1 ? 'são as áreas que mais precisam' : 'é a área que mais precisa'} de carinho e atenção no momento.`;
+            }
+
+            if (minVal <= 4 && maxVal > minVal) {
+                summaryHtml += "<br><br><em>Dica: Muitas vezes, uma área em baixa acaba 'puxando' a energia das outras. Olhar para suas menores notas pode ser o primeiro passo para desbloquear o seu bem-estar geral.</em>";
+            }
+            
+            document.getElementById('summary-text').innerHTML = summaryHtml;
+
+            if (radarChart) {
+                radarChart.data.datasets[0].data = dataValues;
+                radarChart.update();
+            } else {
+                radarChart = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Saúde Física', 'Saúde Mental', 'Relacionamentos', 'Carreira', 'Finanças', 'Lazer'],
+                        datasets: [{
+                            label: 'Sua Roda da Vida',
+                            data: dataValues,
+                            backgroundColor: 'rgba(27, 67, 50, 0.2)',
+                            borderColor: '#1B4332',
+                            pointBackgroundColor: '#FFEE8C',
+                            pointBorderColor: '#1B4332',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: '#1B4332',
+                            borderWidth: 2,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                                grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                                pointLabels: { font: { size: 12, family: 'Inter' }, color: '#555' },
+                                suggestedMin: 0,
+                                suggestedMax: 10,
+                                ticks: { stepSize: 2, display: false }
+                            }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+        }
+
+        // Init
+        updateChart();
+    </script>
+</body>
+</html>

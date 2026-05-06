@@ -242,7 +242,7 @@
                                 <% } %>
                                 <div class="post-card-body">
                                     <span class="card-date">
-                                        <%= new Date(post.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }) %>
+                                        <%= new Date(post.createdAt || post.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }) %>
                                     </span>
                                     <h3><%= post.titulo %></h3>
                                     <p><%= (post.conteudo || '').replace(/<[^>]*>/g, '').substring(0, 100) %>...</p>

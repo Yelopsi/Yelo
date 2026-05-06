@@ -23,7 +23,8 @@ module.exports = (sequelize, DataTypes) => {
         timestamps: true,
         indexes: [
             { name: 'idx_demandsearches_status_created_at', fields: ['status', 'createdAt'] },
-            { name: 'idx_demandsearches_status_updated_at', fields: ['status', 'updatedAt'] }
+            { name: 'idx_demandsearches_status_updated_at', fields: ['status', 'updatedAt'] },
+            { name: 'idx_gin_demandsearches_searchparams', fields: ['searchParams'], using: 'gin' }
         ]
     });
 

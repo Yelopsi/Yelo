@@ -125,7 +125,7 @@
                             <option>Dúvida Geral</option>
                             <option>Sou Paciente</option>
                             <option>Sou Profissional</option>
-                            <option>Imprensa / Parcerias</option>
+                            <option>Imprensa // Parcerias</option>
                         </select>
                     </div>
                     
@@ -165,7 +165,7 @@
                 this.querySelector('button').textContent = 'Enviando...';
                 
                 // Envio real para o Backend
-                fetch('/api/public/contato', {
+                fetch('/api/contato', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

@@ -8,6 +8,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001';
 
     // -----------------------------------------------------
+    // FUNÇÃO UTILITÁRIA PARA IMAGENS
+    // -----------------------------------------------------
+    function formatImageUrl(path, fallback = 'https://placehold.co/100x100') {
+        if (!path) return fallback;
+        if (path.startsWith('http') || path.startsWith('data:')) return path;
+        let cleanPath = path.replace(/\\/g, '/');
+        if (cleanPath.includes('uploads/')) cleanPath = cleanPath.substring(cleanPath.lastIndexOf('uploads/'));
+        if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
+        return `${API_BASE_URL}${cleanPath}`;
+    }
+
+    // -----------------------------------------------------
     // 1. VARIÁVEIS DE ESTADO E INFORMAÇÃO
     // -----------------------------------------------------
     let patientData = null; 
@@ -68,10 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         if (data.fotoUrl) {
-            let fotoUrl = data.fotoUrl;
-            if (fotoUrl && !fotoUrl.startsWith('http') && !fotoUrl.startsWith('data:')) {
-                fotoUrl = `${API_BASE_URL}/${fotoUrl.replace(/^backend\/public\//, '').replace(/^\//, '')}`;
-            }
+            const fotoUrl = formatImageUrl(data.fotoUrl);
             if (photoEl) photoEl.src = fotoUrl; 
             if (mobilePhotoEl) mobilePhotoEl.src = fotoUrl;
         }
@@ -182,10 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             matchesGrid.innerHTML = psychologists.map(pro => {
                 // Tratamento de Imagem
-                let fotoUrl = pro.fotoUrl || pro.foto || 'https://placehold.co/400x400/1B4332/FFFFFF?text=Psi';
-                if (fotoUrl && !fotoUrl.startsWith('http') && !fotoUrl.startsWith('data:')) {
-                    fotoUrl = `${API_BASE_URL}/${fotoUrl.replace(/^backend\/public\//, '').replace(/^\//, '')}`;
-                }
+                    const fotoUrl = formatImageUrl(pro.fotoUrl || pro.foto, 'https://placehold.co/400x400/1B4332/FFFFFF?text=Psi');
 
                 const tags = pro.temas_atuacao || pro.temas || [];
                 // Pílulas com tamanho exato ao texto (fit-content) e cantos bem arredondados
@@ -268,10 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Reutiliza a lógica de criação de card (similar a 'inicializarMatches')
                 favoritosGrid.innerHTML = favorites.map(pro => {
                     // Tratamento de Imagem
-                    let fotoUrl = pro.fotoUrl || pro.foto || 'https://placehold.co/400x400/1B4332/FFFFFF?text=Psi';
-                    if (fotoUrl && !fotoUrl.startsWith('http') && !fotoUrl.startsWith('data:')) {
-                        fotoUrl = `${API_BASE_URL}/${fotoUrl.replace(/^backend\/public\//, '').replace(/^\//, '')}`;
-                    }
+                        const fotoUrl = formatImageUrl(pro.fotoUrl || pro.foto, 'https://placehold.co/400x400/1B4332/FFFFFF?text=Psi');
 
                     const tags = pro.temas_atuacao || pro.temas || [];
                     // Pílulas com tamanho exato ao texto (fit-content) e cantos bem arredondados
@@ -416,6 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function showToast(message, type = 'success') {
         const container = document.getElementById('toast-container');
         if (!container) return;
+    const showToast = window.showToast;
 
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
@@ -453,11 +457,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const photoInput = document.getElementById('account-photo-input');
 
         if (patientData && patientData.fotoUrl && photoPreview) {
-            let fotoUrl = patientData.fotoUrl;
-            if (fotoUrl && !fotoUrl.startsWith('http') && !fotoUrl.startsWith('data:')) {
-                fotoUrl = `${API_BASE_URL}/${fotoUrl.replace(/^backend\/public\//, '').replace(/^\//, '')}`;
-            }
-            photoPreview.src = fotoUrl;
+            photoPreview.src = formatImageUrl(patientData.fotoUrl);
         }
 
         if (photoTrigger && photoInput) {
@@ -477,9 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             const d = await res.json();
                             if(patientData) patientData.fotoUrl = d.fotoUrl;
                             updateSidebarUserInfo(patientData);
-                            let novaFotoUrl = d.fotoUrl;
-                            if (novaFotoUrl && !novaFotoUrl.startsWith('http') && !novaFotoUrl.startsWith('data:')) novaFotoUrl = `${API_BASE_URL}/${novaFotoUrl.replace(/^backend\/public\//, '').replace(/^\//, '')}`;
-                            if(photoPreview) photoPreview.src = novaFotoUrl;
+                            if(photoPreview) photoPreview.src = formatImageUrl(d.fotoUrl);
                             showToast('Foto atualizada com sucesso!', 'success');
                         } else throw new Error();
                     } catch (err) { showToast('Erro ao atualizar foto.', 'error'); } finally { photoInput.value = ''; }
@@ -646,7 +644,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.loadPage = function(pageUrl) {
         if (!pageUrl) return;
 
-        fetch(pageUrl) 
+        // FIX: Garante que o arquivo seja buscado da raiz da pasta /patient/
+        const fetchUrl = pageUrl.startsWith('/') ? pageUrl : `/patient/${pageUrl}`;
+        fetch(fetchUrl) 
             .then(response => response.ok ? response.text() : Promise.reject(`Arquivo não encontrado: ${pageUrl}`))
             .then(html => {
                 mainContent.innerHTML = html;
@@ -686,6 +686,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (pageUrl.includes('patient_minha_conta.html')) {
                     inicializarMinhaConta();
                 }
+
+                // SMART SCROLL PARA PÁGINAS CURTAS
+                const scrollableContent = document.querySelector('.dashboard-main');
+                const bottomNav = document.querySelector('.mobile-bottom-nav');
+                if (scrollableContent && bottomNav && window.innerWidth <= 992) {
+                    setTimeout(() => { const isScrollable = scrollableContent.scrollHeight > scrollableContent.clientHeight; if (!isScrollable) setTimeout(() => bottomNav.classList.add('nav-hidden'), 2000); }, 150);
+                }
+
             })
             .catch(error => {
                 mainContent.innerHTML = `<h1>Página em Construção ou Erro de Carregamento</h1>`;
@@ -823,6 +831,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- INICIALIZAÇÃO DE TELA (Carrega a Visão Geral) ---
         window.loadPage('patient_visao_geral.html');
+
+        // --- LÓGICA DA BOTTOM NAV E SHEET (MOBILE) ---
+        const bottomNavItems = document.querySelectorAll('.bottom-nav-item[data-target-page]');
+        bottomNavItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetPage = item.getAttribute('data-target-page');
+                document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+                item.classList.add('active');
+                const sidebarLink = document.querySelector(`.sidebar-nav a[data-page="${targetPage}"]`);
+                if (sidebarLink) sidebarLink.click();
+            });
+        });
+
+        const accountSheetOverlay = document.getElementById('account-sheet-overlay');
+        const accountSheet = document.querySelector('.account-sheet');
+        const closeSheetBtn = document.getElementById('close-account-sheet');
+        const trigger = document.getElementById('mobile-avatar-trigger');
+        if(trigger) {
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                accountSheetOverlay.classList.add('active');
+                setTimeout(() => accountSheet.classList.add('active'), 10);
+            });
+        }
+        const closeSheet = () => {
+            if(accountSheet) accountSheet.classList.remove('active');
+            if(accountSheetOverlay) setTimeout(() => accountSheetOverlay.classList.remove('active'), 300);
+        };
+        if(closeSheetBtn) closeSheetBtn.addEventListener('click', closeSheet);
+        if(accountSheetOverlay) accountSheetOverlay.addEventListener('click', (e) => { if(e.target === accountSheetOverlay) closeSheet(); });
+
+        document.querySelectorAll('.sheet-link[data-page]').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = link.getAttribute('data-page');
+                const sidebarLink = document.querySelector(`.sidebar-nav a[data-page="${page}"]`);
+                if (sidebarLink) sidebarLink.click();
+                closeSheet();
+            });
+        });
+        const btnLogoutSheet = document.getElementById('btn-logout-sheet');
+        if(btnLogoutSheet) btnLogoutSheet.addEventListener('click', () => document.getElementById('btn-logout').click());
+
+        // --- LÓGICA DE SMART SCROLL ---
+        const scrollableContent = document.querySelector('.dashboard-main');
+        const bottomNav = document.querySelector('.mobile-bottom-nav');
+        if (window.innerWidth <= 992 && scrollableContent && bottomNav) {
+            bottomNav.addEventListener('click', () => bottomNav.classList.remove('nav-hidden'));
+            let lastScrollY = scrollableContent.scrollTop;
+            scrollableContent.addEventListener('scroll', () => {
+                const currentScrollY = scrollableContent.scrollTop;
+                if (currentScrollY > lastScrollY && currentScrollY > 100) bottomNav.classList.add('nav-hidden');
+                else if (currentScrollY < lastScrollY) bottomNav.classList.remove('nav-hidden');
+                lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
+            }, { passive: true });
+        }
 
     } // FIM initializeDashboard()
 

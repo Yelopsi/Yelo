@@ -1175,7 +1175,7 @@ exports.getDetailedReports = async (req, res) => {
             db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: startDate, end: endDate }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
             // NOVO: Acessos 24h
             db.sequelize.query(`SELECT COUNT(*) as count FROM "SiteVisits" WHERE "createdAt" >= NOW() - INTERVAL '24 hours'`, { type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
-            // FAKE DOOR / SHADOW TRACKING: Contagem de uso real de recursos
+            // FAKE DOOR // SHADOW TRACKING: Contagem de uso real de recursos
             // Buscando da tabela correta criada no server.js
             db.sequelize.query(`SELECT feature, COUNT(*) as count FROM "FeatureTrackingLogs" GROUP BY feature ORDER BY count DESC`).catch(() => [[
                 { feature: 'audio_reply', count: 88 },
@@ -1212,7 +1212,7 @@ exports.getDetailedReports = async (req, res) => {
             const totalStart = totalActive + churnedCount; // Aproximação da base no início do período
             const churnRate = totalStart > 0 ? (churnedCount / totalStart) * 100 : 0;
 
-            // LTV: ARPU / Churn Rate (decimal)
+            // LTV: ARPU // Churn Rate (decimal)
             const arpu = payingActiveCount > 0 ? mrr / payingActiveCount : 0;
             const ltv = churnRate > 0 ? arpu / (churnRate / 100) : (arpu * 24); // Estima LTV de 24 meses caso o churn seja zero
 
@@ -1549,7 +1549,7 @@ exports.getSystemLogs = async (req, res) => {
         // CÁLCULO REAL DO TEMPO MÉDIO DE SESSÃO (ANÔNIMOS)
         let avgSessionTime = 0;
         if (metrics.avgSessionResult && metrics.avgSessionResult[0] && metrics.avgSessionResult[0].avgDuration) {
-            avgSessionTime = Math.round(metrics.avgSessionResult[0].avgDuration / 60);
+            avgSessionTime = Math.round(metrics.avgSessionResult[0].avgDuration);
         }
         // --- FIM DO CÁLCULO ---
         res.status(200).json({
@@ -1584,7 +1584,7 @@ exports.getAllMessages = async (req, res) => {
         const messages = await db.Message.findAll({
             include: [
                 { model: db.Patient, as: 'senderPatient', attributes: ['nome', 'id'] },
-                { model: db.Psychologist, as: 'senderPsychologist', attributes: ['nome', 'id'] }, // A linha duplicada foi removida
+                { model: db.Psychologist, as: 'senderPsychologist', attributes: ['nome', 'id'] }, /// a linha duplicada foi removida
                 { model: db.Patient, as: 'recipientPatient', attributes: ['nome', 'id'] },
                 { model: db.Psychologist, as: 'recipientPsychologist', attributes: ['nome', 'id'] }
             ],
@@ -2575,7 +2575,7 @@ exports.registrarContatoLead = async (req, res) => {
     }
 };
 
-// 3. Atualiza o status do lead manualmente (Aguardando / Cadastrado)
+// 3. Atualiza o status do lead manualmente (Aguardando // Cadastrado)
 exports.atualizarStatusLead = async (req, res) => {
     try {
         const { status } = req.body;
@@ -2590,7 +2590,7 @@ exports.atualizarStatusLead = async (req, res) => {
     }
 };
 
-// 4. Remove o lead permanentemente (Recusa / Opt-out)
+// 4. Remove o lead permanentemente (Recusa // Opt-out)
 exports.excluirLead = async (req, res) => {
     try {
         const lead = await db.Lead.findByPk(req.params.id);

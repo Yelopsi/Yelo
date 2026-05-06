@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const qnaController = require('../controllers/qnaController');
-const { protect } = require('../middleware/authMiddleware'); 
+const { protect } = require('../middlewares/authMiddleware'); 
 
 // --- ROTAS PÚBLICAS (PACIENTE) ---
 // Qualquer um pode ler e perguntar

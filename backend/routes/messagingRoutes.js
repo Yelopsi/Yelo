@@ -5,7 +5,7 @@ const messagingController = require('../controllers/messagingController');
 
 // --- CORREÇÃO AQUI ---
 // Usamos o nome correto do arquivo (authMiddleware) e extraímos a função 'protect'
-const { protect } = require('../middleware/authMiddleware'); 
+const { protect } = require('../middlewares/authMiddleware'); 
 
 // Rotas protegidas com 'protect'
 router.get('/conversations', protect, messagingController.getConversations);

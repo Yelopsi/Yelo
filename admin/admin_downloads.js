@@ -168,7 +168,7 @@ Com essas colunas, foque só no que gera decisão.
 
 🔹 1. Performance por psicólogo (obrigatório)
 
-Agrupe por psychologist_id / psychologist_name e calcule:
+Agrupe por psychologist_id // psychologist_name e calcule:
 - Total de cliques recebidos
 - % contact_ok → respondeu e houve contato
 - % contact_fail → paciente tentou, psicólogo não respondeu

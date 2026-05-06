@@ -2,12 +2,13 @@
 const express = require('express');
 const router = express.Router();
 const paymentController = require('../controllers/paymentController');
-const { protect } = require('../middleware/authMiddleware');
+const asaasWebhook = require('../webhooks/asaasWebhook');
+const { protect } = require('../middlewares/authMiddleware');
 
 // Rota protegida: Cria assinatura no Asaas (Checkout Transparente)
 router.post('/create-preference', protect, paymentController.createPreference);
 
 // Rota pública: Webhook para receber notificações do Asaas
-router.post('/webhook', paymentController.handleWebhook);
+router.post('/webhook', asaasWebhook.handleWebhook);
 
 module.exports = router;

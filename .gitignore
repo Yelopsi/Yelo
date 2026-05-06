@@ -3,3 +3,11 @@
 backend/node_modules/
 backend/.env
 .DS_Store
+
+.cache/
+
+node_modules/
+
+.cache/
+
+node_modules/

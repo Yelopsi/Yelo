@@ -567,7 +567,7 @@ window.initializePage = function() {
         return div; // Retorna o elemento DOM criado
     }
 
-    // 6. Envia uma resposta do admin (VERSÃO CORRIGIDA / BLINDADA)
+    // 6. Envia uma resposta do admin (VERSÃO CORRIGIDA // BLINDADA)
     async function sendReply() {
         const content = replyInput.value.trim();
         if (!content || !activePsychologistId) return;
