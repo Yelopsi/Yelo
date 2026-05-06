@@ -935,14 +935,13 @@ exports.getDashboardStats = async (req, res) => {
             db.WaitingList.count({ where: { status: 'pending' } }),
             db.Review.count({ where: { status: 'pending' } }),
             db.Psychologist.findAll({
-                attributes: ['plano', 'is_exempt', [db.sequelize.fn('COUNT', 'plano'), 'count']],
-                where: { status: 'active', plano: { [Op.ne]: null } },
-                group: ['plano', 'is_exempt']
+                attributes: ['plano', 'is_exempt', 'stripeSubscriptionId', 'subscriptionId'],
+                where: { status: 'active', plano: { [Op.ne]: null } }
             }).catch(() => []),
             // Contagem de falhas de e-mail nas últimas 24h
             db.SystemLog.count({ where: { message: { [Op.iLike]: '%[EMAIL_FAIL]%' }, createdAt: { [Op.gte]: oneDayAgo } } }).catch(() => 0),
             // NOVAS QUERIES GERAIS
-            db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs"`, { type: db.sequelize.QueryTypes.SELECT }).catch(() => [[{ count: 0 }]]),
+            db.sequelize.query(`SELECT COUNT(*) as count FROM "MatchEvents"`, { type: db.sequelize.QueryTypes.SELECT }).catch(() => [[{ count: 0 }]]),
             db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsappClickLogs"`, { type: db.sequelize.QueryTypes.SELECT }).catch(() => [[{ count: 0 }]])
         ]);
 
@@ -961,10 +960,10 @@ exports.getDashboardStats = async (req, res) => {
         let mrr = 0;
         
         psisByPlan.forEach(p => {
-            const plano = p.dataValues.plano;
-            const isExempt = p.dataValues.is_exempt;
+            const plano = p.plano;
+            const isExempt = p.is_exempt;
+            const hasSubscription = !!(p.stripeSubscriptionId || p.subscriptionId);
             if (!plano) return;
-            const count = parseInt(p.dataValues.count, 10);
             
             // Normaliza os nomes dos planos para o dashboard frontal poder exibir corretamente
             let planKey = plano;
@@ -972,11 +971,11 @@ exports.getDashboardStats = async (req, res) => {
             if (['CLINICAL', 'Clínico'].includes(plano)) planKey = 'Clínico';
             if (['REFERENCE', 'Sol', 'Reference'].includes(plano)) planKey = 'Sol';
 
-            plansCount[planKey] = (plansCount[planKey] || 0) + count;
+            plansCount[planKey] = (plansCount[planKey] || 0) + 1;
             
-            // Calcula MRR baseado na contagem agregada
-            if (!isExempt && planPrices[plano]) {
-                mrr += planPrices[plano] * count;
+            // Calcula MRR: Conta apenas quem tem ID de assinatura registrado (ignorando Trial Grátis de 14 dias)
+            if (!isExempt && hasSubscription && planPrices[plano]) {
+                mrr += planPrices[plano];
             }
         });
 
@@ -1089,12 +1088,29 @@ exports.getAllPsychologists = async (req, res) => {
 exports.getDetailedReports = async (req, res) => {
     try {
         console.time('⏱️ Detailed Reports Load');
-        const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date();
-        const startDate = req.query.startDate ? new Date(req.query.startDate) : new Date();
-        if (!req.query.startDate) startDate.setDate(startDate.getDate() - 30);
 
-        startDate.setHours(0, 0, 0, 0);
-        endDate.setHours(23, 59, 59, 999);
+        // CORREÇÃO: Fuso Horário BRT (Para alinhar exatamente com Google Analytics/Ads)
+        const parseDateBRT = (dateString, isEnd = false) => {
+            if (!dateString) return null;
+            const time = isEnd ? '23:59:59.999' : '00:00:00.000';
+            return new Date(`${dateString}T${time}-03:00`);
+        };
+
+        let startDate = parseDateBRT(req.query.startDate, false);
+        let endDate = parseDateBRT(req.query.endDate, true);
+
+        if (!startDate) {
+            startDate = new Date();
+            startDate.setHours(startDate.getHours() - 3); // Força BRT
+            startDate.setDate(startDate.getDate() - 30);
+            startDate.setUTCHours(3, 0, 0, 0); // 00:00 no Brasil = 03:00 UTC
+        }
+        if (!endDate) {
+            endDate = new Date();
+            endDate.setHours(endDate.getHours() - 3); // Força BRT
+            endDate.setUTCHours(2, 59, 59, 999); // 23:59 no Brasil = 02:59 UTC do dia seguinte
+            endDate.setDate(endDate.getDate() + 1); 
+        }
 
         // 1. QUERY EVOLUÇÃO (Mantida)
         const usersQuery = `
@@ -1169,7 +1185,7 @@ exports.getDetailedReports = async (req, res) => {
             db.Question.count({ where: { status: 'answered', updatedAt: { [Op.between]: [startDate, endDate] } } }),
             db.Answer.count({ where: { createdAt: { [Op.between]: [startDate, endDate] } } }),
             // Financial Stats
-            db.Psychologist.findAll({ where: { plano: { [Op.ne]: null }, status: 'active' }, attributes: ['plano', 'is_exempt'] }),
+            db.Psychologist.findAll({ where: { plano: { [Op.ne]: null }, status: 'active' }, attributes: ['plano', 'is_exempt', 'stripeSubscriptionId', 'subscriptionId'] }),
             db.Psychologist.count({ where: { status: 'inactive', updatedAt: { [Op.between]: [startDate, endDate] } } }),
             // Whatsapp Clicks Stats
             db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: startDate, end: endDate }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
@@ -1203,6 +1219,9 @@ exports.getDetailedReports = async (req, res) => {
             };
             const mrr = activePsychologists.reduce((acc, psy) => {
                 if (psy.is_exempt) return acc;
+                const hasSub = !!(psy.stripeSubscriptionId || psy.subscriptionId);
+                if (!hasSub) return acc; // IGNORA TRIAL DE 14 DIAS
+                
                 const planoKey = (psy.plano || '').toLowerCase();
                 return acc + (planPrices[planoKey] || 0);
             }, 0);
@@ -1821,7 +1840,7 @@ exports.getFinancials = async (req, res) => {
                 plano: { [Op.ne]: null },
                 status: 'active'
             },
-            attributes: ['id', 'nome', 'plano', 'updatedAt', 'is_exempt', 'planExpiresAt'] 
+            attributes: ['id', 'nome', 'plano', 'updatedAt', 'is_exempt', 'planExpiresAt', 'stripeSubscriptionId', 'subscriptionId'] 
         });
 
         // Preços Atualizados (Baseados na sua página de assinatura)
@@ -1835,6 +1854,9 @@ exports.getFinancials = async (req, res) => {
 
         const mrr = activePsychologists.reduce((acc, psy) => {
             if (psy.is_exempt) return acc;
+            const hasSub = !!(psy.stripeSubscriptionId || psy.subscriptionId);
+            if (!hasSub) return acc; // IGNORA TRIAL DE 14 DIAS NO MRR DO FINANCEIRO
+            
             return acc + (planPrices[psy.plano ? psy.plano.toUpperCase() : ''] || 0);
         }, 0);
         const thirtyDaysAgo = new Date(new Date().setDate(new Date().getDate() - 30));
@@ -1891,12 +1913,15 @@ exports.getFinancials = async (req, res) => {
             }
         }
 
-        const activePlans = activePsychologists.map(psy => ({
-            psychologistName: psy.nome,
-            planName: psy.is_exempt ? `${psy.plano} (VIP)` : psy.plano,
-            mrr: psy.is_exempt ? 0 : (planPrices[psy.plano ? psy.plano.toUpperCase() : ''] || 0),
-            nextBilling: psy.is_exempt ? null : (psy.planExpiresAt ? new Date(psy.planExpiresAt) : new Date(new Date(psy.updatedAt).setMonth(new Date(psy.updatedAt).getMonth() + 1))) 
-        }));
+        const activePlans = activePsychologists.map(psy => {
+            const hasSub = !!(psy.stripeSubscriptionId || psy.subscriptionId);
+            return {
+                psychologistName: psy.nome,
+                planName: psy.is_exempt ? `${psy.plano} (VIP)` : (!hasSub ? `${psy.plano} (Trial)` : psy.plano),
+                mrr: (psy.is_exempt || !hasSub) ? 0 : (planPrices[psy.plano ? psy.plano.toUpperCase() : ''] || 0),
+                nextBilling: psy.is_exempt ? null : (psy.planExpiresAt ? new Date(psy.planExpiresAt) : new Date(new Date(psy.updatedAt).setMonth(new Date(psy.updatedAt).getMonth() + 1))) 
+            };
+        });
         res.status(200).json({
             kpis,
             recentInvoices,
@@ -2432,11 +2457,27 @@ exports.deleteFollowUp = async (req, res) => {
  */
 exports.getFunnelAnalytics = async (req, res) => {
     try {
-        const { startDate, endDate } = req.query;
-        let start = startDate ? new Date(startDate) : new Date(new Date().setDate(new Date().getDate() - 30));
-        let end = endDate ? new Date(endDate) : new Date();
-        start.setHours(0,0,0,0);
-        end.setHours(23,59,59,999);
+        const parseDateBRT = (dateString, isEnd = false) => {
+            if (!dateString) return null;
+            const time = isEnd ? '23:59:59.999' : '00:00:00.000';
+            return new Date(`${dateString}T${time}-03:00`);
+        };
+
+        let start = parseDateBRT(req.query.startDate, false);
+        let end = parseDateBRT(req.query.endDate, true);
+
+        if (!start) {
+            start = new Date();
+            start.setHours(start.getHours() - 3);
+            start.setDate(start.getDate() - 30);
+            start.setUTCHours(3, 0, 0, 0);
+        }
+        if (!end) {
+            end = new Date();
+            end.setHours(end.getHours() - 3);
+            end.setUTCHours(2, 59, 59, 999);
+            end.setDate(end.getDate() + 1);
+        }
 
         // 1. Visitas Totais (Landing Pages)
         const visitsResult = await db.sequelize.query(
