@@ -120,7 +120,8 @@ router.get('/questionario', (req, res) => {
 // --- REDIRECIONAMENTOS SEO ---
 const seoRedirects = {
     '/jornada': '/', '/registro': '/cadastro', '/index.html': '/', '/index': '/',
-    '/perguntas': '/comunidade', '/questionario.html': '/questionario'
+    '/perguntas': '/comunidade', '/questionario.html': '/questionario',
+    '/perguntas.html': '/comunidade', '/privacidade.html': '/privacidade', '/termos.html': '/termos', '/contato.html': '/contato'
 };
 router.use((req, res, next) => {
     const checkPath = req.path.length > 1 && req.path.endsWith('/') ? req.path.slice(0, -1) : req.path;
@@ -153,6 +154,11 @@ router.get('/gerador-bio', (req, res) => res.sendFile(path.join(__dirname, '../.
 router.get('/teste-terapia', (req, res) => res.sendFile(path.join(__dirname, '../../public/teste-terapia.html')));
 router.get('/roda-da-vida', (req, res) => res.sendFile(path.join(__dirname, '../../public/roda-da-vida.html')));
 router.get('/calculadora-psi', (req, res) => res.sendFile(path.join(__dirname, '../../public/calculadora-psi.html')));
+
+// --- PÁGINAS INSTITUCIONAIS (Mapeamento explícito para URLs limpas) ---
+router.get('/privacidade', (req, res) => res.sendFile(path.join(__dirname, '../../public/privacidade.html')));
+router.get('/termos', (req, res) => res.sendFile(path.join(__dirname, '../../public/termos.html')));
+router.get('/contato', (req, res) => res.sendFile(path.join(__dirname, '../../public/contato.html')));
 
 // --- LANDING PAGE GOOGLE ADS ---
 router.get('/terapia-online', async (req, res) => {
@@ -228,7 +234,6 @@ router.get('/robots.txt', (req, res) => {
 // para ignorar requisições de arquivos estáticos.
 router.get('/:slug', async (req, res, next) => {
     const slug = req.params.slug;
-    if (slug.endsWith('.html')) return res.redirect(301, '/' + slug.replace('.html', ''));
     if (slug.includes('.')) return next();
     const reservado = ['api', 'assets', 'css', 'js', 'uploads', 'favicon.ico', 'admin', 'login', 'cadastro', 'dashboard'];
     if (reservado.some(p => slug.startsWith(p))) return next();
@@ -238,7 +243,14 @@ router.get('/:slug', async (req, res, next) => {
         if (psychologist) {
             const hoje = new Date(); const validade = psychologist.planExpiresAt ? new Date(psychologist.planExpiresAt) : null;
             const isVip = psychologist.is_exempt === true;
-            if (psychologist.status === 'active' && (isVip || (validade && validade > hoje))) return res.render('psi_perfil_publico', { psicologo: psychologist });
+            if (psychologist.status === 'active' && (isVip || (validade && validade > hoje))) {
+                try {
+                    return res.render('psi_perfil_publico', { psicologo: psychologist });
+                } catch (renderErr) {
+                    console.error(`Erro do EJS ao renderizar perfil de ${slug}:`, renderErr);
+                    // Se a renderização falhar, sai do try/catch e vai pro "404 Perfil Indisponível" abaixo!
+                }
+            }
         }
 
         // Correção de SEO (Soft 404): 
