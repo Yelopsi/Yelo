@@ -198,8 +198,18 @@ document.addEventListener('DOMContentLoaded', () => {
             trackTop3Appearances(dataToRender);
 
             // Troca telas
-            loadingScreen.style.display = 'none';
-            resultsContent.style.display = 'block';
+            loadingScreen.style.transition = 'opacity 0.3s ease';
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+                resultsContent.style.opacity = '0';
+                resultsContent.style.display = 'block';
+                resultsContent.style.transition = 'opacity 0.4s ease';
+                
+                requestAnimationFrame(() => {
+                    resultsContent.style.opacity = '1';
+                });
+            }, 300);
             
             // --- RASTREAMENTO DE FUNIL (PASSO 4: CLIQUE NO PERFIL) ---
             grid.addEventListener('click', (e) => {
@@ -219,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             
-        }, 1500);
+        }, 600);
     }
 
     // Função de Notificação (Estilo WhatsApp)

@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <%- include('partials/head') %>
 
     <!-- SEO INJETADO NO SERVIDOR -->
     <title><%= psicologo.nome %> | Psicólogo(a) na Yelo</title>
@@ -13,8 +12,6 @@
     %>
     <meta name="description" content="<%= bioSnippet %>">
     
-    <link rel="stylesheet" href="/style.css">
-    <link rel="stylesheet" href="/css/05-pages.css">
     <link rel="stylesheet" href="/css/psi_dashboard.css">
     <style>
         /* Ajuste do selo de verificado no mobile para flutuar sem empurrar o texto */
