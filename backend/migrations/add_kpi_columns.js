@@ -1,4 +1,4 @@
-const db = require('./backend/models');
+const db = require('../models');
 
 async function run() {
   try {
