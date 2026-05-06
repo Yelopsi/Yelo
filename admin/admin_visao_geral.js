@@ -49,7 +49,7 @@ window.initializePage = function() {
     ];
     const smallKpis = [
         'kpi-pat-total', 'kpi-pat-active', 'kpi-pat-deleted',
-        'kpi-psi-total', 'kpi-psi-deleted',
+        'kpi-psi-total', 'kpi-psi-active', 'kpi-psi-deleted',
         'kpi-plan-Essencial', 'kpi-plan-Clínico', 'kpi-plan-sol',
         'kpi-quest-total', 'kpi-quest-deleted',
         'waiting-list-count', 'pending-reviews-count'
@@ -119,6 +119,7 @@ window.initializePage = function() {
  
              if(stats.psychologists) {
                  updateSafe('kpi-psi-total', stats.psychologists.total);
+                 updateSafe('kpi-psi-active', stats.psychologists.active);
                  updateSafe('kpi-psi-deleted', stats.psychologists.deleted);
                  
                  const plans = stats.psychologists.byPlan || {};
@@ -127,6 +128,7 @@ window.initializePage = function() {
                  updateSafe('kpi-plan-sol', plans['Sol'] || 0);
              } else {
                  updateSafe('kpi-psi-total', '--');
+                 updateSafe('kpi-psi-active', '--');
                  updateSafe('kpi-psi-deleted', '--');
                  updateSafe('kpi-plan-Essencial', '--');
                  updateSafe('kpi-plan-Clínico', '--');
