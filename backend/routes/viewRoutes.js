@@ -210,7 +210,8 @@ router.get('/logout', (req, res) => {
     res.clearCookie('token');
     res.send(`<html><body><script>localStorage.removeItem('Yelo_token'); localStorage.removeItem('Yelo_user_type'); localStorage.removeItem('Yelo_user_name'); window.location.href = '/';</script></body></html>`);
 });
-router.get(['/admin/login', '/psi/login', '/patient/login'], (req, res) => res.redirect('/logout'));
+
+router.get(['/admin/login', '/psi/login', '/patient/login'], (req, res) => res.redirect(301, '/login'));
 
 // --- SITEMAP E ROBOTS ---
 router.get('/sitemap.xml', async (req, res) => { /* Omitting full logic to save space, copy from original if preferred, or keep minimal */ });
@@ -240,13 +241,24 @@ router.get('/:slug', async (req, res, next) => {
             if (psychologist.status === 'active' && (isVip || (validade && validade > hoje))) return res.render('psi_perfil_publico', { psicologo: psychologist });
         }
 
-        // Se nenhum psicólogo foi encontrado, a rota não é de perfil.
-        // Passa para o próximo middleware (geralmente o manipulador 404).
-        return next();
+        // Correção de SEO (Soft 404): 
+        // Se passou pela validação de arquivos estáticos, é uma tentativa de acessar um perfil.
+        // Se não achou ou o perfil está inativo, retorna explicitamente o código HTTP 404.
+        res.status(404).send(`
+            <div style="font-family: sans-serif; text-align: center; padding: 50px;">
+                <h2 style="color: #1B4332;">Perfil Indisponível</h2>
+                <p style="color: #666;">Este profissional não está disponível no momento.</p>
+                <a href="/" style="color: #1B4332; text-decoration: underline;">Voltar ao início</a>
+            </div>
+        `);
     } catch (dbErr) {
-        // Passa o erro real para o manipulador de erros do Express para um log adequado.
         return next(dbErr);
     }
+});
+
+// --- CATCH-ALL 404 (Proteção final contra Soft 404) ---
+router.use((req, res) => {
+    res.status(404).send('Página não encontrada (404)');
 });
 
 module.exports = router;
