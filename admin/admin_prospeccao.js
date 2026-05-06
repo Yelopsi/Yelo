@@ -447,7 +447,67 @@ window.exportarLeadsCSV = function() {
     document.body.removeChild(link);
 };
 
+// --- LÓGICA DO ROBÔ SCRAPER (MANUAL) ---
+window.iniciarRoboScraper = async function() {
+    const btn = document.getElementById('btn-cacar-leads');
+    if (!btn) return;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner-sm" style="margin-right: 5px; border-color: rgba(255,255,255,0.3); border-top-color: #fff;"></span> Caçando...';
+
+    try {
+        const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
+        
+        // Envia o comando POST para a controladora disparar o scraper no backend
+        const req = await fetch(`${BASE_URL}/api/admin/leads/scrape`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('Yelo_token')}` }
+        });
+
+        const result = await req.json();
+
+        if (req.ok) {
+            if (window.showToast) window.showToast(result.message || 'Robô iniciado em segundo plano. Aguarde...', 'info');
+            
+            // Fallback de segurança: Reabilita o botão e recarrega a página após 2 minutos caso o WebSocket falhe
+            setTimeout(() => {
+                if (btn.disabled) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="16" y1="16" x2="16" y2="16"></line></svg> Caçar Leads`;
+                    window.carregarLeads(); 
+                }
+            }, 120000);
+        } else {
+            throw new Error(result.error || 'Erro ao iniciar robô.');
+        }
+    } catch (error) {
+        console.error(error);
+        if (window.showToast) window.showToast(error.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="16" y1="16" x2="16" y2="16"></line></svg> Caçar Leads`;
+    }
+};
+
 // Inicia automaticamente ao carregar
 setTimeout(() => { 
     if (document.getElementById('lista-leads-body')) window.carregarLeads(); 
+    
+    // Escuta o evento do Socket.io do backend informando que a prospecção acabou
+    if (window.adminSocket) {
+        window.adminSocket.off('scraper_finished'); // Evita duplicação de listeners
+        window.adminSocket.on('scraper_finished', (data) => {
+            const btn = document.getElementById('btn-cacar-leads');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="16" y1="16" x2="16" y2="16"></line></svg> Caçar Leads`;
+            }
+
+            if (data.success) {
+                if (window.showToast) window.showToast(data.message, 'success');
+                window.carregarLeads(); // Recarrega a tabela para mostrar os novos leads
+            } else {
+                if (window.showToast) window.showToast('Erro no robô: ' + data.message, 'error');
+            }
+        });
+    }
 }, 100);
