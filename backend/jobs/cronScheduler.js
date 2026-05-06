@@ -1,0 +1,147 @@
+const db = require('../models');
+const { Op } = require('sequelize');
+
+// ============================================================================
+// 1. AUDITORIA DE INTEGRIDADE DA BASE DE DADOS (Limpeza de Inadimplentes)
+// ============================================================================
+async function runIntegrityAudit() {
+    console.log('🛡️ [CRON AUDIT] Executando auditoria de integridade da base de dados...');
+    try {
+        // Revoga is_exempt se a pessoa já for pagante
+        await db.sequelize.query(`UPDATE "Psychologists" SET "is_exempt" = false WHERE ("stripeSubscriptionId" IS NOT NULL OR "subscriptionId" IS NOT NULL) AND "is_exempt" = true;`);
+        // Bloqueia quem não tem assinatura nem isenção e já venceu
+        await db.sequelize.query(`UPDATE "Psychologists" SET status = 'inactive', "planExpiresAt" = '1970-01-01' WHERE ("stripeSubscriptionId" IS NULL AND "subscriptionId" IS NULL) AND ("is_exempt" IS NULL OR "is_exempt" = false) AND status = 'active' AND ("planExpiresAt" IS NULL OR "planExpiresAt" <= NOW());`);
+        // Bloqueia quem tem plano mas venceu
+        await db.sequelize.query(`UPDATE "Psychologists" SET status = 'inactive' WHERE "planExpiresAt" <= NOW() AND ("is_exempt" IS NULL OR "is_exempt" = false) AND status = 'active';`);
+        // Bloqueia VIPs que não tem plano setado
+        await db.sequelize.query(`UPDATE "Psychologists" SET "is_exempt" = false, status = 'inactive' WHERE "is_exempt" = true AND ("plano" IS NULL OR "plano" = '');`);
+        
+        console.log('✅ [CRON AUDIT] Auditoria de integridade e limpeza de inadimplentes concluída.');
+    } catch (e) { 
+        console.error('⚠️ [CRON AUDIT] Erro durante a auditoria de integridade:', e.message); 
+    }
+}
+
+// ============================================================================
+// 2. ROTINA DE RESUMO DIÁRIO (Agenda do Psicólogo)
+// ============================================================================
+async function sendDailySummaries(now, currentHM) {
+    try {
+        const psisSummary = await db.Psychologist.findAll({ 
+            where: { dailySummaryTime: currentHM } 
+        });
+
+        if (psisSummary.length > 0) {
+            console.log(`⏰ [CRON] Enviando resumo diário para ${psisSummary.length} psicólogos às ${currentHM}...`);
+            
+            const brtDateStr = now.toLocaleDateString("sv-SE", {timeZone: "America/Sao_Paulo"}); 
+            const startOfDay = new Date(`${brtDateStr}T00:00:00-03:00`);
+            const endOfDay = new Date(`${brtDateStr}T23:59:59.999-03:00`);
+            const psiIds = psisSummary.map(p => p.id);
+
+            const appointments = await db.Appointment.findAll({
+                where: { 
+                    psychologistId: { [Op.in]: psiIds },
+                    start: { [Op.between]: [startOfDay, endOfDay] }
+                },
+                order: [['start', 'ASC']]
+            });
+
+            const appointmentsByPsi = {};
+            appointments.forEach(app => {
+                if (!appointmentsByPsi[app.psychologistId]) appointmentsByPsi[app.psychologistId] = [];
+                appointmentsByPsi[app.psychologistId].push(app);
+            });
+
+            for (const psi of psisSummary) {
+                const apps = appointmentsByPsi[psi.id] || [];
+                if (apps.length > 0) {
+                    let msgLines = [`Olá ${psi.nome}. Segue o resumo das suas sessões de hoje:`];
+                    for (const app of apps) {
+                        const time = new Date(app.start).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
+                        const patientName = app.title || 'Paciente'; 
+                        let statusText = app.status;
+                        if (app.status === 'confirmed') statusText = 'confirmou';
+                        if (app.status === 'cancelled') statusText = 'cancelou';
+                        if (app.status === 'rescheduled') statusText = 'reagendou';
+                        if (app.status === 'scheduled') statusText = 'aguardando confirmação';
+
+                        msgLines.push(`${patientName}, às ${time} - ${statusText}`);
+                    }
+                    // FUTURO: Integração do disparo de Email/WhatsApp viria aqui
+                }
+            }
+        }
+    } catch (e) { console.error("❌ [CRON] Erro no cron de resumo diário:", e.message); }
+}
+
+// ============================================================================
+// 3. ROTINA DE LEMBRETES DE SESSÃO
+// ============================================================================
+async function checkSessionReminders(now) {
+    console.log("⏰ [CRON] Verificando lembretes de sessão...");
+    try {
+        const lookAhead = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+        
+        // Graças à nossa nova model Appointment.js, esse include vai funcionar perfeitamente!
+        const upcomingAppointments = await db.Appointment.findAll({
+            where: { 
+                start: { [Op.between]: [now, lookAhead] },
+                status: { [Op.in]: ['scheduled'] } 
+            },
+            include: [{ model: db.Psychologist, as: 'psychologist' }]
+        });
+        
+        if (upcomingAppointments.length > 0) {
+            /// a lógica de disparo de mensagens fica preservada aqui, pronta para o futuro
+            // console.log(`[CRON] ${upcomingAppointments.length} lembretes pendentes encontrados.`);
+        }
+    } catch (e) { 
+        console.error("❌ [CRON] Erro no cron de lembretes:", e.message); 
+    }
+}
+
+// ============================================================================
+// ORQUESTRADOR CENTRAL (Apenas Inicia e Define Tempos)
+// ============================================================================
+const startCronJobs = () => {
+    console.log('⏰ [CRON] Inicializando agendadores de tarefas...');
+
+    try {
+        require('./scheduler.js');
+        console.log('✅ [CRON] Scheduler externo ativado (Remarketing rodará às 10h).');
+    } catch (err) {
+        console.warn('⚠️ [CRON] Aviso: Não foi possível carregar o scheduler.js.', err.message);
+    }
+
+    let lastReminderHour = -1;
+    let lastSummaryMinute = "";
+    let lastAuditDay = -1;
+
+    setInterval(async () => {
+        const now = new Date();
+        const currentHM = now.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
+        const currentBrtHour = parseInt(now.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit' }), 10);
+        const currentDay = now.getDate();
+        
+        // 1. RESUMO DIÁRIO (Verifica a cada minuto)
+        if (currentHM !== lastSummaryMinute) {
+            lastSummaryMinute = currentHM;
+            await sendDailySummaries(now, currentHM);
+        }
+
+        // 2. AUDITORIA DIÁRIA (Roda uma vez às 3h da manhã)
+        if (currentBrtHour === 3 && currentDay !== lastAuditDay) {
+            lastAuditDay = currentDay;
+            await runIntegrityAudit();
+        }
+
+        // 3. LEMBRETES DE SESSÃO (Verifica a cada virada de hora)
+        if (currentBrtHour !== lastReminderHour) {
+            lastReminderHour = currentBrtHour;
+            await checkSessionReminders(now);
+        }
+    }, 60000); 
+};
+
+module.exports = { startCronJobs };

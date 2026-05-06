@@ -143,6 +143,35 @@
     </template>
 
     <script src="/config.js"></script>
-    <script src="/perguntas.js"></script>
+    
+    <!-- Script Inline de Garantia (Bypass de Cache para o Contador) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const txtArea = document.getElementById('question-text');
+            const btnSubmit = document.getElementById('submit-question-btn');
+            const counter = document.getElementById('char-counter');
+            const errorMsg = document.getElementById('char-error-message');
+
+            if (txtArea && btnSubmit) {
+                txtArea.addEventListener('input', function() {
+                    const len = this.value.length;
+                    if (counter) counter.textContent = len + '/50 caracteres';
+                    
+                    if (len >= 50) {
+                        btnSubmit.disabled = false;
+                        if (errorMsg) errorMsg.textContent = '';
+                        if (counter) { counter.style.color = '#1B4332'; counter.style.fontWeight = 'bold'; }
+                    } else {
+                        btnSubmit.disabled = true;
+                        if (len > 0 && errorMsg) errorMsg.textContent = 'Faltam ' + (50 - len) + ' caracteres';
+                        else if (errorMsg) errorMsg.textContent = '';
+                        if (counter) { counter.style.color = '#666'; counter.style.fontWeight = 'normal'; }
+                    }
+                });
+            }
+        });
+    </script>
+
+    <script src="/js/perguntas.js?v=<%= new Date().getTime() %>"></script>
 </body>
 </html>

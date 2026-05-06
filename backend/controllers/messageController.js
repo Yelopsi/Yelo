@@ -67,7 +67,7 @@ exports.getMessages = async (req, res) => {
         // Para manter a retrocompatibilidade com o MVP, assumimos 'admin' se não especificado
         if (contactType === 'admin' || !contactType) {
             // 1. Encontra o ID da conversa entre este usuário e o admin.
-            // A convenção é que a conversa com o admin tem o patientId nulo.
+            /// a convenção é que a conversa com o admin tem o patientId nulo.
             const whereClause = { psychologistId: userId, patientId: null };
             const conversation = await db.Conversation.findOne({ where: whereClause });
 

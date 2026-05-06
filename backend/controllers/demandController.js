@@ -72,7 +72,7 @@ exports.recordSearch = async (req, res) => {
 exports.getRatings = async (req, res) => {
     try {
         // SQL Otimizado para ler campos dentro do JSONB (searchParams ->> 'rating')
-        // A sintaxe (searchParams->>'rating') extrai o valor como texto
+        /// a sintaxe (searchParams->>'rating') extrai o valor como texto
         
         const [stats] = await db.sequelize.query(`
             SELECT 

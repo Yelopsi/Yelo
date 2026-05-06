@@ -22,7 +22,7 @@ window.initializePage = async function() {
             <h2>Notificações do Sistema</h2>
             <div class="config-item" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0;">
                 <div class="config-infos">
-                    <strong style="display: block; font-size: 16px; color: var(--verde-escuro); margin-bottom: 4px;">Alertas no Navegador / Celular</strong>
+                    <strong style="display: block; font-size: 16px; color: var(--verde-escuro); margin-bottom: 4px;">Alertas no Navegador // Celular</strong>
                     <p class="desc" style="font-size: 13px; color: var(--cinza-texto); margin: 0;">Receba um aviso sonoro/visual quando um novo psicólogo se cadastrar.</p>
                 </div>
                 <button id="btn-push-subscribe" type="button" class="btn btn-secundario" style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem;">

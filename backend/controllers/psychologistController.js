@@ -543,7 +543,7 @@ exports.checkDemand = async (req, res) => {
         
         let temasQuery = "";
         if (temas_atuacao && Array.isArray(temas_atuacao) && temas_atuacao.length > 0) {
-            // A coluna temas_buscados já é um array nativo do Postgres (character varying[])
+            /// a coluna temas_buscados já é um array nativo do Postgres (character varying[])
             // O operador && (overlap) verifica de forma nativa se há algum tema em comum entre os arrays
             temasQuery = `AND "temas_buscados" IS NOT NULL AND "temas_buscados" && ARRAY[:temas_atuacao]::varchar[]`;
             replacements.temas_atuacao = temas_atuacao;
@@ -561,6 +561,17 @@ exports.checkDemand = async (req, res) => {
             replacements,
             type: db.sequelize.QueryTypes.SELECT
         });
+
+        // --- FORÇA O UPDATE NO BANCO CASO O ORM IGNORE AS COLUNAS NOVAS ---
+        try {
+            await db.sequelize.query(`UPDATE "Psychologists" SET "tipo_cobranca" = :tc, "valor_mensal_numero" = :vm WHERE id = :id`, {
+                replacements: { 
+                    tc: tipo_cobranca || 'sessao', 
+                    vm: valor_mensal_numero ? parseFloat(valor_mensal_numero) : null, 
+                    id: psychologist.id 
+                }
+            });
+        } catch (e) { console.warn("Erro ao forçar update das colunas novas:", e.message); }
 
         const count = parseInt(result.count, 10) || 0;
 
@@ -660,7 +671,9 @@ exports.updatePsychologistProfile = async (req, res) => {
             slug, // <--- AGORA ESTAMOS LENDO O CAMPO SLUG QUE VEM DO FORMULÁRIO
         cpf, // <--- ADICIONADO: Extraindo o CPF enviado pelo frontend
         formacao_nivel, formacao_desc,
-        tipo_cobranca, valor_mensal_numero
+        tipo_cobranca, valor_mensal_numero,
+        ano_inicio_experiencia,
+        razao_social
         } = req.body;
 
         // --- FALLBACK PARA CAMPOS LEGADOS (Especialidades/Temas) ---
@@ -752,28 +765,42 @@ exports.updatePsychologistProfile = async (req, res) => {
 
         // --- ATUALIZAÇÃO VIA ORM (MODERNA E DEFINITIVA) ---
         // Graças ao patch no server.js, o Sequelize agora trata esses campos como JSONB nativo.
-        await psychologist.update({
-            slug: finalSlug,
-            nome, telefone, bio, crp, cep, cidade, estado,
-        formacao_nivel, formacao_desc,
-            tipo_cobranca,
-            valor_mensal_numero: valor_mensal_numero !== undefined ? (valor_mensal_numero ? parseFloat(valor_mensal_numero) : null) : undefined,
-            valor_sessao_numero: valor_sessao_numero !== undefined ? (valor_sessao_numero ? parseFloat(valor_sessao_numero) : null) : undefined,
-            genero_identidade,
-            cpf, // <--- ADICIONADO: Salvando o CPF no banco de dados
-            dailySummaryTime: dailySummaryTime || '08:00',
-            reminderHoursBefore: reminderHoursBefore ? parseInt(reminderHoursBefore) : 24,
-            linkedin_url, instagram_url, facebook_url, tiktok_url, x_url,
-            
-            // Passamos os Arrays JS diretamente. O Sequelize fará a serialização correta para JSONB.
-            temas_atuacao, 
-            abordagens_tecnicas, 
-            modalidade, 
-            publico_alvo, 
-            estilo_terapia, 
-            praticas_inclusivas, 
-            disponibilidade_periodo
-        });
+        const updatePayload = {};
+        if (finalSlug !== undefined) updatePayload.slug = finalSlug;
+        if (nome !== undefined) updatePayload.nome = nome;
+        if (telefone !== undefined) updatePayload.telefone = telefone;
+        if (bio !== undefined) updatePayload.bio = bio;
+        if (crp !== undefined) updatePayload.crp = crp;
+        if (cep !== undefined) updatePayload.cep = cep;
+        if (cidade !== undefined) updatePayload.cidade = cidade;
+        if (estado !== undefined) updatePayload.estado = estado;
+        if (formacao_nivel !== undefined) updatePayload.formacao_nivel = formacao_nivel;
+        if (formacao_desc !== undefined) updatePayload.formacao_desc = formacao_desc;
+        if (tipo_cobranca !== undefined) updatePayload.tipo_cobranca = tipo_cobranca;
+        if (valor_mensal_numero !== undefined) updatePayload.valor_mensal_numero = valor_mensal_numero ? parseFloat(valor_mensal_numero) : null;
+        if (valor_sessao_numero !== undefined) updatePayload.valor_sessao_numero = valor_sessao_numero ? parseFloat(valor_sessao_numero) : null;
+        if (genero_identidade !== undefined) updatePayload.genero_identidade = genero_identidade;
+        if (cpf !== undefined) updatePayload.cpf = cpf;
+        if (razao_social !== undefined) updatePayload.razao_social = razao_social;
+        if (ano_inicio_experiencia !== undefined) updatePayload.ano_inicio_experiencia = ano_inicio_experiencia ? parseInt(ano_inicio_experiencia, 10) : null;
+        if (dailySummaryTime !== undefined) updatePayload.dailySummaryTime = dailySummaryTime || '08:00';
+        if (reminderHoursBefore !== undefined) updatePayload.reminderHoursBefore = reminderHoursBefore ? parseInt(reminderHoursBefore) : 24;
+        if (linkedin_url !== undefined) updatePayload.linkedin_url = linkedin_url;
+        if (instagram_url !== undefined) updatePayload.instagram_url = instagram_url;
+        if (facebook_url !== undefined) updatePayload.facebook_url = facebook_url;
+        if (tiktok_url !== undefined) updatePayload.tiktok_url = tiktok_url;
+        if (x_url !== undefined) updatePayload.x_url = x_url;
+
+        // Passamos os Arrays JS diretamente. O Sequelize fará a serialização correta para JSONB.
+        if (temas_atuacao !== undefined) updatePayload.temas_atuacao = temas_atuacao;
+        if (abordagens_tecnicas !== undefined) updatePayload.abordagens_tecnicas = abordagens_tecnicas;
+        if (modalidade !== undefined) updatePayload.modalidade = modalidade;
+        if (publico_alvo !== undefined) updatePayload.publico_alvo = publico_alvo;
+        if (estilo_terapia !== undefined) updatePayload.estilo_terapia = estilo_terapia;
+        if (praticas_inclusivas !== undefined) updatePayload.praticas_inclusivas = praticas_inclusivas;
+        if (disponibilidade_periodo !== undefined) updatePayload.disponibilidade_periodo = disponibilidade_periodo;
+
+        await psychologist.update(updatePayload);
 
         // --- ATIVAÇÃO DO TRIAL PÓS-CADASTRO (ANTI-ABUSO) ---
         // Se o perfil estava pendente e o profissional preencheu um CPF válido agora, ativa os 14 dias
@@ -1776,7 +1803,7 @@ exports.getStats = async (req, res) => {
         // 'all_time' não adiciona filtro
 
         // Adiciona os temas do psicólogo aos replacements para a query
-        // A query só será personalizada se o psicólogo tiver temas cadastrados
+        /// a query só será personalizada se o psicólogo tiver temas cadastrados
         if (psiTemas.length > 0) {
             replacements.psiTemas = psiTemas;
         }
@@ -1839,7 +1866,7 @@ exports.getStats = async (req, res) => {
             ).catch(err => { console.error("KPI Error (Favorites):", err.message); return [{ count: 0 }]; }),
 
             // 4. Top Demandas (Tendências) - Otimizado E PERSONALIZADO
-            // A query agora filtra buscas que contenham pelo menos um dos temas de atuação do psicólogo.
+            /// a query agora filtra buscas que contenham pelo menos um dos temas de atuação do psicólogo.
             db.sequelize.query(
                 `SELECT value as name, COUNT(*) as count
                  FROM "DemandSearches", jsonb_array_elements_text("searchParams"->'temas') as value
@@ -2190,6 +2217,7 @@ exports.getAnnouncements = async (req, res) => {
             where: { psychologistId },
             attributes: ['avisoId']
         });
+
         const lidosIds = new Set(avisosLidos.map(l => l.avisoId));
 
         // Mapeia os avisos adicionando o status 'read'

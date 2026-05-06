@@ -26,6 +26,13 @@ module.exports = (sequelize, DataTypes) => {
       this.hasMany(models.Question, {
         foreignKey: 'PatientId'
       });
+
+      if (models.Appointment) {
+        this.hasMany(models.Appointment, {
+          foreignKey: 'patientId',
+          as: 'appointments'
+        });
+      }
     }
   }
   Patient.init({
@@ -59,11 +66,13 @@ module.exports = (sequelize, DataTypes) => {
     },
     temas_buscados: {
       type: DataTypes.ARRAY(DataTypes.STRING),
-      allowNull: true
+      allowNull: true,
+      defaultValue: []
     },
     abordagem_desejada: {
       type: DataTypes.ARRAY(DataTypes.STRING),
-      allowNull: true
+      allowNull: true,
+      defaultValue: []
     },
     genero_profissional: {
       type: DataTypes.STRING,
@@ -71,11 +80,13 @@ module.exports = (sequelize, DataTypes) => {
     },
     praticas_afirmativas: {
       type: DataTypes.ARRAY(DataTypes.STRING),
-      allowNull: true
+      allowNull: true,
+      defaultValue: []
     },
     disponibilidade_periodo: {
       type: DataTypes.ARRAY(DataTypes.STRING),
-      allowNull: true
+      allowNull: true,
+      defaultValue: []
     },
     
     // --- CAMPOS DE AUDITORIA E LGPD (Adicionados) ---
@@ -141,7 +152,8 @@ module.exports = (sequelize, DataTypes) => {
     paranoid: true, // <--- ADICIONE ISTO (Cria a coluna deletedAt)
     timestamps: true,
     indexes: [
-        { name: 'idx_patients_created_at', fields: ['createdAt'] }
+        { name: 'idx_patients_created_at', fields: ['createdAt'] },
+        { name: 'idx_patients_email', fields: ['email'] }
     ]
   });
   return Patient;

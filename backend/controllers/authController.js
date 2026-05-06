@@ -192,8 +192,8 @@ exports.unifiedGoogleLogin = async (req, res) => {
  * Descrição: Autentica um usuário (paciente ou psicólogo) com email e senha,
  *            incluindo logging detalhado para o seu novo dashboard.
  * @example
- * // Você deve integrar esta lógica aos seus controllers existentes
- * // (ex: psychologistController.js, patientController.js)
+ * / Você deve integrar esta lógica aos seus controllers existentes
+ * / (ex: psychologistController.js, patientController.js)
  */
 exports.loginWithPassword = async (req, res) => {
     const { email, password, userType } = req.body; // userType: 'psychologist' ou 'patient'

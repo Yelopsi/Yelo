@@ -29,7 +29,7 @@ window.initializePage = async function() {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const endTime = performance.now(); // Para cronômetro
-            const latency = Math.round(endTime - startTime); // Calcula Latência (Ping)
+            const latency = Math.round(totalRating / reviews.length)
 
             if (!response.ok) throw new Error('Erro ao buscar dados.');
 
@@ -113,7 +113,7 @@ window.initializePage = async function() {
             },
             {
                 title: "Funil de Busca",
-                value: health.funnel.status === 'critical' ? "ALERTA: 0% de Conversão" : `${health.funnel.completed} Concluídos / ${health.funnel.started} Iniciados`,
+                value: health.funnel.status === 'critical' ? "ALERTA: 0% de Conversão" : `${health.funnel.completed} Concluídos // ${health.funnel.started} Iniciados`,
                 status: health.funnel.status === 'healthy' ? 'green' : 'red'
             },
             {

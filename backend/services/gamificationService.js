@@ -10,9 +10,9 @@ const getNextLevelXP = (currentXP) => { const next = LEVELS.find(l => l.min > cu
 // --- TABELA DE PONTUAÇÃO ---
 const SCORING_RULES = {
     'profile_complete': { points: 500, limit: 1, type: 'unique' }, // Único
-    'forum_post':       { points: 25,  limit: 2, type: 'daily' },  // Criar post no fórum
-    'blog_post':        { points: 50,  limit: 1, type: 'daily' },  // 1x por dia
-    'forum_reply':      { points: 20,  limit: 5, type: 'daily' },  // 5x por dia
+    'forum_post':       { points: 25,  limit: 2, type: 'daily' }, // Criar post no fórum
+    'blog_post':        { points: 50,  limit: 1, type: 'daily' }, // 1x por dia
+    'forum_reply':      { points: 20,  limit: 5, type: 'daily' }, // 5x por dia
     'whatsapp_click':   { points: 10,  limit: 0, type: 'unlimited' },
     'receive_like':     { points: 5,   limit: 0, type: 'unlimited' },
     'login':            { points: 1,   limit: 1, type: 'daily' }
@@ -24,7 +24,22 @@ const LEVELS = [
     { slug: 'nivel_verificado',   min: 500,    label: 'Psicólogo Verificado' },
     { slug: 'nivel_ativo',        min: 1500,   label: 'Perfil Ativo' },
     { slug: 'nivel_especialista', min: 5000,   label: 'Especialista Yelo' },
-    { slug: 'nivel_mentor',       min: 15000,  label: 'Mentor / Top Voice' }
+    { slug: 'nivel_mentor',       min: 15000,  label: 'Mentor // Top Voice' }
+];
+
+// --- REGRAS DE BADGES (CONQUISTAS) ---
+const BADGE_THRESHOLDS = {
+    SEMEADOR: { OURO: 15, PRATA: 5, BRONZE: 1 },
+    VOZ_ATIVA: { OURO: 200, PRATA: 50, BRONZE: 10 }
+};
+
+// --- CAMPOS OBRIGATÓRIOS PARA O PERFIL 100% (Badge Autêntico) ---
+const REQUIRED_PROFILE_FIELDS = [
+    'nome', 'bio', 'crp', 'telefone', 'cep', 'cidade', 'estado', 
+    'fotoUrl', 'valor_sessao_numero', 'genero_identidade'
+];
+const REQUIRED_PROFILE_ARRAYS = [
+    'temas_atuacao', 'abordagens_tecnicas', 'modalidade', 'disponibilidade_periodo'
 ];
 
 /**
@@ -89,21 +104,19 @@ async function calculateBadges(psychologistId) {
         badges.progress = badges.progress || {};
 
         const postCount = await db.Post.count({ where: { psychologist_id: psychologistId } });
-        if (postCount >= 15) badges.semeador = 'ouro';
-        else if (postCount >= 5) badges.semeador = 'prata';
-        else if (postCount >= 1) badges.semeador = 'bronze';
+        if (postCount >= BADGE_THRESHOLDS.SEMEADOR.OURO) badges.semeador = 'ouro';
+        else if (postCount >= BADGE_THRESHOLDS.SEMEADOR.PRATA) badges.semeador = 'prata';
+        else if (postCount >= BADGE_THRESHOLDS.SEMEADOR.BRONZE) badges.semeador = 'bronze';
         else delete badges.semeador;
 
         const commentCount = await db.ForumComment.count({ where: { PsychologistId: psychologistId } });
-        if (commentCount >= 200) badges.voz_ativa = 'ouro';
-        else if (commentCount >= 50) badges.voz_ativa = 'prata';
-        else if (commentCount >= 10) badges.voz_ativa = 'bronze';
+        if (commentCount >= BADGE_THRESHOLDS.VOZ_ATIVA.OURO) badges.voz_ativa = 'ouro';
+        else if (commentCount >= BADGE_THRESHOLDS.VOZ_ATIVA.PRATA) badges.voz_ativa = 'prata';
+        else if (commentCount >= BADGE_THRESHOLDS.VOZ_ATIVA.BRONZE) badges.voz_ativa = 'bronze';
         else delete badges.voz_ativa;
 
-        const requiredFields = ['nome', 'bio', 'crp', 'telefone', 'cep', 'cidade', 'estado', 'fotoUrl', 'valor_sessao_numero', 'genero_identidade'];
-        const requiredArrays = ['temas_atuacao', 'abordagens_tecnicas', 'modalidade', 'disponibilidade_periodo'];
-        const isComplete = requiredFields.every(field => psi[field] != null && String(psi[field]).trim() !== '') &&
-                           requiredArrays.every(field => Array.isArray(psi[field]) && psi[field].length > 0);
+        const isComplete = REQUIRED_PROFILE_FIELDS.every(field => psi[field] != null && String(psi[field]).trim() !== '') &&
+                           REQUIRED_PROFILE_ARRAYS.every(field => Array.isArray(psi[field]) && psi[field].length > 0);
 
         if (isComplete) badges.autentico = true;
         else delete badges.autentico;
@@ -221,5 +234,8 @@ module.exports = {
     processAction,
     rollbackAction,
     calculateBadges,
-    checkProfileCompletion
+    checkProfileCompletion,
+    SCORING_RULES, // Exportados para uso externo (ex: Admin Panel)
+    LEVELS,
+    BADGE_THRESHOLDS
 };

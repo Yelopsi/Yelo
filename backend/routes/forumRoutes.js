@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const forumController = require('../controllers/forumController');
-const { protect } = require('../middleware/authMiddleware'); // Corrigido o caminho e o import
+const { protect } = require('../middlewares/authMiddleware'); // Corrigido o caminho e o import
 
 // Todas as rotas são protegidas
 router.use(protect);

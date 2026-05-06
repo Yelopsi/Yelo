@@ -528,7 +528,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (adminNameEl && newName) {
                 adminNameEl.textContent = newName;
             }
-            // A função updateWelcomeMessage já lê o nome da sidebar, que foi atualizado
+            /// a função updateWelcomeMessage já lê o nome da sidebar, que foi atualizado
             updateWelcomeMessage();
         });
 
@@ -1139,8 +1139,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Cores específicas para os planos
         const colors = labels.map(p => {
             if(p === 'Essencial') return '#81C784'; // Verde claro
-            if(p === 'Clínico') return '#FFD54F';     // Amarelo
-            if(p === 'Sol') return '#FF8A65';     // Laranja
+            if(p === 'Clínico') return '#FFD54F'; // Amarelo
+            if(p === 'Sol') return '#FF8A65'; // Laranja
             return '#ccc';
         });
 

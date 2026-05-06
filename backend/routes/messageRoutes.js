@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const messageController = require('../controllers/messageController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect } = require('../middlewares/authMiddleware');
 
 // Todas as rotas de mensagens e conversas do usuário exigem autenticação
 router.use(protect);

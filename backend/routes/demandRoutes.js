@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const demandController = require('../controllers/demandController');
-const { protect, admin } = require('../middleware/authMiddleware'); // Importa os middlewares
+const { protect, admin } = require('../middlewares/authMiddleware'); // Importa os middlewares
 
 // Rota para registrar acessos ao site
 router.post('/visit', demandController.recordVisit);

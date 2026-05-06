@@ -4,195 +4,6 @@
     <title>Seus Resultados - Yelo</title>
     <%- include('partials/head') %>
     
-    <!-- Event snippet for Match Concluído conversion page -->
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-          try {
-              if (typeof gtag === 'function') {
-                  gtag('event', 'conversion', {'send_to': 'AW-11236864912/hOYjCPO1lqAcEJDnk-4p'});
-              }
-          } catch(e) {}
-      });
-    </script>
-
-    <!-- Estilos Exclusivos desta Página -->
-    <style>
-        /* Hero Section: Fundo Verde com Texto Branco */
-        .results-hero {
-            background-color: var(--verde-escuro);
-            color: white;
-            padding: 100px 20px 140px 20px; /* Espaço extra embaixo para os cards subirem */
-            text-align: center;
-            position: relative;
-            margin-top: -2px;
-        }
-        .results-hero h1 { 
-            color: white; 
-            margin-bottom: 15px; 
-            font-family: var(--font-titulos); 
-            font-size: clamp(2rem, 5vw, 3rem);
-        }
-        .results-hero p { 
-            font-size: 1.1rem; 
-            opacity: 0.9; 
-            max-width: 600px; 
-            margin: 0 auto; 
-            line-height: 1.6;
-        }
-        
-        /* Container Principal (Sobe por cima do Hero) */
-        .results-wrapper {
-            max-width: 1100px;
-            margin: -80px auto 60px auto; /* Margem negativa faz subir */
-            padding: 0 20px;
-            position: relative;
-            z-index: 2;
-        }
-
-        /* Grid Responsivo: Automático (Mobile 1 col, Desktop 3 col) */
-        .results-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-        }
-
-        /* Card Design Novo */
-        .match-card {
-            background: white;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid #f0f0f0;
-            position: relative;
-        }
-        .match-card:hover { 
-            transform: translateY(-8px); 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
-        }
-
-        /* Badge de Compatibilidade */
-        .match-badge {
-            position: absolute;
-            top: 20px; left: 20px; /* Movido para a esquerda */
-            background: var(--verde-escuro);
-            color: var(--cor-Yelo);
-            padding: 6px 14px;
-            border-radius: 30px;
-            font-weight: 700;
-            font-size: 0.85rem;
-            z-index: 10;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-        }
-
-        /* Botão de Favoritar (Coração) */
-        .heart-icon {
-            position: absolute;
-            top: 20px; right: 20px; /* Fica na direita */
-            width: 38px; height: 38px;
-            background: white;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.4rem; 
-            color: #ccc; /* Cor padrão (desativado) */
-            cursor: pointer;
-            z-index: 10;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            transition: all 0.2s ease;
-        }
-        .heart-icon:hover { transform: scale(1.1); }
-        .heart-icon.favorited { color: #E63946; } /* Vermelho quando ativo */
-
-        /* Foto do Profissional */
-        .match-header-img {
-            width: 100%;
-            height: 220px;
-            object-fit: cover;
-            background-color: #f4f4f4;
-        }
-
-        /* Corpo do Card */
-        .match-body {
-            padding: 25px;
-            text-align: left;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .match-name { font-size: 1.5rem; color: #222; margin: 0 0 5px 0; font-family: var(--font-titulos); }
-        .match-crp { font-size: 0.85rem; color: #888; margin-bottom: 15px; display: block; }
-        
-        .match-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-        .match-tag {
-            background: #f0fdf4; /* Verde bem claro */
-            color: var(--verde-escuro);
-            padding: 5px 12px;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .match-bio {
-            font-size: 0.95rem;
-            color: #555;
-            line-height: 1.6;
-            margin-bottom: 25px;
-            display: -webkit-box;
-            -webkit-line-clamp: 3; /* Limita a 3 linhas */
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        /* Rodapé do Card (Preço e Botão) */
-        .match-footer {
-            margin-top: auto;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .match-price span { display: block; font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
-        .match-price strong { color: var(--verde-escuro); font-size: 1.2rem; font-weight: 700; }
-
-        .btn-profile {
-            background-color: var(--verde-escuro);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 50px;
-            font-size: 0.95rem;
-            font-weight: bold;
-            text-decoration: none;
-            transition: background 0.3s;
-        }
-        .btn-profile:hover { background-color: #2a624d; transform: scale(1.05); }
-
-        /* Loading Screen */
-        #loading-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; z-index: 9999;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-        }
-        .spinner-border {
-            width: 60px; height: 60px;
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid var(--verde-escuro);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
 </head>
 
 <body class="pagina-resultados">
@@ -219,9 +30,9 @@
             <div id="results-grid" class="results-grid"></div>
             
             <!-- Botão de Ação Secundária -->
-            <div style="text-align: center; margin-top: 60px;">
-                <p style="color: #666; margin-bottom: 15px;">Quer refinar sua busca?</p>
-                <a href="/questionario.html" class="btn btn-outline" style="color: var(--verde-escuro); border-color: var(--verde-escuro);">Refazer Questionário</a>
+            <div style="text-align: center; margin-top: 80px;">
+                <p style="color: #666; margin-bottom: 20px; font-size: 1.1rem;">Quer explorar outras possibilidades?</p>
+                <a href="/questionario.html" class="btn-outline-refazer" style="color: var(--verde-escuro); border: 2px solid var(--verde-escuro); padding: 12px 30px; border-radius: 50px; font-weight: bold; text-decoration: none; transition: all 0.3s; display: inline-block;">Refazer Questionário</a>
             </div>
         </div>
 
@@ -233,7 +44,7 @@
     <div id="toast-container"></div>
     
     <script src="/config.js"></script>
-    <script src="/resultados.js"></script> 
+    <script src="/js/resultados.js?v=2"></script> 
 
 </body>
 </html>

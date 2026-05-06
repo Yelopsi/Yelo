@@ -44,7 +44,7 @@ window.initializePage = function() {
     function renderKPIs(stats) {
         // Mapa de tradução para os motivos
         const reasonMap = {
-            'financeiro': 'Preço / Financeiro',
+            'financeiro': 'Preço // Financeiro',
             'plataforma': 'Dificuldade com a Plataforma',
             'suporte': 'Suporte Insuficiente',
             'demanda': 'Baixa Demanda',

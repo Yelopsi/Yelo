@@ -12,7 +12,17 @@ exports.createQuestion = async (req, res) => {
             return res.status(400).json({ error: "Conteúdo muito curto." });
         }
 
-        let patient = await db.Patient.findOne({ where: { email: 'anonimo@yelopsi.com.br' } });
+        // FIX: Busca inclusive o paciente anônimo se ele estiver deletado (paranoid: false)
+        // Isso evita o erro de "Unique Constraint" ao tentar recriar o e-mail
+        let patient = await db.Patient.findOne({ 
+            where: { email: 'anonimo@yelopsi.com.br' },
+            paranoid: false 
+        });
+
+        if (patient && patient.deletedAt) {
+            await patient.restore();
+        }
+
         if (!patient) {
             patient = await db.Patient.create({
                 nome: "Anônimo",
@@ -35,7 +45,10 @@ exports.createQuestion = async (req, res) => {
 
     } catch (error) {
         console.error("Erro ao criar pergunta:", error);
-        res.status(500).json({ error: "Erro interno ao salvar pergunta." });
+        const errorMessage = process.env.NODE_ENV === 'production' 
+            ? "Ocorreu um erro interno ao processar sua pergunta. Tente novamente mais tarde." 
+            : "Erro interno ao salvar: " + (error.original ? error.original.message : error.message);
+        res.status(500).json({ error: errorMessage });
     }
 };
 

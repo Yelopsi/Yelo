@@ -16,7 +16,7 @@ module.exports = {
         email: {
           type: Sequelize.STRING,
           allowNull: false, // Não permitimos paciente sem email
-          unique: true      // O email deve ser único no banco
+          unique: true // O email deve ser único no banco
         },
         senha: {
           type: Sequelize.STRING,

@@ -5,8 +5,8 @@ const db = require('../models'); // Adicionado para acesso ao banco
 const { Op } = require('sequelize'); // Adicionado para queries complexas
 const router = express.Router();
 const psychologistController = require('../controllers/psychologistController');
-const { protect } = require('../middleware/authMiddleware');
-const { uploadProfilePhoto, uploadCrpDocument } = require('../middleware/upload');
+const { protect } = require('../middlewares/authMiddleware');
+const { uploadProfilePhoto, uploadCrpDocument } = require('../middlewares/upload');
 
 // ===============================================
 // ROTAS PÚBLICAS (Não exigem login)
@@ -39,6 +39,23 @@ router.use(protect);
 // Rotas "ME" (do usuário logado)
 router.get('/me', psychologistController.getAuthenticatedPsychologistProfile);
 router.put('/me', psychologistController.updatePsychologistProfile);
+
+// --- MOCKS DE DADOS DO DASHBOARD (ANALÍTICA E AVISOS) ---
+router.get('/me/analytics', (req, res) => {
+    res.json({
+        priceComparison: { myPrice: 150, cityAverage: 120, platformAverage: 130 },
+        topTopics: [
+            { topic: 'Ansiedade', count: 45 },
+            { topic: 'Depressão', count: 30 },
+            { topic: 'Carreira', count: 15 }
+        ],
+        visibility: { labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'], appearances: [5, 12, 8, 15, 22] },
+        profileStrength: { myScores: [8, 9, 7, 5, 8], averageScores: [6, 7, 5, 4, 6] }
+    });
+});
+
+router.get('/me/favorites-profile', (req, res) => res.json({ total: 0, temas: {}, faixaValor: {}, genero: {} }));
+router.get('/me/announcements', (req, res) => res.json([]));
 
 // ROTA DE ESTATÍSTICAS REAIS (KPIs)
 router.get('/me/stats', psychologistController.getStats);

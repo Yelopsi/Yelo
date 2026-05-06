@@ -28,7 +28,7 @@ passport.use(
         // Opções para a estratégia do Google
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: '/api/auth/google/callback', // A rota que o Google redirecionará após o login
+        callbackURL: '/api/auth/google/callback', /// a rota que o Google redirecionará após o login
         passReqToCallback: true // Permite passar o objeto 'req' para o callback
     },
     async (req, accessToken, refreshToken, profile, done) => {

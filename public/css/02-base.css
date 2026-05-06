@@ -1,0 +1,102 @@
+/* public/css/02-base.css */
+
+:root {
+    --ui-scale: 1; /* Resetado para 1. O redimensionamento agora é feito pelo zoom no EJS */
+}
+
+/* --- Reset Básico --- */
+*, *::before, *::after {
+    box-sizing: inherit;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    user-select: text !important;
+}
+
+html {
+    min-height: 100%;
+    overflow-x: clip;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-principal);
+    font-weight: 500;
+    font-size: calc(15px * var(--ui-scale));
+    background-color: var(--off-white);
+    background-image: var(--ruido-global) !important;
+    background-attachment: fixed !important;
+    background-repeat: repeat !important;
+    zoom: 0.88;
+    color: #222;
+    overflow-x: clip;
+    width: 100%;
+    line-height: 1.6;
+}
+
+/* Garantir que o container principal fique acima do ruído (base do HTML/Body) */
+main, section, .main-container, .container-navegacao, header, footer {
+    position: relative;
+    z-index: 1;
+}
+
+/* --- Títulos (Personalidade da Marca) --- */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-titulos); /* New Kansas */
+    font-weight: 500;
+    letter-spacing: -0.02em; /* Títulos serifados ficam mais elegantes um pouco mais juntos */
+    color: var(--verde-escuro); /* Garante a cor da marca nos títulos */
+}
+
+/* Ajuste específico para links e botões herdarem a Lato */
+a, button, input, textarea, select {
+    font-family: var(--font-leitura);
+}
+
+/* Reforço de fontes em formulários que vêm do style.css antigo */
+body, input, textarea, select, button {
+    font-family: var(--font-alternativa), var(--font-montserrat), Arial, sans-serif;
+    font-weight: 500;
+    color: #154734;
+}
+
+label { font-weight: 700; }
+ul { list-style: none; padding: 0; margin: 0; }
+a { text-decoration: none; }
+
+/* Outras tipografias utilitárias globais */
+.profile-tags span, .profile-body-tabs, .profile-body-tabs nav, .profile-body-tabs .tab-content, #profile-container, .conversion-card, .card {
+    font-family: inherit;
+    color: #222;
+}
+
+/* ==========================================================================
+   CLASSES UTILITÁRIAS DE ANIMAÇÃO DE SCROLL E ESTADO
+   ========================================================================== */
+
+/* Elemento oculto pronto para aparecer ao rolar */
+.hidden {
+    opacity: 0;
+    transform: translateY(40px); 
+    transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Classe adicionada via JS */
+.visivel {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Elementos de Loading e Erro quando devem sumir de vez da tela */
+#error-state.hidden, 
+#loading-state.hidden {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}

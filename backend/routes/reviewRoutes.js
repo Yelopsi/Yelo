@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { createReview } = require('../controllers/reviewController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect } = require('../middlewares/authMiddleware');
 
 // Define a rota POST /api/reviews
 // Ela é protegida pelo 'protect' (que anexa req.patient)

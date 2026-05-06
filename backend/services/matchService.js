@@ -6,7 +6,7 @@ const MAPA_CARACTERISTICAS = {
     "LGBTQIAPN+ Friendly 🏳️‍🌈": ["LGBTQIAPN+ Friendly 🏳️‍🌈", "LGBTQIAPN+ friendly", "Afirmativa"],
     "Que faça parte da comunidade LGBTQIAPN+": ["Faz parte da comunidade LGBTQIAPN+ / Afirmativa", "Comunidade LGBTQIAPN+", "Que faça parte da comunidade LGBTQIAPN+"],
     
-    "Pessoa não-branca ou com prática antirracista": ["Pessoa não-branca / Prática Antirracista", "Antirracista", "Negritude", "Pessoa não-branca / Antirracista", "Que seja uma pessoa não-branca (racializada) / prática antirracista"],
+    "Pessoa não-branca ou com prática antirracista": ["Pessoa não-branca // Prática Antirracista", "Antirracista", "Negritude", "Pessoa não-branca // Antirracista", "Que seja uma pessoa não-branca (racializada) / prática antirracista"],
     
     "Que tenha uma perspectiva feminista": ["Perspectiva Feminista", "Feminista", "Perspetiva feminista", "Que tenha uma perspectiva feminista"],
     
@@ -113,17 +113,22 @@ const calculateScore = (psychologist, preferences, priceRange) => {
         }
     }
 
-    // 5. PRÁTICAS INCLUSIVAS / AFIRMATIVAS (Identidade) (Peso: 20 pts por prática)
+    // 5. PRÁTICAS INCLUSIVAS E VIVÊNCIAS (Identidade) (Peso: 20 pts por prática)
     if (preferences.praticas_desejadas && preferences.praticas_desejadas.length > 0) {
-        const praticasPsi = psychologist.praticas_inclusivas || [];
+        // Junta as duas colunas do banco que guardam vivências do psicólogo
+        const praticasPsi = [
+            ...(Array.isArray(psychologist.praticas_inclusivas) ? psychologist.praticas_inclusivas : []),
+            ...(Array.isArray(psychologist.praticas_vivencias) ? psychologist.praticas_vivencias : [])
+        ];
+        
         let patricasMatches = 0;
         
         preferences.praticas_desejadas.forEach(pref => {
-            const termosTecnicos = MAPA_CARACTERISTICAS[pref];
-            if (termosTecnicos) {
-                const deuMatch = termosTecnicos.some(termo => praticasPsi.includes(termo));
-                if (deuMatch) patricasMatches++;
-            }
+            // Se não tiver mapeamento, usa o próprio termo
+            const termosTecnicos = MAPA_CARACTERISTICAS[pref] || [pref];
+            
+            const deuMatch = termosTecnicos.some(termo => praticasPsi.includes(termo));
+            if (deuMatch) patricasMatches++;
         });
 
         if (patricasMatches > 0) {
@@ -152,6 +157,13 @@ const calculateScore = (psychologist, preferences, priceRange) => {
     if (daysSinceCreation <= TRIAL_DAYS && whatsappClicks < MAX_TRIAL_CLICKS) {
         score += 30; // Boost generoso para jogar o profissional novo para os primeiros lugares
         // Nota: Não inserimos no 'matchDetails' para não transparecer ao paciente que é um impulsionamento artificial.
+    }
+
+    // 8. ENGAJAMENTO NA PLATAFORMA (Integração Gamificação)
+    // Profissionais que ajudam a comunidade ganham um empurrãozinho (Até 10 pontos)
+    if (psychologist.xp && psychologist.xp > 0) {
+        const xpBoost = Math.min(10, Math.floor(psychologist.xp / 100)); // 1 ponto de match a cada 100 XP no Fórum/Blog
+        score += xpBoost;
     }
 
     return { 
@@ -199,8 +211,25 @@ exports.calculateMatches = async (preferences) => {
         }
     }
 
-    // 4. Ordena do mais compatível pro menos compatível
-    scoredPsychologists.sort((a, b) => b.matchScore - a.matchScore);
+    // 4. Ordena do mais compatível pro menos compatível (Com Desempate Justo)
+    scoredPsychologists.sort((a, b) => {
+        if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
+
+        // Desempate 1: Prioridade por Plano (Referência > Clínico > Essencial)
+        const planWeight = (plan) => {
+            const p = (plan || '').toUpperCase();
+            if (p === 'REFERENCE' || p === 'SOL') return 3;
+            if (p === 'CLINICAL' || p === 'CLÍNICO') return 2;
+            if (p === 'ESSENTIAL' || p === 'ESSENCIAL') return 1;
+            return 0; // Trial ou sem plano
+        };
+        if (planWeight(b.plano) !== planWeight(a.plano)) return planWeight(b.plano) - planWeight(a.plano);
+
+        // Desempate 2: Quem engaja mais na plataforma (XP) passa na frente
+        if ((b.xp || 0) !== (a.xp || 0)) return (b.xp || 0) - (a.xp || 0);
+        // Desempate 3: Quem tem menos contatos no WhatsApp ganha (Distribuição de Renda/Leads)
+        return (a.whatsapp_clicks || 0) - (b.whatsapp_clicks || 0);
+    });
 
     // 5. Categoriza (Ideal vs Próximo)
     const IDEAL_THRESHOLD = 70; // Pontuação alta

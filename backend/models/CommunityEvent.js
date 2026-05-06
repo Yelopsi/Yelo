@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
     titulo: DataTypes.STRING,
     subtitulo: DataTypes.STRING,
     data_hora: DataTypes.STRING, // Ex: "15/12 às 19h"
-    tipo: DataTypes.STRING,      // "Online" ou "Presencial"
+    tipo: DataTypes.STRING, // "Online" ou "Presencial"
     link_acao: DataTypes.STRING, // Link do Google Meet ou Sympla
     texto_botao: DataTypes.STRING,
     ativo: {

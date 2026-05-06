@@ -1,12 +1,12 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+/ This is your Prisma schema file,
+/ learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql" // Ou "mysql", "sqlite", etc.
+  provider = "postgresql" / Ou "mysql", "sqlite", etc.
   url      = env("DATABASE_URL")
 }
 
@@ -16,7 +16,7 @@ enum Role {
   ADMIN
 }
 
-// Modelo para autenticação
+/ Modelo para autenticação
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
@@ -25,25 +25,25 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relação 1-para-1 com o perfil do psicólogo
+  / Relação 1-para-1 com o perfil do psicólogo
   psychologistProfile PsychologistProfile?
 }
 
-// Modelo para os dados do perfil do psicólogo
+/ Modelo para os dados do perfil do psicólogo
 model PsychologistProfile {
   id        Int      @id @default(autoincrement())
   nome      String
   crp       String   @unique
   cpf       String   @unique
   slug      String   @unique
-  status    String   @default("pending") // pending, active, rejected
+  status    String   @default("pending") / pending, active, rejected
   plano     String   @default("Essencial")
   isAdmin   Boolean  @default(false)
   fotoUrl   String?
   bio       String?
   telefone  String?
 
-  // Campos do questionário
+  / Campos do questionário
   modalidade             String?
   cep                    String?
   genero_identidade      String?
@@ -53,7 +53,7 @@ model PsychologistProfile {
   praticas_vivencias     String[]
   disponibilidade_periodo String[]
 
-  // Chave estrangeira para a relação com User
+  / Chave estrangeira para a relação com User
   userId Int  @unique
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

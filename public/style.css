@@ -1,0 +1,101 @@
+/* ==========================================================================
+   STYLE.CSS - ARQUIVO ORQUESTRADOR
+   ========================================================================== */
+
+/* Importa as partes organizadas do sistema ITCSS */
+@import url('/css/01-variables.css?v=2');
+@import url('/css/02-base.css?v=2');
+@import url('/css/03-layout.css?v=2');
+@import url('/css/04-components.css?v=2');
+@import url('/css/05-pages.css?v=2');
+@import url('/css/06-utilities.css?v=2');
+
+/* ==========================================================================
+   CONFIGURAÇÕES GLOBAIS DE TEMA (BACKGROUNDS & TEXTURAS)
+   ========================================================================== */
+
+/* 1. Garante que seções de fundo sólido apliquem a textura de ruído */
+header, .hero, .hero-profissionais, .hero-psi, .faq-hero, .manifesto-hero, .hero-ajuda, .rodape-principal, .plans-section, body.pagina-questionario, body.pagina-aviso, .ruido {
+    background-image: var(--ruido-claro) !important;
+    background-attachment: fixed !important;
+    background-repeat: repeat !important;
+}
+
+/* 2. Unifica a barra inferior de botões no questionário */
+body.pagina-questionario .navigation-buttons {
+    background: transparent !important;
+    border-top: none !important;
+}
+
+@media (max-width: 991px) {
+    body.pagina-questionario .slide {
+        background: transparent !important;
+    }
+}
+
+/* 3. Prevenção de Bug de Overlay do Antigo Script de Noise */
+.noise-overlay, #noise-overlay, .noise {
+    display: none !important;
+}
+
+/* 4. Fundos Base de Páginas */
+body.pagina-dashboard {
+    background-color: var(--cinza-fundo) !important;
+}
+body.pagina-questionario,
+body.pagina-aviso {
+    background-color: var(--verde-escuro) !important;
+}
+
+/* ==========================================================================
+   RESTAURAÇÃO DO RITMO VISUAL (BRANCO // OFF-WHITE)
+   ========================================================================== */
+
+/* Seções puramente brancas */
+.secao-vantagens, .como-funciona, .faq-secao, .stats-section, .benefits-section, .match-section, .faq-psi-section, .secao-terapeutas, .comparativo-secao {
+    background-color: #ffffff !important;
+    background-image: var(--ruido-global) !important;
+    background-attachment: fixed !important;
+    background-repeat: repeat !important;
+}
+
+/* Seções Off-White (Levemente Cinzas) */
+.secao-organica, .secao-depoimentos, .aviso-crise, .jornada-section, .diferenciais-section, .depoimentos-psi-section, .secao-conteudo-pagina, .cta-section {
+    background-color: var(--off-white) !important;
+    background-image: var(--ruido-global) !important;
+    background-attachment: fixed !important;
+    background-repeat: repeat !important;
+}
+
+/* Páginas Inteiras Off-White */
+.pagina-blog, .pagina-contato-main, .pagina-legal, body.pagina-registro, body.pagina-login, .login-main {
+    background-color: var(--off-white) !important;
+    background-image: var(--ruido-global) !important;
+    background-attachment: fixed !important;
+    background-repeat: repeat !important;
+}
+
+/* Telas Logadas Off-White */
+body.pagina-dashboard, .chat-layout, .inbox-container {
+    background-image: var(--ruido-global) !important;
+    background-attachment: fixed !important;
+    background-repeat: repeat !important;
+}
+
+/* ==========================================================================
+   EFEITO DE TRANSIÇÃO (WAVES) COM TEXTURA
+   ========================================================================== */
+
+/* Waves Claras sobre Fundo Escuro */
+.wave-divider::after, .faq-wave-bottom::after, .wave-top-organica::after {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background-image: var(--ruido-global); background-attachment: fixed; background-repeat: repeat;
+    pointer-events: none; z-index: 10;
+}
+
+/* Waves Escuras sobre Fundo Claro */
+.wave-divider-footer::after, .faq-psi-section .wave-divider::after {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background-image: var(--ruido-claro); background-attachment: fixed; background-repeat: repeat;
+    pointer-events: none; z-index: 10;
+}

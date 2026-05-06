@@ -1,0 +1,56 @@
+const authRoutes = require('./authRoutes');
+const newsletterRoutes = require('./newsletterRoutes');
+const trackingRoutes = require('./trackingRoutes');
+const webhookRoutes = require('./webhookRoutes');
+const analyticsRoutes = require('./analyticsRoutes');
+const publicRoutes = require('./publicRoutes');
+const adminAuthRoutes = require('./adminAuthRoutes');
+const myPatientsRoutes = require('./myPatientsRoutes');
+const appointmentRoutes = require('./appointmentRoutes');
+const financialRoutes = require('./financialRoutes');
+const blogRoutes = require('./blogRoutes');
+const psychologistRoutes = require('./psychologistRoutes');
+const patientRoutes = require('./patientRoutes');
+const messageRoutes = require('./messageRoutes');
+const demandRoutes = require('./demandRoutes');
+const usuarioRoutes = require('./usuarioRoutes');
+const adminMessageRoutes = require('./adminMessageRoutes');
+const adminRoutes = require('./adminRoutes');
+const reviewRoutes = require('./reviewRoutes');
+const qnaRoutes = require('./qnaRoutes');
+const paymentRoutes = require('./paymentRoutes');
+const forumRoutes = require('./forumRoutes');
+const fixRoutes = require('./fixRoutes');
+const extraRoutes = require('./extraRoutes');
+const viewRoutes = require('./viewRoutes');
+
+module.exports = (app) => {
+    app.use('/api/auth', authRoutes);
+    app.use('/api/newsletter', newsletterRoutes); 
+    app.use('/api/tracking', trackingRoutes);
+    app.use('/api/webhooks', webhookRoutes);
+    app.use('/api', analyticsRoutes);
+    app.use('/api/public', publicRoutes);
+    app.use('/api', adminAuthRoutes);
+    app.use('/api/my-patients', myPatientsRoutes);
+    app.use('/api/appointments', appointmentRoutes);
+    app.use('/api/financials', financialRoutes);
+    app.use('/api/psychologists/me/posts', blogRoutes);
+    app.use('/api/psychologists', psychologistRoutes);
+    app.use('/api/patients', patientRoutes);
+    app.use('/api/messaging', messageRoutes); 
+    app.use('/api/messages', messageRoutes);
+    app.use('/api/demand', demandRoutes);
+    app.use('/api/usuarios', usuarioRoutes);
+    app.use('/api/admin/messages', adminMessageRoutes);
+    app.use('/api/admin', adminRoutes);
+    app.use('/api/reviews', reviewRoutes);
+    app.use('/api/qna', qnaRoutes);
+    app.use('/api/payments', paymentRoutes);
+    app.use('/api/forum', forumRoutes);
+
+    // Mapeamentos base devem vir por último
+    app.use('/', fixRoutes);
+    app.use('/', extraRoutes);
+    app.use('/', viewRoutes);
+};

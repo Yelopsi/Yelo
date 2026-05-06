@@ -1,0 +1,2223 @@
+<style>
+    /* Ajuste fino para o container do calendário preencher a tela */
+    #calendar-wrapper {
+        flex: 1 1 auto;
+        background: #fff;
+        border-radius: 12px;
+        padding: 10px;
+        min-height: 600px; /* Força espaço para renderizar */
+        display: flex;
+        flex-direction: column;
+        position: relative; /* Contexto de posicionamento para o loader */
+        overflow: hidden;
+        /* [FIX DEFINITIVO DE GEOMETRIA] Neutraliza o zoom: 0.88 do body (1 // 0.88 = 1.13636) */
+        zoom: 1.13636364 !important;
+        font-size: 0.88em !important; /* Mantém os textos visualmente alinhados com o painel */
+    }
+
+    /* Garante que o FullCalendar ocupe todo o wrapper */
+    #calendar-wrapper .fc {
+        flex: 1 1 auto;
+        height: 100% !important;
+    }
+
+    /* [CORREÇÃO LARGURA] Força o calendário a ocupar 100% da largura sempre */
+    .fc, .fc-view-harness, .fc-view, .fc table, .fc-scrollgrid {
+        width: 100% !important;
+    }
+    .fc-col-header, .fc-timegrid-body, .fc-timegrid-slots table, .fc-timegrid-cols table {
+        width: 100% !important;
+    }
+    
+    /* [RESTAURAÇÃO DA GRADE] Devolvemos a altura elegante e respirável para a agenda */
+    .fc .fc-timegrid-slot {
+        height: 48px !important;
+    }
+    .fc .fc-timegrid-slot-label-frame {
+        height: 48px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    /* [CORREÇÃO VISIBILIDADE] Garante que o corpo do calendário não colapse */
+    /* .fc-view-harness { min-height: 500px; } REMOVIDO */
+
+    /* Ajuste do Card de Agendamento */
+    .fc-event {
+        border-radius: 4px !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .fc-event-main {
+        padding: 2px 5px !important; /* Alinhamento interno */
+    }
+        
+        /* CORES FUNCIONAIS (APP-LIKE) */
+        .evt-custom { border-radius: 6px !important; padding: 4px !important; border: none !important; font-weight: 600 !important; color: white !important; }
+        .evt-confirmed { background-color: #1B4332 !important; }
+        .evt-scheduled { background-color: #3788d8 !important; }
+        .evt-done { background-color: #9e9e9e !important; }
+        .evt-missed, .evt-cancelled { background-color: #ffebee !important; color: #d32f2f !important; }
+        .evt-available { background-color: #FFEE8C !important; border: 2px dashed #1B4332 !important; color: #1B4332 !important; }
+        .evt-available .fc-event-main { color: #1B4332 !important; }
+
+    /* Alinhamento do Header da Carteira de Pacientes */
+    .widget-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .widget-header-row h3 {
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+    }
+    
+    .badge-count {
+        background-color: #e8f5e9;
+        color: var(--verde-escuro);
+        font-weight: bold;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        border: 1px solid #cce5d4;
+    }
+
+    .patient-status-badge {
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: capitalize;
+        margin-left: auto; /* Empurra para a direita */
+        margin-right: 10px; /* Espaço antes do próximo ícone */
+    }
+    .status-ativo { background-color: #e8f5e9; color: #1B4332; }
+    .status-inativo { background-color: #f1f3f5; color: #6c757d; }
+
+    /* --- Custom Select (Yelo Aesthetic) --- */
+    .custom-select-wrapper {
+        position: relative;
+        width: 150px; /* Largura ajustável */
+    }
+
+    .custom-select-trigger {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 15px;
+        border-radius: 20px;
+        border: 1px solid #eee;
+        background-color: #f9fafb;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        user-select: none;
+    }
+
+    .custom-select-wrapper:hover .custom-select-trigger {
+        border-color: var(--verde-escuro);
+    }
+
+    .custom-select-arrow { transition: transform 0.3s ease; }
+    .custom-select-wrapper.open .custom-select-arrow { transform: rotate(180deg); }
+
+    .custom-select-options {
+        position: absolute;
+        top: calc(100% + 5px);
+        left: 0;
+        width: 100%;
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        z-index: 10;
+        overflow: hidden;
+        display: none;
+        animation: fadeIn 0.2s;
+    }
+    .custom-select-wrapper.open .custom-select-options { display: block; }
+    .custom-option { padding: 12px 15px; cursor: pointer; transition: background-color 0.2s; }
+    .custom-option:hover { background-color: #f0fdf4; color: var(--verde-escuro); }
+    .custom-option.selected { background-color: var(--verde-escuro); color: #fff; font-weight: 600; }
+
+    /* --- Next Sessions Widget --- */
+    .next-session-card {
+        min-width: 220px;
+        background: #f9fafb;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        padding: 12px 15px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    .next-session-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--verde-escuro);
+        background: #fff;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    .ns-time {
+        background: #e8f5e9;
+        color: #1B4332;
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-weight: 800;
+        font-size: 0.9rem;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        line-height: 1.1;
+    }
+    .ns-info { flex-grow: 1; overflow: hidden; }
+    .ns-info h5 { margin: 0; font-size: 0.95rem; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ns-info span { font-size: 0.8rem; color: #666; }
+
+    /* --- Layout Responsivo (Correção Mobile) --- */
+    .patients-layout-grid {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        gap: 25px;
+        height: calc(100vh - 140px); /* Ajuste de altura para desktop */
+        min-height: 500px; /* Reduzido para evitar espaço em branco excessivo */
+        padding-bottom: 0;
+    }
+
+    /* [FIX DESKTOP] Garante que o calendário preencha a altura correta */
+    @media (min-width: 992px) {
+        .patients-layout-grid .widget {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        #calendar-wrapper {
+            height: 100% !important;
+            min-height: 0 !important;
+        }
+    }
+
+    @media (max-width: 992px) {
+        .patients-layout-grid {
+            display: flex;
+            flex-direction: column;
+            height: auto;
+        }
+        
+        .patient-controls-row {
+            flex-direction: row !important;
+            align-items: center !important;
+            flex-wrap: wrap;
+        }
+        .search-wrapper {
+            flex: 1;
+            width: auto !important;
+            margin-bottom: 0 !important;
+        }
+        
+        .custom-select-wrapper {
+            width: 100%;
+            margin-top: 10px;
+            order: 3;
+        }
+        .header-action-desktop { display: none !important; }
+        
+        /* Limita a altura da lista no mobile para o calendário não ficar inacessível */
+        .patient-list-container {
+            max-height: 350px;
+            overflow-y: auto;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+    }
+
+    .btn-add-mobile-inline {
+        display: none;
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        background-color: #1B4332;
+        color: white;
+        border: none;
+        font-size: 1.5rem;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        margin-left: 10px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        line-height: 0;
+        padding-bottom: 4px;
+        flex-shrink: 0;
+    }
+    @media (max-width: 992px) {
+        .btn-add-mobile-inline { display: flex; }
+    }
+
+    /* --- APP-LIKE CALENDAR UX (2026) --- */
+    .calendar-custom-toolbar {
+        display: flex; flex-direction: row; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+        padding: 15px 20px; background: #fff; border-radius: 12px 12px 0 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .cal-toolbar-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .cal-title-display { margin: 0; font-family: var(--font-titulos); color: #1B4332; font-size: 1.15rem; text-transform: capitalize; white-space: nowrap; }
+    .cal-btn-icon { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #495057; transition: all 0.2s; font-weight: bold; font-size: 0.9rem; }
+    .cal-btn-icon:hover { background: #e8f5e9; border-color: #1B4332; }
+.cal-btn-expand { background: #FFEE8C; color: #1B4332; border: 1px solid #F4D35E; box-shadow: 0 2px 6px rgba(255,238,140,0.4); }
+.cal-btn-expand:hover { background: #F4D35E; border-color: #1B4332; }
+    .cal-toolbar-right { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap; }
+    .cal-btn-hoje { background: #f8f9fa; color: #495057; border: 1px solid #e9ecef; padding: 6px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+    .cal-btn-hoje:hover { background: #e8f5e9; color: #1B4332; border-color: #1B4332; }
+    .cal-view-toggles { display: flex; background: #f1f3f5; border: 1px solid #e9ecef; border-radius: 10px; padding: 3px; }
+    .cal-view-btn { background: transparent; border: none; padding: 6px 14px; font-size: 0.85rem; color: #6c757d; cursor: pointer; font-weight: 600; transition: all 0.2s; border-radius: 8px; }
+    .cal-view-btn.active { background: #fff; color: #1B4332; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+    
+    /* Overrides do FullCalendar para visual Moderno */
+    .fc .fc-toolbar { display: none !important; } /* Esconde toolbar nativa */
+    .fc-theme-standard td, .fc-theme-standard th { border-color: #f5f5f5; }
+    .fc-timegrid-slot-label-cushion { font-size: 0.8rem; color: #888; font-weight: 500; }
+    .fc-col-header-cell-cushion { padding: 12px 4px !important; font-size: 0.9rem; color: #333; text-transform: uppercase; font-weight: 700; }
+    .fc-timegrid-event { border-radius: 8px !important; border: none !important; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 4px; overflow: hidden; transition: transform 0.2s; }
+    .fc-timegrid-event:active { transform: scale(0.98); }
+    .fc-timegrid-event .fc-event-main { color: #fff; font-weight: 600; font-size: 0.85rem; line-height: 1.3; display: flex; flex-direction: column; gap: 2px; }
+    .fc-event-time { font-size: 0.75rem; opacity: 0.9; font-weight: normal; }
+    .fc-now-indicator-line { border-color: #e63946 !important; border-width: 2px !important; }
+    .fc-now-indicator-arrow { border-color: #e63946 !important; background: #e63946 !important; }
+
+    /* --- BOTTOM SHEETS MOBILE --- */
+    .sheet-drag-handle {
+        width: 40px; height: 4px; background: #ddd; border-radius: 2px;
+        margin: -20px auto 20px auto; display: none;
+    }
+    @media (max-width: 768px) {
+        .calendar-custom-toolbar { flex-direction: column; gap: 15px; align-items: flex-start; }
+        .cal-toolbar-right { width: 100%; justify-content: space-between; }
+        .sheet-drag-handle { display: block; }
+        
+        .custom-modal-box {
+            margin-top: auto; /* Empurra para baixo */
+            border-radius: 24px 24px 0 0;
+            width: 100%; max-width: 100%;
+            animation: slideUpSheet 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            padding-top: 30px;
+            padding-bottom: calc(20px + env(safe-area-inset-bottom));
+        }
+        .custom-modal-overlay { align-items: flex-end; padding: 0; }
+        
+        .col-pacientes.mobile-open {
+            display: flex !important;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 100000;
+            background: #fff;
+            padding: 20px;
+            padding-top: 85px;
+        }
+    }
+    @keyframes slideUpSheet {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
+
+    /* MODE TOGGLE */
+    .mode-toggle-container {
+        display: flex; background: #f1f3f5; padding: 4px; border-radius: 50px; width: max-content; gap: 4px; border: 1px solid #e9ecef; margin: 0 auto;
+    }
+    .mode-toggle-btn {
+        padding: 6px 14px; border-radius: 50px; border: none; background: transparent; color: #6c757d; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; line-height: 1.2; white-space: nowrap;
+    }
+    .mode-toggle-btn.active {
+        background: white; color: var(--verde-escuro); box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .ns-btn {
+        background: #fff; border: 1px solid #ddd; padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; color: #555; flex-grow: 1;
+    }
+    .ns-btn:hover { background: #f0f0f0; }
+    .ns-btn-done:hover { background: #e8f5e9; color: #1B4332; border-color: #1B4332; }
+    .ns-btn-cancel:hover { background: #ffebee; color: #d32f2f; border-color: #d32f2f; }
+    .ns-btn-reschedule:hover { background: #fff3e0; color: #f57c00; border-color: #f57c00; }
+
+    /* --- PREMIUM INPUTS (FLATPICKR, TOM SELECT & NATIVOS) --- */
+    #modal-appointment input[type="text"],
+    #modal-appointment input[type="date"],
+    #modal-appointment input[type="time"],
+    #modal-appointment .ts-control,
+    #modal-appointment select {
+        appearance: none; -webkit-appearance: none;
+        background-color: #f9fafb !important;
+        border: 1px solid #ced4da !important;
+        border-radius: 12px !important;
+        padding: 10px 14px !important;
+        font-size: 16px !important;
+        font-family: var(--font-principal) !important;
+        color: #1B4332 !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        cursor: pointer;
+        box-sizing: border-box !important;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important;
+        min-height: 48px !important;
+        height: 48px !important;
+        line-height: normal !important;
+        margin: 0 !important;
+    }
+
+    #modal-appointment .ts-control {
+        display: flex !important;
+        align-items: center !important;
+        padding-right: 30px !important;
+    }
+
+    #modal-appointment input[type="text"]:focus,
+    #modal-appointment input[type="date"]:focus,
+    #modal-appointment input[type="time"]:focus,
+    #modal-appointment .ts-wrapper.focus .ts-control,
+    #modal-appointment select:focus {
+        border-color: var(--verde-escuro) !important;
+        background-color: #fff !important;
+        box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1) !important;
+        outline: none !important;
+    }
+
+    /* Seta customizada para o Select nativo */
+    #modal-appointment select {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231B4332' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 16px center !important;
+        padding-right: 45px !important;
+    }
+    
+    /* Ícone customizado do relógio no campo de Hora */
+    #modal-appointment input[type="time"]::-webkit-calendar-picker-indicator {
+        cursor: pointer; opacity: 0.6; transition: opacity 0.2s;
+        filter: invert(21%) sepia(13%) saturate(2366%) hue-rotate(108deg) brightness(96%) contrast(93%);
+        width: 20px; height: 20px;
+    }
+    #modal-appointment input[type="time"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+
+    /* --- APP-LIKE DATETIME PICKER --- */
+    .app-like-datetime-picker {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .flatpickr-calendar.inline {
+        width: 100% !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        background: transparent !important;
+    }
+    .flatpickr-days, .flatpickr-days .dayContainer { width: 100% !important; min-width: 100% !important; max-width: 100% !important; }
+    .flatpickr-day {
+        max-width: 14% !important;
+        border-radius: 12px !important;
+        height: 40px !important;
+        line-height: 40px !important;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 4px;
+        border: 2px solid transparent !important;
+    }
+    .flatpickr-day.selected { background: #1B4332 !important; border-color: #1B4332 !important; color: white !important; box-shadow: 0 4px 10px rgba(27,67,50,0.2) !important;}
+    .flatpickr-day:hover { background: #e8f5e9 !important; color: #1B4332 !important; }
+    .flatpickr-day.today { border-color: #1B4332 !important; color: #1B4332; }
+    .flatpickr-month { height: 40px !important; margin-bottom: 10px; }
+    .flatpickr-current-month { font-family: var(--font-principal) !important; font-size: 1.1rem !important; font-weight: 700 !important; color: #1B4332 !important; }
+    .flatpickr-weekday { color: #888 !important; font-weight: 700 !important; font-size: 0.8rem; }
+    
+    .time-slots-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+        gap: 10px;
+        max-height: 200px;
+        overflow-y: auto;
+        padding-right: 5px;
+        scrollbar-width: thin;
+    }
+    .time-slots-grid::-webkit-scrollbar { width: 5px; }
+    .time-slots-grid::-webkit-scrollbar-thumb { background: #ccc; border-radius: 5px; }
+    
+    .time-slot-btn {
+        background: #fff; border: 1px solid #dee2e6; border-radius: 12px;
+        padding: 10px 0; font-size: 0.95rem; font-weight: 600; color: #495057;
+        cursor: pointer; transition: all 0.2s ease; text-align: center;
+        font-family: var(--font-principal);
+    }
+    .time-slot-btn:hover:not(:disabled) { border-color: #1B4332; background: #f0fdf4; color: #1B4332; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+    .time-slot-btn.selected { background: #1B4332; color: white; border-color: #1B4332; box-shadow: 0 4px 10px rgba(27,67,50,0.2); transform: translateY(-2px); }
+    .time-slot-btn:disabled { opacity: 0.4; cursor: not-allowed; background: #e9ecef; text-decoration: line-through; }
+
+    /* Tom Select Specific Tweaks */
+    #modal-appointment .ts-wrapper { padding: 0 !important; border: none !important; }
+    #modal-appointment .ts-wrapper.dropdown-active { z-index: 100 !important; position: relative !important; }
+    .custom-ts-dropdown {
+        border-radius: 12px !important; border: 1px solid #e0e0e0 !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+        font-family: var(--font-principal) !important; overflow: hidden; margin-top: 5px; z-index: 101 !important;
+    }
+    .custom-ts-dropdown .option { padding: 12px 16px !important; font-size: 0.95rem; color: #495057; cursor: pointer; }
+    .custom-ts-dropdown .option.active, .custom-ts-dropdown .option:hover { background-color: #f0fdf4 !important; color: #1B4332 !important; }
+
+    /* Fix overlap bug for dropup and dropdown in modal */
+    .form-group:has(.dropdown-active),
+    .assistant-card:has(.dropdown-active),
+    .app-like-datetime-picker:has(.dropdown-active),
+    div:has(> .form-group .dropdown-active) {
+        position: relative !important;
+        z-index: 9999 !important;
+    }
+
+    /* Forçar dropdown para cima (evitar corte no fim da página) */
+    .custom-ts-dropdown.drop-up {
+        top: auto !important;
+        bottom: 100% !important;
+        margin-top: 0 !important;
+        margin-bottom: 5px !important;
+        box-shadow: 0 -10px 30px rgba(0,0,0,0.1) !important;
+    }
+
+    /* Flatpickr Globals */
+    .flatpickr-calendar {
+        font-family: var(--font-principal) !important; border-radius: 16px !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important; border: 1px solid #eee !important; z-index: 200006 !important;
+    }
+    .flatpickr-day.selected { background: #1B4332 !important; border-color: #1B4332 !important; }
+
+    /* --- APP-LIKE TIME PICKER (YELO AESTHETIC) --- */
+    .flatpickr-calendar.hasTime.noCalendar {
+        padding: 20px !important;
+        width: max-content !important;
+        min-width: 220px !important;
+        background: #ffffff !important;
+        border-radius: 24px !important;
+        box-shadow: 0 15px 35px rgba(27,67,50,0.1) !important;
+        border: 1px solid #f0f0f0 !important;
+        display: flex !important;
+        justify-content: center !important;
+    }
+    .flatpickr-time {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        height: 60px !important;
+        max-height: 60px !important;
+        border-top: none !important;
+        overflow: visible !important;
+    }
+    .flatpickr-time .numInputWrapper {
+        height: 56px !important;
+        width: 72px !important;
+    }
+    .flatpickr-time input.flatpickr-hour,
+    .flatpickr-time input.flatpickr-minute {
+        height: 100% !important;
+        font-family: var(--font-titulos) !important;
+        font-size: 1.8rem !important;
+        font-weight: 700 !important;
+        color: #1B4332 !important;
+        background: #f1f3f5 !important;
+        border: 2px solid transparent !important;
+        border-radius: 16px !important;
+        text-align: center !important;
+        box-shadow: none !important;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        padding: 0 !important;
+    }
+    .flatpickr-time input.flatpickr-hour:focus,
+    .flatpickr-time input.flatpickr-minute:focus,
+    .flatpickr-time input.flatpickr-hour:hover,
+    .flatpickr-time input.flatpickr-minute:hover {
+        border-color: var(--verde-escuro) !important;
+        background: #f0fdf4 !important;
+        box-shadow: 0 4px 15px rgba(27,67,50,0.1) !important;
+        transform: translateY(-2px) !important;
+        outline: none !important;
+    }
+    .flatpickr-time-separator {
+        font-size: 1.8rem !important;
+        font-weight: 700 !important;
+        color: #adb5bd !important;
+        margin: 0 10px !important;
+        height: 56px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        animation: pulse-colon 2s infinite ease-in-out;
+    }
+    @keyframes pulse-colon {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+    }
+    .flatpickr-time .numInputWrapper span.arrowUp,
+    .flatpickr-time .numInputWrapper span.arrowDown {
+        display: none !important; /* Visual limpo e minimalista (o scroll do mouse funciona nativamente) */
+    }
+
+    #form-appointment label {
+        color: #6c757d !important;
+        font-weight: 700 !important;
+        font-size: 0.8rem !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px !important;
+    }
+
+    /* --- FULLSCREEN CALENDAR MODAL (DESKTOP) --- */
+    body.calendar-expanded .dashboard-main {
+        position: relative !important;
+        z-index: 100005 !important;
+    }
+    body.calendar-expanded .modern-sidebar-container {
+        z-index: 1 !important;
+    }
+    
+    /* Garante que os modais fiquem acima do calendário em modo expandido */
+    .custom-modal-overlay {
+        z-index: 200005 !important;
+    }
+
+    .calendar-fullscreen-backdrop {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(4px);
+        z-index: 100000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .calendar-fullscreen-backdrop.active { display: block; opacity: 1; }
+
+    .calendar-widget-fullscreen {
+        position: fixed !important; 
+        top: 2% !important; left: 2% !important; right: 2% !important; bottom: 2% !important;
+        width: auto !important; height: auto !important;
+        z-index: 100001 !important; margin: 0 !important;
+        box-shadow: 0 25px 80px rgba(0,0,0,0.5) !important;
+        border-radius: 16px !important;
+        transform: none !important;
+    }
+
+    /* FAB MOBILE */
+    #fab-agendar-mobile {
+        display: none;
+    }
+    @media (max-width: 768px) {
+        .hide-mobile-text { display: none; }
+        .mode-toggle-btn { padding: 6px 10px !important; font-size: 0.8rem !important; }
+        #btn-add-appt-unified, #btn-toggle-patients-mobile { 
+            padding: 10px 0 !important; 
+            font-size: 0.95rem !important; 
+            flex: 1 !important;
+            justify-content: center !important;
+        }
+        .ts-control, .ts-wrapper input { font-size: 16px !important; }
+    }
+    @media (max-width: 992px) {
+        .col-pacientes { display: none !important; }
+        .header-action-desktop { display: none !important; }
+        #btn-toggle-patients-mobile { display: inline-flex !important; }
+        .hidden-mobile { display: none !important; }
+        .calendar-custom-toolbar { flex-direction: column; gap: 15px; }
+        .cal-toolbar-left, .cal-toolbar-right { width: 100%; justify-content: space-between; }
+        .cal-toolbar-right.action-buttons { justify-content: space-between !important; gap: 10px !important; width: 100% !important; }
+    }
+    @media (min-width: 993px) { 
+        .hidden-mobile { display: inline-flex; } 
+        .cal-toolbar-right.action-buttons { justify-content: flex-end !important; }
+    }
+</style>
+
+<div class="main-header" style="flex-direction: row; align-items: center; justify-content: space-between;">
+        <div class="header-content">
+            <h1 style="margin: 0;">Minha Agenda</h1>
+            <p style="margin: 5px 0 0 0; color: rgba(255,255,255,0.85);">Controle seus horários de forma ágil.</p>
+        </div>
+</div>
+
+    <div class="patients-layout-grid">
+    
+    <!-- COLUNA 1: LISTA DE PACIENTES -->
+    <div class="widget col-pacientes" style="display: flex; flex-direction: column; height: 100%;">
+        <button id="btn-close-patients-mobile" style="display: none; align-items: center; gap: 8px; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px 20px; border-radius: 50px; font-size: 0.95rem; font-weight: 600; color: #1B4332; cursor: pointer; margin-bottom: 20px; width: max-content; transition: all 0.2s;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Voltar para Agenda
+        </button>
+        <div class="widget-header-row">
+            <h3 class="widget-title">Carteira de Pacientes</h3>
+            <button id="btn-add-patient" class="btn-secundario" style="padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; background: none; border: 1px solid var(--verde-escuro); cursor: pointer;">+ Novo</button>
+        </div>
+
+        <div class="patient-controls-row" style="display: flex; gap: 15px; margin-bottom: 15px; align-items: center;">
+            <div class="search-wrapper" style="flex-grow: 1; margin-bottom: 0;">
+                <input type="text" id="search-patient" placeholder="Buscar por nome..." class="form-control" style="width: 100%; box-sizing: border-box; border-radius: 20px; padding: 12px 20px; border: 1px solid #eee; background-color: #f9fafb;">
+            </div>
+            <button id="btn-add-mobile-inline" class="btn-add-mobile-inline" type="button">+</button>
+            <div class="custom-select-wrapper" style="flex-shrink: 0;">
+                <div class="custom-select-trigger" id="status-filter-trigger">
+                    <span id="status-filter-selected-text">Ativos</span>
+                    <span class="custom-select-arrow">▼</span>
+                </div>
+                <div class="custom-select-options" id="status-filter-options">
+                    <div class="custom-option selected" data-value="ativo">Ativos</div>
+                    <div class="custom-option" data-value="inativo">Inativos</div>
+                    <div class="custom-option" data-value="todos">Todos</div>
+                </div>
+                <input type="hidden" id="filter-patient-status" value="ativo">
+            </div>
+        </div>
+
+        <div class="patient-list-container" id="patient-list">
+            <!-- Lista renderizada via JS -->
+            <div class="empty-state-patients">
+                <p>Nenhum paciente cadastrado.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- COLUNA 2: CALENDÁRIO -->
+    <div id="calendar-backdrop" class="calendar-fullscreen-backdrop"></div>
+    <div id="calendar-widget-main" class="widget" style="padding: 0; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #eee; transition: all 0.3s ease;">
+        <!-- Custom Toolbar Moderna -->
+        <div class="calendar-custom-toolbar">
+            <div class="cal-toolbar-left">
+                <div style="display: flex; gap: 4px;">
+                    <button id="cal-prev" class="cal-btn-icon">❮</button>
+                    <button id="cal-next" class="cal-btn-icon">❯</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button id="cal-today" class="cal-btn-hoje">Hoje</button>
+                    <h3 id="cal-title" class="cal-title-display" style="margin-top: 2px; line-height: 1;">Agenda</h3>
+                </div>
+            </div>
+
+            <div class="cal-toolbar-right action-buttons">
+                <!-- Visão Dia/Semana -->
+                <div class="cal-view-toggles hidden-mobile" style="margin-right: 10px;">
+                    <button data-view="timeGridDay" class="cal-view-btn">Dia</button>
+                    <button data-view="timeGridWeek" class="cal-view-btn active">Semana</button>
+                </div>
+                
+                <!-- Botão Expandir -->
+                <button id="btn-expand-calendar" class="cal-btn-icon cal-btn-expand hidden-mobile" title="Expandir Calendário" style="width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>
+                </button>
+                
+                <!-- Botão Mobile de Pacientes -->
+                <button id="btn-toggle-patients-mobile" class="btn btn-secundario" style="display: none; background: white; white-space: nowrap; padding: 10px 24px; font-size: 0.95rem; border-radius: 50px; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.05); align-items: center; justify-content: center;">
+                    Pacientes
+                </button>
+                
+                <!-- Botão Agendar -->
+                <button id="btn-add-appt-unified" class="btn btn-principal" style="padding: 10px 24px; font-size: 0.95rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 50px; margin: 0; font-weight: 600; box-shadow: 0 4px 12px rgba(27,67,50,0.15); border: none; width: max-content; white-space: nowrap; transition: transform 0.2s;" onclick="window.handleFabClick()">
+                    <span style="font-size: 1.3rem; font-weight: normal; line-height: 0;">+</span> Agendar
+                </button>
+            </div>
+        </div>
+        
+        <!-- DICA DE UX: Como adicionar horários livres -->
+        <div id="dica-agenda-yelo" class="highlight-box assistant-card" style="margin: 15px 15px 0 15px; padding: 15px; display: flex; align-items: flex-start; gap: 15px; position: relative;">
+            <button onclick="this.parentElement.style.display='none'; localStorage.setItem('yelo_dica_agenda_oculta', 'true');" style="position: absolute; top: 10px; right: 10px; background: none; border: none; cursor: pointer; color: #999; font-size: 1.5rem; padding: 5px; line-height: 0.5;" title="Fechar dica">&times;</button>
+            <div class="assistant-icon" style="width: 45px; height: 45px; font-size: 1.5rem; flex-shrink: 0;">💡</div>
+            <div style="padding-right: 15px;">
+                <strong style="color: #1B4332; display: block; margin-bottom: 5px; font-size: 0.95rem;">Atraia novos pacientes!</strong>
+                <p style="margin: 0; color: #555; font-size: 0.85rem; line-height: 1.5;">
+                    Adicione seus horários livres clicando em <strong>+ Agendar</strong> e escolhendo <strong>Horário Disponível</strong>. Eles aparecerão no seu perfil público para que novos pacientes possam agendar consultas com você.
+                </p>
+            </div>
+        </div>
+        <script>
+            if (localStorage.getItem('yelo_dica_agenda_oculta') === 'true') {
+                document.getElementById('dica-agenda-yelo').style.display = 'none';
+            }
+        </script>
+
+        <!-- PRÓXIMAS SESSÕES -->
+        <div id="next-sessions-container" style="margin-bottom: 0px; display: none; padding: 15px 15px 0 15px;">
+            <h4 style="margin: 0 0 15px 0; color: #1B4332; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                <span style="background:#e8f5e9; padding:4px; border-radius:50%;">⚡</span> Próximos Atendimentos
+            </h4>
+            <div id="next-sessions-list" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: thin;"></div>
+        </div>
+
+        <div class="widget-header-row" style="padding: 15px 15px 0 15px; border-bottom: none; margin-bottom: 0;">
+            <div class="calendar-legend" style="width: 100%; justify-content: center; flex-wrap: wrap;">
+                <span class="legend-item"><span class="dot" style="background-color: #3788d8;"></span> Agendado</span>
+                <span class="legend-item"><span class="dot" style="background-color: #1B4332;"></span> Confirmado</span>
+                <span class="legend-item"><span class="dot" style="background-color: #FFEE8C; border: 1px dashed #1B4332;"></span> Disponível</span>
+                <span class="legend-item"><span class="dot" style="background-color: #9e9e9e;"></span> Realizado</span>
+                <span class="legend-item"><span class="dot" style="background-color: #d32f2f;"></span> Falta</span>
+            </div>
+        </div>
+        <div id="calendar-wrapper"></div>
+    </div>
+</div>
+
+<!-- MODAL: ADICIONAR/EDITAR PACIENTE -->
+<div id="modal-patient" class="custom-modal-overlay" style="display: none;">
+    <div class="custom-modal-box" style="max-width: 650px; padding: 25px 30px;">
+        <div class="sheet-drag-handle"></div>
+        <button type="button" class="modal-close-btn" id="close-patient-modal"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+            <div style="width: 50px; height: 50px; background: #f0fdf4; color: #1B4332; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; box-shadow: 0 4px 10px rgba(27,67,50,0.05);">👤</div>
+            <div>
+                <h3 id="modal-patient-title" style="margin: 0; color: #1B4332; font-family: var(--font-titulos); font-size: 1.5rem;">Novo Paciente</h3>
+                <p style="color: #666; font-size: 0.9rem; margin: 2px 0 0 0;">Preencha os dados de cadastro e sessão.</p>
+            </div>
+        </div>
+        
+        <form id="form-patient">
+            <input type="hidden" id="p-id"> <!-- ID oculto para edição -->
+            
+            <!-- GRID DE CAMPOS: 2 COLUNAS -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: #495057; margin-bottom: 5px; display: block;">Nome Completo *</label>
+                    <input type="text" id="p-name" required placeholder="Ex: João Silva" style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #ccc; background-color: #f9fafb; font-size: 0.95rem;">
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: #495057; margin-bottom: 5px; display: block;">WhatsApp *</label>
+                    <input type="tel" id="p-phone" required placeholder="(00) 00000-0000" style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #ccc; background-color: #f9fafb; font-size: 0.95rem;">
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: #495057; margin-bottom: 5px; display: block;">E-mail (Opcional)</label>
+                    <input type="email" id="p-email" placeholder="joao@email.com" style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #ccc; background-color: #f9fafb; font-size: 0.95rem;">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: #495057; margin-bottom: 5px; display: block;">Valor (R$)</label>
+                        <input type="number" id="p-session-value" placeholder="0,00" step="0.01" required style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #ccc; background-color: #f9fafb; font-size: 0.95rem;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: #495057; margin-bottom: 5px; display: block;">Status</label>
+                        <select id="p-status" required style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #ccc; background-color: #f9fafb; font-size: 0.95rem;">
+                            <option value="ativo">Ativo</option>
+                            <option value="inativo">Inativo</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" style="width: 100%; margin-bottom: 15px;">
+                <label style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: #495057; margin-bottom: 5px; display: block;">Observações (Opcional)</label>
+                <textarea id="p-notes" rows="2" placeholder="Histórico, queixas principais ou anotações gerais..." style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-family: var(--font-principal); resize: vertical; background-color: #fff; font-size: 0.95rem;"></textarea>
+            </div>
+
+            <div class="form-group highlight-box assistant-card" style="margin-top: 0; padding: 15px; border-radius: 12px; margin-bottom: 0;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div class="assistant-icon" style="width: 42px; height: 42px; font-size: 1.4rem; flex-shrink: 0; margin: 0; box-shadow: none; background: #fff;">🤖</div>
+                    <div style="flex-grow: 1;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <label for="p-automated-msg" style="font-weight: 700; color: #1B4332; cursor: not-allowed; font-size: 0.95rem; margin: 0;">Lembretes pelo WhatsApp <span style="background: #e0e0e0; color: #666; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; margin-left: 5px; vertical-align: middle;">Em breve</span></label>
+                            <label class="switch-toggle" style="margin: 0; opacity: 0.5; cursor: not-allowed;">
+                                <input type="checkbox" id="p-automated-msg" disabled>
+                                <span class="slider" style="cursor: not-allowed;"></span>
+                            </label>
+                        </div>
+                        <p style="font-size: 0.8rem; color: #555; margin: 2px 0 0 0; line-height: 1.3;">
+                            Avisa automaticamente o paciente 24h antes da sessão agendada.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions" style="justify-content: space-between; margin-top: 20px; display: flex; align-items: center; width: 100%;">
+                <button type="button" id="btn-delete-patient" style="display: none; background: #ffebee; border: 1px solid #ffcdd2; color: #d32f2f; cursor: pointer; padding: 10px 16px; border-radius: 8px; transition: background 0.2s; font-size: 0.9rem; font-weight: 600; align-items: center; gap: 6px;" title="Excluir Paciente">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    Excluir
+                </button>
+
+                <div style="display: flex; gap: 10px; margin-left: auto;">
+                    <button type="button" class="btn btn-secundario" id="cancel-patient-modal" style="padding: 10px 20px; border-radius: 50px; font-size: 0.95rem;">Cancelar</button>
+                    <button type="submit" class="btn btn-principal" style="padding: 10px 24px; border-radius: 50px; font-size: 0.95rem; box-shadow: 0 4px 15px rgba(27,67,50,0.2);">Salvar Paciente</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: AGENDAMENTO (NOVO) -->
+<div id="modal-appointment" class="custom-modal-overlay" style="display: none;">
+    <div class="custom-modal-box" style="max-width: 650px; padding: 25px 30px; box-sizing: border-box; overflow-x: hidden;">
+        <div class="sheet-drag-handle"></div>
+        <button class="modal-close-btn" id="close-appointment-modal"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+            <div style="width: 50px; height: 50px; background: #f0fdf4; color: #1B4332; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; box-shadow: 0 4px 10px rgba(27,67,50,0.05);">📅</div>
+            <div>
+                <h3 id="modal-appointment-title" style="margin: 0; color: #1B4332; font-family: var(--font-titulos); font-size: 1.5rem;">Novo Agendamento</h3>
+                <p style="color: #666; font-size: 0.9rem; margin: 2px 0 0 0;">Preencha os detalhes da sessão abaixo.</p>
+            </div>
+        </div>
+        
+        <form id="form-appointment">
+            <!-- GRID DE CAMPOS: 2 COLUNAS -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: #495057; margin-bottom: 5px; display: block;">Tipo de Evento *</label>
+                    <select id="appt-type" required style="width: 100%;">
+                        <option value="session">Sessão com Paciente</option>
+                        <option value="available">Horário Disponível</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="group-patient-select" style="margin-bottom: 0;">
+                    <label style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: #495057; margin-bottom: 5px; display: block;">Paciente *</label>
+                    <select id="appt-patient" required style="width: 100%;">
+                        <option value="">Selecione o paciente...</option>
+                        <!-- Preenchido via JS -->
+                    </select>
+                </div>
+            </div>
+            
+            <div class="app-like-datetime-picker" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px; margin-bottom: 15px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: #495057; margin-bottom: 5px; display: block;">Data *</label>
+                    <input type="text" id="appt-date" required placeholder="Selecione a data..." style="width: 100%;">
+                </div>
+                <div class="form-group" id="time-container" style="margin-bottom: 0; padding-top: 0; border-top: none;">
+                    <label style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: #495057; margin-bottom: 5px; display: block;">Horário *</label>
+                    <input type="text" id="appt-time" name="appointment_time" required placeholder="00:00" style="width: 100%;">
+                </div>
+            </div>
+
+            <div class="form-group highlight-box assistant-card" style="margin-top: 0; padding: 15px; border-radius: 12px; margin-bottom: 0;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div class="assistant-icon" style="width: 42px; height: 42px; font-size: 1.4rem; flex-shrink: 0; margin: 0; box-shadow: none; background: #fff;">🔁</div>
+                    <div style="flex-grow: 1;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <label for="appt-recurrence" style="font-weight: 700; color: #1B4332; cursor: pointer; font-size: 0.95rem; margin: 0;">Repetição</label>
+                            <select id="appt-recurrence" style="width: auto; min-width: 140px;">
+                                <option value="none">Não repetir</option>
+                                <option value="weekly">Semanal</option>
+                                <option value="biweekly">Quinzenal</option>
+                            </select>
+                        </div>
+                        <p style="font-size: 0.8rem; color: #555; margin: 2px 0 0 0; line-height: 1.3;">
+                            Repetir automaticamente nos próximos meses.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions" style="justify-content: flex-end; margin-top: 20px; display: flex; align-items: center; width: 100%; gap: 10px;">
+                <button type="button" class="btn btn-secundario" id="cancel-appointment-modal" style="padding: 10px 16px; border-radius: 50px; font-size: 0.95rem; min-width: 0; width: auto;">Cancelar</button>
+                <button type="submit" class="btn btn-principal" style="padding: 10px 16px; border-radius: 50px; font-size: 0.95rem; box-shadow: 0 2px 8px rgba(27,67,50,0.2); min-width: 0; width: auto;">Agendar Sessão</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: CONFIRMAÇÃO GENÉRICA (YELO STYLE) -->
+<div id="modal-generic-confirm" class="custom-modal-overlay" style="display: none; z-index: 200007;">
+    <div class="custom-modal-box" style="text-align: center; max-width: 400px;">
+        <div class="sheet-drag-handle"></div>
+        <div id="generic-confirm-icon" style="margin-bottom: 20px; color: #1B4332;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+            </svg>
+        </div>
+        <h3 id="generic-confirm-title" style="margin-bottom: 10px; color: #333;">Confirmar?</h3>
+        <p id="generic-confirm-text" style="color: #666; margin-bottom: 25px; line-height: 1.5;">Tem certeza?</p>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="btn-generic-cancel" style="padding: 10px 20px; border: 1px solid #ddd; background: #fff; border-radius: 6px; cursor: pointer; color: #555; font-weight: 600;">Cancelar</button>
+            <button id="btn-generic-confirm" style="padding: 10px 20px; border: none; background: #1B4332; border-radius: 6px; cursor: pointer; color: #fff; font-weight: bold;">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: CONFIRMAR EXCLUSÃO (YELO STYLE) -->
+<div id="modal-delete-confirmation" class="custom-modal-overlay" style="display: none;">
+    <div class="custom-modal-box" style="text-align: center; max-width: 400px;">
+        <div class="sheet-drag-handle"></div>
+        <div style="margin-bottom: 20px; color: #e63946;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+            </svg>
+        </div>
+        <h3 style="margin-bottom: 10px; color: #333;">Excluir Paciente?</h3>
+        <p style="color: #666; margin-bottom: 25px; line-height: 1.5;">
+            Tem certeza que deseja remover este paciente? Essa ação não pode ser desfeita.
+        </p>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="btn-cancel-delete" style="padding: 10px 20px; border: 1px solid #ddd; background: #fff; border-radius: 6px; cursor: pointer; color: #555; font-weight: 600;">Cancelar</button>
+            <button id="btn-confirm-delete" style="padding: 10px 20px; border: none; background: #e63946; border-radius: 6px; cursor: pointer; color: #fff; font-weight: bold;">Sim, Excluir</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: DETALHES DA SESSÃO (Status e Ações) -->
+<div id="modal-event-details" class="custom-modal-overlay" style="display: none;">
+    <div class="custom-modal-box">
+        <div class="sheet-drag-handle"></div>
+        <button class="modal-close-btn" id="close-event-modal"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        <h3 style="margin-top: 0; color: #1B4332;">Detalhes da Sessão</h3>
+        
+        <div style="margin-bottom: 20px;">
+            <h2 id="evt-patient-name" style="margin: 0; font-size: 1.4rem; color: #333;">Nome do Paciente</h2>
+            <p id="evt-time-info" style="color: #666; margin: 5px 0;">Data e Hora</p>
+        </div>
+
+        <div style="background: #f9f9f9; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+            <label style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 8px;">Status do Atendimento:</label>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn-status" data-status="confirmed" style="flex: 1; background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                    👍 Confirmar
+                </button>
+                <button class="btn-status" data-status="done" style="flex: 1; background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                    ✅ Realizado
+                </button>
+                <button class="btn-status" data-status="cancelled" style="flex: 1; background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                    ❌ Cancelar
+                </button>
+                <button class="btn-status" data-status="rescheduled" style="flex: 1; background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                    🗓️ Reagendar
+                </button>
+            </div>
+        </div>
+
+        <!-- Opções condicionais -->
+        <div id="evt-options-done" style="display: none; margin-bottom: 20px;">
+            <div class="form-group">
+                <label>Valor Cobrado (R$)</label>
+                <input type="number" id="evt-value" class="form-control" style="width: 100%; box-sizing: border-box;">
+            </div>
+        </div>
+
+        <div id="evt-options-missed" style="display: none; margin-bottom: 20px;">
+            <div class="form-group-checkbox" style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" id="evt-charge-missed">
+                <label for="evt-charge-missed" style="margin: 0;">Cobrar sessão mesmo com falta?</label>
+            </div>
+        </div>
+
+        <div id="evt-options-reschedule" style="display: none; margin-bottom: 20px;">
+            <label style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 8px;">Escolha um novo horário disponível:</label>
+            <div id="reschedule-slots-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto; border: 1px solid #eee; padding: 5px; border-radius: 8px;"></div>
+        </div>
+
+        <div class="form-actions" style="justify-content: space-between; display: flex; align-items: center; gap: 10px;">
+            <button type="button" id="btn-delete-event" style="background: none; border: none; color: #d32f2f; cursor: pointer; padding: 8px; border-radius: 50%; transition: background 0.2s;" title="Excluir Agendamento">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+            </button>
+            <button type="button" id="btn-save-event-status" class="btn btn-principal">Salvar Status</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- LÓGICA DO FRONTEND (INTEGRADA) ---
+    (async function() {
+        // [FIX] Limpa a instância do calendário da memória ao carregar a página.
+        // Isso resolve o bug do calendário não aparecer quando o usuário sai e volta para a aba.
+        window.calendarApi = null;
+
+                window.currentMode = 'agenda';
+
+        // --- GLOBAL GENERIC CONFIRM ---
+        window.yeloConfirm = function(title, text, confirmText, confirmColor, iconColor, callback) {
+            const modal = document.getElementById('modal-generic-confirm');
+            document.getElementById('generic-confirm-title').textContent = title;
+            document.getElementById('generic-confirm-text').textContent = text;
+            const btnConfirm = document.getElementById('btn-generic-confirm');
+            btnConfirm.textContent = confirmText;
+            btnConfirm.style.background = confirmColor;
+            document.getElementById('generic-confirm-icon').style.color = iconColor;
+            
+            modal.style.display = 'flex';
+            
+            document.getElementById('btn-generic-cancel').onclick = () => { modal.style.display = 'none'; };
+            btnConfirm.onclick = () => {
+                modal.style.display = 'none';
+                callback();
+            };
+        };
+
+        // Mode Toggle Logic
+        document.querySelectorAll('.mode-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.mode-toggle-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                window.currentMode = e.target.dataset.mode;
+                
+                const alertDisp = document.getElementById('alert-disponibilidade');
+                if (window.currentMode === 'disponibilidade') {
+                    if (alertDisp) alertDisp.style.display = 'block';
+                } else {
+                    if (alertDisp) alertDisp.style.display = 'none';
+                }
+
+                if (window.calendarApi) {
+                    window.calendarApi.refetchEvents(); // Força update na renderização (visibilidade)
+                }
+            });
+        });
+
+        // Mobile Patient List Toggle
+        const btnTogglePatients = document.getElementById('btn-toggle-patients-mobile');
+        const btnClosePatients = document.getElementById('btn-close-patients-mobile');
+        const colPacientes = document.querySelector('.col-pacientes');
+        
+        if (btnTogglePatients) {
+            btnTogglePatients.addEventListener('click', () => { colPacientes.classList.add('mobile-open'); btnClosePatients.style.display = 'flex'; });
+        }
+        if (btnClosePatients) {
+            btnClosePatients.addEventListener('click', () => { colPacientes.classList.remove('mobile-open'); btnClosePatients.style.display = 'none'; });
+        }
+
+        // --- LÓGICA DO MODO EXPANDIDO (FULLSCREEN) ---
+        const btnExpand = document.getElementById('btn-expand-calendar');
+        const calWidget = document.getElementById('calendar-widget-main');
+        const calBackdrop = document.getElementById('calendar-backdrop');
+
+        const toggleFullscreen = () => {
+            if (!calWidget) return;
+            const isFullscreen = calWidget.classList.contains('calendar-widget-fullscreen');
+            const mainContentEl = document.getElementById('main-content');
+            
+            if (isFullscreen) {
+                calWidget.classList.remove('calendar-widget-fullscreen');
+                if (calBackdrop) calBackdrop.classList.remove('active');
+                document.body.classList.remove('calendar-expanded');
+                
+                if (mainContentEl) {
+                    const currentZoom = parseInt(localStorage.getItem('psi_zoom_level')) || 100;
+                    mainContentEl.style.transform = 'none';
+                    mainContentEl.style.zoom = currentZoom / 100;
+                }
+                
+                if (btnExpand) {
+                    btnExpand.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>';
+                    btnExpand.title = "Expandir Calendário";
+                }
+            } else {
+                calWidget.classList.add('calendar-widget-fullscreen');
+                if (calBackdrop) calBackdrop.classList.add('active');
+                document.body.classList.add('calendar-expanded');
+                
+                if (mainContentEl) {
+                    mainContentEl.style.transform = 'none';
+                }
+
+                if (btnExpand) {
+                    btnExpand.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>';
+                    btnExpand.title = "Restaurar Tamanho";
+                }
+            }
+            setTimeout(() => { if (window.calendarApi) window.calendarApi.updateSize(); }, 350); 
+        };
+        if (btnExpand) btnExpand.addEventListener('click', toggleFullscreen);
+        if (calBackdrop) calBackdrop.addEventListener('click', toggleFullscreen);
+
+        // --- 0. PREPARAÇÃO DO DOM (LIMPEZA E MOVER MODAIS) ---
+        const modalsToMove = ['modal-patient', 'modal-appointment', 'modal-delete-confirmation', 'modal-event-details', 'modal-generic-confirm'];
+        modalsToMove.forEach(modalId => {
+            const modals = document.querySelectorAll(`#${modalId}`);
+            let modalInMain = null;
+            let modalsInBody = [];
+            
+            modals.forEach(m => {
+                if (m.closest('#main-content') || m.closest('.dashboard-main')) {
+                    modalInMain = m;
+                } else if (m.parentNode === document.body) {
+                    modalsInBody.push(m);
+                }
+            });
+            
+            if (modalInMain) {
+                modalsInBody.forEach(m => m.remove());
+                document.body.appendChild(modalInMain);
+            } else if (modalsInBody.length > 1) {
+                for (let i = 0; i < modalsInBody.length - 1; i++) {
+                    modalsInBody[i].remove();
+                }
+            }
+        });
+
+        const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : 'http://localhost:3001';
+        const token = localStorage.getItem('Yelo_token');
+
+        let patients = [];
+        let events = [];
+
+        // Elementos DOM
+
+        const listContainer = document.getElementById('patient-list');
+        const countBadge = document.getElementById('patient-count');
+        const searchInput = document.getElementById('search-patient');
+        const statusFilter = document.getElementById('filter-patient-status');
+        const pStatusInput = document.getElementById('p-status');
+        const modal = document.getElementById('modal-patient');
+        const form = document.getElementById('form-patient');
+        const pIdInput = document.getElementById('p-id');
+        const btnDelete = document.getElementById('btn-delete-patient');
+        
+        // Elementos do Modal de Exclusão
+        const modalDelete = document.getElementById('modal-delete-confirmation');
+        const btnConfirmDelete = document.getElementById('btn-confirm-delete');
+        const btnCancelDelete = document.getElementById('btn-cancel-delete');
+
+        // Elementos do Modal de Agendamento
+        const modalAppt = document.getElementById('modal-appointment');
+        const formAppt = document.getElementById('form-appointment');
+        const selectPatient = document.getElementById('appt-patient');
+
+        let fpDate, fpTime, tsHour, tsMinute, tsType, tsPatient, tsRecurrence;
+        function initFormAesthetics() {
+            const isMobile = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            
+            if (typeof flatpickr !== 'undefined') {
+                fpDate = flatpickr("#appt-date", {
+                    locale: "pt", 
+                    dateFormat: "Y-m-d",
+                    altInput: true,
+                    altFormat: "d/m/Y",
+                    minDate: "today"
+                });
+
+                fpTime = flatpickr("#appt-time", {
+                    enableTime: true,
+                    noCalendar: true,
+                    dateFormat: "H:i",
+                    time_24hr: true,
+                    minuteIncrement: 5,
+                    locale: "pt",
+                    position: "auto center" /* Centraliza o relógio perfeitamente em relação ao input */
+                });
+            }
+
+            if (typeof TomSelect !== 'undefined') {
+                const isMobile = window.innerWidth <= 992 || /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (!isMobile) {
+                    const tsOptions = { 
+                        create: false, 
+                        controlInput: `<input type="text" autocomplete="off" size="1" readonly style="opacity:0; position:absolute; left:-10000px;">`, 
+                        dropdownClass: 'ts-dropdown custom-ts-dropdown' 
+                    };
+                    
+                    // HACK: Função segura que destroi a instância anterior para evitar crash em SPA
+                    const initTS = (selector, opts) => {
+                        const el = document.querySelector(selector);
+                        if (el) {
+                            if (el.tomselect) el.tomselect.destroy();
+                            return new TomSelect(el, opts);
+                        }
+                        return null;
+                    };
+
+                    tsType = initTS("#appt-type", tsOptions);
+                    tsPatient = initTS("#appt-patient", { ...tsOptions, placeholder: "Selecione o paciente..." });
+                    tsRecurrence = initTS("#appt-recurrence", { ...tsOptions, dropdownClass: 'ts-dropdown custom-ts-dropdown drop-up' });
+                }
+            }
+        }
+        
+        // Inicializa ao carregar a página
+        initFormAesthetics();
+
+        // --- CUSTOM SELECT (FILTRO DE STATUS) ---
+        const statusFilterWrapper = document.querySelector('.custom-select-wrapper');
+        const statusFilterTrigger = document.getElementById('status-filter-trigger');
+        const statusFilterOptions = document.getElementById('status-filter-options');
+        const statusFilterSelectedText = document.getElementById('status-filter-selected-text');
+
+        if (statusFilterTrigger) {
+            statusFilterTrigger.addEventListener('click', () => {
+                statusFilterWrapper.classList.toggle('open');
+            });
+
+            statusFilterOptions.addEventListener('click', (e) => {
+                if (e.target.classList.contains('custom-option')) {
+                    const oldSelected = statusFilterOptions.querySelector('.custom-option.selected');
+                    if (oldSelected) oldSelected.classList.remove('selected');
+                    
+                    e.target.classList.add('selected');
+                    
+                    const newValue = e.target.getAttribute('data-value');
+                    const newText = e.target.textContent;
+
+                    statusFilterSelectedText.textContent = newText;
+                    statusFilter.value = newValue; // Atualiza o input hidden
+
+                    statusFilterWrapper.classList.remove('open');
+                    renderList(searchInput.value, newValue);
+                }
+            });
+
+            window.addEventListener('click', (e) => {
+                if (statusFilterWrapper && !statusFilterWrapper.contains(e.target)) {
+                    statusFilterWrapper.classList.remove('open');
+                }
+            });
+        }
+
+        // Elementos Financeiros
+        const modalEvent = document.getElementById('modal-event-details');
+        
+        // --- API FUNCTIONS ---
+        async function fetchData() {
+            console.log("fetchData: Iniciando busca de dados...");
+            try {
+                // 1. Buscar Pacientes
+                const resPatients = await fetch(`${BASE_URL}/api/my-patients`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (resPatients.ok) {
+                    const data = await resPatients.json();
+                    // Mapeia para o formato interno
+                    patients = data.map(p => ({
+                        id: p.id, name: p.nome, phone: p.telefone, email: p.email, automated: p.recebe_mensagens !== false, sessionValue: p.sessionValue || 0, status: p.status || 'ativo',
+                        notes: p.observacoes || ''
+                    }));
+                }
+
+                // 2. Buscar Agendamentos
+                const resAppts = await fetch(`${BASE_URL}/api/appointments`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (resAppts.ok) {
+                    const allEvents = await resAppts.json();
+                    // Filtra para não mostrar agendamentos órfãos (de pacientes excluídos)
+                    events = allEvents.filter(evt => {
+                        if (evt.status === 'available') return true; // Mantém horários livres
+                        return patients.some(p => p.id == evt.patientId); // Só mostra se o paciente existe
+                    });
+                }
+            } catch (e) { 
+                console.error("Erro ao carregar dados:", e); 
+            } finally {
+                console.log("fetchData: Finalizado. Chamando renderizadores.");
+                // Garante que a UI renderize mesmo com erro (com dados vazios se necessário)
+                renderList('', 'ativo');
+                renderNextSessions();
+                if (!window.calendarApi) {
+                    initCalendar();
+                } else {
+                    window.calendarApi.refetchEvents();
+                }
+            }
+        }
+
+        // --- RENDERIZAR PRÓXIMAS SESSÕES ---
+        function renderNextSessions() {
+            const container = document.getElementById('next-sessions-container');
+            const list = document.getElementById('next-sessions-list');
+            if (!list) return; // [FIX] Evita erro se o DOM ainda não carregou via navegação SPA
+            list.innerHTML = '';
+
+            // Filtra eventos futuros e agendados
+            // Ajuste: Filtra eventos com status 'scheduled'
+            const upcoming = events
+                .filter(e => e.status === 'scheduled' || e.status === 'confirmed')
+                .sort((a, b) => new Date(a.start) - new Date(b.start))
+                .slice(0, 5); // Pega os 5 primeiros
+
+            if (upcoming.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+            upcoming.forEach(evt => {
+                const dateObj = new Date(evt.start);
+                // [CORREÇÃO] Exibe em horário local
+                const timeStr = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                const dateStr = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+                
+                // Define o texto e a cor do status
+                let statusText = 'Aguardando';
+                let statusColor = '#666';
+                
+                if (evt.status === 'confirmed') {
+                    statusText = 'Confirmado';
+                    statusColor = '#1B4332';
+                }
+
+                const el = document.createElement('div');
+                el.className = 'next-session-card';
+                el.innerHTML = `
+                    <div class="ns-time"><span>${timeStr}</span><span style="font-size:0.7rem; font-weight:normal;">${dateStr}</span></div>
+                    <div class="ns-info" style="flex-grow: 1; padding-right: 5px;">
+                        <h5 style="margin-bottom: 3px; font-size: 1rem;">${evt.title}</h5>
+                        <span style="color: ${statusColor}; font-weight: 600; font-size: 0.8rem;">${statusText}</span>
+                    </div>
+                    <div style="color:#ccc;">➔</div>
+                `;
+                el.onclick = () => openEventDetails(evt); // Reutiliza a função de abrir detalhes
+                list.appendChild(el);
+            });
+        }
+
+        // Helper Global para botões inline
+        window.updateEvtStatus = async (id, status) => {
+            const evt = events.find(e => e.id == id);
+            const patient = evt.patientId ? patients.find(p => p.id == evt.patientId) : null;
+            try {
+                const res = await fetch(`${BASE_URL}/api/appointments/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ status, value: evt.value, phone: patient ? patient.phone : null, title: evt.title })
+                });
+                if (res.ok) {
+                    fetchData();
+                    if (window.showToast) window.showToast('Status atualizado com sucesso.', 'success');
+                }
+            } catch (e) {
+                if(window.showToast) window.showToast('Erro ao atualizar evento.', 'error'); else alert('Erro ao atualizar evento.');
+            }
+        };
+
+        // 1. Renderizar Lista
+        function renderList(searchTerm = '', statusFilterValue = 'ativo') {
+            listContainer.innerHTML = '';
+            const filteredByName = patients.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+            const finalFiltered = filteredByName.filter(p => {
+                if (statusFilterValue === 'todos') return true;
+                // Garante que pacientes sem status sejam tratados como ativos no filtro padrão
+                const pStatus = (p.status || 'ativo').toLowerCase();
+                const normalizedStatus = pStatus === 'active' ? 'ativo' : pStatus;
+                return normalizedStatus === statusFilterValue;
+            });
+            
+            if (countBadge) countBadge.textContent = finalFiltered.length;
+
+            // Clona o array de pacientes e ordena de A-Z
+            const sortedPatients = [...patients].sort((a, b) => a.name.localeCompare(b.name));
+            
+            // ATUALIZAÇÃO BLINDADA: Preenche o select nativo primeiro (garante dados para o banco e mobile)
+            selectPatient.innerHTML = '<option value="">Selecione o paciente...</option>';
+            sortedPatients.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.name; // Usando nome como ID simplificado
+                opt.textContent = p.name;
+                selectPatient.appendChild(opt);
+            });
+
+            // Atualiza o select do modal de agendamento corretamente via TomSelect API
+            if (typeof tsPatient !== 'undefined' && tsPatient) {
+                tsPatient.clear();
+                tsPatient.clearOptions();
+                tsPatient.addOption({value: '', text: 'Selecione o paciente...'});
+                sortedPatients.forEach(p => {
+                    tsPatient.addOption({value: p.name, text: p.name});
+                });
+                tsPatient.refreshOptions(false);
+            }
+
+            if (finalFiltered.length === 0) {
+                listContainer.innerHTML = '<div class="empty-state-patients"><p>Nenhum paciente encontrado.</p></div>';
+                return;
+            }
+
+            finalFiltered.forEach(p => {
+                // Gera iniciais para o avatar
+                const initials = p.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+
+                const item = document.createElement('div');
+                item.className = 'patient-card';
+                item.innerHTML = `
+                    <div class="patient-avatar">${initials}</div>
+                    <div class="patient-info">
+                        <h4>${p.name}</h4>
+                        <span>${p.phone}</span>
+                    </div>
+                    <span class="patient-status-badge status-${p.status || 'ativo'}">${p.status || 'ativo'}</span>
+                    <div class="patient-status" title="Assistente Inativa (Em breve)">
+                        🔕
+                    </div>
+                    <div style="font-weight:bold; color:#1B4332; font-size:0.9rem; margin-left: 10px;">R$ ${p.sessionValue || 0}</div>
+                `;
+                
+                // Clique no card abre edição
+                item.onclick = () => openEditModal(p);
+                
+                listContainer.appendChild(item);
+            });
+        }
+
+        // 2. Inicializar Calendário (FullCalendar)
+        function initCalendar() {
+            console.log("initCalendar: Iniciando..."); 
+            const calendarEl = document.getElementById('calendar-wrapper');
+            if (!calendarEl) {
+                console.warn("initCalendar: Elemento #calendar-wrapper não encontrado. Ignorando (usuário mudou de aba).");
+                return;
+            }
+            
+            // Verificação de Segurança: FullCalendar carregado?
+            if (typeof FullCalendar === 'undefined') {
+                console.warn("FullCalendar não encontrado. Tentando carregar dinamicamente...");
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js';
+                script.onload = () => {
+                    console.log("FullCalendar carregado dinamicamente.");
+                    initCalendar();
+                };
+                script.onerror = (e) => console.error("Erro ao carregar FullCalendar:", e);
+                document.head.appendChild(script);
+                return;
+            }
+
+            console.log("initCalendar: FullCalendar disponível. Configurando...");
+
+            const mobile = window.innerWidth < 768;
+            const isDesktop = window.innerWidth >= 992;
+
+            try {
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: mobile ? 'timeGridDay' : 'timeGridWeek', // Mobile: Dia | Desktop: Semana
+                locale: 'pt-br',
+                                timeZone: 'local', // [FIX] Usa o fuso local do navegador, alinhando a grade 100% com o Javascript nativo
+                selectable: true,
+                selectLongPressDelay: 250, /* Acelera muito a marcação multi-horário arrastando o dedo no Mobile */
+                editable: true,
+                
+                // --- CONFIGURAÇÃO DE GEOMETRIA (O SEGREDO DO ALINHAMENTO) ---
+                height: isDesktop ? '100%' : 'auto', // Mobile: Auto (Cresce) | Desktop: 100% (Scroll interno)
+                expandRows: false, // [AJUSTE] Desativado para garantir alinhamento perfeito com altura fixa
+                slotDuration: '01:00:00', // [FIXO] Slots de 1 em 1 hora.
+                slotLabelInterval: '01:00', // Rótulos de 1 em 1 hora.
+                allDaySlot: false, // Remove linha de dia inteiro
+                nowIndicator: true, // Linha vermelha de hora atual
+                dayMaxEvents: true,
+                slotLabelFormat: { hour: '2-digit', minute: '2-digit', omitZeroMinute: false, meridiem: false },
+                eventTimeFormat: { hour: '2-digit', minute: '2-digit', meridiem: false },
+                // -----------------------------------------------------------
+                
+                /// a MÁGICA: Permite seleção multi-horário arrastando o mouse/dedo!
+                selectable: true,
+                select: async function(info) {
+                    if (window.currentMode === 'disponibilidade') {
+                        try {
+                            const res = await fetch(`${BASE_URL}/api/appointments`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                body: JSON.stringify({
+                                    title: 'Disponível', start: info.startStr, end: info.endStr,
+                                    patientId: null, status: 'available', value: 0
+                                })
+                            });
+                            if (res.ok) { fetchData(); if(window.showToast) window.showToast('Horário livre adicionado!', 'success'); }
+                        } catch(e) { console.error(e); }
+                    } else {
+                        // Modo Agenda: Abrir modal de agendamento
+                        const dateStr = info.startStr.substring(0, 10);
+                        const timeStr = info.startStr.substring(11, 16);
+                        window.openAppointmentModal(dateStr, timeStr);
+                    }
+                    calendar.unselect();
+                },
+
+                eventDrop: async function(info) {
+                    // Reagendamento (Drag & Drop)
+                    const evtId = info.event.id;
+                    const newStart = info.event.startStr;
+                    const newEnd = info.event.endStr;
+                    
+                    // Busca telefone do paciente para notificar
+                    const evtData = events.find(e => e.id == evtId);
+                    const patient = patients.find(p => p.id == evtData.patientId);
+
+                    try {
+                        await fetch(`${BASE_URL}/api/appointments/${evtId}`, {
+                            method: 'PUT',
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}` 
+                            },
+                            body: JSON.stringify({ 
+                                start: newStart, 
+                                end: newEnd,
+                                phone: patient ? patient.phone : null,
+                                title: evtData.title
+                            })
+                        });
+                        if(window.showToast) window.showToast('Sessão reagendada e paciente notificado.', 'success');
+                    } catch (e) {
+                        info.revert(); // Desfaz se der erro
+                    if(window.showToast) window.showToast('Erro ao reagendar.', 'error'); else alert('Erro ao reagendar.');
+                    }
+                },
+                eventResize: async function(info) {
+                    // Atualiza a duração no array local e no banco
+                    const evtId = info.event.id;
+                    const evt = events.find(e => e.id == info.event.id);
+                    const newStart = info.event.startStr;
+                    const newEnd = info.event.endStr;
+                    
+                    if (evt) {
+                        evt.start = newStart;
+                        evt.end = newEnd;
+                    }
+                    
+                    try {
+                        await fetch(`${BASE_URL}/api/appointments/${evtId}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify({ start: newStart, end: newEnd, title: evt ? evt.title : '' })
+                        });
+                        if(window.showToast) window.showToast('Duração da sessão atualizada.', 'success');
+                    } catch (e) {
+                        info.revert();
+                    if(window.showToast) window.showToast('Erro ao atualizar duração.', 'error'); else alert('Erro ao atualizar duração.');
+                    }
+                },
+                headerToolbar: false, // Desativa nativa pois criamos uma Custom App-like Toolbar
+                
+                // --- CONFIGURAÇÕES MOBILE ---
+                windowResize: function(arg) {
+                    const width = window.innerWidth;
+                    const isSmall = width < 768;
+
+                    if (isSmall) {
+                        calendar.changeView('timeGridDay');
+                        calendar.setOption('titleFormat', { year: 'numeric', month: 'short', day: 'numeric' });
+                        updateCalHeader();
+                    } else {
+                        calendar.changeView('timeGridWeek');
+                        calendar.setOption('titleFormat', undefined);
+                        updateCalHeader();
+                    }
+                },
+                views: {
+                    timeGridDay: {
+                        titleFormat: { year: 'numeric', month: 'short', day: 'numeric' } // Título curto no mobile
+                    }
+                },
+
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    try {
+                        const mappedEvents = (Array.isArray(events) ? events : []).map(evt => ({
+                            ...evt,
+                                            // Converte a string ISO 'Z' do banco para um objeto Date local
+                                            // Isso blinda o FullCalendar contra falhas de interpretação de fuso
+                                            start: new Date(evt.start),
+                                            end: new Date(evt.end),
+                            classNames: ['evt-custom', 'evt-' + evt.status],
+                            display: (evt.status === 'cancelled' || evt.status === 'missed') ? 'background' : 'auto'
+                        })).filter(evt => evt.start !== null); // Garante exclusão de eventos corrompidos
+                        
+                        successCallback(mappedEvents);
+                    } catch (e) {
+                        console.error("Erro ao mapear eventos do calendário:", e);
+                        failureCallback(e);
+                    }
+                },
+                // Clique em um evento existente
+                eventClick: function(info) {
+                    openEventDetails(info.event);
+                }
+            });
+            
+            // --- HOOKS DA CUSTOM TOOLBAR APP-LIKE ---
+            const updateCalHeader = () => {
+                const titleEl = document.getElementById('cal-title');
+                if (titleEl) titleEl.textContent = calendar.view.title;
+            };
+            
+            document.getElementById('cal-prev').onclick = () => { calendar.prev(); updateCalHeader(); };
+            document.getElementById('cal-next').onclick = () => { calendar.next(); updateCalHeader(); };
+            document.getElementById('cal-today').onclick = () => { calendar.today(); updateCalHeader(); };
+            
+            document.querySelectorAll('.cal-view-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    calendar.changeView(e.target.dataset.view);
+                    updateCalHeader();
+                }
+            });
+
+            // Renderiza com um pequeno delay para garantir que o DOM esteja pronto e visível
+            setTimeout(() => {
+                console.log("initCalendar: Renderizando calendário...");
+                const loader = document.getElementById('calendar-loading');
+                if(loader) loader.style.display = 'none';
+                
+                try {
+                    calendar.render();
+                    calendar.updateSize(); // Força recálculo de tamanho (Crítico para Mobile)
+                    updateCalHeader();
+                    console.log("initCalendar: Calendário renderizado com sucesso.");
+                } catch (renderError) {
+                    console.error("initCalendar: Erro ao renderizar:", renderError);
+                }
+            }, 300);
+            
+            window.calendarApi = calendar;
+            
+            // [NOVO] Atualiza altura dinamicamente ao redimensionar a janela
+            window.addEventListener('resize', () => {
+                const isDesktopNow = window.innerWidth >= 992;
+                calendar.setOption('height', isDesktopNow ? '100%' : 'auto');
+                calendar.updateSize();
+            });
+
+            } catch (err) {
+                console.error("initCalendar: Erro na inicialização:", err);
+            }
+
+            // --- SWIPE NAVIGATION (MOBILE) ---
+            let touchStartX = 0;
+            let touchEndX = 0;
+            
+            calendarEl.addEventListener('touchstart', e => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, {passive: true});
+
+            calendarEl.addEventListener('touchend', e => {
+                touchEndX = e.changedTouches[0].screenX;
+                if (touchEndX < touchStartX - 50) calendar.next(); // Swipe Left -> Próximo
+                if (touchEndX > touchStartX + 50) calendar.prev(); // Swipe Right -> Anterior
+            }, {passive: true});
+        }
+
+        // 3. Funções do Modal
+        async function openEditModal(patient) {
+            form.reset();
+            pIdInput.value = String(patient.id); // Garante que seja string para o form
+            document.getElementById('p-name').value = patient.name;
+            document.getElementById('p-phone').value = patient.phone;
+            document.getElementById('p-email').value = (patient.email && patient.email.includes('@temp.com')) ? '' : patient.email;
+            document.getElementById('p-session-value').value = patient.sessionValue;
+            pStatusInput.value = patient.status || 'ativo';
+            document.getElementById('p-notes').value = patient.notes || '';
+            document.getElementById('p-automated-msg').checked = false; // patient.automated; (Desativado temporariamente)
+            
+            document.getElementById('modal-patient-title').textContent = 'Editar Paciente';
+            btnDelete.style.display = 'inline-flex'; // Mostra botão de exclusão
+            modal.style.display = 'flex';
+
+            // Tenta buscar detalhes completos (caso a lista não traga as observações)
+            try {
+                const res = await fetch(`${BASE_URL}/api/my-patients/${patient.id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    const fullData = await res.json();
+                    const fullNotes = fullData.observacoes || '';
+                    
+                    // Atualiza o campo apenas se estiver vazio ou igual ao da lista (evita sobrescrever se usuário já digitou)
+                    const currentVal = document.getElementById('p-notes').value;
+                    if (currentVal === (patient.notes || '')) {
+                        document.getElementById('p-notes').value = fullNotes;
+                    }
+                }
+            } catch (e) { console.error("Erro ao buscar detalhes do paciente:", e); }
+        }
+
+        function openNewPatientModal() {
+            form.reset();
+            pIdInput.value = ''; // Limpa ID para indicar novo
+            document.getElementById('modal-patient-title').textContent = 'Novo Paciente';
+            document.getElementById('p-email').value = '';
+            pStatusInput.value = 'ativo';
+            btnDelete.style.display = 'none'; // Esconde lixeira
+            modal.style.display = 'flex';
+        }
+
+        window.openAppointmentModal = function(dateStr = '', timeStr = '') {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (formAppt) formAppt.reset();
+            
+            if (fpDate && dateStr) {
+                fpDate.setDate(dateStr);
+            } else {
+                if (fpDate) fpDate.clear();
+            }
+            
+            if (timeStr) {
+                if (fpTime) fpTime.setDate(timeStr.substring(0, 5));
+                else { const timeInput = document.getElementById('appt-time'); if (timeInput) timeInput.value = timeStr.substring(0, 5); }
+            } else {
+                if (fpTime) fpTime.clear();
+                else { const timeInput = document.getElementById('appt-time'); if (timeInput) timeInput.value = ''; }
+            }            
+            if (tsType) { try { tsType.setValue('session'); } catch(e){} }
+            else { const e = document.getElementById('appt-type'); if(e) e.value = 'session'; }
+            
+            if (tsPatient) { try { tsPatient.clear(); } catch(e){} }
+            else { const e = document.getElementById('appt-patient'); if(e) e.value = ''; }
+            
+            if (tsRecurrence) { try { tsRecurrence.setValue('none'); } catch(e){} }
+            else { const e = document.getElementById('appt-recurrence'); if(e) e.value = 'none'; }
+            
+            document.getElementById('modal-appointment-title').textContent = 'Novo Agendamento';
+            if (modalAppt) modalAppt.style.display = 'flex';
+        };
+
+        // Toggle de campos no modal de agendamento
+        document.getElementById('appt-type').addEventListener('change', (e) => {
+            const type = e.target.value;
+            const patientGroup = document.getElementById('group-patient-select');
+            const patientSelect = document.getElementById('appt-patient');
+            
+            patientGroup.style.display = type === 'available' ? 'none' : 'block';
+            patientSelect.required = type === 'session';
+        });
+
+        // Função unificada para abrir modal de novo paciente
+        window.handleNewPatient = () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // Traz a tela para o modal
+            if (form) form.reset();
+            if (pIdInput) pIdInput.value = ''; // Limpa ID para indicar novo
+            if (pStatusInput) pStatusInput.value = 'ativo';
+            const checkboxAutomated = document.getElementById('p-automated-msg');
+            if (checkboxAutomated) checkboxAutomated.checked = false; // Desativado por padrão (Em breve)
+            const titleEl = document.getElementById('modal-patient-title');
+            if (titleEl) titleEl.textContent = 'Novo Paciente';
+            // [CORREÇÃO] Reseta o display do botão de excluir usando display flex que configuramos acima
+            if (btnDelete) btnDelete.style.display = 'none'; 
+            if (modal) modal.style.display = 'flex';
+        };
+
+        // Função Global atrelada ao FAB (Floating Action Button)
+        window.handleFabClick = () => {
+            if (window.currentMode === 'disponibilidade') {
+                if(window.showToast) window.showToast('Toque nos horários da agenda e arraste para baixo para marcar como livre.', 'info');
+            } else {
+                window.openAppointmentModal();
+            }
+        };
+
+        // Verifica se deve abrir o modal automaticamente (vindo do FAB)
+        if (sessionStorage.getItem('autoOpenNewPatient')) {
+            sessionStorage.removeItem('autoOpenNewPatient');
+            window.handleNewPatient();
+        }
+
+        // Atrela eventos aos botões de forma segura (blinda contra falhas de DOM)
+        const addBtns = document.querySelectorAll('#btn-add-patient, #btn-add-patient-mobile, #btn-add-mobile-inline');
+        addBtns.forEach(btn => {
+            btn.onclick = (e) => {
+                e.preventDefault();
+                window.handleNewPatient();
+            };
+        });
+        
+        const closeModal = (e) => {
+            if (e) e.preventDefault();
+            if (modal) modal.style.display = 'none';
+        };
+        
+        // Eventos de fechamento escopados ao modal atual
+        if (modal) {
+            const closeBtns = modal.querySelectorAll('#close-patient-modal, #cancel-patient-modal');
+            closeBtns.forEach(btn => {
+                btn.onclick = closeModal;
+            });
+        }
+
+        const closeApptModal = (e) => {
+            if (e) e.preventDefault();
+            if (modalAppt) modalAppt.style.display = 'none';
+        };
+        const btnCloseAppt = document.getElementById('close-appointment-modal');
+        if (btnCloseAppt) btnCloseAppt.onclick = closeApptModal;
+        const btnCancelAppt = document.getElementById('cancel-appointment-modal');
+        if (btnCancelAppt) btnCancelAppt.onclick = closeApptModal;
+
+        // Fechar modais financeiros
+        document.querySelectorAll('.modal-close-btn').forEach(btn => {
+            btn.onclick = () => document.querySelectorAll('.custom-modal-overlay').forEach(m => m.style.display = 'none');
+        });
+
+        // Ação: Abrir Modal de Exclusão
+        if (btnDelete) {
+            btnDelete.onclick = () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                if (modalDelete) modalDelete.style.display = 'flex';
+            };
+        }
+
+        // Ação: Cancelar Exclusão
+        if (btnCancelDelete) {
+            btnCancelDelete.onclick = () => {
+                if (modalDelete) modalDelete.style.display = 'none';
+            };
+        }
+
+        // Ação: Confirmar Exclusão (API REAL)
+        if (btnConfirmDelete) {
+            btnConfirmDelete.onclick = async () => {
+                const id = document.getElementById('p-id').value;
+                if (!id) return;
+
+                btnConfirmDelete.textContent = "Excluindo...";
+                
+                try {
+                    const res = await fetch(`${BASE_URL}/api/my-patients/${id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (res.ok) {
+                        fetchData(); // Recarrega a lista do servidor
+                        if (modalDelete) modalDelete.style.display = 'none';
+                        closeModal();
+                        if(window.showToast) window.showToast('Paciente removido do banco de dados.', 'success');
+                    } else {
+                        if(window.showToast) window.showToast('Erro ao excluir paciente.', 'error'); else alert('Erro ao excluir paciente.');
+                    }
+                } catch (e) {
+                    if(window.showToast) window.showToast('Erro de conexão ao excluir.', 'error'); else alert('Erro de conexão ao excluir.');
+                } finally {
+                    btnConfirmDelete.textContent = "Sim, Excluir";
+                }
+            };
+        }
+
+                // Salvar (Novo ou Edição)
+        if (form) {
+            form.onsubmit = async (e) => {
+                e.preventDefault(); // Impede o reload silencioso da página
+                
+                const btnSubmit = form.querySelector('button[type="submit"]');
+                const originalText = btnSubmit.textContent;
+                btnSubmit.textContent = 'Salvando...';
+                btnSubmit.disabled = true;
+
+                // Buscando os valores escopados no form para evitar falha com IDs duplicados invisíveis
+                const id = form.querySelector('#p-id') ? form.querySelector('#p-id').value : '';
+                const name = form.querySelector('#p-name') ? form.querySelector('#p-name').value : '';
+                const phone = form.querySelector('#p-phone') ? form.querySelector('#p-phone').value : '';
+                const email = form.querySelector('#p-email') ? form.querySelector('#p-email').value : '';
+                const statusSel = form.querySelector('#p-status');
+                const status = statusSel ? statusSel.value : 'ativo';
+                const valInput = form.querySelector('#p-session-value');
+                const sessionValue = parseFloat(valInput ? valInput.value : 0) || 0;
+                const notesInput = form.querySelector('#p-notes');
+                const notes = notesInput ? notesInput.value : '';
+                
+                const automatedMsgInput = form.querySelector('#p-automated-msg');
+                const recebeMensagens = automatedMsgInput ? automatedMsgInput.checked : true;
+                
+                const method = id ? 'PUT' : 'POST';
+                const url = id ? `${BASE_URL}/api/my-patients/${id}` : `${BASE_URL}/api/my-patients`;
+                
+                const payload = { name, phone, email, status, sessionValue, observacoes: notes, recebeMensagens };
+
+                try {
+                    const res = await fetch(url, {
+                        method: method,
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}` 
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (res.ok) {
+                        await fetchData(); // Aguarda os dados voltarem do banco para renderizar
+                        closeModal();
+                        if(window.showToast) window.showToast('Paciente salvo.', 'success');
+                    } else {
+                        const err = await res.json();
+                        if(window.showToast) window.showToast('Erro ao salvar: ' + (err.error || 'Desconhecido'), 'error'); else alert('Erro ao salvar paciente.');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    if(window.showToast) window.showToast('Erro de conexão ao salvar paciente.', 'error'); else alert('Erro de conexão ao salvar paciente.');
+                } finally {
+                    btnSubmit.textContent = originalText;
+                    btnSubmit.disabled = false;
+                }
+            };
+        }
+
+
+        // Salvar Agendamento
+        formAppt.onsubmit = async (e) => {
+            e.preventDefault();
+            
+            const type = document.getElementById('appt-type').value;
+            const patientName = selectPatient.value;
+            const patient = patients.find(p => p.name === patientName);
+            const date = document.getElementById('appt-date').value;
+            const timeValue = document.getElementById('appt-time').value;
+            
+            if (type === 'session' && (!patientName || !patient)) {
+                if(window.showToast) window.showToast('Selecione um paciente para o agendamento.', 'error');
+                else alert('Selecione um paciente.');
+                return;
+            }
+            
+            if (!date || !timeValue) {
+                if(window.showToast) window.showToast('Preencha a data e o horário.', 'error');
+                else alert('Preencha a data e o horário.');
+                return;
+            }
+
+            const time = timeValue;
+            const startStr = `${date}T${time}:00-03:00`; // Força o fuso horário de Brasília no envio pro servidor
+            const startDt = new Date(startStr);
+            const endDt = new Date(startDt.getTime() + 60 * 60 * 1000); // +1 hora
+
+            try {
+                const res = await fetch(`${BASE_URL}/api/appointments`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({
+                        title: type === 'available' ? 'Horário Disponível' : patient.name,
+                        start: startDt.toISOString(),
+                        end: endDt.toISOString(),
+                        patientId: type === 'available' ? null : patient.id,
+                        phone: (type === 'session' && patient) ? patient.phone : null,
+                        status: type === 'available' ? 'available' : 'scheduled',
+                        value: (type === 'session' && patient) ? (patient.sessionValue || 0) : 0
+                    })
+                });
+
+                if (res.ok) {
+                    fetchData(); // Recarrega calendário
+                    closeApptModal();
+                    if(window.showToast) window.showToast(type === 'available' ? 'Horário disponível criado.' : 'Agendado e notificado!', 'success');
+                } else {
+                    const errData = await res.json();
+                    if(window.showToast) window.showToast('Erro ao criar agendamento: ' + (errData.error || 'Verifique os dados.'), 'error'); else alert('Erro ao criar agendamento.');
+                }
+            } catch (e) {
+                if(window.showToast) window.showToast('Erro ao agendar.', 'error'); else alert('Erro ao agendar.');
+            }
+        };
+
+        // --- LÓGICA DE DETALHES DO EVENTO ---
+        let currentEventId = null;
+        function openEventDetails(fcEvent) {
+            const evt = events.find(e => e.id == fcEvent.id);
+            if(!evt) return;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            currentEventId = evt.id;
+            document.getElementById('evt-patient-name').textContent = evt.title;
+            // [CORREÇÃO] Exibe data/hora em UTC no modal de detalhes
+            document.getElementById('evt-time-info').textContent = new Date(evt.start).toLocaleString('pt-BR');
+            document.getElementById('evt-value').value = evt.value;
+            
+            // Reset UI
+            document.querySelectorAll('.btn-status').forEach(b => {
+                b.style.background = '#fff'; b.style.color = '#333'; b.style.borderColor = '#ddd';
+            });
+            document.getElementById('evt-options-done').style.display = 'none';
+            document.getElementById('evt-options-missed').style.display = 'none';
+            document.getElementById('evt-options-reschedule').style.display = 'none';
+
+            // Seleciona status atual se houver
+            if(evt.status) {
+                const btn = document.querySelector(`.btn-status[data-status="${evt.status}"]`);
+                if(btn) highlightStatusBtn(btn, evt.status);
+                if(evt.status === 'done') document.getElementById('evt-options-done').style.display = 'block';
+                // Reutiliza opções de falta para cancelado se necessário, ou esconde
+                if(evt.status === 'missed') document.getElementById('evt-options-missed').style.display = 'block';
+            }
+
+            modalEvent.style.display = 'flex';
+        }
+
+        function highlightStatusBtn(btn, status) {
+            // Remove active class from all to ensure single selection
+            document.querySelectorAll('.btn-status').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            if(status === 'confirmed') { btn.style.background = '#e8f5e9'; btn.style.borderColor = '#1B4332'; btn.style.color = '#1B4332'; }
+            if(status === 'done') { btn.style.background = '#f0f0f0'; btn.style.borderColor = '#999'; btn.style.color = '#555'; }
+            if(status === 'rescheduled') { btn.style.background = '#fff3e0'; btn.style.borderColor = '#f57c00'; btn.style.color = '#f57c00'; }
+            if(status === 'cancelled') { btn.style.background = '#ffebee'; btn.style.borderColor = '#d32f2f'; btn.style.color = '#d32f2f'; }
+        }
+
+        document.querySelectorAll('.btn-status').forEach(btn => {
+            btn.onclick = () => {
+                const status = btn.dataset.status;
+                document.querySelectorAll('.btn-status').forEach(b => {
+                    b.style.background = '#fff'; b.style.color = '#333'; b.style.borderColor = '#ddd';
+                });
+                highlightStatusBtn(btn, status);
+                
+                // --- FEATURE: Preencher valor ao marcar como realizado ---
+                if (status === 'done') {
+                    const evt = events.find(e => e.id == currentEventId);
+                    const valInput = document.getElementById('evt-value');
+                    // Só preenche se o campo estiver vazio ou zerado (para não sobrescrever edições manuais)
+                    if (evt && (!valInput.value || parseFloat(valInput.value) === 0)) {
+                        const patient = patients.find(p => p.id == evt.patientId);
+                        if (patient && patient.sessionValue) {
+                            valInput.value = patient.sessionValue;
+                        }
+                    }
+                }
+
+                document.getElementById('evt-options-done').style.display = status === 'done' ? 'block' : 'none';
+                document.getElementById('evt-options-missed').style.display = 'none'; // Esconde opções extras ao mudar
+                
+                // --- LÓGICA DE REAGENDAMENTO ---
+                const rescheduleContainer = document.getElementById('evt-options-reschedule');
+                if (status === 'rescheduled') {
+                    rescheduleContainer.style.display = 'block';
+                    const list = document.getElementById('reschedule-slots-list');
+                    list.innerHTML = '';
+
+                    // Busca horários disponíveis futuros
+                    const now = new Date();
+                    const availableSlots = events
+                        .filter(e => e.status === 'available' && new Date(e.start) > now)
+                        .sort((a, b) => new Date(a.start) - new Date(b.start))
+                        .slice(0, 5); // Top 5
+
+                    if (availableSlots.length === 0) {
+                        list.innerHTML = '<div style="padding:10px; color:#999; font-size:0.9rem;">Nenhum horário "Disponível" futuro encontrado na agenda.</div>';
+                    } else {
+                        availableSlots.forEach(slot => {
+                            const btn = document.createElement('button');
+                            // [CORREÇÃO] Exibe opções de reagendamento locais
+                            const dateStr = new Date(slot.start).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
+                            const timeStr = new Date(slot.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                            
+                            btn.innerHTML = `📅 <strong>${dateStr}</strong> às <strong>${timeStr}</strong>`;
+                            btn.style.cssText = "padding: 10px; border: 1px solid #ddd; border-radius: 6px; background: #fff; cursor: pointer; text-align: left; transition: background 0.2s;";
+                            btn.onmouseover = () => btn.style.background = "#f0fdf4";
+                            btn.onmouseout = () => btn.style.background = "#fff";
+                            
+                            btn.onclick = () => realizarReagendamento(currentEventId, slot);
+                            list.appendChild(btn);
+                        });
+                    }
+                } else {
+                    rescheduleContainer.style.display = 'none';
+                }
+            };
+        });
+
+        document.getElementById('btn-save-event-status').onclick = async () => {
+            const activeBtn = document.querySelector('.btn-status.active');
+            if(!activeBtn) return;
+            
+            const status = activeBtn.dataset.status;
+            const evt = events.find(e => e.id == currentEventId);
+            const patient = evt.patientId ? patients.find(p => p.id == evt.patientId) : null;
+            
+            try {
+                await fetch(`${BASE_URL}/api/appointments/${currentEventId}`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({ 
+                        status, 
+                        value: parseFloat(document.getElementById('evt-value').value) || 0,
+                        phone: patient ? patient.phone : null,
+                        title: evt.title
+                    })
+                });
+                
+                fetchData(); // Atualiza UI e Financeiro
+                modalEvent.style.display = 'none';
+                if (status === 'rescheduled') {
+                    if(window.showToast) window.showToast('Opções de horário enviadas ao paciente.', 'success');
+                } else {
+                    if(window.showToast) window.showToast('Status atualizado!', 'success');
+                }
+            } catch (e) {
+                if(window.showToast) window.showToast('Erro ao atualizar status.', 'error'); else alert('Erro ao atualizar status.');
+            }
+        };
+
+        // Ação: Excluir Agendamento (Botão Lixeira no Modal de Detalhes)
+        const btnDeleteEvent = document.getElementById('btn-delete-event');
+        if (btnDeleteEvent) {
+            btnDeleteEvent.onclick = async () => {
+                if (!currentEventId) return;
+                window.yeloConfirm(
+                    'Excluir Agendamento?',
+                    'Tem certeza que deseja excluir este agendamento? Essa ação não pode ser desfeita.',
+                    'Sim, Excluir',
+                    '#e63946',
+                    '#e63946',
+                    async () => {
+                        try {
+                            const res = await fetch(`${BASE_URL}/api/appointments/${currentEventId}`, {
+                                method: 'DELETE',
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            if (res.ok) {
+                                fetchData();
+                                modalEvent.style.display = 'none';
+                                if (window.showToast) window.showToast('Agendamento excluído.', 'success');
+                            } else {
+                                if(window.showToast) window.showToast('Erro ao excluir agendamento.', 'error'); else alert('Erro ao excluir agendamento.');
+                            }
+                        } catch (e) {
+                            if(window.showToast) window.showToast('Erro de conexão.', 'error'); else alert('Erro de conexão.');
+                        }
+                    }
+                );
+            };
+        }
+
+        // Função auxiliar para reagendar ao clicar no slot
+        async function realizarReagendamento(eventId, newSlot) {
+            window.yeloConfirm(
+                'Confirmar Reagendamento?',
+                'Deseja confirmar o reagendamento para este novo horário?',
+                'Sim, Reagendar',
+                '#1B4332',
+                '#1B4332',
+                async () => {
+                    const evt = events.find(e => e.id == eventId);
+                    const patient = evt.patientId ? patients.find(p => p.id == evt.patientId) : null;
+                    try {
+                        await fetch(`${BASE_URL}/api/appointments/${eventId}`, {
+                            method: 'PUT',
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}` 
+                            },
+                            body: JSON.stringify({ 
+                                status: 'scheduled', start: newSlot.start, end: newSlot.end,
+                                phone: patient ? patient.phone : null, title: evt.title
+                            })
+                        });
+                        fetchData();
+                        modalEvent.style.display = 'none';
+                        if(window.showToast) window.showToast('Reagendado com sucesso!', 'success');
+                    } catch (e) { 
+                        if(window.showToast) window.showToast('Erro ao reagendar.', 'error'); else alert('Erro ao reagendar.'); 
+                    }
+                }
+            );
+        }
+
+        searchInput.oninput = (e) => renderList(e.target.value, statusFilter.value);
+
+        // Inicialização
+        fetchData();
+
+        // Máscara de telefone (se IMask estiver disponível)
+        if (typeof IMask !== 'undefined') {
+            IMask(document.getElementById('p-phone'), { mask: '(00) 00000-0000' });
+        }
+
+        // Validação do campo Valor da Sessão (Impedir letras 'e', 'E', '+', '-')
+        const sessionInput = document.getElementById('p-session-value');
+        if (sessionInput) {
+            sessionInput.addEventListener('keydown', (e) => {
+                if (['e', 'E', '+', '-'].includes(e.key)) {
+                    e.preventDefault();
+                }
+            });
+        }
+    })();
+</script>

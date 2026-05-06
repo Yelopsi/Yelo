@@ -169,7 +169,7 @@
         const optout = items.filter(i => i.status === 'opt_out').length;
 
         // 1. Taxa de Contato Realizado (KPI-mãe)
-        // Fórmula: contato_realizado / (contato_realizado + contato_nao_realizado)
+        // Fórmula: contato_realizado // (contato_realizado + contato_nao_realizado)
         const totalAttempts = success + failed;
         const successRate = totalAttempts > 0 ? Math.round((success / totalAttempts) * 100) : 0;
         
@@ -183,7 +183,7 @@
         else { elSuccess.style.color = '#e74c3c'; elSuccessLabel.textContent = "Problema estrutural"; }
 
         // 2. Taxa de Falha (Qualidade Global)
-        // Fórmula Global: contato_nao_realizado / total
+        // Fórmula Global: contato_nao_realizado // total
         // Nota: O ideal é por psicólogo, mas aqui mostramos a média do sistema
         const failureRate = Math.round((failed / total) * 100);
         const elFailure = document.getElementById('kpi-failure-rate');
@@ -192,7 +192,7 @@
         elFailure.style.color = failureRate > 30 ? '#e74c3c' : '#2c3e50';
 
         // 3. Taxa de "Ainda não tentou" (Timing)
-        // Fórmula: Ainda não tentou / total
+        // Fórmula: Ainda não tentou // total
         const pendingRate = Math.round((pending / total) * 100);
         const elPending = document.getElementById('kpi-pending-rate');
         elPending.textContent = `${pendingRate}%`;
@@ -201,7 +201,7 @@
         elPending.style.color = '#2c3e50';
 
         // 4. Taxa de Opt-out (Atrito)
-        // Fórmula: Não quer receber / total
+        // Fórmula: Não quer receber // total
         const optoutRate = Math.round((optout / total) * 100);
         const elOptout = document.getElementById('kpi-optout-rate');
         elOptout.textContent = `${optoutRate}%`;

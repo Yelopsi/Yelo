@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https:///www.googletagmanager.com/gtag/js?id=AW-11236864912"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+    
+      gtag('config', 'AW-11236864912');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Gerador de Biografia para Psicólogos | Yelo</title>
+    <link rel="preconnect" href="https:///fonts.googleapis.com">
+    <link rel="preconnect" href="https:///fonts.gstatic.com" crossorigin>
+    <link href="https:///fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/01-variables.css">
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        body { background-color: var(--off-white); margin: 0; padding-top: 60px; }
+        
+        /* Header Fixo App-like */
+        .app-tool-header {
+            position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; box-sizing: border-box !important;
+            background: var(--verde-escuro) !important; padding: 18px 20px !important; margin: 0 !important;
+            display: flex !important; justify-content: space-between !important; align-items: center !important;
+            z-index: 10000 !important; border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+        }
+        .app-tool-header a { color: rgba(255,255,255,0.7); text-decoration: none; font-weight: 600; font-size: 0.95rem; transition: color 0.2s; }
+        .app-tool-header a:hover { color: white; }
+        
+        /* Hero Section */
+        .tool-hero { background: var(--verde-escuro); color: white; padding: 40px 20px 80px 20px; text-align: center; }
+        .tool-hero h1 { font-family: var(--font-titulos); font-size: 2.2rem; margin: 0 0 10px 0; color: white; }
+        .tool-hero p { color: rgba(255,255,255,0.8); max-width: 500px; margin: 0 auto; font-size: 1rem; line-height: 1.5; }
+        
+        .layout-grid { max-width: 1000px; margin: -40px auto 100px auto; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; padding: 0 20px; position: relative; z-index: 10; }
+        @media (max-width: 768px) { .layout-grid { grid-template-columns: 1fr; } }
+
+        .card-box { background: white; border-radius: 24px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.06); border: 1px solid #f0f0f0; }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: #333; }
+        .form-control { width: 100%; padding: 14px; border: 1px solid #ced4da; border-radius: 12px; font-family: var(--font-principal); font-size: 1rem; background: #f8f9fa; box-sizing: border-box; }
+        .form-control:focus { outline: none; border-color: var(--verde-escuro); box-shadow: 0 0 0 3px rgba(27,67,50,0.1); }
+        
+        .btn-generate { width: 100%; background: var(--verde-escuro); color: white; padding: 16px; border-radius: 50px; font-weight: 700; font-size: 1.05rem; border: none; cursor: pointer; transition: transform 0.2s; margin-top: 10px; box-shadow: 0 5px 15px rgba(27,67,50,0.2); }
+        .btn-generate:hover { transform: translateY(-2px); background: #143d2e; }
+        
+        /* Área de Resultados */
+        .bio-result-item { background: #f8f9fa; border: 1px solid #e9ecef; border-left: 4px solid var(--cor-Yelo); padding: 20px; border-radius: 12px; margin-bottom: 20px; position: relative; }
+        .bio-result-item h4 { margin: 0 0 10px 0; color: var(--verde-escuro); font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .bio-result-item p { margin: 0 0 15px 0; color: #444; line-height: 1.6; font-size: 0.95rem; }
+        
+        .btn-copy { background: white; border: 1px solid #ced4da; color: #333; padding: 8px 16px; border-radius: 50px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+        .btn-copy:hover { background: #f0fdf4; border-color: var(--verde-escuro); color: var(--verde-escuro); }
+        .btn-copy.copied { background: var(--verde-escuro); color: white; border-color: var(--verde-escuro); }
+
+        /* Banner CTA */
+        .cta-banner { background: #fffbeb; border: 1px solid #fde68a; padding: 25px; border-radius: 16px; text-align: center; margin-top: 30px; }
+        .cta-banner h3 { margin: 0 0 10px 0; color: #b45309; font-family: var(--font-titulos); font-size: 1.4rem; }
+        .cta-banner .btn-cta { display: inline-block; background: var(--cor-Yelo); color: var(--verde-escuro); padding: 12px 25px; border-radius: 50px; font-weight: bold; text-decoration: none; margin-top: 15px; box-shadow: 0 4px 10px rgba(244,211,94,0.3); transition: transform 0.2s; }
+        .cta-banner .btn-cta:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+
+    <header class="app-tool-header">
+        <a href="ferramentas.html">&larr; Voltar</a>
+        <img src="/assets/logos/logo-branca.png" alt="Logo Yelo" style="height: 26px; width: auto;">
+    </header>
+
+    <div class="tool-hero">
+        <h1>Gerador de Biografia</h1>
+        <p>Crie um texto atraente para o seu perfil no Instagram, Doctoralia ou Yelo em segundos.</p>
+    </div>
+
+    <main class="layout-grid">
+        <!-- Coluna de Inputs -->
+        <div class="card-box">
+            <h3 style="margin: 0 0 20px 0; color: var(--verde-escuro); font-family: var(--font-titulos); font-size: 1.4rem;">Me fale sobre você</h3>
+            
+            <div class="form-group">
+                <label>Seu Nome ou como prefere ser chamado</label>
+                <input type="text" id="inp-nome" class="form-control" placeholder="Ex: Psicóloga Maria Silva">
+            </div>
+            
+            <div class="form-group">
+                <label>Público que você atende</label>
+                <input type="text" id="inp-publico" class="form-control" placeholder="Ex: Mulheres ansiosas, Casais, Adolescentes...">
+            </div>
+            
+            <div class="form-group">
+                <label>Sua principal Abordagem/Foco</label>
+                <input type="text" id="inp-abordagem" class="form-control" placeholder="Ex: TCC, Psicanálise, Gestalt...">
+            </div>
+            
+            <div class="form-group">
+                <label>O maior benefício que você entrega</label>
+                <input type="text" id="inp-beneficio" class="form-control" placeholder="Ex: autoconhecimento, aliviar a ansiedade...">
+            </div>
+
+            <button class="btn-generate" onclick="gerarBios()">✨ Gerar Mágica</button>
+        </div>
+
+        <!-- Coluna de Resultados -->
+        <div>
+            <div id="empty-state" class="card-box" style="text-align: center; color: #888; padding: 60px 20px; display: flex; flex-direction: column; justify-content: center; height: 100%; box-sizing: border-box;">
+                <div style="font-size: 3rem; margin-bottom: 15px;">✍️</div>
+                <h3 style="margin: 0 0 10px 0; color: #333;">Preencha os dados ao lado</h3>
+                <p style="margin: 0;">A inteligência da Yelo criará 3 opções de textos diferentes para você copiar e usar.</p>
+            </div>
+            
+            <div id="results-area" style="display: none;">
+                <div class="card-box" style="padding: 20px;">
+                    
+                    <!-- Opção 1: Acolhedora -->
+                    <div class="bio-result-item">
+                        <h4>Opção 1: Empática e Acolhedora</h4>
+                        <p id="bio-1"></p>
+                        <button class="btn-copy" onclick="copiarTexto('bio-1', this)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copiar Texto
+                        </button>
+                    </div>
+
+                    <!-- Opção 2: Direta -->
+                    <div class="bio-result-item" style="border-left-color: #16a34a;">
+                        <h4>Opção 2: Direta e Focada em Resultado</h4>
+                        <p id="bio-2"></p>
+                        <button class="btn-copy" onclick="copiarTexto('bio-2', this)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copiar Texto
+                        </button>
+                    </div>
+
+                    <!-- Opção 3: Curta (Instagram) -->
+                    <div class="bio-result-item" style="border-left-color: #0284c7;">
+                        <h4>Opção 3: Curta (Ideal p/ Bio do Instagram)</h4>
+                        <p id="bio-3"></p>
+                        <button class="btn-copy" onclick="copiarTexto('bio-3', this)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copiar Texto
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CTA Yelo -->
+                <div class="cta-banner">
+                    <h3>Gostou do resultado?</h3>
+                    <p style="color: #92400e; margin: 0; font-size: 0.95rem;">Use esta biografia no seu novo perfil público da Yelo e comece a receber pacientes que buscam a sua especialidade.</p>
+                    <a href="psi_questionario.html" class="btn-cta">Criar meu Perfil Grátis</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function gerarBios() {
+            const nome = document.getElementById('inp-nome').value.trim() || '[Seu Nome]';
+            const publico = document.getElementById('inp-publico').value.trim() || '[Seu Público]';
+            const abordagem = document.getElementById('inp-abordagem').value.trim() || '[Sua Abordagem]';
+            const beneficio = document.getElementById('inp-beneficio').value.trim() || '[Seu Benefício]';
+
+            // Template 1: Acolhedor
+            const txt1 = `Olá! Sou ${nome}. Meu propósito é oferecer um espaço seguro e livre de julgamentos para que possamos olhar para as suas questões de frente. Através da ${abordagem}, ajudo ${publico} a superar momentos difíceis e conquistar ${beneficio}. Acredito que o processo terapêutico é uma jornada de parceria. Vamos juntos?`;
+            
+            // Template 2: Direto
+            const txt2 = `Sou ${nome}, especialista no atendimento de ${publico}. Na minha prática clínica, utilizo os fundamentos da ${abordagem} para entregar um acompanhamento focado e empático. Meu principal objetivo é proporcionar ferramentas concretas para que você consiga ${beneficio}. Agende sua sessão e inicie essa transformação.`;
+            
+            // Template 3: Curto (Instagram Bio)
+            const txt3 = `🧠 Psicoterapia para ${publico}<br>🌱 Foco em ${beneficio}<br>📚 Abordagem: ${abordagem}<br>✨ Um espaço seguro para a sua saúde mental.<br>👇 Agende sua sessão no link abaixo.`;
+
+            document.getElementById('bio-1').innerHTML = txt1;
+            document.getElementById('bio-2').innerHTML = txt2;
+            document.getElementById('bio-3').innerHTML = txt3;
+
+            // Troca as telas
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('results-area').style.display = 'block';
+            
+            // Scroll suave para os resultados no mobile
+            if(window.innerWidth <= 768) {
+                document.getElementById('results-area').scrollIntoView({behavior: "smooth"});
+            }
+        }
+
+        function copiarTexto(elementId, btn) {
+            const texto = document.getElementById(elementId).innerText;
+            
+            navigator.clipboard.writeText(texto).then(() => {
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Copiado!`;
+                btn.classList.add('copied');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Erro ao copiar', err);
+            });
+        }
+    </script>
+</body>
+</html>

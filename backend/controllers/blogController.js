@@ -116,7 +116,7 @@ module.exports = {
             let queryOptions = { 
                 order: [
                     [db.Sequelize.literal('CASE WHEN curtidas >= 5 THEN 1 ELSE 0 END'), 'DESC'],
-                    ['created_at', 'DESC']
+                    ['createdAt', 'DESC']
                 ] 
             };
             if (Psychologist) {
@@ -167,8 +167,8 @@ module.exports = {
             const recentes = await Post.findAll({
                 where: { id: { [Op.ne]: id } }, // Exclui o ID atual
                 limit: 3, // Traz 3 sugestões
-                order: [['created_at', 'DESC']],
-                attributes: ['id', 'titulo', 'imagem_url', 'created_at'] // Leve, só o necessário
+                order: [['createdAt', 'DESC']],
+                attributes: ['id', 'titulo', 'imagem_url', 'createdAt'] // Leve, só o necessário
             });
 
             res.render('post_completo', { 
