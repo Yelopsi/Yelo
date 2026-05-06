@@ -1159,16 +1159,18 @@ exports.getPatientMatches = async (req, res) => {
                 matchScore: psi.matchScore,
                 source: 'patient_dashboard'
             }));
-            // Usamos bulkCreate para inserir todos os eventos de uma vez
-            if (db.MatchEvent) { // Verifica se o modelo existe
-                try {
-                    await db.MatchEvent.bulkCreate(matchEvents);
-                    console.log(`[MATCH DEBUG] Patient Match: Created ${matchEvents.length} MatchEvents for Patient ID ${patient.id}.`);
-                } catch (err) {
-                    console.error("Erro ao registrar MatchEvents (logado):", err);
+            try {
+                // O modelo db.MatchEvent pode não existir, então usamos SQL puro e garantimos as colunas
+                await db.sequelize.query(`ALTER TABLE "MatchEvents" ADD COLUMN IF NOT EXISTS "patientId" INTEGER, ADD COLUMN IF NOT EXISTS "source" VARCHAR(255);`).catch(() => {});
+                for (const event of matchEvents) {
+                    await db.sequelize.query(
+                        `INSERT INTO "MatchEvents" ("psychologistId", "patientId", "matchScore", "source", "createdAt", "updatedAt") VALUES (:psychologistId, :patientId, :matchScore, :source, NOW(), NOW())`,
+                        { replacements: event, type: db.sequelize.QueryTypes.INSERT }
+                    );
                 }
-            } else {
-                console.warn("[MATCH DEBUG] Model db.MatchEvent não encontrado. Pulando registro de eventos.");
+                console.log(`[MATCH DEBUG] Patient Match: Created ${matchEvents.length} MatchEvents via SQL.`);
+            } catch (err) {
+                console.error("Erro ao registrar MatchEvents (logado):", err);
             }
         }
 
@@ -1229,15 +1231,17 @@ exports.getAnonymousMatches = async (req, res) => {
                 matchScore: psi.matchScore,
                 source: 'questionnaire'
             }));
-            if (db.MatchEvent) {
-                try {
-                    await db.MatchEvent.bulkCreate(matchEvents);
-                    console.log(`[MATCH DEBUG] Anonymous Match: Created ${matchEvents.length} MatchEvents.`);
-                } catch (err) {
-                    console.error("Erro ao registrar MatchEvents (anônimo):", err);
+            try {
+                await db.sequelize.query(`ALTER TABLE "MatchEvents" ADD COLUMN IF NOT EXISTS "patientId" INTEGER, ADD COLUMN IF NOT EXISTS "source" VARCHAR(255);`).catch(() => {});
+                for (const event of matchEvents) {
+                    await db.sequelize.query(
+                        `INSERT INTO "MatchEvents" ("psychologistId", "patientId", "matchScore", "source", "createdAt", "updatedAt") VALUES (:psychologistId, :patientId, :matchScore, :source, NOW(), NOW())`,
+                        { replacements: event, type: db.sequelize.QueryTypes.INSERT }
+                    );
                 }
-            } else {
-                console.warn("[MATCH DEBUG] Model db.MatchEvent não encontrado. Pulando registro de eventos.");
+                console.log(`[MATCH DEBUG] Anonymous Match: Created ${matchEvents.length} MatchEvents via SQL.`);
+            } catch (err) {
+                console.error("Erro ao registrar MatchEvents (anônimo):", err);
             }
         }
 

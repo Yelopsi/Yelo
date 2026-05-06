@@ -3143,6 +3143,21 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 .comment-body {
     margin: 0 !important; font-size: 0.95rem; color: #1c1c1c; line-height: 1.5; word-break: break-word;
 }
+
+/* Tag de Menção (@nome) Estilo Instagram */
+.mention-tag {
+    color: var(--verde-escuro);
+    font-weight: 700;
+    background-color: #e8f5e9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.mention-tag:hover {
+    background-color: #c8e6c9;
+}
+
 .comment-actions {
     display: flex; gap: 8px; margin-top: 6px; align-items: center;
 }
@@ -6017,6 +6032,18 @@ input:checked + .slider:before { transform: translateX(20px); }
     font-weight: 700;
     color: var(--verde-escuro);
 }
+.aviso-feed-item::after {
+    content: '▼';
+    position: absolute;
+    right: 20px;
+    top: 25px;
+    font-size: 0.9rem;
+    color: #adb5bd;
+    transition: transform 0.3s ease;
+}
+.aviso-feed-item.expanded::after {
+    transform: rotate(180deg);
+}
 
 .aviso-feed-header {
     display: flex;
@@ -6049,6 +6076,18 @@ input:checked + .slider:before { transform: translateX(20px); }
 /* Accordion Expandido */
 .aviso-feed-item.expanded .aviso-title { white-space: normal; overflow: visible; }
 .aviso-feed-item.expanded .aviso-preview { display: none; }
+
+.aviso-click-hint {
+    display: inline-block;
+    font-size: 0.75rem;
+    color: #16a34a;
+    background: #dcfce7;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-left: 10px;
+    font-weight: 700;
+    vertical-align: middle;
+}
 
 .aviso-full-content {
     max-height: 0; opacity: 0; overflow: hidden;
