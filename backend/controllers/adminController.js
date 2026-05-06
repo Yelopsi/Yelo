@@ -895,8 +895,8 @@ exports.getDashboardStats = async (req, res) => {
         const patientStatsQuery = `
             SELECT
                 COUNT(*) AS total,
-                COUNT(*) FILTER (WHERE "deletedAt" IS NULL) as active,
-                COUNT(*) FILTER (WHERE "deletedAt" IS NOT NULL) as deleted,
+                COUNT(*) FILTER (WHERE status != 'inactive' OR status IS NULL) as active,
+                COUNT(*) FILTER (WHERE status = 'inactive') as deleted,
                 COUNT(*) FILTER (WHERE "createdAt" >= :thirtyDaysAgo) as new30d
             FROM "Patients"
         `;
@@ -919,9 +919,9 @@ exports.getDashboardStats = async (req, res) => {
         `;
 
         const [
-            [patientStats],
-            [psychologistStats],
-            [demandStats],
+            patientStatsResult,
+            psychologistStatsResult,
+            demandStatsResult,
             waitingListCount,
             pendingReviewsCount,
             psisByPlan,
@@ -929,11 +929,11 @@ exports.getDashboardStats = async (req, res) => {
             totalMatchesResult,
             totalClicksResult
         ] = await Promise.all([
-            db.sequelize.query(patientStatsQuery, { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }),
-            db.sequelize.query(psychologistStatsQuery, { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }),
-            db.sequelize.query(demandStatsQuery, { replacements: { startOfToday, tenMinutesAgo }, type: db.sequelize.QueryTypes.SELECT }),
-            db.WaitingList.count({ where: { status: 'pending' } }),
-            db.Review.count({ where: { status: 'pending' } }),
+            db.sequelize.query(patientStatsQuery, { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }).catch(e => { console.error("Erro KPI Pacientes:", e.message); return [{total:0, active:0, deleted:0, new30d:0}]; }),
+            db.sequelize.query(psychologistStatsQuery, { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }).catch(e => { console.error("Erro KPI Psicólogos:", e.message); return [{total:0, active:0, deleted:0, new30d:0}]; }),
+            db.sequelize.query(demandStatsQuery, { replacements: { startOfToday, tenMinutesAgo }, type: db.sequelize.QueryTypes.SELECT }).catch(e => { console.error("Erro KPI Demandas:", e.message); return [{total:0, today:0, abandoned:0}]; }),
+            db.WaitingList.count({ where: { status: 'pending' } }).catch(() => 0),
+            db.Review.count({ where: { status: 'pending' } }).catch(() => 0),
             db.Psychologist.findAll({
                 attributes: ['plano', 'is_exempt', 'stripeSubscriptionId', 'subscriptionId'],
                 where: { status: 'active', plano: { [Op.ne]: null } }
@@ -941,9 +941,13 @@ exports.getDashboardStats = async (req, res) => {
             // Contagem de falhas de e-mail nas últimas 24h
             db.SystemLog.count({ where: { message: { [Op.iLike]: '%[EMAIL_FAIL]%' }, createdAt: { [Op.gte]: oneDayAgo } } }).catch(() => 0),
             // NOVAS QUERIES GERAIS
-            db.sequelize.query(`SELECT COUNT(*) as count FROM "MatchEvents"`, { type: db.sequelize.QueryTypes.SELECT }).catch(() => [[{ count: 0 }]]),
-            db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsappClickLogs"`, { type: db.sequelize.QueryTypes.SELECT }).catch(() => [[{ count: 0 }]])
+            db.sequelize.query(`SELECT COUNT(*) as count FROM "MatchEvents"`, { type: db.sequelize.QueryTypes.SELECT }).catch(e => { console.error("Erro KPI Match:", e.message); return [{ count: 0 }]; }),
+            db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsappClickLogs"`, { type: db.sequelize.QueryTypes.SELECT }).catch(e => { console.error("Erro KPI Cliques:", e.message); return [{ count: 0 }]; })
         ]);
+
+        const patientStats = patientStatsResult[0] || {};
+        const psychologistStats = psychologistStatsResult[0] || {};
+        const demandStats = demandStatsResult[0] || {};
 
         // Processamento dos Planos e MRR (Sem query extra)
         const plansCount = {
