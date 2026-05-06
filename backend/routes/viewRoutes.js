@@ -10,6 +10,9 @@ const { verifyTokenLocal } = require('../middlewares/localAuth');
 // Servir arquivos estáticos da pasta /public na raiz do site (ex: /css/style.css)
 router.use(express.static(path.join(__dirname, '../../public')));
 
+// Servir arquivos estáticos da pasta /admin na rota /admin
+router.use('/admin', express.static(path.join(__dirname, '../../admin')));
+
 // --- FERRAMENTAS INTERNAS (EQUIPE YELO) ---
 router.get('/admin/gerador-email', verifyTokenLocal, (req, res) => {
     if (req.userDecoded && (req.userDecoded.role === 'admin' || req.userDecoded.type === 'admin')) {
@@ -21,7 +24,7 @@ router.get('/admin/gerador-email', verifyTokenLocal, (req, res) => {
 
 // --- RENDERIZAÇÃO DO PAINEL ADMIN ---
 router.get(['/admin', '/admin/'], (req, res) => {
-    res.sendFile(path.join(__dirname, '../../public/admin/admin.html'));
+    res.sendFile(path.join(__dirname, '../../admin/admin.html'));
 });
 
 // --- ROTA DE RESGATE DE IMAGENS (UPLOADS) ---
