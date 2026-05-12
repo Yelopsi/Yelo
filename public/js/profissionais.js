@@ -1,6 +1,8 @@
 // Arquivo: professionals.js (COMPLETO E CORRIGIDO)
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("🚀 profissionais.js inicializado com sucesso!");
+
     // --- CORREÇÃO DE ROTA ---
     // Pega do config.js ou detecta automaticamente o ambiente
     const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') 

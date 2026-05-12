@@ -34,7 +34,10 @@
     <main class="questionario-container">
         <div class="progress-bar"><div class="progress-bar-fill"></div></div>
         <div class="step-counter"></div>
-        <div class="slides-container"></div>
+        <div class="slides-container">
+            <!-- Mensagem de fallback caso o JS atrase -->
+            <p style="text-align: center; color: white; padding: 40px; font-family: var(--font-principal), sans-serif;">Carregando questionário...</p>
+        </div>
     </main>
 
     <!-- Modal de Validação de Avaliação -->
@@ -48,6 +51,7 @@
     </div>
     <script src="/config.js"></script>
     <script src="https://unpkg.com/imask"></script>
+    <script>console.log("✅ View EJS do Questionário Paciente carregada. Chamando JS...");</script>
     <script src="/js/questionario.js?v=2"></script> 
 </body>
 </html>
