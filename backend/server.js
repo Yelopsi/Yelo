@@ -68,6 +68,14 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(sessionMiddleware);
 app.use(visitMiddleware);
 
+// --- ROTAS DINÂMICAS PRIORITÁRIAS ---
+// Trazidas para cima para evitar conflito com cache de arquivos estáticos
+app.get('/questionario', (req, res) => res.render('questionario'));
+app.get('/psi_questionario', (req, res) => res.render('psi_questionario'));
+// Intercepta botões perdidos pelo site apontando para o arquivo antigo
+app.get('/questionario.html', (req, res) => res.redirect(301, '/questionario'));
+app.get('/psi_questionario.html', (req, res) => res.redirect(301, '/psi_questionario'));
+
 // Servir TODOS os arquivos da pasta public automaticamente.
 // A propriedade 'extensions' faz com que urls limpas como "/ajuda" e "/questionario" abram automaticamente os arquivos .html se existirem.
 const rootPublic = path.join(__dirname, '../public');
@@ -93,10 +101,6 @@ app.get('/contato', (req, res) => res.render('contato'));
 
 // Rota para a página de ajuda renderizando o EJS
 app.get('/ajuda', (req, res) => res.render('ajuda'));
-
-// Rotas dos questionários dinâmicos (Herdando header do EJS)
-app.get('/questionario', (req, res) => res.render('questionario'));
-app.get('/psi_questionario', (req, res) => res.render('psi_questionario'));
 
 // Silencia erro 404 do favicon.ico na raiz 
 app.get('/favicon.ico', (req, res) => res.status(204).end());

@@ -3,6 +3,7 @@
 var BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : 'http://localhost:3001';
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("🚀 questionario.js inicializado com sucesso!");
 
     // --- FORÇAR COR DA BARRA DO NAVEGADOR (MOBILE) ---
     // Garante que a barra fique verde (#1B4332)
