@@ -70,7 +70,17 @@ app.use(visitMiddleware);
 
 // Servir TODOS os arquivos da pasta public automaticamente.
 // A propriedade 'extensions' faz com que urls limpas como "/ajuda" e "/questionario" abram automaticamente os arquivos .html se existirem.
-app.use(express.static(path.join(__dirname, '../public'), { extensions: ['html'] }));
+const rootPublic = path.join(__dirname, '../public');
+const backendPublic = path.join(__dirname, 'public');
+
+app.use(express.static(rootPublic, { extensions: ['html'] }));
+
+// Trava de segurança: Impede que a pasta backend/public sirva arquivos HTML antigos acidentalmente
+const backendStatic = express.static(backendPublic);
+app.use((req, res, next) => {
+    if (req.path.endsWith('.html') || req.path.endsWith('.htm')) return next();
+    backendStatic(req, res, next);
+});
 
 // Permite servir scripts ou arquivos específicos de jobs da pasta backend/jobs
 app.use('/jobs', express.static(path.join(__dirname, 'jobs')));
@@ -80,6 +90,13 @@ app.get('/menor_de_idade', (req, res) => res.render('menor_de_idade'));
 
 // Rota para a página de contato renderizando o EJS
 app.get('/contato', (req, res) => res.render('contato'));
+
+// Rota para a página de ajuda renderizando o EJS
+app.get('/ajuda', (req, res) => res.render('ajuda'));
+
+// Rotas dos questionários dinâmicos (Herdando header do EJS)
+app.get('/questionario', (req, res) => res.render('questionario'));
+app.get('/psi_questionario', (req, res) => res.render('psi_questionario'));
 
 // Silencia erro 404 do favicon.ico na raiz 
 app.get('/favicon.ico', (req, res) => res.status(204).end());
