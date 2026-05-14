@@ -873,6 +873,55 @@ document.addEventListener('DOMContentLoaded', function() {
             if (typeof renderPlansChart === "function") renderPlansChart(data.plans);
             if (typeof renderTimeChart === "function") renderTimeChart(data.timeOfDay);
 
+            // --- DADOS DO FUNIL E DROP-OFFS ---
+            try {
+                const resFunnel = await fetch(`${API_BASE_URL}/api/admin/analytics/funnel${query}`, { headers });
+                if (resFunnel.ok) {
+                    const funnelData = await resFunnel.json();
+                    
+                    // Renderiza o Ranking de Abandonos
+                    const dropoffList = document.getElementById('funnel-dropoff-list');
+                    if (dropoffList) {
+                        if (funnelData.abandonos && funnelData.abandonos.length > 0) {
+                            dropoffList.innerHTML = funnelData.abandonos.map(item => `
+                                <tr>
+                                    <td style="padding: 12px 15px;"><strong>${item.step}</strong></td>
+                                    <td style="text-align: right; padding: 12px 15px; color: #E63946; font-weight: bold;">${item.count}</td>
+                                </tr>
+                            `).join('');
+                        } else {
+                            dropoffList.innerHTML = '<tr><td colspan="2" style="text-align:center; padding: 20px; color: #666;">Nenhum abandono registrado neste período.</td></tr>';
+                        }
+                    }
+
+                    // Renderiza as Origens de Tráfego UTMs
+                    const utmList = document.getElementById('funnel-utm-list');
+                    if (utmList) {
+                        if (funnelData.origens && funnelData.origens.length > 0) {
+                            const totalOrigens = funnelData.origens.reduce((acc, curr) => acc + parseInt(curr.count), 0);
+                            utmList.innerHTML = funnelData.origens.map(item => {
+                                const perc = Math.round((parseInt(item.count) / totalOrigens) * 100);
+                                return `
+                                    <li class="feature-usage-item">
+                                        <div class="feature-header">
+                                            <span>${item.source}</span>
+                                            <span>${item.count} (${perc}%)</span>
+                                        </div>
+                                        <div class="feature-bar-bg">
+                                            <div class="feature-bar-fill" style="width: ${perc}%; background-color: var(--verde-escuro);"></div>
+                                        </div>
+                                    </li>
+                                `;
+                            }).join('');
+                        } else {
+                            utmList.innerHTML = '<p style="color: #666; font-size: 0.9rem; font-style: italic;">Nenhuma origem rastreada.</p>';
+                        }
+                    }
+                }
+            } catch (errFunnel) {
+                console.error("Erro ao carregar dados do funil:", errFunnel);
+            }
+
             // --- CORREÇÃO DO KPI DE VISITAS ---
             // Garante que o array existe e converte explicitamente para Número
             const visitsArray = data.visits || [];

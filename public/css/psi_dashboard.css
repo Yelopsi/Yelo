@@ -3114,19 +3114,37 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 .reddit-app-header {
     display: flex; align-items: center; gap: 12px;
     padding: 15px 20px; border-bottom: 1px solid #edeff1;
-    position: sticky; top: 0; background: var(--cinza-fundo); z-index: 100;
+    position: sticky; top: -20px; background: var(--branco-puro); z-index: 100;
     margin: -20px -20px 20px -20px; /* Estica a barra para ignorar o padding do container pai */
 }
 @media (max-width: 992px) {
     .reddit-app-header {
-        top: calc(var(--mobile-header-h, 70px) - 1px); /* No mobile, cola logo abaixo do cabeçalho fixo do app */
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+            height: calc(70px + env(safe-area-inset-top)) !important;
+        margin: 0 !important;
+            z-index: 100005 !important; /* Z-index altíssimo para cobrir a header original e o botão de menu hambúrguer */
+        background: var(--branco-puro) !important;
+            padding: env(safe-area-inset-top) 20px 0 20px !important; /* Usa flexbox para centralizar verticalmente */
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        box-sizing: border-box;
     }
 }
 .app-back-btn {
     background: none; border: none; color: #1c1c1c; cursor: pointer;
     display: flex; align-items: center; justify-content: center; padding: 5px;
 }
-.app-header-title { font-weight: 700; font-size: 1.1rem; color: #1c1c1c; }
+.app-header-title { 
+    font-weight: 700; 
+    font-size: 1.1rem; 
+    color: #1c1c1c; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1; /* Permite encolher e aplicar o ellipsis no flexbox */
+}
 
 /* View de Post Completo */
 /* Seção de Comentários */
@@ -3218,7 +3236,10 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 
 /* Responsividade */
 @media (max-width: 992px) {
-    .forum-post-layout { grid-template-columns: 1fr; } /* Empilha as colunas */
+    .forum-post-layout { 
+        grid-template-columns: 1fr; 
+        padding-top: 70px; /* Espaço para o novo header fixo não cobrir o conteúdo */
+    } /* Empilha as colunas */
     .forum-post-sidebar .widget { position: static; } /* Remove o sticky */
 }
 

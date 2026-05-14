@@ -28,15 +28,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const questions = [
         { id: 'boas-vindas', question: "Vamos encontrar a pessoa certa para te acompanhar nesta jornada.", subtitle: "Responda a algumas perguntas para começarmos.", type: 'welcome' },
-        { id: 'nome', question: "Olá! Para começarmos, como podemos te chamar?", subtitle: "Isso nos ajuda a entregar uma experiência personalizada para você.", type: 'text', placeholder: "Digite o seu nome ou apelido", required: true, autocomplete: 'off' },
-        { id: 'idade', question: "Muito prazer, [NOME]! Qual a sua faixa etária?", type: 'choice', choices: ["Menor de 18 anos", "18-24 anos", "25-34 anos", "35-44 anos", "45-54 anos", "55+ anos"], required: true },
+        { id: 'idade', question: "Para começarmos, qual a sua faixa etária?", type: 'choice', choices: ["Menor de 18 anos", "18-24 anos", "25-34 anos", "35-44 anos", "45-54 anos", "55+ anos"], required: true },
         { id: 'pref_genero_prof', question: "Você tem preferência pelo gênero do(a) profissional?", subtitle: "Sua segurança e conforto são a nossa prioridade.", type: 'choice', choices: ["Indiferente", "Masculino", "Feminino", "Não-binário"], required: true },
         { id: 'temas', question: "O que te motivou a procurar terapia agora?", subtitle: "Selecione os temas que você gostaria de explorar.", type: 'multiple-choice', scrollable: true, choices: ["Ansiedade ou Estresse", "Depressão ou Tristeza", "Relacionamentos", "Carreira e Trabalho", "Autoestima", "Luto ou Traumas", "Autoconhecimento", "Outro"], required: true },
         { id: 'caracteristicas_prof', question: "Existem características importantes para você no profissional?", subtitle: "A identidade de quem te escuta pode fazer diferença.", type: 'multiple-choice', choices: ["LGBTQIAPN+ Friendly 🏳️‍🌈", "Que faça parte da comunidade LGBTQIAPN+", "Pessoa não-branca ou com prática antirracista", "Que tenha uma perspectiva feminista", "Especialista em Neurodiversidade (TDAH, Autismo)", "Indiferente"], required: true },
         { id: 'faixa_valor', question: "Qual a faixa de valor que você pode investir por sessão?", subtitle: "Para conectarmos você a profissionais dentro do seu orçamento.", type: 'choice', choices: ["Até R$ 50", "R$ 51 - R$ 90", "R$ 91 - R$ 150", "Acima de R$ 150"], required: true },
         { id: 'modalidade_atendimento', question: "Como você prefere ser atendido(a)?", type: 'choice', choices: ["Online", "Presencial", "Indiferente (Online ou Presencial)"], required: true },
         { id: 'cep', question: "Qual o seu CEP?", subtitle: "Para encontrarmos profissionais perto de você.", type: 'text', placeholder: "00000-000", required: true, inputMode: 'numeric' },
-        { id: 'whatsapp', question: "Para finalizar, [NOME]. Qual o seu WhatsApp?", subtitle: "Enviaremos o link do seu Match por segurança caso você feche a página.", type: 'tel', placeholder: "(XX) XXXXX-XXXX", required: false, inputMode: 'numeric' },
+        { id: 'nome', question: "Para finalizar, como podemos te chamar?", subtitle: "Isso nos ajuda a entregar uma experiência personalizada para você.", type: 'text', placeholder: "Digite o seu nome ou apelido", required: true, autocomplete: 'off', autofocus: true },
         { id: 'final', type: 'final', question: "Tudo pronto, [NOME]!", subtitle: "Estamos cruzando as suas respostas para encontrar as conexões mais significativas. Em instantes, você verá as suas recomendações."},
         { id: 'erro-idade', type: 'error', question: "Atenção", subtitle: "A plataforma Yelo é destinada apenas para maiores de 18 anos...", buttonText: "Entendi e Sair"}
     ];
@@ -58,7 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'text': case 'tel': {
                 const inputModeAttr = questionData.inputMode ? `inputmode="${questionData.inputMode}"` : '';
                 const autocompleteAttr = questionData.autocomplete ? `autocomplete="${questionData.autocomplete}"` : '';
-                contentHTML = `<div class="input-wrapper"><input type="${questionData.type}" id="input-${questionData.id}" class="text-input" placeholder="${questionData.placeholder}" ${inputModeAttr} ${autocompleteAttr}>
+                const autofocusAttr = questionData.autofocus ? 'autofocus' : '';
+                contentHTML = `<div class="input-wrapper"><input type="${questionData.type}" id="input-${questionData.id}" class="text-input" placeholder="${questionData.placeholder}" ${inputModeAttr} ${autocompleteAttr} ${autofocusAttr}>
                 <span class="enter-hint">Pressione <strong>Enter ↵</strong></span></div>`; 
                 if (questionData.footer) {
                     contentHTML += `<p style="margin-top: 12px; font-size: 0.85rem; opacity: 0.8; text-align: center; line-height: 1.4;">${questionData.footer}</p>`;
@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let buttonAction = "next";
             
             // Personalizações do botão
-            if(questionData.id === 'whatsapp') { buttonText = "Finalizar"; buttonAction = "finalize"; }
+            if(questionData.id === 'nome') { buttonText = "Finalizar"; buttonAction = "finalize"; }
             if(questionData.type === 'rating') { buttonText = "Finalizar"; buttonAction = "finalize"; } // Mantido caso decida voltar com a avaliação
             
             nextButtonHTML = `<button class="cta-button" data-action="${buttonAction}">${buttonText}</button>`; 
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // =====================================================================
     async function recordAnonymousSearch() {
         try {
-            const { nome, whatsapp, ...demandAnswers } = userAnswers;
+            const { nome, ...demandAnswers } = userAnswers;
             await fetch(`${BASE_URL}/api/demand/searches`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -167,10 +167,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // Separa dados para salvar
-            const { nome, whatsapp, ...demandAnswers } = userAnswers;
+            const { nome, ...demandAnswers } = userAnswers;
             
             // [NOVO] Salva o telefone para usar no clique do WhatsApp (mesmo se não logar)
-            if (whatsapp) localStorage.setItem('yelo_guest_phone', whatsapp);
             if (nome) localStorage.setItem('yelo_guest_name', nome);
 
             // Normaliza o consentimento para booleano (para facilitar o filtro no Admin)
@@ -255,14 +254,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function goToSlide(index) { 
         const currentSlide = document.querySelector('.slide.active'); 
+        const nextSlide = document.querySelector(`[data-index="${index}"]`);
         
         // Se houver slide ativo e estivermos mudando de passo, faz a animação de saída
         if (currentSlide && currentStep !== index) {
-            currentSlide.classList.add('fade-out-up');
-            setTimeout(() => {
+            const isMobile = window.innerWidth <= 992;
+            const inputToFocus = nextSlide ? nextSlide.querySelector('input, textarea') : null;
+            
+            if (inputToFocus && isMobile) {
+                // HACK MOBILE DEFINITIVO: O teclado nativo não sobe se houver setTimeout.
+                // Cortamos a animação neste passo específico para focar de forma síncrona com o clique.
                 currentSlide.classList.remove('active', 'fade-out-up');
                 showNextSlide(index);
-            }, 300); // 300ms é o tempo da animação fadeOutUpTypeform no CSS
+            } else {
+                currentSlide.classList.add('fade-out-up');
+                setTimeout(() => {
+                    currentSlide.classList.remove('active', 'fade-out-up');
+                    showNextSlide(index);
+                }, 300);
+            }
         } else {
             if (currentSlide) currentSlide.classList.remove('active');
             showNextSlide(index);
@@ -276,11 +286,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (nextSlide) {
             nextSlide.classList.add('active'); 
 
-            // --- CORREÇÃO DE SCROLL ---
-            // Garante que a tela suba para o topo ao trocar de pergunta
-            window.scrollTo(0, 0);
-            const slideBody = nextSlide.querySelector('.slide-body');
-            if (slideBody) slideBody.scrollTop = 0;
+            const inputToFocus = nextSlide.querySelector('input, textarea');
+            
+            // --- CORREÇÃO DE SCROLL E FOCO ---
+            // Scroll força o mobile a ocultar o teclado. Só rola a tela se não houver input.
+            if (!inputToFocus) {
+                window.scrollTo(0, 0);
+                const slideBody = nextSlide.querySelector('.slide-body');
+                if (slideBody) slideBody.scrollTop = 0;
+            } else {
+                inputToFocus.focus();
+            }
         } else {
             console.error(`Slide com index ${index} não encontrado.`); 
         }
@@ -328,10 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Só tenta criar máscaras se a biblioteca IMask tiver carregado
         if (typeof IMask !== 'undefined') {
             const currentQuestion = questions[currentStep]; 
-            if (currentQuestion && currentQuestion.type === 'tel') { 
-                const phoneInput = document.getElementById(`input-${currentQuestion.id}`); 
-                if (phoneInput) IMask(phoneInput, { mask: '(00) 00000-0000' }); 
-            } else if (currentQuestion && currentQuestion.id === 'cep') { 
+            if (currentQuestion && currentQuestion.id === 'cep') { 
                 const cepInput = document.getElementById(`input-${currentQuestion.id}`); 
                 if (cepInput) IMask(cepInput, { mask: '00000-000' }); 
             }
@@ -346,7 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!question || !question.id || ['welcome', 'final', 'error', 'thank-you'].includes(question.type)) return; 
         
         let answer; 
-        if (['text', 'tel'].includes(question.type)) { 
+        if (question.type === 'text') { 
             answer = document.getElementById(`input-${question.id}`)?.value || ''; 
         } else if (question.type === 'choice') { 
             const selectedButton = document.querySelector(`#slide-${question.id} .choice-button.selected`); 
@@ -375,12 +388,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let isValid = true; 
         
         if (currentQuestion.required) { 
-            if (['text', 'tel'].includes(currentQuestion.type)) { 
+            if (currentQuestion.type === 'text') { 
                 const input = document.getElementById(`input-${currentQuestion.id}`); 
                 if (input.value.trim() === '') { 
-                    input.classList.add('shake-error'); setTimeout(() => input.classList.remove('shake-error'), 500); isValid = false; 
-                } 
-                if (currentQuestion.type === 'tel' && input.value.length < 15) { 
                     input.classList.add('shake-error'); setTimeout(() => input.classList.remove('shake-error'), 500); isValid = false; 
                 } 
             } else if (['choice', 'multiple-choice'].includes(currentQuestion.type)) { 
@@ -406,14 +416,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         alert("Por favor, selecione uma nota de 1 a 5 estrelas.");
                     }
-                }
-            }
-        } else {
-            // Mesmo se não for obrigatório, precisamos garantir que o formato do telefone está correto se preenchido
-            if (currentQuestion.type === 'tel') {
-                const input = document.getElementById(`input-${currentQuestion.id}`);
-                if (input.value.trim().length > 0 && input.value.length < 15) {
-                    input.classList.add('shake-error'); setTimeout(() => input.classList.remove('shake-error'), 500); isValid = false; 
                 }
             }
         }
@@ -521,9 +523,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // [NOVO] Salva o WhatsApp em tempo real para garantir que não se perca
         slidesContainer.addEventListener('input', (e) => {
-            if (e.target.id === 'input-whatsapp') {
-                localStorage.setItem('yelo_guest_phone', e.target.value);
-            }
             if (e.target.id === 'input-nome') {
                 // Capitaliza a primeira letra do nome (e sobrenomes) em tempo real
                 let val = e.target.value;

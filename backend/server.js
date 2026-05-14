@@ -90,6 +90,9 @@ app.use((req, res, next) => {
     backendStatic(req, res, next);
 });
 
+// Permite servir os arquivos soltos na raiz do projeto (como psi_questionario.html e script.js) sem precisar movê-los
+app.use(express.static(path.join(__dirname, '..'), { extensions: ['html'] }));
+
 // Permite servir scripts ou arquivos específicos de jobs da pasta backend/jobs
 app.use('/jobs', express.static(path.join(__dirname, 'jobs')));
 
@@ -159,6 +162,9 @@ const startServer = async () => {
     }
 
     try {
+        // Sincroniza o banco e cria a coluna faltante na tabela de Avisos (COMENTADO PARA NÃO DEIXAR LENTO):
+        // await db.sequelize.sync({ alter: true });
+        
         await applyDatabaseFixes(db, db.sequelize);
         
         isDbSynced = true;

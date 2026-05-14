@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const docInput = document.getElementById('documento');
     const docFeedback = document.getElementById('doc-feedback');
     const emailInput = document.getElementById('email'); 
+    const telefoneInput = document.getElementById('telefone'); 
 
     // --- NOVO TRECHO (Copie e cole no lugar do antigo) ---
 
@@ -41,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const finalNome = params.get('nome') || params.get('nome-completo') || storedAnswers.nome || '';
     const finalEmail = params.get('email') || storedAnswers.email || '';
     const finalCrp = params.get('crp') || storedAnswers.crp || '';
+    const finalTelefone = params.get('telefone') || storedAnswers.telefone || '';
 
     // 3. Aplica nos campos do formulário
     const nomeInput = document.getElementById('nome-completo');
@@ -54,9 +56,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof crpInput.updateValue === 'function') crpInput.updateValue(); 
     }
 
+    if (telefoneInput && finalTelefone) telefoneInput.value = finalTelefone;
+
     // --- LIMPEZA DE URL (SEGURANÇA E ESTÉTICA) ---
     // Remove os dados visíveis da barra de endereço sem recarregar a página
-    if (params.get('nome') || params.get('nome-completo') || params.get('email') || params.get('crp')) {
+    if (params.get('nome') || params.get('nome-completo') || params.get('email') || params.get('crp') || params.get('telefone')) {
         const newUrl = window.location.pathname + (modeParam ? '?mode=' + modeParam : '');
         window.history.replaceState({}, document.title, newUrl);
     }
@@ -180,12 +184,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const registrationData = {
             nome: document.getElementById('nome-completo').value,
             crp: crpInput ? crpInput.value : '',
+            telefone: telefoneInput ? telefoneInput.value : '',
             documento: docInput ? docInput.value : '', // Manda o valor com máscara, como solicitado
             tipo_documento: docType, // Manda qual é o tipo
             email: emailInput.value.trim().toLowerCase(),
             senha: senha,
             invitationToken: tokenParam
         };
+
+        // Se usou conta Google
+        if (window.googleRegisterToken) registrationData.googleToken = window.googleRegisterToken;
 
         const dadosPsicologo = { ...storedAnswers, ...registrationData };
         
