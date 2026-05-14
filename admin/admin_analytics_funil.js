@@ -54,21 +54,6 @@ window.initializePage = function() {
             if (!res.ok) throw new Error("Falha ao buscar dados de funil");
             const data = await res.json();
 
-            // FIX: Busca os acessos reais diretamente das páginas de destino (/ e /terapia-online)
-            try {
-                const visitsRes = await fetch(`${API_BASE_URL}/api/admin/analytics/visits?${queryParams.toString()}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (visitsRes.ok) {
-                    const visitsData = await visitsRes.json();
-                    data.visitas = visitsData.total !== undefined ? visitsData.total : data.visitas;
-                }
-            } catch (e) {
-                console.error("Erro ao buscar visitas reais do site:", e);
-            }
-
-            exportData = data; // Salva para exportação
-
             // --- 1. POPULA KPIs SUPERIORES ---
             document.getElementById('kpi-visitas').textContent = data.visitas.toLocaleString();
             document.getElementById('kpi-whatsapp').textContent = data.whatsappClicks.toLocaleString();

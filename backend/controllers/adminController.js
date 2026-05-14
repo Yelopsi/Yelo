@@ -2514,7 +2514,13 @@ exports.getFunnelAnalytics = async (req, res) => {
 
         // 6. Abandonos por Etapa (Drop-offs) - Consulta da nova tabela inteligente
         const abandonos = await db.sequelize.query(
-            `SELECT step, COUNT(*) as count FROM "TrackingLogs" WHERE "type" = 'questionario_dropoff' AND "createdAt" BETWEEN :start AND :end GROUP BY step ORDER BY count DESC`,
+            `SELECT t.step, COUNT(*) as count 
+             FROM "TrackingLogs" t
+             LEFT JOIN "DemandSearches" d ON t."searchId" = CAST(d.id AS VARCHAR) AND d.status = 'completed'
+             WHERE t."type" = 'questionario_dropoff' 
+             AND t."createdAt" BETWEEN :start AND :end 
+             AND d.id IS NULL
+             GROUP BY t.step ORDER BY count DESC`,
             { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => []);
 

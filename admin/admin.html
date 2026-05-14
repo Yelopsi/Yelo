@@ -299,6 +299,38 @@
             </div>
         </div>
 
+        <!-- WIDGET DE FUNIL E DROP-OFF -->
+        <div class="widget" style="margin-top: 30px;">
+            <div class="header-flex">
+                <div>
+                    <h3>📉 Análise de Funil e Drop-offs</h3>
+                    <p style="color: var(--cinza-texto); margin-top: -15px;">Onde os pacientes estão desistindo do questionário no período selecionado.</p>
+                </div>
+            </div>
+            <div class="tracking-grid">
+                <div class="tracking-data">
+                    <h4 style="margin-top: 0; color: #E63946; margin-bottom: 20px;">Ranking de Abandono (Etapas Críticas)</h4>
+                    <table class="fin-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th style="padding: 10px 15px;">ID da Pergunta</th>
+                                <th style="text-align: right; padding: 10px 15px;">Desistências</th>
+                            </tr>
+                        </thead>
+                        <tbody id="funnel-dropoff-list">
+                            <tr><td colspan="2" style="text-align:center; padding: 20px; color: #999; font-style: italic;">Carregando dados do funil...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="tracking-data">
+                    <h4 style="margin-top: 0; color: var(--verde-escuro); margin-bottom: 20px;">Origem de Tráfego (UTM Source)</h4>
+                    <ul class="feature-usage-list" id="funnel-utm-list">
+                        <p style="color: #999; font-size: 0.9rem; font-style: italic;">Carregando origens...</p>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
         <!-- WIDGET DE SHADOW TRACKING -->
         <div class="widget" style="margin-top: 30px;">
             <div class="header-flex">
