@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const heartSymbol = isFav ? '♥' : '♡';
 
         return `
-            <div class="match-card" style="animation-delay: ${profile.animationDelay}s">
+            <div class="match-card" style="animation-delay: ${profile.animationDelay}s; cursor: pointer;" data-slug="${profile.slug}">
                 <div class="match-badge">${profile.score}% Compatível</div>
                 <div class="${heartClass}" data-id="${profile.id}" title="Favoritar">${heartSymbol}</div>
                 
@@ -213,11 +213,16 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // --- RASTREAMENTO DE FUNIL (PASSO 4: CLIQUE NO PERFIL) ---
             grid.addEventListener('click', (e) => {
-                // Monitora cliques em qualquer parte que leve ao perfil (Foto, Nome ou Botão)
-                if (e.target.closest('.btn-profile') || e.target.closest('.match-header-img') || e.target.closest('.match-name')) {
-                    const card = e.target.closest('.match-card');
+                const card = e.target.closest('.match-card');
+                if (card && !e.target.closest('.heart-icon')) {
                     const btnFav = card.querySelector('.heart-icon');
                     const profileId = btnFav ? btnFav.dataset.id : null;
+                    const slug = card.dataset.slug;
+                    
+                    // Abre o perfil se clicar no card, exceto no botão de 'Ver Perfil' que já possui link nativo
+                    if (!e.target.closest('.btn-profile') && slug) {
+                        window.open(`/${slug}`, '_blank');
+                    }
                     
                     if (profileId) {
                         fetch(`${BASE_URL}/api/psychologists/${profileId}/appearance`, {

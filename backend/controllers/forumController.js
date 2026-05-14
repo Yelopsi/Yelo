@@ -289,6 +289,16 @@ exports.createComment = async (req, res) => {
                     const parentComment = await ForumComment.findByPk(parentId, { include: [Psychologist] });
                     if (parentComment && parentComment.PsychologistId !== req.user.id && parentComment.Psychologist) {
                         const parentOwner = parentComment.Psychologist;
+
+                        // --- NOVO: Criar Aviso no Painel ---
+                        await db.Aviso.create({
+                            title: 'Nova resposta ao seu comentário!',
+                            content: `O colega <strong>${senderName}</strong> respondeu ao seu comentário no fórum da Yelo:<br><br><em>"${content.substring(0, 100)}..."</em><br><br><a href="#" onclick="window.loadPage('psi_forum.html')" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para acessar o fórum</a>.`,
+                            author: 'Comunidade Yelo',
+                            status: 'published',
+                            psychologistId: parentOwner.id
+                        }).catch(e => console.error("Erro ao criar aviso de comentário:", e));
+
                         if (parentOwner.email && emailService.sendEmail) {
                             await emailService.sendEmail(
                                 parentOwner.email, 
@@ -302,6 +312,16 @@ exports.createComment = async (req, res) => {
                     const postInfo = await ForumPost.findByPk(req.params.id, { include: [Psychologist] });
                     if (postInfo && postInfo.PsychologistId !== req.user.id && postInfo.Psychologist) {
                         const postOwner = postInfo.Psychologist;
+
+                        // --- NOVO: Criar Aviso no Painel ---
+                        await db.Aviso.create({
+                            title: 'Nova resposta na sua discussão!',
+                            content: `O colega <strong>${senderName}</strong> respondeu ao seu tópico "<strong>${postInfo.title}</strong>":<br><br><em>"${content.substring(0, 100)}..."</em><br><br><a href="#" onclick="window.loadPage('psi_forum.html')" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para acessar a discussão</a>.`,
+                            author: 'Comunidade Yelo',
+                            status: 'published',
+                            psychologistId: postOwner.id
+                        }).catch(e => console.error("Erro ao criar aviso de tópico:", e));
+
                         if (postOwner.email && emailService.sendEmail) {
                             await emailService.sendEmail(
                                 postOwner.email, 

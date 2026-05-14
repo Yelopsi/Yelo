@@ -930,6 +930,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Garante que o menu inferior reapareça se estivesse oculto pelo Smart Scroll
         const bNav = document.querySelector('.mobile-bottom-nav');
         if (bNav) bNav.classList.remove('nav-hidden');
+        
+        // Garante que o header mobile reapareça caso tenha sido oculto por alguma tela full-screen (como posts do fórum)
+        const mHeader = document.querySelector('.mobile-header');
+        if (mHeader) mHeader.style.display = '';
 
         let activeLink = document.querySelector(`.sidebar-nav a[data-page="${url}"]`);
         let activeBottomLink = document.querySelector(`.bottom-nav-item[data-target-page="${url}"]`);
@@ -4380,6 +4384,10 @@ async function inicializarForum(preFetchedData = null) {
         postView.innerHTML = '<div class="loader-wrapper"><div class="loader-spinner"></div></div>';
         postView.classList.remove('hidden');
 
+        // Esconde a header mobile padrão para dar lugar ao cabeçalho exclusivo do fórum
+        const mHeader = document.querySelector('.mobile-header');
+        if (mHeader) mHeader.style.display = 'none';
+
         try {
             const postRes = await apiFetch(`${API_BASE_URL}/api/forum/posts/${postId}`);
             if (!postRes.ok) throw new Error('Erro ao carregar post');
@@ -4388,6 +4396,10 @@ async function inicializarForum(preFetchedData = null) {
             const postEl = fullPostTemplate.content.cloneNode(true).firstElementChild;
             postEl.querySelector('.full-post-title').textContent = post.title;
             postEl.querySelector('.full-post-category').textContent = post.category;
+
+            // Atualiza o título na App Header (Barra Flutuante do Mobile)
+            const appHeaderTitle = postEl.querySelector('.app-header-title');
+            if (appHeaderTitle) appHeaderTitle.textContent = post.title;
             
             // CORREÇÃO: Define o avatar e o nome em elementos separados
             const authorAvatarEl = postEl.querySelector('.full-post-avatar');
@@ -4412,6 +4424,9 @@ async function inicializarForum(preFetchedData = null) {
                 feedView.classList.remove('hidden');
                 // if (fab) fab.style.display = 'block'; // Oculto globalmente
                 currentPostId = null;
+                
+                const mHeader = document.querySelector('.mobile-header');
+                if (mHeader) mHeader.style.display = '';
             };
 
             // Ações (Apoiar, Denunciar)
@@ -4948,6 +4963,9 @@ async function inicializarForum(preFetchedData = null) {
                             feedView.classList.remove('hidden');
                             // if (fab) fab.style.display = 'block'; // Oculto globalmente
                             currentPostId = null;
+                            
+                            const mHeader = document.querySelector('.mobile-header');
+                            if (mHeader) mHeader.style.display = '';
                         }
                         fetchAndRenderPosts();
                     } else {

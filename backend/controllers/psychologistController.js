@@ -112,9 +112,16 @@ exports.registerPsychologist = async (req, res) => {
         }
 
         // [RESTRIÇÃO] Verifica se já existe como Paciente
-        const existingPatient = await db.Patient.findOne({ where: { email } });
-        if (existingPatient) {
-            return res.status(400).json({ error: 'Este e-mail já está em uso por uma conta de Paciente.' });
+        try {
+            const existingPatient = await db.Patient.findOne({ 
+                where: { email },
+                attributes: ['id'] // Busca apenas o ID para ignorar colunas removidas do banco de dados
+            });
+            if (existingPatient) {
+                return res.status(400).json({ error: 'Este e-mail já está em uso por uma conta de Paciente.' });
+            }
+        } catch (patientErr) {
+            console.warn("Aviso ao checar duplicidade de paciente (ignorado):", patientErr.message);
         }
 
         // --- 4. Geração de Slug ---
@@ -2210,9 +2217,12 @@ exports.getAnnouncements = async (req, res) => {
     try {
         const psychologistId = req.psychologist?.id || req.userDecoded?.id || req.user?.id;
 
-        // Busca todos os avisos publicados
+        // Busca avisos globais e avisos direcionados especificamente a este psicólogo
         const avisos = await db.Aviso.findAll({
-            where: { status: 'published' },
+            where: { 
+                status: 'published',
+                [Op.or]: [{ psychologistId: null }, { psychologistId }]
+            },
             order: [['createdAt', 'DESC']]
         });
 
