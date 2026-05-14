@@ -359,9 +359,7 @@ exports.updatePatientAnswers = async (req, res) => {
             terapia_anterior,
             experiencia_desejada,
             caracteristicas_prof,
-            valor_sessao_faixa,
-            whatsapp,
-            avaliacao_ux
+            valor_sessao_faixa
         } = req.body;
 
         await patient.update({
@@ -373,8 +371,7 @@ exports.updatePatientAnswers = async (req, res) => {
             temas_buscados: temas,
             abordagem_desejada: experiencia_desejada,
             praticas_afirmativas: caracteristicas_prof,
-            valor_sessao_faixa,
-            telefone: whatsapp,
+            valor_sessao_faixa
         });
 
         res.status(200).json({ message: 'Respostas salvas com sucesso!' });

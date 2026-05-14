@@ -9,6 +9,7 @@
     <div class="avisos-filters">
         <button class="aviso-filter-btn active" data-filter="all">Todos</button>
         <button class="aviso-filter-btn" data-filter="unread">Não lidos</button>
+        <button class="aviso-filter-btn" data-filter="personal">Pessoais</button>
     </div>
     
     <div class="avisos-feed-actions-top" style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
@@ -29,7 +30,10 @@
             <!-- Icon will be set by JS -->
         </div>
         <div class="aviso-title-group">
-            <h4 class="aviso-title"></h4>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <h4 class="aviso-title" style="margin: 0;"></h4>
+                <span class="aviso-personal-badge" style="display: none; background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; white-space: nowrap;">Pessoal</span>
+            </div>
             <span class="aviso-meta"></span>
         </div>
         <div class="aviso-full-content"></div>
@@ -61,6 +65,7 @@
             const title = item.querySelector('.aviso-title');
             const meta = item.querySelector('.aviso-meta');
             const fullContent = item.querySelector('.aviso-full-content');
+            const personalBadge = item.querySelector('.aviso-personal-badge');
 
             if (!aviso.read) {
                 item.classList.add('unread');
@@ -76,8 +81,17 @@
                 iconWrapper.innerHTML = '🎉';
                 iconWrapper.style.backgroundColor = '#ecfdf5';
                 iconWrapper.style.color = '#047857';
+            } else if (lowerTitle.includes('resposta') || lowerTitle.includes('comentário')) {
+                iconWrapper.innerHTML = '💬';
+                iconWrapper.style.backgroundColor = '#e0f2fe';
+                iconWrapper.style.color = '#0284c7';
             } else {
                 iconWrapper.innerHTML = '🔔';
+            }
+
+            // Mostra a tag "Pessoal" se o aviso foi direcionado especificamente a este psicólogo
+            if (aviso.psychologistId) {
+                personalBadge.style.display = 'inline-block';
             }
 
             title.textContent = aviso.title;
@@ -173,6 +187,7 @@
     function filterAndRender() {
         let avisosToRender = allAvisos;
         if (currentFilter === 'unread') avisosToRender = allAvisos.filter(a => !a.read);
+        if (currentFilter === 'personal') avisosToRender = allAvisos.filter(a => a.psychologistId);
         renderAvisos(avisosToRender);
     }
 
