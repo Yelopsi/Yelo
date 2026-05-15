@@ -482,21 +482,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 script.async = true;
                 script.defer = true;
                 script.onload = () => {
-                    google.accounts.id.initialize({
-                        client_id: '283886540808-qj13i35cfagnp9rc6qou1o66mdv3ppkl.apps.googleusercontent.com',
-                        callback: async (response) => {
-                            try {
-                                const authRes = await fetch(`${API_BASE_URL}/api/patients/google`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: response.credential }) });
-                                if (authRes.ok) {
-                                    const authData = await authRes.json();
-                                    localStorage.setItem('Yelo_token', 'cookie_auth_active');
-                                    document.querySelector('div[style*="z-index:999999"]').remove();
-                                    enviarAvaliacao(authData.token || 'cookie_auth_active');
-                                } else { showToast("Falha na autenticação.", "error"); }
-                            } catch (error) { showToast("Erro ao conectar com o Google.", "error"); }
-                        }
-                    });
-                    google.accounts.id.renderButton(document.getElementById('google-btn-container'), { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with' });
+                    console.log('[DEBUG GOOGLE LOGIN] Script do Google carregado.');
+                    try {
+                        google.accounts.id.initialize({
+                            client_id: '283886540808-qj13i35cfagnp9rc6qou1o66mdv3ppkl.apps.googleusercontent.com',
+                            callback: async (response) => {
+                                console.log('[DEBUG GOOGLE LOGIN] Callback do Google disparado!', response);
+                                try {
+                                    console.log('[DEBUG GOOGLE LOGIN] Enviando token para o backend na rota:', `${API_BASE_URL}/api/patients/google`);
+                                    const authRes = await fetch(`${API_BASE_URL}/api/patients/google`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: response.credential }) });
+                                    
+                                    console.log('[DEBUG GOOGLE LOGIN] Resposta do backend:', authRes.status);
+                                    if (authRes.ok) {
+                                        const authData = await authRes.json();
+                                        console.log('[DEBUG GOOGLE LOGIN] Sucesso no backend:', authData);
+                                        localStorage.setItem('Yelo_token', 'cookie_auth_active');
+                                        document.querySelector('div[style*="z-index:999999"]').remove();
+                                        enviarAvaliacao(authData.token || 'cookie_auth_active');
+                                    } else { 
+                                        const errorText = await authRes.text();
+                                        console.error('[DEBUG GOOGLE LOGIN] Erro retornado pelo backend:', errorText);
+                                        showToast("Falha na autenticação.", "error"); 
+                                    }
+                                } catch (error) { 
+                                    console.error('[DEBUG GOOGLE LOGIN] Erro no fetch para o backend:', error);
+                                    showToast("Erro ao conectar com o Google.", "error"); 
+                                }
+                            }
+                        });
+                        console.log('[DEBUG GOOGLE LOGIN] Renderizando botão...');
+                        google.accounts.id.renderButton(document.getElementById('google-btn-container'), { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with' });
+                    } catch (e) {
+                        console.error('[DEBUG GOOGLE LOGIN] Erro fatal ao inicializar GSI:', e);
+                    }
                 };
                 document.head.appendChild(script);
                 return;
