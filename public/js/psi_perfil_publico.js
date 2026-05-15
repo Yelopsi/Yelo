@@ -471,7 +471,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
 
-            const token = localStorage.getItem('Yelo_token');
+            let token = localStorage.getItem('Yelo_token');
+            if (token === 'cookie_auth_active') {
+                localStorage.removeItem('Yelo_token');
+                token = null;
+            }
+
             if (!token) {
                 localStorage.setItem(draftKey, JSON.stringify({ rating, comment }));
                 
@@ -496,9 +501,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                     if (authRes.ok) {
                                         const authData = await authRes.json();
                                         console.log('[DEBUG GOOGLE LOGIN] Sucesso no backend:', authData);
-                                        localStorage.setItem('Yelo_token', 'cookie_auth_active');
+                                        localStorage.setItem('Yelo_token', authData.token);
                                         document.querySelector('div[style*="z-index:999999"]').remove();
-                                        enviarAvaliacao(authData.token || 'cookie_auth_active');
+                                        enviarAvaliacao(authData.token);
                                     } else { 
                                         const errorText = await authRes.text();
                                         console.error('[DEBUG GOOGLE LOGIN] Erro retornado pelo backend:', errorText);
