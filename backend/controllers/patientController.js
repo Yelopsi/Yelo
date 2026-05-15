@@ -280,7 +280,7 @@ exports.googleLogin = async (req, res) => {
             where: { email: { [Op.iLike]: email } },
             paranoid: false
         });
-        if (existingPsychologist) {
+        if (existingPsychologist && !isReviewValidation) {
              return res.status(400).json({ error: 'Este e-mail pertence a um Psicólogo. Faça login na área de profissionais.' });
         }
 

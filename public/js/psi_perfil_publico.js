@@ -353,9 +353,15 @@ document.addEventListener('DOMContentLoaded', () => {
             return fullName.trim().split(/\s+/).map(n => n[0].toUpperCase() + '.').join(' ');
         };
 
-        if (reviewsListContainer) {
+        let visibleCount = 5; // Quantidade inicial de avaliações a exibir
+
+        const renderList = () => {
+            if (!reviewsListContainer) return;
+            
             reviewsListContainer.innerHTML = '';
-            reviews.forEach(review => {
+            const reviewsToShow = reviews.slice(0, visibleCount);
+            
+            reviewsToShow.forEach(review => {
                 const reviewCard = document.createElement('div');
                 reviewCard.style.cssText = 'background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 16px; padding: 20px; margin-bottom: 15px;';
                 let reviewStars = '';
@@ -374,7 +380,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 reviewsListContainer.appendChild(reviewCard);
             });
-        }
+
+            // Se houver mais avaliações do que a quantidade visível, mostra o botão
+            if (reviews.length > visibleCount) {
+                const btnMore = document.createElement('button');
+                btnMore.textContent = `Ver mais avaliações (${reviews.length - visibleCount})`;
+                btnMore.style.cssText = 'display: block; margin: 20px auto 0; background: transparent; border: 2px solid var(--verde-escuro); color: var(--verde-escuro); padding: 10px 24px; border-radius: 50px; font-weight: bold; cursor: pointer; transition: all 0.2s;';
+                btnMore.onmouseover = () => { btnMore.style.background = 'rgba(27, 67, 50, 0.05)'; };
+                btnMore.onmouseout = () => { btnMore.style.background = 'transparent'; };
+                btnMore.onclick = () => { visibleCount += 5; renderList(); };
+                reviewsListContainer.appendChild(btnMore);
+            }
+        };
+
+        renderList();
     }
 
     function showToast(message, type = 'success') {
