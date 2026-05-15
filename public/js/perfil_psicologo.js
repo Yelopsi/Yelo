@@ -690,7 +690,11 @@ const initProfilePage = async () => {
             };
 
             // 1. Verifica Login
-            const token = localStorage.getItem('Yelo_token');
+            let token = localStorage.getItem('Yelo_token');
+            if (token === 'cookie_auth_active') {
+                localStorage.removeItem('Yelo_token');
+                token = null;
+            }
             if (!token) {
                 if (rating || comment) {
                     localStorage.setItem(draftKey, JSON.stringify({ rating, comment }));
@@ -726,14 +730,14 @@ const initProfilePage = async () => {
                                 
                                 if (authRes.ok) {
                                     const authData = await authRes.json();
-                                    localStorage.setItem('Yelo_token', 'cookie_auth_active');
+                                    localStorage.setItem('Yelo_token', authData.token);
                                     localStorage.setItem('Yelo_user_type', 'patient');
                                     localStorage.setItem('Yelo_user_name', authData.nome);
                                     
                                     const modernOverlay = document.querySelector('div[style*="z-index:999999"]');
                                     if (modernOverlay) modernOverlay.remove();
                                     
-                                    enviarAvaliacao(authData.token || 'cookie_auth_active');
+                                    enviarAvaliacao(authData.token);
                                 } else {
                                     showToast("Falha na autenticação com o Google.", "error");
                                     if (containerBtn) {
@@ -770,7 +774,11 @@ const initProfilePage = async () => {
         btn.parentNode.replaceChild(newBtn, btn);
         const activeBtn = document.getElementById('btn-favorite');
 
-        const token = localStorage.getItem('Yelo_token');
+        let token = localStorage.getItem('Yelo_token');
+        if (token === 'cookie_auth_active') {
+            localStorage.removeItem('Yelo_token');
+            token = null;
+        }
         const userType = localStorage.getItem('Yelo_user_type');
 
         // 1. Verifica status inicial (se logado)
@@ -822,7 +830,7 @@ const initProfilePage = async () => {
                                 
                                 if (authRes.ok) {
                                     const authData = await authRes.json();
-                                    localStorage.setItem('Yelo_token', 'cookie_auth_active');
+                                    localStorage.setItem('Yelo_token', authData.token);
                                     localStorage.setItem('Yelo_user_type', 'patient');
                                     localStorage.setItem('Yelo_user_name', authData.nome);
                                     
@@ -832,7 +840,7 @@ const initProfilePage = async () => {
                                     // Favorita na mesma hora
                                     await fetch(`${BASE_URL}/api/patients/favorites`, {
                                         method: 'POST',
-                                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authData.token || 'cookie_auth_active'}` },
+                                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authData.token}` },
                                         body: JSON.stringify({ psychologistId })
                                     });
                                     activeBtn.classList.add('active');
@@ -894,7 +902,11 @@ const initProfilePage = async () => {
             // A. Lógica de Auto-Favoritar (se aplicável, vindo de um redirect)
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('autoFavorite') === 'true') {
-                const token = localStorage.getItem('Yelo_token');
+                let token = localStorage.getItem('Yelo_token');
+                if (token === 'cookie_auth_active') {
+                    localStorage.removeItem('Yelo_token');
+                    token = null;
+                }
                 const userType = localStorage.getItem('Yelo_user_type');
                 if (token && userType === 'patient') {
                     const url = new URL(window.location.href);
