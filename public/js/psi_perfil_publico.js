@@ -495,7 +495,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 console.log('[DEBUG GOOGLE LOGIN] Callback do Google disparado!', response);
                                 try {
                                     console.log('[DEBUG GOOGLE LOGIN] Enviando token para o backend na rota:', `${API_BASE_URL}/api/patients/google`);
-                                    const authRes = await fetch(`${API_BASE_URL}/api/patients/google`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: response.credential }) });
+                                    const authRes = await fetch(`${API_BASE_URL}/api/patients/google`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: response.credential, isReviewValidation: true }) });
                                     
                                     console.log('[DEBUG GOOGLE LOGIN] Resposta do backend:', authRes.status);
                                     if (authRes.ok) {

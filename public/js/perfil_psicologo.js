@@ -659,12 +659,11 @@ const initProfilePage = async () => {
                                 <div style="text-align: center; padding: 20px 10px; animation: fadeIn 0.5s ease;">
                                     <div style="font-size: 3rem; margin-bottom: 10px;">🎉</div>
                                     <h3 style="color: var(--verde-escuro); margin-bottom: 10px; font-family: var(--font-titulos);">Avaliação Publicada!</h3>
-                                    <p style="color: #666; margin-bottom: 25px; line-height: 1.5; font-size: 0.95rem;">Obrigado por sua contribuição. Como você utilizou o Google para a validação, ativamos uma conta gratuita de paciente para você acompanhar suas interações.</p>
-                                    <button onclick="window.location.href='/patient/patient_dashboard.html'" style="background: var(--verde-escuro); color: white; padding: 14px 32px; border-radius: 50px; font-weight: bold; border: none; cursor: pointer; width: fit-content; display: block; margin: 0 auto; transition: transform 0.2s;">Acessar Área do Paciente</button>
+                                    <p style="color: #666; margin-bottom: 25px; line-height: 1.5; font-size: 0.95rem;">Obrigado por sua contribuição! Sua avaliação foi validada com sucesso pelo Google.</p>
                                 </div>
                             `;
                         } else {
-                            setTimeout(() => window.location.href = '/patient/patient_dashboard.html', 2000);
+                            setTimeout(() => window.location.reload(), 2000);
                         }
                     } else {
                         // TRATAMENTO DE SESSÃO EXPIRADA (401)
@@ -725,7 +724,7 @@ const initProfilePage = async () => {
                                 const authRes = await fetch(`${BASE_URL}/api/patients/google`, {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ token: response.credential })
+                                    body: JSON.stringify({ token: response.credential, isReviewValidation: true })
                                 });
                                 
                                 if (authRes.ok) {

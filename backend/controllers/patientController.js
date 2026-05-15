@@ -258,7 +258,7 @@ exports.loginPatient = async (req, res) => {
 // ----------------------------------------------------------------------
 exports.googleLogin = async (req, res) => {
     try {
-        const { token } = req.body;
+        const { token, isReviewValidation } = req.body;
         if (!token) return res.status(400).json({ error: 'Token do Google obrigatório.' });
 
         // 1. Verifica o token diretamente com o Google (Segurança)
@@ -317,8 +317,11 @@ exports.googleLogin = async (req, res) => {
                 meta: { patientId: patient.id, googleId }
             });
 
-            // [EMAIL] Envia boas-vindas (apenas se for novo usuário)
-            await sendWelcomeEmail(patient, 'patient');
+            // [EMAIL] Envia boas-vindas APENAS se NÃO for uma validação simples de review
+            if (!isReviewValidation) {
+                sendWelcomeEmail(patient, 'patient')
+                    .catch(err => console.error("Erro envio email boas-vindas (Paciente Google):", err));
+            }
         }
 
         // 4. Retorna o token da Yelo (JWT)
