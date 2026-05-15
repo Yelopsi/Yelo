@@ -276,15 +276,25 @@ exports.googleLogin = async (req, res) => {
         const { email, name, sub: googleId } = googleUser;
 
         // [RESTRIÇÃO] Verifica se é Psicólogo antes de criar paciente
-        const existingPsychologist = await db.Psychologist.findOne({ where: { email } });
+        const existingPsychologist = await db.Psychologist.findOne({ 
+            where: { email: { [Op.iLike]: email } },
+            paranoid: false
+        });
         if (existingPsychologist) {
              return res.status(400).json({ error: 'Este e-mail pertence a um Psicólogo. Faça login na área de profissionais.' });
         }
 
         // 2. Verifica se o usuário já existe
-        let patient = await db.Patient.findOne({ where: { email } });
+        let patient = await db.Patient.findOne({ 
+            where: { email: { [Op.iLike]: email } },
+            paranoid: false
+        });
 
-        if (!patient) {
+        if (patient) {
+            if (patient.deletedAt) {
+                await patient.restore();
+            }
+        } else {
             // 3. Se não existe, CRIA um novo paciente
             // Gera uma senha aleatória forte pois o usuário vai logar via Google
             const randomPassword = crypto.randomBytes(16).toString('hex');
