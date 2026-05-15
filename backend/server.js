@@ -41,7 +41,10 @@ app.use((req, res, next) => {
 
 // --- SEGURANÇA DE PRODUÇÃO ---
 // Proteção de Cabeçalhos HTTP (Ignora CSP para usar a sua regra customizada)
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({ 
+  contentSecurityPolicy: false,
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }
+}));
 
 // Proteção contra Ataques de Força Bruta e DDoS Básico
 const apiLimiter = rateLimit({
