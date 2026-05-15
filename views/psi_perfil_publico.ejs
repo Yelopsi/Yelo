@@ -2,6 +2,9 @@
 <html lang="pt-BR">
 <head>
     <%- include('partials/head') %>
+    
+    <!-- Garante que a origem seja enviada corretamente para o Google Sign-In -->
+    <meta name="referrer" content="strict-origin-when-cross-origin">
 
     <!-- SEO INJETADO NO SERVIDOR -->
     <title><%= psicologo.nome %> | Psicólogo(a) na Yelo</title>
