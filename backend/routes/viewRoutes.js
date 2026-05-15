@@ -7,6 +7,20 @@ const fs = require('fs');
 const blogController = require('../controllers/blogController');
 const { verifyTokenLocal } = require('../middlewares/localAuth');
 
+// --- REDIRECIONAMENTOS SEO (Blindagem no Topo) ---
+const seoRedirects = {
+    '/registro': '/cadastro', '/index.html': '/', '/index': '/',
+    '/perguntas': '/comunidade', '/questionario.html': '/questionario',
+    '/perguntas.html': '/comunidade', '/privacidade.html': '/privacidade', '/termos.html': '/termos', '/contato.html': '/contato',
+    '/patient/patient_dashboard.html': '/patient/patient_dashboard',
+    '/sobre.html': '/sobre', '/faq.html': '/faq', '/blog.html': '/blog'
+};
+router.use((req, res, next) => {
+    const checkPath = req.path.length > 1 && req.path.endsWith('/') ? req.path.slice(0, -1) : req.path;
+    if (seoRedirects[checkPath]) return res.redirect(301, seoRedirects[checkPath]);
+    next();
+});
+
 // Servir arquivos estáticos da pasta /public na raiz do site (ex: /css/style.css)
 router.use(express.static(path.join(__dirname, '../../public')));
 
@@ -117,18 +131,6 @@ router.get('/questionario', (req, res) => {
     res.sendFile(path.join(__dirname, '../../public/questionario.html'));
 });
 
-// --- REDIRECIONAMENTOS SEO ---
-const seoRedirects = {
-    '/jornada': '/', '/registro': '/cadastro', '/index.html': '/', '/index': '/',
-    '/perguntas': '/comunidade', '/questionario.html': '/questionario',
-    '/perguntas.html': '/comunidade', '/privacidade.html': '/privacidade', '/termos.html': '/termos', '/contato.html': '/contato'
-};
-router.use((req, res, next) => {
-    const checkPath = req.path.length > 1 && req.path.endsWith('/') ? req.path.slice(0, -1) : req.path;
-    if (seoRedirects[checkPath]) return res.redirect(301, seoRedirects[checkPath]);
-    next();
-});
-
 // --- PÁGINAS ESTÁTICAS E TERAPIA ONLINE ---
 router.get('/comunidade', (req, res) => res.render('perguntas'));
 router.get('/profissionais', (req, res) => res.render('profissionais'));
@@ -139,6 +141,7 @@ router.get('/sobre', (req, res) => res.render('sobre'));
 
 router.get('/psi-registro', (req, res) => res.render('psi_registro'));
 router.get('/faq', (req, res) => res.render('faq'));
+router.get('/ajuda', (req, res) => res.render('ajuda'));
 router.get('/ajuda-mulher', (req, res) => res.render('ajuda_mulher'));
 router.get('/banner-linkedin', (req, res) => res.render('banner_linkedin'));
 router.get('/login', (req, res) => res.render('login'));
@@ -147,6 +150,7 @@ router.get('/recuperar-senha', (req, res) => res.render('esqueci_senha'));
 router.get('/redefinir-senha', (req, res) => res.render('redefinir_senha'));
 router.get('/patient/patient_dashboard', (req, res) => res.render('patient/patient_dashboard'));
 router.get('/resultados', (req, res) => res.render('resultados'));
+router.get('/menor_de_idade', (req, res) => res.render('menor_de_idade'));
 
 // --- RECURSOS GRATUITOS (Arquivos HTML na raiz) ---
 router.get('/sos-ansiedade', (req, res) => res.sendFile(path.join(__dirname, '../../public/sos-ansiedade.html')));
@@ -156,9 +160,9 @@ router.get('/roda-da-vida', (req, res) => res.sendFile(path.join(__dirname, '../
 router.get('/calculadora-psi', (req, res) => res.sendFile(path.join(__dirname, '../../public/calculadora-psi.html')));
 
 // --- PÁGINAS INSTITUCIONAIS (Mapeamento explícito para URLs limpas) ---
-router.get('/privacidade', (req, res) => res.sendFile(path.join(__dirname, '../../public/privacidade.html')));
-router.get('/termos', (req, res) => res.sendFile(path.join(__dirname, '../../public/termos.html')));
-router.get('/contato', (req, res) => res.sendFile(path.join(__dirname, '../../public/contato.html')));
+router.get('/privacidade', (req, res) => res.render('privacidade'));
+router.get('/termos', (req, res) => res.render('termos'));
+router.get('/contato', (req, res) => res.render('contato'));
 
 // --- LANDING PAGE GOOGLE ADS ---
 router.get('/terapia-online', async (req, res) => {
@@ -223,7 +227,7 @@ router.get(['/admin/login', '/psi/login', '/patient/login'], (req, res) => res.r
 router.get('/sitemap.xml', async (req, res) => { /* Omitting full logic to save space, copy from original if preferred, or keep minimal */ });
 router.get('/robots.txt', (req, res) => {
     res.type('text/plain');
-    res.send(`User-agent: *\nDisallow: /api/\nDisallow: /admin/\nDisallow: /psi/\nDisallow: /patient/\nSitemap: https://www.yelopsi.com.br/sitemap.xml`);
+    res.send(`User-agent: *\nDisallow: /api/\nDisallow: /admin/\nDisallow: /psi/\nDisallow: /patient/\nDisallow: /*?redirect=\nSitemap: https://www.yelopsi.com.br/sitemap.xml`);
 });
 
 // --- ROTEAMENTO DINÂMICO (PERFIL PÚBLICO OU PÁGINAS ESTÁTICAS) ---
@@ -256,13 +260,7 @@ router.get('/:slug', async (req, res, next) => {
         // Correção de SEO (Soft 404): 
         // Se passou pela validação de arquivos estáticos, é uma tentativa de acessar um perfil.
         // Se não achou ou o perfil está inativo, retorna explicitamente o código HTTP 404.
-        res.status(404).send(`
-            <div style="font-family: sans-serif; text-align: center; padding: 50px;">
-                <h2 style="color: #1B4332;">Perfil Indisponível</h2>
-                <p style="color: #666;">Este profissional não está disponível no momento.</p>
-                <a href="/" style="color: #1B4332; text-decoration: underline;">Voltar ao início</a>
-            </div>
-        `);
+        res.status(404).render('404');
     } catch (dbErr) {
         return next(dbErr);
     }
@@ -270,7 +268,7 @@ router.get('/:slug', async (req, res, next) => {
 
 // --- CATCH-ALL 404 (Proteção final contra Soft 404) ---
 router.use((req, res) => {
-    res.status(404).send('Página não encontrada (404)');
+    res.status(404).render('404');
 });
 
 module.exports = router;
