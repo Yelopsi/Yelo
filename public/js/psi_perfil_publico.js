@@ -347,6 +347,12 @@ document.addEventListener('DOMContentLoaded', () => {
             ratingSummary.innerHTML = `${starsHtml} <span style="color: #666; font-size: 0.9rem; font-weight: 600; margin-left: 5px;">${avgRating} de 5</span>`;
         }
 
+        // Função para converter o nome completo em iniciais (ex: "Anderson Costa" -> "A. C.")
+        const getInitials = (fullName) => {
+            if (!fullName || fullName === 'Anônimo') return 'Anônimo';
+            return fullName.trim().split(/\s+/).map(n => n[0].toUpperCase() + '.').join(' ');
+        };
+
         if (reviewsListContainer) {
             reviewsListContainer.innerHTML = '';
             reviews.forEach(review => {
@@ -356,9 +362,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (let i = 1; i <= 5; i++) {
                     reviewStars += `<span style="color: ${i <= review.rating ? '#f59e0b' : '#e5e7eb'};">★</span>`;
                 }
+                
+                const authorInitials = getInitials(review.patientName);
+
                 reviewCard.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h4 style="margin: 0; font-family: var(--font-principal); color: #333; font-size: 1rem;">${review.patientName || 'Anônimo'}</h4>
+                        <h4 style="margin: 0; font-family: var(--font-principal); color: #333; font-size: 1rem;">${authorInitials}</h4>
                         <div>${reviewStars}</div>
                     </div>
                     <p style="margin: 0; color: #555; font-style: italic; font-size: 0.95rem; line-height: 1.5;">"${review.comment}"</p>
