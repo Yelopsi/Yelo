@@ -58,6 +58,8 @@ async function sendPendingSubscriptionEmails() {
                     },
                     status: { [Op.ne]: 'active' },
                     is_exempt: { [Op.not]: true },
+                    isAdmin: { [Op.not]: true },
+                    stripeSubscriptionId: null
                 }
             });
 

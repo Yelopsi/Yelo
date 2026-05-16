@@ -12,6 +12,7 @@ const rateLimit = require('express-rate-limit');
 // Módulos e Configurações Internas
 const { initSocket } = require('./config/socket');
 const db = require('./models');
+const { initWhatsApp } = require('./services/whatsappService');
 const applyDatabaseFixes = require('./config/dbFixes');
 const { startCronJobs } = require('./jobs/cronScheduler');
 
@@ -41,7 +42,10 @@ app.use((req, res, next) => {
 
 // --- SEGURANÇA DE PRODUÇÃO ---
 // Proteção de Cabeçalhos HTTP (Ignora CSP para usar a sua regra customizada)
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({ 
+  contentSecurityPolicy: false,
+  crossOriginOpenerPolicy: false // Desativado para evitar bloqueios do Google Sign-In (Cross-Origin-Opener-Policy policy would block the window.postMessage call)
+}));
 
 // Proteção contra Ataques de Força Bruta e DDoS Básico
 const apiLimiter = rateLimit({
@@ -68,9 +72,27 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(sessionMiddleware);
 app.use(visitMiddleware);
 
+// --- ROTAS DINÂMICAS PRIORITÁRIAS ---
+// Trazidas para cima para evitar conflito com cache de arquivos estáticos
+app.get('/questionario', (req, res) => res.render('questionario'));
+app.get('/psi_questionario', (req, res) => res.render('psi_questionario'));
+// Intercepta botões perdidos pelo site apontando para o arquivo antigo
+app.get('/questionario.html', (req, res) => res.redirect(301, '/questionario'));
+app.get('/psi_questionario.html', (req, res) => res.redirect(301, '/psi_questionario'));
+
 // Servir TODOS os arquivos da pasta public automaticamente.
 // A propriedade 'extensions' faz com que urls limpas como "/ajuda" e "/questionario" abram automaticamente os arquivos .html se existirem.
-app.use(express.static(path.join(__dirname, '../public'), { extensions: ['html'] }));
+const rootPublic = path.join(__dirname, '../public');
+const backendPublic = path.join(__dirname, 'public');
+
+app.use(express.static(rootPublic, { extensions: ['html'] }));
+
+// Trava de segurança: Impede que a pasta backend/public sirva arquivos HTML antigos acidentalmente
+const backendStatic = express.static(backendPublic);
+app.use((req, res, next) => {
+    if (req.path.endsWith('.html') || req.path.endsWith('.htm')) return next();
+    backendStatic(req, res, next);
+});
 
 // Permite servir os arquivos soltos na raiz do projeto (como psi_questionario.html e script.js) sem precisar movê-los
 app.use(express.static(path.join(__dirname, '..'), { extensions: ['html'] }));
@@ -84,6 +106,9 @@ app.get('/menor_de_idade', (req, res) => res.render('menor_de_idade'));
 // Rota para a página de contato renderizando o EJS
 app.get('/contato', (req, res) => res.render('contato'));
 
+// Rota para a página de ajuda renderizando o EJS
+app.get('/ajuda', (req, res) => res.render('ajuda'));
+
 // Silencia erro 404 do favicon.ico na raiz 
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
@@ -92,6 +117,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // Inicialização HTTP & Socket.IO
 const server = http.createServer(app);
 const io = initSocket(server);
+initWhatsApp(io);
 
 app.use((req, res, next) => {
     req.io = io;

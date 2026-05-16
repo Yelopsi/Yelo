@@ -3,6 +3,8 @@ const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const gamificationService = require('../services/gamificationService');
+const { sendMessage, getWhatsAppStatus } = require('../services/whatsappService');
+const { runOutboundBatch } = require('../jobs/whatsappOutboundJob');
 
 // Configurações do Asaas (Mesma lógica do paymentController)
 let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
@@ -2684,5 +2686,36 @@ exports.runScraper = async (req, res) => {
     } catch (error) {
         console.error('[Admin] Erro ao iniciar scraper:', error);
         res.status(500).json({ error: 'Erro ao iniciar robô de prospecção.' });
+    }
+};
+
+// 6. Teste manual de disparo de WhatsApp
+exports.testWhatsAppMessage = async (req, res) => {
+    try {
+        const { phone } = req.body;
+        if (!phone) return res.status(400).json({ error: 'Telefone é obrigatório.' });
+
+        if (getWhatsAppStatus() !== 'CONNECTED') {
+            return res.status(400).json({ error: 'O Robô do WhatsApp não está conectado.' });
+        }
+
+        const msgTeste = `🤖 *Teste da Yelo!*\n\nOlá! Se você recebeu esta mensagem, significa que o nosso servidor está conseguindo disparar mensagens em segundo plano pelo seu WhatsApp Business com sucesso!\n\nAgora já podemos ativar a automação real.`;
+
+        await sendMessage(phone, msgTeste);
+
+        res.status(200).json({ success: true, message: 'Mensagem de teste enviada.' });
+    } catch (error) {
+        console.error('Erro no teste de WhatsApp:', error);
+        res.status(500).json({ error: error.message || 'Erro ao enviar mensagem de teste.' });
+    }
+};
+
+// 7. Teste manual de disparo de Lote (Robô)
+exports.testOutboundBatch = async (req, res) => {
+    try {
+        runOutboundBatch(2).catch(console.error); // Pega apenas 2 leads e roda em background
+        res.status(200).json({ success: true, message: 'Lote iniciado em background. Acompanhe os logs no terminal.' });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao iniciar lote.' });
     }
 };
