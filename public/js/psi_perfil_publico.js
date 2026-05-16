@@ -413,6 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showModernModal(icon, title, message, primaryText, primaryUrl, secondaryText, customHtml = '') {
         const overlay = document.createElement('div');
+        overlay.id = 'modern-modal-overlay';
         overlay.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:999999; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(3px); opacity: 0; transition: opacity 0.3s ease;";
         
         const box = document.createElement('div');
@@ -530,7 +531,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                         const authData = await authRes.json();
                                         console.log('[DEBUG GOOGLE LOGIN] Sucesso no backend:', authData);
                                         localStorage.setItem('Yelo_token', authData.token);
-                                        document.querySelector('div[style*="z-index:999999"]').remove();
+                                        
+                                        const modernOverlay = document.getElementById('modern-modal-overlay') || document.querySelector('div[style*="z-index:999999"]') || document.querySelector('div[style*="z-index: 999999"]');
+                                        if (modernOverlay) modernOverlay.remove();
+                                        
                                         enviarAvaliacao(authData.token);
                                     } else { 
                                         const errorText = await authRes.text();
