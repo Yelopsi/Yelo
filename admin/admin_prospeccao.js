@@ -100,6 +100,14 @@ window.carregarLeads = async function() {
         document.getElementById('kpi-aguardando').textContent = result.kpis.aguardando;
         document.getElementById('kpi-cadastrados').textContent = result.kpis.cadastrados;
 
+        // Calculando e exibindo a conversão
+        const totalLeads = result.kpis.pendentes + result.kpis.contatados + result.kpis.aguardando + result.kpis.cadastrados;
+        const kpiConversao = document.getElementById('kpi-conversao');
+        if (kpiConversao) {
+            const taxa = totalLeads > 0 ? ((result.kpis.cadastrados / totalLeads) * 100).toFixed(1) : 0;
+            kpiConversao.textContent = `${taxa}%`;
+        }
+
         window.allLeads = result.leads || [];
         window.currentLeadPage = 1;
         window.renderizarPaginaAtual();
@@ -276,7 +284,22 @@ window.enviarWhatsAppCopy = async function(id, telefone, nome, tipoCopy) {
             .replace(/\[NOME\]/g, primeiroNome)
             .replace(/www\.yelopsi\.com\.br\/profissionais/g, linkMagico);
         
-        window.open(`https://wa.me/${telefoneNum}?text=${encodeURIComponent(msgFinal)}`, '_blank');
+        // NOVO: Previne a aba em branco ao voltar e força o WA Business no Android
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const isAndroid = /Android/i.test(navigator.userAgent);
+
+        let whatsappUrl = `https://wa.me/${telefoneNum}?text=${encodeURIComponent(msgFinal)}`;
+
+        if (isAndroid) {
+            // Intent super restrito: Sem barra extra e sem fallback genérico para forçar o Business
+            whatsappUrl = `intent://send?phone=${telefoneNum}&text=${encodeURIComponent(msgFinal)}#Intent;package=com.whatsapp.w4b;scheme=whatsapp;end`;
+        }
+
+        if (isMobile) {
+            window.location.href = whatsappUrl;
+        } else {
+            window.open(whatsappUrl, '_blank');
+        }
 
         const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
         const token = localStorage.getItem('Yelo_token');

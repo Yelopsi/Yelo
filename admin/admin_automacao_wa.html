@@ -1,0 +1,46 @@
+<div class="modern-dashboard-layout">
+    <div class="main-header" style="padding: 20px 25px; margin-bottom: 15px;">
+        <div>
+            <h1 style="font-size: 1.8rem;">Automação do WhatsApp</h1>
+            <p class="subtitulo-header">Conecte seu aparelho para habilitar envios automáticos em segundo plano.</p>
+        </div>
+    </div>
+
+    <div class="modern-dashboard-grid" style="grid-template-columns: 1fr;">
+        <div class="widget" style="text-align: center; padding: 50px 20px;">
+            <h3 style="margin-top: 0; color: var(--verde-escuro);">Status do Robô</h3>
+            <div id="wa-status-badge" style="display: inline-block; padding: 8px 20px; border-radius: 50px; background: #f1f3f5; color: #666; font-weight: bold; margin-bottom: 30px;">Verificando conexão...</div>
+            
+            <div id="wa-qr-container" style="display: none; margin: 0 auto;">
+                <p style="color: #555; margin-bottom: 15px; max-width: 500px; margin-left: auto; margin-right: auto;">Abra o WhatsApp no celular, vá em <strong>Aparelhos Conectados > Conectar um Aparelho</strong> e aponte a câmera para o QR Code abaixo:</p>
+                <img id="wa-qr-image" src="" alt="QR Code WhatsApp" style="max-width: 280px; width: 100%; border: 10px solid white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                <p style="color: #999; font-size: 0.85rem; margin-top: 15px;">Aguarde o QR Code carregar. Isso pode levar alguns segundos.</p>
+            </div>
+
+            <div id="wa-connected-container" style="display: none; margin: 0 auto;">
+                <div style="font-size: 5rem; margin-bottom: 15px;">🤖</div>
+                <p style="color: #10b981; font-weight: bold; font-size: 1.3rem;">Servidor Conectado ao WhatsApp!</p>
+                <p style="color: #666; max-width: 400px; margin: 0 auto 25px auto; line-height: 1.5;">A sessão está salva de forma criptografada no servidor. O robô já pode assumir os disparos invisíveis.</p>
+                
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px dashed #ccc; max-width: 450px; margin-left: auto; margin-right: auto;">
+                    <h4 style="margin-top: 0; color: #1B4332;">🧪 Testar Disparo</h4>
+                    <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px;">Insira um número que você tenha acesso para receber uma mensagem de teste do servidor.</p>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <input type="text" id="wa-test-phone" placeholder="DDD + Número" style="padding: 10px; border-radius: 8px; border: 1px solid #ccc; flex-grow: 1; max-width: 200px;">
+                        <button id="btn-wa-test" class="btn btn-principal" style="border-radius: 8px; padding: 10px 20px;">Enviar Teste</button>
+                    </div>
+                    <p id="wa-test-msg" style="font-size: 0.85rem; margin-top: 15px; font-weight: bold;"></p>
+                </div>
+
+                <div style="background: #fff8e1; padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px dashed #ffe082; max-width: 450px; margin-left: auto; margin-right: auto;">
+                    <h4 style="margin-top: 0; color: #b45309;">⚙️ Testar Lote de Prospecção</h4>
+                    <p style="font-size: 0.9rem; color: #78350f; margin-bottom: 15px;">Adicione seu número 2 vezes como lead na aba de Prospecção e clique abaixo para ver o robô agir com pausas reais.</p>
+                    <button id="btn-wa-batch" class="btn btn-principal" style="background: #d97706; border-color: #d97706; border-radius: 8px; padding: 10px 20px; width: 100%;">Iniciar Lote (Máx 2 Leads)</button>
+                    <p id="wa-batch-msg" style="font-size: 0.85rem; margin-top: 15px; font-weight: bold; color: #b45309;"></p>
+                </div>
+
+                <button id="btn-wa-disconnect" class="btn btn-secundario" style="border-color: #E63946; color: #E63946;">Desconectar Aparelho</button>
+            </div>
+        </div>
+    </div>
+</div>

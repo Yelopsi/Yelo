@@ -11,3 +11,5 @@ node_modules/
 .cache/
 
 node_modules/
+
+.wwebjs_auth
