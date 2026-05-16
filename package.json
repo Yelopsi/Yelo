@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node backend/server.js",
     "dev": "nodemon backend/server.js",
-    "postinstall": "cd backend && npm install && cd .. && rm -rf .cache/puppeteer && npx puppeteer browsers install chrome",
+    "postinstall": "cd backend && npm install && cd .. && npx puppeteer browsers install chrome",
     "lint": "eslint ."
   },
   "keywords": [
@@ -16,7 +16,7 @@
   "author": "Equipe Yelo",
   "license": "ISC",
   "engines": {
-    "node": ">=18.0.0"
+    "node": "22.x"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
