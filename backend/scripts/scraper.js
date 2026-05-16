@@ -13,6 +13,7 @@ async function scrapeLeadsPuppeteer(searchTerm) {
         console.log(`[SCRAPER] Iniciando navegador invisível...`);
         browser = await puppeteer.launch({ 
             headless: 'new', // Roda em background
+            executablePath: puppeteer.executablePath(),
             args: ['--no-sandbox', '--disable-setuid-sandbox'] 
         });
         
