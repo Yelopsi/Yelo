@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node backend/server.js",
     "dev": "nodemon backend/server.js",
+    "test": "node tests/testar-match.js",
+    "deploy": "npm run test && git push origin main",
     "postinstall": "cd backend && npm install && cd .. && npx puppeteer browsers install chrome",
     "lint": "eslint ."
   },
