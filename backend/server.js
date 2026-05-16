@@ -12,6 +12,7 @@ const rateLimit = require('express-rate-limit');
 // Módulos e Configurações Internas
 const { initSocket } = require('./config/socket');
 const db = require('./models');
+const { initWhatsApp } = require('./services/whatsappService');
 const applyDatabaseFixes = require('./config/dbFixes');
 const { startCronJobs } = require('./jobs/cronScheduler');
 
@@ -116,6 +117,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // Inicialização HTTP & Socket.IO
 const server = http.createServer(app);
 const io = initSocket(server);
+initWhatsApp(io);
 
 app.use((req, res, next) => {
     req.io = io;

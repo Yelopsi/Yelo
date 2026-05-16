@@ -121,6 +121,8 @@ router.put('/leads/:id/contato', adminController.registrarContatoLead);
 router.put('/leads/:id/status', adminController.atualizarStatusLead);
 router.delete('/leads/:id', adminController.excluirLead);
 router.post('/leads/scrape', adminController.runScraper);
+router.post('/whatsapp/test', adminController.testWhatsAppMessage);
+router.post('/whatsapp/test-batch', adminController.testOutboundBatch);
 
 // --- ROTAS DE EDIÇÃO DA COMUNIDADE (Apenas Admin pode alterar) ---
 router.put('/community-event', adminController.updateCommunityEvent);

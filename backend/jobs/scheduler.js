@@ -4,6 +4,7 @@ const cron = require('node-cron');
 const { findDemandGaps } = require('./demandMonitor');
 const { manageExpiredInvitations } = require('./invitationManager');
 const { sendPendingSubscriptionEmails } = require('./remarketingCron.js');
+const { runOutboundBatch } = require('./whatsappOutboundJob');
 const { exec } = require('child_process');
 const path = require('path');
 
@@ -62,6 +63,18 @@ cron.schedule('0 4 * * *', () => {
         }
         console.log(`[CRON SCRAPER] Concluído:\n${stdout}`);
     });
+}, {
+    scheduled: true,
+    timezone: "America/Sao_Paulo"
+});
+
+/**
+ * Tarefa 5: Disparo automático de WhatsApp (Prospecção)
+ * Roda às 09h, 13h e 18h de segunda a sexta-feira.
+ */
+cron.schedule('0 9,13,18 * * 1-5', () => {
+    console.log('Executando tarefa agendada: Disparo em Lote WhatsApp');
+    runOutboundBatch(10).catch(err => console.error('[CRON WA]', err));
 }, {
     scheduled: true,
     timezone: "America/Sao_Paulo"
