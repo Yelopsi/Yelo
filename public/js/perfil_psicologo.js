@@ -677,6 +677,8 @@ const initProfilePage = async () => {
                             showToast("Sessão expirada. Faça login novamente.", "error");
                             const currentUrl = encodeURIComponent(window.location.href);
                             setTimeout(() => window.location.href = `/login?redirect=${currentUrl}`, 2000);
+                        } else if (response.status === 409) {
+                            showToast("Você já avaliou este profissional. Não é possível enviar avaliações duplicadas.", "error");
                         } else {
                             showToast(data.error || "Erro ao salvar avaliação.", "error");
                         }

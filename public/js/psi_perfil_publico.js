@@ -491,7 +491,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         localStorage.removeItem(draftKey);
                         setTimeout(() => window.location.reload(), 1500);
                     } else {
-                        showToast("Erro ao enviar avaliação.", "error");
+                        if (response.status === 409) {
+                            showToast("Você já avaliou este profissional. Não é possível enviar avaliações duplicadas.", "error");
+                        } else if (response.status === 401) {
+                            showToast("Sua sessão expirou. Por favor, autentique-se novamente.", "error");
+                        } else {
+                            const errData = await response.json().catch(() => ({}));
+                            showToast(errData.error || "Erro ao enviar avaliação.", "error");
+                        }
                     }
                 } catch (error) {
                     showToast("Erro de conexão.", "error");
