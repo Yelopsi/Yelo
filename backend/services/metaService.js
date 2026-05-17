@@ -6,7 +6,7 @@ const hashData = (data) => {
     return crypto.createHash('sha256').update(data.trim().toLowerCase()).digest('hex');
 };
 
-exports.sendCAPIEvent = async (eventName, user, req, customData = {}) => {
+exports.sendCAPIEvent = async (eventName, user, req, customData = {}, eventId = null) => {
     const pixelId = process.env.META_PIXEL_ID;
     const token = process.env.META_CAPI_TOKEN;
 
@@ -38,6 +38,11 @@ exports.sendCAPIEvent = async (eventName, user, req, customData = {}) => {
             }
         ]
     };
+
+    // O 'event_id' precisa estar na raiz do evento (junto com 'event_name') para a desduplicação funcionar com o Pixel
+    if (eventId) {
+        payload.data[0].event_id = eventId;
+    }
 
     try {
         const response = await fetch(`https://graph.facebook.com/v19.0/${pixelId}/events?access_token=${token}`, {
