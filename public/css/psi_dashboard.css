@@ -5985,12 +5985,9 @@ input:checked + .slider:before { transform: translateX(20px); }
     }
 
     /* 3. Evitar Zoom no iOS ao clicar nos inputs (Fonte >= 16px) */
-    .profile-block input,
-    .profile-block textarea,
-    .profile-block select,
-    .form-group input,
-    .form-group textarea,
-    .form-group select {
+    input,
+    textarea,
+    select {
         font-size: 16px !important;
     }
 }

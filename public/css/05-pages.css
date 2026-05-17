@@ -3166,3 +3166,15 @@ body.pagina-publica .mobile-bottom-nav {
         padding-top: 0;
     }
 }
+
+/* ==========================================================================
+   PREVENIR ZOOM AUTOMÁTICO NO MOBILE (iOS)
+   Garante experiência de App Nativo
+   ========================================================================== */
+@media (max-width: 992px) {
+    input, select, textarea,
+    input[type="text"], input[type="number"], input[type="email"],
+    input[type="tel"], input[type="password"], input[type="search"] {
+        font-size: 16px !important;
+    }
+}

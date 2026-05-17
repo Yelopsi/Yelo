@@ -1657,6 +1657,31 @@ document.addEventListener('DOMContentLoaded', function() {
             if(document.getElementById('kpi-artigos')) document.getElementById('kpi-artigos').innerHTML = renderFriendlyZero(blogCount, 'Nenhum');
             if(document.getElementById('kpi-interacoes')) document.getElementById('kpi-interacoes').innerHTML = renderFriendlyZero(interactions, 'Nenhuma');
 
+            // --- LÓGICA DO CARD DE LEMBRETE DE INTERAÇÃO ---
+            const interactionReminderCard = document.getElementById('interaction-reminder-card');
+            if (interactionReminderCard) {
+                if (blogCount > 0 || interactions > 0) {
+                    interactionReminderCard.style.display = 'none';
+                } else {
+                    const lastDismissed = localStorage.getItem('yelo_interaction_dismissed_at');
+                    const nowMs = new Date().getTime();
+                    const seteDiasEmMs = 7 * 24 * 60 * 60 * 1000;
+                    
+                    if (lastDismissed && (nowMs - parseInt(lastDismissed)) < seteDiasEmMs) {
+                        interactionReminderCard.style.display = 'none';
+                    } else {
+                        interactionReminderCard.style.display = 'block';
+                        const btnDismiss = document.getElementById('btn-dismiss-interaction');
+                        if (btnDismiss) {
+                            btnDismiss.onclick = () => {
+                                interactionReminderCard.style.display = 'none';
+                                localStorage.setItem('yelo_interaction_dismissed_at', new Date().getTime().toString());
+                            };
+                        }
+                    }
+                }
+            }
+
             // --- BLOCO 2: CHECKLIST DINÂMICO & FEEDBACK INTELIGENTE ---
             const actionListContainer = document.querySelector('.modern-action-list');
             if (actionListContainer) {
