@@ -59,7 +59,7 @@ exports.registerPsychologist = async (req, res) => {
         // REVERTIDO: Volta a ler apenas o CPF
         const cpf = req.body.cpf || req.body.documento || null; // Agora é opcional na entrada
         const telefone = req.body.telefone || null; // Captura o telefone vindo do formulário
-        const { googleToken, utm_source, utm_medium, utm_campaign } = req.body;
+        const { googleToken, utm_source, utm_medium, utm_campaign, meta_event_id } = req.body;
 
         // --- Lógica de Registro via Google ---
         if (googleToken) {
@@ -181,7 +181,7 @@ exports.registerPsychologist = async (req, res) => {
         sendWelcomeEmail(newPsychologist, 'psychologist').catch(err => console.error("Erro envio email boas-vindas (Psi):", err));
 
         // [CAPI] Avisa o Facebook sobre o novo cadastro (Registro Completo)
-        metaService.sendCAPIEvent('CompleteRegistration', newPsychologist, req, { user_type: 'psychologist' });
+        metaService.sendCAPIEvent('CompleteRegistration', newPsychologist, req, { user_type: 'psychologist' }, meta_event_id);
 
         // --- [WEB PUSH] Notifica Admin no PWA do iOS/Android ---
         try {

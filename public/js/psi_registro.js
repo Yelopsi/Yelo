@@ -181,6 +181,9 @@ document.addEventListener('DOMContentLoaded', () => {
             storedAnswers = JSON.parse(localStorage.getItem('psi_questionario_respostas') || '{}');
         }
 
+        // Gera um ID único para o evento (desduplicação do Meta Pixel + CAPI)
+        const metaEventId = 'evt_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+
         const registrationData = {
             nome: document.getElementById('nome-completo').value,
             crp: crpInput ? crpInput.value : '',
@@ -189,7 +192,8 @@ document.addEventListener('DOMContentLoaded', () => {
             tipo_documento: docType, // Manda qual é o tipo
             email: emailInput.value.trim().toLowerCase(),
             senha: senha,
-            invitationToken: tokenParam
+            invitationToken: tokenParam,
+            meta_event_id: metaEventId
         };
 
         // Se usou conta Google
@@ -230,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // --- EVENTO DE CADASTRO DO META PIXEL ---
                 if (typeof fbq === 'function') {
-                    fbq('track', 'CompleteRegistration');
+                    fbq('track', 'CompleteRegistration', {}, { eventID: metaEventId });
                 }
 
                 setTimeout(() => { 
