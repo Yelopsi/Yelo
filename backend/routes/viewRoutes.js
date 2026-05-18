@@ -228,10 +228,19 @@ router.get('/sitemap.xml', async (req, res) => {
     try {
         const frontendUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
         
+        // Helper para escapar caracteres inválidos no XML
+        const escapeXml = (unsafe) => 
+            (unsafe || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+
         // 1. URLs Estáticas Essenciais
         const staticUrls = [
             '', '/sobre', '/faq', '/ajuda', '/ajuda-mulher', '/contato', 
-            '/termos', '/privacidade', '/cadastro', '/login', '/terapia-online', 
+            '/termos', '/privacidade', '/terapia-online', 
             '/profissionais', '/comunidade', '/blog', '/sos-ansiedade', 
             '/gerador-bio', '/teste-terapia', '/roda-da-vida', '/calculadora-psi'
         ];
@@ -244,7 +253,7 @@ router.get('/sitemap.xml', async (req, res) => {
         // Renderiza URLs estáticas
         staticUrls.forEach(url => {
             xml += '  <url>\n';
-            xml += `    <loc>${frontendUrl}${url}</loc>\n`;
+            xml += `    <loc>${escapeXml(`${frontendUrl}${url}`)}</loc>\n`;
             xml += `    <lastmod>${today}</lastmod>\n`;
             xml += `    <changefreq>weekly</changefreq>\n`;
             xml += `    <priority>${url === '' ? '1.0' : '0.8'}</priority>\n`;
@@ -263,7 +272,7 @@ router.get('/sitemap.xml', async (req, res) => {
         validPsychologists.forEach(psy => {
             const lastMod = psy.updatedAt ? new Date(psy.updatedAt).toISOString().split('T')[0] : today;
             xml += '  <url>\n';
-            xml += `    <loc>${frontendUrl}/${psy.slug}</loc>\n`;
+            xml += `    <loc>${escapeXml(`${frontendUrl}/${psy.slug}`)}</loc>\n`;
             xml += `    <lastmod>${lastMod}</lastmod>\n`;
             xml += `    <changefreq>weekly</changefreq>\n`;
             xml += `    <priority>0.9</priority>\n`;
@@ -272,8 +281,8 @@ router.get('/sitemap.xml', async (req, res) => {
 
         xml += '</urlset>';
 
-        // Força a resposta HTTP correta (Status 200) e o tipo Content-Type como XML
-        res.header('Content-Type', 'application/xml');
+        // Força a resposta HTTP correta (Status 200) e o tipo Content-Type como XML com charset
+        res.header('Content-Type', 'application/xml; charset=utf-8');
         res.status(200).send(xml);
     } catch (error) {
         console.error('Erro ao gerar sitemap.xml:', error);
