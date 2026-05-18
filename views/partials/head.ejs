@@ -6,6 +6,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> 
 <meta name="apple-mobile-web-app-title" content="Yelo">
 
+<% if (typeof canonicalUrl !== 'undefined') { %>
+    <link rel="canonical" href="<%= canonicalUrl %>" />
+<% } %>
+
 <link rel="stylesheet" href="/css/01-variables.css">
 <link rel="stylesheet" href="/css/02-base.css">
 <link rel="stylesheet" href="/css/03-layout.css">
