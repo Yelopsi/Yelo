@@ -16,6 +16,11 @@ const seoRedirects = {
     '/sobre.html': '/sobre', '/faq.html': '/faq', '/blog.html': '/blog'
 };
 router.use((req, res, next) => {
+    // Força redirecionamento para 'www' em produção para o Google não ver dois sites iguais
+    if (process.env.NODE_ENV === 'production' && req.headers.host && req.headers.host === 'yelopsi.com.br') {
+        return res.redirect(301, `https://www.yelopsi.com.br${req.originalUrl}`);
+    }
+
     const checkPath = req.path.length > 1 && req.path.endsWith('/') ? req.path.slice(0, -1) : req.path;
     if (seoRedirects[checkPath]) return res.redirect(301, seoRedirects[checkPath]);
     next();
