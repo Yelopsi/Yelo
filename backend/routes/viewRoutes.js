@@ -118,10 +118,10 @@ router.get('/', async (req, res) => {
             ];
             depoimentos = [...depoimentos, ...mocks.slice(0, 4 - depoimentos.length)];
         }
-        res.render('index', { profissionais: psicologosFiltrados, mediaAvaliacao, totalAvaliacoes, depoimentos });
+        res.render('index', { profissionais: psicologosFiltrados, mediaAvaliacao, totalAvaliacoes, depoimentos, canonicalUrl: 'https://www.yelopsi.com.br/' });
     } catch (error) {
         console.error("Erro ao buscar profissionais para a home:", error);
-        res.render('index', { profissionais: [], mediaAvaliacao: '4.9', totalAvaliacoes: '100+', depoimentos: [] });
+        res.render('index', { profissionais: [], mediaAvaliacao: '4.9', totalAvaliacoes: '100+', depoimentos: [], canonicalUrl: 'https://www.yelopsi.com.br/' });
     }
 });
 
@@ -318,7 +318,8 @@ router.get('/:slug', async (req, res, next) => {
             const isVip = psychologist.is_exempt === true;
             if (psychologist.status === 'active' && (isVip || (validade && validade > hoje))) {
                 try {
-                    return res.render('psi_perfil_publico', { psicologo: psychologist });
+                    const canonicalUrl = `https://www.yelopsi.com.br/${psychologist.slug}`;
+                    return res.render('psi_perfil_publico', { psicologo: psychologist, canonicalUrl });
                 } catch (renderErr) {
                     console.error(`Erro do EJS ao renderizar perfil de ${slug}:`, renderErr);
                     // Se a renderização falhar, sai do try/catch e vai pro "404 Perfil Indisponível" abaixo!
