@@ -24,6 +24,14 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+// Função auxiliar para proteger a privacidade do paciente nas avaliações (Ex: "Suzana Gomes" -> "Suzana G.")
+const formatPatientName = (name) => {
+    if (!name || name === 'Anônimo') return 'Anônimo';
+    const parts = name.trim().split(' ');
+    if (parts.length === 1) return parts[0];
+    return `${parts[0]} ${parts[parts.length - 1].charAt(0)}.`;
+};
+
 // ----------------------------------------------------------------------
 // Função Auxiliar: Gera o Token JWT para Psicólogo
 // ----------------------------------------------------------------------
@@ -804,7 +812,10 @@ exports.updatePsychologistProfile = async (req, res) => {
         if (modalidade !== undefined) updatePayload.modalidade = modalidade;
         if (publico_alvo !== undefined) updatePayload.publico_alvo = publico_alvo;
         if (estilo_terapia !== undefined) updatePayload.estilo_terapia = estilo_terapia;
-        if (praticas_inclusivas !== undefined) updatePayload.praticas_inclusivas = praticas_inclusivas;
+        if (praticas_inclusivas !== undefined) {
+            updatePayload.praticas_inclusivas = praticas_inclusivas;
+            updatePayload.praticas_vivencias = praticas_inclusivas; // Fallback que sobrescreve rastros legados
+        }
         if (disponibilidade_periodo !== undefined) updatePayload.disponibilidade_periodo = disponibilidade_periodo;
 
         await psychologist.update(updatePayload);
@@ -1370,8 +1381,8 @@ exports.getProfileBySlug = async (req, res) => {
       reviews: reviews.map(r => ({
         id: r.id,
         rating: r.rating,
-        comment: r.comment,
-        patientName: r.patient?.nome || 'Anônimo',
+        comment: (r.comment === 'null' || r.comment === null) ? '' : r.comment,
+        patientName: formatPatientName(r.patient?.nome),
         createdAt: r.createdAt
       }))
     };
@@ -1438,7 +1449,14 @@ exports.getPsychologistProfile = async (req, res) => {
             ...psychologist.toJSON(),
             average_rating,
             review_count,
-            reviews: reviews // Anexa as avaliações
+            reviews: reviews.map(r => {
+                const rev = r.toJSON();
+                if (rev.patient && rev.patient.nome) {
+                    rev.patient.nome = formatPatientName(rev.patient.nome);
+                }
+                rev.comment = (rev.comment === 'null' || rev.comment === null) ? '' : rev.comment;
+                return rev;
+            }) // Anexa as avaliações
         };
 
         res.status(200).json(psychologistData);
@@ -1507,7 +1525,15 @@ exports.getPsychologistReviews = async (req, res) => {
         });
 
         // 3. Retorna a lista de reviews (pode ser vazia, mas não é um erro 500)
-        return res.json({ reviews }); 
+        const formattedReviews = reviews.map(r => {
+            const rev = r.toJSON();
+            if (rev.patient && rev.patient.nome) {
+                rev.patient.nome = formatPatientName(rev.patient.nome);
+            }
+            rev.comment = (rev.comment === 'null' || rev.comment === null) ? '' : rev.comment;
+            return rev;
+        });
+        return res.json({ reviews: formattedReviews }); 
 
     } catch (error) {
         // Se houver um erro de banco de dados (ex: tabela Review não existe), ele será pego aqui.
@@ -2072,6 +2098,43 @@ exports.incrementWhatsappClick = async (req, res) => {
                 `INSERT INTO "WhatsappClickLogs" ("psychologistId", "createdAt", "updatedAt") VALUES (:id, NOW(), NOW())`,
                 { replacements: { id: psychologist.id }, type: db.sequelize.QueryTypes.INSERT }
             ).catch(e => console.error("Erro ao inserir WhatsappClickLog:", e.message));
+
+            // --- LÓGICA DE E-MAIL AUTOMÁTICO (CONCIERGE / LIMITES) ---
+            try {
+                // 1. Calcula os cliques do mês atual para o psicólogo
+                const clicksResult = await db.sequelize.query(
+                    `SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE ("psychologistId" = :id OR "PsychologistId" = :id) AND "createdAt" >= date_trunc('month', CURRENT_DATE)`,
+                    { replacements: { id: psychologist.id }, type: db.sequelize.QueryTypes.SELECT }
+                );
+                const clicksCount = parseInt(clicksResult[0].count, 10);
+
+                // 2. Define o limite do plano
+                const planLimits = { 'ESSENTIAL': 5, 'ESSENCIAL': 5, 'CLINICAL': 15, 'CLÍNICO': 15, 'REFERENCE': 30, 'REFERÊNCIA': 30, 'SOL': 30 };
+                const planoStr = psychologist.plano ? psychologist.plano.toUpperCase() : 'ESSENTIAL';
+                const limit = planLimits[planoStr] || 5;
+
+                // 3. Se atingiu exatamente o limite + 1, envia o e-mail de "overdelivery"
+                if (clicksCount === limit + 1) {
+                    const emailService = require('../services/emailService');
+                    const primeiroNome = psychologist.nome.split(' ')[0];
+                    const htmlContent = `
+                        <div style="font-family: Arial, sans-serif; color: #374151; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px;">
+                            <h2 style="color: #1B4332;">Seu perfil está bombando! 🚀</h2>
+                            <p>Olá, ${primeiroNome}!</p>
+                            <p>Vi aqui que o seu perfil está bombando e você já ultrapassou o limite de conexões do seu plano (<strong>${limit} contatos</strong>).</p>
+                            <p>Como estamos na fase de lançamento, liberei seu perfil para continuar aparecendo nas buscas <strong>sem custos extras neste mês</strong>, tá?</p>
+                            <p>Que bom que os pacientes estão gostando do seu perfil! Aproveite os novos contatos.</p>
+                            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                                <p style="margin: 0; color: #6b7280; font-size: 14px;">Com carinho,<br><strong>Equipe Yelo</strong> 💚</p>
+                            </div>
+                        </div>`;
+
+                    if (typeof emailService.sendEmail === 'function') {
+                        emailService.sendEmail(psychologist.email, "Seu perfil está bombando! 🚀", htmlContent).catch(e => console.error("Erro envio email concierge:", e));
+                    }
+                    console.log(`[CONCIERGE] E-mail de limite excedido enviado automaticamente para ${psychologist.email} (${clicksCount} cliques)`);
+                }
+            } catch (err) { console.error("Erro na verificação de limite para e-mail automático:", err); }
         }
 
         res.status(200).json({ success: true });

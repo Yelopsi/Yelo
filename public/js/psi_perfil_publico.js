@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // BUSCA DADOS FRESCOS VIA API PARA GARANTIR COLUNAS NOVAS E ESPELHAR CORRETAMENTE
     if (psi.slug) {
         // Busca diretamente da rota correta definida no backend (psychologistController.js)
-        fetch(`${API_BASE_URL}/api/psychologists/slug/${psi.slug}`)
+        fetch(`${API_BASE_URL}/api/psychologists/slug/${psi.slug}?t=${new Date().getTime()}`, { cache: 'no-store', headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' } })
             .then(res => {
                 if (!res.ok) {
                     return null;
@@ -311,13 +311,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (Array.isArray(parsedTags) && parsedTags.length > 0) {
+            const finalTags = new Set();
             parsedTags.forEach(tag => {
                 if (!tag) return;
-                const tagElement = document.createElement('span');
-                tagElement.style.cssText = 'background-color: #f0fdf4; color: #166534; padding: 5px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; border: 1px solid #bbf7d0; display: inline-block;';
-                tagElement.textContent = tag;
-                container.appendChild(tagElement);
+                let displayTag = tag.trim();
+                
+                if (containerId === 'psi-praticas-container') {
+                    if (displayTag === "Que faça parte da comunidade LGBTQIAPN+" || displayTag === "Comunidade LGBTQIAPN+") displayTag = "Faz parte da comunidade LGBTQIAPN+ / Afirmativa";
+                    else if (displayTag === "LGBTQIAPN+ friendly" || displayTag === "LGBTQIAPN+ Friendly") displayTag = "LGBTQIAPN+ Friendly 🏳️‍🌈";
+                    else if (displayTag.includes("não-branca") || displayTag.includes("Antirracista")) displayTag = "Pessoa não-branca // Prática Antirracista";
+                    else if (displayTag.includes("Feminista")) displayTag = "Perspectiva Feminista";
+                    else if (displayTag.includes("Neurodiversidade") || displayTag.includes("TDAH") || displayTag.includes("Autismo")) displayTag = "Neurodiversidade (TDAH, Autismo)";
+                }
+                if (displayTag !== "Indiferente" && displayTag !== "Nenhuma específica") {
+                    finalTags.add(displayTag);
+                }
             });
+            if (finalTags.size > 0) {
+                finalTags.forEach(tag => {
+                    const tagElement = document.createElement('span');
+                    tagElement.style.cssText = 'background-color: #f0fdf4; color: #166534; padding: 5px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; border: 1px solid #bbf7d0; display: inline-block;';
+                    tagElement.textContent = tag;
+                    container.appendChild(tagElement);
+                });
+            } else {
+                container.innerHTML = '<span style="color: #aaa; font-size: 0.85rem; font-style: italic;">Não informado</span>';
+            }
         } else {
             container.innerHTML = '<span style="color: #aaa; font-size: 0.85rem; font-style: italic;">Não informado</span>';
         }
