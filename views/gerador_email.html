@@ -67,6 +67,14 @@
                 <p style="color: #666; font-size: 13px; margin-top: 5px;">Preencha os campos para montar o e-mail.</p>
             </div>
 
+            <!-- TEMPLATES RÁPIDOS -->
+            <div class="form-group" style="background: #f0fdf4; padding: 15px; border-radius: 8px; border: 1px solid #bbf7d0;">
+                <label style="color: #166534; margin-bottom: 8px; border-bottom: 1px solid #bbf7d0; padding-bottom: 5px;">Templates Rápidos (Concierge)</label>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" class="editor-btn" onclick="carregarTemplateCS()" style="border-color: #16a34a; color: #166534; background: #dcfce7; cursor: pointer;">🎁 Bônus: Limite Atingido</button>
+                </div>
+            </div>
+
             <div class="form-group">
                 <label>Pré-header (Texto que aparece na caixa de entrada)</label>
                 <input type="text" id="input-preheader" value="Aviso importante da plataforma Yelo.">
@@ -296,6 +304,18 @@
 
     <!-- LÓGICA DO GERADOR -->
     <script>
+        // Função para carregar o Template de Customer Success (Limite Excedido)
+        function carregarTemplateCS() {
+            document.getElementById('input-preheader').value = "Uma boa notícia sobre o seu perfil na Yelo!";
+            document.getElementById('input-titulo').value = "Seu perfil está bombando! 🚀";
+            document.getElementById('input-nome').value = "Suzana";
+            document.getElementById('input-mensagem').innerHTML = "Vi aqui que o seu perfil está bombando e você já ultrapassou o limite de conexões do seu plano.<br><br>Como estamos na fase de lançamento, liberei seu perfil para continuar aparecendo nas buscas <strong>sem custos extras neste mês</strong>, tá?<br><br>Que bom que os pacientes estão gostando do seu perfil! Aproveite os novos contatos.";
+            document.getElementById('input-show-info').checked = false;
+            document.getElementById('input-btn-texto').value = "Acessar Meu Painel";
+            document.getElementById('input-btn-link').value = "https://www.yelopsi.com.br/psi";
+            updatePreview();
+        }
+
         function updatePreview() {
             document.getElementById('preview-preheader').innerText = document.getElementById('input-preheader').value;
             document.getElementById('preview-titulo').innerText = document.getElementById('input-titulo').value;
