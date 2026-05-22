@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'faixa_valor', question: "Qual a faixa de valor que você pode investir por sessão?", subtitle: "Para conectarmos você a profissionais dentro do seu orçamento.", type: 'choice', choices: ["Até R$ 50", "R$ 51 - R$ 90", "R$ 91 - R$ 150", "Acima de R$ 150"], required: true },
         { id: 'modalidade_atendimento', question: "Como você prefere ser atendido(a)?", type: 'choice', choices: ["Online", "Presencial", "Indiferente (Online ou Presencial)"], required: true },
         { id: 'cep', question: "Qual o seu CEP?", subtitle: "Para encontrarmos profissionais perto de você.", type: 'text', placeholder: "00000-000", required: true, inputMode: 'numeric' },
-        { id: 'nome', question: "Para finalizar, como podemos te chamar?", subtitle: "Isso nos ajuda a entregar uma experiência personalizada para você.", type: 'text', placeholder: "Digite o seu nome ou apelido", required: true, autocomplete: 'off', autofocus: true },
+        { id: 'nome', question: "Para finalizar, como podemos te chamar? (Opcional)", subtitle: "Isso nos ajuda a entregar uma experiência personalizada para você.", type: 'text', placeholder: "Digite o seu nome ou apelido", required: false, autocomplete: 'off', autofocus: true },
         { id: 'final', type: 'final', question: "Tudo pronto, [NOME]!", subtitle: "Estamos cruzando as suas respostas para encontrar as conexões mais significativas. Em instantes, você verá as suas recomendações."},
         { id: 'erro-idade', type: 'error', question: "Atenção", subtitle: "A plataforma Yelo é destinada apenas para maiores de 18 anos...", buttonText: "Entendi e Sair"}
     ];
@@ -556,21 +556,30 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeQuiz();
 
     function updateNamePlaceholders(name) { 
-        if (!name) return; 
-        
-        // Pega apenas o primeiro nome e garante a primeira letra maiúscula
-        const firstName = name.trim().split(' ')[0];
-        const formattedName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+        let formattedName = '';
+        if (name && name.trim() !== '') {
+            // Pega apenas o primeiro nome e garante a primeira letra maiúscula
+            const firstName = name.trim().split(' ')[0];
+            formattedName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+        }
 
         const allSlides = document.querySelectorAll('.slide'); 
         allSlides.forEach(slide => { 
             const title = slide.querySelector('h1'); 
             const subtitle = slide.querySelector('p.subtitle'); 
             if (title && title.innerHTML.includes('[NOME]')) { 
-                title.innerHTML = title.innerHTML.replace(/\[NOME\]/g, formattedName); 
+                if (formattedName) {
+                    title.innerHTML = title.innerHTML.replace(/\[NOME\]/g, formattedName); 
+                } else {
+                    title.innerHTML = title.innerHTML.replace(/,\s*\[NOME\]/g, '').replace(/\[NOME\]/g, ''); 
+                }
             } 
             if (subtitle && subtitle.innerHTML.includes('[NOME]')) { 
-                subtitle.innerHTML = subtitle.innerHTML.replace(/\[NOME\]/g, formattedName); 
+                if (formattedName) {
+                    subtitle.innerHTML = subtitle.innerHTML.replace(/\[NOME\]/g, formattedName); 
+                } else {
+                    subtitle.innerHTML = subtitle.innerHTML.replace(/,\s*\[NOME\]/g, '').replace(/\[NOME\]/g, ''); 
+                }
             } 
         }); 
     }

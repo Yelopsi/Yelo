@@ -42,9 +42,8 @@
         return `${API_BASE_URL}${cleanPath}`;
     }
 
-    // --- COMPONENTES ---
+    // --- FUNÇÕES DOS CAMPOS MULTISELECT (V3 - ESTILO BULLETS & TOGGLE) ---
     function setupMultiselects() {
-        // Handler to close any open multiselect when clicking outside
         if (!window.multiselectBodyListener) {
             document.body.addEventListener('click', (e) => {
                 document.querySelectorAll('.multiselect-tag.open').forEach(container => {
@@ -57,28 +56,34 @@
         }
 
         document.querySelectorAll('.multiselect-tag').forEach(container => {
-            // Impede conflito caso dois scripts tentem inicializar o mesmo componente
             if (container.dataset.initialized === 'true') return;
             container.dataset.initialized = 'true';
 
             const display = container.querySelector('.multiselect-display');
             const optionsContainer = container.querySelector('.multiselect-options');
-            const isSingleSelect = container.dataset.singleSelect === 'true';
+            const isSingle = container.dataset.singleSelect === 'true';
 
-            // Open/close the dropdown
             display.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if (container.classList.contains('disabled')) return;
                 
-                if (e.target.classList.contains('remove-tag')) return; // Handle removal below
+                if (e.target.classList.contains('remove-tag')) {
+                    const tagVal = e.target.parentElement.dataset.value;
+                    let currentValues = getMultiselectValues(container.id);
+                    currentValues = currentValues.filter(v => v !== tagVal);
+                    updateMultiselect(container.id, currentValues);
+                    const block = container.closest('.profile-block');
+                    if (block && block.classList.contains('editing')) {
+                        container.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                    return;
+                }
                 
-                // Close other open dropdowns
                 document.querySelectorAll('.multiselect-tag.open').forEach(other => {
                     if (other !== container) other.classList.remove('open');
                 });
                 container.classList.toggle('open');
                 
-                // Scroll suave para garantir visibilidade no mobile
                 if (container.classList.contains('open')) {
                     setTimeout(() => {
                         const rect = optionsContainer.getBoundingClientRect();
@@ -88,43 +93,27 @@
                     }, 50);
                 }
             });
-            
-            // Trata a remoção de tags no clique
-            display.addEventListener('click', e => {
-                if (e.target.classList.contains('remove-tag')) {
+
+            optionsContainer.querySelectorAll('.option').forEach(opt => {
+                opt.addEventListener('click', e => {
                     e.stopPropagation();
                     if (container.classList.contains('disabled')) return;
-                    const tagVal = e.target.parentElement.dataset.value;
-                    let currentValues = getMultiselectValues(container.id);
-                    currentValues = currentValues.filter(v => v !== tagVal);
-                    updateMultiselect(container.id, currentValues);
-                    const block = container.closest('.profile-block');
-                    if (block && block.classList.contains('editing')) {
-                        container.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
-                }
-            });
 
-            // Handle clicks on each custom option
-            optionsContainer.querySelectorAll('.option').forEach(optionEl => {
-                optionEl.addEventListener('click', e => {
-                    e.stopPropagation();
-                    if (container.classList.contains('disabled')) return;
-                    
-                    const value = optionEl.dataset.value;
-                    let currentValues = getMultiselectValues(container.id);
+                    const val = opt.dataset.value;
+                    let currentSelected = getMultiselectValues(container.id);
 
-                    if (isSingleSelect) {
-                        currentValues = [value];
+                    if (isSingle) {
+                        currentSelected = [val];
                         container.classList.remove('open');
                     } else {
-                        if (currentValues.includes(value)) {
-                            currentValues = currentValues.filter(v => v !== value);
+                        if (currentSelected.includes(val)) {
+                            currentSelected = currentSelected.filter(v => v !== val);
                         } else {
-                            currentValues.push(value);
+                            currentSelected.push(val);
                         }
                     }
-                    updateMultiselect(container.id, currentValues);
+                    
+                    updateMultiselect(container.id, currentSelected);
                     
                     const block = container.closest('.profile-block');
                     if (block && block.classList.contains('editing')) {
@@ -138,27 +127,34 @@
     function updateMultiselect(containerId, rawValues) {
         const container = document.getElementById(containerId);
         if (!container) return;
+        
+        let valuesArray = rawValues;
+        if (!valuesArray) valuesArray = [];
+        else if (typeof valuesArray === 'string') {
+            try { valuesArray = JSON.parse(valuesArray); } catch (e) { valuesArray = [valuesArray]; }
+        }
+        if (!Array.isArray(valuesArray)) valuesArray = [];
+
         const display = container.querySelector('.multiselect-display');
         const optionsContainer = container.querySelector('.multiselect-options');
-        
-        let values = rawValues;
-        if (!values) values = [];
-        else if (typeof values === 'string') { try { values = JSON.parse(values); } catch(e) { values = [values]; } }
-        if (!Array.isArray(values)) values = [];
-        
-        container.dataset.value = JSON.stringify(values);
-        const valueSet = new Set(values.map(String));
 
-        display.innerHTML = ''; // Clear display
+        // --- EXTERMÍNIO DEFINITIVO DE GHOST TAGS ---
+        // Se a tag tentar entrar mas não for uma opção válida e visível no HTML, ela é aniquilada.
+        if (optionsContainer) {
+            const validOptions = new Set();
+            optionsContainer.querySelectorAll('.option').forEach(opt => validOptions.add(opt.dataset.value));
+            valuesArray = valuesArray.filter(val => validOptions.has(String(val)));
+        }
+
+        container.dataset.value = JSON.stringify(valuesArray);
+        const valueSet = new Set(valuesArray.map(String));
+
+        display.innerHTML = ''; 
         if (valueSet.size === 0) {
             display.innerHTML = '<span class="multiselect-placeholder">Selecione...</span>';
-        }
-        
-        if (optionsContainer) {
+        } else {
             optionsContainer.querySelectorAll('.option').forEach(opt => {
-                const isSelected = valueSet.has(opt.dataset.value);
-                opt.classList.toggle('selected', isSelected);
-                if (isSelected) {
+                if (valueSet.has(opt.dataset.value)) {
                     const tag = document.createElement('div');
                     tag.className = 'tag';
                     tag.dataset.value = opt.dataset.value;
@@ -172,6 +168,12 @@
                 }
             });
         }
+
+        if (optionsContainer) {
+            Array.from(optionsContainer.children).forEach(opt => {
+                opt.classList.toggle('selected', valueSet.has(opt.dataset.value));
+            });
+        }
     }
 
     function getMultiselectValues(containerId) {
@@ -179,6 +181,9 @@
         if (!container || !container.dataset.value) return [];
         try { return JSON.parse(container.dataset.value); } catch (e) { return []; }
     }
+
+    // --- COMPONENTES ---
+ 
     function setupDocumentMask() {
         if (typeof IMask === 'undefined') return;
         const inputDoc = document.getElementById('cpf');
@@ -448,7 +453,14 @@
             block.classList.add('editing');
             setBlockState(block, 'default');
             block.querySelectorAll('input, textarea, select').forEach(el => {
-                if (el.id !== 'email' && el.id !== 'cidade' && el.id !== 'estado') el.disabled = false;
+                // Impede edição de dados sensíveis ou controlados por API
+                if (el.id !== 'email' && el.id !== 'cidade' && el.id !== 'estado') {
+                    // Bloqueia edição do CPF/CNPJ caso já esteja preenchido e seja válido (maior que 10 dígitos)
+                    if (el.id === 'cpf' && originalProfileData.cpf && originalProfileData.cpf.length >= 11) {
+                        return; // Sai deste loop e mantém o disabled no input de documento
+                    }
+                    el.disabled = false;
+                }
             });
             block.querySelectorAll('.multiselect-tag').forEach(el => el.classList.remove('disabled'));
             block.querySelector('.btn-edit').classList.add('hidden');

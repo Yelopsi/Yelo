@@ -44,9 +44,9 @@ window.abrirModalConfirmacaoPersonalizado = function(titulo, mensagem, onConfirm
         </div>
     `;
     
-    overlay.querySelector('.btn-cancelar').onclick = () => document.body.removeChild(overlay);
+    modalBox.querySelector('.btn-cancelar').onclick = () => document.body.removeChild(overlay);
     overlay.onclick = (e) => { if(e.target === overlay) document.body.removeChild(overlay); };
-    overlay.querySelector('.btn-confirmar').onclick = () => { document.body.removeChild(overlay); onConfirm(); };
+    modalBox.querySelector('.btn-confirmar').onclick = () => { document.body.removeChild(overlay); onConfirm(); };
     overlay.appendChild(modalBox);
     document.body.appendChild(overlay);
 };

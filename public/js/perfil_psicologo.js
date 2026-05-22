@@ -224,6 +224,17 @@ const initProfilePage = async () => {
         const estilo = ensureArray(profile.estilo_terapia);
         const inclusivas = ensureArray(profile.praticas_inclusivas || profile.praticas_vivencias || profile.praticas);
 
+        const inclusivasFormatadas = [];
+        inclusivas.forEach(tag => {
+            let dTag = typeof tag === 'string' ? tag.trim() : tag;
+            if (dTag === "Que faça parte da comunidade LGBTQIAPN+" || dTag === "Faz parte da comunidade LGBTQIAPN+ / Afirmativa") {
+                dTag = "Faz parte da comunidade LGBTQIAPN+";
+            }
+            if (dTag !== "Indiferente" && dTag !== "Nenhuma específica") {
+                inclusivasFormatadas.push(dTag);
+            }
+        });
+
         // Helper para criar grupos separados com título
         const createGroup = (title, items, cssClass) => {
             if (!items || items.length === 0) return;
@@ -265,7 +276,7 @@ const initProfilePage = async () => {
         createGroup('Estilo de Terapia', estilo, 'tag-info');
 
         // 5. Identificadores e Práticas Inclusivas
-        createGroup('Identificadores e Práticas Inclusivas', inclusivas, 'tag-especialidade');
+        createGroup('Identificadores e Práticas Inclusivas', [...new Set(inclusivasFormatadas)], 'tag-especialidade');
         
         // Gênero (Movido para o final para manter a ordem solicitada acima)
         const genero = profile.genero || profile.genero_identidade;

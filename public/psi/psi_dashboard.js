@@ -418,6 +418,54 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (psychologistData.fotoUrl) {
                     localStorage.setItem('Yelo_user_photo', psychologistData.fotoUrl);
                 }
+                
+                // --- SANITIZAÇÃO DE DADOS LEGADOS (GHOST TAGS) ---
+                // Impede que tags antigas fiquem presas e invisíveis no painel de edição
+                const sanitizeTags = (field) => {
+                    if (!psychologistData[field]) return;
+                    let arr = psychologistData[field];
+                    
+                    if (typeof arr === 'string') { 
+                        if (arr.trim().startsWith('[')) {
+                            try { arr = JSON.parse(arr); } catch(e) { arr = [arr]; } 
+                        } else {
+                            arr = [arr]; 
+                        }
+                    }
+                    
+                    if (Array.isArray(arr)) {
+                        let clean = [];
+                        arr.flat(Infinity).forEach(tag => {
+                            if (!tag) return;
+                            let t = typeof tag === 'string' ? tag.trim() : tag;
+                            
+                            // Divide strings legadas concatenadas por vírgula (Ignora vírgula dentro de parênteses como no TDAH)
+                            let subTags = [t];
+                            if (typeof t === 'string' && t.includes(',')) {
+                                subTags = t.split(/,(?![^\(\)]*\))/).map(s => s.trim());
+                            }
+
+                            subTags.forEach(subT => {
+                                if (!subT) return;
+                                if (field === 'praticas_inclusivas') {
+                                    if (subT === "Que faça parte da comunidade LGBTQIAPN+" || subT === "Comunidade LGBTQIAPN+") clean.push("Faz parte da comunidade LGBTQIAPN+ / Afirmativa");
+                                    else if (subT === "LGBTQIAPN+ friendly" || subT === "LGBTQIAPN+ Friendly") clean.push("LGBTQIAPN+ Friendly 🏳️‍🌈");
+                                    else if (subT.includes("não-branca") || subT.includes("Antirracista")) clean.push("Pessoa não-branca // Prática Antirracista");
+                                    else if (subT.includes("Feminista")) clean.push("Perspectiva Feminista");
+                                    else if (subT.includes("Neurodiversidade") || subT.includes("TDAH") || subT.includes("Autismo")) clean.push("Neurodiversidade (TDAH, Autismo)");
+                                    else if (subT === "Faz parte da comunidade LGBTQIAPN+ / Afirmativa" || subT === "LGBTQIAPN+ Friendly 🏳️‍🌈") clean.push(subT);
+                                    else if (subT !== "Indiferente" && subT !== "Nenhuma específica") clean.push(subT);
+                                } else {
+                                    if (subT !== "Indiferente" && subT !== "Nenhuma específica") clean.push(subT);
+                                }
+                            });
+                        });
+                        psychologistData[field] = [...new Set(clean)];
+                    }
+                };
+                
+                const multiSelectFields = ['temas_atuacao', 'publico_alvo', 'praticas_inclusivas', 'abordagens_tecnicas', 'modalidade', 'disponibilidade_periodo', 'estilo_terapia'];
+                multiSelectFields.forEach(f => sanitizeTags(f));
 
                 atualizarInterfaceLateral(); 
                 return true;
@@ -999,9 +1047,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (url.includes('jornada')) {
                     if (psychologistData) updateGamificationWidgets(psychologistData);
                 }
-                else if (url.includes('meu_perfil')) {
-                    if (typeof inicializarLogicaDoPerfil === 'function') inicializarLogicaDoPerfil();
-                }
                 else if (url.includes('visao_geral')) inicializarVisaoGeral();
                 else if (url.includes('comunidade')) inicializarComunidade(dataPromise); // Passa a promessa
                 else if (url.includes('psi_hub')) inicializarHubComunidade(); 
@@ -1052,13 +1097,44 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.disabled = true;
         }
 
-        // Abre o modal imediatamente para o usuário preencher os dados
-        abrirModalAsaas(planType, cupomForce);
-        
-        // Restaura botão
-        if(btn.tagName) {
-            btn.textContent = originalText;
-            btn.disabled = false;
+        const proceedToPayment = () => {
+            // Abre o modal imediatamente para o usuário preencher os dados
+            abrirModalAsaas(planType, cupomForce);
+            
+            // Restaura botão
+            if(btn.tagName) {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        };
+
+        const cancelPayment = () => {
+            if(btn.tagName) {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        };
+
+        const hoje = new Date();
+        const hasSubscription = psychologistData && (psychologistData.stripeSubscriptionId || psychologistData.subscriptionId);
+        const planExpiresAt = psychologistData && psychologistData.planExpiresAt ? new Date(psychologistData.planExpiresAt) : null;
+        const isInTrial = !hasSubscription && planExpiresAt && planExpiresAt > hoje;
+
+        if (isInTrial) {
+            if (typeof window.abrirModalConfirmacaoPersonalizado === 'function') {
+                window.abrirModalConfirmacaoPersonalizado(
+                    'Você está no período de teste! 🎁',
+                    'Você ainda tem dias grátis para conhecer a plataforma e <strong>não precisa cadastrar um cartão de crédito agora.</strong><br><br>Mas se preferir deixar sua assinatura já configurada para não se preocupar depois, <strong>você só será cobrado no 15º dia</strong> (após o fim do seu teste).',
+                    () => { proceedToPayment(); }
+                );
+                cancelPayment();
+            } else {
+                const confirmou = confirm('Você está no período de teste grátis e não precisa cadastrar um cartão agora.\n\nSe quiser assinar mesmo assim, você só será cobrado no 15º dia. Deseja continuar?');
+                if (confirmou) proceedToPayment();
+                else cancelPayment();
+            }
+        } else {
+            proceedToPayment();
         }
     };
 
@@ -1375,6 +1451,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Verifica se tem plano (agora suportando os novos nomes em maiúsculo vindo do banco)
         const temPlano = psychologistData && psychologistData.plano;
+        const hasSubscription = psychologistData && (psychologistData.stripeSubscriptionId || psychologistData.subscriptionId);
         
         // 1. ATUALIZAÇÃO: Mapeamento dos novos Planos e Preços
         // As chaves devem ser em minúsculo para garantir o match
@@ -1393,7 +1470,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const isCancelado = psychologistData.cancelAtPeriodEnd || psychologistData.cancel_at_period_end || psychologistData.status === 'canceled';
 
             if (areaCancelamento) {
-                areaCancelamento.style.display = isCancelado ? 'none' : 'block';
+                areaCancelamento.style.display = (isCancelado || !hasSubscription) ? 'none' : 'block';
             }
 
             // --- BANNER SUPERIOR ---
@@ -1685,37 +1762,44 @@ document.addEventListener('DOMContentLoaded', function() {
             // --- BLOCO 2: CHECKLIST DINÂMICO & FEEDBACK INTELIGENTE ---
             const actionListContainer = document.querySelector('.modern-action-list');
             if (actionListContainer) {
-                const onboardingSteps = [];
-
-                // Regra 1: Foto
                 const hasPhoto = psychologistData.fotoUrl && !psychologistData.fotoUrl.includes('placehold.co');
-                onboardingSteps.push({ title: hasPhoto ? 'Foto profissional adicionada' : 'Adicionar uma foto profissional', impact: '+20% Matches', completed: hasPhoto, url: 'psi_meu_perfil.html' });
-
-                // Regra 2: Bio e Temas
                 const hasBio = psychologistData.bio && psychologistData.bio.length > 150;
-                onboardingSteps.push({ title: hasBio ? 'Biografia otimizada' : 'Escrever uma biografia detalhada', impact: '+Alta Confiança', completed: hasBio, url: 'psi_meu_perfil.html' });
-
-                // Regra 3: Engajamento (Fórum)
                 const hasForumActivity = forumCount > 0;
-                onboardingSteps.push({ title: hasForumActivity ? 'Primeira participação no fórum' : 'Responder a uma dúvida na comunidade', impact: 'Maior Visibilidade', completed: hasForumActivity, url: 'psi_forum.html' });
-
-                // Regra 4: Blog (Artigos)
                 const hasArticle = blogCount > 0;
-                onboardingSteps.push({ title: hasArticle ? 'Primeiro artigo publicado' : 'Publicar seu primeiro artigo', impact: 'Autoridade', completed: hasArticle, url: 'psi_blog.html' });
+                const hasCpf = psychologistData.cpf && psychologistData.cpf.replace(/\D/g, '').length >= 11;
+                const hasSpecialties = psychologistData.temas_atuacao && psychologistData.temas_atuacao.length > 0;
 
-                const completedBasic = onboardingSteps.filter(s => s.completed).length;
+                const phase1Steps = [
+                    { title: hasPhoto ? 'Foto profissional adicionada' : 'Adicionar uma foto profissional', impact: 'Obrigatório', completed: hasPhoto, url: 'psi_meu_perfil.html' },
+                    { title: hasBio ? 'Biografia otimizada' : 'Escrever biografia (mín. 150 caracteres)', impact: 'Obrigatório', completed: hasBio, url: 'psi_meu_perfil.html' },
+                    { title: hasCpf ? 'Documento validado' : 'Preencher CPF/CNPJ', impact: 'Obrigatório', completed: hasCpf, url: 'psi_meu_perfil.html' },
+                    { title: hasSpecialties ? 'Especialidades definidas' : 'Definir temas de atuação', impact: 'Obrigatório', completed: hasSpecialties, url: 'psi_meu_perfil.html' }
+                ];
+
+                const phase2Steps = [
+                    { title: hasForumActivity ? 'Primeira participação no fórum' : 'Responder a uma dúvida na comunidade', impact: 'Maior Visibilidade', completed: hasForumActivity, url: 'psi_forum.html' },
+                    { title: hasArticle ? 'Primeiro artigo publicado' : 'Publicar seu primeiro artigo', impact: 'Autoridade', completed: hasArticle, url: 'psi_blog.html' }
+                ];
+
+                const isPhase1Completed = phase1Steps.every(s => s.completed);
+                const isPhase2Completed = phase2Steps.every(s => s.completed);
+
                 let stepsToRender = [];
-                let headerTitle = "🚀 Próximos passos para crescer";
+                let headerTitle = "";
                 let isAdvancedPhase = false;
 
-                if (completedBasic < 4) {
-                    // MODO ONBOARDING: Foca nas tarefas iniciais (Deixa pendentes no topo)
-                    onboardingSteps.sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1));
-                    stepsToRender = onboardingSteps.slice(0, 4);
+                if (!isPhase1Completed) {
+                    headerTitle = "🎯 Fase 1: Primeiros passos para os matches";
+                    stepsToRender = phase1Steps;
+                    stepsToRender.sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1));
+                } else if (!isPhase2Completed) {
+                    headerTitle = "🚀 Fase 2: Próximos passos para crescer";
+                    stepsToRender = phase2Steps;
+                    stepsToRender.sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1));
                 } else {
                     // MODO AVANÇADO (Missões Contínuas de Manutenção)
                     isAdvancedPhase = true;
-                    headerTitle = "🔄 Manutenção de Autoridade";
+                    headerTitle = "🔄 Fase 3: Manutenção de Autoridade";
                     
                     const diasSemArtigo = stats.lastInteractions?.blog ? Math.floor((new Date() - new Date(stats.lastInteractions.blog)) / (1000 * 60 * 60 * 24)) : 999;
                     const hasRecentArticle = diasSemArtigo <= 30; // 1 artigo por mês
@@ -1764,9 +1848,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Renderiza HTML dinâmico removendo os estáticos preexistentes
                 actionListContainer.innerHTML = '';
                 
-                // Altera o título do card dinamicamente
-                const titleEl = document.querySelector('.checklist-title');
-                if (titleEl) titleEl.innerHTML = headerTitle;
+                // Altera o título do card focando estritamente no componente atual para evitar conflitos
+                const checklistCard = actionListContainer.closest('.modern-checklist-card');
+                const titleEl = checklistCard ? checklistCard.querySelector('.checklist-title') : document.querySelector('.checklist-title');
+                if (titleEl) titleEl.textContent = headerTitle;
 
                 stepsToRender.forEach(step => {
                     const extraStyles = isAdvancedPhase && step.completed ? 'color: #888; text-decoration: none;' : '';
@@ -2110,6 +2195,10 @@ document.addEventListener('DOMContentLoaded', function() {
             block.querySelectorAll('input, textarea, select').forEach(el => {
                 // Impede edição de dados sensíveis ou controlados por API
                 if (el.id !== 'email' && el.id !== 'cidade' && el.id !== 'estado') {
+                    // Bloqueia edição do CPF/CNPJ caso já esteja preenchido e seja válido (maior que 10 dígitos)
+                    if (el.id === 'cpf' && originalProfileData.cpf && originalProfileData.cpf.length >= 11) {
+                        return; // Sai deste loop e mantém o disabled no input de documento
+                    }
                     el.disabled = false;
                     el.readOnly = false;
                 }
@@ -3529,160 +3618,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 removeTooltip();
             }
         });
-    }
-
-// --- FUNÇÕES DOS CAMPOS MULTISELECT (V3 - ESTILO BULLETS & TOGGLE) ---
-
-function setupMultiselects() {
-    if (!window.multiselectBodyListener) {
-            document.body.addEventListener('click', (e) => {
-                document.querySelectorAll('.multiselect-tag.open').forEach(container => {
-                    if (!container.contains(e.target)) {
-                        container.classList.remove('open');
-                    }
-                });
-            });
-            window.multiselectBodyListener = true;
-        }
-
-        document.querySelectorAll('.multiselect-tag').forEach(container => {
-            // Impede conflito caso dois scripts tentem inicializar o mesmo componente
-            if (container.dataset.initialized === 'true') return;
-            container.dataset.initialized = 'true';
-
-            const display = container.querySelector('.multiselect-display');
-            const optionsContainer = container.querySelector('.multiselect-options');
-            const isSingle = container.dataset.singleSelect === 'true';
-
-            // Open/close the dropdown
-            display.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (container.classList.contains('disabled')) return;
-                
-                if (e.target.classList.contains('remove-tag')) {
-                    const tagVal = e.target.parentElement.dataset.value;
-                    let currentValues = getMultiselectValues(container.id);
-                    currentValues = currentValues.filter(v => v !== tagVal);
-                    updateMultiselect(container.id, currentValues);
-                    const block = container.closest('.profile-block');
-                    if (block && block.classList.contains('editing')) {
-                        container.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
-                    return;
-                }
-                
-                // Close other open dropdowns
-                document.querySelectorAll('.multiselect-tag.open').forEach(other => {
-                    if (other !== container) other.classList.remove('open');
-                });
-                container.classList.toggle('open');
-                
-                // Scroll suave para garantir visibilidade no mobile
-                if (container.classList.contains('open')) {
-                    setTimeout(() => {
-                        const rect = optionsContainer.getBoundingClientRect();
-                        if (rect.bottom > window.innerHeight) {
-                            optionsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                        }
-                    }, 50);
-                }
-                
-            });
-
-            // Handle clicks on each custom option
-            optionsContainer.querySelectorAll('.option').forEach(opt => {
-                opt.addEventListener('click', e => {
-                    e.stopPropagation();
-                    if (container.classList.contains('disabled')) return;
-
-                    const val = opt.dataset.value;
-                    let currentSelected = getMultiselectValues(container.id);
-
-                    if (isSingle) {
-                        currentSelected = [val];
-                        container.classList.remove('open');
-                    } else {
-                        if (currentSelected.includes(val)) {
-                            currentSelected = currentSelected.filter(v => v !== val);
-                        } else {
-                            currentSelected.push(val);
-                        }
-                    }
-                    
-                    updateMultiselect(container.id, currentSelected);
-                    
-                    const block = container.closest('.profile-block');
-                    if (block && block.classList.contains('editing')) {
-                        container.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
-                });
-            });
-        });
-
-        
-    }
-
-    function updateMultiselect(containerId, rawValues) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        
-        let valuesArray = rawValues;
-
-        if (!valuesArray) {
-            valuesArray = [];
-        } else if (typeof valuesArray === 'string') {
-            try {
-                valuesArray = JSON.parse(valuesArray);
-            } catch (e) {
-                valuesArray = [valuesArray]; 
-            }
-        }
-        
-        if (!Array.isArray(valuesArray)) {
-            valuesArray = [];
-        }
-
-        const display = container.querySelector('.multiselect-display');
-        const optionsContainer = container.querySelector('.multiselect-options');
-
-        container.dataset.value = JSON.stringify(valuesArray);
-        const valueSet = new Set(valuesArray.map(String));
-
-        display.innerHTML = ''; 
-        if (valueSet.size === 0) {
-            display.innerHTML = '<span class="multiselect-placeholder">Selecione...</span>';
-        } else {
-            optionsContainer.querySelectorAll('.option').forEach(opt => {
-                if (valueSet.has(opt.dataset.value)) {
-                    const tag = document.createElement('div');
-                    tag.className = 'tag';
-                    tag.dataset.value = opt.dataset.value;
-                    tag.textContent = opt.textContent;
-                    const removeBtn = document.createElement('button');
-                    removeBtn.type = 'button';
-                    removeBtn.className = 'remove-tag';
-                    removeBtn.innerHTML = '&times;';
-                    tag.appendChild(removeBtn);
-                    display.appendChild(tag);
-                }
-            });
-        }
-
-        if (optionsContainer) {
-            Array.from(optionsContainer.children).forEach(opt => {
-                const isSelected = valueSet.has(opt.dataset.value);
-                opt.classList.toggle('selected', isSelected);
-            });
-        }
-    }
-
-    // Lê os valores (Permanece igual)
-    function getMultiselectValues(containerId) {
-        const container = document.getElementById(containerId);
-        if (!container || !container.dataset.value) return [];
-        try {
-            return JSON.parse(container.dataset.value);
-        } catch (e) { return []; }
     }
 
     // --- FUNÇÃO AUXILIAR: MODAL DE CONFIRMAÇÃO (Carregado de ui-helpers.js) ---
