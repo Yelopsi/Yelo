@@ -29,7 +29,7 @@ window.initializePage = async function() {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const endTime = performance.now(); // Para cronômetro
-            const latency = Math.round(totalRating / reviews.length)
+            const latency = Math.round(endTime - startTime);
 
             if (!response.ok) throw new Error('Erro ao buscar dados.');
 
