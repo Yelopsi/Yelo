@@ -70,6 +70,13 @@ router.get('/reviews/pending', adminController.getPendingReviews);
 // CORREÇÃO: Adiciona a rota que faltava para ATUALIZAR o status da avaliação
 router.put('/reviews/:id/moderate', adminController.moderateReview);
 
+// --- ROTAS AVALIAÇÕES DA PLATAFORMA (NPS) ---
+router.get('/platform-reviews', adminController.getPlatformReviews);
+router.put('/platform-reviews/:id/testimonial', adminController.togglePlatformReviewTestimonial);
+
+// --- ROTA DE RETENÇÃO E CHURN (EXIT SURVEYS) ---
+router.get('/exit-surveys', adminController.getExitSurveys);
+
 
 
 // Rota para buscar os logs do sistema

@@ -75,6 +75,7 @@ router.post('/me/cancel-subscription', psychologistController.cancelSubscription
 
 // Cole esta linha junto com as outras rotas (geralmente no final da lista)
 router.post('/me/reactivate-subscription', psychologistController.reactivateSubscription);
+router.post('/me/platform-review', psychologistController.savePlatformReview);
 
 // CORREÇÃO AQUI: Removemos 'authMiddleware' pois 'protect' já está aplicado globalmente acima
 router.post('/me/exit-survey', psychologistController.saveExitSurvey);
