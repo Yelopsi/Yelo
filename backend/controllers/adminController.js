@@ -1503,6 +1503,42 @@ exports.moderateReview = async (req, res) => {
 };
 
 /**
+ * Rota: GET /api/admin/platform-reviews (NOVA)
+ * Descrição: Busca todas as avaliações de NPS da plataforma feitas pelos psicólogos.
+ */
+exports.getPlatformReviews = async (req, res) => {
+    try {
+        const query = `
+            SELECT pr.id, pr.rating, pr.comment, pr."isTestimonial", pr."createdAt", p.nome as "psychologistName", p.email as "psychologistEmail", p."fotoUrl" as "psychologistPhoto"
+            FROM "PlatformReviews" pr
+            LEFT JOIN "Psychologists" p ON pr."psychologistId" = p.id
+            ORDER BY pr."createdAt" DESC
+        `;
+        const [reviews] = await db.sequelize.query(query);
+        res.status(200).json(reviews);
+    } catch (error) {
+        console.error('Erro ao buscar avaliações da plataforma:', error);
+        res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};
+
+/**
+ * Rota: PUT /api/admin/platform-reviews/:id/testimonial (NOVA)
+ * Descrição: Alterna o status isTestimonial de uma avaliação.
+ */
+exports.togglePlatformReviewTestimonial = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { isTestimonial } = req.body;
+        await db.sequelize.query(`UPDATE "PlatformReviews" SET "isTestimonial" = :isTestimonial, "updatedAt" = NOW() WHERE id = :id`, { replacements: { id, isTestimonial } });
+        res.status(200).json({ message: 'Status de prova social atualizado com sucesso!' });
+    } catch (error) {
+        console.error('Erro ao atualizar status de depoimento:', error);
+        res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};
+
+/**
  * Rota: GET /api/admin/logs
  * Descrição: Busca os logs do sistema.
  */
@@ -2303,6 +2339,49 @@ exports.getQuestionnaireAnalytics = async (req, res) => {
     } catch (error) {
         console.error("Erro ao gerar analytics de questionários:", error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};
+
+// ----------------------------------------------------------------------
+// Rota: GET /api/admin/exit-surveys
+// Descrição: Busca as pesquisas de satisfação de saída (Churn) preenchidas
+// ----------------------------------------------------------------------
+exports.getExitSurveys = async (req, res) => {
+    try {
+        const { motivo, nota, startDate, endDate } = req.query;
+        const whereClause = {};
+
+        if (motivo) whereClause.motivo = motivo;
+        if (nota) whereClause.avaliacao = parseInt(nota, 10);
+        
+        if (startDate || endDate) {
+            whereClause.createdAt = {};
+            if (startDate) whereClause.createdAt[Op.gte] = new Date(startDate);
+            if (endDate) {
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999);
+                whereClause.createdAt[Op.lte] = end;
+            }
+        }
+
+        const surveys = await db.ExitSurvey.findAll({
+            where: whereClause,
+            order: [['createdAt', 'DESC']]
+        });
+
+        const total = surveys.length;
+        const media = total > 0 ? (surveys.reduce((acc, curr) => acc + (curr.avaliacao || 0), 0) / total).toFixed(1) : 0;
+        
+        const reasonCounts = {};
+        surveys.forEach(s => { if (s.motivo) reasonCounts[s.motivo] = (reasonCounts[s.motivo] || 0) + 1; });
+        
+        let topReason = null; let maxCount = 0;
+        for (const [reason, count] of Object.entries(reasonCounts)) { if (count > maxCount) { maxCount = count; topReason = reason; } }
+
+        res.json({ stats: { total, media, topReason }, list: surveys });
+    } catch (error) {
+        console.error('Erro ao buscar exit surveys:', error);
+        res.status(500).json({ error: 'Erro interno' });
     }
 };
 

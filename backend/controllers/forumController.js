@@ -18,12 +18,12 @@ exports.getAllPosts = async (req, res) => {
         if (filter === 'populares') {
             orderClause = [
                 db.Sequelize.literal('COALESCE("ForumPost"."isPinned", false) DESC'),
-                db.Sequelize.literal('("ForumPost"."votes" + COUNT(DISTINCT "ForumComments"."id")) DESC')
+                db.Sequelize.literal('("ForumPost"."votes" + COUNT(DISTINCT "ForumComments"."id")) DESC'),
+                ['createdAt', 'DESC']
             ];
         } else {
             orderClause = [
                 db.Sequelize.literal('COALESCE("ForumPost"."isPinned", false) DESC'),
-                db.Sequelize.literal('CASE WHEN ("ForumPost"."votes" + COUNT(DISTINCT "ForumComments"."id")) >= 5 THEN 1 ELSE 0 END DESC'),
                 ['createdAt', 'DESC']
             ];
         }
@@ -282,6 +282,7 @@ exports.createComment = async (req, res) => {
             try {
                 const user = await Psychologist.findByPk(req.user.id);
                 const senderName = isAnonymous ? 'Um colega (Anônimo)' : user.nome;
+                const frontendUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
 
                 // Notificar o dono do Post ou do Comentário Pai (Apenas emails de respostas)
                 if (parentId) {
@@ -300,10 +301,26 @@ exports.createComment = async (req, res) => {
                         }).catch(e => console.error("Erro ao criar aviso de comentário:", e));
 
                         if (parentOwner.email && emailService.sendEmail) {
+                            const postLink = `${frontendUrl}/psi/psi_dashboard.html?postId=${req.params.id}`;
+                            const emailHtml = `
+                                <div style="font-family: Arial, sans-serif; color: #374151; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
+                                    <div style="text-align: center; margin-bottom: 20px;">
+                                        <h2 style="color: #1B4332; margin: 0;">Nova resposta ao seu comentário! 💬</h2>
+                                    </div>
+                                    <p>Olá <strong>${parentOwner.nome}</strong>,</p>
+                                    <p>O colega <strong>${senderName}</strong> acabou de responder ao seu comentário na comunidade da Yelo:</p>
+                                    <div style="background-color: #f3f4f6; padding: 15px; border-left: 4px solid #1B4332; margin: 20px 0; border-radius: 4px; font-style: italic; color: #4b5563;">
+                                        "${content.substring(0, 150)}${content.length > 150 ? '...' : ''}"
+                                    </div>
+                                    <div style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
+                                        <a href="${postLink}" style="background-color: #1B4332; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 50px; font-weight: bold; display: inline-block;">Ver Resposta na Comunidade</a>
+                                    </div>
+                                </div>
+                            `;
                             await emailService.sendEmail(
                                 parentOwner.email, 
                                 "Nova resposta ao seu comentário! 💬", 
-                                `Olá ${parentOwner.nome},<br><br>O psicólogo <strong>${senderName}</strong> respondeu ao seu comentário no fórum da Yelo:<br><br><em>"${content.substring(0, 100)}..."</em><br><br>Acesse a plataforma para continuar a discussão.`
+                                emailHtml
                             ).catch(e => console.error("Erro ao enviar email de resposta ao comentário:", e));
                         }
                     }
@@ -323,10 +340,26 @@ exports.createComment = async (req, res) => {
                         }).catch(e => console.error("Erro ao criar aviso de tópico:", e));
 
                         if (postOwner.email && emailService.sendEmail) {
+                            const postLink = `${frontendUrl}/psi/psi_dashboard.html?postId=${req.params.id}`;
+                            const emailHtml = `
+                                <div style="font-family: Arial, sans-serif; color: #374151; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
+                                    <div style="text-align: center; margin-bottom: 20px;">
+                                        <h2 style="color: #1B4332; margin: 0;">Nova resposta na sua discussão! 💬</h2>
+                                    </div>
+                                    <p>Olá <strong>${postOwner.nome}</strong>,</p>
+                                    <p>O colega <strong>${senderName}</strong> respondeu ao seu tópico "<strong>${postInfo.title}</strong>":</p>
+                                    <div style="background-color: #f3f4f6; padding: 15px; border-left: 4px solid #1B4332; margin: 20px 0; border-radius: 4px; font-style: italic; color: #4b5563;">
+                                        "${content.substring(0, 150)}${content.length > 150 ? '...' : ''}"
+                                    </div>
+                                    <div style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
+                                        <a href="${postLink}" style="background-color: #1B4332; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 50px; font-weight: bold; display: inline-block;">Acessar Discussão</a>
+                                    </div>
+                                </div>
+                            `;
                             await emailService.sendEmail(
                                 postOwner.email, 
                                 "Nova resposta no seu tópico! 💬", 
-                                `Olá ${postOwner.nome},<br><br>O psicólogo <strong>${senderName}</strong> respondeu ao seu tópico "<strong>${postInfo.title}</strong>".<br><br><em>"${content.substring(0, 100)}..."</em><br><br>Acesse a plataforma para interagir.`
+                                emailHtml
                             ).catch(e => console.error("Erro ao enviar email de resposta ao post:", e));
                         }
                     }

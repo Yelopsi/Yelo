@@ -532,9 +532,10 @@
         const primeiroNome = nome ? nome.split(' ')[0] : 'Psicólogo(a)';
         const mensagem = `Olá, ${primeiroNome}, tudo bem? Aqui é o Anderson, da Yelo.\n\n` +
                          `Vi que você completou seu perfil na nossa plataforma recentemente. Muito obrigado pelo interesse!\n\n` +
-                         `Como estamos selecionando a dedo os profissionais nesta fase de lançamento, percebi que a etapa de cadastrar o cartão de crédito acaba gerando um atrito desnecessário para quem só quer conhecer a ferramenta.\n\n` +
-                         `Por isso, acabei de liberar o seu acesso Premium de 14 dias manualmente no sistema, sem precisar cadastrar cartão nenhum. O acesso já está liberado lá no seu login.\n\n` +
-                         `Fique à vontade para explorar o painel, a gestão financeira e o fórum. Depois me conta o que achou das funcionalidades?`;
+                         `Mas ainda não completou o perfil. Só relembrando, você tem 14 dias de acesso grátis, sem precisar cadastrar cartão de crédito.\n\n` +
+                         `Seu acesso já está ativo. Agora é só completar o perfil para começar a aparecer para pacientes na plataforma.\n\n` +
+                         `Além disso, você também pode explorar as outras ferramentas da Yelo, como painel financeiro, agenda e fórum da comunidade.\n\n` +
+                         `Depois me conta o que achou — principalmente o que estiver ruim. É justamente isso que estamos ajustando nessa fase inicial;
         
         const prefixo = numeroLimpo.startsWith('55') ? '' : '55';
         return `https://wa.me/${prefixo}${numeroLimpo}?text=${encodeURIComponent(mensagem)}`;
