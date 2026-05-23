@@ -319,5 +319,26 @@
         window.YELO_PROFILE_DATA = <%- JSON.stringify(psicologo) %>;
     </script>
     <script src="/js/psi_perfil_publico.js"></script>
+
+    <script>
+        // Formata a Biografia com negrito, itálico e quebras de linha após o carregamento da página
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const bioEl = document.getElementById('psi-bio-text');
+                if (bioEl && window.YELO_PROFILE_DATA && window.YELO_PROFILE_DATA.bio) {
+                    let text = window.YELO_PROFILE_DATA.bio;
+                    
+                    text = text.replace(/'''([\s\S]*?)'''/g, '<code style="background:#f4f4f4; padding:2px 6px; border-radius:4px; font-family:monospace; color:#333; font-size:0.9em;">$1</code>');
+                    text = text.replace(/__([\s\S]*?)__/g, '<u>$1</u>');
+                    text = text.replace(/\*([\s\S]*?)\*/g, '<strong>$1</strong>');
+                    text = text.replace(/_([\s\S]*?)_/g, '<em>$1</em>');
+                    text = text.replace(/~([\s\S]*?)~/g, '<del>$1</del>');
+                    text = text.replace(/\n/g, '<br>');
+                    
+                    bioEl.innerHTML = text;
+                }
+            }, 200); 
+        });
+    </script>
 </body>
 </html>
