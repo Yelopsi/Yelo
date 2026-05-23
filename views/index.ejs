@@ -784,7 +784,7 @@
                             gtag('event', 'iniciar_questionario');
                         }
                     } catch(trackingError) { console.warn('AdBlocker detectado', trackingError); }
-                });
+                }, { once: true });
             });
         });
     </script>

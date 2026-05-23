@@ -1951,8 +1951,49 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 }
 
+                // --- Busca Avisos/Notificações Reais Não Lidos ---
+                try {
+                    const resAvisos = await apiFetch(`${API_BASE_URL}/api/psychologists/me/announcements?t=${new Date().getTime()}`);
+                    if (resAvisos.ok) {
+                        const allAvisos = await resAvisos.json();
+                        const unreadAvisos = allAvisos.filter(a => !a.read).slice(0, 3); // Pega até os 3 mais recentes
+                        
+                        unreadAvisos.forEach(aviso => {
+                            let icon = '🔔';
+                            let type = 'interaction';
+                            const lowerTitle = aviso.title.toLowerCase();
+                            if (lowerTitle.includes('resposta') || lowerTitle.includes('comentário') || lowerTitle.includes('discussão')) {
+                                icon = '💬';
+                            } else if (lowerTitle.includes('instabilidade') || lowerTitle.includes('importante')) {
+                                icon = '⚠️';
+                                type = 'reminder';
+                            }
+                            
+                            // Remove o HTML do conteúdo (como links) para colocar um texto limpo e conciso no preview
+                            let cleanContent = aviso.content.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+                            if (cleanContent.length > 70) cleanContent = cleanContent.substring(0, 70) + '...';
+
+                            notifications.push({
+                                type: type, 
+                                icon: icon,
+                                text: `<strong>${aviso.title}</strong><br><span style="font-size: 0.85rem; color: #666;">${cleanContent}</span>`,
+                                time: new Date(aviso.createdAt).toLocaleDateString('pt-BR'),
+                                link: 'psi_avisos.html' // Redireciona para a central para marcar como lido e acessar o link do fórum
+                            });
+                        });
+                    }
+                } catch (err) {
+                    console.error("Erro ao buscar avisos para o dashboard:", err);
+                }
+
                 if (notifications.length > 0) {
                     if (emptyState) emptyState.style.display = 'none';
+                    
+                    // FIX: Limpar notificações antigas (exceto o empty state) para não duplicar e garantir renderização correta
+                    Array.from(feed.children).forEach(child => {
+                        if (child.id !== 'notifications-empty-state') child.remove();
+                    });
+
                     notifications.forEach(notif => {
                         const item = document.createElement('a');
                         item.href = '#';
@@ -3333,7 +3374,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Função de background para contar não lidos e atualizar a Badge no Menu Lateral
     window.carregarAvisosBackground = async function() {
         try {
-            const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/announcements`);
+            const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/announcements?t=${new Date().getTime()}`);
             if (res.ok) {
                 const avisos = await res.json();
                 const unread = avisos.filter(a => !a.read).length;
@@ -4339,8 +4380,8 @@ async function inicializarForum(preFetchedData = null) {
 
     let isLoadingMore = false;
 
-    const DELETE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
-    const EDIT_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-pencil"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path><path d="M15 5l4 4"></path><path d="M5 15l4 4"></path><path d="M3.5 16.5l4 4"></path></svg>`;
+    const DELETE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
+    const EDIT_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-pencil"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path><path d="M15 5l4 4"></path><path d="M5 15l4 4"></path><path d="M3.5 16.5l4 4"></path></svg>`;
 
     // --- Funções Auxiliares ---
     function setupAutoResizeTextarea(textarea) {
@@ -4741,7 +4782,7 @@ async function inicializarForum(preFetchedData = null) {
     }
 
     // Renderiza um comentário
-    function renderComment(comment, container) {
+    function renderComment(comment, container, prepend = false) {
         const commentEl = commentTemplate.content.cloneNode(true).firstElementChild;
         commentEl.dataset.commentId = comment.id; // Adiciona ID para permitir respostas
         const authorName = comment.isAnonymous ? 'Anônimo' : comment.authorName;
@@ -4792,14 +4833,14 @@ async function inicializarForum(preFetchedData = null) {
             // 1. Editar (Ícone)
             const editBtn = document.createElement('button');
             // margin-left: auto empurra o grupo para a direita
-            editBtn.style.cssText = "background:none; border:none; cursor:pointer; font-size:1rem; margin-left:auto; color: #999;";
+            editBtn.style.cssText = "background:none; border:none; cursor:pointer; font-size:1rem; margin-left:auto; color: #999; padding: 4px; display: flex; align-items: center;";
             editBtn.innerHTML = EDIT_ICON_SVG;
             editBtn.title = 'Editar';
             editBtn.onclick = () => enableCommentEditing(comment, commentEl);
             
             // 2. Excluir (Ícone)
             const deleteBtn = document.createElement('button');
-            deleteBtn.style.cssText = "background:none; border:none; cursor:pointer; font-size:1rem; color: #999;";
+            deleteBtn.style.cssText = "background:none; border:none; cursor:pointer; font-size:1rem; color: #999; padding: 4px; display: flex; align-items: center;";
             deleteBtn.innerHTML = DELETE_ICON_SVG;
             deleteBtn.title = 'Excluir';
             deleteBtn.onclick = () => deleteComment(comment.id, commentEl);
@@ -4839,7 +4880,7 @@ async function inicializarForum(preFetchedData = null) {
             // Função para renderizar o próximo lote
             const renderNextBatch = () => {
                 const nextBatch = allReplies.slice(shownCount, shownCount + BATCH_SIZE);
-                nextBatch.forEach(reply => renderComment(reply, repliesContainer));
+                nextBatch.forEach(reply => renderComment(reply, repliesContainer, false));
                 shownCount += nextBatch.length;
 
                 // Gerencia botão "Carregar mais"
@@ -4884,7 +4925,11 @@ async function inicializarForum(preFetchedData = null) {
             });
         }
 
-        container.appendChild(commentEl);
+        if (prepend) {
+            container.insertBefore(commentEl, container.firstChild);
+        } else {
+            container.appendChild(commentEl);
+        }
     }
 
     // Mostra o formulário de resposta a um comentário
@@ -5043,11 +5088,13 @@ async function inicializarForum(preFetchedData = null) {
             if (!res.ok) throw new Error('Erro ao salvar comentário');
             const newComment = await res.json();
             
+            newComment.isMine = true; // FIX: Força a flag no frontend imediatamente para os botões aparecerem
+
             // Decide onde renderizar: no container principal ou no de respostas
             const container = parentId ? document.querySelector(`.comment-card[data-comment-id="${parentId}"] .comment-replies-container`) : document.getElementById('comment-thread');
             
             if (!container) throw new Error('Container não encontrado');
-            renderComment(newComment, container);
+            renderComment(newComment, container, true);
             
             form.reset();
             if (parentId) form.parentElement.remove(); // Remove o form dinâmico de resposta
