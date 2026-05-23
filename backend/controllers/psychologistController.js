@@ -2287,27 +2287,59 @@ exports.getAnalyticsData = async (req, res) => {
 exports.getAnnouncements = async (req, res) => {
     try {
         const psychologistId = req.psychologist?.id || req.userDecoded?.id || req.user?.id;
+        console.log(`\n--- [NOTIF DEBUG GET] Buscando avisos para Psi ID: ${psychologistId} ---`);
 
-        // Busca avisos globais e avisos direcionados especificamente a este psicólogo
-        const avisos = await db.Aviso.findAll({
-            where: { 
-                status: 'published',
-                [Op.or]: [{ psychologistId: null }, { psychologistId }]
-            },
-            order: [['createdAt', 'DESC']]
-        });
+        // Garante que a tabela de Avisos exista
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "Avisos" (
+                id SERIAL PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                content TEXT NOT NULL,
+                author VARCHAR(255),
+                status VARCHAR(50) DEFAULT 'published',
+                "psychologistId" INTEGER,
+                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        await db.sequelize.query(`ALTER TABLE "Avisos" ADD COLUMN IF NOT EXISTS "psychologistId" INTEGER;`).catch(() => {});
 
-        // Busca os IDs dos avisos que o psicólogo já leu
-        const avisosLidos = await db.AvisoLido.findAll({
-            where: { psychologistId },
-            attributes: ['avisoId']
+        // Busca avisos usando SQL puro para evitar erros se o Model do Sequelize estiver desatualizado
+        const avisos = await db.sequelize.query(`
+            SELECT * FROM "Avisos" 
+            WHERE status = 'published' 
+            AND ("psychologistId" IS NULL OR "psychologistId" = :psychologistId)
+            ORDER BY "createdAt" DESC
+        `, {
+            replacements: { psychologistId },
+            type: db.sequelize.QueryTypes.SELECT
         });
+        console.log(`[NOTIF DEBUG GET] Encontrados ${avisos.length} avisos no total (globais + pessoais).`);
+
+        // Garante a tabela de AvisosLidos
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "AvisoLidos" (
+                id SERIAL PRIMARY KEY,
+                "avisoId" INTEGER,
+                "psychologistId" INTEGER,
+                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `).catch(() => {});
+
+        // Busca os IDs usando SQL
+        const avisosLidos = await db.sequelize.query(`
+            SELECT "avisoId" FROM "AvisoLidos" WHERE "psychologistId" = :psychologistId
+        `, {
+            replacements: { psychologistId },
+            type: db.sequelize.QueryTypes.SELECT
+        }).catch(() => []);
 
         const lidosIds = new Set(avisosLidos.map(l => l.avisoId));
 
         // Mapeia os avisos adicionando o status 'read'
         const responseData = avisos.map(aviso => ({
-            ...aviso.toJSON(),
+            ...aviso,
             read: lidosIds.has(aviso.id)
         }));
 
@@ -2327,8 +2359,26 @@ exports.markAnnouncementAsRead = async (req, res) => {
         const psychologistId = req.psychologist?.id || req.userDecoded?.id || req.user?.id;
         const { avisoId } = req.params;
 
-        // Usa findOrCreate para evitar erro de constraint se já existir
-        await db.AvisoLido.findOrCreate({ where: { psychologistId, avisoId } });
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "AvisoLidos" (
+                id SERIAL PRIMARY KEY,
+                "avisoId" INTEGER,
+                "psychologistId" INTEGER,
+                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `).catch(() => {});
+
+        await db.sequelize.query(`
+            INSERT INTO "AvisoLidos" ("avisoId", "psychologistId", "createdAt", "updatedAt")
+            SELECT :avisoId, :psychologistId, NOW(), NOW()
+            WHERE NOT EXISTS (
+                SELECT 1 FROM "AvisoLidos" WHERE "avisoId" = :avisoId AND "psychologistId" = :psychologistId
+            )
+        `, {
+            replacements: { avisoId, psychologistId },
+            type: db.sequelize.QueryTypes.INSERT
+        });
 
         res.status(200).json({ message: 'Aviso marcado como lido.' });
     } catch (error) {

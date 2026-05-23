@@ -171,9 +171,9 @@ exports.getComments = async (req, res) => {
                     required: false
                 }
             ],
-            // Comentários: Populares (>= 3 likes) no topo, depois os mais recentes
+            // Comentários: Mais curtidos no topo, depois os mais recentes
             order: [
-                [db.Sequelize.literal('CASE WHEN "ForumComment"."likes" >= 3 THEN 1 ELSE 0 END'), 'DESC'],
+                ['likes', 'DESC'],
                 ['createdAt', 'DESC']
             ],
             limit,
@@ -235,8 +235,11 @@ exports.getComments = async (req, res) => {
                         parentId: c.id
                     };
                 });
-                // Ordena respostas por data (mais antigas primeiro)
-                processedReplies.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                // Ordena respostas por likes e data (mais recentes primeiro)
+                processedReplies.sort((a, b) => {
+                    if (b.likes !== a.likes) return b.likes - a.likes;
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                });
             }
 
             return {
@@ -277,6 +280,8 @@ exports.createComment = async (req, res) => {
         gamificationService.processAction(req.user.id, 'forum_reply').catch(err => console.error("Gamification hook error:", err));
 
         // --- INÍCIO: SISTEMA DE NOTIFICAÇÕES E MENÇÕES ---
+        console.log(`\n--- [NOTIF DEBUG] INICIANDO FLUXO DE NOTIFICAÇÃO ---`);
+        console.log(`[NOTIF DEBUG] Comentário criado por: ${req.user.id} | isReply: ${!!parentId}`);        
         // Rodamos de forma assíncrona (não usa await bloqueante) para não atrasar a resposta no Frontend
         (async () => {
             try {
@@ -286,19 +291,43 @@ exports.createComment = async (req, res) => {
 
                 // Notificar o dono do Post ou do Comentário Pai (Apenas emails de respostas)
                 if (parentId) {
+                    console.log(`[NOTIF DEBUG] Buscando comentário pai ID: ${parentId}`);
                     // É uma resposta a um comentário específico
                     const parentComment = await ForumComment.findByPk(parentId, { include: [Psychologist] });
                     if (parentComment && parentComment.PsychologistId !== req.user.id && parentComment.Psychologist) {
                         const parentOwner = parentComment.Psychologist;
+                        console.log(`[NOTIF DEBUG] Dono do comentário pai: ${parentOwner.id} (${parentOwner.nome})`);
 
                         // --- NOVO: Criar Aviso no Painel ---
-                        await db.Aviso.create({
-                            title: 'Nova resposta ao seu comentário!',
-                            content: `O colega <strong>${senderName}</strong> respondeu ao seu comentário no fórum da Yelo:<br><br><em>"${content.substring(0, 100)}..."</em><br><br><a href="#" onclick="window.loadPage('psi_forum.html')" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para acessar o fórum</a>.`,
-                            author: 'Comunidade Yelo',
-                            status: 'published',
-                            psychologistId: parentOwner.id
-                        }).catch(e => console.error("Erro ao criar aviso de comentário:", e));
+                        try {
+                            await db.sequelize.query(`
+                                CREATE TABLE IF NOT EXISTS "Avisos" (
+                                    id SERIAL PRIMARY KEY,
+                                    title VARCHAR(255) NOT NULL,
+                                    content TEXT NOT NULL,
+                                    author VARCHAR(255),
+                                    status VARCHAR(50) DEFAULT 'published',
+                                    "psychologistId" INTEGER,
+                                    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                                    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                                );
+                            `);
+                            await db.sequelize.query(`ALTER TABLE "Avisos" ADD COLUMN IF NOT EXISTS "psychologistId" INTEGER;`).catch(() => {});
+                            
+                            await db.sequelize.query(`
+                                INSERT INTO "Avisos" (title, content, author, status, "psychologistId", "createdAt", "updatedAt")
+                                VALUES (:title, :content, 'Comunidade Yelo', 'published', :psychologistId, NOW(), NOW())
+                            `, {
+                                replacements: {
+                                    title: 'Nova resposta ao seu comentário!',
+                                    content: `O colega <strong>${senderName}</strong> respondeu ao seu comentário no fórum da Yelo:<br><br><em>"${content.substring(0, 100)}..."</em><br><br><a href="#" onclick="window.loadPage('psi_forum.html')" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para acessar o fórum</a>.`,
+                                    psychologistId: parentOwner.id
+                                }
+                            });
+                            console.log(`[NOTIF DEBUG] Notificação de comentário INSERIDA COM SUCESSO no banco!`);
+                        } catch (e) {
+                            console.error("Erro ao criar aviso de comentário via SQL:", e);
+                        }
 
                         if (parentOwner.email && emailService.sendEmail) {
                             const postLink = `${frontendUrl}/psi/psi_dashboard.html?postId=${req.params.id}`;
@@ -323,21 +352,49 @@ exports.createComment = async (req, res) => {
                                 emailHtml
                             ).catch(e => console.error("Erro ao enviar email de resposta ao comentário:", e));
                         }
+                    } else {
+                        console.log(`[NOTIF DEBUG] Notificação ignorada. É o próprio autor respondendo ou autor deletado.`);
                     }
                 } else {
+                    console.log(`[NOTIF DEBUG] Buscando post original ID: ${req.params.id}`);
                     // É uma resposta direta ao Tópico (Post) original
                     const postInfo = await ForumPost.findByPk(req.params.id, { include: [Psychologist] });
+                    if (!postInfo) console.log(`[NOTIF DEBUG] FALHA: Post original não encontrado.`);
+                    
                     if (postInfo && postInfo.PsychologistId !== req.user.id && postInfo.Psychologist) {
                         const postOwner = postInfo.Psychologist;
+                        console.log(`[NOTIF DEBUG] Dono do Post: ${postOwner.id} (${postOwner.nome})`);
 
                         // --- NOVO: Criar Aviso no Painel ---
-                        await db.Aviso.create({
-                            title: 'Nova resposta na sua discussão!',
-                            content: `O colega <strong>${senderName}</strong> respondeu ao seu tópico "<strong>${postInfo.title}</strong>":<br><br><em>"${content.substring(0, 100)}..."</em><br><br><a href="#" onclick="window.loadPage('psi_forum.html')" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para acessar a discussão</a>.`,
-                            author: 'Comunidade Yelo',
-                            status: 'published',
-                            psychologistId: postOwner.id
-                        }).catch(e => console.error("Erro ao criar aviso de tópico:", e));
+                        try {
+                            await db.sequelize.query(`
+                                CREATE TABLE IF NOT EXISTS "Avisos" (
+                                    id SERIAL PRIMARY KEY,
+                                    title VARCHAR(255) NOT NULL,
+                                    content TEXT NOT NULL,
+                                    author VARCHAR(255),
+                                    status VARCHAR(50) DEFAULT 'published',
+                                    "psychologistId" INTEGER,
+                                    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                                    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                                );
+                            `);
+                            await db.sequelize.query(`ALTER TABLE "Avisos" ADD COLUMN IF NOT EXISTS "psychologistId" INTEGER;`).catch(() => {});
+                            
+                            await db.sequelize.query(`
+                                INSERT INTO "Avisos" (title, content, author, status, "psychologistId", "createdAt", "updatedAt")
+                                VALUES (:title, :content, 'Comunidade Yelo', 'published', :psychologistId, NOW(), NOW())
+                            `, {
+                                replacements: {
+                                    title: 'Nova resposta na sua discussão!',
+                                    content: `O colega <strong>${senderName}</strong> respondeu ao seu tópico "<strong>${postInfo.title}</strong>":<br><br><em>"${content.substring(0, 100)}..."</em><br><br><a href="#" onclick="window.loadPage('psi_forum.html')" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para acessar a discussão</a>.`,
+                                    psychologistId: postOwner.id
+                                }
+                            });
+                            console.log(`[NOTIF DEBUG] Notificação de Post INSERIDA COM SUCESSO no banco!`);
+                        } catch (e) {
+                            console.error("Erro ao criar aviso de tópico via SQL:", e);
+                        }
 
                         if (postOwner.email && emailService.sendEmail) {
                             const postLink = `${frontendUrl}/psi/psi_dashboard.html?postId=${req.params.id}`;
@@ -362,6 +419,8 @@ exports.createComment = async (req, res) => {
                                 emailHtml
                             ).catch(e => console.error("Erro ao enviar email de resposta ao post:", e));
                         }
+                    } else {
+                        console.log(`[NOTIF DEBUG] Notificação ignorada. É o próprio autor comentando no seu post ou autor deletado.`);
                     }
                 }
             } catch (notifyErr) {
@@ -379,7 +438,8 @@ exports.createComment = async (req, res) => {
             isAnonymous: comment.isAnonymous,
             authorName: comment.isAnonymous ? 'Anônimo' : user.nome,
             authorPhoto: comment.isAnonymous ? null : user.fotoUrl,
-            likes: 0 // Novo comentário começa com 0 likes
+            likes: 0, // Novo comentário começa com 0 likes
+            isMine: true
         });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao comentar' });
