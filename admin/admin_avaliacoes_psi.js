@@ -42,7 +42,6 @@ window.initializePage = function() {
     }
 
     function renderKPIs(stats) {
-        // Mapa de tradução para os motivos
         const reasonMap = {
             'financeiro': 'Preço // Financeiro',
             'plataforma': 'Dificuldade com a Plataforma',
@@ -55,7 +54,6 @@ window.initializePage = function() {
         if(kpiMedia) kpiMedia.innerText = stats.media || '-';
         
         const rawReason = stats.topReason;
-        // Se tiver no mapa, usa. Se não, usa o original. Se for nulo, põe texto padrão.
         const displayReason = reasonMap[rawReason] || rawReason || 'Aguardando dados';
         
         if(kpiMotivo) kpiMotivo.innerText = displayReason; 
@@ -68,23 +66,33 @@ window.initializePage = function() {
             return;
         }
 
+        const reasonMap = {
+            'financeiro': 'Preço // Financeiro',
+            'plataforma': 'Dificuldade com a Plataforma',
+            'suporte': 'Suporte Insuficiente',
+            'demanda': 'Baixa Demanda',
+            'outro': 'Outros'
+        };
+
         list.forEach(item => {
             const card = document.createElement('div');
-            card.className = 'review-card'; // Reutiliza estilo de card de review
+            card.className = 'review-card'; 
             card.style.borderLeft = `4px solid ${getRatingColor(item.avaliacao)}`;
             card.style.padding = '20px';
             card.style.background = '#fff';
             card.style.borderRadius = '8px';
             card.style.boxShadow = '0 2px 5px rgba(0,0,0,0.05)';
             
+            const motivoTexto = reasonMap[item.motivo] || item.motivo || 'Sem motivo especificado';
+
             card.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                     <div>
-                        <h4 style="margin: 0; color: #333; font-size: 1.1rem;">${item.motivo || 'Sem motivo especificado'}</h4>
+                        <h4 style="margin: 0; color: #333; font-size: 1.1rem;">${motivoTexto}</h4>
                         <span style="font-size: 0.85rem; color: #888;">${new Date(item.createdAt).toLocaleDateString('pt-BR')} às ${new Date(item.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                     </div>
                     <div style="font-weight: bold; color: ${getRatingColor(item.avaliacao)}; font-size: 1.2rem;">
-                        ${item.avaliacao} ★
+                        ${item.avaliacao || 0} ★
                     </div>
                 </div>
                 <p style="margin: 0; color: #555; font-style: italic; line-height: 1.5;">"${item.sugestao || 'Sem comentários adicionais.'}"</p>
@@ -95,13 +103,12 @@ window.initializePage = function() {
     }
 
     function getRatingColor(rating) {
-        if(rating >= 4) return '#27ae60'; // Verde
-        if(rating === 3) return '#f39c12'; // Laranja
-        return '#e74c3c'; // Vermelho
+        if(rating >= 4) return '#27ae60'; 
+        if(rating === 3) return '#f39c12'; 
+        return '#e74c3c'; 
     }
 
     if(btnFiltrar) btnFiltrar.addEventListener('click', loadExitSurveys);
     
-    // Carregamento inicial
     loadExitSurveys();
 };

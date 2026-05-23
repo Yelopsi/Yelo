@@ -244,9 +244,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const setupZapButton = (btnId) => {
             const btnAgendar = document.getElementById(btnId);
             if (btnAgendar) {
-                let mensagem = `Olá, ${psi.nome}! Encontrei seu perfil na Yelo e gostaria de agendar uma consulta.`;
+                let mensagem = `Olá, ${psi.nome}! Encontrei seu perfil na Yelo e gostaria de tirar algumas dúvidas sobre como funciona o seu atendimento.`;
                 if (psi.tipo_cobranca === 'mensal') {
-                    mensagem = `Olá, ${psi.nome}! Encontrei seu perfil na Yelo e gostaria de saber mais sobre o seu plano de acompanhamento mensal.`;
+                    mensagem = `Olá, ${psi.nome}! Encontrei seu perfil na Yelo e gostaria de tirar algumas dúvidas sobre como funciona o seu atendimento.`;
                 }
                 const whatsappLink = `https://api.whatsapp.com/send?phone=55${(psi.telefone || '').replace(/\D/g, '')}&text=${encodeURIComponent(mensagem)}`;
                 btnAgendar.href = whatsappLink;

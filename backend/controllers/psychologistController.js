@@ -495,8 +495,16 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
         
         if (db.Answer) answerCount = await db.Answer.count({ where: { psychologistId } }).catch(() => 0);
 
+        // --- NOVO: VERIFICA AVALIAÇÃO DA PLATAFORMA ---
+        const platformReviewCountResult = await db.sequelize.query(
+            `SELECT COUNT(*) as count FROM "PlatformReviews" WHERE "psychologistId" = :id`,
+            { replacements: { id: psychologistId }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => [{ count: 0 }]);
+        const hasPlatformReview = parseInt(platformReviewCountResult[0]?.count || 0, 10) > 0;
+
         // Monta o objeto de resposta
         const responseData = psychologist.toJSON();
+        responseData.hasPlatformReview = hasPlatformReview;
 
         // --- AVISO DE QUALIDADE (PERFIL EM BRANCO) ---
         const hasPhoto = !!psychologist.fotoUrl;
@@ -2326,5 +2334,52 @@ exports.markAnnouncementAsRead = async (req, res) => {
     } catch (error) {
         console.error('Erro ao marcar aviso como lido:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};
+
+// ----------------------------------------------------------------------
+// Rota: POST /api/psychologists/me/platform-review (NOVA)
+// Descrição: Salva a avaliação (NPS) da plataforma feita pelo psicólogo.
+// ----------------------------------------------------------------------
+exports.savePlatformReview = async (req, res) => {
+    try {
+        const psychologistId = req.psychologist.id;
+        const { rating, comment } = req.body;
+
+        if (!rating) {
+            return res.status(400).json({ error: 'A nota é obrigatória.' });
+        }
+
+        // 1. Garante a existência da tabela "PlatformReviews" no banco com campo para prova social
+        await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "PlatformReviews" (
+                id SERIAL PRIMARY KEY,
+                "psychologistId" INTEGER REFERENCES "Psychologists"(id) ON DELETE CASCADE,
+                rating INTEGER NOT NULL,
+                comment TEXT,
+                "isTestimonial" BOOLEAN DEFAULT false,
+                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        // 2. Insere o registro vinculando ao Psicólogo Logado
+        await db.sequelize.query(`
+            INSERT INTO "PlatformReviews" ("psychologistId", rating, comment, "createdAt", "updatedAt")
+            VALUES (:psychologistId, :rating, :comment, NOW(), NOW())
+        `, {
+            replacements: { 
+                psychologistId, 
+                rating: parseInt(rating, 10), 
+                comment: comment ? comment.trim() : '' 
+            },
+            type: db.sequelize.QueryTypes.INSERT
+        });
+
+        res.status(200).json({ message: 'Avaliação salva com sucesso!' });
+
+    } catch (error) {
+        console.error('Erro ao salvar avaliação da plataforma:', error);
+        res.status(500).json({ error: 'Erro interno ao salvar avaliação.' });
     }
 };
