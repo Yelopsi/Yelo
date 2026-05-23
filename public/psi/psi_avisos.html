@@ -121,7 +121,7 @@
 
     async function fetchAvisos() {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/psychologists/me/announcements`, {
+            const response = await fetch(`${API_BASE_URL}/api/psychologists/me/announcements?t=${new Date().getTime()}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.ok) {

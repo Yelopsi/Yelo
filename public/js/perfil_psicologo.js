@@ -534,6 +534,13 @@ const initProfilePage = async () => {
                     
                     newBtnZap.addEventListener('click', async () => {
                         try {
+                            // [NOVO] Rastreamento GA4 - Clique no WhatsApp
+                            if (typeof gtag === 'function') {
+                                gtag('event', 'click_whatsapp', {
+                                    'id_psi': profile.id
+                                });
+                            }
+
                             let patientId = null;
                             const token = localStorage.getItem('Yelo_token');
                             if (token && token !== 'cookie_auth_active') {
@@ -557,7 +564,7 @@ const initProfilePage = async () => {
                         } catch (err) {
                             console.error("Erro ao registrar clique:", err);
                         }
-                    });
+                    }, { once: true });
                 } else {
                     btnZap.classList.add('disabled');
                     btnZap.href = "#";
@@ -908,6 +915,15 @@ const initProfilePage = async () => {
             console.error("Dados do perfil não encontrados. O SSR pode ter falhado.");
             return;
         }
+
+        // Rastreamento GA4: Visualização do Perfil
+        try {
+            if (typeof gtag === 'function') {
+                gtag('event', 'view_perfil_psi', {
+                    'id_psi': profileData.id
+                });
+            }
+        } catch(e) { console.warn('[GA4] Erro ao rastrear visualização de perfil', e); }
 
         /// a página já foi renderizada no servidor.
         // Apenas inicializamos os componentes dinâmicos que o JS controla.

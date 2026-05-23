@@ -49,6 +49,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Título da Página
         document.title = `${psi.nome} | Psicólogo(a) na Yelo`;
 
+        // Rastreamento GA4: Visualização do Perfil
+        try {
+            if (typeof gtag === 'function') {
+                gtag('event', 'view_perfil_psi', {
+                    'id_psi': psi.id
+                });
+            }
+        } catch(e) { console.warn('[GA4] Erro ao rastrear visualização de perfil', e); }
+
         // Bloco Principal
         const photoEl = document.getElementById('psi-photo');
         if (photoEl) {
