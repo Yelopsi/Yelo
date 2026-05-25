@@ -62,6 +62,8 @@ router.get('/patients', adminController.getAllPatients);
 router.put('/patients/:id/status', adminController.updatePatientStatus);
 // Rota para deletar um paciente específico
 router.delete('/patients/:id', adminController.deletePatient);
+// Rota para EXCLUIR PERMANENTEMENTE um paciente (Hard Delete)
+router.delete('/patients/:id/force', adminController.forceDeletePatient);
 
 // Rota para buscar todas as avaliações (reviews)
 router.get('/reviews', adminController.getAllReviews);

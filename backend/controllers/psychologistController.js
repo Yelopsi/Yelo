@@ -120,11 +120,12 @@ exports.registerPsychologist = async (req, res) => {
 
         // [RESTRIÇÃO] Verifica se já existe como Paciente
         try {
-            const existingPatient = await db.Patient.findOne({ 
-                where: { email },
-                attributes: ['id'] // Busca apenas o ID para ignorar colunas removidas do banco de dados
+            const existingPatient = await db.Patient.findOne({
+                where: { email: { [Op.iLike]: email } }, // Busca case-insensitive
+                paranoid: false // Inclui usuários com soft-delete na busca
             });
-            if (existingPatient) {
+            // Se o paciente existe E NÃO está deletado (deletedAt é null), então bloqueia.
+            if (existingPatient && !existingPatient.deletedAt) {
                 return res.status(400).json({ error: 'Este e-mail já está em uso por uma conta de Paciente.' });
             }
         } catch (patientErr) {
