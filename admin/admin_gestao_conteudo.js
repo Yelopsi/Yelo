@@ -22,7 +22,6 @@ window.initializePage = function() {
     const btnManageCommunity = document.getElementById('btn-manage-community');
 
     if (!token) {
-        console.error("Elementos essenciais ou token não encontrados.");
         return;
     }
 
@@ -393,7 +392,6 @@ window.initializePage = function() {
                 alert('Erro ao remover: ' + (err.error || 'Erro desconhecido'));
             }
         } catch (e) {
-            console.error(e);
             alert('Erro de conexão.');
         }
     }
@@ -426,7 +424,6 @@ window.initializePage = function() {
                 if (pageKey && typeof window.navigateToPage === 'function') {
                     window.navigateToPage(`admin_editar_pagina.html?page=${pageKey.trim()}`);
                 } else {
-                    console.error("Não foi possível navegar ou encontrar a chave da página.");
                 }
             }
         });

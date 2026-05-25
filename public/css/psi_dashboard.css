@@ -3113,24 +3113,10 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 /* View de Post Completo (App Header) */
 .reddit-app-header {
     display: flex; align-items: center; gap: 12px;
-    padding: 15px 20px; border-bottom: 1px solid #edeff1;
-    position: sticky; top: -20px; background: var(--branco-puro); z-index: 100;
-    margin: -20px -20px 20px -20px; /* Estica a barra para ignorar o padding do container pai */
-}
-@media (max-width: 992px) {
-    .reddit-app-header {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-            height: calc(70px + env(safe-area-inset-top)) !important;
-        margin: 0 !important;
-            z-index: 100005 !important; /* Z-index altíssimo para cobrir a header original e o botão de menu hambúrguer */
-        background: var(--branco-puro) !important;
-            padding: env(safe-area-inset-top) 20px 0 20px !important; /* Usa flexbox para centralizar verticalmente */
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        box-sizing: border-box;
-    }
+    padding: 15px 20px; border: 1px solid #edeff1;
+    border-radius: 16px;
+    background: var(--branco-puro);
+    margin-bottom: 20px;
 }
 .app-back-btn {
     background: none; border: none; color: #1c1c1c; cursor: pointer;

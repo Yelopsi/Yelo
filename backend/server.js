@@ -43,7 +43,8 @@ app.use((req, res, next) => {
 // Proteção de Cabeçalhos HTTP (Ignora CSP para usar a sua regra customizada)
 app.use(helmet({ 
   contentSecurityPolicy: false,
-  crossOriginOpenerPolicy: false // Desativado para evitar bloqueios do Google Sign-In (Cross-Origin-Opener-Policy policy would block the window.postMessage call)
+  crossOriginOpenerPolicy: false, // Desativado para evitar bloqueios do Google Sign-In
+  originAgentCluster: false // Remove o aviso de origin-keyed agent cluster
 }));
 
 // Proteção contra Ataques de Força Bruta e DDoS Básico

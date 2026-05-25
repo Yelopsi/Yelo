@@ -209,9 +209,9 @@ function renderList(containerId, items, renderFn) {
 function renderBlogItem(post) {
     return `
         <div class="content-card">
-            <h4>${post.titulo}</h4>
-            <p>Publicado em: ${new Date(post.createdAt).toLocaleDateString()}</p>
-            <a href="/blog/post/${post.slug}" target="_blank">Ver Post</a>
+            <h4>${post.titulo || post.title || 'Artigo'}</h4>
+            <p>Publicado em: ${new Date(post.createdAt || post.created_at || new Date()).toLocaleDateString('pt-BR')}</p>
+            <a href="/blog/post/${post.slug || post.id}" target="_blank">Ver Post</a>
         </div>
     `;
 }

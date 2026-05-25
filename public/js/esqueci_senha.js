@@ -56,7 +56,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
             } catch (error) {
-                console.error('Erro de conexão:', error);
                 mensagemEl.textContent = error.message || 'Falha na conexão com o servidor.';
                 mensagemEl.className = 'mensagem-erro';
             }

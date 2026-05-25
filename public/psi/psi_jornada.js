@@ -1,12 +1,9 @@
 window.inicializarPaginaJornada = async () => {
-    // Adiciona um log para confirmar que o script começou a ser executado
-    console.log("--- psi_jornada.js: SCRIPT INICIADO ---");
 
     const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001';
     const token = localStorage.getItem('Yelo_token');
 
     if (!token) {
-        console.error("psi_jornada.js: Token não encontrado. Abortando.");
         return;
     }
 
@@ -112,14 +109,12 @@ window.inicializarPaginaJornada = async () => {
 
     // --- LÓGICA PRINCIPAL ---
     try {
-        console.log("psi_jornada.js: Buscando dados da API...");
         const response = await fetch(`${API_BASE_URL}/api/psychologists/me`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) throw new Error('Falha ao carregar dados do perfil.');
 
         const data = await response.json();
-        console.log("psi_jornada.js: Dados recebidos:", data);
 
         const badges = data.badges || {};
         const progress = data.gamificationProgress || { blogPostCount: 0, forumActivityCount: 0, answerCount: 0 };
@@ -136,10 +131,8 @@ window.inicializarPaginaJornada = async () => {
         updateBadgeCard('voz_ativa', progress.vozAtiva || progress.forumActivityCount || 0, badges.voz_ativa);
         updateBadgeCard('conselheiro', progress.conselheiro || progress.answerCount || 0, badges.conselheiro);
 
-        console.log("psi_jornada.js: Interface atualizada com sucesso!");
 
     } catch (error) {
-        console.error("psi_jornada.js: Erro fatal ao carregar:", error);
         document.getElementById('next-level-text').innerHTML = "<span style='color: #d32f2f;'>Não foi possível carregar seu progresso. Tente atualizar a página.</span>";
     }
 };

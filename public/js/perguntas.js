@@ -1,5 +1,4 @@
 function initPerguntas() {
-    console.log("Sistema de Perguntas Restaurado");
 
     const BASE_URL = typeof window.API_BASE_URL !== 'undefined' ? window.API_BASE_URL : 'http://localhost:3001';
     
@@ -34,7 +33,6 @@ function initPerguntas() {
             
             updateListDisplay();
         } catch (error) {
-            console.error(error);
             if(container) container.innerHTML = `<p style="text-align:center; color:#777;">Ainda não há perguntas. Seja o primeiro!</p>`;
         }
     }
@@ -266,7 +264,6 @@ function initPerguntas() {
                     showToast("Erro: " + (data.error || "Erro desconhecido"), "error");
                 }
             } catch (err) {
-                console.error(err);
                 showToast("Erro de conexão com o servidor.", "error");
             } finally {
                 submitBtn.textContent = originalText;

@@ -77,7 +77,7 @@ exports.registerPatient = async (req, res) => {
 
         // [EMAIL] Envia boas-vindas
         // FIX: Envio assíncrono para não bloquear o cadastro
-        sendWelcomeEmail(newPatient, 'patient').catch(err => console.error("Erro envio email boas-vindas (Paciente):", err));
+        sendWelcomeEmail(newPatient, 'patient').catch(err => {});
 
         // [CAPI] Avisa o Facebook sobre o novo cadastro de Paciente
         metaService.sendCAPIEvent('CompleteRegistration', newPatient, req, { user_type: 'patient' });
@@ -99,7 +99,6 @@ exports.registerPatient = async (req, res) => {
             message: 'Cadastro realizado com sucesso!',
         });
     } catch (error) {
-        console.error('Erro ao registrar paciente:', error);
         await db.SystemLog.create({
             level: 'error',
             message: `Erro no registro de Paciente: ${error.message}`
@@ -141,12 +140,10 @@ exports.requestPasswordReset = async (req, res) => {
         const frontendUrl = process.env.FRONTEND_URL || req.headers.origin || 'https://www.yelopsi.com.br';
         const resetLink = `${frontendUrl}/redefinir-senha?token=${resetToken}&type=patient`;
         await sendPasswordResetEmail(patient, resetLink);
-        console.log(`📧 E-mail de recuperação enviado para: ${patient.email}`);
 
         res.status(200).json({ message: 'Se um usuário com este e-mail existir, um link de redefinição foi enviado.' });
 
     } catch (error) {
-        console.error('Erro ao solicitar redefinição de senha:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };
@@ -179,7 +176,6 @@ exports.resetPassword = async (req, res) => {
         res.status(200).json({ message: 'Senha redefinida com sucesso!' });
 
     } catch (error) {
-        console.error('Erro ao redefinir senha:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };
@@ -247,7 +243,6 @@ exports.loginPatient = async (req, res) => {
             res.status(401).json({ error: 'Email ou senha inválidos.' });
         }
     } catch (error) {
-        console.error('Erro no login do paciente:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };
@@ -320,7 +315,7 @@ exports.googleLogin = async (req, res) => {
             // [EMAIL] Envia boas-vindas APENAS se NÃO for uma validação simples de review
             if (!isReviewValidation) {
                 sendWelcomeEmail(patient, 'patient')
-                    .catch(err => console.error("Erro envio email boas-vindas (Paciente Google):", err));
+                    .catch(err => {});
             }
         }
 
@@ -333,7 +328,6 @@ exports.googleLogin = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Erro no login Google:', error);
         res.status(401).json({ error: 'Falha na autenticação com Google.' });
     }
 };
@@ -389,7 +383,6 @@ exports.updatePatientAnswers = async (req, res) => {
 
         res.status(200).json({ message: 'Respostas salvas com sucesso!' });
     } catch (error) {
-        console.error('Erro ao salvar respostas do questionário:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };
@@ -431,7 +424,6 @@ exports.updatePatientDetails = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Erro ao atualizar detalhes do paciente:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };
@@ -449,7 +441,6 @@ exports.getPatientReviews = async (req, res) => {
         });
         res.status(200).json(reviews);
     } catch (error) {
-        console.error('Erro ao buscar avaliações do paciente:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };
@@ -466,7 +457,6 @@ exports.getFavorites = async (req, res) => {
         });
         res.status(200).json(patient.favorites);
     } catch (error) {
-        console.error('Erro ao buscar favoritos:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };
@@ -491,7 +481,6 @@ exports.toggleFavorite = async (req, res) => {
             res.status(200).json({ message: 'Profissional adicionado aos favoritos!', favorited: true });
         }
     } catch (error) {
-        console.error('Erro ao alternar favorito:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };
@@ -517,7 +506,6 @@ exports.updatePatientPassword = async (req, res) => {
 
         res.status(200).json({ message: 'Senha alterada com sucesso!' });
     } catch (error) {
-        console.error('Erro ao alterar senha do paciente:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };
@@ -539,7 +527,6 @@ exports.deletePatientAccount = async (req, res) => {
         await patientWithPassword.destroy();
         res.status(200).json({ message: 'Sua conta foi excluída com sucesso.' });
     } catch (error) {
-        console.error('Erro ao excluir conta do paciente:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };
@@ -565,7 +552,6 @@ exports.updateProfilePhoto = async (req, res) => {
         await patient.save();
         res.status(200).json({ message: 'Foto atualizada com sucesso!', fotoUrl });
     } catch (error) {
-        console.error('Erro ao atualizar foto do paciente:', error);
         res.status(500).json({ error: 'Erro interno ao salvar a imagem.' });
     }
 };

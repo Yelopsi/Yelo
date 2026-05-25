@@ -115,7 +115,6 @@ router.get('/', async (req, res) => {
         }
         res.render('index', { profissionais: psicologosFiltrados, mediaAvaliacao, totalAvaliacoes, depoimentos });
     } catch (error) {
-        console.error("Erro ao buscar profissionais para a home:", error);
         res.render('index', { profissionais: [], mediaAvaliacao: '4.9', totalAvaliacoes: '100+', depoimentos: [] });
     }
 });
@@ -210,7 +209,6 @@ router.get('/terapia-online', async (req, res) => {
         }
         res.render('terapia-online', { mediaAvaliacao, totalAvaliacoes, depoimentos });
     } catch (error) {
-        console.error("Erro ao carregar terapia-online:", error);
         res.render('terapia-online', { mediaAvaliacao: '4.9', totalAvaliacoes: '100+', depoimentos: [] });
     }
 });
@@ -251,7 +249,6 @@ router.get('/:slug', async (req, res, next) => {
                 try {
                     return res.render('psi_perfil_publico', { psicologo: psychologist });
                 } catch (renderErr) {
-                    console.error(`Erro do EJS ao renderizar perfil de ${slug}:`, renderErr);
                     // Se a renderização falhar, sai do try/catch e vai pro "404 Perfil Indisponível" abaixo!
                 }
             }

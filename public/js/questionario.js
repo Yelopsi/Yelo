@@ -3,7 +3,6 @@
 var BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : 'http://localhost:3001';
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 questionario.js inicializado com sucesso!");
 
     // --- FORÇAR COR DA BARRA DO NAVEGADOR (MOBILE) ---
     // Garante que a barra fique verde (#1B4332)
@@ -108,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 contentHTML = ''; // Slides informativos, sem campos de input
                 break;
             default: 
-                console.warn("Tipo de pergunta desconhecido:", questionData.type); 
+                
                 contentHTML = ''; 
         } 
         
@@ -148,9 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(demandAnswers),
             });
-            console.log("Busca anônima registrada com sucesso.");
         } catch (error) {
-            console.error("Não foi possível registrar a busca anônima:", error);
         }
     }
 
@@ -188,10 +185,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(demandAnswers)
             });
 
-            if (saveResponse.ok) {
-                console.log("✅ Questionário contabilizado no Dashboard!");
-            } else {
-                console.warn("⚠️ Servidor recebeu, mas deu erro ao salvar:", saveResponse.status);
+            if (!saveResponse.ok) {
+                // Erro silencioso ao salvar
             }
 
             // --- BUSCA O MATCH ---
@@ -208,14 +203,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- DISPARO DE CONVERSÃO DO GOOGLE ADS E GA4 ---
             try {
                 if (typeof window.gtag === 'function') {
-                    console.log('[GA4 Debug] Conversão final do questionário disparada.');
                     // Disparo para a conta oficial do Google Ads
                     window.gtag('event', 'conversion', {'send_to': 'AW-11236864912/hOYjCPO1lqAcEJDnk-4p'});
                     // Disparo para o funil do GA4
                     window.gtag('event', 'match_concluido');
                 }
             } catch (trackingError) {
-                console.warn('[Tracking Debug] Erro ao disparar conversão:', trackingError);
             }
 
             // Pequena pausa dramática (UX)
@@ -226,7 +219,6 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = '/resultados';
 
         } catch (error) {
-            console.error("❌ Erro no finalize():", error);
             // Fallback de segurança: se der erro, vai para resultados mesmo assim
             setTimeout(() => {
                 sessionStorage.setItem('matchResults', JSON.stringify({ matchTier: 'none', results: [] }));
@@ -298,7 +290,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 inputToFocus.focus();
             }
         } else {
-            console.error(`Slide com index ${index} não encontrado.`); 
         }
         
         updateProgressBar(); 
@@ -309,20 +300,17 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 // 1. Envia o passo atual para o Google Analytics (GA4/Ads)
                 if (typeof window.gtag === 'function') {
-                    console.log(`[GA4 Debug] Disparando evento 'passo_questionario' | Passo: ${currentStep} | Pergunta: ${currentQuestion.id}`);
                     window.gtag('event', 'passo_questionario', {
                         'numero_pergunta': currentStep,
                         'nome_pergunta': currentQuestion.id
                     });
                 } else {
-                    console.warn('[GA4 Debug] window.gtag não está definido no momento da chamada.');
                 }
                 // 2. Envia o passo atual para o Facebook/Meta Pixel
                 if (typeof window.fbq === 'function') {
                     window.fbq('trackCustom', 'PassoQuestionario', { passo: currentStep, nome_pergunta: currentQuestion.id });
                 }
             } catch (trackingError) {
-                console.warn('[Tracking Debug] AdBlocker impediu o disparo dos eventos de passo:', trackingError);
             }
             
             // 3. Envia o passo atual para o Banco de Dados da Yelo (Painel Admin)
@@ -439,7 +427,6 @@ document.addEventListener('DOMContentLoaded', () => {
         try { 
             slidesContainer.innerHTML = questions.map((q, i) => createSlideHTML(q, i)).join(''); 
         } catch (error) { 
-            console.error("Erro ao gerar o HTML dos slides:", error); 
             slidesContainer.innerHTML = "<p style='color:red; text-align:center; padding: 40px;'>Ocorreu um erro ao carregar o questionário. Tente recarregar a página.</p>"; 
             return; 
         } 
@@ -457,9 +444,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         .then(r => r.json())
                         .then(data => { 
                             currentSearchId = data.searchId;
-                            console.log("Rastreamento iniciado. ID:", currentSearchId);
                         })
-                        .catch(e => console.warn("Falha ao iniciar rastreamento", e));
+                        .catch(e => {});
                 }
                 validateAndAdvance(); 
             } 
@@ -541,7 +527,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.querySelector(`[data-index="0"]`)) { 
             goToSlide(0); 
         } else { 
-            console.error("Erro: Slide inicial não encontrado."); 
         } 
     }
 

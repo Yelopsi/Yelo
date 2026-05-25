@@ -20,7 +20,6 @@ function inicializarCaixaEntrada(preFetchedData = null) {
     const btnVoltarMobile = document.getElementById('btn-voltar-mobile');
 
     if (!messagesThread || !replyInput || !sendBtn || !token) {
-        console.error("Elementos essenciais do chat ou token não encontrados.");
         return;
     }
 
@@ -71,7 +70,7 @@ function inicializarCaixaEntrada(preFetchedData = null) {
         script.onload = () => {
             if (window.activePsiChatId === componentId) callback();
         };
-        script.onerror = () => console.error("Falha ao carregar Socket.IO.");
+        script.onerror = () => {};
         document.body.appendChild(script);
     }
 
@@ -82,7 +81,6 @@ function inicializarCaixaEntrada(preFetchedData = null) {
 
         // SE JÁ EXISTIR UM SOCKET ABERTO, MATA ELE ANTES DE CRIAR OUTRO
         if (window.psiChatSocket) {
-            console.log("Fechando socket anterior...");
             window.psiChatSocket.disconnect();
             window.psiChatSocket = null;
         }
@@ -94,7 +92,6 @@ function inicializarCaixaEntrada(preFetchedData = null) {
         });
 
         window.psiChatSocket.on('connect', () => {
-            console.log('Chat PSI Conectado:', window.psiChatSocket.id);
             // Tenta sincronizar assim que conecta (caso as mensagens já tenham carregado)
             syncMessagesStatus();
         });
@@ -143,12 +140,10 @@ function inicializarCaixaEntrada(preFetchedData = null) {
     if (window.cleanupPsiChat) window.cleanupPsiChat(); // Limpa anterior se houver
 
     window.cleanupPsiChat = () => {
-        console.log('[CLEANUP] Desmontando chat PSI...');
         window.activePsiChatId = null; // Invalida este componente
         
         if (window.psiChatSocket) {
             window.psiChatSocket.removeAllListeners(); // Remove ouvintes para evitar memória presa
-            console.log(`[CLEANUP] Desconectando socket ID: ${window.psiChatSocket.id}`);
             window.psiChatSocket.disconnect();
             window.psiChatSocket = null;
         }
@@ -188,7 +183,6 @@ function inicializarCaixaEntrada(preFetchedData = null) {
                 renderConversationList();
             }
         } catch (e) {
-            console.error(e);
             messagesThread.innerHTML = `<p style="color:red; text-align:center; padding: 20px;">Erro ao carregar chat.</p>`;
         }
     }
@@ -314,7 +308,6 @@ function inicializarCaixaEntrada(preFetchedData = null) {
                 if (statusContainer) statusContainer.innerHTML = getStatusIcon(savedMessage.status || 'sent');
             }
         } catch (error) {
-            console.error(error);
             alert('Erro ao enviar mensagem.');
             if(tempBubble) tempBubble.remove();
         }
