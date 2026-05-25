@@ -19,6 +19,11 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(r => r.ok ? r.text() : Promise.reject(pageUrl))
             .then(html => {
                 mainContent.innerHTML = html;
+
+                // Injeta controles de filtro de status nas páginas de gerenciamento
+                if (pageUrl === 'admin_gerenciar_pacientes.html' || pageUrl === 'admin_gerenciar_psicologos.html') {
+                    injectStatusFilters(pageUrl);
+                }
                 
                 const oldScript = document.getElementById('dynamic-page-script');
                 if (oldScript) oldScript.remove();
@@ -221,6 +226,64 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Listener para quando os dados do admin forem atualizados em outra página
         window.addEventListener('adminDataUpdated', updateWelcomeMessage);
+    }
+
+    // --- FUNÇÃO PARA INJETAR FILTROS DE STATUS (NOVO) ---
+    function injectStatusFilters(pageName) {
+        // Aguarda um instante para garantir que o HTML da página foi renderizado
+        setTimeout(() => {
+            const filtrosContainer = document.querySelector('.filtros-container');
+            if (!filtrosContainer) return;
+
+            // Evita duplicação se a função for chamada múltiplas vezes
+            if (document.querySelector('.status-filter-container')) return;
+
+            const statusFilterContainer = document.createElement('div');
+            statusFilterContainer.className = 'status-filter-container';
+            statusFilterContainer.style.cssText = "display: flex; flex-wrap: wrap; gap: 10px; width: 100%; border-bottom: 1px solid var(--cinza-borda); padding-bottom: 20px; margin-bottom: 20px;";
+
+            const params = new URLSearchParams(window.pageQueryString);
+            const currentStatus = params.get('status') || '';
+
+            const createButton = (text, statusValue) => {
+                const btn = document.createElement('button');
+                btn.textContent = text;
+                btn.dataset.status = statusValue;
+                btn.className = 'btn-tabela'; // Reutiliza estilo de botão
+
+                // Destaca o botão ativo
+                if (currentStatus === statusValue) {
+                    btn.classList.add('active');
+                }
+
+                btn.onclick = () => {
+                    const searchParams = new URLSearchParams(window.pageQueryString);
+                    searchParams.set('status', statusValue);
+                    searchParams.set('page', '1'); // Reseta para a primeira página ao filtrar
+                    window.navigateToPage(`${pageName}?${searchParams.toString()}`);
+                };
+                return btn;
+            };
+
+            let buttons = [];
+            if (pageName === 'admin_gerenciar_psicologos.html') {
+                buttons = [
+                    createButton('Todos', ''),
+                    createButton('Ativos', 'active'),
+                    createButton('Pendentes', 'pending'),
+                    createButton('Inativos', 'inactive'),
+                    createButton('Lixeira 🗑️', 'deleted')
+                ];
+            } else { // admin_gerenciar_pacientes.html
+                buttons = [
+                    createButton('Todos', ''),
+                    createButton('Lixeira 🗑️', 'deleted')
+                ];
+            }
+            
+            buttons.forEach(btn => statusFilterContainer.appendChild(btn));
+            filtrosContainer.prepend(statusFilterContainer);
+        }, 100); // Pequeno delay para garantir que o DOM está pronto
     }
 
     // ==========================================

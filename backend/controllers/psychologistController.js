@@ -106,14 +106,17 @@ exports.registerPsychologist = async (req, res) => {
             paranoid: false // FIX: Verifica até usuários deletados para permitir reativação
         });
 
-        if (existingUser) {
-            // Retorna 409 (Conflict) para o frontend saber que deve redirecionar
-            // FIX: Comparação case-insensitive para garantir que pegue duplicatas
+        // Se um usuário existe E NÃO está deletado (soft-deleted), então bloqueia.
+        if (existingUser && !existingUser.deletedAt) {
+            // A lógica original de redirecionar para o login faz sentido se a conta estiver ativa.
+            // Mantemos a verificação de e-mail, CPF e CRP para contas ativas.
             if (existingUser.email.toLowerCase() === email.toLowerCase()) {
-                // Se o usuário já existe, limpa ele da lista de espera caso ele tenha caído lá
-                try { if (db.WaitingList) await db.WaitingList.destroy({ where: { email: { [Op.iLike]: email } } }); } catch(e) {}
-                return res.status(409).json({ error: 'E-mail já cadastrado. Redirecionando para login...', redirect: true });
+                return res.status(409).json({ 
+                    error: 'Este e-mail já pertence a uma conta de psicólogo ativa. Tente fazer login.', 
+                    redirect: true 
+                });
             }
+            // As verificações de CRP e CPF também só devem bloquear se a conta estiver ativa.
             if (crp && existingUser.crp === crp) return res.status(400).json({ error: 'CRP já cadastrado.' });
             if (cleanCpf && existingUser.cpf === cleanCpf) return res.status(400).json({ error: 'CPF já cadastrado.' });
         }

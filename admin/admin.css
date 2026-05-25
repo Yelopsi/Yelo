@@ -415,6 +415,13 @@ html {
     border-color: #fd7e14;
 }
 
+/* --- NOVO: Estilo para o botão de filtro de status ativo --- */
+.status-filter-container .btn-tabela.active {
+    background-color: var(--verde-escuro);
+    color: var(--branco-puro);
+    border-color: var(--verde-escuro);
+}
+
 /* --- NOVO: Estilo para o botão de Fixar --- */
 .btn-tabela.btn-fixar {
     color: #f59e0b; /* Laranja/Amarelo */
