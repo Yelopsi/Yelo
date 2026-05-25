@@ -1422,20 +1422,29 @@ exports.getAllPatients = async (req, res) => {
         const page = parseInt(req.query.page, 10) || 1;
         const limit = parseInt(req.query.limit, 10) || 10;
         const offset = (page - 1) * limit;
-        const { search } = req.query;
+        const { search, status } = req.query;
         const whereClause = {};
+        let isParanoid = true; // Padrão: esconde os excluídos
+
         if (search) {
             whereClause[Op.or] = [
                 { nome: { [Op.iLike]: `%${search}%` } },
                 { email: { [Op.iLike]: `%${search}%` } }
             ];
         }
+
+        if (status === 'deleted') {
+            whereClause.deletedAt = { [Op.ne]: null };
+            isParanoid = false; // Força a busca na lixeira
+        }
+
         const { count, rows } = await db.Patient.findAndCountAll({
             where: whereClause,
             limit,
             offset,
             attributes: { exclude: ['senha', 'resetPasswordToken', 'resetPasswordExpires'] },
-            order: [['createdAt', 'DESC']]
+            order: [['createdAt', 'DESC']],
+            paranoid: isParanoid
         });
         res.status(200).json({ data: rows, totalPages: Math.ceil(count / limit), currentPage: page, totalCount: count });
     } catch (error) {
