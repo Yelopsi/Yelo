@@ -1787,6 +1787,31 @@ exports.deletePatient = async (req, res) => {
 };
 
 /**
+ * Rota: DELETE /api/admin/patients/:id/force
+ * Descrição: Exclui um paciente PERMANENTEMENTE (hard delete).
+ */
+exports.forceDeletePatient = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Busca o paciente, incluindo os que estão na lixeira (paranoid: false)
+        const patient = await db.Patient.findByPk(id, { paranoid: false });
+
+        if (!patient) {
+            return res.status(404).json({ error: 'Paciente não encontrado.' });
+        }
+
+        // A opção { force: true } garante a exclusão permanente do registro no banco
+        await patient.destroy({ force: true });
+
+        res.status(200).json({ message: 'Paciente excluído permanentemente com sucesso. O e-mail agora está liberado.' });
+    } catch (error) {
+        console.error('Erro ao excluir paciente permanentemente:', error);
+        res.status(500).json({ error: 'Erro interno no servidor ao realizar a exclusão permanente.' });
+    }
+};
+
+/**
  * Rota: GET /api/admin/conversations/:id/notes
  * Descrição: Busca todas as notas internas de uma conversa.
  */
