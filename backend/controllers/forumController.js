@@ -279,152 +279,94 @@ exports.createComment = async (req, res) => {
         // Responder Pergunta (20 pts, max 5/dia)
         gamificationService.processAction(req.user.id, 'forum_reply').catch(err => console.error("Gamification hook error:", err));
 
-        // --- INÍCIO: SISTEMA DE NOTIFICAÇÕES E MENÇÕES ---
+        // --- INÍCIO: SISTEMA DE NOTIFICAÇÕES E MENÇÕES (ROBUSTO COM ORM) ---
         console.log(`\n--- [NOTIF DEBUG] INICIANDO FLUXO DE NOTIFICAÇÃO ---`);
         console.log(`[NOTIF DEBUG] Comentário criado por: ${req.user.id} | isReply: ${!!parentId}`);        
-        // Rodamos de forma assíncrona (não usa await bloqueante) para não atrasar a resposta no Frontend
+        
         (async () => {
             try {
-                const user = await Psychologist.findByPk(req.user.id);
-                const senderName = isAnonymous ? 'Um colega (Anônimo)' : user.nome;
+                // 1. Busca o remetente
+                const senderUser = await db.Psychologist.findByPk(req.user.id);
+                const senderName = isAnonymous ? 'Um colega (Anônimo)' : (senderUser ? senderUser.nome : 'Um colega');
+
                 const frontendUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
+                let targetId = null;
+                let notifTitle = '';
+                let notifContent = '';
+                let postTitle = 'Tópico';
 
-                // Notificar o dono do Post ou do Comentário Pai (Apenas emails de respostas)
+                // 2. Descobre o alvo
                 if (parentId) {
-                    console.log(`[NOTIF DEBUG] Buscando comentário pai ID: ${parentId}`);
-                    // É uma resposta a um comentário específico
-                    const parentComment = await ForumComment.findByPk(parentId, { include: [Psychologist] });
-                    if (parentComment && parentComment.PsychologistId !== req.user.id && parentComment.Psychologist) {
-                        const parentOwner = parentComment.Psychologist;
-                        console.log(`[NOTIF DEBUG] Dono do comentário pai: ${parentOwner.id} (${parentOwner.nome})`);
-
-                        // --- NOVO: Criar Aviso no Painel ---
-                        try {
-                            await db.sequelize.query(`
-                                CREATE TABLE IF NOT EXISTS "Avisos" (
-                                    id SERIAL PRIMARY KEY,
-                                    title VARCHAR(255) NOT NULL,
-                                    content TEXT NOT NULL,
-                                    author VARCHAR(255),
-                                    status VARCHAR(50) DEFAULT 'published',
-                                    "psychologistId" INTEGER,
-                                    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                                    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                                );
-                            `);
-                            await db.sequelize.query(`ALTER TABLE "Avisos" ADD COLUMN IF NOT EXISTS "psychologistId" INTEGER;`).catch(() => {});
-                            
-                            await db.sequelize.query(`
-                                INSERT INTO "Avisos" (title, content, author, status, "psychologistId", "createdAt", "updatedAt")
-                                VALUES (:title, :content, 'Comunidade Yelo', 'published', :psychologistId, NOW(), NOW())
-                            `, {
-                                replacements: {
-                                    title: 'Nova resposta ao seu comentário!',
-                                    content: `O colega <strong>${senderName}</strong> respondeu ao seu comentário no fórum da Yelo:<br><br><em>"${content.substring(0, 100)}..."</em><br><br><a href="#" onclick="window.loadPage('psi_forum.html')" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para acessar o fórum</a>.`,
-                                    psychologistId: parentOwner.id
-                                }
-                            });
-                            console.log(`[NOTIF DEBUG] Notificação de comentário INSERIDA COM SUCESSO no banco!`);
-                        } catch (e) {
-                            console.error("Erro ao criar aviso de comentário via SQL:", e);
-                        }
-
-                        if (parentOwner.email && emailService.sendEmail) {
-                            const postLink = `${frontendUrl}/psi/psi_dashboard.html?postId=${req.params.id}`;
-                            const emailHtml = `
-                                <div style="font-family: Arial, sans-serif; color: #374151; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
-                                    <div style="text-align: center; margin-bottom: 20px;">
-                                        <h2 style="color: #1B4332; margin: 0;">Nova resposta ao seu comentário! 💬</h2>
-                                    </div>
-                                    <p>Olá <strong>${parentOwner.nome}</strong>,</p>
-                                    <p>O colega <strong>${senderName}</strong> acabou de responder ao seu comentário na comunidade da Yelo:</p>
-                                    <div style="background-color: #f3f4f6; padding: 15px; border-left: 4px solid #1B4332; margin: 20px 0; border-radius: 4px; font-style: italic; color: #4b5563;">
-                                        "${content.substring(0, 150)}${content.length > 150 ? '...' : ''}"
-                                    </div>
-                                    <div style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
-                                        <a href="${postLink}" style="background-color: #1B4332; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 50px; font-weight: bold; display: inline-block;">Ver Resposta na Comunidade</a>
-                                    </div>
-                                </div>
-                            `;
-                            await emailService.sendEmail(
-                                parentOwner.email, 
-                                "Nova resposta ao seu comentário! 💬", 
-                                emailHtml
-                            ).catch(e => console.error("Erro ao enviar email de resposta ao comentário:", e));
-                        }
-                    } else {
-                        console.log(`[NOTIF DEBUG] Notificação ignorada. É o próprio autor respondendo ou autor deletado.`);
+                    console.log(`[NOTIF DEBUG] Buscando dono do comentário pai ID: ${parentId}`);
+                    const parentComment = await db.ForumComment.findByPk(parentId);
+                    
+                    if (parentComment) {
+                        targetId = parentComment.PsychologistId || parentComment.psychologistId;
+                        notifTitle = 'Nova resposta ao seu comentário!';
+                        notifContent = `<strong>${senderName}</strong> respondeu ao seu comentário no fórum da Yelo:<br><br><em>"${content.substring(0, 100)}..."</em><br><br><a href="#" class="aviso-link-direto" data-post-id="${req.params.id}" onclick="window.loadPage('psi_forum.html?postId=${req.params.id}'); return false;" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para acessar o fórum</a>.`;
                     }
                 } else {
                     console.log(`[NOTIF DEBUG] Buscando post original ID: ${req.params.id}`);
-                    // É uma resposta direta ao Tópico (Post) original
-                    const postInfo = await ForumPost.findByPk(req.params.id, { include: [Psychologist] });
-                    if (!postInfo) console.log(`[NOTIF DEBUG] FALHA: Post original não encontrado.`);
+                    const postInfo = await db.ForumPost.findByPk(req.params.id);
                     
-                    if (postInfo && postInfo.PsychologistId !== req.user.id && postInfo.Psychologist) {
-                        const postOwner = postInfo.Psychologist;
-                        console.log(`[NOTIF DEBUG] Dono do Post: ${postOwner.id} (${postOwner.nome})`);
-
-                        // --- NOVO: Criar Aviso no Painel ---
-                        try {
-                            await db.sequelize.query(`
-                                CREATE TABLE IF NOT EXISTS "Avisos" (
-                                    id SERIAL PRIMARY KEY,
-                                    title VARCHAR(255) NOT NULL,
-                                    content TEXT NOT NULL,
-                                    author VARCHAR(255),
-                                    status VARCHAR(50) DEFAULT 'published',
-                                    "psychologistId" INTEGER,
-                                    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                                    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                                );
-                            `);
-                            await db.sequelize.query(`ALTER TABLE "Avisos" ADD COLUMN IF NOT EXISTS "psychologistId" INTEGER;`).catch(() => {});
-                            
-                            await db.sequelize.query(`
-                                INSERT INTO "Avisos" (title, content, author, status, "psychologistId", "createdAt", "updatedAt")
-                                VALUES (:title, :content, 'Comunidade Yelo', 'published', :psychologistId, NOW(), NOW())
-                            `, {
-                                replacements: {
-                                    title: 'Nova resposta na sua discussão!',
-                                    content: `O colega <strong>${senderName}</strong> respondeu ao seu tópico "<strong>${postInfo.title}</strong>":<br><br><em>"${content.substring(0, 100)}..."</em><br><br><a href="#" onclick="window.loadPage('psi_forum.html')" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para acessar a discussão</a>.`,
-                                    psychologistId: postOwner.id
-                                }
-                            });
-                            console.log(`[NOTIF DEBUG] Notificação de Post INSERIDA COM SUCESSO no banco!`);
-                        } catch (e) {
-                            console.error("Erro ao criar aviso de tópico via SQL:", e);
-                        }
-
-                        if (postOwner.email && emailService.sendEmail) {
-                            const postLink = `${frontendUrl}/psi/psi_dashboard.html?postId=${req.params.id}`;
-                            const emailHtml = `
-                                <div style="font-family: Arial, sans-serif; color: #374151; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
-                                    <div style="text-align: center; margin-bottom: 20px;">
-                                        <h2 style="color: #1B4332; margin: 0;">Nova resposta na sua discussão! 💬</h2>
-                                    </div>
-                                    <p>Olá <strong>${postOwner.nome}</strong>,</p>
-                                    <p>O colega <strong>${senderName}</strong> respondeu ao seu tópico "<strong>${postInfo.title}</strong>":</p>
-                                    <div style="background-color: #f3f4f6; padding: 15px; border-left: 4px solid #1B4332; margin: 20px 0; border-radius: 4px; font-style: italic; color: #4b5563;">
-                                        "${content.substring(0, 150)}${content.length > 150 ? '...' : ''}"
-                                    </div>
-                                    <div style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
-                                        <a href="${postLink}" style="background-color: #1B4332; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 50px; font-weight: bold; display: inline-block;">Acessar Discussão</a>
-                                    </div>
-                                </div>
-                            `;
-                            await emailService.sendEmail(
-                                postOwner.email, 
-                                "Nova resposta no seu tópico! 💬", 
-                                emailHtml
-                            ).catch(e => console.error("Erro ao enviar email de resposta ao post:", e));
-                        }
-                    } else {
-                        console.log(`[NOTIF DEBUG] Notificação ignorada. É o próprio autor comentando no seu post ou autor deletado.`);
+                    if (postInfo) {
+                        targetId = postInfo.PsychologistId || postInfo.psychologistId;
+                        postTitle = postInfo.title || postInfo.titulo || 'Tópico';
+                        notifTitle = 'Nova resposta na sua discussão!';
+                        notifContent = `<strong>${senderName}</strong> respondeu ao seu tópico "<strong>${postTitle}</strong>":<br><br><em>"${content.substring(0, 100)}..."</em><br><br><a href="#" class="aviso-link-direto" data-post-id="${req.params.id}" onclick="window.loadPage('psi_forum.html?postId=${req.params.id}'); return false;" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para acessar a discussão</a>.`;
                     }
                 }
+
+                // 3. Se temos alvo e não for auto-resposta
+                if (targetId && String(targetId) !== String(req.user.id)) {
+                    console.log(`[NOTIF DEBUG] Alvo encontrado: ${targetId}. Inserindo aviso...`);
+                    
+                    try {
+                        // FIX: Garante que a tabela existe no banco
+                        if (db.Aviso) await db.Aviso.sync();
+
+                        const novoAviso = await db.Aviso.create({
+                            title: notifTitle,
+                            content: notifContent,
+                            author: 'Comunidade Yelo',
+                            status: 'published',
+                            psychologistId: targetId
+                        });
+                        console.log(`[NOTIF DEBUG] Aviso INSERIDO COM SUCESSO! ID:`, novoAviso.id);
+                    } catch (ormErr) {
+                        console.error(`[NOTIF DEBUG] Erro ao criar aviso no banco:`, ormErr);
+                    }
+
+                    // 4. Busca alvo para e-mail
+                    const targetUser = await db.Psychologist.findByPk(targetId);
+
+                    if (targetUser && targetUser.email) {
+                        const postLink = `${frontendUrl}/psi/psi_dashboard.html?postId=${req.params.id}`;
+                        const emailHtml = `
+                            <div style="font-family: Arial, sans-serif; color: #374151; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
+                                <div style="text-align: center; margin-bottom: 20px;">
+                                    <h2 style="color: #1B4332; margin: 0;">${notifTitle} 💬</h2>
+                                </div>
+                                <p>Olá <strong>${targetUser.nome}</strong>,</p>
+                                <p><strong>${senderName}</strong> respondeu a você na comunidade da Yelo:</p>
+                                <div style="background-color: #f3f4f6; padding: 15px; border-left: 4px solid #1B4332; margin: 20px 0; border-radius: 4px; font-style: italic; color: #4b5563;">
+                                    "${content.substring(0, 150)}${content.length > 150 ? '...' : ''}"
+                                </div>
+                                <div style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
+                                    <a href="${postLink}" style="background-color: #1B4332; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 50px; font-weight: bold; display: inline-block;">Acessar Comunidade</a>
+                                </div>
+                            </div>
+                        `;
+                        if (emailService && emailService.sendEmail) {
+                            await emailService.sendEmail(targetUser.email, notifTitle, emailHtml).catch(e => console.error("Erro ao enviar email:", e));
+                            console.log(`[NOTIF DEBUG] E-mail de notificação enviado para: ${targetUser.email}`);
+                        }
+                    }
+                } else {
+                    console.log(`[NOTIF DEBUG] Notificação ignorada (Auto-resposta ou alvo não encontrado).`);
+                }
             } catch (notifyErr) {
-                console.error("Erro ao processar notificações do Fórum:", notifyErr);
+                console.error("Erro FATAL ao processar notificações do Fórum:", notifyErr);
             }
         })();
         // --- FIM: SISTEMA DE NOTIFICAÇÕES E MENÇÕES ---

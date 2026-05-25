@@ -1,5 +1,4 @@
 async function initializeFavoritosAnalyticsPage() {
-    console.log("Página de Análise de Favoritos inicializada.");
 
     const token = localStorage.getItem('Yelo_token');
     const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001';
@@ -101,7 +100,6 @@ async function initializeFavoritosAnalyticsPage() {
         }
 
     } catch (error) {
-        console.error("Erro ao buscar análise de favoritos:", error);
         grid.innerHTML = `<div class="widget" style="text-align: center; color: red; grid-column: 1 / -1;"><p>${error.message}</p></div>`;
     }
 }

@@ -34,7 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnSubmit = formRegistro ? formRegistro.querySelector('button[type="submit"]') : null;
 
     if (!formRegistro) {
-        console.error("Formulário não encontrado. O script não pode interceptar o envio.");
         return;
     }
 
@@ -132,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         return;
                     }
                 } catch (e) {
-                    console.warn("Login automático falhou:", e);
+                    
                 }
 
                 // Fallback: Redireciona para login se o automático falhar
@@ -151,7 +150,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
         } catch (error) {
-            console.error('Erro de conexão:', error);
             mostrarErro('Erro de conexão com o servidor. Tente novamente.');
             restaurarBotao();
         }

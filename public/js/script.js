@@ -1,4 +1,3 @@
-console.log("Script carregado!");
 
 // --- FUNÇÃO DE INICIALIZAÇÃO DO MENU (Global) ---
 function initMobileMenu() {
@@ -93,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             localStorage.setItem('yelo_global_utms', JSON.stringify(utms));
         }
-    } catch (e) { console.warn('Storage bloqueado pelo navegador:', e); }
+    } catch (e) { }
 
     // --- LÓGICA DE SESSÃO ANÔNIMA (NOVO) ---
     try {
@@ -130,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             window.addEventListener('pagehide', handleUnload);
         }
-    } catch (e) { console.warn('Storage bloqueado pelo navegador:', e); }
+    } catch (e) { }
 
     // --- PROTEÇÃO CONTRA CÓPIA ---
 
@@ -185,7 +184,7 @@ async function checkLoginState() {
         userName = localStorage.getItem('Yelo_user_name');
         userType = localStorage.getItem('Yelo_user_type');
         userPhoto = localStorage.getItem('Yelo_user_photo');
-    } catch (e) { console.warn('Storage is blocked', e); return; }
+    } catch (e) { return; }
 
     // Se não estiver logado, não faz nada (botões padrão aparecem)
     if (!token) return;
@@ -252,7 +251,7 @@ async function checkLoginState() {
             // Salva para a próxima vez
             if (userName) localStorage.setItem('Yelo_user_name', userName);
             if (userType) localStorage.setItem('Yelo_user_type', userType);
-        } catch (e) { console.warn("Erro ao recuperar dados do usuário:", e); }
+        } catch (e) { }
     }
 
     // Prepara os dados

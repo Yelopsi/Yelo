@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
         const rawData = localStorage.getItem('psi_questionario_respostas');
         if (rawData) storedAnswers = JSON.parse(rawData);
-    } catch (e) { console.warn("Sem dados prévios."); }
+    } catch (e) { }
 
     // BLOQUEIO: Se não for admin e não tiver preenchido o questionário, redireciona
     if (modeParam !== 'admin' && (!storedAnswers || Object.keys(storedAnswers).length === 0)) {
@@ -166,7 +166,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let storedAnswers = {};
 
         if (modeParam === 'admin') {
-            console.log("Modo Admin detectado: Usando dados padrão.");
             // Cria dados fictícios para passar na validação do backend
             storedAnswers = {
                 genero_identidade: 'Prefiro não informar',
@@ -202,10 +201,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const dadosPsicologo = { ...storedAnswers, ...registrationData };
         
         // --- DEBUG: VERIFICAÇÃO DE DADOS ---
-        console.log("🛠️ [DEBUG REGISTRO] Dados preparados para envio:", dadosPsicologo);
 
         try {
-            console.log("🛠️ [DEBUG REGISTRO] Enviando requisição para API...");
             const response = await fetch(`${BASE_URL}/api/psychologists/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -214,7 +211,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
 
             // --- DEBUG: RESPOSTA DO SERVIDOR ---
-            console.log(`🛠️ [DEBUG REGISTRO] Status: ${response.status}`, result);
 
             if (response.ok) {
                 // Se não for admin, limpa o cache. Se for admin, não precisa limpar nada.
@@ -252,14 +248,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.location.href = `/login?email=${encodeURIComponent(emailInput.value.trim())}`;
                 }, 2000);
             } else {
-                console.warn("⚠️ [DEBUG REGISTRO] Erro retornado pela API:", result.error);
                 mensagemRegistro.textContent = result.error;
                 mensagemRegistro.className = 'mensagem-erro';
                 if(btnSubmit) { btnSubmit.disabled = false; btnSubmit.textContent = 'Registrar'; }
             }
         } catch (error) {
-            console.error("❌ [DEBUG REGISTRO] Erro crítico no fetch:", error);
-            console.error('Erro de conexão ou script:', error);
             mensagemRegistro.textContent = 'Erro ao conectar com o servidor.';
             mensagemRegistro.className = 'mensagem-erro';
             if(btnSubmit) { btnSubmit.disabled = false; btnSubmit.textContent = 'Registrar'; }

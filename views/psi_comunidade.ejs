@@ -12,6 +12,10 @@
             <h1>Comunidade Q&A</h1>
         </div>
 
+        <!-- Alerta de Novas Perguntas -->
+        <div id="qna-new-questions-alert" style="display:none; background:#e0f2fe; color:#0284c7; padding:15px 20px; border-radius:12px; margin-bottom:25px; font-weight:600; cursor:pointer; text-align:center; border: 1px solid #bae6fd; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.05);" onclick="document.querySelector('.tab-item[data-filter=\\'pending\\']')?.click(); this.style.display='none';">
+        </div>
+
         <div class="qna-container-admin" id="qna-list-container">
             <div class="loader-wrapper">
                 <div class="loader-spinner"></div>

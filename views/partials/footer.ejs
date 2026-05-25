@@ -104,7 +104,11 @@
             </div>
         </div>
 
-        <hr class="rodape-divisor">
+        <div class="rodape-ilustracao">
+            <img src="/assets/images/rodape.png" alt="Ilustração Yelo">
+        </div>
+
+        <hr class="rodape-divisor" style="margin-top: 0; position: relative; z-index: 1;">
         
         <div class="rodape-base">
             <div class="rodape-bloco-rt">
@@ -190,6 +194,28 @@
             .mobile-break {
                 display: none;
         }
+    }
+
+    /* Estilos da Ilustração do Rodapé */
+    .rodape-ilustracao {
+        display: flex;
+        justify-content: flex-start;
+        width: 100%;
+        margin-top: 20px;
+        position: relative;
+        z-index: 2;
+    }
+    .rodape-ilustracao img {
+        max-height: 84px;
+        display: block;
+        /* AJUSTE MANUAL DE DISTÂNCIA: */
+        /* Aumente ou diminua os valores abaixo para afastar ou aproximar a imagem da linha */
+        margin-bottom: -20px; /* Espaçamento base até a linha */
+        transform: translateY(32px); /* Ajuste fino: valores positivos empurram para baixo, negativos para cima */
+    }
+
+    @media (max-width: 768px) {
+        .rodape-ilustracao { display: none !important; }
     }
 </style>
 

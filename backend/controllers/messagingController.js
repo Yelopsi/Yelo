@@ -20,7 +20,6 @@ exports.getConversations = async (req, res) => {
     ];
     res.json(conversas);
   } catch (error) {
-    console.error('Erro ao buscar conversas:', error);
     res.status(500).json({ error: 'Erro interno' });
   }
 };
@@ -30,7 +29,6 @@ exports.getMessages = async (req, res) => {
     // --- CORREÇÃO DE ROBUSTEZ ---
     const user = req.psychologist || req.patient;
     if (!user) {
-        console.error('[DIAGNÓSTICO messagingCtrl] getMessages: Usuário não autenticado.');
         return res.status(401).json({ error: 'Usuário não autenticado' });
     }
     const psiId = user.id;
@@ -54,7 +52,6 @@ exports.getMessages = async (req, res) => {
 
     res.json(formattedMessages);
   } catch (error) {
-    console.error('Erro ao buscar mensagens:', error);
     res.status(500).json({ error: 'Erro ao buscar mensagens' });
   }
 };
@@ -64,7 +61,6 @@ exports.sendMessage = async (req, res) => {
     // --- CORREÇÃO DE ROBUSTEZ ---
     const user = req.psychologist || req.patient;
     if (!user) {
-        console.error('[DIAGNÓSTICO messagingCtrl] sendMessage: Usuário não autenticado.');
         return res.status(401).json({ error: 'Não autorizado' });
     }
     const psiId = user.id;
@@ -85,7 +81,6 @@ exports.sendMessage = async (req, res) => {
 
     res.json({ success: true, message: newMessage });
   } catch (error) {
-    console.error('Erro ao enviar mensagem:', error);
     res.status(500).json({ error: 'Erro ao enviar mensagem' });
   }
 };

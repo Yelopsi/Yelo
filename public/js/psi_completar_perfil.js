@@ -55,7 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
         } catch (error) {
-            console.error('Erro ao completar perfil:', error);
             mensagemEl.textContent = 'Falha na conexão com o servidor.';
             mensagemEl.className = 'mensagem-erro';
         }

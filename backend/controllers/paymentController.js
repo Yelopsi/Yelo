@@ -99,7 +99,6 @@ exports.createPreference = async (req, res) => {
         try {
             customerSearch = JSON.parse(responseText);
         } catch (e) {
-            console.error(`[ASAAS FATAL] Resposta inválida (${customerResponse.status}). Conteúdo recebido:\n${responseText.substring(0, 500)}`);
             throw Object.assign(new Error(`Erro de comunicação com Asaas (Resposta não é JSON). Verifique os logs do servidor.`), { cause: e });
         }
         
@@ -116,7 +115,6 @@ exports.createPreference = async (req, res) => {
 
             // --- FIX: O Asaas exige CPF para PIX. Se o cliente antigo não tinha, atualizamos agora ---
             if (!existingCpf && cleanCpfCnpj) {
-                console.log(`[ASAAS] Atualizando CPF do cliente existente: ${customerIdAsaas}`);
                 await fetch(`${ASAAS_API_URL}/customers/${customerIdAsaas}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
@@ -154,9 +152,7 @@ exports.createPreference = async (req, res) => {
         // Se o psicólogo ainda está dentro do trial ou plano vigente, agenda para quando acabar
         if (psychologist.planExpiresAt && new Date(psychologist.planExpiresAt) > new Date()) {
             nextDueDate = new Date(psychologist.planExpiresAt).toISOString().split('T')[0];
-            console.log(`[ASAAS] Cartão adicionado com plano ativo/trial: Cobrança agendada para ${nextDueDate}`);
         } else {
-            console.log(`[ASAAS] Plano expirado ou sem data: Cobrança Imediata.`);
         }
 
         // --- LÓGICA INTELIGENTE DE ATUALIZAÇÃO OU CRIAÇÃO ---
@@ -177,7 +173,6 @@ exports.createPreference = async (req, res) => {
                 
                 // Se a assinatura não pode ser atualizada (foi removida, está inativa ou não encontrada)
                 if (res.status === 404 || (res.status === 400 && data.errors && data.errors.some(e => e.code === 'invalid_action' || e.code === 'deleted'))) {
-                    console.log(`[ASAAS] Assinatura antiga (${existingSubId}) inválida para update. Criando nova...`);
                     existingSubId = null; // Reseta o ID para forçar a criação abaixo
                 } else {
                     return { res, data };
@@ -214,7 +209,6 @@ exports.createPreference = async (req, res) => {
             
             // --- FALLBACK: Se PIX não for permitido para assinatura, tenta BOLETO (que tem PIX embutido) ---
             if (subscriptionRes.status === 400 && subscriptionData.errors && subscriptionData.errors[0].description.includes('forma de pagamento')) {
-                console.warn("[ASAAS] PIX direto recusado (Verifique se 'Pix' está ativo para assinaturas no painel Asaas). Tentando fallback para BOLETO.");
                 subscriptionPayload.billingType = 'BOLETO';
                 
                 const fallbackResult = await saveAsaasSubscription(subscriptionPayload);
@@ -315,7 +309,6 @@ exports.createPreference = async (req, res) => {
         res.json({ success: true, subscriptionId: subscriptionData.id });
 
     } catch (error) {
-        console.error('Erro Asaas:', error);
         // GRAVA O ERRO NO SISTEMA PARA O DASHBOARD VER
         try {
             if (db.SystemLog) {
