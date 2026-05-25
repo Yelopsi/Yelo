@@ -38,7 +38,6 @@ exports.getConversations = async (req, res) => {
         
         return res.json(formattedConversations);
     } catch (error) {
-        console.error('Erro ao buscar conversas:', error);
         res.status(500).json({ error: 'Erro interno ao buscar conversas.' });
     }
 };
@@ -46,7 +45,6 @@ exports.getConversations = async (req, res) => {
 // Lista mensagens entre o usuário logado e um contato (Admin ou outro usuário)
 exports.getMessages = async (req, res) => {
     try {
-        console.log('--- EXECUTANDO: messageController.getMessages ---');
 
         // --- CORREÇÃO DE ROBUSTEZ ---
         // Em vez de confiar em 'req.user', verificamos 'req.psychologist' e 'req.patient'
@@ -55,12 +53,10 @@ exports.getMessages = async (req, res) => {
         const userType = req.psychologist ? 'psychologist' : 'patient';
 
         if (!user) {
-            console.error('[DIAGNÓSTICO] getMessages: Nenhum usuário autenticado encontrado. Verifique o token e o authMiddleware.');
             return res.status(401).json({ error: 'Usuário não autenticado.' });
         }
         
         const userId = user.id;
-        console.log(`--- [DIAGNÓSTICO] getMessages --- User: { id: ${userId}, type: ${userType} }`);
 
         const { contactType } = req.query; // ex: 'admin'
 
@@ -86,7 +82,6 @@ exports.getMessages = async (req, res) => {
 
         return res.json([]); // Se não for para o admin, retorna vazio por enquanto.
     } catch (error) {
-        console.error('Erro ao buscar mensagens:', error);
         res.status(500).json({ error: 'Erro interno ao buscar mensagens: ' + error.message });
     }
 };
@@ -94,19 +89,16 @@ exports.getMessages = async (req, res) => {
 // Envia uma nova mensagem
 exports.sendMessage = async (req, res) => {
     try {
-        console.log('--- EXECUTANDO: messageController.sendMessage ---');
 
         // --- CORREÇÃO DE ROBUSTEZ ---
         const sender = req.psychologist || req.patient;
         const senderType = req.psychologist ? 'psychologist' : 'patient';
 
         if (!sender) {
-            console.error('[DIAGNÓSTICO] sendMessage: Nenhum usuário autenticado encontrado. Verifique o token e o authMiddleware.');
             return res.status(401).json({ error: 'Usuário não autenticado.' });
         }
 
         const senderId = sender.id;
-        console.log(`--- [DIAGNÓSTICO] sendMessage --- User: { id: ${senderId}, type: ${senderType} } | Body:`, req.body);
 
         const { recipientId, recipientType, content } = req.body;
 
@@ -141,12 +133,10 @@ exports.sendMessage = async (req, res) => {
         // --- NOTIFICAÇÃO EM TEMPO REAL (SOCKET.IO) ---
         const io = getIo();
         if (io) {
-            console.log(`[SOCKET] Tentando emitir mensagem via Socket. RecipientType: ${recipientType}`);
             
             // --- DIAGNÓSTICO DE SALA ---
             const adminRoom = io.sockets.adapter.rooms.get('admin_room');
             const numAdmins = adminRoom ? adminRoom.size : 0;
-            console.log(`[SOCKET DIAGNOSTIC] Clientes conectados na sala 'admin_room': ${numAdmins}`);
             // ----------------------------
 
             const msgPayload = newMessage.toJSON();
@@ -157,18 +147,15 @@ exports.sendMessage = async (req, res) => {
                 io.to('admin_room').emit('conversationUpdated', { id: conversation.id, lastMessage: msgPayload });
             } else {
                 // Se for um usuário específico, envia para a sala do ID dele
-                console.log(`[SOCKET] Emitindo para user ID: ${recipientId}`);
                 io.to(recipientId.toString()).emit('receiveMessage', msgPayload);
                 io.to(recipientId.toString()).emit('conversationUpdated', { id: conversation.id, lastMessage: msgPayload });
             }
         } else {
-            console.error('[SOCKET] ERRO: Instância IO não encontrada no controller.');
         }
         // ---------------------------------------------
 
         res.status(201).json(newMessage);
     } catch (error) {
-        console.error('Erro ao enviar mensagem:', error);
         res.status(500).json({ error: 'Erro interno ao enviar mensagem: ' + error.message });
     }
 };
@@ -192,7 +179,6 @@ exports.markConversationAsRead = async (req, res) => {
         );
         res.status(200).json({ message: 'Mensagens marcadas como lidas.' });
     } catch (error) {
-        console.error('Erro ao marcar mensagens como lidas:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };

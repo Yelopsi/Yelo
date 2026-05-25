@@ -374,11 +374,11 @@
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                 <div class="calc-input-group">
-                    <label>Aluguel // Plataformas</label>
+                    <label>Aluguel / Plataformas</label>
                     <div class="input-prefix-group"><span class="prefix">R$</span><input type="number" id="calc-custo-aluguel" value="150" class="calc-trigger"></div>
                 </div>
                 <div class="calc-input-group">
-                    <label>Supervisão // Terapia</label>
+                    <label>Supervisão / Terapia</label>
                     <div class="input-prefix-group"><span class="prefix">R$</span><input type="number" id="calc-custo-desenvolvimento" value="400" class="calc-trigger"></div>
                 </div>
                 <div class="calc-input-group">
@@ -497,7 +497,7 @@
 
             // 2. Cálculos de Tempo
             const semanasUteisAno = 52 - feriasSemanas;
-            const semanasUteisMes = semanasUteisAno // 12; // Média real de semanas trabalhadas no mês
+            const semanasUteisMes = semanasUteisAno / 12; // Média real de semanas trabalhadas no mês
             
             // TAXA DE OCUPAÇÃO: Consideramos que 75% das horas disponíveis são preenchidas/cobradas
             const taxaOcupacao = 0.75;
@@ -506,14 +506,21 @@
             // 3. Cálculos Financeiros Base
             const custoTotalMensal = custoAluguel + custoDesenv + custoImp;
             
-            // Faturamento Bruto Necessário = Renda Líquida + Custos Fixos
-            const faturamentoNecessario = rendaLiquida + custoTotalMensal;
+            // Faturamento Bruto Base = Renda Líquida + Custos Fixos
+            const faturamentoBase = rendaLiquida + custoTotalMensal;
 
-            // Valor Ideal da Sessão (Break-even + Lucro Desejado)
-            let valorSessaoIdeal = 0;
+            // Valor Ideal Base da Sessão
+            let valorSessaoBase = 0;
             if (sessoesEfetivasPorMes > 0) {
-                valorSessaoIdeal = faturamentoNecessario // sessoesEfetivasPorMes;
+                valorSessaoBase = faturamentoBase / sessoesEfetivasPorMes;
             }
+            
+            // Ajuste de Autoridade: O valor ideal cresce conforme a experiência e formação
+            let valorSessaoIdeal = valorSessaoBase * multXp * multFormacao;
+            
+            // Recalcula o faturamento e lucro projetados com base no valor ideal ajustado
+            const faturamentoProjetado = valorSessaoIdeal * sessoesEfetivasPorMes;
+            const lucroProjetado = faturamentoProjetado - custoTotalMensal;
 
             // 4. Inteligência de Mercado (Yelo Mock)
             // Base mais realista: R$ 120 * Multiplicador de XP * Multiplicador de Formação
@@ -529,8 +536,8 @@
             setTimeout(() => elValor.style.transform = 'scale(1)', 150);
             elValor.textContent = formatCurrency(valorSessaoIdeal);
 
-            document.getElementById('res-faturamento').textContent = formatCurrency(faturamentoNecessario);
-            document.getElementById('res-lucro').textContent = formatCurrency(rendaLiquida);
+            document.getElementById('res-faturamento').textContent = formatCurrency(faturamentoProjetado);
+            document.getElementById('res-lucro').textContent = formatCurrency(lucroProjetado);
             document.getElementById('res-media-mercado').textContent = formatCurrency(mediaMercado);
 
             // Lógica do Resumo Dinâmico
@@ -540,10 +547,10 @@
             if (isAutoMode && window.autoData) {
                 const { sessionsCount, uniquePatients, totalIncome, avgSessionValue } = window.autoData;
                 
-                const faturamentoFaltante = Math.max(0, faturamentoNecessario - totalIncome);
+                const faturamentoFaltante = Math.max(0, faturamentoProjetado - totalIncome);
                 const valorBaseCalculo = avgSessionValue > 0 ? avgSessionValue : valorSessaoIdeal;
-                const sessoesFaltantes = valorBaseCalculo > 0 ? Math.ceil(faturamentoFaltante / ) : 0;
-                const pacientesEstimadosFaltantes = Math.ceil(sessoesFaltantes / ); // Estimativa de 4 sessões/mês
+                const sessoesFaltantes = valorBaseCalculo > 0 ? Math.ceil(faturamentoFaltante / valorBaseCalculo) : 0;
+                const pacientesEstimadosFaltantes = Math.ceil(sessoesFaltantes / 4); // Estimativa de 4 sessões/mês
                 
                 summaryHtml = `
                     <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);">
@@ -555,7 +562,7 @@
                 
                 if (faturamentoFaltante > 0) {
                     summaryHtml += `
-                        Para alcançar sua meta de <strong>${formatCurrency(rendaLiquida)} livres</strong>, você ainda precisa faturar <strong>${formatCurrency(faturamentoFaltante)}</strong>.<br><br>
+                        Para alcançar sua meta de <strong>${formatCurrency(lucroProjetado)} livres</strong>, você ainda precisa faturar <strong>${formatCurrency(faturamentoFaltante)}</strong>.<br><br>
                         Considerando seu valor médio/ideal (<strong>${formatCurrency(valorBaseCalculo)}</strong>), você precisa de mais <strong>${sessoesFaltantes} sessões</strong> neste mês (aprox. <strong>${pacientesEstimadosFaltantes} novos pacientes</strong>).
                     `;
                     
@@ -613,7 +620,7 @@
                                 uniquePatients: uniquePatients,
                                 totalIncome: totalIncome,
                                 totalCosts: totalCosts,
-                                avgSessionValue: activeAppointments.length > 0 ? (totalIncome // activeAppointments.length) : 0
+                                avgSessionValue: activeAppointments.length > 0 ? (totalIncome / activeAppointments.length) : 0
                             };
                             
                             if (totalCosts > 0) {

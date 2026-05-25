@@ -459,7 +459,6 @@
         if (response.ok) {
             const user = await response.json();
             window.currentUserData = user; // Salva para o modal de pagamento
-            console.log("Debug Assinatura - Dados do Usuário:", user);
 
             // --- CÁLCULO DE DIAS RESTANTES DO TRIAL ---
             const hoje = new Date();

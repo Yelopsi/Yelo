@@ -562,7 +562,6 @@ const initProfilePage = async () => {
                                 body: JSON.stringify({ patientId, guestPhone, guestName })
                             });
                         } catch (err) {
-                            console.error("Erro ao registrar clique:", err);
                         }
                     }, { once: true });
                 } else {
@@ -606,7 +605,7 @@ const initProfilePage = async () => {
                         setTimeout(() => form.style.boxShadow = "none", 2000);
                     }
                 }, 800);
-            } catch (e) { console.error("Erro ao restaurar rascunho:", e); }
+            } catch (e) { }
         }
 
         form.onsubmit = async (e) => {
@@ -702,7 +701,6 @@ const initProfilePage = async () => {
                         }
                     }
                 } catch (error) {
-                    console.error("Erro review:", error);
                     showToast("Erro de conexão.", "error");
                 } finally {
                     if (btn) { btn.disabled = false; btn.textContent = originalText; }
@@ -811,7 +809,7 @@ const initProfilePage = async () => {
                     const data = await res.json();
                     if (data.isFavorited) activeBtn.classList.add('active');
                 }
-            } catch (e) { console.error("Erro ao checar favorito:", e); }
+            } catch (e) { }
         }
 
         // 2. Click Handler
@@ -900,7 +898,6 @@ const initProfilePage = async () => {
                     showToast("Erro ao atualizar favoritos.", "error");
                 }
             } catch (err) {
-                console.error(err);
                 showToast("Erro de conexão.", "error");
             }
         });
@@ -912,7 +909,6 @@ const initProfilePage = async () => {
         const profileData = window.YELO_PROFILE_DATA;
 
         if (!profileData) {
-            console.error("Dados do perfil não encontrados. O SSR pode ter falhado.");
             return;
         }
 
@@ -923,7 +919,18 @@ const initProfilePage = async () => {
                     'id_psi': profileData.id
                 });
             }
-        } catch(e) { console.warn('[GA4] Erro ao rastrear visualização de perfil', e); }
+        } catch(e) { }
+
+        // Rastreamento Yelo: Visualização do Perfil (Com Fonte)
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const source = urlParams.get('ref') === 'match' ? 'profile_click_funnel' : 'direct_view';
+            fetch(`${BASE_URL}/api/psychologists/${profileData.id}/appearance`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: source })
+            }).catch(() => {});
+        } catch(e) {}
 
         /// a página já foi renderizada no servidor.
         // Apenas inicializamos os componentes dinâmicos que o JS controla.
@@ -950,7 +957,7 @@ const initProfilePage = async () => {
                         showToast("Adicionado aos favoritos!", "success");
                         const btn = document.getElementById('btn-favorite');
                         if (btn) btn.classList.add('active');
-                    } catch (e) { console.error("Erro no auto-favorite:", e); }
+                    } catch (e) { }
                 }
             }
 
@@ -1003,10 +1010,9 @@ const initProfilePage = async () => {
                         el.style.setProperty('display', 'flex', 'important'); // Força a exibição
                     });
                 }
-            } catch (e) { console.warn("Aviso de próximo horário ignorado: Rota pendente no backend.", e); }
+            } catch (e) { }
 
         } catch (dynamicInitError) {
-            console.error("Erro ao inicializar componentes dinâmicos:", dynamicInitError);
         }
     };
 

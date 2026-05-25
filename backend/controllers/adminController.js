@@ -228,41 +228,46 @@ exports.getPsychologistFullDetails = async (req, res) => {
             return res.status(404).json({ error: 'Psicólogo não encontrado.' });
         }
 
+        const numericId = parseInt(id, 10);
+
         // 2. Blog Posts (Se o model existir)
-        let blogPosts = [];
-        if (db.Post) {
-            blogPosts = await db.Post.findAll({
-                where: { psychologistId: id },
-                order: [['createdAt', 'DESC']]
-            }).catch(() => []);
-        }
+        let blogPosts = await db.sequelize.query(
+            `SELECT * FROM posts WHERE psychologist_id = :id ORDER BY COALESCE(created_at, "createdAt") DESC`,
+            { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => db.sequelize.query(
+            `SELECT * FROM posts WHERE "psychologistId" = :id ORDER BY COALESCE(created_at, "createdAt") DESC`,
+            { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        )).catch(() => []);
 
         // 3. Fórum (Posts e Comentários)
-        let forumPosts = [];
-        let forumComments = [];
-        
-        // Tenta buscar posts do fórum (considerando variações de FK)
-        if (db.ForumPost) {
-            try {
-                forumPosts = await db.ForumPost.findAll({ where: { PsychologistId: id }, order: [['createdAt', 'DESC']] });
-            } catch (e) {
-                // Fallback para camelCase se PascalCase falhar
-                forumPosts = await db.ForumPost.findAll({ where: { psychologistId: id }, order: [['createdAt', 'DESC']] }).catch(() => []);
-            }
-        }
+        let forumPosts = await db.sequelize.query(
+            `SELECT * FROM "ForumPosts" WHERE "PsychologistId" = :id ORDER BY "createdAt" DESC`,
+            { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => db.sequelize.query(
+            `SELECT * FROM "ForumPosts" WHERE "psychologistId" = :id ORDER BY "createdAt" DESC`,
+            { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        )).catch(() => []);
 
-        // Tenta buscar comentários do fórum
-        if (db.ForumComment) {
-            try {
-                forumComments = await db.ForumComment.findAll({ 
-                    where: { PsychologistId: id },
-                    include: db.ForumPost ? [{ model: db.ForumPost, attributes: ['titulo'] }] : [],
-                    order: [['createdAt', 'DESC']] 
-                });
-            } catch (e) {
-                forumComments = await db.ForumComment.findAll({ where: { psychologistId: id }, order: [['createdAt', 'DESC']] }).catch(() => []);
-            }
-        }
+        let forumComments = await db.sequelize.query(
+            `SELECT fc.*, COALESCE(fp.title, fp.titulo) as "postTitle"
+             FROM "ForumComments" fc
+             LEFT JOIN "ForumPosts" fp ON fc."ForumPostId" = fp.id
+             WHERE fc."PsychologistId" = :id
+             ORDER BY fc."createdAt" DESC`,
+            { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => db.sequelize.query(
+            `SELECT fc.*, COALESCE(fp.title, fp.titulo) as "postTitle"
+             FROM "ForumComments" fc
+             LEFT JOIN "ForumPosts" fp ON fc."forumPostId" = fp.id
+             WHERE fc."psychologistId" = :id
+             ORDER BY fc."createdAt" DESC`,
+            { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        )).catch(() => []);
+
+        console.log(`\n--- [DEBUG KPIs] DETALHES DO PROFISSIONAL (ID: ${numericId}) ---`);
+        console.log(`[DEBUG] Blog Posts Encontrados:`, blogPosts.length);
+        console.log(`[DEBUG] Forum Posts Encontrados:`, forumPosts.length);
+        console.log(`[DEBUG] Forum Comments Encontrados:`, forumComments.length);
 
         // 4. Avaliações
         const reviews = await db.Review.findAll({
@@ -270,30 +275,26 @@ exports.getPsychologistFullDetails = async (req, res) => {
             order: [['createdAt', 'DESC']]
         });
 
-        const numericId = parseInt(id, 10);
-
         // 5. Matches COUNT (Garante o número exato no Card separando do SELECT * que pode falhar)
         const matchesCountResult = await db.sequelize.query(
             `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :id`,
             { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
-        ).catch(() => 
-            db.sequelize.query(
-                `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "PsychologistId" = :id`,
-                { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
-            )
-        ).catch(() => [{ count: 0 }]);
+        ).catch(() => db.sequelize.query(
+            `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "PsychologistId" = :id`,
+            { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        )).catch(() => [{ count: 0 }]);
         const matchesCount = parseInt(matchesCountResult[0]?.count || 0, 10);
+        
+        console.log(`[DEBUG] Matches Raw Result:`, matchesCountResult);
 
         // 5.1 Matches TIMELINE (Lista para a linha do tempo, excluindo a coluna de array TEXT[] para evitar crash do driver)
         let matches = await db.sequelize.query(
             `SELECT id, "psychologistId", "matchScore", "createdAt", "updatedAt", "patientId", "source" FROM "MatchEvents" WHERE "psychologistId" = :id`,
             { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
-        ).catch(() => 
-            db.sequelize.query(
-                `SELECT id, "PsychologistId", "matchScore", "createdAt", "updatedAt", "patientId", "source" FROM "MatchEvents" WHERE "PsychologistId" = :id`,
-                { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
-            )
-        ).catch(() => []);
+        ).catch(() => db.sequelize.query(
+            `SELECT id, "PsychologistId", "matchScore", "createdAt", "updatedAt", "patientId", "source" FROM "MatchEvents" WHERE "PsychologistId" = :id`,
+            { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        )).catch(() => []);
 
         // Ordenação garantida via JS
         if (matches && Array.isArray(matches)) {
@@ -306,12 +307,13 @@ exports.getPsychologistFullDetails = async (req, res) => {
         const whatsappStats = await db.sequelize.query(
             `SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "psychologistId" = :id`,
             { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
-        ).catch(() => 
-            db.sequelize.query(
-                `SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "PsychologistId" = :id`,
-                { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
-            )
-        ).catch(() => [{ count: 0 }]);
+        ).catch(() => db.sequelize.query(
+            `SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "PsychologistId" = :id`,
+            { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        )).catch(() => [{ count: 0 }]);
+        
+        console.log(`[DEBUG] WhatsApp Clicks Raw Result:`, whatsappStats);
+        console.log(`--------------------------------------------------------\n`);
 
         res.json({
             psychologist,
@@ -944,6 +946,13 @@ exports.getDashboardStats = async (req, res) => {
             // NOVAS QUERIES GERAIS
             db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsappClickLogs"`, { type: db.sequelize.QueryTypes.SELECT }).catch(e => { console.error("Erro KPI Cliques:", e.message); return [{ count: 0 }]; })
         ]);
+
+        console.log(`\n--- [DEBUG KPIs] DASHBOARD GERAL ---`);
+        console.log(`[DEBUG] Pacientes:`, patientStatsResult);
+        console.log(`[DEBUG] Psicólogos:`, psychologistStatsResult);
+        console.log(`[DEBUG] Demandas (Questionários):`, demandStatsResult);
+        console.log(`[DEBUG] WhatsApp Clicks Totais:`, totalClicksResult);
+        console.log(`--------------------------------------\n`);
 
         const patientStats = patientStatsResult[0] || {};
         const psychologistStats = psychologistStatsResult[0] || {};

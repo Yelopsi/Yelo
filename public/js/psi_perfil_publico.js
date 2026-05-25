@@ -30,7 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (profileContainer) profileContainer.style.display = 'block';
             })
             .catch(error => {
-                console.error(error);
                 showError('Erro ao processar as informações do perfil.');
             });
     } else {
@@ -56,7 +55,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     'id_psi': psi.id
                 });
             }
-        } catch(e) { console.warn('[GA4] Erro ao rastrear visualização de perfil', e); }
+        } catch(e) { }
+
+        // Rastreamento Yelo: Visualização do Perfil (Com Fonte)
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const source = urlParams.get('ref') === 'match' ? 'profile_click_funnel' : 'direct_view';
+            fetch(`${API_BASE_URL}/api/psychologists/${psi.id}/appearance`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: source })
+            }).catch(() => {});
+        } catch(e) {}
 
         // Bloco Principal
         const photoEl = document.getElementById('psi-photo');
@@ -263,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     e.preventDefault(); // Evita a "Race Condition" bloqueando a saída imediata
                     
                     // 1. Dispara tracking interno (Fire and Forget)
-                    fetch(`${API_BASE_URL}/api/psychologists/${psi.slug}/whatsapp-click`, { method: 'POST' }).catch(console.error);
+                    fetch(`${API_BASE_URL}/api/psychologists/${psi.slug}/whatsapp-click`, { method: 'POST' }).catch(() => {});
                     
                     const goToWhatsApp = () => window.open(whatsappLink, '_blank');
                     
@@ -487,7 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const { rating, comment } = JSON.parse(savedDraft);
                 if (comment) form.querySelector('textarea[name="comentario"]').value = comment;
                 if (rating) form.querySelector(`input[name="rating"][value="${rating}"]`).checked = true;
-            } catch (e) { console.error(e); }
+                    } catch (e) { }
         }
 
         form.onsubmit = async (e) => {
@@ -551,20 +561,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 script.async = true;
                 script.defer = true;
                 script.onload = () => {
-                    console.log('[DEBUG GOOGLE LOGIN] Script do Google carregado.');
                     try {
                         google.accounts.id.initialize({
                             client_id: '283886540808-qj13i35cfagnp9rc6qou1o66mdv3ppkl.apps.googleusercontent.com',
                             callback: async (response) => {
-                                console.log('[DEBUG GOOGLE LOGIN] Callback do Google disparado!', response);
                                 try {
-                                    console.log('[DEBUG GOOGLE LOGIN] Enviando token para o backend na rota:', `${API_BASE_URL}/api/patients/google`);
                                     const authRes = await fetch(`${API_BASE_URL}/api/patients/google`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: response.credential, isReviewValidation: true }) });
                                     
-                                    console.log('[DEBUG GOOGLE LOGIN] Resposta do backend:', authRes.status);
                                     if (authRes.ok) {
                                         const authData = await authRes.json();
-                                        console.log('[DEBUG GOOGLE LOGIN] Sucesso no backend:', authData);
                                         localStorage.setItem('Yelo_token', authData.token);
                                         
                                         const modernOverlay = document.getElementById('modern-modal-overlay') || document.querySelector('div[style*="z-index:999999"]') || document.querySelector('div[style*="z-index: 999999"]');
@@ -573,19 +578,15 @@ document.addEventListener('DOMContentLoaded', () => {
                                         enviarAvaliacao(authData.token);
                                     } else { 
                                         const errorText = await authRes.text();
-                                        console.error('[DEBUG GOOGLE LOGIN] Erro retornado pelo backend:', errorText);
                                         showToast("Falha na autenticação.", "error"); 
                                     }
                                 } catch (error) { 
-                                    console.error('[DEBUG GOOGLE LOGIN] Erro no fetch para o backend:', error);
                                     showToast("Erro ao conectar com o Google.", "error"); 
                                 }
                             }
                         });
-                        console.log('[DEBUG GOOGLE LOGIN] Renderizando botão...');
                         google.accounts.id.renderButton(document.getElementById('google-btn-container'), { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with' });
                     } catch (e) {
-                        console.error('[DEBUG GOOGLE LOGIN] Erro fatal ao inicializar GSI:', e);
                     }
                 };
                 document.head.appendChild(script);

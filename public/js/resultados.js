@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     <div class="match-footer">
                         <div class="match-price">${precoHtml}</div>
-                        <a href="/${profile.slug}" class="btn-profile" target="_blank">Ver Perfil</a>
+                        <a href="/${profile.slug}?ref=match" class="btn-profile" target="_blank">Ver Perfil</a>
                     </div>
                 </div>
             </div>
@@ -111,7 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                         // Não precisamos fazer nada se der certo, o visual já mudou
                     } catch (error) {
-                        console.error("Erro ao favoritar", error);
                         // Reverte se der erro
                         btn.classList.toggle('favorited');
                         btn.textContent = !isNowFav ? '♥' : '♡';
@@ -119,23 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             });
-        });
-    }
-
-    // Função para contabilizar o KPI "Aparições no Top 3"
-    function trackTop3Appearances(profiles) {
-        if (!profiles || !Array.isArray(profiles)) return;
-
-        // Pega apenas os 3 primeiros resultados (Top 3)
-        const top3 = profiles.slice(0, 3);
-
-        top3.forEach(profile => {
-            if (profile.id) {
-                // Envia o evento para o backend (Fire and Forget)
-                fetch(`${BASE_URL}/api/psychologists/${profile.id}/appearance`, { 
-                    method: 'POST' 
-                }).catch(err => console.warn(`Erro ao registrar aparição para ID ${profile.id}`, err));
-            }
         });
     }
 
@@ -180,7 +162,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         }));
                     }
                 } catch (e) {
-                    console.error("Erro ao ler dados salvos", e);
                 }
             }
 
@@ -193,9 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Ativa os botões
             setupFavoriteButtons();
-            
-            // KPI: Contabiliza aparições para os 3 primeiros
-            trackTop3Appearances(dataToRender);
 
             // Troca telas
             loadingScreen.style.transition = 'opacity 0.3s ease';
@@ -221,15 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     // Abre o perfil se clicar no card, exceto no botão de 'Ver Perfil' que já possui link nativo
                     if (!e.target.closest('.btn-profile') && slug) {
-                        window.open(`/${slug}`, '_blank');
-                    }
-                    
-                    if (profileId) {
-                        fetch(`${BASE_URL}/api/psychologists/${profileId}/appearance`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ type: 'profile_click_funnel' })
-                        }).catch(() => {});
+                        window.open(`/${slug}?ref=match`, '_blank');
                     }
                 }
             });

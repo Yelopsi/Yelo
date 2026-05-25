@@ -47,6 +47,7 @@
     const token = localStorage.getItem('Yelo_token');
     let allAvisos = [];
     let currentFilter = 'all';
+    let visibleCount = 10;
 
     function renderAvisos(avisos) {
         container.innerHTML = '';
@@ -108,15 +109,48 @@
             fullContent.innerHTML = personalizedContent.replace(/\n/g, '<br>');
 
             item.addEventListener('click', () => {
-                const isExpanded = item.classList.toggle('expanded');
-                if (isExpanded && !aviso.read) {
+                if (!aviso.read) {
                     markAsRead(aviso.id, item);
                     aviso.read = true; // Update local state
                 }
+                
+                // NOVO: Verifica se tem link direto pro Fórum para redirecionar na hora
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = aviso.content;
+                const linkDireto = tempDiv.querySelector('.aviso-link-direto');
+                if (linkDireto && linkDireto.dataset.postId) {
+                    if (typeof window.loadPage === 'function') {
+                        window.loadPage(`psi_forum.html?postId=${linkDireto.dataset.postId}`);
+                        return;
+                    }
+                }
+
+                const isExpanded = item.classList.toggle('expanded');
             });
 
             container.appendChild(item);
         });
+        
+        // NOVO: Botão "Ver mais"
+        let loadMoreBtn = document.getElementById('btn-load-more-avisos');
+        if (allAvisos.filter(a => (currentFilter === 'all') || (currentFilter === 'unread' && !a.read) || (currentFilter === 'personal' && a.psychologistId)).length > visibleCount) {
+            if (!loadMoreBtn) {
+                loadMoreBtn = document.createElement('button');
+                loadMoreBtn.id = 'btn-load-more-avisos';
+                loadMoreBtn.className = 'btn btn-secundario';
+                loadMoreBtn.style.cssText = 'margin: 20px auto; display: block; padding: 10px 25px; border-radius: 50px; font-weight: bold; background: transparent; border: 2px solid var(--verde-escuro); color: var(--verde-escuro); cursor: pointer;';
+                loadMoreBtn.textContent = 'Ver mais antigos';
+                loadMoreBtn.onclick = () => {
+                    visibleCount += 10;
+                    filterAndRender();
+                };
+                container.parentNode.appendChild(loadMoreBtn);
+            } else {
+                loadMoreBtn.style.display = 'block';
+            }
+        } else {
+            if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+        }
     }
 
     async function fetchAvisos() {
@@ -124,14 +158,19 @@
             const response = await fetch(`${API_BASE_URL}/api/psychologists/me/announcements?t=${new Date().getTime()}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            
+            
             if (response.ok) {
                 allAvisos = await response.json();
                 filterAndRender();
             } else {
-                container.innerHTML = '<p>Erro ao carregar avisos.</p>';
+                const errText = await response.text();
+                container.innerHTML = `<div style="padding: 20px; color: #d32f2f; text-align: center; background: #ffebee; border-radius: 12px; margin-top: 20px;">
+                    <p><b>Erro ${response.status} ao carregar avisos.</b></p>
+                    <p style="font-size: 0.85rem; color: #666;">Se o erro for 404, a rota '/me/announcements' não está mapeada no backend.</p>
+                </div>`;
             }
         } catch (error) {
-            console.error('Erro:', error);
             container.innerHTML = '<p>Erro de conexão ao carregar avisos.</p>';
         }
     }
@@ -147,7 +186,6 @@
             }
             if (window.carregarAvisosBackground) window.carregarAvisosBackground(); // Atualiza a bolinha vermelha
         } catch (error) {
-            console.error('Erro ao marcar como lido:', error);
         }
     }
     
@@ -176,7 +214,6 @@
             if (currentFilter === 'unread') filterAndRender();
             if (window.carregarAvisosBackground) window.carregarAvisosBackground(); // Remove a bolinha vermelha
         } catch (error) {
-            console.error('Erro ao marcar todos como lidos:', error);
             if (window.showToast) window.showToast('Ocorreu um erro. Tente novamente.', 'error');
         } finally {
             btn.textContent = 'Marcar todos como lidos';
@@ -188,7 +225,8 @@
         let avisosToRender = allAvisos;
         if (currentFilter === 'unread') avisosToRender = allAvisos.filter(a => !a.read);
         if (currentFilter === 'personal') avisosToRender = allAvisos.filter(a => a.psychologistId);
-        renderAvisos(avisosToRender);
+        
+        renderAvisos(avisosToRender.slice(0, visibleCount));
     }
 
     document.querySelectorAll('.aviso-filter-btn').forEach(btn => {
@@ -196,6 +234,7 @@
             document.querySelectorAll('.aviso-filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentFilter = btn.dataset.filter;
+        visibleCount = 10; // Reseta a paginação ao trocar de aba
             filterAndRender();
         });
     });

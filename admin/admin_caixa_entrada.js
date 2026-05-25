@@ -79,7 +79,6 @@ window.initializePage = function() {
                 if(broadcastTarget) broadcastTarget.value = "";
                 if(broadcastMessage) broadcastMessage.value = "";
             } else {
-                console.error("ERRO: Modal de broadcast não encontrado no DOM.");
             }
         });
     }
@@ -133,7 +132,6 @@ window.initializePage = function() {
                         throw new Error(result.error || 'Erro ao enviar mensagem.');
                     }
                 } catch (error) {
-                    console.error(error);
                     if (window.showToast) window.showToast("❌ Erro: " + error.message);
                 } finally {
                     sendBroadcastBtn.innerText = originalText;
@@ -210,7 +208,6 @@ window.initializePage = function() {
             renderConversationList(conversations);
 
         } catch (error) {
-            console.error(error);
             // CORREÇÃO: Força a exibição do erro mesmo que tenha o item de "Carregando..."
             conversationList.innerHTML = `<li style="padding:20px; color:red; text-align:center;">Erro: ${error.message}</li>`;
         }
@@ -349,7 +346,6 @@ window.initializePage = function() {
                 throw new Error(err.error || 'Erro ao atualizar status da conversa.');
             }
         } catch (error) {
-            console.error(error);
             if (window.showToast) window.showToast(error.message, 'error');
         }
     }
@@ -392,7 +388,6 @@ window.initializePage = function() {
                 if (window.showToast) window.showToast('Erro ao excluir conversa.', 'error');
             }
         } catch (error) {
-            console.error(error);
         }
     }
 
@@ -454,7 +449,6 @@ window.initializePage = function() {
             }
 
         } catch (error) {
-            console.error(error);
             messagesThread.innerHTML = `<p style="color:red; text-align:center;">Erro ao carregar mensagens.</p>`;
         }
     }
@@ -628,12 +622,10 @@ window.initializePage = function() {
 
             } else {
                 const errText = await response.text();
-                console.error('Erro API Reply:', response.status, errText);
                 alert('Erro ao enviar mensagem. Verifique sua conexão.');
                 // Aqui poderíamos adicionar um indicador de falha na mensagem enviada otimisticamente
             }
         } catch (error) {
-            console.error(error);
             alert('Erro ao enviar mensagem. Verifique sua conexão.');
         }
     }
