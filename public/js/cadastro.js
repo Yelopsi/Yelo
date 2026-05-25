@@ -85,7 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 1500);
 
         } catch (error) {
-            console.error(error);
             mostrarErro(error.message);
             restaurarBotao();
         }

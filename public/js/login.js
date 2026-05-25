@@ -170,7 +170,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
             } catch (error) {
-                console.error(error);
                 if (mensagemEl) {
                     mensagemEl.textContent = error.message;
                     mensagemEl.className = 'mensagem-erro';

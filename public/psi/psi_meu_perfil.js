@@ -236,7 +236,6 @@
                 // Dispara o evento de input para o form reconhecer a mudança e liberar o botão "Salvar"
                 if (inputCidade) inputCidade.dispatchEvent(new Event('input', { bubbles: true }));
             } catch (err) { 
-                console.error(err);
                 showToast('Erro ao buscar CEP. Verifique sua conexão.', 'error'); 
             }
             finally { if (loadingEl) loadingEl.style.display = 'none'; }
@@ -627,7 +626,6 @@
                 throw new Error("Falha ao carregar dados do perfil.");
             }
         } catch (error) {
-            console.error(error);
             const mainContent = document.getElementById('main-content') || document.body;
             mainContent.innerHTML = `<div class="widget" style="text-align:center; color:red;"><p>Erro ao carregar seus dados. Tente recarregar a página.</p></div>`;
         }

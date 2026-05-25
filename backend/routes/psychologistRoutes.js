@@ -55,7 +55,8 @@ router.get('/me/analytics', (req, res) => {
 });
 
 router.get('/me/favorites-profile', (req, res) => res.json({ total: 0, temas: {}, faixaValor: {}, genero: {} }));
-router.get('/me/announcements', (req, res) => res.json([]));
+router.get('/me/announcements', psychologistController.getAnnouncements);
+router.post('/me/announcements/:avisoId/read', psychologistController.markAnnouncementAsRead);
 
 // ROTA DE ESTATÍSTICAS REAIS (KPIs)
 router.get('/me/stats', psychologistController.getStats);

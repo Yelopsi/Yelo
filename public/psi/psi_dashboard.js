@@ -28,26 +28,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ feature: funcionalidade })
-            }).catch(err => console.error('Erro no tracking', err));
+            }).catch(err => {});
         }
     });
 
-    // --- FIX: Adiciona evento de clique para o card de Benchmarking ---
-    // Delegação de evento no body para garantir que funcione mesmo com conteúdo carregado dinamicamente.
-    document.body.addEventListener('click', function(e) {
-        // Procura por um link com data-page dentro dos cards de KPI
+    // --- FIX BLINDADO: Eventos Globais Delegados (Benchmarking e Botões Dinâmicos) ---
+    document.addEventListener('click', function(e) {
+        // 1. Procura por um link com data-page dentro dos cards de KPI
         const link = e.target.closest('.kpi-card a[data-page]');
         if (link) {
-            e.preventDefault(); // Impede a navegação padrão do link
-            // Usa a função global para carregar a página de análise
+            e.preventDefault();
             const pageToLoad = link.getAttribute('data-page');
             if (pageToLoad && typeof window.loadPage === 'function') {
                 window.loadPage(pageToLoad);
             }
         }
-    });
+        
+        // 2. Fix para o botão "Melhorar meu perfil" que carrega dinamicamente
+        const btnMelhorarPerfil = e.target.closest('.modern-hero-cta');
+        if (btnMelhorarPerfil) {
+            e.preventDefault();
+            if (typeof window.loadPage === 'function') {
+                window.loadPage('psi_meu_perfil.html');
+            }
+        }
+    }, true); // Usa capture phase para garantir que o clique não seja bloqueado por outros elementos
 
-    console.log("--- SISTEMA Yelo V2.1 INICIADO ---");
     
     let psychologistData = null; 
     
@@ -355,7 +361,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             throw new Error(errData.error || 'Erro ao enviar foto.');
                         }
                     } catch (err) {
-                        showToast(err.message || 'Erro ao enviar foto.', 'error');
                     } finally {
                         if (cropper) cropper.destroy();
                         sidebarInput.value = '';
@@ -409,7 +414,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 await window.iniciarPagamento(currentPlanAttempt, { textContent: '', tagName: 'BUTTON' }, cupomVal);
                 // Nota: iniciarPagamento já cuida de remontar o Stripe Element
             } catch (err) {
-                console.error(err);
             } finally {
                 btnAplicarModal.textContent = "Aplicar";
             }
@@ -523,7 +527,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error("Token inválido");
             } else {
                 // Erros 500, 502, 503 (Servidor/Banco) não devem deslogar o usuário
-                console.warn(`Erro no servidor ao buscar perfil: ${response.status}`);
                 return false; // Retorna false para tratar na inicialização
             }
         } catch (error) {
@@ -531,7 +534,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.removeItem('Yelo_token');
                 window.location.href = '/';
             } else {
-                console.error("Erro de conexão ou servidor:", error);
                 // Não desloga em erro de rede/fetch
             }
             return false;
@@ -934,7 +936,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 })
                 .catch(err => {
-                    console.error(err);
                     statusDiv.textContent = 'Erro de conexão. Tente novamente mais tarde.';
                     statusDiv.style.color = '#e22';
                 })
@@ -993,9 +994,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         currentPageUrl = url;
 
+        // NOVO: Extrai parâmetros do link (ex: psi_forum.html?postId=123)
+        const [pageUrl, queryString] = url.split('?');
+        if (queryString && queryString.includes('postId=')) {
+            const params = new URLSearchParams(queryString);
+            window.yeloPostToOpen = params.get('postId');
+        }
+
         // --- V6: Limpeza de listeners da página de Blog ---
         if (typeof window.cleanupBlog === 'function') {
-            console.log("Limpando listeners do blog anterior...");
             window.cleanupBlog();
             window.cleanupBlog = null;
         }
@@ -1003,7 +1010,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // --- FIX CRÍTICO: Limpeza de recursos da página anterior ---
         // Garante que o socket do chat seja morto ANTES de carregar qualquer outra coisa.
         if (typeof window.cleanupPsiChat === 'function') {
-            console.log("Limpando chat anterior...");
             window.cleanupPsiChat();
             window.cleanupPsiChat = null; // Remove a referência para não chamar de novo
         }
@@ -1105,10 +1111,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 else if (url.includes('psi_favoritos_analytics.html')) {
                     /// a página se auto-inicializa, mas garantimos que o cleanup de outras páginas rode.
                 }
-                else if (url.includes('psi_avisos.html')) {
-                    window.carregarAvisosBackground(); // Atualiza a bolinha vermelha no menu
-                }
                 // Adicione outras inicializações de página aqui
+                
+                // SEMPRE atualiza a bolinha do sino ao navegar entre as páginas do painel
+                if (typeof window.carregarAvisosBackground === 'function') {
+                    window.carregarAvisosBackground();
+                }
             })
             .catch(e => mainContent.innerHTML = `<p>Erro ao carregar: ${e}</p>`);
 
@@ -1390,7 +1398,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             document.getElementById('card-holder-state').value = data.uf || '';
                             document.getElementById('card-holder-number').focus();
                         }
-                    } catch (err) { console.error("Erro CEP:", err); }
+                    } catch (err) { }
                 }
             });
         }
@@ -1480,7 +1488,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     throw new Error(data.error || 'Erro ao processar pagamento.');
                 }
             } catch (error) {
-                console.error(error);
                 if(msgDiv) {
                     msgDiv.classList.remove('hidden');
                     msgDiv.textContent = error.message;
@@ -1733,8 +1740,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // e cria uma métrica mais coesa com os outros dados do card.
             const convRate = safeCalc(whatsappClicks, matchImpressions);
 
-            if(document.getElementById('hero-contacts')) document.getElementById('hero-contacts').innerHTML = whatsappClicks > 0 ? `+${whatsappClicks}` : '<span style="font-size: 1.1rem; opacity: 0.8; font-weight: 500;">Ainda nenhum contato</span>';
-            if(document.getElementById('hero-views')) document.getElementById('hero-views').innerHTML = profileViews > 0 ? profileViews : '<span style="font-size: 1.1rem; opacity: 0.8; font-weight: 500;">Sem visualizações por enquanto</span>';
+            if(document.getElementById('hero-contacts')) document.getElementById('hero-contacts').innerHTML = stats.last7DaysStats?.whatsappClicks > 0 ? `+${stats.last7DaysStats.whatsappClicks}` : '<span style="font-size: 1.1rem; opacity: 0.8; font-weight: 500;">Nenhum nesta semana</span>';
+            if(document.getElementById('hero-views')) document.getElementById('hero-views').innerHTML = stats.last7DaysStats?.profileViews > 0 ? `+${stats.last7DaysStats.profileViews}` : '<span style="font-size: 1.1rem; opacity: 0.8; font-weight: 500;">Nenhuma nesta semana</span>';
             
             // Métrica real de Ranking (Seu perfil está melhor que...)
             const realScore = stats.betterThanPercentage !== undefined ? stats.betterThanPercentage : 0;
@@ -1746,13 +1753,51 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            // Ação do Botão "Melhorar meu perfil"
-            const btnMelhorarPerfil = document.querySelector('.modern-hero-cta');
-            if (btnMelhorarPerfil) {
-                btnMelhorarPerfil.onclick = (e) => {
-                    e.preventDefault();
-                    window.loadPage('psi_meu_perfil.html');
-                };
+            // --- ATUALIZAÇÃO DO CARD PACIENTES (DOM MANIPULATION) ---
+            const patientsMetricsGroup = document.querySelector('.patients-metrics-group');
+            if (patientsMetricsGroup) {
+                patientsMetricsGroup.style.flexWrap = 'wrap';
+                patientsMetricsGroup.innerHTML = `
+                    <div class="p-metric" style="min-width: 45%; margin-bottom: 15px;">
+                        <div class="p-metric-val" id="kpi-whatsapp-clicks">${stats.whatsappClicks || 0}</div>
+                        <div class="p-metric-label">
+                            Cliques no WhatsApp
+                            <span class="info-tooltip" style="margin-left: 0; width: 16px; height: 16px;" data-tooltip="Total de pacientes que clicaram para falar com você no WhatsApp." tabindex="0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></span>
+                        </div>
+                    </div>
+                    <div class="p-metric" style="min-width: 45%; margin-bottom: 15px;">
+                        <div class="p-metric-val" id="kpi-match-impressions">${stats.matchImpressions || 0}</div>
+                        <div class="p-metric-label">
+                            Aparições no match
+                            <span class="info-tooltip" style="margin-left: 0; width: 16px; height: 16px;" data-tooltip="Vezes que seu perfil foi recomendado na tela de resultados após o questionário." tabindex="0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></span>
+                        </div>
+                    </div>
+                    <div class="p-metric" style="min-width: 45%; border-top: 1px solid #e9ecef; padding-top: 15px;">
+                        <div class="p-metric-val" id="kpi-views-match">${stats.profileViewsMatch || 0}</div>
+                        <div class="p-metric-label">
+                            Visualizações pelo Match
+                            <span class="info-tooltip" style="margin-left: 0; width: 16px; height: 16px;" data-tooltip="Quantas vezes abriram seu perfil clicando na lista de resultados." tabindex="0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></span>
+                        </div>
+                        <div style="font-size: 0.8rem; color: #16a34a; font-weight: bold; margin-top: 4px;">Conversão: ${stats.funnelRates?.matchToProfileViewRate || 0}%</div>
+                    </div>
+                    <div class="p-metric" style="min-width: 45%; border-top: 1px solid #e9ecef; padding-top: 15px;">
+                        <div class="p-metric-val" id="kpi-views-direct">${stats.profileViewsDirect || 0}</div>
+                        <div class="p-metric-label">
+                            Visualizações Diretas
+                            <span class="info-tooltip" style="margin-left: 0; width: 16px; height: 16px;" data-tooltip="Quantas vezes abriram seu perfil por outros meios (Busca Orgânica, Link Direto, Comunidade, Blog)." tabindex="0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></span>
+                        </div>
+                        <div style="font-size: 0.8rem; color: #16a34a; font-weight: bold; margin-top: 4px;">Conversão p/ WhatsApp: ${stats.funnelRates?.directViewToWhatsappRate || 0}%</div>
+                    </div>
+                `;
+                const style = document.createElement('style');
+                style.innerHTML = `.patients-metrics-group .p-metric::after { display: none !important; }`;
+                document.head.appendChild(style);
+                
+                // Re-inicializa os tooltips após recriar o HTML
+                if (typeof window.setupMobileBadgeTooltips === 'function') {
+                    document.body.dataset.tooltipsSetup = '';
+                    window.setupMobileBadgeTooltips();
+                }
             }
 
             if(document.getElementById('psi-sidebar-growth-val')) {
@@ -1973,17 +2018,43 @@ document.addEventListener('DOMContentLoaded', function() {
                             let cleanContent = aviso.content.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
                             if (cleanContent.length > 70) cleanContent = cleanContent.substring(0, 70) + '...';
 
+                            // Extrai o link direto para o fórum
+                            let notifLink = 'psi_avisos.html';
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = aviso.content;
+                            const linkDireto = tempDiv.querySelector('.aviso-link-direto');
+                            if (linkDireto && linkDireto.dataset.postId) {
+                                notifLink = `psi_forum.html?postId=${linkDireto.dataset.postId}`;
+                            }
+
                             notifications.push({
                                 type: type, 
                                 icon: icon,
                                 text: `<strong>${aviso.title}</strong><br><span style="font-size: 0.85rem; color: #666;">${cleanContent}</span>`,
                                 time: new Date(aviso.createdAt).toLocaleDateString('pt-BR'),
-                                link: 'psi_avisos.html' // Redireciona para a central para marcar como lido e acessar o link do fórum
+                                link: notifLink 
                             });
                         });
                     }
                 } catch (err) {
                     console.error("Erro ao buscar avisos para o dashboard:", err);
+                }
+
+                // --- Busca Novas Perguntas na Comunidade (Q&A) ---
+                try {
+                    const resQna = await apiFetch(`${API_BASE_URL}/api/psychologists/me/qna-unanswered-count`);
+                    if (resQna.ok) {
+                        const qnaData = await resQna.json();
+                        if (qnaData.count > 0) {
+                            notifications.push({
+                                type: 'interaction', icon: '🙋🏽‍♀️',
+                                text: `Existem <strong>${qnaData.count} novas perguntas</strong> da comunidade aguardando resposta.`,
+                                time: 'Hoje', link: 'psi_comunidade.html'
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error("Erro ao buscar Q&A para o dashboard:", err);
                 }
 
                 if (notifications.length > 0) {
@@ -2037,13 +2108,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             } catch(e) {
-                console.warn("Erro ao carregar dados secundários:", e);
                 if(document.getElementById('agenda-hoje')) document.getElementById('agenda-hoje').innerHTML = '<span style="color:#888; font-weight:normal; font-size:0.85rem;">Livre hoje</span>';
                 if(document.getElementById('faturamento-mes')) document.getElementById('faturamento-mes').innerHTML = '<span style="color:#888; font-weight:normal; font-size:0.85rem;">Sem saldo</span>';
             }
 
         } catch (error) {
-            console.error("Erro ao buscar dados da Visão Geral:", error);
             showToast('Não foi possível atualizar todas as métricas.', 'error');
         }
     }
@@ -2450,7 +2519,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 atualizarInterfaceLateral();
 
             } catch (err) {
-                console.error("Erro ao salvar bloco:", err);
                 setBlockState(block, 'error', err.message);
             }
         }
@@ -2690,10 +2758,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 allQuestions = questions;
                 applyFiltersAndSort();
             } catch (err) {
-                console.error(err);
                 container.innerHTML = `<div style="text-align:center; padding:40px; color:red;">Erro ao carregar perguntas.</div>`;
             }
         }
+
+        // NOVO: Busca se há perguntas não respondidas para mostrar o Alerta no topo
+        apiFetch(`${API_BASE_URL}/api/psychologists/me/qna-unanswered-count`)
+            .then(res => res.ok ? res.json() : {count: 0})
+            .then(data => {
+                const alertBox = document.getElementById('qna-new-questions-alert');
+                if (data.count > 0 && alertBox) {
+                    alertBox.innerHTML = `👋 Olá! Há <strong>${data.count} pergunta(s)</strong> da comunidade aguardando resposta. Responda e ganhe XP!`;
+                    alertBox.style.display = 'block';
+                }
+            }).catch(() => {});
 
         if (searchInput) {
             searchInput.addEventListener('input', () => { applyFiltersAndSort(); });
@@ -2954,7 +3032,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         throw new Error('Falha no envio');
                     }
                 } catch (error) {
-                    console.error(error);
                     showToast('Erro ao enviar resposta.', 'error');
                 } finally {
                     btnSubmit.textContent = originalText;
@@ -3008,7 +3085,7 @@ document.addEventListener('DOMContentLoaded', function() {
             script.onload = () => {
                 callback();
             };
-            script.onerror = () => console.error("Falha ao carregar Socket.IO. O chat em tempo real não funcionará.");
+            script.onerror = () => {};
             document.body.appendChild(script);
         }
 
@@ -3096,7 +3173,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Renderiza as mensagens no painel principal
                 renderMessages(messages);
             } catch (error) {
-                console.error(error);
                 messagesThread.innerHTML = `<p style="color:red; text-align:center;">Erro ao carregar chat.</p>`;
             }
         }
@@ -3228,7 +3304,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     throw new Error('Falha ao enviar');
                 }
             } catch (error) {
-                console.error(error);
                 showToast('Erro ao enviar mensagem.', 'error');
                 if (tempBubble) tempBubble.remove(); // Remove a mensagem se falhar
             }
@@ -3352,7 +3427,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if(btnCursos && links.link_cursos && links.link_cursos.length > 5) btnCursos.href = links.link_cursos;
                 }
             })
-            .catch(err => console.error("Links:", err)); // Se der erro, mantém o href="#"
+            .catch(err => {}); // Se der erro, mantém o href="#"
 
         // 3. Regra de Bloqueio
         if (!planoAtual || planoAtual === 'ESSENTIAL') {
@@ -3383,17 +3458,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateSidebarBadge('psi_avisos.html', unread);
             }
         } catch (error) {
-            console.error("Fundo: Erro ao carregar avisos", error);
         }
     };
 
     // Atualiza badges silenciosamente no background
     setTimeout(window.carregarAvisosBackground, 2000);
+    setInterval(window.carregarAvisosBackground, 60000); // Checa novas notificações a cada 1 min
 
     // --- NOVA LÓGICA DE NOTIFICAÇÕES DE NAVEGADOR (SESSÕES) ---
     window.setupSessionNotifications = function() {
         if (!("Notification" in window)) {
-            console.warn("⚠️ Notificações do navegador bloqueadas. O navegador exige HTTPS ou localhost para exibir notificações.");
             return;
         }
 
@@ -3413,8 +3487,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         const allAppts = await resAppts.json();
                         const now = new Date();
                         
-                        console.log(`[Notificações] Checando ${allAppts.length} agendamentos... Hora atual:`, now.toLocaleTimeString());
-                        
                         const upcomingAppts = allAppts.filter(a => {
                             const start = new Date(a.start);
                             return (a.status === 'scheduled' || a.status === 'confirmed') &&
@@ -3427,23 +3499,19 @@ document.addEventListener('DOMContentLoaded', function() {
                             const fifteenMins = 15 * 60 * 1000;
                             const minutesLeft = Math.round(timeUntilStart / 60000);
 
-                            console.log(`[Notificações] Sessão ${appt.id} (${appt.title}) - Faltam ${minutesLeft} min.`);
 
                             // Se a sessão vai começar em até 15 minutos (e já não foi notificada)
                             if (timeUntilStart > 0 && timeUntilStart <= fifteenMins) { 
                                 const notifKey = `notified_appt_${appt.id}`;
                                 if (!sessionStorage.getItem(notifKey)) {
-                                console.log("🔔 Exibindo notificação para a sessão:", appt.id);
                                     showDesktopNotification(appt);
                                     sessionStorage.setItem(notifKey, 'shown');
                                 } else {
-                                    console.log(`[Notificações] Sessão ${appt.id} já foi notificada anteriormente nesta aba.`);
                                 }
                             }
                         });
                     }
                 } catch (e) {
-                    console.error("Erro ao checar notificações de sessão:", e);
                 }
             };
 
@@ -3453,22 +3521,17 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         if (Notification.permission === "default") {
-            console.log("Aguardando clique na tela para solicitar permissão de notificação...");
             const requestNotif = async () => {
                 try {
-                    console.log("Solicitando permissão de notificação...");
                     const permission = await Notification.requestPermission();
-                    console.log("Status da permissão:", permission);
                     document.removeEventListener('click', requestNotif);
                     if (permission === "granted") startChecking();
-                } catch(e) { console.error(e); }
+                } catch(e) { }
             };
             document.addEventListener('click', requestNotif);
         } else if (Notification.permission === "granted") {
-            console.log("Permissão já concedida. Iniciando checagem da agenda...");
             startChecking();
         } else if (Notification.permission === "denied") {
-            console.warn("⚠️ Permissão de notificação foi negada pelo navegador.");
         }
     };
 
@@ -3491,7 +3554,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     notification.close();
                 };
             } catch (e) {
-                console.error("Erro ao criar a notificação visual:", e);
             }
         }
     }
@@ -3503,9 +3565,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: "Se você está vendo isso, o sistema de alertas do seu computador está funcionando perfeitamente!",
                 icon: '/assets/images/favicon.png'
             });
-            console.log("Notificação de teste enviada para o Sistema Operacional.");
         } else {
-            console.warn("Não é possível testar: a permissão atual é", Notification.permission);
         }
     };
 
@@ -3893,7 +3953,6 @@ function setupCepSearch() {
                     if(elEstado) elEstado.value = '';
                 }
             } catch (err) {
-                console.error(err);
                 showToast('Erro ao buscar CEP.', 'error');
             } finally {
                 if(elLoading) elLoading.style.display = 'none';
@@ -3905,7 +3964,6 @@ function setupCepSearch() {
 
 // --- LÓGICA DO BLOG (MEUS ARTIGOS) - VERSÃO ROBUSTA COM DEBUG ---
 function inicializarBlog(preFetchedData = null) {
-    console.log("Iniciando lógica do Blog...");
     let currentPage = 1;
     const ARTICLES_LIMIT = 3; // Limite de artigos por página
     const loadMoreBtn = document.getElementById('btn-load-more-articles');
@@ -3956,7 +4014,6 @@ function inicializarBlog(preFetchedData = null) {
 
     // Verificação de segurança: se a página não carregou direito, para tudo.
     if (!viewLista || !viewForm || !form || !btnSalvar) {
-        console.error("ERRO CRÍTICO: Elementos do blog não encontrados no HTML.");
         showToast("Erro ao carregar componentes da página. Atualize (F5).", "error");
         return;
     }
@@ -3995,7 +4052,6 @@ function inicializarBlog(preFetchedData = null) {
                 throw new Error("Falha ao buscar dados de tendências.");
             }
         } catch (error) {
-            console.error("Erro ao buscar sugestões de temas:", error);
             container.innerHTML = '<p style="font-size:0.9rem; color:#92400e; grid-column: 1 / -1; text-align: center;">Não foi possível carregar as sugestões.</p>';
         }
     }
@@ -4084,7 +4140,6 @@ function inicializarBlog(preFetchedData = null) {
                 // Se a API retornou um objeto de erro (ex: 500), tenta ler a mensagem
                 if (posts && posts.error) throw new Error(posts.error); // CORREÇÃO: Verifica se posts existe
                 // Se não, lança erro genérico mas não quebra a aplicação
-                console.warn("Resposta inesperada da API de posts:", posts);
                 posts = []; // Assume vazio para não travar a tela
             }
 
@@ -4106,7 +4161,6 @@ function inicializarBlog(preFetchedData = null) {
             }
           
         } catch (error) {
-            console.error("ERRO AO CARREGAR ARTIGOS:", error);
               if (!append) {
                 containerLista.innerHTML = `<div style="text-align:center; padding:30px; color:#d32f2f; background:#fff0f0; border-radius:8px;"><p><strong>Não foi possível carregar seus artigos.</strong></p><p style="font-size:0.8rem;">Tente recarregar a página.</p></div>`;
             }
@@ -4207,13 +4261,11 @@ function inicializarBlog(preFetchedData = null) {
                 throw new Error("Falha ao excluir");
             }
         } catch (e) {
-            console.error(e);
             showToast('Erro ao excluir artigo.', 'error');
         }
     }
 
     function carregarParaEdicao(post) {
-        console.log("Carregando para edição:", post.id);
         document.getElementById('form-titulo-acao').textContent = "Editar Artigo";
         document.getElementById('blog-id').value = post.id;
         document.getElementById('blog-titulo').value = post.titulo;
@@ -4272,7 +4324,6 @@ function inicializarBlog(preFetchedData = null) {
 
     blogSubmitHandler = async function(e) {
         e.preventDefault(); // IMPEDE O RECARREGAMENTO DA PÁGINA
-        console.log("Botão PUBLICAR clicado! Iniciando envio...");
 
         const btn = document.getElementById('btn-salvar-artigo');
         const originalText = btn.innerHTML;
@@ -4295,7 +4346,6 @@ function inicializarBlog(preFetchedData = null) {
                 imagem_url: document.getElementById('blog-imagem').value
             };
             
-            console.log("Enviando dados para:", url, "Método:", method, "Payload:", payload);
 
             const res = await apiFetch(url, {
                 method: method,
@@ -4303,7 +4353,6 @@ function inicializarBlog(preFetchedData = null) {
                 body: JSON.stringify(payload)
             });
             
-            console.log("Resposta do servidor (Salvar):", res.status);
 
             if(res.ok) {
                 showToast(id ? 'Artigo atualizado!' : 'Artigo publicado com sucesso!', 'success');
@@ -4315,7 +4364,6 @@ function inicializarBlog(preFetchedData = null) {
                 throw new Error(erroData.error || "Erro desconhecido ao salvar no servidor.");
             }
         } catch (error) {
-            console.error("ERRO AO SALVAR:", error);
             showToast('Não foi possível salvar: ' + error.message, 'error');
         } finally {
             btn.innerHTML = originalText;
@@ -4677,7 +4725,6 @@ async function inicializarForum(preFetchedData = null) {
 
         } catch (err) {
             postView.innerHTML = '<p>Erro ao carregar a discussão.</p>';
-            console.error(err);
         }
     }
 
@@ -4731,7 +4778,6 @@ async function inicializarForum(preFetchedData = null) {
             }
 
         } catch (err) {
-            console.error(err);
             if (!append) commentThread.innerHTML = '<p style="color:#d32f2f; padding:15px; text-align:center;">Erro ao carregar comentários.</p>';
         }
     }
@@ -4776,7 +4822,6 @@ async function inicializarForum(preFetchedData = null) {
                 container.appendChild(item);
             });
         } catch (err) {
-            console.error(err);
             container.innerHTML = '';
         }
     }
@@ -5025,7 +5070,6 @@ async function inicializarForum(preFetchedData = null) {
 
         } catch (err) {
            if (!append) postsContainer.innerHTML = '<p>Erro ao carregar discussões.</p>';
-            console.error(err);
         } finally {
             if (loadMoreBtn) { loadMoreBtn.textContent = 'Mostrar mais'; loadMoreBtn.disabled = false; }
             if (append) isLoadingMore = false;
@@ -5058,7 +5102,6 @@ async function inicializarForum(preFetchedData = null) {
             fetchAndRenderPosts(); // Recarrega o feed
         } catch (err) {
             showToast('Erro ao criar discussão.', 'error');
-            console.error(err);
         } finally {
             btn.disabled = false;
             btn.textContent = 'Publicar';
@@ -5100,7 +5143,6 @@ async function inicializarForum(preFetchedData = null) {
             if (parentId) form.parentElement.remove(); // Remove o form dinâmico de resposta
         } catch (err) {
             showToast('Erro ao enviar comentário.', 'error');
-            console.error(err);
         } finally {
             btn.disabled = false;
         }

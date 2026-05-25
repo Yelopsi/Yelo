@@ -1,7 +1,6 @@
 // Arquivo: professionals.js (COMPLETO E CORRIGIDO)
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 profissionais.js inicializado com sucesso!");
 
     // --- CORREÇÃO DE ROTA ---
     // Pega do config.js ou detecta automaticamente o ambiente
@@ -389,7 +388,6 @@ document.addEventListener('DOMContentLoaded', () => {
         goToSlide(questions.findIndex(q => q.id === 'loading'));
 
         // DEBUG: Verificar payload antes de enviar
-        console.log("📤 Enviando dados para verificação de demanda:", userAnswers);
 
         try {
             const response = await fetch(`${BASE_URL}/api/psychologists/check-demand`, {
@@ -406,11 +404,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     goToSlide(questions.findIndex(q => q.id === 'waitlisted'));
                 }
             } else {
-                console.error("Erro na API:", data.error);
                 goToSlide(questions.findIndex(q => q.id === 'error'));
             }
         } catch (error) {
-            console.error("Erro de conexão:", error);
             goToSlide(questions.findIndex(q => q.id === 'error'));
         }
     }
@@ -430,7 +426,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             window.location.href = 'obrigado_lista_espera.html';
         } catch (error) {
-            console.error("Erro ao adicionar à lista de espera:", error);
             alert("Ocorreu um erro ao salvar seu e-mail. Tente novamente.");
         }
     }

@@ -1,5 +1,4 @@
 async function initializeAnalyticsPage() {
-    console.log("Página de Métricas & Mercado inicializada.");
 
     const token = localStorage.getItem('Yelo_token');
     const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001';
@@ -30,7 +29,6 @@ async function initializeAnalyticsPage() {
         renderProfileStrengthChart(data.profileStrength);
 
     } catch (error) {
-        console.error("Erro ao buscar dados de analytics:", error);
         showEmptyState('price-chart-container', 'Não há dados de preço suficientes.');
         showEmptyState('topics-chart-container', 'Ainda não há temas em alta.');
         showEmptyState('visibility-chart-container', 'Sem dados de visibilidade.');
