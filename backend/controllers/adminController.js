@@ -1821,6 +1821,30 @@ exports.forceDeletePatient = async (req, res) => {
 };
 
 /**
+ * Rota: PUT /api/admin/patients/:id/restore
+ * Descrição: Restaura um paciente que foi movido para a lixeira.
+ */
+exports.restorePatient = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const patient = await db.Patient.findByPk(id, { paranoid: false });
+
+        if (!patient) {
+            return res.status(404).json({ error: 'Paciente não encontrado na lixeira.' });
+        }
+
+        if (!patient.deletedAt) {
+            return res.status(400).json({ error: 'Este paciente não está na lixeira.' });
+        }
+
+        await patient.restore();
+        res.status(200).json({ message: 'Paciente restaurado com sucesso.' });
+    } catch (error) {
+        console.error('Erro ao restaurar paciente:', error);
+        res.status(500).json({ error: 'Erro interno no servidor ao restaurar paciente.' });
+    }
+};
+/**
  * Rota: GET /api/admin/conversations/:id/notes
  * Descrição: Busca todas as notas internas de uma conversa.
  */

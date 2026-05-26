@@ -1734,11 +1734,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const whatsappClicks = stats.whatsappClicks || 0;
 
             // --- BLOCO 0: HERO & BLOCO 2/3: PACIENTES E AUTORIDADE ---
-            const safeCalc = (num, den) => (den && den > 0 ? ((num / den) * 100).toFixed(1) : null);
-            // CORREÇÃO: A "Taxa de Clique" no card de Pacientes deve ser calculada em relação às aparições no match,
-            // não às visualizações de perfil. Isso evita valores > 100% (caso haja um botão de contato direto na listagem)
-            // e cria uma métrica mais coesa com os outros dados do card.
-            const convRate = safeCalc(whatsappClicks, matchImpressions);
 
             if(document.getElementById('hero-contacts')) document.getElementById('hero-contacts').innerHTML = stats.last7DaysStats?.whatsappClicks > 0 ? `+${stats.last7DaysStats.whatsappClicks}` : '<span style="font-size: 1.1rem; opacity: 0.8; font-weight: 500;">Nenhum nesta semana</span>';
             if(document.getElementById('hero-views')) document.getElementById('hero-views').innerHTML = stats.last7DaysStats?.profileViews > 0 ? `+${stats.last7DaysStats.profileViews}` : '<span style="font-size: 1.1rem; opacity: 0.8; font-weight: 500;">Nenhuma nesta semana</span>';
@@ -1746,11 +1741,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Métrica real de Ranking (Seu perfil está melhor que...)
             const realScore = stats.betterThanPercentage !== undefined ? stats.betterThanPercentage : 0;
             if(document.getElementById('hero-benchmark-text')) {
-                if (realScore > 0) {
-                    document.getElementById('hero-benchmark-text').innerHTML = `🔥 Seu perfil está melhor que <strong>${realScore}%</strong> dos psicólogos`;
-                } else {
-                    document.getElementById('hero-benchmark-text').innerHTML = `🌱 <strong>Dica:</strong> Complete seu perfil para ganhar destaque no ranking!`;
-                }
+                document.getElementById('hero-benchmark-text').innerHTML = `Seu crescimento esse mês:`;
             }
 
             // --- ATUALIZAÇÃO DO CARD PACIENTES (DOM MANIPULATION) ---
@@ -2110,6 +2101,16 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch(e) {
                 if(document.getElementById('agenda-hoje')) document.getElementById('agenda-hoje').innerHTML = '<span style="color:#888; font-weight:normal; font-size:0.85rem;">Livre hoje</span>';
                 if(document.getElementById('faturamento-mes')) document.getElementById('faturamento-mes').innerHTML = '<span style="color:#888; font-weight:normal; font-size:0.85rem;">Sem saldo</span>';
+            }
+
+            // --- INJEÇÃO DA LABEL "ÚLTIMOS 30 DIAS" ---
+            const patientsCardHeader = document.querySelector('.modern-patients-card .card-header-modern');
+            if (patientsCardHeader && !patientsCardHeader.querySelector('.period-label')) {
+                const periodLabel = document.createElement('span');
+                periodLabel.className = 'period-label'; // Adiciona uma classe para evitar duplicação
+                periodLabel.style.cssText = 'font-size: 0.8rem; color: #666; margin-left: auto; align-self: center;';
+                periodLabel.textContent = 'Últimos 30 dias';
+                patientsCardHeader.appendChild(periodLabel);
             }
 
         } catch (error) {
