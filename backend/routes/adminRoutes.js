@@ -54,6 +54,8 @@ router.put('/psychologists/:id/status', adminController.updatePsychologistStatus
 // Rota para ativar/desativar isenção (VIP)
 router.patch('/psychologists/:id/vip', adminController.updateVipStatus);
 router.delete('/psychologists/:id', adminController.deletePsychologist);
+// Rota para EXCLUIR PERMANENTEMENTE um psicólogo (Hard Delete)
+router.delete('/psychologists/:id/force', adminController.forceDeletePsychologist);
 
 
 // Rota para buscar todos os pacientes
