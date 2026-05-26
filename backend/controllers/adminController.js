@@ -221,7 +221,8 @@ exports.getPsychologistFullDetails = async (req, res) => {
 
         // 1. Dados do Psicólogo
         const psychologist = await db.Psychologist.findByPk(id, {
-            attributes: { exclude: ['senha', 'resetPasswordToken', 'resetPasswordExpires'] }
+            attributes: { exclude: ['senha', 'resetPasswordToken', 'resetPasswordExpires'] },
+            paranoid: false // FIX: Permite ver detalhes de psicólogos na lixeira
         });
 
         if (!psychologist) {
@@ -2080,6 +2081,31 @@ exports.deletePsychologist = async (req, res) => {
     } catch (error) {
         console.error('Erro ao excluir psicólogo:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};
+
+/**
+ * Rota: DELETE /api/admin/psychologists/:id/force
+ * Descrição: Exclui um psicólogo PERMANENTEMENTE (hard delete).
+ */
+exports.forceDeletePsychologist = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Busca o psicólogo, incluindo os que estão na lixeira (paranoid: false)
+        const psychologist = await db.Psychologist.findByPk(id, { paranoid: false });
+
+        if (!psychologist) {
+            return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+        }
+
+        // A opção { force: true } garante a exclusão permanente do registro no banco
+        await psychologist.destroy({ force: true });
+
+        res.status(200).json({ message: 'Psicólogo excluído permanentemente com sucesso. O e-mail agora está liberado.' });
+    } catch (error) {
+        console.error('Erro ao excluir psicólogo permanentemente:', error);
+        res.status(500).json({ error: 'Erro interno no servidor ao realizar a exclusão permanente.' });
     }
 };
 
