@@ -1447,7 +1447,15 @@ exports.getAllPatients = async (req, res) => {
             order: [['createdAt', 'DESC']],
             paranoid: isParanoid
         });
-        res.status(200).json({ data: rows, totalPages: Math.ceil(count / limit), currentPage: page, totalCount: count });
+
+        // Modificação temporária para exibir o ID do paciente no nome
+        const dataWithId = rows.map(p => {
+            const patientJson = p.toJSON();
+            patientJson.nome = `[ID: ${patientJson.id}] ${patientJson.nome}`;
+            return patientJson;
+        });
+
+        res.status(200).json({ data: dataWithId, totalPages: Math.ceil(count / limit), currentPage: page, totalCount: count });
     } catch (error) {
         console.error('Erro ao buscar lista de pacientes:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
