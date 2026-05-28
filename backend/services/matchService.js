@@ -83,7 +83,7 @@ const fetchEligibleCandidates = async (preferences, priceRange, relaxFilters = f
     const eligibleCandidates = await db.Psychologist.findAll({
         where: whereConditions,
         attributes: [
-            'id', 'nome', 'fotoUrl', 'bio', 'slug', 'status', 'is_exempt', 'planExpiresAt',
+            'id', 'nome', 'crp', 'fotoUrl', 'bio', 'slug', 'status', 'is_exempt', 'planExpiresAt',
             'temas_atuacao', 'publico_alvo', 'valor_sessao_numero', 
             'praticas_inclusivas', 'praticas_vivencias', 'genero_identidade', 'modalidade',
             'profile_appearances', 'whatsapp_clicks', 'last_shown_match_at', 'xp'

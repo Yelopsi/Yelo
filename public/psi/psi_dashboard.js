@@ -373,9 +373,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- LÓGICA DO BOTÃO SAIR (LOGOUT) ---
     const btnLogout = document.getElementById('btn-logout');
     if (btnLogout) {
-        btnLogout.onclick = function() {
+        btnLogout.onclick = function(e) {
+            if (e) e.preventDefault();
             // 1. Feedback visual (opcional, mas bom para mobile)
-            this.textContent = "Saindo...";
+            const span = this.querySelector('span');
+            if (span) span.textContent = "Saindo...";
+            else this.textContent = "Saindo...";
             
             // 2. Remove o "crachá" de acesso (Token)
             localStorage.removeItem('Yelo_token');

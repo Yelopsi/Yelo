@@ -5279,7 +5279,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 /* --- SIDEBAR MODERNA (APP-LIKE) --- */
 .modern-sidebar-container {
-    width: 220px; /* Reduzido de 280px para ficar mais compacta */
+    width: 250px; /* Expandido para ficar do mesmo tamanho do admin */
     background: #fcfcfc; /* Fundo mais claro, quase branco */
     border-right: 1px solid #f0f0f0; /* Borda mais sutil */
     display: flex;
@@ -5309,9 +5309,9 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 .sp-avatar-wrapper {
     position: relative;
-    width: 80px; /* Reduzido para caber melhor e ficar mais delicado */
-    height: 80px;
-    margin-bottom: 10px;
+    width: 90px; /* Aumentado para dar mais destaque visual (equipara-se ao admin) */
+    height: 90px;
+    margin-bottom: 5px;
     border-radius: 50%; /* Garante que a área clicável seja exatamente o círculo */
     overflow: hidden;   /* Corta os cantos quadrados e transparentes invisíveis */
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -5373,23 +5373,25 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 .sidebar-profile-modern h3 {
     margin: 0;
-    font-size: 1.3rem !important; /* Reduzido para não quebrar em telas menores */
+    font-size: 21px !important; /* Convertido para PX para não ser afetado pelo root 70% e igualar ao Admin */
     color: var(--verde-escuro);
     font-family: var(--font-titulos) !important;
     font-weight: 700 !important; /* Peso Bold para destacar a New Kansas */
     line-height: 1.2;
+    text-align: center;
 }
 
 .sp-level-indicator {
-    font-size: 0.8rem !important; /* Levemente menor para acompanhar a foto */
+    font-size: 13px !important; /* Em px para manter tamanho exato do Admin */
     color: var(--verde-escuro) !important; /* Texto escuro para garantir leitura no fundo claro */
     background-color: #e8f5e9; /* Fundo verde menta */
     padding: 6px 14px;
     border-radius: 50px; /* Transforma num formato de pílula */
     font-weight: 700 !important;
-    margin-top: 10px;
+    margin-top: 5px;
     display: inline-block;
     border: 1px solid #c8e6c9; /* Borda sutil para acabamento */
+    text-align: center;
 }
 
 .modern-sidebar-nav {
@@ -5422,7 +5424,7 @@ input:checked + .slider:before { transform: translateX(20px); }
     color: var(--verde-escuro) !important;
     text-decoration: none;
     font-weight: 600; 
-    font-size: 0.95rem; /* Ajustado para não ficar exagerado */
+    font-size: 15px !important; /* Em px para garantir a mesma proporção de botão do Admin */
     letter-spacing: 0.3px;
     transition: background-color 0.2s, color 0.2s;
     position: relative;
@@ -5435,14 +5437,14 @@ input:checked + .slider:before { transform: translateX(20px); }
 .sidebar-nav a.nav-item-modern i, .modern-sidebar-nav a.nav-item-modern i,
 .sidebar-nav a.nav-item-modern img, .modern-sidebar-nav a.nav-item-modern img,
 .sidebar-nav a.nav-item-modern .icon, .modern-sidebar-nav a.nav-item-modern .icon {
-    width: 20px !important; /* Reduzido de 22px para ficar mais delicado */
-    height: 20px !important;
-    min-width: 20px !important;
-    max-width: 20px !important;
-    flex: 0 0 20px !important;
+    width: 22px !important;
+    height: 22px !important;
+    min-width: 22px !important; /* Impede que ícones diferentes desalinhem o texto */
+    max-width: 22px !important; /* Blinda contra vazamentos de largura SVG */
+    flex: 0 0 22px !important; /* BLINDAGEM MÁXIMA: Trava o Flexbox impedindo distorção no Safari/Chrome */
     color: var(--verde-escuro);
-    display: block !important;
-    font-size: 1.15rem;
+    display: block !important; /* Oculte o flex interno que causava a quebra das tags <line> */
+    font-size: 18px !important; /* Em px para contornar o 70% root */
     transition: color 0.2s;
     margin: 0 !important;
 }
@@ -5481,11 +5483,17 @@ input:checked + .slider:before { transform: translateX(20px); }
     display: none;
 }
 
+/* Garante que o botão de Sair e o ícone fiquem vermelhos ao invés de verde */
+#btn-logout.nav-item-modern svg,
+#btn-logout.nav-item-modern span {
+    color: #e63946 !important;
+}
+
 /* Ajuste principal para comportar a nova sidebar */
 @media (min-width: 992px) {
     .dashboard-main {
-        margin-left: 220px !important; 
-        width: calc(100% - 220px) !important; 
+        margin-left: 250px !important; 
+        width: calc(100% - 250px) !important; 
     }
     /* Esconder top nav antiga se usar sidebar lateral */
     .dashboard-top-nav {
