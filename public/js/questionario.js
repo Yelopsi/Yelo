@@ -211,8 +211,8 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (trackingError) {
             }
 
-            // Pequena pausa dramática (UX)
-            await new Promise(r => setTimeout(r, 1500));
+            // Pequena pausa dramática (Reduzida pois o servidor agora já faz o cálculo real)
+            await new Promise(r => setTimeout(r, 300));
 
             // Salva resultados e redireciona
             sessionStorage.setItem('matchResults', JSON.stringify(matchData));
@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 sessionStorage.setItem('matchResults', JSON.stringify({ matchTier: 'none', results: [] }));
                 window.location.href = '/resultados';
-            }, 2000);
+            }, 500);
         }
     }
     

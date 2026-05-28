@@ -70,7 +70,7 @@ body.pagina-dashboard {
     display: none; /* Oculto por padrão */
     justify-content: center;
     align-items: center;
-    z-index: 9999; /* Muito acima de tudo */
+    z-index: 200000; /* Muito acima de tudo, inclusive da bottom nav */
     backdrop-filter: blur(3px);
 }
 
@@ -105,6 +105,33 @@ body.pagina-dashboard {
     from { opacity: 0; transform: translateY(30px) scale(0.95); }
     to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* --- BOTTOM SHEETS MOBILE (APP-LIKE) --- */
+.sheet-drag-handle {
+    width: 40px; height: 4px; background: #ddd; border-radius: 2px;
+    margin: -20px auto 20px auto; display: none;
+}
+@media (max-width: 768px) {
+    .sheet-drag-handle { display: block; }
+    
+    .custom-modal-box {
+        margin-top: auto; /* Empurra para baixo */
+        border-radius: 24px 24px 0 0 !important; /* !important para sobrepor inline style */
+        width: 100% !important; max-width: 100% !important;
+        animation: slideUpSheet 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        padding-top: 30px !important;
+        padding-bottom: calc(90px + env(safe-area-inset-bottom)) !important; /* Aumentado para dar espaço para a bottom nav */
+    }
+    .custom-modal-overlay { 
+        align-items: flex-end !important; 
+        padding: 0 !important; 
+    }
+}
+@keyframes slideUpSheet {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
 .dashboard-container { 
     display: flex; 
     height: 100%; /* FIX: Ocupa a altura total do body */
@@ -929,7 +956,7 @@ textarea#bio {
     .dashboard-main { 
         width: 100%; 
         /* Padding inferior dinâmico para garantir que o conteúdo tenha o mesmo 'respiro' acima da bottom nav em todas as páginas */
-        padding: calc(var(--mobile-header-h, 70px) + 20px) 20px calc(var(--mobile-bottom-h, 80px) + 110px + env(safe-area-inset-bottom)) 20px !important;
+        padding: calc(var(--mobile-header-h, 70px) + 20px) 20px calc(var(--mobile-bottom-h, 80px) + 35px + env(safe-area-inset-bottom)) 20px !important;
         margin-left: 0 !important; /* Remove a margem no mobile */
     }
 
@@ -4564,9 +4591,11 @@ input:checked + .slider:before { transform: translateX(20px); }
     display: none !important;
 }
 
-/* Ajuste fino do padding inferior do conteúdo principal */
-.dashboard-main {
-    padding-bottom: 20px !important;
+/* Ajuste fino do padding inferior do conteúdo principal (Apenas Desktop) */
+@media (min-width: 993px) {
+    .dashboard-main {
+        padding-bottom: 20px !important;
+    }
 }
 
 /* ==========================================================================

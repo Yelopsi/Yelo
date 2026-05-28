@@ -11,6 +11,9 @@ const { verifyGoogleToken } = require('./authController');
 const metaService = require('../services/metaService'); // Importa o rastreador
 const matchService = require('../services/matchService'); // Algoritmo unificado de Match
 
+// Flag global de otimização: Evita executar ALTER TABLE em todas as buscas de Match
+let matchSchemaChecked = false;
+
 // Configurações do Asaas
 let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
 ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, ''); // Remove barra final e espaços
@@ -1125,7 +1128,8 @@ exports.getPatientMatches = async (req, res) => {
             genero_profissional: patient.genero_profissional,
             praticas_desejadas: patient.praticas_afirmativas || [],
             // Assumindo que salvamos idade no perfil do paciente, senão ignoramos
-            idade_paciente: patient.idade || '' 
+            idade_paciente: patient.idade || '',
+            modalidade_preferida: patient.modalidade_preferida
         };
 
         // Validação rápida se o perfil está vazio
@@ -1141,24 +1145,57 @@ exports.getPatientMatches = async (req, res) => {
         // --- A MÁGICA ACONTECE AQUI ---
         const matchResult = await matchService.calculateMatches(patientPreferences);
 
-        // --- LOG DE EVENTO DE MATCH ---
+        // --- LOG DE EVENTO DE MATCH E UPDATE DE FAIRNESS ---
         if (matchResult && matchResult.results && matchResult.results.length > 0) {
             const matchEvents = matchResult.results.map(psi => ({
                 psychologistId: psi.id,
-                patientId: patient.id, // Temos o ID do paciente logado
+                patientId: patient ? patient.id : null, // Suporta tanto usuário logado quanto anônimo
                 matchScore: psi.matchScore,
-                source: 'patient_dashboard'
+                source: patient ? 'patient_dashboard' : 'questionnaire'
             }));
             try {
-                // O modelo db.MatchEvent pode não existir, então usamos SQL puro e garantimos as colunas
-                await db.sequelize.query(`ALTER TABLE "MatchEvents" ADD COLUMN IF NOT EXISTS "patientId" INTEGER, ADD COLUMN IF NOT EXISTS "source" VARCHAR(255);`).catch(() => {});
+                // 1. Garantia de Colunas (Executa apenas UMA VEZ na vida útil do servidor para evitar gargalo de I/O)
+                if (!matchSchemaChecked) {
+                    await db.sequelize.query(`
+                        CREATE TABLE IF NOT EXISTS "MatchEvents" (
+                            "id" SERIAL PRIMARY KEY,
+                            "psychologistId" INTEGER,
+                            "patientId" INTEGER,
+                            "matchTags" TEXT[], 
+                            "matchScore" FLOAT,
+                            "source" VARCHAR(255),
+                            "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                            "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                        );
+                    `).catch(() => {});
+                    await db.sequelize.query(`ALTER TABLE "MatchEvents" ADD COLUMN IF NOT EXISTS "patientId" INTEGER, ADD COLUMN IF NOT EXISTS "source" VARCHAR(255), ADD COLUMN IF NOT EXISTS "matchScore" FLOAT;`).catch(() => {});
+                    await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "last_shown_match_at" TIMESTAMP WITH TIME ZONE;`).catch(() => {});
+                    matchSchemaChecked = true;
+                }
+
                 for (const event of matchEvents) {
                     await db.sequelize.query(
                         `INSERT INTO "MatchEvents" ("psychologistId", "patientId", "matchScore", "source", "createdAt", "updatedAt") VALUES (:psychologistId, :patientId, :matchScore, :source, NOW(), NOW())`,
                         { replacements: event, type: db.sequelize.QueryTypes.INSERT }
                     );
                 }
+
+                // 2. ATUALIZA O COOLDOWN E AS IMPRESSÕES (A Mágica do UCB)
+                const idsParaAtualizar = matchResult.results.map(psi => psi.id);
+                if (idsParaAtualizar.length > 0) {
+                    await db.sequelize.query(
+                        `UPDATE "Psychologists" 
+                         SET profile_appearances = profile_appearances + 1, 
+                             last_shown_match_at = NOW() 
+                         WHERE id IN (:ids)`,
+                        { 
+                            replacements: { ids: idsParaAtualizar }, 
+                            type: db.sequelize.QueryTypes.UPDATE 
+                        }
+                    );
+                }
             } catch (err) {
+                console.error("Erro ao registrar evento de match: ", err);
             }
         }
 
@@ -1201,23 +1238,59 @@ exports.getAnonymousMatches = async (req, res) => {
         const matchResult = await matchService.calculateMatches(patientPreferences);
 
 
-        // --- LOG DE EVENTO DE MATCH (ANÔNIMO) ---
+        const patient = null; // Declarado para não quebrar o bloco unificado
+
+        // --- LOG DE EVENTO DE MATCH E UPDATE DE FAIRNESS ---
         if (matchResult && matchResult.results && matchResult.results.length > 0) {
             const matchEvents = matchResult.results.map(psi => ({
                 psychologistId: psi.id,
-                patientId: null, // Usuário anônimo
+                patientId: patient ? patient.id : null, // Suporta tanto usuário logado quanto anônimo
                 matchScore: psi.matchScore,
-                source: 'questionnaire'
+                source: patient ? 'patient_dashboard' : 'questionnaire'
             }));
             try {
-                await db.sequelize.query(`ALTER TABLE "MatchEvents" ADD COLUMN IF NOT EXISTS "patientId" INTEGER, ADD COLUMN IF NOT EXISTS "source" VARCHAR(255);`).catch(() => {});
+                // 1. Garantia de Colunas (Executa apenas UMA VEZ na vida útil do servidor para evitar gargalo de I/O)
+                if (!matchSchemaChecked) {
+                    await db.sequelize.query(`
+                        CREATE TABLE IF NOT EXISTS "MatchEvents" (
+                            "id" SERIAL PRIMARY KEY,
+                            "psychologistId" INTEGER,
+                            "patientId" INTEGER,
+                            "matchTags" TEXT[], 
+                            "matchScore" FLOAT,
+                            "source" VARCHAR(255),
+                            "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                            "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                        );
+                    `).catch(() => {});
+                    await db.sequelize.query(`ALTER TABLE "MatchEvents" ADD COLUMN IF NOT EXISTS "patientId" INTEGER, ADD COLUMN IF NOT EXISTS "source" VARCHAR(255), ADD COLUMN IF NOT EXISTS "matchScore" FLOAT;`).catch(() => {});
+                    await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "last_shown_match_at" TIMESTAMP WITH TIME ZONE;`).catch(() => {});
+                    matchSchemaChecked = true;
+                }
+
                 for (const event of matchEvents) {
                     await db.sequelize.query(
                         `INSERT INTO "MatchEvents" ("psychologistId", "patientId", "matchScore", "source", "createdAt", "updatedAt") VALUES (:psychologistId, :patientId, :matchScore, :source, NOW(), NOW())`,
                         { replacements: event, type: db.sequelize.QueryTypes.INSERT }
                     );
                 }
+
+                // 2. ATUALIZA O COOLDOWN E AS IMPRESSÕES (A Mágica do UCB)
+                const idsParaAtualizar = matchResult.results.map(psi => psi.id);
+                if (idsParaAtualizar.length > 0) {
+                    await db.sequelize.query(
+                        `UPDATE "Psychologists" 
+                         SET profile_appearances = profile_appearances + 1, 
+                             last_shown_match_at = NOW() 
+                         WHERE id IN (:ids)`,
+                        { 
+                            replacements: { ids: idsParaAtualizar }, 
+                            type: db.sequelize.QueryTypes.UPDATE 
+                        }
+                    );
+                }
             } catch (err) {
+                console.error("Erro ao registrar evento de match: ", err);
             }
         }
 
