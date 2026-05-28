@@ -891,7 +891,7 @@ textarea#bio {
 
     /* --- SIDEBAR (MENU LATERAL) --- */
     .dashboard-sidebar {
-    width: 250px; background-color: var(--verde-escuro); color: white; display: flex; flex-direction: column; padding: 25px; box-shadow: 5px 0px 15px rgba(0,0,0,0.1); z-index: 10;
+    width: 200px; background-color: var(--verde-escuro); color: white; display: flex; flex-direction: column; padding: 25px; box-shadow: 5px 0px 15px rgba(0,0,0,0.1); z-index: 10;
     background-image: var(--ruido-claro) !important;
     background-attachment: fixed !important;
     background-repeat: repeat !important;
@@ -5279,7 +5279,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 /* --- SIDEBAR MODERNA (APP-LIKE) --- */
 .modern-sidebar-container {
-    width: 250px; /* Expandido para ficar do mesmo tamanho do admin */
+    width: 200px; /* Reduzido em 20% (de 250px para 200px) */
     background: #fcfcfc; /* Fundo mais claro, quase branco */
     border-right: 1px solid #f0f0f0; /* Borda mais sutil */
     display: flex;
@@ -5410,6 +5410,15 @@ input:checked + .slider:before { transform: translateX(20px); }
     flex-direction: column !important;
     gap: 8px !important; /* Gap vertical padrão */
     flex-grow: 1;
+    align-items: stretch !important; /* Anula o 'center' global da tag <nav> e força alinhamento à esquerda */
+}
+
+/* Garante que cada item ocupe a largura toda para o alinhamento à esquerda funcionar perfeitamente */
+.sidebar-nav li, .modern-sidebar-nav li {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    display: block !important;
 }
 
 /* --- ESTILOS DOS ITENS DO MENU (RESTAURADOS E AJUSTADOS) --- */
@@ -5492,8 +5501,8 @@ input:checked + .slider:before { transform: translateX(20px); }
 /* Ajuste principal para comportar a nova sidebar */
 @media (min-width: 992px) {
     .dashboard-main {
-        margin-left: 250px !important; 
-        width: calc(100% - 250px) !important; 
+        margin-left: 200px !important; 
+        width: calc(100% - 200px) !important; 
     }
     /* Esconder top nav antiga se usar sidebar lateral */
     .dashboard-top-nav {
