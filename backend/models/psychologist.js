@@ -270,6 +270,12 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: 0,
         allowNull: false
     },
+    // --- ADICIONADO PARA O COOLDOWN DE MATCH ---
+    last_shown_match_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: 'Registra a última vez que apareceu no Top 3 do Match para aplicar o cooldown'
+    },
     stripeSubscriptionId: {
       type: DataTypes.STRING,
       allowNull: true

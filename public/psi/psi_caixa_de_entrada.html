@@ -2,114 +2,182 @@
 <!-- ESTRUTURA REFEITA DO ZERO PARA ISOLAMENTO DE LAYOUT -->
 
 <style>
-    /* Estilos da Página de Suporte (Formulário App-like) */
-    .app-like-wrapper {
-        display: flex;
-        flex-direction: column;
+    /* Estilos específicos para a nova página de suporte, inspirados na identidade visual existente */
+    .support-wrapper {
+        max-width: 800px;
+        margin: 0 auto;
+        padding-bottom: 40px;
     }
 
-    .support-container {
-        display: flex;
-        flex-direction: column;
-        max-width: 600px;
-        width: 100%;
-        margin: 0 auto;
-        background-color: #fff;
-        border-radius: 16px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.08); /* Sombra mais destacada e bonita no desktop */
-        border: 1px solid #f0f0f0;
+    /* 1. Card Principal de WhatsApp */
+    .support-card-principal {
+        background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%);
+        color: #fff;
+        padding: 40px;
+        border-radius: 24px;
+        text-align: center;
+        margin-bottom: 40px;
+        box-shadow: 0 12px 35px rgba(27, 67, 50, 0.2);
+        position: relative;
+        overflow: hidden;
         animation: fadeIn 0.5s ease-out;
+    }
+
+    .support-card-principal::before {
+        content: '';
+        position: absolute;
+        top: -50px;
+        right: -80px;
+        width: 250px;
+        height: 250px;
+        background: url('https://static.whatsapp.net/rsrc.php/v3/y7/r/DSxOAUB0raA.png') no-repeat center center;
+        background-size: contain;
+        opacity: 0.08;
+        transform: rotate(15deg);
+    }
+
+    .support-card-principal h2 {
+        font-family: var(--font-titulos);
+        font-size: 2rem;
+        color: #fff;
+        margin: 0 0 10px 0;
+    }
+
+    .support-card-principal p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0 auto 25px auto;
+        max-width: 450px;
+    }
+
+    .response-time-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        margin-bottom: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    #btn-whatsapp-support {
+        background-color: #25D366;
+        color: #fff;
+        padding: 16px 32px;
+        font-size: 1.1rem;
+        border-radius: 50px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        border: none;
+        box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+    }
+    #btn-whatsapp-support:hover {
+        background-color: #1DA851;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(37, 211, 102, 0.4);
+    }
+
+    /* 2. Seção de FAQ */
+    .faq-container {
+        margin-bottom: 40px;
+    }
+    .titulo-secao-menor {
+        font-family: var(--font-titulos);
+        font-size: 1.5rem;
+        color: var(--verde-escuro);
+        text-align: center;
+        margin-bottom: 25px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+    }
+    .accordion-item {
+        background: #fff;
+        border: 1px solid #f0f0f0;
+        border-radius: 12px;
+        margin-bottom: 10px;
         overflow: hidden;
     }
-
-    .support-form {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-    }
-
-    .support-scroll-area {
-        padding: 40px 40px 20px 40px;
-        scrollbar-width: none; 
-        -ms-overflow-style: none; 
-    }
-    .support-scroll-area::-webkit-scrollbar {
-        display: none;
-    }
-
-    /* Novos estilos para os inputs do form */
-    .support-form .form-group {
-        text-align: left;
-        margin-bottom: 20px;
-    }
-
-    .support-form label {
-        display: block;
-        font-weight: bold;
-        color: #1B4332;
-        margin-bottom: 8px;
-        font-size: 0.95rem;
-    }
-
-    .support-form input,
-    .support-form select,
-    .support-form textarea {
+    .accordion-header {
         width: 100%;
-        padding: 14px;
+        background: transparent;
+        border: none;
+        padding: 20px;
+        text-align: left;
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #333;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .accordion-header::after {
+        content: '▼';
+        font-size: 0.8rem;
+        transition: transform 0.3s ease;
+        color: var(--verde-escuro);
+    }
+    .accordion-item.active .accordion-header::after {
+        transform: rotate(180deg);
+    }
+    .accordion-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease-out;
+    }
+    .accordion-content p {
+        padding: 0 20px 20px 20px;
+        margin: 0;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: #555;
+    }
+
+    /* 3. Formulário Secundário */
+    .form-contato-secundario {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        padding: 30px;
+        border-radius: 16px;
+        text-align: center;
+    }
+    .form-contato-secundario h4 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: #555;
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+    .form-contato-secundario .form-group {
+        text-align: left;
+        margin-bottom: 15px;
+    }
+    .form-contato-secundario label {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #333;
+        margin-bottom: 5px;
+        display: block;
+    }
+    .form-contato-secundario input,
+    .form-contato-secundario select,
+    .form-contato-secundario textarea {
+        width: 100%;
+        padding: 12px;
         border-radius: 8px;
         border: 1px solid #ccc;
         font-family: var(--font-principal);
-        font-size: 16px !important; /* Previne zoom de câmera automático no clique (iOS/Mobile) */
-        background-color: #f9fafb;
-        outline: none;
-        transition: all 0.2s ease;
+        font-size: 1rem;
+        background-color: #fff;
         box-sizing: border-box;
     }
-
-    .support-form input:focus,
-    .support-form select:focus,
-    .support-form textarea:focus {
-        border-color: #1B4332;
-        box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
-        background-color: #fff;
-    }
-
-    .support-footer {
-        padding: 20px 40px;
-        background: #fff;
-        border-top: 1px solid #f0f0f0;
-        flex-shrink: 0;
-    }
-
-    .btn-submit-support {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        background-color: #1B4332;
-        color: #fff;
-        padding: 15px 30px;
-        border-radius: 50px;
-        text-decoration: none;
-        font-weight: 700;
-        font-size: 1.1rem;
-        transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
-        border: none;
-        cursor: pointer;
-        width: 100%;
-    }
-
-    .btn-submit-support:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(27, 67, 50, 0.2);
-        background-color: #143d2e;
-    }
-
-    .btn-submit-support:disabled {
-        background-color: #999;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
+    .form-contato-secundario .btn-principal {
+        margin-top: 10px;
+        width: auto;
+        padding: 12px 30px;
     }
 
     @keyframes fadeIn {
@@ -117,88 +185,81 @@
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* --- TomSelect (Estética Yelo) --- */
-    .support-form .ts-wrapper { padding: 0 !important; border: none !important; background: transparent !important; box-shadow: none !important; min-height: auto !important; }
-    .support-form .ts-control {
-        width: 100% !important;
-        padding: 10px 14px !important;
-        border: 1px solid #ccc !important;
-        border-radius: 8px !important;
-        font-size: 0.95rem !important;
-        background-color: #f9fafb !important;
-        font-family: var(--font-principal) !important;
-        color: #333 !important;
-        transition: all 0.3s ease !important;
-        cursor: pointer;
-        display: flex; align-items: center;
-    }
-    .support-form .ts-wrapper.focus .ts-control {
-        border-color: #1B4332 !important;
-        background-color: #fff !important;
-        box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1) !important;
-    }
-    .support-form .ts-control::after {
-        content: '▼'; font-size: 0.7rem; position: absolute; right: 15px; color: #333; pointer-events: none; transition: transform 0.3s;
-    }
-    .support-form .ts-wrapper.dropdown-active .ts-control::after { transform: rotate(180deg); }
-
-    @media (max-width: 992px) {
-        .app-like-wrapper {
-            /* Calcula o espaço exato entre o menu inferior e superior no mobile para travamento */
-            height: calc(100dvh - var(--mobile-header-h, 70px) - var(--mobile-bottom-h, 80px) - 50px);
-            min-height: 400px;
-        }
-        .main-header {
-            display: none; /* Oculta cabeçalho padrão para imersão total */
-        }
-        .support-container {
-            flex-grow: 1;
-            border-radius: 20px;
-            box-shadow: none;
-            border: none;
-        }
-        .support-scroll-area {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 25px 20px 10px 20px;
-        }
-        .support-footer {
-            padding: 15px 20px;
-        }
-        .support-icon { width: 60px; height: 60px; font-size: 1.5rem; }
-        .support-title { font-size: 1.4rem; }
-            
-            /* Força select nativo no Mobile com seta customizada */
-            #support-subject { display: block !important; visibility: visible !important; opacity: 1 !important; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%231B4332' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 15px center; padding-right: 40px !important; }
-            .support-form .ts-wrapper { display: none !important; }
+    @media (max-width: 768px) {
+        .support-card-principal { padding: 30px 20px; }
+        .support-card-principal h2 { font-size: 1.6rem; }
+        .support-card-principal p { font-size: 1rem; }
+        #btn-whatsapp-support { width: 100%; }
     }
 </style>
 
-<div class="app-like-wrapper">
 <div class="main-header">
-    <div>
-        <h1>Fale com a Yelo</h1>
-        <p class="subtitulo-header">Envie sua dúvida, sugestão ou relate um problema.</p>
+    <div class="header-content">
+        <h1>Fale direto com a Yelo</h1>
+        <p>Dúvidas, problemas técnicos ou sugestões? Nossa equipe responde rapidamente pelo WhatsApp.</p>
     </div>
 </div>
 
-<div class="support-container" style="max-width: 650px;">
-    <form id="yelo-support-form" class="support-form">
-        <div class="support-scroll-area" style="padding: 30px;">
-            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px;">
-                <div style="width: 50px; height: 50px; background: #f0fdf4; color: #1B4332; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; box-shadow: 0 4px 10px rgba(27,67,50,0.05);">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2-2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2-2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                </div>
-                <div>
-                    <h3 style="margin: 0; color: #1B4332; font-family: var(--font-titulos); font-size: 1.5rem;">Como podemos ajudar?</h3>
-                    <p style="color: #666; font-size: 0.9rem; margin: 2px 0 0 0; text-align: left;">Preencha os detalhes e nossa equipe de suporte entrará em contato.</p>
+<div class="support-wrapper">
+
+    <!-- Card Principal: WhatsApp -->
+    <div class="support-card-principal">
+        <h2>Suporte rápido e direto</h2>
+        <p>Fale com nossa equipe sem precisar abrir chamados ou esperar e-mails.</p>
+        <div class="response-time-badge">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span>Tempo médio de resposta: <strong>poucos minutos</strong></span>
+        </div>
+        <button id="btn-whatsapp-support" class="btn btn-principal track-feature" data-feature="suporte_whatsapp">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16.75 13.96c.25.13.42.3.52.49.1.19.1.38.05.57-.05.19-.15.35-.29.49-.14.14-.33.23-.56.26-.23.03-.5.03-.79-.02-.29-.05-.62-.16-.99-.34-.37-.18-.77-.43-1.2-.73-.43-.3-.86-.67-1.29-1.1-.43-.43-.79-.9-1.09-1.42-.3-.52-.51-1.07-.62-1.64-.12-.57-.12-1.11,0-1.61.08-.33.24-.61.45-.83.21-.22.45-.38.7-.46.25-.08.5-.11.73-.08.23.03.48.11.73.26.25.15.48.37.68.65.2.28.31.59.31.92,0,.14-.02.28-.05.43-.03.15-.1.3-.19.45-.09.15-.22.3-.38.45l-.05.05c-.09.09-.18.18-.26.26-.08.08-.15.15-.21.21-.06.06-.1.11-.14.15-.04.04-.06.09-.06.14s.01.1.04.14c.03.04.07.09.13.15.23.24.49.49.79.73.29.24.54.45.75.62.21.17.4.32.56.43.16.12.3.22.4.31.1.09.18.17.23.23.05.06.1.1.15.14.05.04.09.07.12.09.03.02.07.04.1.05.03.01.07.02.1.02h.11c.07,0,.14-.01.2-.04.06-.03.12-.07.17-.13.05-.06.1-.13.15-.21.05-.08.09-.17.14-.27.05-.1.09-.2.14-.31.05-.11.1-.21.15-.31.05-.1.1-.18.15-.25.05-.07.1-.13.15-.17.05-.04.1-.08.15-.12a.97.97,0,0,1,1.1,1.6z M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10,10-4.48,10-10S17.52,2,12,2zm0,18c-4.41,0-8-3.59-8-8s3.59-8,8-8,8,3.59,8,8-3.59,8-8,8z"></path></svg>
+            Falar no WhatsApp
+        </button>
+    </div>
+
+    <!-- FAQ Rápida -->
+    <div class="faq-container">
+        <h3 class="titulo-secao-menor">Dúvidas Frequentes</h3>
+        <div class="accordion">
+            <div class="accordion-item">
+                <button class="accordion-header">Como começar a receber pacientes?</button>
+                <div class="accordion-content">
+                    <p>Para começar a receber pacientes, certifique-se de que seu perfil está 100% completo e verificado. Adicione horários disponíveis na sua agenda em "Clínica" > "Minha Agenda". Perfis completos e com horários aparecem com prioridade no match!</p>
                 </div>
             </div>
+            <div class="accordion-item">
+                <button class="accordion-header">Como funciona o teste grátis?</button>
+                <div class="accordion-content">
+                    <p>Você tem 14 dias para usar todas as funcionalidades da plataforma sem custo e sem precisar cadastrar um cartão de crédito. Após esse período, para continuar recebendo pacientes, você precisará escolher um dos nossos planos.</p>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <button class="accordion-header">Como cancelar minha assinatura?</button>
+                <div class="accordion-content">
+                    <p>Você pode cancelar a renovação automática a qualquer momento na página "Ajustes" > "Assinatura & Planos". Seu acesso continuará ativo até o final do período que já foi pago.</p>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <button class="accordion-header">Como preencher meu perfil corretamente?</button>
+                <div class="accordion-content">
+                    <p>Vá em "Ajustes" > "Meu Perfil". Capriche na sua biografia, adicione uma foto profissional e preencha todos os campos de especialidades e atuação. Um perfil completo aumenta em até 3x suas chances de receber contatos.</p>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <button class="accordion-header">Como reagendar sessões?</button>
+                <div class="accordion-content">
+                    <p>Na sua agenda, clique no agendamento que deseja alterar. No modal que se abrirá, você terá a opção de "Reagendar". O sistema buscará seus próximos horários livres e você poderá selecionar um novo dia/hora para a sessão.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            <div class="form-group" style="margin-bottom: 15px; text-align: left;">
-                <label for="support-subject" style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: #495057; margin-bottom: 5px; display: block;">Assunto *</label>
-                <select id="support-subject" required style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #ccc; background-color: #f9fafb; font-size: 0.95rem; font-family: var(--font-principal);">
-                    <option value="" disabled selected>Selecione um assunto...</option>
+    <!-- Formulário de Contato (Alternativa) -->
+    <div class="form-contato-secundario">
+        <h4>Prefere enviar uma mensagem por aqui? Sem problemas.</h4>
+        <form id="form-suporte-alternativo">
+            <div class="form-group">
+                <label for="support-subject-alt">Assunto</label>
+                <select id="support-subject-alt" required>
                     <option value="Dúvida sobre a plataforma">Dúvida sobre a plataforma</option>
                     <option value="Problema técnico">Problema técnico</option>
                     <option value="Sugestão de melhoria">Sugestão de melhoria</option>
@@ -206,127 +267,81 @@
                     <option value="Outros">Outros</option>
                 </select>
             </div>
-
-            <div class="form-group" style="margin-bottom: 0; text-align: left;">
-                <label for="support-message" style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: #495057; margin-bottom: 5px; display: block;">Sua Mensagem *</label>
-                <textarea id="support-message" rows="5" required placeholder="Descreva com o máximo de detalhes como podemos te ajudar..." style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #ccc; background-color: #f9fafb; font-size: 0.95rem; font-family: var(--font-principal); resize: vertical;"></textarea>
+            <div class="form-group">
+                <label for="support-message-alt">Sua Mensagem</label>
+                <textarea id="support-message-alt" rows="4" required placeholder="Descreva sua questão..."></textarea>
             </div>
-        </div>
+            <button type="submit" class="btn btn-principal">Enviar Mensagem</button>
+        </form>
+    </div>
 
-        <div class="support-footer" style="display: flex; justify-content: flex-end; padding: 20px 30px; gap: 10px; align-items: center;">
-            <button type="button" class="btn btn-secundario" style="padding: 10px 20px; border-radius: 50px; font-size: 0.95rem;" onclick="window.loadPage('psi_ajustes_hub.html')">Cancelar</button>
-            <button type="submit" class="btn-submit-support" id="btn-submit-support" style="width: auto; padding: 10px 24px; font-size: 0.95rem; box-shadow: 0 4px 15px rgba(27,67,50,0.2); margin: 0;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: -2px;"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                Enviar Mensagem
-            </button>
-        </div>
-    </form>
-</div>
 </div>
 
 <script>
     (function() {
-        function showSupportToast(message, type = 'success') {
-            let container = document.getElementById('toast-container');
-            if (!container) {
-                container = document.createElement('div');
-                container.id = 'toast-container';
-                document.body.appendChild(container);
-            }
-            const toast = document.createElement('div');
-            toast.className = 'toast toast-' + type;
-            
-            const iconSvg = type === 'success' 
-                ? '<svg width="20" height="20" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'
-                : '<svg width="20" height="20" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
-            
-            toast.innerHTML = iconSvg + '<span>' + message + '</span>';
-            container.appendChild(toast);
-            
-            requestAnimationFrame(() => {
-                toast.style.display = 'flex';
-                toast.style.opacity = '1';
-                toast.style.transform = 'translateY(0) scale(1)';
+        // Lógica do Accordion
+        const accordionItems = document.querySelectorAll('.accordion-item');
+        accordionItems.forEach(item => {
+            const header = item.querySelector('.accordion-header');
+            const content = item.querySelector('.accordion-content');
+            header.addEventListener('click', () => {
+                const isActive = item.classList.toggle('active');
+                content.style.maxHeight = isActive ? content.scrollHeight + 'px' : '0';
             });
-            
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateY(-20px) scale(0.9)';
-                setTimeout(() => toast.remove(), 400);
-            }, 4000);
-        }
-
-        // --- Inicializa o TomSelect para o dropdown de Assunto ---
-        if (typeof TomSelect !== 'undefined') {
-            const isMobile = window.innerWidth <= 992 || /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
-            if (!isMobile) {
-                const subjectSelect = document.getElementById('support-subject');
-                if (subjectSelect && !subjectSelect.tomselect) {
-                    new TomSelect(subjectSelect, {
-                        create: false,
-                        controlInput: `<input type="text" autocomplete="off" size="1" readonly style="opacity:0; position:absolute; left:-10000px;">`,
-                        dropdownParent: 'body',
-                        dropdownClass: 'ts-dropdown custom-ts-dropdown'
-                    });
-                }
-            }
-        }
-
-        document.getElementById('yelo-support-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const subject = document.getElementById('support-subject').value;
-            const message = document.getElementById('support-message').value;
-            const btnSubmit = document.getElementById('btn-submit-support');
-            const originalText = btnSubmit.innerHTML;
-
-            btnSubmit.innerHTML = 'Enviando... ⏳';
-            btnSubmit.disabled = true;
-
-            try {
-                const token = localStorage.getItem('Yelo_token');
-                const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
-                
-                // Busca os dados do psicólogo logado para pegar o email real
-                let nome = localStorage.getItem('Yelo_user_name') || 'Psicólogo Logado';
-                let email = 'nao_informado@yelopsi.com.br';
-                
-                try {
-                    const meRes = await fetch(`${BASE_URL}/api/psychologists/me`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    if (meRes.ok) {
-                        const meData = await meRes.json();
-                        if (meData.nome) nome = meData.nome;
-                        if (meData.email) email = meData.email;
-                    }
-                } catch (err) {
-                    console.warn('Não foi possível obter o perfil para o contato:', err);
-                }
-
-                const response = await fetch(`${BASE_URL}/api/contato`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ nome: nome, email: email, assunto: subject, mensagem: message })
-                });
-
-                if (response.ok) {
-                    showSupportToast('Mensagem enviada com sucesso! Retornaremos em breve.', 'success');
-                    document.getElementById('yelo-support-form').reset();
-                } else {
-                    const data = await response.json();
-                    showSupportToast(data.error || 'Erro ao enviar a mensagem.', 'error');
-                }
-            } catch (error) {
-                console.error('Erro ao enviar suporte:', error);
-                showSupportToast('Erro de conexão ao tentar enviar a mensagem.', 'error');
-            } finally {
-                btnSubmit.innerHTML = originalText;
-                btnSubmit.disabled = false;
-            }
         });
+
+        // Lógica do Botão WhatsApp
+        const btnWhatsapp = document.getElementById('btn-whatsapp-support');
+        if (btnWhatsapp) {
+            btnWhatsapp.addEventListener('click', () => {
+                const numeroYelo = '5511988887723';
+                const mensagem = encodeURIComponent('Olá! Sou psicólogo cadastrado na Yelo e preciso de ajuda com:');
+                window.open(`https://wa.me/${numeroYelo}?text=${mensagem}`, '_blank');
+            });
+        }
+
+        // Lógica do Formulário de Suporte Alternativo
+        const formAlternativo = document.getElementById('form-suporte-alternativo');
+        if (formAlternativo) {
+            formAlternativo.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const btnSubmit = this.querySelector('button[type="submit"]');
+                const originalText = btnSubmit.textContent;
+                btnSubmit.textContent = 'Enviando...';
+                btnSubmit.disabled = true;
+
+                const payload = {
+                    assunto: document.getElementById('support-subject-alt').value,
+                    mensagem: document.getElementById('support-message-alt').value,
+                    nome: localStorage.getItem('Yelo_user_name') || 'Psicólogo Logado',
+                    email: 'suporte-dashboard@yelopsi.com.br' // Email genérico para o formulário interno
+                };
+
+                try {
+                    const token = localStorage.getItem('Yelo_token');
+                    const response = await fetch('/api/contato', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        if (window.showToast) window.showToast('Mensagem enviada com sucesso!', 'success');
+                        this.reset();
+                    } else {
+                        const err = await response.json();
+                        throw new Error(err.error || 'Falha no envio.');
+                    }
+                } catch (error) {
+                    if (window.showToast) window.showToast(error.message, 'error');
+                } finally {
+                    btnSubmit.textContent = originalText;
+                    btnSubmit.disabled = false;
+                }
+            });
+        }
     })();
 </script>

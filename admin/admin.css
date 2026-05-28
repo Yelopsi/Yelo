@@ -2091,8 +2091,8 @@ input:checked + .slider:before { transform: translateX(22px); }
 /* --- 1. Ajustes Gerais de Layout Mobile --- */
 @media (max-width: 768px) {
     .dashboard-main {
-        padding: 15px;
-        padding-top: 70px; /* Espaço para o header fixo/menu */
+        /* Unifica paddings e garante respiro inferior para a bottom nav mobile */
+        padding: 70px 15px calc(var(--mobile-bottom-h, 80px) + 55px + env(safe-area-inset-bottom)) 15px !important;
     }
     
     .header-flex {
