@@ -209,90 +209,94 @@ const applyFairness = (scoredCandidates, totalSystemImpressions) => {
 };
 
 exports.calculateMatches = async (preferences) => {
-    // Ponto 3: Busca Total de Impressões com Cache de 5 minutos (Evita gargalo no banco)
-    const now = Date.now();
-    if (!cachedTotalImpressions || now - lastImpressionCacheTime > 5 * 60 * 1000) {
-        cachedTotalImpressions = await db.Psychologist.sum('profile_appearances') || 1000;
-        lastImpressionCacheTime = now;
-    }
-    const totalSystemImpressions = cachedTotalImpressions;
+    try {
+        // Ponto 3: Busca Total de Impressões com Cache de 5 minutos (Evita gargalo no banco)
+        const now = Date.now();
+        if (!cachedTotalImpressions || now - lastImpressionCacheTime > 5 * 60 * 1000) {
+            // Blindagem: Garante que o retorno é um número seguro para o Math.log do UCB
+            cachedTotalImpressions = parseInt(await db.Psychologist.sum('profile_appearances').catch(() => 1000), 10) || 1000;
+            lastImpressionCacheTime = now;
+        }
+        const totalSystemImpressions = cachedTotalImpressions;
 
-    const priceRange = parsePriceRange(preferences.valor_sessao_faixa);
+        const priceRange = parsePriceRange(preferences.valor_sessao_faixa);
 
-    let candidates = await fetchEligibleCandidates(preferences, priceRange, false);
-    
-    // --- FALLBACK DE SEGURANÇA (Plano B) ---
-    // Se os bloqueios eliminarem quase todos, relaxamos as restrições para nunca deixar a tela vazia
-    if (candidates.length < 3) {
-        candidates = await fetchEligibleCandidates(preferences, priceRange, true);
-    }
-
-    if (!candidates.length) return { matchTier: 'none', results: [] }; // Só se não houver NENHUM psicólogo ativo na base
-
-    let scored = candidates.map(psy => {
-        const { rawMatchScore, explainability } = calculateSimilarity(psy, preferences, priceRange);
-        const psyJSON = psy.toJSON ? psy.toJSON() : psy;
-        return { 
-            ...psyJSON, 
-            rawMatchScore, 
-            matchDetails: [...new Set(explainability.positives)],
-            explainability 
-        };
-    });
-
-    // Filtra sumariamente os que tiveram baixíssima compatibilidade (< 20 pontos)
-    let strictScored = scored.filter(c => c.rawMatchScore > 20);
-    if (strictScored.length < 3) {
-        scored = scored.sort((a, b) => b.rawMatchScore - a.rawMatchScore); // Aproveita os "menos piores" se o filtro for muito severo
-    } else {
-        scored = strictScored;
-    }
-
-    // Aplica o UCB e o Anti-Monopólio
-    scored = applyFairness(scored, totalSystemImpressions);
-
-    // Ordenação Final Primária
-    scored.sort((a, b) => b.finalScore - a.finalScore);
-
-    // WEIGHTED RANDOMIZATION (Roleta Viciada para Empates)
-    const topCandidates = scored.slice(0, 6); // Pega o Top 6 para sortear 3
-    const results = [];
-    
-    while (results.length < 3 && topCandidates.length > 0) {
-        const totalWeight = topCandidates.reduce((acc, val) => acc + Math.pow(val.finalScore, 2), 0);
-        let randomPoint = Math.random() * totalWeight;
+        let candidates = await fetchEligibleCandidates(preferences, priceRange, false);
         
-        for (let i = 0; i < topCandidates.length; i++) {
-            randomPoint -= Math.pow(topCandidates[i].finalScore, 2);
-            if (randomPoint <= 0) {
-                results.push(topCandidates[i]);
-                topCandidates.splice(i, 1);
-                break;
+        // --- FALLBACK DE SEGURANÇA (Plano B) ---
+        if (candidates.length < 3) {
+            candidates = await fetchEligibleCandidates(preferences, priceRange, true);
+        }
+
+        if (!candidates.length) return { matchTier: 'none', results: [] };
+
+        let scored = candidates.map(psy => {
+            const { rawMatchScore, explainability } = calculateSimilarity(psy, preferences, priceRange);
+            const psyJSON = psy.toJSON ? psy.toJSON() : psy;
+            return { 
+                ...psyJSON, 
+                rawMatchScore, 
+                matchDetails: [...new Set(explainability.positives)],
+                explainability 
+            };
+        });
+
+        let strictScored = scored.filter(c => c.rawMatchScore > 20);
+        if (strictScored.length < 3) {
+            scored = scored.sort((a, b) => (b.rawMatchScore || 0) - (a.rawMatchScore || 0)); 
+        } else {
+            scored = strictScored;
+        }
+
+        // Aplica o UCB e o Anti-Monopólio
+        scored = applyFairness(scored, totalSystemImpressions);
+
+        // Ordenação Final Primária
+        scored.sort((a, b) => (b.finalScore || 0) - (a.finalScore || 0));
+
+        // WEIGHTED RANDOMIZATION (Roleta Viciada para Empates)
+        const topCandidates = scored.slice(0, 6); // Pega o Top 6 para sortear 3
+        const results = [];
+        
+        while (results.length < 3 && topCandidates.length > 0) {
+            const totalWeight = topCandidates.reduce((acc, val) => acc + Math.pow(val.finalScore || 1, 2), 0);
+            let randomPoint = Math.random() * totalWeight;
+            
+            for (let i = 0; i < topCandidates.length; i++) {
+                randomPoint -= Math.pow(topCandidates[i].finalScore || 1, 2);
+                if (randomPoint <= 0) {
+                    results.push(topCandidates[i]);
+                    topCandidates.splice(i, 1);
+                    break;
+                }
             }
         }
-    }
 
-    // Fallback Masking para a UX
-    let tier = 'ideal';
-    let compromiseText = "";
-    if (results.length > 0) {
-        const bestScore = results[0].rawMatchScore;
-        if (bestScore < 75 && bestScore >= 50) {
-            tier = 'near';
-            compromiseText = "Compreendemos o que você busca! Não encontramos um profissional com 100% exato de sinergia, mas selecionamos excelentes especialistas que chegam muito perto.";
-        } else if (bestScore < 50) {
-            tier = 'fallback';
-            compromiseText = "Para não te deixar sem apoio, flexibilizamos levemente alguns detalhes e encontramos ótimos profissionais prontos para te acolher.";
+        // Fallback Masking para a UX
+        let tier = 'ideal';
+        let compromiseText = "";
+        if (results.length > 0) {
+            const bestScore = results[0].rawMatchScore;
+            if (bestScore < 75 && bestScore >= 50) {
+                tier = 'near';
+                compromiseText = "Compreendemos o que você busca! Não encontramos um profissional com 100% exato de sinergia, mas selecionamos excelentes especialistas que chegam muito perto.";
+            } else if (bestScore < 50) {
+                tier = 'fallback';
+                compromiseText = "Para não te deixar sem apoio, flexibilizamos levemente alguns detalhes e encontramos ótimos profissionais prontos para te acolher.";
+            }
+
+            results.forEach(r => {
+                let display = r.rawMatchScore || 0;
+                if (display < 50) display = Math.max(45, 60 + (display / 100));
+                if (display > 98) display = 98;
+                r.displayMatchScore = parseFloat(display.toFixed(1));
+                r.matchScore = r.displayMatchScore; 
+            });
         }
 
-        results.forEach(r => {
-            let display = r.rawMatchScore;
-            if (display < 50) display = Math.max(45, 60 + (display / 100));
-            if (display > 98) display = 98;
-            r.displayMatchScore = parseFloat(display.toFixed(1));
-            r.matchScore = r.displayMatchScore; 
-        });
+        return { matchTier: tier, compromiseText, results };
+    } catch (error) {
+        console.error("🔥 Erro fatal no calculateMatches:", error);
+        throw error;
     }
-
-    return { matchTier: tier, compromiseText, results };
 };

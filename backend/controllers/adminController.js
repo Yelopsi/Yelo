@@ -54,11 +54,14 @@ exports.loginAdmin = async (req, res) => {
         if (await bcrypt.compare(senha, adminUser.senha)) {
             console.log(`[LOGIN ADMIN] Sucesso para: ${email}. Gerando token e cookie...`);
             // --- GERAÇÃO DE LOG REAL ---
-            await db.SystemLog.create({
-                level: 'info',
-                message: `Login de administrador bem-sucedido: ${adminUser.email}`,
-                meta: { adminId: adminUser.id, isLegacy }
-            });
+            try {
+                if (db.SystemLog) {
+                    await db.SystemLog.create({
+                        level: 'info',
+                        message: `Login de administrador bem-sucedido: ${adminUser.email}`
+                    }).catch(() => {}); // Blindagem contra falha na tabela
+                }
+            } catch(e) { console.error("Erro ao gerar log de login:", e.message); }
 
             const token = generateAdminToken(adminUser.id);
 

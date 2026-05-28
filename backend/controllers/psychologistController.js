@@ -307,10 +307,14 @@ exports.loginPsychologist = async (req, res) => {
         const isMatch = await bcrypt.compare(passwordInput, psychologist.senha);
         
         if (!isMatch) {
-            await db.SystemLog.create({
-                level: 'warning',
-                message: `Falha de login (Senha incorreta): ${email}`
-            });
+            try {
+                if (db.SystemLog) {
+                    await db.SystemLog.create({
+                        level: 'warning',
+                        message: `Falha de login (Senha incorreta): ${email}`
+                    }).catch(() => {});
+                }
+            } catch(e) {}
             return res.status(401).json({ error: 'Senha incorreta.' });
         }
 
@@ -336,10 +340,14 @@ exports.loginPsychologist = async (req, res) => {
         }
 
         // [LOG DE SUCESSO PARA RASTREAMENTO NO DASHBOARD]
-        await db.SystemLog.create({
-            level: 'info',
-            message: `Login de Psicólogo bem-sucedido: ${email}`
-        });
+        try {
+            if (db.SystemLog) {
+                await db.SystemLog.create({
+                    level: 'info',
+                    message: `Login de Psicólogo bem-sucedido: ${email}`
+                }).catch(() => {});
+            }
+        } catch(e) {}
 
         const token = generateToken(psychologist.id, userType);
 
@@ -1297,6 +1305,7 @@ exports.getAnonymousMatches = async (req, res) => {
         res.status(200).json(matchResult);
 
     } catch (error) {
+            console.error("🔥 Erro fatal em getAnonymousMatches:", error);
         res.status(500).json({ error: 'Erro interno no servidor ao buscar recomendações.' });
     }
 };
