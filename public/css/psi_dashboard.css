@@ -70,7 +70,7 @@ body.pagina-dashboard {
     display: none; /* Oculto por padrão */
     justify-content: center;
     align-items: center;
-    z-index: 9999; /* Muito acima de tudo */
+    z-index: 200000; /* Muito acima de tudo, inclusive da bottom nav */
     backdrop-filter: blur(3px);
 }
 
@@ -105,6 +105,33 @@ body.pagina-dashboard {
     from { opacity: 0; transform: translateY(30px) scale(0.95); }
     to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* --- BOTTOM SHEETS MOBILE (APP-LIKE) --- */
+.sheet-drag-handle {
+    width: 40px; height: 4px; background: #ddd; border-radius: 2px;
+    margin: -20px auto 20px auto; display: none;
+}
+@media (max-width: 768px) {
+    .sheet-drag-handle { display: block; }
+    
+    .custom-modal-box {
+        margin-top: auto; /* Empurra para baixo */
+        border-radius: 24px 24px 0 0 !important; /* !important para sobrepor inline style */
+        width: 100% !important; max-width: 100% !important;
+        animation: slideUpSheet 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        padding-top: 30px !important;
+        padding-bottom: calc(90px + env(safe-area-inset-bottom)) !important; /* Aumentado para dar espaço para a bottom nav */
+    }
+    .custom-modal-overlay { 
+        align-items: flex-end !important; 
+        padding: 0 !important; 
+    }
+}
+@keyframes slideUpSheet {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
 .dashboard-container { 
     display: flex; 
     height: 100%; /* FIX: Ocupa a altura total do body */
@@ -211,7 +238,8 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
 @media (max-width: 992px) {
     .desktop-only { display: none !important; }
 }
-/* =================
+/* ==========================================================================
+   4. FORMULÁRIOS
    ========================================================================== */
 .form-secao {
     background-color: var(--branco-puro);
@@ -261,7 +289,6 @@ textarea#bio {
 }
 
 /* Botões de Formulário */
-.btn { padding: 10px 24px; border-radius: 25px; font-weight: 700; border: none; cursor: pointer; transition: transform 0.2s; display: inline-block; }
 .btn { padding: 10px 24px; border-radius: 25px; font-weight: 700; border: 2px solid transparent; cursor: pointer; transition: transform 0.2s; display: inline-block; text-align: center; box-sizing: border-box; }
 .btn-principal, .btn-rapido, .btn-primario { background-color: var(--verde-escuro); color: var(--branco-puro); }
 .btn-secundario { background-color: transparent; border: 2px solid var(--verde-escuro); color: var(--verde-escuro); }
@@ -929,17 +956,8 @@ textarea#bio {
     .dashboard-main { 
         width: 100%; 
         /* Padding inferior dinâmico para garantir que o conteúdo tenha o mesmo 'respiro' acima da bottom nav em todas as páginas */
-        padding: calc(var(--mobile-header-h, 70px) + 20px) 20px calc(var(--mobile-bottom-h, 80px) + 80px + env(safe-area-inset-bottom)) 20px !important;
-        /* VALOR MÍNIMO: Garante apenas o espaço da bottom nav + um respiro mínimo. O resto é controlado por página. */
-        padding: calc(var(--mobile-header-h, 70px) + 20px) 20px calc(var(--mobile-bottom-h, 80px) + 20px + env(safe-area-inset-bottom)) 20px !important;
+        padding: calc(var(--mobile-header-h, 70px) + 20px) 20px calc(var(--mobile-bottom-h, 80px) + 35px + env(safe-area-inset-bottom)) 20px !important;
         margin-left: 0 !important; /* Remove a margem no mobile */
-    }
-
-    /* --- FIX: ESPAÇAMENTO INFERIOR MOBILE (PÁGINAS ESPECÍFICAS) --- */
-    /* Adiciona um respiro extra no final de páginas que precisam, garantindo que a bottom nav não cubra o conteúdo. */
-    /* A Visão Geral agora tem seu próprio estilo local, como as outras páginas de Hub */
-    #ajustes-hub-grid {     /* Hub de Ajustes */
-        padding-bottom: 80px;
     }
 
     /* Empilha os campos do formulário de perfil no mobile para melhor UX */
@@ -983,13 +1001,6 @@ textarea#bio {
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-
-/* Adiciona espaço no topo em telas maiores para não colar no topo da página */
-@media (min-width: 993px) {
-    .main-header {
-        margin-top: 10px;
-    }
 }
 .main-header h1 { 
     font-family: var(--font-titulos); /* Garante a fonte New Kansas */
@@ -1839,30 +1850,6 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 
 .btn-perigo-final:hover {
     background-color: #c9303c;
-}
-
-/* Media query for desktop */
-@media (min-width: 992px) {
-    .exit-stats-grid {
-        grid-template-columns: repeat(3, 1fr); /* Start with 3 columns for medium desktops */
-        gap: 25px; /* Slightly less gap for 3 columns */
-    }
-
-    .exit-stat-card {
-        padding: 25px; /* Adjust padding for 3 columns */
-    }
-
-    .stat-icon {
-        font-size: 28px; /* Adjust icon size */
-    }
-
-    .stat-value {
-        font-size: 32px; /* Adjust value size */
-    }
-
-    .stat-label {
-        font-size: 13px; /* Adjust label size */
-    }
 }
 
 /* Media query for desktop */
@@ -3128,24 +3115,12 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 
 /* View de Post Completo (App Header) */
 .reddit-app-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 20px;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border-bottom: 1px solid #edeff1;
-    border: 1px solid #edeff1;
+    display: flex; align-items: center; gap: 12px;
+    padding: 15px 20px; border: 1px solid #edeff1;
     border-radius: 16px;
-    position: sticky;
-    z-index: 990;
+    background: var(--branco-puro);
     margin-bottom: 20px;
-    /* Mobile-first: gruda no topo (padding-top do .dashboard-main é 0 no JS) */
-    top: -1px; /* -1px para a borda inferior ficar visível */
-    top: 10px;
 }
-
 .app-back-btn {
     background: none; border: none; color: #1c1c1c; cursor: pointer;
     display: flex; align-items: center; justify-content: center; padding: 5px;
@@ -3158,13 +3133,6 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     overflow: hidden;
     text-overflow: ellipsis;
     flex: 1; /* Permite encolher e aplicar o ellipsis no flexbox */
-}
-
-/* Ajuste para Desktop, compensando o padding do .dashboard-main */
-@media (min-width: 993px) {
-    .reddit-app-header {
-        top: -21px; /* -20px do padding + -1px para a borda */
-    }
 }
 
 /* View de Post Completo */
@@ -3228,12 +3196,12 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
     display: grid;
     grid-template-columns: 1fr 320px; /* Conteúdo principal e sidebar */
     gap: 40px;
+    align-items: flex-start;
 }
 
 .forum-post-sidebar .widget {
     position: sticky;
     top: 20px; /* Fica fixo ao rolar a página */
-    top: 10px; /* Alinha com o cabeçalho principal ao rolar */
 }
 
 /* Itens na sidebar de relacionados */
@@ -3259,6 +3227,7 @@ button[disabled] { background: #e9ecef !important; color: #adb5bd; cursor: not-a
 @media (max-width: 992px) {
     .forum-post-layout { 
         grid-template-columns: 1fr; 
+        padding-top: 70px; /* Espaço para o novo header fixo não cobrir o conteúdo */
     } /* Empilha as colunas */
     .forum-post-sidebar .widget { position: static; } /* Remove o sticky */
 }
@@ -4598,9 +4567,11 @@ input:checked + .slider:before { transform: translateX(20px); }
     display: none !important;
 }
 
-/* Ajuste fino do padding inferior do conteúdo principal */
-.dashboard-main {
-    padding-bottom: 20px !important;
+/* Ajuste fino do padding inferior do conteúdo principal (Apenas Desktop) */
+@media (min-width: 993px) {
+    .dashboard-main {
+        padding-bottom: 20px !important;
+    }
 }
 
 /* ==========================================================================
@@ -5437,54 +5408,6 @@ input:checked + .slider:before { transform: translateX(20px); }
     flex-direction: column !important;
     gap: 8px !important; /* Gap vertical padrão */
     flex-grow: 1;
-}
-
-/* --- SIDEBAR MODERNA (AJUSTADA PARA ALINHAMENTO PERFEITO) --- */
-
-.nav-item-modern {
-    display: flex;
-    align-items: center;    /* Centralização vertical matemática */
-    flex-direction: row;    /* Voltamos para o padrão: ícone na esquerda */
-    display: flex !important;
-    align-items: center !important; /* Alinha o centro do SVG com o centro do Texto */
-    flex-direction: row !important; /* Mantém a ordem Icone -> Texto */
-    justify-content: flex-start !important; 
-    gap: 12px;
-    padding: 12px 15px;
-    border-radius: 50px !important;
-        color: var(--verde-escuro) !important;
-    text-decoration: none;
-    font-weight: 600; 
-    font-size: 1.05rem; /* Aumentado para ornar com o perfil */
-    font-size: 1.05rem;
-    letter-spacing: 0.3px;
-    transition: background-color 0.2s, color 0.2s;
-    position: relative;
-}
-
-/* O Segredo do Alinhamento do Ícone */
-.sidebar-nav a.nav-item-modern svg {
-    width: 22px; /* Aumentado proporcionalmente ao texto */
-    width: 22px;
-    height: 22px;
-    flex-shrink: 0;
-    color: var(--verde-escuro);
-    display: block;         /* Mata o espaçamento de "baseline" do SVG */
-    display: block; /* REMOVE o desalinhamento de baseline (espaço embaixo do svg) */
-    transition: color 0.2s;
-}
-
-/* O Segredo do Alinhamento do Texto */
-.sidebar-nav a.nav-item-modern span {
-    display: flex;
-    align-items: center;
-    line-height: 1;         /* Remove alturas de linha extras que empurram o texto */
-    margin-top: 1px;        /* Ajuste óptico: fontes costumam "flutuar" um pouco */
-    display: block;
-    line-height: 1; /* Remove alturas de linha que empurram o texto para baixo */
-    margin-bottom: 0; /* Garante que não haja margem residual */
-    padding: 0;
-    color: var(--verde-escuro) !important;
 }
 
 .sidebar-nav a.nav-item-modern:hover {

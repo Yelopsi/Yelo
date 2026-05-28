@@ -83,6 +83,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       defaultValue: []
     },
+    modalidade_preferida: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     disponibilidade_periodo: {
       type: DataTypes.ARRAY(DataTypes.STRING),
       allowNull: true,
