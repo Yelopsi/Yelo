@@ -1388,33 +1388,6 @@ html {
     .chat-layout.mobile-chat-active .chat-view-panel { display: flex; }
 }
 
-/* --- ESTILOS PARA O BOTÃO VIP (NOVO) --- */
-.btn-vip-toggle {
-    padding: 6px 12px;
-    border: 1px solid #ccc;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 0.8rem;
-    font-weight: bold;
-    transition: all 0.3s ease;
-    background-color: #f0f0f0;
-    color: #555;
-    min-width: 110px; /* Largura mínima para consistência */
-}
-
-.btn-vip-toggle.active {
-    background-color: var(--cor-Yelo); /* Amarelo Yelo */
-    color: var(--verde-escuro); /* Verde Yelo */
-    border-color: #FFD600;
-}
-
-.btn-vip-toggle:hover:not(:disabled) {
-    transform: scale(1.05);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.btn-vip-toggle:disabled { opacity: 0.6; cursor: not-allowed; }
-
 /* Efeito hover para os mesmos botões */
 .chat-layout .chat-panel-header .icon-btn:hover {
     background-color: #2a624d; /* Tom de verde um pouco mais claro para o hover */
@@ -1426,31 +1399,6 @@ html {
     position: relative;
     height: 350px; /* Altura fixa para o container do gráfico */
     width: 100%;
-}
-
-/* --- Estilos para o Loading Spinner nos KPI Cards --- */
-.kpi-card .kpi-numero {
-    position: relative;
-}
-
-.loading-spinner {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 24px;
-    height: 24px;
-    border: 3px solid rgba(27, 67, 50, 0.2); /* Verde claro */
-    border-top-color: var(--verde-escuro); /* Verde escuro */
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    display: none; /* Escondido por padrão */
-}
-
-@keyframes spin {
-    to {
-        transform: translate(-50%, -50%) rotate(360deg);
-    }
 }
 
 /* --- Estilos para o Loading Spinner nos KPI Cards --- */
