@@ -6,6 +6,12 @@
 </div>
 
 <style>
+    @media (max-width: 991px) {
+        #comunidade-page-wrapper {
+            padding-bottom: 80px; /* Garante que o último card não fique escondido pela navegação mobile */
+        }
+    }
+
     .modern-qna-filters {
         display: flex;
         gap: 10px;
@@ -52,29 +58,31 @@
     }
 </style>
 
-<div class="qna-controls-wrapper">
-    <div class="modern-qna-filters" id="qna-filter-tabs">
-        <button class="tab-item active" data-filter="all">Todas</button>
-        <button class="tab-item" data-filter="pending">Aguardando Resposta</button>
-        <button class="tab-item" data-filter="answered">Respondidas por mim</button>
+<div id="comunidade-page-wrapper">
+    <div class="qna-controls-wrapper">
+        <div class="modern-qna-filters" id="qna-filter-tabs">
+            <button class="tab-item active" data-filter="all">Todas</button>
+            <button class="tab-item" data-filter="pending">Aguardando Resposta</button>
+            <button class="tab-item" data-filter="answered">Respondidas por mim</button>
+        </div>
+        <div class="forum-search-bar" style="width: 100%; max-width: 400px;">
+            <input type="text" id="forum-search-input" placeholder="Buscar por palavras-chave ou temas...">
+        </div>
     </div>
-    <div class="forum-search-bar" style="width: 100%; max-width: 400px;">
-        <input type="text" id="forum-search-input" placeholder="Buscar por palavras-chave ou temas...">
+
+    <!-- Alerta de Novas Perguntas -->
+    <div id="qna-new-questions-alert" style="display:none; background:#e0f2fe; color:#0284c7; padding:15px 20px; border-radius:12px; margin-bottom:25px; font-weight:600; cursor:pointer; text-align:center; border: 1px solid #bae6fd; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.05);" onclick="document.querySelector('.tab-item[data-filter=\'pending\']')?.click(); this.style.display='none';">
     </div>
-</div>
 
-<!-- Alerta de Novas Perguntas -->
-<div id="qna-new-questions-alert" style="display:none; background:#e0f2fe; color:#0284c7; padding:15px 20px; border-radius:12px; margin-bottom:25px; font-weight:600; cursor:pointer; text-align:center; border: 1px solid #bae6fd; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.05);" onclick="document.querySelector('.tab-item[data-filter=\\'pending\\']')?.click(); this.style.display='none';">
-</div>
-
-<div class="qna-container-admin" id="qna-list-container">
-    <div class="loader-wrapper">
-        <div class="loader-spinner"></div>
+    <div class="qna-container-admin" id="qna-list-container">
+        <div class="loader-wrapper">
+            <div class="loader-spinner"></div>
+        </div>
     </div>
-</div>
 
-<!-- Novo Sistema de Paginação -->
-<div id="qna-pagination" class="pagination-container"></div>
+    <!-- Novo Sistema de Paginação -->
+    <div id="qna-pagination" class="pagination-container"></div>
+</div>
 
 <template id="qna-card-template-psi">
     <div class="card qna-card-psi">

@@ -1,9 +1,19 @@
+<style>
+    @media (max-width: 991px) {
+        #finance-page-wrapper {
+            padding-bottom: 80px; /* Garante que o último card não fique escondido pela navegação mobile */
+        }
+    }
+</style>
+
 <div class="main-header">
     <div class="header-content">
         <h1>Gestão Financeira</h1>
         <p>Acompanhe o fluxo de caixa, receitas e despesas do seu consultório.</p>
     </div>
 </div>
+
+<div id="finance-page-wrapper">
 
 <!-- DICA DE UX: Como o financeiro funciona integrado à agenda -->
 <div id="dica-financeiro-yelo" class="highlight-box assistant-card" style="margin-bottom: 25px; padding: 20px; display: flex; align-items: flex-start; gap: 15px; position: relative;">
@@ -116,6 +126,8 @@
         </div>
     </div>
 </div>
+
+</div> <!-- Fim do #finance-page-wrapper -->
 
 <!-- MODAL: LANÇAR DESPESA -->
 <div id="modal-expense" class="custom-modal-overlay" style="display: none;">

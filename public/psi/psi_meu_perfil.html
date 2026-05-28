@@ -1,3 +1,11 @@
+<style>
+    @media (max-width: 991px) {
+        #profile-page-wrapper {
+            padding-bottom: 80px; /* Garante que o último card não fique escondido pela navegação mobile */
+        }
+    }
+</style>
+
 <div class="main-header" style="padding: 25px 40px;">
     <div class="header-content">
         <h1>Meu Perfil</h1>
@@ -7,6 +15,8 @@
         Ver como Paciente
     </a>
 </div>
+
+<div id="profile-page-wrapper">
 
 <!-- Container para Banners de Aviso Dinâmicos -->
 <div id="profile-warning-banner-container" style="margin-bottom: 20px;"></div>
@@ -440,5 +450,7 @@
     <p>Esta ação é irreversível e removerá todos os seus dados da plataforma.</p>
     <a id="btn-excluir-conta" href="psi_excluir_conta.html">Excluir Minha Conta</a>
 </div>
+
+</div> <!-- Fim do #profile-page-wrapper -->
 
 <script src="/psi/psi_meu_perfil.js?v=3"></script>

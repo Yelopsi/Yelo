@@ -4629,6 +4629,12 @@ async function inicializarForum(preFetchedData = null) {
         const mHeader = document.querySelector('.mobile-header');
         if (mHeader) mHeader.style.display = 'none';
 
+        // --- FIX: Remove o padding do topo quando o header principal some ---
+        const dashboardMain = document.querySelector('.dashboard-main');
+        if (dashboardMain && window.innerWidth <= 992) {
+            dashboardMain.style.setProperty('padding-top', '0px', 'important');
+        }
+
         try {
             const postRes = await apiFetch(`${API_BASE_URL}/api/forum/posts/${postId}`);
             if (!postRes.ok) throw new Error('Erro ao carregar post');
@@ -4668,6 +4674,12 @@ async function inicializarForum(preFetchedData = null) {
                 
                 const mHeader = document.querySelector('.mobile-header');
                 if (mHeader) mHeader.style.display = '';
+
+                // --- FIX: Restaura o padding do topo ao voltar para o feed ---
+                const dashboardMain = document.querySelector('.dashboard-main');
+                if (dashboardMain && window.innerWidth <= 992) {
+                    dashboardMain.style.paddingTop = ''; // Remove o override, volta para o CSS
+                }
             };
 
             // Ações (Apoiar, Denunciar)

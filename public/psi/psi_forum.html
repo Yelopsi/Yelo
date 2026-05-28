@@ -1,3 +1,11 @@
+<style>
+    @media (max-width: 991px) {
+        #forum-container {
+            padding-bottom: 80px; /* Garante que o último card não fique escondido pela navegação mobile */
+        }
+    }
+</style>
+
 <!-- Container principal do Fórum -->
 <div id="forum-container">
 
@@ -151,7 +159,7 @@
 <!-- Template para a view de post completo -->
 <template id="forum-full-post-template">
     <div class="reddit-full-view">
-        <div class="forum-post-layout" style="margin-top: 20px;">
+        <div class="forum-post-layout">
             <div class="forum-post-main">
                 <div class="reddit-app-header">
                     <button id="forum-back-to-feed-btn" class="app-back-btn">
