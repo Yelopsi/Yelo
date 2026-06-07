@@ -17,6 +17,71 @@
     <style>
         /* --- ESTILOS ESPECÍFICOS DA LANDING PAGE PSI --- */
         
+                /* Banner Lançamento */
+        .banner-lancamento-yelo {
+            background: linear-gradient(135deg, var(--verde-escuro, #1B4332) 0%, #112A20 100%);
+            border: 1px solid rgba(255, 238, 140, 0.2);
+            border-left: 6px solid var(--cor-Yelo, #FFEE8C);
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 8px 25px rgba(27, 67, 50, 0.15);
+            text-align: left;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .banner-lancamento-yelo .banner-icone {
+            font-size: 1.6rem;
+            background-color: rgba(255, 238, 140, 0.15);
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .banner-lancamento-yelo .banner-conteudo {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+       }
+
+        .banner-lancamento-yelo .banner-titulo {
+            color: var(--cor-Yelo, #FFEE8C);
+            font-family: var(--font-titulos, 'Fraunces', serif);
+            font-size: 1.1rem;
+            margin: 0;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .banner-lancamento-yelo .banner-texto {
+            font-family: var(--font-principal, 'Inter', sans-serif);
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 768px) {
+            .banner-lancamento-yelo {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 15px;
+                gap: 12px;
+            }
+            .banner-lancamento-yelo .banner-icone {
+                width: 35px;
+                height: 35px;
+                font-size: 1.3rem;
+            }
+        }
+        
         /* Hero Section */
         .hero-psi {
             padding: 100px 20px 100px;
@@ -507,6 +572,14 @@
             <svg class="doodle-hero right" viewBox="0 0 200 200" fill="currentColor"><path d="M38.1,-63.8C49.3,-54.6,58.3,-43.3,65.5,-30.8C72.7,-18.3,78.1,-4.6,76.3,8.3C74.5,21.2,65.5,33.3,55.3,43.4C45.1,53.5,33.7,61.6,21.1,66.1C8.5,70.6,-5.3,71.5,-18.4,67.8C-31.5,64.1,-43.9,55.8,-53.4,45.2C-62.9,34.6,-69.5,21.7,-70.8,8.2C-72.1,-5.3,-68.1,-19.4,-59.6,-31.1C-51.1,-42.8,-38.1,-52.1,-25.3,-60.1C-12.5,-68.1,0.1,-74.8,12.7,-74.8C25.3,-74.8,38.1,-68.1,38.1,-63.8Z" transform="translate(100 100)" /></svg>
 
             <div class="container" style="padding-bottom: 0; position: relative; z-index: 2;">
+                <!-- Novo Banner de Lançamento Yelo -->
+                <div class="banner-lancamento-yelo">
+                    <div class="banner-icone">🚀</div>
+                    <div class="banner-conteudo">
+                        <h4 class="banner-titulo">Plataforma em Fase de Lançamento</h4>
+                        <p class="banner-texto">Aproveite condições exclusivas e destaque-se como um dos primeiros profissionais na Yelo.</p>
+                    </div>
+                </div>
                 <h1>Viva da Psicologia com autonomia e segurança</h1>
                 <p>A Yelo conecta você a pacientes que buscam exatamente a sua abordagem. Simplifique sua gestão, receba pagamentos garantidos e foque no que importa: o atendimento.</p>
                 <a href="/psi_questionario" class="btn-cta-principal" style="background-color: #FFEE8C; color: #1B4332;">Criar meu perfil profissional</a>
@@ -770,6 +843,9 @@
         </section>
     </main>
 
+    <!-- Módulos Extraídos da Página de Profissionais -->
+    <script src="/js/profissionais_config.js"></script>
+    <script src="/js/profissionais_api.js"></script>
     <%- include('partials/footer') %>
 
     <script>

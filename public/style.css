@@ -99,3 +99,20 @@ body.pagina-dashboard, .chat-layout, .inbox-container {
     background-image: var(--ruido-claro); background-attachment: fixed; background-repeat: repeat;
     pointer-events: none; z-index: 10;
 }
+
+/* ==========================================================================
+   SPINNER DE CARREGAMENTO ANIMADO (BOOTSTRAP STYLE)
+   ========================================================================== */
+.spinner-border {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    border: 0.25em solid rgba(255, 255, 255, 0.2);
+    border-top-color: var(--cor-Yelo, #FFEE8C);
+    border-radius: 50%;
+    animation: spinner-border 0.75s linear infinite;
+}
+
+@keyframes spinner-border {
+    to { transform: rotate(360deg); }
+}

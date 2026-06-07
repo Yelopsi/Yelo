@@ -1,0 +1,190 @@
+/* ==========================================================================
+   ESTILOS DE TABELAS, FILTROS E PAGINAÇÃO
+   ========================================================================== */
+
+/* --- Página de Gerenciamento (Tabelas e Filtros) --- */
+.filtros-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 40px;
+    align-items: center;
+}
+
+.campo-busca, .filtro-select {
+    padding: 12px 15px;
+    border: 1px solid var(--cinza-borda);
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: var(--font-principal);
+    background-color: var(--branco-puro);
+}
+
+.campo-busca {
+    flex-grow: 1;
+}
+
+.btn-primario {
+    background-color: var(--verde-escuro);
+    color: var(--branco-puro);
+    border: none;
+    padding: 12px 22px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-primario:hover {
+    background-color: #2a624d; /* Um tom de verde um pouco mais claro */
+}
+
+.btn-sm {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    font-size: 14px;
+}
+
+/* --- CONTROLES DE PAGINAÇÃO (TABELAS) --- */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 25px;
+}
+
+.pagination-btn {
+    background-color: var(--branco-puro);
+    border: 1px solid var(--cinza-borda);
+    color: var(--verde-escuro);
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+.pagination-btn:hover:not(:disabled) {
+    background-color: #f0fdf4;
+    border-color: var(--verde-escuro);
+}
+.pagination-btn.active {
+    background-color: var(--verde-escuro);
+    color: var(--branco-puro);
+    border-color: var(--verde-escuro);
+}
+.pagination-btn:disabled {
+    background-color: #f1f3f5;
+    color: #adb5bd;
+    cursor: not-allowed;
+    border-color: #e9ecef;
+}
+
+/* Botão de Exportação Dinâmico (Header) */
+.btn-export-csv {
+    background-color: var(--cor-Yelo);
+    color: var(--verde-escuro);
+    border: 1px solid #e0c855;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-export-csv:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.tabela-container {
+    background-color: var(--branco-puro);
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.06);
+}
+
+.tabela-container h3 { margin-top: 0; margin-bottom: 5px; }
+.subtitulo-secao { color: var(--cinza-texto); margin-top: 0; margin-bottom: 30px; }
+.tabela-wrapper { overflow-x: visible; }
+
+.tabela-gerenciamento {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+.tabela-gerenciamento th, .tabela-gerenciamento td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--cinza-borda);
+    white-space: nowrap;
+}
+.tabela-gerenciamento th {
+    font-family: var(--font-principal);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--cinza-texto);
+    text-transform: uppercase;
+}
+.tabela-gerenciamento tbody tr:hover { background-color: var(--cinza-fundo); }
+
+.status { padding: 5px 12px; border-radius: 20px; font-weight: 500; font-size: 12px; display: inline-block; }
+.status-active, .status-ativo { background-color: #D4EDDA; color: #155724; }
+.status-pending, .status-pendente { background-color: #FFF3CD; color: #856404; }
+.status-inactive, .status-inativo { background-color: #f8d7da; color: #721c24; }
+.status-creator { background-color: #e3f2fd; color: #0277bd; }
+.status-atrasada { background-color: #FFF3CD; color: #856404; }
+.status-cancelada { background-color: #E2E3E5; color: #383D41; }
+
+/* Botões de Tabela */
+.btn-tabela { background-color: transparent; border: 1px solid var(--cinza-borda); color: var(--cinza-texto); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; margin-right: 5px; transition: all 0.2s ease; }
+.btn-tabela:hover { background-color: var(--cinza-borda); color: var(--verde-escuro); }
+.btn-tabela-perigo { color: var(--coral-quente); border-color: var(--coral-quente); }
+.btn-tabela-perigo:hover { background-color: #f8d7da; color: #721c24; border-color: var(--coral-quente); }
+.btn-tabela-aviso { color: #fd7e14; border-color: #fd7e14; }
+.btn-tabela-aviso:hover { background-color: #FFF3CD; color: #856404; border-color: #fd7e14; }
+.status-filter-container .btn-tabela.active { background-color: var(--verde-escuro); color: var(--branco-puro); border-color: var(--verde-escuro); }
+.btn-tabela.btn-fixar { color: #f59e0b; border-color: #f59e0b; }
+.btn-tabela.btn-fixar:hover { background-color: #fffbeb; color: #b45309; border-color: #f59e0b; }
+.btn-tabela.btn-fixar.pinned { background-color: var(--cor-Yelo); color: var(--verde-escuro); border-color: var(--cor-Yelo); }
+.btn-tabela.btn-fixar.pinned:hover { background-color: #fde468; }
+.btn-wpp-tabela { background-color: #25D366; color: #ffffff !important; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: bold; display: inline-flex; align-items: center; gap: 5px; transition: background-color 0.2s ease; }
+.btn-wpp-tabela:hover { background-color: #128C7E; }
+
+/* --- Responsividade da Tabela --- */
+@media (max-width: 1024px) {
+    .tabela-gerenciamento { min-width: 0; }
+    .tabela-gerenciamento thead { display: none; }
+    .tabela-gerenciamento tbody, .tabela-gerenciamento tr, .tabela-gerenciamento td { display: block; width: 100%; box-sizing: border-box; }
+    .tabela-gerenciamento tr { margin-bottom: 25px; border: 1px solid var(--cinza-borda); border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .tabela-gerenciamento td { border: none; padding: 10px 0 10px 45%; text-align: right; white-space: normal; word-break: break-word; overflow-wrap: break-word; position: relative; }
+    .tabela-gerenciamento td::before { content: attr(data-label); position: absolute; left: 0; top: 10px; width: 40%; padding-right: 10px; font-weight: bold; text-align: left; color: var(--verde-escuro); }
+    .tabela-gerenciamento td:last-child { padding: 15px 0 0 0; margin-top: 10px; border-top: 1px solid var(--cinza-borda); text-align: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .tabela-gerenciamento td:last-child::before { display: none; }
+    .tabela-gerenciamento .btn-tabela { width: auto; flex: 1 1 calc(50% - 8px); margin: 0; padding: 10px 8px; }
+}
+
+/* ==========================================================================
+   AJUSTE DE TABELA DESKTOP (admin_gerenciar_psicologos)
+   Reduz tamanho do texto e paddings para evitar rolagem horizontal
+   ========================================================================== */
+@media (min-width: 1025px) {
+    .tabela-gerenciamento th, 
+    .tabela-gerenciamento td {
+        padding: 10px 8px !important;
+        font-size: 13px !important;
+    }
+    
+    .tabela-gerenciamento th { font-size: 12px !important; }
+    .tabela-gerenciamento .status { padding: 4px 8px !important; font-size: 11px !important; }
+    .tabela-gerenciamento .btn-tabela { padding: 6px 8px !important; font-size: 12px !important; }
+    
+    /* Garante que e-mails muito longos não estiquem a tabela */
+    .tabela-gerenciamento td:nth-child(2) {
+        max-width: 180px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <%- include('partials/head') %>
+    <title>Profissional Indisponível | Yelo</title>
+    <link rel="stylesheet" href="/css/psi_dashboard.css">
+</head>
+<body class="pagina-publica" style="background-color: #f8f9fa; display: flex; flex-direction: column; min-height: 100vh;">
+
+    <%- include('partials/header') %>
+
+    <main class="container" style="flex: 1; display: flex; align-items: center; justify-content: center; padding-top: 120px; padding-bottom: 60px;">
+        <div style="background: white; border-radius: 24px; padding: 50px 40px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.05); max-width: 500px; width: 100%;">
+            <div style="width: 80px; height: 80px; background: #e8f5e9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 20px auto; color: #1B4332;">
+                🌱
+            </div>
+            
+            <h1 style="color: var(--verde-escuro); font-family: var(--font-titulos); font-size: 1.8rem; margin-bottom: 15px;">Profissional Indisponível</h1>
+            
+            <p style="color: #555; font-size: 1.05rem; line-height: 1.6; margin-bottom: 30px;">
+                O profissional <strong><%= typeof nome !== 'undefined' ? nome : 'buscado' %></strong> não faz mais parte da plataforma Yelo ou seu perfil foi desativado.
+            </p>
+            
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 20px; border-radius: 16px; margin-bottom: 30px;">
+                <p style="color: #166534; font-size: 0.95rem; margin: 0;">
+                    A sua jornada de cuidado não precisa parar aqui. Temos outros profissionais qualificados prontos para te acolher.
+                </p>
+            </div>
+            
+            <a href="/questionario" class="btn btn-principal" style="display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 16px; border-radius: 50px; font-size: 1.05rem; font-weight: bold; text-decoration: none;">
+                Encontrar um novo Psicólogo
+            </a>
+            
+            <a href="/" style="display: inline-block; margin-top: 20px; color: #666; text-decoration: underline; font-size: 0.95rem; font-weight: 600;">
+                Voltar para o Início
+            </a>
+        </div>
+    </main>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

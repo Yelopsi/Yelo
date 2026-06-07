@@ -163,14 +163,6 @@
             height: auto;
         }
 
-        /* Imagem Única da Seção */
-        .collage-single-img {
-            width: 100%;
-            height: auto;
-            max-width: 800px; /* Limita largura em telas grandes */
-            display: block;
-            margin: 0 auto;
-        }
 
         /* --- CTA FINAL --- */
         .cta-final-psi {
@@ -347,7 +339,10 @@
                 </div>
                 
                 <div class="collage-wrapper">
-                    <img src="/assets/images/sobre_psis.png" alt="Comunidade Yelo" class="collage-single-img">
+                    <!-- Grid populado dinamicamente via JS com profissionais reais -->
+                    <div class="therapist-collage" id="dynamic-therapist-grid">
+                        <p style="text-align: center; color: #888; grid-column: 1 / -1;">Carregando profissionais...</p>
+                    </div>
                 </div>
             </div>
 
@@ -375,5 +370,201 @@
 
     <%- include('partials/footer') %>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const grid = document.getElementById('dynamic-therapist-grid');
+            if (!grid) return;
+            
+            try {
+                // Busca os profissionais da vitrine pública
+                const res = await fetch('/api/psychologists/showcase');
+                let psis = await res.json();
+                
+                if (psis && psis.length > 0) {
+                    // Filtra o placeholder "Em breve" caso existam perfis de verdade
+                    let reais = psis.filter(p => p.id !== 0);
+                    if (reais.length === 0) reais = psis; // Fallback
+                    
+                    // Preenche até 16 slots exatos para montar o 4x4
+                    let displayPsis = [...reais];
+                    while (displayPsis.length < 16) { displayPsis = displayPsis.concat(reais); }
+                    displayPsis = displayPsis.slice(0, 16); 
+
+                    grid.innerHTML = '';
+                    displayPsis.forEach(psi => {
+                        grid.innerHTML += `
+                            <div class="collage-item" title="${psi.nome}">
+                                <img src="${psi.fotoUrl}" alt="${psi.nome}" onerror="this.src='https://placehold.co/400x400/1B4332/FFFFFF?text=Psi'">
+                            </div>
+                        `;
+                    });
+
+                    // Lógica para trocar as fotos de forma independente e assíncrona
+                    const items = Array.from(grid.querySelectorAll('img'));
+                    
+                    // Embaralha para que os primeiros a mudar sejam sempre aleatórios
+                    const shuffledItems = items.sort(() => 0.5 - Math.random());
+                    
+                    shuffledItems.forEach((img, index) => {
+                        const runCycle = () => {
+                            // 1. Desaparece (Fade out)
+                            img.style.opacity = '0';
+                            
+                            setTimeout(() => {
+                                // 2. Escolhe um profissional aleatório
+                                const randomPsi = reais[Math.floor(Math.random() * reais.length)];
+                                
+                                // 3. Troca a foto e o título
+                                img.src = randomPsi.fotoUrl;
+                                img.alt = randomPsi.nome;
+                                if (img.parentElement) img.parentElement.title = randomPsi.nome;
+                                
+                                // 4. Reaparece (Fade in)
+                                img.style.opacity = '1';
+                                
+                                // 5. Agenda a PRÓXIMA troca deste quadrado (Espera de 15 a 30 segundos)
+                                const nextWait = Math.random() * 15000 + 15000;
+                                setTimeout(runCycle, nextWait);
+                            }, 2000); // 2s do fade-out do CSS
+                        };
+                        
+                        // Pontapé inicial escalonado: o 1º muda em 0.5s. Os demais entram na fila com ~3s de diferença.
+                        const initialDelay = index === 0 ? 500 : (index * 3000) + (Math.random() * 1000);
+                        setTimeout(runCycle, initialDelay);
+                    });
+                }
+            } catch (err) {
+                grid.innerHTML = '<p style="text-align: center; color: #888; grid-column: 1 / -1;">Não foi possível carregar os profissionais.</p>';
+            }
+        });
+
+    // --- GESTOS MOBILE: PULL TO REFRESH E SWIPE NAVIGATION ---
+    document.addEventListener("DOMContentLoaded", function() {
+        if (window.innerWidth > 992) return;
+        
+        const mainContent = document.querySelector('main');
+        if (!mainContent) return;
+
+        // Pull to Refresh
+        let ptrEl = document.querySelector('.ptr-element');
+        if (!ptrEl) {
+            ptrEl = document.createElement('div');
+            ptrEl.className = 'ptr-element';
+            ptrEl.innerHTML = '<div class="ptr-spinner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg></div>';
+            document.body.appendChild(ptrEl);
+        }
+        let startY = 0, startX_ptr = 0, currentY = 0, isPulling = false;
+        const ptrThreshold = 70;
+
+        // Swipe Navigation
+        let startX = 0, currentX = 0, isSwiping = false, swipeDirection = null;
+        const edgeThreshold = 30;
+        const swipeThreshold = 80;
+
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) return;
+            const touch = e.touches[0];
+            startX = touch.clientX;
+            startY = touch.clientY;
+
+            // PTR
+            if (window.scrollY <= 1) {
+                startX_ptr = touch.clientX;
+                isPulling = true;
+                ptrEl.style.transition = 'none';
+                ptrEl.classList.remove('ptr-refreshing');
+            }
+
+            // Swipe
+            const target = e.target;
+            if (!target.closest('input, textarea, select, .scrollable-x, .quality-grid, .therapist-collage')) {
+                if (startX <= edgeThreshold) {
+                    isSwiping = true; swipeDirection = 'back';
+                    mainContent.style.transition = 'none';
+                } else if (startX >= window.innerWidth - edgeThreshold) {
+                    isSwiping = true; swipeDirection = 'forward';
+                    mainContent.style.transition = 'none';
+                }
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchmove', (e) => {
+            currentX = e.touches[0].clientX;
+            currentY = e.touches[0].clientY;
+            const deltaX = currentX - startX;
+            const deltaY = currentY - startY;
+
+            // PTR
+            if (isPulling) {
+                const pullDistanceX = Math.abs(currentX - startX_ptr);
+                if (pullDistanceX > Math.abs(deltaY)) {
+                    isPulling = false;
+                    ptrEl.style.transform = 'translateY(-150%)';
+                } else if (deltaY > 0 && window.scrollY <= 1) {
+                    if (e.cancelable) e.preventDefault();
+                    const resistance = deltaY * 0.45;
+                    ptrEl.style.transform = `translateY(${Math.min(resistance, ptrThreshold + 20)}px)`;
+                    const svg = ptrEl.querySelector('svg');
+                    if (svg) svg.style.transform = `rotate(${deltaY}deg)`;
+                } else {
+                    isPulling = false;
+                }
+            }
+
+            // Swipe
+            if (isSwiping) {
+                if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 15) {
+                    isSwiping = false;
+                    mainContent.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                    mainContent.style.transform = 'translateX(0)';
+                    mainContent.style.opacity = '1';
+                    return;
+                }
+                if (e.cancelable) e.preventDefault();
+                if (swipeDirection === 'back' && deltaX > 0) {
+                    mainContent.style.transform = `translateX(${deltaX}px)`;
+                    mainContent.style.opacity = 1 - (deltaX / window.innerWidth) * 0.4;
+                } else if (swipeDirection === 'forward' && deltaX < 0) {
+                    mainContent.style.transform = `translateX(${deltaX}px)`;
+                    mainContent.style.opacity = 1 - (Math.abs(deltaX) / window.innerWidth) * 0.4;
+                }
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', () => {
+            // PTR
+            if (isPulling) {
+                isPulling = false;
+                ptrEl.style.transition = 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+                if ((currentY - startY) * 0.45 > ptrThreshold) {
+                    ptrEl.classList.add('ptr-refreshing');
+                    ptrEl.style.transform = `translateY(${ptrThreshold / 1.5}px)`;
+                    window.location.reload();
+                } else {
+                    ptrEl.style.transform = 'translateY(-150%)';
+                }
+            }
+
+            // Swipe
+            if (isSwiping) {
+                const deltaX = swipeDirection === 'back' ? currentX - startX : startX - currentX;
+                if (deltaX >= swipeThreshold) {
+                    mainContent.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                    mainContent.style.transform = swipeDirection === 'back' ? `translateX(${window.innerWidth}px)` : `translateX(-${window.innerWidth}px)`;
+                    mainContent.style.opacity = '0';
+                    setTimeout(() => {
+                        swipeDirection === 'back' ? window.history.back() : window.history.forward();
+                        setTimeout(() => { mainContent.style.transition = 'none'; mainContent.style.transform = 'translateX(0)'; mainContent.style.opacity = '1'; }, 300);
+                    }, 300);
+                } else {
+                    mainContent.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                    mainContent.style.transform = 'translateX(0)';
+                    mainContent.style.opacity = '1';
+                }
+                isSwiping = false;
+            }
+        });
+    });
+    </script>
 </body>
 </html>

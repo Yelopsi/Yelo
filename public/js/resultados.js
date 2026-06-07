@@ -17,20 +17,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let precoHtml = '';
-        if (profile.tipo_cobranca === 'mensal') {
-            if (profile.valor_mensal_numero && parseFloat(profile.valor_mensal_numero) > 0) {
-                const priceFormatted = parseFloat(profile.valor_mensal_numero).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                precoHtml = `<span>Por mês</span><strong>${priceFormatted}</strong>`;
-            } else {
-                precoHtml = `<span>Por mês</span><strong style="font-size: 1.1rem;">A combinar</strong>`;
+        const isMensal = profile.tipo_cobranca === 'mensal';
+        
+        // Pega o valor (faz fallback entre os campos pois o form salva no valor_sessao_numero por padrão)
+        const rawValue = isMensal 
+            ? (profile.valor_mensal_numero || profile.valor_sessao_numero) 
+            : (profile.valor_sessao_numero || profile.valor_mensal_numero);
+
+        // Limpa formatações (R$, espaços, vírgulas e pontos) para converter em float seguro
+        const parsePrice = (val) => {
+            if (!val) return 0;
+            if (typeof val === 'number') return val;
+            let str = String(val).replace(/[R$\s]/gi, '');
+            if (str.includes(',') && str.includes('.')) {
+                str = str.replace(/\./g, '').replace(',', '.'); // ex: "1.500,00" -> "1500.00"
+            } else if (str.includes(',')) {
+                str = str.replace(',', '.'); // ex: "150,00" -> "150.00"
             }
+            return parseFloat(str) || 0;
+        };
+
+        const priceNum = parsePrice(rawValue);
+
+        if (priceNum > 0) {
+            const priceFormatted = priceNum.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            precoHtml = `<span>Por ${isMensal ? 'mês' : 'sessão'}</span><strong>${priceFormatted}</strong>`;
         } else {
-            if (profile.valor_sessao_numero && parseFloat(profile.valor_sessao_numero) > 0) {
-                const priceFormatted = parseFloat(profile.valor_sessao_numero).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                precoHtml = `<span>Por sessão</span><strong>${priceFormatted}</strong>`;
-            } else {
-                precoHtml = `<span>Por sessão</span><strong style="font-size: 1.1rem;">A combinar</strong>`;
-            }
+            precoHtml = `<span>Por ${isMensal ? 'mês' : 'sessão'}</span><strong style="font-size: 1.1rem;">A combinar</strong>`;
         }
         
         // Lógica de Favorito (Verifica localStorage se não tiver info do backend)
@@ -123,7 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function init() {
         // BLOQUEIO: Verifica se há resultados para mostrar
-        if (!sessionStorage.getItem('matchResults')) {
+        const storedResults = sessionStorage.getItem('matchResults');
+        const pendingAnswers = sessionStorage.getItem('pendingMatchAnswers');
+
+        if (!storedResults && !pendingAnswers) {
             createBlockingModal(
                 "Ops! Nenhum resultado.",
                 "Você precisa responder o questionário antes de ver os resultados.",
@@ -132,79 +148,83 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Simula delay de carregamento
+        if (loadingScreen) {
+            loadingScreen.style.display = 'flex';
+            loadingScreen.style.opacity = '1';
+        }
+        if (resultsContent) {
+            resultsContent.style.display = 'none';
+        }
+
+        if (pendingAnswers) {
+            const userAnswers = JSON.parse(pendingAnswers);
+            fetch(`${BASE_URL}/api/psychologists/match`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userAnswers),
+            })
+            .then(res => res.ok ? res.json() : { matchTier: 'none', results: [] })
+            .then(matchData => {
+                sessionStorage.setItem('matchResults', JSON.stringify(matchData));
+                sessionStorage.removeItem('pendingMatchAnswers');
+                renderData(matchData);
+            })
+            .catch(() => renderData({ matchTier: 'none', results: [] }));
+        } else {
+            renderData(JSON.parse(storedResults));
+        }
+    }
+
+    function renderData(parsed) {
+        let dataToRender = [];
+        if (parsed && parsed.results && parsed.results.length > 0) {
+            const top3Results = parsed.results.slice(0, 3);
+            dataToRender = top3Results.map((p, index) => ({
+                id: p.id,
+                nome: p.nome,
+                crp: p.crp,
+                fotoUrl: p.fotoUrl || "https://placehold.co/400",
+                tipo_cobranca: p.tipo_cobranca || 'sessao',
+                valor_sessao_numero: p.valor_sessao_numero,
+                valor_mensal_numero: p.valor_mensal_numero,
+                bio: p.bio || "Sem biografia.",
+                slug: p.slug,
+                tags: p.matchDetails || p.temas_atuacao || [],
+                score: p.matchScore || 90,
+                isFavorited: p.isFavorited || false,
+                animationDelay: index * 0.15
+            }));
+        }
+
+        if (dataToRender.length === 0) {
+            grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #666;">Nenhum profissional encontrado com os critérios selecionados. <br><a href="/questionario.html" style="color: var(--verde-escuro); font-weight: bold;">Refazer busca</a></div>';
+        } else {
+            grid.innerHTML = dataToRender.map(createCard).join('');
+        }
+        
+        setupFavoriteButtons();
+
+        loadingScreen.style.transition = 'opacity 0.3s ease';
+        loadingScreen.style.opacity = '0';
         setTimeout(() => {
-            // Tenta pegar dados reais do sessionStorage
-            const stored = sessionStorage.getItem('matchResults');
-            let dataToRender = [];
-
-            if (stored) {
-                try {
-                    const parsed = JSON.parse(stored);
-                    if (parsed.results && parsed.results.length > 0) {
-                        // Garante máximo de 3 resultados (Proteção contra cache de sessões antigas)
-                        const top3Results = parsed.results.slice(0, 3);
-                        // Mapeia os dados reais para o formato do card novo
-                        dataToRender = top3Results.map((p, index) => ({
-                            id: p.id,
-                            nome: p.nome,
-                            crp: p.crp,
-                            fotoUrl: p.fotoUrl || "https://placehold.co/400",
-                            tipo_cobranca: p.tipo_cobranca || 'sessao',
-                            valor_sessao_numero: p.valor_sessao_numero,
-                            valor_mensal_numero: p.valor_mensal_numero,
-                            bio: p.bio || "Sem biografia.",
-                            slug: p.slug,
-                            tags: p.matchDetails || p.temas_atuacao || [],
-                            score: p.matchScore || 90,
-                            isFavorited: p.isFavorited || false,
-                            animationDelay: index * 0.15 // Atraso em cascata para a animação (0s, 0.15s, 0.30s)
-                        }));
-                    }
-                } catch (e) {
-                }
-            }
-
-            // Renderiza
-            if (dataToRender.length === 0) {
-                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #666;">Nenhum profissional encontrado com os critérios selecionados. <br><a href="/questionario.html" style="color: var(--verde-escuro); font-weight: bold;">Refazer busca</a></div>';
-            } else {
-                grid.innerHTML = dataToRender.map(createCard).join('');
-            }
-            
-            // Ativa os botões
-            setupFavoriteButtons();
-
-            // Troca telas
-            loadingScreen.style.transition = 'opacity 0.3s ease';
-            loadingScreen.style.opacity = '0';
-            setTimeout(() => {
-                loadingScreen.style.display = 'none';
-                resultsContent.style.opacity = '0';
-                resultsContent.style.display = 'block';
-                resultsContent.style.transition = 'opacity 0.4s ease';
-                
-                requestAnimationFrame(() => {
-                    resultsContent.style.opacity = '1';
-                });
-            }, 300);
-            
-            // --- RASTREAMENTO DE FUNIL (PASSO 4: CLIQUE NO PERFIL) ---
-            grid.addEventListener('click', (e) => {
-                const card = e.target.closest('.match-card');
-                if (card && !e.target.closest('.heart-icon')) {
-                    const btnFav = card.querySelector('.heart-icon');
-                    const profileId = btnFav ? btnFav.dataset.id : null;
-                    const slug = card.dataset.slug;
-                    
-                    // Abre o perfil se clicar no card, exceto no botão de 'Ver Perfil' que já possui link nativo
-                    if (!e.target.closest('.btn-profile') && slug) {
-                        window.open(`/${slug}?ref=match`, '_blank');
-                    }
-                }
+            loadingScreen.style.display = 'none';
+            resultsContent.style.opacity = '0';
+            resultsContent.style.display = 'block';
+            resultsContent.style.transition = 'opacity 0.4s ease';
+            requestAnimationFrame(() => {
+                resultsContent.style.opacity = '1';
             });
-            
-        }, 600);
+        }, 150);
+        
+        grid.addEventListener('click', (e) => {
+            const card = e.target.closest('.match-card');
+            if (card && !e.target.closest('.heart-icon')) {
+                const slug = card.dataset.slug;
+                if (!e.target.closest('.btn-profile') && slug) {
+                    window.open(`/${slug}?ref=match`, '_blank');
+                }
+            }
+        });
     }
 
     // Função de Notificação (Estilo WhatsApp)

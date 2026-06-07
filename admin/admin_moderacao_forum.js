@@ -50,7 +50,7 @@ window.initializePage = function() {
                 <button 
                   class="btn-tabela btn-fixar ${post.isPinned ? 'pinned' : ''}" 
                   onclick="togglePinPost('${post.id}', ${post.isPinned})">
-                  <span>${post.isPinned ? 'Desafixar' : 'Fixar'}</span>
+                  <span>${post.isPinned ? 'Fixado' : 'Fixar'}</span>
                 </button>
             `;
 

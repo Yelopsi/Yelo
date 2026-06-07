@@ -1,3 +1,4 @@
+<div id="qna-main-view">
 <div class="main-header" style="margin-bottom: 20px;">
     <div class="header-content">
         <h1>Comunidade</h1>
@@ -75,6 +76,24 @@
 
 <!-- Novo Sistema de Paginação -->
 <div id="qna-pagination" class="pagination-container"></div>
+</div>
+
+<!-- View de Detalhes da Pergunta (Exibida ao clicar no card) -->
+<div id="qna-details-view" style="display: none; animation: fadeIn 0.3s ease;">
+    <button id="btn-back-qna" class="btn btn-secundario" style="margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        Voltar para as perguntas
+    </button>
+    
+    <div id="qna-details-question-container"></div>
+    
+    <h3 style="margin-top: 30px; margin-bottom: 15px; color: var(--verde-escuro); border-bottom: 1px solid #eee; padding-bottom: 10px;">Todas as Respostas</h3>
+    <div id="qna-details-answers-list" class="existing-answers-list" style="display: flex; flex-direction: column; gap: 15px;"></div>
+    
+    <div style="text-align: center; margin-top: 25px; margin-bottom: 30px;">
+        <button id="btn-load-more-answers" class="btn btn-secundario" style="display: none; padding: 10px 24px; border-radius: 50px;">Carregar mais respostas</button>
+    </div>
+</div>
 
 <template id="qna-card-template-psi">
     <div class="card qna-card-psi">

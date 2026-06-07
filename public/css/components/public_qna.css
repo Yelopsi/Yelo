@@ -1,0 +1,213 @@
+/* ==========================================================================
+   PÁGINA PERGUNTAS E RESPOSTAS (Q&A) - APP LIKE
+   ========================================================================== */
+
+/* 1. Cards de Benefícios (Topo) */
+.beneficios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+    margin: 40px auto 60px auto;
+}
+.beneficio-card {
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 20px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-align: center;
+}
+.beneficio-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+}
+.beneficio-card h3 {
+    font-family: var(--font-titulos);
+    font-size: 1.25rem;
+    color: var(--verde-escuro);
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+.beneficio-card p {
+    font-size: 0.95rem;
+    color: #555;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.beneficio-card:nth-child(1) { border-top: 4px solid var(--verde-escuro); }
+.beneficio-card:nth-child(2) { border-top: 4px solid var(--cor-Yelo); }
+.beneficio-card:nth-child(3) { border-top: 4px solid #4ade80; }
+
+/* 2. Barra de Busca Grande */
+.qa-search-container {
+    max-width: 700px;
+    margin: 0 auto 40px auto;
+    position: relative;
+    width: 100%;
+}
+.qa-search-container input {
+    width: 100%;
+    padding: 16px 25px 16px 55px;
+    border-radius: 50px;
+    border: 1px solid transparent;
+    background-color: #f0f2f5;
+    font-size: 1.05rem;
+    font-family: var(--font-principal);
+    color: #333;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    outline: none;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+.qa-search-container input:focus {
+    background-color: #ffffff;
+    border-color: var(--verde-escuro);
+    box-shadow: 0 0 0 4px rgba(27, 67, 50, 0.1);
+}
+.qa-search-icon {
+    position: absolute;
+    left: 22px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    color: #888;
+    pointer-events: none;
+}
+
+/* 3. Caixa "Faça sua Pergunta" */
+.ask-box-container {
+    background-color: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 24px;
+    padding: 35px;
+    max-width: 700px;
+    margin: 0 auto 60px auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.04);
+    box-sizing: border-box;
+}
+.ask-box-container h3 {
+    font-family: var(--font-titulos);
+    color: var(--verde-escuro);
+    margin-top: 0;
+    font-size: 1.6rem;
+    text-align: center;
+    margin-bottom: 25px;
+}
+.ask-box-container textarea {
+    width: 100%;
+    height: 120px;
+    padding: 18px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 16px;
+    font-family: var(--font-principal);
+    font-size: 1rem;
+    color: #333;
+    resize: vertical;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+.ask-box-container textarea:focus {
+    background-color: #ffffff;
+    border-color: var(--verde-escuro);
+    box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
+    outline: none;
+}
+
+.ask-disclaimers {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 25px;
+    color: #166534;
+    font-size: 0.9rem;
+}
+.ask-disclaimers ul {
+    margin: 0;
+    padding-left: 20px;
+    line-height: 1.6;
+}
+.ask-disclaimers li { margin-bottom: 8px; }
+.ask-disclaimers li:last-child { margin-bottom: 0; }
+
+/* 4. Cards de Perguntas e Respostas (Formato Chat // Balões) */
+.qa-card { 
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    margin: 0 auto 40px auto;
+    max-width: 800px;
+    width: 100%;
+    overflow: visible; 
+    padding: 0;
+}
+.qa-card:hover { transform: none; box-shadow: none; }
+
+.qa-card-answers-container {
+    display: flex; flex-direction: column; gap: 15px; width: 100%;
+    padding-left: 25px; border-left: 3px solid #e8f5e9; margin-left: 20px;
+    margin-top: 10px; box-sizing: border-box;
+}
+
+.qa-card-answers-container:not(:empty)::before {
+    content: 'Respostas de Especialistas'; font-size: 0.85rem; color: #888;
+    text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 5px;
+}
+
+.qa-bubble {
+    padding: 16px 20px; border-radius: 18px; font-size: 1.05rem; line-height: 1.6;
+    position: relative; word-break: break-word; box-shadow: none; width: 100%;
+    max-width: 100%; align-self: flex-start; text-align: left;
+}
+
+.qa-bubble-question { background-color: #ffffff; border: 1px solid #e0e0e0; color: #333; border-radius: 16px; margin-bottom: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.04); }
+.qa-bubble-question h2 { font-family: var(--font-titulos); font-size: 1.3rem; color: var(--verde-escuro); margin: 0 0 12px 0; line-height: 1.4; }
+.qa-bubble-question p { margin: 0; color: #444; white-space: pre-wrap; }
+.data-patient-name { font-size: 0.85rem; color: #888; font-weight: 500; }
+
+.qa-bubble-answer { background-color: #fcfcfc; border: 1px solid #e9ecef; color: #222; border-radius: 16px; margin-top: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+.qa-bubble-answer p { margin: 0; color: #222; white-space: pre-wrap; }
+
+.answer-psy-header { display: flex; flex-direction: row; align-items: center; gap: 12px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(27, 67, 50, 0.1); width: 100%; }
+.answer-psy-header img.data-psy-photo { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex-shrink: 0; margin-bottom: 0 !important; }
+.answer-psy-header .psy-info-mob { display: flex; flex-direction: row; align-items: center; gap: 8px; flex-wrap: wrap; flex-grow: 1; text-align: left; }
+.data-psy-name { font-weight: 700; color: var(--verde-escuro); margin: 0; font-size: 0.95rem; }
+.data-psy-name:hover { text-decoration: underline; }
+.data-psy-crp { font-size: 0.75rem; color: #666; margin: 0; }
+
+.answer-psy-header .btn-ver-perfil { background-color: var(--verde-escuro); color: #fff; padding: 8px 16px; border-radius: 50px; font-size: 0.85rem; font-weight: bold; text-decoration: none; white-space: nowrap; margin-left: auto; transition: transform 0.2s ease, background-color 0.2s ease; }
+.answer-psy-header .btn-ver-perfil:hover { background-color: #143d2e; transform: translateY(-2px); }
+
+@media (max-width: 768px) {
+    .qa-bubble { max-width: 95%; padding: 15px 20px; font-size: 1rem; }
+    .qa-card-answers-container { padding-left: 15px; margin-left: 10px; }
+    .answer-psy-header { flex-wrap: nowrap; gap: 10px; }
+    .answer-psy-header .psy-info-mob { flex-direction: column; align-items: flex-start; gap: 2px; }
+    .answer-psy-header .btn-ver-perfil { display: none !important; }
+    .beneficios-grid { grid-template-columns: 1fr; gap: 15px; }
+    .ask-box-container { padding: 25px; border-radius: 20px; }
+    .ask-disclaimers { padding: 15px; }
+}
+
+/* 5. Grid de Profissionais Ativos */
+.active-pro-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    margin-top: 40px;
+}
+.active-pro-card {
+    display: flex; align-items: center; gap: 20px; background: white; padding: 25px; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); text-align: left; box-shadow: 0 5px 15px rgba(0,0,0,0.03); transition: transform 0.3s ease;
+}
+.active-pro-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+.active-pro-card img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; }
+.pro-metric { margin-left: auto; text-align: center; }
+.metric-number { font-size: 1.5rem; font-weight: bold; color: var(--verde-escuro); display: block; }
+.metric-label { font-size: 0.7rem; color: #888; text-transform: uppercase; }

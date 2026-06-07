@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../models');
 const { verifyTokenLocal } = require('../middlewares/localAuth');
-const adminController = require('../controllers/adminController');
+const adminDashboardController = require('../controllers/adminDashboardController');
 const demandController = require('../controllers/demandController');
 
 // =============================================================
@@ -59,7 +59,7 @@ router.post('/tracking/uso-feature', verifyTokenLocal, async (req, res) => {
 // =============================================================
 // ROTA DE ANÁLISE DE FUNIL E VISITAS (ADMIN)
 // =============================================================
-router.get('/admin/analytics/funnel', verifyTokenLocal, adminController.getFunnelAnalytics);
+router.get('/admin/analytics/funnel', verifyTokenLocal, adminDashboardController.getFunnelAnalytics);
 
 router.get('/admin/analytics/visits', verifyTokenLocal, async (req, res) => {
     try {

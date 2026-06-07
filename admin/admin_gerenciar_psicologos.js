@@ -91,7 +91,7 @@ window.initializePage = function() {
                 if (jaEnviado) {
                     wppCell = `
                         <td data-label="WPP">
-                            <a href="${wppLink}" onclick="window.registrarEnvioWpp(${psy.id}, this.href, event)" class="btn-tabela wpp-enviado" style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 20px; text-decoration: none;">
+                            <a href="${wppLink}" onclick="window.registrarEnvioWpp(${psy.id}, this.href, event)" class="btn-tabela wpp-enviado" style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 20px; text-decoration: none; background-color: #d1fae5; color: #059669; border-color: #d1fae5;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                 Enviado
                             </a>

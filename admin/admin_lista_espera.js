@@ -27,37 +27,6 @@ window.initializePage = function() {
         }, 4500);
     }
 
-    // Função para enviar convite
-    async function sendInvitation(candidateId, button) {
-        button.disabled = true;
-        button.innerHTML = '<span class="loading-spinner-sm"></span> Enviando...';
-
-        try {
-            const response = await fetch('/api/psychologists/waiting-list/invite', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ waitingListId: candidateId })
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                showToast(result.message, 'success');
-                fetchWaitingList(); // Recarrega a lista para mostrar o status atualizado
-            } else {
-                throw new Error(result.error || 'Erro desconhecido');
-            }
-
-        } catch (error) {
-            showToast(`Erro ao enviar convite: ${error.message}`, 'error');
-            button.disabled = false;
-            button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> Convidar`;
-        }
-    }
-
     // Função para buscar e renderizar a lista
     async function fetchWaitingList() {
         try {
@@ -98,16 +67,64 @@ window.initializePage = function() {
 
                 const actionsCell = row.querySelector('[data-label="Ações"]');
                 if (candidate.status === 'pending' || candidate.status === 'invited') {
-                    const inviteButton = document.createElement('button');
-                    inviteButton.className = 'btn-tabela btn-fixar';
-                    inviteButton.style.display = 'inline-flex';
-                    inviteButton.style.alignItems = 'center';
-                    inviteButton.style.gap = '5px';
-                    inviteButton.style.padding = '6px 12px';
-                    inviteButton.style.borderRadius = '20px';
-                    inviteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> ${candidate.status === 'invited' ? 'Reenviar' : 'Convidar'}`;
-                    inviteButton.onclick = () => sendInvitation(candidate.id, inviteButton);
-                    actionsCell.appendChild(inviteButton);
+                    const firstName = candidate.nome ? candidate.nome.split(' ')[0] : 'Profissional';
+                    const text = `Olá ${firstName}! Tudo bem? Aqui é da equipe da Yelo. Vimos que você iniciou o seu cadastro na plataforma mas acabou não finalizando. Ficou alguma dúvida ou teve alguma dificuldade? Estamos à disposição para ajudar!`;
+                    let phone = candidate.telefone ? candidate.telefone.replace(/\D/g, '') : '';
+                    
+                    if (phone && (phone.length === 10 || phone.length === 11)) { phone = '55' + phone; }
+                    const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}` : '#';
+
+                    // Usando a tag de link <a> para o navegador abrir a aba do WhatsApp sozinho
+                    const whatsappButton = document.createElement('a');
+                    whatsappButton.className = 'btn-tabela btn-fixar';
+                    whatsappButton.href = url;
+                    if (phone) whatsappButton.target = '_blank';
+                    
+                    // Estilos focados também na usabilidade Mobile (App-like)
+                    whatsappButton.style.display = 'inline-flex';
+                    whatsappButton.style.alignItems = 'center';
+                    whatsappButton.style.justifyContent = 'center';
+                    whatsappButton.style.gap = '6px';
+                    whatsappButton.style.padding = '8px 16px';
+                    whatsappButton.style.borderRadius = '20px';
+                    whatsappButton.style.border = 'none';
+                    whatsappButton.style.cursor = 'pointer';
+                    whatsappButton.style.textDecoration = 'none';
+                    whatsappButton.style.fontWeight = '600';
+                    whatsappButton.style.whiteSpace = 'nowrap'; // Impede o texto de quebrar linha
+                    
+                    // Verifica se a mensagem já foi enviada usando a memória local do navegador (criado no admin.js)
+                    const foiEnviado = window.verificarWppEnviado && window.verificarWppEnviado(candidate.id);
+                    if (foiEnviado) {
+                        whatsappButton.style.backgroundColor = '#d1fae5';
+                        whatsappButton.style.color = '#059669';
+                        whatsappButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Enviado`;
+                    } else {
+                        whatsappButton.style.backgroundColor = '#128C7E';
+                        whatsappButton.style.color = '#fff';
+                        whatsappButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg> WhatsApp`;
+                    }
+
+                    whatsappButton.onclick = (event) => {
+                        if (!phone) {
+                            event.preventDefault();
+                            showToast('Telefone não disponível ou inválido para este profissional.', 'error');
+                            return;
+                        }
+                        
+                        // Registra na memória sem bloquear o clique nativo do <a> (Evita bloqueadores de pop-up no mobile)
+                        let sent = JSON.parse(localStorage.getItem('yelo_wpp_sent_pending') || '[]');
+                        if (!sent.includes(String(candidate.id))) {
+                            sent.push(String(candidate.id));
+                            localStorage.setItem('yelo_wpp_sent_pending', JSON.stringify(sent));
+                        }
+                        
+                        // Atualização visual imediata
+                        whatsappButton.style.backgroundColor = '#d1fae5';
+                        whatsappButton.style.color = '#059669';
+                        whatsappButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Enviado`;
+                    };
+                    actionsCell.appendChild(whatsappButton);
                 } else {
                     actionsCell.innerHTML = '<span style="color: #999; font-size: 0.85rem;">Já cadastrado</span>';
                 }

@@ -1,0 +1,93 @@
+/* ==========================================================================
+   FEED DE AVISOS (APP-LIKE)
+   ========================================================================== */
+.avisos-feed-widget {
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+    border: none;
+}
+
+.avisos-filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 15px;
+    overflow-x: auto;
+    scrollbar-width: none; /* Esconde scrollbar */
+}
+.avisos-filters::-webkit-scrollbar { display: none; }
+
+.aviso-filter-btn {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #495057;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+.aviso-filter-btn:hover { background: #e9ecef; }
+.aviso-filter-btn.active {
+    background: var(--verde-escuro);
+    color: white;
+    border-color: var(--verde-escuro);
+}
+
+.avisos-feed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.aviso-feed-item {
+    background: #fff; border-radius: 16px; border: 1px solid #e9ecef;
+    padding: 18px; cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative; overflow: hidden;
+}
+.aviso-feed-item:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.05); }
+.aviso-feed-item.unread { background: #f0fdf4; border-left: 4px solid #16a34a; }
+.aviso-feed-item.unread .aviso-title { font-weight: 700; color: var(--verde-escuro); }
+.aviso-feed-item::after { content: '▼'; position: absolute; right: 20px; top: 25px; font-size: 0.9rem; color: #adb5bd; transition: transform 0.3s ease; }
+.aviso-feed-item.expanded::after { transform: rotate(180deg); }
+
+.aviso-feed-header { display: flex; align-items: flex-start; gap: 12px; }
+.aviso-icon-wrapper {
+    width: 40px; height: 40px; border-radius: 50%; background: #e8f5e9; color: #1B4332;
+    display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;
+}
+.aviso-feed-item.unread .aviso-icon-wrapper { background: #16a34a; color: white; }
+.aviso-title-group { flex-grow: 1; min-width: 0; }
+.aviso-title {
+    font-family: var(--font-principal); font-size: 1.05rem; font-weight: 600; color: #333; margin: 0 0 4px 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.aviso-meta { font-size: 0.8rem; color: #888; display: block; }
+
+.aviso-preview {
+    margin: 10px 0 0 0; font-size: 0.95rem; color: #555; line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Accordion Expandido */
+.aviso-feed-item.expanded .aviso-title { white-space: normal; overflow: visible; }
+.aviso-feed-item.expanded .aviso-preview { display: none; }
+
+.aviso-click-hint { display: inline-block; font-size: 0.75rem; color: #16a34a; background: #dcfce7; padding: 2px 8px; border-radius: 12px; margin-left: 10px; font-weight: 700; vertical-align: middle; }
+
+.aviso-full-content {
+    max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.4s ease, opacity 0.4s ease, margin-top 0.4s ease;
+    font-size: 0.95rem; color: #444; line-height: 1.6;
+}
+.aviso-feed-item.expanded .aviso-full-content { max-height: 1000px; opacity: 1; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
+.aviso-full-content p { margin-bottom: 10px; }
+.aviso-full-content p:last-child { margin-bottom: 0; }
+.aviso-feed-actions { margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end; }
+.aviso-card-psi .aviso-conteudo { margin: 0; font-size: 0.95rem; color: #444; line-height: 1.5; }
+.aviso-card-psi .aviso-conteudo p { margin-bottom: 10px; }
+.aviso-card-psi .aviso-conteudo p:last-child { margin-bottom: 0; }

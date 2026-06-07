@@ -1,0 +1,383 @@
+// Arquivo: backend/controllers/matchController.js
+const db = require('../models');
+const { Op } = require('sequelize');
+const matchService = require('../services/matchService'); // Algoritmo unificado de Match
+
+// Flag global de otimização: Evita executar ALTER TABLE em todas as buscas de Match
+let matchSchemaChecked = false;
+
+// Função auxiliar para proteger a privacidade do paciente nas avaliações (Ex: "Suzana Gomes" -> "Suzana G.")
+const formatPatientName = (name) => {
+    if (!name || name === 'Anônimo') return 'Anônimo';
+    const parts = name.trim().split(' ');
+    if (parts.length === 1) return parts[0];
+    return `${parts[0]} ${parts[parts.length - 1].charAt(0)}.`;
+};
+
+// ----------------------------------------------------------------------
+// Rota: GET /api/psychologists/matches (Rota Protegida - Usuário Logado)
+// ----------------------------------------------------------------------
+exports.getPatientMatches = async (req, res) => {
+    try {
+        const patient = req.patient;
+
+        if (!patient) {
+            return res.status(401).json({ error: 'Paciente não autenticado.' });
+        }
+
+        // Monta o objeto de preferências padrão baseado no perfil salvo do paciente
+        const patientPreferences = {
+            valor_sessao_faixa: patient.valor_sessao_faixa,
+            temas_buscados: patient.temas_buscados || [],
+            estilo_desejado: patient.abordagem_desejada || [], 
+            genero_profissional: patient.genero_profissional,
+            praticas_desejadas: patient.praticas_afirmativas || [],
+            // Assumindo que salvamos idade no perfil do paciente, senão ignoramos
+            idade_paciente: patient.idade || '',
+            modalidade_preferida: patient.modalidade_preferida
+        };
+
+        // Validação rápida se o perfil está vazio
+        const hasData = patientPreferences.valor_sessao_faixa || patientPreferences.temas_buscados.length > 0;
+        if (!hasData) {
+            return res.status(200).json({
+                message: 'Por favor, preencha o questionário para encontrar psicólogos compatíveis.',
+                matchTier: 'none',
+                results: []
+            });
+        }
+
+        // --- A MÁGICA ACONTECE AQUI ---
+        const matchResult = await matchService.calculateMatches(patientPreferences);
+
+        // --- FIX DOS PREÇOS ---
+        // Garante que os valores financeiros sejam enviados ao frontend (caso o algoritmo matchService os omita)
+        if (matchResult && matchResult.results) {
+            for (let psi of matchResult.results) {
+                if (psi.valor_sessao_numero === undefined || psi.tipo_cobranca === undefined) {
+                    const dbPsi = await db.Psychologist.findByPk(psi.id, { attributes: ['valor_sessao_numero', 'valor_mensal_numero', 'tipo_cobranca'] });
+                    if (dbPsi) {
+                        psi.valor_sessao_numero = dbPsi.valor_sessao_numero;
+                        psi.valor_mensal_numero = dbPsi.valor_mensal_numero;
+                        psi.tipo_cobranca = dbPsi.tipo_cobranca;
+                    }
+                }
+            }
+        }
+
+        // --- LOG DE EVENTO DE MATCH E UPDATE DE FAIRNESS ---
+        if (matchResult && matchResult.results && matchResult.results.length > 0) {
+            const matchEvents = matchResult.results.map(psi => ({
+                psychologistId: psi.id,
+                patientId: patient ? patient.id : null, // Suporta tanto usuário logado quanto anônimo
+                matchScore: psi.matchScore,
+                source: patient ? 'patient_dashboard' : 'questionnaire'
+            }));
+            try {
+                // 1. Garantia de Colunas (Executa apenas UMA VEZ na vida útil do servidor para evitar gargalo de I/O)
+                if (!matchSchemaChecked) {
+                    await db.sequelize.query(`
+                        CREATE TABLE IF NOT EXISTS "MatchEvents" (
+                            "id" SERIAL PRIMARY KEY,
+                            "psychologistId" INTEGER,
+                            "patientId" INTEGER,
+                            "matchTags" TEXT[], 
+                            "matchScore" FLOAT,
+                            "source" VARCHAR(255),
+                            "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                            "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                        );
+                    `).catch(() => {});
+                    await db.sequelize.query(`ALTER TABLE "MatchEvents" ADD COLUMN IF NOT EXISTS "patientId" INTEGER, ADD COLUMN IF NOT EXISTS "source" VARCHAR(255), ADD COLUMN IF NOT EXISTS "matchScore" FLOAT;`).catch(() => {});
+                    await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "last_shown_match_at" TIMESTAMP WITH TIME ZONE;`).catch(() => {});
+                    matchSchemaChecked = true;
+                }
+
+                for (const event of matchEvents) {
+                    await db.sequelize.query(
+                        `INSERT INTO "MatchEvents" ("psychologistId", "patientId", "matchScore", "source", "createdAt", "updatedAt") VALUES (:psychologistId, :patientId, :matchScore, :source, NOW(), NOW())`,
+                        { replacements: event, type: db.sequelize.QueryTypes.INSERT }
+                    );
+                }
+
+                // 2. ATUALIZA O COOLDOWN E AS IMPRESSÕES (A Mágica do UCB)
+                const idsParaAtualizar = matchResult.results.map(psi => psi.id);
+                if (idsParaAtualizar.length > 0) {
+                    await db.sequelize.query(
+                        `UPDATE "Psychologists" 
+                         SET profile_appearances = profile_appearances + 1, 
+                             last_shown_match_at = NOW() 
+                         WHERE id IN (:ids)`,
+                        { 
+                            replacements: { ids: idsParaAtualizar }, 
+                            type: db.sequelize.QueryTypes.UPDATE 
+                        }
+                    );
+                }
+            } catch (err) {
+                console.error("Erro ao registrar evento de match: ", err);
+            }
+        }
+
+        res.status(200).json({
+            message: matchResult.matchTier === 'ideal' ? 'Psicólogos compatíveis encontrados!' : 'Psicólogos próximos encontrados!',
+            matchTier: matchResult.matchTier,
+            results: matchResult.results,
+            compromiseText: matchResult.compromiseText
+        });
+
+    } catch (error) {
+        res.status(500).json({ error: 'Erro interno no servidor ao buscar psicólogos compatíveis.' });
+    }
+};
+
+// ----------------------------------------------------------------------
+// Rota: POST /api/psychologists/match (Endpoint Público - Anônimo)
+// ----------------------------------------------------------------------
+exports.getAnonymousMatches = async (req, res) => {
+    try {
+        const patientAnswers = req.body;
+
+        // Normalização dos dados vindos do Frontend (questionario.js)
+        // O front manda chaves ligeiramente diferentes do banco, normalizamos aqui.
+        const patientPreferences = {
+            valor_sessao_faixa: patientAnswers.faixa_valor,
+            temas_buscados: patientAnswers.temas || [],
+            estilo_desejado: patientAnswers.experiencia_desejada || [],
+            genero_profissional: patientAnswers.pref_genero_prof,
+            praticas_desejadas: patientAnswers.caracteristicas_prof || [],
+            idade_paciente: patientAnswers.idade,
+            modalidade_preferida: patientAnswers.modalidade_atendimento
+        };
+
+        if (!patientPreferences.valor_sessao_faixa) {
+             return res.status(400).json({ error: 'Faixa de valor é obrigatória.' });
+        }
+
+        // Reutiliza a MESMA lógica do usuário logado
+        const matchResult = await matchService.calculateMatches(patientPreferences);
+
+        // --- FIX DOS PREÇOS ---
+        // Garante que os valores financeiros sejam enviados ao frontend (caso o algoritmo matchService os omita)
+        if (matchResult && matchResult.results) {
+            for (let psi of matchResult.results) {
+                if (psi.valor_sessao_numero === undefined || psi.tipo_cobranca === undefined) {
+                    const dbPsi = await db.Psychologist.findByPk(psi.id, { attributes: ['valor_sessao_numero', 'valor_mensal_numero', 'tipo_cobranca'] });
+                    if (dbPsi) {
+                        psi.valor_sessao_numero = dbPsi.valor_sessao_numero;
+                        psi.valor_mensal_numero = dbPsi.valor_mensal_numero;
+                        psi.tipo_cobranca = dbPsi.tipo_cobranca;
+                    }
+                }
+            }
+        }
+
+        const patient = null; // Declarado para não quebrar o bloco unificado
+
+        // --- LOG DE EVENTO DE MATCH E UPDATE DE FAIRNESS ---
+        if (matchResult && matchResult.results && matchResult.results.length > 0) {
+            const matchEvents = matchResult.results.map(psi => ({
+                psychologistId: psi.id,
+                patientId: patient ? patient.id : null, // Suporta tanto usuário logado quanto anônimo
+                matchScore: psi.matchScore,
+                source: patient ? 'patient_dashboard' : 'questionnaire'
+            }));
+            try {
+                // 1. Garantia de Colunas (Executa apenas UMA VEZ na vida útil do servidor para evitar gargalo de I/O)
+                if (!matchSchemaChecked) {
+                    await db.sequelize.query(`
+                        CREATE TABLE IF NOT EXISTS "MatchEvents" (
+                            "id" SERIAL PRIMARY KEY,
+                            "psychologistId" INTEGER,
+                            "patientId" INTEGER,
+                            "matchTags" TEXT[], 
+                            "matchScore" FLOAT,
+                            "source" VARCHAR(255),
+                            "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                            "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                        );
+                    `).catch(() => {});
+                    await db.sequelize.query(`ALTER TABLE "MatchEvents" ADD COLUMN IF NOT EXISTS "patientId" INTEGER, ADD COLUMN IF NOT EXISTS "source" VARCHAR(255), ADD COLUMN IF NOT EXISTS "matchScore" FLOAT;`).catch(() => {});
+                    await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "last_shown_match_at" TIMESTAMP WITH TIME ZONE;`).catch(() => {});
+                    matchSchemaChecked = true;
+                }
+
+                for (const event of matchEvents) {
+                    await db.sequelize.query(
+                        `INSERT INTO "MatchEvents" ("psychologistId", "patientId", "matchScore", "source", "createdAt", "updatedAt") VALUES (:psychologistId, :patientId, :matchScore, :source, NOW(), NOW())`,
+                        { replacements: event, type: db.sequelize.QueryTypes.INSERT }
+                    );
+                }
+
+                // 2. ATUALIZA O COOLDOWN E AS IMPRESSÕES (A Mágica do UCB)
+                const idsParaAtualizar = matchResult.results.map(psi => psi.id);
+                if (idsParaAtualizar.length > 0) {
+                    await db.sequelize.query(
+                        `UPDATE "Psychologists" 
+                         SET profile_appearances = profile_appearances + 1, 
+                             last_shown_match_at = NOW() 
+                         WHERE id IN (:ids)`,
+                        { 
+                            replacements: { ids: idsParaAtualizar }, 
+                            type: db.sequelize.QueryTypes.UPDATE 
+                        }
+                    );
+                }
+            } catch (err) {
+                console.error("Erro ao registrar evento de match: ", err);
+            }
+        }
+
+        res.status(200).json(matchResult);
+
+    } catch (error) {
+        res.status(500).json({ error: 'Erro interno no servidor ao buscar recomendações.' });
+    }
+};
+
+// ----------------------------------------------------------------------
+// Rota: GET /api/psychologists/showcase
+// ----------------------------------------------------------------------
+exports.getShowcasePsychologists = async (req, res) => {
+    try {
+        const psychologists = await db.Psychologist.findAll({
+            where: {
+                status: 'active',
+                fotoUrl: { [Op.ne]: null }
+            },
+            order: db.sequelize.random(), 
+            limit: 20, 
+            attributes: ['id', 'nome', 'slug', 'fotoUrl', 'status', 'createdAt', 'planExpiresAt', 'is_exempt'] 
+        });
+
+        const agora = new Date();
+        const validPsychologists = psychologists.filter(psy => {
+            const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
+            if (isVip) return true;
+            
+            if (!psy.planExpiresAt) return false;
+            return new Date(psy.planExpiresAt) > agora;
+        }).slice(0, 4);
+
+        while (validPsychologists.length < 4) {
+            validPsychologists.push({
+                id: 0,
+                nome: "Em breve",
+                fotoUrl: "https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+            });
+        }
+
+        res.status(200).json(validPsychologists);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};
+
+// ----------------------------------------------------------------------
+// Rota: GET /api/psychologists/slug/:slug (VERSÃO DESTRAVADA PARA DEV)
+// ----------------------------------------------------------------------
+exports.getProfileBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    const psychologist = await db.Psychologist.findOne({
+      where: { slug: { [Op.iLike]: slug } }, 
+      attributes: { exclude: ['senha', 'resetPasswordToken', 'resetPasswordExpires', 'cpf'] },
+    });
+
+    if (!psychologist) {
+      return res.status(404).json({ error: 'Perfil não encontrado.' });
+    }
+
+    if (psychologist.status === 'content_creator') {
+        return res.status(404).json({ error: 'Perfil não encontrado.' });
+    }
+
+    const hoje = new Date();
+    const validade = psychologist.planExpiresAt ? new Date(psychologist.planExpiresAt) : null;
+    const status = psychologist.status;
+    const isVip = psychologist.is_exempt === true || String(psychologist.is_exempt).toLowerCase() === 'true' || psychologist.is_exempt === 1;
+
+    if (!isVip) {
+        if (!validade || validade <= hoje) {
+            return res.status(404).json({ error: 'Perfil indisponível (Assinatura inativa).' });
+        }
+    }
+    
+    if (status !== 'active') {
+        return res.status(404).json({ error: 'Perfil indisponível no momento.' });
+    }
+
+    const reviews = await db.Review.findAll({
+      where: { psychologistId: psychologist.id },
+      include: [{ model: db.Patient, as: 'patient', attributes: ['nome'] }],
+      order: [['createdAt', 'DESC']]
+    });
+
+    const responseData = {
+      ...psychologist.toJSON(),
+      reviews: reviews.map(r => ({
+        id: r.id,
+        rating: r.rating,
+        comment: (r.comment === 'null' || r.comment === null) ? '' : r.comment,
+        patientName: formatPatientName(r.patient?.nome),
+        createdAt: r.createdAt
+      }))
+    };
+    res.status(200).json(responseData);
+  } catch (error) { res.status(500).json({ error: 'Erro interno no servidor.' }); }
+};
+
+// ----------------------------------------------------------------------
+// Rota: GET /api/psychologists/:id
+// ----------------------------------------------------------------------
+exports.getPsychologistProfile = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!/^\d+$/.test(id)) return res.status(404).json({ error: 'ID inválido ou rota não encontrada.' });
+
+        const psychologist = await db.Psychologist.findByPk(id, { attributes: { exclude: ['senha', 'resetPasswordToken', 'resetPasswordExpires'] } });
+        if (!psychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+
+        const isVip = psychologist.is_exempt === true || String(psychologist.is_exempt).toLowerCase() === 'true' || psychologist.is_exempt === 1;
+        const hoje = new Date();
+        const validade = psychologist.planExpiresAt ? new Date(psychologist.planExpiresAt) : null;
+        
+        if (!isVip && (!validade || validade <= hoje)) return res.status(404).json({ error: 'Perfil indisponível (Assinatura inativa).' });
+        if (psychologist.status !== 'active') return res.status(404).json({ error: 'Perfil indisponível no momento.' });
+
+        const reviews = await db.Review.findAll({ where: { psychologistId: id }, include: [{ model: db.Patient, as: 'patient', attributes: ['nome'] }], order: [['createdAt', 'DESC']] });
+
+        const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+        const average_rating = reviews.length > 0 ? (totalRating / reviews.length).toFixed(1) : 0;
+
+        const psychologistData = {
+            ...psychologist.toJSON(),
+            average_rating, review_count: reviews.length,
+            reviews: reviews.map(r => { const rev = r.toJSON(); if (rev.patient && rev.patient.nome) { rev.patient.nome = formatPatientName(rev.patient.nome); } rev.comment = (rev.comment === 'null' || rev.comment === null) ? '' : rev.comment; return rev; })
+        };
+        res.status(200).json(psychologistData);
+    } catch (error) { res.status(500).json({ error: 'Erro interno no servidor.' }); }
+};
+
+// ----------------------------------------------------------------------
+// Rota: GET /api/psychologists/:id/reviews
+// ----------------------------------------------------------------------
+exports.getPsychologistReviews = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const reviews = await db.Review.findAll({
+            where: { psychologistId: id },
+            include: [{ model: db.Patient, as: 'patient', attributes: ['nome', 'fotoUrl'] }], 
+            order: [['createdAt', 'DESC']]
+        });
+
+        const formattedReviews = reviews.map(r => {
+            const rev = r.toJSON();
+            if (rev.patient && rev.patient.nome) rev.patient.nome = formatPatientName(rev.patient.nome);
+            rev.comment = (rev.comment === 'null' || rev.comment === null) ? '' : rev.comment;
+            return rev;
+        });
+        return res.json({ reviews: formattedReviews }); 
+    } catch (error) { res.status(500).json({ error: 'Erro interno no servidor ao buscar avaliações.' }); }
+};

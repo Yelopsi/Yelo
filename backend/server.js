@@ -57,6 +57,16 @@ const apiLimiter = rateLimit({
 });
 app.use('/api/', apiLimiter);
 
+// Limite específico para a criação de perguntas na Comunidade (2 por IP a cada 24h)
+const qnaAskLimiter = rateLimit({
+    windowMs: 24 * 60 * 60 * 1000, // 24 horas em milissegundos
+    max: 2, // Limite de 2 requisições por IP na mesma janela
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Você atingiu o limite de 2 perguntas por dia. Tente novamente amanhã.' }
+});
+app.use('/api/qna/ask', qnaAskLimiter);
+
 // Middlewares de Aplicação
 app.use(seoRedirect);
 app.use(corsConfig);
@@ -166,9 +176,23 @@ const startServer = async () => {
     }
 
     try {
-        // Sincroniza o banco e cria a coluna faltante na tabela de Avisos (COMENTADO PARA NÃO DEIXAR LENTO):
+        // Sincroniza o banco e cria as colunas faltantes nas tabelas (COMENTADO PARA NÃO TRAVAR O BOOT)
         // await db.sequelize.sync({ alter: true });
         
+        // --- FIX MANUAL DE COLUNAS FALTANTES PARA EVITAR LOCK DO ALTER:TRUE ---
+        try {
+            console.log('🛠️ [DB FIX] Injetando colunas faltantes na tabela Patients...');
+            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "modalidade_preferida" VARCHAR(255);');
+            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "psychologistId" INTEGER;');
+            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "recebe_mensagens" BOOLEAN DEFAULT true;');
+            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMP WITH TIME ZONE;');
+            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "faixa_etaria" VARCHAR(255);');
+            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "idade" VARCHAR(255);');
+            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "identidade_genero" VARCHAR(255);');
+        } catch(e) {
+            console.warn('⚠️ Aviso ao tentar criar colunas manualmente (podem já existir ou banco travado):', e.message);
+        }
+
         await applyDatabaseFixes(db, db.sequelize);
         
         isDbSynced = true;
