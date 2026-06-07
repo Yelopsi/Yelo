@@ -16,19 +16,6 @@
     <meta name="description" content="<%= bioSnippet %>">
     
     <link rel="stylesheet" href="/css/psi_dashboard.css">
-    <style>
-        /* Ajuste do selo de verificado no mobile para flutuar sem empurrar o texto */
-        .mobile-only-badge { display: none !important; }
-        @media (max-width: 768px) {
-            .desktop-only-badge { display: none !important; }
-            .mobile-only-badge { 
-                display: inline-flex !important; 
-                position: absolute !important;
-                right: -32px !important;
-                top: -8px !important;
-            }
-        }
-    </style>
 </head>
 <body class="pagina-publica">
 
@@ -56,14 +43,41 @@
                                         <% if (nameParts.length > 1) { %>
                                             <span class="first-name-wrapper" style="position: relative; display: inline-block;"><%= nameParts[0] %><span title="Psicólogo Verificado" class="hero-verified-badge mobile-only-badge"><%- verifiedSvg %></span></span>
                                             <span class="name-break-mobile"><%= nameParts.slice(1).join(' ') %></span>
-                                            <span title="Psicólogo Verificado" class="hero-verified-badge desktop-only-badge"><%- verifiedSvg %></span>
+                                            <span title="Psicólogo Verificado" class="hero-verified-badge desktop-only-badge" style="position: relative; top: -4px;"><%- verifiedSvg %></span>
                                         <% } else { %>
                                             <span class="first-name-wrapper" style="position: relative; display: inline-block;"><%= psicologo.nome %><span title="Psicólogo Verificado" class="hero-verified-badge mobile-only-badge"><%- verifiedSvg %></span></span>
-                                            <span title="Psicólogo Verificado" class="hero-verified-badge desktop-only-badge"><%- verifiedSvg %></span>
+                                            <span title="Psicólogo Verificado" class="hero-verified-badge desktop-only-badge" style="position: relative; top: -4px;"><%- verifiedSvg %></span>
                                         <% } %>
                                     <% } %>
                                 </h1>
-                                <p id="psi-hero-subtitle" class="hero-subtitle-text">Psicólogo Clínico</p>
+                                <% 
+                                    let profTitle = "Psicólogo(a) Clínico(a)";
+                                    let genVal = psicologo.genero_identidade;
+                                    if (typeof genVal === 'string' && genVal.startsWith('[')) {
+                                        try { genVal = JSON.parse(genVal)[0]; } catch(e) {}
+                                    } else if (Array.isArray(genVal)) {
+                                        genVal = genVal[0];
+                                    }
+                                    if (genVal === 'Feminino') {
+                                        profTitle = "Psicóloga Clínica";
+                                    } else if (genVal === 'Masculino') {
+                                        profTitle = "Psicólogo Clínico";
+                                    } else if (genVal === 'Não-binário' || genVal === 'Outro') {
+                                        profTitle = "Psicólogue Clínique";
+                                    }
+                                    
+                                    let abordagemText = "";
+                                    let abordagens = psicologo.abordagens_tecnicas;
+                                    if (typeof abordagens === 'string' && abordagens.startsWith('[')) {
+                                        try { abordagens = JSON.parse(abordagens); } catch(e) {}
+                                    }
+                                    if (Array.isArray(abordagens) && abordagens.length > 0) {
+                                        abordagemText = " | " + abordagens.join(', ');
+                                    } else if (typeof abordagens === 'string' && abordagens.trim() !== '' && abordagens !== '[]') {
+                                        abordagemText = " | " + abordagens;
+                                    }
+                                %>
+                                <p id="psi-hero-subtitle" class="hero-subtitle-text"><%= profTitle %><%= abordagemText %></p>
                                 
                                 <!-- Resumo clicável das avaliações -->
                                 <div id="psi-rating-summary" class="hero-rating-clickable" onclick="document.getElementById('reviews-section').scrollIntoView({behavior: 'smooth'})">
@@ -80,12 +94,38 @@
                                             expTextSSR = anosExp === 0 ? 'Menos de 1 ano de experiência' : `Profissional com ${anosExp} ano${anosExp > 1 ? 's' : ''} de experiência`;
                                         }
                                     }
+                                    
+                                    let idadeText = '';
+                                    let isBirthday = false;
+                                    if (psicologo.data_nascimento) {
+                                        const dateStr = psicologo.data_nascimento.toString();
+                                        const parts = dateStr.split('-');
+                                        if (parts.length >= 3) {
+                                            const birthYear = parseInt(parts[0], 10);
+                                            const birthMonth = parseInt(parts[1], 10) - 1;
+                                            const birthDay = parseInt(parts[2].substring(0, 2), 10);
+                                            
+                                            const today = new Date();
+                                            let age = today.getFullYear() - birthYear;
+                                            const m = today.getMonth() - birthMonth;
+                                            if (m < 0 || (m === 0 && today.getDate() < birthDay)) {
+                                                age--;
+                                            }
+                                            idadeText = `${age} anos`;
+                                            
+                                            if (today.getMonth() === birthMonth && today.getDate() === birthDay) {
+                                                isBirthday = true;
+                                            }
+                                        }
+                                    }
                                 %>
                                 <!-- Bloco de Autoridade -->
                                 <div class="hero-authority-block">
                                     <div class="auth-item"><span class="auth-icon green">✓</span> <span id="psi-crp">CRP: <%= psicologo.crp %></span></div>
                                     <div class="auth-item"><span class="auth-icon blue">🔒</span> <span>Sigilo Garantido</span></div>
                                     <div id="auth-experiencia" class="auth-item" style="display: <%= showExp ? 'flex' : 'none' %>;"><span class="auth-icon gold">⭐</span> <span id="psi-experiencia-text"><%= expTextSSR %></span></div>
+                                    <% if (idadeText) { %><div class="auth-item"><span class="auth-icon" style="color: #9333ea;">👤</span> <span><%= idadeText %></span></div><% } %>
+                                    <% if (isBirthday) { %><div class="auth-item" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 2px 8px; color: #b45309; font-weight: bold; font-size: 0.85rem;"><span class="auth-icon">🎉</span> Feliz Aniversário!</div><% } %>
                                 </div>
                             </div>
                             <!-- INFORMAÇÕES RÁPIDAS (APENAS MOBILE) -->
@@ -96,6 +136,15 @@
                                     <div id="mq-experiencia" class="mq-trust-item" style="display: <%= showExp ? 'flex' : 'none' %>; color: #f59e0b;">⭐ <span id="mq-experiencia-text"><%= expTextSSR.replace('Profissional com ', '').replace(' de experiência', '') %></span></div>
                                 </div>
                                 <div class="mq-info-grid">
+                                    <% if (idadeText) { %>
+                                    <div class="mq-info-row">
+                                        <div class="mq-icon" style="background: #f3e8ff; color: #9333ea;">👤</div>
+                                        <div class="mq-text-group">
+                                            <span class="mq-label">Idade</span>
+                                            <span class="mq-value"><%= idadeText %><% if (isBirthday) { %> <span style="color: #b45309; font-weight: bold; font-size: 0.8rem; margin-left: 5px;">🎉 Parabéns!</span><% } %></span>
+                                        </div>
+                                    </div>
+                                    <% } %>
                                     <div class="mq-info-row">
                                         <div class="mq-icon" style="background: #e8f5e9; color: #16a34a;">📍</div>
                                         <div class="mq-text-group">

@@ -360,6 +360,54 @@
                 </div>
             </div>
         </div>
+        
+        <!-- WIDGET DE CONVERSÕES PLG (WHATSAPP) -->
+        <div class="widget" style="margin-top: 30px;">
+            <div class="header-flex">
+                <div>
+                    <h3>📊 Conversões do WhatsApp (PLG)</h3>
+                    <p style="color: var(--cinza-texto); margin-top: -15px;">Acompanhamento de cliques no botão de WhatsApp e fechamento de novos pacientes.</p>
+                </div>
+            </div>
+            
+            <!-- KPIs de WhatsApp -->
+            <div class="kpi-grid" style="margin-bottom: 20px;">
+                <div class="kpi-card" style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #3498db; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <h4 style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Total de Cliques</h4>
+                    <span id="kpi-wpp-total" style="font-size: 1.6rem; font-weight: bold; color: #2c3e50;">0</span>
+                </div>
+                <div class="kpi-card" style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #f39c12; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <h4 style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Taxa de Resposta (Psi)</h4>
+                    <span id="kpi-wpp-tx-resposta" style="font-size: 1.6rem; font-weight: bold; color: #2c3e50;">0%</span>
+                </div>
+                <div class="kpi-card" style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #27ae60; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <h4 style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Mensagens Recebidas</h4>
+                    <span id="kpi-wpp-recebidas" style="font-size: 1.6rem; font-weight: bold; color: #2c3e50;">0</span>
+                </div>
+                <div class="kpi-card" style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #16a34a; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <h4 style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Negócios Fechados</h4>
+                    <span id="kpi-wpp-fechados" style="font-size: 1.6rem; font-weight: bold; color: #16a34a;">0</span>
+                </div>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table class="fin-table" style="width: 100%; min-width: 800px;">
+                    <thead>
+                        <tr>
+                            <th style="padding: 10px 15px;">Data do Clique</th>
+                            <th style="padding: 10px 15px;">Psicólogo</th>
+                            <th style="padding: 10px 15px;">Paciente/Visitante</th>
+                            <th style="padding: 10px 15px; text-align: center;">Recebeu Mensagem?</th>
+                            <th style="padding: 10px 15px; text-align: center;">Fechou Negócio?</th>
+                            <th style="padding: 10px 15px; text-align: center;">Status da Resposta</th>
+                        </tr>
+                    </thead>
+                    <tbody id="whatsapp-feedback-tbody">
+                        <tr><td colspan="6" style="text-align:center; padding: 20px; color: #999; font-style: italic;">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </section>
 </main>
     </div>
@@ -399,7 +447,10 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="/config.js?v=2.0"></script>
+    <script src="/admin/admin_modais.js?v=1.0"></script>
+    <script src="/admin/admin_caixa_entrada_ui.js"></script>
     <script src="/admin/admin.js?v=2.0"></script>
+    <script src="/admin/admin_relatorios.js?v=1.0"></script>
     
     <div id="confirmation-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
     <div style="background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 500px; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">

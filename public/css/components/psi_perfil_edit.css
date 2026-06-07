@@ -1,0 +1,138 @@
+/* ==========================================================================
+   EDIÇÃO DO PERFIL (PÁGINA INTERNA DO PAINEL)
+   ========================================================================== */
+.profile-block {
+    border: 1px solid #e9ecef;
+    border-radius: 16px;
+    margin-bottom: 25px;
+    background-color: #fff;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    overflow: visible;
+}
+
+.block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+}
+
+.block-header .section-title { margin: 0; font-size: 1.1rem; color: var(--verde-escuro); }
+.block-actions { 
+    display: flex; align-items: center; gap: 10px; margin-left: auto;
+}
+.block-actions .btn { 
+    width: 110px !important; height: 38px !important; padding: 0 !important;
+    display: inline-flex !important; align-items: center !important;
+    justify-content: center !important; box-sizing: border-box !important;
+}
+
+.block-actions .btn.hidden { display: none !important; }
+.block-actions .btn-principal { border: 2px solid transparent !important; font-weight: 600 !important; }
+.block-actions .btn-secundario { border: 2px solid var(--verde-escuro) !important; }
+.block-content { padding: 20px; }
+
+/* --- Correções de Grid e Layout (Formulários do Perfil) --- */
+.form-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    width: 100%;
+    margin-bottom: 15px;
+}
+.form-row .form-group {
+    flex: 1;
+    min-width: 250px;
+    margin-bottom: 0;
+}
+
+.profile-block input:disabled,
+.profile-block textarea:disabled,
+.profile-block select:disabled {
+    background-color: #f0f2f5 !important; cursor: not-allowed; border-color: transparent !important; color: #6c757d;
+}
+
+.profile-block .multiselect-tag.disabled .multiselect-display {
+    background-color: #f0f2f5; cursor: not-allowed; border-color: transparent; color: #6c757d;
+}
+
+.profile-block.editing {
+    border-color: var(--verde-escuro); box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
+}
+.profile-block.editing input,
+.profile-block.editing textarea,
+.profile-block.editing select {
+    background-color: #fff !important; cursor: text; border-color: #ced4da !important; color: #333;
+}
+.profile-block.editing .multiselect-tag.disabled { opacity: 1; pointer-events: auto; }
+.profile-block.editing .multiselect-tag.disabled .multiselect-display {
+    background-color: #fff; cursor: pointer; border-color: #ced4da;
+}
+
+/* --- UPLOAD DE FOTO MOBILE --- */
+.mobile-photo-upload-section {
+    display: none;
+    flex-direction: column; align-items: center; margin-bottom: 30px; text-align: center;
+    border-bottom: 1px dashed #e0e0e0; padding-bottom: 25px;
+}
+.profile-photo-wrapper-mobile {
+    position: relative; width: 110px; height: 110px; border-radius: 50%;
+    cursor: pointer; margin-bottom: 10px; border: 3px solid var(--verde-escuro);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: transform 0.2s;
+}
+.profile-photo-wrapper-mobile:active { transform: scale(0.95); }
+.profile-photo-wrapper-mobile img {
+    width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background-color: var(--cinza-borda);
+}
+.profile-photo-wrapper-mobile .camera-icon-badge {
+    position: absolute; bottom: 0; right: -5px; background-color: var(--cor-Yelo); color: var(--verde-escuro);
+    width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 16px; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.mobile-photo-upload-section p { font-size: 0.9rem; color: #666; margin: 0; font-weight: 500; }
+@media (max-width: 992px) {
+    .mobile-photo-upload-section { display: flex; }
+}
+
+/* --- UX E ALINHAMENTO MOBILE (PERFIL EDIÇÃO) --- */
+.professional-details-row { align-items: stretch !important; }
+.professional-details-row .form-group { display: flex; flex-direction: column; }
+.professional-details-row .form-group > label { margin-bottom: 8px; flex-shrink: 0; }
+.professional-details-row .form-group > input,
+.professional-details-row .form-group > .segmented-control,
+.professional-details-row .form-group > .input-prefix-group {
+    flex-grow: 1; min-height: 48px; margin-bottom: 0;
+}
+.professional-details-row .segmented-control { display: flex; width: 100%; padding: 4px; }
+.professional-details-row .segmented-control label {
+    flex: 1; display: flex; justify-content: center; align-items: center; height: 100%;
+}
+
+@media (max-width: 992px) {
+    .block-actions { gap: 5px !important; }
+    .block-actions .btn {
+        padding: 5px 8px !important; background: transparent !important; border: none !important;
+        min-width: 0 !important; width: auto !important; height: auto !important;
+        font-size: 0.95rem !important; box-shadow: none !important; color: var(--verde-escuro) !important;
+    }
+    .block-actions .btn-cancel { color: #888 !important; }
+    .block-actions .btn-save { font-weight: 800 !important; }
+
+    .sticky-footer-actions {
+        bottom: calc(var(--mobile-bottom-h, 80px) + 20px) !important;
+        right: 20px !important; left: auto !important; width: auto !important; padding: 0 !important;
+        background-color: transparent !important; transform: translateY(200px) !important;
+        opacity: 0; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s;
+    }
+    .sticky-footer-actions:not(.hidden) { transform: translateY(0) !important; opacity: 1; }
+    .sticky-footer-actions .btn { padding: 12px 24px !important; font-size: 1rem !important; }
+}
+
+/* Evitar Zoom no iOS ao clicar nos inputs (Global p/ mobile) */
+@media (max-width: 992px) {
+    input, textarea, select { font-size: 16px !important; }
+}

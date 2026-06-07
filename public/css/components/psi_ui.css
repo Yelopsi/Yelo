@@ -1,0 +1,347 @@
+/* ==========================================================================
+   MÓDULO: COMPONENTES UNIVERSAIS DE UI (PAINEL PSI)
+   (Modais, Forms, Selects Customizados, Tooltips e Overlays)
+   ========================================================================== */
+
+/* ==========================================================================
+   1. MODAIS GERAIS (E BOTTOM SHEETS MOBILE)
+   ========================================================================== */
+.custom-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%;
+    height: calc(100vh / 0.88); height: calc(100dvh / 0.88);
+    background: rgba(0, 0, 0, 0.5);
+    display: none; /* Oculto por padrão */
+    justify-content: center; align-items: center;
+    z-index: 200000; /* Muito acima de tudo */
+    backdrop-filter: blur(3px);
+}
+.custom-modal-overlay[style*="display: flex"] { display: flex !important; animation: modalFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.custom-modal-box {
+    background: #fff; padding: 30px; border-radius: 16px;
+    width: 90%; max-width: 500px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2); position: relative;
+    max-height: 90vh; overflow-y: auto;
+}
+.custom-modal-overlay[style*="display: flex"] .custom-modal-box { animation: modalContentPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+@keyframes modalFadeIn { from { opacity: 0; backdrop-filter: blur(0px); } to { opacity: 1; backdrop-filter: blur(3px); } }
+@keyframes modalContentPop { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* Botão Global de Fechar (X) */
+.modal-close-btn {
+    position: absolute; top: 20px; right: 20px;
+    background: #f5f5f5; border: none; width: 36px; height: 36px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #666; transition: all 0.2s ease; z-index: 10;
+}
+.modal-close-btn:hover { background: #e0e0e0; color: #333; transform: rotate(90deg); }
+
+/* Estilo Mobile (Bottom Sheet) */
+.sheet-drag-handle { width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: -20px auto 20px auto; display: none; }
+@media (max-width: 768px) {
+    .sheet-drag-handle { display: block; }
+    .custom-modal-box {
+        margin-top: auto; border-radius: 24px 24px 0 0 !important;
+        width: 100% !important; max-width: 100% !important;
+        animation: slideUpSheet 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        padding-top: 30px !important; padding-bottom: calc(90px + env(safe-area-inset-bottom)) !important;
+    }
+    .custom-modal-overlay { align-items: flex-end !important; padding: 0 !important; }
+}
+@keyframes slideUpSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+/* ==========================================================================
+   2. FORMULÁRIOS, BOTÕES E WIDGETS
+   ========================================================================== */
+.form-secao { background-color: var(--branco-puro); padding: 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 20px; }
+.form-secao h2 { font-family: var(--font-titulos); margin-bottom: 15px; border-bottom: 1px solid var(--cinza-borda); padding-bottom: 10px; }
+.form-grid-2col { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+.form-grid-credenciais { display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; }
+
+.form-group { margin-bottom: 15px; position: relative; }
+.form-group:focus-within { z-index: 100; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 13px; }
+.form-group input, .form-group textarea, .form-group select, .filtro-select {
+    width: 100%; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 8px;
+    font-family: var(--font-principal); font-size: 14px; background-color: #f8f9fa; box-sizing: border-box;
+}
+textarea#bio { min-height: 80px; text-align: justify; white-space: pre-wrap; line-height: 1.5; padding: 10px 12px; }
+
+.form-group input.input-error { border-color: var(--coral-quente); }
+.form-error-message { color: var(--coral-quente); font-size: 13px; margin-top: 5px; }
+#form-fieldset { border: none; padding: 0; margin: 0; }
+
+.btn { padding: 10px 24px; border-radius: 25px; font-weight: 700; border: 2px solid transparent; cursor: pointer; transition: transform 0.2s; display: inline-block; text-align: center; box-sizing: border-box; }
+.btn-principal, .btn-rapido, .btn-primario { background-color: var(--verde-escuro); color: var(--branco-puro); }
+.btn-secundario { background-color: transparent; border: 2px solid var(--verde-escuro); color: var(--verde-escuro); }
+.btn:hover { transform: scale(1.03); }
+.form-acoes { display: flex; justify-content: flex-end; margin-top: 20px; }
+
+/* Upload */
+.form-group-upload .upload-label { display: block; padding: 40px 20px; border: 2px dashed var(--cinza-borda); border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s; }
+.form-group-upload .upload-label:hover { background-color: var(--cinza-fundo); border-color: var(--verde-escuro); }
+.form-group-upload input[type="file"] { display: none; }
+
+/* Widget Verificação */
+#verification-widget { display: flex; flex-direction: column; gap: 8px; padding: 20px; border-left-width: 5px; border-left-style: solid; margin-bottom: 30px; }
+#verification-widget.status-pending { background-color: #fffbeb; border-left-color: #f59e0b; color: #b45309; }
+#verification-widget.status-verified { background-color: #f0fdf4; border-left-color: #16a34a; color: #14532d; }
+
+/* ==========================================================================
+   3. MULTISELECT CUSTOMIZADO (YELO STYLE)
+   ========================================================================== */
+.multiselect-tag .multiselect-display {
+    border: 1px solid #d1d5db; border-radius: 12px; padding: 8px 10px; min-height: 44px;
+    cursor: pointer; background-color: #ffffff; display: flex; flex-wrap: wrap; gap: 8px; transition: all 0.2s ease; position: relative;
+}
+.multiselect-tag:hover .multiselect-display, .multiselect-tag.open .multiselect-display {
+    border-color: var(--verde-escuro); box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
+}
+.multiselect-tag .multiselect-display::after {
+    content: '▼'; font-size: 0.7rem; color: #9ca3af; position: absolute; right: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;
+}
+
+.multiselect-display .tag {
+    background-color: var(--cor-Yelo); color: var(--verde-escuro); padding: 3px 14px; border-radius: 15px; font-size: 0.8rem; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: transform 0.1s ease; z-index: 2;
+}
+.multiselect-display .tag:hover { transform: scale(1.02); }
+
+.multiselect-display .tag .remove-tag {
+    background: rgba(27, 67, 50, 0.1); border: none; color: var(--verde-escuro); width: 15px; height: 15px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 0.8rem; line-height: 1; cursor: pointer; padding: 0; transition: all 0.2s; margin-left: 2px;
+}
+.multiselect-display .tag .remove-tag:hover { background: var(--verde-escuro); color: var(--cor-Yelo); }
+
+.multiselect-tag .multiselect-options {
+    display: none; position: absolute; top: 105%; left: 0; background-color: #ffffff; border: 1px solid #f3f4f6; width: 100%;
+    max-height: 250px; overflow-y: auto; z-index: 999; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    padding: 5px; animation: popInDropdown 0.3s cubic-bezier(0.16, 1, 0.3, 1); transform-origin: top center;
+}
+.multiselect-tag.open .multiselect-options { display: block; }
+.multiselect-options .option { padding: 10px 15px; cursor: pointer; border-radius: 8px; color: #4b5563; font-weight: 500; transition: background 0.1s; margin-bottom: 2px; }
+.multiselect-options .option:hover { background-color: #f0fdf4; color: var(--verde-escuro); }
+.multiselect-options .option.selected { background-color: var(--verde-escuro); color: #ffffff; }
+.multiselect-options::-webkit-scrollbar { width: 6px; }
+.multiselect-options::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+@keyframes popInDropdown { from { opacity: 0; transform: translateY(-10px) scaleY(0.95); } to { opacity: 1; transform: translateY(0) scaleY(1); } }
+
+/* ==========================================================================
+   4. INPUTS E SELECTS YELO (P/ MODAIS E ÁREAS DE DESTAQUE)
+   ========================================================================== */
+.custom-modal-box input[type="text"], .custom-modal-box input[type="number"], .custom-modal-box input[type="email"],
+.custom-modal-box input[type="tel"], .custom-modal-box input[type="date"], .custom-modal-box input[type="time"],
+.custom-modal-box select, .custom-modal-box textarea {
+    width: 100% !important; padding: 12px 15px !important; border: 1px solid #e0e0e0 !important; border-radius: 12px !important;
+    background-color: #f9fafb !important; font-family: var(--font-principal, sans-serif) !important; font-size: 1rem !important;
+    color: #333 !important; transition: all 0.3s ease !important; outline: none !important; box-sizing: border-box !important; accent-color: var(--verde-escuro) !important;
+}
+.custom-modal-box input:focus, .custom-modal-box select:focus, .custom-modal-box textarea:focus {
+    border-color: var(--verde-escuro) !important; background-color: #fff !important; box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1) !important;
+}
+.custom-modal-box select {
+    appearance: none !important; -webkit-appearance: none !important; -moz-appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%231B4332' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important; background-position: right 15px center !important; padding-right: 40px !important;
+}
+
+@media (max-width: 992px) {
+    #modal-appointment select, .custom-modal-box select.native-yelo-select { display: block !important; visibility: visible !important; opacity: 1 !important; cursor: pointer !important; }
+    #modal-appointment .ts-wrapper, #modal-appointment .select2-container, #modal-appointment .custom-select-wrapper { display: none !important; }
+}
+
+.custom-modal-box input[type="date"]::-webkit-calendar-picker-indicator,
+.custom-modal-box input[type="time"]::-webkit-calendar-picker-indicator { cursor: pointer; filter: invert(21%) sepia(13%) saturate(2366%) hue-rotate(108deg) brightness(96%) contrast(93%); opacity: 0.7; transition: opacity 0.2s; }
+.custom-modal-box input[type="date"]::-webkit-calendar-picker-indicator:hover,
+.custom-modal-box input[type="time"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+
+/* ==========================================================================
+   5. TOOLTIPS GLOBAIS (INFO ICONS)
+   ========================================================================== */
+.info-tooltip {
+    cursor: help; color: #9ca3af; font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%; border: 1px solid #e5e7eb; background: #fff; transition: all 0.2s; flex-shrink: 0; margin-left: 10px; position: relative;
+}
+.info-tooltip:hover, .info-tooltip:focus { color: var(--verde-escuro); border-color: var(--verde-escuro); background-color: #f0fdf4; outline: none; }
+.info-tooltip::after {
+    content: attr(data-tooltip); position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%) translateY(5px);
+    background-color: #1f2937; color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 0.75rem; width: 180px; text-align: center;
+    opacity: 0; visibility: hidden; transition: all 0.2s ease; pointer-events: none; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-weight: 500; line-height: 1.4;
+}
+.info-tooltip::before {
+    content: ''; position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%) translateY(5px);
+    border: 6px solid transparent; border-top-color: #1f2937; opacity: 0; visibility: hidden; transition: all 0.2s ease; z-index: 100; margin-bottom: -11px;
+}
+.info-tooltip:hover::after, .info-tooltip:focus::after, .info-tooltip:hover::before, .info-tooltip:focus::before { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 768px) {
+    .info-tooltip::after { width: 160px; left: auto; right: -10px; transform: translateY(5px); }
+    .info-tooltip::before { left: auto; right: 5px; transform: translateY(5px); }
+    .info-tooltip:hover::after, .info-tooltip:focus::after, .info-tooltip:hover::before, .info-tooltip:focus::before { transform: translateY(0); }
+}
+
+/* ==========================================================================
+   6. OVERLAYS DE BLOQUEIO E AVISOS (PAYWALL)
+   ========================================================================== */
+.dashboard-main.blocked-view { position: relative; overflow: hidden !important; }
+.dashboard-main.blocked-view > *:not(.dashboard-lock-overlay) { filter: blur(8px); pointer-events: none; opacity: 0.4; user-select: none; }
+
+.dashboard-lock-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(2px);
+}
+.lock-message-card {
+    background: #ffffff; padding: 40px; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    text-align: center; max-width: 450px; width: 90%; border: 1px solid rgba(0,0,0,0.05); animation: slideUpFade 0.4s ease-out;
+}
+.lock-icon-large {
+    width: 70px; height: 70px; background-color: #fffbeb; color: #f59e0b; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 20px auto; box-shadow: 0 10px 20px rgba(245, 158, 11, 0.15);
+}
+.lock-message-card h2 { font-family: var(--font-titulos); color: var(--verde-escuro); font-size: 1.6rem; margin-bottom: 15px; }
+.lock-message-card p { color: #666; font-size: 1rem; line-height: 1.6; margin-bottom: 30px; }
+@keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Efeitos UI Genéricos */
+@keyframes fadeInUpCard { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in-up { animation: fadeInUpCard 0.5s ease-out forwards; opacity: 0; }
+
+/* ==========================================================================
+   7. PULL TO REFRESH (MOBILE APP-LIKE)
+   ========================================================================== */
+.ptr-element {
+    position: fixed; /* Fica fixo no topo da tela */
+    top: 15px; left: 0; width: 100%;
+    display: flex; justify-content: center; align-items: flex-start;
+    z-index: 100000; pointer-events: none; /* Não bloqueia cliques */
+    transform: translateY(-150%); /* Escondido para cima por padrão */
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ptr-spinner {
+    width: 40px; height: 40px;
+    background: #fff; border-radius: 50%;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    display: flex; justify-content: center; align-items: center;
+    color: var(--verde-escuro);
+}
+.ptr-spinner svg { width: 22px; height: 22px; transition: transform 0.1s; }
+/* Animação quando o refresh é acionado */
+.ptr-element.ptr-refreshing .ptr-spinner svg { animation: spin 1s linear infinite; }
+
+/* ==========================================================================
+   8. ELEMENTOS UI FLUTUANTES (Sticky Botão, Segmented Control, Modais)
+   ========================================================================== */
+
+/* Botão Sticky Global (Auto-save transição) */
+.sticky-footer-actions {
+    position: fixed; bottom: 30px; right: 30px; left: auto; width: auto;
+    background-color: transparent; padding: 0; box-shadow: none; z-index: 1001;
+    transform: translateY(150%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sticky-footer-actions:not(.hidden) { transform: translateY(0); }
+.sticky-footer-actions p { display: none; }
+.sticky-footer-actions .btn {
+    background-color: var(--verde-escuro); color: #fff; padding: 15px 30px; border-radius: 50px;
+    box-shadow: 0 10px 25px rgba(27, 67, 50, 0.3); font-size: 1.05rem; font-weight: 700;
+    display: flex; align-items: center; gap: 10px; transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+.sticky-footer-actions .btn:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(27, 67, 50, 0.4); background-color: #143d2e; }
+
+/* Spinner para botões */
+.spinner {
+    border: 2px solid rgba(0, 0, 0, 0.1); border-left-color: var(--verde-escuro); border-radius: 50%;
+    width: 16px; height: 16px; display: inline-block; vertical-align: middle; animation: spin-simple 0.8s linear infinite;
+}
+
+/* Wrapper e Spinner de Carregamento Geral */
+.loader-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 30px 0;
+}
+.loader-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(27, 67, 50, 0.15);
+    border-top-color: var(--verde-escuro);
+    border-radius: 50%;
+    animation: spin-simple 1s linear infinite;
+}
+
+@keyframes spin-simple {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Segmented Control (App-like) */
+.segmented-control { display: inline-flex; background-color: #e9ecef; border-radius: 12px; padding: 4px; gap: 4px; border: none; }
+.segmented-control input[type="radio"] { display: none; }
+.segmented-control label {
+    padding: 8px 16px; cursor: pointer; color: #555; font-weight: 600; font-size: 0.9rem;
+    border-radius: 8px; transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease; border: none;
+}
+.segmented-control input[type="radio"]:checked + label { background-color: white; color: var(--verde-escuro); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+/* Ajustes Opcionais em Modais de Conteúdo Grande */
+#modal-artigo .custom-modal-box,
+#modal-blog .custom-modal-box,
+#modal-post .custom-modal-box { max-width: 750px; }
+
+.custom-modal-box textarea,
+.custom-modal-box .rich-text-editor {
+    min-height: 100px !important;
+    max-height: 40vh !important;
+    overflow-y: auto !important;
+}
+
+#modal-artigo .ql-container,
+#view-form-artigo .ql-container,
+#modal-blog .ql-container { max-height: 40vh !important; overflow-y: auto !important; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
+
+.custom-modal-box .form-acoes,
+.custom-modal-box .modal-footer {
+    display: flex !important; justify-content: flex-end !important; gap: 12px !important; margin-top: 20px !important;
+}
+
+.custom-modal-box .modal-footer .btn,
+.custom-modal-box .form-acoes .btn {
+    width: auto !important; min-width: 0 !important;
+    padding: 8px 20px !important; font-size: 0.95rem !important;
+    flex-grow: 0 !important; justify-content: center; white-space: nowrap;
+}
+
+/* ==========================================================================
+   9. WIDGET: SUGESTÕES DE TEMAS (BLOG)
+   ========================================================================== */
+.sugestoes-temas-widget {
+    background: linear-gradient(135deg, #fffdf4 0%, #fffbeb 100%);
+    border: 1px solid #fde68a;
+    padding: 20px 25px;
+    margin-bottom: 25px;
+}
+.sugestoes-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.sugestao-item {
+    background-color: #ffffff;
+    border: 1px solid #fcd34d;
+    color: #92400e;
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+.sugestao-item:hover {
+    background-color: #fef3c7;
+    border-color: #f59e0b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(245, 158, 11, 0.15);
+}

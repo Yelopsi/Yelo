@@ -108,66 +108,6 @@
 .pricing-card-features li { padding: 10px 0; display: flex; align-items: center; gap: 10px; font-size: 0.95rem; }
 .pricing-card-features li::before { content: '✓'; font-weight: bold; color: var(--verde-escuro); font-size: 1.2rem; }
 
-/* --- FORMULÁRIO DE LOGIN (Correções) --- */
-
-/* 1. Botão Entrar (Largura Total) */
-.btn-login {
-    width: auto;
-    min-width: 180px;
-    display: inline-block;
-    padding: 12px 40px;
-    background-color: var(--verde-escuro);
-    color: var(--branco-puro);
-    border: none;
-    border-radius: 50px;
-    font-family: var(--font-principal); /* Fonte mais moderna */
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-top: 20px; /* Espaço acima */
-    transition: background-color 0.3s ease;
-}
-.btn-login:hover {
-    background-color: #2a624d; /* Verde um pouco mais claro */
-}
-
-/* 2. Correção do Olho da Senha */
-/* O ícone deve ficar DENTRO do input visualmente */
-/* O container do ícone (área clicável) */
-.password-toggle-icon {
-    position: absolute;
-    right: 0px;      /* Distância da borda direita */
-    bottom: -30px;     /* AQUI ESTÁ A CORREÇÃO: Alinha pela base */
-    top: auto;        /* Ignora o topo */
-    right: 10px;       /* Afasta um pouco da borda direita */
-    bottom: -30px;      /* Alinha verticalmente com o texto digitado */
-    top: auto;         
-    width: 30px;       /* Largura fixa para não pular */
-    height: 30px;      /* Altura fixa */
-    cursor: pointer;
-    width: 50px;
-    height: 50px;
-    color: #666;
-    z-index: 2;
-    z-index: 5;
-    
-    /* Centraliza o SVG dentro da área clicável */
-    display: flex;
-    align-items: center;
-    justify-content: center; 
-}
-
-/* Garante que o SVG ocupe o tamanho certo e não estoure */
-.password-toggle-icon svg {
-    width: 20px;
-    height: 20px;
-    display: block; /* Remove comportamentos estranhos de linha */
-}
-/* Ajuste para garantir que o texto não fique embaixo do ícone */
-.form-group-password-wrapper input {
-    padding-right: 45px; 
-}
-
 /* --- PWA INSTALL BANNER (Mobile) --- */
 .pwa-banner {
     position: fixed;
@@ -303,19 +243,6 @@
 /* --- BOTÕES DO FÓRUM E POSTS --- */
 .forum-post-card.pinned { background-color: #fffbeb; border-left: 4px solid var(--cor-Yelo); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
 .forum-post-card .pinned-icon { display: inline-block; margin-right: 8px; transform: rotate(-15deg); font-size: 1.1rem; vertical-align: middle; }
-
-/* --- PERFIL PÚBLICO: ÍCONES SOCIAIS E COMPONENTES MENORES --- */
-.rating-summary-stars { margin-top: 5px; margin-bottom: 15px; }
-#psi-social-links .icon-btn { display: inline-flex; width: 40px; height: 40px; border-radius: 50%; background-color: #f1f3f5; color: #555; align-items: center; justify-content: center; transition: all 0.2s; border: 1px solid transparent; }
-#psi-social-links .icon-btn:hover { background-color: #fff; transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-.rating-display-hero { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px; height: 24px; }
-.social-share-row { background-color: transparent; box-shadow: none; border: none; padding: 0; margin-bottom: 20px; }
-.social-links-group { display: flex; gap: 10px; }
-.icon-btn-modern, #psi-social-links .icon-btn { width: 42px; height: 42px; background-color: #fff; border: 1px solid #e0e0e0; color: #555; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: all 0.3s ease; }
-.icon-btn-modern:hover, #psi-social-links .icon-btn:hover { background-color: var(--verde-escuro) !important; color: #ffffff !important; border-color: var(--verde-escuro) !important; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(27, 67, 50, 0.2); }
-.vertical-divider { display: none; }
-.location-display { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 5px; font-size: 0.9rem; color: #666; }
-.verification-badge { display: inline-block; background-color: var(--verde-escuro); color: var(--branco-puro); border-radius: 50%; width: 24px; height: 24px; line-height: 25px; text-align: center; font-size: 0.9rem; font-weight: bold; margin-left: 10px; vertical-align: middle; transform: translateY(-2px); }
 
 /* --- AVALIAÇÃO (FORMS) --- */
 #review-form textarea { width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-family: var(--font-alternativa); font-weight: 500; font-size: 15px; min-height: 100px; }

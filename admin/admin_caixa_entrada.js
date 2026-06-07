@@ -15,146 +15,16 @@ window.initializePage = function() {
     const sendBtn = document.getElementById('send-reply-btn');
     const searchInput = document.getElementById('chat-search');
     const filterSelect = document.getElementById('chat-filter'); // Novo Filtro
-    const btnNewChat = document.getElementById('btn-new-chat');
     
-    // Elementos do Modal de Broadcast
-    const broadcastModal = document.getElementById('broadcast-modal');
-    const closeBroadcastBtn = document.getElementById('close-broadcast-modal');
-    const cancelBroadcastBtn = document.getElementById('btn-cancel-broadcast');
-    const sendBroadcastBtn = document.getElementById('btn-send-broadcast');
-    const broadcastTarget = document.getElementById('broadcast-target');
-    const broadcastMessage = document.getElementById('broadcast-message');
-
-    // CORREÇÃO CRÍTICA: Move o modal para o body para garantir que ele fique sobre tudo (z-index global)
-    if (broadcastModal && broadcastModal.parentNode !== document.body) {
-        document.body.appendChild(broadcastModal);
+    // --- MÓDULO DE BROADCAST (ISOLADO) ---
+    if (window.AdminBroadcast) {
+        window.AdminBroadcast.init();
     }
 
-    /**
-     * Retorna o SVG do ícone de status da mensagem.
-     * @param {string} status - 'sent', 'delivered', ou 'read'.
-     * @returns {string} HTML do SVG.
-     */
-    function getStatusIcon(status) {
-        // Ícones SVG padronizados e com xmlns (Versão Robusta)
-        const sentIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;" title="Enviado"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-        const deliveredIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;" title="Entregue"><path d="M18 6L7 17l-5-5"></path><path d="M22 10l-7.5 7.5L13 16"></path></svg>`;
-        const readIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34B7F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;" title="Lido"><path d="M18 6L7 17l-5-5"></path><path d="M22 10l-7.5 7.5L13 16"></path></svg>`;
-
-        // Normaliza o status para evitar erros de case
-        const s = status ? status.toLowerCase() : 'sent';
-
-        if (s === 'read') return readIcon;
-        if (s === 'delivered') return deliveredIcon;
-        return sentIcon;
-    }
-
-    // Helper para formatar a data do divisor
-    function getDateLabel(dateString) {
-        const date = new Date(dateString);
-        const today = new Date();
-        const yesterday = new Date();
-        yesterday.setDate(today.getDate() - 1);
-
-        if (date.toDateString() === today.toDateString()) return 'Hoje';
-        if (date.toDateString() === yesterday.toDateString()) return 'Ontem';
-        return date.toLocaleDateString('pt-BR');
-    }
-
-    // --- BOTÃO NOVA CONVERSA ---
-    if (btnNewChat) {
-        btnNewChat.addEventListener('click', (e) => {
-            e.preventDefault(); // Previne qualquer comportamento padrão
-
-            // Abre o modal de mensagem em massa
-            if (broadcastModal) {
-                // GARANTIA EXTRA: Se por algum motivo saiu do body, coloca de volta
-                if (broadcastModal.parentNode !== document.body) {
-                    document.body.appendChild(broadcastModal);
-                }
-                
-                broadcastModal.style.display = 'flex';
-                broadcastModal.style.opacity = '1'; // Força opacidade
-                broadcastModal.style.visibility = 'visible'; // Força visibilidade
-                if(broadcastTarget) broadcastTarget.value = "";
-                if(broadcastMessage) broadcastMessage.value = "";
-            } else {
-            }
-        });
-    }
-
-    // --- LÓGICA DO MODAL DE BROADCAST ---
-    function closeBroadcast() {
-        if (broadcastModal) broadcastModal.style.display = 'none';
-    }
-
-    if (closeBroadcastBtn) closeBroadcastBtn.addEventListener('click', closeBroadcast);
-    if (cancelBroadcastBtn) cancelBroadcastBtn.addEventListener('click', closeBroadcast);
-
-    if (sendBroadcastBtn) {
-        sendBroadcastBtn.addEventListener('click', async () => {
-            const target = broadcastTarget.value;
-            const content = broadcastMessage.value.trim();
-
-            // Validação com Toast em vez de alert
-            if (!target) return window.showToast ? window.showToast("⚠️ Selecione um grupo de destinatários.") : alert("Selecione um grupo.");
-            if (!content) return window.showToast ? window.showToast("⚠️ Digite uma mensagem para enviar.") : alert("Digite uma mensagem.");
-
-            // Texto amigável do grupo selecionado
-            const targetText = broadcastTarget.options[broadcastTarget.selectedIndex].text;
-
-            // CORREÇÃO: Fecha o modal de digitação ANTES de abrir a confirmação
-            closeBroadcast();
-
-            // Função de envio encapsulada
-            const executeBroadcast = async () => {
-                const originalText = sendBroadcastBtn.innerText;
-                sendBroadcastBtn.innerText = "Enviando...";
-                sendBroadcastBtn.disabled = true;
-
-                try {
-                    const token = localStorage.getItem('Yelo_token');
-                    const response = await fetch(`${API_BASE_URL}/api/admin/broadcast`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({ target, content })
-                    });
-
-                    const result = await response.json();
-
-                    if (response.ok) {
-                        if (window.showToast) window.showToast("✅ Mensagem em massa enviada com sucesso!");
-                        loadConversations(); // Atualiza a lista
-                    } else {
-                        throw new Error(result.error || 'Erro ao enviar mensagem.');
-                    }
-                } catch (error) {
-                    if (window.showToast) window.showToast("❌ Erro: " + error.message);
-                } finally {
-                    sendBroadcastBtn.innerText = originalText;
-                    sendBroadcastBtn.disabled = false;
-                    
-                    // Se der erro e precisarmos reabrir o modal, teríamos que tratar aqui,
-                    // mas por UX, melhor manter fechado e mostrar o Toast de erro.
-                }
-            };
-
-            // Usa o modal de confirmação global do admin.js
-            if (window.openConfirmationModal) {
-                window.openConfirmationModal(
-                    "Confirmar Envio em Massa",
-                    `Você está prestes a enviar uma mensagem para <strong>${targetText}</strong>.<br><br>Esta ação não pode ser desfeita. Deseja continuar?`,
-                    executeBroadcast
-                );
-            } else {
-                // Fallback caso o modal não carregue
-                if (confirm(`Enviar para ${targetText}?`)) executeBroadcast();
-            }
-        });
-    }
+    // Ouve o evento emitido pelo broadcast para recarregar as conversas transparentemente
+    window.addEventListener('admin:reload_conversations', () => {
+        loadConversations(searchInput ? searchInput.value : '', filterSelect ? filterSelect.value : 'all');
+    });
 
     let activeConversationId = null;
     let activePsychologistId = null; // Guarda o ID do psicólogo da conversa ativa
@@ -229,47 +99,9 @@ window.initializePage = function() {
             const psy = convo.psychologist || convo.Psychologist;
             if (!psy) return;
 
-            const li = document.createElement('li');
-            li.className = 'conversation-item';
-            li.dataset.conversationId = convo.id;
-            li.dataset.psychologistId = psy.id;
-
-            if (activeConversationId === convo.id || (activePsychologistId === psy.id && String(activeConversationId).startsWith('new-'))) {
-                li.classList.add('active');
-            }
-
-            const lastMessageTime = convo.lastMessage ? new Date(convo.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-            const lastMsgContent = convo.lastMessage ? convo.lastMessage.content : 'Nenhuma mensagem ainda...';
-            const unreadCount = convo.unreadCount || 0;
-            
-            // Ícones SVG simples para as ações
-            const iconArchive = `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z"/></svg>`;
-            const iconUnarchive = `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM6.24 5h11.52l.83 1H5.42l.82-1zM5 19V8h14v11H5zm11-5.5l-4-4-4 4 1.41 1.41L11 13.33V17h2v-3.67l1.59 1.59L16 13.5z"/></svg>`;
-            const iconDelete = `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
-
-            // Define qual ícone mostrar (Arquivar ou Desarquivar)
-            // Verifica o status real da conversa OU o filtro atual
             const isArchived = convo.status === 'archived' || currentFilter === 'archived';
-            const archiveBtnTitle = isArchived ? "Desarquivar" : "Arquivar";
-            const archiveIcon = isArchived ? iconUnarchive : iconArchive;
-
-            li.innerHTML = `
-                <img src="${psy.fotoUrl || 'https://placehold.co/48x48'}" onerror="this.onerror=null;this.src='https://placehold.co/48x48';" alt="Avatar" class="avatar">
-                <div class="conversation-details">
-                    <div class="details-header">
-                        <span class="contact-name">${psy.nome}</span>
-                        <span class="timestamp">${lastMessageTime}</span>
-                    </div>
-                    <div class="last-message-line">
-                        <p class="last-message">${lastMsgContent}</p>
-                        <span class="unread-badge ${unreadCount > 0 ? '' : 'hidden'}">${unreadCount}</span>
-                    </div>
-                </div>
-                <div class="conversation-actions">
-                    <button class="btn-action btn-archive" title="${archiveBtnTitle}">${archiveIcon}</button>
-                    <button class="btn-action btn-delete delete" title="Excluir">${iconDelete}</button>
-                </div>
-            `;
+            const isActive = activeConversationId === convo.id || (activePsychologistId === psy.id && String(activeConversationId).startsWith('new-'));
+            const li = window.AdminChatUI.createConversationElement(convo, psy, isActive, isArchived);
 
             // Event Listeners para os botões (com stopPropagation para não abrir o chat)
             const btnArchive = li.querySelector('.btn-archive');
@@ -497,7 +329,7 @@ window.initializePage = function() {
                         if (currentHtml.includes('title="Entregue"') && newStatus === 'sent') shouldUpdate = false;
                         
                         if (shouldUpdate) {
-                            statusContainer.innerHTML = getStatusIcon(newStatus);
+                            statusContainer.innerHTML = window.AdminChatUI.getStatusIcon(newStatus);
                         }
                     }
                 }
@@ -517,10 +349,7 @@ window.initializePage = function() {
 
     // Adiciona o divisor de data na tela
     function appendDateSeparator(dateString) {
-        const div = document.createElement('div');
-        div.className = 'date-separator';
-        div.style.cssText = "text-align: center; margin: 15px 0; font-size: 0.75rem; color: #888; display: flex; justify-content: center;";
-        div.innerHTML = `<span style="background: rgba(0,0,0,0.05); padding: 4px 12px; border-radius: 12px;">${getDateLabel(dateString)}</span>`;
+        const div = window.AdminChatUI.createDateSeparatorElement(dateString);
         messagesThread.appendChild(div);
     }
 
@@ -535,25 +364,9 @@ window.initializePage = function() {
             }
         }
 
-        const div = document.createElement('div');
-        if (msg.id) div.dataset.messageId = msg.id; // Adiciona ID para atualização de status
-        div.dataset.date = new Date(msg.createdAt).toDateString(); // Salva data para comparação futura
-        // CORREÇÃO: Verificação case-insensitive e segura contra null
         const isSentByAdmin = (msg.senderType && msg.senderType.toLowerCase() === 'admin');
-        div.className = `message-bubble ${isSentByAdmin ? 'sent' : 'received'}`;
-        
-        const time = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        // Para mensagens otimistas, o status é 'sent' por padrão
-        // CORREÇÃO: Garante ABSOLUTAMENTE que mensagens recebidas não tenham ícone
-        const statusIcon = (isSentByAdmin === true) ? getStatusIcon(msg.status || 'sent') : '';
+        const div = window.AdminChatUI.createMessageBubbleElement(msg, isSentByAdmin);
 
-        div.innerHTML = `
-            <p>${msg.content}</p>
-            <div class="message-meta">
-                <span>${time}</span>
-                <span class="message-status">${statusIcon}</span>
-            </div>
-        `;
         messagesThread.appendChild(div);
         if (scrollToBottom) {
             messagesThread.scrollTop = messagesThread.scrollHeight;
@@ -602,7 +415,7 @@ window.initializePage = function() {
                     tempBubble.dataset.messageId = savedMessage.id;
                     // Atualiza o ícone para garantir sincronia
                     const statusContainer = tempBubble.querySelector('.message-status');
-                    if (statusContainer) statusContainer.innerHTML = getStatusIcon(savedMessage.status || 'sent');
+                    if (statusContainer) statusContainer.innerHTML = window.AdminChatUI.getStatusIcon(savedMessage.status || 'sent');
                 }
 
                 // --- CORREÇÃO: Força o envio via Socket (Relay) para o Psicólogo ---
@@ -672,7 +485,7 @@ window.initializePage = function() {
         const messageBubble = document.querySelector(`.message-bubble.sent[data-message-id='${messageId}']`);
         if (messageBubble) {
             const statusContainer = messageBubble.querySelector('.message-status');
-            if (statusContainer) statusContainer.innerHTML = getStatusIcon(status);
+            if (statusContainer) statusContainer.innerHTML = window.AdminChatUI.getStatusIcon(status);
                 return true;
         }
             return false;
@@ -700,13 +513,7 @@ window.initializePage = function() {
     // --- FECHAR COM ESC (Estilo WhatsApp) ---
     const handleEscKey = (e) => {
         if (e.key === 'Escape') {
-            // 1. Se modal de broadcast estiver aberto, fecha ele primeiro
-            if (broadcastModal && broadcastModal.style.display === 'flex') {
-                closeBroadcast();
-                return;
-            }
-
-            // 2. Se tiver conversa ativa, fecha ela
+            // Se tiver conversa ativa, fecha ela
             if (activeConversationId) {
                 activeConversationId = null;
                 activePsychologistId = null;
@@ -733,9 +540,10 @@ window.initializePage = function() {
 
         document.removeEventListener('keydown', handleEscKey);
         
-        // Remove o modal do body para não duplicar ao voltar para a página
-        const modal = document.getElementById('broadcast-modal');
-        if (modal) modal.remove();
+        // Limpeza dos handlers do módulo de Broadcast isolado
+        if (window.AdminBroadcast) {
+            window.AdminBroadcast.cleanup();
+        }
     };
 
     // --- INICIALIZAÇÃO E EVENTOS ---

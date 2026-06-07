@@ -70,8 +70,17 @@
                         </div>
 
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: #495057; margin-bottom: 5px; display: block;">Link da Imagem de Capa (Opcional)</label>
-                            <input type="url" id="blog-imagem" name="imagem_url" placeholder="https://..." style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #ccc; background-color: #f9fafb; font-size: 0.95rem;">
+                            <label style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: #495057; margin-bottom: 5px; display: block;">Capa do Artigo</label>
+                            
+                            <input type="hidden" id="blog-imagem" value="">
+                            
+                            <!-- Mesmos estilos inline do campo de Título, com cursor: pointer para indicar clique -->
+                            <label for="blog-imagem-upload" id="blog-imagem-preview-label" style="position: relative; width: 100%; padding: 10px 30px 10px 14px; border-radius: 8px; border: 1px solid #ccc; background-color: #f9fafb; font-size: 0.95rem; display: block; cursor: pointer; color: #666; box-sizing: border-box; transition: border-color 0.2s ease;">
+                                <span id="blog-imagem-text" style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">📎 Nenhuma imagem selecionada...</span>
+                                <span id="btn-remove-imagem" style="display: none; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 1.2rem; color: #d32f2f; cursor: pointer; font-weight: bold; width: 20px; height: 20px; text-align: center; line-height: 20px;" title="Remover imagem">&times;</span>
+                            </label>
+                            
+                            <input type="file" id="blog-imagem-upload" accept="image/*" style="display: none;">
                         </div>
                     </div>
 

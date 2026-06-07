@@ -5,6 +5,14 @@ const Post = db.Post;
 // Tenta carregar com maiúscula ou minúscula para evitar erro no Linux/Render
 const Psychologist = db.Psychologist || db.psychologist || db.Sequelize.models.Psychologist;
 const gamificationService = require('../services/gamificationService');
+const fs = require('fs').promises;
+
+const cloudinary = require('cloudinary').v2;
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 // Função auxiliar para formatar URL da imagem (mesma lógica do frontend)
 const formatImageUrl = (path) => {
@@ -48,10 +56,22 @@ module.exports = {
             // [CORREÇÃO] Obtém o ID corretamente
             const userId = req.psychologist?.id || req.user?.id || req.userId;
 
+            let finalImageUrl = imagem_url;
+
+            // --- UPLOAD PARA CLOUDINARY SE HOUVER ARQUIVO ---
+            if (req.file) {
+                const result = await cloudinary.uploader.upload(req.file.path, {
+                    folder: 'yelo/blog',
+                    transformation: [{ width: 1000, crop: 'limit' }, { quality: 'auto' }, { fetch_format: 'auto' }]
+                });
+                finalImageUrl = result.secure_url;
+                try { await fs.unlink(req.file.path); } catch (e) {} // Limpa temp
+            }
+
             const novoPost = await Post.create({
                 titulo,
                 conteudo,
-                imagem_url,
+                imagem_url: finalImageUrl,
                 psychologistId: userId
             });
 
@@ -74,12 +94,25 @@ module.exports = {
             const post = await Post.findOne({ where: { id, psychologistId: userId } });
 
             if (!post) {
+                try { if (req.file) await fs.unlink(req.file.path); } catch (e) {}
                 return res.status(404).json({ error: "Não encontrado ou sem permissão." });
             }
 
-            await post.update({ titulo, conteudo, imagem_url });
+            let finalImageUrl = imagem_url;
+
+            if (req.file) {
+                const result = await cloudinary.uploader.upload(req.file.path, {
+                    folder: 'yelo/blog',
+                    transformation: [{ width: 1000, crop: 'limit' }, { quality: 'auto' }, { fetch_format: 'auto' }]
+                });
+                finalImageUrl = result.secure_url;
+                try { await fs.unlink(req.file.path); } catch (e) {}
+            }
+
+            await post.update({ titulo, conteudo, imagem_url: finalImageUrl });
             res.json({ message: "Atualizado!", post });
         } catch (error) {
+            try { if (req.file) await fs.unlink(req.file.path); } catch (e) {}
             res.status(500).json({ error: "Erro ao atualizar." });
         }
     },
@@ -167,8 +200,7 @@ module.exports = {
             const recentes = await Post.findAll({
                 where: { id: { [Op.ne]: id } }, // Exclui o ID atual
                 limit: 3, // Traz 3 sugestões
-                order: [['createdAt', 'DESC']],
-                attributes: ['id', 'titulo', 'imagem_url', 'createdAt'] // Leve, só o necessário
+                order: [['createdAt', 'DESC']]
             });
 
             res.render('post_completo', { 

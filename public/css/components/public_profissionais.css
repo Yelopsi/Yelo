@@ -1,0 +1,131 @@
+/* ==========================================================================
+   MÓDULO: PROFISSIONAIS E VITRINE DE TERAPEUTAS
+   ========================================================================== */
+
+/* --- SEÇÃO TERAPEUTAS --- */
+.secao-terapeutas { padding: calc(70px * var(--ui-scale, 1)) calc(20px * var(--ui-scale, 1)) calc(100px * var(--ui-scale, 1)) calc(20px * var(--ui-scale, 1)); position: relative; background-color: transparent !important; overflow: hidden; }
+.secao-conteudo { display: grid; grid-template-columns: 1fr; gap: calc(40px * var(--ui-scale, 1)); max-width: calc(1100px * var(--ui-scale, 1)); margin: 0 auto; align-items: center; }
+.texto-terapeutas h2 { font-size: calc(32px * var(--ui-scale, 1)); color: var(--verde-escuro); margin-top: 0; line-height: 1.2; }
+.texto-terapeutas p { font-size: calc(16px * var(--ui-scale, 1)); line-height: 1.6; color: #333; }
+
+/* Responsividade para desktop */
+@media (min-width: 768px) {
+    .secao-conteudo { grid-template-columns: 1fr 1fr; }
+}
+
+/* --- VITRINE DE TERAPEUTAS (Grid Estático 4x4) --- */
+.therapist-collage {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px; /* Espaço entre as fotos no Desktop */
+    width: 100%;
+}
+
+.therapist-collage .collage-item {
+    display: block;
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.therapist-collage img {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1 / 1; /* Força imagens a serem quadrados perfeitos */
+    object-fit: cover;
+    display: block;
+    transition: opacity 2s ease-in-out; /* Transição ainda mais suave e lenta */
+    will-change: opacity;
+}
+
+@media (max-width: 768px) {
+    .therapist-collage {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px; /* Espaço menor no celular */
+    }
+    .therapist-collage .collage-item { border-radius: 8px; }
+    .therapist-collage .collage-item:nth-child(16) { display: none; } /* Mantém 15 fotos (3x5) para fechar o grid perfeitamente */
+}
+
+/* --- PÁGINA PROFISSIONAIS --- */
+
+.hero-profissionais .subtitulo-secao {
+    color: var(--verde-escuro) !important;
+    font-weight: 500;
+}
+
+/* --- Lista de Benefícios Moderna --- */
+.lista-beneficios-moderna {
+    list-style: none;
+    padding: 0;
+    margin: 40px 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.lista-beneficios-moderna li {
+    background-color: #fdfaf6;
+    padding: 20px 25px;
+    border-radius: 12px;
+    border: 1px solid #eee;
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.lista-beneficios-moderna li:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border-color: var(--cor-Yelo);
+}
+.lista-beneficios-moderna li::before {
+    content: '';
+    display: inline-block;
+    min-width: 24px;
+    height: 24px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231B4332'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    margin-top: 2px;
+}
+
+/* --- CORREÇÕES VISUAIS PÁGINA PROFISSIONAIS --- */
+.hero-profissionais h1, .hero-profissionais h2 { color: var(--verde-escuro) !important; text-shadow: none !important; }
+.hero-profissionais p { color: var(--cinza-texto) !important; font-size: 1.1rem; }
+
+.layout-2-colunas { display: grid; grid-template-columns: 1fr; gap: 30px; margin-top: 40px; }
+.coluna-item { background-color: var(--branco-puro); padding: 35px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #f0f0f0; transition: transform 0.3s ease; position: relative; overflow: hidden; }
+.coluna-item:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-color: var(--cor-Yelo); }
+.coluna-item::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 6px; background-color: var(--verde-escuro); }
+.coluna-item h3 { margin-top: 10px; font-family: var(--font-titulos); font-size: 1.5rem; color: var(--verde-escuro); }
+
+.card-ecossistema { background-color: #ffffff !important; border: 2px solid #eef2f0; padding: 40px !important; border-radius: 20px !important; box-shadow: 0 8px 40px rgba(0,0,0,0.08) !important; }
+.texto-destaque-eco { font-size: 1.15rem; line-height: 1.8; color: #333; margin-bottom: 30px; }
+.highlight-verde { color: var(--verde-escuro); font-weight: 800; background-color: #e8f5e9; padding: 2px 6px; border-radius: 4px; }
+
+@media (min-width: 768px) { .layout-2-colunas { grid-template-columns: 1fr 1fr; } }
+
+/* --- TABELA COMPARATIVA (Profissionais) --- */
+.comparativo-secao { padding: 80px 20px; background-color: #ffffff; }
+.tabela-comparativa { display: grid; grid-template-columns: 1fr; gap: 30px; max-width: 900px; margin: 40px auto 0 auto; }
+.coluna-tabela { background: #ffffff; padding: 40px 30px; border-radius: 16px; border: 1px solid #e0e0e0; text-align: center; transition: transform 0.3s ease; }
+.coluna-tabela h3 { font-family: var(--font-titulos); font-size: 1.5rem; margin-bottom: 25px; color: #555; }
+.coluna-tabela ul { list-style: none; padding: 0; margin: 0; text-align: left; }
+.coluna-tabela li { padding: 15px 0; border-bottom: 1px solid #eee; font-size: 1rem; color: #666; display: flex; align-items: center; gap: 10px; }
+.coluna-tabela li:last-child { border-bottom: none; }
+
+.icone-x::before { content: '✕'; color: #E63946; font-weight: bold; font-size: 1.2rem; display: inline-block; width: 25px; }
+.icone-check::before { content: '✓'; color: var(--verde-escuro); font-weight: bold; font-size: 1.2rem; display: inline-block; width: 25px; }
+
+/* --- COLUNA DESTAQUE (Yelo) --- */
+.coluna-tabela.destaque { border: 2px solid var(--verde-escuro); box-shadow: 0 10px 40px rgba(27, 67, 50, 0.15); transform: scale(1.02); position: relative; background-color: #fff; z-index: 2; }
+.tag-destaque { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background-color: var(--verde-escuro); color: var(--cor-Yelo); padding: 5px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+.coluna-tabela.destaque h3 { color: var(--verde-escuro); font-size: 1.8rem; }
+.coluna-tabela.destaque li { color: #333; font-weight: 500; }
+
+@media (min-width: 768px) {
+    .tabela-comparativa { grid-template-columns: 1fr 1fr; align-items: center; }
+    .coluna-tabela:not(.destaque) { transform: scale(0.95); background-color: #f9f9f9; }
+}

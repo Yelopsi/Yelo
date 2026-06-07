@@ -101,7 +101,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     approach = ab;
                 }
             }
-            subtitleEl.textContent = `Psicólogo Clínico | ${approach}`;
+
+            let profTitle = "Psicólogo(a) Clínico(a)";
+            let genVal = psi.genero_identidade;
+            if (typeof genVal === 'string' && genVal.startsWith('[')) {
+                try { genVal = JSON.parse(genVal)[0]; } catch(e) {}
+            } else if (Array.isArray(genVal)) {
+                genVal = genVal[0];
+            }
+            
+            if (genVal === 'Feminino') {
+                profTitle = "Psicóloga Clínica";
+            } else if (genVal === 'Masculino') {
+                profTitle = "Psicólogo Clínico";
+            } else if (genVal === 'Não-binário' || genVal === 'Outro') {
+                profTitle = "Psicólogue Clínique";
+            }
+
+            subtitleEl.textContent = `${profTitle} | ${approach}`;
         }
 
         const crpEl = document.getElementById('psi-crp');
@@ -275,6 +292,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     // 1. Dispara tracking interno (Fire and Forget)
                     fetch(`${API_BASE_URL}/api/psychologists/${psi.slug}/whatsapp-click`, { method: 'POST' }).catch(() => {});
                     
+                    // --- Tracking específico para o Modal PLG de Conversão ---
+                    const guestName = localStorage.getItem('yelo_guest_name') || 'um paciente';
+                    fetch(`${API_BASE_URL}/api/psychologists/public/whatsapp-click-log`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ psychologistId: psi.id, guestName })
+                    }).catch(() => {});
+                    // ---------------------------------------------------------------
+
                     const goToWhatsApp = () => window.open(whatsappLink, '_blank');
                     
                     // 2. Dispara a Conversão do Google Ads com fallback seguro

@@ -1,0 +1,177 @@
+/* ==========================================================================
+   PÁGINAS LEGAIS E DÚVIDAS (FAQ, Termos e Privacidade)
+   ========================================================================== */
+
+/* --- FAQ & AVISO --- */
+.faq-secao { padding: calc(70px * var(--ui-scale, 1)) calc(20px * var(--ui-scale, 1)) calc(100px * var(--ui-scale, 1)) calc(20px * var(--ui-scale, 1)); background-color: #ffffff; position: relative; }
+.acordeao-container { max-width: calc(900px * var(--ui-scale, 1)); margin: 0 auto; }
+.acordeao-item { border-bottom: 1px solid #ddd; }
+.acordeao-titulo { display: flex; justify-content: space-between; width: 100%; padding: calc(20px * var(--ui-scale, 1)) 0; background: none; border: none; cursor: pointer; text-align: center; font-size: calc(18px * var(--ui-scale, 1)); font-weight: 500; color: #333; }
+.acordeao-conteudo { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; }
+.acordeao-conteudo p { padding: 0 calc(10px * var(--ui-scale, 1)) calc(20px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1)); font-size: calc(14px * var(--ui-scale, 1)); text-align: justify; color: #555; }
+
+/* --- AJUSTE FAQ MOBILE (CENTRALIZADO) --- */
+@media (max-width: 767px) {
+    .acordeao-titulo {
+        /* Centraliza o texto */
+        justify-content: center;
+    }
+    /* Remove a seta no mobile para deixar apenas o texto */
+    .acordeao-titulo::after {
+        display: none;
+    }
+}
+
+.aviso-crise { padding: 40px 20px 120px 20px; background-color: var(--off-white); border-top: 1px solid #e9ecef; position: relative; text-align: center; }
+.aviso-conteudo { max-width: 1100px; margin: 0 auto; }
+.aviso-texto a { color: #007bff; text-decoration: underline; }
+
+/* Link "Ver todas as perguntas" na Home */
+.faq-ver-mais {
+    display: block;
+    text-align: center;
+    margin-top: 30px;
+    font-weight: bold;
+    color: var(--verde-escuro);
+    text-decoration: none;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.faq-ver-mais:hover {
+    color: #2a624d;
+    text-decoration: underline;
+    transform: translateY(-2px);
+}
+
+.faq-ver-mais::after {
+    content: ' →';
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+
+.faq-ver-mais:hover::after {
+    transform: translateX(4px);
+}
+
+/* --- PÁGINA FAQ (Layout Verde e Branco) --- */
+
+/* 1. Topo da Página (Hero Verde) */
+.faq-hero {
+    text-align: center;
+    background-color: var(--verde-escuro);
+    position: relative;
+    padding: 80px 20px 120px 20px;
+    margin-top: -2px;
+}
+
+.faq-hero h1,
+.faq-hero .subtitulo-secao {
+    color: var(--branco-puro) !important; 
+}
+
+/* 2. Barra de Busca */
+.faq-busca-container {
+    max-width: 800px;
+    margin: 30px auto 0 auto;
+    position: relative;
+    z-index: 2;
+}
+
+#faq-busca {
+    width: 100%;
+    padding: 18px 25px;
+    border-radius: 30px;
+    border: none;
+    font-family: var(--font-principal);
+    font-size: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    outline: none;
+}
+
+/* 3. Onda de Transição */
+.faq-wave-bottom {
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    line-height: 0;
+    z-index: 1;
+}
+.faq-wave-bottom svg { display: block; width: 100%; height: 80px; }
+.faq-wave-bottom .shape-fill { fill: #FFFFFF; }
+
+/* 4. Títulos das Categorias */
+.titulo-secao-menor {
+    font-family: var(--font-titulos);
+    font-size: 28px;
+    color: var(--verde-escuro);
+    margin-top: 60px;
+    margin-bottom: 25px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 15px;
+    text-align: center;
+}
+
+/* 5. Box Final (Ainda com dúvidas) */
+.faq-cta {
+    background-color: #e9ecef;
+    padding: 40px;
+    border-radius: 16px;
+    text-align: center;
+    max-width: 800px;
+    width: 100%;
+    margin: 80px auto 40px auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+.faq-cta h3 { font-family: var(--font-titulos); color: var(--verde-escuro); margin-top: 0; font-size: 24px; margin-bottom: 10px; }
+.faq-cta p { margin-bottom: 25px; color: #555; }
+
+/* ==========================================================================
+   PÁGINAS LEGAIS (Termos e Privacidade) - UX REFINADA
+   ========================================================================== */
+
+.pagina-legal {
+    background-color: transparent;
+    padding: 80px 20px;
+    min-height: 100vh;
+}
+
+.container-legal {
+    max-width: 1000px;
+    margin: 0 auto;
+    background-color: #ffffff;
+    padding: 60px 80px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+    border: 1px solid rgba(0,0,0,0.02);
+}
+
+.header-legal { text-align: center; margin-bottom: 50px; padding-bottom: 30px; border-bottom: 1px solid #eee; }
+.header-legal h1 { font-family: 'Lora', serif; color: var(--verde-escuro); font-size: 2.5rem; margin-bottom: 20px; letter-spacing: -0.5px; line-height: 1.2; }
+.badge-legal { display: inline-block; background-color: #e8f5e9; color: var(--verde-escuro); padding: 8px 20px; border-radius: 50px; font-size: 0.85rem; font-weight: 700; font-family: 'Mulish', sans-serif; letter-spacing: 0.5px; text-transform: uppercase; }
+
+.conteudo-legal { font-family: 'Mulish', sans-serif; color: #374151; line-height: 1.8; font-size: 1.05rem; }
+.conteudo-legal h2 { font-family: 'Lora', serif; color: var(--verde-escuro); font-size: 1.8rem; margin-top: 50px; margin-bottom: 20px; font-weight: 700; }
+.conteudo-legal h3 { font-family: 'Lora', serif; color: #1f2937; font-size: 1.3rem; margin-top: 35px; margin-bottom: 15px; font-weight: 600; }
+.conteudo-legal p { margin-bottom: 20px; text-align: justify; }
+.conteudo-legal ul, .conteudo-legal ol { margin-bottom: 25px; padding-left: 20px; }
+.conteudo-legal li { margin-bottom: 12px; padding-left: 5px; }
+
+.termo-destaque { background-color: #fffbeb; color: #92400e; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+
+.box-contato-legal {
+    background-color: #f8f9fa;
+    border-left: 4px solid var(--verde-escuro);
+    padding: 25px;
+    margin-top: 50px;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+    .container-legal { padding: 40px 25px; }
+    .header-legal h1 { font-size: 2rem; }
+}
