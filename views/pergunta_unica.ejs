@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- META TAGS DINÂMICAS PARA SEO E COMPARTILHAMENTO -->
+    <title><%= question.title %> - Comunidade Yelo</title>
+    <meta name="description" content="<%= question.content ? question.content.substring(0, 155) : '' %>...">
+    
+    <!-- Open Graph (WhatsApp, Facebook, LinkedIn) -->
+    <meta property="og:title" content="<%= question.title %>">
+    <meta property="og:description" content="<%= question.content ? question.content.substring(0, 155) : '' %>...">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="Yelo Saúde Mental">
+
+    <link rel="canonical" href="https://www.yelopsi.com.br/perguntas/<%= question.slug %>" />
+    
+    <%- include('partials/head') %>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Mulish:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --fonte-titulo: 'Lora', serif; --fonte-corpo: 'Mulish', sans-serif; }
+        body { font-family: var(--fonte-corpo); background-color: #f8f9fa; }
+        h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 600; }
+        .single-q-container { max-width: 800px; margin: 120px auto 60px auto; padding: 0 20px; }
+        .q-card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; border-top: 5px solid #1B4332; }
+        .q-title { color: #1B4332; font-size: 1.8rem; margin-bottom: 15px; line-height: 1.3; }
+        .q-meta { color: #888; font-size: 0.85rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .q-content { color: #444; line-height: 1.7; font-size: 1.1rem; }
+        .a-list-title { margin-bottom: 20px; color: #1B4332; font-size: 1.4rem; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .a-card { background: white; padding: 25px; border-radius: 16px; margin-bottom: 20px; border: 1px solid #eee; }
+        .a-header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+        .a-photo { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #e8f5e9; }
+        .a-author { margin: 0; font-size: 1.1rem; color: #1B4332; }
+        .a-crp { font-size: 0.8rem; color: #666; }
+        .btn-profile-small { background: #e8f5e9; color: #1B4332; padding: 6px 15px; border-radius: 50px; text-decoration: none; font-size: 0.85rem; font-weight: bold; margin-left: auto; transition: background 0.2s; }
+        .btn-profile-small:hover { background: #c8e6c9; }
+        .empty-answers { text-align: center; padding: 30px; background: white; border-radius: 12px; color: #666; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <%- include('partials/header') %>
+
+    <main class="single-q-container">
+        
+        <!-- BREADCRUMB P/ NAVEGAÇÃO -->
+        <div style="margin-bottom: 20px; font-size: 0.9rem;">
+            <a href="/comunidade" style="color: #666; text-decoration: none;">← Voltar para Comunidade</a>
+        </div>
+
+        <!-- A PERGUNTA -->
+        <div class="q-card">
+            <h1 class="q-title"><%= question.title %></h1>
+            <div class="q-meta">
+                <span>👤 <%= question.Patient && question.Patient.nome && question.Patient.nome !== 'Anônimo' ? question.Patient.nome.split(' ')[0] : 'Membro da Comunidade' %></span>
+                <span>•</span>
+                <span>📅 <%= new Date(question.createdAt).toLocaleDateString('pt-BR') %></span>
+            </div>
+            <div class="q-content">
+                <%= question.content %>
+            </div>
+        </div>
+
+        <!-- AS RESPOSTAS (INTELIGÊNCIA CLÍNICA) -->
+        <h2 class="a-list-title">
+            <%= question.answers && question.answers.length > 0 ? question.answers.length + ' Resposta(s) de Profissionais' : 'Aguardando Respostas' %>
+        </h2>
+
+        <% if (question.answers && question.answers.length > 0) { %>
+            <% question.answers.forEach(function(answer) { %>
+                <div class="a-card">
+                    <div class="a-header">
+                        <img src="<%= answer.psychologist && answer.psychologist.fotoUrl ? answer.psychologist.fotoUrl : 'https://placehold.co/100x100/1B4332/FFEE8C?text=Psi' %>" alt="Foto" class="a-photo">
+                        <div>
+                            <h3 class="a-author"><%= answer.psychologist ? answer.psychologist.nome : 'Profissional' %></h3>
+                            <span class="a-crp">CRP: <%= answer.psychologist ? answer.psychologist.crp : 'N/A' %></span>
+                        </div>
+                        <% if (answer.psychologist && answer.psychologist.slug) { %>
+                            <a href="/<%= answer.psychologist.slug %>" class="btn-profile-small">Ver Perfil</a>
+                        <% } %>
+                    </div>
+                    <div class="q-content" style="font-size: 1.05rem;">
+                        <%= answer.content %>
+                    </div>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <div class="empty-answers">
+                Nenhum psicólogo respondeu a esta dúvida ainda. Os profissionais da Yelo já foram notificados!
+            </div>
+        <% } %>
+
+    </main>
+
+    <%- include('partials/footer') %>
+    <script src="/config.js"></script>
+    <script src="/js/script.js"></script>
+</body>
+</html>

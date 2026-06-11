@@ -487,9 +487,26 @@
             const payload = getBlockData(block);
             try {
                 const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me`, { method: 'PUT', body: JSON.stringify(payload) });
-                if (!res.ok) throw new Error((await res.json()).error || 'Falha ao salvar.');
-                Object.assign(originalProfileData, payload);
-                psychologistData = { ...psychologistData, ...payload };
+                const resData = await res.json();
+                
+                if (!res.ok) throw new Error(resData.error || 'Falha ao salvar.');
+                Object.assign(originalProfileData, payload, resData);
+                psychologistData = { ...psychologistData, ...payload, ...resData };
+                
+                // --- ATUALIZA O ESTADO GLOBAL E ESCONDE O BANNER DE TRIAL IMEDIATAMENTE ---
+                if (window.getPsychologistData && window.setPsychologistData) {
+                    const globalData = window.getPsychologistData();
+                    if (globalData) {
+                        const newGlobalData = { ...globalData, ...payload, ...resData };
+                        if (newGlobalData.cpf && String(newGlobalData.cpf).replace(/\D/g, '').length >= 11) {
+                            newGlobalData.showTrialBanner = false;
+                            const banner = document.getElementById('trial-premium-banner');
+                            if (banner) banner.style.display = 'none';
+                        }
+                        window.setPsychologistData(newGlobalData);
+                    }
+                }
+                
                 setBlockState(block, 'success');
                 dirtyBlocks.delete(block.dataset.blockId);
                 updateStickyFooter();
@@ -565,10 +582,26 @@
                         body: JSON.stringify(allDirtyData)
                     });
 
-                    if (!res.ok) throw new Error((await res.json()).error || 'Falha ao salvar tudo.');
+                    const resData = await res.json();
+                    
+                    if (!res.ok) throw new Error(resData.error || 'Falha ao salvar tudo.');
 
-                    Object.assign(originalProfileData, allDirtyData);
-                    psychologistData = { ...psychologistData, ...allDirtyData };
+                    Object.assign(originalProfileData, allDirtyData, resData);
+                    psychologistData = { ...psychologistData, ...allDirtyData, ...resData };
+                    
+                    // --- ATUALIZA O ESTADO GLOBAL E ESCONDE O BANNER DE TRIAL IMEDIATAMENTE ---
+                    if (window.getPsychologistData && window.setPsychologistData) {
+                        const globalData = window.getPsychologistData();
+                        if (globalData) {
+                            const newGlobalData = { ...globalData, ...allDirtyData, ...resData };
+                            if (newGlobalData.cpf && String(newGlobalData.cpf).replace(/\D/g, '').length >= 11) {
+                                newGlobalData.showTrialBanner = false;
+                                const banner = document.getElementById('trial-premium-banner');
+                                if (banner) banner.style.display = 'none';
+                            }
+                            window.setPsychologistData(newGlobalData);
+                        }
+                    }
                     
                     dirtyBlocks.forEach(blockId => {
                         const block = profileContainer.querySelector(`[data-block-id="${blockId}"]`);
