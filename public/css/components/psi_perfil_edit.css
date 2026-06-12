@@ -8,6 +8,8 @@
     background-color: #fff;
     transition: box-shadow 0.3s ease, border-color 0.3s ease;
     overflow: visible;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .block-header {
@@ -34,7 +36,7 @@
 .block-actions .btn.hidden { display: none !important; }
 .block-actions .btn-principal { border: 2px solid transparent !important; font-weight: 600 !important; }
 .block-actions .btn-secundario { border: 2px solid var(--verde-escuro) !important; }
-.block-content { padding: 20px; }
+.block-content { padding: 20px; width: 100%; box-sizing: border-box; }
 
 /* --- Correções de Grid e Layout (Formulários do Perfil) --- */
 .form-row {
@@ -42,11 +44,13 @@
     gap: 20px;
     flex-wrap: wrap;
     width: 100%;
+    box-sizing: border-box;
     margin-bottom: 15px;
 }
 .form-row .form-group {
     flex: 1;
-    min-width: 250px;
+    min-width: min(250px, 100%);
+    box-sizing: border-box;
     margin-bottom: 0;
 }
 
@@ -78,6 +82,8 @@
     display: none;
     flex-direction: column; align-items: center; margin-bottom: 30px; text-align: center;
     border-bottom: 1px dashed #e0e0e0; padding-bottom: 25px;
+    width: 100%;
+    box-sizing: border-box;
 }
 .profile-photo-wrapper-mobile {
     position: relative; width: 110px; height: 110px; border-radius: 50%;
@@ -105,7 +111,7 @@
 .professional-details-row .form-group > input,
 .professional-details-row .form-group > .segmented-control,
 .professional-details-row .form-group > .input-prefix-group {
-    flex-grow: 1; min-height: 48px; margin-bottom: 0;
+    flex-grow: 1; min-height: 48px; margin-bottom: 0; width: 100%; box-sizing: border-box;
 }
 .professional-details-row .segmented-control { display: flex; width: 100%; padding: 4px; }
 .professional-details-row .segmented-control label {

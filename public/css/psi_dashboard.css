@@ -297,7 +297,7 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
     .dashboard-main { 
         width: 100%; 
         /* Padding inferior dinâmico para garantir que o conteúdo tenha o mesmo 'respiro' acima da bottom nav em todas as páginas */
-        padding: calc(var(--mobile-header-h, 70px) + 20px) 20px calc(var(--mobile-bottom-h, 80px) + 35px + env(safe-area-inset-bottom)) 20px !important;
+        padding: calc(var(--mobile-header-h, 70px) + 20px) 10px calc(var(--mobile-bottom-h, 80px) + 35px + env(safe-area-inset-bottom)) 10px !important;
         margin-left: 0 !important; /* Remove a margem no mobile */
     }
 
@@ -325,6 +325,11 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
     
     /* Mantém área de toque confortável no mobile */
     .sidebar-nav li a { padding: 12px 15px; gap: 12px; }
+
+    /* Ajusta widgets internos para não parecerem esmagados no mobile */
+    .widget {
+        padding: 20px 15px !important;
+    }
 }
 @media (min-width: 993px) { .btn-voltar-inbox { display: none; } }
 
