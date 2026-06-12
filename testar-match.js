@@ -6,7 +6,10 @@ async function testarJornadaDeMatch() {
     let browser;
     try {
         // Roda de forma invisível (headless)
-        browser = await puppeteer.launch({ headless: 'new' }); 
+        browser = await puppeteer.launch({ 
+            headless: 'new',
+            executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+        }); 
         const page = await browser.newPage();
 
         console.log('⏳ Verificando se o servidor local está no ar...');

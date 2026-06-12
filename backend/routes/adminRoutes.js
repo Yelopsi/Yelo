@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const db = require('../models'); // Importa o banco de dados para operações diretas
 const adminController = require('../controllers/adminController');
+const adminDashboardController = require('../controllers/adminDashboardController');
+const adminCommunityController = require('../controllers/adminCommunityController');
 const adminAnalyticsController = require('../controllers/adminAnalyticsController');
 const reviewController = require('../controllers/reviewController');
 const qnaController = require('../controllers/qnaController'); // Importa o controlador de Q&A
@@ -17,8 +19,8 @@ router.use(protect);
 
 // >>> ADICIONE ESTE BLOCO AQUI (ANTES DE router.use(admin)) <<<
 // Permite que Psicólogos e Admins LEIAM os dados
-router.get('/community-event', adminController.getCommunityEvent);
-router.get('/community-resources', adminController.getCommunityResources);
+router.get('/community-event', adminCommunityController.getCommunityEvent);
+router.get('/community-resources', adminCommunityController.getCommunityResources);
 // >>> FIM DO BLOCO <<<
 
 router.use(admin);
@@ -34,7 +36,7 @@ router.get('/verifications', adminController.getPendingVerifications);
 router.put('/psychologists/:id/moderate', adminController.moderatePsychologist);
 
 // Rota para buscar as estatísticas da Visão Geral
-router.get('/stats', adminController.getDashboardStats);
+router.get('/stats', adminDashboardController.getDashboardStats);
 
 // Rota para liberar 14 dias de teste para todos os usuários inativos/pendentes
 router.post('/psychologists/grant-trial-all', adminController.grantTrialToAll);
@@ -86,19 +88,19 @@ router.get('/exit-surveys', adminController.getExitSurveys);
 
 
 // Rota para buscar os logs do sistema
-router.get('/logs', adminController.getSystemLogs);
+router.get('/logs', adminDashboardController.getSystemLogs);
 
 // Rota para dados de gráficos
-router.get('/charts/new-users', adminController.getNewUsersPerMonth);
+router.get('/charts/new-users', adminDashboardController.getNewUsersPerMonth);
 
 // Rota de Relatórios
-router.get('/reports/charts', protect, admin, adminController.getDetailedReports);
+router.get('/reports/charts', protect, admin, adminDashboardController.getDetailedReports);
 
 // Rota para dados financeiros
-router.get('/financials', adminController.getFinancials);
+router.get('/financials', adminDashboardController.getFinancials);
 
 // Rota para indicadores dos questionários
-// router.get('/questionnaire-analytics', adminController.getQuestionnaireAnalytics);
+// router.get('/questionnaire-analytics', adminDashboardController.getQuestionnaireAnalytics);
 
 // --- FIX: ROTA INLINE PARA INDICADORES (Evita erro 500 se controller falhar) ---
 router.get('/questionnaire-analytics', adminAnalyticsController.getQuestionnaireAnalytics);
@@ -112,6 +114,9 @@ router.delete('/followups/:id', adminController.deleteFollowUp);
 router.get('/export/patients', adminController.exportPatients);
 router.get('/export/psychologists', adminController.exportPsychologists);
 
+// --- ROTA DE FEEDBACK DO WHATSAPP (CONVERSÃO PLG) ---
+router.get('/whatsapp-feedbacks', adminDashboardController.getWhatsappFeedbacks);
+
 // --- ROTAS DE MODERAÇÃO DE PERGUNTAS (Q&A) ---
 
 // Rota para buscar todas as perguntas com status 'pending_review'
@@ -121,12 +126,12 @@ router.get('/qna/pending', qnaController.getPendingQuestions);
 router.put('/qna/:questionId/moderate', qnaController.moderateQuestion);
 
 // --- ROTAS DE MODERAÇÃO DE DENÚNCIAS DO FÓRUM (NOVO) ---
-router.get('/forum/reports', adminController.getForumReports);
-router.put('/forum/moderate', adminController.moderateForumContent);
+router.get('/forum/reports', adminCommunityController.getForumReports);
+router.put('/forum/moderate', adminCommunityController.moderateForumContent);
 // Rota para fixar/desfixar um post do fórum (NOVO)
-router.put('/forum/posts/:id/pin', adminController.pinForumPost);
+router.put('/forum/posts/:id/pin', adminCommunityController.pinForumPost);
 // Rota para listar todos os posts do fórum para o admin (NOVO)
-router.get('/forum/posts', adminController.getAllForumPosts);
+router.get('/forum/posts', adminCommunityController.getAllForumPosts);
 
 // --- ROTAS DE PROSPECÇÃO DE LEADS (OUTBOUND) ---
 router.get('/leads', adminController.getLeads);
@@ -138,8 +143,8 @@ router.post('/whatsapp/test', adminController.testWhatsAppMessage);
 router.post('/whatsapp/test-batch', adminController.testOutboundBatch);
 
 // --- ROTAS DE EDIÇÃO DA COMUNIDADE (Apenas Admin pode alterar) ---
-router.put('/community-event', adminController.updateCommunityEvent);
-router.put('/community-resources', adminController.updateCommunityResources);
+router.put('/community-event', adminCommunityController.updateCommunityEvent);
+router.put('/community-resources', adminCommunityController.updateCommunityResources);
 
 // --- ROTA DE ESTATÍSTICAS PWA (NOVO) ---
 router.get('/stats/pwa', adminAnalyticsController.getPwaStats);

@@ -150,6 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('main-content').style.display = 'none';
             document.getElementById('relatorios').style.display = 'block';
             loadReports();
+            if (typeof window.carregarFeedbacksWhatsApp === 'function') window.carregarFeedbacksWhatsApp();
             return;
         } else {
             const relSection = document.getElementById('relatorios');
@@ -255,8 +256,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // --- INICIALIZA SOCKET (Conecta o Admin à sala) ---
             connectAdminSocket(token);
             
-            // --- INICIALIZA UPLOAD DE FOTO ---
-            setupAdminPhotoUpload();
+            // --- INICIALIZA UPLOAD DE FOTO (admin_modais.js) ---
+            if(window.setupAdminPhotoUpload) window.setupAdminPhotoUpload();
 
             // --- FIX: Remove loader da tela
             const loader = document.getElementById('global-loader');
@@ -354,167 +355,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, { passive: true });
     }
 
-    // --- AQUI ESTÁ A CORREÇÃO DO MODAL ---
-    function setupConfirmationModal() {
-        const modal = document.getElementById('confirmation-modal');
-        
-        // Se não achar o modal no HTML, avisa no console
-        if (!modal) {
-            console.warn("Modal HTML não encontrado em admin.html");
-            return;
-        }
-
-        const confirmBtn = document.getElementById('modal-confirm-btn');
-        const cancelBtn = document.getElementById('modal-cancel-btn');
-        let confirmCallback = null;
-
-        // Função para FECHAR (Esconde na marra)
-        const closeModal = () => {
-            modal.style.display = 'none'; // <--- Força display none
-            confirmCallback = null;
-        };
-
-        // Função Global para ABRIR (Mostra na marra)
-        window.openConfirmationModal = (title, body, onConfirm) => {
-            const titleEl = document.getElementById('modal-title');
-            const bodyEl = document.getElementById('modal-body');
-            
-            if(titleEl) titleEl.textContent = title;
-            if(bodyEl) bodyEl.innerHTML = body;
-            
-            confirmCallback = onConfirm;
-            modal.style.display = 'flex'; // <--- Força display flex (visível)
-        };
-
-        if(confirmBtn) confirmBtn.onclick = () => {
-            if (typeof confirmCallback === 'function') confirmCallback();
-            closeModal();
-        };
-
-        if(cancelBtn) cancelBtn.onclick = closeModal;
-        
-        // Fecha se clicar fora
-        modal.onclick = (e) => {
-            if (e.target === modal) closeModal();
-        };
-    }
-
-    function setupVipModal() {
-        const modal = document.getElementById('vip-modal');
-        if (!modal) {
-            console.warn("Modal VIP não encontrado em admin.html");
-            return;
-        }
-    
-        const confirmBtn = document.getElementById('vip-modal-confirm-btn');
-        const cancelBtn = document.getElementById('vip-modal-cancel-btn');
-        let currentPsyId = null;
-    
-        const closeModal = () => {
-            modal.style.display = 'none';
-            currentPsyId = null;
-        };
-    
-        cancelBtn.onclick = closeModal;
-        modal.onclick = (e) => { if (e.target === modal) closeModal(); };
-    
-        confirmBtn.onclick = async () => {
-            const selectedPlanInput = modal.querySelector('input[name="vip_plan"]:checked');
-            if (!selectedPlanInput) {
-                window.showToast('Por favor, selecione uma opção.', 'error');
-                return;
-            }
-    
-            const planValue = selectedPlanInput.value;
-            
-            confirmBtn.disabled = true;
-            confirmBtn.textContent = 'Salvando...';
-    
-            try {
-                const token = localStorage.getItem('Yelo_token');
-                const headers = { 'Content-Type': 'application/json' };
-                if (token) headers['Authorization'] = `Bearer ${token}`;
-
-                const response = await fetch(`${API_BASE_URL}/api/admin/psychologists/${currentPsyId}/vip`, {
-                    method: 'PATCH',
-                    headers: headers,
-                    body: JSON.stringify({ plan: planValue === 'none' ? null : planValue })
-                });
-    
-                if (!response.ok) {
-                    const errData = await response.json();
-                    throw new Error(errData.error || 'Falha ao atualizar status VIP.');
-                }
-    
-                const data = await response.json();
-                window.showToast(data.message, 'success');
-
-                // Primeiro, fecha o modal para dar feedback imediato ao usuário.
-                closeModal();
-
-                // Dispara um evento para a página de gestão de psis recarregar a lista
-                window.dispatchEvent(new CustomEvent('vipStatusUpdated'));
-            } catch (error) {
-                window.showToast(error.message, 'error');
-            } finally {
-                confirmBtn.disabled = false;
-                confirmBtn.textContent = 'Confirmar Alteração';
-            }
-        };
-    
-        // Expõe a função para abrir o modal globalmente
-        window.openVipModal = (psychologist) => {
-            currentPsyId = psychologist.id;
-            const title = document.getElementById('vip-modal-title');
-            title.innerHTML = `Gerenciar Isenção: <span style="font-weight: normal;">${psychologist.nome}</span>`;
-            
-            const currentPlan = psychologist.is_exempt ? (psychologist.plano || 'none') : 'none';
-            modal.querySelectorAll('input[name="vip_plan"]').forEach(radio => radio.checked = (radio.value === currentPlan));
-    
-            modal.style.display = 'flex';
-        };
-    }
-
-    // --- MODAL DE DENÚNCIA (NOVO) ---
-    function setupReportModal() {
-        const modal = document.getElementById('report-modal');
-        if (!modal) return;
-
-        const closeBtn = document.getElementById('report-modal-close-btn');
-        const actionBtn = document.getElementById('report-modal-action-btn');
-        let actionCallback = null;
-
-        const closeModal = () => {
-            modal.style.display = 'none';
-            actionCallback = null;
-        };
-
-        // Função global para abrir o modal com dados dinâmicos
-        window.openReportModal = (data) => {
-            // data: { title, content, author, reason, count, isHtml, actionLabel, onAction }
-            document.getElementById('report-modal-title').textContent = data.title || 'Detalhes da Denúncia';
-            document.getElementById('report-author').textContent = data.author || 'Anônimo';
-            document.getElementById('report-reason').textContent = data.reason || 'Não especificado';
-            document.getElementById('report-count').textContent = data.count || 1;
-            
-            const contentEl = document.getElementById('report-content-area');
-            if (data.isHtml) contentEl.innerHTML = data.content;
-            else contentEl.textContent = data.content;
-
-            if (actionBtn) {
-                actionBtn.textContent = data.actionLabel || 'Remover Conteúdo';
-                actionBtn.onclick = () => {
-                    if (typeof data.onAction === 'function') data.onAction();
-                    closeModal();
-                };
-            }
-            modal.style.display = 'flex';
-        };
-
-        if (closeBtn) closeBtn.onclick = closeModal;
-        modal.onclick = (e) => { if (e.target === modal) closeModal(); };
-    }
-
     function setupGlobalEvents() {
         const logoutButton = document.getElementById('btn-logout');
         if (logoutButton) logoutButton.onclick = (e) => { logout(); };
@@ -538,90 +378,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ==========================================
-    // UPLOAD DE FOTO DO ADMIN
-    // ==========================================
-    function setupAdminPhotoUpload() {
-        const sidebarTrigger = document.getElementById('admin-photo-trigger');
-        const mobileTrigger = document.getElementById('mobile-avatar-trigger');
-        const photoInput = document.getElementById('admin-photo-input');
-        const cropModal = document.getElementById('crop-modal');
-        const imageElement = document.getElementById('image-to-crop');
-        const btnCancelCrop = document.getElementById('btn-cancel-crop');
-        const btnConfirmCrop = document.getElementById('btn-confirm-crop');
-        let cropper = null;
-
-        const openFileInput = () => { if (photoInput) photoInput.click(); };
-
-        if (sidebarTrigger) sidebarTrigger.onclick = openFileInput;
-        if (mobileTrigger) mobileTrigger.onclick = openFileInput;
-
-        if (photoInput) {
-            photoInput.onchange = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    if (file.size > 10 * 1024 * 1024) {
-                        showToast('Arquivo muito grande. Limite máximo: 10MB.', 'error');
-                        photoInput.value = '';
-                        return;
-                    }
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        if (cropModal) cropModal.style.display = 'flex';
-                        if (imageElement) {
-                            imageElement.src = event.target.result;
-                            if (cropper) cropper.destroy();
-                            cropper = new Cropper(imageElement, { aspectRatio: 1, viewMode: 1, autoCropArea: 1 });
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                }
-            };
-        }
-
-        if (btnCancelCrop) {
-            btnCancelCrop.onclick = () => {
-                if (cropModal) cropModal.style.display = 'none';
-                if (cropper) cropper.destroy();
-                if (photoInput) photoInput.value = '';
-            };
-        }
-
-        if (btnConfirmCrop) {
-            btnConfirmCrop.onclick = () => {
-                if (!cropper) return;
-                cropper.getCroppedCanvas({ width: 400, height: 400 }).toBlob(async (blob) => {
-                    if (!blob) return;
-                    if (cropModal) cropModal.style.display = 'none';
-                    const fd = new FormData();
-                    fd.append('foto', blob, 'profile.jpg');
-                    showToast('Enviando foto...', 'info');
-
-                    try {
-                        const token = localStorage.getItem('Yelo_token');
-                        const res = await fetch(`${API_BASE_URL}/api/admin/me/photo`, { 
-                            method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }, body: fd 
-                        });
-                        
-                        if (res.ok) {
-                            const d = await res.json();
-                            const sidebarPhoto = document.getElementById('admin-sidebar-photo');
-                            const mobilePhoto = document.getElementById('admin-mobile-photo');
-                            if (sidebarPhoto) sidebarPhoto.src = d.fotoUrl;
-                            if (mobilePhoto) mobilePhoto.src = d.fotoUrl;
-                            showToast('Foto atualizada!', 'success');
-                        } else { throw new Error('Erro ao enviar foto.'); }
-                    } catch (err) {
-                        showToast(err.message || 'Erro ao enviar foto.', 'error');
-                    } finally {
-                        if (cropper) cropper.destroy();
-                        if (photoInput) photoInput.value = '';
-                    }
-                }, 'image/jpeg', 0.9);
-            };
-        }
-    }
-
-    // ==========================================
     // NOVA FUNÇÃO: FIXAR POST NO FÓRUM
     // ==========================================
     window.togglePinPost = async function(postId, isCurrentlyPinned) {
@@ -633,8 +389,8 @@ document.addEventListener('DOMContentLoaded', function() {
             'Confirmar Ação',
             `Você tem certeza que deseja <strong>${actionText}</strong> este post?`,
             async () => {
-                const button = event.currentTarget;
-                if(button) button.disabled = true;
+                const modalBtn = document.getElementById('modal-confirm-btn');
+                if(modalBtn) modalBtn.disabled = true;
 
                 try {
                     const token = localStorage.getItem('Yelo_token');
@@ -657,7 +413,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 } catch (error) {
                     window.showToast(`Erro: ${error.message}`, 'error');
-                    if(button) button.disabled = false;
+                } finally {
+                    if(modalBtn) modalBtn.disabled = false; // Destrava para o próximo uso
                 }
             }
         );
@@ -783,19 +540,80 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+    // --- FUNÇÃO PARA CARREGAR OS FEEDBACKS DO WHATSAPP ---
+    window.carregarFeedbacksWhatsApp = async function() {
+        const tbody = document.getElementById('whatsapp-feedback-tbody');
+        if (!tbody) return;
+        try {
+            const API_BASE_URL = window.API_BASE_URL || '';
+            const token = localStorage.getItem('Yelo_token_admin') || localStorage.getItem('Yelo_token');
+            const res = await fetch(`${API_BASE_URL}/api/admin/whatsapp-feedbacks`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Falha ao buscar dados');
+            const feedbacks = await res.json();
+            
+            // --- CÁLCULO DOS KPIs ---
+            const total = feedbacks.length;
+            const respondidos = feedbacks.filter(f => f.feedbackGiven).length;
+            const taxaResposta = total > 0 ? ((respondidos / total) * 100).toFixed(1) : 0;
+            const recebidas = feedbacks.filter(f => f.feedbackGiven && f.contactReceived).length;
+            const fechados = feedbacks.filter(f => f.feedbackGiven && f.contactReceived && f.dealClosed === 'yes').length;
+
+            const elTotal = document.getElementById('kpi-wpp-total');
+            const elTxResposta = document.getElementById('kpi-wpp-tx-resposta');
+            const elRecebidas = document.getElementById('kpi-wpp-recebidas');
+            const elFechados = document.getElementById('kpi-wpp-fechados');
+
+            if (elTotal) elTotal.textContent = total;
+            if (elTxResposta) elTxResposta.textContent = taxaResposta + '%';
+            if (elRecebidas) elRecebidas.textContent = recebidas;
+            if (elFechados) elFechados.textContent = fechados;
+            
+            if (feedbacks.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #999; font-style: italic;">Nenhum clique registrado ainda.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = feedbacks.map(f => {
+                const dataClique = new Date(f.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                let contato = '<span style="color:#888;">⏳ Aguardando psi</span>';
+                let fechou = '-';
+                let status = '<span style="background:#fef08a; color:#b45309; padding:4px 8px; border-radius:12px; font-size:0.85rem; font-weight:bold;">Pendente</span>';
+                if (f.feedbackGiven) {
+                    status = '<span style="background:#bbf7d0; color:#166534; padding:4px 8px; border-radius:12px; font-size:0.85rem; font-weight:bold;">Respondido</span>';
+                    if (f.contactReceived) {
+                        contato = '✅ Sim';
+                        fechou = f.dealClosed === 'yes' ? '✅ <strong style="color:#166534">Fechou!</strong>' : '❌ Não';
+                    } else {
+                        contato = '❌ Não chegou';
+                        fechou = '-';
+                    }
+                }
+                return `<tr style="border-bottom: 1px solid #eee;"><td style="padding: 10px 15px;">${dataClique}</td><td style="padding: 10px 15px;"><strong>${f.psychologist ? f.psychologist.nome : 'Psi Removido'}</strong></td><td style="padding: 10px 15px;">${f.guestName || 'Um paciente'}</td><td style="padding: 10px 15px; text-align: center;">${contato}</td><td style="padding: 10px 15px; text-align: center;">${fechou}</td><td style="padding: 10px 15px; text-align: center;">${status}</td></tr>`;
+            }).join('');
+        } catch (error) {
+            console.error('Erro ao carregar feedbacks:', error);
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red; padding: 20px;">Erro ao carregar métricas de conversão.</td></tr>';
+        }
+    };
+
     // --- CONTROLE DE MENSAGENS DE WHATSAPP ENVIADAS (MEMÓRIA LOCAL) ---
     window.registrarEnvioWpp = function(psiId, link, event) {
         if (event) event.preventDefault();
         
         let sent = JSON.parse(localStorage.getItem('yelo_wpp_sent_pending') || '[]');
-        if (!sent.includes(psiId)) {
-            sent.push(psiId);
+        const idStr = String(psiId);
+        if (!sent.includes(idStr) && !sent.includes(Number(psiId))) {
+            sent.push(idStr);
             localStorage.setItem('yelo_wpp_sent_pending', JSON.stringify(sent));
         }
         
         // Atualiza visualmente o botão que foi clicado imediatamente
         if (event && event.currentTarget) {
             event.currentTarget.classList.add('wpp-enviado');
+            event.currentTarget.style.backgroundColor = '#d1fae5';
+            event.currentTarget.style.color = '#059669';
+            event.currentTarget.style.borderColor = '#d1fae5';
             event.currentTarget.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Enviado';
         }
         
@@ -804,447 +622,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.verificarWppEnviado = function(psiId) {
         let sent = JSON.parse(localStorage.getItem('yelo_wpp_sent_pending') || '[]');
-        return sent.includes(psiId);
+        return sent.includes(String(psiId)) || sent.includes(Number(psiId));
     };
 
     initializeAndProtect();
-    setupConfirmationModal();
-    setupVipModal();
-    setupReportModal();
+    if(window.setupConfirmationModal) window.setupConfirmationModal();
+    if(window.setupVipModal) window.setupVipModal();
+    if(window.setupReportModal) window.setupReportModal();
     setupGlobalEvents();
 
-    // ==========================================
-    // MÓDULO DE RELATÓRIOS (Chart.js)
-    // ==========================================
-    let chartInstances = {}; // Guarda as referências para poder destruir e recriar
-
-    async function loadReports() {
-        const startInput = document.getElementById('report-start');
-        const endInput = document.getElementById('report-end');
-        
-        // Configura datas padrão se vazio
-        if (!startInput.value) {
-            const today = new Date();
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(today.getDate() - 30);
-            startInput.value = thirtyDaysAgo.toISOString().split('T')[0];
-            endInput.value = today.toISOString().split('T')[0];
-        }
-
-        // --- MOSTRA SKELETONS E ESCONDE CONTEÚDO ---
-        document.querySelectorAll('#relatorios .kpi-card').forEach(card => {
-            const skeleton = card.querySelector('.kpi-skeleton');
-            const content = card.querySelector('.kpi-content');
-            if(skeleton) skeleton.style.display = 'block';
-            if(content) content.style.display = 'none';
-        });
-
-        try {
-            const token = localStorage.getItem('Yelo_token');
-            const headers = {};
-            if (token) headers['Authorization'] = `Bearer ${token}`;
-
-            const query = `?startDate=${startInput.value}&endDate=${endInput.value}`;
-            
-            const response = await fetch(`${API_BASE_URL}/api/admin/reports/charts${query}`, {
-                headers: headers
-            });
-            const data = await response.json();
-
-            console.log("Dados recebidos do Relatório:", data); // <--- OLHE O CONSOLE (F12)
-
-            // --- NOVOS KPIs: Questionários ---
-            let totalConcluidos = 0;
-            let totalAbandonados = 0;
-            if (data.demand && Array.isArray(data.demand)) {
-                totalConcluidos = data.demand.reduce((acc, curr) => acc + (parseInt(curr.concluidos, 10) || 0), 0);
-                totalAbandonados = data.demand.reduce((acc, curr) => acc + (parseInt(curr.desistencias, 10) || 0), 0);
-            }
-            
-            const questConcluidosEl = document.getElementById('kpi-quest-concluidos');
-            if (questConcluidosEl) questConcluidosEl.innerText = totalConcluidos.toLocaleString('pt-BR');
-            
-            const questAbandonadosEl = document.getElementById('kpi-quest-abandonados');
-            if (questAbandonadosEl) questAbandonadosEl.innerText = totalAbandonados.toLocaleString('pt-BR');
-
-            // Renderiza Gráficos
-            if (typeof renderUsersChart === "function") renderUsersChart(data.users, data.visits || []);
-            if (typeof renderDemandChart === "function") renderDemandChart(data.demand);
-            if (typeof renderPlansChart === "function") renderPlansChart(data.plans);
-            if (typeof renderTimeChart === "function") renderTimeChart(data.timeOfDay);
-
-            // --- DADOS DO FUNIL E DROP-OFFS ---
-            try {
-                const resFunnel = await fetch(`${API_BASE_URL}/api/admin/analytics/funnel${query}`, { headers });
-                if (resFunnel.ok) {
-                    const funnelData = await resFunnel.json();
-                    
-                    // Renderiza o Ranking de Abandonos
-                    const dropoffList = document.getElementById('funnel-dropoff-list');
-                    if (dropoffList) {
-                        if (funnelData.abandonos && funnelData.abandonos.length > 0) {
-                            dropoffList.innerHTML = funnelData.abandonos.map(item => `
-                                <tr>
-                                    <td style="padding: 12px 15px;"><strong>${item.step}</strong></td>
-                                    <td style="text-align: right; padding: 12px 15px; color: #E63946; font-weight: bold;">${item.count}</td>
-                                </tr>
-                            `).join('');
-                        } else {
-                            dropoffList.innerHTML = '<tr><td colspan="2" style="text-align:center; padding: 20px; color: #666;">Nenhum abandono registrado neste período.</td></tr>';
-                        }
-                    }
-
-                    // Renderiza as Origens de Tráfego UTMs
-                    const utmList = document.getElementById('funnel-utm-list');
-                    if (utmList) {
-                        if (funnelData.origens && funnelData.origens.length > 0) {
-                            const totalOrigens = funnelData.origens.reduce((acc, curr) => acc + parseInt(curr.count), 0);
-                            utmList.innerHTML = funnelData.origens.map(item => {
-                                const perc = Math.round((parseInt(item.count) / totalOrigens) * 100);
-                                return `
-                                    <li class="feature-usage-item">
-                                        <div class="feature-header">
-                                            <span>${item.source}</span>
-                                            <span>${item.count} (${perc}%)</span>
-                                        </div>
-                                        <div class="feature-bar-bg">
-                                            <div class="feature-bar-fill" style="width: ${perc}%; background-color: var(--verde-escuro);"></div>
-                                        </div>
-                                    </li>
-                                `;
-                            }).join('');
-                        } else {
-                            utmList.innerHTML = '<p style="color: #666; font-size: 0.9rem; font-style: italic;">Nenhuma origem rastreada.</p>';
-                        }
-                    }
-                }
-            } catch (errFunnel) {
-                console.error("Erro ao carregar dados do funil:", errFunnel);
-            }
-
-            // --- CORREÇÃO DO KPI DE VISITAS ---
-            // Garante que o array existe e converte explicitamente para Número
-            const visitsArray = data.visits || [];
-            console.log("Visitas recebidas para KPI:", visitsArray);
-
-            const totalVisits = visitsArray.reduce((acc, curr) => {
-                // Converte 'total' (string do BD) para Inteiro. Se falhar, usa 0.
-                const val = parseInt(curr.total, 10);
-                return acc + (isNaN(val) ? 0 : val);
-            }, 0);
-
-            const visitsEl = document.getElementById('kpi-visits');
-            // Formata o número para ficar bonito (ex: 1.200)
-            if (visitsEl) visitsEl.innerText = totalVisits.toLocaleString('pt-BR');
-            
-            const visits24hEl = document.getElementById('kpi-visits-24h');
-            if (visits24hEl) visits24hEl.innerText = (data.visits24h || 0).toLocaleString('pt-BR');
-
-            // Outros KPIs
-            if (data.community) {
-                const updateKpi = (id, val) => {
-                    const el = document.getElementById(id);
-                    // Converte para int para garantir, depois formata
-                    if (el) el.innerText = (parseInt(val, 10) || 0).toLocaleString('pt-BR');
-                };
-                
-                updateKpi('kpi-questions', data.community.questionsTotal);
-                updateKpi('kpi-answered', data.community.questionsAnswered);
-                updateKpi('kpi-answers-total', data.community.answersTotal);
-                updateKpi('kpi-blog', data.community.blogPosts);
-            }
-
-            // --- NOVOS KPIs FINANCEIROS ---
-            if (data.financials) {
-                const formatCurrency = (value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-                const mrrEl = document.getElementById('kpi-mrr');
-                if (mrrEl) mrrEl.innerText = formatCurrency(data.financials.mrr || 0);
-
-                const churnEl = document.getElementById('kpi-churn');
-                if (churnEl) churnEl.innerText = `${(data.financials.churnRate || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
-
-                const ltvEl = document.getElementById('kpi-ltv');
-                if (ltvEl) ltvEl.innerText = formatCurrency(data.financials.ltv || 0);
-
-                const arpuEl = document.getElementById('kpi-arpu');
-                if (arpuEl) arpuEl.innerText = formatCurrency(data.financials.arpu || 0);
-            }
-
-            // --- DADOS PWA (NOVO) ---
-            try {
-                const pwaResponse = await fetch(`${API_BASE_URL}/api/admin/stats/pwa`, { headers });
-                if (pwaResponse.ok) {
-                    const pwaData = await pwaResponse.json();
-                    
-                    const pwaTotalEl = document.getElementById('kpi-pwa');
-                    if (pwaTotalEl) pwaTotalEl.innerText = pwaData.total || 0;
-
-                    let android = 0, ios = 0;
-                    if (pwaData.byPlatform) {
-                        pwaData.byPlatform.forEach(p => {
-                            if (p.platform === 'android') android = parseInt(p.count);
-                            if (p.platform === 'ios') ios = parseInt(p.count);
-                        });
-                    }
-                    const androidEl = document.getElementById('kpi-pwa-android');
-                    const iosEl = document.getElementById('kpi-pwa-ios');
-                    if (androidEl) androidEl.innerText = android;
-                    if (iosEl) iosEl.innerText = ios;
-                }
-            } catch (errPwa) {
-                console.error("Erro ao carregar dados PWA", errPwa);
-            }
-
-            // --- CLIQUES WHATSAPP ---
-            const clicksEl = document.getElementById('kpi-whatsapp-clicks');
-            if (clicksEl) {
-                clicksEl.textContent = (data.whatsappClicks || 0).toLocaleString('pt-BR');
-            }
-
-            // --- RENDERIZA O SHADOW TRACKING ---
-            if (typeof renderShadowTracking === "function") renderShadowTracking(data.shadowTracking);
-
-            // --- ESCONDE SKELETONS E MOSTRA CONTEÚDO ---
-            document.querySelectorAll('#relatorios .kpi-card').forEach(card => {
-                const skeleton = card.querySelector('.kpi-skeleton');
-                const content = card.querySelector('.kpi-content');
-                if(skeleton) skeleton.style.display = 'none';
-                if(content) content.style.display = 'block';
-            });
-
-        } catch (error) {
-            console.error("Erro ao carregar relatórios:", error);
-            // Em caso de erro, mostra o conteúdo (que estará zerado ou com valor antigo) para não travar no skeleton
-            document.querySelectorAll('#relatorios .kpi-card').forEach(card => {
-                const skeleton = card.querySelector('.kpi-skeleton');
-                const content = card.querySelector('.kpi-content');
-                if(skeleton) skeleton.style.display = 'none';
-                if(content) content.style.display = 'block';
-            });
-        }
-
-    }
-    // Expõe para o HTML poder chamar no onclick="loadReports()"
-    window.loadReports = loadReports;
-
-    // --- FUNÇÃO GLOBAL: RENDERIZAR KPI DE E-MAIL ---
-    // Chame esta função no seu script de dashboard (admin_visao_geral.js)
-    // Exemplo: window.renderEmailStatusCard(data.health.email, 'health-grid');
-    window.renderEmailStatusCard = function(emailHealth, containerId) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-
-        // Remove card existente se houver para evitar duplicatas
-        const oldCard = document.getElementById('kpi-email-card');
-        if (oldCard) oldCard.remove();
-
-        const status = emailHealth ? emailHealth.status : 'unknown';
-        const errors = emailHealth ? (emailHealth.errors || 0) : 0;
-
-        let colorClass = 'success';
-        let icon = 'check_circle';
-        let text = 'Operacional';
-
-        if (status === 'warning') {
-            colorClass = 'warning';
-            icon = 'warning';
-            text = `${errors} falhas (24h)`;
-        } else if (status === 'critical') {
-            colorClass = 'danger';
-            icon = 'error';
-            text = `${errors} erros críticos`;
-        }
-
-        const cardHtml = `
-            <div id="kpi-email-card" class="kpi-card">
-                <div class="kpi-icon ${colorClass}">
-                    <span class="material-icons">email</span>
-                </div>
-                <div class="kpi-info">
-                    <h3>Disparo de E-mails</h3>
-                    <p class="kpi-value ${colorClass}">
-                        <span class="material-icons tiny-icon">${icon}</span>
-                        ${text}
-                    </p>
-                    <span class="kpi-label">Notificações Yelo</span>
-                </div>
-            </div>
-        `;
-
-        // Insere o card no container especificado
-        container.insertAdjacentHTML('beforeend', cardHtml);
-    };
-    
-    // --- FUNÇÃO PARA RENDERIZAR SHADOW TRACKING ---
-    function renderShadowTracking(stData) {
-        const usageList = document.getElementById('st-usage-list');
-        const plansList = document.getElementById('st-plans-list');
-        
-        if (!usageList || !plansList) return;
-
-        // Se o backend não retornar dados ou a lista estiver vazia
-        if (!stData || !stData.usage || stData.usage.length === 0) {
-            usageList.innerHTML = '<p style="color: #999; font-size: 0.9rem; font-style: italic;">Aguardando dados de cliques/tracking no banco.</p>';
-            plansList.innerHTML = '<p style="color: #166534; font-size: 0.9rem; font-style: italic;">Aguardando interações dos psicólogos para modelar o Paywall...</p>';
-            return;
-        }
-
-        // 1. Injeta HTML do Uso de Features (com animação de barra)
-        usageList.innerHTML = stData.usage.map(item => {
-            let colorClass = 'medium';
-            if (item.percentage >= 70) colorClass = 'high';
-            else if (item.percentage < 40) colorClass = 'low';
-            if (item.status) colorClass = item.status; // Respeita a cor do backend se enviada
-
-            return `
-                <li class="feature-usage-item">
-                    <div class="feature-header">
-                        <span>${item.name}</span>
-                        <span>${item.percentage}%</span>
-                    </div>
-                    <div class="feature-bar-bg">
-                        <div class="feature-bar-fill ${colorClass}" style="width: 0%; transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1);"></div>
-                    </div>
-                </li>
-            `;
-        }).join('');
-
-        // Animação suave para as barras crescerem
-        setTimeout(() => {
-            const bars = usageList.querySelectorAll('.feature-bar-fill');
-            stData.usage.forEach((item, index) => { if(bars[index]) bars[index].style.width = item.percentage + '%'; });
-        }, 100);
-
-        // 2. Injeta HTML das Sugestões de Planos
-        if (stData.plans && stData.plans.length > 0) {
-            plansList.innerHTML = stData.plans.map(plan => `<div class="upsell-tier"><div class="upsell-tier-name"><span class="status ${plan.cssClass || 'status-active'}">${plan.name}</span></div><ul class="upsell-tier-features">${plan.features.map(f => `<li>${f}</li>`).join('')}</ul></div>`).join('');
-        }
-    }
-
-    // 1. Gráfico de Usuários (Linha)
-    function renderUsersChart(data, visitsData) { // Recebe visitsData agora
-        const ctx = document.getElementById('chartUsers').getContext('2d');
-        if (chartInstances.users) chartInstances.users.destroy(); // Limpa anterior
-
-        // Mapas para alinhar as datas (caso tenha visita num dia mas não tenha cadastro)
-        const allDates = [...new Set([...(data || []).map(d => d.data), ...(visitsData || []).map(v => v.data)])].sort();
-        
-        const labels = allDates.map(d => formatDateBR(d));
-        const patients = allDates.map(d => { const f = (data || []).find(x => x.data === d); return f ? parseInt(f.pacientes, 10) : 0; });
-        const psis = allDates.map(d => { const f = (data || []).find(x => x.data === d); return f ? parseInt(f.psis, 10) : 0; });
-        const visits = allDates.map(d => { const f = (visitsData || []).find(x => x.data === d); return f ? parseInt(f.total, 10) : 0; });
-
-        chartInstances.users = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    { label: 'Acessos (Pageviews)', data: visits, borderColor: '#2980b9', backgroundColor: 'rgba(41, 128, 185, 0.1)', tension: 0.4, fill: true }, // Azul, com preenchimento suave
-                    { label: 'Novos Pacientes', data: patients, borderColor: '#2E7D32', tension: 0.3 },
-                    { label: 'Novos Psicólogos', data: psis, borderColor: '#F9A825', tension: 0.3 }
-                ]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-        });
-    }
-
-    // 2. Gráfico de Demanda (Barra Empilhada)
-    function renderDemandChart(data) {
-        const ctx = document.getElementById('chartDemand').getContext('2d');
-        if (chartInstances.demand) chartInstances.demand.destroy();
-
-        const labels = data.map(item => formatDateBR(item.data));
-        const done = data.map(item => item.concluidos);
-        const drop = data.map(item => item.desistencias);
-
-        chartInstances.demand = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    { label: 'Concluídos', data: done, borderColor: '#2E7D32', backgroundColor: 'rgba(46, 125, 50, 0.1)', tension: 0.3, fill: true },
-                    { label: 'Desistências', data: drop, borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.1)', tension: 0.3, fill: true }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { x: { stacked: false }, y: { stacked: false } },
-                plugins: { legend: { position: 'bottom' } }
-            }
-        });
-    }
-
-    // 3. Gráfico de Planos (Pizza)
-    function renderPlansChart(data) {
-        const ctx = document.getElementById('chartPlans').getContext('2d');
-        if (chartInstances.plans) chartInstances.plans.destroy();
-
-        // Transforma array [{plano: 'Essencial', total: 5}, ...] em arrays separados
-        const labels = data.map(item => item.plano);
-        const values = data.map(item => item.total);
-        
-        // Cores específicas para os planos
-        const colors = labels.map(p => {
-            if(p === 'Essencial') return '#81C784'; // Verde claro
-            if(p === 'Clínico') return '#FFD54F'; // Amarelo
-            if(p === 'Sol') return '#FF8A65'; // Laranja
-            return '#ccc';
-        });
-
-        chartInstances.plans = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: labels,
-                datasets: [{ data: values, backgroundColor: colors }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
-        });
-    }
-
-    // --- NOVAS FUNÇÕES ---
-
-    function updateCommunityKPIs(stats) {
-        if (!stats) return;
-        document.getElementById('kpi-questions').innerText = stats.questionsTotal || 0;
-        document.getElementById('kpi-answered').innerText = stats.questionsAnswered || 0;
-        document.getElementById('kpi-answers-total').innerText = stats.answersTotal || 0;
-        document.getElementById('kpi-blog').innerText = stats.blogPosts || 0;
-    }
-
-    function renderTimeChart(data) {
-        const ctx = document.getElementById('chartTime').getContext('2d');
-        if (chartInstances.time) chartInstances.time.destroy();
-
-        // Mapeia os dados do banco para garantir ordem
-        const periods = ['Manhã', 'Tarde', 'Noite', 'Madrugada'];
-        const values = periods.map(p => {
-            const found = data ? data.find(item => item.periodo === p) : null;
-            return found ? parseInt(found.total) : 0;
-        });
-
-        chartInstances.time = new Chart(ctx, {
-            type: 'polarArea', // Fica visualmente bonito para horários
-            data: {
-                labels: periods,
-                datasets: [{
-                    data: values,
-                    backgroundColor: [
-                        'rgba(255, 206, 86, 0.7)', // Manhã (Sol)
-                        'rgba(255, 159, 64, 0.7)', // Tarde (Pôr do sol)
-                        'rgba(54, 162, 235, 0.7)', // Noite (Azul)
-                        'rgba(153, 102, 255, 0.7)' // Madrugada (Roxo)
-                    ]
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
-        });
-    }
-
-    // Auxiliar: Formata data YYYY-MM-DD para DD/MM
-    function formatDateBR(dateString) {
-        const [y, m, d] = dateString.split('-');
-        return `${d}/${m}`;
-    }
 });

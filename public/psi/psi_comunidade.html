@@ -1,17 +1,12 @@
-<div class="main-header" style="margin-bottom: 20px;">
-    <div class="header-content">
-        <h1>Comunidade</h1>
-        <p>Tire dúvidas e compartilhe conhecimento com outros profissionais.</p>
+<div id="qna-main-view">
+    <div class="main-header" style="margin-bottom: 20px;">
+        <div class="header-content">
+            <h1>Comunidade</h1>
+            <p>Tire dúvidas e compartilhe conhecimento com outros profissionais.</p>
+        </div>
     </div>
-</div>
 
 <style>
-    @media (max-width: 991px) {
-        #comunidade-page-wrapper {
-            padding-bottom: 80px; /* Garante que o último card não fique escondido pela navegação mobile */
-        }
-    }
-
     .modern-qna-filters {
         display: flex;
         gap: 10px;
@@ -56,32 +51,45 @@
             align-items: center;
         }
     }
+    /* Define o card como padrão, sem cursor de clique */
+    .qna-card-psi {
+        cursor: default !important;
+    }
+    /* Estilização para o estado de respondida/inativa */
+    .qna-card-psi.answered {
+        opacity: 0.7;
+    }
+    .qna-card-psi.answered .qna-card-actions {
+        display: none !important;
+    }
+    .qna-card-psi.answered .existing-answers-list {
+        margin-top: 15px;
+    }
 </style>
 
-<div id="comunidade-page-wrapper">
-    <div class="qna-controls-wrapper">
-        <div class="modern-qna-filters" id="qna-filter-tabs">
-            <button class="tab-item active" data-filter="all">Todas</button>
-            <button class="tab-item" data-filter="pending">Aguardando Resposta</button>
-            <button class="tab-item" data-filter="answered">Respondidas por mim</button>
-        </div>
-        <div class="forum-search-bar" style="width: 100%; max-width: 400px;">
-            <input type="text" id="forum-search-input" placeholder="Buscar por palavras-chave ou temas...">
-        </div>
+<div class="qna-controls-wrapper">
+    <div class="modern-qna-filters" id="qna-filter-tabs">
+        <button class="tab-item active" data-filter="all">Todas</button>
+        <button class="tab-item" data-filter="pending">Aguardando Resposta</button>
+        <button class="tab-item" data-filter="answered">Respondidas por mim</button>
     </div>
-
-    <!-- Alerta de Novas Perguntas -->
-    <div id="qna-new-questions-alert" style="display:none; background:#e0f2fe; color:#0284c7; padding:15px 20px; border-radius:12px; margin-bottom:25px; font-weight:600; cursor:pointer; text-align:center; border: 1px solid #bae6fd; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.05);" onclick="document.querySelector('.tab-item[data-filter=\'pending\']')?.click(); this.style.display='none';">
+    <div class="forum-search-bar" style="width: 100%; max-width: 400px;">
+        <input type="text" id="forum-search-input" placeholder="Buscar por palavras-chave ou temas...">
     </div>
+</div>
 
-    <div class="qna-container-admin" id="qna-list-container">
-        <div class="loader-wrapper">
-            <div class="loader-spinner"></div>
-        </div>
+<!-- Alerta de Novas Perguntas -->
+<div id="qna-new-questions-alert" style="display:none; background:#e0f2fe; color:#0284c7; padding:15px 20px; border-radius:12px; margin-bottom:25px; font-weight:600; cursor:pointer; text-align:center; border: 1px solid #bae6fd; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.05);" onclick="document.querySelector('.tab-item[data-filter=\\'pending\\']')?.click(); this.style.display='none';">
+</div>
+
+<div class="qna-container-admin" id="qna-list-container">
+    <div class="loader-wrapper">
+        <div class="loader-spinner"></div>
     </div>
+</div>
 
-    <!-- Novo Sistema de Paginação -->
-    <div id="qna-pagination" class="pagination-container"></div>
+<!-- Novo Sistema de Paginação -->
+<div id="qna-pagination" class="pagination-container"></div>
 </div>
 
 <template id="qna-card-template-psi">
@@ -104,11 +112,11 @@
 </template>
 
 <template id="qna-existing-answer-template">
-    <div class="answer-item">
-        <img src="https://placehold.co/40x40" alt="Foto do Psi" class="answer-psi-photo">
+    <div class="answer-item" style="display: flex; gap: 12px; align-items: flex-start; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 12px;">
+        <img src="https://placehold.co/40x40" alt="Foto do Psi" class="answer-psi-photo" style="width: 40px; height: 40px; min-width: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
         <div class="answer-content">
             <strong><span class="answer-psi-name"></span></strong>
-            <p class="answer-psi-text"></p>
+            <p class="answer-psi-text" style="margin: 5px 0 0 0; color: #444; line-height: 1.5; font-size: 0.95rem;"></p>
         </div>
     </div>
 </template>

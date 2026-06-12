@@ -117,8 +117,7 @@
             <h1 class="app-title">Bem-vindo(a) de volta</h1>
             <p class="app-subtitle">Acesse sua conta para continuar.</p>
 
-            <form id="form-login">                
-                <p id="mensagem-login" class="mensagem-oculta"></p>
+            <form id="form-login">
                 <div class="app-input-group">
                     <label for="email">E-mail</label>
                     <input type="email" id="email-login" class="app-input" name="email" autocomplete="username" placeholder="seu@email.com" required>
@@ -204,13 +203,16 @@
                 if (res.ok) {
                     localStorage.setItem('Yelo_token', data.token);
                     localStorage.setItem('Yelo_user', JSON.stringify(data.user));
-                    window.location.href = data.redirect;
+                    if (window.showToast) window.showToast('Entrando...', 'success');
+                    setTimeout(() => { window.location.href = data.redirect; }, 600);
                 } else {
-                    alert(data.error || 'Erro ao entrar com Google.');
+                    if (window.showToast) window.showToast(data.error || 'Erro ao entrar com Google.', 'error');
+                    else alert(data.error || 'Erro ao entrar com Google.');
                 }
             } catch (error) {
                 console.error('Erro Google Login:', error);
-                alert('Erro de conexão ao tentar login com Google.');
+                if (window.showToast) window.showToast('Erro de conexão ao tentar login com Google.', 'error');
+                else alert('Erro de conexão ao tentar login com Google.');
             }
         }
     </script>

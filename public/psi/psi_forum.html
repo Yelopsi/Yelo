@@ -61,12 +61,9 @@
 
 </div>
 
-<!-- 3. BOTÃO DE AÇÃO FLUTUANTE (FAB) -->
-<button id="forum-fab" title="Criar Novo Tópico">+</button>
-
 <!-- 4. MODAL PARA CRIAR NOVO POST (Inicialmente oculto) -->
 <div id="forum-create-modal" class="custom-modal-overlay" style="display: none;">
-    <div class="custom-modal-box" style="max-width: 600px; padding: 30px; box-sizing: border-box; overflow-x: hidden;">
+    <div class="custom-modal-box" style="max-width: 600px; padding: 30px; box-sizing: border-box; overflow-x: hidden; max-height: 90vh; overflow-y: auto;">
         <div class="sheet-drag-handle"></div>
         <button type="button" class="modal-close-btn" id="forum-modal-close-btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
         
@@ -101,7 +98,7 @@
             </div>
             <div class="form-group" style="margin-bottom: 15px;">
                 <label for="post-content" style="color: #495057; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; display: block;">Conteúdo</label>
-                <textarea id="post-content" name="content" rows="4" required placeholder="Descreva com mais detalhes..." style="width: 100%; padding: 10px 14px; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 0.95rem; background-color: #f9fafb; font-family: var(--font-principal); resize: vertical;"></textarea>
+                <textarea id="post-content" name="content" rows="4" required placeholder="Descreva com mais detalhes..." style="width: 100%; padding: 10px 14px; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 0.95rem; background-color: #f9fafb; font-family: var(--font-principal); resize: vertical; max-height: 25vh; overflow-y: auto;"></textarea>
             </div>
             <div class="form-group-checkbox" style="margin-top: 10px; display: flex; align-items: center; gap: 8px;">
                 <input type="checkbox" id="post-anonymous" name="isAnonymous" style="width: 18px; height: 18px; accent-color: #1B4332;">
@@ -159,7 +156,7 @@
 <!-- Template para a view de post completo -->
 <template id="forum-full-post-template">
     <div class="reddit-full-view">
-        <div class="forum-post-layout">
+        <div class="forum-post-layout forum-layout-adjust">
             <div class="forum-post-main">
                 <div class="reddit-app-header">
                     <button id="forum-back-to-feed-btn" class="app-back-btn">
@@ -200,7 +197,7 @@
                         <h3>Comentários</h3>
                         <form id="comment-form">
                             <div class="form-group">
-                                <textarea id="comment-content" class="comment-input-capsule" rows="1" placeholder="Adicionar um comentário..." required></textarea>
+                                <textarea id="comment-content" class="comment-input-capsule" rows="1" placeholder="Adicionar um comentário..." required style="max-height: 25vh; overflow-y: auto;"></textarea>
                             </div>
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div class="form-group-checkbox">
@@ -231,30 +228,38 @@
 
 <!-- Template para um único comentário -->
 <template id="forum-comment-template">
-    <div class="comment-card reddit-comment">
-        <div class="comment-header">
-            <img class="comment-avatar" src="" alt="Avatar">
-            <span class="comment-author-line">
-                <strong class="comment-author"></strong>
+    <div class="comment-card yt-comment">
+        <div class="yt-comment-header">
+            <img class="comment-avatar yt-avatar" src="" alt="Avatar">
+            <div class="yt-comment-meta">
+                <strong class="comment-author yt-username"></strong>
                 <span class="author-badges"></span>
-            </span>
-            <span class="comment-time"></span>
-        </div>
-        <div class="comment-body-wrapper">
-            <p class="comment-body"></p>
-            <div class="comment-actions">
-                <button class="comment-like-btn reddit-pill" title="Apoiar">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                    <span class="comment-likes-count">0</span>
-                </button>
-                <button class="comment-reply-btn reddit-pill">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg> 
-                    <span>Responder</span>
-                </button>
-                <button class="report-btn icon-btn-small inline-report" title="Denunciar"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg></button>
+                <span class="yt-meta-dot">·</span>
+                <span class="comment-time yt-time"></span>
             </div>
         </div>
-        <div class="comment-replies-container"></div>
+        <div class="yt-comment-content-wrapper">
+            <div class="yt-comment-text-container">
+                <div class="comment-body yt-text"></div>
+                <button class="yt-read-more hidden">Ler mais</button>
+            </div>
+            <div class="comment-actions yt-actions">
+                <button class="comment-like-btn yt-action-btn" title="Curtir">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                    <span class="comment-likes-count yt-action-count">0</span>
+                </button>
+                <button class="comment-reply-btn yt-action-btn" title="Responder">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                </button>
+                <button class="report-btn yt-action-btn inline-report" title="Denunciar">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                </button>
+            </div>
+        </div>
+        <div class="yt-replies-wrapper">
+            <div class="yt-thread-line hidden"></div>
+            <div class="comment-replies-container yt-replies"></div>
+        </div>
     </div>
 </template>
 

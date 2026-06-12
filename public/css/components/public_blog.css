@@ -1,0 +1,110 @@
+/* ==========================================================================
+   PÁGINA DE BLOG (VISÃO PÚBLICA)
+   ========================================================================== */
+
+.container-blog {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Post em Destaque (Topo) */
+.post-destaque {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+    align-items: center;
+    margin-bottom: 80px;
+    text-decoration: none;
+    color: inherit;
+}
+.post-destaque img {
+    width: 100%;
+    border-radius: 16px;
+    object-fit: cover;
+    height: 350px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+.post-destaque-texto span {
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--verde-escuro);
+    margin-bottom: 10px;
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.post-destaque-texto h2 {
+    font-family: var(--font-titulos);
+    font-size: 32px;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+    line-height: 1.2;
+}
+.post-destaque-texto p {
+    font-size: 18px;
+    line-height: 1.7;
+    color: var(--cinza-texto);
+}
+
+/* Grid de Posts Menores */
+.post-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+}
+
+.post-card {
+    background-color: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid #eee;
+}
+.post-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+}
+.post-card a {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.post-card img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+}
+.post-card-conteudo {
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+.post-card-conteudo h3 {
+    font-family: var(--font-titulos);
+    margin-top: 0;
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 10px;
+    line-height: 1.3;
+}
+.post-card-conteudo p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--cinza-texto);
+    margin-bottom: 0;
+}
+
+/* Responsividade do Blog */
+@media (min-width: 768px) {
+    .post-destaque { grid-template-columns: 1fr 1fr; }
+    .post-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 992px) {
+    .post-grid { grid-template-columns: repeat(3, 1fr); }
+}

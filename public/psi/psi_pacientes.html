@@ -210,8 +210,6 @@
             display: flex;
             flex-direction: column;
             height: auto;
-            /* Garante que o calendário não fique escondido pela navegação mobile */
-            padding-bottom: 80px;
         }
         
         .patient-controls-row {
@@ -1009,7 +1007,7 @@
         // Isso resolve o bug do calendário não aparecer quando o usuário sai e volta para a aba.
         window.calendarApi = null;
 
-                window.currentMode = 'agenda';
+        window.currentMode = 'agenda';
 
         // --- GLOBAL GENERIC CONFIRM ---
         window.yeloConfirm = function(title, text, confirmText, confirmColor, iconColor, callback) {
@@ -1922,21 +1920,31 @@
         formAppt.onsubmit = async (e) => {
             e.preventDefault();
             
+            const btnSubmit = formAppt.querySelector('button[type="submit"]');
+            const originalText = btnSubmit.textContent;
+            btnSubmit.textContent = 'Agendando...';
+            btnSubmit.disabled = true;
+
             const type = document.getElementById('appt-type').value;
             const patientName = selectPatient.value;
             const patient = patients.find(p => p.name === patientName);
             const date = document.getElementById('appt-date').value;
             const timeValue = document.getElementById('appt-time').value;
+            const recurrence = document.getElementById('appt-recurrence').value;
             
             if (type === 'session' && (!patientName || !patient)) {
                 if(window.showToast) window.showToast('Selecione um paciente para o agendamento.', 'error');
                 else alert('Selecione um paciente.');
+                btnSubmit.textContent = originalText;
+                btnSubmit.disabled = false;
                 return;
             }
             
             if (!date || !timeValue) {
                 if(window.showToast) window.showToast('Preencha a data e o horário.', 'error');
                 else alert('Preencha a data e o horário.');
+                btnSubmit.textContent = originalText;
+                btnSubmit.disabled = false;
                 return;
             }
 
@@ -1945,34 +1953,63 @@
             const startDt = new Date(startStr);
             const endDt = new Date(startDt.getTime() + 60 * 60 * 1000); // +1 hora
 
-            try {
-                const res = await fetch(`${BASE_URL}/api/appointments`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` 
-                    },
-                    body: JSON.stringify({
-                        title: type === 'available' ? 'Horário Disponível' : patient.name,
-                        start: startDt.toISOString(),
-                        end: endDt.toISOString(),
-                        patientId: type === 'available' ? null : patient.id,
-                        phone: (type === 'session' && patient) ? patient.phone : null,
-                        status: type === 'available' ? 'available' : 'scheduled',
-                        value: (type === 'session' && patient) ? (patient.sessionValue || 0) : 0
-                    })
-                });
+            const occurrences = [];
+            // Cria eventos para 5 anos (simulando "infinitamente" de forma segura para o servidor)
+            const occCount = recurrence === 'weekly' ? 260 : (recurrence === 'biweekly' ? 130 : 1);
+            const stepDays = recurrence === 'weekly' ? 7 : (recurrence === 'biweekly' ? 14 : 0);
 
-                if (res.ok) {
+            for (let i = 0; i < occCount; i++) {
+                const currentStart = new Date(startDt);
+                currentStart.setDate(currentStart.getDate() + (i * stepDays));
+                
+                const currentEnd = new Date(endDt);
+                currentEnd.setDate(currentEnd.getDate() + (i * stepDays));
+
+                occurrences.push({
+                    title: type === 'available' ? 'Horário Disponível' : patient.name,
+                    start: currentStart.toISOString(),
+                    end: currentEnd.toISOString(),
+                    patientId: type === 'available' ? null : patient.id,
+                    phone: (type === 'session' && patient) ? patient.phone : null,
+                    status: type === 'available' ? 'available' : 'scheduled',
+                    value: (type === 'session' && patient) ? (patient.sessionValue || 0) : 0
+                });
+            }
+
+            try {
+                // Envia as requisições em pequenos lotes (chunks) para não sobrecarregar o banco de dados
+                const results = [];
+                const chunkSize = 15;
+                for (let i = 0; i < occurrences.length; i += chunkSize) {
+                    const chunk = occurrences.slice(i, i + chunkSize);
+                    const promises = chunk.map(payload => 
+                        fetch(`${BASE_URL}/api/appointments`, {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}` 
+                            },
+                            body: JSON.stringify(payload)
+                        })
+                    );
+                    const chunkResults = await Promise.all(promises);
+                    results.push(...chunkResults);
+                }
+
+                const allOk = results.every(res => res.ok);
+
+                if (allOk) {
                     fetchData(); // Recarrega calendário
                     closeApptModal();
-                    if(window.showToast) window.showToast(type === 'available' ? 'Horário disponível criado.' : 'Agendado e notificado!', 'success');
+                    if(window.showToast) window.showToast(type === 'available' ? 'Horário(s) disponível(is) criado(s).' : 'Agendado(s) e notificado!', 'success');
                 } else {
-                    const errData = await res.json();
-                    if(window.showToast) window.showToast('Erro ao criar agendamento: ' + (errData.error || 'Verifique os dados.'), 'error'); else alert('Erro ao criar agendamento.');
+                    if(window.showToast) window.showToast('Falha em alguns agendamentos.', 'error'); else alert('Erro ao criar agendamentos.');
                 }
             } catch (e) {
                 if(window.showToast) window.showToast('Erro ao agendar.', 'error'); else alert('Erro ao agendar.');
+            } finally {
+                btnSubmit.textContent = originalText;
+                btnSubmit.disabled = false;
             }
         };
 

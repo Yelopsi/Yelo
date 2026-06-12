@@ -24,9 +24,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.documentElement.style.backgroundRepeat = 'repeat';
 
     let currentSearchId = null; // Guarda o ID do rascunho
+    
+    // Pré-carrega a página de resultados no cache do navegador para transição instantânea
+    const prefetchLink = document.createElement('link');
+    prefetchLink.rel = 'prefetch';
+    prefetchLink.href = '/resultados';
+    document.head.appendChild(prefetchLink);
 
     const questions = [
-        { id: 'boas-vindas', question: "Vamos encontrar a pessoa certa para te acompanhar nesta jornada.", subtitle: "Responda a algumas perguntas para começarmos.", type: 'welcome' },
+        { id: 'boas-vindas', question: "Vamos encontrar a pessoa certa para te acompanhar nesta jornada.", subtitle: "Responda ao nosso questionário. É rápido, seguro e direto ao ponto. Em menos de 1 minuto, encontramos o seu profissional ideal.", type: 'welcome' },
         { id: 'idade', question: "Para começarmos, qual a sua faixa etária?", type: 'choice', choices: ["Menor de 18 anos", "18-24 anos", "25-34 anos", "35-44 anos", "45-54 anos", "55+ anos"], required: true },
         { id: 'pref_genero_prof', question: "Você tem preferência pelo gênero do(a) profissional?", subtitle: "Sua segurança e conforto são a nossa prioridade.", type: 'choice', choices: ["Indiferente", "Masculino", "Feminino", "Não-binário"], required: true },
         { id: 'temas', question: "O que te motivou a procurar terapia agora?", subtitle: "Selecione os temas que você gostaria de explorar.", type: 'multiple-choice', scrollable: true, choices: ["Ansiedade ou Estresse", "Depressão ou Tristeza", "Relacionamentos", "Carreira e Trabalho", "Autoestima", "Luto ou Traumas", "Autoconhecimento", "Outro"], required: true },
@@ -35,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'modalidade_atendimento', question: "Como você prefere ser atendido(a)?", type: 'choice', choices: ["Online", "Presencial", "Indiferente (Online ou Presencial)"], required: true },
         { id: 'cep', question: "Qual o seu CEP?", subtitle: "Para encontrarmos profissionais perto de você.", type: 'text', placeholder: "00000-000", required: true, inputMode: 'numeric' },
         { id: 'nome', question: "Para finalizar, como podemos te chamar? (Opcional)", subtitle: "Isso nos ajuda a entregar uma experiência personalizada para você.", type: 'text', placeholder: "Digite o seu nome ou apelido", required: false, autocomplete: 'off', autofocus: true },
-        { id: 'final', type: 'final', question: "Tudo pronto, [NOME]!", subtitle: "Estamos cruzando as suas respostas para encontrar as conexões mais significativas. Em instantes, você verá as suas recomendações."},
+        { id: 'final', type: 'final', question: "Tudo pronto, [NOME]!", subtitle: "Estamos cruzando as suas respostas para encontrar as conexões mais significativas. Em instantes, você verá as suas recomendações.<br><br><div style=\"display:flex; justify-content:center; margin-top:20px;\"><div style=\"width: 45px; height: 45px; border: 4px solid rgba(255,255,255,0.2); border-top-color: #FFEE8C; border-radius: 50%; animation: spinYelo 1s linear infinite;\"></div></div><style>@keyframes spinYelo { to { transform: rotate(360deg); } }</style>"},
         { id: 'erro-idade', type: 'error', question: "Atenção", subtitle: "A plataforma Yelo é destinada apenas para maiores de 18 anos...", buttonText: "Entendi e Sair"}
     ];
     
@@ -46,121 +52,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalQuestions = questions.filter(q => !['welcome', 'final', 'error', 'thank-you', 'cep'].includes(q.type)).length; 
 
     // =====================================================================
-    // FUNÇÃO createSlideHTML CORRIGIDA
-    // =====================================================================
-    function createSlideHTML(questionData, index) { 
-        let contentHTML = '', navHTML = ''; 
-        const isFirstStep = questions.findIndex(q => q.type !== 'welcome') === index; 
-        
-        switch (questionData.type) { 
-            case 'text': case 'tel': {
-                const inputModeAttr = questionData.inputMode ? `inputmode="${questionData.inputMode}"` : '';
-                const autocompleteAttr = questionData.autocomplete ? `autocomplete="${questionData.autocomplete}"` : '';
-                const autofocusAttr = questionData.autofocus ? 'autofocus' : '';
-                contentHTML = `<div class="input-wrapper"><input type="${questionData.type}" id="input-${questionData.id}" class="text-input" placeholder="${questionData.placeholder}" ${inputModeAttr} ${autocompleteAttr} ${autofocusAttr}>
-                <span class="enter-hint">Pressione <strong>Enter ↵</strong></span></div>`; 
-                if (questionData.footer) {
-                    contentHTML += `<p style="margin-top: 12px; font-size: 0.85rem; opacity: 0.8; text-align: center; line-height: 1.4;">${questionData.footer}</p>`;
-                }
-                break; 
-            }
-            case 'choice': case 'multiple-choice': {
-                const choicesClass = questionData.scrollable ? 'options-grid scrollable' : 'options-grid'; 
-                const buttonClass = questionData.type === 'multiple-choice' ? 'choice-button multi-choice' : 'choice-button'; 
-                contentHTML = `<div class="${choicesClass}">${questionData.choices.map(choice => `<button class="${buttonClass}" data-value="${choice}">${choice}</button>`).join('')}</div>`; 
-                break;
-            }
-            case 'rating': {
-                // Definição do Ícone SVG (Estrela vazada)
-                const starIcon = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
-
-                contentHTML = `
-                <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
-                    <div class="rating-stars">
-                        <input type="radio" id="star5" name="avaliacao" value="5" />
-                        <label for="star5">${starIcon}</label>
-                        
-                        <input type="radio" id="star4" name="avaliacao" value="4" />
-                        <label for="star4">${starIcon}</label>
-                        
-                        <input type="radio" id="star3" name="avaliacao" value="3" />
-                        <label for="star3">${starIcon}</label>
-                        
-                        <input type="radio" id="star2" name="avaliacao" value="2" />
-                        <label for="star2">${starIcon}</label>
-                        
-                        <input type="radio" id="star1" name="avaliacao" value="1" />
-                        <label for="star1">${starIcon}</label>
-                    </div>
-
-                    <div class="form-group-questionario" style="margin-top: 5px;">
-                        <textarea id="input-feedback" class="feedback-textarea" placeholder=" " rows="2"></textarea>
-                        <label class="input-label">Deixe um elogio ou sugestão (Opcional)</label>
-                    </div>
-                </div>`;
-                break;
-            }
-            case 'welcome':
-            case 'thank-you':
-            case 'final':
-            case 'error':
-                contentHTML = ''; // Slides informativos, sem campos de input
-                break;
-            default: 
-                
-                contentHTML = ''; 
-        } 
-        
-        const backButtonHTML = !isFirstStep && !['welcome', 'final', 'error', 'thank-you'].includes(questionData.type) ? `<button class="back-button">← Voltar</button>` : ''; 
-        let nextButtonHTML = ''; 
-
-        if (questionData.type === 'welcome') { 
-            nextButtonHTML = `<button class="cta-button" data-action="next">Vamos começar</button>`; 
-        } else if (['text', 'tel', 'multiple-choice', 'rating'].includes(questionData.type)) { 
-            let buttonText = "Avançar";
-            let buttonAction = "next";
-            
-            // Personalizações do botão
-            if(questionData.id === 'nome') { buttonText = "Finalizar"; buttonAction = "finalize"; }
-            if(questionData.type === 'rating') { buttonText = "Finalizar"; buttonAction = "finalize"; } // Mantido caso decida voltar com a avaliação
-            
-            nextButtonHTML = `<button class="cta-button" data-action="${buttonAction}">${buttonText}</button>`; 
-        } else if (questionData.type === 'error') { 
-            navHTML = `<a href="/" class="cta-button">${questionData.buttonText}</a>`; 
-        } 
-        
-        const navigationClass = backButtonHTML ? '' : 'single-button'; 
-        if (!navHTML && (backButtonHTML || nextButtonHTML)) { 
-            navHTML = `<div class="navigation-buttons ${navigationClass}">${backButtonHTML}${nextButtonHTML}</div>`; 
-        } 
-        return `<div class="slide" id="slide-${questionData.id}" data-index="${index}"><div class="slide-header"><h1>${questionData.question}</h1><p class="subtitle">${questionData.subtitle || ''}</p></div><div class="slide-body ${questionData.scrollable ? 'scrollable' : ''}">${contentHTML}</div>${navHTML}</div>`; 
-    }
-
-    // =====================================================================
-    // FUNÇÃO recordAnonymousSearch
-    // =====================================================================
-    async function recordAnonymousSearch() {
-        try {
-            const { nome, ...demandAnswers } = userAnswers;
-            await fetch(`${BASE_URL}/api/demand/searches`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(demandAnswers),
-            });
-        } catch (error) {
-        }
-    }
-
-    // =====================================================================
     // FUNÇÃO finalize (CORRIGIDA: REMOVIDO BEACON, ADICIONADO FETCH SEGURO)
     // =====================================================================
     async function finalize() {
         // 1. Garante que a última resposta (estrelas) foi coletada
         collectAnswer();
 
-        // 2. Mostra a tela de "final" visualmente
-        const finalSlideIndex = questions.findIndex(q => q.id === 'final');
-        if (finalSlideIndex !== -1) goToSlide(finalSlideIndex);
+        // 2. Feedback visual instantâneo no botão
+        const currentSlideEl = document.querySelector('.slide.active');
+        const actionButton = currentSlideEl ? currentSlideEl.querySelector('.cta-button') : null;
+        if (actionButton) {
+            actionButton.textContent = "Processando...";
+            actionButton.disabled = true;
+        }
 
         try {
             // Separa dados para salvar
@@ -177,45 +81,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 demandAnswers.searchId = currentSearchId;
             }
 
-            // --- CORREÇÃO DO CONTADOR ZERO ---
-            // Envia para o banco de dados e ESPERA (await) a resposta
-            const saveResponse = await fetch(`${BASE_URL}/api/demand/searches`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(demandAnswers)
-            });
-
-            if (!saveResponse.ok) {
-                // Erro silencioso ao salvar
+            if (window.QuestionarioService) {
+                await window.QuestionarioService.saveAnswers(demandAnswers).catch(e => console.error(e));
+                window.QuestionarioService.trackMatchCompleted();
             }
 
-            // --- BUSCA O MATCH ---
-            const matchResponse = await fetch(`${BASE_URL}/api/psychologists/match`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(userAnswers),
-            });
-
-            if (!matchResponse.ok) throw new Error("Falha ao buscar recomendações");
-
-            const matchData = await matchResponse.json();
-
-            // --- DISPARO DE CONVERSÃO DO GOOGLE ADS E GA4 ---
-            try {
-                if (typeof window.gtag === 'function') {
-                    // Disparo para a conta oficial do Google Ads
-                    window.gtag('event', 'conversion', {'send_to': 'AW-11236864912/hOYjCPO1lqAcEJDnk-4p'});
-                    // Disparo para o funil do GA4
-                    window.gtag('event', 'match_concluido');
-                }
-            } catch (trackingError) {
-            }
-
-            // Pequena pausa dramática (Reduzida pois o servidor agora já faz o cálculo real)
-            await new Promise(r => setTimeout(r, 300));
-
-            // Salva resultados e redireciona
-            sessionStorage.setItem('matchResults', JSON.stringify(matchData));
+            // Delega a busca pesada para a página de resultados e redireciona sem atrasos
+            sessionStorage.setItem('pendingMatchAnswers', JSON.stringify(userAnswers));
+            sessionStorage.removeItem('matchResults');
             window.location.href = '/resultados';
 
         } catch (error) {
@@ -223,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 sessionStorage.setItem('matchResults', JSON.stringify({ matchTier: 'none', results: [] }));
                 window.location.href = '/resultados';
-            }, 500);
+            }, 100);
         }
     }
     
@@ -297,34 +170,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- RASTREAMENTO DE FUNIL E DESISTÊNCIAS (Google e Meta) ---
         const currentQuestion = questions[currentStep];
         if (currentQuestion) {
-            try {
-                // 1. Envia o passo atual para o Google Analytics (GA4/Ads)
-                if (typeof window.gtag === 'function') {
-                    window.gtag('event', 'passo_questionario', {
-                        'numero_pergunta': currentStep,
-                        'nome_pergunta': currentQuestion.id
-                    });
-                } else {
-                }
-                // 2. Envia o passo atual para o Facebook/Meta Pixel
-                if (typeof window.fbq === 'function') {
-                    window.fbq('trackCustom', 'PassoQuestionario', { passo: currentStep, nome_pergunta: currentQuestion.id });
-                }
-            } catch (trackingError) {
-            }
-            
-            // 3. Envia o passo atual para o Banco de Dados da Yelo (Painel Admin)
-            if (currentSearchId) {
-                const globalUtms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{}');
-                fetch(`${BASE_URL}/api/tracking/questionario-step`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        searchId: currentSearchId, 
-                        step: currentQuestion.id,
-                        utms: globalUtms
-                    })
-                }).catch(() => {});
+            if (window.QuestionarioService) {
+                window.QuestionarioService.trackStep(currentStep, currentQuestion.id, currentSearchId);
             }
         }
 
@@ -425,7 +272,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function initializeQuiz() { 
         try { 
-            slidesContainer.innerHTML = questions.map((q, i) => createSlideHTML(q, i)).join(''); 
+            const firstInteractiveIndex = questions.findIndex(q => q.type !== 'welcome');
+            slidesContainer.innerHTML = questions.map((q, i) => {
+                const isFirstStep = i === firstInteractiveIndex;
+                return window.QuestionarioUI ? window.QuestionarioUI.createSlideHTML(q, i, isFirstStep) : '';
+            }).join(''); 
         } catch (error) { 
             slidesContainer.innerHTML = "<p style='color:red; text-align:center; padding: 40px;'>Ocorreu um erro ao carregar o questionário. Tente recarregar a página.</p>"; 
             return; 
@@ -440,12 +291,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Se clicou em "Vamos começar" (primeiro slide), avisa o backend
                 if (target.matches('[data-action="next"]') && currentStep === 0) {
                     // Dispara o aviso sem travar o usuário (Fire and Forget)
-                    fetch(`${BASE_URL}/api/demand/start`, { method: 'POST' })
-                        .then(r => r.json())
-                        .then(data => { 
-                            currentSearchId = data.searchId;
-                        })
-                        .catch(e => {});
+                    if (window.QuestionarioService) {
+                        window.QuestionarioService.startSearch().then(id => { if(id) currentSearchId = id; });
+                    }
                 }
                 validateAndAdvance(); 
             } 

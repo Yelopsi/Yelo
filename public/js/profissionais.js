@@ -30,28 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
         utm_campaign: urlParams.get('utm_campaign') || ''
     };
 
-    const questions = [
-        // Etapa 1: Boas-vindas e Captura de Lead (IMEDIATA)
-        { id: 'lead-capture', type: 'lead-capture', question: "Boas-vindas à Yelo, colega.", subtitle: "Para iniciarmos sua triagem de demanda e perfil, informe seus dados básicos de contato.", buttonText: "Avançar", required: true },
-        // Etapa 2: Definição do Nicho
-        { id: 'modalidade', type: 'choice', question: "Como você prefere atender, [NOME]?", choices: ["Apenas Online", "Apenas Presencial", "Híbrido (Online e Presencial)"], required: true },
-        { id: 'cep', type: 'text', question: "Qual o CEP do seu local de atendimento?", placeholder: "CEP (ex: 12345-678)", required: true, inputMode: 'numeric' },
-        { id: 'nicho-intro', type: 'info', question: "Entendendo sua Prática e Especialidades", subtitle: "[NOME], suas respostas aqui são cruciais. Elas definem seu 'nicho de mercado' e nos permitem verificar se há uma demanda ativa de pacientes para o seu perfil." },
-        { id: 'genero_identidade', question: "Com qual gênero você se identifica?", type: 'choice', choices: ["Feminino", "Masculino", "Não-binário", "Outro"], required: true },
-        { id: 'valor_sessao_faixa', question: "Em qual faixa de preço você pretende atender?", type: 'choice', choices: ["Até R$ 50", "R$ 51 - R$ 90", "R$ 91 - R$ 150", "Acima de R$ 150"], required: true },
-        { id: 'temas_atuacao', question: "Quais são seus principais temas de atuação?", type: 'multiple-choice', scrollable: true, choices: ["Ansiedade", "Estresse", "Depressão", "Tristeza", "Relacionamentos", "Carreira", "Trabalho", "Autoestima", "Luto", "Traumas", "TDAH", "Sexualidade", "Autoconhecimento"], required: true },
-        { id: 'abordagens_tecnicas', question: "Qual a sua principal abordagem teórica?", type: 'choice', scrollable: true, choices: ["Psicanálise", "Terapia Cognitivo-Comportamental (TCC)", "Humanista // Centrada na Pessoa", "Gestalt-terapia", "Análise do Comportamento (ABA)", "Outra"], required: true },
-        { id: 'praticas_afirmativas', question: "Sua prática é afirmativa para quais comunidades ou perspectivas?", type: 'multiple-choice', scrollable: true, choices: ["LGBTQIAPN+ Friendly 🏳️‍🌈", "Faz parte da comunidade LGBTQIAPN+ / Afirmativa", "Pessoa não-branca // Prática Antirracista", "Perspectiva Feminista", "Neurodiversidade (TDAH, Autismo)", "Nenhuma específica"], required: true, buttonText: "Verificar Demanda" },
-        // Telas de Resultado Dinâmico
-        { id: 'loading', type: 'loading', question: "Analisando a demanda...", subtitle: "Estamos cruzando seus dados com as buscas de nossos pacientes. Só um instante." },
-        
-        { id: 'approved', type: 'approved', 
-          question: "Ótima notícia, [NOME]!<br>Há uma grande procura por seu perfil."
-        },
-
-        { id: 'waitlisted', type: 'waitlisted', question: "Agradecemos seu interesse na Yelo, [NOME]!", subtitle: "No momento, a busca por profissionais com seu perfil já está bem atendida. Para garantir que todos tenham sucesso, adicionamos seu perfil à lista de espera e te avisaremos no contato informado assim que surgir uma nova oportunidade.", buttonText: "Finalizar" },
-        { id: 'error', type: 'error', question: "Oops! Ocorreu um problema.", subtitle: "Não foi possível conectar ao servidor para verificar a demanda. Por favor, tente novamente em alguns instantes.", buttonText: "Tentar Novamente" }
-    ];
+    // Estrutura de dados extraída para o módulo de configuração
+    const questions = window.ProfissionaisConfig.getQuestions();
 
     let currentStep = 0;
     const userAnswers = {};
@@ -357,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     utm_campaign: utms.utm_campaign
                 };
                 // Envia para o banco silenciosamente (lista de espera funciona como repositório de leads)
-                fetch(`${BASE_URL}/api/psychologists/add-to-waitlist`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(partialLead) }).catch(() => {});
+                window.ProfissionaisAPI.captureLeadSilent(partialLead, BASE_URL);
                 
                 // --- EVENTO DE LEAD DO META PIXEL ---
                 if (typeof fbq === 'function') {
@@ -390,21 +370,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // DEBUG: Verificar payload antes de enviar
 
         try {
-            const response = await fetch(`${BASE_URL}/api/psychologists/check-demand`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(userAnswers)
-            });
-            const data = await response.json();
-
-            if (response.ok) {
-                if (data.status === 'approved') {
-                    goToSlide(questions.findIndex(q => q.id === 'approved'));
-                } else { // 'waitlisted'
-                    goToSlide(questions.findIndex(q => q.id === 'waitlisted'));
-                }
-            } else {
-                goToSlide(questions.findIndex(q => q.id === 'error'));
+            // Camada de API modularizada
+            const data = await window.ProfissionaisAPI.checkDemand(userAnswers, BASE_URL);
+            
+            if (data.status === 'approved') {
+                goToSlide(questions.findIndex(q => q.id === 'approved'));
+            } else { // 'waitlisted'
+                goToSlide(questions.findIndex(q => q.id === 'waitlisted'));
             }
         } catch (error) {
             goToSlide(questions.findIndex(q => q.id === 'error'));
@@ -419,11 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            await fetch(`${BASE_URL}/api/psychologists/add-to-waitlist`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(userAnswers)
-            });
+            await window.ProfissionaisAPI.submitToWaitlist(userAnswers, BASE_URL);
             window.location.href = 'obrigado_lista_espera.html';
         } catch (error) {
             alert("Ocorreu um erro ao salvar seu e-mail. Tente novamente.");

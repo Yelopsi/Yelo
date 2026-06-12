@@ -21,6 +21,30 @@ async function initializeAnalyticsPage() {
         }
 
         const data = await response.json();
+        
+        // Obtém o valor real cadastrado no perfil do psicólogo logado
+        if (typeof window.getPsychologistData === 'function') {
+            const psiData = window.getPsychologistData();
+            if (psiData && data.priceComparison) {
+                const isMensal = psiData.tipo_cobranca === 'mensal';
+                data.priceComparison.isMensal = isMensal;
+                
+                if (isMensal) {
+                    const realPrice = parseFloat(psiData.valor_mensal_numero);
+                    if (realPrice > 0) {
+                        data.priceComparison.myPrice = realPrice;
+                        // Ajusta as médias (baseadas em sessão) para um equivalente mensal aproximado (4 sessões)
+                        if (data.priceComparison.platformAverage && data.priceComparison.platformAverage < 500) {
+                            if (data.priceComparison.cityAverage) data.priceComparison.cityAverage *= 4;
+                            data.priceComparison.platformAverage *= 4;
+                        }
+                    }
+                } else {
+                    const realPrice = parseFloat(psiData.valor_sessao_numero);
+                    if (realPrice > 0) data.priceComparison.myPrice = realPrice;
+                }
+            }
+        }
 
         // Renderiza todos os gráficos com os dados reais
         renderPriceChart(data.priceComparison);
@@ -43,12 +67,23 @@ function renderPriceChart(data) {
         return;
     }
 
+    const tipoLabel = data.isMensal ? 'Valor Mensal' : 'Valor da Sessão';
+
+    // Tenta atualizar o título do card HTML para refletir o tipo de cobrança
+    const container = document.getElementById('price-chart-container');
+    if (container && container.previousElementSibling && container.previousElementSibling.tagName === 'P') {
+        const titleHeader = container.previousElementSibling.previousElementSibling;
+        if (titleHeader && titleHeader.querySelector('h3')) {
+            titleHeader.querySelector('h3').textContent = tipoLabel;
+        }
+    }
+
     new Chart(ctx, {
         type: 'bar',
         data: {
             labels: ['Seu Valor', 'Média (Cidade)', 'Média (Plataforma)'],
             datasets: [{
-                label: 'Valor da Sessão (R$)',
+                label: `${tipoLabel} (R$)`,
                 data: [data.myPrice, data.cityAverage, data.platformAverage],
                 backgroundColor: [
                     '#1B4332', // Verde Yelo

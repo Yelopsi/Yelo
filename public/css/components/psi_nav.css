@@ -1,0 +1,221 @@
+/* ==========================================================================
+   MÓDULO: NAVEGAÇÃO DO PAINEL (PSI)
+   (Sidebar, Top Nav, Bottom Nav, FAB)
+   ========================================================================== */
+
+/* ==========================================================================
+   1. NAVEGAÇÃO SUPERIOR (TOP NAV)
+   ========================================================================== */
+.dashboard-top-nav {
+    background-color: var(--verde-escuro);
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.top-nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    height: 70px;
+}
+.top-nav-left { display: flex; align-items: center; gap: 40px; }
+.top-nav-logo { height: 28px; cursor: pointer; transition: transform 0.2s; }
+.top-nav-logo:hover { transform: scale(1.05); }
+
+.top-menu ul { display: flex; gap: 25px; list-style: none; margin: 0; padding: 0; height: 100%; align-items: center; }
+.top-menu a { 
+    color: #adb5bd; text-decoration: none; font-weight: 600; font-size: 0.95rem; 
+    transition: color 0.2s; padding: 24px 0; border-bottom: 3px solid transparent; display: block;
+}
+.top-menu li.active a, .top-menu a:hover { color: white; border-bottom-color: var(--cor-Yelo); }
+
+.top-nav-right { display: flex; align-items: center; }
+.user-profile-nav { display: flex; align-items: center; gap: 15px; }
+#psi-sidebar-photo { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--cor-Yelo); object-fit: cover; }
+.user-nav-info { display: flex; flex-direction: column; }
+#psi-sidebar-name { font-weight: bold; font-size: 0.9rem; font-family: var(--verde-escuro); line-height: 1; margin-bottom: 3px; color: #14532d;}
+#psi-sidebar-level { font-size: 0.75rem; color: #a7f3d0; font-weight: bold; line-height: 1; }
+.nav-actions { display: flex; gap: 5px; margin-left: 10px; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 15px; }
+.nav-actions button { background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; color: white;}
+.nav-actions button:hover { opacity: 1; }
+
+@media (max-width: 992px) {
+    .desktop-only { display: none !important; }
+    .dashboard-top-nav { display: block !important; }
+}
+
+/* ==========================================================================
+   2. SIDEBAR MODERNA (APP-LIKE)
+   ========================================================================== */
+.modern-sidebar-container {
+    width: 220px;
+    background: #fcfcfc;
+    border-right: 1px solid #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh / 0.88);
+    height: calc(100dvh / 0.88);
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    padding: 12px;
+    box-sizing: border-box;
+}
+
+.sidebar-profile-modern {
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.sp-avatar-wrapper {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin-bottom: 10px;
+    border-radius: 50%;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.sp-avatar-wrapper:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.sp-avatar-wrapper::after {
+    content: '📷 Trocar';
+    position: absolute;
+    bottom: 0; left: 0; width: 100%; height: 35%;
+    background-color: rgba(27, 67, 50, 0.75);
+    color: #fff; font-size: 0.85rem; font-weight: 600;
+    display: flex; justify-content: center; align-items: flex-start;
+    padding-top: 8px; opacity: 0; transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.sp-avatar-wrapper:hover::after { opacity: 1; }
+.sp-avatar-wrapper input[type="file"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 20; }
+
+.sp-avatar {
+    width: 100% !important; height: 100% !important; border-radius: 50%; object-fit: cover;
+    border: 3px solid var(--cor-Yelo) !important; box-sizing: border-box; display: block;
+}
+
+.sidebar-profile-modern h3 {
+    margin: 0; font-size: 1.65rem !important; color: var(--verde-escuro);
+    font-family: var(--font-titulos) !important; font-weight: 700 !important; line-height: 1.2;
+}
+
+.sp-level-indicator {
+    font-size: 0.9rem !important; color: var(--verde-escuro) !important; background-color: #e8f5e9;
+    padding: 6px 14px; border-radius: 50px; font-weight: 700 !important; margin-top: 10px;
+    display: inline-block; border: 1px solid #c8e6c9;
+}
+
+.modern-sidebar-nav { flex-grow: 1; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; width: 100%; }
+.modern-sidebar-nav::-webkit-scrollbar { display: none; }
+.modern-sidebar-nav ul { list-style: none !important; padding: 0 !important; margin: 0 !important; display: flex !important; flex-direction: column !important; gap: 8px !important; flex-grow: 1; width: 100%; }
+.modern-sidebar-nav li { width: 100%; }
+
+.nav-item-modern {
+    display: flex !important; align-items: center !important; flex-direction: row !important;
+    justify-content: flex-start !important; gap: 12px; padding: 12px 20px; border-radius: 50px !important;
+    width: 100%; box-sizing: border-box; /* Garante que os botões estiquem até a borda */
+    color: var(--verde-escuro) !important; text-decoration: none; font-weight: 600; font-size: 1.25rem !important;
+    letter-spacing: 0.3px; transition: background-color 0.2s, color 0.2s; position: relative;
+}
+
+.sidebar-nav a.nav-item-modern svg { width: 26px; height: 26px; flex-shrink: 0; color: var(--verde-escuro); display: block; transition: color 0.2s; }
+.sidebar-nav a.nav-item-modern span { display: block; line-height: 1; margin-bottom: 0; padding: 0; color: var(--verde-escuro) !important; flex-grow: 1; text-align: left; font-size: 1.25rem !important; }
+
+.sidebar-nav a.nav-item-modern:hover { background: #f0f0f0; color: var(--verde-escuro) !important; }
+.sidebar-nav a.nav-item-modern:hover svg { color: var(--verde-escuro); }
+.sidebar-nav li.active a.nav-item-modern { background: #e8f5e9; color: var(--verde-escuro) !important; border-radius: 50px !important; }
+.sidebar-nav li.active a.nav-item-modern svg { opacity: 1; stroke: var(--verde-escuro); }
+.sidebar-nav li.active a.nav-item-modern::before { display: none; }
+
+/* Estilo vermelho para o botão de Sair no hover (Desktop) */
+a.nav-item-modern.btn-logout-sidebar:hover { background: #fee2e2; color: #dc2626 !important; }
+a.nav-item-modern.btn-logout-sidebar:hover svg { color: #dc2626; }
+
+@media (min-width: 992px) {
+    .dashboard-main { margin-left: 220px !important; width: calc(100% - 220px) !important; }
+    .dashboard-top-nav { display: none !important; }
+    .modern-sidebar-nav ul { gap: 6px !important; } /* Espaço vertical reduzido (itens mais próximos) */
+}
+
+@media (max-width: 992px) {
+    .modern-sidebar-container { display: none !important; }
+    .dashboard-sidebar { display: none !important; }
+}
+
+/* ==========================================================================
+   3. BOTTOM NAVIGATION (MOBILE)
+   ========================================================================== */
+.mobile-bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: calc(20px + env(safe-area-inset-bottom)) !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: calc(100% - 40px) !important;
+    max-width: 400px !important;
+    background-color: rgba(255, 255, 255, 0.90) !important;
+    backdrop-filter: blur(12px) !important;
+    border-radius: 50px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+    z-index: 9999 !important;
+    justify-content: space-around;
+    align-items: center;
+    padding: 8px 16px !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.bottom-nav-wave { display: none; }
+
+.bottom-nav-item {
+    display: flex; flex-direction: column; align-items: center;
+    text-decoration: none; color: #999; font-size: 0.65rem; gap: 2px;
+    transition: all 0.3s ease; flex: 1; min-width: 0; padding: 6px 0;
+    border-radius: 20px; overflow: hidden;
+}
+
+.bottom-nav-item span {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 15px; opacity: 1; transform: scale(1); display: block;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    width: 100%; text-align: center;
+}
+
+.bottom-nav-item svg { width: 22px; height: 22px; stroke-width: 2px; transition: transform 0.3s ease; flex-shrink: 0; }
+
+.bottom-nav-item.active { color: var(--verde-escuro); font-weight: 600; background-color: #f0fdf4; }
+.bottom-nav-item.active svg { transform: translateY(-2px); }
+
+/* --- BOTÃO HAMBÚRGUER ANTIGO E AJUSTES EXTRAS MOBILE --- */
+@media (max-width: 992px) {
+    .menu-toggle { display: none !important; }
+    body .mobile-bottom-nav { display: flex !important; }
+    .menu-text-trigger { font-family: var(--font-titulos); font-weight: 800; color: #1B4332; font-size: 1rem; letter-spacing: 1px; cursor: pointer; }
+    #desktop-menu-trigger { display: none !important; }
+}
+@media (min-width: 993px) { 
+    .menu-toggle { display: none; } 
+    .mobile-menu-trigger { display: none !important; } 
+}

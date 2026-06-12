@@ -101,7 +101,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     approach = ab;
                 }
             }
-            subtitleEl.textContent = `Psicólogo Clínico | ${approach}`;
+
+            let profTitle = "Psicólogo(a) Clínico(a)";
+            let genVal = psi.genero_identidade;
+            if (typeof genVal === 'string' && genVal.startsWith('[')) {
+                try { genVal = JSON.parse(genVal)[0]; } catch(e) {}
+            } else if (Array.isArray(genVal)) {
+                genVal = genVal[0];
+            }
+            
+            if (genVal === 'Feminino') {
+                profTitle = "Psicóloga Clínica";
+            } else if (genVal === 'Masculino') {
+                profTitle = "Psicólogo Clínico";
+            } else if (genVal === 'Não-binário' || genVal === 'Outro') {
+                profTitle = "Psicólogue Clínique";
+            }
+
+            subtitleEl.textContent = `${profTitle} | ${approach}`;
         }
 
         const crpEl = document.getElementById('psi-crp');
@@ -275,6 +292,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     // 1. Dispara tracking interno (Fire and Forget)
                     fetch(`${API_BASE_URL}/api/psychologists/${psi.slug}/whatsapp-click`, { method: 'POST' }).catch(() => {});
                     
+                    // --- Tracking específico para o Modal PLG de Conversão ---
+                    const guestName = localStorage.getItem('yelo_guest_name') || 'um paciente';
+                    fetch(`${API_BASE_URL}/api/psychologists/public/whatsapp-click-log`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ psychologistId: psi.id, guestName })
+                    }).catch(() => {});
+                    // ---------------------------------------------------------------
+
                     const goToWhatsApp = () => window.open(whatsappLink, '_blank');
                     
                     // 2. Dispara a Conversão do Google Ads com fallback seguro
@@ -309,13 +335,26 @@ document.addEventListener('DOMContentLoaded', () => {
         populateTags('psi-praticas-container', psi.praticas_inclusivas);
 
         // Avaliações
-        populateReviews(psi.reviews || []);
+        
+        // TODO: Remover mock após testes
+        let avaliacoes = psi.reviews || [];
+        if (avaliacoes.length === 0) {
+            avaliacoes = [
+                { rating: 5, comment: "Excelente profissional! Muito atencioso e me ajudou a entender minhas questões. O espaço é super acolhedor e me senti muito à vontade desde o primeiro dia. Recomendo de olhos fechados.", patientName: "Carlos Silva", createdAt: new Date().toISOString() },
+                { rating: 4, comment: "A terapia tem sido um espaço muito seguro para mim. Gosto muito da abordagem, da pontualidade e das reflexões propostas em sessão.", patientName: "Maria Oliveira", createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
+                { rating: 5, comment: "Me senti acolhida desde o primeiro momento. A escuta é muito ativa e as intervenções são pontuais e precisas. Sem dúvidas um divisor de águas no meu processo de autoconhecimento.", patientName: "Ana Clara M.", createdAt: new Date(Date.now() - 86400000 * 5).toISOString() }
+            ];
+        }
+        populateReviews(avaliacoes);
 
         // Redes Sociais
         populateSocialLinks(psi);
 
         // Configura o formulário de avaliação
         setupReviewForm(psi.id);
+        
+        // Configura modal de avaliação
+        setupReviewModal();
     }
 
     function populateTags(containerId, tagsArray) {
@@ -364,6 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function populateReviews(reviews) {
         const reviewCountSpan = document.getElementById('review-count');
         const reviewsListContainer = document.getElementById('reviews-list-container');
+        const scrollIndicator = document.getElementById('reviews-scroll-indicator');
         const ratingSummary = document.getElementById('psi-rating-summary');
         
         if (reviewCountSpan) reviewCountSpan.textContent = reviews.length;
@@ -371,6 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (reviews.length === 0) {
             if (reviewsListContainer) reviewsListContainer.innerHTML = '<p style="color: #666; font-style: italic; text-align: center;">Este profissional ainda não possui avaliações.</p>';
             if (ratingSummary) ratingSummary.innerHTML = '<span style="color: #666; font-size: 0.9rem; font-weight: 600;">Novo(a) na Yelo</span>';
+            if (scrollIndicator) scrollIndicator.style.display = 'none';
             return;
         }
 
@@ -391,7 +432,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return fullName.trim().split(/\s+/).map(n => n[0].toUpperCase() + '.').join(' ');
         };
 
-        let visibleCount = 5; // Quantidade inicial de avaliações a exibir
+        if (scrollIndicator) {
+            // Mostra o indicador de scroll se tiver mais de 1 avaliação (para rolar o carrossel)
+            scrollIndicator.style.display = reviews.length > 1 ? 'flex' : 'none';
+        }
+
+        const visibleCount = 5; // Limita a quantidade inicial no carrossel
 
         const renderList = () => {
             if (!reviewsListContainer) return;
@@ -401,7 +447,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
             reviewsToShow.forEach(review => {
                 const reviewCard = document.createElement('div');
-                reviewCard.style.cssText = 'background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 16px; padding: 20px; margin-bottom: 15px;';
+                reviewCard.style.cssText = 'background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 16px; padding: 20px; min-width: 280px; width: 280px; flex-shrink: 0; scroll-snap-align: start; cursor: pointer; transition: background 0.2s;';
+                reviewCard.onmouseover = () => { reviewCard.style.background = '#f0fdf4'; };
+                reviewCard.onmouseout = () => { reviewCard.style.background = '#f8f9fa'; };
+                reviewCard.onclick = () => { openAllReviewsView(reviews); };
                 let reviewStars = '';
                 for (let i = 1; i <= 5; i++) {
                     reviewStars += `<span style="color: ${i <= review.rating ? '#f59e0b' : '#e5e7eb'};">★</span>`;
@@ -422,16 +471,84 @@ document.addEventListener('DOMContentLoaded', () => {
             // Se houver mais avaliações do que a quantidade visível, mostra o botão
             if (reviews.length > visibleCount) {
                 const btnMore = document.createElement('button');
-                btnMore.textContent = `Ver mais avaliações (${reviews.length - visibleCount})`;
-                btnMore.style.cssText = 'display: block; margin: 20px auto 0; background: transparent; border: 2px solid var(--verde-escuro); color: var(--verde-escuro); padding: 10px 24px; border-radius: 50px; font-weight: bold; cursor: pointer; transition: all 0.2s;';
+                btnMore.textContent = `Ver todas as ${reviews.length} avaliações`;
+                btnMore.style.cssText = 'display: flex; align-items: center; justify-content: center; min-width: 200px; flex-shrink: 0; scroll-snap-align: start; background: transparent; border: 2px solid var(--verde-escuro); color: var(--verde-escuro); padding: 10px 24px; border-radius: 16px; font-weight: bold; cursor: pointer; transition: all 0.2s;';
                 btnMore.onmouseover = () => { btnMore.style.background = 'rgba(27, 67, 50, 0.05)'; };
                 btnMore.onmouseout = () => { btnMore.style.background = 'transparent'; };
-                btnMore.onclick = () => { visibleCount += 5; renderList(); };
+                btnMore.onclick = () => { openAllReviewsView(reviews); };
                 reviewsListContainer.appendChild(btnMore);
             }
         };
 
         renderList();
+    }
+
+    function openAllReviewsView(reviews) {
+        const view = document.getElementById('all-reviews-view');
+        const listContainer = document.getElementById('all-reviews-list-container');
+        const countSpan = document.getElementById('all-reviews-count');
+        const closeBtn = document.getElementById('btn-close-all-reviews');
+
+        if (!view || !listContainer) return;
+
+        // Função para converter o nome completo em iniciais
+        const getInitials = (fullName) => {
+            if (!fullName || fullName === 'Anônimo') return 'Anônimo';
+            return fullName.trim().split(/\s+/).map(n => n[0].toUpperCase() + '.').join(' ');
+        };
+
+        countSpan.textContent = reviews.length;
+        listContainer.innerHTML = '';
+
+        reviews.forEach(review => {
+            const reviewCard = document.createElement('div');
+            reviewCard.style.cssText = 'background: #fff; border: 1px solid #e9ecef; border-radius: 16px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);';
+            let reviewStars = '';
+            for (let i = 1; i <= 5; i++) {
+                reviewStars += `<span style="color: ${i <= review.rating ? '#f59e0b' : '#e5e7eb'};">★</span>`;
+            }
+            
+            const authorInitials = getInitials(review.patientName);
+            const dateStr = review.createdAt ? new Date(review.createdAt).toLocaleDateString('pt-BR') : '';
+
+            reviewCard.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                    <div>
+                        <h4 style="margin: 0 0 5px 0; font-family: var(--font-principal); color: #333; font-size: 1.05rem;">${authorInitials}</h4>
+                        <div style="font-size: 0.85rem; color: #888;">${dateStr}</div>
+                    </div>
+                    <div style="font-size: 1.1rem;">${reviewStars}</div>
+                </div>
+                <p style="margin: 10px 0 0 0; color: #444; font-size: 0.95rem; line-height: 1.6;">"${review.comment}"</p>
+            `;
+            listContainer.appendChild(reviewCard);
+        });
+
+        view.style.display = 'block';
+        document.body.style.overflow = 'hidden'; // Impede rolagem do fundo
+
+        if (closeBtn) {
+            closeBtn.onclick = () => {
+                view.style.display = 'none';
+                document.body.style.overflow = '';
+            };
+        }
+    }
+
+    function setupReviewModal() {
+        const btnOpen = document.getElementById('btn-open-review-modal');
+        const modal = document.getElementById('modal-review');
+        const btnClose = document.getElementById('btn-close-review-modal');
+        
+        if (btnOpen && modal) {
+            btnOpen.onclick = () => {
+                modal.style.display = 'flex';
+            };
+        }
+        
+        if (btnClose && modal) {
+            btnClose.onclick = () => { modal.style.display = 'none'; };
+        }
     }
 
     function showToast(message, type = 'success') {
@@ -495,6 +612,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedDraft) {
             try {
                 const { rating, comment } = JSON.parse(savedDraft);
+                const modalReview = document.getElementById('modal-review');
+                if (modalReview) modalReview.style.display = 'flex';
                 if (comment) form.querySelector('textarea[name="comentario"]').value = comment;
                 if (rating) form.querySelector(`input[name="rating"][value="${rating}"]`).checked = true;
                     } catch (e) { }
@@ -527,6 +646,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (response.ok) {
                         showToast("Avaliação enviada com sucesso!", "success");
                         localStorage.removeItem(draftKey);
+                        const modalReview = document.getElementById('modal-review');
+                        if (modalReview) modalReview.style.display = 'none';
                         setTimeout(() => window.location.reload(), 1500);
                     } else {
                         if (response.status === 409) {

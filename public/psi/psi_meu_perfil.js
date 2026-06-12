@@ -42,146 +42,6 @@
         return `${API_BASE_URL}${cleanPath}`;
     }
 
-    // --- FUNÇÕES DOS CAMPOS MULTISELECT (V3 - ESTILO BULLETS & TOGGLE) ---
-    function setupMultiselects() {
-        if (!window.multiselectBodyListener) {
-            document.body.addEventListener('click', (e) => {
-                document.querySelectorAll('.multiselect-tag.open').forEach(container => {
-                    if (!container.contains(e.target)) {
-                        container.classList.remove('open');
-                    }
-                });
-            });
-            window.multiselectBodyListener = true;
-        }
-
-        document.querySelectorAll('.multiselect-tag').forEach(container => {
-            if (container.dataset.initialized === 'true') return;
-            container.dataset.initialized = 'true';
-
-            const display = container.querySelector('.multiselect-display');
-            const optionsContainer = container.querySelector('.multiselect-options');
-            const isSingle = container.dataset.singleSelect === 'true';
-
-            display.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (container.classList.contains('disabled')) return;
-                
-                if (e.target.classList.contains('remove-tag')) {
-                    const tagVal = e.target.parentElement.dataset.value;
-                    let currentValues = getMultiselectValues(container.id);
-                    currentValues = currentValues.filter(v => v !== tagVal);
-                    updateMultiselect(container.id, currentValues);
-                    const block = container.closest('.profile-block');
-                    if (block && block.classList.contains('editing')) {
-                        container.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
-                    return;
-                }
-                
-                document.querySelectorAll('.multiselect-tag.open').forEach(other => {
-                    if (other !== container) other.classList.remove('open');
-                });
-                container.classList.toggle('open');
-                
-                if (container.classList.contains('open')) {
-                    setTimeout(() => {
-                        const rect = optionsContainer.getBoundingClientRect();
-                        if (rect.bottom > window.innerHeight) {
-                            optionsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                        }
-                    }, 50);
-                }
-            });
-
-            optionsContainer.querySelectorAll('.option').forEach(opt => {
-                opt.addEventListener('click', e => {
-                    e.stopPropagation();
-                    if (container.classList.contains('disabled')) return;
-
-                    const val = opt.dataset.value;
-                    let currentSelected = getMultiselectValues(container.id);
-
-                    if (isSingle) {
-                        currentSelected = [val];
-                        container.classList.remove('open');
-                    } else {
-                        if (currentSelected.includes(val)) {
-                            currentSelected = currentSelected.filter(v => v !== val);
-                        } else {
-                            currentSelected.push(val);
-                        }
-                    }
-                    
-                    updateMultiselect(container.id, currentSelected);
-                    
-                    const block = container.closest('.profile-block');
-                    if (block && block.classList.contains('editing')) {
-                        container.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
-                });
-            });
-        });
-    }
-
-    function updateMultiselect(containerId, rawValues) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        
-        let valuesArray = rawValues;
-        if (!valuesArray) valuesArray = [];
-        else if (typeof valuesArray === 'string') {
-            try { valuesArray = JSON.parse(valuesArray); } catch (e) { valuesArray = [valuesArray]; }
-        }
-        if (!Array.isArray(valuesArray)) valuesArray = [];
-
-        const display = container.querySelector('.multiselect-display');
-        const optionsContainer = container.querySelector('.multiselect-options');
-
-        // --- EXTERMÍNIO DEFINITIVO DE GHOST TAGS ---
-        // Se a tag tentar entrar mas não for uma opção válida e visível no HTML, ela é aniquilada.
-        if (optionsContainer) {
-            const validOptions = new Set();
-            optionsContainer.querySelectorAll('.option').forEach(opt => validOptions.add(opt.dataset.value));
-            valuesArray = valuesArray.filter(val => validOptions.has(String(val)));
-        }
-
-        container.dataset.value = JSON.stringify(valuesArray);
-        const valueSet = new Set(valuesArray.map(String));
-
-        display.innerHTML = ''; 
-        if (valueSet.size === 0) {
-            display.innerHTML = '<span class="multiselect-placeholder">Selecione...</span>';
-        } else {
-            optionsContainer.querySelectorAll('.option').forEach(opt => {
-                if (valueSet.has(opt.dataset.value)) {
-                    const tag = document.createElement('div');
-                    tag.className = 'tag';
-                    tag.dataset.value = opt.dataset.value;
-                    tag.textContent = opt.textContent;
-                    const removeBtn = document.createElement('button');
-                    removeBtn.type = 'button';
-                    removeBtn.className = 'remove-tag';
-                    removeBtn.innerHTML = '&times;';
-                    tag.appendChild(removeBtn);
-                    display.appendChild(tag);
-                }
-            });
-        }
-
-        if (optionsContainer) {
-            Array.from(optionsContainer.children).forEach(opt => {
-                opt.classList.toggle('selected', valueSet.has(opt.dataset.value));
-            });
-        }
-    }
-
-    function getMultiselectValues(containerId) {
-        const container = document.getElementById(containerId);
-        if (!container || !container.dataset.value) return [];
-        try { return JSON.parse(container.dataset.value); } catch (e) { return []; }
-    }
-
     // --- COMPONENTES ---
  
     function setupDocumentMask() {
@@ -243,9 +103,20 @@
     }
 
     // --- LÓGICA PRINCIPAL DO PERFIL ---
-    function inicializarLogicaDoPerfil() {
+    window.inicializarLogicaDoPerfil = function() {
         const profileContainer = document.getElementById('profile-blocks-container');
         if (!profileContainer) return;
+        
+        // Sincroniza com os dados globais do Dashboard (evita delay de rede e o "Carregando...")
+        if (typeof window.getPsychologistData === 'function') {
+            const globalData = window.getPsychologistData();
+            if (globalData) psychologistData = { ...psychologistData, ...globalData };
+        }
+
+        // --- DETECÇÃO DE DISPOSITIVO (Para CSS e JS Condicional) ---
+        const isMobile = window.innerWidth <= 992 || /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        document.body.classList.toggle('is-mobile', isMobile);
+        document.body.classList.toggle('is-desktop', !isMobile);
 
         originalProfileData = { ...psychologistData };
         const stickyFooter = document.getElementById('sticky-actions');
@@ -293,6 +164,26 @@
         }
 
         function populateBlockForm(data) {
+            // --- ETAPA 1: Header Hero ---
+            const avatarImg = document.getElementById('ph-avatar-img');
+            if (avatarImg) {
+                avatarImg.src = formatImageUrl(data.fotoUrl);
+                avatarImg.onerror = function() { this.src = 'https://placehold.co/150x150/e8f5e9/1B4332?text=Psi'; };
+            }
+            
+            const nameDisplay = document.getElementById('ph-nome-display');
+            if (nameDisplay) nameDisplay.textContent = data.nome || 'Seu Nome';
+            
+            const slugPreview = document.getElementById('ph-slug-preview');
+            if (slugPreview) slugPreview.textContent = data.slug || '...';
+            
+            const btnPublic = document.getElementById('btn-view-public-profile');
+            if (btnPublic && data.slug) {
+                btnPublic.href = `/${data.slug}`;
+                btnPublic.style.opacity = 1;
+                btnPublic.style.pointerEvents = 'auto';
+            }
+
             // Campos simples
             ['nome', 'email', 'crp', 'telefone', 'bio', 'slug', 'cep', 'cidade', 'estado', 'razao_social', 'formacao_desc', 'ano_inicio_experiencia'].forEach(id => {
                 const el = document.getElementById(id);
@@ -331,25 +222,108 @@
                 const desktopId = `${id}_multiselect`;
                 const nativeId = `${id}_native`;
                 const values = data[id] || [];
-
-                if (document.getElementById(desktopId)) {
-                    updateMultiselect(desktopId, values);
-                }
-                const nativeEl = document.getElementById(nativeId);
-                if (nativeEl) {
-                    const valuesArray = Array.isArray(values) ? values : (values ? [values] : []);
-                    Array.from(nativeEl.options).forEach(opt => {
-                        opt.selected = valuesArray.includes(opt.value);
-                    });
+                
+                const el = document.getElementById(id);
+                if (el) {
+                    if (el.tomselect) {
+                        el.tomselect.setValue(values, true);
+                    } else {
+                        const valuesArray = Array.isArray(values) ? values : (values ? [values] : []);
+                        Array.from(el.options).forEach(opt => {
+                            opt.selected = valuesArray.includes(opt.value);
+                        });
+                    }
                 }
             });
+            
+            updateProfileInsights();
+        }
+
+        function updateProfileInsights() {
+            const data = originalProfileData || {};
+    
+            const checks = [
+                { key: 'fotoUrl', label: 'Foto Profissional' },
+                { key: 'bio', label: 'Biografia' },
+                { key: 'temas_atuacao', label: 'Temas de Atuação' },
+                { key: 'abordagens_tecnicas', label: 'Abordagem Clínica' },
+                { key: 'valor_sessao_numero', label: 'Valor da Sessão', condition: (v) => v !== null && v !== undefined },
+                { key: 'disponibilidade_periodo', label: 'Disponibilidade' }
+            ];
+            
+            let filledCount = 0;
+            let checklistHtml = '';
+
+            checks.forEach(check => {
+                let isFilled = false;
+                const val = data[check.key];
+                
+                if (check.condition) {
+                    isFilled = check.condition(val);
+                } else {
+                    if (Array.isArray(val)) isFilled = val.length > 0;
+                    else if (typeof val === 'string') isFilled = val.trim().length > 0 && !val.includes('placehold.co');
+                    else isFilled = !!val;
+                }
+
+                if (isFilled) {
+                    filledCount++;
+                    checklistHtml += `<li class="done">✓ ${check.label}</li>`;
+                } else {
+                    checklistHtml += `<li class="pending">⚠ ${check.label}</li>`;
+                }
+            });
+            
+            const score = Math.round((filledCount / checks.length) * 100);
+            
+            const fillEl = document.getElementById('quality-progress-fill');
+            const scoreBadge = document.getElementById('quality-score-badge');
+            const checklistEl = document.getElementById('quality-checklist');
+            
+            if (fillEl) fillEl.style.width = `${score}%`;
+            if (scoreBadge) scoreBadge.textContent = `${score}/100`;
+            if (checklistEl) checklistEl.innerHTML = checklistHtml;
+            
+            const statusBadge = document.getElementById('ph-status-display');
+            if (statusBadge) {
+                if (score === 100) {
+                    statusBadge.textContent = 'Perfil Otimizado';
+                    statusBadge.style.background = '#dcfce7'; statusBadge.style.color = '#166534'; statusBadge.style.borderColor = '#bbf7d0';
+                } else if (score > 50) {
+                    statusBadge.textContent = 'Perfil Ativo';
+                    statusBadge.style.background = '#fef3c7'; statusBadge.style.color = '#b45309'; statusBadge.style.borderColor = '#fde68a';
+                } else {
+                    statusBadge.textContent = 'Perfil Incompleto';
+                    statusBadge.style.background = '#fee2e2'; statusBadge.style.color = '#b91c1c'; statusBadge.style.borderColor = '#fecaca';
+                }
+            }
+        }
+        
+        async function fetchPerformanceData() {
+            try {
+                const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/stats?period=last30days`);
+                if (res.ok) {
+                    const stats = await res.json();
+                    document.getElementById('perf-views').textContent = stats.profileViews || 0;
+                    document.getElementById('perf-clicks').textContent = stats.whatsappClicks || 0;
+                    document.getElementById('perf-favs').textContent = stats.favoritesCount || 0;
+                }
+            } catch(e) { }
         }
 
         function getBlockData(block) {
             const data = {};
             block.querySelectorAll('input, textarea, select').forEach(input => {
-                if (input.name && input.type !== 'radio' && !input.classList.contains('native-select-mobile')) {
-                    if (input.type === 'number' || input.id === 'valor_dinamico_input') {
+                if (input.name && input.type !== 'radio' && !input.classList.contains('native-select-mobile') && !input.classList.contains('ts-control') && !input.id.endsWith('-ts-control')) {
+                    if (input.tagName === 'SELECT') {
+                        if (input.tomselect) {
+                            data[input.name] = input.tomselect.getValue();
+                        } else if (input.multiple) {
+                            data[input.name] = Array.from(input.selectedOptions).map(opt => opt.value);
+                        } else {
+                            data[input.name] = input.value;
+                        }
+                    } else if (input.type === 'number' || input.id === 'valor_dinamico_input') {
                         const valStr = input.value.toString().replace(/\./g, '').replace(',', '.').trim();
                         const parsed = parseFloat(valStr);
                         data[input.name] = !isNaN(parsed) ? parsed : null;
@@ -371,28 +345,6 @@
                     data.valor_sessao_numero = null;
                 }
             }
-
-            // Multiselects
-            const isMobile = window.innerWidth <= 992;
-            block.querySelectorAll('.multiselect-tag').forEach(container => {
-                const fieldName = container.id.replace('_multiselect', '');
-                const nativeSelect = document.getElementById(fieldName + '_native');
-                
-                if (isMobile && nativeSelect) {
-                    if (nativeSelect.multiple) {
-                        data[fieldName] = Array.from(nativeSelect.selectedOptions).map(opt => opt.value);
-                    } else {
-                        data[fieldName] = nativeSelect.value;
-                    }
-                } else {
-                    const values = getMultiselectValues(container.id);
-                    if (container.dataset.singleSelect === 'true') {
-                        data[fieldName] = values.length > 0 ? values[0] : '';
-                    } else {
-                        data[fieldName] = values;
-                    }
-                }
-            });
 
             return data;
         }
@@ -459,9 +411,9 @@
                         return; // Sai deste loop e mantém o disabled no input de documento
                     }
                     el.disabled = false;
+                    if (el.tomselect) el.tomselect.enable();
                 }
             });
-            block.querySelectorAll('.multiselect-tag').forEach(el => el.classList.remove('disabled'));
             block.querySelector('.btn-edit').classList.add('hidden');
             block.querySelector('.btn-cancel').classList.remove('hidden');
             block.querySelector('.btn-save').classList.remove('hidden');
@@ -469,8 +421,10 @@
 
         function exitEditMode(block) {
             block.classList.remove('editing');
-            block.querySelectorAll('input, textarea, select').forEach(el => { el.disabled = true; });
-            block.querySelectorAll('.multiselect-tag').forEach(el => el.classList.add('disabled'));
+            block.querySelectorAll('input, textarea, select').forEach(el => { 
+                el.disabled = true; 
+                if (el.tomselect) el.tomselect.disable();
+            });
             block.querySelector('.btn-edit').classList.remove('hidden');
             block.querySelector('.btn-cancel').classList.add('hidden');
             block.querySelector('.btn-save').classList.add('hidden');
@@ -511,6 +465,7 @@
                 dirtyBlocks.delete(block.dataset.blockId);
                 updateStickyFooter();
                 setTimeout(() => exitEditMode(block), 600);
+                updateProfileInsights();
             } catch (err) {
                 setBlockState(block, 'error', err.message);
             }
@@ -540,7 +495,9 @@
             if (block && block.classList.contains('editing')) {
                 const blockId = block.dataset.blockId;
                 clearTimeout(debounceTimers[blockId]);
-                debounceTimers[blockId] = setTimeout(() => checkForChanges(block), 600);
+                debounceTimers[blockId] = setTimeout(() => { 
+                    checkForChanges(block); 
+                }, 600);
             }
         });
 
@@ -613,6 +570,7 @@
                     
                     dirtyBlocks.clear();
                     updateStickyFooter();
+                    updateProfileInsights();
                     showToast('Todas as alterações salvas!', 'success');
 
                 } catch (err) {
@@ -632,7 +590,35 @@
         // --- Inicialização ---
         setupMasks();
         setupCepSearch();
-        setupMultiselects(); // Habilita os componentes de multiselect
+        
+        if (typeof TomSelect !== 'undefined') {
+            if (!document.body.classList.contains('is-mobile')) {
+                document.querySelectorAll('select.ts-select').forEach(el => {
+                    if (!el.tomselect) {
+                        try {
+                            const tsConfig = {
+                                create: false,
+                                maxOptions: null
+                            };
+                            if (el.multiple) {
+                                tsConfig.plugins = ['remove_button'];
+                            }
+                            const ph = el.getAttribute('data-placeholder');
+                            tsConfig.placeholder = ph ? ph : 'Selecione...';
+                            
+                            new TomSelect(el, tsConfig);
+                            if (el.disabled) el.tomselect.disable();
+                        } catch (error) {
+                            console.error('Erro ao inicializar TomSelect em', el.id, error);
+                        }
+                    }
+                });
+            }
+        } else {
+            console.warn("TomSelect não está carregado no escopo global.");
+        }
+
+
         if (psychologistData) {
             populateBlockForm(psychologistData);
             profileContainer.querySelectorAll('.profile-block').forEach(block => {
@@ -641,6 +627,20 @@
                 }
             });
         }
+        
+        // Evento Copiar Link
+        const btnCopyLink = document.getElementById('btn-copy-profile-link');
+        if (btnCopyLink) {
+            btnCopyLink.addEventListener('click', () => {
+                if (originalProfileData && originalProfileData.slug) {
+                    const url = `${window.location.origin}/${originalProfileData.slug}`;
+                    navigator.clipboard.writeText(url).then(() => showToast('Link copiado para a área de transferência!', 'success'));
+                }
+            });
+        }
+        
+        // Dispara a busca dos dados do Card de Desempenho
+        fetchPerformanceData();
     }
 
     // --- INICIALIZAÇÃO DA PÁGINA ---
@@ -654,11 +654,12 @@
             });
             if (response.ok) {
                 psychologistData = await response.json();
-                inicializarLogicaDoPerfil();
+                if (window.inicializarLogicaDoPerfil) window.inicializarLogicaDoPerfil();
             } else {
                 throw new Error("Falha ao carregar dados do perfil.");
             }
         } catch (error) {
+            console.error("Erro no carregamento do Perfil:", error);
             const mainContent = document.getElementById('main-content') || document.body;
             mainContent.innerHTML = `<div class="widget" style="text-align:center; color:red;"><p>Erro ao carregar seus dados. Tente recarregar a página.</p></div>`;
         }

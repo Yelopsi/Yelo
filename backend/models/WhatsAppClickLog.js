@@ -1,0 +1,42 @@
+module.exports = (sequelize, DataTypes) => {
+    const WhatsAppClickLog = sequelize.define('WhatsAppClickLog', {
+        id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true
+        },
+        psychologistId: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        guestName: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            defaultValue: 'Visitante'
+        },
+        feedbackGiven: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false // Só vira true quando o psi responder o modal
+        },
+        contactReceived: {
+            type: DataTypes.BOOLEAN,
+            allowNull: true
+        },
+        dealClosed: {
+            type: DataTypes.STRING, // Valores esperados do front: 'yes', 'no'
+            allowNull: true
+        }
+    }, {
+        timestamps: true // Cria automaticamente createdAt (data do clique) e updatedAt
+    });
+
+    WhatsAppClickLog.associate = (models) => {
+        // Relacionamento com o psicólogo (Assumindo que seu modelo principal seja Psychologist)
+        WhatsAppClickLog.belongsTo(models.Psychologist, { 
+            foreignKey: 'psychologistId', 
+            as: 'psychologist' 
+        });
+    };
+
+    return WhatsAppClickLog;
+};

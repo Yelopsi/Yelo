@@ -1,0 +1,127 @@
+/* ==========================================================================
+   MÓDULO DE AUTENTICAÇÃO E CADASTRO
+   (Login, Registro e Wizard Questionário)
+   ========================================================================== */
+
+/* --- PÁGINAS DE LOGIN // REGISTRO --- */
+.login-main { display: flex; justify-content: center; align-items: center; padding: 80px 20px; background-color: transparent; min-height: calc(100vh - 160px); }
+.login-container { background-color: var(--branco-puro); padding: 35px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); width: 100%; max-width: 420px; text-align: center; }
+.login-titulo { color: var(--verde-escuro); margin-bottom: 30px; }
+.login-links { margin-top: 25px; }
+.login-links a { display: block; color: var(--cinza-texto); margin-top: 15px; }
+
+.social-login { display: flex; flex-direction: column; gap: 15px; }
+.btn-social { display: flex; align-items: center; justify-content: center; padding: 10px; border-radius: 8px; border: 1px solid #ccc; text-decoration: none; font-size: 15px; font-weight: bold; gap: 10px; }
+.btn-social.google { background: white; color: #444; }
+.btn-social.apple { background: black; color: white; border-color: black; }
+.btn-social svg { width: 20px; height: 20px; }
+.divisor { display: flex; align-items: center; margin: 25px 0; color: #aaa; }
+.divisor::before, .divisor::after { content: ''; flex: 1; border-bottom: 1px solid #ddd; }
+.divisor span { padding: 0 15px; font-size: 14px; }
+
+/* Role Selector (Psicólogo vs Paciente) */
+.role-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+.role-btn { flex: 1; padding: 10px; border-radius: 8px; font-weight: 700; cursor: pointer; border: 2px solid var(--verde-escuro); background-color: white; color: var(--verde-escuro); transition: all 0.3s; }
+.role-btn.active { background-color: var(--verde-escuro); color: white; }
+
+/* --- AUTENTICAÇÃO GERAL --- */
+.pagina-registro { background-color: transparent; font-family: var(--font-principal); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+.container-auth { display: flex; justify-content: center; align-items: center; width: 100%; }
+.card-auth { background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); padding: 32px 40px; width: 100%; max-width: 450px; display: flex; flex-direction: column; align-items: center; }
+.logo-auth { width: 150px; height: auto; margin-bottom: 24px; }
+.card-auth h2 { font-size: 24px; font-weight: 700; color: var(--verde-escuro); margin-bottom: 24px; text-align: center; }
+.card-auth form { width: 100%; }
+.link-auth { margin-top: 24px; font-size: 14px; text-align: center; color: #4b5563; }
+.link-auth a { color: var(--verde-escuro); font-weight: 500; text-decoration: none; }
+.link-auth a:hover { text-decoration: underline; }
+
+/* --- BOTÃO E CAMPOS DE LOGIN (Trazidos do 04-components) --- */
+.btn-login { width: auto; min-width: 180px; display: inline-block; padding: 12px 40px; background-color: var(--verde-escuro); color: var(--branco-puro); border: none; border-radius: 50px; font-family: var(--font-principal); font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: background-color 0.3s ease; }
+.btn-login:hover { background-color: #2a624d; }
+
+.password-toggle-icon { position: absolute; right: 10px; bottom: -30px; top: auto; width: 50px; height: 50px; cursor: pointer; color: #666; z-index: 5; display: flex; align-items: center; justify-content: center; }
+.password-toggle-icon svg { width: 20px; height: 20px; display: block; }
+.form-group-password-wrapper input { padding-right: 45px; }
+
+/* ==========================================================================
+   WIZARD DE CADASTRO / QUESTIONÁRIO
+   ========================================================================== */
+.pagina-questionario { background-color: var(--verde-escuro); display: flex; align-items: center; justify-content: center; min-height: 100dvh; padding: 0; box-sizing: border-box; }
+.questionario-container { width: 100%; max-width: 800px; background-color: transparent; box-shadow: none; overflow: visible; position: relative; display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
+
+.progress-bar { width: 100%; height: 4px; background-color: rgba(255, 255, 255, 0.1); position: absolute; top: 0; left: 0; z-index: 10; }
+.progress-bar-fill { height: 100%; background-color: var(--cor-Yelo); width: 0%; transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+
+.slides-container { padding: 40px 20px; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+.slide { display: none; opacity: 0; }
+.slide.active { display: block; animation: slideUpTypeform 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes slideUpTypeform { 0% { opacity: 0; transform: translateY(40px); } 100% { opacity: 1; transform: translateY(0); } }
+
+.slide.fade-out-up { animation: fadeOutUpTypeform 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes fadeOutUpTypeform { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-40px); } }
+
+.slide-header { text-align: left !important; }
+.slide-header h1 { font-family: var(--font-titulos); font-size: clamp(1.8rem, 5vw, 2.5rem); color: var(--branco-puro); margin-bottom: 15px; line-height: 1.3; }
+.slide-header .subtitle { color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; margin-bottom: 40px; line-height: 1.5; }
+
+.form-group-questionario { margin: 30px 0; }
+.text-input { width: 100%; border: none; border-bottom: 2px solid rgba(255, 255, 255, 0.3); font-size: clamp(1.5rem, 4vw, 2rem); padding: 10px 0; font-family: var(--font-principal); outline: none; background: transparent; transition: border-color 0.3s; color: var(--branco-puro); }
+.text-input:focus { border-bottom-color: var(--cor-Yelo); }
+.text-input::placeholder { color: rgba(255, 255, 255, 0.3); }
+
+.enter-hint { display: block; margin-top: 10px; font-size: 0.85rem; color: rgba(255, 255, 255, 0.5); }
+.step-counter { position: fixed; bottom: 20px; right: 20px; font-size: 0.9rem; color: rgba(255, 255, 255, 0.4); font-weight: 500; transition: opacity 0.3s; }
+
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 50% { transform: translateX(10px); } 75% { transform: translateX(-10px); } }
+.shake-error { animation: shake 0.4s ease-in-out; }
+
+.rating-stars { display: flex; flex-direction: row-reverse; justify-content: center; gap: 15px; margin: 20px 0; }
+.rating-stars input { display: none; }
+.rating-stars label { width: 45px; height: 45px; color: rgba(255, 255, 255, 0.2); cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.rating-stars label svg { width: 100%; height: 100%; fill: currentColor; }
+.rating-stars input:checked ~ label, .rating-stars label:hover, .rating-stars label:hover ~ label { color: #FFC107; transform: scale(1.15); }
+
+.feedback-textarea { width: 100%; border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 15px; font-family: var(--font-principal); font-size: 1rem; resize: vertical; background: rgba(0,0,0,0.1); color: white; }
+.input-label { color: rgba(255, 255, 255, 0.8); }
+
+/* Botões de Opção (Seleção Única/Múltipla) */
+.options-grid { display: flex; flex-direction: column; gap: 10px; max-width: 600px; }
+.choice-button { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); padding: 14px 20px; border-radius: 8px; text-align: left; font-size: 1.05rem; font-weight: 500; cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); color: var(--branco-puro); font-family: var(--font-principal); backdrop-filter: blur(4px); }
+.choice-button:hover { border-color: var(--cor-Yelo); background-color: rgba(255, 255, 255, 0.15); transform: translateX(5px); }
+
+@keyframes pulseSelect { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 238, 140, 0.7); } 50% { transform: scale(1.02); box-shadow: 0 0 0 15px rgba(255, 238, 140, 0); } 100% { transform: scale(1.02); box-shadow: 0 0 0 0 rgba(255, 238, 140, 0); } }
+.choice-button.selected { background-color: var(--cor-Yelo) !important; color: var(--verde-escuro) !important; border-color: var(--cor-Yelo) !important; font-weight: bold; animation: pulseSelect 0.4s ease-out forwards; }
+
+/* Botões de Navegação (Rodapé) */
+.navigation-buttons { display: flex; justify-content: flex-start; gap: 15px; align-items: center; margin-top: 40px; padding-top: 0; }
+.back-button { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 30px; color: rgba(255, 255, 255, 0.8); font-weight: bold; cursor: pointer; font-size: 1.1rem; padding: 12px 30px; transition: all 0.3s; }
+.back-button:hover { background: rgba(255, 255, 255, 0.2); color: white; }
+
+/* Estado TRAVADO (Menos de 50 caracteres) */
+.cta-button:disabled, #submit-question-btn:disabled {
+    background-color: #e0e0e0;
+    color: #999;
+    border: 1px solid #ccc;
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.8;
+    transform: none;
+}
+
+/* Estado PRONTO */
+.cta-button, #submit-question-btn:not(:disabled) {
+    background-color: var(--cor-Yelo);
+    color: var(--verde-escuro);
+    border: none;
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+}
+
+.cta-button:hover, #submit-question-btn:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(27, 67, 50, 0.2);
+}

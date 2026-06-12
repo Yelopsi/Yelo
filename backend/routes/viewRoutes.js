@@ -241,23 +241,29 @@ router.get('/:slug', async (req, res, next) => {
     if (reservado.some(p => slug.startsWith(p))) return next();
 
     try {
-        const psychologist = await db.Psychologist.findOne({ where: { slug: { [Op.iLike]: slug } }, attributes: { exclude: ['senha', 'resetPasswordToken', 'resetPasswordExpires', 'cpf'] } });
-        if (psychologist) {
-            const hoje = new Date(); const validade = psychologist.planExpiresAt ? new Date(psychologist.planExpiresAt) : null;
-            const isVip = psychologist.is_exempt === true;
-            if (psychologist.status === 'active' && (isVip || (validade && validade > hoje))) {
-                try {
-                    return res.render('psi_perfil_publico', { psicologo: psychologist });
-                } catch (renderErr) {
-                    // Se a renderização falhar, sai do try/catch e vai pro "404 Perfil Indisponível" abaixo!
-                }
-            }
+        const psychologist = await db.Psychologist.findOne({ 
+            where: { slug: { [Op.iLike]: slug } }, 
+            attributes: { exclude: ['senha', 'resetPasswordToken', 'resetPasswordExpires', 'cpf'] },
+            paranoid: false 
+        });
+
+        if (!psychologist) {
+            return res.status(404).render('404');
         }
 
-        // Correção de SEO (Soft 404): 
-        // Se passou pela validação de arquivos estáticos, é uma tentativa de acessar um perfil.
-        // Se não achou ou o perfil está inativo, retorna explicitamente o código HTTP 404.
-        res.status(404).render('404');
+        const hoje = new Date(); const validade = psychologist.planExpiresAt ? new Date(psychologist.planExpiresAt) : null;
+        const isVip = psychologist.is_exempt === true;
+        const isAtivoEValido = psychologist.status === 'active' && (isVip || (validade && validade > hoje));
+
+        if (psychologist.deletedAt !== null || !isAtivoEValido) {
+            return res.status(410).render('psi_inativo', { nome: psychologist.nome });
+        }
+
+        try {
+            return res.render('psi_perfil_publico', { psicologo: psychologist });
+        } catch (renderErr) {
+            return res.status(404).render('404');
+        }
     } catch (dbErr) {
         return next(dbErr);
     }

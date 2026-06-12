@@ -53,6 +53,7 @@ window.initializePage = function() {
 
             if (!res.ok) throw new Error("Falha ao buscar dados de funil");
             const data = await res.json();
+            exportData = data; // Salva os dados globais para permitir a exportação no CSV
 
             // --- 1. POPULA KPIs SUPERIORES ---
             document.getElementById('kpi-visitas').textContent = data.visitas.toLocaleString();
@@ -71,17 +72,23 @@ window.initializePage = function() {
                 { id: 'step-1', icon: '👁️', bg: '#e0f2fe', color: '#0284c7', label: '1. Acessaram o Site', value: data.visitas, parent: data.visitas, desc: 'Visualizações no Período' },
                 { id: 'step-2', icon: '🚀', bg: '#f3e8ff', color: '#7e22ce', label: '2. Iniciaram o Questionário', value: data.iniciaram, parent: data.visitas, desc: 'Clicaram em Começar' },
                 { id: 'step-3', icon: '📋', bg: '#fef3c7', color: '#d97706', label: '3. Finalizaram Questionário (Leads)', value: data.completaram, parent: data.iniciaram, desc: 'Chegaram aos Resultados' },
-                { id: 'step-4', icon: '👤', bg: '#e8f5e9', color: '#166534', label: '4. Clicaram em um Perfil', value: data.profileViews, parent: data.completaram, desc: 'Visualizaram Psicólogo' },
+                { id: 'step-4', icon: '👤', bg: '#e8f5e9', color: '#166534', label: '4. Visualizações de Perfis', value: data.profileViews, parent: data.completaram, desc: 'Acessos detalhados aos resultados' },
                 { id: 'step-5', icon: '💬', bg: '#dcfce7', color: '#15803d', label: '5. Clicaram no WhatsApp (Pacientes)', value: data.whatsappClicks, parent: data.profileViews, desc: 'Conversão Final Efetiva' }
             ].map((step, i, arr) => {
-                const rateToParent = step.parent > 0 ? ((step.value / step.parent) * 100).toFixed(1) : 0;
-                const absoluteFill = ((step.value / maxFunnel) * 100).toFixed(1);
+                const rateToParentRaw = step.parent > 0 ? (step.value / step.parent) : 0;
+                const rateToParentPct = (rateToParentRaw * 100).toFixed(1);
                 
-                let rateClass = 'rate-good';
-                if (rateToParent < 40) rateClass = 'rate-bad';
-                else if (rateToParent < 70) rateClass = 'rate-warn';
+                // Limita a largura do background a 100% para evitar quebra de layout quando há mais visualizações do que visitas
+                const absoluteFill = Math.min(100, ((step.value / maxFunnel) * 100)).toFixed(1);
 
-                const rateHtml = i === 0 ? '' : `<span class="funnel-rate ${rateClass}">${rateToParent}% da etapa anterior</span>`;
+                // Trava visualmente a porcentagem em 100% para manter a lógica estrita de funil
+                const displayPct = Math.min(100, rateToParentPct).toFixed(1);
+
+                let rateClass = 'rate-good';
+                if (displayPct < 40) rateClass = 'rate-bad';
+                else if (displayPct < 70) rateClass = 'rate-warn';
+
+                const rateHtml = i === 0 ? '' : `<span class="funnel-rate ${rateClass}">${displayPct}% da etapa anterior</span>`;
 
                 return `
                     <div class="funnel-stage">
