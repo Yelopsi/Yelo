@@ -131,6 +131,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     } catch (e) { }
 
+    // --- FIX GLOBAL PARA O BUG DO TECLADO MOBILE (iOS/Safari) ---
+    // Corrige o problema onde a tela fica "empurrada para cima" e os headers somem
+    // após o usuário digitar algo e fechar o teclado.
+    document.addEventListener('focusout', function(e) {
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+            setTimeout(() => {
+                // Dá um pequeno "empurrãozinho" para forçar o navegador a recalcular a viewport
+                window.scrollTo(window.scrollX, window.scrollY);
+            }, 100);
+        }
+    });
+
     // --- PROTEÇÃO CONTRA CÓPIA ---
 
     // 1. Desabilita o botão direito do mouse
@@ -376,3 +388,52 @@ async function checkLoginState() {
 
     container.appendChild(userEl);
 }
+
+// --- PULL TO REFRESH GLOBAL (Sensibilidade Ajustada) ---
+window.setupPullToRefresh = function() {
+    const scrollContainer = document.querySelector('.dashboard-main') || document.documentElement;
+    let startY = 0;
+    let currentY = 0;
+    let isPulling = false;
+    
+    // Distância necessária para ativar o refresh (Ajustado para 150px)
+    const PULL_THRESHOLD = 150; 
+
+    scrollContainer.addEventListener('touchstart', (e) => {
+        // Só permite o pull se a página estiver no topo absoluto
+        if (scrollContainer.scrollTop <= 0) {
+            startY = e.touches[0].clientY;
+            isPulling = true;
+        }
+    }, { passive: true });
+
+    scrollContainer.addEventListener('touchmove', (e) => {
+        if (!isPulling) return;
+        
+        currentY = e.touches[0].clientY;
+        // Se o usuário rolou o dedo para cima, cancela a puxada
+        if (currentY - startY < 0) {
+            isPulling = false;
+        }
+    }, { passive: true });
+
+    scrollContainer.addEventListener('touchend', () => {
+        if (!isPulling) return;
+        
+        const pullDistance = currentY - startY;
+        // Verifica se superou o limite de segurança
+        if (pullDistance > PULL_THRESHOLD && scrollContainer.scrollTop <= 0) {
+            if (navigator.vibrate) navigator.vibrate(50);
+            if (window.showToast) window.showToast('Recarregando...', 'info');
+            
+            setTimeout(() => {
+                window.location.reload();
+            }, 300);
+        }
+        
+        // Reset
+        isPulling = false;
+        startY = 0;
+        currentY = 0;
+    });
+};

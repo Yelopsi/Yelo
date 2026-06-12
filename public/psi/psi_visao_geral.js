@@ -124,13 +124,35 @@
             }
 
             const progress = stats.gamificationProgress || psychologistData.gamificationProgress || {};
-            const blogCount = progress.semeador || progress.blogPostCount || 0;
-            const forumCount = progress.vozAtiva || progress.forumActivityCount || 0;
-            const answersCount = progress.conselheiro || progress.answerCount || 0;
-            const interactions = forumCount + answersCount;
+            const blogCount = progress.semeador || progress.blogPostCount || stats.blogPostCount || 0;
+            const forumCount = progress.vozAtiva || progress.forumActivityCount || stats.forumPosts || 0;
+            const answersCount = progress.conselheiro || progress.answerCount || stats.answerCount || 0;
+            const commentCount = stats.forumComments || 0;
+            const interactions = forumCount + answersCount + commentCount;
 
             if(document.getElementById('kpi-artigos')) document.getElementById('kpi-artigos').innerHTML = renderFriendlyZero(blogCount, 'Nenhum');
             if(document.getElementById('kpi-interacoes')) document.getElementById('kpi-interacoes').innerHTML = renderFriendlyZero(interactions, 'Nenhuma');
+
+            // Rastreador local de interações (Frontend Fallback para datas ausentes no Backend)
+            const currentCounts = { blog: blogCount, forum: forumCount, comment: commentCount, answer: answersCount };
+            let localDates = JSON.parse(localStorage.getItem('yelo_interaction_dates') || '{}');
+            const storedCountsStr = localStorage.getItem('yelo_interaction_counts');
+
+            if (!storedCountsStr) {
+                localStorage.setItem('yelo_interaction_counts', JSON.stringify(currentCounts));
+            } else {
+                const storedCounts = JSON.parse(storedCountsStr);
+                let datesUpdated = false;
+                if (currentCounts.blog > (storedCounts.blog || 0)) { localDates.blog = new Date().toISOString(); datesUpdated = true; }
+                if (currentCounts.forum > (storedCounts.forum || 0)) { localDates.forum = new Date().toISOString(); datesUpdated = true; }
+                if (currentCounts.comment > (storedCounts.comment || 0)) { localDates.comment = new Date().toISOString(); datesUpdated = true; }
+                if (currentCounts.answer > (storedCounts.answer || 0)) { localDates.answer = new Date().toISOString(); datesUpdated = true; }
+                
+                if (datesUpdated) {
+                    localStorage.setItem('yelo_interaction_counts', JSON.stringify(currentCounts));
+                    localStorage.setItem('yelo_interaction_dates', JSON.stringify(localDates));
+                }
+            }
 
             const interactionReminderCard = document.getElementById('interaction-reminder-card');
             if (interactionReminderCard) {
@@ -196,19 +218,24 @@
                     isAdvancedPhase = true;
                     headerTitle = "🔄 Fase 3: Manutenção de Autoridade";
                     
-                    let diasSemArtigo = stats.lastInteractions?.blog ? Math.floor((new Date() - new Date(stats.lastInteractions.blog)) / (1000 * 60 * 60 * 24)) : (stats.diasDesdeUltimoArtigo !== undefined ? stats.diasDesdeUltimoArtigo : 999);
+                    const dateBlog = stats.lastInteractions?.blog || localDates.blog;
+                    const dateForum = stats.lastInteractions?.forum || localDates.forum;
+                    const dateComment = stats.lastInteractions?.comment || localDates.comment;
+                    const dateAnswer = stats.lastInteractions?.answer || localDates.answer;
+
+                    let diasSemArtigo = dateBlog ? Math.floor((new Date() - new Date(dateBlog)) / (1000 * 60 * 60 * 24)) : (stats.diasDesdeUltimoArtigo !== undefined ? stats.diasDesdeUltimoArtigo : 999);
                     
                     const interacoesForum = [
-                        stats.lastInteractions?.forum ? new Date(stats.lastInteractions.forum) : null,
-                        stats.lastInteractions?.comment ? new Date(stats.lastInteractions.comment) : null,
-                        stats.lastInteractions?.answer ? new Date(stats.lastInteractions.answer) : null
-                    ].filter(d => d !== null);
+                        dateForum ? new Date(dateForum) : null,
+                        dateComment ? new Date(dateComment) : null,
+                        dateAnswer ? new Date(dateAnswer) : null
+                    ].filter(d => d !== null && !isNaN(d.getTime()));
                     
                     let lastForumDate = interacoesForum.length > 0 ? new Date(Math.max.apply(null, interacoesForum)) : null;
                     let diasSemForum = lastForumDate ? Math.floor((new Date() - lastForumDate) / (1000 * 60 * 60 * 24)) : (stats.diasDesdeUltimaInteracao !== undefined ? stats.diasDesdeUltimaInteracao : 999);
 
                     // Fallback inteligente: Se o backend retornar null para as datas, o front-end busca as datas dos posts reais
-                    if ((!stats.lastInteractions?.blog && diasSemArtigo === 999) || (!lastForumDate && diasSemForum === 999)) {
+                    if ((!dateBlog && diasSemArtigo === 999) || (!lastForumDate && diasSemForum === 999)) {
                         try {
                             const [resBlog, resForum] = await Promise.all([
                                 apiFetch(`${API_BASE_URL}/api/psychologists/me/posts?page=1&limit=1`),
