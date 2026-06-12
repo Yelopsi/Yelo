@@ -3,6 +3,9 @@
 <head>
     <%- include('partials/head') %>
     
+    <!-- Tag Meta Viewport Essencial para Responsividade no Mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
     <!-- Garante que a origem seja enviada corretamente para o Google Sign-In -->
     <meta name="referrer" content="strict-origin-when-cross-origin">
 
@@ -17,6 +20,16 @@
     
     <link rel="stylesheet" href="/css/psi_dashboard.css">
     <style>
+        /* --- CORREÇÕES VITAIS DA PÁGINA PÚBLICA --- */
+        /* Reseta a fonte de 70% imposta pelo psi_dashboard.css para que o mobile fique em tamanho real */
+        html {
+            font-size: 100% !important; 
+        }
+        body.pagina-publica {
+            max-width: 100vw;
+            overflow-x: hidden; /* Impede a rolagem horizontal quebrando a tela do desktop */
+            zoom: 1 !important; /* Previne o zoom de 0.88v do painel logado */
+        }
         #reviews-list-container {
             display: flex;
             overflow-x: auto;
