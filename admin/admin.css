@@ -23,7 +23,7 @@
 }
 /* --- Reset Básico e Padrões --- */
 html {
-    background-color: var(--cinza-fundo);
+    background-color: #f0f2f5;
 }
 
 body.pagina-dashboard {
@@ -33,7 +33,7 @@ body.pagina-dashboard {
     zoom: 0.88; /* Zoom out de 12% para o painel administrativo */
     position: relative;
     padding-top: 0 !important; /* CORREÇÃO GLOBAL */
-    background-color: transparent !important;
+    background-color: #f0f2f5 !important;
     background-image: var(--ruido-global) !important;
     background-attachment: fixed !important;
     background-repeat: repeat !important;
@@ -74,7 +74,8 @@ html {
     background-color: var(--branco-puro);
     padding: 30px;
     border-radius: 16px;
-    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.03), 0 2px 5px rgba(0,0,0,0.02);
 }
 
 .widget h3 {

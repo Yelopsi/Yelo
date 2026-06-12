@@ -1,3 +1,30 @@
+// --- FUNÇÃO DE NOTIFICAÇÃO EM PÍLULA (TOAST) GLOBAL ---
+window.showToast = function(message, type = 'success') {
+    let container = document.getElementById('pill-notification-container');
+    
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'pill-notification-container';
+        container.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 999999; display: flex; flex-direction: column; gap: 10px; align-items: center; pointer-events: none;';
+        document.body.appendChild(container);
+    }
+
+    const pill = document.createElement('div');
+    const bgColor = type === 'success' ? '#1B4332' : '#dc2626';
+    const iconHtml = type === 'success' ? '✅' : '❌';
+
+    pill.style.cssText = `background: ${bgColor}; color: white; padding: 12px 24px; border-radius: 50px; display: flex; align-items: center; gap: 8px; font-weight: 600; box-shadow: 0 8px 20px rgba(0,0,0,0.15); font-family: sans-serif; font-size: 0.95rem; opacity: 0; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);`;
+    pill.innerHTML = `<span class="icon">${iconHtml}</span><span>${message}</span>`;
+    
+    container.appendChild(pill);
+
+    setTimeout(() => { pill.style.opacity = '1'; pill.style.transform = 'translateY(0)'; }, 10);
+    setTimeout(() => {
+        pill.style.opacity = '0'; pill.style.transform = 'translateY(20px)';
+        setTimeout(() => pill.remove(), 300);
+    }, 4500);
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     // Garante a URL base correta (Localhost ou Produção)
     const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') 
@@ -7,7 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('form-login');
     const emailInput = document.getElementById('email-login');
     const senhaInput = document.getElementById('senha-login');
-    const mensagemEl = document.getElementById('mensagem-login');
 
     // --- LIMPEZA DE SESSÃO (LOGOUT FORÇADO) ---
     // Se o usuário acessou a página de login, limpamos qualquer sessão anterior
@@ -56,7 +82,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Feedback visual
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<svg class="spin-anim" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> Autenticando...';
-            if(mensagemEl) mensagemEl.style.display = 'none';
             const email = emailInput.value.trim().toLowerCase();
             const senha = senhaInput.value;
 
@@ -138,14 +163,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     // Mensagem de sucesso
-                    if (mensagemEl) {
-                        if (finalUserType === 'patient') mensagemEl.textContent = "Bem-vindo(a), Paciente!";
-                        else if (finalUserType === 'psychologist') mensagemEl.textContent = "Bem-vindo(a), Psi!";
-                        else if (finalUserType === 'admin') mensagemEl.textContent = "Bem-vindo(a), Admin!";
-                        mensagemEl.className = 'mensagem-sucesso';
-                        mensagemEl.style.display = 'block';
-                    }
-
+                    let msgBemVindo = "Bem-vindo(a) de volta!";
+                    if (finalUserType === 'patient') msgBemVindo = "Bem-vindo(a), Paciente!";
+                    else if (finalUserType === 'psychologist') msgBemVindo = "Bem-vindo(a), Psi!";
+                    else if (finalUserType === 'admin') msgBemVindo = "Bem-vindo(a), Admin!";
+                    
+                    window.showToast(msgBemVindo, 'success');
                     // Redireciona
                     setTimeout(() => {
                         // FIX: Prioridade absoluta para Admin para evitar redirecionamentos quebrados (/admin -> /admin/login.html)
@@ -170,11 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
             } catch (error) {
-                if (mensagemEl) {
-                    mensagemEl.textContent = error.message;
-                    mensagemEl.className = 'mensagem-erro';
-                    mensagemEl.style.display = 'block';
-                }
+                window.showToast(error.message, 'error');
                 submitBtn.disabled = false;
                 submitBtn.textContent = originalBtnText;
             }

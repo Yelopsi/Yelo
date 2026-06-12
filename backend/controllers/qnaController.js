@@ -11,6 +11,24 @@ exports.createQuestion = async (req, res) => {
         if (!conteudo || conteudo.length < 10) {
             return res.status(400).json({ error: "Conteúdo muito curto." });
         }
+        
+        // 1. Gera o Título (pegando as primeiras 60 letras)
+        let title = conteudo.substring(0, 60).trim();
+        if (conteudo.length > 60) title += '...';
+
+        // 2. Gera o Slug Base
+        let baseSlug = title
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "") // Remove acentuações (é -> e)
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '') // Remove interrogações, exclamações, etc.
+            .trim()
+            .replace(/\s+/g, '-'); // Troca espaços por hifens
+
+        // 3. Adiciona um hash aleatório para unicidade no banco
+        const crypto = require('crypto');
+        const hashUnico = crypto.randomBytes(2).toString('hex');
+        const slugFinal = `${baseSlug}-${hashUnico}`;
 
         // FIX: Busca inclusive o paciente anônimo se ele estiver deletado (paranoid: false)
         // Isso evita o erro de "Unique Constraint" ao tentar recriar o e-mail
@@ -32,8 +50,16 @@ exports.createQuestion = async (req, res) => {
             });
         }
 
+        // AUTO-FIX: Garante colunas no banco antes de gravar
+        const qTable = db.Question.tableName;
+        try {
+            await db.sequelize.query(`ALTER TABLE "${qTable}" ADD COLUMN IF NOT EXISTS "title" VARCHAR(255);`);
+            await db.sequelize.query(`ALTER TABLE "${qTable}" ADD COLUMN IF NOT EXISTS "slug" VARCHAR(255);`);
+        } catch(e) {}
+
         const newQ = await db.Question.create({
-            title: "Dúvida da Comunidade",
+            title: title,
+            slug: slugFinal,
             content: conteudo,
             status: "approved",
             PatientId: patient.id,
@@ -41,7 +67,17 @@ exports.createQuestion = async (req, res) => {
             updatedAt: new Date()
         });
 
-        res.json({ success: true, message: "Pergunta enviada com sucesso!", data: newQ });
+        // FORÇA A GRAVAÇÃO POR FORA DO SEQUELIZE (Bypass de Modelo)
+        await db.sequelize.query(
+            `UPDATE "${qTable}" SET "title" = :title, "slug" = :slug WHERE id = :id`,
+            { replacements: { title, slug: slugFinal, id: newQ.id } }
+        );
+
+        // FIX: Garante que o slug seja retornado na resposta da API, mesmo que o modelo não esteja 100% sincronizado
+        const responseData = newQ.toJSON();
+        if (!responseData.slug) responseData.slug = slugFinal;
+
+        res.json({ success: true, message: "Pergunta enviada com sucesso!", data: responseData });
 
     } catch (error) {
         console.error("Erro ao criar pergunta:", error);
@@ -78,6 +114,115 @@ exports.getPublicQuestions = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Erro ao buscar perguntas." });
+    }
+};
+
+// 3. Exibir Pergunta Única (Página SEO)
+exports.getQuestionBySlug = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        
+        // AUTO-FIX: Garante que as colunas existem antes de tentar buscar
+        const qTable = db.Question.tableName;
+        try {
+            await db.sequelize.query(`ALTER TABLE "${qTable}" ADD COLUMN IF NOT EXISTS "title" VARCHAR(255);`);
+            await db.sequelize.query(`ALTER TABLE "${qTable}" ADD COLUMN IF NOT EXISTS "slug" VARCHAR(255);`);
+        } catch(e) {}
+
+        // 1. Busca o ID da pergunta usando SQL puro para evitar erro de modelo desatualizado no Sequelize
+        const rawResults = await db.sequelize.query(
+            `SELECT id, title, slug FROM "${qTable}" WHERE "slug" = :slug LIMIT 1`,
+            { replacements: { slug }, type: db.sequelize.QueryTypes.SELECT }
+        );
+
+        // Se não encontrar o slug, renderiza a página de erro 404
+        if (!rawResults || rawResults.length === 0) {
+            res.status(404);
+            return res.render('404', { url: req.originalUrl });
+        }
+
+        // 2. Com o ID em mãos, usamos o ORM para buscar a pergunta e todas as associações com segurança
+        const question = await db.Question.findByPk(rawResults[0].id, {
+            include: [
+                { model: db.Patient, required: false, attributes: ['nome'] },
+                {
+                    model: db.Answer,
+                    as: 'answers',
+                    required: false,
+                    include: [
+                        { model: db.Psychologist, as: 'psychologist', attributes: ['nome', 'fotoUrl', 'crp', 'slug'] }
+                    ]
+                }
+            ]
+        });
+
+        // 1. Converte a instância bruta do Sequelize para um objeto JavaScript puro (Evita erros no EJS)
+        const questionData = question.toJSON();
+
+         // 1.5. Injeta os dados do SQL puro que o modelo do Sequelize teimou em ignorar
+        questionData.title = rawResults[0].title;
+        questionData.slug = rawResults[0].slug;
+
+        // 2. Ordena as respostas da mais recente para a mais antiga via JavaScript
+        if (questionData.answers && questionData.answers.length > 0) {
+            questionData.answers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+        
+        // 3. Garante que a capitalização do paciente não quebre a tela
+        if (!questionData.Patient && questionData.patient) questionData.Patient = questionData.patient;
+
+        // Renderiza o arquivo pergunta_unica.ejs injetando a variável question
+        res.render('pergunta_unica', { question: questionData });
+    } catch (error) {
+        console.error("Erro ao buscar pergunta por slug:", error);
+        res.status(500).send(`
+            <div style="padding: 40px; font-family: sans-serif; color: #333;">
+                <h2 style="color: #E63946;">Erro Interno (500)</h2>
+                <p>Ocorreu um erro. Por favor, copie o texto abaixo e envie de volta para o Gemini:</p>
+                <pre style="background: #f4f4f4; padding: 20px; border-radius: 8px; overflow-x: auto; font-size: 14px; border: 1px solid #ddd;">${error.stack}</pre>
+            </div>
+        `);
+    }
+};
+
+// 4. Gerar Sitemap XML Dinâmico (SEO)
+exports.generateSitemap = async (req, res) => {
+    try {
+        const qTable = db.Question.tableName;
+        // AUTO-FIX
+        try {
+            await db.sequelize.query(`ALTER TABLE "${qTable}" ADD COLUMN IF NOT EXISTS "slug" VARCHAR(255);`);
+        } catch(e) {}
+
+        // Usa SQL puro para buscar os slugs e evitar falhas de cache do modelo
+        const questions = await db.sequelize.query(
+            `SELECT slug, "updatedAt" FROM "${qTable}" WHERE slug IS NOT NULL ORDER BY "updatedAt" DESC`,
+            { type: db.sequelize.QueryTypes.SELECT }
+        );
+
+        const frontendUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
+
+        let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+
+        // Páginas estáticas principais
+        const staticPages = ['', '/comunidade', '/ajuda', '/contato', '/questionario'];
+        staticPages.forEach(page => {
+            xml += `  <url>\n    <loc>${frontendUrl}${page}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+        });
+
+        // Páginas dinâmicas das perguntas
+        questions.forEach(q => {
+            xml += `  <url>\n    <loc>${frontendUrl}/perguntas/${q.slug}</loc>\n    <lastmod>${new Date(q.updatedAt).toISOString()}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
+        });
+
+        xml += '</urlset>';
+
+        res.header('Content-Type', 'application/xml');
+        res.send(xml);
+    } catch (error) {
+        console.error("Erro ao gerar sitemap:", error);
+        res.status(500).end();
     }
 };
 

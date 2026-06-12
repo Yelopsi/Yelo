@@ -65,10 +65,6 @@
         let currentFilter = 'all';
         let currentQuestionIdToAnswer = null;
         
-        let currentDetailsAnswers = [];
-        let currentAnswersVisibleCount = 0;
-        const ANSWERS_PER_PAGE = 5;
-
         if (!container) return;
 
         async function loadQuestions() {
@@ -201,32 +197,9 @@
                         if (templateAnswer) {
                             renderSingleAnswer(sortedAnswers[0], answersList, templateAnswer);
                         }
-
-                        if (sortedAnswers.length > 1) {
-                            const btnVerMais = document.createElement('button');
-                            btnVerMais.className = 'btn-read-more';
-                            btnVerMais.style.cssText = "background: transparent; border: none; color: #1B4332; font-weight: 600; padding: 0; margin-top: 10px; cursor: pointer; font-size: 0.9rem; text-decoration: underline;";
-                            btnVerMais.textContent = `Ver outras ${sortedAnswers.length - 1} respostas`;
-                            
-                            btnVerMais.onclick = (e) => {
-                                e.stopPropagation(); 
-                                abrirDetalhesPergunta(q);
-                            };
-                            answersList.appendChild(btnVerMais);
-                        }
                     } else {
                         answersList.innerHTML = '<div class="status-aguardando"><span style="margin-right:5px">⏳</span> Aguardando resposta...</div>';
                     }
-                }
-
-                if (cardElement) {
-                    cardElement.style.cursor = 'pointer';
-                    cardElement.onclick = (e) => {
-                        const target = e.target;
-                        if (target.closest && target.closest('button')) return;
-                        if (target.tagName === 'BUTTON') return;
-                        abrirDetalhesPergunta(q);
-                    };
                 }
 
                 const btnResponder = clone.querySelector('.btn-responder');
@@ -235,8 +208,7 @@
                 if (isAnsweredByMe) {
                     if (btnResponder) btnResponder.style.display = 'none';
                     if (cardElement) {
-                        cardElement.style.borderLeft = 'none';
-                        cardElement.style.opacity = '0.5';
+                        cardElement.classList.add('answered');
                     }
                 } else {
                     if (btnResponder) {
@@ -247,6 +219,7 @@
                             if (!modal || !textarea) return;
                             
                             currentQuestionIdToAnswer = q.id;
+                            window.currentQnaCardEl = cardElement;
                             modal.querySelector('.modal-title').textContent = `Respondendo: ${q.titulo || q.title || 'Dúvida'}`;
                             textarea.value = '';
                             checkCharCount();
@@ -275,6 +248,7 @@
                                         if(res.ok) {
                                             allQuestions = allQuestions.filter(item => item.id !== q.id);
                                             applyFiltersAndSort();
+                                            decrementUnansweredCount();
                                             if (showToast) showToast('Pergunta removida.', 'info');
                                         }
                                     } catch(e) {
@@ -331,114 +305,6 @@
             containerEl.appendChild(ansClone);
         }
 
-        function abrirDetalhesPergunta(question) {
-            const mainView = document.getElementById('qna-main-view');
-            const detailsView = document.getElementById('qna-details-view');
-            if (!mainView || !detailsView) return;
-
-            mainView.style.display = 'none';
-            detailsView.style.display = 'block';
-            window.scrollTo(0, 0);
-
-            const questionContainer = document.getElementById('qna-details-question-container');
-            const templateCard = document.getElementById('qna-card-template-psi');
-            const questionClone = templateCard.content.cloneNode(true);
-            
-            questionClone.querySelector('.qna-question-title').textContent = question.titulo || question.title || 'Dúvida da Comunidade';
-            
-            const cardBody = questionClone.querySelector('.qna-card-body');
-            if (cardBody) {
-                const questionText = question.conteudo || question.content || '';
-                cardBody.style.background = 'transparent';
-                cardBody.style.border = 'none';
-                cardBody.style.padding = '0';
-                cardBody.innerHTML = ''; 
-                
-                const threadWrapper = document.createElement('div');
-                threadWrapper.className = 'qna-conversation-thread';
-                
-                const qBubble = document.createElement('div');
-                qBubble.className = 'qna-bubble qna-bubble-question';
-                qBubble.innerHTML = `<p style="margin:0;">${formatTextContent ? formatTextContent(questionText) : questionText}</p>`;
-                threadWrapper.appendChild(qBubble);
-                
-                cardBody.appendChild(threadWrapper);
-            } else {
-                const fallbackContent = questionClone.querySelector('.qna-question-content, p, .conteudo');
-                if (fallbackContent) fallbackContent.innerHTML = formatTextContent ? formatTextContent(question.conteudo || question.content || '') : (question.conteudo || question.content || '');
-            }
-
-            const dataEnvio = new Date(question.createdAt).toLocaleDateString('pt-BR');
-            questionClone.querySelector('.qna-question-author').textContent = `Enviada em ${dataEnvio} • Paciente Anônimo`;
-
-            const ansList = questionClone.querySelector('.existing-answers-list');
-            if (ansList) ansList.remove();
-            
-            const btnResponder = questionClone.querySelector('.btn-responder');
-            if (question.respondedByMe) {
-                if (btnResponder) btnResponder.style.display = 'none';
-            } else if (btnResponder) {
-                btnResponder.onclick = () => {
-                    const modal = document.getElementById('qna-answer-modal');
-                    const textarea = document.getElementById('qna-answer-textarea');
-                    if (!modal || !textarea) return;
-                    
-                    currentQuestionIdToAnswer = question.id;
-                    modal.querySelector('.modal-title').textContent = `Respondendo: ${question.titulo || question.title || 'Dúvida'}`;
-                    textarea.value = '';
-                    checkCharCount();
-                    if (modal.parentNode !== document.body) document.body.appendChild(modal);
-                    modal.style.setProperty('display', 'flex', 'important');
-                };
-            }
-
-            // Remove botões de ignorar da visão de detalhes para não poluir
-            const btnIgnorar = questionClone.querySelector('button[title="Ignorar esta pergunta"]');
-            if (btnIgnorar) btnIgnorar.remove();
-
-            questionContainer.innerHTML = '';
-            questionContainer.appendChild(questionClone);
-
-            currentDetailsAnswers = question.answers ? question.answers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) : [];
-            currentAnswersVisibleCount = 0;
-            
-            document.getElementById('qna-details-answers-list').innerHTML = '';
-            carregarMaisRespostasDetalhes();
-
-            const btnBack = document.getElementById('btn-back-qna');
-            if (btnBack) {
-                btnBack.onclick = () => {
-                    detailsView.style.display = 'none';
-                    mainView.style.display = 'block';
-                };
-            }
-        }
-
-        function carregarMaisRespostasDetalhes() {
-            const answersList = document.getElementById('qna-details-answers-list');
-            const templateAnswer = document.getElementById('qna-existing-answer-template');
-            const btnLoadMore = document.getElementById('btn-load-more-answers');
-
-            if (!answersList || !templateAnswer) return;
-
-            const nextAnswers = currentDetailsAnswers.slice(currentAnswersVisibleCount, currentAnswersVisibleCount + ANSWERS_PER_PAGE);
-            
-            nextAnswers.forEach(ans => {
-                renderSingleAnswer(ans, answersList, templateAnswer);
-            });
-
-            currentAnswersVisibleCount += nextAnswers.length;
-
-            if (btnLoadMore) {
-                if (currentAnswersVisibleCount >= currentDetailsAnswers.length) {
-                    btnLoadMore.style.display = 'none';
-                } else {
-                    btnLoadMore.style.display = 'inline-block';
-                    btnLoadMore.onclick = carregarMaisRespostasDetalhes;
-                }
-            }
-        }
-
         function checkCharCount() {
             const textarea = document.getElementById('qna-answer-textarea');
             const charCounter = document.getElementById('qna-char-counter');
@@ -468,6 +334,21 @@
                         Nenhuma pergunta encontrada com os filtros atuais.
                     </p>
                 </div>`;
+        }
+
+        function decrementUnansweredCount() {
+            const alertBox = document.getElementById('qna-new-questions-alert');
+            if (alertBox && alertBox.style.display !== 'none') {
+                const countMatch = alertBox.innerHTML.match(/<strong>(\d+)/);
+                if (countMatch && countMatch[1]) {
+                    let count = parseInt(countMatch[1]) - 1;
+                    if (count > 0) {
+                        alertBox.innerHTML = `👋 Olá! Há <strong>${count} pergunta(s)</strong> da comunidade aguardando resposta. Responda e ganhe XP!`;
+                    } else {
+                        alertBox.style.display = 'none';
+                    }
+                }
+            }
         }
 
         const textarea = document.getElementById('qna-answer-textarea');
@@ -520,13 +401,43 @@
                             });
                         }
                         
-                        applyFiltersAndSort();
-                        
-                        // Se estiver na tela de detalhes, recarrega a pergunta para mostrar a resposta
-                        const detailsView = document.getElementById('qna-details-view');
-                        if (detailsView && detailsView.style.display === 'block' && qIndex !== -1) {
-                            abrirDetalhesPergunta(allQuestions[qIndex]);
+                        if (window.currentQnaCardEl) {
+                            window.currentQnaCardEl.classList.add('answered');
+                            
+                            const answersList = window.currentQnaCardEl.querySelector('.existing-answers-list');
+                            if (answersList) {
+                                if (answersList.querySelector('.status-aguardando')) {
+                                    answersList.innerHTML = '';
+                                }
+                                
+                                const templateAnswer = document.getElementById('qna-existing-answer-template');
+                                if (templateAnswer) {
+                                    const clone = templateAnswer.content.cloneNode(true);
+                                    
+                                    const nameEl = clone.querySelector('.answer-psi-name');
+                                    const textEl = clone.querySelector('.answer-psi-text');
+                                    const imgEl = clone.querySelector('.answer-psi-photo');
+                                    
+                                    if (nameEl) nameEl.textContent = localStorage.getItem('Yelo_user_name') || 'Você';
+                                    if (textEl) textEl.textContent = textarea.value;
+                                    if (imgEl) {
+                                        const fotoUrl = localStorage.getItem('Yelo_user_photo');
+                                        if (fotoUrl) {
+                                            imgEl.src = typeof window.formatImageUrl === 'function' ? window.formatImageUrl(fotoUrl) : fotoUrl;
+                                        } else {
+                                            imgEl.src = 'https://placehold.co/40x40/1B4332/FFFFFF?text=Psi';
+                                        }
+                                    }
+                                    
+                                    answersList.insertBefore(clone, answersList.firstChild);
+                                }
+                            }
+                            
+                            const btnIgnorar = window.currentQnaCardEl.querySelector('button[title="Ignorar esta pergunta"]');
+                            if (btnIgnorar) btnIgnorar.remove();
                         }
+                        
+                        decrementUnansweredCount();
                     } else {
                         throw new Error('Falha no envio');
                     }

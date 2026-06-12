@@ -283,7 +283,7 @@
             
             const planoKey = psychologistData.plano.toLowerCase();
             const elPreco = document.getElementById('banner-preco');
-            if(elPreco) elPreco.textContent = `${precos[planoKey] || 'R$ --'} // mês`;
+            if(elPreco) elPreco.textContent = `${precos[planoKey] || 'R$ --'} / mês`;
 
             const elData = document.getElementById('banner-renovacao');
             const elBadge = cardResumo.querySelector('.status-badge');

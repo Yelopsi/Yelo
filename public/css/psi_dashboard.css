@@ -50,6 +50,7 @@
     border: 1px solid rgba(255, 255, 255, 0.4);
     padding: 10px 20px;
     font-size: 0.9rem;
+    border-radius: 50px;
     transition: all 0.2s;
 }
 .btn-header-action:hover {
@@ -68,7 +69,8 @@
     background-color: var(--branco-puro);
     padding: 30px;
     border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    border: 1px solid #e5e7eb; /* Borda de limite físico elegante */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.03), 0 2px 5px rgba(0,0,0,0.02); /* Sombra em camadas (Layered Shadow) */
 }
 
 /* ==========================================================================
@@ -88,7 +90,7 @@ html {
 
 body.pagina-dashboard {
     font-family: var(--font-principal) !important; /* Força a fonte Inter */
-    background-color: var(--cinza-fundo) !important;
+    background-color: #f0f2f5 !important; /* Fundo 3% mais escuro para estourar o contraste do branco */
     zoom: 0.88; /* Zoom out de 12% para todo o ecossistema logado */
     background-image: var(--ruido-global) !important;
     background-attachment: fixed !important;
@@ -190,8 +192,8 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
     background: #fff; 
     padding: 20px; 
     border-radius: 16px; 
-    border: 1px solid rgba(0,0,0,0.04); 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    border: 1px solid #e5e7eb; 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.03), 0 2px 5px rgba(0,0,0,0.02);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     position: relative;
 }

@@ -26,6 +26,8 @@
         try {
             const resStats = await apiFetch(`${API_BASE_URL}/api/psychologists/me/stats?period=last30days&t=${new Date().getTime()}`);
             const stats = resStats.ok ? await resStats.json() : {};
+            
+            console.log("📊 Dados de Stats recebidos do backend:", stats);
 
             const profileViews = stats.profileViews || stats.profileAppearances || 0;
             const matchImpressions = stats.matchImpressions > 0 ? stats.matchImpressions : profileViews;
@@ -194,14 +196,40 @@
                     isAdvancedPhase = true;
                     headerTitle = "🔄 Fase 3: Manutenção de Autoridade";
                     
-                    const diasSemArtigo = stats.lastInteractions?.blog ? Math.floor((new Date() - new Date(stats.lastInteractions.blog)) / (1000 * 60 * 60 * 24)) : 999;
-                    const hasRecentArticle = diasSemArtigo <= 30;
-                    
-                    const diasSemForum = stats.lastInteractions?.forum ? Math.floor((new Date() - new Date(stats.lastInteractions.forum)) / (1000 * 60 * 60 * 24)) : 999;
+                    let diasSemArtigo = stats.lastInteractions?.blog ? Math.floor((new Date() - new Date(stats.lastInteractions.blog)) / (1000 * 60 * 60 * 24)) : (stats.diasDesdeUltimoArtigo !== undefined ? stats.diasDesdeUltimoArtigo : 999);
+                    let diasSemForum = stats.lastInteractions?.forum ? Math.floor((new Date() - new Date(stats.lastInteractions.forum)) / (1000 * 60 * 60 * 24)) : (stats.diasDesdeUltimaInteracao !== undefined ? stats.diasDesdeUltimaInteracao : 999);
+
+                    // Fallback inteligente: Se o backend retornar null para as datas, o front-end busca as datas dos posts reais
+                    if ((!stats.lastInteractions?.blog && diasSemArtigo === 999) || (!stats.lastInteractions?.forum && diasSemForum === 999)) {
+                        try {
+                            const [resBlog, resForum] = await Promise.all([
+                                apiFetch(`${API_BASE_URL}/api/psychologists/me/posts?page=1&limit=1`),
+                                apiFetch(`${API_BASE_URL}/api/forum/posts?filter=meus_posts&limit=1`)
+                            ]);
+                            
+                            if (resBlog.ok) {
+                                const blogPosts = await resBlog.json();
+                                if (blogPosts && blogPosts.length > 0) {
+                                    diasSemArtigo = Math.floor((new Date() - new Date(blogPosts[0].createdAt)) / (1000 * 60 * 60 * 24));
+                                }
+                            }
+                            
+                            if (resForum.ok) {
+                                const forumPosts = await resForum.json();
+                                if (forumPosts && forumPosts.length > 0) {
+                                    diasSemForum = Math.floor((new Date() - new Date(forumPosts[0].createdAt)) / (1000 * 60 * 60 * 24));
+                                }
+                            }
+                        } catch(e) {
+                            console.error("Erro no fallback de datas de interações:", e);
+                        }
+                    }
+
+                    const hasRecentArticle = diasSemArtigo <= 7;
                     const hasRecentForum = diasSemForum <= 7;
 
-                    stepsToRender.push({ title: hasRecentForum ? 'Interação semanal mantida' : 'Interagir na comunidade esta semana', impact: hasRecentForum ? 'Em dia!' : '🔥 Alto Impacto', completed: hasRecentForum, url: 'psi_forum.html', isRecurring: true });
-                    stepsToRender.push({ title: hasRecentArticle ? 'Artigo mensal publicado' : 'Publicar um artigo este mês', impact: hasRecentArticle ? 'Em dia!' : 'Autoridade', completed: hasRecentArticle, url: 'psi_blog.html', isRecurring: true });
+                    stepsToRender.push({ title: hasRecentForum ? 'Você marcou presença na comunidade recentemente!' : 'Já deu uma passada no fórum essa semana?', impact: hasRecentForum ? 'Em dia!' : 'Comunidade', completed: hasRecentForum, url: 'psi_forum.html', isRecurring: true });
+                    stepsToRender.push({ title: hasRecentArticle ? 'Seu último artigo está fresquinho!' : 'Alguma ideia em mente? Que tal fazer um post no blog', impact: hasRecentArticle ? 'Em dia!' : 'Autoridade', completed: hasRecentArticle, url: 'psi_blog.html', isRecurring: true });
                     
                     const impressions = stats.matchImpressions || 0;
                     const views = stats.profileViews || 0;
@@ -209,27 +237,28 @@
                     const myPrice = psychologistData.valor_sessao_numero || 0;
                     const viewToClickRate = views > 0 ? (clicks / views) : 0;
 
-                    if (impressions < 5) {
-                        stepsToRender.push({ title: 'Adicionar mais temas e especialidades para aparecer mais vezes no Match', impact: 'Maior Alcance', completed: false, url: 'psi_meu_perfil.html' });
-                    } else if (impressions >= 10 && (views / impressions) < 0.15) {
-                        stepsToRender.push({ title: 'Ajustar o início do seu texto de bio para melhorar a taxa de clique no seu perfil', impact: 'Maior Conversão', completed: false, url: 'psi_meu_perfil.html' });
+                    if (impressions >= 10 && (views / impressions) < 0.15) {
+                        stepsToRender.push({ title: 'Ajustar o início do seu texto de bio para melhorar a taxa de clique no seu perfil', impact: 'Maior Conversão', completed: false, url: 'psi_meu_perfil.html', isTip: true });
                     } else if (views >= 10 && viewToClickRate >= 0.25 && myPrice > 0 && myPrice < 130) {
-                        stepsToRender.push({ title: 'Sua conversão está excelente! Considere reajustar o valor da sessão para valorizar sua hora clínica', impact: 'Mais Faturamento', completed: false, url: 'psi_meu_perfil.html' });
+                        stepsToRender.push({ title: 'Sua conversão está excelente! Considere reajustar o valor da sessão para valorizar sua hora clínica', impact: 'Mais Faturamento', completed: false, url: 'psi_meu_perfil.html', isTip: true });
                     } else if (views >= 10 && viewToClickRate < 0.10 && myPrice > 160) {
-                        stepsToRender.push({ title: 'Muitas visitas, mas poucos contatos. Considere reduzir o valor da sessão temporariamente para atrair pacientes', impact: 'Mais Contatos', completed: false, url: 'psi_meu_perfil.html' });
+                        stepsToRender.push({ title: 'Muitas visitas, mas poucos contatos. Considere reduzir o valor da sessão temporariamente para atrair pacientes', impact: 'Mais Contatos', completed: false, url: 'psi_meu_perfil.html', isTip: true });
                     } else if (views >= 5 && viewToClickRate < 0.15) {
-                        stepsToRender.push({ title: 'Ajustar sua página pública e foto para passar mais confiança e receber mais chamadas', impact: 'Mais Contatos', completed: false, url: 'psi_meu_perfil.html' });
+                        stepsToRender.push({ title: 'Ajustar sua página pública e foto para passar mais confiança e receber mais chamadas', impact: 'Mais Contatos', completed: false, url: 'psi_meu_perfil.html', isTip: true });
                     }
 
                     stepsToRender.push({ title: 'Gestão financeira e agenda revisadas', impact: 'Organização', completed: true, url: 'psi_financeiro.html', isRecurring: true });
                     
-                    stepsToRender.sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1));
+                    stepsToRender.sort((a, b) => {
+                        if (a.isTip !== b.isTip) return a.isTip ? 1 : -1;
+                        return a.completed === b.completed ? 0 : a.completed ? 1 : -1;
+                    });
                 }
 
                 let totalTasks = 0;
                 let completedForProgress = 0;
                 
-                const validTasks = stepsToRender.filter(s => s.title !== 'Gestão financeira e agenda revisadas');
+                const validTasks = stepsToRender.filter(s => !s.isTip && s.title !== 'Gestão financeira e agenda revisadas');
                 totalTasks = validTasks.length;
                 completedForProgress = validTasks.filter(s => s.completed).length;
 
@@ -241,12 +270,17 @@
 
                 stepsToRender.forEach(step => {
                     const extraStyles = isAdvancedPhase && step.completed ? 'color: #888; text-decoration: none;' : '';
+                    
+                    const checkboxHtml = step.isTip 
+                        ? `<div class="action-checkbox tip-icon" style="border: none; background: transparent; font-size: 1.2rem; display: flex; align-items: center; justify-content: center;">💡</div>`
+                        : `<div class="action-checkbox">${step.completed ? '✓' : ''}</div>`;
+
                     const html = `
-                        <a href="#" onclick="event.preventDefault(); window.loadPage('${step.url}');" class="modern-action-item ${step.completed ? 'completed' : ''}">
-                            <div class="action-checkbox">${step.completed ? '✓' : ''}</div>
+                        <a href="#" onclick="event.preventDefault(); window.loadPage('${step.url}');" class="modern-action-item ${step.completed ? 'completed' : ''} ${step.isTip ? 'tip-item' : ''}">
+                            ${checkboxHtml}
                             <div class="action-content">
                                 <h4 class="action-title" style="${extraStyles}">${step.title}</h4>
-                                ${!step.completed 
+                                ${!step.completed || step.isTip
                                     ? `<span class="action-impact">${step.impact}</span>` 
                                     : (isAdvancedPhase ? `<p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #888;">${step.impact}</p>` : '')
                                 }

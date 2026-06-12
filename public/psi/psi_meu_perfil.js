@@ -103,9 +103,15 @@
     }
 
     // --- LÓGICA PRINCIPAL DO PERFIL ---
-    function inicializarLogicaDoPerfil() {
+    window.inicializarLogicaDoPerfil = function() {
         const profileContainer = document.getElementById('profile-blocks-container');
         if (!profileContainer) return;
+        
+        // Sincroniza com os dados globais do Dashboard (evita delay de rede e o "Carregando...")
+        if (typeof window.getPsychologistData === 'function') {
+            const globalData = window.getPsychologistData();
+            if (globalData) psychologistData = { ...psychologistData, ...globalData };
+        }
 
         // --- DETECÇÃO DE DISPOSITIVO (Para CSS e JS Condicional) ---
         const isMobile = window.innerWidth <= 992 || /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -615,7 +621,7 @@
             });
             if (response.ok) {
                 psychologistData = await response.json();
-                inicializarLogicaDoPerfil();
+                if (window.inicializarLogicaDoPerfil) window.inicializarLogicaDoPerfil();
             } else {
                 throw new Error("Falha ao carregar dados do perfil.");
             }

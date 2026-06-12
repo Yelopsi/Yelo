@@ -1,0 +1,172 @@
+<style>
+    .manual-section {
+        background: #fff;
+        border-radius: 16px;
+        padding: 30px;
+        margin-bottom: 25px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.03), 0 2px 5px rgba(0,0,0,0.02);
+    }
+    .manual-section-title {
+        color: #1B4332;
+        font-family: var(--font-titulos);
+        font-size: 1.5rem;
+        margin-top: 0;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .manual-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        border-left: 4px solid var(--verde-escuro);
+    }
+    .manual-card h4 {
+        margin: 0 0 10px 0;
+        color: #1B4332;
+        font-size: 1.1rem;
+    }
+    .manual-card p {
+        margin: 0;
+        color: #555;
+        line-height: 1.6;
+    }
+    .script-box {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        position: relative;
+    }
+    .script-box p {
+        margin: 0 0 15px 0;
+        color: #166534;
+        font-style: italic;
+        line-height: 1.6;
+    }
+    .btn-copy {
+        background: #fff;
+        border: 1px solid #22c55e;
+        color: #166534;
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-copy:hover {
+        background: #166534;
+        color: #fff;
+    }
+</style>
+
+<div class="main-header" style="margin-bottom: 20px;">
+    <div class="header-content">
+        <h1>Manual de Conversão</h1>
+        <p>Transforme um clique no WhatsApp em um vínculo terapêutico real.</p>
+    </div>
+    <button class="btn-header-action" onclick="window.loadPage('psi_clinica_hub.html')">← Voltar</button>
+</div>
+
+<div style="margin-bottom: 30px; font-size: 1.05rem; line-height: 1.6; color: #444; background: #fff; padding: 25px; border-radius: 16px; border: 1px solid #e5e7eb;">
+    <p style="margin: 0;">Este guia rápido foi criado para ajudar você, profissional de psicologia, a conduzir o primeiro contato com os pacientes que chegam através do Match da Yelo. O objetivo é reduzir a insegurança de quem busca ajuda e potencializar seus resultados na plataforma.</p>
+</div>
+
+<!-- Seção 1 -->
+<div class="manual-section fade-in-up">
+    <h3 class="manual-section-title"><span>🌱</span> 1. A Preparação do Terreno (Antes do "Oi")</h3>
+    <div class="manual-card">
+        <h4>Desative mensagens automáticas robóticas</h4>
+        <p>O WhatsApp Business permite criar mensagens de saudação, mas respostas como "Olá, digite 1 para agendar" quebram o acolhimento imediato. Se precisar automatizar por conta do volume, humanize o texto: <em>"Olá! Vi que a sua mensagem chegou. Estou em atendimento agora, mas responderei pessoalmente assim que terminar. Um abraço!"</em></p>
+    </div>
+    <div class="manual-card">
+        <h4>Atenção à sua vitrine</h4>
+        <p>Garanta que a foto do seu perfil no WhatsApp passe uma imagem profissional e empática, alinhada com a foto que o paciente acabou de ver na plataforma.</p>
+    </div>
+</div>
+
+<!-- Seção 2 -->
+<div class="manual-section fade-in-up" style="animation-delay: 0.1s;">
+    <h3 class="manual-section-title"><span>⭐</span> 2. Regras de Ouro do Atendimento Digital</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+        <div class="manual-card" style="border-left-color: #f59e0b; background: #fffbeb;">
+            <h4>⏳ A Regra das 2 Horas</h4>
+            <p>A urgência na internet é alta. Tente responder nas primeiras horas. Demorar 24 horas para dar um retorno aumenta drasticamente a chance de o paciente fechar com outro profissional.</p>
+        </div>
+        <div class="manual-card" style="border-left-color: #3b82f6; background: #eff6ff;">
+            <h4>🎙️ O Poder do Áudio Curto</h4>
+            <p>Mensagens de texto podem soar frias. Um áudio curto e gentil (15 a 30s) transmite seu tom de voz e empatia clínica. É a melhor forma de humanizar a tela do celular.</p>
+        </div>
+        <div class="manual-card" style="border-left-color: #ef4444; background: #fef2f2;">
+            <h4>🛑 O Limite Ético do Resgate</h4>
+            <p>Se o paciente visualizou e não respondeu, dê espaço. Envie apenas uma mensagem de acompanhamento no dia seguinte. Se não houver resposta, encerre de forma respeitosa.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Seção 3 -->
+<div class="manual-section fade-in-up" style="animation-delay: 0.2s;">
+    <h3 class="manual-section-title"><span>📝</span> 3. Roteiros de Sucesso (Copie e Cole)</h3>
+    <p style="margin-bottom: 20px; color: #555;">Você pode usar as mensagens abaixo como base para conduzir as conversas. Sinta-se livre para adaptar ao seu tom de voz.</p>
+    
+    <div class="script-box">
+        <h4 style="margin: 0 0 10px 0; color: #1B4332;">🧊 O Quebra-Gelo (Para a primeira mensagem do paciente)</h4>
+        <p id="script-1">"Olá, [Nome do Paciente]! Que bom que a Yelo cruzou os nossos perfis. Sei que dar esse primeiro passo de buscar terapia exige coragem, então seja muito bem-vindo(a). Me conte um pouco: o que te motivou a buscar esse espaço agora? Fique à vontade para perguntar o que quiser sobre como eu trabalho."</p>
+        <button class="btn-copy" onclick="copyToClipboard('script-1', this)">📋 Copiar</button>
+    </div>
+    <div class="script-box">
+        <h4 style="margin: 0 0 10px 0; color: #1B4332;">💰 A Ancoragem de Preço (Quando perguntam o valor logo de cara)</h4>
+        <p id="script-2">"Como viu no meu perfil, a sessão tem o valor de R$ [X] e dura 50 minutos. Mas antes de fecharmos a questão financeira, para mim é muito importante entender se eu sou a pessoa certa para te ajudar. Gostaria de me contar brevemente o que você busca nesse momento?"</p>
+        <button class="btn-copy" onclick="copyToClipboard('script-2', this)">📋 Copiar</button>
+    </div>
+    <div class="script-box">
+        <h4 style="margin: 0 0 10px 0; color: #1B4332;">🛟 O Resgate (Visualizou e sumiu há 24h)</h4>
+        <p id="script-3">"Olá, [Nome]! Passando só para deixar um abraço e dizer que sigo à disposição se você ainda estiver avaliando o início da terapia. Caso tenha ficado alguma dúvida sobre os horários ou como funciona o processo online, é só me chamar por aqui. Uma ótima semana!"</p>
+        <button class="btn-copy" onclick="copyToClipboard('script-3', this)">📋 Copiar</button>
+    </div>
+</div>
+
+<!-- Seção 4 -->
+<div class="manual-section fade-in-up" style="animation-delay: 0.3s;">
+    <h3 class="manual-section-title"><span>🤝</span> 4. O Alinhamento da Primeira Sessão</h3>
+    <div class="manual-card">
+        <h4>Seja transparente sobre o processo</h4>
+        <p>Assim que confirmar o interesse, envie um resumo claro de como a sessão vai funcionar. Informe o aplicativo (Google Meet, Zoom, WhatsApp) e a duração.</p>
+    </div>
+    <div class="manual-card">
+        <h4>Combine o formato de pagamento</h4>
+        <p>A Yelo não intermedia os pagamentos. Deixe claro no fechamento do horário se o pagamento via Pix ou transferência deve ser feito antes ou logo após a primeira sessão.</p>
+    </div>
+    <div class="manual-card">
+        <h4>Envie o link com antecedência</h4>
+        <p>Para reduzir a ansiedade do primeiro encontro online, envie o link da sala virtual com 10 a 15 minutos de antecedência.</p>
+    </div>
+</div>
+
+<script>
+    // O script embutido facilita que tudo rode via AJAX injection
+    window.copyToClipboard = function(elementId, btn) {
+        const text = document.getElementById(elementId).innerText.replace(/^"|"$/g, '');
+        navigator.clipboard.writeText(text).then(() => {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '✅ Copiado!';
+            btn.style.backgroundColor = '#16a34a';
+            btn.style.borderColor = '#16a34a';
+            btn.style.color = '#fff';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.backgroundColor = '#fff';
+                btn.style.borderColor = '#22c55e';
+                btn.style.color = '#166534';
+            }, 2500);
+        });
+    }
+</script>
