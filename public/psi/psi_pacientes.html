@@ -1000,6 +1000,28 @@
     </div>
 </div>
 
+<!-- MODAL: CONFIRMAR EXCLUSÃO DE EVENTO -->
+<div id="modal-delete-event-options" class="custom-modal-overlay" style="display: none; z-index: 200008;">
+    <div class="custom-modal-box" style="text-align: center; max-width: 400px;">
+        <div class="sheet-drag-handle"></div>
+        <div style="margin-bottom: 20px; color: #e63946;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+            </svg>
+        </div>
+        <h3 style="margin-bottom: 10px; color: #333;">Excluir Agendamento?</h3>
+        <p style="color: #666; margin-bottom: 20px; line-height: 1.5;">Como você deseja excluir este horário?</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 25px;">
+            <button id="btn-delete-only-this" style="padding: 12px 20px; border: 1px solid #e63946; background: #fff; border-radius: 8px; cursor: pointer; color: #e63946; font-weight: 600; transition: all 0.2s;">Excluir apenas este evento</button>
+            <button id="btn-delete-this-and-future" style="padding: 12px 20px; border: none; background: #e63946; border-radius: 8px; cursor: pointer; color: #fff; font-weight: bold; transition: all 0.2s;">Excluir este e os próximos futuros</button>
+        </div>
+        
+        <button id="btn-cancel-delete-event" style="padding: 10px 20px; border: none; background: transparent; cursor: pointer; color: #666; font-weight: 600; text-decoration: underline;">Cancelar</button>
+    </div>
+</div>
+
 <script>
     // --- LÓGICA DO FRONTEND (INTEGRADA) ---
     (async function() {
@@ -1105,7 +1127,7 @@
         if (calBackdrop) calBackdrop.addEventListener('click', toggleFullscreen);
 
         // --- 0. PREPARAÇÃO DO DOM (LIMPEZA E MOVER MODAIS) ---
-        const modalsToMove = ['modal-patient', 'modal-appointment', 'modal-delete-confirmation', 'modal-event-details', 'modal-generic-confirm'];
+        const modalsToMove = ['modal-patient', 'modal-appointment', 'modal-delete-confirmation', 'modal-event-details', 'modal-generic-confirm', 'modal-delete-event-options'];
         modalsToMove.forEach(modalId => {
             const modals = document.querySelectorAll(`#${modalId}`);
             let modalInMain = null;
@@ -2156,35 +2178,86 @@
 
         // Ação: Excluir Agendamento (Botão Lixeira no Modal de Detalhes)
         const btnDeleteEvent = document.getElementById('btn-delete-event');
+        const modalDeleteEventOptions = document.getElementById('modal-delete-event-options');
+        const btnDeleteOnlyThis = document.getElementById('btn-delete-only-this');
+        const btnDeleteThisAndFuture = document.getElementById('btn-delete-this-and-future');
+        const btnCancelDeleteEvent = document.getElementById('btn-cancel-delete-event');
+
         if (btnDeleteEvent) {
             btnDeleteEvent.onclick = async () => {
                 if (!currentEventId) return;
-                window.yeloConfirm(
-                    'Excluir Agendamento?',
-                    'Tem certeza que deseja excluir este agendamento? Essa ação não pode ser desfeita.',
-                    'Sim, Excluir',
-                    '#e63946',
-                    '#e63946',
-                    async () => {
-                        try {
-                            const res = await fetch(`${BASE_URL}/api/appointments/${currentEventId}`, {
-                                method: 'DELETE',
-                                headers: { 'Authorization': `Bearer ${token}` }
-                            });
-                            if (res.ok) {
-                                fetchData();
-                                modalEvent.style.display = 'none';
-                                if (window.showToast) window.showToast('Agendamento excluído.', 'success');
-                            } else {
-                                if(window.showToast) window.showToast('Erro ao excluir agendamento.', 'error'); else alert('Erro ao excluir agendamento.');
-                            }
-                        } catch (e) {
-                            if(window.showToast) window.showToast('Erro de conexão.', 'error'); else alert('Erro de conexão.');
-                        }
-                    }
-                );
+                if (modalDeleteEventOptions) {
+                    modalDeleteEventOptions.style.display = 'flex';
+                }
             };
         }
+
+        if (btnCancelDeleteEvent) {
+            btnCancelDeleteEvent.onclick = () => {
+                if (modalDeleteEventOptions) modalDeleteEventOptions.style.display = 'none';
+            };
+        }
+
+        const executeDeleteEvent = async (deleteAllFuture) => {
+            if (!currentEventId) return;
+            const evt = events.find(e => e.id == currentEventId);
+            if (!evt) return;
+
+            if (modalDeleteEventOptions) modalDeleteEventOptions.style.display = 'none';
+            modalEvent.style.display = 'none';
+            
+            try {
+                let idsToDelete = [currentEventId];
+                
+                if (deleteAllFuture) {
+                    const evtStart = new Date(evt.start);
+                    const evtDay = evtStart.getDay();
+                    const evtHours = evtStart.getHours();
+                    const evtMinutes = evtStart.getMinutes();
+                    
+                    const futureEvents = events.filter(e => {
+                        if (e.id == currentEventId) return false;
+                        if (e.patientId !== evt.patientId) return false;
+                        if (!evt.patientId && e.status !== 'available') return false;
+                        
+                        const eStart = new Date(e.start);
+                        if (eStart < evtStart) return false;
+                        
+                        // Considera como "recorrência" eventos do mesmo paciente, no mesmo dia da semana e hora
+                        if (eStart.getDay() === evtDay && 
+                            eStart.getHours() === evtHours && 
+                            eStart.getMinutes() === evtMinutes &&
+                            (e.status === 'scheduled' || e.status === 'available' || e.status === 'confirmed')) {
+                            return true;
+                        }
+                        return false;
+                    });
+                    
+                    idsToDelete = idsToDelete.concat(futureEvents.map(e => e.id));
+                }
+                
+                // Excluir em lotes de 15 para não travar a conexão
+                const chunkSize = 15;
+                for (let i = 0; i < idsToDelete.length; i += chunkSize) {
+                    const chunk = idsToDelete.slice(i, i + chunkSize);
+                    await Promise.all(chunk.map(id => 
+                        fetch(`${BASE_URL}/api/appointments/${id}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        })
+                    ));
+                }
+                
+                fetchData();
+                if (window.showToast) window.showToast(deleteAllFuture ? `${idsToDelete.length} agendamentos excluídos.` : 'Agendamento excluído.', 'success');
+                
+            } catch (e) {
+                if(window.showToast) window.showToast('Erro de conexão ao excluir.', 'error'); else alert('Erro de conexão ao excluir.');
+            }
+        };
+
+        if (btnDeleteOnlyThis) btnDeleteOnlyThis.onclick = () => executeDeleteEvent(false);
+        if (btnDeleteThisAndFuture) btnDeleteThisAndFuture.onclick = () => executeDeleteEvent(true);
 
         // Função auxiliar para reagendar ao clicar no slot
         async function realizarReagendamento(eventId, newSlot) {

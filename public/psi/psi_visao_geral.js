@@ -197,10 +197,18 @@
                     headerTitle = "🔄 Fase 3: Manutenção de Autoridade";
                     
                     let diasSemArtigo = stats.lastInteractions?.blog ? Math.floor((new Date() - new Date(stats.lastInteractions.blog)) / (1000 * 60 * 60 * 24)) : (stats.diasDesdeUltimoArtigo !== undefined ? stats.diasDesdeUltimoArtigo : 999);
-                    let diasSemForum = stats.lastInteractions?.forum ? Math.floor((new Date() - new Date(stats.lastInteractions.forum)) / (1000 * 60 * 60 * 24)) : (stats.diasDesdeUltimaInteracao !== undefined ? stats.diasDesdeUltimaInteracao : 999);
+                    
+                    const interacoesForum = [
+                        stats.lastInteractions?.forum ? new Date(stats.lastInteractions.forum) : null,
+                        stats.lastInteractions?.comment ? new Date(stats.lastInteractions.comment) : null,
+                        stats.lastInteractions?.answer ? new Date(stats.lastInteractions.answer) : null
+                    ].filter(d => d !== null);
+                    
+                    let lastForumDate = interacoesForum.length > 0 ? new Date(Math.max.apply(null, interacoesForum)) : null;
+                    let diasSemForum = lastForumDate ? Math.floor((new Date() - lastForumDate) / (1000 * 60 * 60 * 24)) : (stats.diasDesdeUltimaInteracao !== undefined ? stats.diasDesdeUltimaInteracao : 999);
 
                     // Fallback inteligente: Se o backend retornar null para as datas, o front-end busca as datas dos posts reais
-                    if ((!stats.lastInteractions?.blog && diasSemArtigo === 999) || (!stats.lastInteractions?.forum && diasSemForum === 999)) {
+                    if ((!stats.lastInteractions?.blog && diasSemArtigo === 999) || (!lastForumDate && diasSemForum === 999)) {
                         try {
                             const [resBlog, resForum] = await Promise.all([
                                 apiFetch(`${API_BASE_URL}/api/psychologists/me/posts?page=1&limit=1`),
