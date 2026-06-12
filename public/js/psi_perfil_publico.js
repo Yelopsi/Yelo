@@ -80,9 +80,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const verifiedSvg = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.79-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.758 2.746 1.9 3.42-.047.19-.074.385-.074.58 0 2.21 1.71 4.002 3.918 4.002.47 0 .92-.086 1.336-.25.52 1.335 1.828 2.25 3.337 2.25s2.816-.915 3.337-2.25c.416.164.866.25 1.336.25 2.21 0 3.918-1.792 3.918-4 0-.195-.027-.39-.074-.58 1.14-.675 1.9-1.96 1.9-3.42z" fill="#1B4332"/><path d="M16.97 8.47a1.5 1.5 0 0 1 0 2.12l-6.5 6.5a1.5 1.5 0 0 1-2.12 0l-3.5-3.5a1.5 1.5 0 1 1 2.12-2.12l2.44 2.44 5.44-5.44a1.5 1.5 0 0 1 2.12 0z" fill="white"/></svg>`;
             const nameParts = psi.nome.trim().split(' ');
             if (nameParts.length > 1) {
-                nameEl.innerHTML = `<span class="first-name-wrapper" style="position: relative; display: inline-block;">${nameParts[0]}<span title="Psicólogo Verificado" class="hero-verified-badge mobile-only-badge">${verifiedSvg}</span></span><span class="name-break-mobile">${nameParts.slice(1).join(' ')}</span><span title="Psicólogo Verificado" class="hero-verified-badge desktop-only-badge">${verifiedSvg}</span>`;
+                nameEl.innerHTML = `<span class="first-name-wrapper" style="display: inline-flex; align-items: center; gap: 4px;">${nameParts[0]}<span title="Psicólogo Verificado" class="hero-verified-badge mobile-only-badge" style="display: inline-flex;">${verifiedSvg}</span></span><span class="name-break-mobile">${nameParts.slice(1).join(' ')}</span><span title="Psicólogo Verificado" class="hero-verified-badge desktop-only-badge" style="display: inline-flex; margin-left: 4px;">${verifiedSvg}</span>`;
             } else {
-                nameEl.innerHTML = `<span class="first-name-wrapper" style="position: relative; display: inline-block;">${psi.nome}<span title="Psicólogo Verificado" class="hero-verified-badge mobile-only-badge">${verifiedSvg}</span></span><span title="Psicólogo Verificado" class="hero-verified-badge desktop-only-badge">${verifiedSvg}</span>`;
+                nameEl.innerHTML = `<span class="first-name-wrapper" style="display: inline-flex; align-items: center; gap: 4px;">${psi.nome}<span title="Psicólogo Verificado" class="hero-verified-badge mobile-only-badge" style="display: inline-flex;">${verifiedSvg}</span></span><span title="Psicólogo Verificado" class="hero-verified-badge desktop-only-badge" style="display: inline-flex; margin-left: 4px;">${verifiedSvg}</span>`;
             }
         }
 
@@ -388,7 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (finalTags.size > 0) {
                 finalTags.forEach(tag => {
                     const tagElement = document.createElement('span');
-                    tagElement.style.cssText = 'background-color: #f0fdf4; color: #166534; padding: 5px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; border: 1px solid #bbf7d0; display: inline-block;';
+                    tagElement.style.cssText = 'background-color: #f0fdf4; color: #166534; padding: 5px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; border: 1px solid #bbf7d0; display: inline-block; word-break: break-word; white-space: normal; box-sizing: border-box; max-width: 100%;';
                     tagElement.textContent = tag;
                     container.appendChild(tagElement);
                 });
@@ -447,7 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             reviewsToShow.forEach(review => {
                 const reviewCard = document.createElement('div');
-                reviewCard.style.cssText = 'background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 16px; padding: 20px; min-width: 280px; width: 280px; flex-shrink: 0; scroll-snap-align: start; cursor: pointer; transition: background 0.2s;';
+                reviewCard.style.cssText = 'background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 16px; padding: 20px; width: 85vw; max-width: 350px; flex-shrink: 0; scroll-snap-align: start; cursor: pointer; transition: background 0.2s; box-sizing: border-box;';
                 reviewCard.onmouseover = () => { reviewCard.style.background = '#f0fdf4'; };
                 reviewCard.onmouseout = () => { reviewCard.style.background = '#f8f9fa'; };
                 reviewCard.onclick = () => { openAllReviewsView(reviews); };
@@ -502,7 +502,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         reviews.forEach(review => {
             const reviewCard = document.createElement('div');
-            reviewCard.style.cssText = 'background: #fff; border: 1px solid #e9ecef; border-radius: 16px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);';
+            reviewCard.style.cssText = 'background: #fff; border: 1px solid #e9ecef; border-radius: 16px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); box-sizing: border-box; width: 100%;';
             let reviewStars = '';
             for (let i = 1; i <= 5; i++) {
                 reviewStars += `<span style="color: ${i <= review.rating ? '#f59e0b' : '#e5e7eb'};">★</span>`;
@@ -572,7 +572,7 @@ document.addEventListener('DOMContentLoaded', () => {
         overlay.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:999999; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(3px); opacity: 0; transition: opacity 0.3s ease;";
         
         const box = document.createElement('div');
-        box.style.cssText = "background:#fff; padding:40px 30px; border-radius:24px; width:90%; max-width:420px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.15); transform: translateY(20px); transition: transform 0.3s ease;";
+        box.style.cssText = "background:#fff; padding:40px 30px; border-radius:24px; width:90%; max-width:420px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.15); transform: translateY(20px); transition: transform 0.3s ease; box-sizing: border-box;";
         
         box.innerHTML = `
             <div style="font-size:3.5rem; margin-bottom:15px; line-height:1;">${icon}</div>
