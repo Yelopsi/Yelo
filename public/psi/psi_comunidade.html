@@ -15,7 +15,14 @@
         border-radius: 50px;
         border: 1px solid #e9ecef;
         width: fit-content;
-        flex-wrap: wrap; /* Para mobile */
+        max-width: 100%;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Esconde scrollbar no Firefox */
+    }
+    .modern-qna-filters::-webkit-scrollbar {
+        display: none; /* Esconde scrollbar no Chrome/Safari/Edge */
     }
     .modern-qna-filters .tab-item {
         padding: 10px 24px;
@@ -28,6 +35,8 @@
         border: none;
         background: transparent;
         font-family: var(--font-principal);
+        white-space: nowrap;
+        flex-shrink: 0;
     }
     .modern-qna-filters .tab-item:hover {
         color: var(--verde-escuro);

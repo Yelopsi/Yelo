@@ -387,6 +387,11 @@
 
                     if (res.ok) {
                         if (showToast) showToast('Resposta enviada com sucesso! 🌻', 'success');
+                        
+                        const psiData = typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null;
+                        if (psiData && psiData.gamificationProgress) {
+                            psiData.gamificationProgress.conselheiro = (psiData.gamificationProgress.conselheiro || 0) + 1;
+                        }
                         fecharModal();
                         
                         const qIndex = allQuestions.findIndex(q => q.id === currentQuestionIdToAnswer);

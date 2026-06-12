@@ -35,6 +35,7 @@ window.setupPullToRefresh = function() {
         if (mainContent.scrollTop <= 1) {
             startY = e.touches[0].clientY;
             startX_ptr = e.touches[0].clientX;
+            currentY = startY; // Zera o valor fantasma do toque anterior
             isPulling = true;
             ptrEl.style.transition = 'none'; // Acompanha o dedo instantaneamente
             ptrEl.classList.remove('ptr-refreshing');

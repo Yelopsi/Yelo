@@ -607,6 +607,11 @@
             try {
                 await apiFetch(`${API_BASE_URL}/api/forum/posts`, { method: 'POST', body: JSON.stringify(data) });
                 showToast('Discussão criada com sucesso!', 'success');
+                
+                const psiData = typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null;
+                if (psiData && psiData.gamificationProgress) {
+                    psiData.gamificationProgress.vozAtiva = (psiData.gamificationProgress.vozAtiva || 0) + 1;
+                }
                 createModal.style.display = 'none';
                 createForm.reset();
                 if (createTextarea) createTextarea.style.height = 'auto';
@@ -632,6 +637,11 @@
                 if (!res.ok) throw new Error('Erro ao salvar comentário');
                 const newComment = await res.json();
                 
+                const psiData = typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null;
+                if (psiData && psiData.gamificationProgress) {
+                    psiData.gamificationProgress.vozAtiva = (psiData.gamificationProgress.vozAtiva || 0) + 1;
+                }
+
                 newComment.isMine = true; 
                 const container = parentId ? document.querySelector(`.comment-card[data-comment-id="${parentId}"] .comment-replies-container`) : document.getElementById('comment-thread');
                 if (!container) throw new Error('Container não encontrado');

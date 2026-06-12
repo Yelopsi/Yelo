@@ -403,6 +403,7 @@ window.setupPullToRefresh = function() {
         // Só permite o pull se a página estiver no topo absoluto
         if (scrollContainer.scrollTop <= 0) {
             startY = e.touches[0].clientY;
+            currentY = startY; // Zera o valor fantasma do toque anterior
             isPulling = true;
         }
     }, { passive: true });

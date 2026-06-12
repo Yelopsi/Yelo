@@ -124,9 +124,9 @@
             }
 
             const progress = stats.gamificationProgress || psychologistData.gamificationProgress || {};
-            const blogCount = progress.semeador || progress.blogPostCount || stats.blogPostCount || 0;
-            const forumCount = progress.vozAtiva || progress.forumActivityCount || stats.forumPosts || 0;
-            const answersCount = progress.conselheiro || progress.answerCount || stats.answerCount || 0;
+            const blogCount = progress.semeador || progress.blogPostCount || stats.blogPostCount || psychologistData.blogPostCount || 0;
+            const forumCount = progress.vozAtiva || progress.forumActivityCount || stats.forumActivityCount || stats.forumPosts || psychologistData.forumActivityCount || 0;
+            const answersCount = progress.conselheiro || progress.answerCount || stats.answerCount || psychologistData.answerCount || 0;
             const commentCount = stats.forumComments || 0;
             const interactions = forumCount + answersCount + commentCount;
 
@@ -311,7 +311,7 @@
                         : `<div class="action-checkbox">${step.completed ? '✓' : ''}</div>`;
 
                     const html = `
-                        <a href="#" onclick="event.preventDefault(); window.loadPage('${step.url}');" class="modern-action-item ${step.completed ? 'completed' : ''} ${step.isTip ? 'tip-item' : ''}">
+                        <a href="javascript:void(0);" data-target-url="${step.url}" class="modern-action-item ${step.completed ? 'completed' : ''} ${step.isTip ? 'tip-item' : ''}">
                             ${checkboxHtml}
                             <div class="action-content">
                                 <h4 class="action-title" style="${extraStyles}">${step.title}</h4>
@@ -324,6 +324,17 @@
                     `;
                     actionListContainer.insertAdjacentHTML('beforeend', html);
                 });
+
+                if (!actionListContainer.dataset.listenerAttached) {
+                    actionListContainer.dataset.listenerAttached = 'true';
+                    actionListContainer.addEventListener('click', (e) => {
+                        const item = e.target.closest('.modern-action-item');
+                        if (item && item.dataset.targetUrl) {
+                            e.preventDefault();
+                            if (window.loadPage) window.loadPage(item.dataset.targetUrl);
+                        }
+                    });
+                }
 
                 const progressText = document.querySelector('.checklist-progress-text');
                 const progressBar = document.querySelector('.checklist-progress-fill');
