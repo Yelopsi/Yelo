@@ -147,7 +147,12 @@ function initPerguntas() {
                     const target = e.target;
                     if (target.tagName === 'BUTTON' || (target.closest && target.closest('button'))) return;
                     if (target.tagName === 'A' || (target.closest && target.closest('a'))) return;
-                    abrirDetalhesPergunta(q);
+                    
+                    if (q.slug) {
+                        window.location.href = `/perguntas/${q.slug}`;
+                    } else {
+                        abrirDetalhesPergunta(q);
+                    }
                 };
             }
             
@@ -362,7 +367,7 @@ function initPerguntas() {
                     // Em vez de recarregar do servidor (que pode estar esperando aprovação),
                     // adicionamos a pergunta manualmente na lista local para o usuário ver agora.
                     const newQuestion = {
-                        title: 'Sua Pergunta (Recente)',
+                        title: conteudo.substring(0, 60) + (conteudo.length > 60 ? '...' : ''),
                         content: conteudo,
                         createdAt: new Date().toISOString(),
                         answers: []
@@ -380,8 +385,14 @@ function initPerguntas() {
                             window.scrollTo({ top: y, behavior: 'smooth' });
                         }
                         
-                        // Exibe o modal convidando para o questionário após um breve delay
-                        setTimeout(mostrarModalQuestionario, 800);
+                        // Exibe o modal de conversão PLG e oculta o formulário de perguntas
+                        setTimeout(() => {
+                            const askBox = document.querySelector('.ask-box-container');
+                            if (askBox) askBox.style.display = 'none';
+                            
+                            const plgModal = document.getElementById('modal-conversao-plg');
+                            if (plgModal) plgModal.style.display = 'flex';
+                        }, 800);
                     }, 100);
                     
                     checkCharCount();
@@ -430,67 +441,6 @@ function initPerguntas() {
         textarea.addEventListener('input', checkCharCount);
     }
 
-    // --- MODAL DE CONVITE PARA O QUESTIONÁRIO ---
-    function mostrarModalQuestionario() {
-        const modalId = 'modal-invite-questionnaire';
-        if (document.getElementById(modalId)) return; // Evita duplicatas
-
-        const modal = document.createElement('div');
-        modal.id = modalId;
-        modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.65); display: flex; justify-content: center; align-items: center; z-index: 100000; animation: fadeIn 0.3s ease; backdrop-filter: blur(4px);';
-        
-        modal.innerHTML = `
-            <style>
-                @media (max-width: 768px) {
-                    #${modalId} {
-                        align-items: flex-end !important;
-                    }
-                    #${modalId} .invite-modal-box {
-                        width: 100% !important;
-                        max-width: 100% !important;
-                        border-radius: 24px 24px 0 0 !important;
-                        padding: 30px 20px 40px 20px !important;
-                        margin: 0 !important;
-                        animation: slideUpSheet 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
-                    }
-                    #${modalId} .invite-modal-box::before {
-                        content: ''; display: block; width: 40px; height: 5px; background: #e0e0e0; border-radius: 5px; margin: -15px auto 20px auto;
-                    }
-                }
-                @keyframes slideUpSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
-                @keyframes slideUpWelcome { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-            </style>
-            <div class="invite-modal-box" style="background: white; padding: 40px 30px; border-radius: 20px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.2); position: relative; animation: slideUpWelcome 0.4s cubic-bezier(0.16, 1, 0.3, 1);">
-                <div style="font-size: 3.5rem; margin-bottom: 15px;">💛</div>
-                <h3 style="color: #1B4332; margin-bottom: 15px; font-family: var(--font-titulos, 'Fraunces', serif); font-size: 1.6rem; line-height: 1.2;">Sua pergunta foi enviada!</h3>
-                <p style="color: #444; line-height: 1.6; margin-bottom: 25px; font-size: 1rem; font-family: var(--font-principal, 'Inter', sans-serif);">
-                    Os nossos profissionais já foram notificados e em breve responderão à sua dúvida.<br><br>
-                    Enquanto isso, que tal descobrir o(a) terapeuta ideal para o seu momento atual?
-                </p>
-                <div style="display: flex; gap: 10px; justify-content: center; flex-direction: column;">
-                    <button id="btn-invite-yes" style="background-color: #1B4332; color: white; border: none; padding: 14px 28px; border-radius: 50px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1.05rem; transition: transform 0.2s, background-color 0.2s;">Encontrar meu Psicólogo</button>
-                    <button id="btn-invite-no" style="background-color: transparent; color: #666; border: none; padding: 10px 28px; border-radius: 50px; font-weight: bold; cursor: pointer; width: 100%; font-size: 0.95rem; transition: transform 0.2s, color 0.2s; text-decoration: underline;">Pular por enquanto</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-
-        const closeModal = () => {
-            const box = modal.querySelector('.invite-modal-box');
-            if (box) {
-                box.style.transition = 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease';
-                box.style.transform = window.innerWidth <= 768 ? 'translateY(100%)' : 'translateY(30px)';
-                box.style.opacity = '0';
-            }
-            modal.style.transition = 'opacity 0.3s ease';
-            modal.style.opacity = '0';
-            setTimeout(() => modal.remove(), 300);
-        };
-
-        document.getElementById('btn-invite-yes').onclick = () => { window.location.href = '/questionario'; };
-        document.getElementById('btn-invite-no').onclick = closeModal;
-        modal.onclick = (e) => { if (e.target === modal) closeModal(); };
-    }
 
     function showToast(message, type = 'success') {
         // Garante que o container exista

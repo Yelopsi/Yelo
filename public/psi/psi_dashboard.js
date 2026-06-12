@@ -495,6 +495,32 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // --- FUNÇÃO PARA OCULTAR LEMBRETE DE INTERAÇÃO ---
+    function verificarLembreteInteracao() {
+        const interactionReminder = document.getElementById('interaction-reminder-card');
+        if (interactionReminder && psychologistData) {
+            const prog = psychologistData.gamificationProgress || {};
+            const totalInteractions = (prog.semeador || prog.blogPostCount || 0) + 
+                                      (prog.vozAtiva || prog.forumActivityCount || 0) + 
+                                      (prog.conselheiro || prog.answerCount || 0);
+            
+            const dismissedUntil = localStorage.getItem('Yelo_interaction_dismissed');
+            const isDismissed = dismissedUntil && Date.now() < parseInt(dismissedUntil, 10);
+
+            if (totalInteractions > 0 || isDismissed) {
+                interactionReminder.style.display = 'none';
+            }
+
+            const btnDismiss = document.getElementById('btn-dismiss-interaction');
+            if (btnDismiss) {
+                btnDismiss.onclick = () => {
+                    interactionReminder.style.display = 'none';
+                    localStorage.setItem('Yelo_interaction_dismissed', Date.now() + (7 * 24 * 60 * 60 * 1000));
+                };
+            }
+        }
+    }
+
     function inicializarAjustesHub() {
         const btnPublic = document.getElementById('hub-btn-public-profile');
         if (btnPublic && psychologistData && psychologistData.slug) {
@@ -565,7 +591,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!activeLink || !activeBottomLink) {
             let hubPage = '';
-            if (['psi_pacientes.html', 'psi_financeiro.html', 'psi_analytics.html', 'psi_favoritos_analytics.html'].includes(url)) {
+            if (['psi_pacientes.html', 'psi_financeiro.html', 'psi_analytics.html', 'psi_favoritos_analytics.html', 'psi_calculadora_honorarios.html', 'psi_manual_conversao.html'].includes(url)) {
                 hubPage = 'psi_clinica_hub.html';
             } else if (['psi_jornada.html', 'psi_blog.html', 'psi_forum.html', 'psi_comunidade.html', 'psi_hub.html', 'psi_lista_espera.html'].includes(url)) {
                 hubPage = 'psi_evolucao_hub.html';
@@ -620,6 +646,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // --- VERIFICAÇÃO DE BLOQUEIO ---
                 verificarBloqueioGeral(url);
+                verificarLembreteInteracao();
 
                 if (url.includes('jornada')) {
                     if (psychologistData && window.updateGamificationWidgets) window.updateGamificationWidgets(psychologistData);
@@ -676,6 +703,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // --- NOVO: MODAL DE BOAS-VINDAS (PRIMEIRO ACESSO) ---
             const welcomeKey = `Yelo_welcome_seen_${psychologistData.id}`;
             if (!localStorage.getItem(welcomeKey)) {
+                // Grava imediatamente para garantir o primeiro acesso absoluto.
+                // Se o usuário recarregar a página sem clicar no botão, não verá o modal de novo.
+                localStorage.setItem(welcomeKey, 'true');
+                
                 const welcomeModal = document.createElement('div');
                 welcomeModal.id = 'modal-boas-vindas-psi';
                 welcomeModal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.65); display: flex; z-index: 100000; animation: fadeIn 0.3s ease; backdrop-filter: blur(4px);';
@@ -753,7 +784,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     welcomeModal.style.transition = 'opacity 0.3s ease';
                     welcomeModal.style.opacity = '0';
                     setTimeout(() => welcomeModal.remove(), 300);
-                    localStorage.setItem(welcomeKey, 'true');
                 };
             }
 

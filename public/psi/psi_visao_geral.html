@@ -32,18 +32,20 @@
         <div class="dashboard-column-main">
             
             <!-- BLOCO 0.5: LEMBRETE DE INTERAÇÃO (NOVO) -->
-            <div id="interaction-reminder-card" class="modern-checklist-card fade-in-up delay-1" style="display: none; margin-bottom: 24px; border-left: 4px solid #f59e0b; background: #fffbeb; position: relative;">
-                <button id="btn-dismiss-interaction" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; cursor: pointer; font-size: 1.5rem; color: #b45309; opacity: 0.6; line-height: 1; padding: 0;" title="Ocultar por 7 dias">&times;</button>
-                <div class="checklist-header" style="margin-bottom: 15px; padding-right: 20px;">
-                    <h3 class="checklist-title" style="color: #b45309; font-size: 1.2rem;">⚠️ Aumente sua visibilidade!</h3>
+            <div id="interaction-reminder-card" class="modern-checklist-card fade-in-up delay-1" style="display: none; margin-bottom: 24px; border-left: 4px solid rgb(245, 158, 11); background: rgb(255, 251, 235); position: relative;">
+                <button id="btn-dismiss-interaction" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; cursor: pointer; font-size: 1.5rem; color: #b45309; opacity: 0.6; line-height: 1; padding: 0;" title="Ocultar por 7 dias">×</button>
+                
+                <div class="checklist-header" style="margin-bottom: 10px; padding-right: 20px;">
+                    <h3 class="checklist-title" style="color: #b45309; font-size: 1.2rem; margin: 0;">🌱 Fortaleça nossa comunidade!</h3>
                 </div>
-                <p id="interaction-reminder-text" style="color: #92400e; font-size: 0.95rem; margin-bottom: 15px;">
-                    Faz <strong id="interaction-days-count">X dias</strong> que você não interage na comunidade.
-                    Faça um post ou comentário no fórum para aumentar as chances de aparecer no match.
+                
+                <p id="interaction-reminder-text" style="color: #92400e; font-size: 0.95rem; margin-bottom: 15px; line-height: 1.5;">
+                    A Yelo é feita de trocas, mas notamos que você <strong id="interaction-time-context">ainda não interagiu</strong> por aqui. Compartilhe um insight no fórum ou escreva um artigo: além de ajudar outros colegas e pacientes, você fortalece o ecossistema, ganha XP e, como recompensa, aumenta sua visibilidade no match.
                 </p>
+                
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn-secondary-action" style="background: #fef3c7; border-color: #f59e0b; color: #b45309; padding: 10px 15px; width: auto;" onclick="window.loadPage('psi_forum.html')">Ir para o Fórum</button>
-                    <button class="btn-secondary-action" style="background: transparent; border-color: #fca5a5; color: #b91c1c; padding: 10px 15px; width: auto;" onclick="window.loadPage('psi_blog.html')">Escrever Artigo</button>
+                    <button class="btn-secondary-action" style="background: #fef3c7; border: 1px solid #f59e0b; color: #b45309; padding: 8px 16px; border-radius: 50px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onclick="window.loadPage('psi_forum.html')">Ir para o Fórum</button>
+                    <button class="btn-secondary-action" style="background: transparent; border: 1px solid #fca5a5; color: #b91c1c; padding: 8px 16px; border-radius: 50px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onclick="window.loadPage('psi_blog.html')">Escrever Artigo</button>
                 </div>
             </div>
 
@@ -183,11 +185,14 @@
             if (!response.ok) return;
             const stats = await response.json();
 
-            if (stats.lastInteractions) {
+            const totalInteractions = (stats.blogPostCount || 0) + (stats.forumPosts || 0) + (stats.forumComments || 0) + (stats.answerCount || 0);
+
+            if (stats.lastInteractions || totalInteractions > 0) {
                 const dates = [
-                    stats.lastInteractions.blog ? new Date(stats.lastInteractions.blog) : null,
-                    stats.lastInteractions.forum ? new Date(stats.lastInteractions.forum) : null,
-                    stats.lastInteractions.comment ? new Date(stats.lastInteractions.comment) : null
+                    stats.lastInteractions?.blog ? new Date(stats.lastInteractions.blog) : null,
+                    stats.lastInteractions?.forum ? new Date(stats.lastInteractions.forum) : null,
+                    stats.lastInteractions?.comment ? new Date(stats.lastInteractions.comment) : null,
+                    stats.lastInteractions?.answer ? new Date(stats.lastInteractions.answer) : null
                 ].filter(d => d !== null);
 
                 let lastInteractionDate = null;
@@ -196,43 +201,61 @@
                 }
 
                 const now = new Date();
-                const diffTime = lastInteractionDate ? Math.abs(now - lastInteractionDate) : null;
-                const diffDays = diffTime ? Math.floor(diffTime / (1000 * 60 * 60 * 24)) : null;
+                let diffDays = null;
+                if (lastInteractionDate) {
+                    const diffTime = Math.abs(now - lastInteractionDate);
+                    diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                } else if (totalInteractions > 0) {
+                    // Se teve interações mas não temos a data exata da API, assumimos que interagiu recentemente
+                    diffDays = 0; 
+                }
 
                 const reminderCard = document.getElementById('interaction-reminder-card');
-                const reminderText = document.getElementById('interaction-days-count');
+                const timeContext = document.getElementById('interaction-time-context');
                 const btnDismiss = document.getElementById('btn-dismiss-interaction');
 
                 // Lógica de "Snooze" de 7 dias
                 const dismissedAt = localStorage.getItem('Yelo_interaction_dismissed_at');
+                const dismissedUntil = localStorage.getItem('Yelo_interaction_dismissed');
                 let isSnoozed = false;
+                
+                if (dismissedUntil && Date.now() < parseInt(dismissedUntil, 10)) {
+                    isSnoozed = true;
+                }
+                
                 if (dismissedAt) {
                     const daysSinceDismiss = Math.floor((now.getTime() - parseInt(dismissedAt)) / (1000 * 60 * 60 * 24));
                     if (daysSinceDismiss < 7) {
                         isSnoozed = true;
                     } else {
-                        // Expirou o snooze, limpa
                         localStorage.removeItem('Yelo_interaction_dismissed_at');
                     }
                 }
 
                 // Mostra se nunca interagiu, ou se faz mais de 7 dias (E não estiver em "Snooze")
-                if ((diffDays === null || diffDays >= 7) && !isSnoozed) {
+                if ((totalInteractions === 0 || (diffDays !== null && diffDays >= 7)) && !isSnoozed) {
                     if (reminderCard) reminderCard.style.display = 'block';
-                    if (reminderText) {
-                        if (diffDays === null) {
-                            reminderText.parentElement.innerHTML = 'Você ainda não interagiu na comunidade. Faça um post no fórum ou escreva um artigo para aumentar suas chances de aparecer no match.';
+                    if (timeContext) {
+                        if (totalInteractions === 0) {
+                            timeContext.innerText = 'ainda não interagiu';
                         } else {
-                            reminderText.innerText = `${diffDays} dias`;
+                            timeContext.innerText = `não interage há ${diffDays} dias`;
                         }
                     }
+                } else {
+                    if (reminderCard) reminderCard.style.display = 'none';
                 }
 
                 // Ação de Dispensar (Snooze por 7 dias)
                 if (btnDismiss && reminderCard) {
-                    btnDismiss.addEventListener('click', () => {
+                    // Clone para garantir que os eventos de clique anteriores não se acumulem
+                    const newBtnDismiss = btnDismiss.cloneNode(true);
+                    btnDismiss.parentNode.replaceChild(newBtnDismiss, btnDismiss);
+                    
+                    newBtnDismiss.addEventListener('click', () => {
                         reminderCard.style.display = 'none';
                         localStorage.setItem('Yelo_interaction_dismissed_at', Date.now().toString());
+                        localStorage.setItem('Yelo_interaction_dismissed', (Date.now() + (7 * 24 * 60 * 60 * 1000)).toString());
                     });
                 }
             }

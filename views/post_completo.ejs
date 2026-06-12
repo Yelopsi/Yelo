@@ -68,6 +68,16 @@
             font-weight: 600;
             font-size: 0.95rem;
         }
+        .autor-click {
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .autor-click:hover {
+            opacity: 0.8;
+        }
+        .autor-click:hover span {
+            text-decoration: underline;
+        }
         .autor-mini img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
         .data-mini { color: #666; font-size: 0.9rem; }
 
@@ -169,7 +179,7 @@
                 <h1 class="titulo-principal"><%= post.titulo %></h1>
                 
                 <div class="meta-info">
-                    <div class="autor-mini">
+                    <div class="autor-mini <%= post.autor && post.autor.slug ? 'autor-click' : '' %>" <%- post.autor && post.autor.slug ? `onclick="window.location.href='/${post.autor.slug}';"` : '' %> <%- post.autor && post.autor.slug ? `title="Ver perfil de ${post.autor.nome}"` : '' %>>
                         <img src="<%= post.autor && post.autor.fotoUrl ? formatImageUrl(post.autor.fotoUrl) : 'https://placehold.co/40x40' %>" alt="Autor">
                         <span>Psi. <%= post.autor ? post.autor.nome.split(' ')[0] : 'Yelo' %></span>
                     </div>

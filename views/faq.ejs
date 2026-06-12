@@ -52,6 +52,7 @@
             border-radius: 24px 60px 24px 60px !important;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             overflow: hidden;
+            cursor: pointer;
         }
         .acordeao-item:nth-child(2n) {
             background-color: #E6F4F1; /* Verde suave */
@@ -92,9 +93,22 @@
             transform: rotate(45deg);
         }
         
+        .acordeao-conteudo {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: auto;
+            overflow: hidden;
+        }
         .acordeao-conteudo p {
+            min-height: 0;
             padding: 0 30px 30px 30px !important;
             color: #555;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .acordeao-item.ativo .acordeao-conteudo {
+            grid-template-rows: 1fr;
         }
 
         /* FAQ CTA Card */
@@ -185,5 +199,74 @@
     </main>
 
     <%- include('partials/footer') %>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const buscaInput = document.getElementById('faq-busca');
+            const categorias = document.querySelectorAll('.faq-categoria');
+            const itensAcordeao = document.querySelectorAll('.acordeao-item');
+
+            // 1. Lógica do Acordeão (Moderna, guiada por CSS Grid)
+            itensAcordeao.forEach(item => {
+                // Evento no card inteiro permite clicar em qualquer lugar
+                item.addEventListener('click', (e) => {
+                    // Ignora se o clique for no texto interno (permite que o usuário copie a resposta)
+                    if (e.target.closest('.acordeao-conteudo')) return;
+
+                    const isAtivo = item.classList.contains('ativo');
+                    
+                    // Fecha todos de forma fluida
+                    itensAcordeao.forEach(i => {
+                        i.classList.remove('ativo');
+                        const tituloEl = i.querySelector('.acordeao-titulo');
+                        if (tituloEl) tituloEl.classList.remove('ativo');
+                    });
+
+                    // Se estava fechado, abre o atual
+                    if (!isAtivo) {
+                        item.classList.add('ativo');
+                        const tituloEl = item.querySelector('.acordeao-titulo');
+                        if (tituloEl) tituloEl.classList.add('ativo');
+                    }
+                });
+            });
+
+            // 2. Lógica de Pesquisa (com Debounce para otimização)
+            if (buscaInput) {
+                let timeoutId;
+
+                buscaInput.addEventListener('input', (e) => {
+                    clearTimeout(timeoutId);
+                    const termoBusca = e.target.value.toLowerCase().trim();
+
+                    timeoutId = setTimeout(() => {
+                        categorias.forEach(categoria => {
+                            let categoriaTemResultados = false;
+                            const itens = categoria.querySelectorAll('.acordeao-item');
+
+                            itens.forEach(item => {
+                                const titulo = item.querySelector('.acordeao-titulo')?.textContent.toLowerCase() || '';
+                                const conteudo = item.querySelector('.acordeao-conteudo')?.textContent.toLowerCase() || '';
+
+                                if (titulo.includes(termoBusca) || conteudo.includes(termoBusca)) {
+                                    item.style.display = '';
+                                    categoriaTemResultados = true;
+                                } else {
+                                    item.style.display = 'none';
+                                    // Remove a classe ativo caso ele estivesse aberto
+                                    item.classList.remove('ativo');
+                                    const tituloEl = item.querySelector('.acordeao-titulo');
+                                    if (tituloEl) tituloEl.classList.remove('ativo');
+                                }
+                            });
+
+                            // Oculta a categoria inteira se nenhum item for encontrado
+                            categoria.style.display = categoriaTemResultados ? '' : 'none';
+                        });
+                    }, 200); // Aguarda 200ms para evitar engasgos ao digitar rapidamente
+                });
+            }
+        });
+    </script>
 </body>
 </html>

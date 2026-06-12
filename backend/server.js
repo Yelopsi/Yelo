@@ -90,6 +90,12 @@ app.get('/psi_questionario', (req, res) => res.render('psi_questionario'));
 app.get('/questionario.html', (req, res) => res.redirect(301, '/questionario'));
 app.get('/psi_questionario.html', (req, res) => res.redirect(301, '/psi_questionario'));
 
+// Rota SEO Dinâmica para a Página Única da Pergunta
+app.get('/perguntas/:slug', require('./controllers/qnaController').getQuestionBySlug);
+
+// Sitemap Automático para o Google
+app.get('/sitemap.xml', require('./controllers/qnaController').generateSitemap);
+
 // Servir TODOS os arquivos da pasta public automaticamente.
 // A propriedade 'extensions' faz com que urls limpas como "/ajuda" e "/questionario" abram automaticamente os arquivos .html se existirem.
 const rootPublic = path.join(__dirname, '../public');
@@ -189,6 +195,10 @@ const startServer = async () => {
             await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "faixa_etaria" VARCHAR(255);');
             await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "idade" VARCHAR(255);');
             await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "identidade_genero" VARCHAR(255);');
+            
+            console.log('🛠️ [DB FIX] Injetando colunas faltantes na tabela Questions...');
+            await db.sequelize.query('ALTER TABLE "Questions" ADD COLUMN IF NOT EXISTS "title" VARCHAR(255);');
+            await db.sequelize.query('ALTER TABLE "Questions" ADD COLUMN IF NOT EXISTS "slug" VARCHAR(255) UNIQUE;');
         } catch(e) {
             console.warn('⚠️ Aviso ao tentar criar colunas manualmente (podem já existir ou banco travado):', e.message);
         }

@@ -303,7 +303,7 @@ exports.createComment = async (req, res) => {
                     if (parentComment) {
                         targetId = parentComment.PsychologistId || parentComment.psychologistId;
                         notifTitle = 'Nova resposta ao seu comentário!';
-                        notifContent = `<strong>${senderName}</strong> respondeu ao seu comentário no fórum da Yelo:<br><br><em>"${content.substring(0, 100)}..."</em><br><br><a href="#" class="aviso-link-direto" data-post-id="${req.params.id}" onclick="window.loadPage('psi_forum.html?postId=${req.params.id}'); return false;" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para acessar o fórum</a>.`;
+                        notifContent = `<strong>${senderName}</strong> respondeu ao seu comentário no fórum da Yelo:<br><br><em>"${content.substring(0, 100)}..."</em><br><br><a href="#" class="aviso-link-direto" data-post-id="${req.params.id}" data-comment-id="${comment.id}" onclick="window.loadPage('psi_forum.html?postId=${req.params.id}&commentId=${comment.id}'); return false;" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para acessar o fórum</a>.`;
                     }
                 } else {
                     console.log(`[NOTIF DEBUG] Buscando post original ID: ${req.params.id}`);
@@ -313,7 +313,7 @@ exports.createComment = async (req, res) => {
                         targetId = postInfo.PsychologistId || postInfo.psychologistId;
                         postTitle = postInfo.title || postInfo.titulo || 'Tópico';
                         notifTitle = 'Nova resposta na sua discussão!';
-                        notifContent = `<strong>${senderName}</strong> respondeu ao seu tópico "<strong>${postTitle}</strong>":<br><br><em>"${content.substring(0, 100)}..."</em><br><br><a href="#" class="aviso-link-direto" data-post-id="${req.params.id}" onclick="window.loadPage('psi_forum.html?postId=${req.params.id}'); return false;" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para acessar a discussão</a>.`;
+                        notifContent = `<strong>${senderName}</strong> respondeu ao seu tópico "<strong>${postTitle}</strong>":<br><br><em>"${content.substring(0, 100)}..."</em><br><br><a href="#" class="aviso-link-direto" data-post-id="${req.params.id}" data-comment-id="${comment.id}" onclick="window.loadPage('psi_forum.html?postId=${req.params.id}&commentId=${comment.id}'); return false;" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para acessar a discussão</a>.`;
                     }
                 }
 
