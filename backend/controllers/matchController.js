@@ -240,13 +240,17 @@ exports.getAnonymousMatches = async (req, res) => {
 // ----------------------------------------------------------------------
 exports.getShowcasePsychologists = async (req, res) => {
     try {
+        // Lê o limite da URL ou usa 4 como padrão para não quebrar outras páginas (ex: Home)
+        const limit = parseInt(req.query.limit, 10) || 4;
+        const dbLimit = limit > 4 ? limit * 2 : 20; // Busca um pouco mais no DB para compensar possíveis inativos
+
         const psychologists = await db.Psychologist.findAll({
             where: {
                 status: 'active',
                 fotoUrl: { [Op.ne]: null }
             },
             order: db.sequelize.random(), 
-            limit: 20, 
+            limit: dbLimit, 
             attributes: ['id', 'nome', 'slug', 'fotoUrl', 'status', 'createdAt', 'planExpiresAt', 'is_exempt'] 
         });
 
@@ -257,7 +261,7 @@ exports.getShowcasePsychologists = async (req, res) => {
             
             if (!psy.planExpiresAt) return false;
             return new Date(psy.planExpiresAt) > agora;
-        }).slice(0, 4);
+        }).slice(0, limit); // Agora respeita o limite dinâmico que vem da requisição
 
         while (validPsychologists.length < 4) {
             validPsychologists.push({
