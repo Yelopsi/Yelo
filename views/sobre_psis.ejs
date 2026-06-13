@@ -377,13 +377,22 @@
             
             try {
                 // Busca os profissionais da vitrine pública
-                const res = await fetch('/api/psychologists/showcase');
+                const res = await fetch('/api/psychologists/showcase?limit=1000');
                 let psis = await res.json();
                 
                 if (psis && psis.length > 0) {
-                    // Filtra o placeholder "Em breve" caso existam perfis de verdade
-                    let reais = psis.filter(p => p.id !== 0);
+                    // Filtra os psicólogos reais com foto válida
+                    let reais = psis.filter(p => 
+                        p.id !== 0 && 
+                        p.fotoUrl && 
+                        p.fotoUrl !== 'null' &&
+                        p.fotoUrl.trim() !== '' &&
+                        !p.fotoUrl.includes('placehold.co')
+                    );
                     if (reais.length === 0) reais = psis; // Fallback
+                    
+                    // Embaralha todos para ter variação inicial nos 16 slots
+                    reais = reais.sort(() => 0.5 - Math.random());
                     
                     // Preenche até 16 slots exatos para montar o 4x4
                     let displayPsis = [...reais];
@@ -412,7 +421,13 @@
                             
                             setTimeout(() => {
                                 // 2. Escolhe um profissional aleatório
-                                const randomPsi = reais[Math.floor(Math.random() * reais.length)];
+                                let randomPsi = reais[Math.floor(Math.random() * reais.length)];
+                                if (reais.length > 1) {
+                                    // Tenta não repetir o mesmo psicólogo no mesmo quadrado
+                                    while (randomPsi.nome === img.alt) {
+                                        randomPsi = reais[Math.floor(Math.random() * reais.length)];
+                                    }
+                                }
                                 
                                 // 3. Troca a foto e o título
                                 img.src = randomPsi.fotoUrl;
