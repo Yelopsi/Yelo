@@ -394,10 +394,16 @@
                     // Embaralha todos para ter variação inicial
                     reais = reais.sort(() => 0.5 - Math.random());
                     
-                    // Preenche até 16 slots exatos para montar o 4x4
-                    let displayPsis = [...reais];
-                    while (displayPsis.length < 16) { displayPsis = displayPsis.concat(reais); }
-                    displayPsis = displayPsis.slice(0, 16); 
+                    // Preenche os 16 slots distribuindo os profissionais de forma igualitária
+                    let displayPsis = [];
+                    let pIndex = 0;
+                    while (displayPsis.length < 16) { 
+                        displayPsis.push(reais[pIndex % reais.length]);
+                        pIndex++;
+                    }
+
+                    // Embaralha as 16 posições para espalhar os repetidos
+                    displayPsis = displayPsis.sort(() => 0.5 - Math.random());
 
                     grid.innerHTML = '';
                     displayPsis.forEach(psi => {
@@ -417,28 +423,35 @@
                             img.style.opacity = '0';
                             
                             setTimeout(() => {
-                                // 2. Mapeia quem está visível no grid AGORA
-                                const currentVisibleNames = Array.from(grid.querySelectorAll('img')).map(el => el.alt);
-                                
-                                // 3. Filtra os profissionais que NÃO estão na tela
-                                let availablePsis = reais.filter(p => !currentVisibleNames.includes(p.nome));
-                                
-                                let randomPsi;
+                                // Conta quantas vezes cada psi está aparecendo na tela AGORA
+                                const currentImgs = Array.from(grid.querySelectorAll('img'));
+                                const visibleCounts = {};
 
-                                // Se houver profissionais fora da tela, pega um deles
-                                if (availablePsis.length > 0) {
-                                    randomPsi = availablePsis[Math.floor(Math.random() * availablePsis.length)];
-                                } else if (reais.length > 1) {
-                                    // Se o total de psis cadastrados for menor ou igual a 16, 
-                                    // é impossível não repetir. Apenas evitamos repetir no mesmo slot.
-                                    randomPsi = reais[Math.floor(Math.random() * reais.length)];
-                                    while (randomPsi.nome === img.alt) {
-                                        randomPsi = reais[Math.floor(Math.random() * reais.length)];
+                                // Inicializa todos com 0
+                                reais.forEach(p => visibleCounts[p.nome] = 0);
+
+                                // Soma as aparições atuais
+                                currentImgs.forEach(el => {
+                                    if (visibleCounts[el.alt] !== undefined) {
+                                        visibleCounts[el.alt]++;
                                     }
+                                });
+
+                                // Filtra as opções tirando quem já está neste exato quadrado
+                                let options = reais.filter(p => p.nome !== img.alt);
+
+                                if (options.length === 0) {
+                                    options = reais; // Fallback se só existir 1 pessoa cadastrada
                                 } else {
-                                    // Fallback se só tiver 1 profissional no banco
-                                    randomPsi = reais[0];
+                                    // Descobre o menor número de aparições
+                                    let minAppearances = Math.min(...options.map(p => visibleCounts[p.nome]));
+                                    
+                                    // Deixa na lista só quem está aparecendo menos
+                                    options = options.filter(p => visibleCounts[p.nome] === minAppearances);
                                 }
+                                
+                                // Escolhe aleatoriamente entre os que estão sumidos ou aparecendo pouco
+                                let randomPsi = options[Math.floor(Math.random() * options.length)];
                                 
                                 // 4. Troca a foto e o título
                                 img.src = randomPsi.fotoUrl;
