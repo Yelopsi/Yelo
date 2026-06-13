@@ -391,7 +391,7 @@
                     );
                     if (reais.length === 0) reais = psis; // Fallback
                     
-                    // Embaralha todos para ter variação inicial nos 16 slots
+                    // Embaralha todos para ter variação inicial
                     reais = reais.sort(() => 0.5 - Math.random());
                     
                     // Preenche até 16 slots exatos para montar o 4x4
@@ -408,10 +408,7 @@
                         `;
                     });
 
-                    // Lógica para trocar as fotos de forma independente e assíncrona
                     const items = Array.from(grid.querySelectorAll('img'));
-                    
-                    // Embaralha para que os primeiros a mudar sejam sempre aleatórios
                     const shuffledItems = items.sort(() => 0.5 - Math.random());
                     
                     shuffledItems.forEach((img, index) => {
@@ -420,24 +417,38 @@
                             img.style.opacity = '0';
                             
                             setTimeout(() => {
-                                // 2. Escolhe um profissional aleatório
-                                let randomPsi = reais[Math.floor(Math.random() * reais.length)];
-                                if (reais.length > 1) {
-                                    // Tenta não repetir o mesmo psicólogo no mesmo quadrado
+                                // 2. Mapeia quem está visível no grid AGORA
+                                const currentVisibleNames = Array.from(grid.querySelectorAll('img')).map(el => el.alt);
+                                
+                                // 3. Filtra os profissionais que NÃO estão na tela
+                                let availablePsis = reais.filter(p => !currentVisibleNames.includes(p.nome));
+                                
+                                let randomPsi;
+
+                                // Se houver profissionais fora da tela, pega um deles
+                                if (availablePsis.length > 0) {
+                                    randomPsi = availablePsis[Math.floor(Math.random() * availablePsis.length)];
+                                } else if (reais.length > 1) {
+                                    // Se o total de psis cadastrados for menor ou igual a 16, 
+                                    // é impossível não repetir. Apenas evitamos repetir no mesmo slot.
+                                    randomPsi = reais[Math.floor(Math.random() * reais.length)];
                                     while (randomPsi.nome === img.alt) {
                                         randomPsi = reais[Math.floor(Math.random() * reais.length)];
                                     }
+                                } else {
+                                    // Fallback se só tiver 1 profissional no banco
+                                    randomPsi = reais[0];
                                 }
                                 
-                                // 3. Troca a foto e o título
+                                // 4. Troca a foto e o título
                                 img.src = randomPsi.fotoUrl;
                                 img.alt = randomPsi.nome;
                                 if (img.parentElement) img.parentElement.title = randomPsi.nome;
                                 
-                                // 4. Reaparece (Fade in)
+                                // 5. Reaparece (Fade in)
                                 img.style.opacity = '1';
                                 
-                                // 5. Agenda a PRÓXIMA troca deste quadrado (Espera de 15 a 30 segundos)
+                                // 6. Agenda a PRÓXIMA troca
                                 const nextWait = Math.random() * 15000 + 15000;
                                 setTimeout(runCycle, nextWait);
                             }, 2000); // 2s do fade-out do CSS
