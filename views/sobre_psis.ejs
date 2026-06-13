@@ -380,6 +380,8 @@
                 const res = await fetch('/api/psychologists/showcase?limit=1000');
                 let psis = await res.json();
                 
+                console.log("1. Total de profissionais vindos da API:", psis ? psis.length : 0);
+
                 if (psis && psis.length > 0) {
                     // Filtra os psicólogos reais com foto válida
                     let reais = psis.filter(p => 
@@ -389,6 +391,10 @@
                         p.fotoUrl.trim() !== '' &&
                         !p.fotoUrl.includes('placehold.co')
                     );
+                    
+                    console.log("2. Total que passou no filtro de fotos:", reais.length);
+                    console.log("Quem são os que passaram?", reais.map(r => r.nome));
+
                     if (reais.length === 0) reais = psis; // Fallback
                     
                     // Embaralha todos para ter variação inicial
