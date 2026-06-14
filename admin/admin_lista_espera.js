@@ -3,28 +3,34 @@
 window.initializePage = function() {
     const tableBody = document.getElementById('waiting-list-body');
     const rowTemplate = document.getElementById('waiting-list-row-template');
-    const token = localStorage.getItem('Yelo_token'); // Supondo que o token de admin esteja salvo
+    const token = localStorage.getItem('Yelo_token'); 
 
     if (!tableBody || !rowTemplate || !token) {
-        console.error("Elementos essenciais ou token não encontrados para a página da lista de espera.");
         if (tableBody) tableBody.innerHTML = '<tr><td colspan="6" class="error-row">Erro ao carregar a página. Faça login novamente.</td></tr>';
         return;
     }
 
+    let allData = [];
+    const statusInput = document.getElementById('crm-status-espera');
+    const searchInput = document.getElementById('search-input');
+
+    // Inicializa Filtros em Formato de Pílula
+    document.querySelectorAll('.crm-pill').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.crm-pill').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            if (statusInput) statusInput.value = e.target.dataset.filter;
+            renderList();
+        });
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener('keyup', renderList);
+    }
+
     // Função para mostrar notificações (toast)
     function showToast(message, type = 'success') {
-        const container = document.getElementById('toast-container');
-        const template = document.getElementById('toast-template');
-        if (!container || !template) return;
-
-        const toast = template.content.cloneNode(true).querySelector('.toast');
-        toast.textContent = message;
-        toast.classList.add(`toast-${type}`);
-        container.appendChild(toast);
-
-        setTimeout(() => {
-            toast.remove();
-        }, 4500);
+        if (window.showToast) window.showToast(message, type);
     }
 
     // Função para buscar e renderizar a lista
@@ -38,15 +44,38 @@ window.initializePage = function() {
                 throw new Error('Falha ao buscar dados da lista de espera.');
             }
 
-            const waitingList = await response.json();
-            tableBody.innerHTML = ''; // Limpa o estado de "carregando"
+            allData = await response.json();
+            renderList();
 
-            if (waitingList.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="6" class="empty-row">A lista de espera está vazia.</td></tr>';
-                return;
+        } catch (error) {
+            console.error(error);
+            tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--coral-quente);">${error.message}</td></tr>`;
+        }
+    }
+
+    function renderList() {
+        tableBody.innerHTML = ''; 
+
+        const search = searchInput ? searchInput.value.toLowerCase() : '';
+        const filter = statusInput ? statusInput.value : 'all';
+
+        const filteredList = allData.filter(c => {
+            if (filter !== 'all' && c.status !== filter) return false;
+            if (search) {
+                const searchStr = search.toLowerCase();
+                const nome = c.nome ? c.nome.toLowerCase() : '';
+                const email = c.email ? c.email.toLowerCase() : '';
+                if (!nome.includes(searchStr) && !email.includes(searchStr)) return false;
             }
+            return true;
+        });
 
-            waitingList.forEach(candidate => {
+        if (filteredList.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--cinza-texto);">Nenhum lead encontrado com estes filtros.</td></tr>';
+            return;
+        }
+
+        filteredList.forEach(candidate => {
                 const row = rowTemplate.content.cloneNode(true).querySelector('tr');
                 row.querySelector('[data-label="Nome"]').innerHTML = `
                     <div style="font-weight: 600; color: var(--verde-escuro); display: flex; align-items: center; gap: 8px;">
@@ -74,11 +103,8 @@ window.initializePage = function() {
                     if (phone && (phone.length === 10 || phone.length === 11)) { phone = '55' + phone; }
                     const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}` : '#';
 
-                    // Usando a tag de link <a> para o navegador abrir a aba do WhatsApp sozinho
-                    const whatsappButton = document.createElement('a');
+                    const whatsappButton = document.createElement('button');
                     whatsappButton.className = 'btn-tabela btn-fixar';
-                    whatsappButton.href = url;
-                    if (phone) whatsappButton.target = '_blank';
                     
                     // Estilos focados também na usabilidade Mobile (App-like)
                     whatsappButton.style.display = 'inline-flex';
@@ -86,28 +112,27 @@ window.initializePage = function() {
                     whatsappButton.style.justifyContent = 'center';
                     whatsappButton.style.gap = '6px';
                     whatsappButton.style.padding = '8px 16px';
-                    whatsappButton.style.borderRadius = '20px';
+                    whatsappButton.style.borderRadius = '50px';
                     whatsappButton.style.border = 'none';
                     whatsappButton.style.cursor = 'pointer';
-                    whatsappButton.style.textDecoration = 'none';
                     whatsappButton.style.fontWeight = '600';
                     whatsappButton.style.whiteSpace = 'nowrap'; // Impede o texto de quebrar linha
                     
                     // Verifica se a mensagem já foi enviada usando a memória local do navegador (criado no admin.js)
                     const foiEnviado = window.verificarWppEnviado && window.verificarWppEnviado(candidate.id);
-                    if (foiEnviado) {
-                        whatsappButton.style.backgroundColor = '#d1fae5';
-                        whatsappButton.style.color = '#059669';
+                    if (foiEnviado || candidate.status === 'invited') {
+                        whatsappButton.style.backgroundColor = '#dcfce7';
+                        whatsappButton.style.color = '#166534';
                         whatsappButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Enviado`;
                     } else {
-                        whatsappButton.style.backgroundColor = '#128C7E';
-                        whatsappButton.style.color = '#fff';
+                        whatsappButton.style.backgroundColor = '#e0f2fe';
+                        whatsappButton.style.color = '#0369a1';
                         whatsappButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg> WhatsApp`;
                     }
 
-                    whatsappButton.onclick = (event) => {
+                    whatsappButton.onclick = async (event) => {
+                        event.preventDefault();
                         if (!phone) {
-                            event.preventDefault();
                             showToast('Telefone não disponível ou inválido para este profissional.', 'error');
                             return;
                         }
@@ -119,10 +144,23 @@ window.initializePage = function() {
                             localStorage.setItem('yelo_wpp_sent_pending', JSON.stringify(sent));
                         }
                         
+                        try {
+                            await fetch(`/api/admin/waiting-list/${candidate.id}/status`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                body: JSON.stringify({ status: 'invited' })
+                            });
+                            candidate.status = 'invited';
+                        } catch(e) {}
+
                         // Atualização visual imediata
-                        whatsappButton.style.backgroundColor = '#d1fae5';
-                        whatsappButton.style.color = '#059669';
+                        whatsappButton.style.backgroundColor = '#dcfce7';
+                        whatsappButton.style.color = '#166534';
                         whatsappButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Enviado`;
+                        
+                        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                        if (isMobile) window.location.href = url;
+                        else window.open(url, '_blank');
                     };
                     actionsCell.appendChild(whatsappButton);
                 } else {
@@ -131,11 +169,6 @@ window.initializePage = function() {
 
                 tableBody.appendChild(row);
             });
-
-        } catch (error) {
-            console.error(error);
-            tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--coral-quente);">${error.message}</td></tr>`;
-        }
     }
 
     fetchWaitingList();

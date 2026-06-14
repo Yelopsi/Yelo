@@ -130,10 +130,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!activeLink || !activeBottomLink) {
             let hubPage = '';
-            if (['admin_caixa_entrada.html', 'admin_avisos.html', 'admin_followup.html'].includes(pageUrl)) hubPage = 'admin_comunicacao_hub.html';
-            else if (['admin_gerenciar_psicologos.html', 'admin_gerenciar_pacientes.html', 'admin_lista_espera.html'].includes(pageUrl)) hubPage = 'admin_usuarios_hub.html';
-            else if (['admin_gestao_conteudo.html', 'admin_comunidade_gestao.html', 'admin_moderacao_forum.html', 'admin_avaliacoes.html', 'admin_avaliacoes_psi.html'].includes(pageUrl)) hubPage = 'admin_conteudo_hub.html';
-            else if (['admin_financeiro.html', 'admin_indicadores.html', 'admin_downloads.html', 'relatorios'].includes(pageUrl) || pageUrl === 'relatorios') hubPage = 'admin_dados_hub.html';
+            if (['admin_crm_leads.html', 'admin_crm_pacientes.html', 'admin_crm_psicologos.html', 'admin_crm_analytics.html', 'admin_analytics_funil.html', 'admin_lista_espera.html', 'admin_avaliacoes.html', 'admin_avaliacoes_psi.html', 'admin_caixa_entrada.html', 'admin_avisos.html', 'admin_followup.html'].includes(pageUrl)) hubPage = 'admin_crm_hub.html';
+            else if (['admin_gestao_conteudo.html', 'admin_comunidade_gestao.html', 'admin_moderacao_forum.html'].includes(pageUrl)) hubPage = 'admin_conteudo_hub.html';
+            else if (['admin_indicadores.html', 'admin_downloads.html'].includes(pageUrl)) hubPage = 'admin_dados_hub.html';
             else if (['admin_minha_conta.html', 'admin_configuracoes.html', 'admin_logs_sistema.html'].includes(pageUrl)) hubPage = 'admin_configuracoes_hub.html';
 
             if (hubPage) {
@@ -145,18 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (activeLink) activeLink.closest('li').classList.add('active');
         if (activeBottomLink) activeBottomLink.classList.add('active');
 
-        // Tratamento especial para "Relatórios" que é uma div embutida
-        if (pageUrl === 'relatorios') {
-            document.getElementById('main-content').style.display = 'none';
-            document.getElementById('relatorios').style.display = 'block';
-            loadReports();
-            if (typeof window.carregarFeedbacksWhatsApp === 'function') window.carregarFeedbacksWhatsApp();
-            return;
-        } else {
-            const relSection = document.getElementById('relatorios');
-            if(relSection) relSection.style.display = 'none';
-            mainContent.style.display = 'block';
-        }
+        mainContent.style.display = 'block';
 
         const absolutePageUrl = `/admin/${pageUrl}`;
         mainContent.innerHTML = '<p style="text-align:center; padding: 40px;">Carregando...</p>';
@@ -537,63 +525,6 @@ document.addEventListener('DOMContentLoaded', function() {
             showToast("Erro ao exportar a lista.", 'error');
         } finally {
             if (btnElement) { btnElement.innerHTML = originalText; btnElement.disabled = false; }
-        }
-    };
-
-    // --- FUNÇÃO PARA CARREGAR OS FEEDBACKS DO WHATSAPP ---
-    window.carregarFeedbacksWhatsApp = async function() {
-        const tbody = document.getElementById('whatsapp-feedback-tbody');
-        if (!tbody) return;
-        try {
-            const API_BASE_URL = window.API_BASE_URL || '';
-            const token = localStorage.getItem('Yelo_token_admin') || localStorage.getItem('Yelo_token');
-            const res = await fetch(`${API_BASE_URL}/api/admin/whatsapp-feedbacks`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!res.ok) throw new Error('Falha ao buscar dados');
-            const feedbacks = await res.json();
-            
-            // --- CÁLCULO DOS KPIs ---
-            const total = feedbacks.length;
-            const respondidos = feedbacks.filter(f => f.feedbackGiven).length;
-            const taxaResposta = total > 0 ? ((respondidos / total) * 100).toFixed(1) : 0;
-            const recebidas = feedbacks.filter(f => f.feedbackGiven && f.contactReceived).length;
-            const fechados = feedbacks.filter(f => f.feedbackGiven && f.contactReceived && f.dealClosed === 'yes').length;
-
-            const elTotal = document.getElementById('kpi-wpp-total');
-            const elTxResposta = document.getElementById('kpi-wpp-tx-resposta');
-            const elRecebidas = document.getElementById('kpi-wpp-recebidas');
-            const elFechados = document.getElementById('kpi-wpp-fechados');
-
-            if (elTotal) elTotal.textContent = total;
-            if (elTxResposta) elTxResposta.textContent = taxaResposta + '%';
-            if (elRecebidas) elRecebidas.textContent = recebidas;
-            if (elFechados) elFechados.textContent = fechados;
-            
-            if (feedbacks.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #999; font-style: italic;">Nenhum clique registrado ainda.</td></tr>';
-                return;
-            }
-            tbody.innerHTML = feedbacks.map(f => {
-                const dataClique = new Date(f.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                let contato = '<span style="color:#888;">⏳ Aguardando psi</span>';
-                let fechou = '-';
-                let status = '<span style="background:#fef08a; color:#b45309; padding:4px 8px; border-radius:12px; font-size:0.85rem; font-weight:bold;">Pendente</span>';
-                if (f.feedbackGiven) {
-                    status = '<span style="background:#bbf7d0; color:#166534; padding:4px 8px; border-radius:12px; font-size:0.85rem; font-weight:bold;">Respondido</span>';
-                    if (f.contactReceived) {
-                        contato = '✅ Sim';
-                        fechou = f.dealClosed === 'yes' ? '✅ <strong style="color:#166534">Fechou!</strong>' : '❌ Não';
-                    } else {
-                        contato = '❌ Não chegou';
-                        fechou = '-';
-                    }
-                }
-                return `<tr style="border-bottom: 1px solid #eee;"><td style="padding: 10px 15px;">${dataClique}</td><td style="padding: 10px 15px;"><strong>${f.psychologist ? f.psychologist.nome : 'Psi Removido'}</strong></td><td style="padding: 10px 15px;">${f.guestName || 'Um paciente'}</td><td style="padding: 10px 15px; text-align: center;">${contato}</td><td style="padding: 10px 15px; text-align: center;">${fechou}</td><td style="padding: 10px 15px; text-align: center;">${status}</td></tr>`;
-            }).join('');
-        } catch (error) {
-            console.error('Erro ao carregar feedbacks:', error);
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red; padding: 20px;">Erro ao carregar métricas de conversão.</td></tr>';
         }
     };
 

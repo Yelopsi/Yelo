@@ -525,7 +525,7 @@
             .cta-section { padding-bottom: 60px; } 
 
             /* Scroll Snap Horizontal para Cards no Mobile */
-            .benefits-grid, .plans-grid, .diferenciais-grid {
+            .benefits-grid, .plans-grid, .diferenciais-grid, .depoimentos-grid {
                 display: flex;
                 overflow-x: auto;
                 scroll-snap-type: x mandatory;
@@ -536,9 +536,9 @@
                 scrollbar-width: none;
                 justify-content: flex-start;
             }
-            .benefits-grid::-webkit-scrollbar, .plans-grid::-webkit-scrollbar, .diferenciais-grid::-webkit-scrollbar { display: none; }
+            .benefits-grid::-webkit-scrollbar, .plans-grid::-webkit-scrollbar, .diferenciais-grid::-webkit-scrollbar, .depoimentos-grid::-webkit-scrollbar { display: none; }
             
-            .benefit-card, .plan-card, .diferencial-card {
+            .benefit-card, .plan-card, .diferencial-card, .depoimento-card {
                 flex: 0 0 85%;
                 scroll-snap-align: center;
                 min-width: 280px;
@@ -726,26 +726,30 @@
         <div class="container" style="padding-top: 20px; padding-bottom: 40px; position: relative; z-index: 2;">
             <h2 class="titulo-secao" style="margin-bottom: 40px;">O que dizem nossos parceiros</h2>
             <div class="depoimentos-grid">
-                <div class="depoimento-card">
-                    <p class="depoimento-texto">"Sempre tive receio de plataformas que parecem 'mercantilizar' a psicologia. A Yelo foi uma surpresa incrível. Sinto que meu trabalho é valorizado, a plataforma respeita totalmente a ética da profissão e os pacientes que chegam através do match já estão muito alinhados."</p>
-                    <div class="depoimento-autor">
-                        <img src="https://placehold.co/100x100/1B4332/FFEE8C?text=MS" alt="Psicóloga">
-                        <div>
-                            <strong>Marina S.</strong>
-                            <span>Psicóloga Clínica (TCC)</span>
+                <% if (typeof depoimentosPsi !== 'undefined' && depoimentosPsi.length > 0) { %>
+                    <% depoimentosPsi.forEach(function(dep) { %>
+                        <div class="depoimento-card">
+                            <div style="color: #f59e0b; font-size: 1.2rem; margin-bottom: 10px; position: relative; z-index: 1;">
+                                <% for(let i = 0; i < (dep.rating || 5); i++) { %>★<% } %>
+                            </div>
+                            <p class="depoimento-texto">"<%= dep.comment %>"</p>
+                            <div class="depoimento-autor">
+                                <% if (dep.fotoUrl) { %>
+                                    <img src="<%= dep.fotoUrl %>" alt="<%= dep.nome %>">
+                                <% } else { %>
+                                    <div style="width: 50px; height: 50px; border-radius: 50%; background: #e8f5e9; color: #1B4332; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; border: 2px solid #fdfaf6; box-shadow: 0 2px 5px rgba(0,0,0,0.05);"><%= dep.nome.charAt(0).toUpperCase() %></div>
+                                <% } %>
+                                <div>
+                                    <strong><%= dep.nome %></strong>
+                                    <span><%= dep.abordagem %></span>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div class="depoimento-card">
-                    <p class="depoimento-texto">"A facilidade de uso é absurda. Antigamente eu perdia muito tempo cobrando pacientes e tentando organizar a agenda. Hoje, tudo fica centralizado na plataforma e eu tenho total autonomia sobre meus horários e valores. Recomendo muito!"</p>
-                    <div class="depoimento-autor">
-                        <img src="https://placehold.co/100x100/1B4332/FFEE8C?text=RM" alt="Psicólogo">
-                        <div>
-                            <strong>Ricardo M.</strong>
-                            <span>Psicanalista</span>
-                        </div>
-                    </div>
-                </div>
+                    <% }); %>
+                <% } %>
+            </div>
+            <div class="mobile-scroll-hint">
+                <div class="scroll-indicator-step"><span class="mouse dark"><span class="wheel"></span></span></div>
             </div>
         </div>
         <div class="wave-divider wave-bottom">

@@ -153,12 +153,28 @@ module.exports = {
                 ] 
             };
             if (Psychologist) {
-                queryOptions.include = [{ model: Psychologist, as: 'autor', attributes: ['nome', 'fotoUrl', 'slug'] }];
+                queryOptions.include = [{ model: Psychologist, as: 'autor', attributes: ['nome', 'fotoUrl', 'slug', 'status', 'planExpiresAt', 'is_exempt'] }];
             }
 
             // CORREÇÃO: Usa .scope(null) para remover qualquer escopo padrão que possa estar
             // ocultando o campo 'conteudo' da consulta.
             let posts = await Post.scope(null).findAll(queryOptions);
+            
+            const agora = new Date();
+            posts = posts.map(post => {
+                const postData = post.toJSON ? post.toJSON() : { ...post };
+                if (postData.autor) {
+                    let isActive = postData.autor.status === 'active';
+                    const isVip = postData.autor.is_exempt === true || String(postData.autor.is_exempt).toLowerCase() === 'true' || postData.autor.is_exempt === 1;
+                    
+                    if (!isVip && (!postData.autor.planExpiresAt || new Date(postData.autor.planExpiresAt) <= agora)) {
+                        isActive = false;
+                    }
+                    
+                    if (!isActive) postData.autor.slug = null;
+                }
+                return postData;
+            });
 
             res.render('blog', { 
                 posts: posts, 
@@ -181,17 +197,30 @@ module.exports = {
                 queryOptions.include = [{
                     model: Psychologist,
                     as: 'autor',
-                    attributes: ['nome', 'fotoUrl', 'slug']
+                    attributes: ['nome', 'fotoUrl', 'slug', 'status', 'planExpiresAt', 'is_exempt']
                 }];
             }
             // CORREÇÃO: Usa .scope(null) para garantir que o campo 'conteudo' seja incluído,
             // ignorando qualquer escopo padrão do modelo que possa o estar excluindo.
-            const post = await Post.scope(null).findByPk(id, queryOptions);
+            let post = await Post.scope(null).findByPk(id, queryOptions);
 
             if (!post) {
                 // CORREÇÃO DE SOFT 404: Renderizar a página oficial 404 em vez de redirecionar para a home do blog
                 res.status(404);
                 return res.render('404', { url: req.originalUrl });
+            }
+            
+            const agora = new Date();
+            const postData = post.toJSON ? post.toJSON() : { ...post };
+            if (postData.autor) {
+                let isActive = postData.autor.status === 'active';
+                const isVip = postData.autor.is_exempt === true || String(postData.autor.is_exempt).toLowerCase() === 'true' || postData.autor.is_exempt === 1;
+                
+                if (!isVip && (!postData.autor.planExpiresAt || new Date(postData.autor.planExpiresAt) <= agora)) {
+                    isActive = false;
+                }
+                
+                if (!isActive) postData.autor.slug = null;
             }
 
             // 2. Busca posts recentes para a Sidebar (excluindo o atual)
@@ -204,7 +233,7 @@ module.exports = {
             });
 
             res.render('post_completo', { 
-                post: post, 
+                post: postData, 
                 recentes: recentes, // Enviamos a lista para a lateral
                 formatImageUrl: formatImageUrl
             });

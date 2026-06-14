@@ -73,7 +73,7 @@ exports.getDashboardStats = async (req, res) => {
                 where: { status: 'active', plano: { [Op.ne]: null } }
             }).catch(() => []),
             db.SystemLog.count({ where: { message: { [Op.iLike]: '%[EMAIL_FAIL]%' }, createdAt: { [Op.gte]: oneDayAgo } } }).catch(() => 0),
-            db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsappClickLogs"`, { type: db.sequelize.QueryTypes.SELECT }).catch(e => { return [{ count: 0 }]; })
+            db.sequelize.query(`SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, "guestName", "id"::varchar)) as count FROM "WhatsappClickLogs"`, { type: db.sequelize.QueryTypes.SELECT }).catch(e => { return [{ count: 0 }]; })
         ]);
 
         const patientStats = patientStatsResult[0] || {};
@@ -168,7 +168,7 @@ exports.getDetailedReports = async (req, res) => {
         }
 
         const usersQuery = `
-            SELECT TO_CHAR("createdAt", 'YYYY-MM-DD') as data,
+            SELECT TO_CHAR("createdAt" AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD') as data,
             SUM(CASE WHEN "type" = 'patient' THEN 1 ELSE 0 END) as pacientes,
             SUM(CASE WHEN "type" = 'psychologist' THEN 1 ELSE 0 END) as psis
             FROM (SELECT "createdAt", 'patient' as type FROM "Patients" UNION ALL SELECT "createdAt", 'psychologist' as type FROM "Psychologists") as combined
@@ -176,7 +176,7 @@ exports.getDetailedReports = async (req, res) => {
         `;
 
         const demandQuery = `
-            SELECT TO_CHAR("createdAt", 'YYYY-MM-DD') as data,
+            SELECT TO_CHAR("createdAt" AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD') as data,
             SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as concluidos,
             SUM(CASE WHEN status = 'started' THEN 1 ELSE 0 END) as desistencias
             FROM "DemandSearches" WHERE "createdAt" BETWEEN :start AND :end GROUP BY data ORDER BY data ASC;
@@ -187,9 +187,9 @@ exports.getDetailedReports = async (req, res) => {
         const timeOfDayQuery = `
             SELECT 
                 CASE 
-                    WHEN EXTRACT(HOUR FROM "createdAt") BETWEEN 6 AND 11 THEN 'Manhã'
-                    WHEN EXTRACT(HOUR FROM "createdAt") BETWEEN 12 AND 17 THEN 'Tarde'
-                    WHEN EXTRACT(HOUR FROM "createdAt") BETWEEN 18 AND 23 THEN 'Noite'
+                    WHEN EXTRACT(HOUR FROM "createdAt" AT TIME ZONE 'America/Sao_Paulo') BETWEEN 6 AND 11 THEN 'Manhã'
+                    WHEN EXTRACT(HOUR FROM "createdAt" AT TIME ZONE 'America/Sao_Paulo') BETWEEN 12 AND 17 THEN 'Tarde'
+                    WHEN EXTRACT(HOUR FROM "createdAt" AT TIME ZONE 'America/Sao_Paulo') BETWEEN 18 AND 23 THEN 'Noite'
                     ELSE 'Madrugada'
                 END as periodo,
                 COUNT(*) as total
@@ -201,7 +201,7 @@ exports.getDetailedReports = async (req, res) => {
 
         const visitsQuery = `
             SELECT 
-                TO_CHAR("createdAt", 'YYYY-MM-DD') as data,
+                TO_CHAR("createdAt" AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD') as data,
                 COUNT(*) as total
             FROM "SiteVisits"
             WHERE "createdAt" BETWEEN :start AND :end
@@ -224,7 +224,7 @@ exports.getDetailedReports = async (req, res) => {
             db.Answer.count({ where: { createdAt: { [Op.between]: [startDate, endDate] } } }),
             db.Psychologist.findAll({ where: { plano: { [Op.ne]: null }, status: 'active' }, attributes: ['plano', 'is_exempt', 'stripeSubscriptionId', 'subscriptionId'] }),
             db.Psychologist.count({ where: { status: 'inactive', updatedAt: { [Op.between]: [startDate, endDate] } } }),
-            db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: startDate, end: endDate }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
+            db.sequelize.query(`SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, "guestName", "id"::varchar)) as count FROM "WhatsappClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: startDate, end: endDate }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
             db.sequelize.query(`SELECT COUNT(*) as count FROM "SiteVisits" WHERE "createdAt" >= NOW() - INTERVAL '24 hours'`, { type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
             db.sequelize.query(`SELECT feature, COUNT(*) as count FROM "FeatureTrackingLogs" GROUP BY feature ORDER BY count DESC`).catch(() => [[
                 { feature: 'audio_reply', count: 88 }, { feature: 'auto_whatsapp', count: 82 }, { feature: 'calculator', count: 65 }, { feature: 'analytics', count: 45 }, { feature: 'external_links', count: 25 }
@@ -691,16 +691,16 @@ exports.getFunnelAnalytics = async (req, res) => {
             end = new Date(); end.setHours(end.getHours() - 3); end.setUTCHours(2, 59, 59, 999); end.setDate(end.getDate() + 1);
         }
 
-        const visitsResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "LandingVisits" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
+        const visitsResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "SiteVisits" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
         const visitas = parseInt(visitsResult[0]?.count || 0);
 
         const iniciaram = await db.DemandSearch.count({ where: { createdAt: { [Op.between]: [start, end] } } }).catch(() => 0);
         const completaram = await db.DemandSearch.count({ where: { status: 'completed', createdAt: { [Op.between]: [start, end] } } }).catch(() => 0);
 
-        const profileViewsResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "createdAt" BETWEEN :start AND :end AND "type" = 'profile_click_funnel'`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
+        const profileViewsResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "createdAt" BETWEEN :start AND :end AND "source" = 'profile_click_funnel'`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
         const profileViews = parseInt(profileViewsResult[0]?.count || 0);
 
-        const whatsappClicksResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
+        const whatsappClicksResult = await db.sequelize.query(`SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, "guestName", "id"::varchar)) as count FROM "WhatsappClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
         const whatsappClicks = parseInt(whatsappClicksResult[0]?.count || 0);
 
         const abandonos = await db.sequelize.query(
@@ -713,7 +713,7 @@ exports.getFunnelAnalytics = async (req, res) => {
         ).catch(() => []);
 
         const origens = await db.sequelize.query(
-            `SELECT utm_source as source, COUNT(*) as count FROM "LandingVisits" WHERE "createdAt" BETWEEN :start AND :end AND utm_source IS NOT NULL AND utm_source != '' GROUP BY utm_source ORDER BY count DESC`,
+            `SELECT utm_source as source, COUNT(*) as count FROM "Patients" WHERE "createdAt" BETWEEN :start AND :end AND utm_source IS NOT NULL AND utm_source != '' GROUP BY utm_source ORDER BY count DESC`,
             { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => []);
 

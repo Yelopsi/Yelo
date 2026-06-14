@@ -11,8 +11,16 @@ window.initializePage = function() {
         const today = new Date();
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(today.getDate() - 30);
-        startInput.value = thirtyDaysAgo.toISOString().split('T')[0];
-        endInput.value = today.toISOString().split('T')[0];
+        
+        const formatDateLocal = (date) => {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        };
+
+        startInput.value = formatDateLocal(thirtyDaysAgo);
+        endInput.value = formatDateLocal(today);
     }
 
     // Dicionário amigável para traduzir as "chaves" do questionário
@@ -62,9 +70,21 @@ window.initializePage = function() {
             const taxaGlobal = data.visitas > 0 ? ((data.whatsappClicks / data.visitas) * 100).toFixed(2) : 0;
             document.getElementById('taxa-conclusao-final').textContent = `${taxaGlobal}% do tráfego total`;
 
-            // Custo Estimado Básico (Exemplo: Assumindo CPC médio de R$ 1.50 para gerar Insight visual)
-            const cpaEstimado = data.whatsappClicks > 0 ? ((data.visitas * 1.50) / data.whatsappClicks).toFixed(2) : '--';
-            document.getElementById('kpi-cpa').textContent = cpaEstimado !== '--' ? `R$ ${cpaEstimado}` : 'R$ --';
+            // --- CÁLCULO DINÂMICO DE CPA (Custo por Aquisição) ---
+            const inputCpc = document.getElementById('input-cpc-medio');
+            const calcularCPA = () => {
+                const cpc = parseFloat(inputCpc ? inputCpc.value : 1.50) || 1.50;
+                // CPA = (Total de Visitas * Custo por Clique) / Conversões Finais
+                const cpaEstimado = data.whatsappClicks > 0 ? ((data.visitas * cpc) / data.whatsappClicks).toFixed(2) : '--';
+                document.getElementById('kpi-cpa').textContent = cpaEstimado !== '--' ? `R$ ${cpaEstimado}` : 'R$ --';
+            };
+            
+            calcularCPA(); // Cálculo inicial
+            
+            if (inputCpc && !inputCpc.hasAttribute('data-listener')) {
+                inputCpc.setAttribute('data-listener', 'true');
+                inputCpc.addEventListener('input', calcularCPA);
+            }
 
             // --- 2. RENDERIZA FUNIL VISUAL END-TO-END ---
             const maxFunnel = data.visitas > 0 ? data.visitas : 1; // Previne divisão por zero
@@ -150,10 +170,16 @@ window.initializePage = function() {
                         const count = parseInt(o.count);
                         totalOrigens += count;
                         
-                        if (src.includes('google')) canais['Google Ads'] += count;
-                        else if (src.includes('fb') || src.includes('facebook') || src.includes('ig') || src.includes('instagram') || src.includes('meta')) canais['Meta/Insta Ads'] += count;
-                        else if (src === 'direto' || src === 'organico' || src === '') canais['Orgânico/Direto'] += count;
-                        else canais['Outros'] += count;
+                        // Mapeamento Estrito para evitar falsos positivos de palavras nas UTMs
+                        if (src === 'google' || src === 'google_ads' || src === 'gads' || src === 'google ads') {
+                            canais['Google Ads'] += count;
+                        } else if (src === 'fb' || src === 'facebook' || src === 'ig' || src === 'instagram' || src === 'meta' || src === 'fb_ads' || src === 'meta_ads') {
+                            canais['Meta/Insta Ads'] += count;
+                        } else if (src === 'direto' || src === 'organico' || src === 'organic' || src === '') {
+                            canais['Orgânico/Direto'] += count;
+                        } else {
+                            canais['Outros'] += count;
+                        }
                     });
 
                     containerOrigens.innerHTML = Object.entries(canais).sort((a,b) => b[1] - a[1]).map(([nome, count]) => {

@@ -101,7 +101,7 @@ exports.getPublicQuestions = async (req, res) => {
                         { 
                             model: db.Psychologist, 
                             as: 'psychologist', 
-                            attributes: ['nome', 'fotoUrl', 'crp', 'slug'] 
+                            attributes: ['nome', 'fotoUrl', 'crp', 'slug', 'status', 'planExpiresAt', 'is_exempt'] 
                         }
                     ]
                 }
@@ -110,7 +110,28 @@ exports.getPublicQuestions = async (req, res) => {
             limit: 20
         });
 
-        res.json(questions);
+        const agora = new Date();
+        const formattedQuestions = questions.map(q => {
+            const qData = q.toJSON ? q.toJSON() : { ...q };
+            if (qData.answers) {
+                qData.answers = qData.answers.map(ans => {
+                    if (ans.psychologist) {
+                        let isActive = ans.psychologist.status === 'active';
+                        const isVip = ans.psychologist.is_exempt === true || String(ans.psychologist.is_exempt).toLowerCase() === 'true' || ans.psychologist.is_exempt === 1;
+                        
+                        if (!isVip && (!ans.psychologist.planExpiresAt || new Date(ans.psychologist.planExpiresAt) <= agora)) {
+                            isActive = false;
+                        }
+                        
+                        if (!isActive) ans.psychologist.slug = null;
+                    }
+                    return ans;
+                });
+            }
+            return qData;
+        });
+
+        res.json(formattedQuestions);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Erro ao buscar perguntas." });
@@ -150,7 +171,7 @@ exports.getQuestionBySlug = async (req, res) => {
                     as: 'answers',
                     required: false,
                     include: [
-                        { model: db.Psychologist, as: 'psychologist', attributes: ['nome', 'fotoUrl', 'crp', 'slug'] }
+                        { model: db.Psychologist, as: 'psychologist', attributes: ['nome', 'fotoUrl', 'crp', 'slug', 'status', 'planExpiresAt', 'is_exempt'] }
                     ]
                 }
             ]
@@ -162,6 +183,23 @@ exports.getQuestionBySlug = async (req, res) => {
          // 1.5. Injeta os dados do SQL puro que o modelo do Sequelize teimou em ignorar
         questionData.title = rawResults[0].title;
         questionData.slug = rawResults[0].slug;
+
+        const agora = new Date();
+        if (questionData.answers) {
+            questionData.answers = questionData.answers.map(ans => {
+                if (ans.psychologist) {
+                    let isActive = ans.psychologist.status === 'active';
+                    const isVip = ans.psychologist.is_exempt === true || String(ans.psychologist.is_exempt).toLowerCase() === 'true' || ans.psychologist.is_exempt === 1;
+                    
+                    if (!isVip && (!ans.psychologist.planExpiresAt || new Date(ans.psychologist.planExpiresAt) <= agora)) {
+                        isActive = false;
+                    }
+                    
+                    if (!isActive) ans.psychologist.slug = null;
+                }
+                return ans;
+            });
+        }
 
         // 2. Ordena as respostas da mais recente para a mais antiga via JavaScript
         if (questionData.answers && questionData.answers.length > 0) {

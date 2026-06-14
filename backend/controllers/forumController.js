@@ -53,7 +53,7 @@ exports.getAllPosts = async (req, res) => {
             include: [
                 {
                     model: Psychologist, // Adiciona badges e nível para exibição
-                    attributes: ['nome', 'fotoUrl', 'badges', 'authority_level', 'slug'],
+                    attributes: ['nome', 'fotoUrl', 'badges', 'authority_level', 'slug', 'status', 'planExpiresAt', 'is_exempt'],
                     required: false // Garante LEFT JOIN
                 },
                 {
@@ -68,25 +68,39 @@ exports.getAllPosts = async (req, res) => {
             subQuery: false // Impede que o Sequelize crie uma subquery que quebra a ordenação com COUNT
         });
 
+        const agora = new Date();
         // Formata a resposta para o frontend
-        const formattedPosts = posts.map(post => ({
-            id: post.id,
-            title: post.title,
-            content: post.content,
-            category: post.category,
-            isAnonymous: post.isAnonymous,
-            createdAt: post.createdAt,
-            isPinned: post.dataValues.isPinned,
-            votes: post.votes,
-            authorBadges: post.isAnonymous ? {} : post.Psychologist?.badges, // Passa as badges para o front
-            authorLevel: post.isAnonymous ? null : post.Psychologist?.authority_level, // Passa o nível
-            authorName: post.isAnonymous ? 'Anônimo' : post.Psychologist?.nome,
-            authorPhoto: post.isAnonymous ? null : post.Psychologist?.fotoUrl,
-            authorSlug: post.isAnonymous ? null : post.Psychologist?.slug,
-            commentCount: parseInt(post.dataValues.commentCount, 10) || 0,
-            supportedByMe: post.dataValues.supportedByMe,
-            isMine: post.dataValues.isMine
-        }));
+        const formattedPosts = posts.map(post => {
+            let authorSlug = post.isAnonymous ? null : post.Psychologist?.slug;
+            
+            if (post.Psychologist && !post.isAnonymous) {
+                let isActive = post.Psychologist.status === 'active';
+                const isVip = post.Psychologist.is_exempt === true || String(post.Psychologist.is_exempt).toLowerCase() === 'true' || post.Psychologist.is_exempt === 1;
+                if (!isVip && (!post.Psychologist.planExpiresAt || new Date(post.Psychologist.planExpiresAt) <= agora)) {
+                    isActive = false;
+                }
+                if (!isActive) authorSlug = null;
+            }
+
+            return {
+                id: post.id,
+                title: post.title,
+                content: post.content,
+                category: post.category,
+                isAnonymous: post.isAnonymous,
+                createdAt: post.createdAt,
+                isPinned: post.dataValues.isPinned,
+                votes: post.votes,
+                authorBadges: post.isAnonymous ? {} : post.Psychologist?.badges, // Passa as badges para o front
+                authorLevel: post.isAnonymous ? null : post.Psychologist?.authority_level, // Passa o nível
+                authorName: post.isAnonymous ? 'Anônimo' : post.Psychologist?.nome,
+                authorPhoto: post.isAnonymous ? null : post.Psychologist?.fotoUrl,
+                authorSlug: authorSlug,
+                commentCount: parseInt(post.dataValues.commentCount, 10) || 0,
+                supportedByMe: post.dataValues.supportedByMe,
+                isMine: post.dataValues.isMine
+            };
+        });
 
         res.json(formattedPosts);
 
@@ -116,7 +130,7 @@ exports.createPost = async (req, res) => {
 exports.getPostDetails = async (req, res) => {
     try {
         const post = await ForumPost.findByPk(req.params.id, {
-            include: [{ model: Psychologist, attributes: ['nome', 'fotoUrl', 'badges', 'authority_level', 'slug'] }]
+            include: [{ model: Psychologist, attributes: ['nome', 'fotoUrl', 'badges', 'authority_level', 'slug', 'status', 'planExpiresAt', 'is_exempt'] }]
         });
         
         if (!post) return res.status(404).json({ error: 'Post não encontrado' });
@@ -124,6 +138,17 @@ exports.getPostDetails = async (req, res) => {
         const supported = await ForumVote.findOne({ 
             where: { ForumPostId: post.id, PsychologistId: req.user.id } 
         });
+
+        let authorSlug = post.isAnonymous ? null : (post.Psychologist ? post.Psychologist.slug : null);
+        if (post.Psychologist && !post.isAnonymous) {
+            const agora = new Date();
+            let isActive = post.Psychologist.status === 'active';
+            const isVip = post.Psychologist.is_exempt === true || String(post.Psychologist.is_exempt).toLowerCase() === 'true' || post.Psychologist.is_exempt === 1;
+            if (!isVip && (!post.Psychologist.planExpiresAt || new Date(post.Psychologist.planExpiresAt) <= agora)) {
+                isActive = false;
+            }
+            if (!isActive) authorSlug = null;
+        }
 
         res.json({
             id: post.id,
@@ -138,7 +163,7 @@ exports.getPostDetails = async (req, res) => {
             authorPhoto: post.isAnonymous ? null : (post.Psychologist ? post.Psychologist.fotoUrl : null),
             authorBadges: post.isAnonymous ? {} : (post.Psychologist ? post.Psychologist.badges : {}),
             authorLevel: post.isAnonymous ? null : (post.Psychologist ? post.Psychologist.authority_level : null),
-            authorSlug: post.isAnonymous ? null : (post.Psychologist ? post.Psychologist.slug : null),
+            authorSlug: authorSlug,
             supportedByMe: !!supported,
             isMine: post.PsychologistId === req.user.id
         });
@@ -162,12 +187,12 @@ exports.getComments = async (req, res) => {
                 parentId: null 
             },
             include: [
-                { model: Psychologist, attributes: ['nome', 'fotoUrl', 'badges', 'authority_level', 'slug'], required: false },
+                { model: Psychologist, attributes: ['nome', 'fotoUrl', 'badges', 'authority_level', 'slug', 'status', 'planExpiresAt', 'is_exempt'], required: false },
                 // Inclui as respostas aninhadas
                 { 
                     model: ForumComment, 
                     as: 'Replies', 
-                    include: [{ model: Psychologist, attributes: ['nome', 'fotoUrl', 'badges', 'authority_level', 'slug'], required: false }],
+                    include: [{ model: Psychologist, attributes: ['nome', 'fotoUrl', 'badges', 'authority_level', 'slug', 'status', 'planExpiresAt', 'is_exempt'], required: false }],
                     required: false
                 }
             ],
@@ -202,13 +227,24 @@ exports.getComments = async (req, res) => {
             likedCommentIds = new Set(userVotes.map(v => v.ForumCommentId));
         }
 
+        const agora = new Date();
+
         // 4. Mapeia os dados com a informação de 'like' já em mãos (muito mais rápido)
         const data = comments.map(c => {
             const authorName = c.isAnonymous ? 'Anônimo' : (c.Psychologist ? c.Psychologist.nome : 'Usuário Desconhecido');
             const authorPhoto = c.isAnonymous ? null : (c.Psychologist ? c.Psychologist.fotoUrl : null);
             const authorBadges = c.isAnonymous ? {} : c.Psychologist?.badges;
             const authorLevel = c.isAnonymous ? null : c.Psychologist?.authority_level;
-            const authorSlug = c.isAnonymous ? null : c.Psychologist?.slug;
+            
+            let authorSlug = c.isAnonymous ? null : c.Psychologist?.slug;
+            if (c.Psychologist && !c.isAnonymous) {
+                let isActive = c.Psychologist.status === 'active';
+                const isVip = c.Psychologist.is_exempt === true || String(c.Psychologist.is_exempt).toLowerCase() === 'true' || c.Psychologist.is_exempt === 1;
+                if (!isVip && (!c.Psychologist.planExpiresAt || new Date(c.Psychologist.planExpiresAt) <= agora)) {
+                    isActive = false;
+                }
+                if (!isActive) authorSlug = null;
+            }
 
             // Processa as respostas (Replies) para incluir authorName e likedByMe
             let processedReplies = [];
@@ -218,7 +254,17 @@ exports.getComments = async (req, res) => {
                     const rAuthorPhoto = r.isAnonymous ? null : (r.Psychologist ? r.Psychologist.fotoUrl : null);
                     const rAuthorBadges = r.isAnonymous ? {} : r.Psychologist?.badges;
                     const rAuthorLevel = r.isAnonymous ? null : r.Psychologist?.authority_level;
-                    const rAuthorSlug = r.isAnonymous ? null : r.Psychologist?.slug;
+                    
+                    let rAuthorSlug = r.isAnonymous ? null : r.Psychologist?.slug;
+                    if (r.Psychologist && !r.isAnonymous) {
+                        let isActive = r.Psychologist.status === 'active';
+                        const isVip = r.Psychologist.is_exempt === true || String(r.Psychologist.is_exempt).toLowerCase() === 'true' || r.Psychologist.is_exempt === 1;
+                        if (!isVip && (!r.Psychologist.planExpiresAt || new Date(r.Psychologist.planExpiresAt) <= agora)) {
+                            isActive = false;
+                        }
+                        if (!isActive) rAuthorSlug = null;
+                    }
+                    
                     return {
                         id: r.id,
                         content: r.content,

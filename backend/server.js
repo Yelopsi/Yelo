@@ -197,6 +197,12 @@ const startServer = async () => {
             await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "identidade_genero" VARCHAR(255);');
             
             console.log('🛠️ [DB FIX] Injetando colunas faltantes na tabela Questions...');
+            
+            // Garante a criação estrutural das tabelas do fórum/comunidade caso não existam
+            if (db.Question) await db.Question.sync();
+            if (db.Answer) await db.Answer.sync();
+            if (db.QuestionIgnore) await db.QuestionIgnore.sync();
+
             await db.sequelize.query('ALTER TABLE "Questions" ADD COLUMN IF NOT EXISTS "title" VARCHAR(255);');
             await db.sequelize.query('ALTER TABLE "Questions" ADD COLUMN IF NOT EXISTS "slug" VARCHAR(255) UNIQUE;');
         } catch(e) {

@@ -1,0 +1,206 @@
+<style>
+    /* Estrutura do Drawer (Side-panel) */
+    .drawer-overlay {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    .drawer-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    .drawer-content {
+        transform: translateX(100%);
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .drawer-overlay.active .drawer-content {
+        transform: translateX(0);
+    }
+    
+    .crm-pill {
+        background: #f8f9fa;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+        padding: 8px 18px;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+    .crm-pill:hover { background: #e2e8f0; color: #1e293b; }
+    .crm-pill.active { background: #1B4332; color: white; border-color: #1B4332; box-shadow: 0 2px 4px rgba(27, 67, 50, 0.2); }
+    
+    .health-bar-bg { background: #e2e8f0; height: 8px; border-radius: 4px; width: 100%; overflow: hidden; margin-top: 5px; }
+    .health-bar-fill { height: 100%; transition: width 0.5s ease-out; }
+    
+    .btn-close-drawer { background: none; border: none; cursor: pointer; color: #64748b; padding: 5px; display: flex; align-items: center; justify-content: center; transition: transform 0.3s ease; }
+    .btn-close-drawer:hover { transform: rotate(90deg); color: #1e293b; }
+
+    @media (max-width: 768px) {
+        .drawer-content {
+            width: 100% !important;
+            max-width: 100% !important;
+            transform: translateY(100%);
+            border-radius: 24px 24px 0 0;
+            margin-top: 60px;
+            height: calc(100% - 60px) !important;
+        }
+        .drawer-overlay.active .drawer-content {
+            transform: translateY(0) !important;
+        }
+        .drawer-header-mobile::before {
+            content: ''; display: block; width: 40px; height: 5px; background: #cbd5e1; border-radius: 5px; margin: 0 auto 15px auto;
+        }
+        .drawer-body-scroll {
+            padding-bottom: 120px !important;
+        }
+    }
+</style>
+
+<div class="modern-dashboard-layout" style="padding-bottom: 120px;">
+    <div class="main-header" style="background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%); padding: 25px 30px; margin-bottom: 25px; border-radius: 16px;">
+        <div>
+            <h1 style="color: white; margin: 0 0 5px 0; font-size: 1.8rem; font-family: var(--font-titulos);">Sucesso do Psicólogo (CS)</h1>
+            <p style="color: rgba(255,255,255,0.8); margin: 0;">Monitoramento de saúde da assinatura, engajamento e força do perfil.</p>
+        </div>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card" style="border-top-color: #3498db;">
+            <h4 style="display: flex; align-items: center; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> Total</h4>
+            <p class="kpi-numero" id="kpi-total-psis" style="color: #3498db;">0</p>
+        </div>
+        <div class="kpi-card" style="border-top-color: var(--verde-sucesso);">
+            <h4 style="display: flex; align-items: center; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Ativos</h4>
+            <p class="kpi-numero" id="kpi-ativos-psis" style="color: var(--verde-sucesso);">0</p>
+        </div>
+        <div class="kpi-card" style="border-top-color: #f39c12;">
+            <h4 style="display: flex; align-items: center; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Pendentes</h4>
+            <p class="kpi-numero" id="kpi-pendentes-psis" style="color: #f39c12;">0</p>
+        </div>
+        <div class="kpi-card" style="border-top-color: var(--coral-quente);">
+            <h4 style="display: flex; align-items: center; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="15"></line><line x1="15" y1="9" x2="9" y2="15"></line></svg> Inativos</h4>
+            <p class="kpi-numero" id="kpi-inativos-psis" style="color: var(--coral-quente);">0</p>
+        </div>
+        <div class="kpi-card" style="border-top-color: #FFD700;">
+            <h4 style="display: flex; align-items: center; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> VIPs</h4>
+            <p class="kpi-numero" id="kpi-vip-psis" style="color: #d4af37;">0</p>
+        </div>
+    </div>
+
+    <div class="widget" style="margin-bottom: 25px;">
+        <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px;">
+            <div class="crm-funnel-tabs" style="display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 5px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+                <button class="crm-pill active" data-filter="">Todos</button>
+                <button class="crm-pill" data-filter="active">Ativos</button>
+                <button class="crm-pill" data-filter="pending">Pendentes</button>
+                <button class="crm-pill" data-filter="inactive">Inativos</button>
+                <button class="crm-pill" data-filter="vip">VIPs</button>
+                <button class="crm-pill" data-filter="deleted">Lixeira 🗑️</button>
+            </div>
+            <input type="hidden" id="crm-status-psi" value="">
+            
+            <div class="search-wrapper" style="position: relative; width: 300px; max-width: 100%;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="crm-search-psi" class="campo-busca" placeholder="Buscar psicólogo..." style="width: 100%; padding-left: 42px;">
+            </div>
+        </div>
+    </div>
+
+    <div class="tabela-container">
+        <div class="tabela-wrapper">
+            <table class="tabela-gerenciamento">
+                <thead>
+                    <tr>
+                        <th>Profissional</th>
+                        <th>Status / Plano</th>
+                        <th>Força do Perfil</th>
+                        <th>Nível (Gamificação)</th>
+                        <th style="text-align: right;">Ações CS</th>
+                    </tr>
+                </thead>
+                <tbody id="crm-psis-body">
+                    <tr><td colspan="5" class="loading-row" style="text-align: center; padding: 40px;"><span class="loading-spinner-sm"></span> Carregando CRM...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="crm-pagination-psis" class="pagination-container" style="margin-top: 20px;"></div>
+    </div>
+</div>
+
+<!-- DRAWER: VISÃO 360 CS -->
+<div id="drawer-cs-overlay" class="drawer-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100000; display: flex; justify-content: flex-end;">
+    <div class="drawer-content" style="background: #f8f9fa; width: 100%; max-width: 500px; height: 100%; box-shadow: -5px 0 25px rgba(0,0,0,0.1); display: flex; flex-direction: column;">
+        
+        <div class="drawer-header-mobile" style="background: white; padding: 20px 25px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; flex-wrap: wrap;">
+            <h2 style="margin: 0; font-size: 1.3rem; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #8b5cf6;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                Visão de CS (360º)
+            </h2>
+            <button id="btn-close-cs-drawer" class="btn-close-drawer">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        
+        <div class="drawer-body-scroll" style="padding: 25px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 20px;">
+            <!-- Basic Info -->
+            <div style="background: white; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                    <img id="cs-avatar" src="" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; background: #f1f5f9; display: none;">
+                    <div id="cs-avatar-fallback" style="width: 50px; height: 50px; border-radius: 50%; background: #f5f3ff; color: #8b5cf6; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem;">P</div>
+                    <div>
+                        <h3 style="margin: 0; color: #1e293b; font-size: 1.2rem;" id="cs-name">Nome</h3>
+                        <p style="margin: 0; color: #64748b; font-size: 0.9rem;" id="cs-email">email</p>
+                    </div>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                    <span style="background: #f1f5f9; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; color: #475569;" id="cs-phone">Tel: </span>
+                    <span style="background: #f1f5f9; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; color: #475569;" id="cs-crp">CRP: </span>
+                    <span style="background: #f1f5f9; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; color: #475569;" id="cs-date">Desde: </span>
+                </div>
+            </div>
+
+            <!-- Health Score -->
+            <div style="background: white; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0;">
+                <h4 style="margin: 0 0 15px 0; color: #1e293b; font-size: 1.05rem;">Saúde do Perfil</h4>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; color: #475569;">
+                    <span>Completude:</span>
+                    <strong id="cs-health-pct">0%</strong>
+                </div>
+                <div class="health-bar-bg">
+                    <div id="cs-health-bar" class="health-bar-fill" style="width: 0%; background: #ef4444;"></div>
+                </div>
+
+                <ul style="list-style: none; padding: 0; margin: 15px 0 0 0; font-size: 0.85rem; color: #64748b; display: flex; flex-direction: column; gap: 8px;" id="cs-health-checks">
+                    <!-- Checks -->
+                </ul>
+            </div>
+
+            <!-- Assinatura -->
+            <div style="background: white; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0;">
+                <h4 style="margin: 0 0 15px 0; color: #1e293b; font-size: 1.05rem;">Assinatura</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <span style="display: block; font-size: 0.8rem; color: #64748b;">Plano</span>
+                        <strong id="cs-plan" style="color: #1e293b;">-</strong>
+                    </div>
+                    <div>
+                        <span style="display: block; font-size: 0.8rem; color: #64748b;">Vencimento</span>
+                        <strong id="cs-expire" style="color: #1e293b;">-</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ações Rápidas -->
+            <div style="background: white; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0;">
+                <h4 style="margin: 0 0 15px 0; color: #1e293b; font-size: 1.05rem;">Ações de CS</h4>
+                <div style="display: flex; flex-direction: column; gap: 10px;" id="cs-actions-container">
+                    <!-- Botoes -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

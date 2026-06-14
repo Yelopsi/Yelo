@@ -33,44 +33,53 @@ const initProfilePage = async () => {
                     btnZap.parentNode.replaceChild(newBtnZap, btnZap);
                     
                     newBtnZap.addEventListener('click', async () => {
-                        try {
-                            // [NOVO] Rastreamento GA4 - Clique no WhatsApp
-                            if (typeof gtag === 'function') {
-                                gtag('event', 'click_whatsapp', {
-                                    'id_psi': profile.id
-                                });
-                            }
-
-                            let patientId = null;
-                            const token = localStorage.getItem('Yelo_token');
-                            if (token && token !== 'cookie_auth_active') {
-                                try {
-                                    const payload = JSON.parse(atob(token.split('.')[1]));
-                                    if (payload.type === 'patient') patientId = payload.id;
-                                } catch(e) {}
-                            }
-
-                            // Recupera dados do visitante se houver
-                            const guestPhone = localStorage.getItem('yelo_guest_phone');
-                            const guestName = localStorage.getItem('yelo_guest_name') || 'Visitante';
-
-                            // Não esperamos o fetch terminar para não atrasar o usuário
-                            fetch(`${BASE_URL}/api/psychologists/${profile.slug}/whatsapp-click`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ patientId, guestPhone, guestName })
-                            }).catch(() => {});
+                        // --- FIX DE IDEMPOTÊNCIA (EVITA SUPERCONTAGEM) ---
+                        const clickKey = `yelo_wpp_clicked_${profile.id}`;
+                        const alreadyClicked = sessionStorage.getItem(clickKey);
+                        
+                        if (!alreadyClicked) {
+                            sessionStorage.setItem(clickKey, 'true'); // Trava futuros cliques na mesma sessão
                             
-                            // --- Tracking específico para o Modal PLG de Conversão ---
-                            fetch(`${BASE_URL}/api/public/whatsapp-click-log`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ psychologistId: profile.id, guestName })
-                            }).catch(() => {});
-                            
-                        } catch (err) {
+                            try {
+                                // [NOVO] Rastreamento GA4 - Clique no WhatsApp
+                                if (typeof gtag === 'function') {
+                                    gtag('event', 'click_whatsapp', {
+                                        'id_psi': profile.id
+                                    });
+                                }
+
+                                let patientId = null;
+                                const token = localStorage.getItem('Yelo_token');
+                                if (token && token !== 'cookie_auth_active') {
+                                    try {
+                                        const payload = JSON.parse(atob(token.split('.')[1]));
+                                        if (payload.type === 'patient') patientId = payload.id;
+                                    } catch(e) {}
+                                }
+
+                                // Recupera dados do visitante se houver
+                                const guestPhone = localStorage.getItem('yelo_guest_phone');
+                                const guestName = localStorage.getItem('yelo_guest_name') || 'Visitante';
+
+                                // Não esperamos o fetch terminar para não atrasar o usuário
+                                fetch(`${BASE_URL}/api/psychologists/${profile.slug}/whatsapp-click`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ patientId, guestPhone, guestName })
+                                }).catch(() => {});
+                                
+                                // --- Tracking específico para o Modal PLG de Conversão ---
+                                fetch(`${BASE_URL}/api/public/whatsapp-click-log`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ psychologistId: profile.id, guestName })
+                                }).catch(() => {});
+                                
+                            } catch (err) {
+                                console.error("Erro no rastreamento:", err);
+                            }
                         }
-                    }, { once: true });
+                    });
                 } else {
                     btnZap.classList.add('disabled');
                     btnZap.href = "#";
