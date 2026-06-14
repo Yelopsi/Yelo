@@ -101,6 +101,24 @@ window.initializePage = function() {
             currentRankingSort = { column: 'posicao', direction: 'asc' };
             updateSortIndicators('posicao');
             renderRankingPsi(globalRankingData);
+            
+            // --- POPULA KPIs DO RANKING ---
+            if (globalRankingData) {
+                const totalPsis = globalRankingData.length;
+                const totalBusca = globalRankingData.reduce((acc, curr) => acc + (curr.aparicoesBusca || 0), 0);
+                const totalDiretas = globalRankingData.reduce((acc, curr) => acc + (curr.visitasDiretas || 0), 0);
+                const totalWpp = globalRankingData.reduce((acc, curr) => acc + (curr.cliquesWpp || 0), 0);
+
+                const elTotal = document.getElementById('kpi-ranking-total');
+                const elBusca = document.getElementById('kpi-ranking-busca');
+                const elDiretas = document.getElementById('kpi-ranking-diretas');
+                const elWpp = document.getElementById('kpi-ranking-wpp');
+
+                if (elTotal) elTotal.textContent = totalPsis.toLocaleString();
+                if (elBusca) elBusca.textContent = totalBusca.toLocaleString();
+                if (elDiretas) elDiretas.textContent = totalDiretas.toLocaleString();
+                if (elWpp) elWpp.textContent = totalWpp.toLocaleString();
+            }
 
             // --- 1. POPULA KPIs SUPERIORES ---
             document.getElementById('kpi-visitas').textContent = data.visitas.toLocaleString();
