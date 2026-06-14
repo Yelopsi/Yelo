@@ -474,13 +474,23 @@ window.initializePage = function() {
         document.getElementById('cs-actions-container').innerHTML = '';
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${psiId}/full`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            let psi = null;
             
-            if(!res.ok) throw new Error("Falha ao buscar detalhes");
-            const psi = await res.json();
+            // Usa cache inteligente para não baixar a lista de todos os psicólogos a cada clique
+            if (window.globalAllPsisCache) {
+                psi = window.globalAllPsisCache.find(p => p.id == psiId);
+            } else {
+                const res = await fetch(`${API_BASE_URL}/api/admin/psychologists`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if(!res.ok) throw new Error("Falha ao buscar lista de profissionais");
+                const psis = await res.json();
+                window.globalAllPsisCache = psis; // Salva em memória para os próximos cliques
+                psi = psis.find(p => p.id == psiId);
+            }
             
+            if(!psi) throw new Error("Profissional não encontrado nos registros");
+
             document.getElementById('cs-name').textContent = psi.nome;
             document.getElementById('cs-email').textContent = psi.email || 'Sem e-mail';
             document.getElementById('cs-phone').textContent = `Tel: ${psi.telefone || '-'}`;

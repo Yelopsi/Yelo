@@ -1,3 +1,3 @@
 window.initializePage = function() {
-    console.log("Página de Hub de Configurações carregada.");
+    // Hub de Configurações - Nenhuma lógica dinâmica necessária
 };

@@ -1,3 +1,3 @@
 window.initializePage = function() {
-    // Página estática de hub (Painel). Nenhuma inicialização complexa necessária no momento.
+    // Hub de Dados - Nenhuma lógica dinâmica necessária
 };
