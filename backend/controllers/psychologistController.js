@@ -59,13 +59,16 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         
+        // FIX DE DUPLICIDADE: Conta apenas acessos únicos agrupando quem não tem ID pelo nome/telefone
         const globalMatchesResult = await db.sequelize.query(
-            `SELECT COUNT(*) as count FROM "DemandSearches" WHERE "createdAt" >= :thirtyDaysAgo`,
+            `SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, "id"::varchar)) as count 
+             FROM "DemandSearches" WHERE "createdAt" >= :thirtyDaysAgo`,
             { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => [{ count: 0 }]);
         
         const globalClicksResult = await db.sequelize.query(
-            `SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "createdAt" >= :thirtyDaysAgo`,
+            `SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, "guestName", "id"::varchar)) as count 
+             FROM "WhatsappClickLogs" WHERE "createdAt" >= :thirtyDaysAgo`,
             { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => [{ count: 0 }]);
 

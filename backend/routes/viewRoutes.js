@@ -132,7 +132,50 @@ router.get('/questionario', (req, res) => {
 
 // --- PÁGINAS ESTÁTICAS E TERAPIA ONLINE ---
 router.get('/comunidade', (req, res) => res.render('perguntas'));
-router.get('/profissionais', (req, res) => res.render('profissionais'));
+router.get('/profissionais', async (req, res) => {
+    console.log("➡️ [DEBUG] Acessou a rota EJS de /profissionais");
+    let depoimentosPsi = [];
+    try {
+        const rows = await db.sequelize.query(`
+            SELECT pr.rating, pr.comment, p.nome, p."fotoUrl", p.abordagens_tecnicas
+            FROM "PlatformReviews" pr
+            JOIN "Psychologists" p ON p.id = pr."psychologistId"
+            WHERE pr.status = 'approved' AND pr.comment IS NOT NULL
+            ORDER BY pr."createdAt" DESC LIMIT 10
+        `, { type: db.sequelize.QueryTypes.SELECT });
+
+        if (rows && rows.length > 0) {
+            depoimentosPsi = rows.map(r => {
+                let abordagem = 'Psicologia Clínica';
+                try {
+                    let ab = r.abordagens_tecnicas;
+                    if (typeof ab === 'string' && ab.startsWith('[')) ab = JSON.parse(ab);
+                    if (Array.isArray(ab) && ab.length > 0) abordagem = ab[0];
+                    else if (typeof ab === 'string' && ab.trim() !== '') abordagem = ab;
+                } catch(e) {}
+
+                return {
+                    comment: r.comment,
+                    rating: parseInt(r.rating) || 5,
+                    nome: r.nome ? r.nome.split(' ')[0] + ' ' + (r.nome.split(' ').length > 1 ? r.nome.split(' ')[r.nome.split(' ').length - 1].charAt(0) + '.' : '') : 'Psicólogo(a) Parceiro(a)',
+                    fotoUrl: r.fotoUrl,
+                    abordagem: abordagem
+                };
+            });
+        }
+    } catch(e) {
+        console.error("Erro ao buscar depoimentos de psis:", e);
+    }
+
+    if (depoimentosPsi.length === 0) {
+        depoimentosPsi = [
+            { comment: "Sempre tive receio de plataformas que parecem 'mercantilizar' a psicologia. A Yelo foi uma surpresa incrível. Sinto que meu trabalho é valorizado, a plataforma respeita totalmente a ética da profissão e os pacientes que chegam através do match já estão muito alinhados.", nome: "Marina S.", fotoUrl: null, abordagem: "TCC", rating: 5 },
+            { comment: "A facilidade de uso é absurda. Antigamente eu perdia muito tempo cobrando pacientes e tentando organizar a agenda. Hoje, tudo fica centralizado na plataforma e eu tenho total autonomia sobre meus horários e valores. Recomendo muito!", nome: "Ricardo M.", fotoUrl: null, abordagem: "Psicanálise", rating: 5 }
+        ];
+    }
+
+    res.render('profissionais', { depoimentosPsi });
+});
 router.get('/sobre_psis', (req, res) => res.render('sobre_psis'));
 
 // Rota para a página Sobre

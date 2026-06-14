@@ -1,7 +1,17 @@
 // Arquivo: backend/controllers/matchController.js
 const db = require('../models');
 const { Op } = require('sequelize');
+const crypto = require('crypto');
 const matchService = require('../services/matchService'); // Algoritmo unificado de Match
+
+// --- CACHE DE IDEMPOTÊNCIA PARA EVITAR SUPERCONTAGEM (F5) ---
+const recentMatchesCache = new Map();
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, timestamp] of recentMatchesCache.entries()) {
+        if (now - timestamp > 15 * 60 * 1000) recentMatchesCache.delete(key); // Limpa após 15 min
+    }
+}, 5 * 60 * 1000);
 
 // Flag global de otimização: Evita executar ALTER TABLE em todas as buscas de Match
 let matchSchemaChecked = false;
@@ -47,6 +57,11 @@ exports.getPatientMatches = async (req, res) => {
             });
         }
 
+        // Gera Hash Único da Busca para evitar contar F5 repetido na mesma sessão
+        const matchHash = crypto.createHash('md5').update(JSON.stringify(patientPreferences) + patient.id).digest('hex');
+        const isDuplicate = recentMatchesCache.has(matchHash);
+        recentMatchesCache.set(matchHash, Date.now());
+
         // --- A MÁGICA ACONTECE AQUI ---
         const matchResult = await matchService.calculateMatches(patientPreferences);
 
@@ -66,7 +81,7 @@ exports.getPatientMatches = async (req, res) => {
         }
 
         // --- LOG DE EVENTO DE MATCH E UPDATE DE FAIRNESS ---
-        if (matchResult && matchResult.results && matchResult.results.length > 0) {
+        if (!isDuplicate && matchResult && matchResult.results && matchResult.results.length > 0) {
             const matchEvents = matchResult.results.map(psi => ({
                 psychologistId: psi.id,
                 patientId: patient ? patient.id : null, // Suporta tanto usuário logado quanto anônimo
@@ -154,6 +169,12 @@ exports.getAnonymousMatches = async (req, res) => {
              return res.status(400).json({ error: 'Faixa de valor é obrigatória.' });
         }
 
+        // Gera Hash Único da Busca usando o IP para anônimos
+        const userIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'anon';
+        const matchHash = crypto.createHash('md5').update(JSON.stringify(patientPreferences) + userIp).digest('hex');
+        const isDuplicate = recentMatchesCache.has(matchHash);
+        recentMatchesCache.set(matchHash, Date.now());
+
         // Reutiliza a MESMA lógica do usuário logado
         const matchResult = await matchService.calculateMatches(patientPreferences);
 
@@ -175,7 +196,7 @@ exports.getAnonymousMatches = async (req, res) => {
         const patient = null; // Declarado para não quebrar o bloco unificado
 
         // --- LOG DE EVENTO DE MATCH E UPDATE DE FAIRNESS ---
-        if (matchResult && matchResult.results && matchResult.results.length > 0) {
+        if (!isDuplicate && matchResult && matchResult.results && matchResult.results.length > 0) {
             const matchEvents = matchResult.results.map(psi => ({
                 psychologistId: psi.id,
                 patientId: patient ? patient.id : null, // Suporta tanto usuário logado quanto anônimo
@@ -240,24 +261,34 @@ exports.getAnonymousMatches = async (req, res) => {
 // ----------------------------------------------------------------------
 exports.getShowcasePsychologists = async (req, res) => {
     try {
+        // Lê o limite da URL ou usa 4 como padrão para não quebrar outras páginas (ex: Home)
+        const limit = parseInt(req.query.limit, 10) || 4;
+        const dbLimit = limit > 4 ? limit * 2 : 20; // Busca um pouco mais no DB para compensar possíveis inativos
+
         const psychologists = await db.Psychologist.findAll({
             where: {
-                status: 'active',
                 fotoUrl: { [Op.ne]: null }
             },
             order: db.sequelize.random(), 
-            limit: 20, 
+            limit: dbLimit, 
             attributes: ['id', 'nome', 'slug', 'fotoUrl', 'status', 'createdAt', 'planExpiresAt', 'is_exempt'] 
         });
 
         const agora = new Date();
-        const validPsychologists = psychologists.filter(psy => {
+        const validPsychologists = psychologists.map(psy => {
+            let isActive = psy.status === 'active';
             const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
-            if (isVip) return true;
             
-            if (!psy.planExpiresAt) return false;
-            return new Date(psy.planExpiresAt) > agora;
-        }).slice(0, 4);
+            if (!isVip && (!psy.planExpiresAt || new Date(psy.planExpiresAt) <= agora)) {
+                isActive = false;
+            }
+            
+            const psyData = psy.toJSON ? psy.toJSON() : { ...psy };
+            // Se o psicólogo estiver inativo ou com plano vencido, anulamos o link de perfil dele.
+            if (!isActive) psyData.slug = null; 
+            
+            return psyData;
+        }).slice(0, limit);
 
         while (validPsychologists.length < 4) {
             validPsychologists.push({

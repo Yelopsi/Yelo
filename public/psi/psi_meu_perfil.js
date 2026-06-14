@@ -240,14 +240,34 @@
         }
 
         function updateProfileInsights() {
-            const data = originalProfileData || {};
-    
+            // Lê os dados ao vivo do formulário, mesclando com o que já existe (como fotoUrl)
+            let liveData = { ...originalProfileData };
+            const profileContainer = document.getElementById('profile-blocks-container');
+            if (profileContainer) {
+                profileContainer.querySelectorAll('.profile-block').forEach(block => {
+                    Object.assign(liveData, getBlockData(block));
+                });
+            }
+            
             const checks = [
-                { key: 'fotoUrl', label: 'Foto Profissional' },
-                { key: 'bio', label: 'Biografia' },
+                { key: 'fotoUrl', label: 'Foto de Perfil' },
+                { key: 'nome', label: 'Nome de Exibição' },
+                { key: 'crp', label: 'Número do CRP' },
+                { key: 'telefone', label: 'WhatsApp' },
+                { key: 'cpf', label: 'Documento (CPF/CNPJ)', condition: (v, data) => !!(data.cpf || data.cnpj || data.document_number) },
+                { key: 'cep', label: 'Localização (CEP)' },
+                { key: 'slug', label: 'Link Personalizado' },
+                { key: 'bio', label: 'Biografia', condition: (v) => v && String(v).trim().length >= 10 },
+                { key: 'ano_inicio_experiencia', label: 'Ano de Início' },
+                { key: 'valor', label: 'Valor da Sessão', condition: (v, data) => (data.valor_sessao_numero !== null && !isNaN(data.valor_sessao_numero)) || (data.valor_mensal_numero !== null && !isNaN(data.valor_mensal_numero)) },
+                { key: 'formacao_nivel', label: 'Formação Acadêmica' },
+                { key: 'social', label: 'Redes Sociais', condition: (v, data) => !!(data.instagram_url || data.linkedin_url || data.tiktok_url || data.facebook_url || data.x_url) },
                 { key: 'temas_atuacao', label: 'Temas de Atuação' },
-                { key: 'abordagens_tecnicas', label: 'Abordagem Clínica' },
-                { key: 'valor_sessao_numero', label: 'Valor da Sessão', condition: (v) => v !== null && v !== undefined },
+                { key: 'publico_alvo', label: 'Público-Alvo' },
+                { key: 'praticas_inclusivas', label: 'Identidade e Inclusão' },
+                { key: 'genero_identidade', label: 'Gênero' },
+                { key: 'abordagens_tecnicas', label: 'Abordagens e Técnicas' },
+                { key: 'modalidade', label: 'Modalidade de Atendimento' },
                 { key: 'disponibilidade_periodo', label: 'Disponibilidade' }
             ];
             
@@ -256,10 +276,10 @@
 
             checks.forEach(check => {
                 let isFilled = false;
-                const val = data[check.key];
+                const val = liveData[check.key];
                 
                 if (check.condition) {
-                    isFilled = check.condition(val);
+                    isFilled = check.condition(val, liveData);
                 } else {
                     if (Array.isArray(val)) isFilled = val.length > 0;
                     else if (typeof val === 'string') isFilled = val.trim().length > 0 && !val.includes('placehold.co');
@@ -281,16 +301,16 @@
             const checklistEl = document.getElementById('quality-checklist');
             
             if (fillEl) fillEl.style.width = `${score}%`;
-            if (scoreBadge) scoreBadge.textContent = `${score}/100`;
+            if (scoreBadge) scoreBadge.textContent = `${score}%`;
             if (checklistEl) checklistEl.innerHTML = checklistHtml;
             
             const statusBadge = document.getElementById('ph-status-display');
             if (statusBadge) {
                 if (score === 100) {
-                    statusBadge.textContent = 'Perfil Otimizado';
+                    statusBadge.textContent = 'Perfil 100% Otimizado';
                     statusBadge.style.background = '#dcfce7'; statusBadge.style.color = '#166534'; statusBadge.style.borderColor = '#bbf7d0';
-                } else if (score > 50) {
-                    statusBadge.textContent = 'Perfil Ativo';
+                } else if (score >= 70) {
+                    statusBadge.textContent = 'Perfil Forte';
                     statusBadge.style.background = '#fef3c7'; statusBadge.style.color = '#b45309'; statusBadge.style.borderColor = '#fde68a';
                 } else {
                     statusBadge.textContent = 'Perfil Incompleto';
@@ -469,7 +489,7 @@
             if (block && block.classList.contains('editing')) {
                 const blockId = block.dataset.blockId;
                 clearTimeout(debounceTimers[blockId]);
-                debounceTimers[blockId] = setTimeout(() => checkForChanges(block), 600);
+                debounceTimers[blockId] = setTimeout(() => { checkForChanges(block); updateProfileInsights(); }, 600);
             }
         });
 
@@ -480,6 +500,7 @@
                 clearTimeout(debounceTimers[blockId]);
                 debounceTimers[blockId] = setTimeout(() => { 
                     checkForChanges(block); 
+                    updateProfileInsights();
                 }, 600);
             }
         });
