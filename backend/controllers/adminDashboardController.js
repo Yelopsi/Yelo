@@ -720,7 +720,25 @@ exports.getFunnelAnalytics = async (req, res) => {
             { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => []);
 
-        res.json({ visitas, iniciaram, completaram, profileViews, whatsappClicks, abandonos, origens, desqualificados });
+        // --- BLOCO DE INTELIGÊNCIA DE DEMANDA ---
+        const jsonCol = 'CAST("searchParams" AS JSONB)';
+        
+        const topTemas = await db.sequelize.query(
+            `SELECT value, COUNT(*) as count FROM "DemandSearches", jsonb_array_elements_text(${jsonCol}->'temas') as value WHERE status = 'completed' AND "createdAt" BETWEEN :start AND :end AND ${jsonCol}->'temas' IS NOT NULL AND jsonb_typeof(${jsonCol}->'temas') = 'array' GROUP BY value ORDER BY count DESC LIMIT 10`,
+            { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => []);
+
+        const faixaValor = await db.sequelize.query(
+            `SELECT ${jsonCol}->>'faixa_valor' as value, COUNT(*) as count FROM "DemandSearches" WHERE status = 'completed' AND "createdAt" BETWEEN :start AND :end AND ${jsonCol}->>'faixa_valor' IS NOT NULL GROUP BY value ORDER BY count DESC`,
+            { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => []);
+
+        const modalidades = await db.sequelize.query(
+            `SELECT ${jsonCol}->>'modalidade_atendimento' as value, COUNT(*) as count FROM "DemandSearches" WHERE status = 'completed' AND "createdAt" BETWEEN :start AND :end AND ${jsonCol}->>'modalidade_atendimento' IS NOT NULL GROUP BY value ORDER BY count DESC`,
+            { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => []);
+
+        res.json({ visitas, iniciaram, completaram, profileViews, whatsappClicks, abandonos, origens, desqualificados, inteligencia: { topTemas, faixaValor, modalidades } });
     } catch (error) {
         console.error('Erro em getFunnelAnalytics:', error);
         res.status(500).json({ error: 'Erro ao gerar dados do funil' });

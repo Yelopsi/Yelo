@@ -323,19 +323,66 @@ window.initializePage = function() {
     function exportarCSV() {
         if (!exportData) return alert("Nenhum dado para exportar. Atualize a página.");
         
-        // Constrói cabecalho CSV
-        let csvContent = "Métrica,Valor\n";
-        csvContent += `Visitantes Totais,${exportData.visitas}\n`;
-        csvContent += `Iniciaram Quiz,${exportData.iniciaram}\n`;
-        csvContent += `Completaram Quiz,${exportData.completaram}\n`;
-        csvContent += `Acessaram Perfis,${exportData.profileViews}\n`;
-        csvContent += `Clicaram WhatsApp,${exportData.whatsappClicks}\n`;
-        csvContent += `\nAbandono por Etapa,Qtd\n`;
+        // Helpers de formatação
+        const formatToBR = (dateStr) => {
+            if (!dateStr) return 'N/A';
+            const [y, m, d] = dateStr.split('-');
+            return `${d}/${m}/${y}`;
+        };
+        const safeStr = (str) => (str || '').replace(/;/g, ' - '); // Previne quebra de colunas no Excel
+
+        // Captura o período selecionado
+        const dataInicial = formatToBR(startInput ? startInput.value : '');
+        const dataFinal = formatToBR(endInput ? endInput.value : '');
+        const taxaConversao = exportData.visitas > 0 ? ((exportData.whatsappClicks / exportData.visitas) * 100).toFixed(2) : 0;
+
+        // 1. CABEÇALHO E FUNIL PRINCIPAL
+        let csvContent = `RELATÓRIO DE BUSINESS INTELLIGENCE E FUNIL DE PACIENTES\n`;
+        csvContent += `Período: ${dataInicial} a ${dataFinal}\n\n`;
+        csvContent += `--- FUNIL DE CONVERSÃO ---\n`;
+        csvContent += `Etapa;Quantidade\n`;
+        csvContent += `1. Visitantes Totais (Site);${exportData.visitas}\n`;
+        csvContent += `2. Iniciaram Questionário;${exportData.iniciaram}\n`;
+        csvContent += `3. Completaram Questionário;${exportData.completaram}\n`;
+        csvContent += `4. Acessaram Perfis Detalhados;${exportData.profileViews}\n`;
+        csvContent += `5. Clicaram WhatsApp (Conversão);${exportData.whatsappClicks}\n`;
+        csvContent += `Taxa de Conversão Final;${taxaConversao}%\n\n`;
+
+        // 2. DESISTÊNCIAS E DESQUALIFICAÇÕES
+        csvContent += `--- RETENÇÃO E PERDAS ---\n`;
+        csvContent += `Categoria;Quantidade\n`;
+        csvContent += `Desqualificados (Menor de Idade / Regras de Negócio);${exportData.desqualificados || 0}\n`;
         
-        if (exportData.abandonos) {
+        if (exportData.abandonos && exportData.abandonos.length > 0) {
             exportData.abandonos.forEach(a => {
-                csvContent += `${stepNames[a.step] || a.step || 'Sessão Perdida'},${a.count}\n`;
+                const stepName = stepNames[a.step] || a.step || 'Sessão Perdida';
+                csvContent += `Abandono - ${stepName};${a.count}\n`;
             });
+        } else {
+            csvContent += `Abandonos no Questionário;0\n`;
+        }
+        csvContent += `\n`;
+
+        // 3. ORIGENS DE TRÁFEGO (UTMs)
+        csvContent += `--- ORIGENS DE TRÁFEGO (UTMs) ---\n`;
+        csvContent += `Origem / Campanha;Acessos\n`;
+        if (exportData.origens && exportData.origens.length > 0) {
+            exportData.origens.forEach(o => csvContent += `${safeStr(o.source) || 'Direto/Orgânico'};${o.count}\n`);
+        } else {
+            csvContent += `Sem dados de UTM mapeados;0\n`;
+        }
+        csvContent += `\n`;
+
+        // 4. INTELIGÊNCIA DE DEMANDA (NOVO)
+        if (exportData.inteligencia) {
+            csvContent += `--- INTELIGÊNCIA DE DEMANDA (PACIENTES QUE CONCLUÍRAM) ---\n`;
+            
+            csvContent += `Top Temas Buscados;Quantidade\n`;
+            (exportData.inteligencia.topTemas || []).forEach(t => csvContent += `${safeStr(t.value)};${t.count}\n`);
+            csvContent += `\nFaixa de Valor Desejada;Quantidade\n`;
+            (exportData.inteligencia.faixaValor || []).forEach(f => csvContent += `${safeStr(f.value)};${f.count}\n`);
+            csvContent += `\nModalidade Preferida;Quantidade\n`;
+            (exportData.inteligencia.modalidades || []).forEach(m => csvContent += `${safeStr(m.value)};${m.count}\n`);
         }
 
         // Download
