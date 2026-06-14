@@ -38,21 +38,17 @@ window.initializePage = function() {
 
         try {
             // Realiza múltiplas buscas simultâneas resolvendo o gargalo assíncrono antigo
-            const [resCharts, resFin, resPwa, resFunnel, resWpp, resRanking] = await Promise.all([
+            const [resCharts, resFin, resPwa, resFunnel] = await Promise.all([
                 fetch(`${API_BASE_URL}/api/admin/reports/charts${query}`, { headers: { 'Authorization': `Bearer ${token}` } }),
                 fetch(`${API_BASE_URL}/api/admin/financials`, { headers: { 'Authorization': `Bearer ${token}` } }),
                 fetch(`${API_BASE_URL}/api/admin/stats/pwa`, { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch(`${API_BASE_URL}/api/admin/analytics/funnel${query}`, { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch(`${API_BASE_URL}/api/admin/whatsapp-feedbacks`, { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch(`${API_BASE_URL}/api/admin/analytics/ranking${query}`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
+                fetch(`${API_BASE_URL}/api/admin/analytics/funnel${query}`, { headers: { 'Authorization': `Bearer ${token}` } })
             ]);
 
             const dataCharts = resCharts.ok ? await resCharts.json() : {};
             const dataFin = resFin.ok ? await resFin.json() : {};
             const dataPwa = resPwa.ok ? await resPwa.json() : {};
             const dataFunnel = resFunnel.ok ? await resFunnel.json() : {};
-            const dataWpp = resWpp.ok ? await resWpp.json() : [];
-            const dataRanking = (resRanking && resRanking.ok) ? await resRanking.json() : null;
 
             // === PREENCHIMENTO ABA 1: DESEMPENHO E USO ===
             
@@ -94,13 +90,6 @@ window.initializePage = function() {
             renderFaturas(dataFin.recentInvoices);
             renderPlanosAtivos(dataFin.activePlans);
 
-            // === PREENCHIMENTO ABA 3: CONVERSÕES PLG ===
-            renderWppFeedbacks(dataWpp);
-
-            // === PREENCHIMENTO ABA 4: RANKING DE PROFISSIONAIS ===
-            let rankingList = dataRanking ? (Array.isArray(dataRanking) ? dataRanking : dataRanking.ranking) : null;
-            renderRankingPsi(rankingList);
-
         } catch (error) {
             console.error("Erro na consolidação do CRM Analytics:", error);
             window.showToast("Erro ao carregar dados.", "error");
@@ -112,88 +101,6 @@ window.initializePage = function() {
 
     // --- FUNÇÕES DE RENDERIZAÇÃO SECUNDÁRIAS ---
     
-    function renderWppFeedbacks(feedbacks) {
-        const tbody = document.getElementById('whatsapp-feedback-tbody');
-        if (!tbody) return;
-
-        const total = feedbacks.length;
-        const respondidos = feedbacks.filter(f => f.feedbackGiven).length;
-        const taxaResposta = total > 0 ? ((respondidos / total) * 100).toFixed(1) : 0;
-        const recebidas = feedbacks.filter(f => f.feedbackGiven && f.contactReceived).length;
-        const fechados = feedbacks.filter(f => f.feedbackGiven && f.contactReceived && f.dealClosed === 'yes').length;
-
-        document.getElementById('kpi-wpp-total-feedbacks').innerText = total;
-        document.getElementById('kpi-wpp-tx-resposta').innerText = taxaResposta + '%';
-        document.getElementById('kpi-wpp-recebidas').innerText = recebidas;
-        document.getElementById('kpi-wpp-fechados').innerText = fechados;
-
-        if (feedbacks.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #666;">Nenhum clique no WhatsApp registrado até o momento.</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = feedbacks.map(f => {
-            const dataClique = new Date(f.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-            let contato = '<span style="color:#888;">⏳ Aguardando psi</span>';
-            let fechou = '-';
-            let status = '<span class="status status-pendente">Pendente</span>';
-            
-            if (f.feedbackGiven) {
-                status = '<span class="status status-ativo">Respondido</span>';
-                if (f.contactReceived) {
-                    contato = '✅ Sim';
-                    fechou = f.dealClosed === 'yes' ? '✅ <strong style="color:#16a34a">Fechou!</strong>' : '❌ Não';
-                } else {
-                    contato = '❌ Não chegou';
-                    fechou = '-';
-                }
-            }
-            
-            return `<tr>
-                <td style="color: #666; font-size: 0.9rem;">${dataClique}</td>
-                <td><strong style="color: var(--verde-escuro);">${f.psychologist ? f.psychologist.nome : 'Psi Removido'}</strong></td>
-                <td>${f.guestName || 'Visitante'}</td>
-                <td style="text-align: center;">${contato}</td>
-                <td style="text-align: center;">${fechou}</td>
-                <td style="text-align: center;">${status}</td>
-            </tr>`;
-        }).join('');
-    }
-
-    function renderRankingPsi(ranking) {
-        const tbody = document.getElementById('ranking-psi-tbody');
-        if (!tbody) return;
-
-        if (!ranking) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #b45309; background: #fffbeb; font-weight: 500;">O endpoint <code>/api/admin/analytics/ranking</code> está pendente no servidor backend.</td></tr>';
-            return;
-        }
-
-        if (ranking.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #666;">Nenhum dado de performance encontrado no período.</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = ranking.map((item, index) => {
-            let badgePos = `<strong>${index + 1}º</strong>`;
-            if (index === 0) badgePos = `<span style="background: #fef08a; color: #b45309; padding: 4px 10px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;">🥇 1º</span>`;
-            else if (index === 1) badgePos = `<span style="background: #e5e7eb; color: #4b5563; padding: 4px 10px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;">🥈 2º</span>`;
-            else if (index === 2) badgePos = `<span style="background: #fed7aa; color: #9a3412; padding: 4px 10px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;">🥉 3º</span>`;
-
-            const visitasTotais = (item.aparicoesBusca || 0) + (item.visitasDiretas || 0);
-            const conversao = visitasTotais > 0 ? (((item.cliquesWpp || 0) / visitasTotais) * 100).toFixed(1) + '%' : '0%';
-
-            return `<tr>
-                <td style="text-align: center;">${badgePos}</td>
-                <td><strong style="color: var(--verde-escuro);">${item.nome}</strong></td>
-                <td style="text-align: center; font-weight: bold; color: #16a34a;">${item.cliquesWpp || 0}</td>
-                <td style="text-align: center; color: #4b5563;">${item.aparicoesBusca || 0}</td>
-                <td style="text-align: center; color: #4b5563;">${item.visitasDiretas || 0}</td>
-                <td style="text-align: center; font-weight: bold; color: #3b82f6;">${conversao}</td>
-            </tr>`;
-        }).join('');
-    }
-
     function renderFaturas(invoices) {
         const tbody = document.getElementById('faturas-recentes-body');
         tbody.innerHTML = '';

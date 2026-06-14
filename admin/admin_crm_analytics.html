@@ -1,6 +1,14 @@
 <style>
-    .crm-date-filter { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 10px 15px; display: flex; gap: 10px; align-items: center; }
-    .crm-date-filter input { background: white; border: none; border-radius: 6px; padding: 8px; color: #333; font-family: var(--font-principal); }
+    .crm-date-input {
+        background: #f8f9fa; color: #64748b; border: 1px solid #e2e8f0; padding: 7px 18px; border-radius: 50px;
+        font-size: 0.9rem; font-weight: 600; font-family: var(--font-principal); outline: none; transition: all 0.2s;
+        position: relative;
+    }
+    .crm-date-input:focus { border-color: #1B4332; box-shadow: 0 0 0 2px rgba(27, 67, 50, 0.1); }
+    .crm-date-input::-webkit-calendar-picker-indicator {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;
+    }
+
     .chart-container { position: relative; height: 300px; width: 100%; }
     
     .crm-pill {
@@ -22,23 +30,30 @@
     .content-tabs::-webkit-scrollbar { display: none; } /* Oculta a barra de rolagem visualmente mas mantém a função */
     
     @media (max-width: 768px) {
-        .crm-date-filter { flex-direction: column; width: 100%; align-items: stretch; }
-        .crm-date-filter input, .crm-date-filter button { width: 100%; text-align: center; }
+        .filtros-container { flex-direction: column; align-items: stretch !important; gap: 10px !important; }
+        .crm-date-filter { flex-direction: column; width: 100%; align-items: stretch !important; gap: 10px !important; }
+        .crm-date-filter > div { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+        .crm-date-filter input { flex: 1; margin-left: 10px; width: auto !important; }
+        .crm-date-filter button { width: 100%; justify-content: center; }
         .main-header { flex-direction: column; align-items: stretch !important; }
     }
 </style>
 
 <div class="modern-dashboard-layout" style="padding-bottom: 120px;">
-    <div class="main-header" style="background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%); padding: 25px 30px; margin-bottom: 25px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+    <div class="main-header" style="background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%); padding: 25px 30px; margin-bottom: 20px; border-radius: 16px;">
         <div>
             <h1 style="color: white; margin: 0 0 5px 0; font-size: 1.8rem; font-family: var(--font-titulos);">Inteligência e Analytics</h1>
             <p style="color: rgba(255,255,255,0.8); margin: 0;">Visão consolidada de tráfego, uso da plataforma e financeiro.</p>
         </div>
-        <div class="crm-date-filter">
-            <input type="date" id="crm-analytics-start">
-            <span style="color: white; font-weight: 500;">até</span>
-            <input type="date" id="crm-analytics-end">
-            <button id="btn-update-analytics" style="background: #FFEE8C; color: #1B4332; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer;">Filtrar</button>
+    </div>
+
+    <div class="filtros-container" style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px;">
+        <div class="crm-date-filter" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 0; padding: 0; border: none; background: transparent;">
+            <div style="display:flex; align-items:center; gap:5px;"><span style="font-size:0.9rem; color:#666; font-weight: 500;">De:</span><input type="date" id="crm-analytics-start" class="crm-date-input" onclick="this.showPicker && this.showPicker()"></div>
+            <div style="display:flex; align-items:center; gap:5px;"><span style="font-size:0.9rem; color:#666; font-weight: 500;">Até:</span><input type="date" id="crm-analytics-end" class="crm-date-input" onclick="this.showPicker && this.showPicker()"></div>
+            <button id="btn-update-analytics" class="crm-pill active" style="display: flex; align-items: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg> Filtrar
+            </button>
         </div>
     </div>
 
@@ -46,8 +61,6 @@
     <div class="content-tabs" style="margin-bottom: 25px;">
         <button class="crm-pill content-tab-btn active" data-target="tab-desempenho">📈 Desempenho e Uso</button>
         <button class="crm-pill content-tab-btn" data-target="tab-financeiro">💰 Receita e Assinaturas</button>
-        <button class="crm-pill content-tab-btn" data-target="tab-conversoes">🤝 Conversões (PLG)</button>
-        <button class="crm-pill content-tab-btn" data-target="tab-ranking">🏆 Ranking de Psis</button>
     </div>
 
     <!-- ABA 1: DESEMPENHO E USO (Substitui a Tag hardcoded de relatorios) -->
@@ -176,67 +189,6 @@
                     </thead>
                     <tbody id="planos-ativos-body">
                         <tr><td colspan="4" class="loading-row" style="text-align: center; padding: 40px; color: var(--cinza-texto);"><span class="loading-spinner-sm"></span> Carregando planos...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- ABA 3: CONVERSÕES PLG (Feedbacks de WhatsApp) -->
-    <div id="tab-conversoes" class="analytics-tab-content" style="display: none;">
-        <div class="kpi-grid">
-            <div class="kpi-card" style="border-top-color: #3498db;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Cliques no WhatsApp</h4>
-                <p class="kpi-numero" id="kpi-wpp-total-feedbacks" style="color: #3498db;">0</p>
-            </div>
-            <div class="kpi-card" style="border-top-color: #f59e0b;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Taxa de Resposta (Psi)</h4>
-                <p class="kpi-numero" id="kpi-wpp-tx-resposta" style="color: #f59e0b;">0%</p>
-            </div>
-            <div class="kpi-card" style="border-top-color: var(--verde-sucesso);">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Contatos Realizados</h4>
-                <p class="kpi-numero" id="kpi-wpp-recebidas" style="color: var(--verde-sucesso);">0</p>
-            </div>
-            <div class="kpi-card" style="border-top-color: #16a34a;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Negócios Fechados</h4>
-                <p class="kpi-numero" id="kpi-wpp-fechados" style="color: #16a34a;">0</p>
-            </div>
-        </div>
-
-        <div class="tabela-container" style="margin-top: 20px; margin-bottom: 30px;">
-            <h3 style="display: flex; align-items: center; gap: 8px;">Auditoria de Contatos (Pacientes ➔ Psicólogos)</h3>
-            <div class="tabela-wrapper">
-                <table class="tabela-gerenciamento">
-                    <thead>
-                        <tr><th>Data do Clique</th><th>Psicólogo</th><th>Paciente / Lead</th><th style="text-align: center;">Recebeu Mensagem?</th><th style="text-align: center;">Fechou Negócio?</th><th style="text-align: center;">Status da Resposta</th></tr>
-                    </thead>
-                    <tbody id="whatsapp-feedback-tbody">
-                        <tr><td colspan="6" class="loading-row" style="text-align: center; padding: 40px; color: var(--cinza-texto);"><span class="loading-spinner-sm"></span> Carregando feedbacks...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- ABA 4: RANKING DE PROFISSIONAIS -->
-    <div id="tab-ranking" class="analytics-tab-content" style="display: none;">
-        <div class="tabela-container" style="margin-top: 20px; margin-bottom: 30px;">
-            <h3 style="display: flex; align-items: center; gap: 8px;">Ranking de Performance dos Psicólogos</h3>
-            <p style="color: #666; font-size: 0.9rem; margin-top: -10px; margin-bottom: 20px;">Acompanhe quem está gerando mais engajamento e conversões na plataforma.</p>
-            <div class="tabela-wrapper">
-                <table class="tabela-gerenciamento">
-                    <thead>
-                        <tr>
-                            <th style="width: 80px; text-align: center;">Posição</th>
-                            <th>Psicólogo</th>
-                            <th style="text-align: center;" title="Total de cliques no botão de WhatsApp">Cliques WhatsApp</th>
-                            <th style="text-align: center;" title="Total de vezes que apareceu nos resultados de busca">Aparições na Busca</th>
-                            <th style="text-align: center;" title="Total de visitas diretas ao perfil público">Visitas Diretas</th>
-                            <th style="text-align: center;" title="Taxa de conversão (Cliques / Visitas Totais)">Conversão</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ranking-psi-tbody">
-                        <tr><td colspan="6" class="loading-row" style="text-align: center; padding: 40px; color: var(--cinza-texto);"><span class="loading-spinner-sm"></span> Carregando ranking...</td></tr>
                     </tbody>
                 </table>
             </div>

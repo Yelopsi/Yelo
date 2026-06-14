@@ -455,7 +455,7 @@ exports.getPsiRanking = async (req, res) => {
             `, { replacements, type: db.sequelize.QueryTypes.SELECT });
         } catch(e) {
             appearancesData = await db.sequelize.query(`
-                SELECT "psychologistId", 'direct_view' as type, COUNT(id) as total_aparicoes
+                SELECT "psychologistId", 'profile_click_funnel' as type, COUNT(id) as total_aparicoes
                 FROM "ProfileAppearanceLogs"
                 ${dateFilter}
                 GROUP BY "psychologistId"

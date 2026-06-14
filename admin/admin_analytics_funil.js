@@ -3,6 +3,8 @@
 window.initializePage = function() {
     const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
     let exportData = null; // Armazena dados globais para o CSV
+    let globalRankingData = []; // Armazena o ranking para ordenação no front
+    let currentRankingSort = { column: 'posicao', direction: 'asc' }; // Estado da ordenação
 
     // Inicializa as datas de filtro (últimos 30 dias por padrão)
     const startInput = document.getElementById('funil-start');
@@ -35,6 +37,22 @@ window.initializePage = function() {
         'contato': 'Preenchimento do Contato (Fim)'
     };
 
+    // --- TAB SWITCHING ---
+    window.switchFunilTab = function(btn) {
+        document.querySelectorAll('.content-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        document.querySelectorAll('.analytics-tab-content').forEach(tab => tab.style.display = 'none');
+        
+        const targetId = btn.getAttribute('data-target');
+        const targetTab = document.getElementById(targetId);
+        if (targetTab) {
+            targetTab.style.display = 'block';
+        }
+        
+        // IMPORTANTE: Mova as funções carregarRankingPsis() e carregarConversoesPLG() que estavam no admin_crm_analytics.js para cá, para popular as tabelas
+    };
+
     async function carregarDadosFunil() {
         const loadingEl = document.getElementById('loading-funil');
         const contentEl = document.getElementById('content-funil');
@@ -55,13 +73,34 @@ window.initializePage = function() {
             if (startInput && startInput.value) queryParams.append('startDate', startInput.value);
             if (endInput && endInput.value) queryParams.append('endDate', endInput.value);
 
-            const res = await fetch(`${API_BASE_URL}/api/admin/analytics/funnel?${queryParams.toString()}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const [res, resWpp, resRanking] = await Promise.all([
+                fetch(`${API_BASE_URL}/api/admin/analytics/funnel?${queryParams.toString()}`, { headers: { 'Authorization': `Bearer ${token}` } }),
+                fetch(`${API_BASE_URL}/api/admin/whatsapp-feedbacks`, { headers: { 'Authorization': `Bearer ${token}` } }),
+                fetch(`${API_BASE_URL}/api/admin/analytics/ranking?${queryParams.toString()}`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
+            ]);
 
             if (!res.ok) throw new Error("Falha ao buscar dados de funil");
             const data = await res.json();
+            const dataWpp = resWpp.ok ? await resWpp.json() : [];
+            const dataRanking = (resRanking && resRanking.ok) ? await resRanking.json() : null;
+
             exportData = data; // Salva os dados globais para permitir a exportação no CSV
+            
+            renderWppFeedbacks(dataWpp);
+            globalRankingData = dataRanking ? (Array.isArray(dataRanking) ? dataRanking : dataRanking.ranking) : null;
+            
+            if (globalRankingData) {
+                globalRankingData.forEach((item, idx) => {
+                    item.originalPos = idx + 1; // Salva a posição oficial do backend
+                    const visitasTotais = (item.aparicoesBusca || 0) + (item.visitasDiretas || 0);
+                    item.conversaoVal = visitasTotais > 0 ? ((item.cliquesWpp || 0) / visitasTotais) * 100 : 0;
+                });
+            }
+            
+            // Reseta a ordenação e renderiza
+            currentRankingSort = { column: 'posicao', direction: 'asc' };
+            updateSortIndicators('posicao');
+            renderRankingPsi(globalRankingData);
 
             // --- 1. POPULA KPIs SUPERIORES ---
             document.getElementById('kpi-visitas').textContent = data.visitas.toLocaleString();
@@ -272,6 +311,129 @@ window.initializePage = function() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    }
+
+    // --- FUNÇÕES DE RENDERIZAÇÃO SECUNDÁRIAS ---
+    
+    function renderWppFeedbacks(feedbacks) {
+        const tbody = document.getElementById('whatsapp-feedback-tbody');
+        if (!tbody) return;
+
+        const total = feedbacks.length;
+        const respondidos = feedbacks.filter(f => f.feedbackGiven).length;
+        const taxaResposta = total > 0 ? ((respondidos / total) * 100).toFixed(1) : 0;
+        const recebidas = feedbacks.filter(f => f.feedbackGiven && f.contactReceived).length;
+        const fechados = feedbacks.filter(f => f.feedbackGiven && f.contactReceived && f.dealClosed === 'yes').length;
+
+        const elWppTotal = document.getElementById('kpi-wpp-total-feedbacks');
+        const elWppTx = document.getElementById('kpi-wpp-tx-resposta');
+        const elWppRec = document.getElementById('kpi-wpp-recebidas');
+        const elWppFec = document.getElementById('kpi-wpp-fechados');
+
+        if (elWppTotal) elWppTotal.innerText = total;
+        if (elWppTx) elWppTx.innerText = taxaResposta + '%';
+        if (elWppRec) elWppRec.innerText = recebidas;
+        if (elWppFec) elWppFec.innerText = fechados;
+
+        if (feedbacks.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #666;">Nenhum clique no WhatsApp registrado até o momento.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = feedbacks.map(f => {
+            const dataClique = new Date(f.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            let contato = '<span style="color:#888;">⏳ Aguardando psi</span>';
+            let fechou = '-';
+            let status = '<span class="status status-pendente" style="background: #f8f9fa; color: #6c757d; font-size: 0.75rem; border: 1px solid #dee2e6; padding: 4px 10px; border-radius: 20px;">Pendente</span>';
+            
+            if (f.feedbackGiven) {
+                status = '<span class="status status-ativo" style="background: #e0f2fe; color: #0369a1; font-size: 0.75rem; border: 1px solid #bae6fd; padding: 4px 10px; border-radius: 20px;">Respondido</span>';
+                if (f.contactReceived) {
+                    contato = '✅ Sim';
+                    fechou = f.dealClosed === 'yes' ? '✅ <strong style="color:#16a34a">Fechou!</strong>' : '❌ Não';
+                } else {
+                    contato = '❌ Não chegou';
+                    fechou = '-';
+                }
+            }
+            
+            return `<tr>
+                <td data-label="Data do Clique" style="color: #666; font-size: 0.9rem;">${dataClique}</td>
+                <td data-label="Psicólogo"><strong style="color: var(--verde-escuro);">${f.psychologist ? f.psychologist.nome : 'Psi Removido'}</strong></td>
+                <td data-label="Paciente / Lead">${f.guestName || 'Visitante'}</td>
+                <td data-label="Recebeu Mensagem?" style="text-align: center;">${contato}</td>
+                <td data-label="Fechou Negócio?" style="text-align: center;">${fechou}</td>
+                <td data-label="Status da Resposta" style="text-align: center;">${status}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    // --- ORDENAÇÃO DO RANKING (FRONTEND) ---
+    window.sortRanking = function(column) {
+        if (!globalRankingData) return;
+        
+        if (currentRankingSort.column === column) {
+            currentRankingSort.direction = currentRankingSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentRankingSort.column = column;
+            currentRankingSort.direction = column === 'nome' || column === 'posicao' ? 'asc' : 'desc';
+        }
+        
+        const sortedData = [...globalRankingData].sort((a, b) => {
+            let valA = column === 'conversao' ? a.conversaoVal : (column === 'posicao' ? a.originalPos : a[column]);
+            let valB = column === 'conversao' ? b.conversaoVal : (column === 'posicao' ? b.originalPos : b[column]);
+            
+            if (typeof valA === 'string') { valA = valA.toLowerCase(); valB = valB.toLowerCase(); }
+            
+            if (valA < valB) return currentRankingSort.direction === 'asc' ? -1 : 1;
+            if (valA > valB) return currentRankingSort.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+        
+        updateSortIndicators(column);
+        renderRankingPsi(sortedData);
+    };
+
+    function updateSortIndicators(activeColumn) {
+        document.querySelectorAll('.sortable-header').forEach(th => {
+            const col = th.getAttribute('data-sort');
+            let text = th.innerText.replace(' ⬆️', '').replace(' ⬇️', '').replace(' ↕️', '');
+            th.innerText = text + (col === activeColumn ? (currentRankingSort.direction === 'asc' ? ' ⬆️' : ' ⬇️') : ' ↕️');
+        });
+    }
+
+    function renderRankingPsi(ranking) {
+        const tbody = document.getElementById('ranking-psi-tbody');
+        if (!tbody) return;
+
+        if (!ranking) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #b45309; background: #fffbeb; font-weight: 500;">O endpoint <code>/api/admin/analytics/ranking</code> está pendente no servidor backend.</td></tr>';
+            return;
+        }
+
+        if (ranking.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #666;">Nenhum dado de performance encontrado no período.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = ranking.map((item, index) => {
+            let badgePos = `<strong>${item.originalPos}º</strong>`;
+            if (item.originalPos === 1) badgePos = `<span style="background: #fef08a; color: #b45309; padding: 4px 10px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;">🥇 1º</span>`;
+            else if (item.originalPos === 2) badgePos = `<span style="background: #e5e7eb; color: #4b5563; padding: 4px 10px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;">🥈 2º</span>`;
+            else if (item.originalPos === 3) badgePos = `<span style="background: #fed7aa; color: #9a3412; padding: 4px 10px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;">🥉 3º</span>`;
+
+            const visitasTotais = (item.aparicoesBusca || 0) + (item.visitasDiretas || 0);
+            const conversao = visitasTotais > 0 ? (((item.cliquesWpp || 0) / visitasTotais) * 100).toFixed(1) + '%' : '0%';
+
+            return `<tr>
+                <td data-label="Posição" style="text-align: center;">${badgePos}</td>
+                <td data-label="Psicólogo"><strong style="color: var(--verde-escuro);">${item.nome}</strong></td>
+                <td data-label="Cliques WhatsApp" style="text-align: center; font-weight: bold; color: #16a34a;">${item.cliquesWpp || 0}</td>
+                <td data-label="Aparições na Busca" style="text-align: center; color: #4b5563;">${item.aparicoesBusca || 0}</td>
+                <td data-label="Visitas Diretas" style="text-align: center; color: #4b5563;">${item.visitasDiretas || 0}</td>
+                <td data-label="Conversão" style="text-align: center; font-weight: bold; color: #3b82f6;">${conversao}</td>
+            </tr>`;
+        }).join('');
     }
 
     // Acopla o botão
