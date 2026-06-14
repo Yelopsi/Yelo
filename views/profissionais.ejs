@@ -893,6 +893,41 @@
             }, observerOptions);
 
             document.querySelectorAll('.stat-number').forEach(el => observer.observe(el));
+
+            // Auto-scroll do Carrossel de Depoimentos (Mobile)
+            const depoimentosGrid = document.querySelector('.depoimentos-grid');
+            if (depoimentosGrid) {
+                let isInteracting = false;
+                let autoScrollTimer;
+                
+                const startAutoScroll = () => {
+                    if (window.innerWidth > 991) return;
+                    autoScrollTimer = setInterval(() => {
+                        if (isInteracting) return;
+                        
+                        const firstCard = depoimentosGrid.querySelector('.depoimento-card');
+                        if (!firstCard) return;
+                        
+                        const cardWidth = firstCard.offsetWidth + parseInt(window.getComputedStyle(depoimentosGrid).gap || 15);
+                        let nextScroll = depoimentosGrid.scrollLeft + cardWidth;
+                        
+                        // Volta para o início se encostar na borda direita
+                        if (Math.ceil(depoimentosGrid.scrollLeft + depoimentosGrid.clientWidth) >= depoimentosGrid.scrollWidth - 5) {
+                            nextScroll = 0;
+                        }
+                        
+                        depoimentosGrid.scrollTo({ left: nextScroll, behavior: 'smooth' });
+                    }, 4000); // Rola a cada 4 segundos
+                };
+                
+                const stopAutoScroll = () => clearInterval(autoScrollTimer);
+                
+                depoimentosGrid.addEventListener('touchstart', () => { isInteracting = true; stopAutoScroll(); }, {passive: true});
+                depoimentosGrid.addEventListener('touchend', () => { isInteracting = false; startAutoScroll(); }, {passive: true});
+                
+                startAutoScroll();
+                window.addEventListener('resize', () => { stopAutoScroll(); startAutoScroll(); });
+            }
         });
     </script>
 </body>

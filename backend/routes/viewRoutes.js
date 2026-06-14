@@ -167,11 +167,17 @@ router.get('/profissionais', async (req, res) => {
         console.error("Erro ao buscar depoimentos de psis:", e);
     }
 
-    if (depoimentosPsi.length === 0) {
-        depoimentosPsi = [
-            { comment: "Sempre tive receio de plataformas que parecem 'mercantilizar' a psicologia. A Yelo foi uma surpresa incrível. Sinto que meu trabalho é valorizado, a plataforma respeita totalmente a ética da profissão e os pacientes que chegam através do match já estão muito alinhados.", nome: "Marina S.", fotoUrl: null, abordagem: "TCC", rating: 5 },
-            { comment: "A facilidade de uso é absurda. Antigamente eu perdia muito tempo cobrando pacientes e tentando organizar a agenda. Hoje, tudo fica centralizado na plataforma e eu tenho total autonomia sobre meus horários e valores. Recomendo muito!", nome: "Ricardo M.", fotoUrl: null, abordagem: "Psicanálise", rating: 5 }
+    // Se houver menos de 6 avaliações reais no banco, completa com mocks positivos
+    if (depoimentosPsi.length < 6) {
+        const mocks = [
+            { comment: "O suporte é, sem dúvida, um diferencial gigantesco. Recebi orientações super atenciosas de como ajustar a minha biografia para focar na dor do paciente e gerar mais conexão. Você não é tratado como apenas mais um número; a equipe realmente se importa em te ajudar a ter resultados.", nome: "Marina S.", fotoUrl: null, abordagem: "TCC", rating: 5 },
+            { comment: "A plataforma é linda e super intuitiva. Dá pra ver que foi desenhada pra facilitar a nossa vida, sem aquela poluição visual pesada. Achei a proposta excelente e muito fácil de mexer!", nome: "Camila E.", fotoUrl: null, abordagem: "Humanista", rating: 5 },
+            { comment: "Estou começando na clínica agora e as ferramentas de gestão ajudam demais. A calculadora de honorários me deu muita segurança para precificar, e ter os 14 dias para testar sem compromisso tira qualquer peso.", nome: "Felipe L.", fotoUrl: null, abordagem: "Psicanálise", rating: 5 },
+            { comment: "não cobrarem comissão por sessão faz toda a diferença  . Adoro", nome: "Juliana P.", fotoUrl: null, abordagem: "Sistêmica", rating: 5 }
         ];
+        
+        const neededMocks = 6 - depoimentosPsi.length;
+        depoimentosPsi = [...depoimentosPsi, ...mocks.slice(0, neededMocks)];
     }
 
     res.render('profissionais', { depoimentosPsi });
