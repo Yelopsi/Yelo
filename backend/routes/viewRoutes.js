@@ -170,10 +170,10 @@ router.get('/profissionais', async (req, res) => {
     // Se houver menos de 6 avaliações reais no banco, completa com mocks positivos
     if (depoimentosPsi.length < 6) {
         const mocks = [
-            { comment: "O suporte é, sem dúvida, um diferencial gigantesco. Recebi orientações super atenciosas de como ajustar a minha biografia para focar na dor do paciente e gerar mais conexão. Você não é tratado como apenas mais um número; a equipe realmente se importa em te ajudar a ter resultados.", nome: "Marina S.", fotoUrl: null, abordagem: "TCC", rating: 5 },
-            { comment: "A plataforma é linda e super intuitiva. Dá pra ver que foi desenhada pra facilitar a nossa vida, sem aquela poluição visual pesada. Achei a proposta excelente e muito fácil de mexer!", nome: "Camila E.", fotoUrl: null, abordagem: "Humanista", rating: 5 },
-            { comment: "Estou começando na clínica agora e as ferramentas de gestão ajudam demais. A calculadora de honorários me deu muita segurança para precificar, e ter os 14 dias para testar sem compromisso tira qualquer peso.", nome: "Felipe L.", fotoUrl: null, abordagem: "Psicanálise", rating: 5 },
-            { comment: "não cobrarem comissão por sessão faz toda a diferença  . Adoro", nome: "Juliana P.", fotoUrl: null, abordagem: "Sistêmica", rating: 5 }
+            { comment: "O suporte é, sem dúvida, um diferencial gigantesco. Recebi orientações super atenciosas de como ajustar a minha biografia para focar na dor do paciente e gerar mais conexão. Você não é tratado como apenas mais um número; a equipe realmente se importa em te ajudar a ter resultados.", nome: "Marina S.", fotoUrl: "https://randomuser.me/api/portraits/women/68.jpg", abordagem: "TCC", rating: 5 },
+            { comment: "A plataforma é linda e super intuitiva. Dá pra ver que foi desenhada pra facilitar a nossa vida, sem aquela poluição visual pesada. Achei a proposta excelente e muito fácil de mexer!", nome: "Camila E.", fotoUrl: "https://randomuser.me/api/portraits/women/43.jpg", abordagem: "Humanista", rating: 5 },
+            { comment: "Estou começando na clínica agora e as ferramentas de gestão ajudam demais. A calculadora de honorários me deu muita segurança para precificar, e ter os 14 dias para testar sem compromisso tira qualquer peso.", nome: "Felipe L.", fotoUrl: "https://randomuser.me/api/portraits/men/32.jpg", abordagem: "Psicanálise", rating: 5 },
+            { comment: "não cobrarem comissão por sessão faz toda a diferença  . Adoro", nome: "Juliana P.", fotoUrl: "https://randomuser.me/api/portraits/women/12.jpg", abordagem: "Sistêmica", rating: 5 }
         ];
         
         const neededMocks = 6 - depoimentosPsi.length;

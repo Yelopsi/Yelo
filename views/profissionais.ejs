@@ -320,13 +320,20 @@
             text-align: center;
         }
         .depoimentos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
             gap: 30px;
             max-width: 1000px;
             margin: 40px auto 0;
+            padding-bottom: 20px;
         }
+        .depoimentos-grid::-webkit-scrollbar { display: none; }
         .depoimento-card {
+            flex: 0 0 350px;
+            scroll-snap-align: center;
             background: #fff;
             padding: 40px 30px;
             border-radius: 24px 60px 24px 60px;
@@ -894,14 +901,13 @@
 
             document.querySelectorAll('.stat-number').forEach(el => observer.observe(el));
 
-            // Auto-scroll do Carrossel de Depoimentos (Mobile)
+            // Auto-scroll do Carrossel de Depoimentos (Global)
             const depoimentosGrid = document.querySelector('.depoimentos-grid');
             if (depoimentosGrid) {
                 let isInteracting = false;
                 let autoScrollTimer;
                 
                 const startAutoScroll = () => {
-                    if (window.innerWidth > 991) return;
                     autoScrollTimer = setInterval(() => {
                         if (isInteracting) return;
                         
@@ -924,6 +930,10 @@
                 
                 depoimentosGrid.addEventListener('touchstart', () => { isInteracting = true; stopAutoScroll(); }, {passive: true});
                 depoimentosGrid.addEventListener('touchend', () => { isInteracting = false; startAutoScroll(); }, {passive: true});
+                
+                // Interações com o mouse no Desktop
+                depoimentosGrid.addEventListener('mouseenter', () => { isInteracting = true; stopAutoScroll(); });
+                depoimentosGrid.addEventListener('mouseleave', () => { isInteracting = false; startAutoScroll(); });
                 
                 startAutoScroll();
                 window.addEventListener('resize', () => { stopAutoScroll(); startAutoScroll(); });
