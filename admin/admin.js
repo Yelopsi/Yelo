@@ -115,6 +115,9 @@ document.addEventListener('DOMContentLoaded', function() {
         window.currentAdminPageUrl = pageUrlWithParams; // Salva para o Pull-to-Refresh Global
         window.pageQueryString = queryString || ''; // Armazena params para o próximo script
 
+        // Salva a página atual no navegador para manter em caso de refresh
+        if (pageUrlWithParams) sessionStorage.setItem('yelo_last_admin_page', pageUrlWithParams);
+
         // Se for a caixa de entrada, remove a badge
         if (pageUrl === 'admin_caixa_entrada.html') {
             window.unreadConversations.clear();
@@ -191,6 +194,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function logout() {
         localStorage.removeItem('Yelo_token');
         localStorage.removeItem('Yelo_token_admin');
+        localStorage.removeItem('yelo_last_admin_page'); // Limpa resquícios da versão antiga
+        sessionStorage.removeItem('yelo_last_admin_page');
         window.location.href = '/login'; 
     }
 
@@ -297,7 +302,15 @@ document.addEventListener('DOMContentLoaded', function() {
         // Adiciona delegação via Hub também, então monitora os links reais clicados
         const allNavItems = document.querySelectorAll('.sidebar-nav a[data-page], .bottom-nav-item[data-target-page]');
         
-        window.loadPage('admin_visao_geral.html'); // Carrega a home por padrão
+        let lastPage = sessionStorage.getItem('yelo_last_admin_page');
+        
+        // Se o usuário acabou de vir da tela de login, ignora a última página e zera a memória
+        if (document.referrer && document.referrer.includes('/login')) {
+            lastPage = null;
+            sessionStorage.removeItem('yelo_last_admin_page');
+        }
+
+        window.loadPage(lastPage || 'admin_visao_geral.html'); // Carrega a última página visitada ou a home por padrão
 
         allNavItems.forEach(link => {
             link.addEventListener('click', function (e) {

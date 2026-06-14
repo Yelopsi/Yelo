@@ -282,7 +282,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const span = this.querySelector('span') || this;
             span.textContent = "Saindo...";
             localStorage.removeItem('Yelo_token');
-            localStorage.removeItem('yelo_last_psi_page');
+            localStorage.removeItem('yelo_last_psi_page'); // Limpa resquícios da versão antiga
+            sessionStorage.removeItem('yelo_last_psi_page');
             window.location.href = '/';
         });
     });
@@ -313,6 +314,8 @@ document.addEventListener('DOMContentLoaded', function() {
     async function fetchPsychologistData() {
         const token = localStorage.getItem('Yelo_token');
         if (!token) { 
+            localStorage.removeItem('yelo_last_psi_page'); // Limpa resquícios da versão antiga
+            sessionStorage.removeItem('yelo_last_psi_page');
             // Salva intenção de post caso o usuário não esteja logado e tenha vindo do e-mail
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('postId')) {
@@ -398,6 +401,8 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             if (error.message === "Token inválido") {
                 localStorage.removeItem('Yelo_token');
+                localStorage.removeItem('yelo_last_psi_page'); // Limpa resquícios da versão antiga
+                sessionStorage.removeItem('yelo_last_psi_page');
                 window.location.href = '/';
             } else {
                 // Não desloga em erro de rede/fetch
@@ -568,7 +573,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Salva a página atual para persistir após o refresh
-        localStorage.setItem('yelo_last_psi_page', url);
+        sessionStorage.setItem('yelo_last_psi_page', url);
         // Spinner de carregamento entre páginas
         mainContent.innerHTML = `
             <div class="loader-wrapper" style="height: 100%; min-height: 400px; align-items: center;">
@@ -946,7 +951,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 loadPage('psi_forum.html');
             } else {
                 // Carrega a última página visitada ou a visão geral como padrão.
-                const lastPage = localStorage.getItem('yelo_last_psi_page');
+                let lastPage = sessionStorage.getItem('yelo_last_psi_page');
+                
+                // Se o usuário acabou de vir da tela de login ou cadastro, ignora a última página e zera a memória
+                if (document.referrer && (document.referrer.includes('/login') || document.referrer.includes('/cadastro') || document.referrer.includes('/registro'))) {
+                    lastPage = null;
+                    sessionStorage.removeItem('yelo_last_psi_page');
+                }
+
                 loadPage(lastPage || 'psi_visao_geral.html');
             }
             

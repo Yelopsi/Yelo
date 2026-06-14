@@ -265,7 +265,7 @@ router.get('/terapia-online', async (req, res) => {
 // --- LOGOUT ---
 router.get('/logout', (req, res) => {
     res.clearCookie('token');
-    res.send(`<html><body><script>localStorage.removeItem('Yelo_token'); localStorage.removeItem('Yelo_user_type'); localStorage.removeItem('Yelo_user_name'); window.location.href = '/';</script></body></html>`);
+    res.send(`<html><body><script>localStorage.removeItem('Yelo_token'); localStorage.removeItem('Yelo_user_type'); localStorage.removeItem('Yelo_user_name'); localStorage.removeItem('yelo_last_admin_page'); localStorage.removeItem('yelo_last_psi_page'); sessionStorage.removeItem('yelo_last_admin_page'); sessionStorage.removeItem('yelo_last_psi_page'); window.location.href = '/';</script></body></html>`);
 });
 
 router.get(['/admin/login', '/psi/login', '/patient/login'], (req, res) => res.redirect(301, '/login'));

@@ -50,10 +50,16 @@
             display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 5px; -webkit-overflow-scrolling: touch; scrollbar-width: none;
         }
         .crm-funnel-tabs::-webkit-scrollbar { display: none; }
+        
+        @media (max-width: 768px) {
+            .widget-header-leads { flex-direction: column; align-items: stretch !important; gap: 15px !important; }
+            .header-actions-leads { flex-direction: column; width: 100%; align-items: stretch !important; }
+            .header-actions-leads button { width: 100%; justify-content: center; }
+        }
     </style>
 
     <div class="widget" style="margin-bottom: 25px;">
-        <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px;">
+        <div class="widget-header-leads" style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px;">
             <div class="crm-funnel-tabs">
                 <button class="crm-pill active" data-filter="ativos">Pipeline Ativo</button>
                 <button class="crm-pill" data-filter="pendentes">Frios</button>
@@ -64,10 +70,14 @@
             </div>
             <input type="hidden" id="filtro-funil" value="ativos">
             
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button class="btn-secundario" onclick="window.exportarLeadsCSV()">📥 Exportar Pipeline</button>
-                <button id="btn-cacar-leads" class="btn-primario" onclick="window.iniciarRoboScraper()">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="16" y1="16" x2="16" y2="16"></line></svg> Capturar Prospectos
+            <div class="header-actions-leads" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <button class="crm-pill" style="display: flex; align-items: center; gap: 8px;" onclick="window.exportarLeadsCSV()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> 
+                    Exportar Pipeline
+                </button>
+                <button id="btn-cacar-leads" class="crm-pill active" style="display: flex; align-items: center; gap: 8px;" onclick="window.iniciarRoboScraper()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="16" y1="16" x2="16" y2="16"></line></svg> 
+                    Capturar Prospectos
                 </button>
             </div>
         </div>
