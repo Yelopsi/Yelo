@@ -140,7 +140,7 @@ router.get('/profissionais', async (req, res) => {
             SELECT pr.rating, pr.comment, p.nome, p."fotoUrl", p.abordagens_tecnicas
             FROM "PlatformReviews" pr
             JOIN "Psychologists" p ON p.id = pr."psychologistId"
-            WHERE pr.status = 'approved' AND pr.comment IS NOT NULL
+            WHERE pr."isTestimonial" = true AND pr.comment IS NOT NULL
             ORDER BY pr."createdAt" DESC LIMIT 10
         `, { type: db.sequelize.QueryTypes.SELECT });
 

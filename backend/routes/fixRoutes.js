@@ -145,6 +145,8 @@ router.get('/api/setup-platform-reviews', async (req, res) => {
                 "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
             );
         `);
+        // Garante que a coluna de destaque na Landing Page exista para não quebrar o Admin
+        await db.sequelize.query(`ALTER TABLE "PlatformReviews" ADD COLUMN IF NOT EXISTS "isTestimonial" BOOLEAN DEFAULT false;`);
         res.send('✅ Tabela PlatformReviews criada com sucesso no banco de dados!');
     } catch (error) {
         res.status(500).send('Erro ao criar tabela: ' + error.message);
