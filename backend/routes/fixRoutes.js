@@ -7,6 +7,9 @@ const db = require('../models'); // Importado para queries inline de correção
 // 🚨 ROTAS DE EMERGÊNCIA (DESATIVADAS PARA PRODUÇÃO) 🚨
 // =============================================================
 
+// --- EXCEÇÃO TEMPORÁRIA: Liberado em produção para atualizar o banco ---
+router.get('/api/fix-add-disqualification-columns', fixController.addDisqualificationColumns);
+
 // Bloqueio global para as rotas de correção em produção
 if (process.env.NODE_ENV === 'production') {
     router.use([/^\/api\/fix-.*/, /^\/fix-.*/, /^\/api\/debug-.*/, /^\/api\/run-.*/], (req, res) => res.status(403).json({ error: 'Rotas de manutenção e diagnóstico desativadas em produção por segurança.' }));
@@ -130,8 +133,5 @@ router.get('/api/fix-financial-tables', fixController.fixFinancialTables);
 
 // --- ROTA DE CORREÇÃO: TABELA DE PACIENTES ---
 router.get('/api/fix-patient-table', fixController.fixPatientTable);
-
-// --- ROTA DE CORREÇÃO: COLUNAS DE DESQUALIFICAÇÃO DO FUNIL ---
-router.get('/api/fix-add-disqualification-columns', fixController.addDisqualificationColumns);
 
 module.exports = router;
