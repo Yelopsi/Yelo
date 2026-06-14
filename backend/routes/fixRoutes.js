@@ -131,4 +131,7 @@ router.get('/api/fix-financial-tables', fixController.fixFinancialTables);
 // --- ROTA DE CORREÇÃO: TABELA DE PACIENTES ---
 router.get('/api/fix-patient-table', fixController.fixPatientTable);
 
+// --- ROTA DE CORREÇÃO: COLUNAS DE DESQUALIFICAÇÃO DO FUNIL ---
+router.get('/api/fix-add-disqualification-columns', fixController.addDisqualificationColumns);
+
 module.exports = router;

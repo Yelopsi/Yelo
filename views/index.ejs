@@ -469,8 +469,23 @@
                 %>
                 <h1 style="font-weight: 800;">Você merece <%= fraseAleatoria %></h1>
                 <p>Encontrar a pessoa certa para te acompanhar nessa jornada é o primeiro passo.</p>
+                
+                <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 20px; position: relative; z-index: 2;">
+                    <div style="display: flex; margin-right: -5px;">
+                        <div style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #1B4332; margin-right: -12px; z-index: 3; background: #FFF8E1; color: #1B4332; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold;">M</div>
+                        <div style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #1B4332; margin-right: -12px; z-index: 2; background: #E6F4F1; color: #1B4332; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold;">C</div>
+                        <div style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #1B4332; z-index: 1; background: #F8F3ED; color: #1B4332; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold;">F</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                        <span style="color: #FFC107; font-size: 0.85rem; letter-spacing: 1px; line-height: 1;">★★★★★</span>
+                        <span style="color: rgba(255,255,255,0.9); font-size: 0.8rem; margin-top: 3px;"><strong><%= typeof mediaAvaliacao !== 'undefined' ? mediaAvaliacao : '4.9' %>/5</strong> (<%= typeof totalAvaliacoes !== 'undefined' ? totalAvaliacoes : '150+' %> avaliações)</span>
+                    </div>
+                </div>
             </div>
-            <a href="/questionario" class="btn-cta-principal">Começar</a>
+            <a href="/questionario" class="btn-cta-principal">Encontrar meu psicólogo</a>
+            <p style="font-size: 0.85rem; color: #E6F4F1; margin-top: 12px; opacity: 0.9; text-align: center; position: relative; z-index: 2; font-weight: 500;">
+                ✨ O match é por nossa conta e sem compromisso. O pagamento das sessões é combinado direto com o/a psicólogo/a.
+            </p>
             <div class="wave-divider">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
                     <path fill="#ffffff" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
@@ -554,7 +569,7 @@
                     </div>
 
                     <div style="margin-top: 40px;">
-                        <a href="/questionario" class="btn-cta-principal">Encontrar meu terapeuta</a>
+                        <a href="/questionario" class="btn-cta-principal">Encontrar meu psicólogo</a>
                     </div>
                 </div>
 
@@ -653,7 +668,7 @@
                 </div>
             <div class="container">
                 <div style="margin-top: 40px; margin-bottom: 60px; text-align: center; position: relative; z-index: 2;">
-                    <a href="/questionario" class="btn-cta-principal">Quero começar agora</a>
+                    <a href="/questionario" class="btn-cta-principal">Encontrar meu psicólogo</a>
                 </div>
             </div>
             <div class="wave-divider">
@@ -669,13 +684,18 @@
                 <div class="header-depoimentos">
                     <h2 class="titulo-organico">Histórias de quem já começou</h2>
                     <div class="rating-badge">
+                        <div style="display: flex; margin-right: -5px;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fdfaf6; margin-right: -12px; z-index: 3; background: #FFF8E1; color: #1B4332; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold;">M</div>
+                            <div style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fdfaf6; margin-right: -12px; z-index: 2; background: #E6F4F1; color: #1B4332; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold;">C</div>
+                            <div style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fdfaf6; z-index: 1; background: #F8F3ED; color: #1B4332; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold;">F</div>
+                        </div>
                         <span class="rating-score"><%= typeof mediaAvaliacao !== 'undefined' ? mediaAvaliacao : '4.9' %>/5</span>
                         <!-- Estrelas Dinâmicas (Preenchimento via CSS width) -->
                         <div class="stars-wrapper" style="position: relative; display: inline-block; color: #e0e0e0; font-size: 1.1rem; letter-spacing: 2px;">
                             ★★★★★
                             <div style="position: absolute; top: 0; left: 0; overflow: hidden; width: <%= (parseFloat(typeof mediaAvaliacao !== 'undefined' ? mediaAvaliacao : 4.9) / 5) * 100 %>%; color: #FFC107; white-space: nowrap;">★★★★★</div>
                         </div>
-                        <span class="rating-count">Baseado em <%= typeof totalAvaliacoes !== 'undefined' ? totalAvaliacoes : '2.000+' %> avaliações</span>
+                        <span class="rating-count">Baseado em <%= typeof totalAvaliacoes !== 'undefined' ? totalAvaliacoes : '150+' %> avaliações</span>
                     </div>
                 </div>
 
@@ -725,6 +745,12 @@
                     <button class="acordeao-titulo">Qual o valor das sessões?</button>
                     <div class="acordeao-conteudo">
                         <p>Na Yelo, você tem liberdade de escolha. Nossos profissionais definem seus próprios honorários, criando uma variedade de faixas de preço para que você encontre alguém excelente que também caiba no seu orçamento.</p>
+                    </div>
+                </div>
+                <div class="acordeao-item-organico">
+                    <button class="acordeao-titulo">E se eu não me adaptar ao profissional? (Troca Facilitada)</button>
+                    <div class="acordeao-conteudo">
+                        <p>Entendemos que a conexão com o terapeuta é fundamental. Se você iniciar as sessões e sentir que não deu "liga", você pode usar a nossa plataforma para trocar de profissional a qualquer momento, de forma autônoma e sem constrangimento. Nosso objetivo é que você encontre o espaço perfeito para você.</p>
                     </div>
                 </div>
             </div>

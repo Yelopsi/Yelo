@@ -37,7 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.head.appendChild(prefetchLink);
 
     const questions = [
-        { id: 'boas-vindas', question: "Vamos encontrar a pessoa certa para te acompanhar nesta jornada.", subtitle: "Responda ao nosso questionário. É rápido, seguro e direto ao ponto. Em menos de 1 minuto, encontramos o seu profissional ideal.", type: 'welcome' },
         { id: 'idade', question: "Para começarmos, qual a sua faixa etária?", type: 'choice', choices: ["Menor de 18 anos", "18-24 anos", "25-34 anos", "35-44 anos", "45-54 anos", "55+ anos"], required: true },
         { id: 'pref_genero_prof', question: "Você tem preferência pelo gênero do(a) profissional?", subtitle: "Sua segurança e conforto são a nossa prioridade.", type: 'choice', choices: ["Indiferente", "Masculino", "Feminino", "Não-binário"], required: true },
         { id: 'temas', question: "O que te motivou a procurar terapia agora?", subtitle: "Selecione os temas que você gostaria de explorar.", type: 'multiple-choice', scrollable: true, choices: ["Ansiedade ou Estresse", "Depressão ou Tristeza", "Relacionamentos", "Carreira e Trabalho", "Autoestima", "Luto ou Traumas", "Autoconhecimento", "Outro"], required: true },
@@ -186,7 +185,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentQuestion = questions[currentStep]; 
             if (currentQuestion && currentQuestion.id === 'cep') { 
                 const cepInput = document.getElementById(`input-${currentQuestion.id}`); 
-                if (cepInput) IMask(cepInput, { mask: '00000-000' }); 
+                if (cepInput && !cepInput.maskRef) { 
+                    const mask = IMask(cepInput, { mask: '00000-000' }); 
+                    cepInput.maskRef = mask;
+                    
+                    // Avanço automático ao completar o CEP
+                    mask.on('complete', () => {
+                        const savedStep = currentStep;
+                        cepInput.blur(); // Esconde o teclado mobile
+                        // Pequeno delay visual para o usuário ver o CEP preenchido antes da transição
+                        setTimeout(() => { if (currentStep === savedStep) validateAndAdvance(); }, 300);
+                    });
+                } 
             }
         }
     }
@@ -293,13 +303,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // --- 1. Ação: Avançar/Finalizar ---
             if (target.matches('[data-action="next"], [data-action="finalize"]')) { 
-                // Se clicou em "Vamos começar" (primeiro slide), avisa o backend
-                if (target.matches('[data-action="next"]') && currentStep === 0) {
-                    // Dispara o aviso sem travar o usuário (Fire and Forget)
-                    if (window.QuestionarioService && !isTestUser()) {
-                        window.QuestionarioService.startSearch().then(id => { if(id) currentSearchId = id; });
-                    }
-                }
                 validateAndAdvance(); 
             } 
             
@@ -332,6 +335,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     // --- LÓGICA DE IDADE ---
                     if (currentQuestion.id === 'idade' && target.dataset.value === 'Menor de 18 anos') {
                         sessionStorage.setItem('Yelo_user_name', userAnswers.nome || ''); 
+                        
+                        // Dispara evento para o GA4
+                        try {
+                            if (typeof window.gtag === 'function') {
+                                window.gtag('event', 'desqualificado_idade');
+                            }
+                        } catch(e) {}
+
+                        // Avisa o backend para não contar como abandono
+                        if (currentSearchId) {
+                            fetch(`${BASE_URL}/api/tracking/disqualify`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ searchId: currentSearchId, reason: 'under_18' })
+                            }).catch(() => {});
+                        }
+
                         setTimeout(() => { window.location.href = '/menor_de_idade'; }, 300);
                     } else {
                         let proximoPasso = currentStep + 1;
@@ -360,6 +380,12 @@ document.addEventListener('DOMContentLoaded', () => {
             } 
         }); 
 
+        // [NOVO] Garante submissão via teclado mobile (Go/Avançar) quando os inputs estão dentro de forms
+        slidesContainer.addEventListener('submit', (e) => {
+            e.preventDefault();
+            validateAndAdvance();
+        });
+
         // [NOVO] Salva o WhatsApp em tempo real para garantir que não se perca
         slidesContainer.addEventListener('input', (e) => {
             if (e.target.id === 'input-nome') {
@@ -379,6 +405,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (document.querySelector(`[data-index="0"]`)) { 
             goToSlide(0); 
+            // Dispara a criação do rascunho de busca imediatamente no carregamento da página
+            if (window.QuestionarioService && !isTestUser()) {
+                window.QuestionarioService.startSearch().then(id => { if(id) currentSearchId = id; });
+            }
         } else { 
         } 
     }

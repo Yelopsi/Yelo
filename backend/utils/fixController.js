@@ -797,3 +797,13 @@ exports.fixPatientTable = async (req, res) => {
         res.send("✅ Tabela de Pacientes verificada e corrigida.");
     } catch (error) { res.status(500).send("Erro: " + error.message); }
 };
+
+exports.addDisqualificationColumns = async (req, res) => {
+    try {
+        await db.sequelize.query('ALTER TABLE "DemandSearches" ADD COLUMN IF NOT EXISTS "is_disqualified" BOOLEAN DEFAULT FALSE;');
+        await db.sequelize.query('ALTER TABLE "DemandSearches" ADD COLUMN IF NOT EXISTS "disqualification_reason" VARCHAR(255);');
+        res.send("✅ Sucesso! Colunas 'is_disqualified' e 'disqualification_reason' criadas na tabela DemandSearches.");
+    } catch (error) {
+        res.status(500).send("Erro ao criar colunas: " + error.message);
+    }
+};

@@ -12,8 +12,10 @@ window.QuestionarioUI = (function() {
                     const inputModeAttr = questionData.inputMode ? `inputmode="${questionData.inputMode}"` : '';
                     const autocompleteAttr = questionData.autocomplete ? `autocomplete="${questionData.autocomplete}"` : '';
                     const autofocusAttr = questionData.autofocus ? 'autofocus' : '';
-                    contentHTML = `<div class="input-wrapper"><input type="${questionData.type}" id="input-${questionData.id}" class="text-input" placeholder="${questionData.placeholder}" ${inputModeAttr} ${autocompleteAttr} ${autofocusAttr}>
-                    <span class="enter-hint">Pressione <strong>Enter ↵</strong></span></div>`; 
+                    const enterHintAttr = questionData.id === 'nome' ? 'enterkeyhint="go"' : 'enterkeyhint="next"';
+                    
+                    contentHTML = `<form onsubmit="return false;" class="input-wrapper" style="margin: 0; width: 100%;"><input type="${questionData.type}" id="input-${questionData.id}" class="text-input" placeholder="${questionData.placeholder}" ${inputModeAttr} ${autocompleteAttr} ${autofocusAttr} ${enterHintAttr}>
+                    <span class="enter-hint">Pressione <strong>Enter ↵</strong></span></form>`; 
                     if (questionData.footer) {
                         contentHTML += `<p style="margin-top: 12px; font-size: 0.85rem; opacity: 0.8; text-align: center; line-height: 1.4;">${questionData.footer}</p>`;
                     }

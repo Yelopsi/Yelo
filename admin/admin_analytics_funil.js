@@ -131,6 +131,9 @@ window.initializePage = function() {
 
             document.getElementById('kpi-whatsapp').textContent = data.whatsappClicks.toLocaleString();
             
+            const kpiDesqualificados = document.getElementById('kpi-desqualificados');
+            if(kpiDesqualificados) kpiDesqualificados.textContent = (data.desqualificados || 0).toLocaleString();
+
             const taxaInicio = data.visitas > 0 ? ((data.iniciaram / data.visitas) * 100).toFixed(1) : 0;
             const elTaxaInicio = document.getElementById('taxa-inicio');
             if (elTaxaInicio) elTaxaInicio.textContent = `${taxaInicio}% das visitas`;

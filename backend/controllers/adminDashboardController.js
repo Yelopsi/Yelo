@@ -49,7 +49,7 @@ exports.getDashboardStats = async (req, res) => {
             SELECT
                 COUNT(*) FILTER (WHERE status = 'completed') as total,
                 COUNT(*) FILTER (WHERE "createdAt" >= :startOfToday AND status = 'completed') as today,
-                COUNT(*) FILTER (WHERE status = 'started' AND "updatedAt" < :tenMinutesAgo) as abandoned
+                COUNT(*) FILTER (WHERE status = 'started' AND "updatedAt" < :tenMinutesAgo AND ("is_disqualified" IS NULL OR "is_disqualified" = false)) as abandoned
             FROM "DemandSearches"
         `;
 
@@ -178,7 +178,7 @@ exports.getDetailedReports = async (req, res) => {
         const demandQuery = `
             SELECT TO_CHAR("createdAt" AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD') as data,
             SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as concluidos,
-            SUM(CASE WHEN status = 'started' THEN 1 ELSE 0 END) as desistencias
+            SUM(CASE WHEN status = 'started' AND ("is_disqualified" IS NULL OR "is_disqualified" = false) THEN 1 ELSE 0 END) as desistencias
             FROM "DemandSearches" WHERE "createdAt" BETWEEN :start AND :end GROUP BY data ORDER BY data ASC;
         `;
 
@@ -703,10 +703,13 @@ exports.getFunnelAnalytics = async (req, res) => {
         const whatsappClicksResult = await db.sequelize.query(`SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, "guestName", "id"::varchar)) as count FROM "WhatsappClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
         const whatsappClicks = parseInt(whatsappClicksResult[0]?.count || 0);
 
+        const desqualificadosResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "DemandSearches" WHERE "is_disqualified" = true AND "createdAt" BETWEEN :start AND :end`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
+        const desqualificados = parseInt(desqualificadosResult[0]?.count || 0);
+
         const abandonos = await db.sequelize.query(
             `SELECT t.step, COUNT(*) as count 
              FROM "TrackingLogs" t
-             LEFT JOIN "DemandSearches" d ON t."searchId" = CAST(d.id AS VARCHAR) AND d.status = 'completed'
+             LEFT JOIN "DemandSearches" d ON t."searchId" = CAST(d.id AS VARCHAR) AND (d.status = 'completed' OR d.is_disqualified = true)
              WHERE t."type" = 'questionario_dropoff' AND t."createdAt" BETWEEN :start AND :end AND d.id IS NULL
              GROUP BY t.step ORDER BY count DESC`,
             { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
@@ -717,7 +720,7 @@ exports.getFunnelAnalytics = async (req, res) => {
             { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => []);
 
-        res.json({ visitas, iniciaram, completaram, profileViews, whatsappClicks, abandonos, origens });
+        res.json({ visitas, iniciaram, completaram, profileViews, whatsappClicks, abandonos, origens, desqualificados });
     } catch (error) {
         console.error('Erro em getFunnelAnalytics:', error);
         res.status(500).json({ error: 'Erro ao gerar dados do funil' });
