@@ -48,14 +48,11 @@ exports.loginAdmin = async (req, res) => {
         if (await bcrypt.compare(senha, adminUser.senha)) {
             console.log(`[LOGIN ADMIN] Sucesso para: ${email}. Gerando token e cookie...`);
             // --- GERAÇÃO DE LOG REAL ---
-            try {
-                if (db.SystemLog) {
-                    await db.SystemLog.create({
-                        level: 'info',
-                        message: `Login de administrador bem-sucedido: ${adminUser.email}`
-                    }).catch(() => {}); // Blindagem contra falha na tabela
-                }
-            } catch(e) { console.error("Erro ao gerar log de login:", e.message); }
+            await db.SystemLog.create({
+                level: 'info',
+                message: `Login de administrador bem-sucedido: ${adminUser.email}`,
+                meta: { adminId: adminUser.id, isLegacy }
+            });
 
             const token = generateAdminToken(adminUser.id);
 
@@ -418,6 +415,82 @@ exports.togglePlatformReviewTestimonial = async (req, res) => {
         res.status(200).json({ message: 'Status de prova social atualizado com sucesso!' });
     } catch (error) {
         console.error('Erro ao atualizar status de depoimento:', error);
+        res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};
+
+/**
+ * Rota: GET /api/admin/analytics/ranking (NOVA)
+ * Descrição: Retorna o ranking de performance dos psicólogos
+ */
+exports.getPsiRanking = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        
+        let dateFilter = '';
+        const replacements = {};
+
+        if (startDate && endDate) {
+            dateFilter = `WHERE "createdAt" >= :startDate AND "createdAt" <= :endDate`;
+            replacements.startDate = `${startDate} 00:00:00`;
+            replacements.endDate = `${endDate} 23:59:59`;
+        }
+
+        // 1. Busca Cliques do WhatsApp
+        const clicksData = await db.sequelize.query(`
+            SELECT "psychologistId", COUNT(id) as total_cliques
+            FROM "WhatsappClickLogs"
+            ${dateFilter}
+            GROUP BY "psychologistId"
+        `, { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+
+        // 2. Busca Aparições (Com fallback inteligente caso a coluna 'type' não exista na tabela antiga)
+        let appearancesData = [];
+        try {
+            appearancesData = await db.sequelize.query(`
+                SELECT "psychologistId", "type", COUNT(id) as total_aparicoes
+                FROM "ProfileAppearanceLogs"
+                ${dateFilter}
+                GROUP BY "psychologistId", "type"
+            `, { replacements, type: db.sequelize.QueryTypes.SELECT });
+        } catch(e) {
+            appearancesData = await db.sequelize.query(`
+                SELECT "psychologistId", 'direct_view' as type, COUNT(id) as total_aparicoes
+                FROM "ProfileAppearanceLogs"
+                ${dateFilter}
+                GROUP BY "psychologistId"
+            `, { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+        }
+
+        // 3. Busca todos os psicólogos cadastrados (ignorando admins)
+        const psis = await db.Psychologist.findAll({
+            where: { isAdmin: { [Op.ne]: true } },
+            attributes: ['id', 'nome', 'status'],
+            raw: true
+        });
+
+        // 4. Mapeia e consolida os dados de cada um
+        const rankingMap = psis.filter(p => p.status !== 'deleted').map(psi => {
+            const clickRecord = clicksData.find(c => c.psychologistId === psi.id);
+            const psiApps = appearancesData.filter(a => a.psychologistId === psi.id);
+            
+            const cliquesWpp = clickRecord ? parseInt(clickRecord.total_cliques) : 0;
+            const aparicoesBusca = psiApps.filter(a => a.type === 'profile_click_funnel').reduce((acc, curr) => acc + parseInt(curr.total_aparicoes), 0);
+            const visitasDiretas = psiApps.filter(a => a.type !== 'profile_click_funnel').reduce((acc, curr) => acc + parseInt(curr.total_aparicoes), 0);
+            
+            return { id: psi.id, nome: psi.nome, cliquesWpp, aparicoesBusca, visitasDiretas };
+        });
+
+        // 5. Ordena o Ranking: Primeiro quem tem + Cliques, depois quem tem + Visitas/Aparições Totais
+        rankingMap.sort((a, b) => {
+            if (b.cliquesWpp !== a.cliquesWpp) return b.cliquesWpp - a.cliquesWpp;
+            return (b.aparicoesBusca + b.visitasDiretas) - (a.aparicoesBusca + a.visitasDiretas);
+        });
+
+        // 6. Retorna o Top 50 para o Front-end
+        res.status(200).json(rankingMap.slice(0, 50));
+    } catch (error) {
+        console.error('Erro ao buscar ranking de psis:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };

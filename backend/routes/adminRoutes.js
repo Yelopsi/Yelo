@@ -117,6 +117,9 @@ router.get('/export/psychologists', adminController.exportPsychologists);
 // --- ROTA DE FEEDBACK DO WHATSAPP (CONVERSÃO PLG) ---
 router.get('/whatsapp-feedbacks', adminDashboardController.getWhatsappFeedbacks);
 
+// --- ROTA DE RANKING DE PSICÓLOGOS (NOVO CRM) ---
+router.get('/analytics/ranking', adminController.getPsiRanking);
+
 // --- ROTAS DE MODERAÇÃO DE PERGUNTAS (Q&A) ---
 
 // Rota para buscar todas as perguntas com status 'pending_review'

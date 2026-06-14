@@ -38,12 +38,13 @@ window.initializePage = function() {
 
         try {
             // Realiza múltiplas buscas simultâneas resolvendo o gargalo assíncrono antigo
-            const [resCharts, resFin, resPwa, resFunnel, resWpp] = await Promise.all([
+            const [resCharts, resFin, resPwa, resFunnel, resWpp, resRanking] = await Promise.all([
                 fetch(`${API_BASE_URL}/api/admin/reports/charts${query}`, { headers: { 'Authorization': `Bearer ${token}` } }),
                 fetch(`${API_BASE_URL}/api/admin/financials`, { headers: { 'Authorization': `Bearer ${token}` } }),
                 fetch(`${API_BASE_URL}/api/admin/stats/pwa`, { headers: { 'Authorization': `Bearer ${token}` } }),
                 fetch(`${API_BASE_URL}/api/admin/analytics/funnel${query}`, { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch(`${API_BASE_URL}/api/admin/whatsapp-feedbacks`, { headers: { 'Authorization': `Bearer ${token}` } }) // Recuperado da faxina
+                fetch(`${API_BASE_URL}/api/admin/whatsapp-feedbacks`, { headers: { 'Authorization': `Bearer ${token}` } }),
+                fetch(`${API_BASE_URL}/api/admin/analytics/ranking${query}`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
             ]);
 
             const dataCharts = resCharts.ok ? await resCharts.json() : {};
@@ -51,6 +52,7 @@ window.initializePage = function() {
             const dataPwa = resPwa.ok ? await resPwa.json() : {};
             const dataFunnel = resFunnel.ok ? await resFunnel.json() : {};
             const dataWpp = resWpp.ok ? await resWpp.json() : [];
+            const dataRanking = (resRanking && resRanking.ok) ? await resRanking.json() : null;
 
             // === PREENCHIMENTO ABA 1: DESEMPENHO E USO ===
             
@@ -94,6 +96,10 @@ window.initializePage = function() {
 
             // === PREENCHIMENTO ABA 3: CONVERSÕES PLG ===
             renderWppFeedbacks(dataWpp);
+
+            // === PREENCHIMENTO ABA 4: RANKING DE PROFISSIONAIS ===
+            let rankingList = dataRanking ? (Array.isArray(dataRanking) ? dataRanking : dataRanking.ranking) : null;
+            renderRankingPsi(rankingList);
 
         } catch (error) {
             console.error("Erro na consolidação do CRM Analytics:", error);
@@ -150,6 +156,40 @@ window.initializePage = function() {
                 <td style="text-align: center;">${contato}</td>
                 <td style="text-align: center;">${fechou}</td>
                 <td style="text-align: center;">${status}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    function renderRankingPsi(ranking) {
+        const tbody = document.getElementById('ranking-psi-tbody');
+        if (!tbody) return;
+
+        if (!ranking) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #b45309; background: #fffbeb; font-weight: 500;">O endpoint <code>/api/admin/analytics/ranking</code> está pendente no servidor backend.</td></tr>';
+            return;
+        }
+
+        if (ranking.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #666;">Nenhum dado de performance encontrado no período.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = ranking.map((item, index) => {
+            let badgePos = `<strong>${index + 1}º</strong>`;
+            if (index === 0) badgePos = `<span style="background: #fef08a; color: #b45309; padding: 4px 10px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;">🥇 1º</span>`;
+            else if (index === 1) badgePos = `<span style="background: #e5e7eb; color: #4b5563; padding: 4px 10px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;">🥈 2º</span>`;
+            else if (index === 2) badgePos = `<span style="background: #fed7aa; color: #9a3412; padding: 4px 10px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;">🥉 3º</span>`;
+
+            const visitasTotais = (item.aparicoesBusca || 0) + (item.visitasDiretas || 0);
+            const conversao = visitasTotais > 0 ? (((item.cliquesWpp || 0) / visitasTotais) * 100).toFixed(1) + '%' : '0%';
+
+            return `<tr>
+                <td style="text-align: center;">${badgePos}</td>
+                <td><strong style="color: var(--verde-escuro);">${item.nome}</strong></td>
+                <td style="text-align: center; font-weight: bold; color: #16a34a;">${item.cliquesWpp || 0}</td>
+                <td style="text-align: center; color: #4b5563;">${item.aparicoesBusca || 0}</td>
+                <td style="text-align: center; color: #4b5563;">${item.visitasDiretas || 0}</td>
+                <td style="text-align: center; font-weight: bold; color: #3b82f6;">${conversao}</td>
             </tr>`;
         }).join('');
     }

@@ -47,6 +47,7 @@
         <button class="crm-pill content-tab-btn active" data-target="tab-desempenho">📈 Desempenho e Uso</button>
         <button class="crm-pill content-tab-btn" data-target="tab-financeiro">💰 Receita e Assinaturas</button>
         <button class="crm-pill content-tab-btn" data-target="tab-conversoes">🤝 Conversões (PLG)</button>
+        <button class="crm-pill content-tab-btn" data-target="tab-ranking">🏆 Ranking de Psis</button>
     </div>
 
     <!-- ABA 1: DESEMPENHO E USO (Substitui a Tag hardcoded de relatorios) -->
@@ -211,6 +212,31 @@
                     </thead>
                     <tbody id="whatsapp-feedback-tbody">
                         <tr><td colspan="6" class="loading-row" style="text-align: center; padding: 40px; color: var(--cinza-texto);"><span class="loading-spinner-sm"></span> Carregando feedbacks...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ABA 4: RANKING DE PROFISSIONAIS -->
+    <div id="tab-ranking" class="analytics-tab-content" style="display: none;">
+        <div class="tabela-container" style="margin-top: 20px; margin-bottom: 30px;">
+            <h3 style="display: flex; align-items: center; gap: 8px;">Ranking de Performance dos Psicólogos</h3>
+            <p style="color: #666; font-size: 0.9rem; margin-top: -10px; margin-bottom: 20px;">Acompanhe quem está gerando mais engajamento e conversões na plataforma.</p>
+            <div class="tabela-wrapper">
+                <table class="tabela-gerenciamento">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px; text-align: center;">Posição</th>
+                            <th>Psicólogo</th>
+                            <th style="text-align: center;" title="Total de cliques no botão de WhatsApp">Cliques WhatsApp</th>
+                            <th style="text-align: center;" title="Total de vezes que apareceu nos resultados de busca">Aparições na Busca</th>
+                            <th style="text-align: center;" title="Total de visitas diretas ao perfil público">Visitas Diretas</th>
+                            <th style="text-align: center;" title="Taxa de conversão (Cliques / Visitas Totais)">Conversão</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ranking-psi-tbody">
+                        <tr><td colspan="6" class="loading-row" style="text-align: center; padding: 40px; color: var(--cinza-texto);"><span class="loading-spinner-sm"></span> Carregando ranking...</td></tr>
                     </tbody>
                 </table>
             </div>

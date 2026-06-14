@@ -84,7 +84,7 @@ window.initializePage = function() {
 
     async function fetchAndRenderPsis(page = 1) {
         if (!tableBody) return;
-        tableBody.innerHTML = `<tr><td colspan="5" class="loading-row" style="text-align: center; padding: 40px; color: var(--cinza-texto);"><span class="loading-spinner-sm"></span> Carregando CRM...</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="6" class="loading-row" style="text-align: center; padding: 40px; color: var(--cinza-texto);"><span class="loading-spinner-sm"></span> Carregando CRM...</td></tr>`;
 
         const searchTerm = searchInput.value;
         const status = statusInput.value;
@@ -110,7 +110,7 @@ window.initializePage = function() {
                 setText('kpi-vip-psis', kpis.vip);
             }
         } catch (error) {
-            tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--coral-quente);">Erro ao carregar dados.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--coral-quente);">Erro ao carregar dados.</td></tr>`;
         }
     }
 
@@ -145,7 +145,7 @@ window.initializePage = function() {
     function renderTable(psis) {
         tableBody.innerHTML = '';
         if (psis.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--cinza-texto);">Nenhum profissional encontrado.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--cinza-texto);">Nenhum profissional encontrado.</td></tr>`;
             return;
         }
 
@@ -157,6 +157,7 @@ window.initializePage = function() {
             
             const isCopied = copiedList.includes(String(psy.id));
             const copyBadge = (psy.status === 'active' && isCopied) ? '<span class="badge-copied" title="Análise Copiada" style="margin-left: 5px; font-size: 0.8rem;">✅</span>' : '';
+            const dataInscricao = new Date(psy.createdAt).toLocaleDateString('pt-BR');
 
             let statusLabel = psy.status || 'inativo';
             let statusClass = `status-${psy.status || 'inactive'}`;
@@ -207,6 +208,9 @@ window.initializePage = function() {
                         </div>
                         <span style="font-size: 0.85rem; font-weight: 600; color: ${scoreColor};">${score}%</span>
                     </div>
+                </td>
+                <td data-label="Data de Inscrição">
+                    <span style="color: #64748b; font-size: 0.9rem; font-weight: 500;">${dataInscricao}</span>
                 </td>
                 <td data-label="Gamificação">
                     <div style="display: flex; flex-direction: column;">
