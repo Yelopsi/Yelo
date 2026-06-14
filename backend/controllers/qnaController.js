@@ -1,5 +1,6 @@
 const db = require('../models');
 const { Op } = require('sequelize');
+const seoService = require('../services/seoService'); // Importa a Inteligência Artificial
 
 // --- ÁREA PÚBLICA (PACIENTE) ---
 
@@ -12,9 +13,16 @@ exports.createQuestion = async (req, res) => {
             return res.status(400).json({ error: "Conteúdo muito curto." });
         }
         
-        // 1. Gera o Título (pegando as primeiras 60 letras)
+        // 1. Tenta gerar um Título Inteligente e Otimizado para SEO com a IA
         let title = conteudo.substring(0, 60).trim();
         if (conteudo.length > 60) title += '...';
+        let metaDescription = null;
+
+        const seoData = await seoService.generatePatientQuestionSEO(conteudo);
+        if (seoData && seoData.title) {
+            title = seoData.title;
+            metaDescription = seoData.meta_description || null;
+        }
 
         // 2. Gera o Slug Base
         let baseSlug = title
@@ -55,6 +63,7 @@ exports.createQuestion = async (req, res) => {
         try {
             await db.sequelize.query(`ALTER TABLE "${qTable}" ADD COLUMN IF NOT EXISTS "title" VARCHAR(255);`);
             await db.sequelize.query(`ALTER TABLE "${qTable}" ADD COLUMN IF NOT EXISTS "slug" VARCHAR(255);`);
+            await db.sequelize.query(`ALTER TABLE "${qTable}" ADD COLUMN IF NOT EXISTS "meta_description" TEXT;`);
         } catch(e) {}
 
         const newQ = await db.Question.create({
@@ -69,8 +78,8 @@ exports.createQuestion = async (req, res) => {
 
         // FORÇA A GRAVAÇÃO POR FORA DO SEQUELIZE (Bypass de Modelo)
         await db.sequelize.query(
-            `UPDATE "${qTable}" SET "title" = :title, "slug" = :slug WHERE id = :id`,
-            { replacements: { title, slug: slugFinal, id: newQ.id } }
+            `UPDATE "${qTable}" SET "title" = :title, "slug" = :slug, "meta_description" = :meta WHERE id = :id`,
+            { replacements: { title, slug: slugFinal, meta: metaDescription, id: newQ.id } }
         );
 
         // FIX: Garante que o slug seja retornado na resposta da API, mesmo que o modelo não esteja 100% sincronizado
@@ -148,11 +157,12 @@ exports.getQuestionBySlug = async (req, res) => {
         try {
             await db.sequelize.query(`ALTER TABLE "${qTable}" ADD COLUMN IF NOT EXISTS "title" VARCHAR(255);`);
             await db.sequelize.query(`ALTER TABLE "${qTable}" ADD COLUMN IF NOT EXISTS "slug" VARCHAR(255);`);
+            await db.sequelize.query(`ALTER TABLE "${qTable}" ADD COLUMN IF NOT EXISTS "meta_description" TEXT;`);
         } catch(e) {}
 
         // 1. Busca o ID da pergunta usando SQL puro para evitar erro de modelo desatualizado no Sequelize
         const rawResults = await db.sequelize.query(
-            `SELECT id, title, slug FROM "${qTable}" WHERE "slug" = :slug LIMIT 1`,
+            `SELECT id, title, slug, meta_description FROM "${qTable}" WHERE "slug" = :slug LIMIT 1`,
             { replacements: { slug }, type: db.sequelize.QueryTypes.SELECT }
         );
 
@@ -183,6 +193,7 @@ exports.getQuestionBySlug = async (req, res) => {
          // 1.5. Injeta os dados do SQL puro que o modelo do Sequelize teimou em ignorar
         questionData.title = rawResults[0].title;
         questionData.slug = rawResults[0].slug;
+        questionData.meta_description = rawResults[0].meta_description;
 
         const agora = new Date();
         if (questionData.answers) {
@@ -350,6 +361,20 @@ exports.answerQuestion = async (req, res) => {
             await question.save();
         }
         
+        // --- GERAÇÃO AUTOMÁTICA DE SEO PARA A PERGUNTA (Em segundo plano) ---
+        seoService.generateQuestionSEO(question.title || 'Dúvida Psicológica', question.content, conteudo).then(async (seoData) => {
+            if (seoData && seoData.meta_description) {
+                try {
+                    const qTable = db.Question.tableName;
+                    await db.sequelize.query(`ALTER TABLE "${qTable}" ADD COLUMN IF NOT EXISTS "meta_description" TEXT;`).catch(() => {});
+                    await db.sequelize.query(
+                        `UPDATE "${qTable}" SET "meta_description" = :meta WHERE "id" = :id`,
+                        { replacements: { meta: seoData.meta_description, id: question.id } }
+                    );
+                } catch (err) { console.error("Erro SEO Q&A:", err.message); }
+            }
+        });
+
         res.json({ success: true, message: 'Resposta enviada!' });
 
     } catch (error) {

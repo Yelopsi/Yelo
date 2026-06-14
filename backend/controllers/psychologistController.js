@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs').promises;
 const gamificationService = require('../services/gamificationService'); // Importa o serviço
 const subscriptionController = require('./subscriptionController');
+const seoService = require('../services/seoService'); // Importa a Inteligência Artificial
 
 // --- CONFIGURAÇÃO DO CLOUDINARY ---
 const cloudinary = require('cloudinary').v2;
@@ -281,6 +282,21 @@ exports.updatePsychologistProfile = async (req, res) => {
 
         // --- GAMIFICATION HOOK (BADGE AUTÊNTICO) ---
         await gamificationService.checkProfileCompletion(psychologist.id);
+
+        // --- GERAÇÃO AUTOMÁTICA DE SEO PARA O PERFIL (Em segundo plano) ---
+        if (updatePayload.bio && updatePayload.bio.length > 30) {
+            const especialidades = [...(updatePayload.temas_atuacao || []), ...(updatePayload.abordagens_tecnicas || [])].join(', ');
+            seoService.generateProfileSEO(updatePayload.nome || psychologist.nome, updatePayload.bio, especialidades).then(async (seoData) => {
+                if (seoData && seoData.meta_description) {
+                    try {
+                        await db.sequelize.query(
+                            `UPDATE "Psychologists" SET "meta_description" = :meta WHERE "id" = :id`,
+                            { replacements: { meta: seoData.meta_description, id: psychologist.id } }
+                        );
+                    } catch (err) { console.error("Erro SEO Perfil:", err.message); }
+                }
+            });
+        }
 
         res.json({
             id: psychologist.id,

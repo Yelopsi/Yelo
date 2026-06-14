@@ -5,6 +5,7 @@ const Post = db.Post;
 // Tenta carregar com maiúscula ou minúscula para evitar erro no Linux/Render
 const Psychologist = db.Psychologist || db.psychologist || db.Sequelize.models.Psychologist;
 const gamificationService = require('../services/gamificationService');
+const seoService = require('../services/seoService'); // Importa o serviço de IA
 const fs = require('fs').promises;
 
 const cloudinary = require('cloudinary').v2;
@@ -41,7 +42,17 @@ module.exports = {
                 limit: parseInt(limit, 10),
                 offset: offset
             });
-            return res.json(posts);
+            
+            // Garante que a coluna tags seja enviada como Array
+            const formattedPosts = posts.map(p => {
+                const pData = p.toJSON ? p.toJSON() : { ...p };
+                if (typeof pData.tags === 'string') {
+                    try { pData.tags = JSON.parse(pData.tags); } catch(e) { pData.tags = []; }
+                }
+                if (!Array.isArray(pData.tags)) pData.tags = [];
+                return pData;
+            });
+            return res.json(formattedPosts);
         } catch (error) {
             console.error("Erro ao listar posts:", error);
             res.status(500).json({ error: "Erro interno ao listar posts." });
@@ -73,6 +84,24 @@ module.exports = {
                 conteudo,
                 imagem_url: finalImageUrl,
                 psychologistId: userId
+            });
+
+            // --- GERAÇÃO AUTOMÁTICA DE SEO COM IA (Gemini) ---
+            // Roda após a criação em segundo plano e atualiza via query bruta para evitar erros do Sequelize
+            seoService.generateSEO(conteudo, titulo).then(async (seoData) => {
+                try {
+                    const queryParams = {
+                        replacements: { meta: seoData.meta_description, tags: JSON.stringify(seoData.tags), id: novoPost.id }
+                    };
+                    // Tenta atualizar a tabela (com fallback de case sensitivity)
+                    await db.sequelize.query(
+                        `UPDATE "posts" SET "meta_description" = :meta, "tags" = CAST(:tags AS JSONB) WHERE "id" = :id`, queryParams
+                    ).catch(() => db.sequelize.query(
+                        `UPDATE "Posts" SET "meta_description" = :meta, "tags" = CAST(:tags AS JSONB) WHERE "id" = :id`, queryParams
+                    ));
+                } catch (seoErr) {
+                    console.error("Erro ao salvar SEO no banco:", seoErr);
+                }
             });
 
             // --- GAMIFICATION HOOK ---
@@ -110,6 +139,21 @@ module.exports = {
             }
 
             await post.update({ titulo, conteudo, imagem_url: finalImageUrl });
+
+            // --- REGERA O SEO COM IA (Em segundo plano) ---
+            seoService.generateSEO(conteudo, titulo).then(async (seoData) => {
+                try {
+                    const queryParams = {
+                        replacements: { meta: seoData.meta_description, tags: JSON.stringify(seoData.tags), id: post.id }
+                    };
+                    await db.sequelize.query(
+                        `UPDATE "posts" SET "meta_description" = :meta, "tags" = CAST(:tags AS JSONB) WHERE "id" = :id`, queryParams
+                    ).catch(() => db.sequelize.query(
+                        `UPDATE "Posts" SET "meta_description" = :meta, "tags" = CAST(:tags AS JSONB) WHERE "id" = :id`, queryParams
+                    ));
+                } catch (seoErr) { console.error("Erro ao salvar SEO no banco:", seoErr); }
+            });
+            
             res.json({ message: "Atualizado!", post });
         } catch (error) {
             try { if (req.file) await fs.unlink(req.file.path); } catch (e) {}
@@ -145,10 +189,9 @@ module.exports = {
     // ÁREA PÚBLICA: Lista do Blog
     exibirBlogPublico: async (req, res) => {
         try {
-            // Lógica Híbrida: Recentes no topo, mas "Virais" (Curtidas >= 5) furam a fila
+            // Ordenação estritamente cronológica para respeitar a flag "MAIS RECENTE"
             let queryOptions = { 
                 order: [
-                    [db.Sequelize.literal('CASE WHEN curtidas >= 5 THEN 1 ELSE 0 END'), 'DESC'],
                     ['createdAt', 'DESC']
                 ] 
             };
@@ -163,6 +206,13 @@ module.exports = {
             const agora = new Date();
             posts = posts.map(post => {
                 const postData = post.toJSON ? post.toJSON() : { ...post };
+                
+                // FIX: Garante que as tags sejam um array válido (Resolve o erro 500 do EJS)
+                if (typeof postData.tags === 'string') {
+                    try { postData.tags = JSON.parse(postData.tags); } catch(e) { postData.tags = []; }
+                }
+                if (!Array.isArray(postData.tags)) postData.tags = [];
+
                 if (postData.autor) {
                     let isActive = postData.autor.status === 'active';
                     const isVip = postData.autor.is_exempt === true || String(postData.autor.is_exempt).toLowerCase() === 'true' || postData.autor.is_exempt === 1;
@@ -232,9 +282,19 @@ module.exports = {
                 order: [['createdAt', 'DESC']]
             });
 
+            // Garante o parse das tags também para as sugestões da sidebar
+            const recentesData = recentes.map(r => {
+                const rData = r.toJSON ? r.toJSON() : { ...r };
+                if (typeof rData.tags === 'string') {
+                    try { rData.tags = JSON.parse(rData.tags); } catch(e) { rData.tags = []; }
+                }
+                if (!Array.isArray(rData.tags)) rData.tags = [];
+                return rData;
+            });
+
             res.render('post_completo', { 
                 post: postData, 
-                recentes: recentes, // Enviamos a lista para a lateral
+                recentes: recentesData, // Enviamos a lista para a lateral
                 formatImageUrl: formatImageUrl
             });
 

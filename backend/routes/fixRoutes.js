@@ -134,4 +134,7 @@ router.get('/api/fix-patient-table', fixController.fixPatientTable);
 // --- ROTA DE CORREÇÃO: COLUNAS DE DESQUALIFICAÇÃO DO FUNIL ---
 router.get('/api/fix-add-disqualification-columns', fixController.addDisqualificationColumns);
 
+// --- ROTA DE CORREÇÃO: COLUNAS DE SEO PARA O BLOG ---
+router.get('/api/fix-add-seo-columns', fixController.addSeoColumns);
+
 module.exports = router;

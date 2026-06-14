@@ -52,6 +52,7 @@ router.put('/me/photo', uploadProfilePhoto.single('profilePhoto'), adminControll
 router.get('/psychologists', adminController.getAllPsychologists);
 // Novas rotas para gerenciar psicólogos
 router.get('/psychologists/:id/full-details', adminController.getPsychologistFullDetails); // <--- NOVA ROTA
+router.get('/psychologists/:id/analyze', adminController.analyzeProfile);
 router.put('/psychologists/:id/status', adminController.updatePsychologistStatus);
 // Rota para ativar/desativar isenção (VIP)
 router.patch('/psychologists/:id/vip', adminController.updateVipStatus);

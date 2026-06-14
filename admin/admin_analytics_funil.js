@@ -602,11 +602,57 @@ window.initializePage = function() {
                 actsHtml += `<a href="https://wa.me/${numZap}" target="_blank" style="display:flex; justify-content:center; padding: 10px; background: #ecfdf5; color: #10b981; text-decoration: none; border-radius: 6px; font-weight: 600; border: 1px solid #a7f3d0;">Chamar no WhatsApp</a>`;
             }
             actsHtml += `<button onclick="window.navigateToPage('admin_detalhes_psicologo.html?id=${psi.id}')" style="padding: 10px; background: white; color: #1e293b; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 600; cursor: pointer;">Ver Dossiê Completo</button>`;
+            actsHtml += `<button onclick="window.gerarAnaliseCS('${psi.id}')" id="btn-analise-${psi.id}" style="padding: 10px; background: #fef08a; color: #b45309; border: 1px solid #fde047; border-radius: 6px; font-weight: 600; cursor: pointer;">✨ Análise de Perfil (IA)</button>`;
             
             document.getElementById('cs-actions-container').innerHTML = actsHtml;
             
         } catch(e) {
             document.getElementById('cs-actions-container').innerHTML = `<p style="color:red; text-align:center;">Erro ao carregar dados.</p>`;
+        }
+    };
+
+    window.gerarAnaliseCS = async function(psiId) {
+        const btn = document.getElementById(`btn-analise-${psiId}`);
+        if(btn) { btn.disabled = true; btn.innerHTML = '<span class="loading-spinner-sm" style="width:14px; height:14px; margin-right:5px; border-width:2px; display:inline-block;"></span> Gerando...'; }
+        
+        try {
+            const token = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : localStorage.getItem('Yelo_token');
+            const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${psiId}/analyze`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if(data.message) {
+                const copyToClipboardFallback = (text) => {
+                    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+                    return new Promise((resolve, reject) => {
+                        const textArea = document.createElement("textarea");
+                        textArea.value = text;
+                        textArea.style.position = "fixed"; textArea.style.left = "-999999px";
+                        document.body.appendChild(textArea);
+                        textArea.focus(); textArea.select();
+                        document.execCommand('copy') ? resolve() : reject();
+                        textArea.remove();
+                    });
+                };
+                
+                await copyToClipboardFallback(data.message);
+                
+                let currentList = JSON.parse(localStorage.getItem('yelo_psi_copied_analysis') || '[]');
+                if (!currentList.includes(String(psiId))) {
+                    currentList.push(String(psiId));
+                    localStorage.setItem('yelo_psi_copied_analysis', JSON.stringify(currentList));
+                }
+
+                if(window.showToast) window.showToast("Análise copiada para a área de transferência!", "success");
+                else alert("Análise copiada!");
+            } else {
+                throw new Error("Erro na resposta");
+            }
+        } catch(e) {
+            if(window.showToast) window.showToast("Erro ao gerar análise", "error");
+            else alert("Erro ao gerar análise");
+        } finally {
+            if(btn) { btn.disabled = false; btn.innerHTML = '✨ Copiado!'; setTimeout(() => btn.innerHTML = '✨ Análise de Perfil (IA)', 3000); }
         }
     };
 

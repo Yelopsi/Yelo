@@ -807,3 +807,18 @@ exports.addDisqualificationColumns = async (req, res) => {
         res.status(500).send("Erro ao criar colunas: " + error.message);
     }
 };
+
+exports.addSeoColumns = async (req, res) => {
+    try {
+        // Tenta adicionar na tabela (com fallback de case sensitivity para Postgres)
+        await db.sequelize.query('ALTER TABLE "posts" ADD COLUMN IF NOT EXISTS "meta_description" TEXT;').catch(() => db.sequelize.query('ALTER TABLE "Posts" ADD COLUMN IF NOT EXISTS "meta_description" TEXT;'));
+        await db.sequelize.query('ALTER TABLE "posts" ADD COLUMN IF NOT EXISTS "tags" JSONB DEFAULT \'[]\';').catch(() => db.sequelize.query('ALTER TABLE "Posts" ADD COLUMN IF NOT EXISTS "tags" JSONB DEFAULT \'[]\';'));
+        
+        // NOVO: Coluna para otimizar os Perfis Públicos
+        await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "meta_description" TEXT;');
+        
+        res.send("✅ Sucesso! Colunas de SEO criadas na tabela de posts e Psicólogos.");
+    } catch (error) {
+        res.status(500).send("Erro ao criar colunas de SEO: " + error.message);
+    }
+};

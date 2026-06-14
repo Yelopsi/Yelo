@@ -720,3 +720,45 @@ exports.excluirLead = adminLeadController.excluirLead;
 exports.runScraper = adminLeadController.runScraper;
 exports.testWhatsAppMessage = adminLeadController.testWhatsAppMessage;
 exports.testOutboundBatch = adminLeadController.testOutboundBatch;
+
+// ----------------------------------------------------------------------
+// Rota: GET /api/admin/psychologists/:id/analyze (NOVA)
+// Descrição: Gera feedback de perfil usando IA para o WhatsApp
+// ----------------------------------------------------------------------
+exports.analyzeProfile = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const psi = await db.Psychologist.findByPk(id, {
+            attributes: ['nome', 'bio', 'valor_sessao_numero', 'valor_mensal_numero', 'tipo_cobranca', 'temas_atuacao', 'abordagens_tecnicas', 'fotoUrl']
+        });
+
+        if (!psi) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+
+        const reviewsCount = await db.Review.count({ where: { psychologistId: id, status: 'approved' } }).catch(() => 0);
+
+        let valorConsulta = "A combinar";
+        if (psi.tipo_cobranca === 'mensal' && psi.valor_mensal_numero && parseFloat(psi.valor_mensal_numero) > 0) {
+            valorConsulta = `R$ ${psi.valor_mensal_numero} (Mensal)`;
+        } else if (psi.valor_sessao_numero && parseFloat(psi.valor_sessao_numero) > 0) {
+            valorConsulta = `R$ ${psi.valor_sessao_numero} (Por Sessão)`;
+        }
+
+        const profileData = {
+            nome: psi.nome,
+            bio: psi.bio || "Não preenchida",
+            preco_ou_valor: valorConsulta,
+            temas: psi.temas_atuacao || [],
+            abordagens: psi.abordagens_tecnicas || [],
+            avaliacoes: reviewsCount,
+            tem_foto: !!psi.fotoUrl
+        };
+
+        const seoService = require('../services/seoService');
+        const analysis = await seoService.analyzeProfileForCS(profileData);
+
+        res.json({ message: analysis });
+    } catch (error) {
+        console.error("Erro em analyzeProfile:", error);
+        res.status(500).json({ error: 'Erro interno ao gerar análise.' });
+    }
+};
