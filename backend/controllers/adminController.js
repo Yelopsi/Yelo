@@ -419,6 +419,82 @@ exports.togglePlatformReviewTestimonial = async (req, res) => {
     }
 };
 
+/**
+ * Rota: GET /api/admin/analytics/ranking (NOVA)
+ * Descrição: Retorna o ranking de performance dos psicólogos
+ */
+exports.getPsiRanking = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        
+        let dateFilter = '';
+        const replacements = {};
+
+        if (startDate && endDate) {
+            dateFilter = `WHERE "createdAt" >= :startDate AND "createdAt" <= :endDate`;
+            replacements.startDate = `${startDate} 00:00:00`;
+            replacements.endDate = `${endDate} 23:59:59`;
+        }
+
+        // 1. Busca Cliques do WhatsApp
+        const clicksData = await db.sequelize.query(`
+            SELECT "psychologistId", COUNT(id) as total_cliques
+            FROM "WhatsappClickLogs"
+            ${dateFilter}
+            GROUP BY "psychologistId"
+        `, { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+
+        // 2. Busca Aparições (Com fallback inteligente caso a coluna 'type' não exista na tabela antiga)
+        let appearancesData = [];
+        try {
+            appearancesData = await db.sequelize.query(`
+                SELECT "psychologistId", "type", COUNT(id) as total_aparicoes
+                FROM "ProfileAppearanceLogs"
+                ${dateFilter}
+                GROUP BY "psychologistId", "type"
+            `, { replacements, type: db.sequelize.QueryTypes.SELECT });
+        } catch(e) {
+            appearancesData = await db.sequelize.query(`
+                SELECT "psychologistId", 'profile_click_funnel' as type, COUNT(id) as total_aparicoes
+                FROM "ProfileAppearanceLogs"
+                ${dateFilter}
+                GROUP BY "psychologistId"
+            `, { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+        }
+
+        // 3. Busca todos os psicólogos cadastrados (ignorando admins)
+        const psis = await db.Psychologist.findAll({
+            where: { isAdmin: { [Op.ne]: true } },
+            attributes: ['id', 'nome', 'status'],
+            raw: true
+        });
+
+        // 4. Mapeia e consolida os dados de cada um
+        const rankingMap = psis.filter(p => p.status !== 'deleted').map(psi => {
+            const clickRecord = clicksData.find(c => c.psychologistId === psi.id);
+            const psiApps = appearancesData.filter(a => a.psychologistId === psi.id);
+            
+            const cliquesWpp = clickRecord ? parseInt(clickRecord.total_cliques) : 0;
+            const aparicoesBusca = psiApps.filter(a => a.type === 'profile_click_funnel').reduce((acc, curr) => acc + parseInt(curr.total_aparicoes), 0);
+            const visitasDiretas = psiApps.filter(a => a.type !== 'profile_click_funnel').reduce((acc, curr) => acc + parseInt(curr.total_aparicoes), 0);
+            
+            return { id: psi.id, nome: psi.nome, cliquesWpp, aparicoesBusca, visitasDiretas };
+        });
+
+        // 5. Ordena o Ranking: Primeiro quem tem + Cliques, depois quem tem + Visitas/Aparições Totais
+        rankingMap.sort((a, b) => {
+            if (b.cliquesWpp !== a.cliquesWpp) return b.cliquesWpp - a.cliquesWpp;
+            return (b.aparicoesBusca + b.visitasDiretas) - (a.aparicoesBusca + a.visitasDiretas);
+        });
+
+        // 6. Retorna o Top 50 para o Front-end
+        res.status(200).json(rankingMap.slice(0, 50));
+    } catch (error) {
+        console.error('Erro ao buscar ranking de psis:', error);
+        res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};
+
 exports.getAllMessages = adminMessagesController.getAllMessages;
 exports.sendBroadcastMessage = adminMessagesController.sendBroadcastMessage;
 exports.sendReply = adminMessagesController.sendReply;
@@ -644,3 +720,45 @@ exports.excluirLead = adminLeadController.excluirLead;
 exports.runScraper = adminLeadController.runScraper;
 exports.testWhatsAppMessage = adminLeadController.testWhatsAppMessage;
 exports.testOutboundBatch = adminLeadController.testOutboundBatch;
+
+// ----------------------------------------------------------------------
+// Rota: GET /api/admin/psychologists/:id/analyze (NOVA)
+// Descrição: Gera feedback de perfil usando IA para o WhatsApp
+// ----------------------------------------------------------------------
+exports.analyzeProfile = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const psi = await db.Psychologist.findByPk(id, {
+            attributes: ['nome', 'bio', 'valor_sessao_numero', 'valor_mensal_numero', 'tipo_cobranca', 'temas_atuacao', 'abordagens_tecnicas', 'fotoUrl']
+        });
+
+        if (!psi) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+
+        const reviewsCount = await db.Review.count({ where: { psychologistId: id, status: 'approved' } }).catch(() => 0);
+
+        let valorConsulta = "A combinar";
+        if (psi.tipo_cobranca === 'mensal' && psi.valor_mensal_numero && parseFloat(psi.valor_mensal_numero) > 0) {
+            valorConsulta = `R$ ${psi.valor_mensal_numero} (Mensal)`;
+        } else if (psi.valor_sessao_numero && parseFloat(psi.valor_sessao_numero) > 0) {
+            valorConsulta = `R$ ${psi.valor_sessao_numero} (Por Sessão)`;
+        }
+
+        const profileData = {
+            nome: psi.nome,
+            bio: psi.bio || "Não preenchida",
+            preco_ou_valor: valorConsulta,
+            temas: psi.temas_atuacao || [],
+            abordagens: psi.abordagens_tecnicas || [],
+            avaliacoes: reviewsCount,
+            tem_foto: !!psi.fotoUrl
+        };
+
+        const seoService = require('../services/seoService');
+        const analysis = await seoService.analyzeProfileForCS(profileData);
+
+        res.json({ message: analysis });
+    } catch (error) {
+        console.error("Erro em analyzeProfile:", error);
+        res.status(500).json({ error: 'Erro interno ao gerar análise.' });
+    }
+};

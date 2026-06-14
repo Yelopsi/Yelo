@@ -11,9 +11,9 @@
     <!-- SEO INJETADO NO SERVIDOR -->
     <title><%= psicologo.nome %> | Psicólogo(a) na Yelo</title>
     <% 
-      const bioSnippet = psicologo.bio 
+      const bioSnippet = psicologo.meta_description || (psicologo.bio 
         ? psicologo.bio.replace(/<[^>]*>?/gm, '').substring(0, 155) + '...' 
-        : `Encontre acolhimento e suporte com ${psicologo.nome}. Psicólogo(a) especialista em saúde mental.`;
+        : `Encontre acolhimento e suporte com ${psicologo.nome}. Psicólogo(a) especialista em saúde mental.`);
     %>
     <meta name="description" content="<%= bioSnippet %>">
     

@@ -131,24 +131,10 @@ router.get('/api/fix-financial-tables', fixController.fixFinancialTables);
 // --- ROTA DE CORREÇÃO: TABELA DE PACIENTES ---
 router.get('/api/fix-patient-table', fixController.fixPatientTable);
 
-// --- ROTA DE CORREÇÃO: CRIAR TABELA PLATFORM REVIEWS ---
-router.get('/api/fix-create-platform-reviews', async (req, res) => {
-    try {
-        await db.sequelize.query(`
-            CREATE TABLE IF NOT EXISTS "PlatformReviews" (
-                "id" SERIAL PRIMARY KEY,
-                "psychologistId" INTEGER REFERENCES "Psychologists"("id") ON DELETE CASCADE,
-                "rating" INTEGER NOT NULL DEFAULT 5,
-                "comment" TEXT,
-                "status" VARCHAR(50) DEFAULT 'pending',
-                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-                "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-            );
-        `);
-        res.send('✅ Tabela PlatformReviews criada com sucesso no banco de dados!');
-    } catch (error) {
-        res.status(500).send('Erro ao criar tabela: ' + error.message);
-    }
-});
+// --- ROTA DE CORREÇÃO: COLUNAS DE DESQUALIFICAÇÃO DO FUNIL ---
+router.get('/api/fix-add-disqualification-columns', fixController.addDisqualificationColumns);
+
+// --- ROTA DE CORREÇÃO: COLUNAS DE SEO PARA O BLOG ---
+router.get('/api/fix-add-seo-columns', fixController.addSeoColumns);
 
 module.exports = router;

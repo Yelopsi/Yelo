@@ -235,9 +235,9 @@
 
             <% const outros = posts.slice(1); %>
             <% if (outros.length > 0) { %>
-                <div class="blog-grid">
-                    <% outros.forEach(post => { %>
-                        <article class="post-card">
+                <div class="blog-grid" id="blog-grid">
+                    <% outros.forEach((post, index) => { %>
+                        <article class="post-card post-item" style="<%= index >= 6 ? 'display: none;' : '' %>">
                             <a href="/blog/post/<%= post.id %>" class="card-link">
                                 <% if (post.imagem_url) { %>
                                 <img src="<%= post.imagem_url %>" alt="<%= post.titulo %>" class="card-img">
@@ -273,6 +273,11 @@
                         </article>
                     <% }) %>
                 </div>
+                <% if (outros.length > 6) { %>
+                    <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
+                        <button id="btn-load-more-posts" style="background: transparent; border: 2px solid #1B4332; color: #1B4332; font-weight: 600; padding: 10px 24px; border-radius: 50px; cursor: pointer; transition: all 0.2s ease;">Carregar mais artigos</button>
+                    </div>
+                <% } %>
             <% } %>
 
         <% } else { %>
@@ -340,6 +345,26 @@
             }
         } catch (error) { console.error('Erro:', error); }
     }
+
+    // --- PAGINAÇÃO (CARREGAR MAIS ARTIGOS) ---
+    document.addEventListener("DOMContentLoaded", function() {
+        const btnLoadMore = document.getElementById('btn-load-more-posts');
+        if (btnLoadMore) {
+            let currentVisible = 6;
+            const posts = document.querySelectorAll('.post-item');
+            btnLoadMore.addEventListener('click', () => {
+                for (let i = currentVisible; i < currentVisible + 6; i++) {
+                    if (posts[i]) {
+                        posts[i].style.display = 'flex'; // Exibe o item mantendo o layout flex
+                    }
+                }
+                currentVisible += 6;
+                if (currentVisible >= posts.length) {
+                    btnLoadMore.style.display = 'none'; // Esconde botão se não houver mais posts
+                }
+            });
+        }
+    });
 
     // --- GESTOS MOBILE: PULL TO REFRESH E SWIPE NAVIGATION ---
     document.addEventListener("DOMContentLoaded", function() {

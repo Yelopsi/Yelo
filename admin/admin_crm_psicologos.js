@@ -84,7 +84,7 @@ window.initializePage = function() {
 
     async function fetchAndRenderPsis(page = 1) {
         if (!tableBody) return;
-        tableBody.innerHTML = `<tr><td colspan="5" class="loading-row" style="text-align: center; padding: 40px; color: var(--cinza-texto);"><span class="loading-spinner-sm"></span> Carregando CRM...</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="6" class="loading-row" style="text-align: center; padding: 40px; color: var(--cinza-texto);"><span class="loading-spinner-sm"></span> Carregando CRM...</td></tr>`;
 
         const searchTerm = searchInput.value;
         const status = statusInput.value;
@@ -110,7 +110,7 @@ window.initializePage = function() {
                 setText('kpi-vip-psis', kpis.vip);
             }
         } catch (error) {
-            tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--coral-quente);">Erro ao carregar dados.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--coral-quente);">Erro ao carregar dados.</td></tr>`;
         }
     }
 
@@ -145,7 +145,7 @@ window.initializePage = function() {
     function renderTable(psis) {
         tableBody.innerHTML = '';
         if (psis.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--cinza-texto);">Nenhum profissional encontrado.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--cinza-texto);">Nenhum profissional encontrado.</td></tr>`;
             return;
         }
 
@@ -157,6 +157,7 @@ window.initializePage = function() {
             
             const isCopied = copiedList.includes(String(psy.id));
             const copyBadge = (psy.status === 'active' && isCopied) ? '<span class="badge-copied" title="Análise Copiada" style="margin-left: 5px; font-size: 0.8rem;">✅</span>' : '';
+            const dataInscricao = new Date(psy.createdAt).toLocaleDateString('pt-BR');
 
             let statusLabel = psy.status || 'inativo';
             let statusClass = `status-${psy.status || 'inactive'}`;
@@ -207,6 +208,9 @@ window.initializePage = function() {
                         </div>
                         <span style="font-size: 0.85rem; font-weight: 600; color: ${scoreColor};">${score}%</span>
                     </div>
+                </td>
+                <td data-label="Data de Inscrição">
+                    <span style="color: #64748b; font-size: 0.9rem; font-weight: 500;">${dataInscricao}</span>
                 </td>
                 <td data-label="Gamificação">
                     <div style="display: flex; flex-direction: column;">
@@ -318,6 +322,7 @@ window.initializePage = function() {
         if (psy.status === 'active') {
             const btnCopy = document.createElement('button');
             btnCopy.className = 'btn-tabela';
+            btnCopy.id = `btn-analise-${psy.id}`;
             
             // Verifica se já foi copiado
             let copiedList = JSON.parse(localStorage.getItem('yelo_psi_copied_analysis') || '[]');
@@ -327,41 +332,36 @@ window.initializePage = function() {
             
             if (isCopied) {
                 btnCopy.style.background = '#dcfce7'; btnCopy.style.color = '#166534'; btnCopy.style.border = '1px solid #bbf7d0';
-                btnCopy.innerHTML = 'Análise Copiada ✅';
+                btnCopy.innerHTML = '✨ Análise Copiada ✅';
             } else {
-                btnCopy.style.background = '#fef3c7'; btnCopy.style.color = '#b45309'; btnCopy.style.border = '1px solid #fde68a';
-                btnCopy.innerHTML = 'Copiar para Análise 📋';
+                btnCopy.style.background = '#fef08a'; btnCopy.style.color = '#b45309'; btnCopy.style.border = '1px solid #fde047';
+                btnCopy.innerHTML = '✨ Análise de Perfil (IA)';
             }
 
-            btnCopy.onclick = () => {
-                const currentYear = new Date().getFullYear();
-                const anosExp = psy.ano_inicio_experiencia ? (currentYear - parseInt(psy.ano_inicio_experiencia, 10)) : null;
-                
-                let valor = "A combinar";
-                if (psy.valor_sessao_numero !== null && psy.valor_sessao_numero !== undefined) {
-                    valor = `R$ ${psy.valor_sessao_numero}`;
-                } else if (psy.valor_mensal_numero !== null && psy.valor_mensal_numero !== undefined) {
-                    valor = `R$ ${psy.valor_mensal_numero}/mês`;
-                }
+            btnCopy.onclick = () => window.gerarAnaliseCS(psy.id);
+            actionsContainer.appendChild(btnCopy);
+        }
 
-                const dadosPerfil = {
-                    "nome": psy.nome || "",
-                    "abordagem": (psy.abordagens_tecnicas && psy.abordagens_tecnicas.length > 0) ? psy.abordagens_tecnicas[0] : "",
-                    "tempo_experiencia_anos": anosExp,
-                    "valor_sessao": valor,
-                    "numero_avaliacoes": psy.numero_avaliacoes || 0,
-                    "possui_foto": !!psy.fotoUrl,
-                    "especialidades": psy.temas_atuacao || [],
-                    "publico_alvo": psy.publico_alvo || [],
-                    "praticas_afirmativas": psy.praticas_inclusivas || [],
-                    "texto_sobre_mim": psy.bio || ""
-                };
+        drawerOverlay.classList.add('active');
+    };
 
-                // Função Fallback robusta para copiar mesmo em localhost sem HTTPS
+    window.gerarAnaliseCS = async function(psiId) {
+        const btn = document.getElementById(`btn-analise-${psiId}`);
+        const originalBg = btn ? btn.style.background : '';
+        if(btn) { 
+            btn.disabled = true; 
+            btn.innerHTML = '<span class="loading-spinner-sm" style="width:14px; height:14px; margin-right:5px; border-width:2px; display:inline-block;"></span> Gerando...'; 
+        }
+        
+        try {
+            const token = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : localStorage.getItem('Yelo_token');
+            const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${psiId}/analyze`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if(data.message) {
                 const copyToClipboardFallback = (text) => {
-                    if (navigator.clipboard && window.isSecureContext) {
-                        return navigator.clipboard.writeText(text);
-                    }
+                    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
                     return new Promise((resolve, reject) => {
                         const textArea = document.createElement("textarea");
                         textArea.value = text;
@@ -372,33 +372,43 @@ window.initializePage = function() {
                         textArea.remove();
                     });
                 };
+                
+                await copyToClipboardFallback(data.message);
 
-                copyToClipboardFallback(JSON.stringify(dadosPerfil, null, 2))
-                    .then(() => {
-                        let currentList = JSON.parse(localStorage.getItem('yelo_psi_copied_analysis') || '[]');
-                        if (!currentList.includes(String(psy.id))) {
-                            currentList.push(String(psy.id));
-                            localStorage.setItem('yelo_psi_copied_analysis', JSON.stringify(currentList));
-                        }
-                        
-                        btnCopy.style.background = '#dcfce7'; btnCopy.style.color = '#166534'; btnCopy.style.border = '1px solid #bbf7d0';
-                        btnCopy.innerHTML = 'Análise Copiada ✅';
-                        
-                        // Atualiza a tabela na hora
-                        const nameEl = document.getElementById(`name-psy-${psy.id}`);
-                        if (nameEl && !nameEl.innerHTML.includes('✅')) {
-                            nameEl.innerHTML += '<span class="badge-copied" title="Análise Copiada" style="margin-left: 5px; font-size: 0.8rem;">✅</span>';
-                        }
+                let currentList = JSON.parse(localStorage.getItem('yelo_psi_copied_analysis') || '[]');
+                if (!currentList.includes(String(psiId))) {
+                    currentList.push(String(psiId));
+                    localStorage.setItem('yelo_psi_copied_analysis', JSON.stringify(currentList));
+                }
 
-                        if (window.showToast) window.showToast('Dados copiados para análise!', 'success');
-                        else alert('Dados copiados para análise!');
-                    })
-                    .catch(err => console.error('Erro ao copiar', err));
-            };
-            actionsContainer.appendChild(btnCopy);
+                const nameEl = document.getElementById(`name-psy-${psiId}`);
+                if (nameEl && !nameEl.innerHTML.includes('✅')) {
+                    nameEl.innerHTML += '<span class="badge-copied" title="Análise Copiada" style="margin-left: 5px; font-size: 0.8rem;">✅</span>';
+                }
+
+                if(window.showToast) window.showToast("Análise gerada e copiada com sucesso!", "success");
+                else alert("Análise copiada!");
+
+                if(btn) { 
+                    btn.style.background = '#dcfce7'; 
+                    btn.style.color = '#166534'; 
+                    btn.style.border = '1px solid #bbf7d0';
+                    btn.innerHTML = '✨ Análise Copiada ✅'; 
+                }
+            } else {
+                throw new Error(data.error || "Erro na resposta");
+            }
+        } catch(e) {
+            if(window.showToast) window.showToast("Erro ao gerar análise", "error");
+            else alert("Erro ao gerar análise");
+            if(btn) { 
+                btn.disabled = false; 
+                btn.innerHTML = '✨ Análise de Perfil (IA)'; 
+                btn.style.background = originalBg;
+            }
+        } finally {
+            if(btn) btn.disabled = false;
         }
-
-        drawerOverlay.classList.add('active');
     };
 
     window.forceDeletePsy = function(id, name) {

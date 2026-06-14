@@ -797,3 +797,28 @@ exports.fixPatientTable = async (req, res) => {
         res.send("✅ Tabela de Pacientes verificada e corrigida.");
     } catch (error) { res.status(500).send("Erro: " + error.message); }
 };
+
+exports.addDisqualificationColumns = async (req, res) => {
+    try {
+        await db.sequelize.query('ALTER TABLE "DemandSearches" ADD COLUMN IF NOT EXISTS "is_disqualified" BOOLEAN DEFAULT FALSE;');
+        await db.sequelize.query('ALTER TABLE "DemandSearches" ADD COLUMN IF NOT EXISTS "disqualification_reason" VARCHAR(255);');
+        res.send("✅ Sucesso! Colunas 'is_disqualified' e 'disqualification_reason' criadas na tabela DemandSearches.");
+    } catch (error) {
+        res.status(500).send("Erro ao criar colunas: " + error.message);
+    }
+};
+
+exports.addSeoColumns = async (req, res) => {
+    try {
+        // Tenta adicionar na tabela (com fallback de case sensitivity para Postgres)
+        await db.sequelize.query('ALTER TABLE "posts" ADD COLUMN IF NOT EXISTS "meta_description" TEXT;').catch(() => db.sequelize.query('ALTER TABLE "Posts" ADD COLUMN IF NOT EXISTS "meta_description" TEXT;'));
+        await db.sequelize.query('ALTER TABLE "posts" ADD COLUMN IF NOT EXISTS "tags" JSONB DEFAULT \'[]\';').catch(() => db.sequelize.query('ALTER TABLE "Posts" ADD COLUMN IF NOT EXISTS "tags" JSONB DEFAULT \'[]\';'));
+        
+        // NOVO: Coluna para otimizar os Perfis Públicos
+        await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "meta_description" TEXT;');
+        
+        res.send("✅ Sucesso! Colunas de SEO criadas na tabela de posts e Psicólogos.");
+    } catch (error) {
+        res.status(500).send("Erro ao criar colunas de SEO: " + error.message);
+    }
+};
