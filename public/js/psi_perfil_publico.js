@@ -336,15 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Avaliações
         
-        // TODO: Remover mock após testes
         let avaliacoes = psi.reviews || [];
-        if (avaliacoes.length === 0) {
-            avaliacoes = [
-                { rating: 5, comment: "Excelente profissional! Muito atencioso e me ajudou a entender minhas questões. O espaço é super acolhedor e me senti muito à vontade desde o primeiro dia. Recomendo de olhos fechados.", patientName: "Carlos Silva", createdAt: new Date().toISOString() },
-                { rating: 4, comment: "A terapia tem sido um espaço muito seguro para mim. Gosto muito da abordagem, da pontualidade e das reflexões propostas em sessão.", patientName: "Maria Oliveira", createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
-                { rating: 5, comment: "Me senti acolhida desde o primeiro momento. A escuta é muito ativa e as intervenções são pontuais e precisas. Sem dúvidas um divisor de águas no meu processo de autoconhecimento.", patientName: "Ana Clara M.", createdAt: new Date(Date.now() - 86400000 * 5).toISOString() }
-            ];
-        }
         populateReviews(avaliacoes);
 
         // Redes Sociais

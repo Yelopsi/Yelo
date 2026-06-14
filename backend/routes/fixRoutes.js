@@ -151,4 +151,35 @@ router.get('/api/setup-platform-reviews', async (req, res) => {
     }
 });
 
+// --- ROTA DE CORREÇÃO: AUTO-APROVAR AVALIAÇÕES DE PACIENTES NO PERFIL PÚBLICO ---
+router.get('/api/setup-auto-approve-reviews', async (req, res) => {
+    try {
+        // 1. Atualiza as existentes (Aprova o que já foi enviado)
+        await db.sequelize.query(`UPDATE "Reviews" SET status = 'approved' WHERE status = 'pending';`);
+        
+        // 2. Altera o valor padrão da coluna para futuros cadastros
+        await db.sequelize.query(`ALTER TABLE "Reviews" ALTER COLUMN status SET DEFAULT 'approved';`);
+        
+        // 3. Cria o Trigger de segurança (impede que o ORM force o status para 'pending')
+        await db.sequelize.query(`
+            CREATE OR REPLACE FUNCTION force_review_approved()
+            RETURNS TRIGGER AS $$
+            BEGIN
+                NEW.status = 'approved';
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
+        `);
+        await db.sequelize.query(`DROP TRIGGER IF EXISTS trg_force_review_approved ON "Reviews";`);
+        await db.sequelize.query(`
+            CREATE TRIGGER trg_force_review_approved
+            BEFORE INSERT OR UPDATE ON "Reviews"
+            FOR EACH ROW EXECUTE FUNCTION force_review_approved();
+        `);
+        res.send('✅ Gatilho Ativado! Avaliações no perfil público agora são aprovadas e exibidas automaticamente.');
+    } catch (error) {
+        res.status(500).send('Erro ao automatizar avaliações: ' + error.message);
+    }
+});
+
 module.exports = router;

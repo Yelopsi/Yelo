@@ -5,9 +5,12 @@ window.initializePage = function() {
     // Garante URL base correta
     const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : 'http://localhost:3001';
 
+    // Ocultar a seção de Moderação de Avaliações se existir no HTML (Auto-aprovadas)
     const reviewsList = document.getElementById('pending-reviews-list');
-    const loadingState = document.getElementById('reviews-loading-state');
-    const emptyState = document.getElementById('reviews-empty-state');
+    if (reviewsList) {
+        const widget = reviewsList.closest('.widget');
+        if (widget) widget.style.display = 'none';
+    }
 
     // Seletores para a nova seção de Q&A
     const questionsList = document.getElementById('pending-questions-list');
@@ -24,132 +27,6 @@ window.initializePage = function() {
     if (!token) {
         return;
     }
-
-    /**
-     * Renderiza uma única avaliação na lista.
-     * @param {object} review - O objeto da avaliação.
-     */
-    function renderReviewItem(review) {
-        const listItem = document.createElement('li');
-        listItem.setAttribute('data-review-id', review.id);
-
-        const ratingStars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
-
-        // CORREÇÃO: Lida com casos onde o paciente ou psicólogo foram excluídos
-        const patientName = review.patient ? review.patient.nome : 'Usuário Excluído';
-        const psychologistName = review.psychologist ? review.psychologist.nome : 'Profissional Excluído';
-
-        listItem.innerHTML = `
-            <div class="avaliacao-info">
-                <span class="avaliacao-autor">${patientName} (para ${psychologistName})</span>
-                <span class="avaliacao-data">${new Date(review.createdAt).toLocaleDateString('pt-BR')}</span>
-            </div>
-            <p class="avaliacao-texto">"${review.comment}"</p>
-            <div class="avaliacao-rating">${ratingStars} (${review.rating}/5)</div>
-            <div class="moderacao-acoes">
-                <button class="btn-tabela btn-aprovar" data-action="approved">Aprovar</button>
-                <button class="btn-tabela btn-reprovar" data-action="rejected">Rejeitar</button>
-            </div>
-        `;
-        return listItem;
-    }
-
-    /**
-     * Busca as avaliações pendentes da API e as renderiza.
-     */
-    async function fetchPendingReviews() {
-        loadingState.style.display = 'block';
-        emptyState.style.display = 'none';
-        reviewsList.innerHTML = '';
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/reviews/pending`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (!response.ok) throw new Error('Falha ao buscar avaliações.');
-
-            const reviews = await response.json();
-            loadingState.style.display = 'none';
- 
-            if (reviews.length === 0) {
-                emptyState.style.display = 'block';
-            } else {
-                reviews.forEach(review => {
-                    reviewsList.appendChild(renderReviewItem(review));
-                });
-            }
-
-        } catch (error) {
-            loadingState.style.display = 'none';
-            emptyState.textContent = `Erro ao carregar avaliações: ${error.message}`;
-            emptyState.style.display = 'block';
-        }
-    }
-
-    /**
-     * Lida com o clique nos botões de moderação.
-     * @param {string} reviewId - O ID da avaliação.
-     * @param {string} action - 'approved' ou 'rejected'.
-     */
-    async function handleModeration(reviewId, action) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/reviews/${reviewId}/moderate`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ status: action })
-            });
-
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error);
-
-            // Feedback visual de sucesso
-            if (window.showToast) window.showToast(`Avaliação ${action === 'approved' ? 'aprovada' : 'rejeitada'} com sucesso!`);
-
-            // Animação de remoção e atualização da UI
-            const itemToRemove = reviewsList.querySelector(`[data-review-id="${reviewId}"]`);
-            if (itemToRemove) {
-                itemToRemove.style.transition = 'opacity 0.5s, transform 0.5s';
-                itemToRemove.style.opacity = '0';
-                itemToRemove.style.transform = 'translateX(20px)';
-                setTimeout(() => {
-                    itemToRemove.remove();
-                    if (reviewsList.children.length === 0) {
-                        emptyState.style.display = 'block';
-                    }
-                }, 500);
-            }
-
-        } catch (error) {
-            if (window.showToast) window.showToast(`Erro ao moderar avaliação: ${error.message}`, 'error');
-            else alert(`Erro: ${error.message}`);
-        }
-    }
-
-    // Adiciona um único event listener na lista para lidar com todos os cliques (delegação)
-    reviewsList.addEventListener('click', (e) => {
-        if (e.target.matches('.btn-aprovar, .btn-reprovar')) {
-            const reviewItem = e.target.closest('li');
-            const reviewId = reviewItem.dataset.reviewId;
-            const action = e.target.dataset.action;
-            
-            const actionText = action === 'approved' ? 'aprovar' : 'rejeitar';
-            const title = action === 'approved' ? 'Aprovar Avaliação' : 'Rejeitar Avaliação';
-
-            if (window.openConfirmationModal) {
-                window.openConfirmationModal(
-                    title, 
-                    `Tem certeza que deseja <strong>${actionText}</strong> esta avaliação?`, 
-                    () => handleModeration(reviewId, action)
-                );
-            } else {
-                handleModeration(reviewId, action);
-            }
-        }
-    });
 
     // --- LÓGICA PARA MODERAÇÃO DE PERGUNTAS (Q&A) ---
 
@@ -438,7 +315,6 @@ window.initializePage = function() {
         }
     }
 
-    fetchPendingReviews();
     fetchPendingQuestions();
     
     // Carrega a aba inicial (Blog)
