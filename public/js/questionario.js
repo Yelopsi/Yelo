@@ -25,6 +25,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentSearchId = null; // Guarda o ID do rascunho
     
+    function isTestUser() {
+        const type = localStorage.getItem('Yelo_user_type');
+        return type === 'psychologist' || type === 'admin' || type === 'psi';
+    }
+
     // Pré-carrega a página de resultados no cache do navegador para transição instantânea
     const prefetchLink = document.createElement('link');
     prefetchLink.rel = 'prefetch';
@@ -81,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 demandAnswers.searchId = currentSearchId;
             }
 
-            if (window.QuestionarioService) {
+            if (window.QuestionarioService && !isTestUser()) {
                 await window.QuestionarioService.saveAnswers(demandAnswers).catch(e => console.error(e));
                 window.QuestionarioService.trackMatchCompleted();
             }
@@ -169,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // --- RASTREAMENTO DE FUNIL E DESISTÊNCIAS (Google e Meta) ---
         const currentQuestion = questions[currentStep];
-        if (currentQuestion) {
+        if (currentQuestion && !isTestUser()) {
             if (window.QuestionarioService) {
                 window.QuestionarioService.trackStep(currentStep, currentQuestion.id, currentSearchId);
             }
@@ -291,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Se clicou em "Vamos começar" (primeiro slide), avisa o backend
                 if (target.matches('[data-action="next"]') && currentStep === 0) {
                     // Dispara o aviso sem travar o usuário (Fire and Forget)
-                    if (window.QuestionarioService) {
+                    if (window.QuestionarioService && !isTestUser()) {
                         window.QuestionarioService.startSearch().then(id => { if(id) currentSearchId = id; });
                     }
                 }

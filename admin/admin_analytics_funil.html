@@ -201,21 +201,31 @@
                     <p class="kpi-numero" id="kpi-visitas">0</p>
                     <span class="kpi-delta" style="color: #666;">No período selecionado</span>
                 </div>
+                <div class="kpi-card" style="border-top-color: #8b5cf6;">
+                    <h4 style="display: flex; align-items: center; gap: 5px;">Iniciaram Questionário <span class="info-tooltip" data-tooltip="Quantidade de vezes que o questionário foi iniciado (clicaram em começar).">i</span></h4>
+                    <p class="kpi-numero" id="kpi-iniciaram">0</p>
+                    <span class="kpi-delta" id="taxa-inicio" style="color: #8b5cf6;">0% das visitas</span>
+                </div>
+                <div class="kpi-card" style="border-top-color: #f59e0b;">
+                    <h4 style="display: flex; align-items: center; gap: 5px;">Chegaram aos Resultados <span class="info-tooltip" data-tooltip="Quantidade de vezes que um questionário foi finalizado e os pacientes viram seus matches.">i</span></h4>
+                    <p class="kpi-numero" id="kpi-completaram">0</p>
+                    <span class="kpi-delta" id="taxa-completaram" style="color: #f59e0b;">0% dos iniciados</span>
+                </div>
                 <div class="kpi-card" style="border-top-color: #10b981;">
                     <h4 style="display: flex; align-items: center; gap: 5px;">Pacientes Conquistados <span class="info-tooltip" data-tooltip="Pacientes que completaram o quiz e clicaram para chamar um profissional no WhatsApp.">i</span></h4>
                     <p class="kpi-numero" id="kpi-whatsapp">0</p>
                     <span class="kpi-delta" id="taxa-conclusao-final" style="color: #10b981;">0% do tráfego total</span>
                 </div>
-                <div class="kpi-card" style="border-top-color: #8b5cf6;">
+                <div class="kpi-card" style="border-top-color: #64748b;">
                     <h4 style="display: flex; align-items: center; justify-content: space-between;">
                         <div style="display: flex; align-items: center; gap: 5px;">CPA Estimado (Ads) <span class="info-tooltip" data-tooltip="Custo Por Aquisição. Simule o custo real de cada paciente convertido baseado no seu CPC.">i</span></div>
                     </h4>
-                    <p class="kpi-numero" id="kpi-cpa" style="color: #8b5cf6;">R$ --</p>
+                    <p class="kpi-numero" id="kpi-cpa" style="color: #64748b;">R$ --</p>
                     
                     <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #f0f0f0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                         <span style="font-size: 0.85rem; color: #666; font-weight: 600;">Custo por Clique (CPC):</span>
-                        <div style="display: flex; align-items: center; background: #f5f3ff; border: 1px solid #d8b4fe; border-radius: 8px; padding: 4px 10px;">
-                            <span style="color: #8b5cf6; font-weight: bold; margin-right: 5px;">R$</span>
+                        <div style="display: flex; align-items: center; background: #f8f9fa; border: 1px solid #e2e8f0; border-radius: 8px; padding: 4px 10px;">
+                            <span style="color: #64748b; font-weight: bold; margin-right: 5px;">R$</span>
                             <input type="number" id="input-cpc-medio" value="1.50" step="0.10" style="width: 60px; border: none; font-size: 1rem; color: #1f2937; font-weight: bold; outline: none; background: transparent;">
                         </div>
                     </div>

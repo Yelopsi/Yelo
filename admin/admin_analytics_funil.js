@@ -122,8 +122,23 @@ window.initializePage = function() {
 
             // --- 1. POPULA KPIs SUPERIORES ---
             document.getElementById('kpi-visitas').textContent = data.visitas.toLocaleString();
+            
+            const kpiIniciaram = document.getElementById('kpi-iniciaram');
+            if(kpiIniciaram) kpiIniciaram.textContent = data.iniciaram.toLocaleString();
+            
+            const kpiCompletaram = document.getElementById('kpi-completaram');
+            if(kpiCompletaram) kpiCompletaram.textContent = data.completaram.toLocaleString();
+
             document.getElementById('kpi-whatsapp').textContent = data.whatsappClicks.toLocaleString();
             
+            const taxaInicio = data.visitas > 0 ? ((data.iniciaram / data.visitas) * 100).toFixed(1) : 0;
+            const elTaxaInicio = document.getElementById('taxa-inicio');
+            if (elTaxaInicio) elTaxaInicio.textContent = `${taxaInicio}% das visitas`;
+
+            const taxaCompletaram = data.iniciaram > 0 ? ((data.completaram / data.iniciaram) * 100).toFixed(1) : 0;
+            const elTaxaCompletaram = document.getElementById('taxa-completaram');
+            if (elTaxaCompletaram) elTaxaCompletaram.textContent = `${taxaCompletaram}% dos iniciados`;
+
             const taxaGlobal = data.visitas > 0 ? ((data.whatsappClicks / data.visitas) * 100).toFixed(2) : 0;
             document.getElementById('taxa-conclusao-final').textContent = `${taxaGlobal}% do tráfego total`;
 
