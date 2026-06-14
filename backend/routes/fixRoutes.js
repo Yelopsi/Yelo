@@ -132,7 +132,7 @@ router.get('/api/fix-financial-tables', fixController.fixFinancialTables);
 router.get('/api/fix-patient-table', fixController.fixPatientTable);
 
 // --- ROTA DE CORREÇÃO: CRIAR TABELA PLATFORM REVIEWS ---
-router.get('/api/fix-create-platform-reviews', async (req, res) => {
+router.get('/api/setup-platform-reviews', async (req, res) => {
     try {
         await db.sequelize.query(`
             CREATE TABLE IF NOT EXISTS "PlatformReviews" (
