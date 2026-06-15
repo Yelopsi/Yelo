@@ -486,6 +486,57 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnConfirmar = document.getElementById('btn-confirmar-exclusao');
         const inputSenhaExclusao = document.getElementById('senha-exclusao');
 
+        // LÓGICA DE VINCULAR GOOGLE (PACIENTE)
+        window.handlePatientGoogleLinkResponse = async function(response) {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/patients/me/link-google`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('Yelo_token')}` },
+                    body: JSON.stringify({ token: response.credential })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast('Conta do Google vinculada com sucesso!', 'success');
+                    document.getElementById('patient-google-link-container').style.display = 'none';
+                    document.getElementById('patient-google-linked-message').style.display = 'flex';
+                    if (patientData) patientData.googleId = data.googleId;
+                } else {
+                    showToast(data.error || 'Erro ao vincular conta.', 'error');
+                }
+            } catch (error) {
+                showToast('Erro de conexão ao tentar vincular o Google.', 'error');
+            }
+        };
+
+        // ADAPTAÇÃO PARA QUEM LOGA COM O GOOGLE
+        if (patientData && patientData.googleId) {
+            const labelSenha = document.getElementById('label-senha-exclusao');
+            const descSenha = document.getElementById('desc-senha-exclusao');
+            if (labelSenha) labelSenha.innerHTML = '<span style="color: #c53030;">Confirme sua exclusão</span>';
+            if (descSenha) descSenha.style.display = 'block';
+            if (inputSenhaExclusao) {
+                inputSenhaExclusao.type = 'text';
+                inputSenhaExclusao.placeholder = 'Digite EXCLUIR ou sua senha';
+                inputSenhaExclusao.style.borderColor = '#fecaca';
+                inputSenhaExclusao.style.backgroundColor = '#fff';
+                inputSenhaExclusao.style.textTransform = 'uppercase';
+            }
+            
+            // Aviso para Alterar Senha
+            if (formSenha && !document.getElementById('google-senha-aviso')) {
+                const p = document.createElement('p');
+                p.id = 'google-senha-aviso';
+                p.style.cssText = "font-size: 0.85rem; color: #b45309; background: #fffbeb; padding: 10px; border-radius: 8px; margin-bottom: 15px;";
+                p.innerHTML = `💡 <strong>Aviso:</strong> Como você vinculou o Google, pode não saber sua "Senha Atual". Caso queira cadastrar uma senha manual, saia da conta e use a opção <strong>"Esqueci minha senha"</strong> na página de login.`;
+                formSenha.prepend(p);
+            }
+
+            // Esconde o bloco de vincular se já está vinculado
+            const linkContainer = document.getElementById('patient-google-link-container');
+            const linkedMsg = document.getElementById('patient-google-linked-message');
+            if (linkContainer && linkedMsg) { linkContainer.style.display = 'none'; linkedMsg.style.display = 'flex'; }
+        }
+
         if (btnExcluir && modalExclusao) {
             // Abrir Modal
             btnExcluir.addEventListener('click', (e) => {

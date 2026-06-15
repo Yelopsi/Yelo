@@ -22,6 +22,9 @@ router.get('/me', protect, patientController.getPatientData);
 // Rota de Upload da Foto do Paciente: /api/patients/me/foto (Acesso PRIVADO)
 router.post('/me/foto', protect, uploadProfilePhoto.single('foto'), patientController.updateProfilePhoto);
 
+// Rota para vincular conta do Google: /api/patients/me/link-google (Acesso PRIVADO)
+router.post('/me/link-google', protect, patientController.linkGoogleAccount);
+
 // Rota para SALVAR as respostas do questionário (Acesso PRIVADO)
 router.put('/answers', protect, patientController.updatePatientAnswers);
 

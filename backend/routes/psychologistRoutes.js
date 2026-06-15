@@ -127,6 +127,8 @@ router.delete('/me', psychologistController.deletePsychologistAccount);
 // Adicione junto com as rotas protegidas "me"
 router.post('/me/cancel-subscription', psychologistController.cancelSubscription);
 
+router.post('/me/link-google', psiAuthController.linkGoogleAccount);
+
 // Cole esta linha junto com as outras rotas (geralmente no final da lista)
 router.post('/me/reactivate-subscription', psychologistController.reactivateSubscription);
 router.post('/me/platform-review', psiDashboardController.savePlatformReview);

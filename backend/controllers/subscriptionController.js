@@ -27,10 +27,18 @@ exports.deletePsychologistAccount = async (req, res) => {
             return res.status(404).json({ error: 'Usuário não encontrado.' });
         }
 
-        // 3. Verifica a senha
-        const isMatch = await bcrypt.compare(senha, psychologist.senha);
-        if (!isMatch) {
-            return res.status(403).json({ error: 'Senha incorreta. A conta não foi excluída.' });
+        // Verifica googleId via SQL direto pois a coluna pode não estar no model
+        const [rawPsychologist] = await db.sequelize.query(
+            `SELECT "googleId" FROM "Psychologists" WHERE id = :id LIMIT 1`,
+            { replacements: { id: req.psychologist.id }, type: db.sequelize.QueryTypes.SELECT }
+        );
+        const isGoogleBypass = rawPsychologist && rawPsychologist.googleId && senha.trim().toUpperCase() === 'EXCLUIR';
+
+        if (!isGoogleBypass) {
+            const isMatch = await bcrypt.compare(senha, psychologist.senha);
+            if (!isMatch) {
+                return res.status(403).json({ error: 'Senha ou confirmação incorreta. A conta não foi excluída.' });
+            }
         }
 
         // --- PONTO CRÍTICO: CANCELAMENTO NO ASAAS ---

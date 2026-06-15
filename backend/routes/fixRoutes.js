@@ -137,4 +137,7 @@ router.get('/api/fix-add-disqualification-columns', fixController.addDisqualific
 // --- ROTA DE CORREÇÃO: COLUNAS DE SEO PARA O BLOG ---
 router.get('/api/fix-add-seo-columns', fixController.addSeoColumns);
 
+// --- ROTA DE CORREÇÃO: COLUNA GOOGLE ID PARA VINCULAÇÃO ---
+router.get('/api/fix-add-googleid', fixController.addGoogleIdColumn);
+
 module.exports = router;

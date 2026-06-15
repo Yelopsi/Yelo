@@ -1,6 +1,8 @@
 <!-- Bibliotecas Externas para o Perfil (TomSelect) -->
 <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<!-- Script do Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <style>
     /* Novo Layout do Bloco Especialidades (Sem card de fundo duplo) */
@@ -529,6 +531,29 @@
         <span class="btn-text">Salvar alterações</span>
         <span class="spinner hidden"></span>
     </button>
+</div>
+
+<div class="widget" style="margin-top: 20px;">
+    <h3>Conectar com Google</h3>
+    <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">Vincule sua conta do Google para facilitar o login futuramente.</p>
+    
+    <div id="google-link-container">
+        <div id="g_id_onload"
+             data-client_id="283886540808-qj13i35cfagnp9rc6qou1o66mdv3ppkl.apps.googleusercontent.com"
+             data-callback="handleGoogleLinkResponse">
+        </div>
+        <div class="g_id_signin"
+             data-type="standard"
+             data-size="large"
+             data-theme="outline"
+             data-text="continue_with"
+             data-shape="pill"
+             data-logo_alignment="left">
+        </div>
+    </div>
+    <div id="google-linked-message" style="display: none; color: #16a34a; font-weight: 600; align-items: center; gap: 8px;">
+        ✅ Conta do Google vinculada com sucesso!
+    </div>
 </div>
 
 <div class="widget" style="margin-top: 20px;">

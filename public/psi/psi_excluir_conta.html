@@ -508,6 +508,18 @@
                         const primeiroNome = nomes[0].charAt(0).toUpperCase() + nomes[0].slice(1).toLowerCase();
                         document.getElementById('display-nome-psi').textContent = primeiroNome + '!';
                     }
+
+                    // ADAPTAÇÃO PARA QUEM LOGA COM O GOOGLE
+                    if (profileData.googleId) {
+                        const dangerZone = document.querySelector('.danger-zone');
+                        if (dangerZone) {
+                            dangerZone.innerHTML = `
+                                <label for="senha-exclusao" style="color: #c53030;">Confirme sua exclusão</label>
+                                <p style="font-size: 0.85rem; color: #991b1b; margin-top: 0; margin-bottom: 12px;">Como você vinculou o login do Google, digite a palavra <strong>EXCLUIR</strong> para confirmar, ou informe sua senha caso tenha uma.</p>
+                                <input type="text" id="senha-exclusao" name="senha" required class="form-control" placeholder="Digite EXCLUIR ou sua senha" style="border-color: #fecaca; background-color: #fff; text-transform: uppercase;">
+                            `;
+                        }
+                    }
                 }
 
             } catch(e) {

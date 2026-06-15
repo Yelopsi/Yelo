@@ -325,10 +325,42 @@ exports.googleLogin = async (req, res) => {
             nome: patient.nome,
             email: patient.email,
             token: generateToken(patient.id),
+            redirect: '/patient/patient_dashboard'
         });
 
     } catch (error) {
         res.status(401).json({ error: 'Falha na autenticação com Google.' });
+    }
+};
+
+// ----------------------------------------------------------------------
+// Rota: POST /api/patients/me/link-google
+// DESCRIÇÃO: Vincula o Google ID ao Paciente
+// ----------------------------------------------------------------------
+exports.linkGoogleAccount = async (req, res) => {
+    try {
+        const { token } = req.body;
+        if (!token) return res.status(400).json({ error: 'Token do Google obrigatório.' });
+
+        // Usa a função do authController
+        const { verifyGoogleToken } = require('./authController');
+        const googleUser = await verifyGoogleToken(token);
+        const { sub: googleId } = googleUser;
+
+        // Usar raw query pois as models podem não ter o googleId mapeado
+        const [existingPatient] = await db.sequelize.query(
+            `SELECT id FROM "Patients" WHERE "googleId" = :googleId LIMIT 1`,
+            { replacements: { googleId }, type: db.sequelize.QueryTypes.SELECT }
+        );
+        
+        if (existingPatient && existingPatient.id !== req.patient.id) {
+            return res.status(400).json({ error: 'Esta conta do Google já está vinculada a outro perfil.' });
+        }
+
+        await db.sequelize.query(`UPDATE "Patients" SET "googleId" = :googleId WHERE id = :id`, { replacements: { googleId, id: req.patient.id } });
+        res.status(200).json({ message: 'Conta do Google vinculada com sucesso!', googleId });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao vincular conta do Google.' });
     }
 };
 
@@ -339,7 +371,18 @@ exports.googleLogin = async (req, res) => {
 exports.getPatientData = async (req, res) => {
     // O middleware `protect` já anexa `req.patient`
     if (req.patient) {
-        res.status(200).json(req.patient);
+        let responseData = req.patient.toJSON ? req.patient.toJSON() : { ...req.patient };
+        
+        // Verifica googleId via SQL direto
+        try {
+            const [rawPatient] = await db.sequelize.query(
+                `SELECT "googleId" FROM "Patients" WHERE id = :id LIMIT 1`,
+                { replacements: { id: req.patient.id }, type: db.sequelize.QueryTypes.SELECT }
+            );
+            if (rawPatient && rawPatient.googleId) responseData.googleId = rawPatient.googleId;
+        } catch (e) { console.error(e); }
+
+        res.status(200).json(responseData);
     } else {
         res.status(404).json({ error: 'Paciente não encontrado.' });
     }
@@ -519,9 +562,19 @@ exports.deletePatientAccount = async (req, res) => {
         }
 
         const patientWithPassword = await db.Patient.findByPk(req.patient.id);
-        const isMatch = await bcrypt.compare(senha, patientWithPassword.senha);
-        if (!isMatch) {
-            return res.status(401).json({ error: 'Senha incorreta. A conta não foi excluída.' });
+        
+        // Verifica googleId via SQL direto
+        const [rawPatient] = await db.sequelize.query(
+            `SELECT "googleId" FROM "Patients" WHERE id = :id LIMIT 1`,
+            { replacements: { id: req.patient.id }, type: db.sequelize.QueryTypes.SELECT }
+        );
+        const isGoogleBypass = rawPatient && rawPatient.googleId && senha.trim().toUpperCase() === 'EXCLUIR';
+
+        if (!isGoogleBypass) {
+            const isMatch = await bcrypt.compare(senha, patientWithPassword.senha);
+            if (!isMatch) {
+                return res.status(401).json({ error: 'Senha ou confirmação incorreta. A conta não foi excluída.' });
+            }
         }
 
         await patientWithPassword.destroy();

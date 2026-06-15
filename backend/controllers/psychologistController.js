@@ -76,6 +76,12 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
         // Monta o objeto de resposta
         const responseData = psychologist.toJSON();
         responseData.hasPlatformReview = hasPlatformReview;
+        
+        // Verifica se vinculou google (raw query)
+        const [rawRecord] = await db.sequelize.query(`SELECT "googleId" FROM "Psychologists" WHERE id = :id`, { replacements: { id: psychologistId }, type: db.sequelize.QueryTypes.SELECT });
+        if (rawRecord && rawRecord.googleId) {
+            responseData.googleId = rawRecord.googleId;
+        }
 
         // --- AVISO DE QUALIDADE (PERFIL EM BRANCO) ---
         const hasPhoto = !!psychologist.fotoUrl;

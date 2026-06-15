@@ -42,7 +42,12 @@ exports.unifiedGoogleLogin = async (req, res) => {
         console.log(`[AUTH] Tentativa de login Google: ${email}`);
 
         // 1. Verifica Psicólogo
-        let psychologist = await db.Psychologist.findOne({ where: { email } });
+        const [rawPsychologist] = await db.sequelize.query(
+            `SELECT id FROM "Psychologists" WHERE email = :email OR "googleId" = :googleId LIMIT 1`,
+            { replacements: { email, googleId }, type: db.sequelize.QueryTypes.SELECT }
+        );
+        
+        let psychologist = rawPsychologist ? await db.Psychologist.findByPk(rawPsychologist.id) : null;
         
         if (psychologist) {
             // FIX: Permite login de TODOS (ativos, inativos, pendentes) pelo Google.
@@ -50,6 +55,9 @@ exports.unifiedGoogleLogin = async (req, res) => {
             if (!psychologist.fotoUrl && picture) {
                 await psychologist.update({ fotoUrl: picture });
             }
+
+            // Auto-gravação do googleId (caso o usuário seja antigo e tenha acabado de logar pelo Google)
+            await db.sequelize.query(`UPDATE "Psychologists" SET "googleId" = :googleId WHERE id = :id`, { replacements: { googleId, id: psychologist.id } });
 
             const tokenJwt = generateToken(psychologist.id, psychologist.isAdmin ? 'admin' : 'psychologist');
             
@@ -109,6 +117,9 @@ exports.unifiedGoogleLogin = async (req, res) => {
         let patient = await db.Patient.findOne({ where: { email } });
 
         if (patient) {
+            // Auto-gravação do googleId para pacientes existentes
+            await db.sequelize.query(`UPDATE "Patients" SET "googleId" = :googleId WHERE id = :id`, { replacements: { googleId, id: patient.id } });
+
             const tokenJwt = generateToken(patient.id, 'patient');
             
             // LOG DE SUCESSO
@@ -129,7 +140,7 @@ exports.unifiedGoogleLogin = async (req, res) => {
             return res.status(200).json({
                 user: { id: patient.id, nome: patient.nome, email: patient.email, type: 'patient' },
                 token: tokenJwt,
-                redirect: '/paciente/dashboard.html'
+                redirect: '/patient/patient_dashboard'
             });
         }
 
@@ -146,6 +157,9 @@ exports.unifiedGoogleLogin = async (req, res) => {
             termos_aceitos: true,
             marketing_aceito: false
         });
+
+        // Força a gravação burlando o cache do Sequelize (Novo Paciente)
+        await db.sequelize.query(`UPDATE "Patients" SET "googleId" = :googleId WHERE id = :id`, { replacements: { googleId, id: newPatient.id } });
 
         // LOG DE SUCESSO (NOVO CADASTRO)
         if (db.SystemLog) {
@@ -169,7 +183,7 @@ exports.unifiedGoogleLogin = async (req, res) => {
         return res.status(201).json({
             user: { id: newPatient.id, nome: newPatient.nome, email: newPatient.email, type: 'patient' },
             token: newToken,
-            redirect: '/paciente/dashboard.html',
+            redirect: '/patient/patient_dashboard',
             isNewUser: true
         });
 

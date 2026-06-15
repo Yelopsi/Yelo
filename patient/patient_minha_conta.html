@@ -1,3 +1,6 @@
+<!-- Script do Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
 <div class="modern-dashboard-layout" id="profile-blocks-container">
 
     <div class="main-header" style="padding: 20px 25px; margin-bottom: 25px;">
@@ -66,6 +69,33 @@
             </div>
         </div>
         
+        <!-- Vincular Google -->
+        <div class="profile-block" data-block-id="google-link">
+            <div class="block-header">
+                <h3 class="section-title" style="margin: 0; color: var(--verde-escuro);">Conectar com Google</h3>
+            </div>
+            <div class="block-content">
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">Vincule sua conta do Google para facilitar o login futuramente.</p>
+                <div id="patient-google-link-container">
+                    <div id="g_id_onload"
+                         data-client_id="283886540808-qj13i35cfagnp9rc6qou1o66mdv3ppkl.apps.googleusercontent.com"
+                         data-callback="handlePatientGoogleLinkResponse">
+                    </div>
+                    <div class="g_id_signin"
+                         data-type="standard"
+                         data-size="large"
+                         data-theme="outline"
+                         data-text="continue_with"
+                         data-shape="pill"
+                         data-logo_alignment="left">
+                    </div>
+                </div>
+                <div id="patient-google-linked-message" style="display: none; color: #16a34a; font-weight: 600; align-items: center; gap: 8px;">
+                    ✅ Conta do Google vinculada com sucesso!
+                </div>
+            </div>
+        </div>
+
         <!-- Ações da Conta -->
        <div class="hub-grid" style="margin-top: 10px; padding-top: 0;">
             <a href="#" id="btn-excluir-conta" class="hub-card logout-card" style="border-color: #fca5a5; width: 100%; box-sizing: border-box;">
@@ -90,7 +120,8 @@
             <p style="color: #666; margin-bottom: 25px; font-size: 0.95rem; line-height: 1.5;">Essa ação é <strong>irreversível</strong>. Todos os seus dados, histórico e conexões serão apagados permanentemente.</p>
             
             <div class="form-group" style="text-align: left;">
-                <label for="senha-exclusao" style="display: block; margin-bottom: 8px; font-weight: 600; color: #333; font-size: 0.9rem;">Digite sua senha para confirmar:</label>
+                <label id="label-senha-exclusao" for="senha-exclusao" style="display: block; margin-bottom: 8px; font-weight: 600; color: #333; font-size: 0.9rem;">Digite sua senha para confirmar:</label>
+                <p id="desc-senha-exclusao" style="display: none; font-size: 0.85rem; color: #991b1b; margin-top: 0; margin-bottom: 12px;">Como você vinculou o login do Google, digite a palavra <strong>EXCLUIR</strong> para confirmar, ou informe sua senha caso tenha uma.</p>
                 <input type="password" id="senha-exclusao" class="form-control" placeholder="Sua senha atual" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; background-color: #f9f9f9;">
             </div>
 

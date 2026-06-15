@@ -822,3 +822,13 @@ exports.addSeoColumns = async (req, res) => {
         res.status(500).send("Erro ao criar colunas de SEO: " + error.message);
     }
 };
+
+exports.addGoogleIdColumn = async (req, res) => {
+    try {
+        await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "googleId" VARCHAR(255);');
+        await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "googleId" VARCHAR(255);');
+        res.send("✅ Sucesso! Coluna 'googleId' criada com sucesso na tabela Psychologists.");
+    } catch (error) {
+        res.status(500).send("Erro ao criar coluna googleId: " + error.message);
+    }
+};

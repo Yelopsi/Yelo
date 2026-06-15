@@ -102,6 +102,27 @@
         });
     }
 
+    // --- LÓGICA DE VINCULAR GOOGLE ---
+    window.handleGoogleLinkResponse = async function(response) {
+        try {
+            const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/link-google`, {
+                method: 'POST',
+                body: JSON.stringify({ token: response.credential })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showToast('Conta do Google vinculada com sucesso!', 'success');
+                document.getElementById('google-link-container').style.display = 'none';
+                document.getElementById('google-linked-message').style.display = 'flex';
+                if (psychologistData) psychologistData.googleId = data.googleId;
+            } else {
+                showToast(data.error || 'Erro ao vincular conta do Google.', 'error');
+            }
+        } catch (error) {
+            showToast('Erro de conexão ao tentar vincular o Google.', 'error');
+        }
+    };
+
     // --- LÓGICA PRINCIPAL DO PERFIL ---
     window.inicializarLogicaDoPerfil = function() {
         const profileContainer = document.getElementById('profile-blocks-container');
@@ -647,6 +668,23 @@
                     block.querySelectorAll('input, textarea, select').forEach(el => { el.disabled = true; });
                 }
             });
+            
+            const googleLinkContainer = document.getElementById('google-link-container');
+            const googleLinkedMessage = document.getElementById('google-linked-message');
+            if (googleLinkContainer && googleLinkedMessage && psychologistData.googleId) {
+                googleLinkContainer.style.display = 'none';
+                googleLinkedMessage.style.display = 'flex';
+            }
+            
+            // Aviso de senha para quem usa Google
+            const passwordForm = document.getElementById('password-form');
+            if (passwordForm && psychologistData.googleId && !document.getElementById('aviso-senha-google')) {
+                const p = document.createElement('p');
+                p.id = 'aviso-senha-google';
+                p.style.cssText = "font-size: 0.85rem; color: #b45309; background: #fffbeb; padding: 10px; border-radius: 8px; margin-bottom: 15px;";
+                p.innerHTML = `💡 <strong>Aviso:</strong> Como você vinculou o Google, pode não saber sua "Senha Atual" (ela foi gerada aleatoriamente na criação). Caso queira cadastrar uma senha manual, saia da conta e use a opção <strong>"Esqueci minha senha"</strong> na página de login.`;
+                passwordForm.prepend(p);
+            }
         }
         
         // Evento Copiar Link

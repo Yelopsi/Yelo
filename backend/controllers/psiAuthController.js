@@ -349,3 +349,36 @@ exports.resetPassword = async (req, res) => {
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };
+
+// ----------------------------------------------------------------------
+// Rota: POST /api/psychologists/me/link-google
+// ----------------------------------------------------------------------
+exports.linkGoogleAccount = async (req, res) => {
+    try {
+        const { token } = req.body;
+        if (!token) return res.status(400).json({ error: 'Token do Google obrigatório.' });
+
+        const googleUser = await verifyGoogleToken(token);
+        const { sub: googleId } = googleUser;
+
+        const psychologist = await db.Psychologist.findByPk(req.psychologist.id);
+        if (!psychologist) {
+            return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+        }
+
+        const [existingPsychologist] = await db.sequelize.query(
+            `SELECT id FROM "Psychologists" WHERE "googleId" = :googleId LIMIT 1`,
+            { replacements: { googleId }, type: db.sequelize.QueryTypes.SELECT }
+        );
+        if (existingPsychologist && existingPsychologist.id !== psychologist.id) {
+            return res.status(400).json({ error: 'Esta conta do Google já está vinculada a outro perfil.' });
+        }
+
+        // Usando raw query pois o model pode não ter googleId mapeado estruturalmente
+        await db.sequelize.query(`UPDATE "Psychologists" SET "googleId" = :googleId WHERE id = :id`, { replacements: { googleId, id: psychologist.id } });
+
+        res.status(200).json({ message: 'Conta do Google vinculada com sucesso!', googleId });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao vincular conta do Google.' });
+    }
+};
