@@ -4,7 +4,7 @@ window.initializePage = function() {
 
     if (!psyId) {
         alert("ID do psicólogo não fornecido.");
-        navigateToPage('admin_gerenciar_psicologos.html');
+        navigateToPage('admin_crm_psicologos.html');
         return;
     }
 
