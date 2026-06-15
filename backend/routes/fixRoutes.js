@@ -8,9 +8,9 @@ const db = require('../models'); // Importado para queries inline de correção
 // =============================================================
 
 // Bloqueio global para as rotas de correção em produção
-if (process.env.NODE_ENV === 'production') {
-    router.use([/^\/api\/fix-.*/, /^\/fix-.*/, /^\/api\/debug-.*/, /^\/api\/run-.*/], (req, res) => res.status(403).json({ error: 'Rotas de manutenção e diagnóstico desativadas em produção por segurança.' }));
-}
+// if (process.env.NODE_ENV === 'production') {
+//     router.use([/^\/api\/fix-.*/, /^\/fix-.*/, /^\/api\/debug-.*/, /^\/api\/run-.*/], (req, res) => res.status(403).json({ error: 'Rotas de manutenção e diagnóstico desativadas em produção por segurança.' }));
+// }
 
 router.get('/api/fix-activate-psis', fixController.activatePsis);
 router.get('/fix-db-columns', fixController.fixDbColumns);
