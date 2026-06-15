@@ -541,18 +541,12 @@ window.initializePage = function() {
         try {
             let psi = null;
             
-            // Usa cache inteligente para não baixar a lista de todos os psicólogos a cada clique
-            if (window.globalAllPsisCache) {
-                psi = window.globalAllPsisCache.find(p => p.id == psiId);
-            } else {
-                const res = await fetch(`${API_BASE_URL}/api/admin/psychologists`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if(!res.ok) throw new Error("Falha ao buscar lista de profissionais");
-                const psis = await res.json();
-                window.globalAllPsisCache = psis; // Salva em memória para os próximos cliques
-                psi = psis.find(p => p.id == psiId);
-            }
+            const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${psiId}/full-details`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if(!res.ok) throw new Error("Falha ao buscar detalhes do profissional");
+            const data = await res.json();
+            psi = data.psychologist;
             
             if(!psi) throw new Error("Profissional não encontrado nos registros");
 
@@ -574,21 +568,22 @@ window.initializePage = function() {
                 avatarFallback.textContent = psi.nome ? psi.nome.charAt(0).toUpperCase() : 'P';
             }
             
-            let score = 0; let checksHtml = '';
-            const addCheck = (cond, label) => {
-                if(cond) { score += 20; checksHtml += `<li style="color: #10b981;">✅ ${label} preenchido</li>`; }
-                else { checksHtml += `<li style="color: #ef4444;">❌ ${label} pendente</li>`; }
-            };
-            addCheck(psi.fotoUrl, 'Foto de Perfil');
-            addCheck(psi.crp_valido, 'CRP Validado');
-            addCheck(psi.mini_bio, 'Mini Bio');
-            addCheck(psi.sobre, 'Sobre Mim');
-            addCheck(psi.telefone, 'WhatsApp de Contato');
+            const checks = [
+                { text: 'Foto de Perfil', ok: !!psi.fotoUrl },
+                { text: 'Número do CRP', ok: !!(psi.crp && String(psi.crp).length > 3) },
+                { text: 'Biografia', ok: !!(psi.bio && psi.bio.trim().length >= 10) },
+                { text: 'WhatsApp', ok: !!(psi.telefone && String(psi.telefone).length > 8) },
+                { text: 'Temas de Atuação', ok: Array.isArray(psi.temas_atuacao) ? psi.temas_atuacao.length > 0 : !!psi.temas_atuacao }
+            ];
+            
+            const okCount = checks.filter(c => c.ok).length;
+            const score = Math.round((okCount / checks.length) * 100);
             
             document.getElementById('cs-health-pct').textContent = `${score}%`;
             const bar = document.getElementById('cs-health-bar');
             bar.style.width = `${score}%`;
-            bar.style.background = score === 100 ? '#10b981' : (score >= 60 ? '#f59e0b' : '#ef4444');
+            bar.style.background = score >= 75 ? '#10b981' : (score >= 50 ? '#f59e0b' : '#ef4444');
+            const checksHtml = checks.map(c => `<li style="display:flex; align-items:center; gap:8px;">${c.ok ? '<span style="color:#10b981;">✓</span>' : '<span style="color:#ef4444;">✗</span>'} ${c.text}</li>`).join('');
             document.getElementById('cs-health-checks').innerHTML = checksHtml;
             
             let isVip = psi.is_exempt === true || String(psi.is_exempt) === 'true';
@@ -599,10 +594,10 @@ window.initializePage = function() {
             let actsHtml = '';
             if(numZap && numZap.length >= 10) {
                 if(!numZap.startsWith('55')) numZap = '55' + numZap;
-                actsHtml += `<a href="https://wa.me/${numZap}" target="_blank" style="display:flex; justify-content:center; padding: 10px; background: #ecfdf5; color: #10b981; text-decoration: none; border-radius: 6px; font-weight: 600; border: 1px solid #a7f3d0;">Chamar no WhatsApp</a>`;
+                actsHtml += `<a href="https://wa.me/${numZap}" target="_blank" style="display:flex; justify-content:center; padding: 12px; background: #ecfdf5; color: #10b981; text-decoration: none; border-radius: 50px; font-weight: 600; border: 1px solid #a7f3d0;">Chamar no WhatsApp 📱</a>`;
             }
-            actsHtml += `<button onclick="window.navigateToPage('admin_detalhes_psicologo.html?id=${psi.id}')" style="padding: 10px; background: white; color: #1e293b; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 600; cursor: pointer;">Ver Dossiê Completo</button>`;
-            actsHtml += `<button onclick="window.gerarAnaliseCS('${psi.id}')" id="btn-analise-${psi.id}" style="padding: 10px; background: #fef08a; color: #b45309; border: 1px solid #fde047; border-radius: 6px; font-weight: 600; cursor: pointer;">✨ Análise de Perfil (IA)</button>`;
+            actsHtml += `<button onclick="window.navigateToPage('admin_detalhes_psicologo.html?id=${psi.id}')" style="padding: 12px; background: white; color: #1e293b; border: 1px solid #cbd5e1; border-radius: 50px; font-weight: 600; cursor: pointer;">Ver Dossiê Completo 🔗</button>`;
+            actsHtml += `<button onclick="window.gerarAnaliseCS('${psi.id}')" id="btn-analise-${psi.id}" style="padding: 12px; background: #fef08a; color: #b45309; border: 1px solid #fde047; border-radius: 50px; font-weight: 600; cursor: pointer;">✨ Análise de Perfil (IA)</button>`;
             
             document.getElementById('cs-actions-container').innerHTML = actsHtml;
             
@@ -669,10 +664,60 @@ window.initializePage = function() {
 
     // Listener do Drawer Close
     const btnCloseDrawer = document.getElementById('btn-close-cs-drawer');
+    const drawerOverlay = document.getElementById('drawer-cs-overlay');
+    const drawerContent = drawerOverlay ? drawerOverlay.querySelector('.drawer-content') : null;
+    const drawerHeader = drawerOverlay ? drawerOverlay.querySelector('.drawer-header-mobile') : null;
+
+    const closeDrawer = () => {
+        if (drawerOverlay) drawerOverlay.classList.remove('active');
+        if (drawerContent) {
+            setTimeout(() => {
+                drawerContent.style.removeProperty('transform');
+                drawerContent.style.removeProperty('transition');
+            }, 300);
+        }
+    };
+
     if (btnCloseDrawer) {
-        btnCloseDrawer.addEventListener('click', () => {
-            const drawer = document.getElementById('drawer-cs-overlay');
-            if(drawer) drawer.classList.remove('active');
+        btnCloseDrawer.addEventListener('click', closeDrawer);
+    }
+
+    if (drawerOverlay) {
+        drawerOverlay.addEventListener('click', (e) => {
+            // Se o alvo exato do clique for o overlay (fundo escuro) e não o conteúdo branco, fecha o painel
+            if (e.target === drawerOverlay) closeDrawer();
+        });
+    }
+
+    // Lógica de Swipe Down APENAS NO CABEÇALHO (Para não travar o scroll do conteúdo)
+    let startY = 0;
+    let currentY = 0;
+    
+    if (drawerHeader && drawerContent) {
+        drawerHeader.addEventListener('touchstart', (e) => {
+            if (window.innerWidth > 768) return;
+            startY = e.touches[0].clientY;
+            currentY = startY;
+            drawerContent.style.setProperty('transition', 'none', 'important');
+        }, { passive: true });
+        
+        drawerHeader.addEventListener('touchmove', (e) => {
+            if (window.innerWidth > 768 || startY === 0) return;
+            currentY = e.touches[0].clientY;
+            const diffY = currentY - startY;
+            if (diffY > 0) { 
+                drawerContent.style.setProperty('transform', `translateY(${diffY}px)`, 'important'); 
+                e.preventDefault(); 
+            }
+        }, { passive: false });
+        
+        drawerHeader.addEventListener('touchend', (e) => {
+            if (window.innerWidth > 768 || startY === 0) return;
+            const diffY = currentY - startY;
+            drawerContent.style.setProperty('transition', 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)', 'important');
+            if (diffY > 80) { closeDrawer(); }
+            else { drawerContent.style.setProperty('transform', 'translateY(0)', 'important'); setTimeout(() => { drawerContent.style.removeProperty('transform'); drawerContent.style.removeProperty('transition'); }, 300); }
+            startY = 0; currentY = 0;
         });
     }
 

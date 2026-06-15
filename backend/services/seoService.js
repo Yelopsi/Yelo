@@ -1,11 +1,18 @@
 const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require('@google/generative-ai');
 
-// Inicializa a API do Gemini (certifique-se de ter a GEMINI_API_KEY no seu .env)
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Função auxiliar para inicializar a API sob demanda (lazy load)
+let genAIInstance = null;
+const getGenAI = () => {
+    if (!genAIInstance && process.env.GEMINI_API_KEY) {
+        genAIInstance = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    }
+    return genAIInstance;
+};
 
 exports.generateSEO = async (postContent, postTitle) => {
     try {
-        if (!process.env.GEMINI_API_KEY) {
+        const genAI = getGenAI();
+        if (!genAI) {
             console.error("❌ [SEO Service] CHAVE DO GEMINI NÃO ENCONTRADA NO .env!");
             return { meta_description: '', tags: [] };
         }
@@ -70,7 +77,8 @@ ${truncatedContent}
 
 exports.generateProfileSEO = async (nome, bio, especialidades) => {
     try {
-        if (!process.env.GEMINI_API_KEY || !bio || bio.length < 30) {
+        const genAI = getGenAI();
+        if (!genAI || !bio || bio.length < 30) {
             return { meta_description: '' };
         }
 
@@ -107,7 +115,8 @@ Bio: ${bio.substring(0, 1500)}
 
 exports.generateQuestionSEO = async (questionTitle, questionContent, answerContent) => {
     try {
-        if (!process.env.GEMINI_API_KEY) {
+        const genAI = getGenAI();
+        if (!genAI) {
             return { meta_description: '' };
         }
 
@@ -144,7 +153,8 @@ Resposta do Especialista: ${answerContent.substring(0, 1000)}
 
 exports.generatePatientQuestionSEO = async (questionContent) => {
     try {
-        if (!process.env.GEMINI_API_KEY) return null;
+        const genAI = getGenAI();
+        if (!genAI) return null;
         
         const model = genAI.getGenerativeModel({
             model: "gemini-3.1-flash-lite",
@@ -175,7 +185,8 @@ Retorne um JSON estrito com as chaves "title" e "meta_description".
 
 exports.analyzeProfileForCS = async (profileData) => {
     try {
-        if (!process.env.GEMINI_API_KEY) return "Chave da API não configurada no servidor.";
+        const genAI = getGenAI();
+        if (!genAI) return "Chave da API não configurada no servidor.";
         
         const model = genAI.getGenerativeModel({
             model: "gemini-3.1-flash-lite"
