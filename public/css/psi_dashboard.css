@@ -442,6 +442,55 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
 .hidden { display: none !important; }
 
 /* ==========================================================================
+   GAMIFICAÇÃO E JORNADA (CARDS)
+   ========================================================================== */
+.gamification-panel {
+    background-color: var(--branco-puro, #ffffff);
+    border-radius: 24px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid #e5e7eb;
+}
+
+.badges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.badge-card {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important; /* Borda bem definida (Slate 300) para separar do painel branco */
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03) !important;
+    opacity: 1 !important; /* Garante opacidade 100% no container */
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.badge-card:not(.locked):hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.06) !important;
+    border-color: var(--verde-escuro) !important;
+}
+
+.badge-card.locked {
+    background-color: #f8f9fa !important; /* Fundo cinza gelo suave */
+    border: 1px dashed #cbd5e1 !important; /* Tracejado para indicar 'bloqueado' */
+    filter: none !important; /* Removemos o grayscale total para não sujar o card */
+}
+
+/* Aplica o filtro de cinza e opacidade APENAS no conteúdo interno da locked */
+.badge-card.locked .badge-header {
+    filter: grayscale(100%);
+    opacity: 0.6;
+}
+
+.badge-card.locked .badge-progress-container {
+    opacity: 0.5;
+}
+
+/* ==========================================================================
    SIDEBAR BADGES CONTAINER
    ========================================================================== */
 #sidebar-badges-container {

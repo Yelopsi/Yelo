@@ -13,7 +13,7 @@ window.inicializarPaginaJornada = async () => {
         { slug: 'nivel_verificado',   min: 500,    label: 'Psicólogo Verificado', next: 1500 },
         { slug: 'nivel_ativo',        min: 1500,   label: 'Perfil Ativo', next: 5000 },
         { slug: 'nivel_especialista', min: 5000,   label: 'Especialista Yelo', next: 15000 },
-        { slug: 'nivel_mentor',       min: 15000,  label: 'Mentor // Top Voice', next: 15000 }
+        { slug: 'nivel_mentor',       min: 15000,  label: 'Mentor / Top Voice', next: 15000 }
     ];
 
     const BADGE_REQUIREMENTS = {
