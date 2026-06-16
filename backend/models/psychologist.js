@@ -146,6 +146,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       defaultValue: 'pending' // pending, active, inactive, suspended
     },
+    // --- MARCAÇÃO DA ANÁLISE DE IA ---
+    isProfileAnalyzed: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     // --- ADICIONE ESTE BLOCO NOVO ---
     cancelAtPeriodEnd: {
         type: DataTypes.BOOLEAN,

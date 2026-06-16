@@ -155,8 +155,9 @@ window.initializePage = function() {
             const isVip = psy.is_exempt === true;
             const isDeleted = psy.deletedAt !== null && psy.deletedAt !== undefined;
             
-            const isCopied = copiedList.includes(String(psy.id));
-            const copyBadge = (psy.status === 'active' && isCopied) ? '<span class="badge-copied" title="Análise Copiada" style="margin-left: 5px; font-size: 0.8rem;">✅</span>' : '';
+            // 🧠 Sincronização Híbrida: Lê do Banco de Dados (isProfileAnalyzed) ou do cache local do navegador
+            const isCopied = psy.isProfileAnalyzed === true || copiedList.includes(String(psy.id));
+            const copyBadge = isCopied ? '<span class="badge-copied" title="Análise Copiada" style="margin-left: 5px; font-size: 0.8rem;">✅</span>' : '';
             const dataInscricao = new Date(psy.createdAt).toLocaleDateString('pt-BR');
 
             let statusLabel = psy.status || 'inativo';
@@ -318,29 +319,27 @@ window.initializePage = function() {
             actionsContainer.appendChild(btnZap);
         }
 
-        // 4. Copiar para Análise (Para profissionais Ativos)
-        if (psy.status === 'active') {
-            const btnCopy = document.createElement('button');
-            btnCopy.className = 'btn-tabela';
-            btnCopy.id = `btn-analise-${psy.id}`;
-            
-            // Verifica se já foi copiado
-            let copiedList = JSON.parse(localStorage.getItem('yelo_psi_copied_analysis') || '[]');
-            const isCopied = copiedList.includes(String(psy.id));
+        // 4. Copiar para Análise (Liberado para todos os profissionais)
+        const btnCopy = document.createElement('button');
+        btnCopy.className = 'btn-tabela';
+        btnCopy.id = `btn-analise-${psy.id}`;
+        
+        // Verifica se já foi copiado (Sincronização Híbrida)
+        let copiedList = JSON.parse(localStorage.getItem('yelo_psi_copied_analysis') || '[]');
+        const isCopied = psy.isProfileAnalyzed === true || copiedList.includes(String(psy.id));
 
-            btnCopy.style.width = '100%'; btnCopy.style.justifyContent = 'center'; btnCopy.style.padding = '12px'; btnCopy.style.borderRadius = '50px';
-            
-            if (isCopied) {
-                btnCopy.style.background = '#dcfce7'; btnCopy.style.color = '#166534'; btnCopy.style.border = '1px solid #bbf7d0';
-                btnCopy.innerHTML = '✨ Análise Copiada ✅';
-            } else {
-                btnCopy.style.background = '#fef08a'; btnCopy.style.color = '#b45309'; btnCopy.style.border = '1px solid #fde047';
-                btnCopy.innerHTML = '✨ Análise de Perfil (IA)';
-            }
-
-            btnCopy.onclick = () => window.gerarAnaliseCS(psy.id);
-            actionsContainer.appendChild(btnCopy);
+        btnCopy.style.width = '100%'; btnCopy.style.justifyContent = 'center'; btnCopy.style.padding = '12px'; btnCopy.style.borderRadius = '50px';
+        
+        if (isCopied) {
+            btnCopy.style.background = '#dcfce7'; btnCopy.style.color = '#166534'; btnCopy.style.border = '1px solid #bbf7d0';
+            btnCopy.innerHTML = '✨ Análise Copiada ✅';
+        } else {
+            btnCopy.style.background = '#fef08a'; btnCopy.style.color = '#b45309'; btnCopy.style.border = '1px solid #fde047';
+            btnCopy.innerHTML = '✨ Análise de Perfil (IA)';
         }
+
+        btnCopy.onclick = () => window.gerarAnaliseCS(psy.id);
+        actionsContainer.appendChild(btnCopy);
 
         drawerOverlay.classList.add('active');
     };
@@ -379,6 +378,26 @@ window.initializePage = function() {
                 if (!currentList.includes(String(psiId))) {
                     currentList.push(String(psiId));
                     localStorage.setItem('yelo_psi_copied_analysis', JSON.stringify(currentList));
+                }
+
+                // ☁️ Salva a marcação na nuvem (Banco de Dados) para persistir entre celular e PC
+                try {
+                    await fetch(`${API_BASE_URL}/api/admin/psychologists/${psiId}/analyzed`, {
+                        method: 'PUT',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}` 
+                        },
+                        body: JSON.stringify({ isProfileAnalyzed: true })
+                    });
+                    
+                    // Atualiza o cache de dados local para não precisar recarregar a página
+                    const psyIndex = psisDataCache.findIndex(p => String(p.id) === String(psiId));
+                    if (psyIndex !== -1) {
+                        psisDataCache[psyIndex].isProfileAnalyzed = true;
+                    }
+                } catch (e) {
+                    console.warn("Backend ainda não suporta salvamento na nuvem da análise ou ocorreu um erro na rede", e);
                 }
 
                 const nameEl = document.getElementById(`name-psy-${psiId}`);

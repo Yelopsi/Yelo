@@ -53,6 +53,19 @@ router.get('/psychologists', adminController.getAllPsychologists);
 // Novas rotas para gerenciar psicólogos
 router.get('/psychologists/:id/full-details', adminController.getPsychologistFullDetails); // <--- NOVA ROTA
 router.get('/psychologists/:id/analyze', adminController.analyzeProfile);
+// --- ROTA PARA SALVAR A MARCAÇÃO DA ANÁLISE NA NUVEM ---
+router.put('/psychologists/:id/analyzed', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await db.Psychologist.update(
+            { isProfileAnalyzed: true },
+            { where: { id } }
+        );
+        res.json({ success: true, message: 'Status de análise salvo na nuvem.' });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao salvar marcação.' });
+    }
+});
 router.put('/psychologists/:id/status', adminController.updatePsychologistStatus);
 // Rota para ativar/desativar isenção (VIP)
 router.patch('/psychologists/:id/vip', adminController.updateVipStatus);

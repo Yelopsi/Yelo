@@ -196,6 +196,9 @@ const startServer = async () => {
             await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "idade" VARCHAR(255);');
             await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "identidade_genero" VARCHAR(255);');
             
+            console.log('🛠️ [DB FIX] Injetando coluna isProfileAnalyzed na tabela Psychologists...');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "isProfileAnalyzed" BOOLEAN DEFAULT false;');
+
             console.log('🛠️ [DB FIX] Injetando colunas faltantes na tabela Questions...');
             
             // Garante a criação estrutural das tabelas do fórum/comunidade caso não existam
@@ -203,8 +206,8 @@ const startServer = async () => {
             if (db.Answer) await db.Answer.sync();
             if (db.QuestionIgnore) await db.QuestionIgnore.sync();
 
-            await db.sequelize.query('ALTER TABLE "Questions" ADD COLUMN IF NOT EXISTS "title" VARCHAR(255);');
-            await db.sequelize.query('ALTER TABLE "Questions" ADD COLUMN IF NOT EXISTS "slug" VARCHAR(255) UNIQUE;');
+            await db.sequelize.query('ALTER TABLE questions ADD COLUMN IF NOT EXISTS title VARCHAR(255);');
+            await db.sequelize.query('ALTER TABLE questions ADD COLUMN IF NOT EXISTS slug VARCHAR(255) UNIQUE;');
         } catch(e) {
             console.warn('⚠️ Aviso ao tentar criar colunas manualmente (podem já existir ou banco travado):', e.message);
         }
