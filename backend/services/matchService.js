@@ -1,5 +1,6 @@
 const db = require('../models');
 const { Op } = require('sequelize');
+const seoService = require('./seoService'); // Importa a IA para gerar os textos de conexão
 
 // Variaveis globais de cache para o Motor de Match (Ponto 3)
 let cachedTotalImpressions = null;
@@ -9,7 +10,8 @@ let lastImpressionCacheTime = 0;
 const WEIGHTS = {
     CLINICAL: 0.65,
     OPERATIONAL: 0.35,
-    UCB_EXPLORATION_RATE: 2.0 // Define a força com que o sistema testa novatos
+    UCB_EXPLORATION_RATE: 3.0, // Aumentado para dar mais chance aos novatos
+    MVP_ZERO_CLICK_BOOST: 25   // Bônus massivo para quem nunca recebeu um clique no WhatsApp
 };
 
 const MAPA_CARACTERISTICAS = {
@@ -185,13 +187,14 @@ const calculateSimilarity = (psy, preferences, priceRange) => {
 // --- L3: FAIRNESS (MULTI-ARMED BANDIT - UCB) ---
 const applyFairness = (scoredCandidates, totalSystemImpressions) => {
     return scoredCandidates.map(c => {
-        // Cooldown Progressivo: Penalidade máxima de 20% decaindo para 0% ao longo de 60 minutos
+        // Cooldown Progressivo MVP: Penalidade máxima de 50% decaindo para 0% ao longo de 120 minutos
+        // Isso força a plataforma a "girar a roleta" e mostrar psicólogos diferentes o dia todo
         const minutesSinceLastShown = c.last_shown_match_at ? (new Date() - new Date(c.last_shown_match_at)) / 60000 : 9999;
         
         let cooldownPenalty = 1.0;
-        if (minutesSinceLastShown < 60) {
-            const decayProgress = minutesSinceLastShown / 60; // De 0 (agora) a 1 (60 min)
-            cooldownPenalty = 0.80 + (0.20 * decayProgress); // Sobe suavemente de 0.80 para 1.00
+        if (minutesSinceLastShown < 120) {
+            const decayProgress = minutesSinceLastShown / 120; // De 0 (agora) a 1 (120 min)
+            cooldownPenalty = 0.50 + (0.50 * decayProgress); // Sobe de 0.50 para 1.00
         }
 
         const impressions = Math.max(1, c.profile_appearances || 1);
@@ -201,8 +204,13 @@ const applyFairness = (scoredCandidates, totalSystemImpressions) => {
         // Bônus UCB para descoberta de novos talentos
         const explorationBonus = WEIGHTS.UCB_EXPLORATION_RATE * Math.sqrt(Math.log(totalSystemImpressions || 10) / impressions);
         
-        // Aplica modificadores garantindo que o algoritmo clínico ainda seja o fator principal
-        let finalScore = (c.rawMatchScore * cooldownPenalty) + (ctr * 10) + Math.min(15, explorationBonus);
+        // --- BÔNUS MVP (ZERO TO ONE) ---
+        // Se o profissional NUNCA recebeu um clique no WhatsApp, damos um bônus absurdo
+        // Isso garante que todo mundo na Yelo receba pelo menos um lead para ver o valor da plataforma
+        const mvpBoost = (clicks === 0) ? WEIGHTS.MVP_ZERO_CLICK_BOOST : 0;
+
+        // Calcula a pontuação final com as táticas de nivelamento
+        let finalScore = (c.rawMatchScore * cooldownPenalty) + (ctr * 10) + Math.min(20, explorationBonus) + mvpBoost;
 
         return { ...c, finalScore };
     });
@@ -292,6 +300,36 @@ exports.calculateMatches = async (preferences) => {
                 r.displayMatchScore = parseFloat(display.toFixed(1));
                 r.matchScore = r.displayMatchScore; 
             });
+        }
+        
+        // --- GERANDO COPY COM IA (MATCH SEMÂNTICO) ---
+        if (results.length > 0) {
+            try {
+                const psiDataForAI = results.map(r => ({
+                    id: r.id,
+                    nome: r.nome,
+                    temas_atuacao: r.temas_atuacao,
+                    modalidade: r.modalidade
+                }));
+                
+                // ⏱️ TIMEOUT DE SEGURANÇA (Anti-Demora)
+                // Se o Google Gemini demorar mais de 1.8 segundos, abortamos a espera e usamos as tags padrão (fallback)
+                // Isso garante que o paciente NUNCA perca a paciência e feche a tela de carregamento.
+                const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 1800));
+                
+                const aiReasons = await Promise.race([
+                    seoService.generateMatchCopy(preferences, psiDataForAI), 
+                    timeoutPromise
+                ]);
+
+                if (aiReasons) {
+                    results.forEach(r => {
+                        if (aiReasons[r.id] || aiReasons[String(r.id)]) r.matchReasons = aiReasons[r.id] || aiReasons[String(r.id)];
+                    });
+                }
+            } catch (aiErr) {
+                console.error("⚠️ Fallback IA Match:", aiErr.message);
+            }
         }
 
         return { matchTier: tier, compromiseText, results };

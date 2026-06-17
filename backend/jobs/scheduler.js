@@ -4,6 +4,7 @@ const cron = require('node-cron');
 const { findDemandGaps } = require('./demandMonitor');
 const { manageExpiredInvitations } = require('./invitationManager');
 const { sendPendingSubscriptionEmails } = require('./remarketingCron.js');
+const { checkAndSendEvaluationEmails } = require('./evaluationMonitor');
 const { exec } = require('child_process');
 const path = require('path');
 
@@ -41,6 +42,18 @@ cron.schedule('0 2 * * *', () => {
 cron.schedule('0 10 * * *', () => {
     console.log('Executando tarefa agendada: sendPendingSubscriptionEmails');
     sendPendingSubscriptionEmails();
+}, {
+    scheduled: true,
+    timezone: "America/Sao_Paulo"
+});
+
+/**
+ * Tarefa 5: Enviar e-mail de avaliação para psicólogos com trial ou plano expirado
+ * Roda todos os dias às 11h da manhã.
+ */
+cron.schedule('0 11 * * *', () => {
+    console.log('Executando tarefa agendada: checkAndSendEvaluationEmails');
+    checkAndSendEvaluationEmails();
 }, {
     scheduled: true,
     timezone: "America/Sao_Paulo"
@@ -91,6 +104,9 @@ cron.schedule('0 4 * * *', () => {
     } else if (taskToRun === 'remarketing') {
         console.log('Executando manualmente: sendPendingSubscriptionEmails');
         await sendPendingSubscriptionEmails();
+    } else if (taskToRun === 'evaluation') {
+        console.log('Executando manualmente: checkAndSendEvaluationEmails');
+        await checkAndSendEvaluationEmails();
     }
 
     process.exit(0); // Encerra o processo após a execução da tarefa manual

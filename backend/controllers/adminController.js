@@ -7,6 +7,7 @@ const adminCommunityController = require('./adminCommunityController');
 const adminLeadController = require('./adminLeadController');
 const adminUsersController = require('./adminUsersController');
 const adminMessagesController = require('./adminMessagesController');
+const { GoogleGenerativeAI } = require('@google/generative-ai'); // IA da Equipe de Growth
 
 const generateAdminToken = (id) => {
     return jwt.sign({ id, type: 'admin' }, process.env.JWT_SECRET, {
@@ -728,14 +729,56 @@ exports.testOutboundBatch = adminLeadController.testOutboundBatch;
 exports.analyzeProfile = async (req, res) => {
     try {
         const { id } = req.params;
+        
+        // 1. Busca os dados super enriquecidos do psicólogo
         const psi = await db.Psychologist.findByPk(id, {
-            attributes: ['nome', 'bio', 'valor_sessao_numero', 'valor_mensal_numero', 'tipo_cobranca', 'temas_atuacao', 'abordagens_tecnicas', 'fotoUrl']
+            attributes: [
+                'nome', 'bio', 'valor_sessao_numero', 'valor_mensal_numero', 'tipo_cobranca', 
+                'temas_atuacao', 'abordagens_tecnicas', 'fotoUrl', 'authority_level', 'xp',
+                'profile_appearances', 'whatsapp_clicks', 'createdAt',
+                'planExpiresAt', 'stripeSubscriptionId', 'subscriptionId', 'status', 'plano', 'is_exempt',
+                'utm_source'
+            ]
         });
 
         if (!psi) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
 
+        // 2. Busca métricas extras de engajamento
         const reviewsCount = await db.Review.count({ where: { psychologistId: id, status: 'approved' } }).catch(() => 0);
+        const recentReviews = await db.Review.findAll({ 
+            where: { psychologistId: id, status: 'approved' },
+            attributes: ['rating', 'comment'],
+            order: [['createdAt', 'DESC']],
+            limit: 3
+        }).catch(() => []);
 
+        let postsCount = 0;
+        let recentPosts = [];
+        if (db.Post) {
+            postsCount = await db.Post.count({ where: { psychologistId: id } }).catch(() => 0);
+            recentPosts = await db.Post.findAll({
+                where: { psychologistId: id },
+                attributes: ['titulo', 'conteudo'],
+                order: [['createdAt', 'DESC']],
+                limit: 2
+            }).catch(() => []);
+        }
+        let forumAnswersCount = 0;
+        if (db.ForumComment) forumAnswersCount = await db.ForumComment.count({ where: { PsychologistId: id } }).catch(() => 0);
+
+        // 2.1. Busca Tendências de Mercado (O que os pacientes estão buscando)
+        const [topDemands] = await db.sequelize.query(`
+            SELECT value as tema, COUNT(*) as count 
+            FROM "DemandSearches", jsonb_array_elements_text("searchParams"->'temas') as value 
+            WHERE status = 'completed' AND "createdAt" >= NOW() - INTERVAL '30 days' 
+            AND jsonb_typeof("searchParams"->'temas') = 'array' 
+            GROUP BY value 
+            ORDER BY count DESC 
+            LIMIT 5;
+        `).catch(() => [[]]);
+        const topDemandsText = topDemands.length > 0 ? topDemands.map(d => `- ${d.tema}`).join('\n') : 'Sem dados recentes de busca.';
+
+        // 3. Formatação do Preço
         let valorConsulta = "A combinar";
         if (psi.tipo_cobranca === 'mensal' && psi.valor_mensal_numero && parseFloat(psi.valor_mensal_numero) > 0) {
             valorConsulta = `R$ ${psi.valor_mensal_numero} (Mensal)`;
@@ -743,22 +786,116 @@ exports.analyzeProfile = async (req, res) => {
             valorConsulta = `R$ ${psi.valor_sessao_numero} (Por Sessão)`;
         }
 
-        const profileData = {
-            nome: psi.nome,
-            bio: psi.bio || "Não preenchida",
-            preco_ou_valor: valorConsulta,
-            temas: psi.temas_atuacao || [],
-            abordagens: psi.abordagens_tecnicas || [],
-            avaliacoes: reviewsCount,
-            tem_foto: !!psi.fotoUrl
-        };
+        // 3.1. Formatação de Textos para a IA
+        const reviewsText = recentReviews.length > 0 ? recentReviews.map(r => `- ${r.rating} estrelas: "${r.comment && r.comment !== 'null' ? r.comment : 'Apenas nota, sem comentário escrito.'}"`).join('\n') : 'Nenhuma avaliação recente.';
+        const postsText = recentPosts.length > 0 ? recentPosts.map(p => `- Título: "${p.titulo}"\n  Trecho: "${p.conteudo ? p.conteudo.substring(0, 200).replace(/\n/g, ' ') : ''}..."`).join('\n\n') : 'Nenhum artigo publicado.';
 
-        const seoService = require('../services/seoService');
-        const analysis = await seoService.analyzeProfileForCS(profileData);
+        // 3.2. Formatação de Status Financeiro/Ciclo de Vida
+        const dataCadastro = new Date(psi.createdAt).toLocaleDateString('pt-BR');
+        let statusPagamento = 'Desconhecido';
+        const hasSubscription = !!(psi.stripeSubscriptionId || psi.subscriptionId);
+        const isVip = psi.is_exempt;
+        const agora = new Date();
+        const expiracao = psi.planExpiresAt ? new Date(psi.planExpiresAt) : null;
+        
+        if (isVip) {
+            statusPagamento = 'Conta VIP / Isenta';
+        } else if (hasSubscription) {
+            statusPagamento = `Assinante Pago (${psi.plano || 'Plano Ativo'})`;
+        } else if (expiracao) {
+            const diffTime = Math.ceil((expiracao - agora) / (1000 * 60 * 60 * 24));
+            if (diffTime > 0) {
+                statusPagamento = `Trial Ativo (Faltam ${diffTime} dias para expirar)`;
+            } else {
+                statusPagamento = `Trial Expirado (Há ${Math.abs(diffTime)} dias)`;
+            }
+        } else {
+             statusPagamento = 'Pendente / Sem Trial Iniciado';
+        }
+
+        // 3.3. Formatação da Saudação (WhatsApp / Scraper / Recente)
+        const source = (psi.utm_source || '').toLowerCase();
+        const isInvite = source.includes('scraper') || source.includes('whatsapp') || source.includes('outbound');
+        const isRecent = (agora - new Date(psi.createdAt)) / (1000 * 60 * 60 * 24) <= 15; // Até 15 dias
+        
+        let welcomePhrase = "";
+        if (isInvite) welcomePhrase = "Que bom que aceitou nosso convite! ";
+        else if (isRecent) welcomePhrase = "Seja muito bem-vindo(a) à Yelo! ";
+        
+        if (!process.env.GEMINI_API_KEY) {
+            throw new Error("A chave GEMINI_API_KEY não foi encontrada no servidor. Adicione-a no arquivo .env!");
+        }
+
+        // 4. O SUPER PROMPT DA EQUIPE DE GROWTH
+        const promptGrowth = `Você atua como a equipe de Growth e Customer Success (CS) da plataforma Yelo, especializada em marketing para clínicas de psicologia.
+Seu objetivo é analisar o perfil deste psicólogo e fornecer uma consultoria acionável para ajudá-lo a crescer, captar mais pacientes e engajar.
+
+IMPORTANTE SOBRE O TOM DE VOZ E FORMATO (WHATSAPP):
+Assuma sempre o tom plural da nossa equipe (Nós da Yelo). Fale DIRETAMENTE com o psicólogo de forma parceira.
+Use OBRIGATORIAMENTE expressões como: "Nós percebemos que o seu perfil...", "Acreditamos que se você...", "Notamos que...", "Nós achamos que...", "Nossa equipe recomenda...".
+A mensagem será enviada via WhatsApp. Portanto, NUNCA use dois asteriscos para negrito (**texto**). Use SEMPRE APENAS UM asterisco (exemplo: *palavra*). NÃO INCLUA nota percentual de força de perfil.
+
+FUNCIONALIDADES DA YELO PARA SUGERIR COMO SOLUÇÃO (quando aplicável):
+1. Calculadora de Honorários: Se ele não tem preço definido ou parece incompatível, sugira usar a Calculadora no painel.
+2. Fórum/Comunidade: Se ele tem pouca visibilidade, XP baixo ou não respondeu perguntas ainda, sugira responder pacientes na Comunidade para destravar Badges e ganhar autoridade.
+3. Blog: Sugira escrever artigos curtos sobre os temas dele para melhorar o SEO.
+4. Hub de Evolução / Métricas: Se a conversão dele estiver ruim (muitas visualizações mas poucos cliques no WhatsApp), alerte-o para checar o Hub de Evolução para repensar a estratégia.
+5. Conversão Financeira: Se ele estiver em período de teste (Trial) ou expirado, incentive-o sutilmente a ver o valor da plataforma e sugira a assinatura para não perder os contatos.
+6. Otimização de Perfil baseada em Demanda: Compare as abordagens/temas dele com os temas mais buscados pelos pacientes na Yelo (listados abaixo). Sugira que, se for compatível com a formação dele, adicione essas palavras-chave na Bio ou Tags para aparecer em mais buscas!
+
+--- DOSSIÊ DE DADOS DO PSICÓLOGO ---
+Nome: ${psi.nome}
+Data de Cadastro: ${dataCadastro}
+Status Financeiro: ${statusPagamento}
+Biografia: ${psi.bio && psi.bio.length > 10 ? psi.bio : 'Não preenchida ou muito curta'}
+Preço Configurado: ${valorConsulta}
+Temas de Atuação: ${psi.temas_atuacao && psi.temas_atuacao.length > 0 ? psi.temas_atuacao.join(', ') : 'Nenhum'}
+Abordagens: ${psi.abordagens_tecnicas && psi.abordagens_tecnicas.length > 0 ? psi.abordagens_tecnicas.join(', ') : 'Nenhuma'}
+Nível na Gamificação: ${psi.authority_level || 'Iniciante'} (${psi.xp || 0} XP)
+Visualizações do Perfil (Tráfego): ${psi.profile_appearances || 0}
+Cliques no WhatsApp (Leads): ${psi.whatsapp_clicks || 0}
+Total de Avaliações de Pacientes: ${reviewsCount}
+📝 Últimas Avaliações Recebidas:
+${reviewsText}
+
+🔥 Top 5 Temas Mais Buscados Pelos Pacientes (Últimos 30 dias):
+${topDemandsText}
+
+Artigos no Blog: ${postsCount}
+✍️ Últimos Artigos Publicados:
+${postsText}
+
+Respostas no Fórum: ${forumAnswersCount}
+Foto de Perfil: ${psi.fotoUrl ? 'Possui Foto' : 'SEM FOTO'}
+-----------------------------------
+
+Responda ESTRITAMENTE nesta estrutura abaixo, preservando as quebras de linha e os emojis:
+
+Olá, ${psi.nome.split(' ')[0]}! Aqui é o Anderson, da Yelo. ${welcomePhrase}Pra iniciarmos nossa parceria, pedi à nossa equipe de Growth e Customer Success para analisar detalhadamente a sua presença na nossa plataforma e preparamos um plano de ação para alavancar seus resultados.
+
+💚 *O que nós percebemos de muito bom:*
+[1 parágrafo elogiando as fortalezas dele]
+
+🛠️ *Onde acreditamos que pode melhorar:*
+[Dicas de marketing sobre a bio, foto, preço ou conversão do funil, INCLUINDO dicas baseadas nos Temas Mais Buscados se houver alinhamento]
+
+🚀 *Plano de Ação sugerido:*
+
+1. *[Ação 1]:* [Explicação]
+2. *[Ação 2]:* [Explicação]
+
+Estamos à disposição para transformar esses acessos em pacientes recorrentes. Vamos juntos?`;
+
+        // 5. Chamada direta ao Gemini (Usando a versão que já funciona no seoService)
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
+        
+        const result = await model.generateContent(promptGrowth);
+        const analysis = result.response.text();
 
         res.json({ message: analysis });
     } catch (error) {
         console.error("Erro em analyzeProfile:", error);
-        res.status(500).json({ error: 'Erro interno ao gerar análise.' });
+        res.status(500).json({ error: error.message || 'Erro interno ao gerar análise.' });
     }
 };

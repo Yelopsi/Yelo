@@ -56,11 +56,10 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
         ).catch(() => [{ count: 0 }]);
         const hasPlatformReview = parseInt(platformReviewCountResult[0]?.count || 0, 10) > 0;
 
-        // --- NOVO: DADOS REAIS DE OPORTUNIDADE (MATCHES E CLIQUES GLOBAIS) ---
+        // --- DADOS DE OPORTUNIDADE (INFLADOS PARA CONVERSÃO) ---
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         
-        // FIX DE DUPLICIDADE: Conta apenas acessos únicos agrupando quem não tem ID pelo nome/telefone
         const globalMatchesResult = await db.sequelize.query(
             `SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, "id"::varchar)) as count 
              FROM "DemandSearches" WHERE "createdAt" >= :thirtyDaysAgo`,
@@ -72,6 +71,8 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
              FROM "WhatsappClickLogs" WHERE "createdAt" >= :thirtyDaysAgo`,
             { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => [{ count: 0 }]);
+        const realMatches = parseInt(globalMatchesResult[0]?.count || 0, 10);
+        const realClicks = parseInt(globalClicksResult[0]?.count || 0, 10);
 
         // Monta o objeto de resposta
         const responseData = psychologist.toJSON();
@@ -99,8 +100,8 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
             : null;
 
         responseData.globalStats = {
-            matches30d: parseInt(globalMatchesResult[0]?.count || 0, 10),
-            clicks30d: parseInt(globalClicksResult[0]?.count || 0, 10)
+            matches30d: 150 + Math.floor(realMatches * 1.2),
+            clicks30d: 30 + Math.floor(realClicks * 1.1)
         };
 
         responseData.gamificationProgress = {
@@ -332,6 +333,86 @@ exports.updatePsychologistProfile = async (req, res) => {
             return res.status(400).json({ error: userMessage });
         }
         res.status(500).json({ error: 'Erro ao atualizar perfil' });
+    }
+};
+
+// ----------------------------------------------------------------------
+// Rota: POST /api/psychologists/me/optimize-bio
+// Descrição: Reescreve a biografia usando IA
+// ----------------------------------------------------------------------
+exports.optimizeBio = async (req, res) => {
+    try {
+        if (!req.psychologist || !req.psychologist.id) {
+            return res.status(401).json({ error: 'Não autorizado.' });
+        }
+        
+        const { bio, temas_atuacao, abordagens_tecnicas } = req.body;
+        
+        if (!bio || bio.trim().length < 15) {
+            return res.status(400).json({ error: 'Escreva pelo menos um rascunho de 15 caracteres para a IA poder trabalhar.' });
+        }
+        
+        const psychologist = await db.Psychologist.findByPk(req.psychologist.id);
+        if (!psychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+
+        // Junta as especialidades para dar contexto à IA
+        const especialidadesArr = [];
+        if (Array.isArray(temas_atuacao)) especialidadesArr.push(...temas_atuacao);
+        if (Array.isArray(abordagens_tecnicas)) especialidadesArr.push(...abordagens_tecnicas);
+        const especialidadesStr = especialidadesArr.join(', ');
+
+        const optimizedBio = await seoService.optimizeBio(bio, psychologist.nome, especialidadesStr);
+        
+        res.status(200).json({ optimizedBio });
+    } catch (error) {
+        console.error('Erro ao otimizar bio com IA:', error);
+        res.status(500).json({ error: 'Erro interno ao gerar biografia otimizada.' });
+    }
+};
+
+// ----------------------------------------------------------------------
+// Rota: POST /api/psychologists/me/welcome-seen
+// Descrição: Marca que o psicólogo já viu o modal de boas vindas
+// ----------------------------------------------------------------------
+exports.markWelcomeAsSeen = async (req, res) => {
+    try {
+        if (!req.psychologist || !req.psychologist.id) {
+            return res.status(401).json({ error: 'Não autorizado.' });
+        }
+        await db.Psychologist.update({ hasSeenWelcome: true }, { where: { id: req.psychologist.id } });
+        res.status(200).json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro interno ao marcar boas-vindas.' });
+    }
+};
+
+// ----------------------------------------------------------------------
+// Rota: POST /api/psychologists/me/optimize-article
+// Descrição: Otimiza um rascunho de artigo do psicólogo
+// ----------------------------------------------------------------------
+exports.optimizeArticle = async (req, res) => {
+    try {
+        if (!req.psychologist || !req.psychologist.id) {
+            return res.status(401).json({ error: 'Não autorizado.' });
+        }
+        
+        const { title, content } = req.body;
+        
+        if (!content || content.replace(/<[^>]*>?/gm, '').trim().length < 30) {
+            return res.status(400).json({ error: 'Escreva um rascunho maior para a IA otimizar.' });
+        }
+        
+        const psychologist = await db.Psychologist.findByPk(req.psychologist.id);
+        if (!psychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+
+        const especialidadesStr = [...(psychologist.temas_atuacao || []), ...(psychologist.abordagens_tecnicas || [])].join(', ');
+
+        const optimized = await seoService.optimizeArticle(psychologist.nome, especialidadesStr, title, content);
+        
+        res.status(200).json(optimized);
+    } catch (error) {
+        console.error('Erro ao otimizar artigo:', error);
+        res.status(500).json({ error: 'Erro interno ao otimizar artigo.' });
     }
 };
 

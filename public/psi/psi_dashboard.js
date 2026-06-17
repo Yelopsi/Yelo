@@ -706,11 +706,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (ok) {
             // --- NOVO: MODAL DE BOAS-VINDAS (PRIMEIRO ACESSO) ---
-            const welcomeKey = `Yelo_welcome_seen_${psychologistData.id}`;
-            if (!localStorage.getItem(welcomeKey)) {
-                // Grava imediatamente para garantir o primeiro acesso absoluto.
-                // Se o usuário recarregar a página sem clicar no botão, não verá o modal de novo.
-                localStorage.setItem(welcomeKey, 'true');
+            if (psychologistData.hasSeenWelcome === false) {
+                // Atualiza o estado local para não repetir na mesma sessão
+                psychologistData.hasSeenWelcome = true;
+                
+                // Salva no banco de dados para garantir que a flag persista entre celular e computador (Acesso Absoluto)
+                apiFetch(`${API_BASE_URL}/api/psychologists/me/welcome-seen`, { method: 'POST' }).catch(() => {});
                 
                 const welcomeModal = document.createElement('div');
                 welcomeModal.id = 'modal-boas-vindas-psi';

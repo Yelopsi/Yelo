@@ -88,6 +88,10 @@
             <h4 style="display: flex; align-items: center; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> VIPs</h4>
             <p class="kpi-numero" id="kpi-vip-psis" style="color: #d4af37;">0</p>
         </div>
+        <div class="kpi-card" style="border-top-color: #8b5cf6;">
+            <h4 style="display: flex; align-items: center; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg> Fila CS (IA)</h4>
+            <p class="kpi-numero" id="kpi-fila-cs" style="color: #8b5cf6;">0</p>
+        </div>
     </div>
 
     <div class="widget" style="margin-bottom: 25px;">
@@ -98,6 +102,7 @@
                 <button class="crm-pill" data-filter="pending">Pendentes</button>
                 <button class="crm-pill" data-filter="inactive">Inativos</button>
                 <button class="crm-pill" data-filter="vip">VIPs</button>
+                <button class="crm-pill" data-filter="not_analyzed">Fila CS ✨</button>
                 <button class="crm-pill" data-filter="deleted">Lixeira 🗑️</button>
             </div>
             <input type="hidden" id="crm-status-psi" value="">

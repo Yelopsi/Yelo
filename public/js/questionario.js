@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const questions = [
         { id: 'idade', question: "Para começarmos, qual a sua faixa etária?", type: 'choice', choices: ["Menor de 18 anos", "18-24 anos", "25-34 anos", "35-44 anos", "45-54 anos", "55+ anos"], required: true },
+        { id: 'responsavel_menor', question: "Você é o responsável legal por este paciente?", subtitle: "Atendimentos para menores de idade exigem o acompanhamento ou autorização de um responsável (pai, mãe ou tutor legal).", type: 'choice', choices: ["Sim, sou o responsável legal", "Não, sou o próprio menor"], required: true },
         { id: 'pref_genero_prof', question: "Você tem preferência pelo gênero do(a) profissional?", subtitle: "Sua segurança e conforto são a nossa prioridade.", type: 'choice', choices: ["Indiferente", "Masculino", "Feminino", "Não-binário"], required: true },
         { id: 'temas', question: "O que te motivou a procurar terapia agora?", subtitle: "Selecione os temas que você gostaria de explorar.", type: 'multiple-choice', scrollable: true, choices: ["Ansiedade ou Estresse", "Depressão ou Tristeza", "Relacionamentos", "Carreira e Trabalho", "Autoestima", "Luto ou Traumas", "Autoconhecimento", "Outro"], required: true },
         { id: 'caracteristicas_prof', question: "Existem características importantes para você no profissional?", subtitle: "A identidade de quem te escuta pode fazer diferença.", type: 'multiple-choice', choices: ["LGBTQIAPN+ Friendly 🏳️‍🌈", "Que faça parte da comunidade LGBTQIAPN+", "Pessoa não-branca ou com prática antirracista", "Que tenha uma perspectiva feminista", "Especialista em Neurodiversidade (TDAH, Autismo)", "Indiferente"], required: true },
@@ -310,12 +311,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (target.matches('.back-button')) {
                 let passoAnterior = currentStep - 1;
                 const cepStepIndex = questions.findIndex(q => q.id === 'cep');
+                const responsavelStepIndex = questions.findIndex(q => q.id === 'responsavel_menor');
+                const generoStepIndex = questions.findIndex(q => q.id === 'pref_genero_prof');
 
                 // Se estou no passo DEPOIS do CEP (ex: 'whatsapp')
                 if (currentStep === cepStepIndex + 1) {
                     const modalidade = userAnswers['modalidade_atendimento'];
                     if (modalidade === 'Online') {
                         passoAnterior = cepStepIndex - 1; // PULA o CEP e volta direto para Modalidade
+                    }
+                }
+                
+                // Se estou voltando da pergunta de Gênero, verifico se pulo o passo do Responsável
+                if (currentStep === generoStepIndex) {
+                    if (userAnswers['idade'] !== 'Menor de 18 anos') {
+                        passoAnterior = responsavelStepIndex - 1; // Volta direto para a pergunta de idade
                     }
                 }
                 goToSlide(passoAnterior); 
@@ -332,39 +342,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     target.classList.add('selected'); 
                     collectAnswer(); 
 
-                    // --- LÓGICA DE IDADE ---
-                    if (currentQuestion.id === 'idade' && target.dataset.value === 'Menor de 18 anos') {
-                        sessionStorage.setItem('Yelo_user_name', userAnswers.nome || ''); 
-                        
-                        // Dispara evento para o GA4
-                        try {
-                            if (typeof window.gtag === 'function') {
-                                window.gtag('event', 'desqualificado_idade');
-                            }
-                        } catch(e) {}
+                    let proximoPasso = currentStep + 1;
 
-                        // Avisa o backend para não contar como abandono
-                        if (currentSearchId) {
-                            fetch(`${BASE_URL}/api/tracking/disqualify`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ searchId: currentSearchId, reason: 'under_18' })
-                            }).catch(() => {});
+                    // --- LÓGICA CONDICIONAL DE IDADE E RESPONSÁVEL ---
+                    if (currentQuestion.id === 'idade') {
+                        if (target.dataset.value !== 'Menor de 18 anos') {
+                            const generoStepIndex = questions.findIndex(q => q.id === 'pref_genero_prof');
+                            proximoPasso = generoStepIndex; // Pula a tela do responsável se for adulto
                         }
+                    } else if (currentQuestion.id === 'responsavel_menor') {
+                        if (target.dataset.value === 'Não, sou o próprio menor') {
+                            sessionStorage.setItem('Yelo_user_name', userAnswers.nome || ''); 
+                            
+                            try { if (typeof window.gtag === 'function') window.gtag('event', 'desqualificado_idade'); } catch(e) {}
 
-                        setTimeout(() => { window.location.href = '/menor_de_idade'; }, 300);
-                    } else {
-                        let proximoPasso = currentStep + 1;
-                        if (currentQuestion.id === 'modalidade_atendimento') {
-                            const modalidade = userAnswers['modalidade_atendimento'];
-                            if (modalidade === 'Online') {
-                                const cepStepIndex = questions.findIndex(q => q.id === 'cep');
-                                proximoPasso = cepStepIndex + 1;
-                                userAnswers['cep'] = null; 
+                            if (currentSearchId) {
+                                fetch(`${BASE_URL}/api/tracking/disqualify`, {
+                                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ searchId: currentSearchId, reason: 'under_18' })
+                                }).catch(() => {});
+                            }
+
+                            setTimeout(() => { window.location.href = '/menor_de_idade'; }, 300);
+                            return; // Encerra a execução para não rolar slide
+                        }
+                    } else if (currentQuestion.id === 'modalidade_atendimento') {
+                        const modalidade = userAnswers['modalidade_atendimento'];
+                        if (modalidade === 'Online') {
+                            const cepStepIndex = questions.findIndex(q => q.id === 'cep');
+                            proximoPasso = cepStepIndex + 1;
+                            userAnswers['cep'] = null; 
                             }
                         }
                     setTimeout(() => goToSlide(proximoPasso), 450); /* Aumentado para ver a transição */
-                    } 
                 } 
             } 
             

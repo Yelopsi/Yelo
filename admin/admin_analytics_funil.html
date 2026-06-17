@@ -141,6 +141,14 @@
         .info-tooltip:hover::after, .info-tooltip:hover::before { transform: translateY(0); }
     }
 
+    /* FIX: Garante que o tooltip não fique escondido atrás de outros cards do grid */
+    .kpi-card {
+        position: relative;
+    }
+    .kpi-card:hover {
+        z-index: 100;
+    }
+
     @media (max-width: 768px) {
         .funnel-stage { flex-direction: column; align-items: flex-start; gap: 15px; }
         .funnel-metrics { text-align: left; display: flex; align-items: center; gap: 15px; width: 100%; justify-content: space-between; }
@@ -212,7 +220,7 @@
                     <span class="kpi-delta" id="taxa-completaram" style="color: #f59e0b;">0% dos iniciados</span>
                 </div>
                 <div class="kpi-card" style="border-top-color: #10b981;">
-                    <h4 style="display: flex; align-items: center; gap: 5px;">Pacientes Conquistados <span class="info-tooltip" data-tooltip="Pacientes que completaram o quiz e clicaram para chamar um profissional no WhatsApp.">i</span></h4>
+                    <h4 style="display: flex; align-items: center; gap: 5px;">Pacientes Conquistados <span class="info-tooltip" data-tooltip="Total de pacientes ÚNICOS que concluíram o funil. (Se um paciente chamar 3 psicólogos, ele conta como apenas 1 conversão final no funil).">i</span></h4>
                     <p class="kpi-numero" id="kpi-whatsapp">0</p>
                     <span class="kpi-delta" id="taxa-conclusao-final" style="color: #10b981;">0% do tráfego total</span>
                 </div>
@@ -288,19 +296,19 @@
     <div id="tab-conversoes" class="analytics-tab-content" style="display: none;">
         <div class="kpi-grid">
             <div class="kpi-card" style="border-top-color: #3498db;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Cliques no WhatsApp</h4>
+                <h4 style="display: flex; align-items: center; gap: 8px;">Cliques no WhatsApp <span class="info-tooltip" data-tooltip="Total BRUTO de cliques. Se 1 paciente chamar 3 psicólogos, gera 3 cliques aqui.">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-total-feedbacks" style="color: #3498db;">0</p>
             </div>
             <div class="kpi-card" style="border-top-color: #f59e0b;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Taxa de Resposta (Psi)</h4>
+                <h4 style="display: flex; align-items: center; gap: 8px;">Taxa de Resposta (Psi) <span class="info-tooltip" data-tooltip="Porcentagem de psicólogos que responderam à nossa pesquisa de feedback perguntando se o lead fechou negócio.">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-tx-resposta" style="color: #f59e0b;">0%</p>
             </div>
             <div class="kpi-card" style="border-top-color: var(--verde-sucesso);">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Contatos Realizados</h4>
+                <h4 style="display: flex; align-items: center; gap: 8px;">Contatos Realizados <span class="info-tooltip" data-tooltip="Quantidade de vezes que o psicólogo confirmou que a mensagem do paciente realmente chegou no WhatsApp dele.">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-recebidas" style="color: var(--verde-sucesso);">0</p>
             </div>
             <div class="kpi-card" style="border-top-color: #16a34a;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Negócios Fechados</h4>
+                <h4 style="display: flex; align-items: center; gap: 8px;">Negócios Fechados <span class="info-tooltip" data-tooltip="Quantidade de vezes que o psicólogo confirmou que o lead se tornou um paciente pagante na vida real.">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-fechados" style="color: #16a34a;">0</p>
             </div>
         </div>
@@ -324,19 +332,19 @@
     <div id="tab-ranking" class="analytics-tab-content" style="display: none;">
         <div class="kpi-grid">
             <div class="kpi-card" style="border-top-color: #8b5cf6;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Profissionais Listados</h4>
+                <h4 style="display: flex; align-items: center; gap: 8px;">Profissionais Listados <span class="info-tooltip" data-tooltip="Total de psicólogos cadastrados ativos competindo neste ranking.">i</span></h4>
                 <p class="kpi-numero" id="kpi-ranking-total" style="color: #8b5cf6;">0</p>
             </div>
             <div class="kpi-card" style="border-top-color: #f59e0b;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Aparições na Busca</h4>
+                <h4 style="display: flex; align-items: center; gap: 8px;">Aparições na Busca <span class="info-tooltip" data-tooltip="Soma de vezes que estes profissionais apareceram nos Top 3 do Match para os pacientes.">i</span></h4>
                 <p class="kpi-numero" id="kpi-ranking-busca" style="color: #f59e0b;">0</p>
             </div>
             <div class="kpi-card" style="border-top-color: #3b82f6;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Visitas Diretas</h4>
+                <h4 style="display: flex; align-items: center; gap: 8px;">Visitas Diretas <span class="info-tooltip" data-tooltip="Soma das visualizações de perfil através de links diretos, artigos de blog ou Google.">i</span></h4>
                 <p class="kpi-numero" id="kpi-ranking-diretas" style="color: #3b82f6;">0</p>
             </div>
             <div class="kpi-card" style="border-top-color: #16a34a;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Conversões (Wpp)</h4>
+                <h4 style="display: flex; align-items: center; gap: 8px;">Conversões (Wpp) <span class="info-tooltip" data-tooltip="Soma dos cliques no WhatsApp APENAS dos psicólogos listados neste ranking. Não contabiliza os cliques em contas que já foram excluídas/inativadas.">i</span></h4>
                 <p class="kpi-numero" id="kpi-ranking-wpp" style="color: #16a34a;">0</p>
             </div>
         </div>

@@ -243,7 +243,7 @@ exports.getAllPsychologists = async (req, res) => {
         const page = parseInt(req.query.page, 10) || 1;
         const limit = parseInt(req.query.limit, 10) || 10;
         const offset = (page - 1) * limit;
-        const { search, status, plano, isVip } = req.query;
+        const { search, status, plano, isVip, notAnalyzed } = req.query;
         const whereClause = {};
         let isParanoid = true; 
         if (search) {
@@ -263,6 +263,10 @@ exports.getAllPsychologists = async (req, res) => {
         }
         if (plano) whereClause.plano = plano;
         if (isVip === 'true') whereClause.is_exempt = true;
+        if (notAnalyzed === 'true') {
+            whereClause.isProfileAnalyzed = { [Op.ne]: true };
+            whereClause.status = { [Op.in]: ['active', 'pending'] }; // Foca nos reais
+        }
 
         const kpisQuery = `
             SELECT 
@@ -270,7 +274,8 @@ exports.getAllPsychologists = async (req, res) => {
                 COUNT(*) FILTER (WHERE status = 'active') as active,
                 COUNT(*) FILTER (WHERE status = 'pending') as pending,
                 COUNT(*) FILTER (WHERE status = 'inactive') as inactive,
-                COUNT(*) FILTER (WHERE is_exempt = true) as vip
+                COUNT(*) FILTER (WHERE is_exempt = true) as vip,
+                COUNT(*) FILTER (WHERE (status = 'active' OR status = 'pending') AND ("isProfileAnalyzed" IS NULL OR "isProfileAnalyzed" = false)) as fila_cs
             FROM "Psychologists"
             WHERE "deletedAt" IS NULL AND ("isAdmin" IS NULL OR "isAdmin" = false)
         `;
@@ -290,7 +295,7 @@ exports.getAllPsychologists = async (req, res) => {
             totalPages,
             currentPage: page,
             totalCount: count,
-            kpis: kpiResults || { total: 0, active: 0, pending: 0, inactive: 0, vip: 0 }
+            kpis: kpiResults || { total: 0, active: 0, pending: 0, inactive: 0, vip: 0, fila_cs: 0 }
         });
     } catch (error) {
         console.error('Erro ao buscar lista de psicólogos:', error);

@@ -458,6 +458,8 @@
             block.querySelector('.btn-edit').classList.add('hidden');
             block.querySelector('.btn-cancel').classList.remove('hidden');
             block.querySelector('.btn-save').classList.remove('hidden');
+            const btnOptimize = block.querySelector('#btn-optimize-bio');
+            if (btnOptimize) btnOptimize.style.display = 'inline-flex';
         }
 
         function exitEditMode(block) {
@@ -469,6 +471,8 @@
             block.querySelector('.btn-edit').classList.remove('hidden');
             block.querySelector('.btn-cancel').classList.add('hidden');
             block.querySelector('.btn-save').classList.add('hidden');
+            const btnOptimize = block.querySelector('#btn-optimize-bio');
+            if (btnOptimize) btnOptimize.style.display = 'none';
         }
 
         function cancelEditMode(block) {
@@ -702,6 +706,54 @@
         fetchPerformanceData();
     }
 
+    // --- LÓGICA DO BOTÃO DE OTIMIZAR BIO (Separada para clareza) ---
+    function setupOptimizeBioButton() {
+        const btnOptimizeBio = document.getElementById('btn-optimize-bio');
+        if (!btnOptimizeBio) return;
+
+        btnOptimizeBio.addEventListener('click', async () => {
+            const bioTextarea = document.getElementById('bio');
+            const currentBio = bioTextarea.value;
+
+            if (currentBio.trim().length < 15) {
+                showToast('Escreva pelo menos um rascunho para a IA otimizar.', 'error');
+                return;
+            }
+
+            const btnText = btnOptimizeBio.querySelector('.btn-text');
+            const spinner = btnOptimizeBio.querySelector('.spinner');
+
+            btnOptimizeBio.disabled = true;
+            if(btnText) btnText.textContent = 'Otimizando...';
+            if(spinner) spinner.classList.remove('hidden');
+
+            try {
+                const temas = document.getElementById('temas_atuacao')?.tomselect?.getValue();
+                const abordagens = document.getElementById('abordagens_tecnicas')?.tomselect?.getValue();
+
+                const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/optimize-bio`, {
+                    method: 'POST',
+                    body: JSON.stringify({ bio: currentBio, temas_atuacao: temas, abordagens_tecnicas: abordagens })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Falha ao otimizar a biografia.');
+
+                if (data.optimizedBio) {
+                    bioTextarea.value = data.optimizedBio;
+                    bioTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+                    showToast('Biografia otimizada com sucesso!', 'success');
+                }
+            } catch (error) {
+                showToast(error.message, 'error');
+            } finally {
+                btnOptimizeBio.disabled = false;
+                if(btnText) btnText.textContent = '✨ Otimizar com IA';
+                if(spinner) spinner.classList.add('hidden');
+            }
+        });
+    }
+
     // --- INICIALIZAÇÃO DA PÁGINA ---
     async function initPage() {
         const token = localStorage.getItem('Yelo_token');
@@ -714,6 +766,7 @@
             if (response.ok) {
                 psychologistData = await response.json();
                 if (window.inicializarLogicaDoPerfil) window.inicializarLogicaDoPerfil();
+                setupOptimizeBioButton(); // Inicializa o botão da IA
             } else {
                 throw new Error("Falha ao carregar dados do perfil.");
             }

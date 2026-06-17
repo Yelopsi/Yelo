@@ -90,9 +90,15 @@
                         <div id="editor-container" style="min-height: 150px; background: #fff; font-family: var(--font-principal); font-size: 1rem; border-radius: 0 0 12px 12px; border-color: #e0e0e0;"></div>
                     </div>
 
-                    <div class="form-actions modal-footer" style="justify-content: flex-end; margin-top: 20px; display: flex; align-items: center; width: 100%; gap: 10px;">
-                        <button type="button" id="btn-cancelar-artigo" class="btn btn-secundario" style="padding: 10px 20px; border-radius: 50px; font-size: 0.95rem;">Cancelar</button>
-                        <button type="submit" id="btn-salvar-artigo" class="btn btn-principal" style="padding: 10px 24px; border-radius: 50px; font-size: 0.95rem; box-shadow: 0 4px 15px rgba(27,67,50,0.2);">Publicar Artigo</button>
+                    <div class="form-actions modal-footer" style="justify-content: space-between; margin-top: 20px; display: flex; align-items: center; width: 100%; gap: 10px; flex-wrap: wrap;">
+                        <button type="button" id="btn-otimizar-artigo-ia" class="btn btn-sm" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; border-radius: 50px; padding: 10px 15px; cursor: pointer;">
+                            <span class="btn-text">✨ Otimizar Artigo (IA)</span>
+                            <span class="spinner hidden" style="width: 14px; height: 14px; border-width: 2px;"></span>
+                        </button>
+                        <div style="display: flex; gap: 10px; flex-grow: 1; justify-content: flex-end;">
+                            <button type="button" id="btn-cancelar-artigo" class="btn btn-secundario" style="padding: 10px 20px; border-radius: 50px; font-size: 0.95rem;">Cancelar</button>
+                            <button type="submit" id="btn-salvar-artigo" class="btn btn-principal" style="padding: 10px 24px; border-radius: 50px; font-size: 0.95rem; box-shadow: 0 4px 15px rgba(27,67,50,0.2);">Publicar Artigo</button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -126,3 +132,58 @@
         .btn-acao { flex: 1; padding: 12px; }
     }
 </style>
+
+<script>
+(function() {
+    const btnOtimizar = document.getElementById('btn-otimizar-artigo-ia');
+    if (btnOtimizar && !btnOtimizar.dataset.iaListenerAttached) {
+        btnOtimizar.dataset.iaListenerAttached = 'true';
+        btnOtimizar.addEventListener('click', async () => {
+            const titleInput = document.getElementById('blog-titulo');
+            const quillEditor = document.querySelector('#editor-container .ql-editor');
+            
+            const currentTitle = titleInput ? titleInput.value : '';
+            const currentContent = quillEditor ? quillEditor.innerHTML : '';
+            const textContent = quillEditor ? quillEditor.innerText.trim() : '';
+
+            if (textContent.length < 30) {
+                if(window.showToast) window.showToast('Escreva pelo menos um rascunho de artigo para a IA poder otimizar.', 'error');
+                return;
+            }
+
+            const btnText = btnOtimizar.querySelector('.btn-text');
+            const spinner = btnOtimizar.querySelector('.spinner');
+
+            btnOtimizar.disabled = true;
+            if(btnText) btnText.textContent = 'Otimizando...';
+            if(spinner) spinner.classList.remove('hidden');           
+
+            try {
+                const token = localStorage.getItem('Yelo_token');
+                const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001';
+                
+                const res = await fetch(`${API_BASE_URL}/api/psychologists/me/optimize-article`, {
+                     method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ title: currentTitle, content: currentContent })
+                });
+                
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Erro ao otimizar artigo.');
+                
+                if (titleInput && data.titulo) titleInput.value = data.titulo;
+                
+                if (quillEditor && data.conteudo) quillEditor.innerHTML = data.conteudo;
+
+                if(window.showToast) window.showToast('Artigo otimizado com sucesso!', 'success');
+            } catch(error) {
+                if(window.showToast) window.showToast(error.message, 'error');
+            } finally {
+                btnOtimizar.disabled = false;
+                if(btnText) btnText.textContent = '✨ Otimizar Artigo (IA)';
+                if(spinner) spinner.classList.add('hidden');
+            }
+        });
+    }
+})();
+</script>

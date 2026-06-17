@@ -12,6 +12,7 @@ window.initializePage = function() {
     let searchTimeout;
     let psisDataCache = [];
     let isVipFilterActive = false;
+    let isNotAnalyzedFilterActive = false;
 
     const drawerContent = drawerOverlay ? drawerOverlay.querySelector('.drawer-content') : null;
     const drawerHeader = drawerOverlay ? drawerOverlay.querySelector('.drawer-header-mobile') : null;
@@ -36,12 +37,17 @@ window.initializePage = function() {
             e.target.classList.add('active');
             
             const filterVal = e.target.dataset.filter;
+            
+            isVipFilterActive = false;
+            isNotAnalyzedFilterActive = false;
+            statusInput.value = '';
+
             if (filterVal === 'vip') {
-                statusInput.value = '';
                 isVipFilterActive = true;
+            } else if (filterVal === 'not_analyzed') {
+                isNotAnalyzedFilterActive = true;
             } else {
                 statusInput.value = filterVal;
-                isVipFilterActive = false;
             }
             fetchAndRenderPsis(1);
         });
@@ -90,7 +96,7 @@ window.initializePage = function() {
         const status = statusInput.value;
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/psychologists?page=${page}&search=${searchTerm}&status=${status}&isVip=${isVipFilterActive}`, {
+            const response = await fetch(`${API_BASE_URL}/api/admin/psychologists?page=${page}&search=${searchTerm}&status=${status}&isVip=${isVipFilterActive}&notAnalyzed=${isNotAnalyzedFilterActive}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Falha ao buscar dados.');
@@ -108,6 +114,7 @@ window.initializePage = function() {
                 setText('kpi-pendentes-psis', kpis.pending);
                 setText('kpi-inativos-psis', kpis.inactive);
                 setText('kpi-vip-psis', kpis.vip);
+                setText('kpi-fila-cs', kpis.fila_cs);
             }
         } catch (error) {
             tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--coral-quente);">Erro ao carregar dados.</td></tr>`;
@@ -315,6 +322,28 @@ window.initializePage = function() {
                 } else {
                     window.open(whatsappUrl, '_blank');
                 }
+                
+                // --- NOVO: Remove da Fila CS se clicou em WhatsApp ---
+                if (isNotAnalyzedFilterActive) {
+                    try {
+                        fetch(`${API_BASE_URL}/api/admin/psychologists/${psy.id}/analyzed`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+                        });
+                    } catch(e) {}
+                    
+                    const tr = document.getElementById(`name-psy-${psy.id}`)?.closest('tr');
+                    if (tr) {
+                        tr.style.transition = 'all 0.4s ease';
+                        tr.style.opacity = '0';
+                        setTimeout(() => tr.remove(), 400);
+                    }
+                    if (window.showToast) window.showToast("Contato iniciado! Removido da fila.", "success");
+                    
+                    // Fecha a gaveta (Visão 360) para não ficar vazia em cima
+                    const btnClose = document.getElementById('btn-close-cs-drawer');
+                    if(btnClose) btnClose.click();
+                }
             };
             actionsContainer.appendChild(btnZap);
         }
@@ -418,8 +447,8 @@ window.initializePage = function() {
                 throw new Error(data.error || "Erro na resposta");
             }
         } catch(e) {
-            if(window.showToast) window.showToast("Erro ao gerar análise", "error");
-            else alert("Erro ao gerar análise");
+            if(window.showToast) window.showToast(e.message || "Erro ao gerar análise", "error");
+            else alert(e.message || "Erro ao gerar análise");
             if(btn) { 
                 btn.disabled = false; 
                 btn.innerHTML = '✨ Análise de Perfil (IA)'; 

@@ -7,14 +7,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const grid = document.getElementById('results-grid');
     
     function createCard(profile) {
-        // Limita a 3 tags visuais no card
-        const displayTags = profile.tags.slice(0, 3);
-        let tagsHtml = displayTags.map(tag => `<span class="match-tag">${tag}</span>`).join('');
+        // NOVA LÓGICA: Usa os motivos gerados pela IA ou faz fallback para as antigas tags
+        const displayReasons = (profile.matchReasons && profile.matchReasons.length > 0) 
+            ? profile.matchReasons.slice(0, 3) 
+            : profile.tags.slice(0, 3);
         
-        // Se houver mais tags ocultas, avisa o usuário (ex: +2)
-        if (profile.tags.length > 3) {
-            tagsHtml += `<span class="match-tag" style="background: transparent; border: none; padding-left: 0; color: #888;">+${profile.tags.length - 3}</span>`;
-        }
+        let reasonsHtml = `<div class="match-tags" style="display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0;">` + 
+            displayReasons.map(reason => `
+                <span class="match-tag" style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 6px 14px; border-radius: 50px; font-size: 0.85rem; font-weight: 600; display: inline-block; line-height: 1.4; text-transform: none !important;">
+                    ${reason.charAt(0).toUpperCase() + reason.slice(1)}
+                </span>`).join('') + 
+        `</div>`;
 
         let precoHtml = '';
         const isMensal = profile.tipo_cobranca === 'mensal';
@@ -72,9 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h3 class="match-name">${profile.nome}</h3>
                     <span class="match-crp">CRP ${profile.crp}</span>
                     
-                    <div class="match-tags">
-                        ${tagsHtml}
-                    </div>
+                    ${reasonsHtml}
                     
                     <p class="match-bio">${profile.bio}</p>
                     
@@ -189,6 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 valor_mensal_numero: p.valor_mensal_numero,
                 bio: p.bio || "Sem biografia.",
                 slug: p.slug,
+                matchReasons: p.matchReasons || [], // Puxa os motivos da IA
                 tags: p.matchDetails || p.temas_atuacao || [],
                 score: p.matchScore || 90,
                 isFavorited: p.isFavorited || false,

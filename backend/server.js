@@ -199,6 +199,12 @@ const startServer = async () => {
             console.log('🛠️ [DB FIX] Injetando coluna isProfileAnalyzed na tabela Psychologists...');
             await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "isProfileAnalyzed" BOOLEAN DEFAULT false;');
 
+            console.log('🛠️ [DB FIX] Injetando coluna hasSeenWelcome na tabela Psychologists...');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "hasSeenWelcome" BOOLEAN DEFAULT false;');
+
+            console.log('🛠️ [DB FIX] Injetando coluna evaluationEmailSent na tabela Psychologists...');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "evaluationEmailSent" BOOLEAN DEFAULT false;');
+
             console.log('🛠️ [DB FIX] Injetando colunas faltantes na tabela Questions...');
             
             // Garante a criação estrutural das tabelas do fórum/comunidade caso não existam

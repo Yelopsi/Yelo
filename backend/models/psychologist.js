@@ -151,6 +151,16 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false
     },
+    // --- MODAL DE BOAS VINDAS ---
+    hasSeenWelcome: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    // --- MARCAÇÃO DE EMAIL DE AVALIAÇÃO ENVIADO ---
+    evaluationEmailSent: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     // --- ADICIONE ESTE BLOCO NOVO ---
     cancelAtPeriodEnd: {
         type: DataTypes.BOOLEAN,

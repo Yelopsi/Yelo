@@ -104,6 +104,13 @@ router.use(protect);
 router.get('/me', psychologistController.getAuthenticatedPsychologistProfile);
 router.put('/me', psychologistController.updatePsychologistProfile);
 
+// Rota para otimizar a bio com IA
+router.post('/me/optimize-bio', psychologistController.optimizeBio);
+router.post('/me/optimize-article', psychologistController.optimizeArticle);
+
+// Rota para marcar modal de boas-vindas como visto
+router.post('/me/welcome-seen', psychologistController.markWelcomeAsSeen);
+
 // Dados de Dashboards do Psicólogo
 router.get('/me/analytics', psiDashboardController.getAnalyticsData);
 

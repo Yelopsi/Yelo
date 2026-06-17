@@ -113,6 +113,117 @@ Bio: ${bio.substring(0, 1500)}
     }
 };
 
+exports.optimizeBio = async (currentBio, nome, especialidades) => {
+    try {
+        const genAI = getGenAI();
+        if (!genAI) throw new Error("Chave do Gemini não configurada.");
+        
+        const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
+        
+        const prompt = `Você é um copywriter especialista em marketing médico e saúde mental.
+Sua tarefa é reescrever o rascunho de biografia deste psicólogo para torná-la mais empática, atraente e focada em conversão de pacientes.
+
+Regras OBRIGATÓRIAS:
+1. Corrija qualquer erro gramatical.
+2. Comece com foco na dor do paciente ou no acolhimento (empatia), e só depois fale do currículo.
+3. Escreva em primeira pessoa ("Eu sou...").
+4. Divida em parágrafos curtos com uma quebra de linha entre eles (para facilitar a leitura no celular).
+5. NÃO invente formações acadêmicas ou promessas que não foram mencionadas.
+6. Mantenha o tom profissional, ético (de acordo com o CRP), porém caloroso.
+
+DADOS DO PROFISSIONAL:
+Nome: ${nome}
+Especialidades: ${especialidades || 'Psicologia Clínica'}
+Rascunho Atual: "${currentBio}"
+
+Retorne APENAS o texto final da nova biografia. Sem aspas, sem introduções como "Aqui está". Apenas o texto pronto para uso.`;
+
+        const result = await model.generateContent(prompt);
+        return result.response.text().trim();
+    } catch (error) {
+        console.error("❌ [SEO Service - Otimizar Bio] Erro:", error.message);
+        throw new Error("Não foi possível otimizar a bio no momento.");
+    }
+};
+
+exports.optimizeArticle = async (nome, especialidades, currentTitle, currentContent) => {
+    try {
+        const genAI = getGenAI();
+        if (!genAI) throw new Error("Chave do Gemini não configurada.");
+        
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-3.1-flash-lite",
+            generationConfig: { responseMimeType: "application/json" }
+        });
+        
+        const prompt = `Você é um copywriter e revisor experiente em marketing para a área da saúde.
+Sua tarefa é otimizar o artigo escrito pelo psicólogo ${nome} (especialidades: ${especialidades || 'Psicologia Clínica'}).
+
+O profissional já escreveu um rascunho. Você deve melhorar a coesão, corrigir erros gramaticais, melhorar o SEO e tornar a leitura mais envolvente para pacientes, mantendo o tom de voz profissional e ético.
+
+Rascunho do Título: "${currentTitle}"
+Rascunho do Conteúdo: "${currentContent}"
+
+Crie um JSON estrito com as chaves:
+1. "titulo": Título otimizado e atrativo (máximo 70 caracteres).
+2. "conteudo": Conteúdo otimizado em HTML (use as tags <p>, <strong>, <h3>, <ul> para estruturar bem o texto).
+
+Retorne APENAS o JSON estrito.`;
+
+        const result = await model.generateContent(prompt);
+        let rawText = result.response.text();
+        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error("JSON inválido");
+        
+        return JSON.parse(jsonMatch[0]);
+    } catch (error) {
+        console.error("❌ [SEO Service - Otimizar Artigo] Erro:", error.message);
+        throw new Error("Não foi possível otimizar o artigo no momento.");
+    }
+};
+
+exports.generateMatchCopy = async (patientPreferences, psychologists) => {
+    try {
+        const genAI = getGenAI();
+        if (!genAI) return null;
+        
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-3.1-flash-lite",
+            generationConfig: { responseMimeType: "application/json" }
+        });
+        
+        const patientContext = `Faixa de Valor: ${patientPreferences.faixa_valor || 'Não informada'}
+Temas buscados: ${(patientPreferences.temas || []).join(', ')}
+Gênero preferido: ${patientPreferences.pref_genero_prof || 'Indiferente'}
+Modalidade: ${patientPreferences.modalidade_atendimento || 'Indiferente'}`;
+
+        const psiContext = psychologists.map(p => `ID: ${p.id} | Nome: ${p.nome} | Especialidades: ${(p.temas_atuacao || []).join(', ')} | Modalidade: ${(p.modalidade || []).join(', ')}`).join('\n');
+
+        const prompt = `Aja como um "Matchmaker" empático de uma clínica de psicologia.
+Nós cruzamos o perfil de um paciente com 3 psicólogos ideais. Sua tarefa é criar EXATAMENTE 3 frases curtas (máximo 60 caracteres cada) por psicólogo, explicando diretamente ao paciente POR QUE este profissional é uma ótima escolha.
+As frases devem focar no acolhimento, nas dores do paciente e nos pontos fortes do psicólogo.
+Exemplos: "Especialista em Ansiedade, tema que você busca", "Atende Online, do jeito que você prefere", "Acolhimento humanizado e experiente".
+
+DADOS PACIENTE:
+${patientContext}
+
+PSICÓLOGOS SELECIONADOS:
+${psiContext}
+
+Retorne APENAS um JSON onde as chaves são os IDs dos psicólogos passados e os valores são arrays contendo as 3 frases curtas.`;
+
+        const result = await model.generateContent(prompt);
+        let rawText = result.response.text();
+        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) return null;
+        
+        return JSON.parse(jsonMatch[0]);
+    } catch (error) {
+        console.error("❌ [SEO Service - Match Copy] Erro:", error.message);
+        return null;
+    }
+};
+
 exports.generateQuestionSEO = async (questionTitle, questionContent, answerContent) => {
     try {
         const genAI = getGenAI();
