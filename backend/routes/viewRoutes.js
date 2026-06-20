@@ -301,7 +301,7 @@ router.get(['/admin/login', '/psi/login', '/patient/login'], (req, res) => res.r
 router.get('/sitemap.xml', async (req, res) => { /* Omitting full logic to save space, copy from original if preferred, or keep minimal */ });
 router.get('/robots.txt', (req, res) => {
     res.type('text/plain');
-    res.send(`User-agent: *\nDisallow: /api/\nDisallow: /admin/\nDisallow: /psi/\nDisallow: /patient/\nDisallow: /*?redirect=\nSitemap: https://www.yelopsi.com.br/sitemap.xml`);
+    res.send(`User-agent: *\nDisallow: /api/\nDisallow: /admin/\nDisallow: /psi/\nDisallow: /patient/\nSitemap: https://www.yelopsi.com.br/sitemap.xml`);
 });
 
 // --- ROTEAMENTO DINÂMICO (PERFIL PÚBLICO OU PÁGINAS ESTÁTICAS) ---
@@ -324,7 +324,7 @@ router.get('/:slug', async (req, res, next) => {
         });
 
         if (!psychologist) {
-            return res.status(404).render('404');
+            return res.status(410).render('404');
         }
 
         const hoje = new Date(); const validade = psychologist.planExpiresAt ? new Date(psychologist.planExpiresAt) : null;

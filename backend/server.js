@@ -86,6 +86,15 @@ app.use(visitMiddleware);
 // Trazidas para cima para evitar conflito com cache de arquivos estáticos
 app.get('/questionario', (req, res) => res.render('questionario'));
 app.get('/psi_questionario', (req, res) => res.render('psi_questionario'));
+
+// SEO Middleware (X-Robots-Tag): Impede a indexação de URLs com parâmetro 'redirect'
+app.use((req, res, next) => {
+    if (req.query && Object.keys(req.query).includes('redirect')) {
+        res.setHeader('X-Robots-Tag', 'noindex');
+    }
+    next();
+});
+
 // SEO Redirecionamento Global (301): Remove .html de qualquer URL (Evita conteúdo duplicado no Google)
 app.use((req, res, next) => {
     if (req.path.endsWith('.html')) {
