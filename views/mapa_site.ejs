@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title>Mapa do Site | Yelo - Psicólogos Online</title>
+    <meta name="description" content="Navegue pelo mapa do site da Yelo para encontrar nossos profissionais, dúvidas frequentes e serviços de terapia.">
+    <meta name="robots" content="index, follow">
+    <%- include('partials/head') %>
+    <style>
+        .mapa-site-container {
+            max-width: 800px;
+            margin: 100px auto;
+            padding: 40px 20px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .mapa-site-container h1 {
+            color: #1B4332;
+            font-family: var(--font-titulos);
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .mapa-section {
+            margin-bottom: 40px;
+        }
+        .mapa-section h2 {
+            color: #2D6A4F;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e8f5e9;
+            padding-bottom: 10px;
+        }
+        .mapa-lista {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .mapa-lista li a {
+            color: #555;
+            text-decoration: none;
+            font-size: 1.05rem;
+            transition: color 0.2s;
+            display: block;
+            padding: 8px 12px;
+            background: #fdfaf6;
+            border-radius: 6px;
+            border: 1px solid #f0eee9;
+        }
+        .mapa-lista li a:hover {
+            color: #1B4332;
+            background: #e8f5e9;
+            border-color: #c8e6c9;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <%- include('partials/header') %>
+
+    <main>
+        <section class="mapa-site-container">
+            <h1>Mapa do Site</h1>
+
+            <div class="mapa-section">
+                <h2>Páginas Institucionais</h2>
+                <ul class="mapa-lista">
+                    <li><a href="/">Início</a></li>
+                    <li><a href="/questionario">Match com Psicólogo</a></li>
+                    <li><a href="/comunidade">Pergunte a um Especialista</a></li>
+                    <li><a href="/blog">Blog e Artigos</a></li>
+                    <li><a href="/sobre_psis">Para Psicólogos (Plataforma)</a></li>
+                    <li><a href="/sobre">Sobre a Yelo</a></li>
+                    <li><a href="/faq">Dúvidas Frequentes (FAQ)</a></li>
+                    <li><a href="/contato">Contato</a></li>
+                </ul>
+            </div>
+
+            <div class="mapa-section">
+                <h2>Nossos Profissionais</h2>
+                <p style="color: #666; margin-bottom: 15px; font-size: 0.95rem;">Conheça nossa rede de especialistas parceiros.</p>
+                <ul class="mapa-lista">
+                    <% if (psicologos && psicologos.length > 0) { %>
+                        <% psicologos.forEach(psi => { %>
+                            <li>
+                                <a href="/<%= psi.slug %>" title="Ver perfil de <%= psi.nome %>"><%= psi.nome %></a>
+                            </li>
+                        <% }); %>
+                    <% } else { %>
+                        <li><span style="color:#999; font-style:italic;">Nenhum profissional listado no momento.</span></li>
+                    <% } %>
+                </ul>
+            </div>
+
+            <div class="mapa-section">
+                <h2>Termos e Políticas</h2>
+                <ul class="mapa-lista">
+                    <li><a href="/privacidade">Política de Privacidade</a></li>
+                    <li><a href="/termos">Termos de Uso</a></li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <%- include('partials/footer') %>
+
+</body>
+</html>

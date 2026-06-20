@@ -217,6 +217,28 @@ router.get('/privacidade', (req, res) => res.render('privacidade'));
 router.get('/termos', (req, res) => res.render('termos'));
 router.get('/contato', (req, res) => res.render('contato'));
 
+// --- MAPA DO SITE HTML (SEO) ---
+router.get('/mapa-do-site', async (req, res) => {
+    try {
+        const agora = new Date();
+        const psicologos = await db.Psychologist.findAll({
+            where: { status: 'active' },
+            attributes: ['nome', 'slug', 'is_exempt', 'planExpiresAt'],
+            order: [['nome', 'ASC']]
+        });
+
+        const ativos = psicologos.filter(psy => {
+            const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
+            return isVip || (psy.planExpiresAt && new Date(psy.planExpiresAt) > agora);
+        });
+
+        res.render('mapa_site', { psicologos: ativos });
+    } catch (error) {
+        console.error("Erro ao gerar mapa do site HTML:", error);
+        res.render('mapa_site', { psicologos: [] });
+    }
+});
+
 // --- LANDING PAGE GOOGLE ADS ---
 router.get('/terapia-online', async (req, res) => {
     try {
