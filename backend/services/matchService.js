@@ -23,12 +23,12 @@ const MAPA_CARACTERISTICAS = {
 };
 
 const parsePriceRange = (rangeString) => {
-    if (!rangeString || typeof rangeString !== 'string') return { min: 0, max: 9999 };
+    if (!rangeString || typeof rangeString !== 'string') return { min: 0, max: 99999 };
     if (rangeString.toLowerCase().includes('acima')) return { min: 150, max: 9999 }; // Corrige o teto ilimitado para pacientes premium
     const numbers = rangeString.match(/\d+/g);
     if (!numbers || numbers.length === 0) return { min: 0, max: 9999 };
     const min = parseInt(numbers[0], 10);
-    const max = numbers.length > 1 ? parseInt(numbers[1], 10) : min;
+    const max = numbers.length > 1 ? parseInt(numbers[1], 10) : (min === 0 ? 99999 : min);
     return { min, max };
 };
 
@@ -42,83 +42,35 @@ const getArrayField = (field) => {
 };
 
 const mapAgeToTarget = (idadeStr) => {
-    if (!idadeStr) return [];
+    if (!idadeStr || typeof idadeStr !== 'string') return [];
     if (idadeStr.includes("Menor de 18")) return ["Crianças", "Adolescentes"];
     if (idadeStr.includes("55+")) return ["Idosos", "Adultos"];
     return ["Adultos"];
 };
 
-// --- L1: DATABASE PRE-FILTER ---
-const fetchEligibleCandidates = async (preferences, priceRange, relaxFilters = false) => {
-    const agora = new Date();
-    
-    const prefMod = preferences.modalidade_preferida;
-    const requiresSpecificModality = prefMod && prefMod !== 'Indiferente' && prefMod !== 'Indiferente (Online ou Presencial)';
-
-    const whereConditions = { 
-        status: 'active',
-        fotoUrl: { [Op.ne]: null }, // Exige foto
-        [Op.and]: [
-            // Exige biografia com pelo menos 10 caracteres
-            db.sequelize.where(db.sequelize.fn('LENGTH', db.sequelize.fn('TRIM', db.sequelize.col('bio'))), { [Op.gte]: 10 }),
-            // Exige que seja VIP/Isento OU que o plano ainda não tenha vencido
-            {
-                [Op.or]: [
-                    { is_exempt: true },
-                    { planExpiresAt: { [Op.gt]: agora } }
-                ]
-            }
-        ]
-    };
-
-    // Ponto 4: Filtro de Modalidade movido para o Banco de Dados com Cast seguro (ILIKE)
-    if (requiresSpecificModality && !relaxFilters) {
-        whereConditions[Op.and].push({
-            [Op.or]: [
-                db.sequelize.where(db.sequelize.cast(db.sequelize.col('modalidade'), 'text'), { [Op.iLike]: `%${prefMod}%` }),
-                db.sequelize.where(db.sequelize.cast(db.sequelize.col('modalidade'), 'text'), { [Op.iLike]: `%Indiferente%` })
-            ]
-        });
-    }
-
-    // Busca Super Otimizada: O banco de dados faz todo o filtro pesado de eligibilidade
-    const eligibleCandidates = await db.Psychologist.findAll({
-        where: whereConditions,
-        attributes: [
-            'id', 'nome', 'crp', 'fotoUrl', 'bio', 'slug', 'status', 'is_exempt', 'planExpiresAt',
-            'temas_atuacao', 'publico_alvo', 'valor_sessao_numero', 
-            'praticas_inclusivas', 'praticas_vivencias', 'genero_identidade', 'modalidade',
-            'profile_appearances', 'whatsapp_clicks', 'last_shown_match_at', 'xp'
-        ]
-    });
-
-    const targetAges = mapAgeToTarget(preferences.idade_paciente);
-
-    return eligibleCandidates.filter(psy => {
-        if (relaxFilters) return true; // Fallback: ignora os bloqueios rígidos para garantir resultados
-
-        // 2. Hard Block: Público-Alvo (Idade do Paciente vs Atendimento do Psi)
-        if (targetAges.length > 0) {
-            const psiPublico = getArrayField(psy.publico_alvo);
-            if (psiPublico.length > 0 && !targetAges.some(age => psiPublico.includes(age))) return false;
-        }
-
-        // 3. Hard Block: Perigo Financeiro (Valor da sessão > 50% acima do teto do paciente)
-        const valorPsi = parseFloat(psy.valor_sessao_numero || 0);
-        if (valorPsi > 0 && valorPsi > priceRange.max * 1.5) return false;
-
-        return true;
-    });
-};
-
 // --- L2: SCORING CLINICO & OPERACIONAL ---
-const calculateSimilarity = (psy, preferences, priceRange) => {
+const calculateSimilarity = (psy, preferences = {}, priceRange) => {
+    try {
     let sClinical = 0;
     let sOp = 50;
     const explainability = { positives: [], negatives: [], neutral: [], penalties: [], absoluteBlock: false };
 
+    // --- REQUISITOS MÍNIMOS (AGORA COMO PENALIDADES) ---
+    const agora = new Date();
+    const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true';
+    const hasActivePlan = isVip || (psy.planExpiresAt && new Date(psy.planExpiresAt) > agora);
+    const hasPhoto = psy.fotoUrl && psy.fotoUrl.trim() !== '' && !psy.fotoUrl.includes('placehold.co');
+    const hasMinBio = psy.bio && psy.bio.trim().length >= 10;
+
+    // Se os requisitos mínimos não forem atendidos, a pontuação será drasticamente reduzida,
+    // garantindo que esses perfis só apareçam como último recurso.
+    if (!hasActivePlan) sOp -= 100;
+    if (!hasPhoto) sOp -= 50;
+    if (!hasMinBio) sOp -= 50;
+    // --- FIM DOS REQUISITOS MÍNIMOS ---
+
     const temasPsi = getArrayField(psy.temas_atuacao);
-    const temasBuscados = preferences.temas_buscados || [];
+    const temasBuscados = preferences.temas || []; // CORRIGIDO
     
     // 1. MATCH CLÍNICO
     const matches = temasBuscados.filter(t => temasPsi.includes(t));
@@ -133,7 +85,7 @@ const calculateSimilarity = (psy, preferences, priceRange) => {
     }
 
     // 1.2 MATCH DE GÊNERO
-    const prefGenero = preferences.genero_profissional;
+    const prefGenero = preferences.pref_genero_prof; // CORRIGIDO
     if (prefGenero && prefGenero !== 'Indiferente') {
         if (psy.genero_identidade === prefGenero) {
             sClinical += 15;
@@ -142,9 +94,9 @@ const calculateSimilarity = (psy, preferences, priceRange) => {
     }
 
     // 1.3 MATCH DE PRÁTICAS INCLUSIVAS / AFIRMATIVAS
-    const praticasDesejadas = preferences.praticas_desejadas || [];
+    const praticasDesejadas = preferences.caracteristicas_prof || []; // CORRIGIDO
     const praticasPsi = getArrayField(psy.praticas_inclusivas).concat(getArrayField(psy.praticas_vivencias));
-    if (praticasDesejadas.length > 0) {
+    if (praticasDesejadas.length > 0 && !praticasDesejadas.includes('Indiferente')) {
         let praticasAtendidas = 0;
         for (const pratica of praticasDesejadas) {
             const sinonimos = MAPA_CARACTERISTICAS[pratica] || [pratica];
@@ -159,7 +111,7 @@ const calculateSimilarity = (psy, preferences, priceRange) => {
     }
 
     // 2. MATCH OPERACIONAL E ORÇAMENTO
-    const prefMod = preferences.modalidade_preferida;
+    const prefMod = preferences.modalidade_atendimento; // CORRIGIDO
     if (prefMod && prefMod !== 'Indiferente' && prefMod !== 'Indiferente (Online ou Presencial)') {
         const psiMods = getArrayField(psy.modalidade);
         if (psiMods.includes(prefMod) || psiMods.includes('Indiferente')) {
@@ -175,18 +127,28 @@ const calculateSimilarity = (psy, preferences, priceRange) => {
         } else if (valorPsi < priceRange.min) {
             sOp += 20; 
         } else if (valorPsi > priceRange.max) {
-            sOp -= 20; // Penalidade suave. Se fosse > 50% mais caro, já teria sido cortado no Hard Block inicial.
+            sOp -= 20; // Penalidade suave. Ocorre apenas se o filtro rigoroso falhar (relaxFilters ativado na L3).
         }
     }
 
     const rawMatchScore = (Math.max(0, Math.min(100, sClinical)) * WEIGHTS.CLINICAL) + (Math.max(0, sOp) * WEIGHTS.OPERATIONAL);
     
+    // Se os requisitos mínimos não forem atendidos, limita a pontuação a um valor muito baixo.
+    if (!hasActivePlan || !hasPhoto || !hasMinBio) {
+        return { rawMatchScore: Math.min(5, rawMatchScore), explainability };
+    }
+
     return { rawMatchScore, explainability };
+    } catch (err) {
+        console.error("🔥 [MATCH ENGINE] Erro no calculateSimilarity:", err.message);
+        return { rawMatchScore: 10, explainability: { positives: [], negatives: [], neutral: [], penalties: [], absoluteBlock: false } };
+    }
 };
 
 // --- L3: FAIRNESS (MULTI-ARMED BANDIT - UCB) ---
 const applyFairness = (scoredCandidates, totalSystemImpressions) => {
     return scoredCandidates.map(c => {
+        try {
         // Cooldown Progressivo MVP: Penalidade máxima de 50% decaindo para 0% ao longo de 120 minutos
         // Isso força a plataforma a "girar a roleta" e mostrar psicólogos diferentes o dia todo
         const minutesSinceLastShown = c.last_shown_match_at ? (new Date() - new Date(c.last_shown_match_at)) / 60000 : 9999;
@@ -202,7 +164,7 @@ const applyFairness = (scoredCandidates, totalSystemImpressions) => {
         const ctr = clicks / impressions;
 
         // Bônus UCB para descoberta de novos talentos
-        const explorationBonus = WEIGHTS.UCB_EXPLORATION_RATE * Math.sqrt(Math.log(totalSystemImpressions || 10) / impressions);
+            const explorationBonus = WEIGHTS.UCB_EXPLORATION_RATE * Math.sqrt(Math.log(Math.max(2, totalSystemImpressions || 10)) / impressions);
         
         // --- BÔNUS MVP (ZERO TO ONE) ---
         // Se o profissional NUNCA recebeu um clique no WhatsApp, damos um bônus absurdo
@@ -212,35 +174,63 @@ const applyFairness = (scoredCandidates, totalSystemImpressions) => {
         // Calcula a pontuação final com as táticas de nivelamento
         let finalScore = (c.rawMatchScore * cooldownPenalty) + (ctr * 10) + Math.min(20, explorationBonus) + mvpBoost;
 
+            if (isNaN(finalScore) || finalScore < 0) finalScore = c.rawMatchScore || 1; // Fallback de segurança matemática absoluta
+
         return { ...c, finalScore };
+        } catch(e) {
+            console.error("🔥 [MATCH ENGINE] Erro no applyFairness:", e.message);
+            return { ...c, finalScore: c.rawMatchScore || 1 };
+        }
     });
 };
 
-exports.calculateMatches = async (preferences) => {
+exports.calculateMatches = async (preferences = {}) => {
+    // --- MODO DEBUG ---
+    const debugLog = [];
+    const startTime = Date.now();
+    debugLog.push(`\n======================================================================`);
+    debugLog.push(`🧩 [MATCH ENGINE V4 - DEBUG MODE] - ${new Date().toISOString()}`);
+    debugLog.push(`======================================================================`);
+    debugLog.push(`[0ms] ➡️  Iniciando novo match.`);
+    debugLog.push(`[0ms] 🎯 Preferências do Paciente: ${JSON.stringify(preferences)}`);
+    
+    console.log("\n=======================================================");
+    console.log("🧩 [MATCH ENGINE V4 - DEBUG MODE] INICIANDO NOVO MOTOR DE MATCH");
+    console.log("🧩 PREFERÊNCIAS DO PACIENTE:", JSON.stringify(preferences));
+    
     try {
-        // Ponto 3: Busca Total de Impressões com Cache de 5 minutos (Evita gargalo no banco)
         const now = Date.now();
         if (!cachedTotalImpressions || now - lastImpressionCacheTime > 5 * 60 * 1000) {
-            // Blindagem: Garante que o retorno é um número seguro para o Math.log do UCB
             cachedTotalImpressions = parseInt(await db.Psychologist.sum('profile_appearances').catch(() => 1000), 10) || 1000;
             lastImpressionCacheTime = now;
         }
         const totalSystemImpressions = cachedTotalImpressions;
+        const agora = new Date();
 
-        const priceRange = parsePriceRange(preferences.valor_sessao_faixa);
+        // --- MUDANÇA ESTRATÉGICA: BUSCA AMPLA E PENALIZAÇÃO NO SCORE ---
+        const baseWhereConditions = { status: { [Op.ne]: 'inactive' } };
 
-        let candidates = await fetchEligibleCandidates(preferences, priceRange, false);
-        
-        // --- FALLBACK DE SEGURANÇA (Plano B) ---
-        if (candidates.length < 3) {
-            candidates = await fetchEligibleCandidates(preferences, priceRange, true);
+        debugLog.push(`[${Date.now() - startTime}ms] 🔍 Buscando candidatos elegíveis no banco de dados...`);
+        const allEligiblePsychologists = await db.Psychologist.findAll({ where: baseWhereConditions });
+        debugLog.push(`[${Date.now() - startTime}ms] ✅ Encontrados ${allEligiblePsychologists.length} candidatos elegíveis.`);
+
+        if (allEligiblePsychologists.length === 0) {
+            debugLog.push(`[${Date.now() - startTime}ms] ❌ FIM DO MATCH: A base de dados não possui profissionais com assinatura ativa e perfil preenchido.`);
+            console.log(debugLog.join('\n'));
+            return { 
+                matchTier: 'none', 
+                compromiseText: 'Puxa! Não encontramos profissionais disponíveis em nossa plataforma no momento. Nossa base de especialistas cresce todos os dias, por favor, tente novamente mais tarde.',
+                results: [] 
+            };
         }
 
-        if (!candidates.length) return { matchTier: 'none', results: [] };
-
-        let scored = candidates.map(psy => {
+        const priceRange = parsePriceRange(preferences.faixa_valor);
+        debugLog.push(`[${Date.now() - startTime}ms] 💯 Calculando pontuação de similaridade para ${allEligiblePsychologists.length} candidatos...`);
+        
+        let scored = allEligiblePsychologists.map(psy => {
             const { rawMatchScore, explainability } = calculateSimilarity(psy, preferences, priceRange);
             const psyJSON = psy.toJSON ? psy.toJSON() : psy;
+            debugLog.push(`   - ID: ${psyJSON.id} | Nome: ${psyJSON.nome.substring(0,15)}... | Score Bruto: ${rawMatchScore.toFixed(2)}`);
             return { 
                 ...psyJSON, 
                 rawMatchScore, 
@@ -249,38 +239,56 @@ exports.calculateMatches = async (preferences) => {
             };
         });
 
-        let strictScored = scored.filter(c => c.rawMatchScore > 20);
-        if (strictScored.length < 3) {
-            scored = scored.sort((a, b) => (b.rawMatchScore || 0) - (a.rawMatchScore || 0)); 
-        } else {
-            scored = strictScored;
-        }
+        // --- REMOÇÃO DO FILTRO RÍGIDO ---
+        // O filtro `strictScored` foi removido. Agora, todos os candidatos elegíveis
+        // entram na fase de "fairness" e ordenação, garantindo que ninguém seja
+        // descartado prematuramente por uma pontuação baixa.
+        debugLog.push(`[${Date.now() - startTime}ms] 🗑️ Filtro de score bruto > 20 foi REMOVIDO. Todos os ${scored.length} candidatos seguem para a próxima fase.`);
 
-        // Aplica o UCB e o Anti-Monopólio
+        debugLog.push(`[${Date.now() - startTime}ms] ⚖️ Aplicando algoritmos de fairness (UCB, Cooldown, MVP Boost)...`);
         scored = applyFairness(scored, totalSystemImpressions);
 
-        // Ordenação Final Primária
         scored.sort((a, b) => (b.finalScore || 0) - (a.finalScore || 0));
+        debugLog.push(`[${Date.now() - startTime}ms] 📊 Candidatos ordenados por pontuação final (Top 10):`);
+        scored.slice(0, 10).forEach((c, i) => {
+            debugLog.push(`   ${i+1}. ID: ${c.id} | Nome: ${c.nome.substring(0,15)}... | Score Final: ${c.finalScore.toFixed(2)} (Bruto: ${c.rawMatchScore.toFixed(2)})`);
+        });
 
-        // WEIGHTED RANDOMIZATION (Roleta Viciada para Empates)
-        const topCandidates = scored.slice(0, 6); // Pega o Top 6 para sortear 3
+        const topCandidates = scored.slice(0, 6);
+        debugLog.push(`[${Date.now() - startTime}ms] 🎰 Selecionando ${topCandidates.length} melhores candidatos para o sorteio ponderado.`);
         const results = [];
         
-        while (results.length < 3 && topCandidates.length > 0) {
+        let loopCounter = 0;
+        while (results.length < 3 && topCandidates.length > 0 && loopCounter < 20) {
+            loopCounter++;
             const totalWeight = topCandidates.reduce((acc, val) => acc + Math.pow(val.finalScore || 1, 2), 0);
+            
+            if (isNaN(totalWeight) || totalWeight <= 0) {
+                results.push(topCandidates.shift());
+                continue;
+            }
+
             let randomPoint = Math.random() * totalWeight;
             
+            let selected = false;
             for (let i = 0; i < topCandidates.length; i++) {
                 randomPoint -= Math.pow(topCandidates[i].finalScore || 1, 2);
                 if (randomPoint <= 0) {
                     results.push(topCandidates[i]);
                     topCandidates.splice(i, 1);
+                    selected = true;
                     break;
                 }
             }
+            
+            if (!selected && topCandidates.length > 0) {
+                results.push(topCandidates.shift());
+            }
         }
 
-        // Fallback Masking para a UX
+        debugLog.push(`[${Date.now() - startTime}ms] ✅ Sorteio concluído! Retornando ${results.length} profissionais.`);
+        debugLog.push(`   - IDs Sorteados: ${results.map(r => r.id).join(', ')}`);
+
         let tier = 'ideal';
         let compromiseText = "";
         if (results.length > 0) {
@@ -302,7 +310,6 @@ exports.calculateMatches = async (preferences) => {
             });
         }
         
-        // --- GERANDO COPY COM IA (MATCH SEMÂNTICO) ---
         if (results.length > 0) {
             try {
                 const psiDataForAI = results.map(r => ({
@@ -312,9 +319,6 @@ exports.calculateMatches = async (preferences) => {
                     modalidade: r.modalidade
                 }));
                 
-                // ⏱️ TIMEOUT DE SEGURANÇA (Anti-Demora)
-                // Se o Google Gemini demorar mais de 1.8 segundos, abortamos a espera e usamos as tags padrão (fallback)
-                // Isso garante que o paciente NUNCA perca a paciência e feche a tela de carregamento.
                 const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 1800));
                 
                 const aiReasons = await Promise.race([
@@ -328,13 +332,17 @@ exports.calculateMatches = async (preferences) => {
                     });
                 }
             } catch (aiErr) {
-                console.error("⚠️ Fallback IA Match:", aiErr.message);
+                debugLog.push(`[${Date.now() - startTime}ms] ⚠️ Fallback da IA de Match: ${aiErr.message}`);
             }
         }
 
+        debugLog.push(`[${Date.now() - startTime}ms] 🏁 Match finalizado.`);
+        console.log(debugLog.join('\n'));
+        
         return { matchTier: tier, compromiseText, results };
     } catch (error) {
-        console.error("🔥 Erro fatal no calculateMatches:", error);
+        debugLog.push(`[${Date.now() - startTime}ms] 🔥 Erro fatal no calculateMatches: ${error.message}`);
+        console.error(debugLog.join('\n'), error);
         throw error;
     }
 };

@@ -37,6 +37,23 @@ window.initializePage = function() {
         'contato': 'Preenchimento do Contato (Fim)'
     };
 
+    // --- CORREÇÃO: TOOLTIPS NO MOBILE ---
+    // Dispositivos touch não lidam bem com o pseudo-elemento :hover.
+    // Isso garante que ao tocar no ícone "i", o tooltip abra e feche corretamente.
+    document.addEventListener('click', function(e) {
+        const isTooltip = e.target.closest('.info-tooltip');
+        
+        // Fecha todos os tooltips ativos quando o usuário clicar fora
+        document.querySelectorAll('.info-tooltip.active').forEach(tt => {
+            if (tt !== isTooltip) tt.classList.remove('active');
+        });
+
+        // Alterna o tooltip clicado (Tocar para abrir, tocar de novo para fechar)
+        if (isTooltip) {
+            isTooltip.classList.toggle('active');
+        }
+    });
+
     // --- TAB SWITCHING ---
     window.switchFunilTab = function(btn) {
         document.querySelectorAll('.content-tab-btn').forEach(b => b.classList.remove('active'));
@@ -75,7 +92,7 @@ window.initializePage = function() {
 
             const [res, resWpp, resRanking] = await Promise.all([
                 fetch(`${API_BASE_URL}/api/admin/analytics/funnel?${queryParams.toString()}`, { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch(`${API_BASE_URL}/api/admin/whatsapp-feedbacks`, { headers: { 'Authorization': `Bearer ${token}` } }),
+                fetch(`${API_BASE_URL}/api/admin/whatsapp-feedbacks?${queryParams.toString()}`, { headers: { 'Authorization': `Bearer ${token}` } }),
                 fetch(`${API_BASE_URL}/api/admin/analytics/ranking?${queryParams.toString()}`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
             ]);
 
@@ -120,8 +137,25 @@ window.initializePage = function() {
                 if (elWpp) elWpp.textContent = totalWpp.toLocaleString();
             }
 
+            // --- FUNÇÃO AUXILIAR PARA RENDERIZAR AS METAS VISUAIS ---
+            const renderGoalBar = (currentPct, goalPct, label) => {
+                const isGood = parseFloat(currentPct) >= goalPct;
+                const barColor = isGood ? '#10b981' : (parseFloat(currentPct) >= (goalPct * 0.6) ? '#f59e0b' : '#ef4444');
+                const pctFill = Math.min(100, (parseFloat(currentPct) / goalPct) * 100);
+                return `
+                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:5px;">
+                        <span style="font-weight:600; color:${barColor};">${currentPct}% ${label}</span>
+                        <span style="color:#64748b; font-size:0.75rem; font-weight: 600;">Meta: ${goalPct}%</span>
+                    </div>
+                    <div style="width:100%; background:#e2e8f0; height:6px; border-radius:4px; overflow:hidden;">
+                        <div style="width:${pctFill}%; height:100%; background:${barColor}; border-radius:4px; transition:width 0.5s ease-out;"></div>
+                    </div>
+                `;
+            };
+
             // --- 1. POPULA KPIs SUPERIORES ---
-            document.getElementById('kpi-visitas').textContent = data.visitas.toLocaleString();
+            const kpiVisitas = document.getElementById('kpi-visitas');
+            if (kpiVisitas) kpiVisitas.textContent = data.visitas.toLocaleString();
             
             const kpiIniciaram = document.getElementById('kpi-iniciaram');
             if(kpiIniciaram) kpiIniciaram.textContent = data.iniciaram.toLocaleString();
@@ -129,28 +163,43 @@ window.initializePage = function() {
             const kpiCompletaram = document.getElementById('kpi-completaram');
             if(kpiCompletaram) kpiCompletaram.textContent = data.completaram.toLocaleString();
 
-            document.getElementById('kpi-whatsapp').textContent = data.whatsappClicks.toLocaleString();
+            const kpiWhatsapp = document.getElementById('kpi-whatsapp');
+            if (kpiWhatsapp) kpiWhatsapp.textContent = data.whatsappClicks.toLocaleString();
             
             const kpiDesqualificados = document.getElementById('kpi-desqualificados');
             if(kpiDesqualificados) kpiDesqualificados.textContent = (data.desqualificados || 0).toLocaleString();
 
             const taxaInicio = data.visitas > 0 ? ((data.iniciaram / data.visitas) * 100).toFixed(1) : 0;
             const elTaxaInicio = document.getElementById('taxa-inicio');
-            if (elTaxaInicio) elTaxaInicio.textContent = `${taxaInicio}% das visitas`;
+            if (elTaxaInicio) elTaxaInicio.innerHTML = renderGoalBar(taxaInicio, 15, 'das visitas');
 
             const taxaCompletaram = data.iniciaram > 0 ? ((data.completaram / data.iniciaram) * 100).toFixed(1) : 0;
             const elTaxaCompletaram = document.getElementById('taxa-completaram');
-            if (elTaxaCompletaram) elTaxaCompletaram.textContent = `${taxaCompletaram}% dos iniciados`;
+            if (elTaxaCompletaram) elTaxaCompletaram.innerHTML = renderGoalBar(taxaCompletaram, 65, 'dos iniciados');
 
             const taxaGlobal = data.visitas > 0 ? ((data.whatsappClicks / data.visitas) * 100).toFixed(2) : 0;
-            document.getElementById('taxa-conclusao-final').textContent = `${taxaGlobal}% do tráfego total`;
+            const elTaxaGlobal = document.getElementById('taxa-conclusao-final');
+            if (elTaxaGlobal) elTaxaGlobal.innerHTML = renderGoalBar(taxaGlobal, 3, 'do tráfego');
 
             // --- CÁLCULO DINÂMICO DE CPA (Custo por Aquisição) ---
             const inputCpc = document.getElementById('input-cpc-medio');
             const calcularCPA = () => {
                 const cpc = parseFloat(inputCpc ? inputCpc.value : 1.50) || 1.50;
-                // CPA = (Total de Visitas * Custo por Clique) / Conversões Finais
-                const cpaEstimado = data.whatsappClicks > 0 ? ((data.visitas * cpc) / data.whatsappClicks).toFixed(2) : '--';
+                
+                // Isola apenas o tráfego pago para não punir o CPA com tráfego orgânico/direto
+                let visitasPagas = data.visitas;
+                if (data.origens && data.origens.length > 0) {
+                    const canaisPagos = data.origens.filter(o => {
+                        const src = (o.source || '').toLowerCase();
+                        return src.includes('ads') || src.includes('google') || src.includes('meta') || src.includes('fb') || src.includes('ig');
+                    });
+                    if (canaisPagos.length > 0) {
+                        visitasPagas = canaisPagos.reduce((acc, curr) => acc + parseInt(curr.count), 0);
+                    }
+                }
+                
+                // CPA = (Total de Visitas Pagas * Custo por Clique) / Conversões Finais
+                const cpaEstimado = data.whatsappClicks > 0 ? ((visitasPagas * cpc) / data.whatsappClicks).toFixed(2) : '--';
                 document.getElementById('kpi-cpa').textContent = cpaEstimado !== '--' ? `R$ ${cpaEstimado}` : 'R$ --';
             };
             
@@ -281,25 +330,25 @@ window.initializePage = function() {
                 
                 // Top Funnel Insight (Tráfego -> Início)
                 const tInicio = data.visitas > 0 ? (data.iniciaram / data.visitas) : 0;
-                if (tInicio < 0.25) {
-                    insightsHtml += `<div class="insight-item"><div class="insight-icon">⚠️</div><div class="insight-text"><h5>Baixa adesão na Landing Page</h5><p>Menos de 25% do seu tráfego inicia o questionário. Revise o copy da sua página principal e o apelo (Call-to-Action) dos seus anúncios.</p></div></div>`;
+                if (tInicio < 0.15) {
+                    insightsHtml += `<div class="insight-item"><div class="insight-icon">⚠️</div><div class="insight-text"><h5>Baixa adesão na Landing Page (${(tInicio * 100).toFixed(1)}%)</h5><p>Sua meta é 15% a 20%. O volume que inicia o questionário está baixo. Continue testando quebras de objeção financeira e chamadas para ação (CTAs) mais evidentes na primeira dobra do site.</p></div></div>`;
                 } else {
-                    insightsHtml += `<div class="insight-item"><div class="insight-icon">🔥</div><div class="insight-text"><h5>Landing Page Saudável</h5><p>O engajamento inicial está ótimo! As pessoas que chegam ao site estão se interessando pela proposta.</p></div></div>`;
+                    insightsHtml += `<div class="insight-item"><div class="insight-icon">🔥</div><div class="insight-text"><h5>Landing Page Saudável (${(tInicio * 100).toFixed(1)}%)</h5><p>O engajamento inicial atingiu ou superou a meta de 15%. As quebras de objeção estão funcionando!</p></div></div>`;
                 }
 
                 // Mid Funnel Insight (Início -> Fim Questionário)
                 const tFim = data.iniciaram > 0 ? (data.completaram / data.iniciaram) : 0;
-                if (tFim < 0.40) {
+                if (tFim < 0.65) {
                     const worstStep = (data.abandonos && data.abandonos[0]) ? (stepNames[data.abandonos[0].step] || data.abandonos[0].step) : 'no meio do formulário';
-                    insightsHtml += `<div class="insight-item"><div class="insight-icon">📉</div><div class="insight-text"><h5>Atrito no Questionário</h5><p>Muitas pessoas abandonam em: <strong>${worstStep}</strong>. Considere remover esta pergunta, torná-la opcional ou simplificar as opções de resposta.</p></div></div>`;
+                    insightsHtml += `<div class="insight-item"><div class="insight-icon">📉</div><div class="insight-text"><h5>Atrito no Questionário (${(tFim * 100).toFixed(1)}%)</h5><p>Sua meta é manter acima de 65%. Muitas pessoas abandonam em: <strong>${worstStep}</strong>. Avalie se as perguntas estão muito complexas ou se exigem muito esforço.</p></div></div>`;
                 }
 
                 // Bottom Funnel Insight (Fim Questionário -> Clique WhatsApp)
                 const tWhats = data.completaram > 0 ? (data.whatsappClicks / data.completaram) : 0;
-                if (tWhats < 0.15) {
-                    insightsHtml += `<div class="insight-item"><div class="insight-icon">👀</div><div class="insight-text"><h5>Falta de Conexão Final</h5><p>Eles completam o quiz, mas não chamam o psicólogo. Pode ser que os resultados sugeridos sejam caros demais ou as fotos dos perfis não estejam transmitindo confiança.</p></div></div>`;
-                } else if (tWhats > 0.3) {
-                    insightsHtml += `<div class="insight-item"><div class="insight-icon">💸</div><div class="insight-text"><h5>Excelente Conversão Final!</h5><p>Os psicólogos recomendados estão fazendo match perfeito com o público. Escale suas campanhas no Google Ads.</p></div></div>`;
+                if (tWhats < 0.35) {
+                    insightsHtml += `<div class="insight-item"><div class="insight-icon">👀</div><div class="insight-text"><h5>Falta de Conexão Final (${(tWhats * 100).toFixed(1)}%)</h5><p>Sua meta é 35% a 40%. Os pacientes vêm os matches, mas não clicam. Soluções possíveis: forçar os psicólogos a melhorarem fotos/bios, ou refinar a IA para explicar melhor o porquê daquele match.</p></div></div>`;
+                } else if (tWhats >= 0.35) {
+                    insightsHtml += `<div class="insight-item"><div class="insight-icon">💸</div><div class="insight-text"><h5>Excelente Conversão Final! (${(tWhats * 100).toFixed(1)}%)</h5><p>Você atingiu a meta de conversão final! O algoritmo de recomendação está fazendo um match perfeito com o público.</p></div></div>`;
                 }
 
                 insightsList.innerHTML = insightsHtml || '<p>Sem insights críticos no momento. Tudo operando dentro do esperado.</p>';
@@ -440,9 +489,11 @@ window.initializePage = function() {
                 }
             }
             
+            const safePsiId = f.psychologistId || (f.psychologist ? f.psychologist.id : '');
+            
             return `<tr>
                 <td data-label="Data do Clique" style="color: #666; font-size: 0.9rem;">${dataClique}</td>
-                <td data-label="Psicólogo"><strong style="color: var(--verde-escuro); cursor: pointer; text-decoration: underline;" onclick="openFunnelPsiDrawer('${f.psychologist ? f.psychologist.id : ''}')">${f.psychologist ? f.psychologist.nome : 'Psi Removido'}</strong></td>
+                <td data-label="Psicólogo"><strong style="color: var(--verde-escuro); cursor: pointer; text-decoration: underline;" onclick="openFunnelPsiDrawer('${safePsiId}')">${f.psychologist ? f.psychologist.nome : 'Psi Removido'}</strong></td>
                 <td data-label="Paciente / Lead">${f.guestName || 'Visitante'}</td>
                 <td data-label="Recebeu Mensagem?" style="text-align: center;">${contato}</td>
                 <td data-label="Fechou Negócio?" style="text-align: center;">${fechou}</td>

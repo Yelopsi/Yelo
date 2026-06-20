@@ -86,11 +86,11 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
 
         // --- AVISO DE QUALIDADE (PERFIL EM BRANCO) ---
         const hasPhoto = !!psychologist.fotoUrl;
-        const hasBio = !!(psychologist.bio && psychologist.bio.trim().length >= 10);
+        const hasBio = !!(psychologist.bio && psychologist.bio.trim().length >= 150);
         responseData.isProfileComplete = hasPhoto && hasBio;
         responseData.profileWarning = responseData.isProfileComplete 
             ? null 
-            : "⚠️ Atenção: Seu perfil não aparecerá nos Matches para os pacientes enquanto não tiver uma Foto de Perfil e uma Biografia. Complete seus dados para receber contatos.";
+            : "⚠️ Atenção: Seu perfil não aparecerá nos Matches para os pacientes enquanto não tiver uma Foto de Perfil e uma Biografia detalhada (mínimo 150 caracteres). Complete seus dados para receber contatos.";
 
         // --- NOVO: LÓGICA PARA O BANNER DE TRIAL PREMIUM (CPF) ---
         const hasValidCpf = !!(psychologist.cpf && psychologist.cpf.replace(/\D/g, '').length >= 11);
@@ -624,9 +624,12 @@ exports.getMyPatients = async (req, res) => {
  */
 exports.saveExitSurvey = async (req, res) => {
     try {
-        const { motivo, avaliacao, sugestao } = req.body;
+        const { motivo, avaliacao, sugestao, psiId } = req.body;
         // Tenta pegar o ID do psi logado (se o middleware de auth estiver ativo)
-        const psychologistId = req.user ? req.user.id : null; 
+        let psychologistId = null;
+        if (req.user && req.user.id) psychologistId = req.user.id;
+        else if (req.psychologist && req.psychologist.id) psychologistId = req.psychologist.id;
+        else if (psiId) psychologistId = psiId; // Fallback para a página pública
 
         await db.sequelize.query(`
             INSERT INTO "ExitSurveys" ("psychologistId", "motivo", "avaliacao", "sugestao", "createdAt", "updatedAt")
@@ -640,6 +643,29 @@ exports.saveExitSurvey = async (req, res) => {
             },
             type: db.sequelize.QueryTypes.INSERT
         });
+
+        // --- NOVO: NOTIFICA O ADMIN POR E-MAIL ---
+        try {
+            let psiName = 'Anônimo ou Desconhecido';
+            if (psychologistId) {
+                const psi = await db.Psychologist.findByPk(psychologistId, { attributes: ['nome'] });
+                if (psi) psiName = psi.nome;
+            }
+            
+            const emailService = require('../services/emailService');
+            const adminEmail = process.env.EMAIL_SUPPORT || 'oi@yelopsi.com.br';
+            const notifHtml = `
+                <h3 style="color: #1B4332;">🚨 Novo Feedback de Churn/Saída</h3>
+                <p><strong>Profissional:</strong> ${psiName} (ID: ${psychologistId || 'Não rastreado'})</p>
+                <p><strong>Nota:</strong> ${avaliacao ? avaliacao + ' estrelas' : 'Não informada'}</p>
+                <p><strong>Motivo Principal:</strong> ${motivo || 'Não informado'}</p>
+                <div style="background-color: #f3f4f6; padding: 15px; border-left: 4px solid #f59e0b; margin-top: 10px;">
+                    <strong>Mensagem/Sugestão:</strong><br/>
+                    ${sugestao ? sugestao.replace(/\n/g, '<br>') : '<em>Nenhum comentário adicional escrito.</em>'}
+                </div>
+            `;
+            await emailService.sendEmail(adminEmail, `Feedback Recebido (${psiName})`, notifHtml);
+        } catch (notifErr) { console.error("Erro ao notificar admin sobre feedback:", notifErr); }
 
         res.json({ message: "Feedback salvo." });
     } catch (error) {

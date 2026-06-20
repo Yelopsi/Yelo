@@ -133,12 +133,12 @@
         border: 6px solid transparent; border-top-color: #1f2937; opacity: 0; visibility: hidden;
         transition: all 0.2s ease; z-index: 100; margin-bottom: -11px;
     }
-    .info-tooltip:hover::after, .info-tooltip:hover::before { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+    .info-tooltip:hover::after, .info-tooltip:hover::before, .info-tooltip:active::after, .info-tooltip:active::before, .info-tooltip.active::after, .info-tooltip.active::before { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
     
     @media (max-width: 768px) {
         .info-tooltip::after { width: 180px; left: auto; right: -10px; transform: translateY(5px); }
         .info-tooltip::before { left: auto; right: 5px; transform: translateY(5px); }
-        .info-tooltip:hover::after, .info-tooltip:hover::before { transform: translateY(0); }
+        .info-tooltip:hover::after, .info-tooltip:hover::before, .info-tooltip:active::after, .info-tooltip:active::before, .info-tooltip.active::after, .info-tooltip.active::before { transform: translateY(0); }
     }
 
     /* FIX: Garante que o tooltip não fique escondido atrás de outros cards do grid */
@@ -212,17 +212,17 @@
                 <div class="kpi-card" style="border-top-color: #8b5cf6;">
                     <h4 style="display: flex; align-items: center; gap: 5px;">Iniciaram Questionário <span class="info-tooltip" data-tooltip="Quantidade de vezes que o questionário foi iniciado (clicaram em começar).">i</span></h4>
                     <p class="kpi-numero" id="kpi-iniciaram">0</p>
-                    <span class="kpi-delta" id="taxa-inicio" style="color: #8b5cf6;">0% das visitas</span>
+                    <div id="taxa-inicio" style="width: 100%; margin-top: 12px;"></div>
                 </div>
                 <div class="kpi-card" style="border-top-color: #f59e0b;">
                     <h4 style="display: flex; align-items: center; gap: 5px;">Chegaram aos Resultados <span class="info-tooltip" data-tooltip="Quantidade de vezes que um questionário foi finalizado e os pacientes viram seus matches.">i</span></h4>
                     <p class="kpi-numero" id="kpi-completaram">0</p>
-                    <span class="kpi-delta" id="taxa-completaram" style="color: #f59e0b;">0% dos iniciados</span>
+                    <div id="taxa-completaram" style="width: 100%; margin-top: 12px;"></div>
                 </div>
                 <div class="kpi-card" style="border-top-color: #10b981;">
                     <h4 style="display: flex; align-items: center; gap: 5px;">Pacientes Conquistados <span class="info-tooltip" data-tooltip="Total de pacientes ÚNICOS que concluíram o funil. (Se um paciente chamar 3 psicólogos, ele conta como apenas 1 conversão final no funil).">i</span></h4>
                     <p class="kpi-numero" id="kpi-whatsapp">0</p>
-                    <span class="kpi-delta" id="taxa-conclusao-final" style="color: #10b981;">0% do tráfego total</span>
+                    <div id="taxa-conclusao-final" style="width: 100%; margin-top: 12px;"></div>
                 </div>
                 <div class="kpi-card" style="border-top-color: #64748b;">
                     <h4 style="display: flex; align-items: center; justify-content: space-between;">

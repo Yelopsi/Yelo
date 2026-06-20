@@ -289,6 +289,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnAgendar.onclick = (e) => {
                     e.preventDefault(); // Evita a "Race Condition" bloqueando a saída imediata
                     
+                    // Dispara evento para o Google Analytics (GA4)
+                    try {
+                        if (typeof gtag === 'function') {
+                            gtag('event', 'clique_whatsapp', {
+                                'id_psi': psi.id,
+                                'nome_psi': psi.nome,
+                                'btn_id': btnId
+                            });
+                        }
+                    } catch(e) {}
+
                     // 1. Dispara tracking interno (Fire and Forget)
                     fetch(`${API_BASE_URL}/api/psychologists/${psi.slug}/whatsapp-click`, { method: 'POST' }).catch(() => {});
                     
@@ -604,11 +615,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedDraft) {
             try {
                 const { rating, comment } = JSON.parse(savedDraft);
-                const modalReview = document.getElementById('modal-review');
-                if (modalReview) modalReview.style.display = 'flex';
+                // Preenche os dados, mas NÃO abre o modal automaticamente para não ser intrusivo
                 if (comment) form.querySelector('textarea[name="comentario"]').value = comment;
                 if (rating) form.querySelector(`input[name="rating"][value="${rating}"]`).checked = true;
-                    } catch (e) { }
+            } catch (e) { }
         }
 
         form.onsubmit = async (e) => {

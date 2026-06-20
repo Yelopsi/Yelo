@@ -5,6 +5,7 @@ const { Op } = require('sequelize');
 const path = require('path');
 const fs = require('fs');
 const blogController = require('../controllers/blogController');
+const psychologistController = require('../controllers/psychologistController');
 const { verifyTokenLocal } = require('../middlewares/localAuth');
 
 // --- REDIRECIONAMENTOS SEO (Blindagem no Topo) ---
@@ -206,6 +207,10 @@ router.get('/gerador-bio', (req, res) => res.sendFile(path.join(__dirname, '../.
 router.get('/teste-terapia', (req, res) => res.sendFile(path.join(__dirname, '../../public/teste-terapia.html')));
 router.get('/roda-da-vida', (req, res) => res.sendFile(path.join(__dirname, '../../public/roda-da-vida.html')));
 router.get('/calculadora-psi', (req, res) => res.sendFile(path.join(__dirname, '../../public/calculadora-psi.html')));
+router.get('/feedback', (req, res) => res.sendFile(path.join(__dirname, '../../public/feedback.html')));
+
+// --- API PÚBLICA PARA FEEDBACK (SEM LOGIN) ---
+router.post('/api/public/feedback', psychologistController.saveExitSurvey);
 
 // --- PÁGINAS INSTITUCIONAIS (Mapeamento explícito para URLs limpas) ---
 router.get('/privacidade', (req, res) => res.render('privacidade'));

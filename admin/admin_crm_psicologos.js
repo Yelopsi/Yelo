@@ -294,6 +294,21 @@ window.initializePage = function() {
         };
         actionsContainer.appendChild(btnVip);
 
+        // 1.5. Ver Dossiê Completo
+        const btnDossie = document.createElement('button');
+        btnDossie.className = 'btn-tabela';
+        btnDossie.style.width = '100%'; btnDossie.style.justifyContent = 'center'; btnDossie.style.padding = '12px'; btnDossie.style.borderRadius = '50px';
+        btnDossie.style.background = '#f8fafc'; btnDossie.style.color = '#334155'; btnDossie.style.border = '1px solid #cbd5e1';
+        btnDossie.innerHTML = 'Ver Dossiê Completo 🗂️';
+        btnDossie.onclick = () => {
+            if (window.navigateToPage) {
+                window.navigateToPage(`admin_detalhes_psicologo.html?id=${psy.id}`);
+            } else {
+                window.location.href = `admin.html#admin_detalhes_psicologo.html?id=${psy.id}`; // Fallback, assume main admin router
+            }
+        };
+        actionsContainer.appendChild(btnDossie);
+
         // 2. Ver Perfil Público
         if (psy.slug) {
             const btnProfile = document.createElement('button');
@@ -312,11 +327,38 @@ window.initializePage = function() {
             btnZap.style.width = '100%'; btnZap.style.justifyContent = 'center'; btnZap.style.padding = '12px'; btnZap.style.borderRadius = '50px';
             btnZap.style.background = '#e0f2fe'; btnZap.style.color = '#0369a1'; btnZap.style.border = '1px solid #bae6fd';
             btnZap.innerHTML = 'Chamar no WhatsApp 📱';
-            btnZap.onclick = () => {
+            btnZap.onclick = async () => {
                 const tel = psy.telefone.replace(/\D/g, '');
                 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                const whatsappUrl = `https://wa.me/55${tel}`;
                 
+                let whatsappUrl = `https://wa.me/55${tel}`;
+                
+                if (psy.status === 'pending') {
+                    const copyMsg = `Olá, ${psy.nome}! Tudo bem? Aqui é o Anderson, da Yelo. 🌿\n\nVi que você deu o primeiro passo e iniciou o seu cadastro, mas acabou não finalizando o preenchimento do seu perfil. Como também sou da clínica, sei bem que a rotina de atendimentos acaba engolindo o nosso tempo, né? rs\n\nPassei só para te lembrar que os seus 14 dias de teste gratuito (sem precisar cadastrar cartão de crédito) só começam a contar *depois* que a sua página for para o ar! \n\nÉ a oportunidade perfeita para você testar na prática como a plataforma te conecta com pacientes direto no seu WhatsApp, lembrando que a gente não cobra nenhuma taxa ou comissão pelas suas sessões.\n\nFalta bem pouco para o seu perfil ficar ativo nas buscas. Se precisar de uma mãozinha para preencher a sua bio ou tiver qualquer dúvida, é só me dar um toque respondendo esta mensagem. Sigo super à disposição por aqui!`;
+                    
+                    const copyToClipboardFallback = (text) => {
+                        if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+                        return new Promise((resolve, reject) => {
+                            const textArea = document.createElement("textarea");
+                            textArea.value = text;
+                            textArea.style.position = "fixed"; textArea.style.left = "-999999px";
+                            document.body.appendChild(textArea);
+                            textArea.focus(); textArea.select();
+                            document.execCommand('copy') ? resolve() : reject();
+                            textArea.remove();
+                        });
+                    };
+
+                    try {
+                        await copyToClipboardFallback(copyMsg);
+                        if(window.showToast) window.showToast("Mensagem de perfil incompleto copiada!", "success");
+                    } catch(e) {
+                        console.log("Erro ao copiar", e);
+                    }
+                    
+                    whatsappUrl += `?text=${encodeURIComponent(copyMsg)}`;
+                }
+
                 if (isMobile) {
                     window.location.href = whatsappUrl; // Evita aba fantasma about:blank
                 } else {

@@ -187,6 +187,14 @@ exports.sendSubscriptionCancelledEmail = async (user) => {
     const content = `
         <p>Olá, <strong>${user.nome}</strong>,</p>
         <p>Sua assinatura foi cancelada com sucesso e seu perfil não aparecerá mais nas buscas. Se quiser voltar a expandir seus atendimentos, estamos de portas abertas.</p>
+        
+        <div style="background-color: #f3f4f6; padding: 15px; border-left: 4px solid #f59e0b; border-radius: 4px; color: #4b5563; font-size: 0.95em; margin: 20px 0;">
+            <strong>Como foi sua experiência?</strong><br>
+            Sua opinião é fundamental para a evolução da Yelo. Leva menos de 1 minuto para nos contar o motivo da sua pausa:
+            <br><br>
+            <a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/feedback?psiId=${user.id}" style="color: #b45309; font-weight: bold; text-decoration: underline;">👉 Deixar meu Feedback Rápido</a>
+        </div>
+        
         <center><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" class="btn">Reativar Assinatura</a></center>
     `;
     await sendEmail(user.email, 'Assinatura Cancelada - Yelo', getBaseTemplate(title, content));
@@ -277,7 +285,7 @@ exports.sendEvaluationEmail = async (user) => {
         <p>Notamos que o seu período na Yelo chegou ao fim recentemente. Nosso maior objetivo é construir uma plataforma que realmente faça a diferença na prática clínica dos profissionais de psicologia, e a sua opinião é a peça mais importante para nós.</p>
         <p>Gostaríamos muito de saber como foi a sua jornada conosco. O que funcionou bem? O que poderia ser melhor? Leva apenas um minutinho e nos ajuda a evoluir cada vez mais!</p>
         <center>
-            <a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" class="btn" style="background-color: #1B4332; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 50px; font-weight: bold; display: inline-block; margin-bottom: 20px;">Avaliar a Plataforma</a>
+            <a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/feedback?psiId=${user.id}" class="btn" style="background-color: #1B4332; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 50px; font-weight: bold; display: inline-block; margin-bottom: 20px;">Avaliar a Plataforma</a>
         </center>
         <div style="background-color: #f3f4f6; padding: 15px; border-left: 4px solid #1B4332; border-radius: 4px; color: #4b5563; font-size: 0.95em;">
             Seja para compartilhar um elogio, uma crítica construtiva ou uma sugestão de nova funcionalidade, nós estamos ouvindo.

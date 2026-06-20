@@ -85,7 +85,7 @@ window.PsiSidebar = (function() {
                     btnConfirmCrop.onclick = () => {
                         if (!cropper) return;
                         
-                        cropper.getCroppedCanvas({ width: 400, height: 400 }).toBlob(async (blob) => {
+                        cropper.getCroppedCanvas({ width: 1080, height: 1080 }).toBlob(async (blob) => {
                             if (!blob) return;
                             if (cropModal) cropModal.style.display = 'none';
                             
@@ -117,7 +117,7 @@ window.PsiSidebar = (function() {
                                 if (cropper) cropper.destroy();
                                 sidebarInput.value = '';
                             }
-                        }, 'image/jpeg', 0.9);
+                        }, 'image/jpeg', 0.95);
                     };
                 }
             }

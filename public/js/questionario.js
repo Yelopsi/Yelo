@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressBarFill = document.querySelector('.progress-bar-fill');
     const totalQuestions = questions.filter(q => !['welcome', 'final', 'error', 'thank-you', 'cep'].includes(q.type)).length; 
 
-    // =====================================================================
+// =====================================================================
     // FUNÇÃO finalize (CORRIGIDA: REMOVIDO BEACON, ADICIONADO FETCH SEGURO)
     // =====================================================================
     async function finalize() {
@@ -74,7 +74,14 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // Separa dados para salvar
             const { nome, ...demandAnswers } = userAnswers;
+
+            const utms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{}');
             
+            // Adiciona as UTMs capturadas da URL para aparecerem no gráfico de Canais de Aquisição
+            demandAnswers.utm_source = utms.utm_source;
+            demandAnswers.utm_medium = utms.utm_medium;
+            demandAnswers.utm_campaign = utms.utm_campaign;
+
             // [NOVO] Salva o telefone para usar no clique do WhatsApp (mesmo se não logar)
             if (nome) localStorage.setItem('yelo_guest_name', nome);
 
@@ -91,17 +98,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.QuestionarioService.trackMatchCompleted();
             }
 
-            // Delega a busca pesada para a página de resultados e redireciona sem atrasos
-            sessionStorage.setItem('pendingMatchAnswers', JSON.stringify(userAnswers));
-            sessionStorage.removeItem('matchResults');
+            // --- CHAMA O MOTOR DE MATCH AQUI ---
+            const matchResponse = await fetch(`${BASE_URL}/api/psychologists/match`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userAnswers),
+            });
+
+            if (!matchResponse.ok) throw new Error("A API retornou erro " + matchResponse.status);
+
+            const matchData = await matchResponse.json();
+
+            // Salva os resultados reais e redireciona
+            sessionStorage.setItem('matchResults', JSON.stringify(matchData));
             window.location.href = '/resultados';
 
         } catch (error) {
-            // Fallback de segurança: se der erro, vai para resultados mesmo assim
+            console.error("❌ Erro no finalize():", error);
+            
+            // Fallback de segurança: se der erro, vai para resultados vazio
             setTimeout(() => {
                 sessionStorage.setItem('matchResults', JSON.stringify({ matchTier: 'none', results: [] }));
                 window.location.href = '/resultados';
-            }, 100);
+            }, 2000);
         }
     }
     

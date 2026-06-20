@@ -135,13 +135,13 @@
         if (btnConfirmCrop) {
             btnConfirmCrop.onclick = () => {
                 if (!cropper) return;
-                cropper.getCroppedCanvas({ width: 400, height: 400 }).toBlob(async (blob) => {
+                cropper.getCroppedCanvas({ width: 1080, height: 1080 }).toBlob(async (blob) => {
                     if (!blob) return;
                     if (cropModal) cropModal.style.display = 'none';
                     const fd = new FormData(); fd.append('foto', blob, 'profile.jpg');
                     if (window.showToast) window.showToast('Enviando foto...', 'info');
                     try { const token = localStorage.getItem('Yelo_token'); const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : ''; const res = await fetch(`${API_BASE_URL}/api/admin/me/photo`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }, body: fd }); if (res.ok) { const d = await res.json(); const sidebarPhoto = document.getElementById('admin-sidebar-photo'); const mobilePhoto = document.getElementById('admin-mobile-photo'); if (sidebarPhoto) sidebarPhoto.src = d.fotoUrl; if (mobilePhoto) mobilePhoto.src = d.fotoUrl; if(window.showToast) window.showToast('Foto atualizada!', 'success'); } else { throw new Error('Erro ao enviar foto.'); } } catch (err) { if(window.showToast) window.showToast(err.message || 'Erro ao enviar foto.', 'error'); } finally { if (cropper) cropper.destroy(); if (photoInput) photoInput.value = ''; }
-                }, 'image/jpeg', 0.9);
+                }, 'image/jpeg', 0.95);
             };
         }
     };

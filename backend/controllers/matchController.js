@@ -35,20 +35,19 @@ exports.getPatientMatches = async (req, res) => {
             return res.status(401).json({ error: 'Paciente não autenticado.' });
         }
 
-        // Monta o objeto de preferências padrão baseado no perfil salvo do paciente
+        // --- CORREÇÃO: Normaliza as preferências do paciente para o formato esperado pelo motor de match ---
+        // O motor de match espera as mesmas chaves enviadas pelo questionário anônimo.
         const patientPreferences = {
-            valor_sessao_faixa: patient.valor_sessao_faixa,
-            temas_buscados: patient.temas_buscados || [],
-            estilo_desejado: patient.abordagem_desejada || [], 
-            genero_profissional: patient.genero_profissional,
-            praticas_desejadas: patient.praticas_afirmativas || [],
-            // Assumindo que salvamos idade no perfil do paciente, senão ignoramos
-            idade_paciente: patient.idade || '',
-            modalidade_preferida: patient.modalidade_preferida
+            faixa_valor: patient.valor_sessao_faixa,
+            temas: patient.temas_buscados || [],
+            pref_genero_prof: patient.genero_profissional,
+            caracteristicas_prof: patient.praticas_afirmativas || [],
+            idade: patient.idade || '',
+            modalidade_atendimento: patient.modalidade_preferida
         };
 
         // Validação rápida se o perfil está vazio
-        const hasData = patientPreferences.valor_sessao_faixa || patientPreferences.temas_buscados.length > 0;
+        const hasData = patientPreferences.faixa_valor || (patientPreferences.temas && patientPreferences.temas.length > 0);
         if (!hasData) {
             return res.status(200).json({
                 message: 'Por favor, preencha o questionário para encontrar psicólogos compatíveis.',
@@ -151,21 +150,11 @@ exports.getPatientMatches = async (req, res) => {
 // ----------------------------------------------------------------------
 exports.getAnonymousMatches = async (req, res) => {
     try {
-        const patientAnswers = req.body;
+        // As respostas do questionário (req.body) já vêm no formato que o motor de match espera.
+        // Não é necessário remapear as chaves.
+        const patientPreferences = req.body;
 
-        // Normalização dos dados vindos do Frontend (questionario.js)
-        // O front manda chaves ligeiramente diferentes do banco, normalizamos aqui.
-        const patientPreferences = {
-            valor_sessao_faixa: patientAnswers.faixa_valor,
-            temas_buscados: patientAnswers.temas || [],
-            estilo_desejado: patientAnswers.experiencia_desejada || [],
-            genero_profissional: patientAnswers.pref_genero_prof,
-            praticas_desejadas: patientAnswers.caracteristicas_prof || [],
-            idade_paciente: patientAnswers.idade,
-            modalidade_preferida: patientAnswers.modalidade_atendimento
-        };
-
-        if (!patientPreferences.valor_sessao_faixa) {
+        if (!patientPreferences.faixa_valor) {
              return res.status(400).json({ error: 'Faixa de valor é obrigatória.' });
         }
 

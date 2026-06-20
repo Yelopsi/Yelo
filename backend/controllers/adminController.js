@@ -433,8 +433,9 @@ exports.getPsiRanking = async (req, res) => {
 
         if (startDate && endDate) {
             dateFilter = `WHERE "createdAt" >= :startDate AND "createdAt" <= :endDate`;
-            replacements.startDate = `${startDate} 00:00:00`;
-            replacements.endDate = `${endDate} 23:59:59`;
+            // Ajuste para Timezone Brasília (UTC-3), resolvendo o vazamento de madrugadas
+            replacements.startDate = new Date(`${startDate}T00:00:00-03:00`).toISOString();
+            replacements.endDate = new Date(`${endDate}T23:59:59-03:00`).toISOString();
         }
 
         // 1. Busca Cliques do WhatsApp
@@ -465,13 +466,16 @@ exports.getPsiRanking = async (req, res) => {
 
         // 3. Busca todos os psicólogos cadastrados (ignorando admins)
         const psis = await db.Psychologist.findAll({
-            where: { isAdmin: { [Op.ne]: true } },
+            where: { 
+                isAdmin: { [Op.ne]: true },
+                status: 'active' // Limpa expostos, inativos, pendentes ou soft deletes
+            },
             attributes: ['id', 'nome', 'status'],
             raw: true
         });
 
         // 4. Mapeia e consolida os dados de cada um
-        const rankingMap = psis.filter(p => p.status !== 'deleted').map(psi => {
+        const rankingMap = psis.map(psi => {
             const clickRecord = clicksData.find(c => c.psychologistId === psi.id);
             const psiApps = appearancesData.filter(a => a.psychologistId === psi.id);
             
@@ -503,6 +507,60 @@ exports.deleteConversation = adminMessagesController.deleteConversation;
 exports.deletePatient = adminUsersController.deletePatient;
 exports.forceDeletePatient = adminUsersController.forceDeletePatient;
 exports.restorePatient = adminUsersController.restorePatient;
+
+/**
+ * Rota: GET /api/admin/patients/:id/360
+ * Descrição: Compila a linha do tempo (Dossiê) de um paciente
+ */
+exports.getPatient360 = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const patient = await db.Patient.findByPk(id, {
+            attributes: ['id', 'nome', 'email', 'telefone', 'createdAt', 'status']
+        });
+
+        if (!patient) return res.status(404).json({ error: 'Paciente não encontrado.' });
+
+        // Busca Histórico de Demandas (Questionários)
+        const demandas = await db.DemandSearch.findAll({
+            where: { patientId: id },
+            order: [['createdAt', 'DESC']]
+        }).catch(() => []);
+
+        // Busca Cliques no WhatsApp
+        const cliques = await db.WhatsAppClickLog.findAll({
+            where: { patientId: id },
+            include: [{ model: db.Psychologist, as: 'psychologist', attributes: ['nome'] }],
+            order: [['createdAt', 'DESC']]
+        }).catch(() => []);
+
+        // Compila a timeline
+        const timeline = [];
+        
+        timeline.push({ type: 'system', date: patient.createdAt, title: 'Conta Criada', description: 'Paciente se registrou na plataforma.' });
+
+        demandas.forEach(d => {
+            timeline.push({
+                type: d.status === 'completed' ? 'success' : 'warning',
+                date: d.createdAt,
+                title: d.status === 'completed' ? 'Questionário Finalizado' : 'Questionário Iniciado',
+                description: d.status === 'completed' ? 'Concluiu o funil e viu os matches.' : 'Abandonou o questionário.'
+            });
+        });
+
+        cliques.forEach(c => {
+            timeline.push({ type: 'success', date: c.createdAt, title: 'Contato Realizado', description: `Clicou no WhatsApp do profissional: ${c.psychologist ? c.psychologist.nome : 'Desconhecido'}` });
+        });
+
+        timeline.sort((a, b) => new Date(b.date) - new Date(a.date)); // Mais recente primeiro
+        res.json({ patient, timeline });
+
+    } catch (error) {
+        console.error("Erro no Dossiê 360 do Paciente:", error);
+        res.status(500).json({ error: 'Erro ao carregar o histórico.' });
+    }
+};
 
 exports.getInternalNotesForConversation = adminMessagesController.getInternalNotesForConversation;
 exports.addInternalNote = adminMessagesController.addInternalNote;

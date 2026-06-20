@@ -39,7 +39,7 @@ exports.getDashboardStats = async (req, res) => {
         const psychologistStatsQuery = `
             SELECT
                 COUNT(*) AS total,
-                COALESCE(COUNT(*) FILTER (WHERE "deletedAt" IS NULL AND status = 'active'), 0) as active,
+                COALESCE(COUNT(*) FILTER (WHERE "deletedAt" IS NULL AND status = 'active' AND (is_exempt = true OR "planExpiresAt" > NOW())), 0) as active,
                 COALESCE(COUNT(*) FILTER (WHERE "deletedAt" IS NOT NULL), 0) as deleted,
                 COALESCE(COUNT(*) FILTER (WHERE "createdAt" >= :thirtyDaysAgo AND "deletedAt" IS NULL), 0) as new30d
             FROM "Psychologists"
@@ -70,7 +70,11 @@ exports.getDashboardStats = async (req, res) => {
             db.Review.count({ where: { status: 'pending' } }).catch(() => 0),
             db.Psychologist.findAll({
                 attributes: ['plano', 'is_exempt', 'stripeSubscriptionId', 'subscriptionId'],
-                where: { status: 'active', plano: { [Op.ne]: null } }
+                where: { 
+                    status: 'active', 
+                    plano: { [Op.ne]: null },
+                    [Op.or]: [ { is_exempt: true }, { planExpiresAt: { [Op.gt]: new Date() } } ]
+                }
             }).catch(() => []),
             db.SystemLog.count({ where: { message: { [Op.iLike]: '%[EMAIL_FAIL]%' }, createdAt: { [Op.gte]: oneDayAgo } } }).catch(() => 0),
             db.sequelize.query(`SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, "guestName", "id"::varchar)) as count FROM "WhatsappClickLogs"`, { type: db.sequelize.QueryTypes.SELECT }).catch(e => { return [{ count: 0 }]; })
@@ -222,7 +226,14 @@ exports.getDetailedReports = async (req, res) => {
             db.Question.count({ where: { createdAt: { [Op.between]: [startDate, endDate] } } }),
             db.Question.count({ where: { status: 'answered', updatedAt: { [Op.between]: [startDate, endDate] } } }),
             db.Answer.count({ where: { createdAt: { [Op.between]: [startDate, endDate] } } }),
-            db.Psychologist.findAll({ where: { plano: { [Op.ne]: null }, status: 'active' }, attributes: ['plano', 'is_exempt', 'stripeSubscriptionId', 'subscriptionId'] }),
+            db.Psychologist.findAll({ 
+                where: { 
+                    plano: { [Op.ne]: null }, 
+                    status: 'active',
+                    [Op.or]: [ { is_exempt: true }, { planExpiresAt: { [Op.gt]: new Date() } } ]
+                }, 
+                attributes: ['plano', 'is_exempt', 'stripeSubscriptionId', 'subscriptionId'] 
+            }),
             db.Psychologist.count({ where: { status: 'inactive', updatedAt: { [Op.between]: [startDate, endDate] } } }),
             db.sequelize.query(`SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, "guestName", "id"::varchar)) as count FROM "WhatsappClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: startDate, end: endDate }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
             db.sequelize.query(`SELECT COUNT(*) as count FROM "SiteVisits" WHERE "createdAt" >= NOW() - INTERVAL '24 hours'`, { type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
@@ -715,8 +726,10 @@ exports.getFunnelAnalytics = async (req, res) => {
             { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => []);
 
+        // Busca origens a partir dos questionários preenchidos, em vez da tabela de pacientes
+        const jsonColUtm = 'CAST("searchParams" AS JSONB)';
         const origens = await db.sequelize.query(
-            `SELECT utm_source as source, COUNT(*) as count FROM "Patients" WHERE "createdAt" BETWEEN :start AND :end AND utm_source IS NOT NULL AND utm_source != '' GROUP BY utm_source ORDER BY count DESC`,
+            `SELECT ${jsonColUtm}->>'utm_source' as source, COUNT(*) as count FROM "DemandSearches" WHERE "createdAt" BETWEEN :start AND :end AND ${jsonColUtm}->>'utm_source' IS NOT NULL AND ${jsonColUtm}->>'utm_source' != '' GROUP BY source ORDER BY count DESC`,
             { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => []);
 
@@ -749,12 +762,27 @@ exports.getWhatsappFeedbacks = async (req, res) => {
     try {
         const db = require('../models');
         
+        const { Op } = require('sequelize');
+        const { startDate, endDate } = req.query;
+
+        const whereClause = {};
+        if (startDate && endDate) {
+            // Aplica o fuso horário correto (Brasília)
+            const start = new Date(`${startDate}T00:00:00-03:00`).toISOString();
+            const end = new Date(`${endDate}T23:59:59-03:00`).toISOString();
+            whereClause.createdAt = {
+                [Op.gte]: start,
+                [Op.lte]: end
+            };
+        }
+
         // Busca todos os logs de cliques, ordenando pelos mais recentes
         const feedbacks = await db.WhatsAppClickLog.findAll({
+            where: whereClause,
             include: [{
                 model: db.Psychologist,
                 as: 'psychologist', // Precisa bater com o alias definido no WhatsAppClickLog.js
-                attributes: ['nome', 'email', 'slug']
+                attributes: ['id', 'nome', 'email', 'slug'] // 'id' adicionado para permitir o clique no painel
             }],
             order: [['createdAt', 'DESC']]
         });

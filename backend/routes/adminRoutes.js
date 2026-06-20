@@ -76,6 +76,8 @@ router.delete('/psychologists/:id/force', adminController.forceDeletePsychologis
 
 // Rota para buscar todos os pacientes
 router.get('/patients', adminController.getAllPatients);
+// Rota para compilar o Dossiê 360º do paciente
+router.get('/patients/:id/360', adminController.getPatient360);
 // Rota para atualizar status do paciente (suspender/ativar)
 router.put('/patients/:id/status', adminController.updatePatientStatus);
 // Rota para deletar um paciente específico
