@@ -86,9 +86,15 @@ app.use(visitMiddleware);
 // Trazidas para cima para evitar conflito com cache de arquivos estáticos
 app.get('/questionario', (req, res) => res.render('questionario'));
 app.get('/psi_questionario', (req, res) => res.render('psi_questionario'));
-// Intercepta botões perdidos pelo site apontando para o arquivo antigo
-app.get('/questionario.html', (req, res) => res.redirect(301, '/questionario'));
-app.get('/psi_questionario.html', (req, res) => res.redirect(301, '/psi_questionario'));
+// SEO Redirecionamento Global (301): Remove .html de qualquer URL (Evita conteúdo duplicado no Google)
+app.use((req, res, next) => {
+    if (req.path.endsWith('.html')) {
+        const newPath = req.path.slice(0, -5); // Corta os últimos 5 caracteres (".html")
+        const query = req.url.slice(req.path.length); // Mantém parâmetros como ?redirect=algo
+        return res.redirect(301, newPath + query);
+    }
+    next();
+});
 
 // Rota SEO Dinâmica para a Página Única da Pergunta
 app.get('/perguntas/:slug', require('./controllers/qnaController').getQuestionBySlug);

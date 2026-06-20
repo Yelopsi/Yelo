@@ -249,13 +249,39 @@ exports.generateSitemap = async (req, res) => {
             { type: db.sequelize.QueryTypes.SELECT }
         );
 
+        // Busca os psicólogos ativos
+        const psyTable = db.Psychologist ? db.Psychologist.tableName : 'Psychologists';
+        let psychologists = [];
+        try {
+            psychologists = await db.sequelize.query(
+                `SELECT slug, "updatedAt" FROM "${psyTable}" 
+                 WHERE status = 'active' AND "deletedAt" IS NULL AND slug IS NOT NULL 
+                 AND (is_exempt = true OR is_exempt = 'true' OR is_exempt = '1' OR "planExpiresAt" > NOW())`,
+                { type: db.sequelize.QueryTypes.SELECT }
+            );
+        } catch(e) { console.error("Erro ao buscar psicólogos para o sitemap:", e.message); }
+
+        // Busca os posts do blog
+        const postTable = db.Post ? db.Post.tableName : 'Posts';
+        let posts = [];
+        try {
+            posts = await db.sequelize.query(
+                `SELECT id, "updatedAt" FROM "${postTable}"`,
+                { type: db.sequelize.QueryTypes.SELECT }
+            );
+        } catch(e) {
+            try {
+                posts = await db.sequelize.query(`SELECT id, "updatedAt" FROM "posts"`, { type: db.sequelize.QueryTypes.SELECT });
+            } catch(e2) { console.error("Erro ao buscar posts para o sitemap:", e2.message); }
+        }
+
         const frontendUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
 
         let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
         xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
         // Páginas estáticas principais
-        const staticPages = ['', '/comunidade', '/ajuda', '/contato', '/questionario'];
+        const staticPages = ['', '/comunidade', '/ajuda', '/contato', '/questionario', '/blog', '/sobre', '/sobre_psis', '/faq'];
         staticPages.forEach(page => {
             xml += `  <url>\n    <loc>${frontendUrl}${page}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
         });
@@ -263,6 +289,16 @@ exports.generateSitemap = async (req, res) => {
         // Páginas dinâmicas das perguntas
         questions.forEach(q => {
             xml += `  <url>\n    <loc>${frontendUrl}/perguntas/${q.slug}</loc>\n    <lastmod>${new Date(q.updatedAt).toISOString()}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
+        });
+
+        // Páginas de perfil dos Psicólogos
+        psychologists.forEach(p => {
+            xml += `  <url>\n    <loc>${frontendUrl}/${p.slug}</loc>\n    <lastmod>${new Date(p.updatedAt).toISOString()}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.9</priority>\n  </url>\n`;
+        });
+
+        // Páginas de Posts do Blog
+        posts.forEach(post => {
+            xml += `  <url>\n    <loc>${frontendUrl}/blog/post/${post.id}</loc>\n    <lastmod>${new Date(post.updatedAt).toISOString()}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
         });
 
         xml += '</urlset>';
