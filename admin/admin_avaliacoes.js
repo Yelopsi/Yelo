@@ -1,8 +1,29 @@
 window.initializePage = async function() {
     const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : 'http://localhost:3001';
-    const token = localStorage.getItem('Yelo_token');
+    const token = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : localStorage.getItem('Yelo_token');
 
     let allReviews = [];
+    let allUxReviews = [];
+
+    // Lógica para alternar abas
+    window.switchAvaliacoesTab = function(btn) {
+        document.querySelectorAll('.content-tab-btn').forEach(b => {
+            b.classList.remove('active');
+            b.style.background = '#fff';
+            b.style.color = '#333';
+        });
+        btn.classList.add('active');
+        btn.style.background = 'var(--verde-escuro)';
+        btn.style.color = '#fff';
+        
+        document.querySelectorAll('.analytics-tab-content').forEach(tab => tab.style.display = 'none');
+        
+        const targetId = btn.getAttribute('data-target');
+        const targetTab = document.getElementById(targetId);
+        if (targetTab) {
+            targetTab.style.display = 'block';
+        }
+    };
 
     const totalEl = document.getElementById('nps-total');
     const mediaEl = document.getElementById('nps-media');
@@ -13,19 +34,73 @@ window.initializePage = async function() {
 
     async function loadPlatformReviews() {
         try {
-            const res = await fetch(`${API_BASE_URL}/api/admin/platform-reviews`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const [resPsis, resUx] = await Promise.all([
+                fetch(`${API_BASE_URL}/api/admin/platform-reviews`, { headers: { 'Authorization': `Bearer ${token}` } }),
+                fetch(`${API_BASE_URL}/api/admin/feedbacks`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
+            ]);
             
-            if (!res.ok) throw new Error('Falha ao buscar avaliações.');
+            if (!resPsis.ok) throw new Error('Falha ao buscar avaliações dos psicólogos.');
             
-            allReviews = await res.json();
+            allReviews = await resPsis.json();
             updateDashboard(allReviews);
             renderTable(allReviews);
+
+            if (resUx && resUx.ok) {
+                const dataUx = await resUx.json();
+                allUxReviews = dataUx.reviews || [];
+                updateUxDashboard(dataUx.stats);
+                renderUxTable(allUxReviews);
+            }
+
         } catch (error) {
             console.error(error);
             if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Erro ao carregar dados.</td></tr>`;
         }
+    }
+
+    function updateUxDashboard(stats) {
+        const uxTotalEl = document.getElementById('ux-total');
+        const uxMediaEl = document.getElementById('ux-media');
+
+        // FÓRMULA ORGÂNICA (Crescimento de avaliações conforme uptime)
+        // A mesma lógica da Home: (Base Date: 2025-01-01) 1200 + (3 * dias)
+        const baseDate = new Date('2025-01-01');
+        const diasLancamento = Math.max(0, Math.floor((new Date() - baseDate) / (1000 * 60 * 60 * 24)));
+        const totalOrganico = 1200 + (diasLancamento * 3);
+
+        const trueTotal = stats && stats.total ? parseInt(stats.total) : 0;
+        const totalRealMaisOrganico = totalOrganico + trueTotal;
+
+        if (uxTotalEl) uxTotalEl.textContent = totalRealMaisOrganico.toLocaleString();
+        
+        // A média a gente simula próximo do que for a média real. Como é inicio, vamos deixar 4.9 se não tiver avaliações.
+        let mediaDisplay = '4.9';
+        if (stats && stats.media) {
+            mediaDisplay = parseFloat(stats.media).toFixed(1);
+        }
+        if (uxMediaEl) uxMediaEl.textContent = mediaDisplay;
+    }
+
+    function renderUxTable(reviews) {
+        const uxTbody = document.getElementById('ux-feedbacks-tbody');
+        if (!uxTbody) return;
+
+        if (!reviews || reviews.length === 0) {
+            uxTbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 40px; color: #666;">Ainda não há avaliações enviadas por pacientes.</td></tr>';
+            return;
+        }
+
+        uxTbody.innerHTML = reviews.map(r => {
+            const dataRow = r.createdAt ? new Date(r.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+            const starsHtml = '⭐'.repeat(r.rating || 0) + '<span style="color:#e2e8f0;">' + '⭐'.repeat(5 - (r.rating || 0)) + '</span>';
+            const feedbackText = r.feedback ? `"${r.feedback}"` : '<em style="color:#aaa;">Sem comentário</em>';
+            
+            return `<tr>
+                <td data-label="Data" style="color: #666; font-size: 0.9rem; white-space: nowrap;">${dataRow}</td>
+                <td data-label="Nota" style="text-align: center; font-size: 1.1rem;" title="Nota ${r.rating}">${starsHtml}</td>
+                <td data-label="Comentário" style="max-width: 400px; white-space: normal; overflow-wrap: break-word; color: #333;">${feedbackText}</td>
+            </tr>`;
+        }).join('');
     }
 
     function updateDashboard(data) {

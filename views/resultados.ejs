@@ -17,6 +17,53 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        /* Estilos do Modal de Avaliação (Exit-Intent) */
+        .feedback-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            z-index: 99999;
+            display: none; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .feedback-modal-overlay.active { opacity: 1; }
+        .feedback-modal-content {
+            background: white; padding: 40px 30px; border-radius: 24px;
+            width: 90%; max-width: 450px; text-align: center; position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            transform: translateY(20px); transition: transform 0.3s ease;
+        }
+        .feedback-modal-overlay.active .feedback-modal-content { transform: translateY(0); }
+        .feedback-stars { display: flex; justify-content: center; gap: 8px; margin: 20px 0; flex-direction: row-reverse; }
+        .feedback-stars input { display: none; }
+        .feedback-stars label { font-size: 2.8rem; color: #e0e0e0; cursor: pointer; transition: color 0.2s, transform 0.2s; }
+        .feedback-stars label:hover, .feedback-stars label:hover ~ label, .feedback-stars input:checked ~ label { color: #FFC107; transform: scale(1.1); }
+        .feedback-btn {
+            background: var(--verde-escuro); color: white; border: none;
+            padding: 15px 30px; border-radius: 50px; font-weight: bold; width: 100%;
+            cursor: pointer; margin-top: 15px; transition: opacity 0.2s; font-size: 1rem;
+        }
+        .feedback-btn:hover { opacity: 0.9; }
+        .feedback-close {
+            position: absolute; top: 15px; right: 20px; font-size: 2rem; line-height: 1;
+            color: #aaa; cursor: pointer; background: none; border: none; padding: 0; margin: 0; transition: color 0.2s;
+        }
+        .feedback-close:hover { color: #555; }
+
+        /* Comportamento Bottom-Sheet (Sobe de baixo) para Mobile */
+        @media (max-width: 768px) {
+            .feedback-modal-overlay { align-items: flex-end; }
+            .feedback-modal-content {
+                width: 100%; max-width: 100%; 
+                border-radius: 30px 30px 0 0; 
+                padding: 40px 25px 45px 25px; 
+                transform: translateY(100%); 
+                margin: 0; box-sizing: border-box;
+                padding-bottom: env(safe-area-inset-bottom, 40px); /* Previne corte do teclado/navegação no iOS */
+            }
+            .feedback-close { top: 20px; right: 25px; }
+        }
     </style>
 </head>
 
@@ -56,6 +103,27 @@
     </div>
 
     <%- include('partials/footer') %>
+
+    <!-- Modal de Avaliação Exit-Intent -->
+    <div id="exit-feedback-modal" class="feedback-modal-overlay">
+        <div class="feedback-modal-content">
+            <button id="close-feedback-btn" class="feedback-close">&times;</button>
+            <h3 style="color: var(--verde-escuro); font-size: 1.5rem; margin-bottom: 10px;">Como foi sua experiência?</h3>
+            <p style="color: #666; font-size: 0.95rem; margin-bottom: 10px;">Gostaríamos muito de saber o que você achou dos profissionais recomendados.</p>
+            
+            <div class="feedback-stars">
+                <input type="radio" id="star5" name="ux-rating" value="5"><label for="star5">★</label>
+                <input type="radio" id="star4" name="ux-rating" value="4"><label for="star4">★</label>
+                <input type="radio" id="star3" name="ux-rating" value="3"><label for="star3">★</label>
+                <input type="radio" id="star2" name="ux-rating" value="2"><label for="star2">★</label>
+                <input type="radio" id="star1" name="ux-rating" value="1"><label for="star1">★</label>
+            </div>
+
+            <textarea id="ux-feedback-text" placeholder="Tem alguma sugestão? (Opcional)" style="width: 100%; border: 1px solid #ddd; border-radius: 12px; padding: 12px; resize: none; height: 80px; font-family: inherit; font-size: 0.9rem; margin-bottom: 10px;"></textarea>
+            
+            <button id="submit-feedback-btn" class="feedback-btn">Enviar Avaliação</button>
+        </div>
+    </div>
 
     <!-- Container para notificações (Toast) -->
     <div id="toast-container"></div>

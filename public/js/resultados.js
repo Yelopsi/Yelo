@@ -284,4 +284,74 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(overlay);
         document.getElementById('btn-block-redirect').onclick = () => window.location.href = redirectUrl;
     }
+
+    // --- LÓGICA DO MODAL EXIT-INTENT (FEEDBACK) ---
+    const feedbackModal = document.getElementById('exit-feedback-modal');
+    if (feedbackModal) {
+        let hasShownFeedback = sessionStorage.getItem('yelo_feedback_shown') === 'true';
+        let ratingValue = 0;
+
+        const showFeedbackModal = () => {
+            if (hasShownFeedback) return;
+            hasShownFeedback = true;
+            sessionStorage.setItem('yelo_feedback_shown', 'true');
+            feedbackModal.style.display = 'flex';
+            // Pega o frame seguinte para garantir que a transição do CSS ocorra
+            requestAnimationFrame(() => feedbackModal.classList.add('active'));
+        };
+
+        const closeFeedbackModal = () => {
+            feedbackModal.classList.remove('active');
+            setTimeout(() => { feedbackModal.style.display = 'none'; }, 300);
+        };
+
+        // 1. Rastreamento Desktop (Mouse saiu para cima)
+        document.addEventListener('mouseleave', (e) => {
+            if (e.clientY < 5) showFeedbackModal();
+        });
+
+        // 2. Rastreamento Mobile (Fallback por tempo após 15 segundos)
+        setTimeout(() => {
+            showFeedbackModal();
+        }, 15000);
+
+        // UI Eventos
+        const closeBtn = document.getElementById('close-feedback-btn');
+        if(closeBtn) closeBtn.addEventListener('click', closeFeedbackModal);
+        
+        const stars = document.querySelectorAll('input[name="ux-rating"]');
+        stars.forEach(star => {
+            star.addEventListener('change', (e) => {
+                ratingValue = e.target.value;
+            });
+        });
+
+        const submitBtn = document.getElementById('submit-feedback-btn');
+        if(submitBtn) {
+            submitBtn.addEventListener('click', async () => {
+                if (ratingValue == 0) {
+                    showToast('Por favor, selecione uma nota de 1 a 5 estrelas.', 'error');
+                    return;
+                }
+                const feedbackText = document.getElementById('ux-feedback-text').value;
+                submitBtn.textContent = 'Enviando...';
+                submitBtn.disabled = true;
+
+                try {
+                    await fetch(`${BASE_URL}/api/demand/searches`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            searchId: sessionStorage.getItem('currentSearchId') || null,
+                            avaliacao_ux: { rating: ratingValue, feedback: feedbackText }
+                        })
+                    });
+                    closeFeedbackModal();
+                    showToast('Muito obrigado pelo seu feedback!', 'success');
+                } catch (err) {
+                    closeFeedbackModal();
+                }
+            });
+        }
+    }
 });

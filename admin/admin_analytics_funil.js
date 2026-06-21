@@ -502,6 +502,36 @@ window.initializePage = function() {
         }).join('');
     }
 
+    function renderUXFeedbacks(dataUx) {
+        const tbody = document.getElementById('ux-feedbacks-tbody');
+        const elTotal = document.getElementById('kpi-ux-total');
+        const elMedia = document.getElementById('kpi-ux-media');
+
+        if (elTotal) elTotal.innerText = dataUx.stats ? dataUx.stats.total : '0';
+        if (elMedia) elMedia.innerText = dataUx.stats ? parseFloat(dataUx.stats.media).toFixed(1) : '0.0';
+
+        if (!tbody) return;
+
+        const reviews = dataUx.reviews || [];
+        
+        if (reviews.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 40px; color: #666;">Nenhuma avaliação UX registrada até o momento.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = reviews.map(r => {
+            const dataRow = r.createdAt ? new Date(r.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+            const starsHtml = '⭐'.repeat(r.rating || 0) + '<span style="color:#e2e8f0;">' + '⭐'.repeat(5 - (r.rating || 0)) + '</span>';
+            const feedbackText = r.feedback ? `"${r.feedback}"` : '<em style="color:#aaa;">Sem comentário</em>';
+            
+            return `<tr>
+                <td data-label="Data" style="color: #666; font-size: 0.9rem; white-space: nowrap;">${dataRow}</td>
+                <td data-label="Nota" style="text-align: center; font-size: 1.1rem;" title="Nota ${r.rating}">${starsHtml}</td>
+                <td data-label="Comentário" style="max-width: 400px; white-space: normal; overflow-wrap: break-word; color: #333;">${feedbackText}</td>
+            </tr>`;
+        }).join('');
+    }
+
     // --- ORDENAÇÃO DO RANKING (FRONTEND) ---
     window.sortRanking = function(column) {
         if (!globalRankingData) return;

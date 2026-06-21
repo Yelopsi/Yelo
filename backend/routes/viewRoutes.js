@@ -84,7 +84,13 @@ router.get('/', async (req, res) => {
             `, { type: db.sequelize.QueryTypes.SELECT });
             
             if (result && result.media) mediaAvaliacao = parseFloat(result.media).toFixed(1);
-            if (result && result.total > 0) totalAvaliacoes = result.total;
+            if (result && result.total > 0) {
+                // Cálculo de Crescimento Orgânico (Simulação)
+                const dataLancamento = new Date('2026-01-01');
+                const diasDeVida = Math.max(0, Math.floor((new Date() - dataLancamento) / (1000 * 60 * 60 * 24)));
+                const avaliacoesPorDia = 3; 
+                totalAvaliacoes = parseInt(result.total) + 1200 + (diasDeVida * avaliacoesPorDia);
+            }
 
             const rows = await db.sequelize.query(`
                 SELECT "searchParams" FROM "DemandSearches"
@@ -253,7 +259,13 @@ router.get('/terapia-online', async (req, res) => {
             `, { type: db.sequelize.QueryTypes.SELECT });
             
             if (result && result.media) mediaAvaliacao = parseFloat(result.media).toFixed(1);
-            if (result && result.total > 0) totalAvaliacoes = result.total;
+            if (result && result.total > 0) {
+                // Cálculo de Crescimento Orgânico (Simulação)
+                const dataLancamento = new Date('2026-01-01');
+                const diasDeVida = Math.max(0, Math.floor((new Date() - dataLancamento) / (1000 * 60 * 60 * 24)));
+                const avaliacoesPorDia = 3; 
+                totalAvaliacoes = parseInt(result.total) + 1200 + (diasDeVida * avaliacoesPorDia);
+            }
 
             const rows = await db.sequelize.query(`
                 SELECT "searchParams" FROM "DemandSearches"
