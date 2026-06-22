@@ -168,6 +168,12 @@ router.put('/community-resources', adminCommunityController.updateCommunityResou
 // --- ROTA DE ESTATÍSTICAS PWA (NOVO) ---
 router.get('/stats/pwa', adminAnalyticsController.getPwaStats);
 
+// --- ROTA DO TERMÔMETRO DE ESCALA (TRÁFEGO) ---
+router.get('/termometro', adminAnalyticsController.getTermometroEscala);
+
+// --- ROTA DE AUDITORIA DE LEADS RECENTES ---
+router.get('/leads-recentes', adminAnalyticsController.getLeadsRecentes);
+
 // --- ROTA RÁPIDA: RAIO-X DO REMARKETING (FUNIL EM TEMPO REAL) ---
 router.get('/remarketing-status', adminAnalyticsController.getRemarketingStatus);
 

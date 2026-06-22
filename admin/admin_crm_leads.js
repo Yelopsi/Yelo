@@ -308,6 +308,48 @@ window.initializePage = function() {
         link.remove();
     };
 
+    window.exportarTodosLeadsCSV = async function() {
+        try {
+            if (window.showToast) window.showToast('Buscando toda a base de leads...', 'info');
+            
+            const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
+            const token = localStorage.getItem('Yelo_token');
+            const response = await fetch(`${BASE_URL}/api/admin/leads?filtro=todos`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Falha ao buscar todos os leads');
+            const result = await response.json();
+            const todosLeads = result.leads || [];
+
+            if (todosLeads.length === 0) {
+                alert("Nenhum lead encontrado na base.");
+                return;
+            }
+
+            let csvContent = "\uFEFFProfissional;Contato;Estágio;Origem\n";
+            todosLeads.forEach(lead => {
+                const nome = lead.nome ? lead.nome.replace(/;/g, '') : '';
+                const telefone = window.mascaraTelefoneLeads(lead.telefone) || '';
+                const status = lead.status_funil || '';
+                const origem = lead.origem_url ? lead.origem_url.replace(/;/g, '') : '';
+                csvContent += `"${nome}";"${telefone}";"${status}";"${origem}"\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.setAttribute("href", URL.createObjectURL(blob));
+            link.setAttribute("download", `yelo_todos_os_leads_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.error(error);
+            alert("Erro ao exportar todos os leads. Tente novamente.");
+        }
+    };
+
     window.iniciarRoboScraper = async function() {
         const btn = document.getElementById('btn-cacar-leads');
         if (!btn) return;

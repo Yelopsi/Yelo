@@ -96,3 +96,73 @@ exports.getRemarketingStatus = async (req, res) => {
         res.json({ resumo_envios_de_hoje: { total_cadastros_inativos: pendingPsis.length, recebem_passo_1_hoje: funnel.passo1_hoje.length, recebem_passo_2_hoje: funnel.passo2_hoje.length, recebem_passo_3_hoje: funnel.passo3_hoje.length, recebem_passo_4_hoje: funnel.passo4_hoje.length }, detalhes: funnel });
     } catch (error) { res.status(500).json({ error: "Erro ao gerar relatório" }); }
 };
+
+exports.getTermometroEscala = async (req, res) => {
+    try {
+        const query = `
+            SELECT p.id, COUNT(w.id) AS leads_recebidos
+            FROM "Psychologists" p
+            LEFT JOIN "WhatsAppClickLogs" w ON p.id = w."psychologistId" AND w."createdAt" >= CURRENT_DATE - INTERVAL '14 days'
+            WHERE p.status = 'active'
+            GROUP BY p.id;
+        `;
+        
+        const [results] = await db.sequelize.query(query);
+        
+        if (!results || results.length === 0) {
+            return res.json({ mediaLeads: 0, totalPsis: 0 });
+        }
+
+        const totalPsis = results.length;
+        const totalLeads = results.reduce((sum, row) => sum + parseInt(row.leads_recebidos || 0, 10), 0);
+        
+        const mediaLeads = totalPsis > 0 ? (totalLeads / totalPsis).toFixed(2) : 0;
+
+        res.json({ 
+            mediaLeads: parseFloat(mediaLeads),
+            totalPsis: totalPsis,
+            totalLeads14dias: totalLeads
+        });
+
+    } catch (error) {
+        console.error("Erro em getTermometroEscala:", error);
+        res.status(500).json({ error: "Erro ao calcular o termômetro de escala" });
+    }
+};
+
+exports.getLeadsRecentes = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        let dateCondition = `w."createdAt" >= CURRENT_DATE - INTERVAL '3 days'`;
+        
+        if (startDate && endDate) {
+            dateCondition = `w."createdAt" >= '${startDate} 00:00:00' AND w."createdAt" <= '${endDate} 23:59:59'`;
+        } else if (startDate) {
+            dateCondition = `w."createdAt" >= '${startDate} 00:00:00'`;
+        } else if (endDate) {
+            dateCondition = `w."createdAt" <= '${endDate} 23:59:59'`;
+        }
+
+        const query = `
+            SELECT 
+                p.nome,
+                p.status,
+                COUNT(w.id) AS leads_recentes
+            FROM 
+                "Psychologists" p
+            JOIN 
+                "WhatsAppClickLogs" w ON p.id = w."psychologistId" 
+                AND ${dateCondition}
+            GROUP BY 
+                p.id, p.nome, p.status
+            ORDER BY 
+                leads_recentes DESC;
+        `;
+        
+        const [results] = await db.sequelize.query(query);
+        res.json(results);
+    } catch (error) {
+        console.error("Erro em getLeadsRecentes:", error);
+        res.status(500).json({ error: "Erro ao buscar a auditoria de leads." });
+    }
+};
