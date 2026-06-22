@@ -55,6 +55,12 @@ document.addEventListener('DOMContentLoaded', () => {
         checkButton.textContent = 'Verificando...';
         checkButton.disabled = true;
         await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Dispara o evento de Conversão do Pixel da Meta
+        if (typeof fbq === 'function') {
+            fbq('track', 'CompleteRegistration');
+        }
+        
         goToSlide('slide-vaga-disponivel');
     }
 
