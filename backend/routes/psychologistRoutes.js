@@ -113,6 +113,7 @@ router.post('/me/welcome-seen', psychologistController.markWelcomeAsSeen);
 
 // Dados de Dashboards do Psicólogo
 router.get('/me/analytics', psiDashboardController.getAnalyticsData);
+router.post('/me/ai-insights', psiDashboardController.getAiInsights);
 
 router.get('/me/favorites-profile', (req, res) => res.json({ total: 0, temas: {}, faixaValor: {}, genero: {} }));
 router.get('/me/announcements', psiDashboardController.getAnnouncements);
