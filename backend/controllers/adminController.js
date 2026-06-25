@@ -77,7 +77,7 @@ exports.loginAdmin = async (req, res) => {
             try {
                 if (db.SystemLog) {
                     await db.SystemLog.create({
-                        level: 'warning',
+                        level: 'error',
                         message: `Falha de login Admin (Senha incorreta): ${email}`
                     });
                 }

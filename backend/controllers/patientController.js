@@ -237,7 +237,7 @@ exports.loginPatient = async (req, res) => {
             });
         } else {
             await db.SystemLog.create({
-                level: 'warning',
+                level: 'error',
                 message: `Falha de login Paciente (Credenciais inválidas): ${email}`
             });
             res.status(401).json({ error: 'Email ou senha inválidos.' });

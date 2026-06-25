@@ -22,7 +22,7 @@ router.post('/login-admin-check', async (req, res) => {
         const senhaValida = await bcrypt.compare(senha, adminUser.senha);
         if (!senhaValida) {
             try {
-                if (db.SystemLog) await db.SystemLog.create({ level: 'warning', message: `Falha de login (Senha incorreta): ${email}` });
+                if (db.SystemLog) await db.SystemLog.create({ level: 'error', message: `Falha de login (Senha incorreta): ${email}` });
             } catch(e) {}
             return res.status(401).json({ success: false, message: 'Senha de Admin incorreta' });
         }
