@@ -74,7 +74,7 @@ export default function Footer() {
             <View className="flex-row flex-wrap justify-center gap-x-6 gap-y-4">
               <TouchableOpacity onPress={() => router.push('/')}><Text className="font-sans text-[#adb5bd] text-[15px]">Início</Text></TouchableOpacity>
               <TouchableOpacity><Text className="font-sans text-[#adb5bd] text-[15px]">Sobre</Text></TouchableOpacity>
-              <TouchableOpacity><Text className="font-sans text-[#adb5bd] text-[15px]">Pergunte</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/perguntas')}><Text className="font-sans text-[#adb5bd] text-[15px]">Pergunte</Text></TouchableOpacity>
               <TouchableOpacity><Text className="font-sans text-[#adb5bd] text-[15px]">Para Profissionais</Text></TouchableOpacity>
               <TouchableOpacity onPress={() => router.push('/faq')}><Text className="font-sans text-[#adb5bd] text-[15px]">FAQ</Text></TouchableOpacity>
               <TouchableOpacity><Text className="font-sans text-[#adb5bd] text-[15px]">Blog</Text></TouchableOpacity>
