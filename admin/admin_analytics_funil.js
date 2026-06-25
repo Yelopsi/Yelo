@@ -802,6 +802,142 @@ window.initializePage = function() {
         });
     }
 
+    // --- LÓGICA DO TERMÔMETRO DE ESCALA (ADS) ---
+    const btnAnalisarEscala = document.getElementById('btn-analisar-escala');
+    if (btnAnalisarEscala) {
+        btnAnalisarEscala.addEventListener('click', async () => {
+            const cpaStr = document.getElementById('input-cpa').value;
+            if (!cpaStr) return alert("Digite o CPA Atual do Google!");
+            
+            const cpaAtual = parseFloat(cpaStr);
+            
+            // UI de carregamento
+            const originalText = btnAnalisarEscala.innerHTML;
+            btnAnalisarEscala.innerHTML = '<span class="loading-spinner-sm" style="width:14px; height:14px; margin-right:5px; border-width:2px; display:inline-block;"></span> Analisando...';
+            btnAnalisarEscala.disabled = true;
+
+            try {
+                const token = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : localStorage.getItem('Yelo_token');
+                const res = await fetch(`${API_BASE_URL}/api/admin/termometro`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!res.ok) throw new Error("Falha ao buscar dados do termômetro.");
+                
+                const data = await res.json();
+                const media = parseFloat(data.mediaLeads || 0);
+                
+                // Exibe contêiner
+                const resultBox = document.getElementById('termometro-result');
+                resultBox.style.display = 'block';
+                
+                const luz = document.getElementById('semaforo-luz');
+                const titulo = document.getElementById('semaforo-titulo');
+                const msg = document.getElementById('semaforo-msg');
+                
+                document.getElementById('semaforo-media').textContent = media.toFixed(2);
+                document.getElementById('semaforo-totalpsi').textContent = data.totalPsis || 0;
+
+                // LÓGICA DE NEGÓCIO (Sinal)
+                if (cpaAtual <= 35 && media < 2) {
+                    // SINAL VERDE
+                    resultBox.style.backgroundColor = '#ecfdf5';
+                    resultBox.style.borderColor = '#a7f3d0';
+                    luz.textContent = '🟢';
+                    titulo.textContent = 'Sinal Verde: Aumentar Verba';
+                    titulo.style.color = '#059669';
+                    msg.textContent = 'Acelere o tráfego. Profissionais ociosos e CPA barato.';
+                } else if (cpaAtual <= 45 && media >= 2 && media <= 4) {
+                    // SINAL AMARELO
+                    resultBox.style.backgroundColor = '#fefce8';
+                    resultBox.style.borderColor = '#fde047';
+                    luz.textContent = '🟡';
+                    titulo.textContent = 'Sinal Amarelo: Manter Verba';
+                    titulo.style.color = '#ca8a04';
+                    msg.textContent = 'Ecossistema equilibrado. Mantenha o orçamento.';
+                } else {
+                    // SINAL VERMELHO
+                    resultBox.style.backgroundColor = '#fef2f2';
+                    resultBox.style.borderColor = '#fecaca';
+                    luz.textContent = '🔴';
+                    titulo.textContent = 'Sinal Vermelho: Congelar / Reduzir';
+                    titulo.style.color = '#dc2626';
+                    msg.textContent = 'Atenção: Tráfego muito caro ou profissionais lotados de leads.';
+                }
+                
+            } catch(e) {
+                console.error(e);
+                alert("Erro ao analisar a escala.");
+            } finally {
+                btnAnalisarEscala.innerHTML = originalText;
+                btnAnalisarEscala.disabled = false;
+            }
+        });
+    }
+
+    // --- LÓGICA DA AUDITORIA DE LEADS RECENTES ---
+    const btnBuscarLeads = document.getElementById('btn-buscar-leads');
+    if (btnBuscarLeads) {
+        btnBuscarLeads.addEventListener('click', async () => {
+            const tbody = document.getElementById('auditoria-leads-tbody');
+            
+            // UI de carregamento
+            const originalText = btnBuscarLeads.innerHTML;
+            btnBuscarLeads.innerHTML = '<span class="loading-spinner-sm" style="width:14px; height:14px; margin-right:5px; border-width:2px; display:inline-block;"></span> Buscando...';
+            btnBuscarLeads.disabled = true;
+            
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 40px;"><span class="loading-spinner-sm" style="border-width: 3px; border-top-color: #1B4332;"></span></td></tr>';
+
+            try {
+                const startInputEl = document.getElementById('funil-start');
+                const endInputEl = document.getElementById('funil-end');
+                const queryParams = new URLSearchParams();
+                if (startInputEl && startInputEl.value) queryParams.append('startDate', startInputEl.value);
+                if (endInputEl && endInputEl.value) queryParams.append('endDate', endInputEl.value);
+
+                const token = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : localStorage.getItem('Yelo_token');
+                const res = await fetch(`${API_BASE_URL}/api/admin/leads-recentes?${queryParams.toString()}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!res.ok) throw new Error("Falha ao buscar dados de auditoria.");
+                
+                const leads = await res.json();
+                
+                if (!leads || leads.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 40px; color: #64748b;">Nenhum lead recebido no período selecionado.</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = leads.map(l => {
+                    let statusBadge = '<span style="background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">Desconhecido</span>';
+                    if (l.status === 'active') {
+                        statusBadge = '<span style="background: #ecfdf5; color: #10b981; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">Ativo</span>';
+                    } else if (l.status === 'pending') {
+                        statusBadge = '<span style="background: #fefce8; color: #ca8a04; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">Pendente</span>';
+                    } else if (l.status === 'inactive') {
+                        statusBadge = '<span style="background: #fef2f2; color: #ef4444; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">Inativo</span>';
+                    }
+
+                    return `
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 12px; font-weight: 500; color: #1e293b;">${l.nome}</td>
+                            <td style="padding: 12px;">${statusBadge}</td>
+                            <td style="padding: 12px; text-align: center; font-weight: bold; color: #6366f1;">${l.leads_recentes}</td>
+                        </tr>
+                    `;
+                }).join('');
+                
+            } catch(e) {
+                console.error(e);
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 40px; color: #ef4444;">Erro ao buscar dados. Tente novamente.</td></tr>';
+            } finally {
+                btnBuscarLeads.innerHTML = originalText;
+                btnBuscarLeads.disabled = false;
+            }
+        });
+    }
+
     // Executa assim que a view injetada carregar
     carregarDadosFunil();
 };

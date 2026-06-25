@@ -225,7 +225,7 @@ exports.loginPsychologist = async (req, res) => {
         
         if (!isMatch) {
             await db.SystemLog.create({
-                level: 'warning',
+                level: 'error',
                 message: `Falha de login (Senha incorreta): ${email}`
             });
             return res.status(401).json({ error: 'Senha incorreta.' });

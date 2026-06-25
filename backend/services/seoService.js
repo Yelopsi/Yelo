@@ -344,3 +344,83 @@ ${JSON.stringify(profileData, null, 2)}`;
         return "Erro ao gerar análise de perfil.";
     }
 };
+
+exports.generateDashboardInsights = async (stats, psychologistData) => {
+    try {
+        const genAI = getGenAI();
+        if (!genAI) return null;
+
+        const model = genAI.getGenerativeModel({
+            model: "gemini-3.1-flash-lite",
+            generationConfig: { responseMimeType: "application/json" }
+        });
+
+        let diasDePerfil = psychologistData.createdAt ? Math.floor((new Date() - new Date(psychologistData.createdAt)) / (1000 * 60 * 60 * 24)) : 30;
+
+        // Se o plano expira em breve (sinal de trial ativado recentemente), calculamos a idade real do perfil público
+        if (psychologistData.planExpiresAt) {
+            const expiraEm = new Date(psychologistData.planExpiresAt);
+            const diasParaExpirar = Math.ceil((expiraEm - new Date()) / (1000 * 60 * 60 * 24));
+            
+            // Se faltam entre 0 e 14 dias para expirar, significa que ele ativou o trial recentemente.
+            // Exemplo: se faltam 14 dias, o perfil foi ativado hoje (0 dias de vida).
+            if (diasParaExpirar >= 0 && diasParaExpirar <= 14) {
+                diasDePerfil = 14 - diasParaExpirar;
+            }
+        }
+
+        const prompt = `Você é um 'Consultor de Crescimento' (Growth Coach) amigável da comunidade Yelo.
+Sua missão é ajudar um psicólogo a conseguir mais pacientes ou aumentar sua autoridade na plataforma.
+Analise os DADOS REAIS abaixo (funil, interações, preço, especialidades).
+
+Regras Absolutas:
+- NÃO invente nem suponha dados que não estão listados abaixo (ex: não diga para adicionar foto se você não sabe se a pessoa já tem foto).
+- Nunca diga que o perfil está "invisível" se ele tem "profileViews" maior que 0.
+
+Hierarquia de Urgência:
+1. Se o "Dias desde a criação do perfil" for menor que 14 dias -> Ignore as métricas de conversão. O perfil é recém-nascido! Dê as boas-vindas, acalme o profissional lembrando que o algoritmo está aprendendo sobre ele e que os resultados orgânicos levam tempo. Sugira revisar com calma a "Bio" ou interagir no Fórum para acelerar essa visibilidade.
+2. Se "whatsappClicks" for baixo (ex: menos de 5% de conversão), mas "profileViews" for alto -> O perfil está sendo VISTO, mas não está convencendo o paciente a clicar. Sugira revisar o início do texto de apresentação (Bio) para focar mais na dor do paciente, ou conferir se o preço está muito fora da média. Ferramenta: "psi_meu_perfil.html"
+3. Se "whatsappClicks" for alto e "valor_sessao" for baixo -> O problema é a precificação. Sugira reajustar o preço para valorizar a hora clínica. Ferramenta: "psi_meu_perfil.html"
+4. Se o funil estiver excelente, mas a comunidade estiver parada (Dias sem interagir alto) -> Sugira responder pacientes ("psi_comunidade.html") ou postar no fórum ("psi_forum.html").
+5. Se tudo estiver fluindo perfeitamente -> Sugira escrever um Artigo para o Blog focado nas suas especialidades ("psi_blog.html").
+
+Tom de Voz:
+Amigável, construtivo, orgânico e motivador. NUNCA pareça um robô. Use emojis com moderação. Mostre que fazemos parte da mesma comunidade e o objetivo é crescer juntos.
+
+Retorne EXATAMENTE este JSON:
+{
+  "marketingTip": {
+    "title": "Sua dica de conversão ou negócio aqui (amigável e direta)",
+    "impact": "Mais Contatos" ou "Maior Conversão" ou "Mais Valor",
+    "url": "psi_meu_perfil.html"
+  },
+  "contentIdea": {
+    "title": "Sua sugestão de conteúdo ou engajamento comunitário (seja bem específico sobre o tema, ex: 'Que tal escrever sobre ansiedade noturna?')",
+    "impact": "Autoridade" ou "Comunidade",
+    "url": "psi_blog.html" ou "psi_forum.html" ou "psi_comunidade.html"
+  }
+}
+
+DADOS DO PSICÓLOGO:
+Especialidades: ${(psychologistData.temas_atuacao || []).join(', ')}
+Valor da Sessão: ${psychologistData.valor_sessao_numero || 'Não informado'}
+XP Atual: ${psychologistData.xp || 0}
+Dias sem interagir: ${stats.diasDesdeUltimaInteracao !== undefined ? stats.diasDesdeUltimaInteracao : 10}
+Dias desde a criação do perfil: ${diasDePerfil}
+
+MÉTRICAS DO FUNIL (Últimos 30 dias):
+Impressões no Match: ${stats.matchImpressions || 0}
+Visualizações de Perfil: ${stats.profileViews || 0}
+Cliques no WhatsApp: ${stats.whatsappClicks || 0}
+`;
+
+        const result = await model.generateContent(prompt);
+        let rawText = result.response.text();
+        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error("JSON inválido");
+        return JSON.parse(jsonMatch[0]);
+    } catch (error) {
+        console.error("❌ [SEO Service - Dashboard Insights] Erro:", error.message);
+        return null;
+    }
+};

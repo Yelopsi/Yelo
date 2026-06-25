@@ -249,3 +249,25 @@ exports.savePlatformReview = async (req, res) => {
         res.status(200).json({ message: 'Avaliação salva com sucesso!' });
     } catch (error) { res.status(500).json({ error: 'Erro interno ao salvar avaliação.' }); }
 };
+
+exports.getAiInsights = async (req, res) => {
+    try {
+        const psychologistId = req.psychologist.id;
+        const stats = req.body.stats || {};
+        
+        const psychologist = await db.Psychologist.findByPk(psychologistId);
+        if (!psychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+
+        const seoService = require('../services/seoService');
+        const insights = await seoService.generateDashboardInsights(stats, psychologist);
+        
+        if (insights) {
+            res.status(200).json(insights);
+        } else {
+            res.status(500).json({ error: 'Falha ao gerar insights da IA.' });
+        }
+    } catch (error) {
+        console.error("Erro em getAiInsights:", error);
+        res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};

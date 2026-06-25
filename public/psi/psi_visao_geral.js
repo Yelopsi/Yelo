@@ -263,23 +263,96 @@
                     const hasRecentArticle = diasSemArtigo <= 7;
                     const hasRecentForum = diasSemForum <= 7;
 
-                    stepsToRender.push({ title: hasRecentForum ? 'Você marcou presença na comunidade recentemente!' : 'Já deu uma passada no fórum essa semana?', impact: hasRecentForum ? 'Em dia!' : 'Comunidade', completed: hasRecentForum, url: 'psi_forum.html', isRecurring: true });
-                    stepsToRender.push({ title: hasRecentArticle ? 'Seu último artigo está fresquinho!' : 'Alguma ideia em mente? Que tal fazer um post no blog', impact: hasRecentArticle ? 'Em dia!' : 'Autoridade', completed: hasRecentArticle, url: 'psi_blog.html', isRecurring: true });
-                    
-                    const impressions = stats.matchImpressions || 0;
-                    const views = stats.profileViews || 0;
-                    const clicks = stats.whatsappClicks || 0;
-                    const myPrice = psychologistData.valor_sessao_numero || 0;
-                    const viewToClickRate = views > 0 ? (clicks / views) : 0;
+                    let aiMarketingTip = null;
+                    let aiContentIdea = null;
 
-                    if (impressions >= 10 && (views / impressions) < 0.15) {
-                        stepsToRender.push({ title: 'Ajustar o início do seu texto de bio para melhorar a taxa de clique no seu perfil', impact: 'Maior Conversão', completed: false, url: 'psi_meu_perfil.html', isTip: true });
-                    } else if (views >= 10 && viewToClickRate >= 0.25 && myPrice > 0 && myPrice < 130) {
-                        stepsToRender.push({ title: 'Sua conversão está excelente! Considere reajustar o valor da sessão para valorizar sua hora clínica', impact: 'Mais Faturamento', completed: false, url: 'psi_meu_perfil.html', isTip: true });
-                    } else if (views >= 10 && viewToClickRate < 0.10 && myPrice > 160) {
-                        stepsToRender.push({ title: 'Muitas visitas, mas poucos contatos. Considere reduzir o valor da sessão temporariamente para atrair pacientes', impact: 'Mais Contatos', completed: false, url: 'psi_meu_perfil.html', isTip: true });
-                    } else if (views >= 5 && viewToClickRate < 0.15) {
-                        stepsToRender.push({ title: 'Ajustar sua página pública e foto para passar mais confiança e receber mais chamadas', impact: 'Mais Contatos', completed: false, url: 'psi_meu_perfil.html', isTip: true });
+                    const cacheKey = 'yelo_ai_tips_cache_v2';
+                    const cachedStr = localStorage.getItem(cacheKey);
+                    let useCache = false;
+
+                    if (cachedStr) {
+                        try {
+                            const cachedData = JSON.parse(cachedStr);
+                            const diasPassados = (new Date().getTime() - cachedData.timestamp) / (1000 * 60 * 60 * 24);
+                            if (diasPassados < 3 && cachedData.tips) { // Cache dura 3 dias (para variar a dica de tempos em tempos)
+                                aiMarketingTip = cachedData.tips.marketingTip;
+                                aiContentIdea = cachedData.tips.contentIdea;
+                                useCache = true;
+                                console.log("💡 [Growth Coach] Dicas carregadas do cache local.");
+                            }
+                        } catch(e) {}
+                    }
+
+                    if (!useCache) {
+                        try {
+                            const resAi = await apiFetch(`${API_BASE_URL}/api/psychologists/me/ai-insights`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ stats })
+                            });
+                            
+                            if (resAi.ok) {
+                                const aiTips = await resAi.json();
+                                aiMarketingTip = aiTips.marketingTip;
+                                aiContentIdea = aiTips.contentIdea;
+                                console.log("💡 [Growth Coach] Dicas geradas:", aiTips);
+                                if (aiMarketingTip) {
+                                    aiMarketingTip.title = "✨ " + aiMarketingTip.title;
+                                }
+                                localStorage.setItem(cacheKey, JSON.stringify({
+                                    timestamp: new Date().getTime(),
+                                    tips: { marketingTip: aiMarketingTip, contentIdea: aiContentIdea }
+                                }));
+                            }
+                        } catch (e) {
+                            console.error("⚠️ Falha na IA, usando regras locais:", e);
+                        }
+                    }
+
+                    // 1. INTEGRAÇÃO DA IA COM TAREFAS RECORRENTES (Blog/Fórum)
+                    // Se o psi precisa postar no fórum (não postou nos últimos 7 dias) e a IA sugeriu fórum, usamos a sugestão. Senão, usamos o genérico.
+                    const isForumIdea = aiContentIdea && aiContentIdea.url && aiContentIdea.url.includes('forum');
+                    const forumPendingTitle = isForumIdea ? aiContentIdea.title : 'Já deu uma passada no fórum essa semana?';
+                    stepsToRender.push({ 
+                        title: hasRecentForum ? 'Você marcou presença na comunidade recentemente!' : forumPendingTitle, 
+                        impact: hasRecentForum ? 'Em dia!' : 'Comunidade', 
+                        completed: hasRecentForum, 
+                        url: 'psi_forum.html', 
+                        isRecurring: true 
+                    });
+
+                    // O mesmo para o Blog
+                    const isBlogIdea = aiContentIdea && aiContentIdea.url && aiContentIdea.url.includes('blog');
+                    const blogPendingTitle = isBlogIdea ? aiContentIdea.title : 'Alguma ideia em mente? Que tal fazer um post no blog';
+                    stepsToRender.push({ 
+                        title: hasRecentArticle ? 'Seu último artigo está fresquinho!' : blogPendingTitle, 
+                        impact: hasRecentArticle ? 'Em dia!' : 'Autoridade', 
+                        completed: hasRecentArticle, 
+                        url: 'psi_blog.html', 
+                        isRecurring: true 
+                    });
+
+                    // 2. DICAS DE MARKETING / CONVERSÃO (Sempre exibidas como Lâmpada 💡)
+                    if (aiMarketingTip) {
+                        stepsToRender.push({ 
+                            title: aiMarketingTip.title, 
+                            impact: aiMarketingTip.impact, 
+                            completed: false, 
+                            url: aiMarketingTip.url || 'psi_meu_perfil.html', 
+                            isTip: true, // Lâmpada fixa
+                            isMarketingAI: true 
+                        });
+                    } else {
+                        // Fallback de Regras de Negócio
+                        if (impressions >= 10 && (views / impressions) < 0.15) {
+                            stepsToRender.push({ title: 'Ajustar o início do seu texto de bio para melhorar a taxa de clique no seu perfil', impact: 'Maior Conversão', completed: false, url: 'psi_meu_perfil.html', isTip: true });
+                        } else if (views >= 10 && viewToClickRate >= 0.25 && myPrice > 0 && myPrice < 130) {
+                            stepsToRender.push({ title: 'Sua conversão está excelente! Considere reajustar o valor da sessão para valorizar sua hora clínica', impact: 'Mais Faturamento', completed: false, url: 'psi_meu_perfil.html', isTip: true });
+                        } else if (views >= 10 && viewToClickRate < 0.10 && myPrice > 160) {
+                            stepsToRender.push({ title: 'Muitas visitas, mas poucos contatos. Considere reduzir o valor da sessão temporariamente para atrair pacientes', impact: 'Mais Contatos', completed: false, url: 'psi_meu_perfil.html', isTip: true });
+                        } else if (views >= 5 && viewToClickRate < 0.15) {
+                            stepsToRender.push({ title: 'Ajustar sua página pública e foto para passar mais confiança e receber mais chamadas', impact: 'Mais Contatos', completed: false, url: 'psi_meu_perfil.html', isTip: true });
+                        }
                     }
 
                     stepsToRender.push({ title: 'Gestão financeira e agenda revisadas', impact: 'Organização', completed: true, url: 'psi_financeiro.html', isRecurring: true });
@@ -311,7 +384,7 @@
                         : `<div class="action-checkbox">${step.completed ? '✓' : ''}</div>`;
 
                     const html = `
-                        <a href="javascript:void(0);" data-target-url="${step.url}" class="modern-action-item ${step.completed ? 'completed' : ''} ${step.isTip ? 'tip-item' : ''}">
+                        <a href="javascript:void(0);" data-target-url="${step.url}" ${step.isMarketingAI ? 'data-is-marketing-ai="true"' : ''} class="modern-action-item ${step.completed ? 'completed' : ''} ${step.isTip ? 'tip-item' : ''}">
                             ${checkboxHtml}
                             <div class="action-content">
                                 <h4 class="action-title" style="${extraStyles}">${step.title}</h4>
@@ -329,7 +402,9 @@
                     actionListContainer.dataset.listenerAttached = 'true';
                     actionListContainer.addEventListener('click', (e) => {
                         const item = e.target.closest('.modern-action-item');
-                        if (item && item.dataset.targetUrl) {
+                        if (!item) return;
+
+                        if (item.dataset.targetUrl) {
                             e.preventDefault();
                             if (window.loadPage) window.loadPage(item.dataset.targetUrl);
                         }
