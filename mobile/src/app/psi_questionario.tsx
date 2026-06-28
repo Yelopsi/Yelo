@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -148,33 +148,33 @@ export default function PsiQuestionarioScreen() {
       case 'lead-capture':
         return (
           <View className="w-full mt-4">
-            <View className="mb-4">
-              <Text className="text-[13px] font-bold text-[#4b5563] mb-1 uppercase font-sans">Nome Completo</Text>
+            <View className="mb-6">
+              <Text className="text-[13px] font-bold text-white/60 mb-1 uppercase font-sans">Nome Completo</Text>
               <TextInput
-                className="w-full bg-[#f9fafb] border border-[#e5e7eb] rounded-[12px] px-4 py-3 text-[16px] text-[#111] font-sans"
+                className="w-full border-b-2 border-white/30 text-white font-sans text-[22px] py-[10px]"
                 placeholder="Seu nome"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor="rgba(255,255,255,0.3)"
                 value={leadNome}
                 onChangeText={setLeadNome}
               />
             </View>
-            <View className="mb-4">
-              <Text className="text-[13px] font-bold text-[#4b5563] mb-1 uppercase font-sans">WhatsApp (com DDD)</Text>
+            <View className="mb-6">
+              <Text className="text-[13px] font-bold text-white/60 mb-1 uppercase font-sans">WhatsApp (com DDD)</Text>
               <TextInput
-                className="w-full bg-[#f9fafb] border border-[#e5e7eb] rounded-[12px] px-4 py-3 text-[16px] text-[#111] font-sans"
+                className="w-full border-b-2 border-white/30 text-white font-sans text-[22px] py-[10px]"
                 placeholder="(00) 00000-0000"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor="rgba(255,255,255,0.3)"
                 keyboardType="numeric"
                 value={leadTelefone}
                 onChangeText={setLeadTelefone}
               />
             </View>
-            <View className="mb-4">
-              <Text className="text-[13px] font-bold text-[#4b5563] mb-1 uppercase font-sans">Melhor E-mail</Text>
+            <View className="mb-6">
+              <Text className="text-[13px] font-bold text-white/60 mb-1 uppercase font-sans">Melhor E-mail</Text>
               <TextInput
-                className="w-full bg-[#f9fafb] border border-[#e5e7eb] rounded-[12px] px-4 py-3 text-[16px] text-[#111] font-sans"
+                className="w-full border-b-2 border-white/30 text-white font-sans text-[22px] py-[10px]"
                 placeholder="seu@email.com"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor="rgba(255,255,255,0.3)"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={leadEmail}
@@ -187,9 +187,9 @@ export default function PsiQuestionarioScreen() {
         return (
           <View className="w-full mt-4">
             <TextInput
-              className="w-full bg-[#f9fafb] border border-[#e5e7eb] rounded-[12px] px-4 py-4 text-[18px] text-[#111] font-sans text-center"
+              className="w-full border-b-2 border-white/30 text-white font-sans text-[28px] py-[10px]"
               placeholder={question.placeholder}
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor="rgba(255,255,255,0.3)"
               keyboardType={question.inputMode === 'numeric' ? 'numeric' : 'default'}
               value={answers[question.id] || ''}
               onChangeText={(text) => setAnswers(prev => ({ ...prev, [question.id]: text }))}
@@ -201,7 +201,7 @@ export default function PsiQuestionarioScreen() {
       case 'multiple-choice':
         const isMultiple = question.type === 'multiple-choice';
         return (
-          <View className="w-full mt-4 flex-row flex-wrap justify-center">
+          <View className="w-full flex-col gap-3 mt-4">
             {question.choices?.map(choice => {
               const selected = isMultiple 
                 ? (Array.isArray(answers[question.id]) && answers[question.id].includes(choice))
@@ -210,10 +210,13 @@ export default function PsiQuestionarioScreen() {
                 <TouchableOpacity
                   key={choice}
                   onPress={() => toggleChoice(choice, isMultiple)}
-                  className={`border m-1.5 px-4 py-3 rounded-[50px] ${selected ? 'bg-[#FFEE8C] border-[#1B4332]' : 'bg-white border-[#e5e7eb]'}`}
+                  className={`py-[12px] px-[20px] rounded-[12px] border ${
+                    selected ? 'bg-[#FFEE8C] border-[#FFEE8C]' : 'bg-white/10 border-white/20'
+                  }`}
+                  style={{ minHeight: 48, justifyContent: 'center' }}
                   activeOpacity={0.7}
                 >
-                  <Text className={`text-[15px] font-sans text-center ${selected ? 'text-[#1B4332] font-bold' : 'text-[#4b5563]'}`}>
+                  <Text className={`font-sans text-[16px] ${selected ? 'text-[#1B4332] font-bold' : 'text-white font-medium'}`}>
                     {choice}
                   </Text>
                 </TouchableOpacity>
@@ -224,17 +227,18 @@ export default function PsiQuestionarioScreen() {
       case 'loading':
         return (
           <View className="items-center justify-center mt-10">
-            <ActivityIndicator size="large" color="#1B4332" />
+            <ActivityIndicator size="large" color="#FFEE8C" />
+            <Text className="text-white/60 font-sans mt-4">Analisando suas respostas...</Text>
           </View>
         );
       case 'approved':
       case 'waitlisted':
         return (
           <View className="items-center justify-center mt-10">
-            <View className="w-20 h-20 bg-[#f0fdf4] rounded-full items-center justify-center mb-6">
-              <Feather name={question.type === 'approved' ? "check" : "clock"} size={32} color="#1B4332" />
+            <View className="w-20 h-20 bg-white/10 rounded-full items-center justify-center mb-6 border border-white/20">
+              <Feather name={question.type === 'approved' ? "check" : "clock"} size={32} color="#FFEE8C" />
             </View>
-            <Text className="text-[16px] text-[#666] font-sans text-center px-4">
+            <Text className="text-[18px] text-white/80 font-sans text-center px-4 leading-7">
               {parseText(question.subtitle)}
             </Text>
           </View>
@@ -245,64 +249,77 @@ export default function PsiQuestionarioScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }}>
-      {/* HEADER / PROGRESS BAR */}
-      {!['loading', 'approved', 'waitlisted', 'error'].includes(question.type) && (
-        <View className="w-full px-5 py-4 flex-row items-center">
-          <TouchableOpacity onPress={handleBack} className="w-10 h-10 items-center justify-center rounded-full bg-[#f3f4f6]">
-            <Feather name="chevron-left" size={24} color="#333" />
-          </TouchableOpacity>
-          <View className="flex-1 ml-4 h-2 bg-[#e5e7eb] rounded-full overflow-hidden">
-            <View style={{ width: `${progressPercent}%` }} className="h-full bg-[#1B4332]" />
+    <View style={{ flex: 1, backgroundColor: '#1B4332' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#1B4332' }} edges={['top']}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
+        
+        {/* PROGRESS BAR */}
+        {!['loading', 'approved', 'waitlisted', 'error'].includes(question.type) && (
+          <View className="w-full h-[4px] bg-white/10 absolute top-0 z-10">
+            <View style={{ width: `${progressPercent}%` }} className="h-full bg-[#FFEE8C]" />
           </View>
-        </View>
-      )}
+        )}
 
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24, paddingBottom: 100 }} keyboardShouldPersistTaps="handled">
+          <ScrollView 
+            contentContainerStyle={{ flexGrow: 1, padding: 20, justifyContent: 'center' }} 
+            keyboardShouldPersistTaps="handled"
+          >
             
-            <View className="w-full max-w-[500px] self-center mt-6">
+            <View className="w-full max-w-[600px] self-center">
+              
               {/* Título e Subtítulo */}
-              <Text className="text-[28px] text-[#1B4332] leading-tight mb-3 font-title text-center">
-                {parseText(question.question)}
-              </Text>
-              {question.subtitle && question.type !== 'approved' && question.type !== 'waitlisted' && (
-                <Text className="text-[16px] text-[#666] mb-6 font-sans text-center">
-                  {parseText(question.subtitle)}
+              <View className="mb-8">
+                <Text className="font-title text-[32px] text-white leading-10 mb-4">
+                  {parseText(question.question)}
                 </Text>
-              )}
+                {question.subtitle && question.type !== 'approved' && question.type !== 'waitlisted' && (
+                  <Text className="font-sans text-[18px] text-white/80 leading-7">
+                    {parseText(question.subtitle)}
+                  </Text>
+                )}
+              </View>
 
               {/* Erro de Validação */}
               {errorMsg ? (
-                <Text className="text-red-500 text-[14px] font-sans mb-4 text-center bg-red-50 p-2 rounded-lg">{errorMsg}</Text>
+                <Text className="text-red-400 font-sans mb-4">{errorMsg}</Text>
               ) : null}
 
               {/* Renderização Dinâmica */}
               {renderContent()}
 
-              {/* Navigation Buttons (Avançar, Verificar) */}
-              {!['loading', 'choice'].includes(question.type) && (
-                <View className="mt-10">
-                  {question.type === 'approved' ? (
-                    <TouchableOpacity onPress={() => router.push('/')} className="w-full bg-[#1B4332] py-4 rounded-full items-center justify-center">
-                      <Text className="text-white font-bold text-[16px] font-sans">Finalizar Cadastro</Text>
-                    </TouchableOpacity>
-                  ) : question.type === 'waitlisted' ? (
-                    <TouchableOpacity onPress={() => router.push('/')} className="w-full bg-[#1B4332] py-4 rounded-full items-center justify-center">
-                      <Text className="text-white font-bold text-[16px] font-sans">Concluir</Text>
-                    </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity onPress={handleNext} className="w-full bg-[#1B4332] py-4 rounded-full items-center justify-center">
-                      <Text className="text-white font-bold text-[16px] font-sans">{question.buttonText || 'Avançar'}</Text>
+              {/* Navigation Buttons (Avançar, Verificar, Voltar) */}
+              {!['loading', 'approved', 'waitlisted'].includes(question.type) && (
+                <View className="flex-row items-center mt-[40px]">
+                  <TouchableOpacity onPress={handleBack} className="border border-white/20 rounded-[30px] py-[12px] px-[30px] mr-4">
+                    <Text className="text-white/80 font-bold font-sans text-[16px]">Voltar</Text>
+                  </TouchableOpacity>
+
+                  {question.type !== 'choice' && (
+                    <TouchableOpacity onPress={handleNext} className="bg-[#FFEE8C] rounded-[30px] py-[12px] px-[30px]">
+                      <Text className="text-[#1B4332] font-bold font-sans text-[16px]">
+                        {question.buttonText || 'Avançar'}
+                      </Text>
                     </TouchableOpacity>
                   )}
+                </View>
+              )}
+
+              {/* Ações Finais (Approved / Waitlisted) */}
+              {['approved', 'waitlisted'].includes(question.type) && (
+                <View className="mt-[40px]">
+                  <TouchableOpacity onPress={() => router.push('/')} className="w-full bg-[#FFEE8C] py-[12px] px-[30px] rounded-[30px] items-center justify-center">
+                    <Text className="text-[#1B4332] font-bold text-[16px] font-sans">
+                      {question.type === 'approved' ? 'Finalizar Cadastro' : 'Concluir'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               )}
             </View>
           </ScrollView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }

@@ -12,7 +12,7 @@ exports.getStats = async (req, res) => {
         const psychologistId = req.psychologist.id;
         const { period } = req.query; 
 
-        const psychologist = await db.Psychologist.findByPk(psychologistId, { attributes: ['temas_atuacao'] });
+        const psychologist = await db.Psychologist.findByPk(psychologistId, { attributes: ['temas_atuacao', 'xp'] });
         const psiTemas = psychologist?.temas_atuacao || [];
 
         let dateCondition = "";
@@ -88,7 +88,7 @@ exports.getStats = async (req, res) => {
             percentage: totalDemands > 0 ? Math.round((parseInt(demanda.count, 10) / totalDemands) * 100) : 0
         }));
 
-        const myEngagement = psychologist.xp || 0;
+        const myEngagement = psychologist?.xp || 0;
         const [betterThanResult] = await db.sequelize.query(`SELECT COALESCE(COUNT(*) * 100.0 / NULLIF((SELECT COUNT(*) FROM "Psychologists" WHERE status = 'active'), 0), 0) as percentage FROM "Psychologists" WHERE status = 'active' AND xp < :myEngagement`, { replacements: { myEngagement }, type: db.sequelize.QueryTypes.SELECT });
         const betterThanPercentage = Math.round(parseFloat(betterThanResult?.percentage || 0));
 

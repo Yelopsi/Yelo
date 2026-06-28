@@ -9,6 +9,21 @@
             <label for="comunicado-titulo">Título do Comunicado</label>
             <input type="text" id="comunicado-titulo" class="form-control" value="Instabilidade na Plataforma" required>
         </div>
+        
+        <div class="form-group" style="display: flex; gap: 20px; align-items: center; margin-bottom: 15px;">
+            <label style="margin-bottom: 0; font-weight: bold;">Tipo de Envio:</label>
+            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; margin-bottom: 0;">
+                <input type="radio" name="tipo-envio" value="imediato" checked> Imediato
+            </label>
+            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; margin-bottom: 0;">
+                <input type="radio" name="tipo-envio" value="agendado"> Agendado
+            </label>
+        </div>
+
+        <div class="form-group" id="container-agendamento" style="display: none;">
+            <label for="comunicado-data">Data e Hora do Disparo</label>
+            <input type="datetime-local" id="comunicado-data" class="form-control">
+        </div>
         <div class="form-group">
             <label for="comunicado-conteudo">Conteúdo da Mensagem</label>
             <textarea id="comunicado-conteudo" class="form-control" rows="12" required>Olá, [nome]
@@ -34,12 +49,32 @@ Agradecemos a compreensão.</textarea>
 (function() {
     const form = document.getElementById('form-comunicado');
     const btnSubmit = document.getElementById('btn-enviar-comunicado');
+    const containerAgendamento = document.getElementById('container-agendamento');
+    const inputData = document.getElementById('comunicado-data');
+    const radioEnvio = document.getElementsByName('tipo-envio');
     const token = localStorage.getItem('Yelo_token') || localStorage.getItem('YeloAdmin_token') || (document.cookie.split('; ').find(row => row.startsWith('token=')) || '').split('=')[1];
+
+    // Lógica para mostrar/esconder o campo de data
+    radioEnvio.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (e.target.value === 'agendado') {
+                containerAgendamento.style.display = 'block';
+                inputData.required = true;
+                btnSubmit.innerHTML = 'Agendar Disparo';
+            } else {
+                containerAgendamento.style.display = 'none';
+                inputData.required = false;
+                btnSubmit.innerHTML = 'Enviar para todos os psicólogos';
+            }
+        });
+    });
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const title = document.getElementById('comunicado-titulo').value;
         const content = document.getElementById('comunicado-conteudo').value;
+        const isScheduled = document.querySelector('input[name="tipo-envio"]:checked').value === 'agendado';
+        const scheduledFor = isScheduled ? inputData.value : null;
 
         if (!title || !content) {
             showToast('Por favor, preencha o título e o conteúdo.', 'error');
@@ -57,7 +92,7 @@ Agradecemos a compreensão.</textarea>
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ title, content })
+                body: JSON.stringify({ title, content, scheduledFor })
             });
 
             const data = await response.json();

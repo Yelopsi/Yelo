@@ -84,12 +84,49 @@ const safeProtect = async (req, res, next) => {
             return res.status(401).json({ error: 'Token ausente ou inválido.' });
         }
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.psychologist = { id: decoded.id };
+
+        // Busca dados completos do psicólogo no banco (necessário para os controllers)
+        let user = null;
+        const userType = decoded.type || decoded.role;
+
+        if (userType === 'admin') {
+            // Admin: tenta na tabela de Psicólogos primeiro
+            try {
+                user = await db.Psychologist.findByPk(decoded.id, { attributes: { exclude: ['senha'] } });
+            } catch(e) {}
+            if (!user || !user.isAdmin) {
+                try {
+                    const [adminResults] = await db.sequelize.query('SELECT * FROM "Admins" WHERE id = :id', { replacements: { id: decoded.id } });
+                    if (adminResults[0]) user = { id: adminResults[0].id, nome: adminResults[0].nome, email: adminResults[0].email, isAdmin: true };
+                } catch(e) {}
+            }
+        } else {
+            user = await db.Psychologist.findByPk(decoded.id, { attributes: { exclude: ['senha'] } });
+
+            // Verifica e atualiza expiração do plano (espelhando o protect original)
+            if (user && userType === 'psychologist') {
+                const isVip = user.is_exempt === true || String(user.is_exempt).toLowerCase() === 'true' || user.is_exempt === 1;
+                if (user.status === 'active' && !isVip) {
+                    const validade = user.planExpiresAt ? new Date(user.planExpiresAt) : null;
+                    if (!validade || validade <= new Date()) {
+                        await user.update({ status: 'inactive' }).catch(() => {});
+                        user.status = 'inactive';
+                    }
+                }
+            }
+        }
+
+        if (!user) {
+            return res.status(401).json({ error: 'Usuário não encontrado.' });
+        }
+
+        req.psychologist = user;
+        req.user = user;
+        req.user.type = userType;
         req.userDecoded = decoded;
-        req.user = { id: decoded.id }; 
         next();
     } catch (error) {
-        return res.status(401).json({ error: 'Falha de autenticação local.' });
+        return res.status(401).json({ error: 'Falha de autenticação. Faça login novamente.' });
     }
 };
 
@@ -97,11 +134,22 @@ const safeProtect = async (req, res, next) => {
 router.get('/me/pending-whatsapp-feedback', safeProtect, whatsappClickController.getPendingFeedback);
 router.post('/me/whatsapp-feedback', safeProtect, whatsappClickController.submitFeedback);
 
+// ===============================================
+// ROTAS MOBILE-SAFE: Usam safeProtect para aceitar Bearer token
+// Essas rotas precisam funcionar tanto com Cookie (web) quanto com Bearer (app)
+// ===============================================
+router.get('/me/stats', safeProtect, psiDashboardController.getStats);
+router.get('/me', safeProtect, psychologistController.getAuthenticatedPsychologistProfile);
+router.get('/me/analytics', safeProtect, psiDashboardController.getAnalyticsData);
+router.get('/me/announcements', safeProtect, psiDashboardController.getAnnouncements);
+router.post('/me/announcements/:avisoId/read', safeProtect, psiDashboardController.markAnnouncementAsRead);
+router.get('/me/qna-unanswered-count', safeProtect, psychologistController.getUnansweredQuestionsCount);
+
 // O middleware 'protect' é aplicado a TODAS as rotas abaixo desta linha
 router.use(protect); 
 
-// Rotas "ME" (do usuário logado)
-router.get('/me', psychologistController.getAuthenticatedPsychologistProfile);
+// Rotas "ME" (do usuário logado) - as principais já registradas acima com safeProtect
+// router.get('/me', psychologistController.getAuthenticatedPsychologistProfile); // já registrada
 router.put('/me', psychologistController.updatePsychologistProfile);
 
 // Rota para otimizar a bio com IA
@@ -119,8 +167,8 @@ router.get('/me/favorites-profile', (req, res) => res.json({ total: 0, temas: {}
 router.get('/me/announcements', psiDashboardController.getAnnouncements);
 router.post('/me/announcements/:avisoId/read', psiDashboardController.markAnnouncementAsRead);
 
-// ROTA DE ESTATÍSTICAS REAIS (KPIs)
-router.get('/me/stats', psiDashboardController.getStats);
+// ROTA DE ESTATÍSTICAS REAIS (KPIs) - Já registrada acima com safeProtect
+// router.get('/me/stats', psiDashboardController.getStats);
 
 // Nota: O frontend envia para /me/foto via POST com campo 'foto'. 
 // Mantive conforme seu código original, mas verifique se o frontend bate com 'profilePhoto'

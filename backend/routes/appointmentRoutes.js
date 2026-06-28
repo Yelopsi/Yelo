@@ -7,8 +7,15 @@ const { verifyTokenLocal } = require('../middlewares/localAuth');
 router.get('/', verifyTokenLocal, async (req, res) => {
     try {
         const decoded = req.userDecoded;
+        const psiId = decoded && (decoded.id || decoded._id);
+        
+        if (!psiId) {
+            console.error("Token sem ID em /api/appointments:", decoded);
+            return res.json([]);
+        }
+
         const appointments = await db.Appointment.findAll({
-            where: { psychologistId: decoded.id }
+            where: { psychologistId: psiId }
         });
         const events = appointments.map(a => {
             const app = typeof a.toJSON === 'function' ? a.toJSON() : a;

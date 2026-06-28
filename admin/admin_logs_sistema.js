@@ -1,9 +1,9 @@
-window.initializePage = async function() {
+window.initializePage = async function () {
     console.log("Inicializando Monitoramento do Sistema...");
-    
+
     const localApiUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : 'http://localhost:3001';
     const token = localStorage.getItem('Yelo_token');
-    
+
     // Elementos da UI de Logs
     const logsList = document.getElementById('logs-list');
     const loadingEl = document.getElementById('logs-loading');
@@ -12,7 +12,7 @@ window.initializePage = async function() {
     const filterSelect = document.getElementById('log-filter');
 
     // Define o filtro padrão para "Apenas Erros" ao carregar
-    if(filterSelect) filterSelect.value = 'error';
+    if (filterSelect) filterSelect.value = 'error';
 
     let allLogs = [];
     let processedLogs = [];
@@ -21,7 +21,7 @@ window.initializePage = async function() {
     async function fetchSystemData() {
         if (!logsList) return; // Segurança caso a página não tenha carregado
 
-        if(loadingEl) loadingEl.style.display = 'block';
+        if (loadingEl) loadingEl.style.display = 'block';
         try {
             // Adiciona timestamp para evitar cache e garantir dados frescos sempre que abrir
             const startTime = performance.now(); // Inicia cronômetro
@@ -34,7 +34,7 @@ window.initializePage = async function() {
             if (!response.ok) throw new Error('Erro ao buscar dados.');
 
             const data = await response.json();
-            
+
             let logs = [];
             let health = null;
 
@@ -66,14 +66,14 @@ window.initializePage = async function() {
             health.socket = { connected: window.adminSocket && window.adminSocket.connected };
 
             renderHealthCards(health);
-            
+
             allLogs = logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             processedLogs = processAndCorrelateLogs([...allLogs]).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Garante que os logs processados também estejam ordenados
             applyFilters();
 
         } catch (error) {
             console.error(error);
-            if(logsList) logsList.innerHTML = `<p style="color:red;">Erro: ${error.message}</p>`;
+            if (logsList) logsList.innerHTML = `<p style="color:red;">Erro: ${error.message}</p>`;
         }
     }
 
@@ -113,7 +113,7 @@ window.initializePage = async function() {
             },
             {
                 title: "Funil de Busca",
-                value: health.funnel.status === 'critical' ? "ALERTA: 0% de Conversão" : `${health.funnel.completed} Concluídos // ${health.funnel.started} Iniciados`,
+                value: health.funnel.status === 'critical' ? "ALERTA: 0% de Conversão" : `${health.funnel.completed} Concluídos / ${health.funnel.started} Iniciados`,
                 status: health.funnel.status === 'healthy' ? 'green' : 'red'
             },
             {
@@ -198,7 +198,7 @@ window.initializePage = async function() {
                     statusClass = 'status-gave-up';
                     statusText = `<strong>Resultado:</strong> DESISTÊNCIA (nenhuma nova tentativa detectada).`;
                 }
-                
+
                 attemptStatusHTML = `<div class="subsequent-attempt ${statusClass}">${statusText}</div>`;
             }
 
@@ -241,7 +241,7 @@ window.initializePage = async function() {
 
             const userActions = logsByUser[userId];
             const currentActionIndex = userActions.findIndex(action => action.id === newLog.id);
-            
+
             if (currentActionIndex > -1 && currentActionIndex < userActions.length - 1) {
                 const nextAction = userActions[currentActionIndex + 1];
                 const timeDiff = new Date(nextAction.createdAt) - new Date(newLog.createdAt);
@@ -251,7 +251,7 @@ window.initializePage = async function() {
                     const msgA = (newLog.message || '').toLowerCase();
                     const msgB = (nextAction.message || '').toLowerCase();
                     const isSameAction = (msgA.includes('login') && msgB.includes('login')) || (msgA.includes('pagamento') && msgB.includes('pagamento'));
-                    
+
                     newLog.subsequentAttempt = isSameAction ? { type: nextAction.level === 'error' ? 'failure' : 'success' } : { type: 'gave_up' };
                 } else { newLog.subsequentAttempt = { type: 'gave_up' }; }
             } else { newLog.subsequentAttempt = { type: 'gave_up' }; }
@@ -299,7 +299,7 @@ window.initializePage = async function() {
 
     // Inicia
     fetchSystemData();
-    if(searchInput) searchInput.addEventListener('input', applyFilters);
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
     // CORREÇÃO: O filtro deve apenas aplicar o filtro, não refazer o fetch. O botão de refresh faz o fetch.
-    if(filterSelect) filterSelect.addEventListener('change', applyFilters); 
+    if (filterSelect) filterSelect.addEventListener('change', applyFilters);
 };

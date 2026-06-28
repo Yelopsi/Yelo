@@ -1,26 +1,65 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, Modal, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import YeloScrollView from '../components/YeloScrollView';
 import PublicBottomNav from '../components/PublicBottomNav';
+import PublicHeader from '../components/PublicHeader';
+import api from '../services/api';
+import { ActivityIndicator, Alert } from 'react-native';
 
 export default function PerguntasScreen() {
   const router = useRouter();
   const [question, setQuestion] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [questionsList, setQuestionsList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
 
-  const handleSubmit = () => {
+  const fetchQuestions = async () => {
+    try {
+      const res = await api.get('/api/qna/public');
+      setQuestionsList(Array.isArray(res.data) ? res.data : []);
+    } catch (error) {
+      console.log('Erro ao buscar perguntas:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchQuestions();
+  }, []);
+
+  const handleSubmit = async () => {
     if (question.length >= 50) {
-      setModalVisible(true);
-      setQuestion('');
+      setSending(true);
+      try {
+        await api.post('/api/qna/ask', { conteudo: question });
+        setModalVisible(true);
+        setQuestion('');
+        fetchQuestions(); // recarrega a lista
+      } catch (error) {
+        Alert.alert("Erro", "Não foi possível enviar a pergunta. Tente novamente mais tarde.");
+      } finally {
+        setSending(false);
+      }
     }
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <YeloScrollView refreshColor="#1B4332" style={{ flex: 1 }} contentContainerStyle={styles.scrollContent}>
+    <View style={{ flex: 1, backgroundColor: '#1B4332' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: isScrolled ? '#ffffff' : '#1B4332' }} edges={['top']}>
+        <PublicHeader isScrolled={isScrolled} />
+        <YeloScrollView 
+          refreshColor="#1B4332" 
+          style={{ flex: 1, backgroundColor: '#fff' }} 
+          contentContainerStyle={styles.scrollContent}
+          onScroll={(e) => setIsScrolled(e.nativeEvent.contentOffset.y > 20)}
+          scrollEventThrottle={16}
+        >
         {/* Doodles de Fundo */}
         <View style={{ position: 'absolute', top: 150, left: -50, opacity: 0.4, zIndex: 0, transform: [{ rotate: '45deg' }] }}>
           <Svg viewBox="0 0 200 200" width={300} height={300}>
@@ -127,11 +166,11 @@ export default function PerguntasScreen() {
 
             <View className="mt-[20px] items-center">
               <TouchableOpacity 
-                className={`w-full max-w-[300px] py-[15px] rounded-[50px] items-center ${question.length >= 50 ? 'bg-[#1B4332]' : 'bg-[#e0e0e0]'}`}
-                disabled={question.length < 50}
+                className={`w-full max-w-[300px] py-[15px] rounded-[50px] items-center flex-row justify-center ${question.length >= 50 ? 'bg-[#1B4332]' : 'bg-[#e0e0e0]'}`}
+                disabled={question.length < 50 || sending}
                 onPress={handleSubmit}
               >
-                <Text className="font-sans font-bold text-white text-[16px]">Enviar Pergunta</Text>
+                {sending ? <ActivityIndicator color="#fff" /> : <Text className="font-sans font-bold text-white text-[16px]">Enviar Pergunta</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -142,40 +181,61 @@ export default function PerguntasScreen() {
           </Text>
           
           <View className="w-full mb-[40px]">
-            {/* Pergunta */}
-            <View className="bg-white border border-[#e0e0e0] rounded-[16px] p-[20px] shadow-[0_4px_15px_rgba(0,0,0,0.04)] w-full mb-[15px]">
-              <Text className="font-title text-[#1B4332] text-[20px] mb-[12px] leading-relaxed">
-                Como lidar com a ansiedade antes de uma entrevista?
-              </Text>
-              <Text className="font-sans text-[#444] text-[16px] leading-relaxed">
-                Tenho uma entrevista de emprego amanhã e não consigo parar de tremer e suar frio. O que posso fazer?
-              </Text>
-              <Text className="font-sans text-[#888] text-[13px] font-medium mt-[10px] text-right">
-                Paciente Anônimo
-              </Text>
-            </View>
-            
-            {/* Resposta */}
-            <View className="ml-[20px] pl-[15px] border-l-[3px] border-l-[#e8f5e9] gap-y-[10px]">
-              <Text className="font-sans text-[#888] text-[12px] font-bold uppercase tracking-wide mb-[5px]">
-                Respostas de Especialistas
-              </Text>
-              <View className="bg-[#fcfcfc] border border-[#e9ecef] rounded-[16px] p-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-                <View className="flex-row items-center gap-[12px] pb-[10px] mb-[10px] border-b border-b-[rgba(27,67,50,0.1)]">
-                  <Image source={{ uri: 'https://i.pravatar.cc/150?u=a042581f4e29026704d' }} className="w-[36px] h-[36px] rounded-full border-2 border-white" />
-                  <View className="flex-1">
-                    <Text className="font-sans font-bold text-[#1B4332] text-[15px]">Dra. Ana Silva</Text>
-                    <Text className="font-sans text-[#666] text-[12px]">CRP 06/12345</Text>
+            {loading ? (
+              <ActivityIndicator size="large" color="#1B4332" style={{ marginTop: 20 }} />
+            ) : questionsList.length === 0 ? (
+              <Text className="font-sans text-center text-[#666]">Nenhuma pergunta respondida ainda.</Text>
+            ) : (
+              questionsList.map((item, index) => (
+                <View key={item.id || index} className="mb-[30px]">
+                  {/* Pergunta */}
+                  <View className="bg-white border border-[#e0e0e0] rounded-[16px] p-[20px] shadow-[0_4px_15px_rgba(0,0,0,0.04)] w-full mb-[15px]">
+                    <Text className="font-title text-[#1B4332] text-[20px] mb-[12px] leading-relaxed">
+                      {item.title || item.conteudo?.substring(0, 50) + (item.conteudo?.length > 50 ? '...' : '')}
+                    </Text>
+                    <Text className="font-sans text-[#444] text-[16px] leading-relaxed">
+                      {item.content || item.conteudo}
+                    </Text>
+                    <Text className="font-sans text-[#888] text-[13px] font-medium mt-[10px] text-right">
+                      Paciente Anônimo • {new Date(item.createdAt).toLocaleDateString()}
+                    </Text>
                   </View>
-                  <TouchableOpacity className="bg-[#1B4332] py-[8px] px-[16px] rounded-[50px] hidden sm:flex">
-                    <Text className="font-sans font-bold text-white text-[13px]">Ver perfil</Text>
-                  </TouchableOpacity>
+                  
+                  {/* Respostas */}
+                  {item.answers && item.answers.length > 0 && (
+                    <View className="ml-[20px] pl-[15px] border-l-[3px] border-l-[#e8f5e9] gap-y-[15px]">
+                      <Text className="font-sans text-[#888] text-[12px] font-bold uppercase tracking-wide">
+                        Respostas de Especialistas
+                      </Text>
+                      {item.answers.map((answer: any, ansIdx: number) => (
+                        <View key={answer.id || ansIdx} className="bg-[#fcfcfc] border border-[#e9ecef] rounded-[16px] p-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                          <View className="flex-row items-center gap-[12px] pb-[10px] mb-[10px] border-b border-b-[rgba(27,67,50,0.1)]">
+                            <Image 
+                              source={{ uri: answer.psychologist?.fotoUrl || 'https://placehold.co/150x150?text=PSI' }} 
+                              className="w-[36px] h-[36px] rounded-full border-2 border-white" 
+                            />
+                            <View className="flex-1">
+                              <Text className="font-sans font-bold text-[#1B4332] text-[15px]">
+                                {answer.psychologist?.nome || 'Psicólogo Especialista'}
+                              </Text>
+                              <Text className="font-sans text-[#666] text-[12px]">
+                                CRP {answer.psychologist?.crp || '00/00000'}
+                              </Text>
+                            </View>
+                            <TouchableOpacity onPress={() => router.push(`/${answer.psychologist?.slug}` as any)} className="bg-[#1B4332] py-[8px] px-[16px] rounded-[50px] hidden sm:flex">
+                              <Text className="font-sans font-bold text-white text-[13px]">Ver perfil</Text>
+                            </TouchableOpacity>
+                          </View>
+                          <Text className="font-sans text-[#222] text-[16px] leading-relaxed">
+                            {answer.content || answer.conteudo}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
                 </View>
-                <Text className="font-sans text-[#222] text-[16px] leading-relaxed">
-                  Olá! A ansiedade pré-entrevista é muito comum. Tente fazer exercícios de respiração profunda, visualize um resultado positivo e lembre-se de que a entrevista é também uma oportunidade para você conhecer a empresa.
-                </Text>
-              </View>
-            </View>
+              ))
+            )}
           </View>
 
         </View>
@@ -210,7 +270,8 @@ export default function PerguntasScreen() {
       </Modal>
 
       <PublicBottomNav />
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }
 

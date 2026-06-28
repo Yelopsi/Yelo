@@ -52,10 +52,13 @@ const protect = async (req, res, next) => {
                 if (user && user.isAdmin) {
                     req.psychologist = user;
                 } else {
-                    // 2. Fallback para a tabela antiga ('Admins') - Mantém compatibilidade
-                    const [adminResults] = await db.sequelize.query('SELECT * FROM "Admins" WHERE id = :id', { replacements: { id: decoded.id } });
-                    user = adminResults[0];
-                    if (user) req.psychologist = { id: user.id, nome: user.nome, email: user.email, isAdmin: true };
+                    try {
+                        const [adminResults] = await db.sequelize.query('SELECT * FROM "Admins" WHERE id = :id', { replacements: { id: decoded.id } });
+                        user = adminResults[0];
+                        if (user) req.psychologist = { id: user.id, nome: user.nome, email: user.email, isAdmin: true };
+                    } catch (err) {
+                        // Tabela Admins não existe, ignora e prossegue
+                    }
                 }
             }
 

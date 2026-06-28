@@ -6,7 +6,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { Feather } from '@expo/vector-icons';
 import YeloScrollView from '../components/YeloScrollView';
+import PublicHeader from '../components/PublicHeader';
 import Footer from '../components/Footer';
+import PublicBottomNav from '../components/PublicBottomNav';
 
 // Habilita animações fluidas de Layout no Android
 if (Platform.OS === 'android') {
@@ -96,6 +98,7 @@ function FAQItem({ item, index }: { item: any, index: number }) {
 export default function FAQScreen() {
   const router = useRouter();
   const [search, setSearch] = useState('');
+  const [isScrolled, setIsScrolled] = useState(false);
 
   // Busca Local otimizada
   const filteredPacientes = useMemo(() => {
@@ -111,36 +114,24 @@ export default function FAQScreen() {
   }, [search]);
 
   return (
-    <View className="flex-1 bg-[#1B4332]">
-      <StatusBar style="light" />
-      {/* Proteção do Notch (SafeAreaView) fora do Scroll, garante o fundo elástico nativo para o RefreshControl */}
-      <SafeAreaView edges={['top']} className="flex-1">
-        <YeloScrollView className="flex-1" style={{ backgroundColor: '#1B4332' }} showsVerticalScrollIndicator={false} refreshColor="#ffffff">
+    <View style={{ flex: 1, backgroundColor: '#1B4332' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: isScrolled ? '#ffffff' : '#1B4332' }} edges={['top']}>
+        <PublicHeader isScrolled={isScrolled} />
+        
+        <YeloScrollView 
+          style={{ flex: 1, backgroundColor: '#1B4332' }} 
+          showsVerticalScrollIndicator={false} 
+          refreshColor="#ffffff"
+          onScroll={(e) => setIsScrolled(e.nativeEvent.contentOffset.y > 20)}
+          scrollEventThrottle={16}
+        >
           <View className="bg-white">
             
-            {/* HEADER SIMPLIFICADO NAV */}
-            <View className="bg-[#1B4332] pt-2 pb-4">
-              <View className="px-5 flex-row justify-between items-center">
-                <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-                  <Feather name="arrow-left" size={24} color="#FFFFFF" />
-                </TouchableOpacity>
-                <Text className="font-title font-bold text-white text-[18px]">Yelo</Text>
-                <View className="w-10" />
-              </View>
-            </View>
-
             {/* HERO SECTION CONTAINER */}
             <View className="bg-[#1B4332] pt-[40px] relative z-10">
               
               {/* INNER CONTENT */}
               <View className="px-5 pb-[120px] items-center">
-              
-              {/* LINKS TOPO */}
-              <View className="flex-row justify-center gap-6 mb-6">
-                <TouchableOpacity><Text className="font-sans font-medium text-white/90 text-[16px]">Sobre</Text></TouchableOpacity>
-                <TouchableOpacity onPress={() => router.push('/faq')}><Text className="font-sans font-medium text-white text-[16px]">FAQ</Text></TouchableOpacity>
-                <TouchableOpacity><Text className="font-sans font-medium text-white/90 text-[16px]">Blog</Text></TouchableOpacity>
-              </View>
 
               <Text className="font-title text-[36px] text-white text-center mb-4 leading-tight font-black">
                 Perguntas Frequentes
@@ -229,6 +220,7 @@ export default function FAQScreen() {
 
           </View>
         </YeloScrollView>
+        <PublicBottomNav />
       </SafeAreaView>
     </View>
   );

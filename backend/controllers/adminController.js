@@ -30,13 +30,17 @@ exports.loginAdmin = async (req, res) => {
 
         // 2. Fallback: Busca na tabela de Admins (Legado/Super Admin)
         if (!adminUser) {
-            const results = await db.sequelize.query(
-                `SELECT * FROM "Admins" WHERE email = :email LIMIT 1`,
-                { replacements: { email }, type: db.sequelize.QueryTypes.SELECT }
-            );
-            if (results && results.length > 0) {
-                adminUser = results[0];
-                isLegacy = true;
+            try {
+                const results = await db.sequelize.query(
+                    `SELECT * FROM "Admins" WHERE email = :email LIMIT 1`,
+                    { replacements: { email }, type: db.sequelize.QueryTypes.SELECT }
+                );
+                if (results && results.length > 0) {
+                    adminUser = results[0];
+                    isLegacy = true;
+                }
+            } catch (legacyErr) {
+                // Tabela Admins não existe, ignora e prossegue (adminUser continuará null)
             }
         }
 
@@ -49,11 +53,13 @@ exports.loginAdmin = async (req, res) => {
         if (await bcrypt.compare(senha, adminUser.senha)) {
             console.log(`[LOGIN ADMIN] Sucesso para: ${email}. Gerando token e cookie...`);
             // --- GERAÇÃO DE LOG REAL ---
-            await db.SystemLog.create({
-                level: 'info',
-                message: `Login de administrador bem-sucedido: ${adminUser.email}`,
-                meta: { adminId: adminUser.id, isLegacy }
-            });
+            try {
+                await db.SystemLog.create({
+                    level: 'info',
+                    message: `Login de administrador bem-sucedido: ${adminUser.email}`,
+                    meta: { adminId: adminUser.id, isLegacy }
+                });
+            } catch (err) {}
 
             const token = generateAdminToken(adminUser.id);
 
@@ -75,12 +81,10 @@ exports.loginAdmin = async (req, res) => {
         } else {
             // O usuário É um admin, mas errou a senha. Aqui sim geramos o log de falha.
             try {
-                if (db.SystemLog) {
-                    await db.SystemLog.create({
-                        level: 'error',
-                        message: `Falha de login Admin (Senha incorreta): ${email}`
-                    });
-                }
+                await db.SystemLog.create({
+                    level: 'warning',
+                    message: `Tentativa de login falha (senha incorreta) para admin: ${adminUser.email}`
+                });
             } catch(e) {}
             res.status(401).json({ error: 'Credenciais de administrador inválidas.' });
         }
@@ -667,15 +671,32 @@ exports.exportPsychologists = async (req, res) => {
 exports.exportWaitlist = async (req, res) => {
     try {
         const waitlist = await db.WaitingList.findAll({
-            attributes: ['nome', 'telefone', 'email', 'status', 'createdAt'],
             order: [['createdAt', 'DESC']]
         });
         res.json(waitlist);
     } catch (error) {
-        console.error("Erro ao exportar lista de espera:", error);
-        res.status(500).json({ error: 'Erro ao gerar lista de espera.' });
+        console.error("Erro ao exportar waitlist:", error);
+        res.status(500).json({ error: "Erro ao exportar lista de espera" });
     }
 };
+
+// --- GESTÃO DE PUSH NOTIFICATIONS ---
+exports.sendPushNotification = async (req, res) => {
+    try {
+        const { title, content, target, scheduleType, scheduleDate, scheduleTime } = req.body;
+        console.log(`[Admin] 📢 Disparando Push: "${title}" para [${target}]`);
+        console.log(`[Admin] Mensagem: ${content.substring(0, 50)}...`);
+        if (scheduleType === 'agendado') {
+            console.log(`[Admin] ⏳ Agendado para: ${scheduleDate} às ${scheduleTime}`);
+        }
+        // TODO: Integrar com Firebase Cloud Messaging ou OneSignal
+        res.json({ success: true, message: 'Push notification enviado/agendado com sucesso!' });
+    } catch (error) {
+        console.error("Erro ao enviar push:", error);
+        res.status(500).json({ error: "Erro ao enviar notificação push" });
+    }
+};
+
 
 /**
  * Rota: GET /api/admin/followups

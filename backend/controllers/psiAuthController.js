@@ -196,24 +196,28 @@ exports.loginPsychologist = async (req, res) => {
         let redirectUrl = '/psi/psi_dashboard.html';
 
         if (!psychologist) {
-            const results = await db.sequelize.query(
-                `SELECT * FROM "Admins" WHERE email = :email LIMIT 1`,
-                { replacements: { email }, type: db.sequelize.QueryTypes.SELECT }
-            );
-            
-            if (results && results.length > 0) {
-                const adminUser = results[0];
-                psychologist = {
-                    id: adminUser.id,
-                    nome: adminUser.nome,
-                    email: adminUser.email,
-                    senha: adminUser.senha,
-                    fotoUrl: adminUser.fotoUrl,
-                    slug: 'admin',
-                    is_exempt: true,
-                    status: 'active',
-                    isAdmin: true
-                };
+            try {
+                const results = await db.sequelize.query(
+                    `SELECT * FROM "Admins" WHERE email = :email LIMIT 1`,
+                    { replacements: { email }, type: db.sequelize.QueryTypes.SELECT }
+                );
+                
+                if (results && results.length > 0) {
+                    const adminUser = results[0];
+                    psychologist = {
+                        id: adminUser.id,
+                        nome: adminUser.nome,
+                        email: adminUser.email,
+                        senha: adminUser.senha,
+                        fotoUrl: adminUser.fotoUrl,
+                        slug: 'admin',
+                        is_exempt: true,
+                        status: 'active',
+                        isAdmin: true
+                    };
+                }
+            } catch (err) {
+                // Tabela Admins não existe, ignora e prossegue (psychologist continuará null)
             }
         }
 
@@ -224,10 +228,12 @@ exports.loginPsychologist = async (req, res) => {
         const isMatch = await bcrypt.compare(passwordInput, psychologist.senha);
         
         if (!isMatch) {
-            await db.SystemLog.create({
-                level: 'error',
-                message: `Falha de login (Senha incorreta): ${email}`
-            });
+            try {
+                await db.SystemLog.create({
+                    level: 'error',
+                    message: `Falha de login (Senha incorreta): ${email}`
+                });
+            } catch (err) {}
             return res.status(401).json({ error: 'Senha incorreta.' });
         }
 
@@ -242,10 +248,12 @@ exports.loginPsychologist = async (req, res) => {
             redirectUrl = '/admin/admin.html';
         }
 
-        await db.SystemLog.create({
-            level: 'info',
-            message: `Login de Psicólogo bem-sucedido: ${email}`
-        });
+        try {
+            await db.SystemLog.create({
+                level: 'info',
+                message: `Login bem-sucedido: ${email}`
+            });
+        } catch (err) {}
 
         const token = generateToken(psychologist.id, userType);
 

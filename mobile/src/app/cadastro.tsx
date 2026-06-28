@@ -208,9 +208,11 @@ export default function CadastroScreen() {
                   </TouchableOpacity>
                 </View>
                 
-                <Text className="text-[#666] text-[13px] font-sans">
-                  É psicólogo(a)? <Text className="text-[#1B4332] font-bold">Cadastrar-se</Text>
-                </Text>
+                <TouchableOpacity onPress={() => router.push('/profissionais')}>
+                  <Text className="text-[#666] text-[13px] font-sans mt-[5px]">
+                    É psicólogo(a)? <Text className="text-[#1B4332] font-bold">Cadastrar-se</Text>
+                  </Text>
+                </TouchableOpacity>
               </View>
 
             </View>

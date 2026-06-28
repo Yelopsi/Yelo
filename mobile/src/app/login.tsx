@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Image, TouchableWithoutFeedback, Keyboard, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Image, TouchableWithoutFeedback, Keyboard, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import { StatusBar } from 'expo-status-bar';
+import api from '../services/api';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -22,16 +24,84 @@ export default function LoginScreen() {
     }
     setErrorMsg('');
     setLoadingLocal(true);
-    // Bypass: Focando no frontend, não bate na API e pula direto para o app
-    setTimeout(async () => {
-      await signIn('fake-token', { id: 1, nome: 'Usuário Teste', email: email });
-      router.replace('/(tabs)');
+    try {
+      let response;
+      let userData;
+      let tokenStr;
+      let userType;
+
+      try {
+        // 1. Tenta login como Psicólogo (que também cobre Admins novos)
+        response = await api.post('/api/psychologists/login', {
+          email,
+          password
+        });
+        tokenStr = response.data.token;
+        userType = response.data.type || 'psychologist';
+        userData = {
+          id: response.data.id,
+          nome: response.data.nome,
+          email: response.data.email,
+          type: userType
+        };
+      } catch (err: any) {
+        if (err.response && err.response.status === 401) {
+          // 2. Fallback para rota admin legado
+          response = await api.post('/api/admin/login', {
+            email,
+            password
+          });
+          tokenStr = response.data.token;
+          userType = 'admin';
+          userData = {
+            id: response.data.user.id,
+            nome: response.data.user.nome,
+            email: response.data.user.email,
+            type: userType
+          };
+        } else {
+          throw err;
+        }
+      }
+
+      // Salva no SecureStore
+      await signIn(tokenStr, userData);
+      
+      // Redireciona dependendo de quem está logando
+      const destination = userType === 'admin' ? '/(admin)' : '/(tabs)';
+      
+      router.replace(destination);
+    } catch (error: any) {
+      console.error(error);
+      const isPsi = email.toLowerCase().includes('psi') || email.toLowerCase().includes('teste');
+      const destination = isPsi ? '/(tabs)' : '/(admin)';
+
+      // Fallback amigável caso a API não esteja rodando ou a rota de login não exista ainda (404)
+      if (error.message === 'Network Error' || (error.response && (error.response.status >= 500 || error.response.status === 404))) {
+        Alert.alert(
+          'Servidor Indisponível (Testes)',
+          'A rota de login da API não foi encontrada ou o servidor está offline. Entrando em Modo Offline (Testes).',
+          [
+            { 
+              text: 'Entrar Offline', 
+              onPress: async () => {
+                await signIn('offline-token', { id: 1, nome: isPsi ? 'Psicólogo (Offline)' : 'Admin (Offline)', email: email });
+                router.replace(destination);
+              }
+            }
+          ]
+        );
+      } else {
+        setErrorMsg('E-mail ou senha inválidos.');
+      }
+    } finally {
       setLoadingLocal(false);
-    }, 500);
+    }
   };
 
   return (
     <SafeAreaView className="flex-1 bg-[#f9fafb]">
+      <StatusBar style="dark" backgroundColor="transparent" translucent={true} />
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <KeyboardAvoidingView 
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -149,14 +219,13 @@ export default function LoginScreen() {
                   <Text className="text-[#6b7280] font-medium text-[15px] font-sans">Esqueceu sua senha?</Text>
                 </TouchableOpacity>
                 
-                <View className="flex-row">
+                <View className="flex-row mb-4">
                   <Text className="text-[#6b7280] text-[15px] font-sans">Não tem uma conta? </Text>
                   <TouchableOpacity onPress={() => router.push('/cadastro')}>
                     <Text className="text-[#1B4332] font-bold text-[15px] font-sans">Cadastre-se</Text>
                   </TouchableOpacity>
                 </View>
               </View>
-
             </View>
           </ScrollView>
         </KeyboardAvoidingView>

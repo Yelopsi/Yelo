@@ -126,6 +126,12 @@ router.get('/followups', adminController.getFollowUps);
 router.put('/followups/:id', adminController.updateFollowUpStatus);
 router.delete('/followups/:id', adminController.deleteFollowUp);
 
+// ROTAS DE NOTIFICAÇÕES (PUSH)
+router.post('/push', adminController.sendPushNotification);
+
+// ROTAS DE ESPERA
+router.get('/waitlist', adminController.exportWaitlist);
+
 // --- ROTAS DE EXPORTAÇÃO DE DADOS (NOVO) ---
 router.get('/export/patients', adminController.exportPatients);
 router.get('/export/psychologists', adminController.exportPsychologists);

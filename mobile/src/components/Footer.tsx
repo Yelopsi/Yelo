@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Image, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, Image, Dimensions, Linking } from 'react-native';
 
 const { width } = Dimensions.get('window');
 import { useRouter } from 'expo-router';
@@ -73,13 +73,13 @@ export default function Footer() {
             <Text className="font-title text-white text-[20px] mb-4">Plataforma</Text>
             <View className="flex-row flex-wrap justify-center gap-x-6 gap-y-4">
               <TouchableOpacity onPress={() => router.push('/')}><Text className="font-sans text-[#adb5bd] text-[15px]">Início</Text></TouchableOpacity>
-              <TouchableOpacity><Text className="font-sans text-[#adb5bd] text-[15px]">Sobre</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/sobre_psis')}><Text className="font-sans text-[#adb5bd] text-[15px]">Sobre</Text></TouchableOpacity>
               <TouchableOpacity onPress={() => router.push('/perguntas')}><Text className="font-sans text-[#adb5bd] text-[15px]">Pergunte</Text></TouchableOpacity>
-              <TouchableOpacity><Text className="font-sans text-[#adb5bd] text-[15px]">Para Profissionais</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/profissionais')}><Text className="font-sans text-[#adb5bd] text-[15px]">Para Profissionais</Text></TouchableOpacity>
               <TouchableOpacity onPress={() => router.push('/faq')}><Text className="font-sans text-[#adb5bd] text-[15px]">FAQ</Text></TouchableOpacity>
-              <TouchableOpacity><Text className="font-sans text-[#adb5bd] text-[15px]">Blog</Text></TouchableOpacity>
-              <TouchableOpacity><Text className="font-sans text-[#adb5bd] text-[15px]">Contato</Text></TouchableOpacity>
-              <TouchableOpacity><Text className="font-sans text-[#adb5bd] text-[15px]">Código de Ética</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/blog')}><Text className="font-sans text-[#adb5bd] text-[15px]">Blog</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/contato')}><Text className="font-sans text-[#adb5bd] text-[15px]">Contato</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => Linking.openURL('https://site.cfp.org.br/wp-content/uploads/2012/07/codigo-de-etica-psicologia.pdf')}><Text className="font-sans text-[#adb5bd] text-[15px]">Código de Ética</Text></TouchableOpacity>
             </View>
           </View>
 
@@ -87,16 +87,17 @@ export default function Footer() {
           <View className="mb-10 items-center">
             <Text className="font-title text-white text-[20px] mb-4">Recursos Gratuitos</Text>
             <View className="flex-row flex-wrap justify-center gap-x-6 gap-y-4 mb-4">
-              <TouchableOpacity><Text className="font-sans text-[#adb5bd] text-[15px]">SOS Ansiedade</Text></TouchableOpacity>
-              <TouchableOpacity><Text className="font-sans text-[#adb5bd] text-[15px]">Terapia Ideal</Text></TouchableOpacity>
-              <TouchableOpacity><Text className="font-sans text-[#adb5bd] text-[15px]">Roda da Vida</Text></TouchableOpacity>
-              <TouchableOpacity><Text className="font-sans text-[#adb5bd] text-[15px]">Calc. Honorários</Text></TouchableOpacity>
-              <TouchableOpacity><Text className="font-sans text-[#adb5bd] text-[15px]">Gerador de Bio</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/ferramentas/sos-ansiedade')}><Text className="font-sans text-[#adb5bd] text-[15px]">SOS Ansiedade</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/ferramentas/teste-terapia')}><Text className="font-sans text-[#adb5bd] text-[15px]">Terapia Ideal</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/ferramentas/roda-da-vida')}><Text className="font-sans text-[#adb5bd] text-[15px]">Roda da Vida</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/ferramentas/calculadora-psi')}><Text className="font-sans text-[#adb5bd] text-[15px]">Calc. Honorários</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/ferramentas/gerador-bio')}><Text className="font-sans text-[#adb5bd] text-[15px]">Gerador de Bio</Text></TouchableOpacity>
             </View>
             
             {/* Botão Apoio à Mulher */}
             <TouchableOpacity 
               activeOpacity={0.8}
+              onPress={() => router.push('/ajuda_mulher')}
               className="flex-row items-center bg-[#8b5cf6] border border-[#7c3aed] px-5 py-2.5 rounded-[50px] shadow-[0_4px_15px_rgba(139,92,246,0.3)] mt-2"
             >
               <Feather name="info" size={16} color="white" className="mr-2" />
@@ -168,9 +169,9 @@ export default function Footer() {
             </Text>
 
             <View className="flex-row justify-center gap-4 mb-5 flex-wrap">
-              <TouchableOpacity><Text className="font-sans text-[#adb5bd] text-[13px]">Termos de Uso</Text></TouchableOpacity>
-              <TouchableOpacity><Text className="font-sans text-[#adb5bd] text-[13px]">Privacidade</Text></TouchableOpacity>
-              <TouchableOpacity><Text className="font-sans text-[#adb5bd] text-[13px]">Mapa do Site</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/termos')}><Text className="font-sans text-[#adb5bd] text-[13px]">Termos de Uso</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/privacidade')}><Text className="font-sans text-[#adb5bd] text-[13px]">Privacidade</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/mapa_site')}><Text className="font-sans text-[#adb5bd] text-[13px]">Mapa do Site</Text></TouchableOpacity>
             </View>
 
             <Text className="font-sans text-white/60 text-[13px] text-center">

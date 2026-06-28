@@ -9,6 +9,7 @@ import { StatusBar } from 'expo-status-bar';
 import Svg, { Path } from 'react-native-svg';
 import Footer from '../components/Footer';
 import PublicBottomNav from '../components/PublicBottomNav';
+import PublicHeader from '../components/PublicHeader';
 
 const { width } = Dimensions.get('window');
 
@@ -24,6 +25,7 @@ export default function Index() {
   const { YeloToken, loading } = useAuth();
   const router = useRouter();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   // Lista de frases dinâmicas para o Título (baseado na web)
   const frases = [
@@ -71,35 +73,18 @@ export default function Index() {
   // Se não logado, exibe a Landing Page 1:1 com a Web
   return (
     <View className="flex-1 bg-[#1B4332]">
-      <StatusBar style="light" />
-      <SafeAreaView edges={['top']} className="flex-1">
-        <YeloScrollView className="flex-1" style={{ backgroundColor: '#1B4332' }} showsVerticalScrollIndicator={false} refreshColor="#ffffff" onRefreshAction={handleRefresh}>
+      <SafeAreaView edges={['top']} className={`flex-1 ${isScrolled ? 'bg-[#ffffff]' : 'bg-[#1B4332]'}`}>
+        <PublicHeader isScrolled={isScrolled} />
+        <YeloScrollView 
+          className="flex-1" 
+          style={{ backgroundColor: '#1B4332' }} 
+          showsVerticalScrollIndicator={false} 
+          refreshColor="#ffffff" 
+          onRefreshAction={handleRefresh}
+          onScroll={(e) => setIsScrolled(e.nativeEvent.contentOffset.y > 20)}
+          scrollEventThrottle={16}
+        >
           <View className="bg-white">
-            {/* HEADER */}
-            <View className="bg-[#1B4332] pt-2">
-          <View className="px-5 py-4 flex-row justify-between items-center">
-            {/* Logo Yelo Branca */}
-            <Image
-              source={require('../../assets/images/logo-branca.png')}
-              style={{ width: 80, height: 32 }}
-              resizeMode="contain"
-            />
-
-            {/* Links da Direita */}
-            <View className="flex-row items-center">
-              <TouchableOpacity onPress={() => { }} className="mr-3">
-                <Text className="font-sans font-medium text-white text-[13px]">Sobre</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/faq')} className="mr-3">
-                <Text className="font-sans font-medium text-white text-[13px]">FAQ</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => { }}>
-                <Text className="font-sans font-medium text-white text-[13px]">Blog</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
         {/* HERO SECTION */}
         <View className="bg-[#1B4332] pt-8 items-center relative overflow-hidden">
           <View className="px-6 items-center w-full">
@@ -127,7 +112,7 @@ export default function Index() {
             </View>
 
             <TouchableOpacity 
-              onPress={() => router.push('/cadastro')}
+              onPress={() => router.push('/questionario')}
               className="bg-[#FFEE8C] px-[35px] py-[15px] rounded-[50px] shadow-[0_4px_20px_rgba(0,0,0,0.15)] items-center mb-3"
             >
               <Text className="font-black text-[#1B4332] text-[18px]">Encontrar meu psicólogo</Text>
@@ -155,24 +140,24 @@ export default function Index() {
 
           <YeloScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, gap: 16 }} snapToInterval={width * 0.75 + 16} decelerationRate="fast">
             <View style={{ width: width * 0.75 }} className="bg-[#F8F3ED] border border-[rgba(0,0,0,0.03)] p-8 rounded-[24px] rounded-tr-[60px] rounded-bl-[60px] shadow-[0_4px_15px_rgba(0,0,0,0.02)]">
-              <View className="w-14 h-14 bg-white rounded-full items-center justify-center mb-5 shadow-[0_4px_10px_rgba(0,0,0,0.05)]">
-                <Feather name="users" size={24} color="#1B4332" />
+              <View className="mb-5">
+                <Image source={require('../../assets/images/match.png')} style={{ width: 44, height: 44 }} resizeMode="contain" />
               </View>
               <Text className="font-title text-[20px] text-[#1B4332] mb-3">Match Inteligente</Text>
               <Text className="font-sans text-[14px] text-[#555] leading-relaxed">Não perca tempo procurando. Nossa tecnologia conecta você aos especialistas ideais para sua necessidade específica.</Text>
             </View>
 
             <View style={{ width: width * 0.75 }} className="bg-[#E6F4F1] border border-[rgba(0,0,0,0.03)] p-8 rounded-[60px] rounded-tr-[24px] rounded-bl-[24px] shadow-[0_4px_15px_rgba(0,0,0,0.02)]">
-              <View className="w-14 h-14 bg-white rounded-full items-center justify-center mb-5 shadow-[0_4px_10px_rgba(0,0,0,0.05)]">
-                <Feather name="lock" size={24} color="#1B4332" />
+              <View className="mb-5">
+                <Image source={require('../../assets/images/sigilo.png')} style={{ width: 44, height: 44 }} resizeMode="contain" />
               </View>
               <Text className="font-title text-[20px] text-[#1B4332] mb-3">100% Sigiloso e Seguro</Text>
               <Text className="font-sans text-[14px] text-[#555] leading-relaxed">Sua privacidade é nossa prioridade. Plataforma criptografada e profissionais éticos verificados pelo CRP.</Text>
             </View>
 
             <View style={{ width: width * 0.75 }} className="bg-[#FFF8E1] border border-[rgba(0,0,0,0.03)] p-8 rounded-[24px] rounded-tr-[60px] rounded-bl-[60px] shadow-[0_4px_15px_rgba(0,0,0,0.02)]">
-              <View className="w-14 h-14 bg-white rounded-full items-center justify-center mb-5 shadow-[0_4px_10px_rgba(0,0,0,0.05)]">
-                <Feather name="refresh-cw" size={24} color="#1B4332" />
+              <View className="mb-5">
+                <Image source={require('../../assets/images/troca.png')} style={{ width: 44, height: 44 }} resizeMode="contain" />
               </View>
               <Text className="font-title text-[20px] text-[#1B4332] mb-3">Troca Facilitada</Text>
               <Text className="font-sans text-[14px] text-[#555] leading-relaxed">Não se adaptou? Acontece. Troque de profissional a qualquer momento sem burocracia ou custo extra.</Text>
@@ -180,68 +165,128 @@ export default function Index() {
           </YeloScrollView>
         </View>
 
-        {/* QUALIDADE */}
-        <View className="bg-[#f9fafb] px-6 py-12 rounded-[40px] mx-4 mb-12 shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-[#f0f0f0]">
-          <View className="bg-[#E6F4F1] self-start px-4 py-1.5 rounded-[50px] mb-5">
-            <Text className="font-sans font-bold text-[#1B4332] text-[11px] uppercase tracking-wider">Segurança e Qualidade</Text>
+        {/* SEÇÃO ORGÂNICA (COLLAGE) */}
+        <View className="bg-[#fdfaf6] pt-[60px] pb-[80px] px-[20px]">
+          {/* Texto e Tags */}
+          <View className="items-center text-center z-10 mb-8">
+            <View className="bg-[#E6F4F1] px-[18px] py-[8px] rounded-[50px] mb-[25px]">
+              <Text className="font-sans font-bold text-[#1B4332] text-[12px] uppercase tracking-[1px]">Segurança e Qualidade</Text>
+            </View>
+            <Text className="font-title text-[32px] text-[#1B4332] text-center leading-tight mb-6">Profissionais verificados em quem você pode confiar.</Text>
+            <Text className="font-sans text-[16px] text-[#555] text-center leading-[26px]">Nossa curadoria é rigorosa. Apenas psicólogos com CRP ativo e aprovados em nossa entrevista técnica entram na plataforma.</Text>
+            
+            <View className="flex-row flex-wrap justify-center gap-4 mt-8 w-full">
+              <View className="flex-row items-center bg-white py-2 pr-6 pl-2 rounded-[50px] shadow-[0_8px_25px_rgba(27,67,50,0.06)] border border-[rgba(27,67,50,0.05)]">
+                <View className="w-9 h-9 bg-[#E6F4F1] rounded-full items-center justify-center mr-3">
+                  <Feather name="check" size={16} color="#1B4332" />
+                </View>
+                <Text className="font-sans font-bold text-[#1B4332] text-[14px]">CRP Ativo</Text>
+              </View>
+              <View className="flex-row items-center bg-white py-2 pr-6 pl-2 rounded-[50px] shadow-[0_8px_25px_rgba(27,67,50,0.06)] border border-[rgba(27,67,50,0.05)]">
+                <View className="w-9 h-9 bg-[#E6F4F1] rounded-full items-center justify-center mr-3">
+                  <Feather name="shield" size={16} color="#1B4332" />
+                </View>
+                <Text className="font-sans font-bold text-[#1B4332] text-[14px]">Verificados</Text>
+              </View>
+            </View>
+            <TouchableOpacity 
+              onPress={() => router.push('/questionario')}
+              className="bg-[#FFEE8C] px-[35px] py-[15px] rounded-[50px] shadow-[0_4px_15px_rgba(0,0,0,0.15)] mt-8"
+            >
+              <Text className="font-black text-[#1B4332] text-[16px]">Encontrar meu psicólogo</Text>
+            </TouchableOpacity>
           </View>
-          <Text className="font-title text-[30px] text-[#1B4332] mb-4 leading-tight">Profissionais verificados em quem você pode confiar.</Text>
-          <Text className="font-sans text-[15px] text-[#555] leading-relaxed mb-8">Nossa curadoria é rigorosa. Apenas psicólogos com CRP ativo e aprovados em nossa entrevista técnica entram na plataforma.</Text>
 
-          <View className="gap-3">
-            <View className="bg-white flex-row items-center p-3 rounded-[50px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-[#f5f5f5]">
-              <View className="w-10 h-10 bg-[#E6F4F1] rounded-full items-center justify-center mr-3">
-                <Feather name="check" size={18} color="#1B4332" />
-              </View>
-              <Text className="font-sans font-bold text-[#1B4332] text-[14px]">CRP Ativo e Regularizado</Text>
-            </View>
-            <View className="bg-white flex-row items-center p-3 rounded-[50px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-[#f5f5f5]">
-              <View className="w-10 h-10 bg-[#E6F4F1] rounded-full items-center justify-center mr-3">
-                <Feather name="shield" size={18} color="#1B4332" />
-              </View>
-              <Text className="font-sans font-bold text-[#1B4332] text-[14px]">Entrevista de Verificação</Text>
-            </View>
+          {/* Collage Wrapper */}
+          <View style={{ width: '100%', height: 350, marginTop: 20, position: 'relative' }}>
+             <Image 
+               source={{ uri: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=600' }} 
+               style={{ position: 'absolute', width: '55%', height: '70%', top: '15%', left: '22.5%', borderTopLeftRadius: 100, borderTopRightRadius: 100, borderBottomRightRadius: 20, borderBottomLeftRadius: 20 }}
+               resizeMode="cover"
+             />
+             <Image 
+               source={{ uri: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=300' }} 
+               style={{ position: 'absolute', width: '25%', aspectRatio: 1, top: '5%', left: '5%', borderRadius: 40 }}
+               resizeMode="cover"
+             />
+             <Image 
+               source={{ uri: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=300' }} 
+               style={{ position: 'absolute', width: '22%', aspectRatio: 1, top: '10%', right: '5%', borderRadius: 50 }}
+               resizeMode="cover"
+             />
+             <Image 
+               source={{ uri: 'https://images.pexels.com/photos/1121796/pexels-photo-1121796.jpeg?auto=compress&cs=tinysrgb&w=300' }} 
+               style={{ position: 'absolute', width: '18%', aspectRatio: 1, top: '45%', right: '0%', borderRadius: 30 }}
+               resizeMode="cover"
+             />
+             <Image 
+               source={{ uri: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=300' }} 
+               style={{ position: 'absolute', width: '28%', height: '35%', bottom: '0%', right: '10%', borderRadius: 20 }}
+               resizeMode="cover"
+             />
+             <Image 
+               source={{ uri: 'https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&w=300' }} 
+               style={{ position: 'absolute', width: '24%', aspectRatio: 1, bottom: '10%', left: '0%', borderRadius: 40 }}
+               resizeMode="cover"
+             />
           </View>
         </View>
 
         {/* COMO FUNCIONA */}
-        <View className="px-6 pb-14">
-          <Text className="font-title text-[32px] text-[#1B4332] mb-3">Como a Yelo funciona</Text>
-          <Text className="font-sans text-[15px] text-[#555] mb-10 leading-relaxed">Uma jornada simples, transparente e focada no seu bem-estar.</Text>
+        <View className="px-6 pb-14 pt-10">
+          <View className="items-center mb-10 text-center">
+            <Text className="font-title text-[32px] text-[#1B4332] mb-3 text-center">Como a Yelo funciona</Text>
+            <Text className="font-sans text-[15px] text-[#555] text-center leading-relaxed">Uma jornada simples, transparente e focada no seu bem-estar.</Text>
+          </View>
 
-          <View className="gap-8">
-            <View className="flex-row items-start">
-              <View className="w-12 h-12 rounded-full bg-[#1B4332] items-center justify-center mr-4 mt-1">
-                <Text className="font-title text-white text-[20px]">1</Text>
+          <View className="gap-12">
+            {/* Passo 01 */}
+            <View className="items-center text-center">
+              <View className="bg-[#E6F4F1] px-[16px] py-[6px] rounded-[50px] mb-[15px] self-center">
+                <Text className="font-sans font-bold text-[#1B4332] text-[12px] uppercase tracking-wider">Passo 01</Text>
               </View>
-              <View className="flex-1">
-                <Text className="font-sans font-bold text-[#16a34a] text-[11px] uppercase tracking-widest mb-1">Passo 01</Text>
-                <Text className="font-title text-[20px] text-[#1B4332] mb-2 leading-tight">Encontre o profissional ideal para você</Text>
-                <Text className="font-sans text-[14px] text-[#555] leading-relaxed">Esqueça as listas infinitas. Responda ao nosso questionário inteligente. Nossa tecnologia fará a curadoria dos psicólogos mais compatíveis.</Text>
+              <Text className="font-title text-[24px] text-[#1B4332] mb-3 text-center leading-tight">Encontre o profissional ideal para você</Text>
+              <Text className="font-sans text-[15px] text-[#555] leading-relaxed text-center mb-6">Esqueça as listas infinitas. Responda ao nosso questionário inteligente sobre suas necessidades e preferências. Nossa tecnologia fará a curadoria e te apresentará os psicólogos mais compatíveis com o seu perfil.</Text>
+              
+              <View className="w-full relative items-center justify-center h-[280px] bg-[#F8F3ED] rounded-[40px] overflow-hidden p-4">
+                <Image source={require('../../assets/images/passo_1.png')} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
               </View>
             </View>
 
-            <View className="flex-row items-start">
-              <View className="w-12 h-12 rounded-full bg-[#1B4332] items-center justify-center mr-4 mt-1">
-                <Text className="font-title text-white text-[20px]">2</Text>
+            {/* Passo 02 */}
+            <View className="items-center text-center">
+              <View className="bg-[#E6F4F1] px-[16px] py-[6px] rounded-[50px] mb-[15px] self-center">
+                <Text className="font-sans font-bold text-[#1B4332] text-[12px] uppercase tracking-wider">Passo 02</Text>
               </View>
-              <View className="flex-1">
-                <Text className="font-sans font-bold text-[#16a34a] text-[11px] uppercase tracking-widest mb-1">Passo 02</Text>
-                <Text className="font-title text-[20px] text-[#1B4332] mb-2 leading-tight">Conheça e conecte-se com segurança</Text>
-                <Text className="font-sans text-[14px] text-[#555] leading-relaxed">Veja o perfil detalhado, avaliações reais e vídeo de apresentação. Inicie uma conversa ou agende sua sessão diretamente.</Text>
+              <Text className="font-title text-[24px] text-[#1B4332] mb-3 text-center leading-tight">Conheça e conecte-se com segurança</Text>
+              <Text className="font-sans text-[15px] text-[#555] leading-relaxed text-center mb-6">Veja o perfil detalhado, assista ao vídeo de apresentação e leia avaliações reais. Quando sentir confiança, inicie uma conversa ou agende sua sessão diretamente pela plataforma, sem intermediários.</Text>
+              
+              <View className="w-full relative items-center justify-center h-[280px] bg-[#E6F4F1] rounded-[40px] overflow-hidden p-4">
+                <Image source={require('../../assets/images/passo_2.png')} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
               </View>
             </View>
 
-            <View className="flex-row items-start">
-              <View className="w-12 h-12 rounded-full bg-[#1B4332] items-center justify-center mr-4 mt-1">
-                <Text className="font-title text-white text-[20px]">3</Text>
+            {/* Passo 03 */}
+            <View className="items-center text-center">
+              <View className="bg-[#E6F4F1] px-[16px] py-[6px] rounded-[50px] mb-[15px] self-center">
+                <Text className="font-sans font-bold text-[#1B4332] text-[12px] uppercase tracking-wider">Passo 03</Text>
               </View>
-              <View className="flex-1">
-                <Text className="font-sans font-bold text-[#16a34a] text-[11px] uppercase tracking-widest mb-1">Passo 03</Text>
-                <Text className="font-title text-[20px] text-[#1B4332] mb-2 leading-tight">Comece sua jornada de transformação</Text>
-                <Text className="font-sans text-[14px] text-[#555] leading-relaxed">Realize suas sessões online no conforto da sua casa. E se não se adaptar, a Troca Facilitada resolve seu problema.</Text>
+              <Text className="font-title text-[24px] text-[#1B4332] mb-3 text-center leading-tight">Comece sua jornada de transformação</Text>
+              <Text className="font-sans text-[15px] text-[#555] leading-relaxed text-center mb-6">Realize suas sessões online no conforto da sua casa. Se não se adaptar, nosso sistema de Troca Facilitada permite que você encontre outro profissional rapidamente.</Text>
+              
+              <View className="w-full relative items-center justify-center h-[280px] bg-[#FFF8E1] rounded-[40px] overflow-hidden p-4">
+                <Image source={require('../../assets/images/passo_3.png')} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
               </View>
             </View>
+          </View>
+          
+          <View className="items-center mt-12 mb-6">
+            <TouchableOpacity 
+              onPress={() => router.push('/questionario')}
+              className="bg-[#FFEE8C] px-[35px] py-[15px] rounded-[50px] shadow-[0_4px_15px_rgba(0,0,0,0.15)]"
+            >
+              <Text className="font-black text-[#1B4332] text-[16px]">Encontrar meu psicólogo</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -319,7 +364,7 @@ export default function Index() {
         {/* BOTTOM CTA */}
         <View className="px-6 pb-20 items-center bg-white">
           <TouchableOpacity
-            onPress={() => router.push('/cadastro')}
+            onPress={() => router.push('/questionario')}
             className="w-full bg-[#1B4332] py-4 rounded-[50px] shadow-[0_6px_20px_rgba(27,67,50,0.25)] items-center mb-6"
           >
             <Text className="font-black text-white text-[16px]">Encontrar meu psicólogo</Text>
