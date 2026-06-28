@@ -226,6 +226,7 @@ const startServer = async () => {
             if (db.Question) await db.Question.sync();
             if (db.Answer) await db.Answer.sync();
             if (db.QuestionIgnore) await db.QuestionIgnore.sync();
+            if (db.WhatsAppClickLog) await db.WhatsAppClickLog.sync({ alter: true });
 
             await db.sequelize.query('ALTER TABLE questions ADD COLUMN IF NOT EXISTS title VARCHAR(255);');
             await db.sequelize.query('ALTER TABLE questions ADD COLUMN IF NOT EXISTS slug VARCHAR(255) UNIQUE;');
