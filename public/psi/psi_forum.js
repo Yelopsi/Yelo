@@ -870,6 +870,55 @@
         
         const cancelForumBtn = document.getElementById('cancel-forum-modal');
         if (cancelForumBtn) cancelForumBtn.onclick = () => createModal.style.display = 'none';
+
+        // Lógica do botão de IA para Admins
+        const btnAiComment = document.getElementById('btn-generate-ai-comment');
+        if (btnAiComment && psiData && psiData.isAdmin) {
+            btnAiComment.classList.remove('hidden');
+            btnAiComment.onclick = async () => {
+                const postTitleEl = document.querySelector('.full-post-title');
+                const postContentEl = document.querySelector('.full-post-content');
+                const commentInput = document.getElementById('comment-content');
+                
+                if (!postTitleEl || !postContentEl) return;
+                
+                const postTitle = postTitleEl.textContent;
+                const postContent = postContentEl.innerText;
+                
+                // Pega os 3 primeiros comentários para dar contexto
+                const commentEls = document.querySelectorAll('.comment-thread .comment-body');
+                let commentsContext = '';
+                for (let i = 0; i < Math.min(3, commentEls.length); i++) {
+                    commentsContext += `- ${commentEls[i].innerText}\n`;
+                }
+
+                btnAiComment.disabled = true;
+                const originalText = btnAiComment.innerHTML;
+                btnAiComment.innerHTML = '✨ Pensando...';
+
+                try {
+                    const res = await apiFetch(`${API_BASE_URL}/api/forum/ai/generate-comment`, {
+                        method: 'POST',
+                        body: JSON.stringify({ postTitle, postContent, comments: commentsContext })
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        commentInput.value = data.generatedText;
+                        // Ajusta a altura da caixa
+                        commentInput.style.height = 'auto';
+                        commentInput.style.height = commentInput.scrollHeight + 'px';
+                        showToast('Comentário gerado! Revise e publique.', 'info');
+                    } else {
+                        showToast('Erro ao gerar com IA.', 'error');
+                    }
+                } catch (err) {
+                    showToast('Erro ao gerar com IA.', 'error');
+                } finally {
+                    btnAiComment.disabled = false;
+                    btnAiComment.innerHTML = originalText;
+                }
+            };
+        }
         
         const tabs = document.querySelectorAll('.forum-tabs .tab-item');
         tabs.forEach(tab => {

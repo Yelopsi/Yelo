@@ -29,6 +29,14 @@ module.exports = (sequelize, DataTypes) => {
         reminderEmailSent: {
             type: DataTypes.BOOLEAN,
             defaultValue: false
+        },
+        adminWppReminderSentAt: {
+            type: DataTypes.DATE,
+            allowNull: true
+        },
+        adminWppReminderCount: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0
         }
     }, {
         timestamps: true // Cria automaticamente createdAt (data do clique) e updatedAt

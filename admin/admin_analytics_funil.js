@@ -2,8 +2,10 @@
 
 window.initializePage = function() {
     const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
-    let exportData = null; // Armazena dados globais para o CSV
+    let exportData = null; // Guarda os dados do funil
     let globalRankingData = []; // Armazena o ranking para ordenação no front
+    window.termometroData = null;
+    window.auditoriaData = null;
     let currentRankingSort = { column: 'posicao', direction: 'asc' }; // Estado da ordenação
 
     // Inicializa as datas de filtro (últimos 30 dias por padrão)
@@ -181,34 +183,7 @@ window.initializePage = function() {
             const elTaxaGlobal = document.getElementById('taxa-conclusao-final');
             if (elTaxaGlobal) elTaxaGlobal.innerHTML = renderGoalBar(taxaGlobal, 3, 'do tráfego');
 
-            // --- CÁLCULO DINÂMICO DE CPA (Custo por Aquisição) ---
-            const inputCpc = document.getElementById('input-cpc-medio');
-            const calcularCPA = () => {
-                const cpc = parseFloat(inputCpc ? inputCpc.value : 1.50) || 1.50;
-                
-                // Isola apenas o tráfego pago para não punir o CPA com tráfego orgânico/direto
-                let visitasPagas = data.visitas;
-                if (data.origens && data.origens.length > 0) {
-                    const canaisPagos = data.origens.filter(o => {
-                        const src = (o.source || '').toLowerCase();
-                        return src.includes('ads') || src.includes('google') || src.includes('meta') || src.includes('fb') || src.includes('ig');
-                    });
-                    if (canaisPagos.length > 0) {
-                        visitasPagas = canaisPagos.reduce((acc, curr) => acc + parseInt(curr.count), 0);
-                    }
-                }
-                
-                // CPA = (Total de Visitas Pagas * Custo por Clique) / Conversões Finais
-                const cpaEstimado = data.whatsappClicks > 0 ? ((visitasPagas * cpc) / data.whatsappClicks).toFixed(2) : '--';
-                document.getElementById('kpi-cpa').textContent = cpaEstimado !== '--' ? `R$ ${cpaEstimado}` : 'R$ --';
-            };
-            
-            calcularCPA(); // Cálculo inicial
-            
-            if (inputCpc && !inputCpc.hasAttribute('data-listener')) {
-                inputCpc.setAttribute('data-listener', 'true');
-                inputCpc.addEventListener('input', calcularCPA);
-            }
+
 
             // --- 2. RENDERIZA FUNIL VISUAL END-TO-END ---
             const maxFunnel = data.visitas > 0 ? data.visitas : 1; // Previne divisão por zero
@@ -368,81 +343,136 @@ window.initializePage = function() {
         }
     }
 
-    // --- 6. EXPORTAÇÃO CSV ---
+    function downloadCSV(filename, content) {
+        const blob = new Blob(["\uFEFF"+content], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // --- 6. EXPORTAÇÃO CSV DINÂMICA (POR ABA) ---
     function exportarCSV() {
-        if (!exportData) return alert("Nenhum dado para exportar. Atualize a página.");
+        const activeTabBtn = document.querySelector('.content-tab-btn.active');
+        const tabTarget = activeTabBtn ? activeTabBtn.getAttribute('data-target') : 'tab-funil';
         
-        // Helpers de formatação
         const formatToBR = (dateStr) => {
             if (!dateStr) return 'N/A';
             const [y, m, d] = dateStr.split('-');
             return `${d}/${m}/${y}`;
         };
-        const safeStr = (str) => (str || '').replace(/;/g, ' - '); // Previne quebra de colunas no Excel
+        const safeStr = (str) => (str || '').toString().replace(/;/g, ' - ');
 
-        // Captura o período selecionado
         const dataInicial = formatToBR(startInput ? startInput.value : '');
         const dataFinal = formatToBR(endInput ? endInput.value : '');
-        const taxaConversao = exportData.visitas > 0 ? ((exportData.whatsappClicks / exportData.visitas) * 100).toFixed(2) : 0;
+        const periodStr = `${dataInicial} a ${dataFinal}`;
 
-        // 1. CABEÇALHO E FUNIL PRINCIPAL
-        let csvContent = `RELATÓRIO DE BUSINESS INTELLIGENCE E FUNIL DE PACIENTES\n`;
-        csvContent += `Período: ${dataInicial} a ${dataFinal}\n\n`;
-        csvContent += `--- FUNIL DE CONVERSÃO ---\n`;
-        csvContent += `Etapa;Quantidade\n`;
-        csvContent += `1. Visitantes Totais (Site);${exportData.visitas}\n`;
-        csvContent += `2. Iniciaram Questionário;${exportData.iniciaram}\n`;
-        csvContent += `3. Completaram Questionário;${exportData.completaram}\n`;
-        csvContent += `4. Acessaram Perfis Detalhados;${exportData.profileViews}\n`;
-        csvContent += `5. Clicaram WhatsApp (Conversão);${exportData.whatsappClicks}\n`;
-        csvContent += `Taxa de Conversão Final;${taxaConversao}%\n\n`;
-
-        // 2. DESISTÊNCIAS E DESQUALIFICAÇÕES
-        csvContent += `--- RETENÇÃO E PERDAS ---\n`;
-        csvContent += `Categoria;Quantidade\n`;
-        csvContent += `Desqualificados (Menor de Idade / Regras de Negócio);${exportData.desqualificados || 0}\n`;
-        
-        if (exportData.abandonos && exportData.abandonos.length > 0) {
-            exportData.abandonos.forEach(a => {
-                const stepName = stepNames[a.step] || a.step || 'Sessão Perdida';
-                csvContent += `Abandono - ${stepName};${a.count}\n`;
-            });
-        } else {
-            csvContent += `Abandonos no Questionário;0\n`;
-        }
-        csvContent += `\n`;
-
-        // 3. ORIGENS DE TRÁFEGO (UTMs)
-        csvContent += `--- ORIGENS DE TRÁFEGO (UTMs) ---\n`;
-        csvContent += `Origem / Campanha;Acessos\n`;
-        if (exportData.origens && exportData.origens.length > 0) {
-            exportData.origens.forEach(o => csvContent += `${safeStr(o.source) || 'Direto/Orgânico'};${o.count}\n`);
-        } else {
-            csvContent += `Sem dados de UTM mapeados;0\n`;
-        }
-        csvContent += `\n`;
-
-        // 4. INTELIGÊNCIA DE DEMANDA (NOVO)
-        if (exportData.inteligencia) {
-            csvContent += `--- INTELIGÊNCIA DE DEMANDA (PACIENTES QUE CONCLUÍRAM) ---\n`;
+        if (tabTarget === 'tab-funil') {
+            if (!exportData) return alert("Nenhum dado para exportar. Atualize a página.");
             
-            csvContent += `Top Temas Buscados;Quantidade\n`;
-            (exportData.inteligencia.topTemas || []).forEach(t => csvContent += `${safeStr(t.value)};${t.count}\n`);
-            csvContent += `\nFaixa de Valor Desejada;Quantidade\n`;
-            (exportData.inteligencia.faixaValor || []).forEach(f => csvContent += `${safeStr(f.value)};${f.count}\n`);
-            csvContent += `\nModalidade Preferida;Quantidade\n`;
-            (exportData.inteligencia.modalidades || []).forEach(m => csvContent += `${safeStr(m.value)};${m.count}\n`);
-        }
+            const taxaConversao = exportData.visitas > 0 ? ((exportData.whatsappClicks / exportData.visitas) * 100).toFixed(2) : 0;
 
-        // Download
-        const blob = new Blob(["\uFEFF"+csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", `yelo_funil_export_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+            let csvContent = `RELATÓRIO DE BUSINESS INTELLIGENCE E FUNIL DE PACIENTES\n`;
+            csvContent += `Período: ${periodStr}\n\n`;
+            csvContent += `--- FUNIL DE CONVERSÃO ---\n`;
+            csvContent += `Etapa;Quantidade\n`;
+            csvContent += `1. Visitantes Totais (Site);${exportData.visitas}\n`;
+            csvContent += `2. Iniciaram Questionário;${exportData.iniciaram}\n`;
+            csvContent += `3. Completaram Questionário;${exportData.completaram}\n`;
+            csvContent += `4. Acessaram Perfis Detalhados;${exportData.profileViews}\n`;
+            csvContent += `5. Clicaram WhatsApp (Conversão);${exportData.whatsappClicks}\n`;
+            csvContent += `Taxa de Conversão Final;${taxaConversao}%\n\n`;
+
+            csvContent += `--- RETENÇÃO E PERDAS ---\n`;
+            csvContent += `Categoria;Quantidade\n`;
+            csvContent += `Desqualificados (Menor de Idade / Regras de Negócio);${exportData.desqualificados || 0}\n`;
+            
+            if (exportData.abandonos && exportData.abandonos.length > 0) {
+                exportData.abandonos.forEach(a => {
+                    const stepName = stepNames[a.step] || a.step || 'Sessão Perdida';
+                    csvContent += `Abandono - ${stepName};${a.count}\n`;
+                });
+            } else {
+                csvContent += `Abandonos no Questionário;0\n`;
+            }
+            csvContent += `\n`;
+
+            csvContent += `--- ORIGENS DE TRÁFEGO (UTMs) ---\n`;
+            csvContent += `Origem / Campanha;Acessos\n`;
+            if (exportData.origens && exportData.origens.length > 0) {
+                exportData.origens.forEach(o => csvContent += `${safeStr(o.source) || 'Direto/Orgânico'};${o.count}\n`);
+            } else {
+                csvContent += `Sem dados de UTM mapeados;0\n`;
+            }
+            csvContent += `\n`;
+
+            if (exportData.inteligencia) {
+                csvContent += `--- INTELIGÊNCIA DE DEMANDA (PACIENTES QUE CONCLUÍRAM) ---\n`;
+                csvContent += `Top Temas Buscados;Quantidade\n`;
+                (exportData.inteligencia.topTemas || []).forEach(t => csvContent += `${safeStr(t.value)};${t.count}\n`);
+                csvContent += `\nFaixa de Valor Desejada;Quantidade\n`;
+                (exportData.inteligencia.faixaValor || []).forEach(f => csvContent += `${safeStr(f.value)};${f.count}\n`);
+                csvContent += `\nModalidade Preferida;Quantidade\n`;
+                (exportData.inteligencia.modalidades || []).forEach(m => csvContent += `${safeStr(m.value)};${m.count}\n`);
+            }
+
+            downloadCSV(`yelo_funil_export_${new Date().toISOString().split('T')[0]}.csv`, csvContent);
+            
+        } else if (tabTarget === 'tab-conversoes') {
+            const wppData = window.wppDataState ? window.wppDataState.allFeedbacks : [];
+            if (!wppData || wppData.length === 0) return alert("Nenhum dado de conversão para exportar.");
+            
+            let csvContent = `RELATÓRIO DE CONVERSÕES (PLG)\nPeríodo: ${periodStr}\n\n`;
+            csvContent += `Data;Paciente (Visitante);Psicólogo;Recebeu Contato?;Fechou Negócio?;Status\n`;
+            
+            wppData.forEach(l => {
+                const dataFormatada = new Date(l.createdAt).toLocaleDateString('pt-BR');
+                const pName = safeStr(l.guestName);
+                const psiName = l.psychologist ? safeStr(l.psychologist.nome) : 'N/A';
+                const recContato = l.contactReceived === true ? 'Sim' : (l.contactReceived === false ? 'Não' : 'Pendente');
+                const fechou = l.dealClosed === 'yes' ? 'Sim' : (l.dealClosed === 'no' ? 'Não' : 'Pendente');
+                const status = l.feedbackGiven ? 'Respondido' : 'Pendente';
+                csvContent += `${dataFormatada};${pName};${psiName};${recContato};${fechou};${status}\n`;
+            });
+            downloadCSV(`yelo_conversoes_${new Date().toISOString().split('T')[0]}.csv`, csvContent);
+
+        } else if (tabTarget === 'tab-ranking') {
+            if (!globalRankingData || globalRankingData.length === 0) return alert("Nenhum dado de ranking para exportar.");
+            
+            let csvContent = `RANKING DE PSICÓLOGOS\nPeríodo: ${periodStr}\n\n`;
+            csvContent += `Posição;Nome;Acesso Direto;Busca (Filtros);Visitantes Totais;Cliques no WhatsApp;Taxa de Conversão\n`;
+            
+            globalRankingData.forEach((item, idx) => {
+                const pos = idx + 1;
+                const visitasTotais = (item.aparicoesBusca || 0) + (item.visitasDiretas || 0);
+                const conver = item.conversaoVal ? item.conversaoVal.toFixed(2) : '0.00';
+                csvContent += `${pos};${safeStr(item.nome)};${item.visitasDiretas || 0};${item.aparicoesBusca || 0};${visitasTotais};${item.cliquesWpp || 0};${conver}%\n`;
+            });
+            downloadCSV(`yelo_ranking_${new Date().toISOString().split('T')[0]}.csv`, csvContent);
+            
+        } else if (tabTarget === 'tab-termometro') {
+            if (!window.termometroData) return alert("Nenhum dado do termômetro. Faça a análise primeiro.");
+            const data = window.termometroData;
+            let csvContent = `ESCALA (ADS) E SAÚDE DO TRÁFEGO\nData da Análise: ${new Date().toLocaleDateString('pt-BR')}\n\n`;
+            csvContent += `Métrica;Valor\n`;
+            csvContent += `Total de Psicólogos Ativos;${data.totalPsis || 0}\n`;
+            csvContent += `Total de Leads Entregues no Período;${data.totalLeads || 0}\n`;
+            csvContent += `Média de Leads por Psicólogo;${(data.mediaLeads || 0).toFixed(2)}\n`;
+            downloadCSV(`yelo_escala_${new Date().toISOString().split('T')[0]}.csv`, csvContent);
+            
+        } else if (tabTarget === 'tab-auditoria') {
+            if (!window.auditoriaData || window.auditoriaData.length === 0) return alert("Nenhum dado de auditoria. Faça a busca primeiro.");
+            let csvContent = `AUDITORIA DE LEADS (PERÍODO)\nPeríodo: ${periodStr}\n\n`;
+            csvContent += `Psicólogo;Status da Assinatura;Total de Leads Recebidos\n`;
+            window.auditoriaData.forEach(l => {
+                const status = l.status === 'active' ? 'Ativo' : (l.status === 'pending' ? 'Pendente' : 'Inativo');
+                csvContent += `${safeStr(l.nome)};${status};${l.leads_recentes}\n`;
+            });
+            downloadCSV(`yelo_auditoria_${new Date().toISOString().split('T')[0]}.csv`, csvContent);
+        }
     }
 
     // --- FUNÇÕES DE RENDERIZAÇÃO SECUNDÁRIAS ---
@@ -453,7 +483,9 @@ window.initializePage = function() {
         filteredFeedbacks: [],
         currentPage: 1,
         itemsPerPage: 15,
-        currentFilter: 'todos'
+        currentFilter: 'todos',
+        sortColumn: 'data',
+        sortDirection: 'desc'
     };
 
     window.applyWppFilter = function() {
@@ -471,8 +503,68 @@ window.initializePage = function() {
             if (filterVal === 'nao_recebeu') return f.feedbackGiven && !f.contactReceived;
             return true;
         });
-        renderWppTableOnly();
+        applyWppSort();
     };
+
+    window.sortWppData = function(column) {
+        if (window.wppDataState.sortColumn === column) {
+            window.wppDataState.sortDirection = window.wppDataState.sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            window.wppDataState.sortColumn = column;
+            window.wppDataState.sortDirection = 'asc';
+        }
+        
+        ['data', 'psi', 'paciente', 'recebeu', 'fechou', 'status'].forEach(col => {
+            const icon = document.getElementById(`sort-wpp-${col}`);
+            if (icon) {
+                if (col === column) {
+                    icon.textContent = window.wppDataState.sortDirection === 'asc' ? '↑' : '↓';
+                    icon.style.opacity = '1';
+                } else {
+                    icon.textContent = '↕';
+                    icon.style.opacity = '0.5';
+                }
+            }
+        });
+        
+        applyWppSort();
+    };
+
+    function applyWppSort() {
+        if (!window.wppDataState.filteredFeedbacks) return;
+        const col = window.wppDataState.sortColumn;
+        const dir = window.wppDataState.sortDirection === 'asc' ? 1 : -1;
+        
+        window.wppDataState.filteredFeedbacks.sort((a, b) => {
+            let valA, valB;
+            
+            if (col === 'data') {
+                valA = new Date(a.createdAt).getTime();
+                valB = new Date(b.createdAt).getTime();
+            } else if (col === 'psi') {
+                valA = a.psychologist && a.psychologist.nome ? a.psychologist.nome.toLowerCase() : '';
+                valB = b.psychologist && b.psychologist.nome ? b.psychologist.nome.toLowerCase() : '';
+            } else if (col === 'paciente') {
+                valA = (a.guestName || '').toLowerCase();
+                valB = (b.guestName || '').toLowerCase();
+            } else if (col === 'recebeu') {
+                valA = a.contactReceived === true ? 1 : (a.contactReceived === false ? -1 : 0);
+                valB = b.contactReceived === true ? 1 : (b.contactReceived === false ? -1 : 0);
+            } else if (col === 'fechou') {
+                valA = a.dealClosed === 'yes' ? 1 : (a.dealClosed === 'no' ? -1 : 0);
+                valB = b.dealClosed === 'yes' ? 1 : (b.dealClosed === 'no' ? -1 : 0);
+            } else if (col === 'status') {
+                valA = a.feedbackGiven ? 1 : -1;
+                valB = b.feedbackGiven ? 1 : -1;
+            }
+            
+            if (valA < valB) return -1 * dir;
+            if (valA > valB) return 1 * dir;
+            return 0;
+        });
+        
+        renderWppTableOnly();
+    }
 
     window.prevWppPage = function() {
         if (window.wppDataState.currentPage > 1) {
@@ -486,6 +578,35 @@ window.initializePage = function() {
         if (window.wppDataState.currentPage < totalPages) {
             window.wppDataState.currentPage++;
             renderWppTableOnly();
+        }
+    };
+
+    window.markWppAsSent = async function(psiId, wppLink) {
+        // Abre o wpp imediatamente para não ser bloqueado pelo popup blocker
+        window.open(wppLink, '_blank');
+        
+        try {
+            const token = localStorage.getItem('Yelo_admin_token') || localStorage.getItem('Yelo_token');
+            const response = await fetch(`/api/admin/whatsapp-feedbacks/remind/${psiId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.ok) {
+                // Ao dar certo, recarrega a tabela de conversões para pegar os novos dados do banco
+                const btnLoad = document.querySelector(`button[onclick="loadWppFeedbacks()"]`);
+                if (btnLoad) {
+                    btnLoad.click();
+                } else if (typeof loadWppFeedbacks === 'function') {
+                    loadWppFeedbacks();
+                }
+            } else {
+                console.error('Falha ao registrar cobrança no servidor.');
+            }
+        } catch (e) {
+            console.error('Erro ao marcar reminder:', e);
         }
     };
 
@@ -526,6 +647,8 @@ window.initializePage = function() {
             let fechou = '-';
             let status = '<span class="status status-pendente" style="background: #f8f9fa; color: #6c757d; font-size: 0.75rem; border: 1px solid #dee2e6; padding: 4px 10px; border-radius: 20px;">Pendente</span>';
             
+            const safePsiId = f.psychologistId || (f.psychologist ? f.psychologist.id : '');
+
             if (f.feedbackGiven) {
                 status = '<span class="status status-ativo" style="background: #e0f2fe; color: #0369a1; font-size: 0.75rem; border: 1px solid #bae6fd; padding: 4px 10px; border-radius: 20px;">Respondido</span>';
                 if (f.contactReceived) {
@@ -535,9 +658,49 @@ window.initializePage = function() {
                     contato = '❌ Não chegou';
                     fechou = '-';
                 }
+            } else {
+                // Lógica do botão de WhatsApp para cobrança
+                
+                // 1. Não mostrar se tiver menos de 24h
+                const createdAtMs = new Date(f.createdAt).getTime();
+                const nowMs = Date.now();
+                const ageHours = (nowMs - createdAtMs) / (1000 * 60 * 60);
+                
+                if (ageHours > 24 && f.psychologist && f.psychologist.telefone) {
+                    const sentAtMs = f.adminWppReminderSentAt ? new Date(f.adminWppReminderSentAt).getTime() : 0;
+                    const count = f.adminWppReminderCount || 0;
+                    
+                    const hoursSinceLastReminder = sentAtMs ? (nowMs - sentAtMs) / (1000 * 60 * 60) : 9999;
+                    
+                    if (hoursSinceLastReminder < 48) {
+                        // BLOQUEADO - Já cobrado recentemente (menos de 48h)
+                        const btnWpp = `<span style="display:inline-flex; align-items:center; justify-content:center; background:#9ca3af; color:#fff; border-radius:50%; width:26px; height:26px; margin-left:8px; cursor:default;" title="Cobrança já enviada nas últimas 48h">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </span>`;
+                        status = `<div style="display:flex; align-items:center; justify-content:center;">${status}${btnWpp}</div>`;
+                    } else {
+                        // LIBERADO - Pode cobrar
+                        const phoneRaw = f.psychologist.telefone.replace(/\D/g, '');
+                        const phone = phoneRaw.startsWith('55') ? phoneRaw : (phoneRaw.length >= 10 ? `55${phoneRaw}` : phoneRaw);
+                        const psiNameFirst = (f.psychologist.nome || 'Psi').split(' ')[0];
+                        const patientName = f.guestName || 'um paciente';
+                        
+                        let msgWpp = '';
+                        if (count === 0) {
+                            msgWpp = `Olá ${psiNameFirst}, vimos que o(a) paciente ${patientName} entrou em contato com você recentemente pela Yelo.\n\nPor favor, acesse seu painel em https://www.yelopsi.com.br/psi/dashboard e nos confirme se a mensagem chegou e se fecharam negócio!\n\nObrigado.`;
+                        } else {
+                            msgWpp = `Olá ${psiNameFirst}, tudo bem? Passando para relembrar sobre o(a) paciente ${patientName}. Ainda estamos aguardando a sua confirmação no painel (https://www.yelopsi.com.br/psi/dashboard) para sabermos se o contato deu certo! Pode nos atualizar por favor?`;
+                        }
+                        
+                        const wppLink = `https://wa.me/${phone}?text=${encodeURIComponent(msgWpp)}`;
+                        
+                        const btnWpp = `<a href="javascript:void(0)" onclick="window.markWppAsSent('${safePsiId}', '${wppLink}')" style="display:inline-flex; align-items:center; justify-content:center; background:#25D366; color:#fff; border-radius:50%; width:26px; height:26px; margin-left:8px; text-decoration:none; transition: transform 0.2s; box-shadow: 0 2px 4px rgba(37,211,102,0.3);" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Cobrar resposta via WhatsApp">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                        </a>`;
+                        status = `<div style="display:flex; align-items:center; justify-content:center;">${status}${btnWpp}</div>`;
+                    }
+                }
             }
-            
-            const safePsiId = f.psychologistId || (f.psychologist ? f.psychologist.id : '');
             
             return `<tr>
                 <td data-label="Data do Clique" style="color: #666; font-size: 0.9rem;">${dataClique}</td>
@@ -911,6 +1074,7 @@ window.initializePage = function() {
                 if (!res.ok) throw new Error("Falha ao buscar dados do termômetro.");
                 
                 const data = await res.json();
+                window.termometroData = data;
                 const media = parseFloat(data.mediaLeads || 0);
                 
                 // Exibe contêiner
@@ -989,6 +1153,7 @@ window.initializePage = function() {
                 if (!res.ok) throw new Error("Falha ao buscar dados de auditoria.");
                 
                 const leads = await res.json();
+                window.auditoriaData = leads;
                 
                 if (!leads || leads.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 40px; color: #64748b;">Nenhum lead recebido no período selecionado.</td></tr>';

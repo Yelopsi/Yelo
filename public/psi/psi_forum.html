@@ -204,7 +204,10 @@
                                     <input type="checkbox" id="comment-anonymous">
                                     <label for="comment-anonymous">Comentar como Anônimo</label>
                                 </div>
-                                <button type="submit" class="btn btn-principal" style="padding: 8px 18px; font-size: 0.9rem; min-width: 0; width: auto; border-radius: 50px; margin: 0;">Comentar</button>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <button type="button" id="btn-generate-ai-comment" class="btn hidden" style="padding: 8px 18px; font-size: 0.9rem; min-width: 0; width: auto; border-radius: 50px; margin: 0; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; box-shadow: 0 2px 5px rgba(16,185,129,0.3); display: flex; align-items: center; gap: 6px; cursor: pointer;" title="Gerar resposta engajadora com IA">✨ IA</button>
+                                    <button type="submit" class="btn btn-principal" style="padding: 8px 18px; font-size: 0.9rem; min-width: 0; width: auto; border-radius: 50px; margin: 0;">Comentar</button>
+                                </div>
                             </div>
                         </form>
                         <div id="comment-thread" class="comment-thread">

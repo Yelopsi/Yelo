@@ -684,3 +684,57 @@ exports.resolveReport = async (req, res) => {
         res.status(500).json({ error: 'Erro ao moderar.' });
     }
 };
+
+exports.generateAiComment = async (req, res) => {
+    try {
+        const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require('@google/generative-ai');
+        
+        // Verifica se o usuário é admin
+        const psychologistId = req.user.id;
+        const psychologist = await Psychologist.findByPk(psychologistId);
+        
+        if (!psychologist || !psychologist.isAdmin) {
+            return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem gerar comentários com IA.' });
+        }
+
+        const { postTitle, postContent, comments } = req.body;
+
+        if (!postTitle && !postContent) {
+            return res.status(400).json({ error: 'Conteúdo do post é obrigatório.' });
+        }
+
+        if (!process.env.GEMINI_API_KEY) {
+            return res.status(500).json({ error: 'Chave da API do Gemini não configurada.' });
+        }
+
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-3.1-flash-lite",
+            safetySettings: [
+                { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+                { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE }
+            ]
+        });
+
+        const prompt = `Você é um psicólogo e administrador da plataforma Yelo, engajando no fórum da comunidade com outros psicólogos. Sua abordagem terapêutica de base é a psicanálise. A linguagem deve ser profissional, porém não extremamente formal, mantendo um tom acadêmico e acolhedor, focado em promover o engajamento e gerar mais comentários.
+
+        Aqui está o post original:
+        Título: ${postTitle || 'Sem título'}
+        Conteúdo: ${postContent || ''}
+
+        E aqui estão os principais comentários (se houver):
+        ${comments || 'Nenhum comentário ainda.'}
+
+        Baseado neste post (e considerando os comentários existentes), escreva um comentário agregando valor à discussão, validando o colega, e talvez deixando uma reflexão ou pergunta aberta no final para estimular mais respostas. Escreva SOMENTE o comentário a ser publicado, sem aspas e sem explicações extras.`;
+
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text();
+
+        res.status(200).json({ generatedText: responseText.trim() });
+    } catch (error) {
+        console.error('Erro ao gerar comentário com IA:', error);
+        res.status(500).json({ error: 'Erro interno ao gerar comentário.' });
+    }
+};

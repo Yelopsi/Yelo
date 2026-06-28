@@ -18,6 +18,7 @@ router.post('/report', forumController.reportContent);
 router.delete('/posts/:id', forumController.deletePost); // Nova rota de exclusão
 router.delete('/comments/:id', forumController.deleteComment); // Rota para excluir comentários
 router.post('/comments/:id/vote', forumController.toggleCommentVote); // <-- NOVA ROTA
+router.post('/ai/generate-comment', forumController.generateAiComment); // Rota para gerar comentario com IA
 
 // Rotas de Admin (Idealmente deveriam ter middleware de admin, mas usaremos o protect por enquanto)
 router.get('/admin/reports', forumController.getReports);

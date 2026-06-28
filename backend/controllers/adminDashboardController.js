@@ -782,7 +782,7 @@ exports.getWhatsappFeedbacks = async (req, res) => {
             include: [{
                 model: db.Psychologist,
                 as: 'psychologist', // Precisa bater com o alias definido no WhatsAppClickLog.js
-                attributes: ['id', 'nome', 'email', 'slug'] // 'id' adicionado para permitir o clique no painel
+                attributes: ['id', 'nome', 'email', 'slug', 'telefone'] // 'id' adicionado para permitir o clique no painel
             }],
             order: [['createdAt', 'DESC']]
         });
@@ -791,5 +791,44 @@ exports.getWhatsappFeedbacks = async (req, res) => {
     } catch (error) {
         console.error('Erro ao buscar feedbacks do WhatsApp (Admin):', error);
         res.status(500).json({ error: 'Erro interno ao buscar feedbacks.' });
+    }
+};
+
+exports.markWhatsappReminder = async (req, res) => {
+    try {
+        const db = require('../models');
+        const { psiId } = req.params;
+
+        if (!psiId) {
+            return res.status(400).json({ error: 'ID do psicólogo é obrigatório.' });
+        }
+
+        const { Op } = require('sequelize');
+
+        // Busca todos os logs pendentes desse psicólogo
+        const pendingLogs = await db.WhatsAppClickLog.findAll({
+            where: {
+                psychologistId: psiId,
+                feedbackGiven: false
+            }
+        });
+
+        if (pendingLogs.length === 0) {
+            return res.status(404).json({ message: 'Nenhum contato pendente encontrado para este psicólogo.' });
+        }
+
+        const now = new Date();
+
+        // Atualiza todos para marcar como cobrados
+        for (const log of pendingLogs) {
+            log.adminWppReminderSentAt = now;
+            log.adminWppReminderCount = (log.adminWppReminderCount || 0) + 1;
+            await log.save();
+        }
+
+        res.status(200).json({ message: `Lembrete marcado para ${pendingLogs.length} contatos.` });
+    } catch (error) {
+        console.error('Erro ao marcar cobrança do WhatsApp:', error);
+        res.status(500).json({ error: 'Erro interno ao marcar cobrança.' });
     }
 };

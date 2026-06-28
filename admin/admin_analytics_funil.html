@@ -226,20 +226,7 @@
                     <p class="kpi-numero" id="kpi-whatsapp">0</p>
                     <div id="taxa-conclusao-final" style="width: 100%; margin-top: 12px;"></div>
                 </div>
-                <div class="kpi-card" style="border-top-color: #64748b;">
-                    <h4 style="display: flex; align-items: center; justify-content: space-between;">
-                        <div style="display: flex; align-items: center; gap: 5px;">CPA Estimado (Ads) <span class="info-tooltip" data-tooltip="Custo Por Aquisição. Simule o custo real de cada paciente convertido baseado no seu CPC.">i</span></div>
-                    </h4>
-                    <p class="kpi-numero" id="kpi-cpa" style="color: #64748b;">R$ --</p>
-                    
-                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #f0f0f0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-                        <span style="font-size: 0.85rem; color: #666; font-weight: 600;">Custo por Clique (CPC):</span>
-                        <div style="display: flex; align-items: center; background: #f8f9fa; border: 1px solid #e2e8f0; border-radius: 8px; padding: 4px 10px;">
-                            <span style="color: #64748b; font-weight: bold; margin-right: 5px;">R$</span>
-                            <input type="number" id="input-cpc-medio" value="1.50" step="0.10" style="width: 60px; border: none; font-size: 1rem; color: #1f2937; font-weight: bold; outline: none; background: transparent;">
-                        </div>
-                    </div>
-                </div>
+
                 <div class="kpi-card" style="border-top-color: #ef4444;">
                     <h4 style="display: flex; align-items: center; gap: 5px;">Desqualificados <span class="info-tooltip" data-tooltip="Usuários barrados por regras de negócio (ex: menores de 18 anos). Não entram na taxa de abandono.">i</span></h4>
                     <p class="kpi-numero" id="kpi-desqualificados" style="color: #ef4444;">0</p>
@@ -351,7 +338,14 @@
             <div class="tabela-wrapper">
                 <table class="tabela-gerenciamento">
                     <thead>
-                        <tr><th>Data do Clique</th><th>Psicólogo</th><th>Paciente / Lead</th><th style="text-align: center;">Recebeu Mensagem?</th><th style="text-align: center;">Fechou Negócio?</th><th style="text-align: center;">Status da Resposta</th></tr>
+                        <tr>
+                            <th onclick="window.sortWppData('data')" style="cursor: pointer; user-select: none;">Data do Clique <span style="font-size: 0.8rem; opacity: 0.5; margin-left: 5px;" id="sort-wpp-data">↕</span></th>
+                            <th onclick="window.sortWppData('psi')" style="cursor: pointer; user-select: none;">Psicólogo <span style="font-size: 0.8rem; opacity: 0.5; margin-left: 5px;" id="sort-wpp-psi">↕</span></th>
+                            <th onclick="window.sortWppData('paciente')" style="cursor: pointer; user-select: none;">Paciente / Lead <span style="font-size: 0.8rem; opacity: 0.5; margin-left: 5px;" id="sort-wpp-paciente">↕</span></th>
+                            <th onclick="window.sortWppData('recebeu')" style="cursor: pointer; user-select: none; text-align: center;">Recebeu Mensagem? <span style="font-size: 0.8rem; opacity: 0.5; margin-left: 5px;" id="sort-wpp-recebeu">↕</span></th>
+                            <th onclick="window.sortWppData('fechou')" style="cursor: pointer; user-select: none; text-align: center;">Fechou Negócio? <span style="font-size: 0.8rem; opacity: 0.5; margin-left: 5px;" id="sort-wpp-fechou">↕</span></th>
+                            <th onclick="window.sortWppData('status')" style="cursor: pointer; user-select: none; text-align: center;">Status da Resposta <span style="font-size: 0.8rem; opacity: 0.5; margin-left: 5px;" id="sort-wpp-status">↕</span></th>
+                        </tr>
                     </thead>
                     <tbody id="whatsapp-feedback-tbody">
                         <tr><td colspan="6" class="loading-row" style="text-align: center; padding: 40px; color: var(--cinza-texto);"><span class="loading-spinner-sm"></span> Carregando feedbacks...</td></tr>
