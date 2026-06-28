@@ -873,7 +873,8 @@
 
         // Lógica do botão de IA para Admins
         const btnAiComment = document.getElementById('btn-generate-ai-comment');
-        if (btnAiComment && psiData && psiData.isAdmin) {
+        const adminPsiData = typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null;
+        if (btnAiComment && adminPsiData && adminPsiData.isAdmin) {
             btnAiComment.classList.remove('hidden');
             btnAiComment.onclick = async () => {
                 const postTitleEl = document.querySelector('.full-post-title');
