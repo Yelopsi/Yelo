@@ -254,8 +254,28 @@ exports.calculateMatches = async (preferences = {}) => {
             debugLog.push(`   ${i+1}. ID: ${c.id} | Nome: ${c.nome.substring(0,15)}... | Score Final: ${c.finalScore.toFixed(2)} (Bruto: ${c.rawMatchScore.toFixed(2)})`);
         });
 
-        const topCandidates = scored.slice(0, 6);
-        debugLog.push(`[${Date.now() - startTime}ms] 🎰 Selecionando ${topCandidates.length} melhores candidatos para o sorteio ponderado.`);
+        // 1. Pegamos os 4 Melhores Absolutos (Mérito Clínico Puro - Mantém a qualidade alta)
+        const topMerit = scored.slice(0, 4);
+
+        // 2. Buscamos 2 candidatos "Ociosos" (Round-Robin para quem está no limbo)
+        // Regras: Não estar no Top 4, ter match >= 40 (segurança clínica), ordenados pelos menos leads (whatsapp_clicks)
+        const idleCandidates = scored
+            .filter(c => !topMerit.some(t => t.id === c.id))
+            .filter(c => c.rawMatchScore >= 40)
+            .sort((a, b) => {
+                if ((a.whatsapp_clicks || 0) !== (b.whatsapp_clicks || 0)) {
+                    return (a.whatsapp_clicks || 0) - (b.whatsapp_clicks || 0);
+                }
+                const lastA = a.last_shown_match_at ? new Date(a.last_shown_match_at).getTime() : 0;
+                const lastB = b.last_shown_match_at ? new Date(b.last_shown_match_at).getTime() : 0;
+                return lastA - lastB;
+            });
+
+        const topIdle = idleCandidates.slice(0, 2);
+
+        // 3. Junta os Pools (Máximo de 6 candidatos irão para o sorteio roleta)
+        const topCandidates = [...topMerit, ...topIdle];
+        debugLog.push(`[${Date.now() - startTime}ms] 🎰 Selecionando ${topCandidates.length} candidatos (${topMerit.length} por mérito, ${topIdle.length} ociosos) para o sorteio ponderado.`);
         const results = [];
         
         let loopCounter = 0;

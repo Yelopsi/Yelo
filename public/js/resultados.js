@@ -62,9 +62,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const heartClass = isFav ? 'heart-icon favorited' : 'heart-icon';
         const heartSymbol = isFav ? '♥' : '♡';
 
+        // Mapeia o score original (0 a 100) para a faixa (85 a 99) para manter a percepção de alta compatibilidade
+        const displayScore = (85 + (parseFloat(profile.score) * 0.14)).toFixed(1);
+
         return `
             <div class="match-card" style="animation-delay: ${profile.animationDelay}s; cursor: pointer;" data-slug="${profile.slug}">
-                <div class="match-badge">${profile.score}% Compatível</div>
+                <div class="match-badge">${displayScore}% Compatível</div>
                 <div class="${heartClass}" data-id="${profile.id}" title="Favoritar">${heartSymbol}</div>
                 
                 <div class="match-header-wrapper">
@@ -77,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     ${reasonsHtml}
                     
-                    <p class="match-bio">${profile.bio}</p>
+                    <div class="match-bio">${profile.bio}</div>
                     
                     <div class="match-footer">
                         <div class="match-price">${precoHtml}</div>

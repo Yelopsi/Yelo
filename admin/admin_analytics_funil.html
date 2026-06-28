@@ -297,13 +297,10 @@
     <!-- ABA 2: CONVERSÕES PLG -->
     <div id="tab-conversoes" class="analytics-tab-content" style="display: none;">
         <div class="kpi-grid">
+            <!-- ABSOLUTOS -->
             <div class="kpi-card" style="border-top-color: #3498db;">
                 <h4 style="display: flex; align-items: center; gap: 8px;">Cliques no WhatsApp <span class="info-tooltip" data-tooltip="Total BRUTO de cliques. Se 1 paciente chamar 3 psicólogos, gera 3 cliques aqui.">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-total-feedbacks" style="color: #3498db;">0</p>
-            </div>
-            <div class="kpi-card" style="border-top-color: #f59e0b;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Taxa de Resposta (Psi) <span class="info-tooltip" data-tooltip="Porcentagem de psicólogos que responderam à nossa pesquisa de feedback perguntando se o lead fechou negócio.">i</span></h4>
-                <p class="kpi-numero" id="kpi-wpp-tx-resposta" style="color: #f59e0b;">0%</p>
             </div>
             <div class="kpi-card" style="border-top-color: var(--verde-sucesso);">
                 <h4 style="display: flex; align-items: center; gap: 8px;">Contatos Realizados <span class="info-tooltip" data-tooltip="Quantidade de vezes que o psicólogo confirmou que a mensagem do paciente realmente chegou no WhatsApp dele.">i</span></h4>
@@ -313,10 +310,44 @@
                 <h4 style="display: flex; align-items: center; gap: 8px;">Negócios Fechados <span class="info-tooltip" data-tooltip="Quantidade de vezes que o psicólogo confirmou que o lead se tornou um paciente pagante na vida real.">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-fechados" style="color: #16a34a;">0</p>
             </div>
+            <div class="kpi-card" style="border-top-color: #ef4444;">
+                <h4 style="display: flex; align-items: center; gap: 8px;">Pacientes Fantasmas <span class="info-tooltip" data-tooltip="Quantidade de vezes que o psicólogo marcou 'Ainda não recebi mensagem' (Desperdício de clique).">i</span></h4>
+                <p class="kpi-numero" id="kpi-wpp-fantasmas" style="color: #ef4444;">0</p>
+            </div>
+
+            <!-- PORCENTAGENS -->
+            <div class="kpi-card" style="border-top-color: #f59e0b;">
+                <h4 style="display: flex; align-items: center; gap: 8px;">Taxa de Resposta (Psi) <span class="info-tooltip" data-tooltip="Porcentagem de psicólogos que responderam à nossa pesquisa de feedback perguntando se o lead fechou negócio.">i</span></h4>
+                <p class="kpi-numero" id="kpi-wpp-tx-resposta" style="color: #f59e0b;">0%</p>
+            </div>
+            <div class="kpi-card" style="border-top-color: #64748b;">
+                <h4 style="display: flex; align-items: center; gap: 8px;">Taxa de Não Resposta <span class="info-tooltip" data-tooltip="Porcentagem de interações onde os psicólogos ignoraram/fecharam o popup sem nos dar o feedback.">i</span></h4>
+                <p class="kpi-numero" id="kpi-wpp-tx-nao-resposta" style="color: #64748b;">0%</p>
+            </div>
+            <div class="kpi-card" style="border-top-color: #8b5cf6;">
+                <h4 style="display: flex; align-items: center; gap: 8px;">Taxa de Fechamento <span class="info-tooltip" data-tooltip="Dos pacientes que REALMENTE mandaram mensagem (Contatos Realizados), qual a porcentagem que se tornou paciente pagante.">i</span></h4>
+                <p class="kpi-numero" id="kpi-wpp-tx-fechamento" style="color: #8b5cf6;">0%</p>
+            </div>
+            <div class="kpi-card" style="border-top-color: #eab308;">
+                <h4 style="display: flex; align-items: center; gap: 8px;">Taxa de Não Fechamento <span class="info-tooltip" data-tooltip="Porcentagem de leads que entraram em contato mas NÃO se tornaram pagantes.">i</span></h4>
+                <p class="kpi-numero" id="kpi-wpp-tx-nao-fechamento" style="color: #eab308;">0%</p>
+            </div>
         </div>
 
         <div class="tabela-container" style="margin-top: 20px; margin-bottom: 30px;">
-            <h3 style="display: flex; align-items: center; gap: 8px;">Auditoria de Contatos (Pacientes ➔ Psicólogos)</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <h3 style="display: flex; align-items: center; gap: 8px; margin: 0;">Auditoria de Contatos (Pacientes ➔ Psicólogos)</h3>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <label for="filter-wpp-status" style="font-size: 0.9rem; font-weight: 500; color: #4b5563;">Filtrar:</label>
+                    <select id="filter-wpp-status" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; font-size: 0.9rem; outline: none; cursor: pointer;" onchange="applyWppFilter()">
+                        <option value="todos">Todos os Contatos</option>
+                        <option value="pendente">Pendente (Sem Resposta)</option>
+                        <option value="respondido">Respondido (Todos)</option>
+                        <option value="fechou">Negócio Fechado</option>
+                        <option value="nao_recebeu">Não Recebeu Mensagem</option>
+                    </select>
+                </div>
+            </div>
             <div class="tabela-wrapper">
                 <table class="tabela-gerenciamento">
                     <thead>
@@ -326,6 +357,14 @@
                         <tr><td colspan="6" class="loading-row" style="text-align: center; padding: 40px; color: var(--cinza-texto);"><span class="loading-spinner-sm"></span> Carregando feedbacks...</td></tr>
                     </tbody>
                 </table>
+            </div>
+            
+            <div id="wpp-pagination-controls" style="display: none; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 0.9rem; color: #4b5563; flex-wrap: wrap; gap: 10px;">
+                <div id="wpp-pagination-info">Mostrando 0-0 de 0</div>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="prevWppPage()" id="btn-wpp-prev" style="padding: 5px 12px; border: 1px solid #d1d5db; background: #fff; border-radius: 4px; cursor: pointer;" disabled>Anterior</button>
+                    <button onclick="nextWppPage()" id="btn-wpp-next" style="padding: 5px 12px; border: 1px solid #d1d5db; background: #fff; border-radius: 4px; cursor: pointer;" disabled>Próximo</button>
+                </div>
             </div>
         </div>
     </div>

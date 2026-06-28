@@ -125,6 +125,7 @@
             const targetComment = document.querySelector(`.comment-card[data-comment-id="${commentId}"]`);
             if (targetComment) {
                 clearInterval(poller);
+                window.yeloCommentToHighlight = null; // Limpa ao encontrar
                 
                 // Rolagem segura compatível com o layout da Yelo (.dashboard-main)
                 const dashboardMain = document.querySelector('.dashboard-main');
@@ -147,8 +148,21 @@
                     targetComment.style.backgroundColor = 'transparent';
                     targetComment.style.boxShadow = 'none';
                 }, 3500);
-            } else if (attempts >= 25) { // Desiste após 5 segundos
-                clearInterval(poller);
+            } else {
+                // Se não encontrou, talvez esteja numa página de paginação ou escondido.
+                // A cada 1 segundo (5 attempts), se houver botão de carregar mais, clica nele.
+                if (attempts % 5 === 0) {
+                    const loadMoreBtn = document.getElementById('btn-load-more-comments');
+                    if (loadMoreBtn && loadMoreBtn.style.display !== 'none' && !loadMoreBtn.disabled) {
+                        loadMoreBtn.click();
+                    } else if (attempts >= 40) { // Desiste após 8 segundos ou se não há mais páginas
+                        clearInterval(poller);
+                        window.yeloCommentToHighlight = null;
+                    }
+                } else if (attempts >= 40) {
+                    clearInterval(poller);
+                    window.yeloCommentToHighlight = null;
+                }
             }
         }, 200);
     }
@@ -342,10 +356,8 @@
                 }
 
                 // Destaque de comentário ao abrir via notificação
-                if (window.yeloCommentToHighlight) {
-                    const commentIdToHighlight = window.yeloCommentToHighlight;
-                    window.yeloCommentToHighlight = null; // Limpa imediatamente para não repetir
-                    scrollToAndHighlightComment(commentIdToHighlight);
+                if (window.yeloCommentToHighlight && !append) {
+                    scrollToAndHighlightComment(window.yeloCommentToHighlight);
                 }
             } catch (err) {
                 if (!append) commentThread.innerHTML = '<p style="color:#d32f2f; padding:15px; text-align:center;">Erro ao carregar comentários.</p>';

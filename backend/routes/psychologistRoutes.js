@@ -133,6 +133,7 @@ const safeProtect = async (req, res, next) => {
 // Rotas do Feedback do WhatsApp puxadas para cima (Bypass do middleware global)
 router.get('/me/pending-whatsapp-feedback', safeProtect, whatsappClickController.getPendingFeedback);
 router.post('/me/whatsapp-feedback', safeProtect, whatsappClickController.submitFeedback);
+router.get('/me/contact-history', safeProtect, whatsappClickController.getContactHistory);
 
 // ===============================================
 // ROTAS MOBILE-SAFE: Usam safeProtect para aceitar Bearer token

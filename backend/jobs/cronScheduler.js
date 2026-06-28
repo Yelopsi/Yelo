@@ -102,6 +102,40 @@ async function checkSessionReminders(now) {
 }
 
 // ============================================================================
+// 4. ROTINA DE LEMBRETES DE FEEDBACK DE WHATSAPP
+// ============================================================================
+async function checkFeedbackReminders(now) {
+    console.log("⏰ [CRON] Verificando lembretes de feedback de WhatsApp pendentes...");
+    try {
+        const emailService = require('../services/emailService');
+        const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+        
+        const pendingFeedbacks = await db.WhatsAppClickLog.findAll({
+            where: {
+                feedbackGiven: false,
+                reminderEmailSent: false,
+                createdAt: { [Op.lte]: twoHoursAgo }
+            },
+            include: [{ model: db.Psychologist, as: 'psychologist' }]
+        });
+        
+        for (const log of pendingFeedbacks) {
+            if (log.psychologist && log.psychologist.email) {
+                let nameToUse = log.guestName && log.guestName !== 'Visitante' ? log.guestName : 'um paciente';
+                await emailService.sendFeedbackRequestEmail(log.psychologist, nameToUse);
+                log.reminderEmailSent = true;
+                await log.save();
+            }
+        }
+        if (pendingFeedbacks.length > 0) {
+            console.log(`✅ [CRON] Enviados ${pendingFeedbacks.length} e-mails de lembrete de feedback.`);
+        }
+    } catch (e) {
+        console.error("❌ [CRON] Erro no cron de lembretes de feedback:", e.message);
+    }
+}
+
+// ============================================================================
 // ORQUESTRADOR CENTRAL (Apenas Inicia e Define Tempos)
 // ============================================================================
 const startCronJobs = () => {
@@ -136,10 +170,11 @@ const startCronJobs = () => {
             await runIntegrityAudit();
         }
 
-        // 3. LEMBRETES DE SESSÃO (Verifica a cada virada de hora)
+        // 3 & 4. LEMBRETES DE SESSÃO E FEEDBACK (Verifica a cada virada de hora)
         if (currentBrtHour !== lastReminderHour) {
             lastReminderHour = currentBrtHour;
             await checkSessionReminders(now);
+            await checkFeedbackReminders(now);
         }
     }, 60000); 
 };

@@ -50,18 +50,11 @@ exports.getPendingFeedback = async (req, res) => {
             return res.status(401).json({ error: 'Usuário não autenticado no getPendingFeedback.' });
         }
         
-        // Calcula o horário de 2 horas atrás (ALTERADO TEMPORARIAMENTE PARA TESTE: 1 minuto no futuro)
-        const twoHoursAgo = new Date(Date.now() + 60 * 1000);
-
-        // Busca o clique mais antigo que ainda não teve feedback 
-        // e que ocorreu há mais de 2h
+        // Busca o clique mais antigo que ainda não teve feedback
         const pendingClick = await db.WhatsAppClickLog.findOne({
             where: {
                 psychologistId,
-                feedbackGiven: false,
-                createdAt: {
-                    [Op.lte]: twoHoursAgo // <= 2 horas atrás
-                }
+                feedbackGiven: false
             },
             order: [['createdAt', 'ASC']] // Pega o mais antigo pendente primeiro
         });
@@ -107,6 +100,29 @@ exports.submitFeedback = async (req, res) => {
         res.status(200).json({ message: 'Feedback salvo com sucesso!' });
     } catch (error) {
         console.error('Erro ao salvar feedback:', error);
+        res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};
+
+// 4. Busca histórico completo de cliques e feedbacks para o psicólogo logado
+exports.getContactHistory = async (req, res) => {
+    try {
+        await ensureTableExists();
+        
+        const psychologistId = req.psychologist?.id || req.user?.id || req.userDecoded?.id;
+        if (!psychologistId) {
+            return res.status(401).json({ error: 'Usuário não autenticado no getContactHistory.' });
+        }
+        
+        const history = await db.WhatsAppClickLog.findAll({
+            where: { psychologistId },
+            order: [['createdAt', 'DESC']],
+            attributes: ['id', 'guestName', 'feedbackGiven', 'contactReceived', 'dealClosed', 'createdAt']
+        });
+
+        res.status(200).json(history);
+    } catch (error) {
+        console.error('Erro ao buscar histórico de contatos:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };

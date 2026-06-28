@@ -1,6 +1,6 @@
 // public/js/utils/ui-helpers.js
 
-window.showToast = function(message, type = 'success') {
+window.showToast = function(message, type = 'success', duration = 4500) {
     let container = document.getElementById('pill-notification-container');
     if (!container) {
         container = document.createElement('div');
@@ -17,7 +17,7 @@ window.showToast = function(message, type = 'success') {
     
     pill.innerHTML = `${iconHtml}<span>${message}</span>`;
     container.appendChild(pill);
-    setTimeout(() => pill.remove(), 4500);
+    setTimeout(() => pill.remove(), duration);
 };
 
 window.formatImageUrl = function(path) {

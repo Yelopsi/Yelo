@@ -1,0 +1,219 @@
+<style>
+    .contact-history-container {
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--verde-escuro);
+        text-decoration: none;
+        font-weight: 600;
+        margin-bottom: 20px;
+        cursor: pointer;
+        transition: opacity 0.2s;
+    }
+    .back-btn:hover {
+        opacity: 0.8;
+    }
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+    .kpi-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        border: 1px solid #eaeaea;
+        text-align: center;
+    }
+    .kpi-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--verde-escuro);
+        font-family: var(--font-titulos);
+        margin-bottom: 5px;
+    }
+    .kpi-label {
+        color: #666;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    .history-table-wrapper {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        border: 1px solid #eaeaea;
+        overflow-x: auto;
+    }
+    .history-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .history-table th, .history-table td {
+        padding: 15px 20px;
+        text-align: left;
+        border-bottom: 1px solid #eaeaea;
+    }
+    .history-table th {
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+    .history-table tr:last-child td {
+        border-bottom: none;
+    }
+    .status-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+    .status-badge.pendente {
+        background: #fff3cd;
+        color: #856404;
+    }
+    .status-badge.fechado {
+        background: #dcfce7;
+        color: #166534;
+    }
+    .status-badge.nao-fechado {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    .status-badge.fantasma {
+        background: #f1f5f9;
+        color: #475569;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 50px 20px;
+        color: #666;
+    }
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        color: #cbd5e1;
+    }
+    
+    @media (max-width: 768px) {
+        .history-table-wrapper {
+            background: transparent;
+            box-shadow: none;
+            border: none;
+        }
+        .history-table, .history-table thead, .history-table tbody, .history-table th, .history-table td, .history-table tr { 
+            display: block; 
+        }
+        .history-table thead tr { 
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+        }
+        .history-table tr { 
+            background: #fff;
+            border: 1px solid #eaeaea; 
+            margin-bottom: 15px; 
+            border-radius: 12px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            overflow: hidden; 
+        }
+        .history-table td { 
+            border: none;
+            border-bottom: 1px solid #f8fafc; 
+            position: relative;
+            padding-left: 50%; 
+            white-space: normal;
+            text-align: right;
+            font-size: 0.95rem;
+        }
+        .history-table tr:last-child td {
+            border-bottom: none;
+        }
+        .history-table td:before { 
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            left: 15px;
+            width: 45%; 
+            padding-right: 10px; 
+            white-space: nowrap;
+            text-align: left;
+            font-weight: 600;
+            color: #64748b;
+            font-size: 0.85rem;
+            content: attr(data-label);
+        }
+    }
+</style>
+
+<div class="contact-history-container fade-in-up">
+    <a onclick="window.loadPage('psi_evolucao_hub.html')" class="back-btn">
+        <span>←</span> Voltar para Evolução
+    </a>
+
+    <div class="main-header" style="border-radius: 16px; margin-bottom: 25px;">
+        <div class="header-content">
+            <h1 style="margin: 0; font-family: var(--font-titulos); font-size: 2.2rem; color: white;">Histórico de Contatos</h1>
+            <p style="margin: 5px 0 0 0; color: rgba(255,255,255,0.85); font-size: 1.1rem; max-width: 600px;">Acompanhe todos os cliques no seu WhatsApp e os respectivos retornos reportados por você.</p>
+        </div>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-value" id="kpi-cliques">0</div>
+            <div class="kpi-label">
+                Cliques Totais
+                <span class="info-tooltip" tabindex="0" data-tooltip="Total de pessoas que clicaram no seu perfil para falar com você no WhatsApp." style="display: inline-block; vertical-align: middle; margin-left: 5px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                </span>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value" id="kpi-fechados">0</div>
+            <div class="kpi-label">
+                Negócios Fechados
+                <span class="info-tooltip" tabindex="0" data-tooltip="Total de pacientes que agendaram e iniciaram sessões com você." style="display: inline-block; vertical-align: middle; margin-left: 5px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                </span>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value" id="kpi-conversao">0%</div>
+            <div class="kpi-label">
+                Taxa de Conversão
+                <span class="info-tooltip" tabindex="0" data-tooltip="Porcentagem de pessoas que clicaram e fecharam negócio (Negócios Fechados / Cliques Totais)." style="display: inline-block; vertical-align: middle; margin-left: 5px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="history-table-wrapper">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Paciente / Contato</th>
+                    <th>Status do Retorno</th>
+                </tr>
+            </thead>
+            <tbody id="history-table-body">
+                <tr>
+                    <td colspan="3" style="text-align: center; padding: 30px;">Carregando histórico...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="psi_historico_contatos.js"></script>

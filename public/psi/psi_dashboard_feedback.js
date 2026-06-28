@@ -12,9 +12,6 @@ window.PsiFeedback = (function() {
             modal.className = 'custom-modal-overlay';
             modal.innerHTML = `
                 <div class="custom-modal-box" style="text-align: center; max-width: 450px;">
-                    <div class="modal-header" style="display: flex; justify-content: flex-end; margin-bottom: -20px;">
-                        <button type="button" id="btn-fechar-modal-fb-x" style="background: none; border: none; font-size: 2rem; cursor: pointer; color: #aaa; padding: 0; line-height: 1; z-index: 10;">&times;</button>
-                    </div>
                     <div style="font-size: 3.5rem; margin-bottom: 10px;">⭐</div>
                     <h2 style="margin: 0 0 10px 0; font-family: var(--font-titulos); color: var(--verde-escuro);">Como está sendo sua experiência?</h2>
                     <p style="color: #666; font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px;">Você já está na Yelo há alguns dias! Gostaríamos muito de saber o que você está achando da plataforma para continuarmos melhorando.</p>
@@ -38,7 +35,6 @@ window.PsiFeedback = (function() {
                         <textarea id="feedback-mensagem" rows="3" placeholder="Deixe um comentário, sugestão ou crítica (opcional)" style="width: 100%; padding: 15px; border: 1px solid #e0e0e0; border-radius: 12px; font-family: var(--font-principal); font-size: 0.95rem; resize: vertical; margin-bottom: 25px; box-sizing: border-box; background-color: #f9fafb;"></textarea>
                         
                         <div style="display: flex; justify-content: center; gap: 15px;">
-                            <button type="button" class="btn btn-secundario" id="btn-fechar-feedback" style="padding: 12px 25px; border-radius: 50px; font-weight: bold;">Lembrar depois</button>
                             <button type="submit" class="btn btn-principal" id="btn-enviar-feedback" style="padding: 12px 25px; border-radius: 50px; font-weight: bold;">Enviar Avaliação</button>
                         </div>
                     </form>
@@ -50,14 +46,8 @@ window.PsiFeedback = (function() {
                 modal.style.display = 'none';
                 if (permanente) {
                     localStorage.setItem('yelo_platform_feedback_done', 'true');
-                } else {
-                    const adiarAte = new Date().getTime() + (3 * 24 * 60 * 60 * 1000);
-                    localStorage.setItem('yelo_platform_feedback_adiado_ate', adiarAte.toString());
                 }
             };
-
-            document.getElementById('btn-fechar-modal-fb-x').addEventListener('click', () => fecharModal(true));
-            document.getElementById('btn-fechar-feedback').addEventListener('click', () => fecharModal(false));
 
             document.getElementById('form-feedback-plataforma').addEventListener('submit', async function(e) {
                 e.preventDefault();

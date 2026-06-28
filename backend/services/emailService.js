@@ -45,7 +45,7 @@ const getBaseTemplate = (title, content) => `
 <body>
     <div class="container">
         <div class="header">
-            <img src="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/assets/logos/logo-clara.png" alt="Yelo">
+            <img src="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/assets/logos/logo-branca.png" alt="Yelo">
         </div>
         <div class="content">
             <h2 style="color: #1B4332; margin-top: 0;">${title}</h2>
@@ -293,4 +293,21 @@ exports.sendEvaluationEmail = async (user) => {
         <p>E lembre-se: as portas da nossa comunidade estarão sempre abertas para você.</p>
     `;
     await sendEmail(user.email, title, getBaseTemplate(title, content));
+};
+
+exports.sendFeedbackRequestEmail = async (user, guestName) => {
+    const title = 'Acompanhe o andamento desse contato';
+    const patientText = (guestName === 'um paciente') 
+        ? '<strong>Um paciente</strong> demonstrou interesse' 
+        : `O paciente <strong>${guestName}</strong> demonstrou interesse`;
+
+    const content = `
+        <p>Olá, <strong>${user.nome}</strong>!</p>
+        <p>${patientText} no seu perfil e iniciou um contato pelo WhatsApp.</p>
+        <p>Agora, queremos saber como essa conexão evoluiu.</p>
+        <p>Sua resposta leva menos de 30 segundos e ajuda a Yelo a entender quais indicações estão gerando atendimentos, tornando as próximas recomendações cada vez mais precisas.</p>
+        <p>👉 Basta acessar seu painel e atualizar o status desse contato.</p>
+        <center><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/psi/psi_dashboard" class="btn">Atualizar atendimento</a></center>
+    `;
+    await sendEmail(user.email, 'Um paciente demonstrou interesse no seu perfil 👋', getBaseTemplate(title, content));
 };

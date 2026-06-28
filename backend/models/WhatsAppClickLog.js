@@ -25,6 +25,10 @@ module.exports = (sequelize, DataTypes) => {
         dealClosed: {
             type: DataTypes.STRING, // Valores esperados do front: 'yes', 'no'
             allowNull: true
+        },
+        reminderEmailSent: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
         }
     }, {
         timestamps: true // Cria automaticamente createdAt (data do clique) e updatedAt

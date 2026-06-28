@@ -285,7 +285,10 @@
                     <div style="background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 10px;">
                         <strong>💡 Dica:</strong> As primeiras linhas do seu texto aparecerão no card de resultados. Capriche no início para causar uma ótima primeira impressão!
                     </div>
-                    <textarea id="bio" name="bio" rows="8" placeholder="Escreva um texto acolhedor contando sua experiência, abordagem e como você pode ajudar o paciente..." required></textarea>
+                    <div id="bio-editor-container" style="background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #e0e0e0;">
+                        <div id="bio-editor" style="min-height: 150px; border: none; font-family: var(--font-principal); font-size: 1rem;"></div>
+                    </div>
+                    <textarea id="bio" name="bio" style="display: none;" required></textarea>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
                         <button type="button" id="btn-optimize-bio" class="btn btn-sm" style="display: none; align-items: center; gap: 5px; font-weight: 600; background: #dcfce7; color: #166534; border: 1px solid #bbf7d0;">
                             <span class="btn-text">✨ Otimizar com IA</span>
@@ -341,7 +344,7 @@
                         <select id="formacao_nivel" name="formacao_nivel" class="ts-select" disabled data-placeholder="Selecione...">
                             <option value="">Selecione...</option>
                             <option value="Graduação">Graduação</option>
-                            <option value="Especialização">Especialização // Pós-Graduação</option>
+                            <option value="Especialização">Especialização / Pós-Graduação</option>
                             <option value="Mestrado">Mestrado</option>
                             <option value="Doutorado">Doutorado</option>
                             <option value="Pós-Doutorado">Pós-Doutorado</option>

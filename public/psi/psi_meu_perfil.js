@@ -6,6 +6,7 @@
     const dirtyBlocks = new Set();
     const debounceTimers = {};
     let documentMaskInstance = null;
+    let quillBio = null;
 
     // --- HELPERS ---
     function showToast(message, type = 'success') {
@@ -209,6 +210,9 @@
             ['nome', 'email', 'crp', 'telefone', 'bio', 'slug', 'cep', 'cidade', 'estado', 'razao_social', 'formacao_desc', 'ano_inicio_experiencia'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = data[id] || '';
+                if (id === 'bio' && quillBio && data.bio) {
+                    quillBio.root.innerHTML = data.bio;
+                }
             });
 
             // Documento (CPF/CNPJ)
@@ -460,6 +464,15 @@
             block.querySelector('.btn-save').classList.remove('hidden');
             const btnOptimize = block.querySelector('#btn-optimize-bio');
             if (btnOptimize) btnOptimize.style.display = 'inline-flex';
+            
+            if (quillBio && block.contains(document.getElementById('bio-editor'))) {
+                quillBio.enable(true);
+                const toolbar = document.querySelector('#bio-editor-container .ql-toolbar');
+                if (toolbar) {
+                    toolbar.style.opacity = '1';
+                    toolbar.style.pointerEvents = 'auto';
+                }
+            }
         }
 
         function exitEditMode(block) {
@@ -473,6 +486,15 @@
             block.querySelector('.btn-save').classList.add('hidden');
             const btnOptimize = block.querySelector('#btn-optimize-bio');
             if (btnOptimize) btnOptimize.style.display = 'none';
+            
+            if (quillBio && block.contains(document.getElementById('bio-editor'))) {
+                quillBio.enable(false);
+                const toolbar = document.querySelector('#bio-editor-container .ql-toolbar');
+                if (toolbar) {
+                    toolbar.style.opacity = '0.4';
+                    toolbar.style.pointerEvents = 'none';
+                }
+            }
         }
 
         function cancelEditMode(block) {
@@ -741,6 +763,7 @@
 
                 if (data.optimizedBio) {
                     bioTextarea.value = data.optimizedBio;
+                    if (quillBio) quillBio.root.innerHTML = data.optimizedBio;
                     bioTextarea.dispatchEvent(new Event('input', { bubbles: true }));
                     showToast('Biografia otimizada com sucesso!', 'success');
                 }
@@ -767,6 +790,43 @@
                 psychologistData = await response.json();
                 if (window.inicializarLogicaDoPerfil) window.inicializarLogicaDoPerfil();
                 setupOptimizeBioButton(); // Inicializa o botão da IA
+                
+                // Inicializa o Quill para a Biografia
+                if (typeof Quill !== 'undefined' && !quillBio && document.getElementById('bio-editor')) {
+                    quillBio = new Quill('#bio-editor', {
+                        theme: 'snow',
+                        placeholder: 'Escreva um texto acolhedor contando sua experiência, abordagem e como você pode ajudar o paciente...',
+                        modules: {
+                            toolbar: [
+                                ['bold', 'italic', 'underline'],
+                                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                ['clean']
+                            ]
+                        }
+                    });
+
+                    // Sincronizar Quill com o textarea hidden (para salvar e pro optimize-bio)
+                    const bioTextarea = document.getElementById('bio');
+                    quillBio.on('text-change', function() {
+                        const html = quillBio.root.innerHTML;
+                        bioTextarea.value = html === '<p><br></p>' ? '' : html;
+                        // Dispara evento para salvar automático e checar progresso
+                        bioTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+                    });
+                    
+                    // Popular dados iniciais se existirem
+                    if (bioTextarea && bioTextarea.value) {
+                        quillBio.root.innerHTML = bioTextarea.value;
+                    }
+                    
+                    // Inicializa desabilitado (modo de visualização padrão)
+                    quillBio.enable(false);
+                    const toolbar = document.querySelector('#bio-editor-container .ql-toolbar');
+                    if (toolbar) {
+                        toolbar.style.opacity = '0.4';
+                        toolbar.style.pointerEvents = 'none';
+                    }
+                }
             } else {
                 throw new Error("Falha ao carregar dados do perfil.");
             }

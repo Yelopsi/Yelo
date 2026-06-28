@@ -447,32 +447,80 @@ window.initializePage = function() {
 
     // --- FUNÇÕES DE RENDERIZAÇÃO SECUNDÁRIAS ---
     
-    function renderWppFeedbacks(feedbacks) {
+    // Estado Global de Paginação WPP
+    window.wppDataState = {
+        allFeedbacks: [],
+        filteredFeedbacks: [],
+        currentPage: 1,
+        itemsPerPage: 15,
+        currentFilter: 'todos'
+    };
+
+    window.applyWppFilter = function() {
+        const select = document.getElementById('filter-wpp-status');
+        if (!select) return;
+        window.wppDataState.currentFilter = select.value;
+        window.wppDataState.currentPage = 1;
+        
+        const filterVal = window.wppDataState.currentFilter;
+        window.wppDataState.filteredFeedbacks = window.wppDataState.allFeedbacks.filter(f => {
+            if (filterVal === 'todos') return true;
+            if (filterVal === 'pendente') return !f.feedbackGiven;
+            if (filterVal === 'respondido') return f.feedbackGiven;
+            if (filterVal === 'fechou') return f.feedbackGiven && f.dealClosed === 'yes';
+            if (filterVal === 'nao_recebeu') return f.feedbackGiven && !f.contactReceived;
+            return true;
+        });
+        renderWppTableOnly();
+    };
+
+    window.prevWppPage = function() {
+        if (window.wppDataState.currentPage > 1) {
+            window.wppDataState.currentPage--;
+            renderWppTableOnly();
+        }
+    };
+
+    window.nextWppPage = function() {
+        const totalPages = Math.ceil(window.wppDataState.filteredFeedbacks.length / window.wppDataState.itemsPerPage);
+        if (window.wppDataState.currentPage < totalPages) {
+            window.wppDataState.currentPage++;
+            renderWppTableOnly();
+        }
+    };
+
+    function renderWppTableOnly() {
         const tbody = document.getElementById('whatsapp-feedback-tbody');
+        const paginationControls = document.getElementById('wpp-pagination-controls');
+        const paginationInfo = document.getElementById('wpp-pagination-info');
+        const btnPrev = document.getElementById('btn-wpp-prev');
+        const btnNext = document.getElementById('btn-wpp-next');
+        
         if (!tbody) return;
 
-        const total = feedbacks.length;
-        const respondidos = feedbacks.filter(f => f.feedbackGiven).length;
-        const taxaResposta = total > 0 ? ((respondidos / total) * 100).toFixed(1) : 0;
-        const recebidas = feedbacks.filter(f => f.feedbackGiven && f.contactReceived).length;
-        const fechados = feedbacks.filter(f => f.feedbackGiven && f.contactReceived && f.dealClosed === 'yes').length;
-
-        const elWppTotal = document.getElementById('kpi-wpp-total-feedbacks');
-        const elWppTx = document.getElementById('kpi-wpp-tx-resposta');
-        const elWppRec = document.getElementById('kpi-wpp-recebidas');
-        const elWppFec = document.getElementById('kpi-wpp-fechados');
-
-        if (elWppTotal) elWppTotal.innerText = total;
-        if (elWppTx) elWppTx.innerText = taxaResposta + '%';
-        if (elWppRec) elWppRec.innerText = recebidas;
-        if (elWppFec) elWppFec.innerText = fechados;
-
-        if (feedbacks.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #666;">Nenhum clique no WhatsApp registrado até o momento.</td></tr>';
+        const filtered = window.wppDataState.filteredFeedbacks;
+        
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #666;">Nenhum contato encontrado para este filtro.</td></tr>';
+            if (paginationControls) paginationControls.style.display = 'none';
             return;
         }
 
-        tbody.innerHTML = feedbacks.map(f => {
+        const totalPages = Math.ceil(filtered.length / window.wppDataState.itemsPerPage);
+        if (window.wppDataState.currentPage > totalPages) window.wppDataState.currentPage = totalPages;
+        
+        const startIdx = (window.wppDataState.currentPage - 1) * window.wppDataState.itemsPerPage;
+        const endIdx = startIdx + window.wppDataState.itemsPerPage;
+        const pageItems = filtered.slice(startIdx, endIdx);
+
+        if (paginationControls) {
+            paginationControls.style.display = 'flex';
+            paginationInfo.innerText = `Mostrando ${startIdx + 1}-${Math.min(endIdx, filtered.length)} de ${filtered.length}`;
+            btnPrev.disabled = window.wppDataState.currentPage === 1;
+            btnNext.disabled = window.wppDataState.currentPage === totalPages;
+        }
+
+        tbody.innerHTML = pageItems.map(f => {
             const dataClique = new Date(f.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
             let contato = '<span style="color:#888;">⏳ Aguardando psi</span>';
             let fechou = '-';
@@ -500,6 +548,44 @@ window.initializePage = function() {
                 <td data-label="Status da Resposta" style="text-align: center;">${status}</td>
             </tr>`;
         }).join('');
+    }
+
+    function renderWppFeedbacks(feedbacks) {
+        window.wppDataState.allFeedbacks = feedbacks;
+        
+        const total = feedbacks.length;
+        const respondidos = feedbacks.filter(f => f.feedbackGiven).length;
+        const taxaResposta = total > 0 ? ((respondidos / total) * 100).toFixed(1) : 0;
+        const taxaNaoResposta = total > 0 ? (100 - parseFloat(taxaResposta)).toFixed(1) : 0;
+
+        const recebidas = feedbacks.filter(f => f.feedbackGiven && f.contactReceived).length;
+        const fechados = feedbacks.filter(f => f.feedbackGiven && f.contactReceived && f.dealClosed === 'yes').length;
+        
+        const fantasmas = feedbacks.filter(f => f.feedbackGiven && !f.contactReceived).length;
+        const taxaFechamento = recebidas > 0 ? ((fechados / recebidas) * 100).toFixed(1) : 0;
+        const taxaNaoFechamento = recebidas > 0 ? (100 - parseFloat(taxaFechamento)).toFixed(1) : 0;
+
+        const elWppTotal = document.getElementById('kpi-wpp-total-feedbacks');
+        const elWppRec = document.getElementById('kpi-wpp-recebidas');
+        const elWppFec = document.getElementById('kpi-wpp-fechados');
+        const elWppFant = document.getElementById('kpi-wpp-fantasmas');
+
+        const elWppTx = document.getElementById('kpi-wpp-tx-resposta');
+        const elWppTxNaoResp = document.getElementById('kpi-wpp-tx-nao-resposta');
+        const elWppTxFec = document.getElementById('kpi-wpp-tx-fechamento');
+        const elWppTxNaoFec = document.getElementById('kpi-wpp-tx-nao-fechamento');
+
+        if (elWppTotal) elWppTotal.innerText = total;
+        if (elWppRec) elWppRec.innerText = recebidas;
+        if (elWppFec) elWppFec.innerText = fechados;
+        if (elWppFant) elWppFant.innerText = fantasmas;
+
+        if (elWppTx) elWppTx.innerText = taxaResposta + '%';
+        if (elWppTxNaoResp) elWppTxNaoResp.innerText = taxaNaoResposta + '%';
+        if (elWppTxFec) elWppTxFec.innerText = taxaFechamento + '%';
+        if (elWppTxNaoFec) elWppTxNaoFec.innerText = taxaNaoFechamento + '%';
+
+        window.applyWppFilter(); // Já faz o filtro, paginação e renderização da tabela
     }
 
     function renderUXFeedbacks(dataUx) {
