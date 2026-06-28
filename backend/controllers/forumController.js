@@ -703,7 +703,7 @@ exports.generateAiComment = async (req, res) => {
             return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem gerar comentários com IA.' });
         }
 
-        const { postTitle, postContent, comments, targetComment } = req.body;
+        const { postTitle, postContent, comments, targetComment, authorName } = req.body;
 
         if (!postTitle && !postContent) {
             return res.status(400).json({ error: 'Conteúdo do post é obrigatório.' });
@@ -726,29 +726,31 @@ exports.generateAiComment = async (req, res) => {
 
         let prompt = "";
         
+        const nomeDestinatario = authorName || "colega";
+
         if (targetComment) {
             prompt = `Você é um psicólogo engajando no fórum da comunidade Yelo. Sua base é a psicanálise, mas você tem uma comunicação leve, acolhedora, humana e natural (nada engessado, acadêmico ou excessivamente formal).
 
-Você está conversando DIRETAMENTE com o colega que escreveu este comentário:
+Você está conversando DIRETAMENTE com o colega chamado ${nomeDestinatario}, que escreveu este comentário:
 "${targetComment}"
 
 Contexto do post onde isso ocorreu:
 Título: ${postTitle || 'Sem título'}
 Conteúdo: ${postContent || ''}
 
-Sua tarefa: Escreva uma resposta curta (metade do tamanho de uma resposta normal), direta e exclusiva para a pessoa que fez o comentário. Fale diretamente com ela ("você"). Valide o que ela disse, traga uma contribuição rápida e termine de forma empática. Não fale com o resto do grupo.
+Sua tarefa: Escreva uma resposta curta (metade do tamanho de uma resposta normal), direta e exclusiva para ${nomeDestinatario}. Valide o que a pessoa disse, traga uma contribuição rápida e termine de forma empática. Use o nome da pessoa na resposta de forma natural. Não fale com o resto do grupo.
 Retorne SOMENTE a resposta, sem aspas e sem enrolação.`;
         } else {
             prompt = `Você é um psicólogo engajando no fórum da comunidade Yelo. Sua base é a psicanálise, mas você tem uma comunicação leve, acolhedora, humana e natural (nada engessado, acadêmico ou excessivamente formal).
 
-Você está conversando DIRETAMENTE e EXCLUSIVAMENTE com o autor deste post:
+Você está conversando DIRETAMENTE e EXCLUSIVAMENTE com o autor deste post, chamado ${nomeDestinatario}:
 Título: ${postTitle || 'Sem título'}
 Conteúdo: ${postContent || ''}
 
 Comentários já feitos na thread (apenas para seu contexto):
 ${comments || 'Nenhum comentário ainda.'}
 
-Sua tarefa: Escreva um comentário curto (metade do tamanho de um texto padrão), em tom de conversa direta e exclusiva com o autor do post ("você"). Não se dirija ao resto da discussão. Traga uma validação rápida, uma reflexão leve e acolhedora.
+Sua tarefa: Escreva um comentário curto (metade do tamanho de um texto padrão), em tom de conversa direta e exclusiva com ${nomeDestinatario}. Traga uma validação rápida, uma reflexão leve e acolhedora. Use o nome da pessoa na resposta de forma natural. Não se dirija ao resto da discussão.
 Retorne SOMENTE a resposta, sem aspas e sem enrolação.`;
         }
 

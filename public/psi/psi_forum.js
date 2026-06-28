@@ -327,7 +327,7 @@
                         try {
                             const res = await apiFetch(`${API_BASE_URL}/api/forum/ai/generate-comment`, {
                                 method: 'POST',
-                                body: JSON.stringify({ postTitle, postContent, comments: commentsContext })
+                                body: JSON.stringify({ postTitle, postContent, comments: commentsContext, authorName: post.authorName })
                             });
                             if (res.ok) {
                                 const data = await res.json();
@@ -491,7 +491,7 @@
                     try {
                         const res = await apiFetch(`${API_BASE_URL}/api/forum/ai/generate-comment`, {
                             method: 'POST',
-                            body: JSON.stringify({ postTitle, postContent, targetComment })
+                            body: JSON.stringify({ postTitle, postContent, targetComment, authorName: comment.authorName })
                         });
                         if (res.ok) {
                             const data = await res.json();
