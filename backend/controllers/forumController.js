@@ -703,7 +703,7 @@ exports.generateAiComment = async (req, res) => {
             return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem gerar comentários com IA.' });
         }
 
-        const { postTitle, postContent, comments } = req.body;
+        const { postTitle, postContent, comments, targetComment } = req.body;
 
         if (!postTitle && !postContent) {
             return res.status(400).json({ error: 'Conteúdo do post é obrigatório.' });
@@ -724,16 +724,31 @@ exports.generateAiComment = async (req, res) => {
             ]
         });
 
-        const prompt = `Você é um psicólogo e administrador da plataforma Yelo, engajando no fórum da comunidade com outros psicólogos. Sua abordagem terapêutica de base é a psicanálise. A linguagem deve ser profissional, porém não extremamente formal, mantendo um tom acadêmico e acolhedor, focado em promover o engajamento e gerar mais comentários.
+        let prompt = "";
+        
+        if (targetComment) {
+            prompt = `Você é um psicólogo e administrador da plataforma Yelo, engajando no fórum da comunidade com outros psicólogos. Sua abordagem terapêutica de base é a psicanálise. A linguagem deve ser profissional, porém não extremamente formal, mantendo um tom acolhedor e construtivo.
 
-        Aqui está o post original:
+        Você está respondendo a este comentário específico feito por um colega no fórum:
+        "${targetComment}"
+
+        Para dar contexto, este comentário foi feito no seguinte post:
         Título: ${postTitle || 'Sem título'}
         Conteúdo: ${postContent || ''}
 
-        E aqui estão os principais comentários (se houver):
+        Escreva uma resposta DIRETA a este comentário. Seja empático, agregue valor técnico ou reflexivo à discussão e mantenha o tom colaborativo. Escreva SOMENTE o texto da sua resposta, sem aspas e sem explicações extras.`;
+        } else {
+            prompt = `Você é um psicólogo e administrador da plataforma Yelo, engajando no fórum da comunidade com outros psicólogos. Sua abordagem terapêutica de base é a psicanálise. A linguagem deve ser profissional, porém não extremamente formal, mantendo um tom acadêmico e acolhedor, focado em promover o engajamento e gerar mais comentários.
+
+        Aqui está o post original que você vai comentar:
+        Título: ${postTitle || 'Sem título'}
+        Conteúdo: ${postContent || ''}
+
+        E aqui estão os principais comentários existentes na thread para o seu contexto (se houver):
         ${comments || 'Nenhum comentário ainda.'}
 
-        Baseado neste post (e considerando os comentários existentes), escreva um comentário agregando valor à discussão, validando o colega, e talvez deixando uma reflexão ou pergunta aberta no final para estimular mais respostas. Escreva SOMENTE o comentário a ser publicado, sem aspas e sem explicações extras.`;
+        Baseado APENAS no post original (use os comentários apenas para saber o que já foi dito e não repetir, mas o seu foco é responder ao post), escreva um comentário em resposta ao autor do post, agregando valor à discussão, validando o colega, e talvez deixando uma reflexão ou pergunta aberta no final para estimular mais respostas. Escreva SOMENTE o comentário a ser publicado, sem aspas e sem explicações extras.`;
+        }
 
         const result = await model.generateContent(prompt);
         const responseText = result.response.text();

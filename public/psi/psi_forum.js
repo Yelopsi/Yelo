@@ -471,6 +471,55 @@
             likeBtn.onclick = () => toggleCommentLike(comment.id, likeBtn, likesCount);
             replyBtn.onclick = () => showReplyForm(comment.id, commentEl);
 
+            const aiReplyBtn = commentEl.querySelector('.comment-ai-reply-btn');
+            const adminPsiData = typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null;
+            if (aiReplyBtn && adminPsiData && (adminPsiData.isAdmin || adminPsiData.email === 'pix@yelopsi.com.br' || adminPsiData.email === 'pix@yeloposi.com.br')) {
+                aiReplyBtn.classList.remove('hidden');
+                aiReplyBtn.onclick = async () => {
+                    const postTitleEl = document.querySelector('.full-post-title');
+                    const postContentEl = document.querySelector('.full-post-content');
+                    if (!postTitleEl || !postContentEl) return;
+                    
+                    const postTitle = postTitleEl.textContent;
+                    const postContent = postContentEl.innerText;
+                    const targetComment = comment.content;
+
+                    aiReplyBtn.disabled = true;
+                    const originalText = aiReplyBtn.innerHTML;
+                    aiReplyBtn.innerHTML = '⏳';
+
+                    try {
+                        const res = await apiFetch(`${API_BASE_URL}/api/forum/ai/generate-comment`, {
+                            method: 'POST',
+                            body: JSON.stringify({ postTitle, postContent, targetComment })
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            showReplyForm(comment.id, commentEl);
+                            setTimeout(() => {
+                                const replyForm = commentEl.querySelector('#reply-form-dynamic');
+                                if (replyForm) {
+                                    const replyInput = replyForm.querySelector('textarea');
+                                    if (replyInput) {
+                                        replyInput.value = data.generatedText;
+                                        replyInput.style.height = 'auto';
+                                        replyInput.style.height = replyInput.scrollHeight + 'px';
+                                        if (typeof showToast === 'function') showToast('Resposta gerada! Revise e publique.', 'info');
+                                    }
+                                }
+                            }, 50);
+                        } else {
+                            if (typeof showToast === 'function') showToast('Erro ao gerar com IA.', 'error');
+                        }
+                    } catch (err) {
+                        if (typeof showToast === 'function') showToast('Erro ao gerar com IA.', 'error');
+                    } finally {
+                        aiReplyBtn.disabled = false;
+                        aiReplyBtn.innerHTML = originalText;
+                    }
+                };
+            }
+
             const reportBtn = commentEl.querySelector('.report-btn');
             if (comment.isMine) reportBtn.style.display = 'none';
             reportBtn.onclick = () => reportContent('comment', comment.id);
