@@ -129,3 +129,23 @@ exports.inviteFromWaitlist = async (req, res) => {
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };
+
+// ----------------------------------------------------------------------
+// Rota: DELETE /api/psychologists/waiting-list/:id
+// ----------------------------------------------------------------------
+exports.deleteFromWaitlist = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const lead = await db.WaitingList.findByPk(id);
+        
+        if (!lead) {
+            return res.status(404).json({ error: 'Lead não encontrado na lista de espera.' });
+        }
+
+        await lead.destroy();
+        res.status(200).json({ message: 'Lead excluído com sucesso.' });
+    } catch (error) {
+        console.error('Erro ao excluir lead da lista de espera:', error);
+        res.status(500).json({ error: 'Erro ao excluir lead da lista de espera.' });
+    }
+};

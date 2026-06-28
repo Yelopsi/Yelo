@@ -163,6 +163,45 @@ window.initializePage = function() {
                         else window.open(url, '_blank');
                     };
                     actionsCell.appendChild(whatsappButton);
+                    
+                    // Botão de Excluir
+                    const deleteButton = document.createElement('button');
+                    deleteButton.className = 'btn-tabela btn-fixar';
+                    deleteButton.style.display = 'inline-flex';
+                    deleteButton.style.alignItems = 'center';
+                    deleteButton.style.justifyContent = 'center';
+                    deleteButton.style.gap = '6px';
+                    deleteButton.style.padding = '8px 16px';
+                    deleteButton.style.borderRadius = '50px';
+                    deleteButton.style.border = 'none';
+                    deleteButton.style.cursor = 'pointer';
+                    deleteButton.style.fontWeight = '600';
+                    deleteButton.style.whiteSpace = 'nowrap';
+                    deleteButton.style.backgroundColor = '#fee2e2';
+                    deleteButton.style.color = '#b91c1c';
+                    deleteButton.style.marginLeft = '8px';
+                    deleteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg> Excluir`;
+                    
+                    deleteButton.onclick = async (e) => {
+                        e.preventDefault();
+                        if (confirm('Tem certeza que deseja excluir este lead? Essa ação não pode ser desfeita.')) {
+                            try {
+                                const res = await fetch(`/api/psychologists/waiting-list/${candidate.id}`, {
+                                    method: 'DELETE',
+                                    headers: { 'Authorization': `Bearer ${token}` }
+                                });
+                                if (res.ok) {
+                                    showToast('Lead excluído com sucesso', 'success');
+                                    fetchWaitingList(); // recarrega a lista
+                                } else {
+                                    showToast('Erro ao excluir lead', 'error');
+                                }
+                            } catch(err) {
+                                showToast('Erro ao excluir lead', 'error');
+                            }
+                        }
+                    };
+                    actionsCell.appendChild(deleteButton);
                 } else {
                     actionsCell.innerHTML = '<span style="color: #999; font-size: 0.85rem;">Já cadastrado</span>';
                 }

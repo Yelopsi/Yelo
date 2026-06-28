@@ -197,6 +197,7 @@ router.post('/me/exit-survey', psychologistController.saveExitSurvey);
 router.get('/matches', matchController.getPatientMatches);
 router.get('/waiting-list', psiWaitlistController.getWaitingList);
 router.post('/waiting-list/invite', psiWaitlistController.inviteFromWaitlist);
+router.delete('/waiting-list/:id', psiWaitlistController.deleteFromWaitlist);
 
 // ===============================================
 // ROTA PÚBLICA GENÉRICA (DEVE SER A ÚLTIMA)
