@@ -693,7 +693,13 @@ exports.generateAiComment = async (req, res) => {
         const psychologistId = req.user.id;
         const psychologist = await Psychologist.findByPk(psychologistId);
         
-        if (!psychologist || !psychologist.isAdmin) {
+        if (!psychologist) {
+            return res.status(403).json({ error: 'Acesso negado. Usuário não encontrado.' });
+        }
+        
+        const isAuthorized = psychologist.isAdmin || psychologist.email === 'pix@yelopsi.com.br' || psychologist.email === 'pix@yeloposi.com.br';
+        
+        if (!isAuthorized) {
             return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem gerar comentários com IA.' });
         }
 
