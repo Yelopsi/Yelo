@@ -727,27 +727,29 @@ exports.generateAiComment = async (req, res) => {
         let prompt = "";
         
         if (targetComment) {
-            prompt = `Você é um psicólogo e administrador da plataforma Yelo, engajando no fórum da comunidade com outros psicólogos. Sua abordagem terapêutica de base é a psicanálise. A linguagem deve ser profissional, porém não extremamente formal, mantendo um tom acolhedor e construtivo.
+            prompt = `Você é um psicólogo engajando no fórum da comunidade Yelo. Sua base é a psicanálise, mas você tem uma comunicação leve, acolhedora, humana e natural (nada engessado, acadêmico ou excessivamente formal).
 
-        Você está respondendo a este comentário específico feito por um colega no fórum:
-        "${targetComment}"
+Você está conversando DIRETAMENTE com o colega que escreveu este comentário:
+"${targetComment}"
 
-        Para dar contexto, este comentário foi feito no seguinte post:
-        Título: ${postTitle || 'Sem título'}
-        Conteúdo: ${postContent || ''}
+Contexto do post onde isso ocorreu:
+Título: ${postTitle || 'Sem título'}
+Conteúdo: ${postContent || ''}
 
-        Escreva uma resposta DIRETA a este comentário. Seja empático, agregue valor técnico ou reflexivo à discussão e mantenha o tom colaborativo. Escreva SOMENTE o texto da sua resposta, sem aspas e sem explicações extras.`;
+Sua tarefa: Escreva uma resposta curta (metade do tamanho de uma resposta normal), direta e exclusiva para a pessoa que fez o comentário. Fale diretamente com ela ("você"). Valide o que ela disse, traga uma contribuição rápida e termine de forma empática. Não fale com o resto do grupo.
+Retorne SOMENTE a resposta, sem aspas e sem enrolação.`;
         } else {
-            prompt = `Você é um psicólogo e administrador da plataforma Yelo, engajando no fórum da comunidade com outros psicólogos. Sua abordagem terapêutica de base é a psicanálise. A linguagem deve ser profissional, porém não extremamente formal, mantendo um tom acadêmico e acolhedor, focado em promover o engajamento e gerar mais comentários.
+            prompt = `Você é um psicólogo engajando no fórum da comunidade Yelo. Sua base é a psicanálise, mas você tem uma comunicação leve, acolhedora, humana e natural (nada engessado, acadêmico ou excessivamente formal).
 
-        Aqui está o post original que você vai comentar:
-        Título: ${postTitle || 'Sem título'}
-        Conteúdo: ${postContent || ''}
+Você está conversando DIRETAMENTE e EXCLUSIVAMENTE com o autor deste post:
+Título: ${postTitle || 'Sem título'}
+Conteúdo: ${postContent || ''}
 
-        E aqui estão os principais comentários existentes na thread para o seu contexto (se houver):
-        ${comments || 'Nenhum comentário ainda.'}
+Comentários já feitos na thread (apenas para seu contexto):
+${comments || 'Nenhum comentário ainda.'}
 
-        Baseado APENAS no post original (use os comentários apenas para saber o que já foi dito e não repetir, mas o seu foco é responder ao post), escreva um comentário em resposta ao autor do post, agregando valor à discussão, validando o colega, e talvez deixando uma reflexão ou pergunta aberta no final para estimular mais respostas. Escreva SOMENTE o comentário a ser publicado, sem aspas e sem explicações extras.`;
+Sua tarefa: Escreva um comentário curto (metade do tamanho de um texto padrão), em tom de conversa direta e exclusiva com o autor do post ("você"). Não se dirija ao resto da discussão. Traga uma validação rápida, uma reflexão leve e acolhedora.
+Retorne SOMENTE a resposta, sem aspas e sem enrolação.`;
         }
 
         const result = await model.generateContent(prompt);
