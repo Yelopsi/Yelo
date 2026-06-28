@@ -246,6 +246,15 @@
             acceptBtn.addEventListener('click', function() {
                 // Salva a decisão
                 localStorage.setItem('Yelo_cookies_accepted', 'true');
+                // Atualiza o consentimento no GA4 e Ads na mesma hora
+                if (typeof gtag === 'function') {
+                    gtag('consent', 'update', {
+                        'ad_storage': 'granted',
+                        'ad_user_data': 'granted',
+                        'ad_personalization': 'granted',
+                        'analytics_storage': 'granted'
+                    });
+                }
                 // Esconde o banner
                 cookieBanner.style.display = 'none';
             });

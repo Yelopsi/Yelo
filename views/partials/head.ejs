@@ -26,12 +26,22 @@
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
+
+  // Google Consent Mode v2
+  const cookiesAccepted = localStorage.getItem('Yelo_cookies_accepted') === 'true';
+  gtag('consent', 'default', {
+    'ad_storage': cookiesAccepted ? 'granted' : 'denied',
+    'ad_user_data': cookiesAccepted ? 'granted' : 'denied',
+    'ad_personalization': cookiesAccepted ? 'granted' : 'denied',
+    'analytics_storage': cookiesAccepted ? 'granted' : 'denied'
+  });
+
   gtag('js', new Date());
 
-  // Conecta o Google Analytics 4
-  gtag('config', 'G-5NFD83MGSM');
-  // Conecta o Google Ads
+  // Conecta o Google Analytics 4 e Ads
+  gtag('config', 'G-5NFD83MGSM'<% if (typeof user !== 'undefined' && user && user.id) { %>, { 'user_id': '<%= user.id %>' }<% } else if (typeof userDecoded !== 'undefined' && userDecoded && userDecoded.id) { %>, { 'user_id': '<%= userDecoded.id %>' }<% } %>);
   gtag('config', 'AW-11236864912');
+  gtag('config', 'AW-783735995'); // Tracking de Terapia Online
 </script>
 
 <script type="text/javascript">

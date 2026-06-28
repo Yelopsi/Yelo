@@ -34,19 +34,17 @@ const initProfilePage = async () => {
                     
                     newBtnZap.addEventListener('click', async () => {
                         // --- FIX DE IDEMPOTÊNCIA (EVITA SUPERCONTAGEM) ---
-                        const clickKey = `yelo_wpp_clicked_${profile.id}`;
-                        const alreadyClicked = sessionStorage.getItem(clickKey);
+                        if (newBtnZap.dataset.clicked) return;
+                        newBtnZap.dataset.clicked = "true";
+                        setTimeout(() => delete newBtnZap.dataset.clicked, 2000); // Debounce de 2s
                         
-                        if (!alreadyClicked) {
-                            sessionStorage.setItem(clickKey, 'true'); // Trava futuros cliques na mesma sessão
-                            
-                            try {
-                                // [NOVO] Rastreamento GA4 - Clique no WhatsApp
-                                if (typeof gtag === 'function') {
-                                    gtag('event', 'click_whatsapp', {
-                                        'id_psi': profile.id
-                                    });
-                                }
+                        try {
+                            // [NOVO] Rastreamento GA4 - Clique no WhatsApp
+                            if (typeof gtag === 'function') {
+                                gtag('event', 'whatsapp_click', {
+                                    'id_psi': profile.id
+                                });
+                            }
 
                                 let patientId = null;
                                 const token = localStorage.getItem('Yelo_token');
@@ -78,7 +76,6 @@ const initProfilePage = async () => {
                             } catch (err) {
                                 console.error("Erro no rastreamento:", err);
                             }
-                        }
                     });
                 } else {
                     btnZap.classList.add('disabled');

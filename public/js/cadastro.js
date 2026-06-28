@@ -75,6 +75,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 5. Sucesso!
+            try {
+                if (typeof gtag === 'function') {
+                    gtag('event', 'sign_up', { method: 'email' });
+                }
+            } catch(e) {}
+            
             msgFeedback.textContent = 'Conta criada com sucesso! Redirecionando...';
             msgFeedback.className = 'mensagem-sucesso';
             msgFeedback.style.display = 'block';

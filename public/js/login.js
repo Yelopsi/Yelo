@@ -100,6 +100,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     const data = await response.json();
+                    
+                    // Tracking GA4
+                    try {
+                        if (typeof gtag === 'function') {
+                            gtag('event', 'login', { method: 'email' });
+                        }
+                    } catch(e) {}
+                    
                     return { success: true, data, fallbackType };
                 } catch (err) {
                     return { success: false };

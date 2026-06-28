@@ -228,7 +228,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     mensagemRegistro.className = 'mensagem-sucesso';
                 }
 
-                // --- EVENTO DE CADASTRO DO META PIXEL ---
+                // --- EVENTO DE CADASTRO DO META PIXEL E GA4 ---
+                try {
+                    if (typeof gtag === 'function') {
+                        gtag('event', 'sign_up', { method: 'email' });
+                    }
+                } catch(e) {}
+                
                 if (typeof fbq === 'function') {
                     fbq('track', 'CompleteRegistration', {}, { eventID: metaEventId });
                 }

@@ -288,11 +288,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnAgendar.href = whatsappLink;
                 btnAgendar.onclick = (e) => {
                     e.preventDefault(); // Evita a "Race Condition" bloqueando a saída imediata
+                    if (btnAgendar.dataset.clicked) return;
+                    btnAgendar.dataset.clicked = "true";
+                    setTimeout(() => delete btnAgendar.dataset.clicked, 2000); // Debounce de 2s
                     
                     // Dispara evento para o Google Analytics (GA4)
                     try {
                         if (typeof gtag === 'function') {
-                            gtag('event', 'clique_whatsapp', {
+                            gtag('event', 'whatsapp_click', {
                                 'id_psi': psi.id,
                                 'nome_psi': psi.nome,
                                 'btn_id': btnId
