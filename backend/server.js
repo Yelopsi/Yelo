@@ -23,8 +23,10 @@ const errorHandler = require('./middlewares/errorHandler');
 
 // Gerenciador Central de Rotas
 const setupRoutes = require('./routes');
+const compression = require('compression');
 
 const app = express();
+app.use(compression()); // Otimização: Gzip para recursos estáticos e responses
 app.set('trust proxy', 1);
 app.set('view engine', 'ejs');
 app.set('views', [path.join(__dirname, '../views'), path.join(__dirname, '..')]);
