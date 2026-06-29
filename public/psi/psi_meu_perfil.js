@@ -149,6 +149,33 @@
         const tipoCobrancaRadios = document.querySelectorAll('input[name="tipo_cobranca"]');
         const valorDinamicoLabel = document.getElementById('valor_dinamico_label');
         const valorDinamicoInput = document.getElementById('valor_dinamico_input');
+        const roiSpeechBubble = document.getElementById('roi_speech_bubble');
+        const roiBubbleText = document.getElementById('roi_bubble_text');
+
+        function updateRoiBadge() {
+            if (!roiSpeechBubble || !roiBubbleText || !valorDinamicoInput) return;
+            const valStr = valorDinamicoInput.value;
+            const cleanStr = valStr.replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, '');
+            const val = parseFloat(cleanStr);
+            if (!val || val <= 0) {
+                roiSpeechBubble.style.display = 'none';
+                return;
+            }
+            const sessions = Math.ceil(99 / val);
+            
+            if (sessions === 1) {
+                roiBubbleText.innerHTML = `🚀 1 sessão paga a Yelo. O resto é 100% lucro!`;
+            } else {
+                roiBubbleText.innerHTML = `💡 ${sessions} sessões pagam sua mensalidade na Yelo!`;
+            }
+            roiSpeechBubble.style.display = 'block';
+        }
+
+        if (valorDinamicoInput) {
+            valorDinamicoInput.addEventListener('input', updateRoiBadge);
+            valorDinamicoInput.addEventListener('keyup', updateRoiBadge);
+            valorDinamicoInput.addEventListener('change', updateRoiBadge);
+        }
 
         function updateBillingFields(isInitialLoad = false) {
             if (!valorDinamicoLabel || !valorDinamicoInput) return;
@@ -172,6 +199,7 @@
                     valorDinamicoInput.value = val ? val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
                 }
             }
+            updateRoiBadge();
         }
 
         if (tipoCobrancaRadios.length) {
@@ -179,6 +207,7 @@
                 radio.addEventListener('change', () => {
                     updateBillingFields(false); // É uma mudança do usuário, não carrega valor antigo
                     valorDinamicoInput.value = ''; // Limpa o campo para evitar confusão
+                    updateRoiBadge(); // Esconde a badge
                     const block = radio.closest('.profile-block');
                     if (block) checkForChanges(block);
                 });
