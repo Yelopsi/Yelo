@@ -18,6 +18,11 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.BOOLEAN,
             defaultValue: false // Só vira true quando o psi responder o modal
         },
+        feedbackToken: {
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4,
+            allowNull: true
+        },
         contactReceived: {
             type: DataTypes.BOOLEAN,
             allowNull: true

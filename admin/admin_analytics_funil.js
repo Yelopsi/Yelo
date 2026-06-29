@@ -497,6 +497,13 @@ window.initializePage = function() {
         const filterVal = window.wppDataState.currentFilter;
         window.wppDataState.filteredFeedbacks = window.wppDataState.allFeedbacks.filter(f => {
             if (filterVal === 'todos') return true;
+            if (filterVal === 'cobrar_agora') {
+                if (f.feedbackGiven) return false;
+                const ageHours = (Date.now() - new Date(f.createdAt).getTime()) / (1000 * 60 * 60);
+                if (ageHours <= 24 || !f.psychologist || !f.psychologist.telefone) return false;
+                const sentAtMs = f.adminWppReminderSentAt ? new Date(f.adminWppReminderSentAt).getTime() : 0;
+                return sentAtMs === 0 || ((Date.now() - sentAtMs) / (1000 * 60 * 60)) >= 48;
+            }
             if (filterVal === 'pendente') return !f.feedbackGiven;
             if (filterVal === 'respondido') return f.feedbackGiven;
             if (filterVal === 'fechou') return f.feedbackGiven && f.dealClosed === 'yes';
@@ -666,30 +673,40 @@ window.initializePage = function() {
                 const nowMs = Date.now();
                 const ageHours = (nowMs - createdAtMs) / (1000 * 60 * 60);
                 
-                if (ageHours > 24 && f.psychologist && f.psychologist.telefone) {
+                if (ageHours > 48 && f.psychologist && f.psychologist.telefone) {
                     const sentAtMs = f.adminWppReminderSentAt ? new Date(f.adminWppReminderSentAt).getTime() : 0;
                     const count = f.adminWppReminderCount || 0;
                     
-                    const hoursSinceLastReminder = sentAtMs ? (nowMs - sentAtMs) / (1000 * 60 * 60) : 9999;
-                    
-                    if (hoursSinceLastReminder < 48) {
-                        // BLOQUEADO - Já cobrado recentemente (menos de 48h)
-                        const btnWpp = `<span style="display:inline-flex; align-items:center; justify-content:center; background:#9ca3af; color:#fff; border-radius:50%; width:26px; height:26px; margin-left:8px; cursor:default;" title="Cobrança já enviada nas últimas 48h">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    if (count >= 2) {
+                        // BLOQUEADO - Já foram enviados os 2 lembretes máximos
+                        const btnWpp = `<span style="display:inline-flex; align-items:center; justify-content:center; background:#9ca3af; color:#fff; border-radius:50%; width:26px; height:26px; margin-left:8px; cursor:default;" title="Lembretes esgotados (máximo de 2)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
                         </span>`;
                         status = `<div style="display:flex; align-items:center; justify-content:center;">${status}${btnWpp}</div>`;
                     } else {
+                        const hoursSinceLastReminder = sentAtMs ? (nowMs - sentAtMs) / (1000 * 60 * 60) : 9999;
+                        
+                        if (hoursSinceLastReminder < 48) {
+                            // BLOQUEADO - Já cobrado recentemente (menos de 48h)
+                            const btnWpp = `<span style="display:inline-flex; align-items:center; justify-content:center; background:#9ca3af; color:#fff; border-radius:50%; width:26px; height:26px; margin-left:8px; cursor:default;" title="Cobrança já enviada nas últimas 48h">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </span>`;
+                            status = `<div style="display:flex; align-items:center; justify-content:center;">${status}${btnWpp}</div>`;
+                        } else {
                         // LIBERADO - Pode cobrar
                         const phoneRaw = f.psychologist.telefone.replace(/\D/g, '');
                         const phone = phoneRaw.startsWith('55') ? phoneRaw : (phoneRaw.length >= 10 ? `55${phoneRaw}` : phoneRaw);
                         const psiNameFirst = (f.psychologist.nome || 'Psi').split(' ')[0];
-                        const patientName = f.guestName || 'um paciente';
+                        const patientText = f.guestName ? `o(a) paciente ${f.guestName}` : 'um paciente';
                         
                         let msgWpp = '';
+                        const baseUrl = window.location.origin.includes('localhost') ? 'http://localhost:3000' : 'https://www.yelopsi.com.br';
+                        const linkFeedback = f.feedbackToken ? `${baseUrl}/magic-feedback.html?token=${f.feedbackToken}` : `${baseUrl}/psi/dashboard`;
+
                         if (count === 0) {
-                            msgWpp = `Olá ${psiNameFirst}, vimos que o(a) paciente ${patientName} entrou em contato com você recentemente pela Yelo.\n\nPor favor, acesse seu painel em https://www.yelopsi.com.br/psi/dashboard e nos confirme se a mensagem chegou e se fecharam negócio!\n\nObrigado.`;
+                            msgWpp = `Olá, ${psiNameFirst}!\nPrecisamos da sua ajuda com um retorno rápido.\n${patientText} entrou em contato com você pela Yelo. Você pode acessar o link abaixo e informar:\n• A mensagem chegou?\n• O paciente iniciou a terapia?\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\nResponder agora:\n👉 ${linkFeedback}\n\nObrigado! 🌿`;
                         } else {
-                            msgWpp = `Olá ${psiNameFirst}, tudo bem? Passando para relembrar sobre o(a) paciente ${patientName}. Ainda estamos aguardando a sua confirmação no painel (https://www.yelopsi.com.br/psi/dashboard) para sabermos se o contato deu certo! Pode nos atualizar por favor?`;
+                            msgWpp = `Olá, ${psiNameFirst}! Tudo bem? 😊\n\nPassando para lembrar sobre ${patientText}.\n\nAinda estamos aguardando seu retorno para saber o que aconteceu com esse encaminhamento. Basta informar se a mensagem chegou e se o atendimento foi iniciado.\n\nEsse retorno leva menos de 1 minuto e nos ajuda a melhorar os próximos encaminhamentos para você e para toda a comunidade da Yelo.\n\nVocê pode atualizar por aqui:\n👉 ${linkFeedback}\n\nObrigado! 🌿`;
                         }
                         
                         const wppLink = `https://wa.me/${phone}?text=${encodeURIComponent(msgWpp)}`;
@@ -697,7 +714,8 @@ window.initializePage = function() {
                         const btnWpp = `<a href="javascript:void(0)" onclick="window.markWppAsSent('${safePsiId}', '${wppLink}')" style="display:inline-flex; align-items:center; justify-content:center; background:#25D366; color:#fff; border-radius:50%; width:26px; height:26px; margin-left:8px; text-decoration:none; transition: transform 0.2s; box-shadow: 0 2px 4px rgba(37,211,102,0.3);" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Cobrar resposta via WhatsApp">
                             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                         </a>`;
-                        status = `<div style="display:flex; align-items:center; justify-content:center;">${status}${btnWpp}</div>`;
+                            status = `<div style="display:flex; align-items:center; justify-content:center;">${status}${btnWpp}</div>`;
+                        }
                     }
                 }
             }

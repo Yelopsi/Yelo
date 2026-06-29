@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Feedback de Encaminhamento - Yelo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --verde-escuro: #1B4332;
+            --verde-claro: #2D6A4F;
+            --verde-fundo: #E8F3EF;
+            --cinza-texto: #555555;
+            --cinza-claro: #F4F8F6;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, var(--verde-fundo) 0%, #ffffff 100%);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+            overflow: hidden;
+        }
+        .container {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 32px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(27, 67, 50, 0.08);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            max-height: 85vh;
+        }
+        .logo {
+            width: 120px;
+            margin-bottom: 30px;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+        }
+        
+        /* Oculta barra de rolagem mas permite o scroll */
+        ::-webkit-scrollbar { display: none; }
+        * { scrollbar-width: none; -ms-overflow-style: none; }
+
+        .step { display: none; width: 100%; }
+        .step.active { display: flex; flex-direction: column; animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); flex: 1; min-height: 0; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--verde-escuro);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Estilos dos botões */
+        .btn-pill {
+            padding: 14px 20px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-primary {
+            background: var(--verde-escuro);
+            color: white;
+            box-shadow: 0 4px 15px rgba(27, 67, 50, 0.2);
+        }
+        .btn-primary:hover {
+            background: #143326;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(27, 67, 50, 0.25);
+        }
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-outline {
+            background: white;
+            color: var(--cinza-texto);
+            border: 1px solid #E0E0E0;
+        }
+        .btn-outline:hover {
+            background: #F9F9F9;
+            border-color: #D0D0D0;
+            transform: translateY(-2px);
+        }
+
+        .btn-list-opt {
+            background: white;
+            border: 1px solid #EAEAEA;
+            padding: 14px 20px;
+            border-radius: 16px;
+            text-align: left;
+            cursor: pointer;
+            color: #333;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            display: block;
+            width: 100%;
+        }
+        .btn-list-opt:hover {
+            background: var(--cinza-claro);
+            border-color: #D1E6DD;
+            transform: translateX(4px);
+        }
+
+        /* Cards de Pendência */
+        .pending-item {
+            background: var(--cinza-claro);
+            padding: 24px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+            text-align: left;
+            transition: opacity 0.3s ease;
+            border: 1px solid transparent;
+        }
+        .pending-item:hover {
+            border-color: rgba(27, 67, 50, 0.1);
+        }
+
+        /* Mobile Adjustments (Bottom Sheet) */
+        @media (max-width: 768px) {
+            body { 
+                align-items: flex-end; 
+                background: var(--verde-fundo); 
+            }
+            .logo { 
+                position: absolute;
+                top: 40px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 0;
+            }
+            .container { 
+                max-width: 100%; 
+                margin: 0; 
+                padding: 30px 20px 40px 20px;
+                width: 100%; 
+                border-radius: 32px 32px 0 0;
+                max-height: 85vh;
+                animation: slideUpMobile 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+                box-shadow: 0 -10px 40px rgba(27, 67, 50, 0.1);
+                z-index: 10;
+                box-sizing: border-box;
+            }
+            /* Drag Handle */
+            .container::before {
+                content: '';
+                position: absolute;
+                top: 12px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 40px;
+                height: 5px;
+                background: #E0E0E0;
+                border-radius: 10px;
+            }
+        }
+        @keyframes slideUpMobile {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <img src="/assets/logos/logo-escura.png" alt="Yelo Logo" class="logo" onerror="this.style.display='none'">
+
+    <div class="container">
+        
+        <!-- Loading -->
+        <div id="step-loading" class="step active" style="align-items: center; justify-content: center; min-height: 200px;">
+            <div class="loader"></div>
+            <p style="color: var(--cinza-texto); font-weight: 500;">Preparando ambiente seguro...</p>
+        </div>
+
+        <!-- Erro -->
+        <div id="step-error" class="step" style="align-items: center; justify-content: center; min-height: 200px;">
+            <div style="font-size: 3.5rem; margin-bottom: 15px;">👀</div>
+            <h2 style="color: var(--verde-escuro); margin: 0 0 10px 0;">Ops!</h2>
+            <p id="error-message" style="color: var(--cinza-texto); line-height: 1.5;">Este link é inválido ou o feedback já foi preenchido.</p>
+        </div>
+
+        <!-- Passo da Lista Unificada -->
+        <div id="step-list" class="step">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="font-size: 3rem; margin-bottom: 12px; animation: bounce 2s infinite;">💬</div>
+                <h3 style="color: var(--verde-escuro); margin: 0 0 10px 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px;">Olá, <span id="psi-name-header">Psicólogo(a)</span>!</h3>
+                <p style="color: var(--cinza-texto); line-height: 1.5; margin: 0; font-size: 0.95rem;">
+                    Os pacientes abaixo entraram em contato com você pelo WhatsApp? Essa informação nos ajuda a entender a conexão e melhorar indicações.
+                </p>
+            </div>
+            
+            <div id="pending-wpp-list" style="overflow-y: auto; flex: 1; padding-bottom: 20px;">
+                <!-- Preenchido via JS -->
+            </div>
+            
+            <div id="pending-wpp-done-msg" style="display:none; text-align: center; margin-top: 30px;">
+                <div style="font-size: 3rem; margin-bottom: 15px;">🎉</div>
+                <h3 style="color: var(--verde-escuro); margin: 0 0 10px 0;">Tudo respondido!</h3>
+                <p style="color: var(--cinza-texto); margin: 0;">Obrigado por nos ajudar a construir uma Yelo melhor.</p>
+                <button onclick="window.close()" class="btn-pill btn-outline" style="margin-top: 25px; max-width: 200px; margin-left: auto; margin-right: auto;">Fechar janela</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:3001' : window.location.origin;
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        let answeredCount = 0;
+        let totalPending = 0;
+
+        function goToStep(stepId) {
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            document.getElementById(stepId).classList.add('active');
+        }
+
+        async function init() {
+            if (!token) {
+                document.getElementById('error-message').innerText = 'Link inválido (Token ausente).';
+                goToStep('step-error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/public/feedback/${token}`);
+                if (!res.ok) throw new Error('Link inválido ou erro no servidor.');
+                
+                const data = await res.json();
+                
+                if (!data.pending || data.pending.length === 0) {
+                    document.getElementById('error-message').innerText = 'Obrigado! Todos os feedbacks desta lista já foram respondidos anteriormente.';
+                    goToStep('step-error');
+                    return;
+                }
+
+                if (data.pending[0] && data.pending[0].psychologist && data.pending[0].psychologist.nome) {
+                    const firstName = data.pending[0].psychologist.nome.split(' ')[0];
+                    document.getElementById('psi-name-header').innerText = firstName;
+                }
+
+                totalPending = data.pending.length;
+                renderPendingList(data.pending);
+                goToStep('step-list');
+            } catch (err) {
+                goToStep('step-error');
+            }
+        }
+
+        function renderPendingList(pending) {
+            const listContainer = document.getElementById('pending-wpp-list');
+            listContainer.innerHTML = pending.map(item => {
+                let gName = item.guestName || 'um paciente';
+                if (gName === 'Visitante') gName = 'um paciente';
+                const dStr = new Date(item.createdAt).toLocaleDateString('pt-BR');
+                const itemToken = item.feedbackToken || token; 
+
+                return `
+                    <div class="pending-item" id="pending-item-${item.id}">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 16px; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 12px;">
+                            <h4 style="margin: 0; color: var(--verde-escuro); font-size: 1.1rem; font-weight: 700;">${gName}</h4>
+                            <span style="font-size: 0.75rem; color: #888; font-weight: 500; background: white; padding: 4px 10px; border-radius: 20px;">${dStr}</span>
+                        </div>
+                        
+                        <div id="step1-${item.id}">
+                            <p style="margin: 0 0 16px 0; font-size: 0.95rem; color: #444; font-weight: 600;">O paciente entrou em contato?</p>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <button onclick="goToStep2Wpp('${item.id}', true)" class="btn-pill btn-primary">✅ Sim, conversamos</button>
+                                <button onclick="goToStep2Wpp('${item.id}', false)" class="btn-pill btn-outline">❌ Ainda não recebi</button>
+                            </div>
+                        </div>
+
+                        <div id="step2a-${item.id}" style="display: none;">
+                            <p style="margin: 0 0 16px 0; font-size: 0.95rem; color: #444; font-weight: 600; text-align: center;">Como está esse atendimento?</p>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <button onclick="submitListFeedback('${item.id}', '${itemToken}', true, 'started')" class="btn-list-opt">✅ Já iniciou a terapia</button>
+                                <button onclick="submitListFeedback('${item.id}', '${itemToken}', true, 'talking')" class="btn-list-opt">⏳ Ainda estamos conversando</button>
+                                <button onclick="submitListFeedback('${item.id}', '${itemToken}', true, 'not_started')" class="btn-list-opt">❌ Decidiu não iniciar</button>
+                                <button onclick="submitListFeedback('${item.id}', '${itemToken}', true, 'ghosted')" class="btn-list-opt">👻 O paciente não respondeu mais</button>
+                            </div>
+                            <div style="text-align: center;"><button onclick="backToStep1Wpp('${item.id}')" style="margin-top: 15px; background: transparent; border: none; color: #888; font-size:0.85rem; cursor:pointer; font-weight: 600; text-decoration: underline;">Voltar</button></div>
+                        </div>
+
+                        <div id="step2b-${item.id}" style="display: none;">
+                            <p style="margin: 0 0 16px 0; font-size: 0.95rem; color: #444; font-weight: 600; text-align: center;">O que aconteceu?</p>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <button onclick="submitListFeedback('${item.id}', '${itemToken}', false, 'no_contact')" class="btn-list-opt">⏳ O paciente ainda não entrou em contato</button>
+                                <button onclick="submitListFeedback('${item.id}', '${itemToken}', false, 'wpp_issue')" class="btn-list-opt">📱 Acho que houve algum problema no WhatsApp</button>
+                                <button onclick="submitListFeedback('${item.id}', '${itemToken}', false, 'unknown')" class="btn-list-opt">🤷 Não sei informar</button>
+                            </div>
+                            <div style="text-align: center;"><button onclick="backToStep1Wpp('${item.id}')" style="margin-top: 15px; background: transparent; border: none; color: #888; font-size:0.85rem; cursor:pointer; font-weight: 600; text-decoration: underline;">Voltar</button></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.goToStep2Wpp = (id, received) => {
+            document.getElementById(`step1-${id}`).style.display = 'none';
+            if (received) {
+                document.getElementById(`step2a-${id}`).style.display = 'block';
+            } else {
+                document.getElementById(`step2b-${id}`).style.display = 'block';
+            }
+        };
+
+        window.backToStep1Wpp = (id) => {
+            document.getElementById(`step2a-${id}`).style.display = 'none';
+            document.getElementById(`step2b-${id}`).style.display = 'none';
+            document.getElementById(`step1-${id}`).style.display = 'block';
+        };
+
+        window.submitListFeedback = async (id, itemToken, contact_received, deal_closed) => {
+            const itemDiv = document.getElementById(`pending-item-${id}`);
+            itemDiv.style.opacity = '0.5';
+            itemDiv.style.pointerEvents = 'none';
+            
+            const thanksMsg = contact_received 
+                ? 'Estas informações ajudam a Yelo a melhorar as próximas indicações.'
+                : 'Vamos acompanhar esse caso e usar essa informação para melhorar as próximas conexões.';
+
+            itemDiv.innerHTML = `
+                <div style="text-align:center; padding: 30px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                    <div style="width: 40px; height: 40px; background: var(--verde-escuro); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(27,67,50,0.2);">✓</div>
+                    <strong style="color: var(--verde-escuro); font-size: 1.1rem; margin-bottom: 8px;">Resposta enviada!</strong>
+                    <span style="font-size: 0.9rem; color: var(--cinza-texto); line-height: 1.4;">${thanksMsg}</span>
+                </div>`;
+            
+            try {
+                await fetch(`${API_BASE_URL}/api/public/feedback/${itemToken}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contact_received, deal_closed })
+                });
+            } catch(e) {
+                console.error('Erro ao enviar', e);
+            }
+
+            answeredCount++;
+            if (answeredCount >= totalPending) {
+                document.getElementById('pending-wpp-list').style.display = 'none';
+                document.getElementById('step-list').querySelector('div:first-child').style.display = 'none';
+                document.getElementById('pending-wpp-done-msg').style.display = 'block';
+            }
+        };
+
+        init();
+    </script>
+</body>
+</html>

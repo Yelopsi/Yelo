@@ -3,6 +3,11 @@ const router = express.Router();
 const db = require('../models');
 const { Op } = require('sequelize');
 const gamificationService = require('../services/gamificationService');
+const whatsappClickController = require('../controllers/whatsappClickController');
+
+// Rotas de Magic Link de Feedback (PLG)
+router.get('/feedback/:token', whatsappClickController.getPublicFeedbackByToken);
+router.post('/feedback/:token', whatsappClickController.submitPublicFeedback);
 
 router.post('/psychologists/:slug/whatsapp-click', async (req, res) => {
     try {

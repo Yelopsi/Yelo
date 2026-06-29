@@ -821,129 +821,139 @@ document.addEventListener('DOMContentLoaded', function() {
                     const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/pending-whatsapp-feedback`);
                     if (res.ok) {
                         const data = await res.json();
-                        if (data && data.id) {
+                        if (data && data.pending && data.pending.length > 0) {
                             const modal = document.createElement('div');
                             modal.id = 'modal-feedback-wpp';
                             // Adicionado backdrop-filter forte e pointer-events auto para bloquear a tela inteira
                             modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 100000; animation: fadeIn 0.3s ease; backdrop-filter: blur(12px);';
-                            let guestName = data.guestName || 'um paciente';
-                            if (guestName === 'Visitante') guestName = 'um paciente';
                             
+                            const pendingListHtml = data.pending.map((item, index) => {
+                                let gName = item.guestName || 'um paciente';
+                                if (gName === 'Visitante') gName = 'um paciente';
+                                const dStr = new Date(item.createdAt).toLocaleDateString('pt-BR');
+                                return `
+                                    <div class="pending-item" id="pending-item-${item.id}" style="border: 1px solid #eaeaea; padding: 18px; border-radius: 14px; margin-bottom: 15px; text-align: left; background: #fafafa;">
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center;">
+                                            <h4 style="margin: 0; color: var(--verde-escuro); font-size: 1.05rem;">Paciente: ${gName}</h4>
+                                            <span style="font-size: 0.8rem; color: #888;">${dStr}</span>
+                                        </div>
+                                        
+                                        <div id="step1-${item.id}">
+                                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                                <button onclick="window.goToStep2Wpp('${item.id}', true)" style="padding: 12px; border-radius: 50px; border:none; background: var(--verde-escuro); color: white; cursor: pointer; font-weight: bold; font-size: 0.95rem;">✅ Sim, conversamos</button>
+                                                <button onclick="window.goToStep2Wpp('${item.id}', false)" style="padding: 12px; border-radius: 50px; border: 1px solid #ccc; background: white; color: #555; cursor: pointer; font-weight: bold; font-size: 0.95rem;">❌ Ainda não recebi nenhuma mensagem</button>
+                                            </div>
+                                        </div>
+
+                                        <div id="step2a-${item.id}" style="display: none;">
+                                            <p style="margin: 0 0 12px 0; font-size: 0.95rem; color: #444; font-weight: bold; text-align: center;">Como está esse atendimento?</p>
+                                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                                <button onclick="window.submitListFeedback('${item.id}', true, 'started')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:12px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">✅ Já iniciou a terapia</button>
+                                                <button onclick="window.submitListFeedback('${item.id}', true, 'talking')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:12px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">⏳ Ainda estamos conversando</button>
+                                                <button onclick="window.submitListFeedback('${item.id}', true, 'not_started')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:12px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">❌ Decidiu não iniciar</button>
+                                                <button onclick="window.submitListFeedback('${item.id}', true, 'ghosted')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:12px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">👻 O paciente não respondeu mais</button>
+                                            </div>
+                                            <div style="text-align: center;"><button onclick="window.backToStep1Wpp('${item.id}')" style="margin-top: 10px; background: transparent; border: none; color: #888; font-size:0.85rem; cursor:pointer; font-weight: 500;">⬅ Voltar</button></div>
+                                        </div>
+
+                                        <div id="step2b-${item.id}" style="display: none;">
+                                            <p style="margin: 0 0 12px 0; font-size: 0.95rem; color: #444; font-weight: bold; text-align: center;">O que aconteceu?</p>
+                                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                                <button onclick="window.submitListFeedback('${item.id}', false, 'no_contact')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:12px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">⏳ O paciente ainda não entrou em contato</button>
+                                                <button onclick="window.submitListFeedback('${item.id}', false, 'wpp_issue')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:12px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">📱 Acho que houve algum problema no WhatsApp</button>
+                                                <button onclick="window.submitListFeedback('${item.id}', false, 'unknown')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:12px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">🤷 Não sei informar</button>
+                                            </div>
+                                            <div style="text-align: center;"><button onclick="window.backToStep1Wpp('${item.id}')" style="margin-top: 10px; background: transparent; border: none; color: #888; font-size:0.85rem; cursor:pointer; font-weight: 500;">⬅ Voltar</button></div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('');
+
+                            const psiFirstName = psychologistData && psychologistData.nome ? psychologistData.nome.split(' ')[0] : 'Psicólogo(a)';
+
                             modal.innerHTML = `
                                 <style>
+                                    .feedback-wpp-box {
+                                        background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.2); position: relative; max-height: 85vh; display: flex; flex-direction: column; animation: slideUpWelcome 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                                    }
                                     @media (max-width: 768px) {
-                                        #modal-feedback-wpp {
-                                            align-items: flex-end !important;
-                                        }
-                                        #modal-feedback-wpp .welcome-modal-box {
+                                        .feedback-wpp-box {
                                             width: 100% !important;
                                             max-width: 100% !important;
-                                            border-radius: 24px 24px 0 0 !important;
-                                            padding: 30px 20px 40px 20px !important;
+                                            border-radius: 20px 20px 0 0 !important;
+                                            position: absolute !important;
+                                            bottom: 0 !important;
                                             margin: 0 !important;
-                                            animation: slideUpSheet 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
-                                        }
-                                        #modal-feedback-wpp .welcome-modal-box::before {
-                                            content: '';
-                                            display: block;
-                                            width: 40px;
-                                            height: 5px;
-                                            background: #e0e0e0;
-                                            border-radius: 5px;
-                                            margin: -15px auto 20px auto;
+                                            max-height: 90vh !important;
+                                            animation: slideUpMobile 0.4s cubic-bezier(0.16, 1, 0.3, 1);
                                         }
                                     }
+                                    @keyframes slideUpMobile {
+                                        from { transform: translateY(100%); }
+                                        to { transform: translateY(0); }
+                                    }
                                 </style>
-                                <div class="welcome-modal-box" id="feedback-step-1" style="background: white; padding: 40px 30px; border-radius: 20px; width: 90%; max-width: 600px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.2); position: relative; animation: slideUpWelcome 0.4s cubic-bezier(0.16, 1, 0.3, 1);">
-                                    <div style="font-size: 3.5rem; margin-bottom: 15px;">👋</div>
-                                    <h3 style="color: var(--verde-escuro, #1B4332); margin-bottom: 15px; font-family: var(--font-titulos, 'Fraunces', serif); font-size: 1.4rem; line-height: 1.3;">Olá, ${guestName} entrou em contato com você pelo WhatsApp?</h3>
-                                    <p style="color: #444; line-height: 1.6; margin-bottom: 25px; font-size: 1rem; font-family: var(--font-principal, 'Inter', sans-serif);">
-                                        Essa informação ajuda a Yelo a entender se a conexão aconteceu e melhorar as próximas indicações.
+                                <div class="welcome-modal-box feedback-wpp-box">
+                                    <div style="font-size: 3rem; margin-bottom: 10px;">💬</div>
+                                    <h3 style="color: var(--verde-escuro, #1B4332); margin-bottom: 10px; font-family: var(--font-titulos, 'Fraunces', serif); font-size: 1.4rem; line-height: 1.3;">Olá, ${psiFirstName}!</h3>
+                                    <p style="color: #666; line-height: 1.5; margin-bottom: 20px; font-size: 0.95rem; font-family: var(--font-principal, 'Inter', sans-serif);">
+                                        Os pacientes abaixo entraram em contato com você pelo WhatsApp? Essa informação ajuda a Yelo a entender se a conexão aconteceu e melhorar as próximas indicações.
                                     </p>
-                                    <div style="display: flex; gap: 10px; justify-content: center; flex-direction: column;">
-                                        <button id="btn-feedback-yes" style="background-color: var(--verde-escuro, #1B4332); color: white; border: none; padding: 14px 28px; border-radius: 50px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1.05rem; transition: transform 0.2s, background-color 0.2s;">✅ Sim, conversamos</button>
-                                        <button id="btn-feedback-no" style="background-color: transparent; color: #666; border: 1px solid #ccc; padding: 14px 28px; border-radius: 50px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1.05rem; transition: transform 0.2s, background-color 0.2s;">❌ Ainda não recebi nenhuma mensagem</button>
+                                    <div style="overflow-y: auto; flex: 1; padding-right: 5px;" id="pending-wpp-list">
+                                        ${pendingListHtml}
                                     </div>
-                                </div>
-
-                                <div class="welcome-modal-box" id="feedback-step-2a" style="display: none; background: white; padding: 40px 30px; border-radius: 20px; width: 90%; max-width: 600px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.2); position: relative; animation: slideUpWelcome 0.4s cubic-bezier(0.16, 1, 0.3, 1);">
-                                    <div style="text-align: left; margin-bottom: 10px;">
-                                        <button class="btn-back-to-step1" style="background: transparent; border: none; color: #666; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-weight: bold; font-size: 0.95rem; padding: 0;">⬅ Voltar</button>
-                                    </div>
-                                    <h3 style="color: var(--verde-escuro, #1B4332); margin-bottom: 25px; font-family: var(--font-titulos, 'Fraunces', serif); font-size: 1.4rem; line-height: 1.2;">Como está esse atendimento?</h3>
-                                    <div style="display: flex; gap: 10px; justify-content: center; flex-direction: column;">
-                                        <button class="btn-step-2a" data-answer="started" style="background-color: transparent; color: #333; border: 1px solid #ccc; padding: 14px 20px; border-radius: 12px; font-weight: 500; cursor: pointer; width: 100%; font-size: 1rem; text-align: left; transition: background-color 0.2s;">✅ Já iniciou a terapia</button>
-                                        <button class="btn-step-2a" data-answer="talking" style="background-color: transparent; color: #333; border: 1px solid #ccc; padding: 14px 20px; border-radius: 12px; font-weight: 500; cursor: pointer; width: 100%; font-size: 1rem; text-align: left; transition: background-color 0.2s;">⏳ Ainda estamos conversando</button>
-                                        <button class="btn-step-2a" data-answer="not_started" style="background-color: transparent; color: #333; border: 1px solid #ccc; padding: 14px 20px; border-radius: 12px; font-weight: 500; cursor: pointer; width: 100%; font-size: 1rem; text-align: left; transition: background-color 0.2s;">❌ Decidiu não iniciar</button>
-                                        <button class="btn-step-2a" data-answer="ghosted" style="background-color: transparent; color: #333; border: 1px solid #ccc; padding: 14px 20px; border-radius: 12px; font-weight: 500; cursor: pointer; width: 100%; font-size: 1rem; text-align: left; transition: background-color 0.2s;">👻 O paciente não respondeu mais</button>
-                                    </div>
-                                </div>
-
-                                <div class="welcome-modal-box" id="feedback-step-2b" style="display: none; background: white; padding: 40px 30px; border-radius: 20px; width: 90%; max-width: 600px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.2); position: relative; animation: slideUpWelcome 0.4s cubic-bezier(0.16, 1, 0.3, 1);">
-                                    <div style="text-align: left; margin-bottom: 10px;">
-                                        <button class="btn-back-to-step1" style="background: transparent; border: none; color: #666; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-weight: bold; font-size: 0.95rem; padding: 0;">⬅ Voltar</button>
-                                    </div>
-                                    <h3 style="color: var(--verde-escuro, #1B4332); margin-bottom: 25px; font-family: var(--font-titulos, 'Fraunces', serif); font-size: 1.4rem; line-height: 1.2;">O que aconteceu?</h3>
-                                    <div style="display: flex; gap: 10px; justify-content: center; flex-direction: column;">
-                                        <button class="btn-step-2b" data-answer="no_contact" style="background-color: transparent; color: #333; border: 1px solid #ccc; padding: 14px 20px; border-radius: 12px; font-weight: 500; cursor: pointer; width: 100%; font-size: 1rem; text-align: left; transition: background-color 0.2s;">⏳ O paciente ainda não entrou em contato</button>
-                                        <button class="btn-step-2b" data-answer="wpp_issue" style="background-color: transparent; color: #333; border: 1px solid #ccc; padding: 14px 20px; border-radius: 12px; font-weight: 500; cursor: pointer; width: 100%; font-size: 1rem; text-align: left; transition: background-color 0.2s;">📱 Acho que houve algum problema no WhatsApp</button>
-                                        <button class="btn-step-2b" data-answer="unknown" style="background-color: transparent; color: #333; border: 1px solid #ccc; padding: 14px 20px; border-radius: 12px; font-weight: 500; cursor: pointer; width: 100%; font-size: 1rem; text-align: left; transition: background-color 0.2s;">🤷 Não sei informar</button>
-                                    </div>
+                                    <p id="pending-wpp-done-msg" style="display:none; color: var(--verde-escuro); font-weight: bold; margin-top: 20px;">Tudo respondido! Obrigado. 🎉</p>
                                 </div>
                             `;
                             document.body.appendChild(modal);
 
-                            // Hover effects para os botões do tipo lista
-                            const addHover = (btn) => {
-                                btn.onmouseover = () => btn.style.backgroundColor = '#f8f9fa';
-                                btn.onmouseout = () => btn.style.backgroundColor = 'transparent';
+                            window.goToStep2Wpp = (id, received) => {
+                                document.getElementById(`step1-${id}`).style.display = 'none';
+                                if (received) {
+                                    document.getElementById(`step2a-${id}`).style.display = 'block';
+                                } else {
+                                    document.getElementById(`step2b-${id}`).style.display = 'block';
+                                }
                             };
-                            document.querySelectorAll('.btn-step-2a, .btn-step-2b').forEach(addHover);
 
-                            const sendFeedback = async (contact_received, deal_closed) => {
+                            window.backToStep1Wpp = (id) => {
+                                document.getElementById(`step2a-${id}`).style.display = 'none';
+                                document.getElementById(`step2b-${id}`).style.display = 'none';
+                                document.getElementById(`step1-${id}`).style.display = 'block';
+                            };
+
+                            let answeredCount = 0;
+                            const totalPending = data.pending.length;
+
+                            window.submitListFeedback = async (id, contact_received, deal_closed) => {
+                                const itemDiv = document.getElementById(`pending-item-${id}`);
+                                itemDiv.style.opacity = '0.5';
+                                itemDiv.style.pointerEvents = 'none';
+                                const thanksMsg = contact_received 
+                                    ? 'Obrigado! Estas informações ajudam a Yelo a melhorar as próximas indicações.'
+                                    : 'Obrigado! Vamos acompanhar esse caso e usar essa informação para melhorar as próximas conexões.';
+
+                                itemDiv.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--verde-escuro); font-weight: 500; line-height: 1.4;">✅ Resposta enviada!<br><br><span style="font-size: 0.9rem; color: #555;">${thanksMsg}</span></div>`;
+                                
                                 try {
                                     await apiFetch(`${API_BASE_URL}/api/psychologists/me/whatsapp-feedback`, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('Yelo_token')}` },
-                                        body: JSON.stringify({ clickLogId: data.id, contact_received, deal_closed })
+                                        body: JSON.stringify({ clickLogId: id, contact_received, deal_closed })
                                     });
                                 } catch(e) {}
-                                
-                                modal.style.transition = 'opacity 0.3s ease';
-                                modal.style.opacity = '0';
-                                setTimeout(() => modal.remove(), 300);
+
+                                answeredCount++;
+                                if (answeredCount >= totalPending) {
+                                    document.getElementById('pending-wpp-list').style.display = 'none';
+                                    document.getElementById('pending-wpp-done-msg').style.display = 'block';
+                                    setTimeout(() => {
+                                        modal.style.transition = 'opacity 0.3s ease';
+                                        modal.style.opacity = '0';
+                                        setTimeout(() => modal.remove(), 300);
+                                    }, 1500);
+                                }
                             };
-
-                            document.getElementById('btn-feedback-yes').onclick = () => {
-                                document.getElementById('feedback-step-1').style.display = 'none';
-                                document.getElementById('feedback-step-2a').style.display = 'block';
-                            };
-                            document.getElementById('btn-feedback-no').onclick = () => {
-                                document.getElementById('feedback-step-1').style.display = 'none';
-                                document.getElementById('feedback-step-2b').style.display = 'block';
-                            };
-
-                            document.querySelectorAll('.btn-back-to-step1').forEach(btn => {
-                                btn.onclick = () => {
-                                    document.getElementById('feedback-step-2a').style.display = 'none';
-                                    document.getElementById('feedback-step-2b').style.display = 'none';
-                                    document.getElementById('feedback-step-1').style.display = 'block';
-                                };
-                            });
-
-                            document.querySelectorAll('.btn-step-2a').forEach(btn => {
-                                btn.onclick = () => {
-                                    showToast('Obrigado! Essas informações ajudam a Yelo a melhorar as próximas indicações.', 'success', 9000);
-                                    sendFeedback(true, btn.getAttribute('data-answer'));
-                                };
-                            });
-
-                            document.querySelectorAll('.btn-step-2b').forEach(btn => {
-                                btn.onclick = () => {
-                                    showToast('Obrigado! Vamos acompanhar esse caso e usar essa informação para melhorar as próximas conexões.', 'info', 9000);
-                                    sendFeedback(false, btn.getAttribute('data-answer'));
-                                };
-                            });
                         }
                     }
                 } catch (err) {}
