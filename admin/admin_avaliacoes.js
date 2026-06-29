@@ -150,7 +150,7 @@ window.initializePage = async function() {
                 <td data-label="Paciente"><strong>${patName}</strong></td>
                 <td data-label="Psicólogo" style="color: var(--verde-escuro); font-weight: 500;">${psiName}</td>
                 <td data-label="Nota" style="text-align: center; font-size: 1.1rem;" title="Nota ${r.rating}">${starsHtml}</td>
-                <td data-label="Comentário" style="max-width: 300px;">${comment}</td>
+                <td data-label="Comentário" style="max-width: 300px; white-space: normal; overflow-wrap: break-word;">${comment}</td>
                 <td data-label="Status" style="text-align: center;">${statusHtml}</td>
             </tr>`;
         }).join('');
