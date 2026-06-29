@@ -34,9 +34,10 @@ window.initializePage = async function() {
 
     async function loadPlatformReviews() {
         try {
-            const [resPsis, resUx] = await Promise.all([
+            const [resPsis, resUx, resPerfis] = await Promise.all([
                 fetch(`${API_BASE_URL}/api/admin/platform-reviews`, { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch(`${API_BASE_URL}/api/admin/feedbacks`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
+                fetch(`${API_BASE_URL}/api/admin/feedbacks`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null),
+                fetch(`${API_BASE_URL}/api/admin/reviews`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
             ]);
             
             if (!resPsis.ok) throw new Error('Falha ao buscar avaliações dos psicólogos.');
@@ -50,6 +51,11 @@ window.initializePage = async function() {
                 allUxReviews = dataUx.reviews || [];
                 updateUxDashboard(dataUx.stats);
                 renderUxTable(allUxReviews);
+            }
+
+            if (resPerfis && resPerfis.ok) {
+                const dataPerfis = await resPerfis.json();
+                renderPerfisTable(dataPerfis);
             }
 
         } catch (error) {
@@ -99,6 +105,53 @@ window.initializePage = async function() {
                 <td data-label="Data" style="color: #666; font-size: 0.9rem; white-space: nowrap;">${dataRow}</td>
                 <td data-label="Nota" style="text-align: center; font-size: 1.1rem;" title="Nota ${r.rating}">${starsHtml}</td>
                 <td data-label="Comentário" style="max-width: 400px; white-space: normal; overflow-wrap: break-word; color: #333;">${feedbackText}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    function renderPerfisTable(reviews) {
+        const perfisTbody = document.getElementById('perfis-tbody');
+        const totalEl = document.getElementById('perfis-total');
+        const mediaEl = document.getElementById('perfis-media');
+
+        if (!reviews || !Array.isArray(reviews)) reviews = [];
+
+        if (totalEl) totalEl.textContent = reviews.length;
+        if (mediaEl) {
+            if (reviews.length > 0) {
+                const sum = reviews.reduce((acc, r) => acc + (r.rating || 0), 0);
+                mediaEl.textContent = (sum / reviews.length).toFixed(1);
+            } else {
+                mediaEl.textContent = '--';
+            }
+        }
+
+        if (!perfisTbody) return;
+
+        if (reviews.length === 0) {
+            perfisTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #666;">Nenhuma avaliação encontrada nos perfis.</td></tr>';
+            return;
+        }
+
+        perfisTbody.innerHTML = reviews.map(r => {
+            const dataRow = r.createdAt ? new Date(r.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-';
+            const starsHtml = '⭐'.repeat(r.rating || 0) + '<span style="color:#e2e8f0;">' + '⭐'.repeat(5 - (r.rating || 0)) + '</span>';
+            const psiName = r.psychologist && r.psychologist.nome ? r.psychologist.nome : 'Desconhecido';
+            const patName = r.patient && r.patient.nome ? r.patient.nome : 'Anônimo';
+            const comment = r.comment ? `"${r.comment}"` : '<em style="color:#aaa;">Sem comentário</em>';
+            
+            let statusHtml = '';
+            if (r.status === 'pending') statusHtml = '<span style="background: #fef08a; color: #854d0e; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem;">Pendente</span>';
+            else if (r.status === 'approved') statusHtml = '<span style="background: #bbf7d0; color: #166534; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem;">Aprovado</span>';
+            else statusHtml = '<span style="background: #fecaca; color: #991b1b; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem;">Rejeitado</span>';
+
+            return `<tr>
+                <td data-label="Data" style="color: #666; font-size: 0.9rem; white-space: nowrap;">${dataRow}</td>
+                <td data-label="Paciente"><strong>${patName}</strong></td>
+                <td data-label="Psicólogo" style="color: var(--verde-escuro); font-weight: 500;">${psiName}</td>
+                <td data-label="Nota" style="text-align: center; font-size: 1.1rem;" title="Nota ${r.rating}">${starsHtml}</td>
+                <td data-label="Comentário" style="max-width: 300px;">${comment}</td>
+                <td data-label="Status" style="text-align: center;">${statusHtml}</td>
             </tr>`;
         }).join('');
     }
