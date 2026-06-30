@@ -143,7 +143,10 @@
                 Sua resposta será pública e ajudará este usuário e outros na comunidade.
             </p>
             <div class="form-group" style="margin-bottom: 20px; text-align: left;">
-                <label for="qna-answer-textarea" style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">Sua Resposta</label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label for="qna-answer-textarea" style="display: block; font-weight: 600; color: #333; margin: 0;">Sua Resposta</label>
+                    <button type="button" id="btn-generate-ai-qna" class="btn hidden" style="padding: 6px 14px; font-size: 0.85rem; min-width: 0; width: auto; border-radius: 50px; margin: 0; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; box-shadow: 0 2px 5px rgba(16,185,129,0.3); display: flex; align-items: center; gap: 6px; cursor: pointer;" title="Gerar resposta com IA">✨ IA</button>
+                </div>
                 <textarea id="qna-answer-textarea" minlength="50" required placeholder="Digite sua resposta aqui... Mínimo de 50 caracteres." style="width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #ccc; font-family: var(--font-principal); font-size: 1rem; resize: vertical; min-height: 120px; box-sizing: border-box;"></textarea>
                 <div id="qna-char-counter" style="text-align: right; font-size: 0.85rem; color: #666; margin-top: 8px;">0/50 caracteres</div>
             </div>

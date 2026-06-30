@@ -368,6 +368,46 @@
         }
 
         const form = document.getElementById('qna-answer-form');
+        
+        // --- Lógica do botão de IA para Admins ---
+        const btnAiQna = document.getElementById('btn-generate-ai-qna');
+        const adminPsiData = typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null;
+        if (btnAiQna && adminPsiData && (adminPsiData.isAdmin || adminPsiData.email === 'pix@yelopsi.com.br' || adminPsiData.email === 'pix@yeloposi.com.br')) {
+            btnAiQna.classList.remove('hidden');
+            btnAiQna.onclick = async () => {
+                const q = allQuestions.find(item => item.id === currentQuestionIdToAnswer);
+                if (!q) return;
+
+                btnAiQna.disabled = true;
+                const originalText = btnAiQna.innerHTML;
+                btnAiQna.innerHTML = '✨ Pensando...';
+
+                try {
+                    const res = await apiFetch(`${API_BASE_URL}/api/forum/ai/generate-comment`, {
+                        method: 'POST',
+                        body: JSON.stringify({ postTitle: q.titulo || q.title || 'Dúvida', postContent: q.conteudo || q.content || '', comments: '', authorName: 'Anônimo' })
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        const textarea = document.getElementById('qna-answer-textarea');
+                        textarea.value = data.generatedText;
+                        textarea.style.height = 'auto';
+                        textarea.style.height = textarea.scrollHeight + 'px';
+                        if (typeof checkCharCount === 'function') checkCharCount();
+                        if (typeof showToast === 'function') showToast('Resposta gerada! Revise e publique.', 'info');
+                    } else {
+                        if (typeof showToast === 'function') showToast('Erro ao gerar com IA.', 'error');
+                    }
+                } catch (err) {
+                    if (typeof showToast === 'function') showToast('Erro ao gerar com IA.', 'error');
+                } finally {
+                    btnAiQna.disabled = false;
+                    btnAiQna.innerHTML = originalText;
+                }
+            };
+        }
+        // ----------------------------------------
+
         if (form) {
             form.onsubmit = async (e) => {
                 e.preventDefault();

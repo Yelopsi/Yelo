@@ -16,24 +16,24 @@ export default function Footer() {
       {/* ONDA DE DIVISÃO (Transição para o Footer) - Copiada da Index */}
       <View className="w-full -mb-1">
         <Svg viewBox="0 0 1440 320" width="100%" height={width * (320 / 1440)} preserveAspectRatio="none">
-          <Path 
-            fill="#1B4332" 
-            fillOpacity="1" 
-            d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" 
+          <Path
+            fill="#1B4332"
+            fillOpacity="1"
+            d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
           />
         </Svg>
       </View>
 
       <View className="bg-[#1B4332] px-6 pt-10 pb-[120px]">
         <View className="max-w-[1200px] mx-auto w-full">
-          
+
           {/* BLOCO 1: NEWSLETTER */}
           <View className="mb-10 items-center">
             <Text className="font-title text-white text-[20px] mb-2 text-center">Fique por dentro</Text>
             <Text className="font-sans text-white/70 text-[15px] mb-5 text-center leading-relaxed">
               Receba dicas de saúde mental e novidades da plataforma direto no seu e-mail.
             </Text>
-            
+
             <View className="w-full max-w-[400px]">
               <View className="flex-col gap-3 w-full">
                 <TextInput
@@ -45,7 +45,7 @@ export default function Footer() {
                   keyboardType="email-address"
                   autoCapitalize="none"
                 />
-                <TouchableOpacity 
+                <TouchableOpacity
                   activeOpacity={0.8}
                   className="bg-[#FFEE8C] rounded-[50px] py-3 px-8 self-center"
                 >
@@ -53,8 +53,8 @@ export default function Footer() {
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity 
-                activeOpacity={0.7} 
+              <TouchableOpacity
+                activeOpacity={0.7}
                 onPress={() => setConsent(!consent)}
                 className="flex-row items-center justify-center mt-4 gap-2"
               >
@@ -93,9 +93,9 @@ export default function Footer() {
               <TouchableOpacity onPress={() => router.push('/ferramentas/calculadora-psi')}><Text className="font-sans text-[#adb5bd] text-[15px]">Calc. Honorários</Text></TouchableOpacity>
               <TouchableOpacity onPress={() => router.push('/ferramentas/gerador-bio')}><Text className="font-sans text-[#adb5bd] text-[15px]">Gerador de Bio</Text></TouchableOpacity>
             </View>
-            
+
             {/* Botão Apoio à Mulher */}
-            <TouchableOpacity 
+            <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => router.push('/ajuda_mulher')}
               className="flex-row items-center bg-[#8b5cf6] border border-[#7c3aed] px-5 py-2.5 rounded-[50px] shadow-[0_4px_15px_rgba(139,92,246,0.3)] mt-2"
@@ -123,10 +123,10 @@ export default function Footer() {
               </TouchableOpacity>
             </View>
 
-            {/* BAIXE O APP */}
-            <Text className="font-title text-white text-[18px] mb-4">Baixe o App</Text>
+            {/* BAIXE O NOSSO APP */}
+            <Text className="font-title text-white text-[18px] mb-4">Baixe o nosso App</Text>
             <View className="flex-row gap-4 justify-center">
-              
+
               <View className="relative opacity-60">
                 <View className="bg-black border border-white/30 rounded-lg px-3 py-2 flex-row items-center gap-2">
                   <FontAwesome5 name="google-play" size={18} color="white" />
