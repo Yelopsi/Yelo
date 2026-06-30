@@ -29,7 +29,7 @@
         const POSTS_LIMIT = 3; // Limite de posts por carga
         
         let currentCommentsPage = 1;
-        const COMMENTS_LIMIT = 3; // Limite de comentários por carga
+        const COMMENTS_LIMIT = 50; // Limite de comentários por carga aumentado para suportar deep linking
 
         let isLoadingMore = false;
 
