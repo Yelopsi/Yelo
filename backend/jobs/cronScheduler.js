@@ -108,13 +108,13 @@ async function checkFeedbackReminders(now) {
     console.log("⏰ [CRON] Verificando lembretes de feedback de WhatsApp pendentes...");
     try {
         const emailService = require('../services/emailService');
-        const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+        const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
         
         const pendingFeedbacks = await db.WhatsAppClickLog.findAll({
             where: {
                 feedbackGiven: false,
                 reminderEmailSent: false,
-                createdAt: { [Op.lte]: twoHoursAgo }
+                createdAt: { [Op.lte]: twentyFourHoursAgo }
             },
             include: [{ model: db.Psychologist, as: 'psychologist' }]
         });
