@@ -191,11 +191,17 @@
 
                 if (answersList) {
                     answersList.innerHTML = '';
-                    if (q.answers && q.answers.length > 0) {
-                        const sortedAnswers = q.answers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                        
+                    const psiData = typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null;
+                    const psiId = psiData ? psiData.id : null;
+                    
+                    let myAnswer = null;
+                    if (q.answers && q.answers.length > 0 && psiId) {
+                        myAnswer = q.answers.find(a => String(a.psychologistId) === String(psiId) || String(a.PsychologistId) === String(psiId));
+                    }
+
+                    if (myAnswer) {
                         if (templateAnswer) {
-                            renderSingleAnswer(sortedAnswers[0], answersList, templateAnswer);
+                            renderSingleAnswer(myAnswer, answersList, templateAnswer);
                         }
                     } else {
                         answersList.innerHTML = '<div class="status-aguardando"><span style="margin-right:5px">⏳</span> Aguardando resposta...</div>';
