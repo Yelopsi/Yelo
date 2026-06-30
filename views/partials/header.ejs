@@ -188,7 +188,7 @@
         <!-- Botões para Visitantes -->
         <div class="botoes-acao" id="guest-actions">
             <a href="/login" class="btn btn-outline">Entrar</a>
-            <a href="/cadastro" class="btn btn-solid">Registrar</a>
+            <a href="/cadastro" class="btn btn-solid" id="header-register-btn">Registrar</a>
         </div>
 
         <!-- Área do Usuário Logado (Oculto por padrão) -->
@@ -198,6 +198,15 @@
         </div>
     </div>
 </header>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const path = window.location.pathname;
+        const registerBtn = document.getElementById('header-register-btn');
+        if (registerBtn && (path === '/profissionais' || path === '/sobre_psis' || path.startsWith('/profissionais/'))) {
+            registerBtn.href = '/psi_questionario.html';
+        }
+    });
+</script>
 
 <!-- Bottom Navigation Bar HTML -->
 <nav class="bottom-nav">
