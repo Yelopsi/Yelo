@@ -64,6 +64,7 @@
         const ITEMS_PER_PAGE = 5;
         let currentFilter = 'all';
         let currentQuestionIdToAnswer = null;
+        let currentAnswerIdToEdit = null;
         
         if (!container) return;
 
@@ -298,10 +299,44 @@
             const nameEl = ansClone.querySelector('.answer-psi-name');
             const textEl = ansClone.querySelector('.answer-psi-text');
             const imgEl = ansClone.querySelector('.answer-psi-photo');
+            const badgeEl = ansClone.querySelector('.answer-edited-badge');
+            const btnEdit = ansClone.querySelector('.btn-edit-answer');
 
             if (nameEl) nameEl.textContent = ans.psychologist ? ans.psychologist.nome : 'Psicólogo';
             if (textEl) textEl.textContent = ans.conteudo || ans.content;
             
+            if (badgeEl && ans.isEdited) {
+                badgeEl.style.display = 'inline';
+            }
+
+            const psiData = typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null;
+            const psiId = psiData ? psiData.id : null;
+            if (btnEdit && psiId && (String(ans.psychologistId) === String(psiId) || String(ans.PsychologistId) === String(psiId))) {
+                const timeDiff = Date.now() - new Date(ans.createdAt).getTime();
+                if (timeDiff <= 15 * 60 * 1000) {
+                    btnEdit.classList.remove('hidden');
+                    btnEdit.onclick = (e) => {
+                        e.stopPropagation();
+                        const modal = document.getElementById('qna-answer-modal');
+                        const textarea = document.getElementById('qna-answer-textarea');
+                        if (!modal || !textarea) return;
+                        
+                        currentQuestionIdToAnswer = ans.questionId || ans.QuestionId;
+                        currentAnswerIdToEdit = ans.id;
+                        
+                        const titleEl = modal.querySelector('.modal-title');
+                        if (titleEl) titleEl.textContent = 'Editar Resposta (15 min)';
+                        const btnSubmit = document.getElementById('qna-submit-answer');
+                        if (btnSubmit) btnSubmit.textContent = 'Salvar Alterações';
+                        
+                        textarea.value = ans.conteudo || ans.content;
+                        if (typeof checkCharCount === 'function') checkCharCount();
+                        if (modal.parentNode !== document.body) document.body.appendChild(modal);
+                        modal.style.setProperty('display', 'flex', 'important');
+                    };
+                }
+            }
+
             if (imgEl && ans.psychologist && ans.psychologist.fotoUrl) {
                 const formatImageUrl = window.formatImageUrl;
                 imgEl.src = typeof formatImageUrl === 'function' ? formatImageUrl(ans.psychologist.fotoUrl) : ans.psychologist.fotoUrl;
@@ -362,7 +397,14 @@
 
         const fecharModal = () => {
             const modal = document.getElementById('qna-answer-modal');
-            if (modal) modal.style.setProperty('display', 'none', 'important');
+            if (modal) {
+                modal.style.setProperty('display', 'none', 'important');
+                const titleEl = modal.querySelector('.modal-title');
+                if (titleEl) titleEl.textContent = 'Responder Pergunta';
+                const btnSubmit = document.getElementById('qna-submit-answer');
+                if (btnSubmit) btnSubmit.textContent = 'Enviar Resposta';
+            }
+            currentAnswerIdToEdit = null;
         };
         
         const modal = document.getElementById('qna-answer-modal');
@@ -426,13 +468,24 @@
                 btnSubmit.disabled = true;
                 
                 try {
-                    const res = await apiFetch(`${API_BASE_URL}/api/qna/${currentQuestionIdToAnswer}/answer`, {
-                        method: 'POST',
-                        body: JSON.stringify({ conteudo: textarea.value })
-                    });
+                    let res;
+                    if (currentAnswerIdToEdit) {
+                        res = await apiFetch(`${API_BASE_URL}/api/qna/${currentQuestionIdToAnswer}/answer/${currentAnswerIdToEdit}`, {
+                            method: 'PUT',
+                            body: JSON.stringify({ conteudo: textarea.value })
+                        });
+                    } else {
+                        res = await apiFetch(`${API_BASE_URL}/api/qna/${currentQuestionIdToAnswer}/answer`, {
+                            method: 'POST',
+                            body: JSON.stringify({ conteudo: textarea.value })
+                        });
+                    }
 
                     if (res.ok) {
-                        if (showToast) showToast('Resposta enviada com sucesso! 🌻', 'success');
+                        const data = await res.json();
+                        const returnedAnswerId = data.answerId || null;
+                        
+                        if (showToast) showToast(currentAnswerIdToEdit ? 'Resposta editada com sucesso! 🌻' : 'Resposta enviada com sucesso! 🌻', 'success');
                         
                         const psiData = typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null;
                         if (psiData && psiData.gamificationProgress) {
@@ -445,11 +498,27 @@
                             allQuestions[qIndex].respondedByMe = true;
                             allQuestions[qIndex].minhaResposta = textarea.value;
                             if (!allQuestions[qIndex].answers) allQuestions[qIndex].answers = [];
-                            allQuestions[qIndex].answers.push({
-                                content: textarea.value,
-                                createdAt: new Date().toISOString(),
-                                psychologist: { nome: localStorage.getItem('Yelo_user_name') || 'Você' }
-                            });
+                            
+                            if (currentAnswerIdToEdit) {
+                                const ansIdx = allQuestions[qIndex].answers.findIndex(a => a.id === currentAnswerIdToEdit);
+                                if (ansIdx !== -1) {
+                                    allQuestions[qIndex].answers[ansIdx].content = textarea.value;
+                                    allQuestions[qIndex].answers[ansIdx].conteudo = textarea.value;
+                                    allQuestions[qIndex].answers[ansIdx].isEdited = true;
+                                }
+                            } else {
+                                allQuestions[qIndex].answers.push({
+                                    id: returnedAnswerId,
+                                    content: textarea.value,
+                                    conteudo: textarea.value,
+                                    createdAt: new Date().toISOString(),
+                                    psychologistId: psiData ? psiData.id : null,
+                                    psychologist: { 
+                                        nome: localStorage.getItem('Yelo_user_name') || 'Você',
+                                        fotoUrl: localStorage.getItem('Yelo_user_photo') || null
+                                    }
+                                });
+                            }
                         }
                         
                         if (window.currentQnaCardEl) {
@@ -457,30 +526,14 @@
                             
                             const answersList = window.currentQnaCardEl.querySelector('.existing-answers-list');
                             if (answersList) {
-                                if (answersList.querySelector('.status-aguardando')) {
-                                    answersList.innerHTML = '';
-                                }
-                                
+                                answersList.innerHTML = '';
                                 const templateAnswer = document.getElementById('qna-existing-answer-template');
-                                if (templateAnswer) {
-                                    const clone = templateAnswer.content.cloneNode(true);
-                                    
-                                    const nameEl = clone.querySelector('.answer-psi-name');
-                                    const textEl = clone.querySelector('.answer-psi-text');
-                                    const imgEl = clone.querySelector('.answer-psi-photo');
-                                    
-                                    if (nameEl) nameEl.textContent = localStorage.getItem('Yelo_user_name') || 'Você';
-                                    if (textEl) textEl.textContent = textarea.value;
-                                    if (imgEl) {
-                                        const fotoUrl = localStorage.getItem('Yelo_user_photo');
-                                        if (fotoUrl) {
-                                            imgEl.src = typeof window.formatImageUrl === 'function' ? window.formatImageUrl(fotoUrl) : fotoUrl;
-                                        } else {
-                                            imgEl.src = 'https://placehold.co/40x40/1B4332/FFFFFF?text=Psi';
-                                        }
+                                if (templateAnswer && qIndex !== -1) {
+                                    const psiId = psiData ? psiData.id : null;
+                                    const myAns = allQuestions[qIndex].answers.find(a => String(a.psychologistId) === String(psiId) || String(a.PsychologistId) === String(psiId));
+                                    if (myAns) {
+                                        renderSingleAnswer(myAns, answersList, templateAnswer);
                                     }
-                                    
-                                    answersList.insertBefore(clone, answersList.firstChild);
                                 }
                             }
                             

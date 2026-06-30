@@ -382,7 +382,7 @@ exports.answerQuestion = async (req, res) => {
         const question = await db.Question.findByPk(id);
         if (!question) return res.status(404).json({ error: 'Pergunta não encontrada.' });
         
-        await db.Answer.create({
+        const newAnswer = await db.Answer.create({
             content: conteudo,
             questionId: id,
             psychologistId: psychologistId
@@ -411,11 +411,47 @@ exports.answerQuestion = async (req, res) => {
             }
         });
 
-        res.json({ success: true, message: 'Resposta enviada!' });
+        res.json({ success: true, message: 'Resposta enviada!', answerId: newAnswer.id });
 
     } catch (error) {
         console.error('Erro ao responder:', error);
         res.status(500).json({ error: 'Erro ao salvar resposta.' });
+    }
+};
+
+exports.editAnswer = async (req, res) => {
+    try {
+        const { answerId } = req.params;
+        const { conteudo } = req.body; 
+        const psychologistId = req.psychologist.id; 
+
+        const answer = await db.Answer.findByPk(answerId);
+        if (!answer) return res.status(404).json({ error: 'Resposta não encontrada.' });
+        if (answer.psychologistId !== psychologistId && answer.PsychologistId !== psychologistId) {
+            return res.status(403).json({ error: 'Você só pode editar suas próprias respostas.' });
+        }
+
+        const timeDiff = Date.now() - new Date(answer.createdAt).getTime();
+        if (timeDiff > 15 * 60 * 1000) {
+            return res.status(403).json({ error: 'O tempo limite de 15 minutos para edição expirou.' });
+        }
+
+        answer.content = conteudo;
+        await answer.save();
+
+        try {
+            const ansTable = db.Answer.tableName;
+            await db.sequelize.query(`ALTER TABLE "${ansTable}" ADD COLUMN IF NOT EXISTS "isEdited" BOOLEAN DEFAULT false;`).catch(() => {});
+            await db.sequelize.query(
+                `UPDATE "${ansTable}" SET "isEdited" = true WHERE id = :id`,
+                { replacements: { id: answer.id } }
+            );
+        } catch (e) {}
+
+        res.json({ success: true, message: 'Resposta atualizada com sucesso!' });
+    } catch (error) {
+        console.error('Erro ao editar resposta:', error);
+        res.status(500).json({ error: 'Erro ao editar resposta.' });
     }
 };
 

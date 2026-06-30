@@ -13,6 +13,7 @@ router.post('/ask', qnaController.createQuestion);
 // Só Psi logado vê a lista interna e responde
 router.get('/', protect, qnaController.getQuestions);
 router.post('/:id/answer', protect, qnaController.answerQuestion);
+router.put('/:questionId/answer/:answerId', protect, qnaController.editAnswer);
 router.post('/:id/ignore', protect, qnaController.ignoreQuestion);
 
 module.exports = router;
