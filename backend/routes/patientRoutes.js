@@ -14,6 +14,12 @@ router.post('/login', patientController.loginPatient);
 // Rota de Login com Google: /api/patients/google (Acesso Público)
 router.post('/google', patientController.googleLogin);
 
+// Rota de Recuperação de Senha: /api/patients/forgot-password (Acesso Público)
+router.post('/forgot-password', patientController.requestPasswordReset);
+
+// Rota de Redefinição de Senha: /api/patients/reset-password/:token (Acesso Público)
+router.post('/reset-password/:token', patientController.resetPassword);
+
 // Rota de Dados do Paciente Logado: /api/patients/me (Acesso PRIVADO)
 // O middleware 'protect' é executado ANTES do controller. 
 // Ele garante que o token JWT seja válido.
