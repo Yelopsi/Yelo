@@ -176,8 +176,8 @@ textarea#bio { min-height: 80px; text-align: justify; white-space: pre-wrap; lin
 .info-tooltip:hover::after, .info-tooltip:focus::after, .info-tooltip:hover::before, .info-tooltip:focus::before { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
 
 @media (max-width: 768px) {
-    .info-tooltip::after { width: 160px; left: auto; right: -10px; transform: translateY(5px); }
-    .info-tooltip::before { left: auto; right: 5px; transform: translateY(5px); }
+    .info-tooltip::after { width: max-content; max-width: 220px; left: auto; right: 0; transform: translateY(5px); }
+    .info-tooltip::before { left: auto; right: 8px; transform: translateY(5px); }
     .info-tooltip:hover::after, .info-tooltip:focus::after, .info-tooltip:hover::before, .info-tooltip:focus::before { transform: translateY(0); }
 }
 
