@@ -89,6 +89,8 @@
     grid-template-columns: 1fr; /* Mobile: 1 coluna */
     gap: 24px;
     align-items: stretch; /* Garante que todos os cards tenham a mesma altura */
+    max-width: none !important; /* Reseta o limite de 1000px do public_institucional.css */
+    margin: 0 !important;
 }
 
 /* Tablet: 2 colunas */
@@ -102,7 +104,7 @@
 /* Desktop/Laptop: 4 cards lado a lado (Breakpoint reduzido para 900px) */
 @media (min-width: 900px) {
     .recursos-grid {
-        grid-template-columns: repeat(4, 1fr); /* Força 4 colunas */
+        grid-template-columns: repeat(4, 1fr) !important; /* Força 4 colunas sobrepondo public_institucional.css */
         gap: 24px;
     }
 }
