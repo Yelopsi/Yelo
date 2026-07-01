@@ -848,7 +848,7 @@
                 if (typeof Quill !== 'undefined' && !quillBio && document.getElementById('bio-editor')) {
                     quillBio = new Quill('#bio-editor', {
                         theme: 'snow',
-                        placeholder: 'Escreva um texto acolhedor contando sua experiência, abordagem e como você pode ajudar o paciente...',
+                        placeholder: (psychologistData && psychologistData.bio) ? '' : 'Escreva um texto acolhedor contando sua experiência, abordagem e como você pode ajudar o paciente...',
                         modules: {
                             toolbar: [
                                 ['bold', 'italic', 'underline'],
