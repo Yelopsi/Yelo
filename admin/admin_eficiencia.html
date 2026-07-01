@@ -1,0 +1,138 @@
+<link rel="stylesheet" href="/admin/admin_eficiencia.css">
+
+<div class="modern-dashboard-layout" style="padding: 24px;">
+    
+    <!-- HEADER INTRO -->
+    <div class="main-header" style="background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%); padding: 25px 30px; margin-bottom: 30px; border-radius: 16px;">
+        <div>
+            <h1 style="color: white; margin: 0 0 5px 0; font-size: 2rem; font-family: var(--font-titulos);">Centro de Comando de Growth</h1>
+            <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 1.05rem;">Atribuição completa (UTMs), análise de funil (Impressão até Venda) e IA Estratégica.</p>
+        </div>
+    </div>
+
+    <!-- MAIN GRID (INPUTS + IA) -->
+    <div class="efficiency-top-grid">
+        <!-- INPUT DA SEMANA -->
+        <div class="efficiency-card input-card">
+            <h3 class="efficiency-card-title text-white">Lançamento de Tráfego</h3>
+            <p class="efficiency-card-desc text-white-alpha" style="margin-bottom: 16px;">Copie os dados dos seus gerenciadores de anúncios da semana atual.</p>
+            
+            <div class="channel-group">
+                <h4 style="color: #6ee7b7; font-size: 0.85rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Canal: Meta Ads</h4>
+                <div class="efficiency-inputs-row">
+                    <div class="input-wrap">
+                        <label style="color: white;">Gasto (R$)</label>
+                        <input type="text" id="input-meta-ads" class="funnel-input currency-input" placeholder="0,00">
+                    </div>
+                    <div class="input-wrap">
+                        <label style="color: white;">Impressões</label>
+                        <input type="number" id="input-meta-imp" class="funnel-input" placeholder="0">
+                    </div>
+                    <div class="input-wrap">
+                        <label style="color: white;">Cliques</label>
+                        <input type="number" id="input-meta-clicks" class="funnel-input" placeholder="0">
+                    </div>
+                </div>
+            </div>
+
+            <div class="channel-group mt-3">
+                <h4 style="color: #93c5fd; font-size: 0.85rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Canal: Google Ads</h4>
+                <div class="efficiency-inputs-row">
+                    <div class="input-wrap">
+                        <label style="color: white;">Gasto (R$)</label>
+                        <input type="text" id="input-google-ads" class="funnel-input currency-input" placeholder="0,00">
+                    </div>
+                    <div class="input-wrap">
+                        <label style="color: white;">Impressões</label>
+                        <input type="number" id="input-google-imp" class="funnel-input" placeholder="0">
+                    </div>
+                    <div class="input-wrap">
+                        <label style="color: white;">Cliques</label>
+                        <input type="number" id="input-google-clicks" class="funnel-input" placeholder="0">
+                    </div>
+                </div>
+            </div>
+            
+            <button id="btn-save-week" class="btn-salvar-semana mt-4">
+                Salvar Semana e Analisar com IA
+            </button>
+        </div>
+
+        <!-- INSIGHT DA IA -->
+        <div class="efficiency-card insight-card" style="display: flex; flex-direction: column;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #8b5cf6;"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                <h3 class="efficiency-card-title m-0" style="color: #8b5cf6;">Análise Tática (Yelo IA)</h3>
+            </div>
+            <div id="ai-insight-content" class="insight-content" style="flex: 1; overflow-y: auto;">
+                <p style="color: #64748b;"><em>O insight da IA cruzará o seu funil de anúncios com a conversão orgânica e paga. Salve uma nova semana para gerar a análise...</em></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAROL FINANCEIRO GLOBAL -->
+    <div class="efficiency-card mt-4 mb-4">
+        <h3 class="efficiency-card-title">Runway & Saúde Financeira</h3>
+        
+        <div style="display: flex; gap: 32px; flex-wrap: wrap; margin-top: 16px;">
+            <div>
+                <span class="metric-label">MRR Atual</span>
+                <div class="metric-value" id="val-mrr">R$ 0,00</div>
+            </div>
+            <div>
+                <span class="metric-label">Lucro/Déficit (Mês Projetado)</span>
+                <div class="metric-value" id="val-netburn">R$ 0,00</div>
+            </div>
+            <div style="flex: 1; min-width: 250px;">
+                <div class="progress-header">
+                    <span class="progress-title">Meta de Empate (17 Pagantes)</span>
+                    <span class="progress-count" id="val-paying-count">0/17</span>
+                </div>
+                <div class="progress-track mt-2">
+                    <div class="progress-fill" id="val-paying-bar" style="width: 0%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABELA HISTÓRICA DO FUNIL -->
+    <div class="efficiency-card">
+        <h3 class="efficiency-card-title">Atribuição e Funil Semanal (UTMs)</h3>
+        <p class="efficiency-card-desc">Histórico completo cruzando gastos, engajamento e aquisição.</p>
+        
+        <div class="table-responsive">
+            <table class="efficiency-table funnel-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2" style="background: white;">Semana</th>
+                        <th colspan="4" style="text-align: center; background: #ecfdf5; color: #047857;">Meta Ads</th>
+                        <th colspan="4" style="text-align: center; background: #eff6ff; color: #1d4ed8;">Google Ads</th>
+                        <th colspan="2" style="text-align: center; background: #fdf4ff; color: #a21caf;">Orgânico/Outros</th>
+                        <th colspan="2" style="text-align: center; background: #f1f5f9; color: #0f172a;">Global</th>
+                    </tr>
+                    <tr>
+                        <th style="background: #ecfdf5;">Gasto</th>
+                        <th style="background: #ecfdf5;">CTR</th>
+                        <th style="background: #ecfdf5;">Trials</th>
+                        <th style="background: #ecfdf5;">Pagantes</th>
+                        
+                        <th style="background: #eff6ff;">Gasto</th>
+                        <th style="background: #eff6ff;">CTR</th>
+                        <th style="background: #eff6ff;">Trials</th>
+                        <th style="background: #eff6ff;">Pagantes</th>
+                        
+                        <th style="background: #fdf4ff;">Trials</th>
+                        <th style="background: #fdf4ff;">Pagantes</th>
+
+                        <th style="background: #f1f5f9;">CPL</th>
+                        <th style="background: #f1f5f9;">CAC</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body">
+                    <tr><td colspan="13" style="text-align: center; color: #64748b; padding: 20px;">Carregando funil...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>

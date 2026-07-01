@@ -8,6 +8,7 @@ const adminAnalyticsController = require('../controllers/adminAnalyticsControlle
 const reviewController = require('../controllers/reviewController');
 const qnaController = require('../controllers/qnaController'); // Importa o controlador de Q&A
 const settingsController = require('../controllers/settingsController');
+const adminEficienciaController = require('../controllers/adminEficienciaController');
 const { protect, admin } = require('../middlewares/authMiddleware'); // Corrigido para importar ambos
 const { uploadProfilePhoto } = require('../middlewares/upload'); // Importa o Multer unificado
 
@@ -183,5 +184,9 @@ router.get('/leads-recentes', adminAnalyticsController.getLeadsRecentes);
 
 // --- ROTA RÁPIDA: RAIO-X DO REMARKETING (FUNIL EM TEMPO REAL) ---
 router.get('/remarketing-status', adminAnalyticsController.getRemarketingStatus);
+
+// --- ROTA DO PAINEL DE EFICIÊNCIA (STOP-LOSS) ---
+router.get('/efficiency', adminEficienciaController.getEfficiencyDashboard);
+router.post('/efficiency', adminEficienciaController.saveWeeklyEfficiency);
 
 module.exports = router;

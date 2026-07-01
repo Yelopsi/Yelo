@@ -206,7 +206,7 @@ window.initializePage = function() {
             if (primeiroNome.includes('Psicólogo')) primeiroNome = 'colega';
             
             // URL com UTMs para rastrear a adesão B2B do psicólogo via WhatsApp do Admin
-            const linkMagico = `yelopsi.com.br/profissionais?utm_source=crm_outbound&utm_medium=whatsapp&utm_campaign=${telefoneNum}`;
+            const linkMagico = `www.yelopsi.com.br/profissionais?utm_source=whatsapp&utm_medium=convite_manual`;
             const msgFinal = window.copysOutbound[tipoCopy].replace(/\[PRIMEIRO NOME\]/g, primeiroNome).replace(/www\.yelopsi\.com\.br\/profissionais/g, linkMagico);
             
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
