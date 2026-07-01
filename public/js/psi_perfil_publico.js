@@ -351,7 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Avaliações
         
         let avaliacoes = psi.reviews || [];
-        populateReviews(avaliacoes);
+        populateReviews(avaliacoes, psi);
 
         // Redes Sociais
         populateSocialLinks(psi);
@@ -406,7 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function populateReviews(reviews) {
+    function populateReviews(reviews, psi) {
         const reviewCountSpan = document.getElementById('review-count');
         const reviewsListContainer = document.getElementById('reviews-list-container');
         const scrollIndicator = document.getElementById('reviews-scroll-indicator');
@@ -416,7 +416,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (reviews.length === 0) {
             if (reviewsListContainer) reviewsListContainer.innerHTML = '<p style="color: #666; font-style: italic; text-align: center;">Este profissional ainda não possui avaliações.</p>';
-            if (ratingSummary) ratingSummary.innerHTML = '<span style="color: #666; font-size: 0.9rem; font-weight: 600;">Novo(a) na Yelo</span>';
+            
+            let novoText = 'Novo(a) na Yelo';
+            if (psi) {
+                if (psi.genero_identidade === 'Feminino') {
+                    novoText = 'Nova na Yelo';
+                } else if (psi.genero_identidade === 'Masculino') {
+                    novoText = 'Novo na Yelo';
+                } else if (psi.genero_identidade === 'Não-binário' || psi.genero_identidade === 'Outro') {
+                    novoText = 'Nove na Yelo';
+                }
+            }
+            
+            if (ratingSummary) ratingSummary.innerHTML = `<span style="color: #666; font-size: 0.9rem; font-weight: 600;">${novoText}</span>`;
             if (scrollIndicator) scrollIndicator.style.display = 'none';
             return;
         }

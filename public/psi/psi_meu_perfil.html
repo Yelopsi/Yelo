@@ -9,6 +9,18 @@
     .specialties-layout { display: flex; flex-direction: column; gap: 0; }
     .specialty-sub-group { padding-bottom: 25px; margin-bottom: 25px; border-bottom: 1px dashed #e9ecef; }
     .specialty-sub-group:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+    
+    /* Lógica de Colapso (Acordeão) - Apenas Mobile (Evita cache no Android) */
+    body.is-mobile .block-header { cursor: pointer; user-select: none; }
+    body.is-mobile .block-header .section-title { gap: 8px; }
+    body.is-mobile .block-header .section-title::before {
+        content: ''; display: inline-block; width: 20px; height: 20px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%231B4332' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='18 15 12 9 6 15'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat; background-position: center; transition: transform 0.3s ease;
+    }
+    body.is-mobile .profile-block.collapsed .block-content { display: none !important; }
+    body.is-mobile .profile-block.collapsed .block-header { border-bottom: none !important; border-bottom-left-radius: 15px !important; border-bottom-right-radius: 15px !important; }
+    body.is-mobile .profile-block.collapsed .block-header .section-title::before { transform: rotate(180deg); }
     .specialty-sub-group h5 { font-family: var(--font-titulos); color: var(--verde-escuro); font-size: 1.15rem; margin: 0 0 15px 0; }
     
     /* Estética Expandida de Inputs e Textareas para o Restante da Página */
@@ -73,18 +85,32 @@
     .ts-wrapper.multi .ts-control > div .remove { border-left: 1px solid #bbf7d0 !important; color: #166534 !important; }
     .ts-wrapper .ts-control {
         min-height: 48px; padding: 10px 14px !important; border-radius: 12px !important; border: 1px solid #e0e0e0 !important; background: #f9fafb !important;
+        transition: all 0.3s ease;
     }
     .ts-wrapper.focus .ts-control { border-color: var(--verde-escuro) !important; background: #fff !important; box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1) !important; }
     .ts-wrapper .ts-control input { font-size: 1rem !important; }
 
+    /* Estilo premium para o menu dropdown do TomSelect */
+    .ts-dropdown {
+        border-radius: 12px !important; border: 1px solid #e0e0e0 !important; box-shadow: 0 10px 25px rgba(0,0,0,0.08) !important; padding: 5px 0 !important; margin-top: 5px !important; font-family: var(--font-principal) !important; overflow: hidden;
+    }
+    .ts-dropdown .option {
+        padding: 12px 16px !important; font-size: 0.95rem !important; color: #444 !important; transition: all 0.2s ease; cursor: pointer;
+    }
+    .ts-dropdown .option:hover, .ts-dropdown .option.active {
+        background-color: #f0fdf4 !important; color: #166534 !important;
+    }
+    .ts-dropdown .selected {
+        background-color: #dcfce7 !important; color: #166534 !important; font-weight: 600 !important;
+    }
+
     /* Grid Redes Sociais */
     .social-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-
-    /* Selects Nativos no Mobile */
-    body.is-mobile .profile-block .ts-wrapper {
+    /* Selects Nativos no Mobile (Apenas para single selects) */
+    body.is-mobile .profile-block .ts-wrapper.single {
         display: none !important;
     }
-    body.is-mobile .profile-block select.ts-select {
+    body.is-mobile .profile-block select.ts-select:not([multiple]) {
         display: block !important; visibility: visible !important; opacity: 1 !important;
         width: 100%; height: 48px; padding: 12px 14px; border-radius: 12px; border: 1px solid #e0e0e0;
         background-color: #f9fafb; font-family: var(--font-principal); font-size: 16px !important;
@@ -478,7 +504,7 @@
                                 </select>
                             </div>
                             <div class="form-group" style="flex: 1;">
-                                <label style="margin-bottom: 2px;">Gênero de Identidade *</label>
+                                <label style="margin-bottom: 2px;">Identidade de Gênero *</label>
                                 <small style="display: block; color: #666; font-size: 0.85rem; margin-bottom: 8px;">Como você gostaria de se identificar.</small>
                                 <select id="genero_identidade" name="genero_identidade" class="ts-select" data-placeholder="Selecione...">
                                     <option value="">Selecione...</option>
@@ -488,6 +514,7 @@
                                     <option value="Outro">Outro</option>
                                 </select>
                             </div>
+
                         </div>
                     </div>
 

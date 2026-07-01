@@ -17,22 +17,26 @@ window.verificarConquistasPLG = function(user) {
         banner.style.display = 'none';
     }
     
-    const appKey = `Yelo_apps_count_${user.id}`;
-    const clickKey = `Yelo_clicks_count_${user.id}`;
-    const storedApps = parseInt(localStorage.getItem(appKey) || '0', 10);
-    const storedClicks = parseInt(localStorage.getItem(clickKey) || '0', 10);
+    const hasSeenConfetti = user.badges && user.badges.hasSeenConfetti === true;
     
     let deveComemorar = false;
-    if (appearances > 0 && storedApps === 0) deveComemorar = true;
-    if (clicks > 0 && storedClicks === 0) deveComemorar = true;
-    
-    localStorage.setItem(appKey, appearances.toString());
-    localStorage.setItem(clickKey, clicks.toString());
+    if (clicks > 0 && !hasSeenConfetti) {
+        deveComemorar = true;
+    }
     
     if (deveComemorar && typeof confetti === 'function') {
         setTimeout(() => {
             confetti({ particleCount: 50, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#1B4332', '#FFEE8C', '#f59e0b'] });
             confetti({ particleCount: 50, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#1B4332', '#FFEE8C', '#f59e0b'] });
+            
+            // Grava no backend para nunca mais exibir
+            fetch('/api/psychologists/me/confetti-seen', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('yelo_token_psi')}`
+                }
+            }).catch(err => console.error('Erro ao marcar confetti como visto:', err));
         }, 600);
     }
 };

@@ -23,7 +23,10 @@
     border-top-right-radius: 15px;
 }
 
-.block-header .section-title { margin: 0; font-size: 1.1rem; color: var(--verde-escuro); }
+.block-header .section-title { 
+    margin: 0; font-size: 1.1rem; color: var(--verde-escuro); 
+    display: flex; align-items: center;
+}
 .block-actions { 
     display: flex; align-items: center; gap: 10px; margin-left: auto;
 }

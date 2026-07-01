@@ -271,7 +271,7 @@
             });
 
             // Multiselects e Selects Nativos
-            const multiSelectIds = ['temas_atuacao', 'publico_alvo', 'praticas_inclusivas', 'abordagens_tecnicas', 'genero_identidade', 'modalidade', 'disponibilidade_periodo', 'formacao_nivel'];
+            const multiSelectIds = ['temas_atuacao', 'publico_alvo', 'praticas_inclusivas', 'abordagens_tecnicas', 'genero_identidade', 'pronomes', 'modalidade', 'disponibilidade_periodo', 'formacao_nivel'];
             multiSelectIds.forEach(id => {
                 const desktopId = `${id}_multiselect`;
                 const nativeId = `${id}_native`;
@@ -475,6 +475,7 @@
         }
 
         function enterEditMode(block) {
+            block.classList.remove('collapsed');
             block.classList.add('editing');
             setBlockState(block, 'default');
             block.querySelectorAll('input, textarea, select').forEach(el => {
@@ -506,6 +507,7 @@
 
         function exitEditMode(block) {
             block.classList.remove('editing');
+            block.classList.add('collapsed');
             block.querySelectorAll('input, textarea, select').forEach(el => { 
                 el.disabled = true; 
                 if (el.tomselect) el.tomselect.disable();
@@ -572,6 +574,7 @@
             const btnEdit = e.target.closest('.btn-edit');
             const btnCancel = e.target.closest('.btn-cancel');
             const btnSave = e.target.closest('.btn-save');
+            
             if (btnEdit) { e.preventDefault(); enterEditMode(btnEdit.closest('.profile-block')); }
             else if (btnCancel) { e.preventDefault(); cancelEditMode(btnCancel.closest('.profile-block')); }
             else if (btnSave) { e.preventDefault(); saveBlockData(btnSave.closest('.profile-block')); }
@@ -689,28 +692,37 @@
         setupCepSearch();
         
         if (typeof TomSelect !== 'undefined') {
-            if (!document.body.classList.contains('is-mobile')) {
-                document.querySelectorAll('select.ts-select').forEach(el => {
-                    if (!el.tomselect) {
-                        try {
-                            const tsConfig = {
-                                create: false,
-                                maxOptions: null
-                            };
-                            if (el.multiple) {
-                                tsConfig.plugins = ['remove_button'];
+            const isMobile = document.body.classList.contains('is-mobile');
+            document.querySelectorAll('select.ts-select').forEach(el => {
+                if (isMobile && !el.multiple) {
+                    return; // Mantemos nativo apenas para single selects (que funcionam bem no mobile)
+                }
+                if (!el.tomselect) {
+                    try {
+                        const tsConfig = {
+                            create: false,
+                            maxOptions: null,
+                            controlInput: '<input type="text" autocomplete="off" size="1" tabindex="-1" inputmode="none" readonly>',
+                            onInitialize: function() {
+                                if (this.control_input) {
+                                    this.control_input.readOnly = true;
+                                    this.control_input.setAttribute('inputmode', 'none');
+                                }
                             }
-                            const ph = el.getAttribute('data-placeholder');
-                            tsConfig.placeholder = ph ? ph : 'Selecione...';
-                            
-                            new TomSelect(el, tsConfig);
-                            if (el.disabled) el.tomselect.disable();
-                        } catch (error) {
-                            console.error('Erro ao inicializar TomSelect em', el.id, error);
+                        };
+                        if (el.multiple) {
+                            tsConfig.plugins = ['remove_button'];
                         }
+                        const ph = el.getAttribute('data-placeholder');
+                        tsConfig.placeholder = ph ? ph : 'Selecione...';
+                        
+                        new TomSelect(el, tsConfig);
+                        if (el.disabled) el.tomselect.disable();
+                    } catch (error) {
+                        console.error('Erro ao inicializar TomSelect em', el.id, error);
                     }
-                });
-            }
+                }
+            });
         } else {
             console.warn("TomSelect não está carregado no escopo global.");
         }
@@ -720,7 +732,19 @@
             populateBlockForm(psychologistData);
             profileContainer.querySelectorAll('.profile-block').forEach(block => {
                 if (!block.classList.contains('editing')) {
+                    block.classList.add('collapsed');
                     block.querySelectorAll('input, textarea, select').forEach(el => { el.disabled = true; });
+                }
+                
+                const header = block.querySelector('.block-header');
+                if (header) {
+                    header.onclick = function(e) {
+                        if (!document.body.classList.contains('is-mobile')) return; // Apenas no mobile
+                        if (e.target.closest('.block-actions')) return;
+                        if (!block.classList.contains('editing')) {
+                            block.classList.toggle('collapsed');
+                        }
+                    };
                 }
             });
             

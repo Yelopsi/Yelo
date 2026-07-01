@@ -478,7 +478,7 @@ const initProfilePage = async () => {
             // O HTML principal já foi renderizado no servidor.
             if(typeof renderTagsSection === 'function') renderTagsSection(profileData);
             if(typeof renderSocialLinks === 'function') renderSocialLinks(profileData);
-            if(typeof renderHeroRating === 'function') renderHeroRating(profileData.reviews);
+            if(typeof renderHeroRating === 'function') renderHeroRating(profileData.reviews, profileData);
             if(typeof renderReviewsList === 'function') renderReviewsList(profileData.reviews);
             if(typeof setupReviewForm === 'function') setupReviewForm(profileData.id);
             if(typeof setupFavoriteButton === 'function') setupFavoriteButton(profileData.id);

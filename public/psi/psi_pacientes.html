@@ -295,14 +295,6 @@
     @media (max-width: 768px) {
         .calendar-custom-toolbar { flex-direction: column; gap: 15px; align-items: flex-start; }
         .cal-toolbar-right { width: 100%; justify-content: space-between; }
-        .col-pacientes.mobile-open {
-            display: flex !important;
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 100000;
-            background: #fff;
-            padding: 20px;
-            padding-top: 85px;
-        }
     }
 
     /* MODE TOGGLE */
@@ -603,6 +595,14 @@
         .ts-control, .ts-wrapper input { font-size: 16px !important; }
     }
     @media (max-width: 992px) {
+        .col-pacientes.mobile-open {
+            display: flex !important;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 100000;
+            background: #fff;
+            padding: 20px;
+            padding-top: 85px;
+        }
         .col-pacientes { display: none !important; }
         .header-action-desktop { display: none !important; }
         #btn-toggle-patients-mobile { display: inline-flex !important; }

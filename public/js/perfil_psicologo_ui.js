@@ -79,10 +79,16 @@ window.PerfilUI = (function() {
     // --- RENDERIZADORES DE COMPONENTES ---
 
     // A. Renderiza Estrelas (Média)
-    const renderHeroRating = (reviews) => {
+    const renderHeroRating = (reviews, profile) => {
         const container = document.getElementById('hero-rating-display');
         if (!reviews || reviews.length === 0) {
-            container.innerHTML = '<span class="hero-rating-text">Novo(a) na Yelo</span>';
+            let novoText = 'Novo(a) na Yelo';
+            if (profile) {
+                if (profile.genero_identidade === 'Feminino') novoText = 'Nova na Yelo';
+                else if (profile.genero_identidade === 'Masculino') novoText = 'Novo na Yelo';
+                else if (profile.genero_identidade === 'Não-binário' || profile.genero_identidade === 'Outro') novoText = 'Nove na Yelo';
+            }
+            container.innerHTML = `<span class="hero-rating-text">${novoText}</span>`;
             return;
         }
 
@@ -236,7 +242,7 @@ window.PerfilUI = (function() {
             genero = genero[0];
         }
         if (genero && !['Prefiro não informar', 'Não informado'].includes(genero)) {
-            createGroup('Gênero de Identidade', [genero], 'tag-info');
+            createGroup('Identidade de Gênero', [genero], 'tag-info');
         }
         
         if (tagsContainer.children.length === 0) {
