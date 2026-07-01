@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+window.initializePage = function() {
     
     const formatCurrency = (value) => {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const applyCurrencyMask = (input) => {
+        if (!input) return;
         input.addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, '');
             if (value === '') {
@@ -113,6 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const saveWeeklyData = async () => {
         const btn = document.getElementById('btn-save-week');
+        if (!btn) return;
         const originalText = btn.textContent;
         btn.textContent = 'Processando Funil & IA...';
         btn.disabled = true;
@@ -163,7 +165,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    document.getElementById('btn-save-week').addEventListener('click', saveWeeklyData);
+    const btn = document.getElementById('btn-save-week');
+    if (btn) btn.addEventListener('click', saveWeeklyData);
 
     fetchEfficiencyData();
-});
+};
