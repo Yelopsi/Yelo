@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(`/api/admin/efficiency`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('yelo_admin_token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('Yelo_token')}`
                 }
             });
 
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('yelo_admin_token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('Yelo_token')}`
                 },
                 body: JSON.stringify(payload)
             });
