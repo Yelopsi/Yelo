@@ -126,10 +126,6 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       unique: true
     },
-    pronomes: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
     isAdmin: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,

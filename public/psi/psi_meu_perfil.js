@@ -271,7 +271,7 @@
             });
 
             // Multiselects e Selects Nativos
-            const multiSelectIds = ['temas_atuacao', 'publico_alvo', 'praticas_inclusivas', 'abordagens_tecnicas', 'genero_identidade', 'pronomes', 'modalidade', 'disponibilidade_periodo', 'formacao_nivel'];
+            const multiSelectIds = ['temas_atuacao', 'publico_alvo', 'praticas_inclusivas', 'abordagens_tecnicas', 'genero_identidade', 'modalidade', 'disponibilidade_periodo', 'formacao_nivel'];
             multiSelectIds.forEach(id => {
                 const desktopId = `${id}_multiselect`;
                 const nativeId = `${id}_native`;

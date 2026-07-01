@@ -145,7 +145,7 @@ exports.updatePsychologistProfile = async (req, res) => {
             nome, telefone, bio, crp, cep, cidade, estado,
             temas_atuacao, abordagens_tecnicas, modalidade,
             publico_alvo, estilo_terapia, praticas_inclusivas, // NOVOS CAMPOS
-            valor_sessao_numero, disponibilidade_periodo, genero_identidade, pronomes,
+            valor_sessao_numero, disponibilidade_periodo, genero_identidade,
             dailySummaryTime, reminderHoursBefore, // NOVOS CAMPOS DE NOTIFICAÇÃO
             linkedin_url, instagram_url, facebook_url, tiktok_url, x_url,
             slug, // <--- AGORA ESTAMOS LENDO O CAMPO SLUG QUE VEM DO FORMULÁRIO
@@ -249,7 +249,6 @@ exports.updatePsychologistProfile = async (req, res) => {
         if (valor_mensal_numero !== undefined) updatePayload.valor_mensal_numero = valor_mensal_numero ? parseFloat(valor_mensal_numero) : null;
         if (valor_sessao_numero !== undefined) updatePayload.valor_sessao_numero = valor_sessao_numero ? parseFloat(valor_sessao_numero) : null;
         if (genero_identidade !== undefined) updatePayload.genero_identidade = genero_identidade;
-        if (pronomes !== undefined) updatePayload.pronomes = pronomes;
         if (cpf !== undefined) updatePayload.cpf = cpf;
         if (razao_social !== undefined) updatePayload.razao_social = razao_social;
         if (ano_inicio_experiencia !== undefined) updatePayload.ano_inicio_experiencia = ano_inicio_experiencia ? parseInt(ano_inicio_experiencia, 10) : null;
