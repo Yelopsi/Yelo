@@ -68,10 +68,19 @@ window.initializePage = function() {
             document.getElementById('kpi-aguardando').textContent = result.kpis.aguardando;
             document.getElementById('kpi-cadastrados').textContent = result.kpis.cadastrados;
 
-            const totalLeads = result.kpis.pendentes + result.kpis.contatados + result.kpis.aguardando + result.kpis.cadastrados;
+            const kpiConvitesWpp = document.getElementById('kpi-convites-wpp');
+            if (kpiConvitesWpp && result.kpis.convitesWhatsapp !== undefined) {
+                kpiConvitesWpp.textContent = result.kpis.convitesWhatsapp;
+                
+                if (document.getElementById('kpi-wpp-pagantes')) document.getElementById('kpi-wpp-pagantes').textContent = result.kpis.convitesWhatsapp_Pagantes || 0;
+                if (document.getElementById('kpi-wpp-trial')) document.getElementById('kpi-wpp-trial').textContent = result.kpis.convitesWhatsapp_Trial || 0;
+                if (document.getElementById('kpi-wpp-incompletos')) document.getElementById('kpi-wpp-incompletos').textContent = result.kpis.convitesWhatsapp_Incompletos || 0;
+            }
+
+            const leadsTrabalhados = result.kpis.contatados + result.kpis.aguardando + result.kpis.cadastrados;
             const kpiConversao = document.getElementById('kpi-conversao');
             if (kpiConversao) {
-                const taxa = totalLeads > 0 ? ((result.kpis.cadastrados / totalLeads) * 100).toFixed(1) : 0;
+                const taxa = leadsTrabalhados > 0 ? ((result.kpis.cadastrados / leadsTrabalhados) * 100).toFixed(1) : 0;
                 kpiConversao.textContent = `${taxa}%`;
             }
 

@@ -1,0 +1,113 @@
+<div class="modern-dashboard-layout" style="padding-bottom: 80px;">
+    <!-- HEADER -->
+    <div class="main-header" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 25px 30px; margin-bottom: 30px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+        <div>
+            <h1 style="color: white; margin: 0 0 5px 0; font-size: 2rem; font-family: var(--font-titulos);">Controle de Gastos e Caixa</h1>
+            <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 1.05rem;">Gerencie as despesas da plataforma e monitore o lucro líquido estimado (Receita MRR - Custos).</p>
+        </div>
+        
+        <div class="filter-tabs" style="display: flex; gap: 10px; align-items: center;">
+            <label style="color: white; font-weight: 600;">Competência:</label>
+            <input type="month" id="filter-month" class="date-input" style="padding: 8px 15px; border: 1px solid rgba(255,255,255,0.2); border-radius: 50px; background: rgba(255,255,255,0.05); color: white; font-weight: 600; outline: none; font-family: 'Inter', sans-serif;" onchange="carregarDespesas()">
+        </div>
+    </div>
+
+    <!-- KPIs GERAIS -->
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); margin-bottom: 30px;">
+        <div class="kpi-card" style="border-top-color: #10b981; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <h4 style="color: #64748b; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                MRR (Receita Recorrente Atual)
+            </h4>
+            <p class="kpi-numero" id="kpi-mrr" style="color: #10b981; font-size: 2rem; margin: 0; font-weight: bold;">R$ 0,00</p>
+        </div>
+        <div class="kpi-card" style="border-top-color: #ef4444; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <h4 style="color: #64748b; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                Total de Custos do Mês
+            </h4>
+            <p class="kpi-numero" id="kpi-custos" style="color: #ef4444; font-size: 2rem; margin: 0; font-weight: bold;">R$ 0,00</p>
+        </div>
+        <div class="kpi-card" style="border-top-color: #3b82f6; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <h4 style="color: #64748b; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                Lucro Líquido Estimado
+            </h4>
+            <p class="kpi-numero" id="kpi-lucro" style="color: #3b82f6; font-size: 2rem; margin: 0; font-weight: bold;">R$ 0,00</p>
+        </div>
+    </div>
+
+    <div class="content-wrapper" style="display: flex; flex-wrap: wrap; gap: 30px;">
+        
+        <!-- FORMULÁRIO DE NOVA DESPESA -->
+        <div class="chart-container form-side" style="flex: 1; min-width: 300px; background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); height: fit-content;">
+            <h3 style="margin: 0 0 15px 0; color: #1e293b; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">Adicionar Novo Custo</h3>
+            
+            <form id="form-despesa" onsubmit="salvarDespesa(event)">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: #475569; font-weight: 500;">Nome do Custo</label>
+                    <input type="text" id="expense-name" required placeholder="Ex: Servidor AWS, Contador..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'Inter', sans-serif; outline: none; box-sizing: border-box;">
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: #475569; font-weight: 500;">Categoria</label>
+                    <select id="expense-category" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'Inter', sans-serif; outline: none; background: white; box-sizing: border-box;">
+                        <option value="Domínio">Domínio</option>
+                        <option value="Render">Render</option>
+                        <option value="Google Ads">Google Ads</option>
+                        <option value="Meta Ads">Meta Ads</option>
+                        <option value="IA">IA (Gemini/OpenAI)</option>
+                        <option value="Redes Sociais">Redes Sociais</option>
+                        <option value="Equipe">Equipe</option>
+                        <option value="Impostos">Impostos</option>
+                        <option value="Outros" selected>Outros</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; margin-bottom: 5px; color: #475569; font-weight: 500;">Valor (R$)</label>
+                    <input type="number" id="expense-amount" required step="0.01" min="0" placeholder="0.00" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'Inter', sans-serif; outline: none; box-sizing: border-box;">
+                </div>
+
+                <button type="submit" id="btn-save-expense" style="width: 100%; background: #1e293b; color: white; border: none; padding: 12px; border-radius: 50px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-sizing: border-box;">
+                    + Lançar Custo
+                </button>
+            </form>
+        </div>
+
+        <!-- LISTAGEM DE DESPESAS -->
+        <div class="chart-container list-side" style="flex: 2; min-width: 350px; background: white; border-radius: 12px; padding: 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden;">
+            <div style="padding: 20px 25px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <h3 style="margin: 0; color: #1e293b;">Extrato do Mês</h3>
+                <button onclick="window.navigateToPage('admin_growth_analytics.html')" style="background: #10b981; color: white; border: none; padding: 8px 15px; border-radius: 50px; cursor: pointer; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    Ver Crescimento e CAC
+                </button>
+            </div>
+            
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; min-width: 500px; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 0.9rem;">
+                            <th style="padding: 15px 25px; font-weight: 600;">Descrição</th>
+                            <th style="padding: 15px 25px; font-weight: 600;">Categoria</th>
+                            <th style="padding: 15px 25px; font-weight: 600;">Data</th>
+                            <th style="padding: 15px 25px; font-weight: 600; text-align: right;">Valor</th>
+                            <th style="padding: 15px 25px; font-weight: 600; text-align: center;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenses-table-body">
+                        <!-- Conteúdo populado por JS -->
+                    </tbody>
+                </table>
+                <div id="expenses-empty-state" style="padding: 40px; text-align: center; color: #94a3b8; display: none;">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 10px; opacity: 0.5;"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    <p style="margin: 0;">Nenhuma despesa lançada para esta competência.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="admin_finance_expenses.js"></script>

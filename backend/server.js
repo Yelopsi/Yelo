@@ -230,6 +230,7 @@ const startServer = async () => {
             if (db.QuestionIgnore) await db.QuestionIgnore.sync();
             if (db.WhatsAppClickLog) await db.WhatsAppClickLog.sync({ alter: true });
             if (db.WeeklyEfficiency) await db.WeeklyEfficiency.sync({ alter: true });
+            if (db.YeloExpense) await db.YeloExpense.sync({ alter: true });
 
             await db.sequelize.query('ALTER TABLE questions ADD COLUMN IF NOT EXISTS title VARCHAR(255);');
             await db.sequelize.query('ALTER TABLE questions ADD COLUMN IF NOT EXISTS slug VARCHAR(255) UNIQUE;');

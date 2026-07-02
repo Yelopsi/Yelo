@@ -5,6 +5,8 @@ const adminController = require('../controllers/adminController');
 const adminDashboardController = require('../controllers/adminDashboardController');
 const adminCommunityController = require('../controllers/adminCommunityController');
 const adminAnalyticsController = require('../controllers/adminAnalyticsController');
+const adminGrowthController = require('../controllers/adminGrowthController');
+const adminExpenseController = require('../controllers/adminExpenseController');
 const reviewController = require('../controllers/reviewController');
 const qnaController = require('../controllers/qnaController'); // Importa o controlador de Q&A
 const settingsController = require('../controllers/settingsController');
@@ -121,6 +123,12 @@ router.get('/financials', adminDashboardController.getFinancials);
 
 // --- FIX: ROTA INLINE PARA INDICADORES (Evita erro 500 se controller falhar) ---
 router.get('/questionnaire-analytics', adminAnalyticsController.getQuestionnaireAnalytics);
+router.get('/analytics/growth', adminGrowthController.getGrowthData);
+
+// --- ROTAS FINANCEIRAS E DESPESAS ---
+router.get('/expenses', adminExpenseController.getExpenses);
+router.post('/expenses', adminExpenseController.createExpense);
+router.delete('/expenses/:id', adminExpenseController.deleteExpense);
 
 // --- ROTAS DE FOLLOW-UP (NOVO) ---
 router.get('/followups', adminController.getFollowUps);

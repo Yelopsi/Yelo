@@ -17,6 +17,20 @@ exports.getLeads = async (req, res) => {
         const aguardando = await db.Lead.count({ where: { status_funil: 'Aguardando' } });
         const cadastrados = await db.Lead.count({ where: { status_funil: 'Cadastrado' } });
 
+        // Conta quantos psicólogos se cadastraram de fato pelo link mágico do WhatsApp e separa por status
+        const convitesWhatsappRaw = await db.Psychologist.findAll({
+            where: {
+                utm_source: 'whatsapp',
+                utm_medium: 'convite_manual'
+            },
+            attributes: ['status', 'subscriptionId']
+        });
+
+        const convitesWhatsapp = convitesWhatsappRaw.length;
+        const convitesWhatsapp_Incompletos = convitesWhatsappRaw.filter(p => p.status !== 'active').length;
+        const convitesWhatsapp_Trial = convitesWhatsappRaw.filter(p => p.status === 'active' && !p.subscriptionId).length;
+        const convitesWhatsapp_Pagantes = convitesWhatsappRaw.filter(p => p.status === 'active' && p.subscriptionId).length;
+
         const { filtro } = req.query;
         let whereClause = {};
 
@@ -44,7 +58,13 @@ exports.getLeads = async (req, res) => {
 
         res.json({
             leads: leads,
-            kpis: { pendentes, contatados, aguardando, cadastrados }
+            kpis: { 
+                pendentes, contatados, aguardando, cadastrados, 
+                convitesWhatsapp,
+                convitesWhatsapp_Incompletos,
+                convitesWhatsapp_Trial,
+                convitesWhatsapp_Pagantes
+            }
         });
     } catch (error) {
         console.error('[Admin] Erro ao buscar leads:', error);
