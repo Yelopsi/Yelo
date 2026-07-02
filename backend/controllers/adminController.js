@@ -816,7 +816,7 @@ exports.analyzeProfile = async (req, res) => {
                 'temas_atuacao', 'abordagens_tecnicas', 'fotoUrl', 'authority_level', 'xp',
                 'profile_appearances', 'whatsapp_clicks', 'createdAt',
                 'planExpiresAt', 'stripeSubscriptionId', 'subscriptionId', 'status', 'plano', 'is_exempt',
-                'utm_source'
+                'utm_source', 'genero_identidade'
             ]
         });
 
@@ -876,6 +876,7 @@ exports.analyzeProfile = async (req, res) => {
         const isVip = psi.is_exempt;
         const agora = new Date();
         const expiracao = psi.planExpiresAt ? new Date(psi.planExpiresAt) : null;
+        let diasParaExpirar = null;
         
         if (isVip) {
             statusPagamento = 'Conta VIP / Isenta';
@@ -883,6 +884,7 @@ exports.analyzeProfile = async (req, res) => {
             statusPagamento = `Assinante Pago (${psi.plano || 'Plano Ativo'})`;
         } else if (expiracao) {
             const diffTime = Math.ceil((expiracao - agora) / (1000 * 60 * 60 * 24));
+            diasParaExpirar = diffTime;
             if (diffTime > 0) {
                 statusPagamento = `Trial Ativo (Faltam ${diffTime} dias para expirar)`;
             } else {
@@ -892,76 +894,64 @@ exports.analyzeProfile = async (req, res) => {
              statusPagamento = 'Pendente / Sem Trial Iniciado';
         }
 
-        // 3.3. Formatação da Saudação (WhatsApp / Scraper / Recente)
-        const source = (psi.utm_source || '').toLowerCase();
-        const isInvite = source.includes('scraper') || source.includes('whatsapp') || source.includes('outbound');
-        const isRecent = (agora - new Date(psi.createdAt)) / (1000 * 60 * 60 * 24) <= 15; // Até 15 dias
-        
-        let welcomePhrase = "";
-        if (isInvite) welcomePhrase = "Que bom que aceitou nosso convite! ";
-        else if (isRecent) welcomePhrase = "Seja muito bem-vindo(a) à Yelo! ";
-        
         if (!process.env.GEMINI_API_KEY) {
             throw new Error("A chave GEMINI_API_KEY não foi encontrada no servidor. Adicione-a no arquivo .env!");
         }
+
+        const diasTrialText = diasParaExpirar !== null && diasParaExpirar > 0 ? diasParaExpirar : 'alguns';
 
         // 4. O SUPER PROMPT DA EQUIPE DE GROWTH
         const promptGrowth = `Você atua como a equipe de Growth e Customer Success (CS) da plataforma Yelo, especializada em marketing para clínicas de psicologia.
 Seu objetivo é analisar o perfil deste psicólogo e fornecer uma consultoria acionável para ajudá-lo a crescer, captar mais pacientes e engajar.
 
 IMPORTANTE SOBRE O TOM DE VOZ E FORMATO (WHATSAPP):
-Assuma sempre o tom plural da nossa equipe (Nós da Yelo). Fale DIRETAMENTE com o psicólogo de forma parceira.
-Use OBRIGATORIAMENTE expressões como: "Nós percebemos que o seu perfil...", "Acreditamos que se você...", "Notamos que...", "Nós achamos que...", "Nossa equipe recomenda...".
-A mensagem será enviada via WhatsApp. Portanto, NUNCA use dois asteriscos para negrito (**texto**). Use SEMPRE APENAS UM asterisco (exemplo: *palavra*). NÃO INCLUA nota percentual de força de perfil.
+1. Assuma sempre o tom plural da nossa equipe (Nós da Yelo). Fale DIRETAMENTE com o psicólogo de forma parceira.
+2. Use OBRIGATORIAMENTE expressões como: "Nós percebemos que o seu perfil...", "Acreditamos que se você...", "Notamos que...", "Nós achamos que...", "Nossa equipe recomenda...".
+3. A mensagem será enviada via WhatsApp. Portanto, NUNCA use dois asteriscos para negrito (**texto**). Use SEMPRE APENAS UM asterisco (exemplo: *palavra*).
+4. O nome deve estar com a primeira letra maiúscula. Adapte o "bem-vindo/bem-vinda/bem-vinde" na saudação com base no gênero informado pelo psicólogo.
+5. "Trial" deve ser chamado de "teste".
+6. NÃO INCLUA nota percentual de força de perfil.
 
-FUNCIONALIDADES DA YELO PARA SUGERIR COMO SOLUÇÃO (quando aplicável):
-1. Calculadora de Honorários: Se ele não tem preço definido ou parece incompatível, sugira usar a Calculadora no painel.
-2. Fórum/Comunidade: Se ele tem pouca visibilidade, XP baixo ou não respondeu perguntas ainda, sugira responder pacientes na Comunidade para destravar Badges e ganhar autoridade.
-3. Blog: Sugira escrever artigos curtos sobre os temas dele para melhorar o SEO.
-4. Hub de Evolução / Métricas: Se a conversão dele estiver ruim (muitas visualizações mas poucos cliques no WhatsApp), alerte-o para checar o Hub de Evolução para repensar a estratégia.
-5. Conversão Financeira: Se ele estiver em período de teste (Trial) ou expirado, incentive-o sutilmente a ver o valor da plataforma e sugira a assinatura para não perder os contatos.
-6. Otimização de Perfil baseada em Demanda: Compare as abordagens/temas dele com os temas mais buscados pelos pacientes na Yelo (listados abaixo). Sugira que, se for compatível com a formação dele, adicione essas palavras-chave na Bio ou Tags para aparecer em mais buscas!
+REGRAS DE ANÁLISE:
+- Sobre conversões: Considere o tempo de cadastro. Faz sentido ter poucas visitas ou nenhuma conversão se o perfil for novo. Nesse caso, tranquilize o psicólogo.
+- Comunidade e Blog: Sugira escrever posts no blog ou responder perguntas da comunidade para melhorar a percepção dos pacientes sobre como ele trabalha. Adapte essa recomendação com base na ABORDAGEM TEÓRICA dele (ex: na Psicanálise, entender como o profissional atua é o início da transferência). NÃO sugira que faça isso para "ganhar badges" ou "melhorar ranqueamento". O Fórum é para psis dentro da plataforma, foque em trocar experiências e fortalecer a comunidade.
 
 --- DOSSIÊ DE DADOS DO PSICÓLOGO ---
 Nome: ${psi.nome}
+Gênero/Identidade: ${psi.genero_identidade || 'Não informado'}
 Data de Cadastro: ${dataCadastro}
 Status Financeiro: ${statusPagamento}
-Biografia: ${psi.bio && psi.bio.length > 10 ? psi.bio : 'Não preenchida ou muito curta'}
+Biografria: ${psi.bio && psi.bio.length > 10 ? psi.bio : 'Não preenchida ou muito curta'}
 Preço Configurado: ${valorConsulta}
 Temas de Atuação: ${psi.temas_atuacao && psi.temas_atuacao.length > 0 ? psi.temas_atuacao.join(', ') : 'Nenhum'}
 Abordagens: ${psi.abordagens_tecnicas && psi.abordagens_tecnicas.length > 0 ? psi.abordagens_tecnicas.join(', ') : 'Nenhuma'}
-Nível na Gamificação: ${psi.authority_level || 'Iniciante'} (${psi.xp || 0} XP)
 Visualizações do Perfil (Tráfego): ${psi.profile_appearances || 0}
 Cliques no WhatsApp (Leads): ${psi.whatsapp_clicks || 0}
 Total de Avaliações de Pacientes: ${reviewsCount}
-📝 Últimas Avaliações Recebidas:
-${reviewsText}
 
 🔥 Top 5 Temas Mais Buscados Pelos Pacientes (Últimos 30 dias):
 ${topDemandsText}
-
-Artigos no Blog: ${postsCount}
-✍️ Últimos Artigos Publicados:
-${postsText}
-
-Respostas no Fórum: ${forumAnswersCount}
-Foto de Perfil: ${psi.fotoUrl ? 'Possui Foto' : 'SEM FOTO'}
 -----------------------------------
 
-Responda ESTRITAMENTE nesta estrutura abaixo, preservando as quebras de linha e os emojis:
+Responda ESTRITAMENTE nesta estrutura abaixo, substituindo os colchetes por textos humanizados da sua análise, e preservando os emojis e formatação:
 
-Olá, ${psi.nome.split(' ')[0]}! Aqui é o Anderson, da Yelo. ${welcomePhrase}Pra iniciarmos nossa parceria, pedi à nossa equipe de Growth e Customer Success para analisar detalhadamente a sua presença na nossa plataforma e preparamos um plano de ação para alavancar seus resultados.
+Olá, [primeiro nome com a inicial maiuscula]!
+
+Aqui é o Anderson, da Yelo. Seja muito [bem-vindo > masculino, bem-vinda > feminino, bem-vinde > não-binário ou outros] à nossa comunidade de psis!🌿
+
+Pra iniciarmos nossa parceria, pedi à nossa equipe de *Growth e Customer Success* para analisar detalhadamente a sua presença na nossa plataforma e preparamos um plano de ação para alavancar seus resultados.
 
 💚 *O que nós percebemos de muito bom:*
-[1 parágrafo elogiando as fortalezas dele]
+[1 parágrafo elogiando as fortalezas do perfil]
 
 🛠️ *Onde acreditamos que pode melhorar:*
-[Dicas de marketing sobre a bio, foto, preço ou conversão do funil, INCLUINDO dicas baseadas nos Temas Mais Buscados se houver alinhamento]
+[Análise sobre bio, conversões, fotos e preço. Lembre-se de tranquilizar sobre a conversão caso seja um perfil novo!]
 
 🚀 *Plano de Ação sugerido:*
 
-1. *[Ação 1]:* [Explicação]
-2. *[Ação 2]:* [Explicação]
+1. *Definição de Honorários:* [Sua recomendação sobre clareza nos preços e usar a Calculadora de Honorários no painel]
+2. *Autoridade no Fórum e Blog:* [Recomendação baseada na abordagem teórica sobre compartilhar conhecimento no Blog e na Comunidade, sem citar badges ou ranking]
+3. *Atenção ao Hub de Evolução:* [Se estiver no teste/trial, informe: "Como o seu período de teste expira em ${diasTrialText} dias, nossa equipe recomenda que você monitore o seu Hub de Evolução diariamente. Ele te dará insights precisos sobre onde ajustar sua abordagem para garantir que os visitantes do seu perfil entrem em contato antes de finalizar sua transição para o plano definitivo." Se não estiver no teste, faça uma recomendação geral sobre acompanhar as métricas do Hub.]
 
 Estamos à disposição para transformar esses acessos em pacientes recorrentes. Vamos juntos?`;
 
