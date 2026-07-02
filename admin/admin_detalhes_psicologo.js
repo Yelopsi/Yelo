@@ -94,11 +94,15 @@ function renderDetails(data) {
             vencimentoEl.innerHTML = '<span class="status-badge" style="background:#FFD700; color:#000;">Isento (VIP)</span>';
         } else if (p.planExpiresAt) {
             const vencimento = new Date(p.planExpiresAt);
-            const dataFormatada = vencimento.toLocaleDateString('pt-BR');
-            if (vencimento < new Date()) {
-                vencimentoEl.innerHTML = `<span style="color:#d32f2f; font-weight:bold;">${dataFormatada} (Vencida)</span>`;
+            if (vencimento.getFullYear() < 2000) {
+                vencimentoEl.innerHTML = `<span style="color:#d32f2f; font-weight:bold;">Expirado</span>`;
             } else {
-                vencimentoEl.textContent = dataFormatada;
+                const dataFormatada = vencimento.toLocaleDateString('pt-BR');
+                if (vencimento < new Date()) {
+                    vencimentoEl.innerHTML = `<span style="color:#d32f2f; font-weight:bold;">${dataFormatada} (Vencida)</span>`;
+                } else {
+                    vencimentoEl.textContent = dataFormatada;
+                }
             }
         } else {
             vencimentoEl.textContent = 'Sem assinatura';

@@ -275,8 +275,12 @@ window.initializePage = function() {
         if (isVip) expText = 'Isento';
         else if (psy.planExpiresAt) {
             const expDate = new Date(psy.planExpiresAt);
-            expText = expDate.toLocaleDateString('pt-BR');
-            if (expDate < new Date()) expText += ' (Vencido)';
+            if (expDate.getFullYear() < 2000) {
+                expText = 'Expirado';
+            } else {
+                expText = expDate.toLocaleDateString('pt-BR');
+                if (expDate < new Date()) expText += ' (Vencido)';
+            }
         }
         document.getElementById('cs-expire').textContent = expText;
 
