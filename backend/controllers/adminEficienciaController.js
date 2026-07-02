@@ -61,14 +61,30 @@ async function calculateWeeklyMetrics(weekStart, metaAdsSpend, googleAdsSpend) {
 // GET /api/admin/efficiency - Retorna o dashboard completo
 exports.getEfficiencyDashboard = async (req, res) => {
     try {
-        // 1. Current MRR (Em tempo real)
-        const payingUsersCount = await db.Psychologist.count({
+        // 1. Current MRR e Paying Users (Em tempo real)
+        const activePsychologists = await db.Psychologist.findAll({
             where: {
-                status: 'active',
-                subscriptionId: { [Op.ne]: null }
-            }
+                plano: { [Op.ne]: null },
+                status: 'active'
+            },
+            attributes: ['plano', 'is_exempt', 'stripeSubscriptionId', 'subscriptionId'] 
         });
-        const currentMRR = payingUsersCount * MONTHLY_SUBSCRIPTION_PRICE;
+
+        const planPrices = { 
+            'essencial': 147.00,
+            'pro': 297.00,
+            'elite': 497.00,
+            'anual': 1470.00
+        };
+
+        const payingUsersCount = activePsychologists.filter(psy => !psy.is_exempt && !!(psy.stripeSubscriptionId || psy.subscriptionId)).length;
+
+        const currentMRR = activePsychologists.reduce((acc, psy) => {
+            if (psy.is_exempt) return acc;
+            const hasSub = !!(psy.stripeSubscriptionId || psy.subscriptionId);
+            if (!hasSub) return acc;
+            return acc + (planPrices[psy.plano ? psy.plano.toLowerCase() : ''] || 0);
+        }, 0);
 
         // 2. Buscar o histórico semanal (Últimas 12 semanas)
         const dozeSemanasAtras = moment().subtract(12, 'weeks').startOf('week').toDate();
