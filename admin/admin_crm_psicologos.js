@@ -157,6 +157,7 @@ window.initializePage = function() {
         }
 
         let copiedList = JSON.parse(localStorage.getItem('yelo_psi_copied_analysis') || '[]');
+        let pendingReminders = JSON.parse(localStorage.getItem('yelo_psi_pending_reminder') || '[]');
 
         psis.forEach(psy => {
             const isVip = psy.is_exempt === true;
@@ -165,6 +166,7 @@ window.initializePage = function() {
             // 🧠 Sincronização Híbrida: Lê do Banco de Dados (isProfileAnalyzed) ou do cache local do navegador
             const isCopied = psy.isProfileAnalyzed === true || copiedList.includes(String(psy.id));
             const copyBadge = isCopied ? '<span class="badge-copied" title="Análise Copiada" style="margin-left: 5px; font-size: 0.8rem;">✅</span>' : '';
+            const pendingBadge = (psy.status === 'pending' && pendingReminders.includes(String(psy.id))) ? '<span class="badge-pending" title="Lembrete Enviado" style="margin-left: 5px; font-size: 0.8rem;">✉️</span>' : '';
             const dataInscricao = new Date(psy.createdAt).toLocaleDateString('pt-BR');
 
             let statusLabel = psy.status || 'inativo';
@@ -200,7 +202,7 @@ window.initializePage = function() {
                     <div style="display: flex; align-items: center; gap: 10px;">
                         ${psy.fotoUrl ? `<img src="${psy.fotoUrl}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;">` : `<div style="width: 32px; height: 32px; border-radius: 50%; background-color: #f5f3ff; color: #8b5cf6; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem;">${psy.nome.charAt(0).toUpperCase()}</div>`}
                         <div style="display: flex; flex-direction: column;">
-                            <strong style="color: var(--verde-escuro); cursor: pointer;" onclick="window.openCSDrawer('${psy.id}')" id="name-psy-${psy.id}">${psy.nome}${copyBadge}</strong>
+                            <strong style="color: var(--verde-escuro); cursor: pointer;" onclick="window.openCSDrawer('${psy.id}')" id="name-psy-${psy.id}">${psy.nome}${copyBadge}${pendingBadge}</strong>
                             <span style="font-size: 0.75rem; color: #666;">${psy.email}</span>
                         </div>
                     </div>
@@ -356,6 +358,17 @@ window.initializePage = function() {
 
                     try {
                         await copyToClipboardFallback(copyMsg);
+                        
+                        let pReminders = JSON.parse(localStorage.getItem('yelo_psi_pending_reminder') || '[]');
+                        if (!pReminders.includes(String(psy.id))) {
+                            pReminders.push(String(psy.id));
+                            localStorage.setItem('yelo_psi_pending_reminder', JSON.stringify(pReminders));
+                        }
+                        const nameEl = document.getElementById(`name-psy-${psy.id}`);
+                        if (nameEl && !nameEl.innerHTML.includes('✉️')) {
+                            nameEl.innerHTML += '<span class="badge-pending" title="Lembrete Enviado" style="margin-left: 5px; font-size: 0.8rem;">✉️</span>';
+                        }
+                        
                         if(window.showToast) window.showToast("Mensagem de perfil incompleto copiada!", "success");
                     } catch(e) {
                         console.log("Erro ao copiar", e);
