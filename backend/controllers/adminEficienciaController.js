@@ -71,10 +71,8 @@ exports.getEfficiencyDashboard = async (req, res) => {
         });
 
         const planPrices = { 
-            'essencial': 147.00,
-            'pro': 297.00,
-            'elite': 497.00,
-            'anual': 1470.00
+            'essential': 99.00, 'clinical': 159.00, 'reference': 259.00,
+            'essencial': 99.00, 'clínico': 159.00, 'sol': 259.00 
         };
 
         const payingUsersCount = activePsychologists.filter(psy => !psy.is_exempt && !!(psy.stripeSubscriptionId || psy.subscriptionId)).length;
@@ -236,5 +234,23 @@ ${historicoTexto}`;
     } catch (error) {
         console.error('[Efficiency Dashboard] Erro no POST:', error);
         res.status(500).json({ error: 'Erro interno ao salvar dados semanais.' });
+    }
+};
+
+// DELETE /api/admin/efficiency/:id - Exclui uma semana do funil
+exports.deleteWeeklyEfficiency = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const record = await db.WeeklyEfficiency.findByPk(id);
+        
+        if (!record) {
+            return res.status(404).json({ error: 'Semana não encontrada' });
+        }
+
+        await record.destroy();
+        res.json({ message: 'Semana excluída com sucesso' });
+    } catch (error) {
+        console.error('Erro ao excluir semana do funil:', error);
+        res.status(500).json({ error: 'Erro interno ao excluir semana' });
     }
 };

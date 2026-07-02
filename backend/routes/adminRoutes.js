@@ -188,5 +188,6 @@ router.get('/remarketing-status', adminAnalyticsController.getRemarketingStatus)
 // --- ROTA DO PAINEL DE EFICIÊNCIA (STOP-LOSS) ---
 router.get('/efficiency', adminEficienciaController.getEfficiencyDashboard);
 router.post('/efficiency', adminEficienciaController.saveWeeklyEfficiency);
+router.delete('/efficiency/:id', adminEficienciaController.deleteWeeklyEfficiency);
 
 module.exports = router;

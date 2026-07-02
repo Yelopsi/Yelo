@@ -98,7 +98,12 @@ window.initializePage = function() {
                         
                         <!-- GLOBAL -->
                         <td style="${cplClass} background: #f8fafc;">${formatCurrency(row.cpl)}</td>
-                        <td style="${cacClass} background: #f8fafc;">${formatCurrency(row.cac)}</td>
+                        <td style="${cacClass} background: #f8fafc; position: relative;">
+                            ${formatCurrency(row.cac)}
+                            <button onclick="window.deleteWeeklyEfficiency('${row.id}')" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #ef4444; font-size: 1.1rem; padding: 4px;" title="Excluir semana">
+                                ✕
+                            </button>
+                        </td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -109,6 +114,27 @@ window.initializePage = function() {
         } catch (error) {
             console.error(error);
             if (window.showToast) window.showToast('Erro ao carregar histórico.', 'error');
+        }
+    };
+
+    window.deleteWeeklyEfficiency = async (id) => {
+        if (!confirm('Tem certeza que deseja excluir os dados desta semana?')) return;
+        
+        try {
+            const response = await fetch(`/api/admin/efficiency/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('Yelo_token')}`
+                }
+            });
+
+            if (!response.ok) throw new Error('Erro ao excluir semana');
+
+            if (window.showToast) window.showToast('Semana excluída!', 'success');
+            fetchEfficiencyData();
+        } catch (error) {
+            console.error(error);
+            if (window.showToast) window.showToast('Erro ao excluir semana.', 'error');
         }
     };
 
