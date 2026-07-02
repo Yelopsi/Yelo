@@ -91,8 +91,8 @@ exports.getDashboardStats = async (req, res) => {
         };
         
         const planPrices = { 
-            'ESSENTIAL': 99.00, 'CLINICAL': 159.00, 'REFERENCE': 259.00,
-            'Essencial': 99.00, 'Clínico': 159.00, 'Sol': 259.00 
+            'essential': 99.00, 'clinical': 159.00, 'reference': 259.00,
+            'essencial': 99.00, 'clínico': 159.00, 'sol': 259.00 
         };
         let mrr = 0;
         
@@ -102,15 +102,13 @@ exports.getDashboardStats = async (req, res) => {
             const hasSubscription = !!(p.stripeSubscriptionId || p.subscriptionId);
             if (!plano) return;
             
-            let planKey = plano;
-            if (['ESSENTIAL', 'Essencial'].includes(plano)) planKey = 'Essencial';
-            if (['CLINICAL', 'Clínico'].includes(plano)) planKey = 'Clínico';
-            if (['REFERENCE', 'Sol', 'Reference'].includes(plano)) planKey = 'Sol';
-
-            plansCount[planKey] = (plansCount[planKey] || 0) + 1;
+            let planKey = plano.toLowerCase();
+            if (['essential', 'essencial'].includes(planKey)) plansCount['Essencial'] = (plansCount['Essencial'] || 0) + 1;
+            if (['clinical', 'clínico'].includes(planKey)) plansCount['Clínico'] = (plansCount['Clínico'] || 0) + 1;
+            if (['reference', 'sol'].includes(planKey)) plansCount['Sol'] = (plansCount['Sol'] || 0) + 1;
             
-            if (!isExempt && hasSubscription && planPrices[plano]) {
-                mrr += planPrices[plano];
+            if (!isExempt && hasSubscription && planPrices[planKey]) {
+                mrr += planPrices[planKey];
             }
         });
 
@@ -485,8 +483,8 @@ exports.getFinancials = async (req, res) => {
         });
 
         const planPrices = { 
-            'ESSENTIAL': 99.00, 'CLINICAL': 159.00, 'REFERENCE': 259.00,
-            'Essencial': 99.00, 'Clínico': 159.00, 'Sol': 259.00 
+            'essential': 99.00, 'clinical': 159.00, 'reference': 259.00,
+            'essencial': 99.00, 'clínico': 159.00, 'sol': 259.00 
         };
 
         const mrr = activePsychologists.reduce((acc, psy) => {
@@ -494,7 +492,8 @@ exports.getFinancials = async (req, res) => {
             const hasSub = !!(psy.stripeSubscriptionId || psy.subscriptionId);
             if (!hasSub) return acc;
             
-            return acc + (planPrices[psy.plano ? psy.plano.toUpperCase() : ''] || 0);
+            const planoKey = (psy.plano || '').toLowerCase();
+            return acc + (planPrices[planoKey] || 0);
         }, 0);
         const thirtyDaysAgo = new Date(new Date().setDate(new Date().getDate() - 30));
         const churnedCount = await db.Psychologist.count({
