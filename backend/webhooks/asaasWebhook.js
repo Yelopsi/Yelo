@@ -155,7 +155,7 @@ exports.handleWebhook = async (req, res) => {
             if (!psi && payment.subscription) psi = await db.Psychologist.findOne({ where: { stripeSubscriptionId: payment.subscription } });
 
             if (psi) {
-                await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0), cancelAtPeriodEnd: false });
+                await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(), cancelAtPeriodEnd: false });
                 emailService.sendSubscriptionCancelledEmail(psi).catch(e => console.error("Erro email cancelamento:", e));
             }
         } catch (err) { console.error('❌ [ASAAS] Erro ao processar estorno no banco:', err); }
@@ -171,7 +171,7 @@ exports.handleWebhook = async (req, res) => {
             if (psychologistId) psi = await db.Psychologist.findByPk(psychologistId);
             if (!psi && payment.subscription) psi = await db.Psychologist.findOne({ where: { stripeSubscriptionId: payment.subscription } });
             if (psi) {
-                await psi.update({ status: 'inactive', planExpiresAt: new Date(0) });
+                await psi.update({ status: 'inactive', planExpiresAt: new Date() });
                 emailService.sendPaymentFailedEmail(psi, payment.invoiceUrl).catch(e => console.error("Erro email falha:", e));
             }
         } catch (err) { console.error('Erro ao processar falha de pagamento:', err); }

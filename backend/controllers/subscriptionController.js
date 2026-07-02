@@ -107,7 +107,7 @@ exports.cancelSubscription = async (req, res) => {
              await psychologist.update({
                 status: 'inactive',
                 plano: null,
-                planExpiresAt: new Date(0),
+                planExpiresAt: new Date(),
                 cancelAtPeriodEnd: false,
                 stripeSubscriptionId: null,
                 subscriptionId: null
@@ -127,7 +127,7 @@ exports.cancelSubscription = async (req, res) => {
              await psychologist.update({ 
                  status: 'inactive',
                  plano: null,
-                 planExpiresAt: new Date(0),
+                 planExpiresAt: new Date(),
                  cancelAtPeriodEnd: false,
                  stripeSubscriptionId: null
              });
@@ -204,7 +204,7 @@ exports.cancelSubscription = async (req, res) => {
             await psychologist.update({
                 status: 'inactive',
                 plano: null,
-                planExpiresAt: new Date(0), // Expira já
+                planExpiresAt: new Date(), // Expira já
                 cancelAtPeriodEnd: false,
                 stripeSubscriptionId: null, // FIX: Limpa o ID para impedir que o webhook reative
                 subscriptionId: null, // Limpa também a coluna legada se existir

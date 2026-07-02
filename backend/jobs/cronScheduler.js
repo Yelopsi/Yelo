@@ -10,7 +10,7 @@ async function runIntegrityAudit() {
         // Revoga is_exempt se a pessoa já for pagante
         await db.sequelize.query(`UPDATE "Psychologists" SET "is_exempt" = false WHERE ("stripeSubscriptionId" IS NOT NULL OR "subscriptionId" IS NOT NULL) AND "is_exempt" = true;`);
         // Bloqueia quem não tem assinatura nem isenção e já venceu
-        await db.sequelize.query(`UPDATE "Psychologists" SET status = 'inactive', "planExpiresAt" = '1970-01-01' WHERE ("stripeSubscriptionId" IS NULL AND "subscriptionId" IS NULL) AND ("is_exempt" IS NULL OR "is_exempt" = false) AND status = 'active' AND ("planExpiresAt" IS NULL OR "planExpiresAt" <= NOW());`);
+        await db.sequelize.query(`UPDATE "Psychologists" SET status = 'inactive' WHERE ("stripeSubscriptionId" IS NULL AND "subscriptionId" IS NULL) AND ("is_exempt" IS NULL OR "is_exempt" = false) AND status = 'active' AND ("planExpiresAt" IS NULL OR "planExpiresAt" <= NOW());`);
         // Bloqueia quem tem plano mas venceu
         await db.sequelize.query(`UPDATE "Psychologists" SET status = 'inactive' WHERE "planExpiresAt" <= NOW() AND ("is_exempt" IS NULL OR "is_exempt" = false) AND status = 'active';`);
         // Bloqueia VIPs que não tem plano setado
