@@ -110,7 +110,7 @@ window.initializePage = function() {
             if (kpis) {
                 const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value || 0; };
                 setText('kpi-total-psis', kpis.total);
-                setText('kpi-ativos-psis', kpis.active);
+                setText('kpi-ativos-psis', (parseInt(kpis.active_paying) || 0) + (parseInt(kpis.active_trial) || 0));
                 setText('kpi-pendentes-psis', kpis.pending);
                 setText('kpi-inativos-psis', kpis.inactive);
                 setText('kpi-vip-psis', kpis.vip);

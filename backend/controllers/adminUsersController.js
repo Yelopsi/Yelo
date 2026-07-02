@@ -257,6 +257,17 @@ exports.getAllPsychologists = async (req, res) => {
             if (status === 'deleted') {
                 whereClause.deletedAt = { [Op.ne]: null };
                 isParanoid = false; 
+            } else if (status === 'active_paying') {
+                whereClause.status = 'active';
+                whereClause[Op.or] = [
+                    { stripeSubscriptionId: { [Op.ne]: null } },
+                    { subscriptionId: { [Op.ne]: null } }
+                ];
+            } else if (status === 'active_trial') {
+                whereClause.status = 'active';
+                whereClause.stripeSubscriptionId = null;
+                whereClause.subscriptionId = null;
+                whereClause.is_exempt = { [Op.or]: [null, false] };
             } else {
                 whereClause.status = status;
             }
@@ -271,7 +282,8 @@ exports.getAllPsychologists = async (req, res) => {
         const kpisQuery = `
             SELECT 
                 COUNT(*) as total,
-                COUNT(*) FILTER (WHERE status = 'active') as active,
+                COUNT(*) FILTER (WHERE status = 'active' AND ("stripeSubscriptionId" IS NOT NULL OR "subscriptionId" IS NOT NULL)) as active_paying,
+                COUNT(*) FILTER (WHERE status = 'active' AND ("stripeSubscriptionId" IS NULL AND "subscriptionId" IS NULL) AND (is_exempt IS NULL OR is_exempt = false)) as active_trial,
                 COUNT(*) FILTER (WHERE status = 'pending') as pending,
                 COUNT(*) FILTER (WHERE status = 'inactive') as inactive,
                 COUNT(*) FILTER (WHERE is_exempt = true) as vip,
