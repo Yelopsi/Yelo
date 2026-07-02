@@ -1,12 +1,12 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // Definir o mês atual no input de competência (YYYY-MM)
+// Definir o mês atual no input de competência (YYYY-MM)
+if (!document.getElementById('filter-month').value) {
     const hoje = new Date();
     const ano = hoje.getFullYear();
     const mes = String(hoje.getMonth() + 1).padStart(2, '0');
     document.getElementById('filter-month').value = `${ano}-${mes}`;
+}
 
-    carregarDespesas();
-});
+carregarDespesas();
 
 function formatarMoeda(valor) {
     return `R$ ${parseFloat(valor).toFixed(2).replace('.', ',')}`;

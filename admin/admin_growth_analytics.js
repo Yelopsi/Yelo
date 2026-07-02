@@ -1,22 +1,23 @@
-let chartCumulativoInstance = null;
-let chartPeriodoInstance = null;
-let currentStartDate = '';
-let currentEndDate = '';
+var chartCumulativoInstance = window.chartCumulativoInstance || null;
+var chartPeriodoInstance = window.chartPeriodoInstance || null;
+var currentStartDate = window.currentStartDate || '';
+var currentEndDate = window.currentEndDate || '';
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Define os valores padrão para o mês atual
+// Define os valores padrão para o mês atual, se ainda não definidos
+if (!currentStartDate || !currentEndDate) {
     const hoje = new Date();
     const trintaDiasAtras = new Date();
     trintaDiasAtras.setDate(hoje.getDate() - 30);
     
     currentStartDate = trintaDiasAtras.toISOString().split('T')[0];
     currentEndDate = hoje.toISOString().split('T')[0];
-    
-    document.getElementById('filter-start-date').value = currentStartDate;
-    document.getElementById('filter-end-date').value = currentEndDate;
+}
 
-    carregarDados();
-});
+// Configura os inputs
+document.getElementById('filter-start-date').value = currentStartDate;
+document.getElementById('filter-end-date').value = currentEndDate;
+
+carregarDados();
 
 function aplicarFiltroData() {
     const start = document.getElementById('filter-start-date').value;

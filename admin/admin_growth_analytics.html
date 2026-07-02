@@ -71,19 +71,19 @@
 
     <div style="display: grid; grid-template-columns: 1fr; gap: 30px;">
         <!-- Gráfico Cumulativo -->
-        <div class="chart-container" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <div class="chart-container" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden;">
             <h3 style="margin: 0 0 5px 0; color: #1e293b;">Crescimento Acumulado (Base Total)</h3>
             <p style="margin: 0 0 20px 0; color: #64748b; font-size: 0.9rem;">Visão histórica do total de psicólogos na plataforma subtraindo o churn.</p>
-            <div style="height: 350px; width: 100%;">
+            <div style="position: relative; height: 350px; width: 100%;">
                 <canvas id="chartCumulativo"></canvas>
             </div>
         </div>
 
         <!-- Gráfico Por Período -->
-        <div class="chart-container" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <div class="chart-container" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden;">
             <h3 style="margin: 0 0 5px 0; color: #1e293b;">Aquisição vs Perda (Novos por Período)</h3>
             <p style="margin: 0 0 20px 0; color: #64748b; font-size: 0.9rem;">Análise de novas entradas (Trials + Pagantes) vs Cancelamentos na mesma janela.</p>
-            <div style="height: 350px; width: 100%;">
+            <div style="position: relative; height: 350px; width: 100%;">
                 <canvas id="chartPeriodo"></canvas>
             </div>
         </div>
