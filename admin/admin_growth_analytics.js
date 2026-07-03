@@ -98,6 +98,13 @@ function renderizarGraficoCumulativo(graficos) {
         chartCumulativoInstance.destroy();
     }
 
+    // A função mapDataToDataset() vai lidar com a exibição de acordo com as checkboxes.
+    // Usamos 'hidden' no dataset e associamos uma id de checkbox correspondente, e criaremos a função update.
+    const isChecked = (id) => {
+        const el = document.getElementById(id);
+        return el ? el.checked : true;
+    };
+
     chartCumulativoInstance = new Chart(ctx, {
         type: 'line',
         data: {
@@ -110,17 +117,40 @@ function renderizarGraficoCumulativo(graficos) {
                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
                     borderWidth: 3,
                     fill: true,
-                    tension: 0.3
+                    tension: 0.3,
+                    hidden: !isChecked('togglePagantes')
                 },
                 {
-                    label: 'Trials (Acumulado)',
-                    data: graficos.cumulativo.trials,
+                    label: 'Trials Ativos (Acumulado)',
+                    data: graficos.cumulativo.trialsAtivos,
                     borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
                     borderWidth: 2,
                     borderDash: [5, 5],
                     fill: false,
-                    tension: 0.3
+                    tension: 0.3,
+                    hidden: !isChecked('toggleTrialsAtivos')
+                },
+                {
+                    label: 'Trials Expirados (Acumulado)',
+                    data: graficos.cumulativo.trialsExpirados,
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.3,
+                    hidden: !isChecked('toggleTrialsExpirados')
+                },
+                {
+                    label: 'Churn (Acumulado)',
+                    data: graficos.cumulativo.churn,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    hidden: !isChecked('toggleChurn')
                 }
             ]
         },
@@ -142,6 +172,22 @@ function renderizarGraficoCumulativo(graficos) {
         }
     });
 }
+
+window.updateCumulativoVisibility = function() {
+    if (!chartCumulativoInstance) return;
+    
+    const pagantes = document.getElementById('togglePagantes').checked;
+    const trialsAtivos = document.getElementById('toggleTrialsAtivos').checked;
+    const trialsExpirados = document.getElementById('toggleTrialsExpirados').checked;
+    const churn = document.getElementById('toggleChurn').checked;
+    
+    chartCumulativoInstance.data.datasets[0].hidden = !pagantes;
+    chartCumulativoInstance.data.datasets[1].hidden = !trialsAtivos;
+    chartCumulativoInstance.data.datasets[2].hidden = !trialsExpirados;
+    chartCumulativoInstance.data.datasets[3].hidden = !churn;
+    
+    chartCumulativoInstance.update();
+};
 
 function renderizarGraficoPeriodo(graficos) {
     const ctx = document.getElementById('chartPeriodo').getContext('2d');

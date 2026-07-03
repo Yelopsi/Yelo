@@ -33,6 +33,8 @@ exports.getGrowthData = async (req, res) => {
                 DATE_TRUNC('${truncPeriod}', "createdAt") as periodo,
                 COUNT(*) as total_entrantes,
                 SUM(CASE WHEN "subscriptionId" IS NOT NULL OR "stripeSubscriptionId" IS NOT NULL THEN 1 ELSE 0 END) as pagantes,
+                SUM(CASE WHEN "subscriptionId" IS NULL AND "stripeSubscriptionId" IS NULL AND ("planExpiresAt" IS NULL OR "planExpiresAt" >= NOW()) THEN 1 ELSE 0 END) as trials_ativos,
+                SUM(CASE WHEN "subscriptionId" IS NULL AND "stripeSubscriptionId" IS NULL AND "planExpiresAt" < NOW() THEN 1 ELSE 0 END) as trials_expirados,
                 SUM(CASE WHEN "subscriptionId" IS NULL AND "stripeSubscriptionId" IS NULL THEN 1 ELSE 0 END) as trials
             FROM "Psychologists"
             WHERE "createdAt" >= ${dateFilter} AND "createdAt" <= ${dateFilterEnd}
@@ -60,15 +62,23 @@ exports.getGrowthData = async (req, res) => {
         const dadosChurn = [];
         
         const dadosCumulativosTrials = [];
+        const dadosCumulativosTrialsAtivos = [];
+        const dadosCumulativosTrialsExpirados = [];
         const dadosCumulativosPagantes = [];
+        const dadosCumulativosChurn = [];
         
         let cumulativoTrials = 0;
+        let cumulativoTrialsAtivos = 0;
+        let cumulativoTrialsExpirados = 0;
         let cumulativoPagantes = 0;
+        let cumulativoChurn = 0;
 
         // Primeiro, pega a contagem histórica *antes* do filtro de data para o gráfico cumulativo começar correto
         const queryHistoricaAntesFiltro = `
             SELECT 
                 SUM(CASE WHEN "subscriptionId" IS NOT NULL OR "stripeSubscriptionId" IS NOT NULL THEN 1 ELSE 0 END) as pagantes,
+                SUM(CASE WHEN "subscriptionId" IS NULL AND "stripeSubscriptionId" IS NULL AND ("planExpiresAt" IS NULL OR "planExpiresAt" >= NOW()) THEN 1 ELSE 0 END) as trials_ativos,
+                SUM(CASE WHEN "subscriptionId" IS NULL AND "stripeSubscriptionId" IS NULL AND "planExpiresAt" < NOW() THEN 1 ELSE 0 END) as trials_expirados,
                 SUM(CASE WHEN "subscriptionId" IS NULL AND "stripeSubscriptionId" IS NULL THEN 1 ELSE 0 END) as trials
             FROM "Psychologists"
             WHERE "createdAt" < ${dateFilter} AND "deletedAt" IS NULL;
@@ -76,7 +86,19 @@ exports.getGrowthData = async (req, res) => {
         const [historicoResult] = await db.sequelize.query(queryHistoricaAntesFiltro);
         if (historicoResult && historicoResult.length > 0) {
             cumulativoPagantes = parseInt(historicoResult[0].pagantes || 0, 10);
+            cumulativoTrialsAtivos = parseInt(historicoResult[0].trials_ativos || 0, 10);
+            cumulativoTrialsExpirados = parseInt(historicoResult[0].trials_expirados || 0, 10);
             cumulativoTrials = parseInt(historicoResult[0].trials || 0, 10);
+        }
+
+        const queryHistoricoChurn = `
+            SELECT COUNT(*) as total
+            FROM "Psychologists"
+            WHERE "deletedAt" IS NOT NULL AND "deletedAt" < ${dateFilter};
+        `;
+        const [historicoChurnResult] = await db.sequelize.query(queryHistoricoChurn);
+        if (historicoChurnResult && historicoChurnResult.length > 0) {
+            cumulativoChurn = parseInt(historicoChurnResult[0].total || 0, 10);
         }
 
         novosPorPeriodo.forEach(row => {
@@ -84,6 +106,8 @@ exports.getGrowthData = async (req, res) => {
             labels.push(dataStr);
             
             const trials = parseInt(row.trials || 0, 10);
+            const trialsAtivos = parseInt(row.trials_ativos || 0, 10);
+            const trialsExpirados = parseInt(row.trials_expirados || 0, 10);
             const pagantes = parseInt(row.pagantes || 0, 10);
             
             dadosNovosTrials.push(trials);
@@ -95,10 +119,16 @@ exports.getGrowthData = async (req, res) => {
             dadosChurn.push(churnCount);
 
             cumulativoTrials += trials;
+            cumulativoTrialsAtivos += trialsAtivos;
+            cumulativoTrialsExpirados += trialsExpirados;
             cumulativoPagantes += pagantes;
+            cumulativoChurn += churnCount;
             
             dadosCumulativosTrials.push(cumulativoTrials);
+            dadosCumulativosTrialsAtivos.push(cumulativoTrialsAtivos);
+            dadosCumulativosTrialsExpirados.push(cumulativoTrialsExpirados);
             dadosCumulativosPagantes.push(cumulativoPagantes);
+            dadosCumulativosChurn.push(cumulativoChurn);
         });
 
         // Totais gerais atuais da base para os KPIs
@@ -154,7 +184,10 @@ exports.getGrowthData = async (req, res) => {
                 },
                 cumulativo: {
                     trials: dadosCumulativosTrials,
-                    pagantes: dadosCumulativosPagantes
+                    trialsAtivos: dadosCumulativosTrialsAtivos,
+                    trialsExpirados: dadosCumulativosTrialsExpirados,
+                    pagantes: dadosCumulativosPagantes,
+                    churn: dadosCumulativosChurn
                 }
             },
             finance: {

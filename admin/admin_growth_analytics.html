@@ -72,8 +72,26 @@
     <div style="display: grid; grid-template-columns: 1fr; gap: 30px;">
         <!-- Gráfico Cumulativo -->
         <div class="chart-card" style="background: white; border-radius: 12px; padding: 20px 20px 40px 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);" title="Mostra a evolução total da base de psicólogos da Yelo ao longo do tempo.">
-            <h3 style="margin: 0 0 5px 0; color: #1e293b;">Crescimento Acumulado (Base Total)</h3>
-            <p style="margin: 0 0 20px 0; color: #64748b; font-size: 0.9rem;">Visão histórica do total de psicólogos na plataforma subtraindo o churn.</p>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; margin-bottom: 20px; gap: 15px;">
+                <div>
+                    <h3 style="margin: 0 0 5px 0; color: #1e293b;">Crescimento Acumulado (Base Total)</h3>
+                    <p style="margin: 0; color: #64748b; font-size: 0.9rem;">Visão histórica do total de psicólogos na plataforma.</p>
+                </div>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; background: #f8f9fa; padding: 10px 15px; border-radius: 8px; border: 1px solid #e9ecef;">
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: #10b981;">
+                        <input type="checkbox" id="togglePagantes" checked onchange="updateCumulativoVisibility()"> Pagantes
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: #3b82f6;">
+                        <input type="checkbox" id="toggleTrialsAtivos" checked onchange="updateCumulativoVisibility()"> Trials Ativos
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: #8b5cf6;">
+                        <input type="checkbox" id="toggleTrialsExpirados" onchange="updateCumulativoVisibility()"> Expirados
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: #ef4444;">
+                        <input type="checkbox" id="toggleChurn" onchange="updateCumulativoVisibility()"> Churn
+                    </label>
+                </div>
+            </div>
             <div style="position: relative; height: 300px; width: 100%;">
                 <canvas id="chartCumulativo"></canvas>
             </div>
