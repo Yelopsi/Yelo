@@ -1,9 +1,9 @@
-@import url('admin_chat.css');
-@import url('admin_moderacao.css');
-@import url('admin_tables.css');
-@import url('admin_chat_ui.css');
-@import url('admin_reports_kpi.css');
-@import url('admin_system_config.css');
+@import url('admin_chat.css?v=1.1');
+@import url('admin_moderacao.css?v=1.1');
+@import url('admin_tables.css?v=1.1');
+@import url('admin_chat_ui.css?v=1.1');
+@import url('admin_reports_kpi.css?v=1.1');
+@import url('admin_system_config.css?v=1.1');
 
 /* ==========================================================================
    ESTILOS DO DASHBOARD ADMIN (VERSÃO REFINADA)
@@ -709,4 +709,16 @@ html {
     input[type="tel"], input[type="password"], input[type="search"] {
         font-size: 16px !important;
     }
+}
+
+/* ==========================================================================
+   FIX CRÍTICO: FORÇA BRUTA PARA BLOQUEAR SVG VAZANDO EM KPI-CARD NO MOBILE/SAFARI
+   ========================================================================== */
+.kpi-card svg {
+    max-width: 32px !important;
+    max-height: 32px !important;
+    width: 24px !important;
+    height: 24px !important;
+    flex-shrink: 0 !important;
+    display: block !important;
 }
