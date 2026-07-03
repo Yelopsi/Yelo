@@ -786,6 +786,15 @@ exports.getWhatsappFeedbacks = async (req, res) => {
             order: [['createdAt', 'DESC']]
         });
         
+        // Garante que contatos antigos tenham feedbackToken para o link mágico do admin
+        const { v4: uuidv4 } = require('uuid');
+        for (let i = 0; i < feedbacks.length; i++) {
+            if (!feedbacks[i].feedbackToken) {
+                feedbacks[i].feedbackToken = uuidv4();
+                await feedbacks[i].save();
+            }
+        }
+        
         res.status(200).json(feedbacks);
     } catch (error) {
         console.error('Erro ao buscar feedbacks do WhatsApp (Admin):', error);
