@@ -124,51 +124,29 @@ exports.getPsychologistFullDetails = async (req, res) => {
         const numericId = parseInt(id, 10);
 
         let blogPosts = await db.sequelize.query(
-            `SELECT * FROM posts WHERE psychologist_id = :id ORDER BY COALESCE(created_at, "createdAt") DESC`,
+            `SELECT * FROM posts WHERE psychologist_id = :id ORDER BY created_at DESC`,
             { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
-        ).catch(() => db.sequelize.query(
-            `SELECT * FROM posts WHERE "psychologistId" = :id ORDER BY COALESCE(created_at, "createdAt") DESC`,
-            { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
-        )).catch(() => []);
+        ).catch(() => []);
 
         let forumPosts = await db.sequelize.query(
             `SELECT * FROM "ForumPosts" WHERE "PsychologistId" = :id ORDER BY "createdAt" DESC`,
             { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
-        ).catch(() => db.sequelize.query(
-            `SELECT * FROM "ForumPosts" WHERE "psychologistId" = :id ORDER BY "createdAt" DESC`,
-            { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
-        )).catch(() => []);
+        ).catch(() => []);
 
         let forumComments = await db.sequelize.query(
-            `SELECT fc.*, COALESCE(fp.title, fp.titulo) as "postTitle"
+            `SELECT fc.*, fp.title as "postTitle"
              FROM "ForumComments" fc
              LEFT JOIN "ForumPosts" fp ON fc."ForumPostId" = fp.id
              WHERE fc."PsychologistId" = :id
              ORDER BY fc."createdAt" DESC`,
             { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
-        ).catch(() => db.sequelize.query(
-            `SELECT fc.*, COALESCE(fp.title, fp.titulo) as "postTitle"
-             FROM "ForumComments" fc
-             LEFT JOIN "ForumPosts" fp ON fc."forumPostId" = fp.id
-             WHERE fc."psychologistId" = :id
-             ORDER BY fc."createdAt" DESC`,
-            { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
-        )).catch(() => []);
+        ).catch(() => []);
 
         const reviews = await db.Review.findAll({
             where: { psychologistId: id },
             order: [['createdAt', 'DESC']]
-        });
+        }).catch(() => []);
 
-        const matchesCountResult = await db.sequelize.query(
-            `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :id`,
-            { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
-        ).catch(() => db.sequelize.query(
-            `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "PsychologistId" = :id`,
-            { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
-        )).catch(() => [{ count: 0 }]);
-        const matchesCount = parseInt(matchesCountResult[0]?.count || 0, 10);
-        
         let matches = await db.sequelize.query(
             `SELECT id, "psychologistId", "matchScore", "createdAt", "updatedAt", "patientId", "source" FROM "MatchEvents" WHERE "psychologistId" = :id`,
             { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
@@ -176,6 +154,8 @@ exports.getPsychologistFullDetails = async (req, res) => {
             `SELECT id, "PsychologistId", "matchScore", "createdAt", "updatedAt", "patientId", "source" FROM "MatchEvents" WHERE "PsychologistId" = :id`,
             { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
         )).catch(() => []);
+        
+        const matchesCount = matches.length;
 
         if (matches && Array.isArray(matches)) {
             matches.sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0));
