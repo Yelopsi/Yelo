@@ -56,7 +56,7 @@ exports.getGrowthData = async (req, res) => {
         const [churnPorPeriodo] = await db.sequelize.query(queryChurn);
 
         // Processa os dados para o formato que o frontend espera (Chart.js)
-        const labels = [];
+        let labels = [];
         const dadosNovosTrials = [];
         const dadosNovosPagantes = [];
         const dadosChurn = [];
@@ -102,7 +102,7 @@ exports.getGrowthData = async (req, res) => {
         novosPorPeriodo.forEach(row => todasDatas.add(new Date(row.periodo).toISOString().split('T')[0]));
         churnPorPeriodo.forEach(row => todasDatas.add(new Date(row.periodo).toISOString().split('T')[0]));
         
-        const labels = Array.from(todasDatas).sort();
+        labels = Array.from(todasDatas).sort();
 
         labels.forEach(dataStr => {
             const rowEntrantes = novosPorPeriodo.find(r => new Date(r.periodo).toISOString().split('T')[0] === dataStr);
