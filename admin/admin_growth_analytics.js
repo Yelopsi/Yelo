@@ -19,7 +19,7 @@ document.getElementById('filter-end-date').value = currentEndDate;
 
 carregarDados();
 
-function aplicarFiltroData() {
+window.aplicarFiltroData = function() {
     const start = document.getElementById('filter-start-date').value;
     const end = document.getElementById('filter-end-date').value;
     
@@ -30,7 +30,7 @@ function aplicarFiltroData() {
     } else {
         alert("Por favor, selecione as duas datas.");
     }
-}
+};
 
 async function carregarDados() {
     try {
