@@ -61,17 +61,14 @@ exports.getGrowthData = async (req, res) => {
         const dadosNovosPagantes = [];
         const dadosChurn = [];
         
-        const dadosCumulativosTrials = [];
-        const dadosCumulativosTrialsAtivos = [];
-        const dadosCumulativosTrialsExpirados = [];
-        const dadosCumulativosPagantes = [];
-        const dadosCumulativosChurn = [];
+        const dadosPeriodoTrialsAtivos = [];
+        const dadosPeriodoTrialsExpirados = [];
+        const dadosPeriodoPagantes = [];
+        const dadosPeriodoChurn = [];
         
+        // Mantemos os acumulativos históricos apenas para os KPIs globais
         let cumulativoTrials = 0;
-        let cumulativoTrialsAtivos = 0;
-        let cumulativoTrialsExpirados = 0;
         let cumulativoPagantes = 0;
-        let cumulativoChurn = 0;
 
         // Primeiro, pega a contagem histórica *antes* do filtro de data para o gráfico cumulativo começar correto
         const queryHistoricaAntesFiltro = `
@@ -97,9 +94,8 @@ exports.getGrowthData = async (req, res) => {
             WHERE "deletedAt" IS NOT NULL AND "deletedAt" < ${dateFilter};
         `;
         const [historicoChurnResult] = await db.sequelize.query(queryHistoricoChurn);
-        if (historicoChurnResult && historicoChurnResult.length > 0) {
-            cumulativoChurn = parseInt(historicoChurnResult[0].total || 0, 10);
-        }
+        const historicoChurnTotal = historicoChurnResult && historicoChurnResult.length > 0 ? parseInt(historicoChurnResult[0].total || 0, 10) : 0;
+        let totalChurnGeral = historicoChurnTotal;
 
         novosPorPeriodo.forEach(row => {
             const dataStr = new Date(row.periodo).toISOString().split('T')[0];
@@ -119,22 +115,18 @@ exports.getGrowthData = async (req, res) => {
             dadosChurn.push(churnCount);
 
             cumulativoTrials += trials;
-            cumulativoTrialsAtivos += trialsAtivos;
-            cumulativoTrialsExpirados += trialsExpirados;
             cumulativoPagantes += pagantes;
-            cumulativoChurn += churnCount;
+            totalChurnGeral += churnCount;
             
-            dadosCumulativosTrials.push(cumulativoTrials);
-            dadosCumulativosTrialsAtivos.push(cumulativoTrialsAtivos);
-            dadosCumulativosTrialsExpirados.push(cumulativoTrialsExpirados);
-            dadosCumulativosPagantes.push(cumulativoPagantes);
-            dadosCumulativosChurn.push(cumulativoChurn);
+            dadosPeriodoTrialsAtivos.push(trialsAtivos);
+            dadosPeriodoTrialsExpirados.push(trialsExpirados);
+            dadosPeriodoPagantes.push(pagantes);
+            dadosPeriodoChurn.push(churnCount);
         });
 
         // Totais gerais atuais da base para os KPIs
         const totalPagantes = cumulativoPagantes;
         const totalTrials = cumulativoTrials;
-        const totalChurnGeral = churnPorPeriodo.reduce((sum, row) => sum + parseInt(row.total_churn || 0, 10), 0);
 
         // --- VISÃO MACRO FINANCEIRA ---
         // 1. Calcular o MRR Atual
@@ -182,12 +174,11 @@ exports.getGrowthData = async (req, res) => {
                     pagantes: dadosNovosPagantes,
                     churn: dadosChurn
                 },
-                cumulativo: {
-                    trials: dadosCumulativosTrials,
-                    trialsAtivos: dadosCumulativosTrialsAtivos,
-                    trialsExpirados: dadosCumulativosTrialsExpirados,
-                    pagantes: dadosCumulativosPagantes,
-                    churn: dadosCumulativosChurn
+                periodo: {
+                    trialsAtivos: dadosPeriodoTrialsAtivos,
+                    trialsExpirados: dadosPeriodoTrialsExpirados,
+                    pagantes: dadosPeriodoPagantes,
+                    churn: dadosPeriodoChurn
                 }
             },
             finance: {

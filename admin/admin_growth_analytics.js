@@ -111,8 +111,8 @@ function renderizarGraficoCumulativo(graficos) {
             labels: graficos.labels,
             datasets: [
                 {
-                    label: 'Pagantes (Acumulado)',
-                    data: graficos.cumulativo.pagantes,
+                    label: 'Pagantes (Período)',
+                    data: graficos.periodo.pagantes,
                     borderColor: '#10b981',
                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
                     borderWidth: 3,
@@ -121,8 +121,8 @@ function renderizarGraficoCumulativo(graficos) {
                     hidden: !isChecked('togglePagantes')
                 },
                 {
-                    label: 'Trials Ativos (Acumulado)',
-                    data: graficos.cumulativo.trialsAtivos,
+                    label: 'Trials Ativos (Período)',
+                    data: graficos.periodo.trialsAtivos,
                     borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
                     borderWidth: 2,
@@ -132,8 +132,8 @@ function renderizarGraficoCumulativo(graficos) {
                     hidden: !isChecked('toggleTrialsAtivos')
                 },
                 {
-                    label: 'Trials Expirados (Acumulado)',
-                    data: graficos.cumulativo.trialsExpirados,
+                    label: 'Trials Expirados (Período)',
+                    data: graficos.periodo.trialsExpirados,
                     borderColor: '#8b5cf6',
                     backgroundColor: 'rgba(139, 92, 246, 0.1)',
                     borderWidth: 2,
@@ -143,8 +143,8 @@ function renderizarGraficoCumulativo(graficos) {
                     hidden: !isChecked('toggleTrialsExpirados')
                 },
                 {
-                    label: 'Churn (Acumulado)',
-                    data: graficos.cumulativo.churn,
+                    label: 'Churn (Período)',
+                    data: graficos.periodo.churn,
                     borderColor: '#ef4444',
                     backgroundColor: 'rgba(239, 68, 68, 0.1)',
                     borderWidth: 2,
