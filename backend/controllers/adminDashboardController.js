@@ -831,3 +831,27 @@ exports.markWhatsappReminder = async (req, res) => {
         res.status(500).json({ error: 'Erro interno ao marcar cobrança.' });
     }
 };
+
+exports.forceWhatsappResponse = async (req, res) => {
+    try {
+        const db = require('../models');
+        const { id } = req.params;
+        const { contactReceived, dealClosed } = req.body;
+
+        const log = await db.WhatsAppClickLog.findByPk(id);
+        if (!log) {
+            return res.status(404).json({ error: 'Log não encontrado.' });
+        }
+
+        log.feedbackGiven = true;
+        log.contactReceived = contactReceived === 'yes' || contactReceived === true;
+        log.dealClosed = dealClosed; // 'yes' or 'no'
+
+        await log.save();
+
+        res.status(200).json({ message: 'Feedback forçado com sucesso.' });
+    } catch (error) {
+        console.error('Erro ao forçar resposta do feedback:', error);
+        res.status(500).json({ error: 'Erro interno ao salvar resposta.' });
+    }
+};

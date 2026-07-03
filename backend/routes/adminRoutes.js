@@ -148,6 +148,7 @@ router.get('/export/psychologists', adminController.exportPsychologists);
 // --- ROTA DE FEEDBACK DO WHATSAPP (CONVERSÃO PLG) ---
 router.get('/whatsapp-feedbacks', adminDashboardController.getWhatsappFeedbacks);
 router.post('/whatsapp-feedbacks/remind/:psiId', adminDashboardController.markWhatsappReminder);
+router.post('/whatsapp-feedbacks/:id/force-response', adminDashboardController.forceWhatsappResponse);
 
 // --- ROTA DE RANKING DE PSICÓLOGOS (NOVO CRM) ---
 router.get('/analytics/ranking', adminController.getPsiRanking);
