@@ -670,7 +670,10 @@ window.initializePage = function() {
                 const baseUrl = window.location.origin.includes('localhost') ? 'http://localhost:3000' : 'https://www.yelopsi.com.br';
                 const linkFeedback = f.feedbackToken ? `${baseUrl}/magic-feedback.html?token=${f.feedbackToken}` : `${baseUrl}/psi/dashboard`;
                 
-                const btnManual = `<a href="javascript:void(0)" onclick="window.forceFeedbackModal(${f.id}, '${patientText.replace(/'/g, "\\'")}', '${psiNameFirst.replace(/'/g, "\\'")}')" style="display:inline-flex; align-items:center; justify-content:center; background:#3b82f6; color:#fff; border-radius:50%; width:26px; height:26px; margin-left:8px; text-decoration:none; transition: transform 0.2s; box-shadow: 0 2px 4px rgba(59,130,246,0.3);" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Responder Manualmente pelo Profissional">
+                const modalPatientName = f.guestName || 'Visitante';
+                const modalPsiName = (f.psychologist && f.psychologist.nome) ? f.psychologist.nome.split(' ')[0] : 'Profissional';
+                
+                const btnManual = `<a href="javascript:void(0)" onclick="window.forceFeedbackModal(${f.id}, '${modalPatientName.replace(/'/g, "\\'")}', '${modalPsiName.replace(/'/g, "\\'")}')" style="display:inline-flex; align-items:center; justify-content:center; background:#3b82f6; color:#fff; border-radius:50%; width:26px; height:26px; margin-left:8px; text-decoration:none; transition: transform 0.2s; box-shadow: 0 2px 4px rgba(59,130,246,0.3);" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Responder Manualmente pelo Profissional">
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                 </a>`;
                 
