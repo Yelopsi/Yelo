@@ -97,31 +97,54 @@ exports.getGrowthData = async (req, res) => {
         const historicoChurnTotal = historicoChurnResult && historicoChurnResult.length > 0 ? parseInt(historicoChurnResult[0].total || 0, 10) : 0;
         let totalChurnGeral = historicoChurnTotal;
 
-        novosPorPeriodo.forEach(row => {
-            const dataStr = new Date(row.periodo).toISOString().split('T')[0];
-            labels.push(dataStr);
-            
-            const trials = parseInt(row.trials || 0, 10);
-            const trialsAtivos = parseInt(row.trials_ativos || 0, 10);
-            const trialsExpirados = parseInt(row.trials_expirados || 0, 10);
-            const pagantes = parseInt(row.pagantes || 0, 10);
+        // Criar um array com todas as datas do período para não pular dias sem novos cadastros
+        const todasDatas = new Set();
+        novosPorPeriodo.forEach(row => todasDatas.add(new Date(row.periodo).toISOString().split('T')[0]));
+        churnPorPeriodo.forEach(row => todasDatas.add(new Date(row.periodo).toISOString().split('T')[0]));
+        
+        const labels = Array.from(todasDatas).sort();
+
+        labels.forEach(dataStr => {
+            const rowEntrantes = novosPorPeriodo.find(r => new Date(r.periodo).toISOString().split('T')[0] === dataStr);
+            const trials = rowEntrantes ? parseInt(rowEntrantes.trials || 0, 10) : 0;
+            const trialsAtivos = rowEntrantes ? parseInt(rowEntrantes.trials_ativos || 0, 10) : 0;
+            const trialsExpirados = rowEntrantes ? parseInt(rowEntrantes.trials_expirados || 0, 10) : 0;
+            const pagantes = rowEntrantes ? parseInt(rowEntrantes.pagantes || 0, 10) : 0;
             
             dadosNovosTrials.push(trials);
             dadosNovosPagantes.push(pagantes);
             
-            // Procura se teve churn nesse mesmo período
-            const churnRow = churnPorPeriodo.find(c => new Date(c.periodo).toISOString().split('T')[0] === dataStr);
-            const churnCount = churnRow ? parseInt(churnRow.total_churn || 0, 10) : 0;
+            const rowChurn = churnPorPeriodo.find(c => new Date(c.periodo).toISOString().split('T')[0] === dataStr);
+            const churnCount = rowChurn ? parseInt(rowChurn.total_churn || 0, 10) : 0;
             dadosChurn.push(churnCount);
 
+            // Acumula os valores a partir do zero (respeitando o período filtrado)
             cumulativoTrials += trials;
             cumulativoPagantes += pagantes;
             totalChurnGeral += churnCount;
             
-            dadosPeriodoTrialsAtivos.push(trialsAtivos);
-            dadosPeriodoTrialsExpirados.push(trialsExpirados);
-            dadosPeriodoPagantes.push(pagantes);
-            dadosPeriodoChurn.push(churnCount);
+            // Para o gráfico do período (acumulado apenas dentro do filtro)
+            let acumuladoTrialsAtivos = 0;
+            let acumuladoTrialsExpirados = 0;
+            let acumuladoPagantes = 0;
+            let acumuladoChurn = 0;
+            
+            if (dadosPeriodoTrialsAtivos.length > 0) {
+                acumuladoTrialsAtivos = dadosPeriodoTrialsAtivos[dadosPeriodoTrialsAtivos.length - 1];
+                acumuladoTrialsExpirados = dadosPeriodoTrialsExpirados[dadosPeriodoTrialsExpirados.length - 1];
+                acumuladoPagantes = dadosPeriodoPagantes[dadosPeriodoPagantes.length - 1];
+                acumuladoChurn = dadosPeriodoChurn[dadosPeriodoChurn.length - 1];
+            }
+            
+            acumuladoTrialsAtivos += trialsAtivos;
+            acumuladoTrialsExpirados += trialsExpirados;
+            acumuladoPagantes += pagantes;
+            acumuladoChurn += churnCount;
+            
+            dadosPeriodoTrialsAtivos.push(acumuladoTrialsAtivos);
+            dadosPeriodoTrialsExpirados.push(acumuladoTrialsExpirados);
+            dadosPeriodoPagantes.push(acumuladoPagantes);
+            dadosPeriodoChurn.push(acumuladoChurn);
         });
 
         // Totais gerais atuais da base para os KPIs
