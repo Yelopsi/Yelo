@@ -718,6 +718,7 @@ html {
     position: relative !important;
     width: 100% !important;
     min-height: 0 !important; 
+    min-width: 0 !important; /* Fix CSS Grid horizontal overflow */
     /* Permite que o container encolha e evite estourar a altura da div pai no mobile */
 }
 .chart-container canvas {
@@ -726,4 +727,5 @@ html {
 }
 .chart-card, .widget, .card, .kpi-card {
     min-height: 0 !important; /* Fix flex-box blowout em iOS/Safari */
+    min-width: 0 !important;
 }
