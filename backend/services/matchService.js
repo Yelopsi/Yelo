@@ -263,6 +263,15 @@ exports.calculateMatches = async (preferences = {}) => {
             .filter(c => !topMerit.some(t => t.id === c.id))
             .filter(c => c.rawMatchScore >= 40)
             .sort((a, b) => {
+                const daysUntilExpiryA = a.planExpiresAt ? (new Date(a.planExpiresAt) - new Date()) / (1000 * 60 * 60 * 24) : 999;
+                const daysUntilExpiryB = b.planExpiresAt ? (new Date(b.planExpiresAt) - new Date()) / (1000 * 60 * 60 * 24) : 999;
+                
+                const isRiskA = (daysUntilExpiryA > 0 && daysUntilExpiryA <= 3);
+                const isRiskB = (daysUntilExpiryB > 0 && daysUntilExpiryB <= 3);
+
+                if (isRiskA && !isRiskB) return -1; // Dá preferência total ao psicólogo na zona de risco
+                if (isRiskB && !isRiskA) return 1;
+
                 if ((a.whatsapp_clicks || 0) !== (b.whatsapp_clicks || 0)) {
                     return (a.whatsapp_clicks || 0) - (b.whatsapp_clicks || 0);
                 }
