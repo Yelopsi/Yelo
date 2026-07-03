@@ -146,15 +146,18 @@ function renderTimeline(data) {
     if(data.reviews) data.reviews.forEach(x => events.push({ type: 'review', date: x.createdAt, data: x }));
     if(data.matches) data.matches.forEach(x => events.push({ type: 'match', date: x.createdAt, data: x }));
     
-    // Ordena decrescente
+    // Ordena decrescente (mais recentes primeiro)
     events.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    if(events.length === 0) {
+    // Limita a linha do tempo às últimas 10 atividades
+    const latestEvents = events.slice(0, 10);
+
+    if(latestEvents.length === 0) {
         container.innerHTML = '<p class="empty-state">Nenhuma atividade recente.</p>';
         return;
     }
 
-    container.innerHTML = events.map(e => {
+    container.innerHTML = latestEvents.map(e => {
         const dateStr = new Date(e.date).toLocaleString('pt-BR');
         let icon = '•';
         let title = '';
@@ -202,6 +205,10 @@ function renderTimeline(data) {
             </div>
         `;
     }).join('');
+    
+    if (events.length > 10) {
+        container.innerHTML += `<div style="text-align: center; margin-top: 15px; color: #94a3b8; font-size: 0.85rem;">Mostrando as 10 atividades mais recentes (de um total de ${events.length}).</div>`;
+    }
 }
 
 function renderList(containerId, items, renderFn) {
