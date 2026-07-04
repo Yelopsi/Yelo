@@ -30,9 +30,9 @@
     .saas-header p { font-size: 0.9rem; color: rgba(255,255,255,0.8); margin: 0; }
     
     .saas-toolbar { display: flex; gap: 8px; padding: 0 40px; }
-    .toolbar-chip { background: transparent; border: 1px solid transparent; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; color: var(--saas-muted); cursor: pointer; transition: all 0.2s; }
-    .toolbar-chip:hover { background: var(--saas-border); color: var(--saas-text); }
-    .toolbar-chip.active { background: white; border-color: var(--saas-border); color: var(--saas-text); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .toolbar-chip { background: #f8f9fa; color: #64748b; border: 1px solid #e2e8f0; padding: 8px 18px; border-radius: 50px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .toolbar-chip:hover { background: #e2e8f0; color: #1e293b; }
+    .toolbar-chip.active { background: #1B4332; color: white; border-color: #1B4332; box-shadow: 0 2px 4px rgba(27, 67, 50, 0.2); }
     
     .btn-refresh { background: white; border: 1px solid var(--saas-border); padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
     .btn-refresh:hover { background: var(--saas-hover); }
@@ -61,9 +61,9 @@
     /* Insights Section */
     .saas-section { padding: 0 40px; margin-bottom: 30px; }
     .saas-section-title { font-size: 1rem; font-weight: 600; color: var(--saas-text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;}
-    .insights-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
-    .insight-card { background: var(--saas-card); border: 1px solid var(--saas-border); border-radius: 8px; padding: 14px; display: flex; align-items: flex-start; gap: 10px; font-size: 0.85rem; color: var(--saas-text); line-height: 1.4; }
-    .insight-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+    .insights-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+    .insight-card { background: var(--saas-card); border: 1px solid var(--saas-border); border-radius: 50px; padding: 8px 16px; display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--saas-text); font-weight: 500; line-height: 1.2; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+    .insight-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .dot-positive { background: var(--saas-green); }
     .dot-negative { background: var(--saas-red); }
     .dot-warning { background: var(--saas-orange); }
@@ -107,6 +107,13 @@
     .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; border-radius: 4px; }
     @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
+    /* Info Tooltip */
+    .info-tooltip { position: relative; cursor: help; color: #9ca3af; font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid #e5e7eb; background: #fff; transition: all 0.2s; flex-shrink: 0; font-weight: bold; font-family: monospace; }
+    .info-tooltip:hover { color: #1B4332; border-color: #1B4332; background-color: #f0fdf4; }
+    .info-tooltip::after { content: attr(data-tooltip); position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%) translateY(5px); background-color: #1B4332; color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 0.75rem; width: max-content; max-width: 220px; text-align: center; opacity: 0; visibility: hidden; transition: all 0.2s ease; pointer-events: none; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-weight: 500; line-height: 1.4; font-family: var(--font-principal); white-space: normal; }
+    .info-tooltip::before { content: ''; position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%) translateY(5px); border: 6px solid transparent; border-top-color: #1B4332; opacity: 0; visibility: hidden; transition: all 0.2s ease; z-index: 100; margin-bottom: -11px; }
+    .info-tooltip:hover::after, .info-tooltip:hover::before { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+
     /* Elegant CSS Tooltips */
     [data-tooltip] { position: relative; cursor: help; }
     [data-tooltip]:hover::before {
@@ -144,10 +151,10 @@
         <button class="toolbar-chip" id="btn-custom-date">Personalizado</button>
         
         <div class="custom-date-picker" id="custom-date-wrap">
-            <input type="date" id="crm-analytics-start">
+            <input type="date" id="crm-analytics-start" class="crm-date-input">
             <span style="color:#666;font-size:0.8rem;">até</span>
-            <input type="date" id="crm-analytics-end">
-            <button class="toolbar-chip" id="btn-apply-custom" style="background:#111827;color:white;border:none;">Aplicar</button>
+            <input type="date" id="crm-analytics-end" class="crm-date-input">
+            <button class="toolbar-chip" id="btn-apply-custom" style="background:#1B4332;color:white;border:none;">Aplicar</button>
         </div>
     </div>
 
@@ -310,7 +317,7 @@
         <div class="saas-section saas-grid-2">
             <!-- 3. Evolução / Planos Ativos -->
             <div class="plan-distribution">
-                <h3 class="saas-section-title">Distribuição de Planos</h3>
+                <h3 class="saas-section-title">Distribuição de Planos <span class="info-tooltip" data-tooltip="Mostra a proporção de assinantes em cada plano">i</span></h3>
                 <div id="plans-bar-container">
                     <div class="plan-row"><div class="skeleton" style="width: 100%; height: 20px;"></div></div>
                     <div class="plan-row"><div class="skeleton" style="width: 100%; height: 20px;"></div></div>
@@ -319,7 +326,7 @@
             
             <!-- Projeção de Crescimento -->
             <div class="plan-distribution" style="display: flex; flex-direction: column; justify-content: center;">
-                <h3 class="saas-section-title" style="margin-bottom: 25px;">Projeção de MRR</h3>
+                <h3 class="saas-section-title" style="margin-bottom: 25px;">Projeção de MRR <span class="info-tooltip" data-tooltip="Estima a receita futura baseada no crescimento atual">i</span></h3>
                 <div style="display: flex; justify-content: space-between;">
                     <div style="text-align: center;">
                         <span style="font-size: 0.75rem; color: var(--saas-muted); font-weight: 600; text-transform: uppercase;">30 dias</span>
