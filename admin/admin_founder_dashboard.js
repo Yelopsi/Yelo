@@ -1,3 +1,5 @@
+const API_BASE_URL = window.API_BASE_URL || '';
+
 window.initializePage = function() {
     loadFounderMetrics();
 };
@@ -9,7 +11,7 @@ async function loadFounderMetrics() {
         const token = localStorage.getItem('adminToken');
         if (!token) return;
 
-        const res = await fetch('/api/admin/founder-metrics', {
+        const res = await fetch(`${API_BASE_URL}/api/admin/founder-metrics`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -185,7 +187,7 @@ window.saveFounderGoals = async function() {
     };
 
     try {
-        const res = await fetch('/api/admin/founder-goals', {
+        const res = await fetch(`${API_BASE_URL}/api/admin/founder-goals`, {
             method: 'POST',
             headers: { 
                 'Authorization': `Bearer ${token}`,
