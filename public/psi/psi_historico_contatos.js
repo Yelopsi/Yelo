@@ -69,6 +69,8 @@ window.loadContactHistory = async function() {
                     badgeClass = 'pendente';
                     badgeText = 'Feedback Registrado';
                 }
+            }
+            
             let badgeStyle = '';
             let clickAction = '';
             
