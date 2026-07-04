@@ -495,11 +495,21 @@ exports.getFinancials = async (req, res) => {
             const planoKey = (psy.plano || '').toLowerCase();
             return acc + (planPrices[planoKey] || 0);
         }, 0);
-        const thirtyDaysAgo = new Date(new Date().setDate(new Date().getDate() - 30));
+        const { startDate, endDate } = req.query;
+        let dateCondition = {};
+        if (startDate && endDate) {
+            const start = new Date(`${startDate}T00:00:00-03:00`);
+            const end = new Date(`${endDate}T23:59:59-03:00`);
+            dateCondition = { [Op.between]: [start, end] };
+        } else {
+            const thirtyDaysAgo = new Date(new Date().setDate(new Date().getDate() - 30));
+            dateCondition = { [Op.gte]: thirtyDaysAgo };
+        }
+        
         const churnedCount = await db.Psychologist.count({
             where: {
                 status: 'inactive',
-                updatedAt: { [Op.gte]: thirtyDaysAgo }
+                updatedAt: dateCondition
             }
         });
         const totalActiveCount = activePsychologists.length;
@@ -515,7 +525,7 @@ exports.getFinancials = async (req, res) => {
         let recentInvoices = [];
         if (ASAAS_API_KEY) {
             try {
-                const response = await fetch(`${ASAAS_API_URL}/payments?status=RECEIVED&limit=10&order=desc`, {
+                const response = await fetch(`${ASAAS_API_URL}/payments?limit=10&order=desc`, {
                     headers: { 'access_token': ASAAS_API_KEY }
                 });
                 
@@ -528,11 +538,17 @@ exports.getFinancials = async (req, res) => {
                                 const psi = await db.Psychologist.findByPk(payment.externalReference, { attributes: ['nome'] });
                                 if (psi) psiName = psi.nome;
                             }
+                            
+                            let translatedStatus = 'Pendente';
+                            if (['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].includes(payment.status)) translatedStatus = 'Paga';
+                            else if (payment.status === 'OVERDUE') translatedStatus = 'Atrasada';
+                            else if (['REFUNDED', 'CHARGEBACK_REQUESTED'].includes(payment.status)) translatedStatus = 'Cancelada';
+
                             return {
                                 psychologistName: psiName,
                                 date: payment.paymentDate || payment.dateCreated,
                                 amount: payment.value,
-                                status: 'Paga'
+                                status: translatedStatus
                             };
                         }));
                     }
@@ -540,15 +556,23 @@ exports.getFinancials = async (req, res) => {
             } catch (err) {}
         }
 
-        const activePlans = activePsychologists.map(psy => {
+        let activePlans = activePsychologists.map(psy => {
             const hasSub = !!(psy.stripeSubscriptionId || psy.subscriptionId);
+            const planKey = (psy.plano || '').toLowerCase();
             return {
                 psychologistName: psy.nome,
                 planName: psy.is_exempt ? `${psy.plano} (VIP)` : (!hasSub ? `${psy.plano} (Trial)` : psy.plano),
-                mrr: (psy.is_exempt || !hasSub) ? 0 : (planPrices[psy.plano ? psy.plano.toUpperCase() : ''] || 0),
+                mrr: (psy.is_exempt || !hasSub) ? 0 : (planPrices[planKey] || 0),
                 nextBilling: psy.is_exempt ? null : (psy.planExpiresAt ? new Date(psy.planExpiresAt) : new Date(new Date(psy.updatedAt).setMonth(new Date(psy.updatedAt).getMonth() + 1))) 
             };
         });
+
+        // Filtrar apenas planos com cobrança futura, ordenar pela data mais próxima e limitar a 10
+        activePlans = activePlans
+            .filter(plan => plan.nextBilling !== null && plan.mrr > 0)
+            .sort((a, b) => a.nextBilling - b.nextBilling)
+            .slice(0, 10);
+        
         res.status(200).json({ kpis, recentInvoices, activePlans });
     } catch (error) {
         res.status(500).json({ error: 'Erro interno no servidor.' });

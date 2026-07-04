@@ -74,8 +74,14 @@ exports.getQuestionnaireAnalytics = async (req, res) => {
 
 exports.getPwaStats = async (req, res) => {
     try {
-        const [totalResult] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "PwaInstallLogs"`);
-        const [byPlatform] = await db.sequelize.query(`SELECT platform, COUNT(*) as count FROM "PwaInstallLogs" GROUP BY platform`);
+        const { startDate, endDate } = req.query;
+        let dateCondition = '';
+        if (startDate && endDate) {
+            dateCondition = `WHERE "createdAt" >= '${startDate} 00:00:00-03:00' AND "createdAt" <= '${endDate} 23:59:59-03:00'`;
+        }
+        
+        const [totalResult] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "PwaInstallLogs" ${dateCondition}`);
+        const [byPlatform] = await db.sequelize.query(`SELECT platform, COUNT(*) as count FROM "PwaInstallLogs" ${dateCondition} GROUP BY platform`);
         res.json({ total: parseInt(totalResult[0]?.count || 0, 10), byPlatform });
     } catch (error) { res.json({ total: 0, byPlatform: [] }); }
 };

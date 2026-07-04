@@ -37,65 +37,64 @@ window.initializePage = function() {
         const query = `?startDate=${startInput.value}&endDate=${endInput.value}`;
 
         try {
-            // Realiza múltiplas buscas simultâneas resolvendo o gargalo assíncrono antigo
-            const [resCharts, resFin, resPwa, resFunnel] = await Promise.all([
-                fetch(`${API_BASE_URL}/api/admin/reports/charts${query}`, { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch(`${API_BASE_URL}/api/admin/financials`, { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch(`${API_BASE_URL}/api/admin/stats/pwa`, { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch(`${API_BASE_URL}/api/admin/analytics/funnel${query}`, { headers: { 'Authorization': `Bearer ${token}` } })
-            ]);
+            // Fetch Charts Data
+            fetch(`${API_BASE_URL}/api/admin/reports/charts${query}`, { headers: { 'Authorization': `Bearer ${token}` } })
+                .then(res => res.ok ? res.json() : {})
+                .then(dataCharts => {
+                    let totalConcluidos = 0, totalAbandonados = 0;
+                    if (dataCharts.demand && Array.isArray(dataCharts.demand)) {
+                        totalConcluidos = dataCharts.demand.reduce((acc, curr) => acc + (parseInt(curr.concluidos) || 0), 0);
+                        totalAbandonados = dataCharts.demand.reduce((acc, curr) => acc + (parseInt(curr.desistencias) || 0), 0);
+                    }
+                    document.getElementById('kpi-quest-concluidos').innerText = totalConcluidos.toLocaleString();
+                    document.getElementById('kpi-quest-abandonados').innerText = totalAbandonados.toLocaleString();
+                    
+                    const totalVisits = (dataCharts.visits || []).reduce((acc, curr) => acc + (parseInt(curr.total) || 0), 0);
+                    document.getElementById('kpi-visits').innerText = totalVisits.toLocaleString();
+                    document.getElementById('kpi-questions').innerText = dataCharts.community?.questionsTotal || 0;
+                    document.getElementById('kpi-whatsapp-clicks').innerText = dataCharts.whatsappClicks || 0;
 
-            const dataCharts = resCharts.ok ? await resCharts.json() : {};
-            const dataFin = resFin.ok ? await resFin.json() : {};
-            const dataPwa = resPwa.ok ? await resPwa.json() : {};
-            const dataFunnel = resFunnel.ok ? await resFunnel.json() : {};
+                    renderUsersChart(dataCharts.users, dataCharts.visits);
+                    renderDemandChart(dataCharts.demand);
+                    renderPlansChart(dataCharts.plans);
+                    renderShadowTracking(dataCharts.shadowTracking);
+                }).catch(err => console.error(err));
 
-            // === PREENCHIMENTO ABA 1: DESEMPENHO E USO ===
-            
-            // KPIs de Demandas/Questionários
-            let totalConcluidos = 0, totalAbandonados = 0;
-            if (dataCharts.demand && Array.isArray(dataCharts.demand)) {
-                totalConcluidos = dataCharts.demand.reduce((acc, curr) => acc + (parseInt(curr.concluidos) || 0), 0);
-                totalAbandonados = dataCharts.demand.reduce((acc, curr) => acc + (parseInt(curr.desistencias) || 0), 0);
-            }
-            document.getElementById('kpi-quest-concluidos').innerText = totalConcluidos.toLocaleString();
-            document.getElementById('kpi-quest-abandonados').innerText = totalAbandonados.toLocaleString();
-            
-            // Visitas e PWA
-            const totalVisits = (dataCharts.visits || []).reduce((acc, curr) => acc + (parseInt(curr.total) || 0), 0);
-            document.getElementById('kpi-visits').innerText = totalVisits.toLocaleString();
-            document.getElementById('kpi-questions').innerText = dataCharts.community?.questionsTotal || 0;
-            document.getElementById('kpi-pwa').innerText = dataPwa.total || 0;
-            document.getElementById('kpi-whatsapp-clicks').innerText = dataCharts.whatsappClicks || 0;
+            // Fetch Funnel Data
+            fetch(`${API_BASE_URL}/api/admin/analytics/funnel${query}`, { headers: { 'Authorization': `Bearer ${token}` } })
+                .then(res => res.ok ? res.json() : {})
+                .then(dataFunnel => {
+                    renderDropoffs(dataFunnel.abandonos);
+                    renderUTMs(dataFunnel.origens);
+                }).catch(err => console.error(err));
 
-            // Gráficos (Reaproveitados do Chart.js)
-            renderUsersChart(dataCharts.users, dataCharts.visits);
-            renderDemandChart(dataCharts.demand);
-            renderPlansChart(dataCharts.plans);
+            // Fetch PWA Data
+            fetch(`${API_BASE_URL}/api/admin/stats/pwa${query}`, { headers: { 'Authorization': `Bearer ${token}` } })
+                .then(res => res.ok ? res.json() : {})
+                .then(dataPwa => {
+                    document.getElementById('kpi-pwa').innerText = dataPwa.total || 0;
+                }).catch(err => console.error(err));
 
-            // Shadow Tracking e Funil
-            renderDropoffs(dataFunnel.abandonos);
-            renderUTMs(dataFunnel.origens);
-            renderShadowTracking(dataCharts.shadowTracking);
+            // Fetch Financial Data
+            fetch(`${API_BASE_URL}/api/admin/financials${query}`, { headers: { 'Authorization': `Bearer ${token}` } })
+                .then(res => res.ok ? res.json() : {})
+                .then(dataFin => {
+                    if (dataFin.kpis) {
+                        const formatBRL = (v) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                        document.getElementById('kpi-mrr').innerText = formatBRL(dataFin.kpis.mrr || 0);
+                        document.getElementById('kpi-churn').innerText = `${(dataFin.kpis.churnRate || 0)}%`;
+                        document.getElementById('kpi-ltv').innerText = formatBRL(dataFin.kpis.ltv || 0);
+                        document.getElementById('kpi-arpu').innerText = formatBRL(dataFin.kpis.arpu || 0);
+                    }
+                    renderFaturas(dataFin.recentInvoices);
+                    renderPlanosAtivos(dataFin.activePlans);
+                }).catch(err => console.error(err));
 
-            // === PREENCHIMENTO ABA 2: FINANCEIRO ===
-            if (dataFin.kpis) {
-                const formatBRL = (v) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-                document.getElementById('kpi-mrr').innerText = formatBRL(dataFin.kpis.mrr || 0);
-                document.getElementById('kpi-churn').innerText = `${(dataFin.kpis.churnRate || 0)}%`;
-                document.getElementById('kpi-ltv').innerText = formatBRL(dataFin.kpis.ltv || 0);
-                document.getElementById('kpi-arpu').innerText = formatBRL(dataFin.kpis.arpu || 0);
-            }
-
-            renderFaturas(dataFin.recentInvoices);
-            renderPlanosAtivos(dataFin.activePlans);
-
-        } catch (error) {
-            console.error("Erro na consolidação do CRM Analytics:", error);
-            window.showToast("Erro ao carregar dados.", "error");
         } finally {
-            btnUpdate.textContent = 'Filtrar';
-            btnUpdate.disabled = false;
+            setTimeout(() => {
+                btnUpdate.textContent = 'Filtrar';
+                btnUpdate.disabled = false;
+            }, 1000);
         }
     }
 
