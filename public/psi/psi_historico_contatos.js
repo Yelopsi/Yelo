@@ -1,7 +1,7 @@
 // Arquivo: psi_historico_contatos.js
 // Responsável por carregar o histórico de contatos do WhatsApp do psicólogo logado.
 
-(async function() {
+window.loadContactHistory = async function() {
     const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : 'http://localhost:3001';
     const tbody = document.getElementById('history-table-body');
     const kpiCliques = document.getElementById('kpi-cliques');
@@ -17,7 +17,7 @@
         renderHistory(history);
     } catch (err) {
         console.error('Erro ao carregar histórico de contatos:', err);
-        tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: red;">Erro ao carregar os dados.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: red;">Erro ao carregar os dados.</td></tr>`;
     }
 
     function renderHistory(logs) {
@@ -41,8 +41,8 @@
 
         tbody.innerHTML = '';
         logs.forEach(log => {
-            if (log.contactReceived) mensagensRecebidas++;
-            if (log.dealClosed) negociosFechados++;
+            if (log.contactReceived === true) mensagensRecebidas++;
+            if (log.dealClosed === 'yes' || log.dealClosed === 'started') negociosFechados++;
 
             const dataFormatada = new Date(log.createdAt).toLocaleDateString('pt-BR', {
                 day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -53,34 +53,80 @@
             let badgeText = 'Pendente de Feedback';
 
             if (log.feedbackGiven) {
-                if (log.dealClosed) {
+                if (log.dealClosed === 'yes' || log.dealClosed === 'started') {
                     badgeClass = 'fechado';
-                    badgeText = 'Fechou Negócio';
-                } else if (log.contactReceived && !log.dealClosed) {
+                    badgeText = '✅ Fechou Negócio';
+                } else if (log.dealClosed === 'talking') {
+                    badgeClass = 'pendente';
+                    badgeText = '⏳ Em negociação';
+                } else if (log.dealClosed === 'not_started' || log.dealClosed === 'ghosted' || log.dealClosed === 'no') {
                     badgeClass = 'nao-fechado';
-                    badgeText = 'Não Fechou';
-                } else {
+                    badgeText = '❌ Não Fechou';
+                } else if (!log.contactReceived || log.dealClosed === 'no_contact' || log.dealClosed === 'wpp_issue' || log.dealClosed === 'unknown') {
                     badgeClass = 'fantasma';
-                    badgeText = 'Paciente Fantasma';
+                    badgeText = '👻 Paciente Fantasma';
+                } else {
+                    badgeClass = 'pendente';
+                    badgeText = 'Feedback Registrado';
                 }
+            }
+
+            let actionBtn = '';
+            if (log.dealClosed === 'talking') {
+                actionBtn = `<button onclick="window.updateToClosed('${log.id}')" style="margin-left: 10px; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; border-radius: 50px; padding: 4px 12px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">✅ Fechamos!</button>`;
             }
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td data-label="Data">${dataFormatada}</td>
                 <td data-label="Paciente / Contato" style="font-weight: 500;">${log.guestName || 'Um paciente'}</td>
-                <td data-label="Status do Retorno"><span class="status-badge ${badgeClass}">${badgeText}</span></td>
+                <td data-label="Status do Retorno"><span class="status-badge ${badgeClass}">${badgeText}</span>${actionBtn}</td>
             `;
             tbody.appendChild(tr);
         });
 
         // Atualiza KPIs
         if (kpiCliques) kpiCliques.textContent = totalCliques;
+        if (kpiRecebidos) kpiRecebidos.textContent = mensagensRecebidas;
         if (kpiFechados) kpiFechados.textContent = negociosFechados;
         
         if (kpiConversao) {
-            const taxa = totalCliques > 0 ? Math.round((negociosFechados / totalCliques) * 100) : 0;
+            // A taxa de conversão agora é calculada sobre os contatos reais recebidos, não sobre os cliques!
+            const taxa = mensagensRecebidas > 0 ? Math.round((negociosFechados / mensagensRecebidas) * 100) : 0;
             kpiConversao.textContent = `${taxa}%`;
         }
     }
-})();
+};
+
+window.updateToClosed = async function(id) {
+    if (!confirm('Deseja marcar este paciente como "Fechou Negócio"? Isso vai atualizar suas métricas!')) return;
+    try {
+        const token = localStorage.getItem('Yelo_token');
+        const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : 'http://localhost:3001';
+        const res = await window.apiFetch(`${API_BASE_URL}/api/psychologists/me/whatsapp-feedback`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                clickLogId: id,
+                contact_received: true,
+                deal_closed: 'started'
+            })
+        });
+        
+        if (res.ok) {
+            if (window.showToast) window.showToast('Parabéns por fechar o negócio! 🎉', 'success');
+            window.loadContactHistory(); // recarrega a tabela e KPIs
+        } else {
+            if (window.showToast) window.showToast('Erro ao atualizar. Tente novamente.', 'error');
+        }
+    } catch(err) {
+        console.error(err);
+        if (window.showToast) window.showToast('Erro de conexão.', 'error');
+    }
+}
+
+// Inicia a carga inicial
+window.loadContactHistory();

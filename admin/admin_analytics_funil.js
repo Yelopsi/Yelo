@@ -433,8 +433,15 @@ window.initializePage = function() {
                 const pName = safeStr(l.guestName);
                 const psiName = l.psychologist ? safeStr(l.psychologist.nome) : 'N/A';
                 const recContato = l.contactReceived === true ? 'Sim' : (l.contactReceived === false ? 'Não' : 'Pendente');
-                const fechou = l.dealClosed === 'yes' ? 'Sim' : (l.dealClosed === 'no' ? 'Não' : 'Pendente');
                 const status = l.feedbackGiven ? 'Respondido' : 'Pendente';
+                
+                // Mapeia fechou granularmente
+                let fechou = 'Pendente';
+                if (l.dealClosed === 'yes' || l.dealClosed === 'started') fechou = 'Sim';
+                else if (l.dealClosed === 'no' || l.dealClosed === 'not_started' || l.dealClosed === 'ghosted') fechou = 'Não';
+                else if (l.dealClosed === 'talking') fechou = 'Em Negociação';
+                else if (l.dealClosed) fechou = 'Sem Contato';
+
                 csvContent += `${dataFormatada};${pName};${psiName};${recContato};${fechou};${status}\n`;
             });
             downloadCSV(`yelo_conversoes_${new Date().toISOString().split('T')[0]}.csv`, csvContent);
@@ -506,7 +513,7 @@ window.initializePage = function() {
             }
             if (filterVal === 'pendente') return !f.feedbackGiven;
             if (filterVal === 'respondido') return f.feedbackGiven;
-            if (filterVal === 'fechou') return f.feedbackGiven && f.dealClosed === 'yes';
+            if (filterVal === 'fechou') return f.feedbackGiven && (f.dealClosed === 'yes' || f.dealClosed === 'started');
             if (filterVal === 'nao_recebeu') return f.feedbackGiven && !f.contactReceived;
             return true;
         });
@@ -660,7 +667,11 @@ window.initializePage = function() {
                 status = '<span class="status status-ativo" style="background: #e0f2fe; color: #0369a1; font-size: 0.75rem; border: 1px solid #bae6fd; padding: 4px 10px; border-radius: 20px;">Respondido</span>';
                 if (f.contactReceived) {
                     contato = '✅ Sim';
-                    fechou = f.dealClosed === 'yes' ? '✅ <strong style="color:#16a34a">Fechou!</strong>' : '❌ Não';
+                    if (f.dealClosed === 'yes' || f.dealClosed === 'started') fechou = '✅ <strong style="color:#16a34a">Fechou!</strong>';
+                    else if (f.dealClosed === 'talking') fechou = '⏳ <span style="color:#ca8a04">Em negociação</span>';
+                    else if (f.dealClosed === 'no' || f.dealClosed === 'not_started' || f.dealClosed === 'ghosted') fechou = '❌ <span style="color:#dc2626">Não</span>';
+                    else if (f.dealClosed === 'no_contact' || f.dealClosed === 'wpp_issue' || f.dealClosed === 'unknown') fechou = '👻 <span style="color:#6b7280">Fantasma</span>';
+                    else fechou = '❌ Não';
                 } else {
                     contato = '❌ Não chegou';
                     fechou = '-';
