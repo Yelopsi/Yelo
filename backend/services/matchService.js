@@ -345,10 +345,11 @@ exports.calculateMatches = async (preferences = {}) => {
                     id: r.id,
                     nome: r.nome,
                     temas_atuacao: r.temas_atuacao,
-                    modalidade: r.modalidade
+                    modalidade: r.modalidade,
+                    bio: r.bio || ''
                 }));
                 
-                const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 1800));
+                const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 8000));
                 
                 const aiReasons = await Promise.race([
                     seoService.generateMatchCopy(preferences, psiDataForAI), 
@@ -357,7 +358,11 @@ exports.calculateMatches = async (preferences = {}) => {
 
                 if (aiReasons) {
                     results.forEach(r => {
-                        if (aiReasons[r.id] || aiReasons[String(r.id)]) r.matchReasons = aiReasons[r.id] || aiReasons[String(r.id)];
+                        const psiAi = aiReasons[r.id] || aiReasons[String(r.id)];
+                        if (psiAi) {
+                            r.matchReasons = psiAi.reasons || psiAi; // Fallback se retornar array antigo
+                            r.miniBio = psiAi.miniBio || null;
+                        }
                     });
                 }
             } catch (aiErr) {

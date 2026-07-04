@@ -197,12 +197,12 @@ Temas buscados: ${(patientPreferences.temas || []).join(', ')}
 Gênero preferido: ${patientPreferences.pref_genero_prof || 'Indiferente'}
 Modalidade: ${patientPreferences.modalidade_atendimento || 'Indiferente'}`;
 
-        const psiContext = psychologists.map(p => `ID: ${p.id} | Nome: ${p.nome} | Especialidades: ${(p.temas_atuacao || []).join(', ')} | Modalidade: ${(p.modalidade || []).join(', ')}`).join('\n');
+        const psiContext = psychologists.map(p => `ID: ${p.id} | Nome: ${p.nome} | Especialidades: ${(p.temas_atuacao || []).join(', ')} | Modalidade: ${(p.modalidade || []).join(', ')} | Bio Original: ${(p.bio || '').substring(0, 300)}`).join('\n');
 
         const prompt = `Aja como um "Matchmaker" empático de uma clínica de psicologia.
-Nós cruzamos o perfil de um paciente com 3 psicólogos ideais. Sua tarefa é criar EXATAMENTE 3 frases curtas (máximo 60 caracteres cada) por psicólogo, explicando diretamente ao paciente POR QUE este profissional é uma ótima escolha.
-As frases devem focar no acolhimento, nas dores do paciente e nos pontos fortes do psicólogo.
-Exemplos: "Especialista em Ansiedade, tema que você busca", "Atende Online, do jeito que você prefere", "Acolhimento humanizado e experiente".
+Nós cruzamos o perfil de um paciente com 3 psicólogos ideais. Sua tarefa para CADA psicólogo é criar:
+1. "reasons": Array com EXATAMENTE 1 única frase curta (máximo 60 caracteres) explicando o principal motivo de ele ser uma ótima escolha para esse paciente. Foco no acolhimento e nas dores do paciente.
+2. "miniBio": Uma resposta direta e empática à pergunta "Como eu posso te ajudar?". Para criar esta resposta, analise obrigatoriamente a Bio Original e TODAS as personalizações do perfil do psicólogo (especialidades, modalidade), cruzando isso com as respostas que o paciente acabou de dar no questionário. (máx 150 caracteres). A frase deve iniciar respondendo a pergunta diretamente, sem saudações (sem "Olá" ou "Sou especialista"). O tom deve ser do próprio psicólogo falando. (Ex: "Posso te ajudar a compreender suas emoções e construir ferramentas práticas para superar a ansiedade no seu dia a dia.").
 
 DADOS PACIENTE:
 ${patientContext}
@@ -210,7 +210,14 @@ ${patientContext}
 PSICÓLOGOS SELECIONADOS:
 ${psiContext}
 
-Retorne APENAS um JSON onde as chaves são os IDs dos psicólogos passados e os valores são arrays contendo as 3 frases curtas.`;
+Retorne APENAS um JSON onde as chaves são os IDs dos psicólogos passados, e o valor é um objeto contendo "reasons" e "miniBio".
+Exemplo de formato esperado:
+{
+  "123": {
+    "reasons": ["Especialista em Ansiedade", "Atende Online", "Abordagem humanizada"],
+    "miniBio": "Eu posso te ajudar oferecendo um espaço seguro para explorarmos juntos a origem dessa angústia e construirmos novos caminhos."
+  }
+}`;
 
         const result = await model.generateContent(prompt);
         let rawText = result.response.text();

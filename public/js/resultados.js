@@ -8,20 +8,23 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function createCard(profile) {
         // NOVA LÓGICA: Usa os motivos gerados pela IA ou faz fallback para as antigas tags
+        let reasonsHtml = '';
         const displayReasons = (profile.matchReasons && profile.matchReasons.length > 0) 
-            ? profile.matchReasons.slice(0, 3) 
-            : profile.tags.slice(0, 3);
-        
-        let reasonsHtml = `
-        <div class="match-reasons-box" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px; padding: 12px; margin: 15px 0;">
-            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path></svg>
-                <span style="font-size: 0.8rem; font-weight: 800; color: #0284c7; text-transform: uppercase; letter-spacing: 0.5px;">Por que recomendamos?</span>
-            </div>
-            <ul style="margin: 0; padding-left: 18px; color: #0f172a; font-size: 0.9rem; line-height: 1.4; font-weight: 500;">
-                ${displayReasons.map(reason => `<li style="margin-bottom: 4px;">${reason.charAt(0).toUpperCase() + reason.slice(1)}</li>`).join('')}
-            </ul>
-        </div>`;
+            ? profile.matchReasons.slice(0, 1) 
+            : profile.tags.slice(0, 1);
+
+        if (displayReasons && displayReasons.length > 0) {
+            const r = displayReasons[0];
+            const reasonText = r.charAt(0).toUpperCase() + r.slice(1);
+            reasonsHtml = `
+                <div class="match-reasons-box" style="background-color: #E8F5E9; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                    <span style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--verde-escuro); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Por que recomendamos</span>
+                    <p style="margin: 0; color: var(--verde-escuro); font-size: 0.85rem; line-height: 1.4;">
+                        ${reasonText}
+                    </p>
+                </div>
+            `;
+        }
 
         let precoHtml = '';
         const isMensal = profile.tipo_cobranca === 'mensal';
@@ -84,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     ${reasonsHtml}
                     
-                    <div class="match-bio">${profile.bio}</div>
+                    <div class="match-bio">"${profile.miniBio || profile.bio}"</div>
                     
                     <div class="match-footer">
                         <div class="match-price">${precoHtml}</div>
@@ -196,6 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 valor_sessao_numero: p.valor_sessao_numero,
                 valor_mensal_numero: p.valor_mensal_numero,
                 bio: p.bio || "Sem biografia.",
+                miniBio: p.miniBio,
                 slug: p.slug,
                 matchReasons: p.matchReasons || [], // Puxa os motivos da IA
                 tags: p.matchDetails || p.temas_atuacao || [],

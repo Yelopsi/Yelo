@@ -94,23 +94,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (window.QuestionarioService && !isTestUser()) {
-                await window.QuestionarioService.saveAnswers(demandAnswers).catch(e => console.error(e));
+                window.QuestionarioService.saveAnswers(demandAnswers).catch(e => console.error(e));
                 window.QuestionarioService.trackMatchCompleted();
             }
 
-            // --- CHAMA O MOTOR DE MATCH AQUI ---
-            const matchResponse = await fetch(`${BASE_URL}/api/psychologists/match`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(userAnswers),
-            });
-
-            if (!matchResponse.ok) throw new Error("A API retornou erro " + matchResponse.status);
-
-            const matchData = await matchResponse.json();
-
-            // Salva os resultados reais e redireciona
-            sessionStorage.setItem('matchResults', JSON.stringify(matchData));
+            // --- REDIRECIONAMENTO IMEDIATO ---
+            // Salva as respostas para que a página de resultados faça o match e exiba o loading animado
+            sessionStorage.setItem('pendingMatchAnswers', JSON.stringify(userAnswers));
             window.location.href = '/resultados';
 
         } catch (error) {
