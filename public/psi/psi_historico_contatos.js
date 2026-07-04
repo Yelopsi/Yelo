@@ -127,8 +127,6 @@ window.abrirModalStatus = function(id, contact_received, deal_closed) {
     }
 
     modal.style.display = 'flex';
-    // Use timeout to allow display:flex to apply before adding class for transition
-    setTimeout(() => modal.classList.add('active'), 10);
 };
 
 window.updateStatus = async function(id, contact_received, deal_closed) {
