@@ -81,10 +81,17 @@ window.initializePage = function() {
                 .then(dataFin => {
                     if (dataFin.kpis) {
                         const formatBRL = (v) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                        const formatNum = (v) => `${Math.round(v).toLocaleString('pt-BR')}`;
                         document.getElementById('kpi-mrr').innerText = formatBRL(dataFin.kpis.mrr || 0);
                         document.getElementById('kpi-churn').innerText = `${(dataFin.kpis.churnRate || 0)}%`;
                         document.getElementById('kpi-ltv').innerText = formatBRL(dataFin.kpis.ltv || 0);
                         document.getElementById('kpi-arpu').innerText = formatBRL(dataFin.kpis.arpu || 0);
+                        
+                        if (document.getElementById('kpi-proj-30')) {
+                            document.getElementById('kpi-proj-30').innerText = formatBRL(dataFin.kpis.proj30 || 0);
+                            document.getElementById('kpi-proj-60').innerText = formatBRL(dataFin.kpis.proj60 || 0);
+                            document.getElementById('kpi-proj-90').innerText = formatBRL(dataFin.kpis.proj90 || 0);
+                        }
                     }
                     renderFaturas(dataFin.recentInvoices);
                     renderPlanosAtivos(dataFin.activePlans);

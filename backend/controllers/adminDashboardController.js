@@ -512,14 +512,31 @@ exports.getFinancials = async (req, res) => {
                 updatedAt: dateCondition
             }
         });
+        const newUsersCount = await db.Psychologist.count({
+            where: {
+                status: 'active',
+                createdAt: dateCondition
+            }
+        });
+        
         const totalActiveCount = activePsychologists.length;
         const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt).length;
-        const totalUsersAtStartOfMonth = totalActiveCount + churnedCount;
-        const churnRate = totalUsersAtStartOfMonth > 0 ? (churnedCount / totalUsersAtStartOfMonth) * 100 : 0;
+        const totalUsersAtStartOfMonth = totalActiveCount + churnedCount - newUsersCount;
+        const baseForChurn = totalUsersAtStartOfMonth > 0 ? totalUsersAtStartOfMonth : 1;
+        const churnRate = (churnedCount / baseForChurn) * 100;
         const arpu = payingActiveCount > 0 ? mrr / payingActiveCount : 0;
         const ltv = churnRate > 0 ? arpu / (churnRate / 100) : (arpu * 24);
+        
+        const netGrowth = newUsersCount - churnedCount;
+        const growthRate = totalActiveCount > 0 ? (netGrowth / totalActiveCount) : 0;
+        
+        const proj30 = mrr * (1 + growthRate);
+        const proj60 = mrr * Math.pow(1 + growthRate, 2);
+        const proj90 = mrr * Math.pow(1 + growthRate, 3);
+        
         const kpis = {
-            mrr: mrr, churnRate: churnRate.toFixed(1), ltv: ltv, arpu: arpu
+            mrr: mrr, churnRate: churnRate.toFixed(1), ltv: ltv, arpu: arpu,
+            proj30, proj60, proj90
         };
 
         let recentInvoices = [];
