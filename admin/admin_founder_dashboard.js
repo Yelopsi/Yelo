@@ -151,10 +151,12 @@ async function loadFounderMetrics() {
         
         const alertsArea = document.getElementById('founder-alerts-area');
         if (alerts.length > 0) {
-            alertsArea.style.display = 'block';
+            alertsArea.style.display = 'flex';
+            alertsArea.style.flexWrap = 'wrap';
+            alertsArea.style.gap = '10px';
             alertsArea.innerHTML = alerts.map(a => `
-                <div style="background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; padding: 15px 20px; border-radius: 8px; margin-bottom: 10px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 1.2rem;">⚠️</span> ${a}
+                <div style="background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; padding: 6px 16px; border-radius: 9999px; font-size: 0.9rem; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <span style="font-size: 1.1rem;">⚠️</span> ${a}
                 </div>
             `).join('');
         } else {
