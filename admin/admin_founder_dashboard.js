@@ -91,7 +91,6 @@ async function loadFounderMetrics() {
         document.getElementById('f-prev-mrr').innerText = `R$ ${metrics.projectedMRR.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
 
         // 6. FUNIL
-        document.getElementById('f-funnel-visit').innerText = funnel.visitors;
         document.getElementById('f-funnel-signup').innerText = funnel.signups;
         document.getElementById('f-funnel-trial').innerText = funnel.trials;
         document.getElementById('f-funnel-paid').innerText = funnel.paying;
@@ -146,8 +145,8 @@ async function loadFounderMetrics() {
 
         // 10. ALERTAS
         const alerts = [];
-        if (convPct < 30) alerts.push('Taxa de conversão Trial → Pago caiu abaixo de 30%.');
-        if (metrics.churnRate > 0.05) alerts.push('Churn estourou o limite saudável de 5%.');
+        if (convPct > 0 && convPct < 30) alerts.push('Taxa de conversão Trial → Pago caiu abaixo de 30%.');
+        if (churnPct > 5) alerts.push('Churn estourou o limite saudável de 5%.');
         if (metrics.activeTrialsCount === 0) alerts.push('O funil secou: Nenhum trial ativo no momento.');
         
         const alertsArea = document.getElementById('founder-alerts-area');
@@ -168,12 +167,17 @@ async function loadFounderMetrics() {
 }
 
 window.openFounderGoalsModal = function() {
-    const goals = window.currentFounderGoals || {};
-    document.getElementById('input-goal-mrr').value = goals.goalMRR || 1980;
-    document.getElementById('input-goal-users').value = goals.goalUsers || 20;
-    document.getElementById('input-goal-months').value = goals.goalMonths || 8;
-    document.getElementById('input-goal-new').value = goals.newPerMonth || 2;
-    document.getElementById('modal-founder-goals').style.display = 'flex';
+    try {
+        const goals = window.currentFounderGoals || {};
+        document.getElementById('input-goal-mrr').value = goals.goalMRR || 1980;
+        document.getElementById('input-goal-users').value = goals.goalUsers || 20;
+        document.getElementById('input-goal-months').value = goals.goalMonths || 8;
+        document.getElementById('input-goal-new').value = goals.newPerMonth || 2;
+        document.getElementById('modal-founder-goals').style.display = 'flex';
+    } catch (e) {
+        if(window.Swal) window.Swal.fire('Erro', 'Não foi possível abrir as configurações: ' + e.message, 'error');
+        else alert('Erro ao abrir: ' + e.message);
+    }
 };
 
 window.saveFounderGoals = async function() {
