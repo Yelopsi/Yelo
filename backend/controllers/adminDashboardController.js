@@ -1093,11 +1093,18 @@ exports.getFounderMetrics = async (req, res) => {
 
         // 5. FUNIL
         const visitors = await db.sequelize.query('SELECT COUNT(*) as count FROM "SiteVisits"', { type: db.sequelize.QueryTypes.SELECT }).then(res => res[0].count).catch(() => 0);
+        
+        // Trial Churn: pessoas que iniciaram trial, não pagaram e já expiraram
+        const trialChurnCount = trialsCount - everPaidCount - activeTrialsCount;
+        const trialChurnRate = trialsCount > 0 ? (Math.max(0, trialChurnCount) / trialsCount) : 0;
+
         const funnel = {
             visitors: parseInt(visitors) || 0,
             signups: signups,
             trials: trialsCount,
-            paying: everPaidCount
+            paying: everPaidCount,
+            trialChurnCount: Math.max(0, trialChurnCount),
+            trialChurnRate: trialChurnRate
         };
 
         // 6. HISTÓRICO DE CRESCIMENTO MENSAL

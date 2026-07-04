@@ -29,14 +29,20 @@ async function loadFounderMetrics() {
         const progressPct = Math.min(100, Math.round((metrics.payingUsers / goals.goalUsers) * 100));
         document.getElementById('f-progress-pct').innerText = `${progressPct}%`;
 
-        document.getElementById('f-current-mrr').innerText = `R$ ${metrics.currentMRR.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
+        document.getElementById('f-current-mrr').innerText = `R$ ${metrics.currentMRR.toFixed(2).replace('.', ',')}`;
         document.getElementById('f-trials-count').innerText = metrics.activeTrialsCount;
+        document.getElementById('f-conv-rate').innerText = `${(metrics.conversionRate * 100).toFixed(0)}%`;
+        document.getElementById('f-churn-rate').innerText = `${(metrics.churnRate * 100).toFixed(1)}%`;
+        
+        // Trial Churn
+        if (document.getElementById('f-trial-churn-rate')) {
+            document.getElementById('f-trial-churn-rate').innerText = `${((metrics.funnel?.trialChurnRate || 0) * 100).toFixed(1)}%`;
+            document.getElementById('f-trial-churn-count').innerText = metrics.funnel?.trialChurnCount || 0;
+        }
         
         const convPct = Math.round(metrics.conversionRate * 100);
-        document.getElementById('f-conv-rate').innerText = `${convPct}%`;
-        
         const churnPct = (metrics.churnRate * 100).toFixed(1);
-        document.getElementById('f-churn-rate').innerText = `${churnPct}%`;
+
 
         // 2. BIG PROGRESS BAR
         document.getElementById('f-big-pct').innerText = `${progressPct}%`;
