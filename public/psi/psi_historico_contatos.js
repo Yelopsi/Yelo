@@ -73,7 +73,8 @@ window.loadContactHistory = async function() {
             let clickAction = '';
             
             // Lógica de proteção de indicadores: Não permite reverter um fechamento.
-            if (log.dealClosed !== 'yes' && log.dealClosed !== 'started') {
+            // Só permite alterar se o feedback inicial já foi dado (modal principal)
+            if (log.feedbackGiven && log.dealClosed !== 'yes' && log.dealClosed !== 'started') {
                 badgeClass += ' clickable';
                 badgeStyle = 'title="Clique para atualizar status"';
                 clickAction = `onclick="window.abrirModalStatus('${log.id}', ${log.contactReceived}, '${log.dealClosed}')"`;
