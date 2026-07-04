@@ -83,8 +83,7 @@ window.openCSDrawer = async function(idStr) {
         if (psy.status === 'pending' && pendingReminders.includes(String(psy.id))) {
             nameHtml += ' <span class="badge-pending" title="Lembrete Enviado" style="margin-left: 5px; font-size: 0.8rem;">✉️</span>';
         }
-        document.getElementById('cs-name').innerHTML = nameHtml;
-        document.getElementById('cs-name').id = `name-psy-${psy.id}`; // Para o script de badge achar
+        document.getElementById('cs-name').innerHTML = `<span id="name-psy-${psy.id}">${nameHtml}</span>`;
 
         document.getElementById('cs-email').textContent = psy.email;
         document.getElementById('cs-phone').textContent = `Tel: ${psy.telefone || 'N/A'}`;

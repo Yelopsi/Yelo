@@ -547,7 +547,7 @@ exports.getFinancials = async (req, res) => {
         const ltv = churnRate > 0 ? arpu / (churnRate / 100) : (arpu * 24);
         
         // Previous KPIs Approximation
-        const netGrowth = newUsersCount - churnedCount;
+            const netGrowth = newUsersCount - churnedCount;
         const prevTotalActiveCount = totalUsersAtStartOfMonth;
         const prevBaseForChurn = (prevTotalActiveCount + prevChurnedCount - prevNewUsersCount) || 1;
         const prevChurnRate = (prevChurnedCount / prevBaseForChurn) * 100;
@@ -555,17 +555,17 @@ exports.getFinancials = async (req, res) => {
         const prevLtv = prevChurnRate > 0 ? arpu / (prevChurnRate / 100) : (arpu * 24);
 
         const periodDays = Math.max(1, (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-        const rawGrowthRate = totalActiveCount > 0 ? (netGrowth / totalActiveCount) : 0;
+        const dailyNetGrowth = netGrowth / periodDays;
+        const projectedMonthlyUsersGrowth = dailyNetGrowth * 30;
         
-        // Evita base negativa na exponenciação (MRR nunca pode ser menor que 0)
-        const safeGrowthRate = Math.max(-1, rawGrowthRate);
+        // Projeção Linear Baseada em Usuários x Ticket Médio
+        const users30 = Math.max(0, totalActiveCount + projectedMonthlyUsersGrowth);
+        const users60 = Math.max(0, totalActiveCount + (projectedMonthlyUsersGrowth * 2));
+        const users90 = Math.max(0, totalActiveCount + (projectedMonthlyUsersGrowth * 3));
         
-        // Normaliza a taxa de crescimento para uma base mensal (30 dias)
-        const monthlyGrowthRate = Math.pow(1 + safeGrowthRate, 30 / periodDays) - 1;
-
-        const proj30 = Math.max(0, mrr * (1 + monthlyGrowthRate));
-        const proj60 = Math.max(0, mrr * Math.pow(1 + monthlyGrowthRate, 2));
-        const proj90 = Math.max(0, mrr * Math.pow(1 + monthlyGrowthRate, 3));
+        const proj30 = users30 * arpu;
+        const proj60 = users60 * arpu;
+        const proj90 = users90 * arpu;
         
         // Sparklines Generation (10 points max)
         const generateSparkline = (dates, type = 'count') => {
