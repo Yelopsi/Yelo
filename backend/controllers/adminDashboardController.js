@@ -554,10 +554,18 @@ exports.getFinancials = async (req, res) => {
         const prevMrr = mrr - (newUsersCount * arpu) + (churnedCount * arpu); 
         const prevLtv = prevChurnRate > 0 ? arpu / (prevChurnRate / 100) : (arpu * 24);
 
-        const growthRate = totalActiveCount > 0 ? (netGrowth / totalActiveCount) : 0;
-        const proj30 = mrr * (1 + growthRate);
-        const proj60 = mrr * Math.pow(1 + growthRate, 2);
-        const proj90 = mrr * Math.pow(1 + growthRate, 3);
+        const periodDays = Math.max(1, (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        const rawGrowthRate = totalActiveCount > 0 ? (netGrowth / totalActiveCount) : 0;
+        
+        // Evita base negativa na exponenciação (MRR nunca pode ser menor que 0)
+        const safeGrowthRate = Math.max(-1, rawGrowthRate);
+        
+        // Normaliza a taxa de crescimento para uma base mensal (30 dias)
+        const monthlyGrowthRate = Math.pow(1 + safeGrowthRate, 30 / periodDays) - 1;
+
+        const proj30 = Math.max(0, mrr * (1 + monthlyGrowthRate));
+        const proj60 = Math.max(0, mrr * Math.pow(1 + monthlyGrowthRate, 2));
+        const proj90 = Math.max(0, mrr * Math.pow(1 + monthlyGrowthRate, 3));
         
         // Sparklines Generation (10 points max)
         const generateSparkline = (dates, type = 'count') => {
