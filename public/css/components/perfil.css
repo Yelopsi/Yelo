@@ -332,8 +332,8 @@ body.pagina-publica .mobile-bottom-nav { display: none !important; }
         width: 100%;
         background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(10px);
-        padding: 15px 20px;
-        padding-bottom: calc(15px + env(safe-area-inset-bottom));
+        padding: 24px 24px;
+        padding-bottom: calc(24px + env(safe-area-inset-bottom));
         box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
         z-index: 1000;
         align-items: center;
@@ -359,7 +359,7 @@ body.pagina-publica .mobile-bottom-nav { display: none !important; }
 
     .mobile-sticky-price .value {
         font-family: var(--font-titulos);
-        font-size: 3rem;
+        font-size: 1.8rem;
         color: var(--verde-escuro);
         font-weight: 700;
         line-height: 1;

@@ -12,12 +12,16 @@ document.addEventListener('DOMContentLoaded', () => {
             ? profile.matchReasons.slice(0, 3) 
             : profile.tags.slice(0, 3);
         
-        let reasonsHtml = `<div class="match-tags" style="display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0;">` + 
-            displayReasons.map(reason => `
-                <span class="match-tag" style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 6px 14px; border-radius: 50px; font-size: 0.85rem; font-weight: 600; display: inline-block; line-height: 1.4; text-transform: none !important;">
-                    ${reason.charAt(0).toUpperCase() + reason.slice(1)}
-                </span>`).join('') + 
-        `</div>`;
+        let reasonsHtml = `
+        <div class="match-reasons-box" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px; padding: 12px; margin: 15px 0;">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path></svg>
+                <span style="font-size: 0.8rem; font-weight: 800; color: #0284c7; text-transform: uppercase; letter-spacing: 0.5px;">Por que recomendamos?</span>
+            </div>
+            <ul style="margin: 0; padding-left: 18px; color: #0f172a; font-size: 0.9rem; line-height: 1.4; font-weight: 500;">
+                ${displayReasons.map(reason => `<li style="margin-bottom: 4px;">${reason.charAt(0).toUpperCase() + reason.slice(1)}</li>`).join('')}
+            </ul>
+        </div>`;
 
         let precoHtml = '';
         const isMensal = profile.tipo_cobranca === 'mensal';

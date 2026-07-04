@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (psi.valor_mensal_numero && parseFloat(psi.valor_mensal_numero) > 0) {
                 if (priceContainer) {
                     priceContainer.innerHTML = `
-                        <div class="price-display" style="font-family: var(--font-titulos); font-size: 2.8rem; font-weight: 700; color: var(--verde-escuro); margin: 10px 0 0 0; line-height: 1;">R$ ${parseFloat(psi.valor_mensal_numero).toFixed(2).replace('.', ',')}</div>
+                        <div class="price-display" style="font-family: var(--font-titulos); font-size: 2.0rem; font-weight: 700; color: var(--verde-escuro); margin: 5px 0 0 0; line-height: 1;">R$ ${parseFloat(psi.valor_mensal_numero).toFixed(2).replace('.', ',')}</div>
                         <div class="price-suffix" style="font-size: 0.9rem; color: #999; font-weight: 500;">por mês</div>
                     `;
                 }
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 if (priceContainer) {
                     priceContainer.innerHTML = `
-                        <div class="price-display" style="font-family: var(--font-titulos); font-size: 2.2rem; font-weight: 700; color: var(--verde-escuro); margin: 10px 0 0 0; line-height: 1;">A combinar</div>
+                        <div class="price-display" style="font-family: var(--font-titulos); font-size: 2.0rem; font-weight: 700; color: var(--verde-escuro); margin: 5px 0 0 0; line-height: 1;">A combinar</div>
                         <div class="price-suffix" style="font-size: 0.9rem; color: #999; font-weight: 500;">por mês</div>
                     `;
                 }
@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (psi.valor_sessao_numero && parseFloat(psi.valor_sessao_numero) > 0) {
                 if (priceContainer) {
                     priceContainer.innerHTML = `
-                        <div class="price-display" style="font-family: var(--font-titulos); font-size: 2.8rem; font-weight: 700; color: var(--verde-escuro); margin: 10px 0 0 0; line-height: 1;">R$ ${parseFloat(psi.valor_sessao_numero).toFixed(2).replace('.', ',')}</div>
+                        <div class="price-display" style="font-family: var(--font-titulos); font-size: 2.0rem; font-weight: 700; color: var(--verde-escuro); margin: 5px 0 0 0; line-height: 1;">R$ ${parseFloat(psi.valor_sessao_numero).toFixed(2).replace('.', ',')}</div>
                         <div class="price-suffix" style="font-size: 0.9rem; color: #999; font-weight: 500;">por sessão</div>
                     `;
                 }
@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 if (priceContainer) {
                     priceContainer.innerHTML = `
-                        <div class="price-display" style="font-family: var(--font-titulos); font-size: 2.2rem; font-weight: 700; color: var(--verde-escuro); margin: 10px 0 0 0; line-height: 1;">A combinar</div>
+                        <div class="price-display" style="font-family: var(--font-titulos); font-size: 2.0rem; font-weight: 700; color: var(--verde-escuro); margin: 5px 0 0 0; line-height: 1;">A combinar</div>
                         <div class="price-suffix" style="font-size: 0.9rem; color: #999; font-weight: 500;">por sessão</div>
                     `;
                 }
@@ -407,15 +407,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function populateReviews(reviews, psi) {
-        const reviewCountSpan = document.getElementById('review-count');
+        const reviewsSection = document.getElementById('reviews-section');
         const reviewsListContainer = document.getElementById('reviews-list-container');
         const scrollIndicator = document.getElementById('reviews-scroll-indicator');
         const ratingSummary = document.getElementById('psi-rating-summary');
         
+        const reviewCountSpan = document.getElementById('review-count');
+        const reviewCountWrapper = document.getElementById('review-count-wrapper');
+        
         if (reviewCountSpan) reviewCountSpan.textContent = reviews.length;
 
         if (reviews.length === 0) {
-            if (reviewsListContainer) reviewsListContainer.innerHTML = '<p style="color: #666; font-style: italic; text-align: center;">Este profissional ainda não possui avaliações.</p>';
+            if (reviewCountWrapper) reviewCountWrapper.style.display = 'none';
+            if (reviewsListContainer) reviewsListContainer.innerHTML = '<p style="color: #666; font-style: italic; width: 100%;">Este profissional ingressou recentemente. Se você já conhece o trabalho, seja o primeiro a deixar um depoimento!</p>';
             
             let novoText = 'Novo(a) na Yelo';
             if (psi) {
@@ -432,6 +436,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (scrollIndicator) scrollIndicator.style.display = 'none';
             return;
         }
+
+        if (reviewCountWrapper) reviewCountWrapper.style.display = 'inline';
 
         const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
         const avgRating = (totalRating / reviews.length).toFixed(1);
