@@ -83,6 +83,12 @@ window.initializePage = function() {
         });
     }
 
+    // Handle auto search from other pages
+    const autoSearchName = localStorage.getItem('autoSearchPsiName');
+    if (autoSearchName && searchInput) {
+        searchInput.value = autoSearchName;
+    }
+
     searchInput.addEventListener('keyup', () => {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => fetchAndRenderPsis(1), 500);
@@ -115,6 +121,14 @@ window.initializePage = function() {
                 setText('kpi-inativos-psis', kpis.inactive);
                 setText('kpi-vip-psis', kpis.vip);
                 setText('kpi-fila-cs', kpis.fila_cs);
+            }
+
+            // Auto open logic
+            const autoOpenId = localStorage.getItem('autoOpenPsiId');
+            if (autoOpenId && data.some(p => String(p.id) === String(autoOpenId))) {
+                localStorage.removeItem('autoOpenPsiId');
+                localStorage.removeItem('autoSearchPsiName');
+                setTimeout(() => window.openCSDrawer(autoOpenId), 300);
             }
         } catch (error) {
             tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--coral-quente);">Erro ao carregar dados.</td></tr>`;
