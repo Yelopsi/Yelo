@@ -1,6 +1,6 @@
-document.addEventListener('DOMContentLoaded', () => {
+window.initializePage = function() {
     loadFounderMetrics();
-});
+};
 
 let currentGoals = {};
 
