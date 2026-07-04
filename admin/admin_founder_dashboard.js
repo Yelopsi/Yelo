@@ -6,7 +6,7 @@ window.currentFounderGoals = {};
 
 async function loadFounderMetrics() {
     try {
-        const token = localStorage.getItem('adminToken');
+        const token = localStorage.getItem('Yelo_token');
         if (!token) return;
 
         const baseUrl = window.API_BASE_URL || '';
@@ -177,7 +177,7 @@ window.openFounderGoalsModal = function() {
 };
 
 window.saveFounderGoals = async function() {
-    const token = localStorage.getItem('adminToken');
+    const token = localStorage.getItem('Yelo_token');
     const goals = window.currentFounderGoals || {};
     const newGoals = {
         goalMRR: parseFloat(document.getElementById('input-goal-mrr').value),
