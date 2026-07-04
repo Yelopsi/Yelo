@@ -67,7 +67,7 @@ window.QuestionarioUI = (function() {
 
             if (questionData.type === 'welcome') { 
                 nextButtonHTML = `<button class="cta-button" data-action="next">Vamos começar</button>`; 
-            } else if (['text', 'tel', 'multiple-choice', 'rating'].includes(questionData.type)) { 
+            } else if (['text', 'tel', 'multiple-choice', 'rating', 'info'].includes(questionData.type)) { 
                 let buttonText = "Avançar";
                 let buttonAction = "next";
                 if(questionData.id === 'nome') { buttonText = "Finalizar"; buttonAction = "finalize"; }

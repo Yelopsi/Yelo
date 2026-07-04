@@ -53,48 +53,143 @@
         .drawer-header-mobile::before {
             content: ''; display: block; width: 40px; height: 5px; background: #cbd5e1; border-radius: 5px; margin: 0 auto 15px auto;
         }
+        }
         .drawer-body-scroll {
             padding-bottom: 120px !important;
         }
+    .kpi-card { cursor: pointer; position: relative; transition: all 0.2s; border-radius: 12px; }
+    .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 10; }
+    .kpi-card[data-kpi="active_paying"].active { background: #ecfdf5; border-color: #10b981; }
+    .kpi-card[data-kpi="active_trial"].active { background: #eff6ff; border-color: #3b82f6; }
+    .kpi-card[data-kpi="pending"].active { background: #fffbeb; border-color: #f59e0b; }
+    .kpi-card[data-kpi="inactive"].active { background: #fef2f2; border-color: #ef4444; }
+    .kpi-card[data-kpi="vip"].active { background: #fefce8; border-color: #eab308; }
+    .kpi-card[data-kpi="not_analyzed"].active { background: #f5f3ff; border-color: #8b5cf6; }
+    .kpi-card[data-kpi="deleted"].active { background: #f8fafc; border-color: #0f172a; }
+    .kpi-card[data-kpi=""].active { background: #f1f5f9; border-color: #64748b; }
+    
+    .kpi-card h4 { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+    .kpi-trend { font-size: 0.8rem; margin-top: 8px; font-weight: 500; }
+    .kpi-trend.positive { color: #10b981; }
+    .kpi-trend.negative { color: #ef4444; }
+    .kpi-trend.neutral { color: #64748b; }
+    
+    .tooltip-icon { color: #94a3b8; cursor: help; font-size: 0.9rem; position: relative; display: inline-flex; }
+    .tooltip-icon::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 125%; left: 50%; transform: translateX(-50%);
+        background: #1e293b; color: white;
+        padding: 8px 12px; border-radius: 6px;
+        font-size: 0.75rem; white-space: normal; width: 180px; text-align: center;
+        opacity: 0; visibility: hidden; transition: all 0.2s;
+        pointer-events: none; z-index: 100; line-height: 1.4; font-family: sans-serif;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
+    .tooltip-icon::before {
+        content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+        border-width: 5px; border-style: solid; border-color: #1e293b transparent transparent transparent;
+        opacity: 0; visibility: hidden; transition: all 0.2s; pointer-events: none;
+    }
+    .tooltip-icon:hover::after, .tooltip-icon:hover::before { opacity: 1; visibility: visible; }
+    
+    .pagination-btn-modern:hover:not(:disabled) { background: #f8f9fa !important; }
+    .pagination-btn-modern:disabled { opacity: 0.5; cursor: not-allowed !important; }
 </style>
 
 <div class="modern-dashboard-layout" style="padding-bottom: 120px;">
-    <div class="main-header" style="background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%); padding: 25px 30px; margin-bottom: 25px; border-radius: 16px;">
+    <div class="main-header" style="background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%); padding: 25px 30px; margin-bottom: 25px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
         <div>
             <h1 style="color: white; margin: 0 0 5px 0; font-size: 1.8rem; font-family: var(--font-titulos);">Sucesso do Psicólogo (CS)</h1>
             <p style="color: rgba(255,255,255,0.8); margin: 0;">Monitoramento de saúde da assinatura, engajamento e força do perfil.</p>
         </div>
-    </div>
-
-    <div class="kpi-grid">
-        <div class="kpi-card" style="border-top-color: #3498db;">
-            <h4 style="display: flex; align-items: center; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> Total</h4>
-            <p class="kpi-numero" id="kpi-total-psis" style="color: #3498db;">0</p>
-        </div>
-        <div class="kpi-card" style="border-top-color: var(--verde-sucesso);">
-            <h4 style="display: flex; align-items: center; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Ativos</h4>
-            <p class="kpi-numero" id="kpi-ativos-psis" style="color: var(--verde-sucesso);">0</p>
-        </div>
-        <div class="kpi-card" style="border-top-color: #f39c12;">
-            <h4 style="display: flex; align-items: center; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Pendentes</h4>
-            <p class="kpi-numero" id="kpi-pendentes-psis" style="color: #f39c12;">0</p>
-        </div>
-        <div class="kpi-card" style="border-top-color: var(--coral-quente);">
-            <h4 style="display: flex; align-items: center; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="15"></line><line x1="15" y1="9" x2="9" y2="15"></line></svg> Inativos</h4>
-            <p class="kpi-numero" id="kpi-inativos-psis" style="color: var(--coral-quente);">0</p>
-        </div>
-        <div class="kpi-card" style="border-top-color: #FFD700;">
-            <h4 style="display: flex; align-items: center; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> VIPs</h4>
-            <p class="kpi-numero" id="kpi-vip-psis" style="color: #d4af37;">0</p>
-        </div>
-        <div class="kpi-card" style="border-top-color: #8b5cf6;">
-            <h4 style="display: flex; align-items: center; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg> Fila CS (IA)</h4>
-            <p class="kpi-numero" id="kpi-fila-cs" style="color: #8b5cf6;">0</p>
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            <div style="background: rgba(255,255,255,0.1); padding: 15px 20px; border-radius: 12px; text-align: center; flex: 1; min-width: 100px;">
+                <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 5px;">MRR <span class="tooltip-icon" data-tooltip="Receita Mensal Recorrente estimada baseada nas assinaturas ativas."><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span></p>
+                <h3 style="margin: 5px 0 0 0; color: white; font-size: 1.5rem;">R$ 12.450</h3>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); padding: 15px 20px; border-radius: 12px; text-align: center; flex: 1; min-width: 100px;">
+                <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 5px;">Ativação <span class="tooltip-icon" data-tooltip="Percentual de psicólogos que finalizaram o perfil e estão prontos para atendimento."><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span></p>
+                <h3 style="margin: 5px 0 0 0; color: #10b981; font-size: 1.5rem;">85%</h3>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); padding: 15px 20px; border-radius: 12px; text-align: center; flex: 1; min-width: 100px;">
+                <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 5px;">Retenção <span class="tooltip-icon" data-tooltip="Percentual de psicólogos que se mantiveram pagantes após o trial ou renovaram o ciclo."><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span></p>
+                <h3 style="margin: 5px 0 0 0; color: #3b82f6; font-size: 1.5rem;">92%</h3>
+            </div>
         </div>
     </div>
 
-    <div class="widget" style="margin-bottom: 25px;">
+    <div style="margin-bottom: 25px;">
+        <h3 style="font-size: 1.2rem; color: #1e293b; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> 
+            Ações Prioritárias
+        </h3>
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px; background: #fffbeb; border: 1px solid #fde68a; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; gap: 5px;">
+                <div style="font-size: 2.2rem; font-weight: bold; color: #d97706; line-height: 1;">3</div>
+                <div><strong style="color: #92400e; display: block; font-size: 1.1rem;">Trials Acabando</strong><span style="font-size: 0.85rem; color: #b45309;">Vencimento nas próximas 24h</span></div>
+            </div>
+            <div style="flex: 1; min-width: 200px; background: #fef2f2; border: 1px solid #fecaca; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; gap: 5px;">
+                <div style="font-size: 2.2rem; font-weight: bold; color: #dc2626; line-height: 1;">2</div>
+                <div><strong style="color: #991b1b; display: block; font-size: 1.1rem;">Pagamentos Falhados</strong><span style="font-size: 0.85rem; color: #b91c1c;">Necessitam de contato urgente</span></div>
+            </div>
+            <div style="flex: 1; min-width: 200px; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; gap: 5px;">
+                <div style="font-size: 2.2rem; font-weight: bold; color: #16a34a; line-height: 1;" id="kpi-alerta-pendentes">15</div>
+                <div><strong style="color: #166534; display: block; font-size: 1.1rem;">Perfis Incompletos</strong><span style="font-size: 0.85rem; color: #15803d;">Pendentes há mais de 3 dias</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 15px;">
+        <!-- 1. Pagantes -->
+        <div class="kpi-card active" data-kpi="active_paying" style="border-top-color: #10b981;" onclick="window.filterByKpi('active_paying')">
+            <h4><span style="display:flex; align-items:center; gap:8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg> Pagantes</span> <span class="tooltip-icon" data-tooltip="Psicólogos que já assinaram e estão com o pagamento em dia."><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span></h4>
+            <p class="kpi-numero" id="kpi-pagantes-psis" style="color: #10b981; font-size: 2rem;">0</p>
+            <p class="kpi-trend positive">+5 este mês</p>
+        </div>
+        <!-- 2. Trial -->
+        <div class="kpi-card" data-kpi="active_trial" style="border-top-color: #3b82f6;" onclick="window.filterByKpi('active_trial')">
+            <h4><span style="display:flex; align-items:center; gap:8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Em Trial</span> <span class="tooltip-icon" data-tooltip="Psicólogos nos 14 dias de teste grátis."><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span></h4>
+            <p class="kpi-numero" id="kpi-trial-psis" style="color: #3b82f6; font-size: 2rem;">0</p>
+            <p class="kpi-trend neutral">Mantido</p>
+        </div>
+        <!-- 3. Pendentes -->
+        <div class="kpi-card" data-kpi="pending" style="border-top-color: #f59e0b;" onclick="window.filterByKpi('pending')">
+            <h4><span style="display:flex; align-items:center; gap:8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.13 15.57a10 10 0 1 0 2.54-10.4L2 7"></path></svg> Pendentes</span> <span class="tooltip-icon" data-tooltip="Não finalizaram o perfil. Após um certo período, irão para a lixeira."><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span></h4>
+            <p class="kpi-numero" id="kpi-pendentes-psis" style="color: #f59e0b; font-size: 2rem;">0</p>
+            <p class="kpi-trend negative" id="kpi-trend-pendentes">15 há > 3 dias</p>
+        </div>
+        <!-- 5. Inativos -->
+        <div class="kpi-card" data-kpi="inactive" style="border-top-color: #ef4444;" onclick="window.filterByKpi('inactive')">
+            <h4><span style="display:flex; align-items:center; gap:8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="15"></line><line x1="15" y1="9" x2="9" y2="15"></line></svg> Inativos</span> <span class="tooltip-icon" data-tooltip="Assinatura cancelada, expirada ou pagamentos falhados."><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span></h4>
+            <p class="kpi-numero" id="kpi-inativos-psis" style="color: #ef4444; font-size: 2rem;">0</p>
+            <p class="kpi-trend negative">+2 esta semana</p>
+        </div>
+    </div>
+
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 25px; gap: 10px;">
+        <!-- 4. VIPs -->
+        <div class="kpi-card" data-kpi="vip" style="border-top-color: #eab308; padding: 12px 15px;" onclick="window.filterByKpi('vip')">
+            <h4 style="font-size: 0.85rem; margin-bottom: 2px;"><span style="display:flex; align-items:center; gap:6px;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> VIPs</span></h4>
+            <p class="kpi-numero" id="kpi-vip-psis" style="color: #eab308; font-size: 1.4rem;">0</p>
+        </div>
+        <!-- 6. Fila CS -->
+        <div class="kpi-card" data-kpi="not_analyzed" style="border-top-color: #8b5cf6; padding: 12px 15px;" onclick="window.filterByKpi('not_analyzed')">
+            <h4 style="font-size: 0.85rem; margin-bottom: 2px;"><span style="display:flex; align-items:center; gap:6px;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg> Fila CS</span></h4>
+            <p class="kpi-numero" id="kpi-fila-cs" style="color: #8b5cf6; font-size: 1.4rem;">0</p>
+        </div>
+        <!-- 8. Total Cadastros -->
+        <div class="kpi-card" data-kpi="" style="border-top-color: #64748b; padding: 12px 15px;" onclick="window.filterByKpi('')">
+            <h4 style="font-size: 0.85rem; margin-bottom: 2px;"><span style="display:flex; align-items:center; gap:6px;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> Total Geral</span></h4>
+            <p class="kpi-numero" id="kpi-total-psis" style="color: #64748b; font-size: 1.4rem;">0</p>
+        </div>
+        <!-- 9. Lixeira -->
+        <div class="kpi-card" data-kpi="deleted" style="border-top-color: #0f172a; padding: 12px 15px;" onclick="window.filterByKpi('deleted')">
+            <h4 style="font-size: 0.85rem; margin-bottom: 2px;"><span style="display:flex; align-items:center; gap:6px;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Lixeira</span></h4>
+            <p class="kpi-numero" id="kpi-lixeira-psis" style="color: #0f172a; font-size: 1.4rem;">0</p>
+        </div>
+    </div>
+
+    <div class="widget" style="margin-bottom: 15px;">
         <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px;">
             <div class="crm-funnel-tabs" style="display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 5px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
                 <button class="crm-pill active" data-filter="">Todos</button>
@@ -108,9 +203,17 @@
             </div>
             <input type="hidden" id="crm-status-psi" value="">
             
-            <div class="search-wrapper" style="position: relative; width: 300px; max-width: 100%;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" id="crm-search-psi" class="campo-busca" placeholder="Buscar psicólogo..." style="width: 100%; padding-left: 42px;">
+            <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                <div class="date-filters" style="display: flex; gap: 10px; align-items: center;">
+                    <input type="date" id="crm-date-start" class="campo-busca" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.9rem;">
+                    <span style="color: #64748b;">até</span>
+                    <input type="date" id="crm-date-end" class="campo-busca" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.9rem;">
+                </div>
+                
+                <div class="search-wrapper" style="position: relative; width: 300px; max-width: 100%;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" id="crm-search-psi" class="campo-busca" placeholder="Buscar psicólogo..." style="width: 100%; padding-left: 42px;">
+                </div>
             </div>
         </div>
     </div>
@@ -133,6 +236,21 @@
                 </tbody>
             </table>
         </div>
-        <div id="crm-pagination-psis" class="pagination-container" style="margin-top: 20px;"></div>
+        <div id="crm-pagination-psis" class="pagination-container" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; flex-wrap: wrap; gap: 15px;">
+            <div id="pagination-info" style="font-size: 0.9rem; color: #64748b; font-weight: 500;">
+                Mostrando -- de --
+            </div>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <select id="crm-per-page" style="padding: 6px 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.9rem; color: #1e293b; outline: none; cursor: pointer;">
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+                <div class="page-nav" style="display: flex; gap: 5px;">
+                    <button class="pagination-btn-modern" id="btn-prev-page" style="padding: 6px 12px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; color: #1e293b;">←</button>
+                    <button class="pagination-btn-modern" id="btn-next-page" style="padding: 6px 12px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; color: #1e293b;">→</button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

@@ -33,24 +33,46 @@ window.initializePage = function() {
 
     document.querySelectorAll('.crm-pill').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.crm-pill').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            
-            const filterVal = e.target.dataset.filter;
-            
-            isVipFilterActive = false;
-            isNotAnalyzedFilterActive = false;
-            statusInput.value = '';
-
-            if (filterVal === 'vip') {
-                isVipFilterActive = true;
-            } else if (filterVal === 'not_analyzed') {
-                isNotAnalyzedFilterActive = true;
-            } else {
-                statusInput.value = filterVal;
-            }
-            fetchAndRenderPsis(1);
+            window.filterByKpi(e.target.dataset.filter);
         });
+    });
+
+    window.filterByKpi = function(filterVal) {
+        // Atualiza Pills
+        document.querySelectorAll('.crm-pill').forEach(b => b.classList.remove('active'));
+        const pill = document.querySelector(`.crm-pill[data-filter="${filterVal}"]`);
+        if (pill) pill.classList.add('active');
+
+        // Atualiza Cards
+        document.querySelectorAll('.kpi-card').forEach(c => c.classList.remove('active'));
+        const card = document.querySelector(`.kpi-card[data-kpi="${filterVal}"]`);
+        if (card) card.classList.add('active');
+
+        isVipFilterActive = false;
+        isNotAnalyzedFilterActive = false;
+        statusInput.value = '';
+        
+        if (filterVal === 'vip') isVipFilterActive = true;
+        else if (filterVal === 'not_analyzed') isNotAnalyzedFilterActive = true;
+        else statusInput.value = filterVal;
+        
+        fetchAndRenderPsis(1);
+        
+        // Scroll suave para a tabela
+        document.querySelector('.kpi-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    window.currentCrmPage = 1;
+    
+    document.getElementById('crm-per-page')?.addEventListener('change', () => fetchAndRenderPsis(1));
+    document.getElementById('crm-date-start')?.addEventListener('change', () => fetchAndRenderPsis(1));
+    document.getElementById('crm-date-end')?.addEventListener('change', () => fetchAndRenderPsis(1));
+    
+    document.getElementById('btn-prev-page')?.addEventListener('click', () => {
+        if (window.currentCrmPage > 1) fetchAndRenderPsis(window.currentCrmPage - 1);
+    });
+    document.getElementById('btn-next-page')?.addEventListener('click', () => {
+        fetchAndRenderPsis(window.currentCrmPage + 1);
     });
 
     // Lógica de Swipe Down APENAS NO CABEÇALHO (Para não travar o scroll do conteúdo)
@@ -100,27 +122,33 @@ window.initializePage = function() {
 
         const searchTerm = searchInput.value;
         const status = statusInput.value;
+        const startDate = document.getElementById('crm-date-start')?.value || '';
+        const endDate = document.getElementById('crm-date-end')?.value || '';
+        const limit = document.getElementById('crm-per-page')?.value || 20;
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/psychologists?page=${page}&search=${searchTerm}&status=${status}&isVip=${isVipFilterActive}&notAnalyzed=${isNotAnalyzedFilterActive}`, {
+            const response = await fetch(`${API_BASE_URL}/api/admin/psychologists?page=${page}&limit=${limit}&search=${searchTerm}&status=${status}&isVip=${isVipFilterActive}&notAnalyzed=${isNotAnalyzedFilterActive}&startDate=${startDate}&endDate=${endDate}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Falha ao buscar dados.');
 
-            const { data, totalPages, currentPage, kpis } = await response.json();
+            const { data, totalPages, currentPage, totalItems, kpis } = await response.json();
             psisDataCache = data;
             
             renderTable(data);
-            renderPagination(totalPages, currentPage);
+            renderPagination(totalPages, currentPage, totalItems, limit);
 
             if (kpis) {
                 const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value || 0; };
                 setText('kpi-total-psis', kpis.total);
-                setText('kpi-ativos-psis', (parseInt(kpis.active_paying) || 0) + (parseInt(kpis.active_trial) || 0));
+                setText('kpi-pagantes-psis', kpis.active_paying || 0);
+                setText('kpi-trial-psis', kpis.active_trial || 0);
                 setText('kpi-pendentes-psis', kpis.pending);
                 setText('kpi-inativos-psis', kpis.inactive);
                 setText('kpi-vip-psis', kpis.vip);
                 setText('kpi-fila-cs', kpis.fila_cs);
+                setText('kpi-lixeira-psis', kpis.deleted || 0);
+                setText('kpi-alerta-pendentes', kpis.pending || 0);
             }
 
             // Auto open logic
@@ -237,14 +265,22 @@ window.initializePage = function() {
         }
     };
 
-    function renderPagination(totalPages, currentPage) {
-        const container = document.getElementById('crm-pagination-psis');
-        if (!container || totalPages <= 1) { if(container) container.innerHTML = ''; return; }
+    function renderPagination(totalPages, currentPage, totalItems, limit) {
+        window.currentCrmPage = currentPage;
+        const infoEl = document.getElementById('pagination-info');
+        const btnPrev = document.getElementById('btn-prev-page');
+        const btnNext = document.getElementById('btn-next-page');
         
-        let html = `<button class="pagination-btn" onclick="window.loadCrmPsisPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>&laquo;</button>`;
-        for (let i = 1; i <= totalPages; i++) html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="window.loadCrmPsisPage(${i})">${i}</button>`;
-        html += `<button class="pagination-btn" onclick="window.loadCrmPsisPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>&raquo;</button>`;
-        container.innerHTML = html;
+        if (!infoEl || !btnPrev || !btnNext) return;
+
+        const effectiveTotal = totalItems || (totalPages * limit) || 0;
+        const startItem = effectiveTotal === 0 ? 0 : ((currentPage - 1) * limit) + 1;
+        const endItem = Math.min(currentPage * limit, effectiveTotal);
+        
+        infoEl.textContent = `Mostrando ${startItem}–${endItem} de ${effectiveTotal}`;
+        
+        btnPrev.disabled = currentPage <= 1;
+        btnNext.disabled = currentPage >= totalPages || totalPages === 0;
     }
     window.loadCrmPsisPage = function(p) { fetchAndRenderPsis(p); };
 

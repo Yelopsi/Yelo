@@ -1,0 +1,7 @@
+{
+  "goalMRR": 2000,
+  "goalUsers": 21,
+  "goalMonths": 7,
+  "newPerMonth": 3,
+  "goalStartDate": "2026-05-01"
+}

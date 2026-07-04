@@ -36,8 +36,8 @@ async function loadFounderMetrics() {
         
         // Trial Churn
         if (document.getElementById('f-trial-churn-rate')) {
-            document.getElementById('f-trial-churn-rate').innerText = `${((metrics.funnel?.trialChurnRate || 0) * 100).toFixed(1)}%`;
-            document.getElementById('f-trial-churn-count').innerText = metrics.funnel?.trialChurnCount || 0;
+            document.getElementById('f-trial-churn-rate').innerText = `${((funnel?.trialChurnRate || 0) * 100).toFixed(1)}%`;
+            document.getElementById('f-trial-churn-count').innerText = funnel?.trialChurnCount || 0;
         }
         
         const convPct = Math.round(metrics.conversionRate * 100);
@@ -100,7 +100,7 @@ async function loadFounderMetrics() {
         document.getElementById('f-funnel-signup').innerText = funnel.signups;
         document.getElementById('f-funnel-trial').innerText = funnel.trials;
         document.getElementById('f-funnel-paid').innerText = funnel.paying;
-        document.getElementById('f-funnel-current').innerText = metrics.activeUsersCount;
+        document.getElementById('f-funnel-current').innerText = metrics.payingUsers || 0;
 
         // 7. PIPELINE DOS TRIALS
         const tbody = document.getElementById('f-trials-table');
@@ -177,20 +177,50 @@ async function loadFounderMetrics() {
 
 window.openFounderGoalsModal = function() {
     try {
-        const goals = window.currentFounderGoals || {};
-        let modal = document.getElementById('modal-founder-goals');
-        if (modal) {
-            document.body.appendChild(modal); // Move para o body para evitar problemas de z-index
-            document.getElementById('input-goal-mrr').value = goals.goalMRR || 1980;
-            document.getElementById('input-goal-users').value = goals.goalUsers || 20;
-            document.getElementById('input-goal-months').value = goals.goalMonths || 8;
-            document.getElementById('input-goal-new').value = goals.newPerMonth || 2;
-            modal.style.display = 'flex';
+        console.log("Abrindo modal de metas...");
+        
+        const allModals = document.querySelectorAll('#modal-founder-goals');
+        console.log("Modais encontrados na tela:", allModals.length);
+        
+        let modalToUse = null;
+        
+        if (allModals.length > 0) {
+            modalToUse = allModals[0];
+            for (let i = 1; i < allModals.length; i++) {
+                allModals[i].remove();
+            }
+        }
+        
+        if (modalToUse) {
+            console.log("Modal validado. Preparando para exibir...");
+            const goals = window.currentFounderGoals || {};
+            
+            if (modalToUse.parentElement !== document.body) {
+                document.body.appendChild(modalToUse);
+            }
+            
+            // Usando querySelector direto no modal para evitar conflitos de ID globais
+            const inMRR = modalToUse.querySelector('#input-goal-mrr');
+            const inUsers = modalToUse.querySelector('#input-goal-users');
+            const inMonths = modalToUse.querySelector('#input-goal-months');
+            const inNew = modalToUse.querySelector('#input-goal-new');
+            
+            if (inMRR) inMRR.value = goals.goalMRR || 1980;
+            if (inUsers) inUsers.value = goals.goalUsers || 20;
+            if (inMonths) inMonths.value = goals.goalMonths || 8;
+            if (inNew) inNew.value = goals.newPerMonth || 2;
+            
+            modalToUse.style.display = 'flex';
+            modalToUse.style.setProperty('display', 'flex', 'important');
+            modalToUse.style.opacity = '1'; // <--- Ignora CSS global de opacidade
+            modalToUse.style.pointerEvents = 'auto'; // <--- Ignora CSS de pointer-events: none
+            modalToUse.style.zIndex = '999999';
+            console.log("Modal agora deve estar visível e clicável.");
         } else {
-            alert('Modal não encontrado na página.');
+            console.error('Modal não encontrado na página.');
         }
     } catch (e) {
-        alert('Erro ao abrir: ' + e.message);
+        console.error('Erro ao abrir o modal:', e);
     }
 };
 
