@@ -25,9 +25,9 @@
     .modern-dashboard-layout { background-color: var(--saas-bg); padding-bottom: 120px; font-family: 'Inter', sans-serif; }
 
     /* Elegant Header & Toolbar */
-    .saas-header { display: flex; justify-content: space-between; align-items: center; padding: 30px 40px 20px; }
-    .saas-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--saas-text); margin: 0 0 4px 0; letter-spacing: -0.02em; }
-    .saas-header p { font-size: 0.9rem; color: var(--saas-muted); margin: 0; }
+    .saas-header { display: flex; background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%); border-radius: 16px; margin: 20px 40px; color: white; justify-content: space-between; align-items: center; padding: 30px 40px 20px; }
+    .saas-header h1 { font-size: 1.5rem; font-weight: 700; color: white; margin: 0 0 4px 0; letter-spacing: -0.02em; }
+    .saas-header p { font-size: 0.9rem; color: rgba(255,255,255,0.8); margin: 0; }
     
     .saas-toolbar { display: flex; gap: 8px; padding: 0 40px; }
     .toolbar-chip { background: transparent; border: 1px solid transparent; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; color: var(--saas-muted); cursor: pointer; transition: all 0.2s; }
@@ -145,8 +145,77 @@
 
     <!-- ABA 1: DESEMPENHO E USO (Mantido Oculto por Padrão) -->
     <div id="tab-desempenho" class="analytics-tab-content" style="display: none;">
-        <!-- Mantém estrutura anterior aqui -->
-        <p style="padding: 0 40px;">*Conteúdo de uso mantido conforme original. Mude a aba para ver a Receita.*</p>
+        <div class="kpi-grid">
+            <div class="kpi-card" style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #2E7D32; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <div class="kpi-content">
+                    <h4 style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Questionários Feitos</h4>
+                    <span id="kpi-quest-concluidos" style="font-size: 1.6rem; font-weight: bold; color: #2E7D32;">0</span>
+                </div>
+            </div>
+            <div class="kpi-card" style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #e74c3c; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <div class="kpi-content">
+                    <h4 style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Questionários Abandonados</h4>
+                    <span id="kpi-quest-abandonados" style="font-size: 1.6rem; font-weight: bold; color: #e74c3c;">0</span>
+                </div>
+            </div>
+            <div class="kpi-card" style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #3498db; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <div class="kpi-content">
+                    <h4 style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Acessos ao Site</h4>
+                    <span id="kpi-visits" style="font-size: 1.6rem; font-weight: bold; color: #2c3e50;">0</span>
+                </div>
+            </div>
+            <div class="kpi-card" style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #f39c12; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <div class="kpi-content">
+                    <h4 style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Perguntas Feitas (Fórum)</h4>
+                    <span id="kpi-questions" style="font-size: 1.6rem; font-weight: bold; color: #2c3e50;">0</span>
+                </div>
+            </div>
+            <div class="kpi-card" style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #25D366; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <div class="kpi-content">
+                    <h4 style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Cliques no WhatsApp</h4>
+                    <span id="kpi-whatsapp-clicks" style="font-size: 1.6rem; font-weight: bold; color: #2c3e50;">0</span>
+                </div>
+            </div>
+            <div class="kpi-card" style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #333; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <div class="kpi-content">
+                    <h4 style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Instalações PWA (App)</h4>
+                    <span id="kpi-pwa" style="font-size: 1.6rem; font-weight: bold; color: #2c3e50;">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-grid" style="margin-top: 20px;">
+            <div class="chart-card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                <h3>Tráfego vs Novos Usuários</h3>
+                <div class="chart-container"><canvas id="chartUsers"></canvas></div>
+            </div>
+            <div class="chart-card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                <h3>Funil do Questionário</h3>
+                <div class="chart-container"><canvas id="chartDemand"></canvas></div>
+            </div>
+        </div>
+
+        <!-- WIDGET DE SHADOW TRACKING E FUNIL -->
+        <div class="widget" style="margin-top: 30px;">
+            <h3 style="margin-top: 0; color: var(--verde-escuro);">🕵️‍♂️ Shadow Tracking & Drop-offs</h3>
+            <p style="color: var(--cinza-texto); margin-top: -10px; margin-bottom: 20px;">Métricas detalhadas do comportamento dentro do sistema.</p>
+            <div class="tracking-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                <div class="tracking-data">
+                    <h4 style="color: #E63946; margin-bottom: 10px;">Ranking de Abandono</h4>
+                    <table class="fin-table" style="width: 100%;">
+                        <tbody id="funnel-dropoff-list"><tr><td colspan="2">Carregando...</td></tr></tbody>
+                    </table>
+                </div>
+                <div class="tracking-data">
+                    <h4 style="color: var(--verde-escuro); margin-bottom: 10px;">Origem de Tráfego (UTM)</h4>
+                    <ul class="feature-usage-list" id="funnel-utm-list">Carregando origens...</ul>
+                </div>
+                <div class="tracking-data">
+                    <h4 style="color: #0284C7; margin-bottom: 10px;">Uso de Recursos (App)</h4>
+                    <ul class="feature-usage-list" id="st-usage-list">Carregando engajamento...</ul>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- ABA 2: FINANCEIRO PREMIUM -->
