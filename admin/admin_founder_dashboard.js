@@ -94,6 +94,7 @@ async function loadFounderMetrics() {
         document.getElementById('f-funnel-signup').innerText = funnel.signups;
         document.getElementById('f-funnel-trial').innerText = funnel.trials;
         document.getElementById('f-funnel-paid').innerText = funnel.paying;
+        document.getElementById('f-funnel-current').innerText = metrics.activeUsersCount;
 
         // 7. PIPELINE DOS TRIALS
         const tbody = document.getElementById('f-trials-table');
@@ -171,14 +172,19 @@ async function loadFounderMetrics() {
 window.openFounderGoalsModal = function() {
     try {
         const goals = window.currentFounderGoals || {};
-        document.getElementById('input-goal-mrr').value = goals.goalMRR || 1980;
-        document.getElementById('input-goal-users').value = goals.goalUsers || 20;
-        document.getElementById('input-goal-months').value = goals.goalMonths || 8;
-        document.getElementById('input-goal-new').value = goals.newPerMonth || 2;
-        document.getElementById('modal-founder-goals').style.display = 'flex';
+        let modal = document.getElementById('modal-founder-goals');
+        if (modal) {
+            document.body.appendChild(modal); // Move para o body para evitar problemas de z-index
+            document.getElementById('input-goal-mrr').value = goals.goalMRR || 1980;
+            document.getElementById('input-goal-users').value = goals.goalUsers || 20;
+            document.getElementById('input-goal-months').value = goals.goalMonths || 8;
+            document.getElementById('input-goal-new').value = goals.newPerMonth || 2;
+            modal.style.display = 'flex';
+        } else {
+            alert('Modal não encontrado na página.');
+        }
     } catch (e) {
-        if(window.Swal) window.Swal.fire('Erro', 'Não foi possível abrir as configurações: ' + e.message, 'error');
-        else alert('Erro ao abrir: ' + e.message);
+        alert('Erro ao abrir: ' + e.message);
     }
 };
 
