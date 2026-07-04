@@ -171,8 +171,15 @@ exports.handleWebhook = async (req, res) => {
             if (psychologistId) psi = await db.Psychologist.findByPk(psychologistId);
             if (!psi && payment.subscription) psi = await db.Psychologist.findOne({ where: { stripeSubscriptionId: payment.subscription } });
             if (psi) {
-                await psi.update({ status: 'inactive', planExpiresAt: new Date() });
-                emailService.sendPaymentFailedEmail(psi, payment.invoiceUrl).catch(e => console.error("Erro email falha:", e));
+                // TRAVA DE SEGURANÇA: Se o psicólogo já tem uma validade futura ativa (por causa de outro pagamento pago),
+                // ignoramos este aviso de falha/vencimento (pois geralmente é uma cobrança velha/duplicada que venceu).
+                const now = new Date();
+                if (psi.planExpiresAt && psi.planExpiresAt > now) {
+                    console.log(`[ASAAS] Alerta de falha/vencimento ignorado para ${psi.email}. O plano está válido até ${psi.planExpiresAt}.`);
+                } else {
+                    await psi.update({ status: 'inactive', planExpiresAt: new Date() });
+                    emailService.sendPaymentFailedEmail(psi, payment.invoiceUrl).catch(e => console.error("Erro email falha:", e));
+                }
             }
         } catch (err) { console.error('Erro ao processar falha de pagamento:', err); }
     }
