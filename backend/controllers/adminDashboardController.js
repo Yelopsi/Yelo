@@ -1002,3 +1002,154 @@ exports.forceWhatsappResponse = async (req, res) => {
         res.status(500).json({ error: 'Erro interno ao salvar resposta.' });
     }
 };
+
+// ----------------------------------------------------------------------
+// Rota: GET /api/admin/founder-metrics
+// ----------------------------------------------------------------------
+exports.getFounderMetrics = async (req, res) => {
+    try {
+        const { Op } = require('sequelize');
+        
+        // 1. LER METAS (JSON File ou Default)
+        const goalsFile = require('path').join(__dirname, '..', '..', 'backend', 'config', 'founder_goals.json');
+        let goals = { goalUsers: 20, goalMRR: 1980, goalMonths: 8, goalStartDate: '2024-05-01', newPerMonth: 2 };
+        if (require('fs').existsSync(goalsFile)) {
+            try {
+                goals = JSON.parse(require('fs').readFileSync(goalsFile, 'utf8'));
+            } catch(e){}
+        }
+
+        const planPrices = { 
+            'essential': 99.00, 'clinical': 159.00, 'reference': 259.00,
+            'essencial': 99.00, 'clínico': 159.00, 'sol': 259.00 
+        };
+
+        // 2. BUSCAR TODOS OS PSICÓLOGOS
+        const activePsis = await db.Psychologist.findAll({
+            where: { status: 'active', is_exempt: false },
+            attributes: ['id', 'nome', 'plano', 'stripeSubscriptionId', 'subscriptionId', 'planExpiresAt', 'cancelAtPeriodEnd', 'createdAt']
+        });
+
+        let currentMRR = 0;
+        let payingUsers = 0;
+        let activeTrialsCount = 0;
+        const now = new Date();
+        const trialPipeline = [];
+
+        activePsis.forEach(p => {
+            const hasSub = !!(p.stripeSubscriptionId || p.subscriptionId);
+            const planEndsInFuture = p.planExpiresAt && new Date(p.planExpiresAt) > now;
+
+            if (hasSub) {
+                // Pagante
+                payingUsers++;
+                const planoKey = (p.plano || '').toLowerCase();
+                currentMRR += (planPrices[planoKey] || 0);
+            } else if (planEndsInFuture) {
+                // Trial Ativo
+                activeTrialsCount++;
+                const expDate = new Date(p.planExpiresAt);
+                const daysLeft = Math.ceil((expDate.getTime() - now.getTime()) / (1000 * 3600 * 24));
+                trialPipeline.push({
+                    name: p.nome,
+                    daysLeft: daysLeft,
+                    status: daysLeft === 0 ? 'Expira hoje' : (daysLeft < 0 ? 'Expirado' : 'Trial')
+                });
+            }
+        });
+
+        // Ordenar Pipeline: os que expiram antes primeiro
+        trialPipeline.sort((a,b) => a.daysLeft - b.daysLeft);
+
+        // 3. CÁLCULO DE CHURN (Últimos 30 dias)
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        const churnedCount = await db.Psychologist.count({
+            where: { status: 'inactive', updatedAt: { [Op.gte]: thirtyDaysAgo } }
+        });
+        const totalStart = payingUsers + churnedCount;
+        const churnRate = totalStart > 0 ? (churnedCount / totalStart) : 0;
+
+        // 4. TAXA DE CONVERSÃO
+        const allPsis = await db.Psychologist.count({ where: { is_exempt: false } });
+        const allInactive = await db.Psychologist.count({ where: { status: 'inactive' } });
+        const everPaid = payingUsers + allInactive; 
+        const everTrialed = allPsis; 
+        const conversionRate = everTrialed > 0 ? (everPaid / everTrialed) : 0;
+
+        // 5. FUNIL
+        const visitors = await db.sequelize.query('SELECT COUNT(*) as count FROM "SiteVisits"', { type: db.sequelize.QueryTypes.SELECT }).then(res => res[0].count);
+        const funnel = {
+            visitors: parseInt(visitors) || 0,
+            signups: allPsis + (await db.Psychologist.count({ where: { is_exempt: true } })),
+            trials: everTrialed,
+            paying: everPaid
+        };
+
+        // 6. HISTÓRICO DE CRESCIMENTO MENSAL
+        const growthHistory = [];
+        const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        for (let i = 4; i >= 0; i--) { 
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const endD = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+            const activesAtTime = await db.Psychologist.count({
+                where: { 
+                    createdAt: { [Op.lte]: endD },
+                    [Op.or]: [
+                        { status: 'active' },
+                        { updatedAt: { [Op.gt]: endD } } 
+                    ]
+                }
+            });
+            growthHistory.push({ month: monthNames[d.getMonth()], users: Math.round(activesAtTime * 0.4) || activesAtTime });
+        }
+
+        // 7. YELO SCORE (0 a 100)
+        const scoreMrr = Math.min(1, currentMRR / goals.goalMRR) * 15;
+        const scoreUsers = Math.min(1, payingUsers / goals.goalUsers) * 40;
+        const scoreConv = Math.min(1, conversionRate / 0.40) * 25; 
+        const scoreRet = Math.max(0, (1 - churnRate)) * 20;
+        const yeloScore = Math.round(scoreMrr + scoreUsers + scoreConv + scoreRet);
+
+        // Previsão MRR (Trials * Conversão * Mensalidade Média)
+        const avgTicket = payingUsers > 0 ? (currentMRR / payingUsers) : 99;
+        const projectedMRR = activeTrialsCount * conversionRate * avgTicket;
+        
+        res.status(200).json({
+            goals,
+            metrics: {
+                currentMRR,
+                payingUsers,
+                activeTrialsCount,
+                conversionRate,
+                churnRate,
+                projectedMRR
+            },
+            trialPipeline,
+            funnel,
+            growthHistory,
+            yeloScore
+        });
+    } catch(err) {
+        console.error(err);
+        res.status(500).json({ error: 'Erro ao buscar métricas do fundador.' });
+    }
+};
+
+// ----------------------------------------------------------------------
+// Rota: POST /api/admin/founder-goals
+// ----------------------------------------------------------------------
+exports.saveFounderGoals = (req, res) => {
+    try {
+        const configDir = require('path').join(__dirname, '..', '..', 'backend', 'config');
+        if (!require('fs').existsSync(configDir)) {
+            require('fs').mkdirSync(configDir, { recursive: true });
+        }
+        
+        const goalsFile = require('path').join(configDir, 'founder_goals.json');
+        const newGoals = req.body;
+        require('fs').writeFileSync(goalsFile, JSON.stringify(newGoals, null, 2), 'utf8');
+        res.status(200).json({ message: 'Metas atualizadas com sucesso.', goals: newGoals });
+    } catch(err) {
+        res.status(500).json({ error: 'Erro ao salvar metas.' });
+    }
+};
