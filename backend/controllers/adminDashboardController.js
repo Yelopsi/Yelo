@@ -184,7 +184,7 @@ exports.getDetailedReports = async (req, res) => {
             FROM "DemandSearches" WHERE "createdAt" BETWEEN :start AND :end GROUP BY data ORDER BY data ASC;
         `;
 
-        const plansQuery = `SELECT plano, COUNT(*) as total FROM "Psychologists" WHERE status = 'active' AND plano IS NOT NULL AND "deletedAt" IS NULL GROUP BY plano;`;
+        const plansQuery = `SELECT UPPER(plano) as plano, COUNT(*) as total FROM "Psychologists" WHERE status = 'active' AND plano IS NOT NULL AND "deletedAt" IS NULL GROUP BY UPPER(plano);`;
 
         const timeOfDayQuery = `
             SELECT 
