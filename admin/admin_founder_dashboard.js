@@ -1,17 +1,16 @@
-const API_BASE_URL = window.API_BASE_URL || '';
-
 window.initializePage = function() {
     loadFounderMetrics();
 };
 
-let currentGoals = {};
+window.currentFounderGoals = {};
 
 async function loadFounderMetrics() {
     try {
         const token = localStorage.getItem('adminToken');
         if (!token) return;
 
-        const res = await fetch(`${API_BASE_URL}/api/admin/founder-metrics`, {
+        const baseUrl = window.API_BASE_URL || '';
+        const res = await fetch(`${baseUrl}/api/admin/founder-metrics`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -19,7 +18,7 @@ async function loadFounderMetrics() {
 
         const data = await res.json();
         const { goals, metrics, trialPipeline, funnel, growthHistory, yeloScore } = data;
-        currentGoals = goals;
+        window.currentFounderGoals = goals;
 
         // 1. TOP CARDS
         document.getElementById('f-goal-mrr').innerText = `R$ ${goals.goalMRR.toLocaleString('pt-BR')}`;
@@ -169,25 +168,28 @@ async function loadFounderMetrics() {
 }
 
 window.openFounderGoalsModal = function() {
-    document.getElementById('input-goal-mrr').value = currentGoals.goalMRR || 1980;
-    document.getElementById('input-goal-users').value = currentGoals.goalUsers || 20;
-    document.getElementById('input-goal-months').value = currentGoals.goalMonths || 8;
-    document.getElementById('input-goal-new').value = currentGoals.newPerMonth || 2;
+    const goals = window.currentFounderGoals || {};
+    document.getElementById('input-goal-mrr').value = goals.goalMRR || 1980;
+    document.getElementById('input-goal-users').value = goals.goalUsers || 20;
+    document.getElementById('input-goal-months').value = goals.goalMonths || 8;
+    document.getElementById('input-goal-new').value = goals.newPerMonth || 2;
     document.getElementById('modal-founder-goals').style.display = 'flex';
 };
 
 window.saveFounderGoals = async function() {
     const token = localStorage.getItem('adminToken');
+    const goals = window.currentFounderGoals || {};
     const newGoals = {
         goalMRR: parseFloat(document.getElementById('input-goal-mrr').value),
         goalUsers: parseInt(document.getElementById('input-goal-users').value),
         goalMonths: parseInt(document.getElementById('input-goal-months').value),
         newPerMonth: parseInt(document.getElementById('input-goal-new').value),
-        goalStartDate: currentGoals.goalStartDate || '2024-05-01'
+        goalStartDate: goals.goalStartDate || '2024-05-01'
     };
 
     try {
-        const res = await fetch(`${API_BASE_URL}/api/admin/founder-goals`, {
+        const baseUrl = window.API_BASE_URL || '';
+        const res = await fetch(`${baseUrl}/api/admin/founder-goals`, {
             method: 'POST',
             headers: { 
                 'Authorization': `Bearer ${token}`,
