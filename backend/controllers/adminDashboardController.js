@@ -525,14 +525,18 @@ exports.getFinancials = async (req, res) => {
         let recentInvoices = [];
         if (ASAAS_API_KEY) {
             try {
-                const response = await fetch(`${ASAAS_API_URL}/payments?limit=10&order=desc`, {
+                // Buscamos 30 para poder filtrar os pendentes e ainda sobrar pelo menos 10
+                const response = await fetch(`${ASAAS_API_URL}/payments?limit=30&order=desc`, {
                     headers: { 'access_token': ASAAS_API_KEY }
                 });
                 
                 if (response.ok) {
                     const data = await response.json();
                     if (data.data) {
-                        recentInvoices = await Promise.all(data.data.map(async (payment) => {
+                        // Filtra faturas pendentes (abandonos de checkout) e pega as 10 últimas reais
+                        const filteredData = data.data.filter(p => p.status !== 'PENDING').slice(0, 10);
+                        
+                        recentInvoices = await Promise.all(filteredData.map(async (payment) => {
                             let psiName = 'Cliente Externo';
                             if (payment.externalReference) {
                                 const psi = await db.Psychologist.findByPk(payment.externalReference, { attributes: ['nome'] });
@@ -546,7 +550,7 @@ exports.getFinancials = async (req, res) => {
 
                             return {
                                 psychologistName: psiName,
-                                date: payment.paymentDate || payment.dateCreated,
+                                date: payment.paymentDate || payment.dueDate || payment.dateCreated,
                                 amount: payment.value,
                                 status: translatedStatus
                             };
