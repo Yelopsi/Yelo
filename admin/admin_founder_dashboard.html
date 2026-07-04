@@ -19,15 +19,15 @@
         <!-- Kpis Principais (Top Row) -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
             <!-- Meta -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">🎯 Objetivo (MRR)</div>
+            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);" title="Sua meta principal de faturamento recorrente mensal e o número de psicólogos pagantes que você quer atingir no prazo estabelecido.">
+                <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; cursor: help;">🎯 Objetivo (MRR) <span style="font-size: 0.75rem; opacity: 0.6;">ⓘ</span></div>
                 <div style="font-size: 1.8rem; font-weight: 800; color: #111827;" id="f-goal-mrr">R$ --</div>
                 <div style="color: #6b7280; font-size: 0.85rem; margin-top: 5px;">Meta de Pagantes: <span id="f-goal-users">--</span></div>
             </div>
 
             <!-- Progresso -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">📈 Progresso (Pagantes)</div>
+            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);" title="Mostra a quantidade atual de assinantes ativos e o percentual em relação à sua meta final de assinantes.">
+                <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; cursor: help;">📈 Progresso (Pagantes) <span style="font-size: 0.75rem; opacity: 0.6;">ⓘ</span></div>
                 <div style="display: flex; align-items: baseline; gap: 8px;">
                     <div style="font-size: 1.8rem; font-weight: 800; color: #111827;" id="f-current-users">--</div>
                     <div style="font-size: 1.1rem; color: #6b7280; font-weight: 600;">/ <span id="f-goal-users-display">--</span></div>
@@ -36,37 +36,37 @@
             </div>
 
             <!-- MRR -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); position: relative; overflow: hidden;">
+            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); position: relative; overflow: hidden;" title="O Monthly Recurring Revenue (Receita Recorrente Mensal) atualizado em tempo real com base nas assinaturas ativas na plataforma.">
                 <div style="position: absolute; top: -10px; right: -10px; opacity: 0.05; font-size: 80px;">💰</div>
-                <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">💰 MRR Atual</div>
+                <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; cursor: help;">💰 MRR Atual <span style="font-size: 0.75rem; opacity: 0.6;">ⓘ</span></div>
                 <div style="font-size: 1.8rem; font-weight: 800; color: #10b981;" id="f-current-mrr">R$ --</div>
             </div>
 
             <!-- Trials -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">🚀 Trials Ativos</div>
+            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);" title="Psicólogos que estão com perfil aprovado utilizando a plataforma gratuitamente antes do prazo de assinatura expirar.">
+                <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; cursor: help;">🚀 Trials Ativos <span style="font-size: 0.75rem; opacity: 0.6;">ⓘ</span></div>
                 <div style="font-size: 1.8rem; font-weight: 800; color: #111827;" id="f-trials-count">--</div>
                 <div style="color: #6b7280; font-size: 0.85rem; margin-top: 5px;">Potenciais próximos clientes</div>
             </div>
 
             <!-- Conversão -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">🔥 Conversão Trial → Pago</div>
+            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);" title="Taxa que representa quantos psicólogos que iniciaram o trial chegaram a pagar alguma vez pela plataforma.">
+                <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; cursor: help;">🔥 Conversão Trial → Pago <span style="font-size: 0.75rem; opacity: 0.6;">ⓘ</span></div>
                 <div style="font-size: 1.8rem; font-weight: 800; color: #f59e0b;" id="f-conv-rate">--%</div>
             </div>
 
             <!-- Churn -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">⚠️ Churn</div>
+            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);" title="Porcentagem de clientes pagantes que cancelaram (ficaram inativos) em relação ao total de usuários pagantes.">
+                <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; cursor: help;">⚠️ Churn <span style="font-size: 0.75rem; opacity: 0.6;">ⓘ</span></div>
                 <div style="font-size: 1.8rem; font-weight: 800; color: #ef4444;" id="f-churn-rate">--%</div>
             </div>
         </div>
 
         <!-- Barra de Progresso Master -->
-        <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 30px;">
+        <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 30px;" title="Barra que representa visualmente o progresso total do seu MRR atual comparado com a sua meta configurada de MRR.">
             <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px;">
                 <div>
-                    <h3 style="font-size: 1.3rem; font-weight: 800; margin: 0; color: #111827;">Evolução do Negócio</h3>
+                    <h3 style="font-size: 1.3rem; font-weight: 800; margin: 0; color: #111827; cursor: help;">Evolução do Negócio <span style="font-size: 0.8rem; opacity: 0.6;">ⓘ</span></h3>
                     <p style="margin: 5px 0 0; color: #6b7280; font-size: 0.95rem;">Progresso geral até a meta de MRR</p>
                 </div>
                 <div style="text-align: right;">
@@ -83,8 +83,8 @@
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
             
             <!-- Break-even -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <h3 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin: 0 0 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">Previsão de Meta</h3>
+            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);" title="Analisa o tempo percorrido desde a data de início (maio de 2026) até o prazo estabelecido. Ele compara se o seu crescimento de MRR atual está no ritmo necessário para bater a meta dentro desse prazo.">
+                <h3 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin: 0 0 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; cursor: help;">Previsão de Meta <span style="font-size: 0.8rem; opacity: 0.6;">ⓘ</span></h3>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
                     <span style="color: #6b7280; font-weight: 600;">Prazo</span>
                     <strong style="color: #111827;" id="f-be-goal">-- meses</strong>
@@ -100,8 +100,8 @@
             </div>
 
             <!-- Meta do mês -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <h3 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin: 0 0 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">Meta do Mês (Net New)</h3>
+            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);" title="Compara o total de novos pagantes do último mês com a sua meta mensal de crescimento (cadastrada como Novos p/ Mês).">
+                <h3 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin: 0 0 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; cursor: help;">Meta do Mês (Net New) <span style="font-size: 0.8rem; opacity: 0.6;">ⓘ</span></h3>
                 <div style="font-size: 2rem; font-weight: 900; color: #111827; text-align: center; margin-bottom: 10px;" id="f-month-goal">+-- pagantes líquidos</div>
                 <div style="height: 12px; background: #f3f4f6; border-radius: 6px; overflow: hidden; margin-bottom: 10px;">
                     <div id="f-month-bar" style="height: 100%; background: #3b82f6; width: 0%;"></div>
@@ -110,8 +110,8 @@
             </div>
 
             <!-- Receita Prevista -->
-            <div style="background: #111827; color: white; border-radius: 12px; padding: 25px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
-                <h3 style="font-size: 1.1rem; font-weight: 800; color: #f3f4f6; margin: 0 0 20px; border-bottom: 1px solid #374151; padding-bottom: 15px;">Receita Prevista</h3>
+            <div style="background: #111827; color: white; border-radius: 12px; padding: 25px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);" title="Calcula o faturamento esperado multiplicando a quantidade de Trials Ativos pela Taxa Histórica de Conversão e o Ticket Médio das assinaturas atuais.">
+                <h3 style="font-size: 1.1rem; font-weight: 800; color: #f3f4f6; margin: 0 0 20px; border-bottom: 1px solid #374151; padding-bottom: 15px; cursor: help;">Receita Prevista <span style="font-size: 0.8rem; opacity: 0.6;">ⓘ</span></h3>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #9ca3af;">
                     <span>Trials Ativos</span>
                     <strong id="f-prev-trials" style="color: white;">--</strong>
@@ -134,8 +134,8 @@
         <!-- Gráfico Funil e Pipeline Trials -->
         <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-bottom: 30px;">
             <!-- Funil -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <h3 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin: 0 0 25px;">Funil de Aquisição (All-Time)</h3>
+            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);" title="O fluxo histórico completo: desde acessos no site até quantos cadastros existem, quantos viraram trials aprovados, e o total que pagou em algum momento.">
+                <h3 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin: 0 0 25px; cursor: help;">Funil de Aquisição (All-Time) <span style="font-size: 0.8rem; opacity: 0.6;">ⓘ</span></h3>
                 
                 <div style="display: flex; flex-direction: column; gap: 15px; align-items: center;">
                     <div style="background: #f8fafc; border: 1px solid #e2e8f0; width: 100%; text-align: center; padding: 15px; border-radius: 8px;">
@@ -164,8 +164,8 @@
             </div>
 
             <!-- Pipeline dos Trials -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; display: flex; flex-direction: column;">
-                <h3 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin: 0 0 20px;">Pipeline dos Trials</h3>
+            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; display: flex; flex-direction: column;" title="Lista de todos os psicólogos que estão rodando na esteira gratuita com o tempo que falta para precisarem assinar o plano.">
+                <h3 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin: 0 0 20px; cursor: help;">Pipeline dos Trials <span style="font-size: 0.8rem; opacity: 0.6;">ⓘ</span></h3>
                 <div style="overflow-y: auto; flex-grow: 1;">
                     <table style="width: 100%; border-collapse: collapse; text-align: left;">
                         <thead>
@@ -186,16 +186,16 @@
         <!-- Crescimento e Score -->
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
             <!-- Crescimento -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <h3 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin: 0 0 20px;">Crescimento Mensal (Usuários)</h3>
+            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);" title="Mostra o total acumulado de pagantes ao final de cada um dos últimos 5 meses.">
+                <h3 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin: 0 0 20px; cursor: help;">Crescimento Mensal (Usuários) <span style="font-size: 0.8rem; opacity: 0.6;">ⓘ</span></h3>
                 <div style="height: 250px; display: flex; align-items: flex-end; justify-content: space-around; gap: 10px;" id="f-growth-chart">
                     <!-- Barras injetadas via JS -->
                 </div>
             </div>
 
             <!-- Yelo Score -->
-            <div style="background: linear-gradient(135deg, #111827 0%, #374151 100%); color: white; border-radius: 12px; padding: 30px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-                <h3 style="font-size: 1.2rem; font-weight: 800; color: #f3f4f6; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.1em;">Yelo Score</h3>
+            <div style="background: linear-gradient(135deg, #111827 0%, #374151 100%); color: white; border-radius: 12px; padding: 30px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;" title="Uma métrica interna agregada de 0 a 100 que pondera seu MRR Atual (15%), Adoção da Meta (40%), Conversão Acima de 40% (25%) e Retenção/Churn (20%) para dar uma nota sobre a saúde do negócio.">
+                <h3 style="font-size: 1.2rem; font-weight: 800; color: #f3f4f6; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.1em; cursor: help;">Yelo Score <span style="font-size: 0.8rem; opacity: 0.6;">ⓘ</span></h3>
                 <p style="color: #9ca3af; font-size: 0.9rem; margin: 0 0 25px;">Indicador Geral de Saúde do Negócio</p>
                 <div style="position: relative; width: 160px; height: 160px;">
                     <svg viewBox="0 0 36 36" style="width: 100%; height: 100%;">

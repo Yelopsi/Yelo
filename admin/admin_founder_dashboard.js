@@ -184,7 +184,7 @@ window.saveFounderGoals = async function() {
         goalUsers: parseInt(document.getElementById('input-goal-users').value),
         goalMonths: parseInt(document.getElementById('input-goal-months').value),
         newPerMonth: parseInt(document.getElementById('input-goal-new').value),
-        goalStartDate: goals.goalStartDate || '2024-05-01'
+        goalStartDate: goals.goalStartDate || '2026-05-01'
     };
 
     try {

@@ -1012,7 +1012,7 @@ exports.getFounderMetrics = async (req, res) => {
         
         // 1. LER METAS (JSON File ou Default)
         const goalsFile = require('path').join(__dirname, '..', '..', 'backend', 'config', 'founder_goals.json');
-        let goals = { goalUsers: 20, goalMRR: 1980, goalMonths: 8, goalStartDate: '2024-05-01', newPerMonth: 2 };
+        let goals = { goalUsers: 20, goalMRR: 1980, goalMonths: 8, goalStartDate: '2026-05-01', newPerMonth: 2 };
         if (require('fs').existsSync(goalsFile)) {
             try {
                 goals = JSON.parse(require('fs').readFileSync(goalsFile, 'utf8'));
@@ -1061,28 +1061,43 @@ exports.getFounderMetrics = async (req, res) => {
         // Ordenar Pipeline: os que expiram antes primeiro
         trialPipeline.sort((a,b) => a.daysLeft - b.daysLeft);
 
-        // 3. CÁLCULO DE CHURN (Últimos 30 dias)
-        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        const churnedCount = await db.Psychologist.count({
-            where: { status: 'inactive', updatedAt: { [Op.gte]: thirtyDaysAgo } }
+        // 3. CÁLCULO DE CHURN E CONVERSÃO
+        const signups = await db.Psychologist.count();
+        const trialsCount = await db.Psychologist.count({ where: { status: { [Op.ne]: 'pending' } } });
+        
+        const everPaidCount = await db.Psychologist.count({
+            where: {
+                [Op.or]: [
+                    { stripeSubscriptionId: { [Op.not]: null } },
+                    { subscriptionId: { [Op.not]: null } },
+                    { subscription_payments_count: { [Op.gt]: 0 } }
+                ]
+            }
         });
-        const totalStart = payingUsers + churnedCount;
-        const churnRate = totalStart > 0 ? (churnedCount / totalStart) : 0;
 
-        // 4. TAXA DE CONVERSÃO
-        const allPsis = await db.Psychologist.count({ where: { is_exempt: false } });
-        const allInactive = await db.Psychologist.count({ where: { status: 'inactive' } });
-        const everPaid = payingUsers + allInactive; 
-        const everTrialed = allPsis; 
-        const conversionRate = everTrialed > 0 ? (everPaid / everTrialed) : 0;
+        const conversionRate = trialsCount > 0 ? (everPaidCount / trialsCount) : 0;
+
+        const churnedUsers = await db.Psychologist.count({
+            where: { 
+                status: 'inactive',
+                [Op.or]: [
+                    { stripeSubscriptionId: { [Op.not]: null } },
+                    { subscriptionId: { [Op.not]: null } },
+                    { subscription_payments_count: { [Op.gt]: 0 } }
+                ]
+            }
+        });
+        
+        const totalStart = payingUsers + churnedUsers;
+        const churnRate = totalStart > 0 ? (churnedUsers / totalStart) : 0;
 
         // 5. FUNIL
-        const visitors = await db.sequelize.query('SELECT COUNT(*) as count FROM "SiteVisits"', { type: db.sequelize.QueryTypes.SELECT }).then(res => res[0].count);
+        const visitors = await db.sequelize.query('SELECT COUNT(*) as count FROM "SiteVisits"', { type: db.sequelize.QueryTypes.SELECT }).then(res => res[0].count).catch(() => 0);
         const funnel = {
             visitors: parseInt(visitors) || 0,
-            signups: allPsis + (await db.Psychologist.count({ where: { is_exempt: true } })),
-            trials: everTrialed,
-            paying: everPaid
+            signups: signups,
+            trials: trialsCount,
+            paying: everPaidCount
         };
 
         // 6. HISTÓRICO DE CRESCIMENTO MENSAL
@@ -1091,16 +1106,19 @@ exports.getFounderMetrics = async (req, res) => {
         for (let i = 4; i >= 0; i--) { 
             const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const endD = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+            
+            // Conta quantos pagantes já existiam até aquele mês
             const activesAtTime = await db.Psychologist.count({
                 where: { 
                     createdAt: { [Op.lte]: endD },
                     [Op.or]: [
-                        { status: 'active' },
-                        { updatedAt: { [Op.gt]: endD } } 
+                        { stripeSubscriptionId: { [Op.not]: null } },
+                        { subscriptionId: { [Op.not]: null } },
+                        { subscription_payments_count: { [Op.gt]: 0 } }
                     ]
                 }
             });
-            growthHistory.push({ month: monthNames[d.getMonth()], users: Math.round(activesAtTime * 0.4) || activesAtTime });
+            growthHistory.push({ month: monthNames[d.getMonth()], users: activesAtTime });
         }
 
         // 7. YELO SCORE (0 a 100)
