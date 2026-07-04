@@ -69,36 +69,21 @@ window.loadContactHistory = async function() {
                     badgeClass = 'pendente';
                     badgeText = 'Feedback Registrado';
                 }
-            }
-
-            let actionBtn = '';
+            let badgeStyle = '';
+            let clickAction = '';
             
             // Lógica de proteção de indicadores: Não permite reverter um fechamento.
             if (log.dealClosed !== 'yes' && log.dealClosed !== 'started') {
-                
-                const isFantasma = (!log.contactReceived || log.dealClosed === 'no_contact' || log.dealClosed === 'wpp_issue' || log.dealClosed === 'unknown');
-                const isNaoFechou = (log.dealClosed === 'not_started' || log.dealClosed === 'ghosted' || log.dealClosed === 'no');
-                const isTalking = (log.dealClosed === 'talking');
-
-                if (isFantasma) {
-                    actionBtn += `<button onclick="window.updateStatus('${log.id}', true, 'talking')" style="margin-left: 10px; background: #fef3c7; color: #b45309; border: 1px solid #fde68a; border-radius: 50px; padding: 4px 12px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">💬 Retornou!</button>`;
-                }
-                
-                if (isNaoFechou) {
-                    actionBtn += `<button onclick="window.updateStatus('${log.id}', true, 'started')" style="margin-left: 10px; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; border-radius: 50px; padding: 4px 12px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">✅ Mudou de Ideia!</button>`;
-                }
-
-                if (isTalking) {
-                    actionBtn += `<button onclick="window.updateStatus('${log.id}', true, 'not_started')" style="margin-left: 10px; background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; border-radius: 50px; padding: 4px 12px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">❌ Desistiu</button>`;
-                    actionBtn += `<button onclick="window.updateStatus('${log.id}', true, 'started')" style="margin-left: 5px; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; border-radius: 50px; padding: 4px 12px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">✅ Fechamos!</button>`;
-                }
+                badgeClass += ' clickable';
+                badgeStyle = 'title="Clique para atualizar status"';
+                clickAction = `onclick="window.abrirModalStatus('${log.id}', ${log.contactReceived}, '${log.dealClosed}')"`;
             }
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td data-label="Data">${dataFormatada}</td>
                 <td data-label="Paciente / Contato" style="font-weight: 500;">${log.guestName || 'Um paciente'}</td>
-                <td data-label="Status do Retorno"><span class="status-badge ${badgeClass}">${badgeText}</span>${actionBtn}</td>
+                <td data-label="Status do Retorno"><span class="status-badge ${badgeClass}" ${badgeStyle} ${clickAction}>${badgeText}</span></td>
             `;
             tbody.appendChild(tr);
         });
@@ -116,19 +101,40 @@ window.loadContactHistory = async function() {
     }
 };
 
+window.abrirModalStatus = function(id, contact_received, deal_closed) {
+    const modal = document.getElementById('yelo-status-modal');
+    const container = document.getElementById('yelo-modal-options-container');
+    container.innerHTML = '';
+
+    const isFantasma = (!contact_received || deal_closed === 'no_contact' || deal_closed === 'wpp_issue' || deal_closed === 'unknown');
+    const isNaoFechou = (deal_closed === 'not_started' || deal_closed === 'ghosted' || deal_closed === 'no');
+    const isTalking = (deal_closed === 'talking');
+
+    if (isFantasma) {
+        container.innerHTML += `<button class="yelo-modal-btn" onclick="window.updateStatus('${id}', true, 'talking')">💬 Retornou o contato!</button>`;
+    }
+    
+    if (isNaoFechou) {
+        container.innerHTML += `<button class="yelo-modal-btn" onclick="window.updateStatus('${id}', true, 'started')">✅ Mudou de Ideia e Fechou!</button>`;
+    }
+
+    if (isTalking) {
+        container.innerHTML += `<button class="yelo-modal-btn" onclick="window.updateStatus('${id}', true, 'started')">✅ Fechamos Negócio!</button>`;
+        container.innerHTML += `<button class="yelo-modal-btn" onclick="window.updateStatus('${id}', true, 'not_started')">❌ Paciente Desistiu</button>`;
+    }
+
+    modal.style.display = 'flex';
+    // Use timeout to allow display:flex to apply before adding class for transition
+    setTimeout(() => modal.classList.add('active'), 10);
+};
+
 window.updateStatus = async function(id, contact_received, deal_closed) {
-    let msg = 'Tem certeza que deseja atualizar o status desse paciente?';
-    if (deal_closed === 'started') msg = 'Parabéns! Deseja confirmar que este paciente Fechou Negócio? Seus indicadores vão subir!';
-    if (deal_closed === 'not_started') msg = 'Tem certeza que deseja dar baixa nesse paciente? Ele sairá da negociação.';
-    if (deal_closed === 'talking') msg = 'Ótimo! O paciente mandou mensagem. Deseja movê-lo para Em Negociação?';
-
-    if (!confirm(msg)) return;
-
+    fecharModalStatus(); // From the HTML script block
     try {
         const token = localStorage.getItem('Yelo_token');
         const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : 'http://localhost:3001';
         const res = await window.apiFetch(`${API_BASE_URL}/api/psychologists/me/whatsapp-feedback`, {
-            method: 'PUT',
+            method: 'POST', // Mudado de PUT para POST para corrigir o 404
             headers: { 
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`

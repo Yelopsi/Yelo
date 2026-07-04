@@ -94,18 +94,113 @@
         background: #f1f5f9;
         color: #475569;
     }
+    .status-badge.clickable {
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px dashed transparent;
+    }
+    .status-badge.clickable:hover {
+        transform: scale(1.05);
+        border: 1px dashed currentColor;
+    }
+    .status-badge.clickable:after {
+        content: " ▾";
+        opacity: 0.7;
+    }
     .empty-state {
         text-align: center;
         padding: 50px 20px;
         color: #666;
     }
-    .empty-state-icon {
-        font-size: 3rem;
-        margin-bottom: 15px;
-        color: #cbd5e1;
+    /* Custom Modal Bottom Sheet Styles */
+    .yelo-modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.4);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(4px);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .yelo-modal-overlay.active {
+        display: flex;
+        opacity: 1;
+    }
+    .yelo-modal-box {
+        background: #fff;
+        border-radius: 20px;
+        padding: 30px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        transform: translateY(20px);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .yelo-modal-overlay.active .yelo-modal-box {
+        transform: translateY(0);
+    }
+    .yelo-modal-title {
+        font-family: var(--font-titulos);
+        font-size: 1.5rem;
+        color: var(--verde-escuro);
+        margin: 0 0 5px 0;
+        text-align: center;
+    }
+    .yelo-modal-subtitle {
+        color: #64748b;
+        font-size: 0.95rem;
+        text-align: center;
+        margin-bottom: 25px;
+    }
+    .yelo-modal-options {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .yelo-modal-btn {
+        width: 100%;
+        padding: 15px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #f8fafc;
+        color: #334155;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-align: left;
+    }
+    .yelo-modal-btn:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+        transform: translateY(-2px);
+    }
+    .yelo-modal-close {
+        margin-top: 20px;
+        width: 100%;
+        padding: 12px;
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .yelo-modal-close:hover {
+        color: #64748b;
     }
     
     @media (max-width: 768px) {
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #cbd5e1;
+        }
         .history-table-wrapper {
             background: transparent;
             box-shadow: none;
@@ -225,4 +320,29 @@
     </div>
 </div>
 
-<script src="psi_historico_contatos.js"></script>
+<!-- Modal Yelo Status -->
+<div id="yelo-status-modal" class="yelo-modal-overlay">
+    <div class="yelo-modal-box">
+        <h3 class="yelo-modal-title">Atualizar Status</h3>
+        <p class="yelo-modal-subtitle">Selecione o novo status para este contato.</p>
+        <div class="yelo-modal-options" id="yelo-modal-options-container">
+            <!-- Botões dinâmicos injetados via JS -->
+        </div>
+        <button class="yelo-modal-close" onclick="fecharModalStatus()">Cancelar</button>
+    </div>
+</div>
+
+<script>
+    function fecharModalStatus() {
+        const modal = document.getElementById('yelo-status-modal');
+        modal.classList.remove('active');
+        setTimeout(() => modal.style.display = 'none', 300);
+    }
+    
+    // Close on overlay click
+    document.getElementById('yelo-status-modal').addEventListener('click', function(e) {
+        if(e.target === this) fecharModalStatus();
+    });
+</script>
+
+<script src="/psi/psi_historico_contatos.js?v=3.0"></script>
