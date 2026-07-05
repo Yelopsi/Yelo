@@ -1027,7 +1027,7 @@ exports.getFounderMetrics = async (req, res) => {
         // 2. BUSCAR TODOS OS PSICÓLOGOS
         const activePsis = await db.Psychologist.findAll({
             where: { status: 'active', is_exempt: false },
-            attributes: ['id', 'nome', 'plano', 'stripeSubscriptionId', 'subscriptionId', 'planExpiresAt', 'cancelAtPeriodEnd', 'createdAt']
+            attributes: ['id', 'nome', 'plano', 'stripeSubscriptionId', 'subscriptionId', 'planExpiresAt', 'cancelAtPeriodEnd', 'createdAt', 'fotoUrl', 'bio']
         });
 
         let currentMRR = 0;
@@ -1046,15 +1046,17 @@ exports.getFounderMetrics = async (req, res) => {
                 const planoKey = (p.plano || '').toLowerCase();
                 currentMRR += (planPrices[planoKey] || 0);
             } else if (planEndsInFuture) {
-                // Trial Ativo
-                activeTrialsCount++;
-                const expDate = new Date(p.planExpiresAt);
-                const daysLeft = Math.ceil((expDate.getTime() - now.getTime()) / (1000 * 3600 * 24));
-                trialPipeline.push({
-                    name: p.nome,
-                    daysLeft: daysLeft,
-                    status: daysLeft === 0 ? 'Expira hoje' : (daysLeft < 0 ? 'Expirado' : 'Trial')
-                });
+                // Trial Ativo: Somente contabiliza como ativo se executou ação chave (preencheu perfil)
+                if (p.fotoUrl || p.bio) {
+                    activeTrialsCount++;
+                    const expDate = new Date(p.planExpiresAt);
+                    const daysLeft = Math.ceil((expDate.getTime() - now.getTime()) / (1000 * 3600 * 24));
+                    trialPipeline.push({
+                        name: p.nome,
+                        daysLeft: daysLeft,
+                        status: daysLeft === 0 ? 'Expira hoje' : (daysLeft < 0 ? 'Expirado' : 'Trial')
+                    });
+                }
             }
         });
 

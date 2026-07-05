@@ -171,8 +171,8 @@ async function loadFounderMetrics() {
 
         // 10. ALERTAS
         const alerts = [];
-        if (convPct > 0 && convPct < 30) alerts.push('Taxa de conversão Trial → Pago caiu abaixo de 30%.');
-        if (churnPct > 5) alerts.push('Churn estourou o limite saudável de 5%.');
+        if (convPct > 0 && convPct < 15) alerts.push('Taxa de conversão Trial → Pago caiu abaixo de 15%.');
+        if (metrics.churnCount > 3) alerts.push(`Atenção: Você perdeu ${metrics.churnCount} assinantes ativos neste mês (Quebra de Funil Pago).`);
         if (metrics.activeTrialsCount === 0) alerts.push('O funil secou: Nenhum trial ativo no momento.');
         
         const alertsArea = document.getElementById('founder-alerts-area');
