@@ -1040,7 +1040,7 @@ exports.getFounderMetrics = async (req, res) => {
                     }
                 ]
             },
-            attributes: ['id', 'nome', 'telefone', 'plano', 'stripeSubscriptionId', 'subscriptionId', 'planExpiresAt', 'cancelAtPeriodEnd', 'createdAt', 'fotoUrl', 'bio', 'whatsapp_clicks', 'profile_appearances']
+            attributes: ['id', 'nome', 'telefone', 'plano', 'stripeSubscriptionId', 'subscriptionId', 'planExpiresAt', 'cancelAtPeriodEnd', 'createdAt', 'fotoUrl', 'bio', 'whatsapp_clicks', 'profile_appearances', 'admin_billing_sent_at']
         });
 
         let currentMRR = 0;
@@ -1089,6 +1089,7 @@ exports.getFounderMetrics = async (req, res) => {
                         telefone: p.telefone,
                         whatsapp_clicks: p.whatsapp_clicks || 0,
                         profile_appearances: p.profile_appearances || 0,
+                        admin_billing_sent_at: p.admin_billing_sent_at,
                         daysLeft: daysLeft,
                         status: statusTxt,
                         expiredSundayKeepMonday: expiredSundayKeepMonday
@@ -1291,5 +1292,24 @@ exports.saveFounderGoals = (req, res) => {
         res.status(200).json({ message: 'Metas atualizadas com sucesso.', goals: newGoals });
     } catch(err) {
         res.status(500).json({ error: 'Erro ao salvar metas.' });
+    }
+};
+// ----------------------------------------------------------------------
+// Rota: POST /api/admin/founder-metrics/billing-sent/:id
+// ----------------------------------------------------------------------
+exports.markBillingSent = async (req, res) => {
+    try {
+        const { db } = require('../models');
+        const psiId = req.params.id;
+        const psi = await db.Psychologist.findByPk(psiId);
+        if (!psi) return res.status(404).json({ error: 'Psi não encontrado' });
+        
+        psi.admin_billing_sent_at = new Date();
+        await psi.save();
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('[ERRO] Ao marcar cobrança enviada:', error);
+        res.status(500).json({ error: 'Erro interno' });
     }
 };

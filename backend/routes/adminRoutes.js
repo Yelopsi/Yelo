@@ -118,6 +118,7 @@ router.get('/reports/charts', protect, admin, adminDashboardController.getDetail
 // Rota para dados financeiros
 router.get('/financials', adminDashboardController.getFinancials);
 router.get('/founder-metrics', adminDashboardController.getFounderMetrics);
+router.post('/founder-metrics/billing-sent/:id', adminDashboardController.markBillingSent);
 router.post('/founder-goals', adminDashboardController.saveFounderGoals);
 
 // Rota para indicadores dos questionários

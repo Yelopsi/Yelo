@@ -170,11 +170,19 @@ async function loadFounderMetrics() {
                     
                     // Escapando aspas duplas com &quot; e aspas simples com \' para evitar quebra no HTML do onclick
                     const svgCheck = `<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;12&quot; height=&quot;12&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;><polyline points=&quot;20 6 9 17 4 12&quot;></polyline></svg>`;
-                    const buttonClickLogic = `${openTarget}; this.innerHTML='${svgCheck} Cobrado'; this.style.backgroundColor='#9ca3af'; this.style.pointerEvents='none';`;
+                    
+                    const fetchLogic = `fetch('/api/admin/founder-metrics/billing-sent/${t.id}', {method: 'POST', headers: { 'Authorization': 'Bearer ' + localStorage.getItem('yelo_admin_token') }})`;
+                    const buttonClickLogic = `${openTarget}; this.innerHTML='${svgCheck} Cobrado'; this.style.backgroundColor='#9ca3af'; this.style.pointerEvents='none'; ${fetchLogic};`;
 
-                    wppBtn = `<button onclick="${buttonClickLogic}" title="Enviar alerta de conversão" style="background:#22c55e; color:white; border:none; border-radius:8px; padding:4px 10px; font-size:0.75rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:5px; margin-left: 10px; flex-shrink: 0; transition: background 0.3s;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> Cobrar
-                    </button>`;
+                    if (t.admin_billing_sent_at) {
+                        wppBtn = `<button title="Cobrança já enviada" style="background:#9ca3af; color:white; border:none; border-radius:8px; padding:4px 10px; font-size:0.75rem; font-weight:600; cursor:default; display:flex; align-items:center; gap:5px; margin-left: 10px; flex-shrink: 0; pointer-events: none;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Cobrado
+                        </button>`;
+                    } else {
+                        wppBtn = `<button onclick="${buttonClickLogic}" title="Enviar alerta de conversão" style="background:#22c55e; color:white; border:none; border-radius:8px; padding:4px 10px; font-size:0.75rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:5px; margin-left: 10px; flex-shrink: 0; transition: background 0.3s;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> Cobrar
+                        </button>`;
+                    }
                 }
 
                 tbody.innerHTML += `
