@@ -101,6 +101,56 @@ window.initializePage = function() {
         fetchAndRenderPsis(window.currentCrmPage + 1);
     });
 
+    // --- SORTING LOGIC ---
+    let currentSortColumn = '';
+    let currentSortOrder = 'asc';
+
+    document.querySelectorAll('th.sortable').forEach(th => {
+        th.addEventListener('click', () => {
+            const column = th.dataset.sort;
+            if (currentSortColumn === column) {
+                currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortColumn = column;
+                currentSortOrder = 'asc';
+            }
+
+            // Update icons
+            document.querySelectorAll('th.sortable .sort-icon').forEach(icon => icon.textContent = '');
+            const icon = th.querySelector('.sort-icon');
+            if (icon) icon.textContent = currentSortOrder === 'asc' ? ' ↑' : ' ↓';
+
+            // Sort data cache
+            psisDataCache.sort((a, b) => {
+                let valA = a[column];
+                let valB = b[column];
+
+                if (column === 'score') {
+                    valA = window.calculateProfileHealth ? window.calculateProfileHealth(a).score : 0;
+                    valB = window.calculateProfileHealth ? window.calculateProfileHealth(b).score : 0;
+                } else if (column === 'xp') {
+                    valA = a.xp || 0;
+                    valB = b.xp || 0;
+                } else if (column === 'status') {
+                    valA = (a.status || '') + (a.plano || '');
+                    valB = (b.status || '') + (b.plano || '');
+                } else if (column === 'createdAt') {
+                    valA = new Date(a.createdAt || 0).getTime();
+                    valB = new Date(b.createdAt || 0).getTime();
+                } else if (typeof valA === 'string') {
+                    valA = valA.toLowerCase();
+                    valB = (valB || '').toLowerCase();
+                }
+
+                if (valA < valB) return currentSortOrder === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSortOrder === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            renderTable(psisDataCache);
+        });
+    });
+
     // Lógica de Swipe Down APENAS NO CABEÇALHO (Para não travar o scroll do conteúdo)
     let startY = 0;
     let currentY = 0;
