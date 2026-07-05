@@ -219,8 +219,16 @@ window.initializePage = function() {
             const msgFinal = window.copysOutbound[tipoCopy].replace(/\[PRIMEIRO NOME\]/g, primeiroNome).replace(/www\.yelopsi\.com\.br\/profissionais/g, linkMagico);
             
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            
+            // Default link
             let whatsappUrl = `https://wa.me/${telefoneNum}?text=${encodeURIComponent(msgFinal)}`;
-            if (/Android/i.test(navigator.userAgent)) whatsappUrl = `intent://send?phone=${telefoneNum}&text=${encodeURIComponent(msgFinal)}#Intent;package=com.whatsapp.w4b;scheme=whatsapp;end`;
+            
+            // Força o WhatsApp Business no Android via Intent e no iOS via URL Scheme
+            if (/Android/i.test(navigator.userAgent)) {
+                whatsappUrl = `intent://send?phone=${telefoneNum}&text=${encodeURIComponent(msgFinal)}#Intent;package=com.whatsapp.w4b;scheme=whatsapp;end`;
+            } else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                whatsappUrl = `wabusiness://send?phone=${telefoneNum}&text=${encodeURIComponent(msgFinal)}`;
+            }
 
             if (isMobile) window.location.href = whatsappUrl;
             else window.open(whatsappUrl, '_blank');
