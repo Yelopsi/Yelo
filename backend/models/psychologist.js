@@ -137,6 +137,10 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: false,
       allowNull: false
     },
+    admin_billing_sent_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
     plano: {
       type: DataTypes.STRING,
       allowNull: true,
