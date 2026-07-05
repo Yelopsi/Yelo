@@ -1073,13 +1073,23 @@ exports.getFounderMetrics = async (req, res) => {
             attributes: ['psychologistId', 'dealClosed']
         });
 
-        // Associa o status de fechamento ao pipeline
+        // Associa o status de fechamento ao pipeline e corrige a contagem de cliques
         trialPipeline.forEach(tp => {
             const logs = trialWppLogs.filter(l => l.psychologistId === tp.id);
             const closedDeals = logs.filter(l => l.dealClosed === 'yes' || l.dealClosed === 'talking');
             tp.dealClosed = closedDeals.length > 0;
+            
+            // A fonte da verdade para cliques é o log (WhatsAppClickLog), mas se o contador legado for maior, usamos ele.
+            tp.whatsapp_clicks = Math.max(tp.whatsapp_clicks || 0, logs.length);
+            
             // Estima visualizações com base nas aparições (já que não temos tabela de views)
-            tp.profile_views = Math.ceil((tp.profile_appearances || 0) * 0.45);
+            // Se as aparições estiverem zeradas mas houver cliques, assumimos pelo menos alguns views lógicos
+            let baseAppearances = tp.profile_appearances || 0;
+            if (baseAppearances === 0 && tp.whatsapp_clicks > 0) {
+                baseAppearances = tp.whatsapp_clicks * 5; // Estimativa reversa (5 views por clique)
+                tp.profile_appearances = baseAppearances;
+            }
+            tp.profile_views = Math.ceil(baseAppearances * 0.45);
         });
 
         // Ordenar Pipeline: os que expiram antes primeiro
