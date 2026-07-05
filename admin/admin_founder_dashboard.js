@@ -132,9 +132,39 @@ async function loadFounderMetrics() {
                 if (t.daysLeft <= 3 && t.daysLeft > 1) color = '#f59e0b'; // Amarelo
                 if (t.daysLeft <= 1) color = '#ef4444'; // Vermelho
 
+                let wppBtn = '';
+                if (t.daysLeft <= 3) {
+                    const firstName = t.name.split(' ')[0];
+                    const msgFechou = t.dealClosed
+                        ? `E o melhor de tudo: notei pelo seu feedback que você conseguiu fechar terapia com paciente que veio da Yelo! 🚀\n\nIsso mostra que o algoritmo funcionou e uma única sessão já pagou a sua assinatura por meses.`
+                        : `Vi pelo seu feedback que o paciente acabou não fechando dessa vez, mas não desanime, isso é super normal no início!\n\nOs números provam o mais importante: o tráfego existe, os pacientes têm demanda para sua especialidade e a Yelo está te dando visibilidade.`;
+                    
+                    const textoMsg = encodeURIComponent(
+                        `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo.\n\n` +
+                        `Vi que faltam apenas ${t.daysLeft} dias para o seu período premium na plataforma encerrar e decidi te chamar.\n\n` +
+                        `Durante seus dias de teste, o algoritmo te recomendou *${t.profile_appearances || 0} vezes* no Match, seu perfil teve cerca de *${t.profile_views || 0} visualizações* e *${t.whatsapp_clicks || 0} pacientes* clicaram no seu WhatsApp. ${msgFechou}\n\n` +
+                        `Como seu trial expira em breve, acesse o seu perfil e finalize a sua assinatura para manter seu perfil no ar e não perder os próximos acessos.`
+                    );
+                    
+                    let telNumber = (t.telefone || '').replace(/\D/g, '');
+                    if (telNumber.length === 10 || telNumber.length === 11) telNumber = '55' + telNumber;
+
+                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                    let waLink = `https://wa.me/${telNumber}?text=${textoMsg}`;
+                    if (/Android/i.test(navigator.userAgent)) {
+                        waLink = `intent://send?phone=${telNumber}&text=${textoMsg}#Intent;package=com.whatsapp.w4b;scheme=whatsapp;end`;
+                    }
+                    
+                    const openTarget = isMobile ? `window.location.href='${waLink}'` : `window.open('${waLink}', '_blank')`;
+
+                    wppBtn = `<button onclick="${openTarget}" title="Enviar alerta de conversão" style="background:#22c55e; color:white; border:none; border-radius:8px; padding:4px 10px; font-size:0.75rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:5px; margin-left: 10px; flex-shrink: 0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> Cobrar
+                    </button>`;
+                }
+
                 tbody.innerHTML += `
                     <tr style="border-bottom: 1px solid #f1f5f9;">
-                        <td style="padding: 15px 12px; font-weight: 600; color: #334155;">${t.name}</td>
+                        <td style="padding: 15px 12px; font-weight: 600; color: #334155; display: flex; align-items: center; justify-content: space-between;">${t.name} ${wppBtn}</td>
                         <td style="padding: 15px 12px; color: ${color}; font-weight: 700;">${t.daysLeft} dias</td>
                         <td style="padding: 15px 12px; text-align: right;">
                             <span style="background: #f1f5f9; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; color: #64748b;">${t.status}</span>

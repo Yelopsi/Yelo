@@ -1027,7 +1027,7 @@ exports.getFounderMetrics = async (req, res) => {
         // 2. BUSCAR TODOS OS PSICÓLOGOS
         const activePsis = await db.Psychologist.findAll({
             where: { status: 'active', is_exempt: false },
-            attributes: ['id', 'nome', 'plano', 'stripeSubscriptionId', 'subscriptionId', 'planExpiresAt', 'cancelAtPeriodEnd', 'createdAt', 'fotoUrl', 'bio']
+            attributes: ['id', 'nome', 'telefone', 'plano', 'stripeSubscriptionId', 'subscriptionId', 'planExpiresAt', 'cancelAtPeriodEnd', 'createdAt', 'fotoUrl', 'bio', 'whatsapp_clicks', 'profile_appearances']
         });
 
         let currentMRR = 0;
@@ -1035,6 +1035,8 @@ exports.getFounderMetrics = async (req, res) => {
         let activeTrialsCount = 0;
         const now = new Date();
         const trialPipeline = [];
+
+        const activeTrialIds = [];
 
         activePsis.forEach(p => {
             const hasSub = !!(p.stripeSubscriptionId || p.subscriptionId);
@@ -1049,15 +1051,35 @@ exports.getFounderMetrics = async (req, res) => {
                 // Trial Ativo: Somente contabiliza como ativo se executou ação chave (preencheu perfil)
                 if (p.fotoUrl || p.bio) {
                     activeTrialsCount++;
+                    activeTrialIds.push(p.id);
                     const expDate = new Date(p.planExpiresAt);
                     const daysLeft = Math.ceil((expDate.getTime() - now.getTime()) / (1000 * 3600 * 24));
                     trialPipeline.push({
+                        id: p.id,
                         name: p.nome,
+                        telefone: p.telefone,
+                        whatsapp_clicks: p.whatsapp_clicks || 0,
+                        profile_appearances: p.profile_appearances || 0,
                         daysLeft: daysLeft,
                         status: daysLeft === 0 ? 'Expira hoje' : (daysLeft < 0 ? 'Expirado' : 'Trial')
                     });
                 }
             }
+        });
+
+        // Mapear logs de WhatsApp para saber se fecharam negócio
+        const trialWppLogs = await db.WhatsAppClickLog.findAll({
+            where: { psychologistId: { [Op.in]: activeTrialIds } },
+            attributes: ['psychologistId', 'dealClosed']
+        });
+
+        // Associa o status de fechamento ao pipeline
+        trialPipeline.forEach(tp => {
+            const logs = trialWppLogs.filter(l => l.psychologistId === tp.id);
+            const closedDeals = logs.filter(l => l.dealClosed === 'yes' || l.dealClosed === 'talking');
+            tp.dealClosed = closedDeals.length > 0;
+            // Estima visualizações com base nas aparições (já que não temos tabela de views)
+            tp.profile_views = Math.ceil((tp.profile_appearances || 0) * 0.45);
         });
 
         // Ordenar Pipeline: os que expiram antes primeiro
