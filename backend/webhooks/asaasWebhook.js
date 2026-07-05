@@ -76,6 +76,14 @@ exports.handleWebhook = async (req, res) => {
         } catch (err) {
             console.error(`❌ [YELO MAIL ERROR] Falha ao enviar notificação ${event.event}:`, err.message);
         }
+        
+        if (db.SystemLog) {
+            db.SystemLog.create({
+                level: 'info',
+                message: `[ASAAS] Evento de Cobrança: ${event.event} recebido para ${externalId || payment.subscription || 'Desconhecido'}`,
+                meta: { event: event.event }
+            }).catch(() => {});
+        }
     }
     // -------------------------------------------------------
 
@@ -157,6 +165,14 @@ exports.handleWebhook = async (req, res) => {
             if (psi) {
                 await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(), cancelAtPeriodEnd: false });
                 emailService.sendSubscriptionCancelledEmail(psi).catch(e => console.error("Erro email cancelamento:", e));
+                
+                if (db.SystemLog) {
+                    db.SystemLog.create({
+                        level: 'warning',
+                        message: `[ASAAS] Pagamento Estornado/Cancelado: ${psi.email}`,
+                        meta: { event: event.event, psychologistId: psi.id }
+                    }).catch(() => {});
+                }
             }
         } catch (err) { console.error('❌ [ASAAS] Erro ao processar estorno no banco:', err); }
     }
@@ -179,6 +195,14 @@ exports.handleWebhook = async (req, res) => {
                 } else {
                     await psi.update({ status: 'inactive', planExpiresAt: new Date() });
                     emailService.sendPaymentFailedEmail(psi, payment.invoiceUrl).catch(e => console.error("Erro email falha:", e));
+                    
+                    if (db.SystemLog) {
+                        db.SystemLog.create({
+                            level: 'error',
+                            message: `[ASAAS] Pagamento Falhou/Venceu: ${psi.email}. Acesso suspenso.`,
+                            meta: { event: event.event, psychologistId: psi.id }
+                        }).catch(() => {});
+                    }
                 }
             }
         } catch (err) { console.error('Erro ao processar falha de pagamento:', err); }

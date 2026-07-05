@@ -1139,6 +1139,55 @@ exports.getFounderMetrics = async (req, res) => {
         const avgTicket = payingUsers > 0 ? (currentMRR / payingUsers) : 99;
         const projectedMRR = activeTrialsCount * conversionRate * avgTicket;
         
+        // --- CONVERSION ANALYTICS ---
+        const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+        
+        const trialsLastMonth = await db.Psychologist.count({
+            where: { createdAt: { [Op.between]: [lastMonthStart, lastMonthEnd] } }
+        });
+        const paidLastMonth = await db.Psychologist.count({
+            where: { 
+                createdAt: { [Op.between]: [lastMonthStart, lastMonthEnd] },
+                [Op.or]: [
+                    { stripeSubscriptionId: { [Op.not]: null } },
+                    { subscriptionId: { [Op.not]: null } },
+                    { subscription_payments_count: { [Op.gt]: 0 } }
+                ]
+            }
+        });
+        const lastMonthConversionRate = trialsLastMonth > 0 ? (paidLastMonth / trialsLastMonth) : 0;
+
+        const daysPassedThisMonth = now.getDate();
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        const trialsThisMonth = await db.Psychologist.count({
+            where: { createdAt: { [Op.gte]: currentMonthStart } }
+        });
+        const projectedTrialsThisMonth = Math.round((trialsThisMonth / Math.max(1, daysPassedThisMonth)) * daysInMonth);
+        
+        const projectedPaidUsingTotal = Math.round(projectedTrialsThisMonth * conversionRate);
+        const projectedPaidUsingLastMonth = Math.round(projectedTrialsThisMonth * lastMonthConversionRate);
+
+        const conversionAnalytics = {
+            total: {
+                trials: trialsCount,
+                paid: everPaidCount,
+                rate: conversionRate
+            },
+            lastMonth: {
+                trials: trialsLastMonth,
+                paid: paidLastMonth,
+                rate: lastMonthConversionRate
+            },
+            currentMonth: {
+                trialsSoFar: trialsThisMonth,
+                projectedTrials: projectedTrialsThisMonth,
+                projectedPaidUsingTotal: projectedPaidUsingTotal,
+                projectedPaidUsingLastMonth: projectedPaidUsingLastMonth
+            }
+        };
+
         res.status(200).json({
             goals,
             metrics: {
@@ -1152,7 +1201,8 @@ exports.getFounderMetrics = async (req, res) => {
             trialPipeline,
             funnel,
             growthHistory,
-            yeloScore
+            yeloScore,
+            conversionAnalytics
         });
     } catch(err) {
         console.error(err);

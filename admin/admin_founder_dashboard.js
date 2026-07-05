@@ -96,6 +96,25 @@ async function loadFounderMetrics() {
         document.getElementById('f-prev-ticket').innerText = `R$ ${avgT.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
         document.getElementById('f-prev-mrr').innerText = `R$ ${metrics.projectedMRR.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
 
+        // 5.5 CONVERSÃO AVANÇADA
+        if (data.conversionAnalytics) {
+            const ca = data.conversionAnalytics;
+            if (document.getElementById('f-conv-tot-trials')) {
+                document.getElementById('f-conv-tot-trials').innerText = ca.total.trials;
+                document.getElementById('f-conv-tot-paid').innerText = ca.total.paid;
+                document.getElementById('f-conv-tot-rate').innerText = `${(ca.total.rate * 100).toFixed(1)}%`;
+                
+                document.getElementById('f-conv-last-trials').innerText = ca.lastMonth.trials;
+                document.getElementById('f-conv-last-paid').innerText = ca.lastMonth.paid;
+                document.getElementById('f-conv-last-rate').innerText = `${(ca.lastMonth.rate * 100).toFixed(1)}%`;
+                
+                document.getElementById('f-conv-cur-trials').innerText = ca.currentMonth.trialsSoFar;
+                document.getElementById('f-conv-cur-proj').innerText = ca.currentMonth.projectedTrials;
+                document.getElementById('f-conv-cur-paid-tot').innerText = ca.currentMonth.projectedPaidUsingTotal;
+                document.getElementById('f-conv-cur-paid-last').innerText = ca.currentMonth.projectedPaidUsingLastMonth;
+            }
+        }
+
         // 6. FUNIL
         document.getElementById('f-funnel-signup').innerText = funnel.signups;
         document.getElementById('f-funnel-trial').innerText = funnel.trials;

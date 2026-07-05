@@ -20,9 +20,10 @@ router.post('/psychologists/:slug/whatsapp-click', async (req, res) => {
         const isAssinante = psychologist.status === 'active' || psychologist.is_exempt;
         const clicksAtuais = psychologist.whatsapp_clicks || 0;
 
-        if (!isAssinante && clicksAtuais >= MAX_TRIAL_CLICKS) {
-            return res.status(403).json({ error: 'Profissional com agenda lotada no momento.' });
-        }
+        // Trava desativada temporariamente conforme solicitado
+        // if (!isAssinante && clicksAtuais >= MAX_TRIAL_CLICKS) {
+        //     return res.status(403).json({ error: 'Profissional com agenda lotada no momento.' });
+        // }
 
         await db.sequelize.query(
             `INSERT INTO "WhatsappClickLogs" ("psychologistId", "patientId", "guestPhone", "guestName", "createdAt", "updatedAt") VALUES (:id, :patId, :phone, :name, NOW(), NOW())`,
@@ -38,10 +39,12 @@ router.post('/psychologists/:slug/whatsapp-click', async (req, res) => {
         if (clicksAtuais === 0) {
             const emailService = require('../services/emailService');
             emailService.sendFirstLeadEmail(psychologist).catch(e => console.error('[EMAIL] Erro:', e));
-        } else if (!isAssinante && clicksAtuais === (MAX_TRIAL_CLICKS - 1)) {
-            const emailService = require('../services/emailService');
-            emailService.sendLimitReachedEmail(psychologist, MAX_TRIAL_CLICKS).catch(e => console.error('[EMAIL] Erro:', e));
         }
+        // E-mail de limite desativado temporariamente
+        // else if (!isAssinante && clicksAtuais === (MAX_TRIAL_CLICKS - 1)) {
+        //     const emailService = require('../services/emailService');
+        //     emailService.sendLimitReachedEmail(psychologist, MAX_TRIAL_CLICKS).catch(e => console.error('[EMAIL] Erro:', e));
+        // }
         res.status(200).send('Clique registrado com sucesso.');
     } catch (error) { res.status(500).send('Erro interno do servidor.'); }
 });
