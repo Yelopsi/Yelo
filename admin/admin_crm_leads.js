@@ -220,14 +220,12 @@ window.initializePage = function() {
             
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             
-            // Default link
+            // Default link (usado para Web e iOS)
             let whatsappUrl = `https://wa.me/${telefoneNum}?text=${encodeURIComponent(msgFinal)}`;
             
-            // Força o WhatsApp Business no Android via Intent e no iOS via URL Scheme
+            // Força o WhatsApp Business no Android via Intent (único que suporta 100%)
             if (/Android/i.test(navigator.userAgent)) {
                 whatsappUrl = `intent://send?phone=${telefoneNum}&text=${encodeURIComponent(msgFinal)}#Intent;package=com.whatsapp.w4b;scheme=whatsapp;end`;
-            } else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                whatsappUrl = `wabusiness://send?phone=${telefoneNum}&text=${encodeURIComponent(msgFinal)}`;
             }
 
             if (isMobile) window.location.href = whatsappUrl;
