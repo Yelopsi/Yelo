@@ -1024,9 +1024,22 @@ exports.getFounderMetrics = async (req, res) => {
             'essencial': 99.00, 'clínico': 159.00, 'sol': 259.00 
         };
 
-        // 2. BUSCAR TODOS OS PSICÓLOGOS
+        const yesterdayStart = new Date();
+        yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+        yesterdayStart.setHours(0,0,0,0);
+
+        // 2. BUSCAR TODOS OS PSICÓLOGOS (Ativos ou inativos desde ontem)
         const activePsis = await db.Psychologist.findAll({
-            where: { status: 'active', is_exempt: false },
+            where: {
+                is_exempt: false,
+                [Op.or]: [
+                    { status: 'active' },
+                    {
+                        status: 'inactive',
+                        planExpiresAt: { [Op.gte]: yesterdayStart }
+                    }
+                ]
+            },
             attributes: ['id', 'nome', 'telefone', 'plano', 'stripeSubscriptionId', 'subscriptionId', 'planExpiresAt', 'cancelAtPeriodEnd', 'createdAt', 'fotoUrl', 'bio', 'whatsapp_clicks', 'profile_appearances']
         });
 
@@ -1040,20 +1053,36 @@ exports.getFounderMetrics = async (req, res) => {
 
         activePsis.forEach(p => {
             const hasSub = !!(p.stripeSubscriptionId || p.subscriptionId);
-            const planEndsInFuture = p.planExpiresAt && new Date(p.planExpiresAt) > now;
+            
+            let planEndsInFuture = false;
+            let expiredSundayKeepMonday = false;
+
+            if (p.planExpiresAt) {
+                const expDate = new Date(p.planExpiresAt);
+                planEndsInFuture = expDate > now;
+                
+                // Se expirou ontem e ontem era domingo, hoje é segunda, então mantemos no funil para cobrança no dia útil
+                if (!planEndsInFuture && expDate > yesterdayStart && expDate.getDay() === 0 && now.getDay() === 1) {
+                    expiredSundayKeepMonday = true;
+                }
+            }
 
             if (hasSub) {
                 // Pagante
                 payingUsers++;
                 const planoKey = (p.plano || '').toLowerCase();
                 currentMRR += (planPrices[planoKey] || 0);
-            } else if (planEndsInFuture) {
+            } else if (planEndsInFuture || expiredSundayKeepMonday) {
                 // Trial Ativo: Somente contabiliza como ativo se executou ação chave (preencheu perfil)
                 if (p.fotoUrl || p.bio) {
                     activeTrialsCount++;
                     activeTrialIds.push(p.id);
                     const expDate = new Date(p.planExpiresAt);
                     const daysLeft = Math.ceil((expDate.getTime() - now.getTime()) / (1000 * 3600 * 24));
+                    
+                    let statusTxt = daysLeft === 0 ? 'Expira hoje' : (daysLeft < 0 ? 'Expirado' : 'Trial');
+                    if (expiredSundayKeepMonday) statusTxt = 'Expirou no Domingo';
+
                     trialPipeline.push({
                         id: p.id,
                         name: p.nome,
@@ -1061,7 +1090,8 @@ exports.getFounderMetrics = async (req, res) => {
                         whatsapp_clicks: p.whatsapp_clicks || 0,
                         profile_appearances: p.profile_appearances || 0,
                         daysLeft: daysLeft,
-                        status: daysLeft === 0 ? 'Expira hoje' : (daysLeft < 0 ? 'Expirado' : 'Trial')
+                        status: statusTxt,
+                        expiredSundayKeepMonday: expiredSundayKeepMonday
                     });
                 }
             }
