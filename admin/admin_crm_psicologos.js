@@ -17,6 +17,32 @@ window.initializePage = function() {
     const drawerContent = drawerOverlay ? drawerOverlay.querySelector('.drawer-content') : null;
     const drawerHeader = drawerOverlay ? drawerOverlay.querySelector('.drawer-header-mobile') : null;
 
+    // Fetch Advanced KPIs for Header (MRR, Activation, Retention)
+    async function loadAdvancedKpis() {
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/admin/founder-metrics`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                
+                // MRR
+                const mrrEl = document.getElementById('crm-mrr');
+                if (mrrEl) mrrEl.innerText = `R$ ${data.metrics.currentMRR.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+                
+                // Retenção (100% - Churn Pago)
+                const retentionEl = document.getElementById('crm-retention');
+                if (retentionEl) {
+                    const retentionPct = Math.max(0, 100 - (data.metrics.churnRate * 100)).toFixed(1);
+                    retentionEl.innerText = `${retentionPct}%`;
+                }
+            }
+        } catch (e) {
+            console.error('Erro ao carregar KPIs avançados:', e);
+        }
+    }
+    loadAdvancedKpis();
+
     // --- CONTROLES DO DRAWER ---
     function closeDrawer() { 
         drawerOverlay.classList.remove('active'); 
@@ -149,6 +175,14 @@ window.initializePage = function() {
                 setText('kpi-fila-cs', kpis.fila_cs);
                 setText('kpi-lixeira-psis', kpis.deleted || 0);
                 setText('kpi-alerta-pendentes', kpis.pending || 0);
+                
+                // Ativação: (Ativos / Totais) * 100
+                const activationEl = document.getElementById('crm-activation');
+                if (activationEl && kpis.total > 0) {
+                    const ativos = (parseInt(kpis.active_paying) || 0) + (parseInt(kpis.active_trial) || 0) + (parseInt(kpis.vip) || 0);
+                    const actPct = ((ativos / kpis.total) * 100).toFixed(1);
+                    activationEl.innerText = `${actPct}%`;
+                }
             }
 
             // Auto open logic
