@@ -919,7 +919,8 @@ exports.getWhatsappFeedbacks = async (req, res) => {
             include: [{
                 model: db.Psychologist,
                 as: 'psychologist', // Precisa bater com o alias definido no WhatsAppClickLog.js
-                attributes: ['id', 'nome', 'email', 'slug', 'telefone'] // 'id' adicionado para permitir o clique no painel
+                attributes: ['id', 'nome', 'email', 'slug', 'telefone'], // 'id' adicionado para permitir o clique no painel
+                paranoid: false // Incluir psicólogos que deletaram a conta
             }],
             order: [['createdAt', 'DESC']]
         });
