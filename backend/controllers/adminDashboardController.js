@@ -1078,6 +1078,7 @@ exports.getFounderMetrics = async (req, res) => {
             const logs = trialWppLogs.filter(l => l.psychologistId === tp.id);
             const closedDeals = logs.filter(l => l.dealClosed === 'yes' || l.dealClosed === 'talking');
             tp.dealClosed = closedDeals.length > 0;
+            tp.closedDealsCount = closedDeals.length;
             
             // A fonte da verdade para cliques é o log (WhatsAppClickLog), mas se o contador legado for maior, usamos ele.
             tp.whatsapp_clicks = Math.max(tp.whatsapp_clicks || 0, logs.length);
