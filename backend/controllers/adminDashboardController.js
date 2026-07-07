@@ -1041,7 +1041,7 @@ exports.getFounderMetrics = async (req, res) => {
                     }
                 ]
             },
-            attributes: ['id', 'nome', 'telefone', 'plano', 'stripeSubscriptionId', 'subscriptionId', 'planExpiresAt', 'cancelAtPeriodEnd', 'createdAt', 'fotoUrl', 'bio', 'whatsapp_clicks', 'profile_appearances', 'admin_billing_sent_at']
+            attributes: ['id', 'nome', 'telefone', 'plano', 'status', 'stripeSubscriptionId', 'subscriptionId', 'planExpiresAt', 'cancelAtPeriodEnd', 'createdAt', 'fotoUrl', 'bio', 'whatsapp_clicks', 'profile_appearances', 'admin_billing_sent_at']
         });
 
         let currentMRR = 0;
@@ -1068,7 +1068,7 @@ exports.getFounderMetrics = async (req, res) => {
                 }
             }
 
-            if (hasSub) {
+            if (hasSub && p.status === 'active') {
                 // Pagante
                 payingUsers++;
                 const planoKey = (p.plano || '').toLowerCase();
