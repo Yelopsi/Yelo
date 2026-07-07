@@ -1105,6 +1105,25 @@ exports.getFounderMetrics = async (req, res) => {
             attributes: ['psychologistId', 'dealClosed']
         });
 
+        // Buscar exatos de MatchEvents e ProfileAppearanceLogs
+        let matchEventsCount = [];
+        let profileViewsCount = [];
+        if (activeTrialIds.length > 0) {
+            matchEventsCount = await db.sequelize.query(`
+                SELECT "psychologistId", COUNT(*) as count 
+                FROM "MatchEvents" 
+                WHERE "psychologistId" IN (:activeTrialIds) 
+                GROUP BY "psychologistId"
+            `, { replacements: { activeTrialIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+
+            profileViewsCount = await db.sequelize.query(`
+                SELECT "psychologistId", COUNT(*) as count 
+                FROM "ProfileAppearanceLogs" 
+                WHERE "psychologistId" IN (:activeTrialIds) 
+                GROUP BY "psychologistId"
+            `, { replacements: { activeTrialIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+        }
+
         // Associa o status de fechamento ao pipeline e corrige a contagem de cliques
         trialPipeline.forEach(tp => {
             const logs = trialWppLogs.filter(l => l.psychologistId === tp.id);
@@ -1112,17 +1131,16 @@ exports.getFounderMetrics = async (req, res) => {
             tp.dealClosed = closedDeals.length > 0;
             tp.closedDealsCount = closedDeals.length;
             
-            // A fonte da verdade para cliques é o log (WhatsAppClickLog), mas se o contador legado for maior, usamos ele.
             tp.whatsapp_clicks = Math.max(tp.whatsapp_clicks || 0, logs.length);
             
-            // Estima visualizações com base nas aparições (já que não temos tabela de views)
-            // Se as aparições estiverem zeradas mas houver cliques, assumimos pelo menos alguns views lógicos
-            let baseAppearances = tp.profile_appearances || 0;
-            if (baseAppearances === 0 && tp.whatsapp_clicks > 0) {
-                baseAppearances = tp.whatsapp_clicks * 5; // Estimativa reversa (5 views por clique)
-                tp.profile_appearances = baseAppearances;
-            }
-            tp.profile_views = Math.ceil(baseAppearances * 0.45);
+            const matchEv = matchEventsCount.find(m => m.psychologistId == tp.id);
+            const profView = profileViewsCount.find(m => m.psychologistId == tp.id);
+            
+            const exactMatches = matchEv ? parseInt(matchEv.count) : 0;
+            const exactViews = profView ? parseInt(profView.count) : 0;
+            
+            if (exactMatches > (tp.profile_appearances || 0)) tp.profile_appearances = exactMatches;
+            tp.profile_views = exactViews;
         });
 
         // Ordenar Pipeline: os que expiram antes primeiro

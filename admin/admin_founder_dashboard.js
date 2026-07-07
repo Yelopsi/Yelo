@@ -153,7 +153,7 @@ async function loadFounderMetrics() {
                     const textoMsg = encodeURIComponent(
                         `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo.\n\n` +
                         `Vi que ${tempoFaltaText} e decidi te chamar.\n\n` +
-                        `Durante seus dias de teste, o algoritmo te recomendou *${t.profile_appearances || 0} vezes* no Match, seu perfil teve cerca de *${t.profile_views || 0} visualizações* e *${t.whatsapp_clicks || 0} pacientes* clicaram no seu WhatsApp. ${msgFechou}\n\n` +
+                        `Durante seus dias de teste, o algoritmo te recomendou *${t.profile_appearances || 0} vezes* no Match, seu perfil teve *${t.profile_views || 0} visualizações* e *${t.whatsapp_clicks || 0} pacientes* clicaram no seu WhatsApp. ${msgFechou}\n\n` +
                         `Como seu trial expira em breve, acesse o seu perfil e finalize a sua assinatura para manter seu perfil no ar e não perder os próximos acessos.`
                     );
                     
