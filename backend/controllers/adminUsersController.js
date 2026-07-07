@@ -462,8 +462,10 @@ exports.getPendingActions = async (req, res) => {
                 fotoUrl: { [Op.ne]: null },
                 bio: { [Op.ne]: null },
                 status: 'active',
-                plano: 'trial',
-                msg_analysis_sent_at: null
+                stripeSubscriptionId: null,
+                subscriptionId: null,
+                msg_analysis_sent_at: null,
+                deletedAt: null
             },
             attributes: ['id', 'nome', 'telefone', 'createdAt', 'fotoUrl', 'bio']
         });
@@ -489,7 +491,8 @@ exports.getPendingActions = async (req, res) => {
         const churnCandidates = await db.Psychologist.findAll({
             where: {
                 status: 'inactive',
-                plano: 'trial',
+                stripeSubscriptionId: null,
+                subscriptionId: null,
                 planExpiresAt: { [Op.lte]: threeDaysAgo },
                 msg_churn_followup_sent_at: null,
                 deletedAt: null
@@ -598,12 +601,14 @@ exports.getPendingActions = async (req, res) => {
         const expiringCandidates = await db.Psychologist.findAll({
             where: {
                 status: 'active',
-                plano: 'trial',
+                stripeSubscriptionId: null,
+                subscriptionId: null,
                 planExpiresAt: {
                     [Op.lte]: expirationUpperBound,
                     [Op.gte]: expirationLowerBound
                 },
-                admin_billing_sent_at: null
+                admin_billing_sent_at: null,
+                deletedAt: null
             },
             attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano', 'profile_appearances', 'whatsapp_clicks']
         });
