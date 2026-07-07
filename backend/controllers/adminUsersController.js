@@ -509,11 +509,8 @@ exports.getPendingActions = async (req, res) => {
                 const closedDeals = logs.filter(l => l.dealClosed === 'yes' || l.dealClosed === 'talking');
                 const dealClosedCount = closedDeals.length;
                 
-                let clicks = Math.max(p.whatsapp_clicks || 0, logs.length);
+                let clicks = p.whatsapp_clicks || 0;
                 let appearances = p.profile_appearances || 0;
-                if (appearances === 0 && clicks > 0) {
-                    appearances = clicks * 5;
-                }
                 let views = Math.ceil(appearances * 0.45);
 
                 pendingList.push({ 
