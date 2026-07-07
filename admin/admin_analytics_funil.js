@@ -758,6 +758,7 @@ window.initializePage = function() {
 
         const recebidas = feedbacks.filter(f => f.feedbackGiven && f.contactReceived).length;
         const fechados = feedbacks.filter(f => f.feedbackGiven && f.contactReceived && f.dealClosed === 'yes').length;
+        const negociacao = feedbacks.filter(f => f.feedbackGiven && f.contactReceived && f.dealClosed === 'talking').length;
         
         const fantasmas = feedbacks.filter(f => f.feedbackGiven && !f.contactReceived).length;
         const taxaFechamento = recebidas > 0 ? ((fechados / recebidas) * 100).toFixed(1) : 0;
@@ -766,6 +767,7 @@ window.initializePage = function() {
         const elWppTotal = document.getElementById('kpi-wpp-total-feedbacks');
         const elWppRec = document.getElementById('kpi-wpp-recebidas');
         const elWppFec = document.getElementById('kpi-wpp-fechados');
+        const elWppNeg = document.getElementById('kpi-wpp-negociacao');
         const elWppFant = document.getElementById('kpi-wpp-fantasmas');
 
         const elWppTx = document.getElementById('kpi-wpp-tx-resposta');
@@ -776,6 +778,7 @@ window.initializePage = function() {
         if (elWppTotal) elWppTotal.innerText = total;
         if (elWppRec) elWppRec.innerText = recebidas;
         if (elWppFec) elWppFec.innerText = fechados;
+        if (elWppNeg) elWppNeg.innerText = negociacao;
         if (elWppFant) elWppFant.innerText = fantasmas;
 
         if (elWppTx) elWppTx.innerText = taxaResposta + '%';
