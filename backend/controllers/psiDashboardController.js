@@ -258,10 +258,24 @@ exports.getAiInsights = async (req, res) => {
         const psychologist = await db.Psychologist.findByPk(psychologistId);
         if (!psychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
 
+        if (psychologist.ai_insights_cache) {
+            const cacheData = psychologist.ai_insights_cache;
+            const diasPassados = (Date.now() - cacheData.timestamp) / (1000 * 60 * 60 * 24);
+            if (diasPassados < 3 && cacheData.tips) {
+                console.log("💡 [Growth Coach Backend] Dicas carregadas do cache do banco de dados.");
+                return res.status(200).json(cacheData.tips);
+            }
+        }
+
         const seoService = require('../services/seoService');
         const insights = await seoService.generateDashboardInsights(stats, psychologist);
         
         if (insights) {
+            psychologist.ai_insights_cache = {
+                timestamp: Date.now(),
+                tips: insights
+            };
+            await psychologist.save();
             res.status(200).json(insights);
         } else {
             res.status(500).json({ error: 'Falha ao gerar insights da IA.' });

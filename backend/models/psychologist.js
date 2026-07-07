@@ -97,6 +97,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     },
     // -------------------------------
+    ai_insights_cache: {
+      type: DataTypes.JSONB,
+      allowNull: true
+    },
     fotoUrl: {
       type: DataTypes.STRING,
       allowNull: true
