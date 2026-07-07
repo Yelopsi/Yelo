@@ -536,55 +536,73 @@ exports.getPendingActions = async (req, res) => {
                 if (clicks === 0) clicks = p.whatsapp_clicks || 0;
 
                 pendingList.push({ 
-                    ...p.toJSON(), 
-                    actionType: 'churn', 
-                    reason: 'Trial expirado há >3 dias',
-                    metrics: { appearances, views, clicks, dealClosedCount }
-                });
-            });
-        }
+                churnCandidates.forEach(p => {
+                    const logs = wppLogs.filter(l => l.psychologistId === p.id);
+                    const closedDeals = logs.filter(l => l.dealClosed === 'yes' || l.dealClosed === 'talking');
+                    const dealClosedCount = closedDeals.length;
+                    
+                    const clicks = logs.length;
+                    
+                    const matchEv = matchEventsCount.find(m => m.psychologistId == p.id);
+                    let appearances = matchEv ? parseInt(matchEv.count, 10) : 0;
+                    
+                    const profView = profileViewsCount.find(v => v.psychologistId == p.id);
+                    let views = profView ? parseInt(profView.count, 10) : 0;
+                    
+                    // Fallbacks seguros caso os logs antigos não existam, usa o consolidado do psicólogo
+                    if (appearances === 0) appearances = p.profile_appearances || 0;
+                    if (clicks === 0) clicks = p.whatsapp_clicks || 0;
 
-        // 4. Feedback / Cobrança (Clique WhatsApp > 24h E adminWppReminderSentAt NULA E feedbackGiven = false)
-        if (db.WhatsAppClickLog) {
-            const clicksQuery = `
-                SELECT DISTINCT ON (w."psychologistId") 
-                    w."psychologistId", 
-                    w."guestName", 
-                    w."feedbackToken",
-                    p.nome as "patientName"
-                FROM "WhatsAppClickLogs" w
-                LEFT JOIN "Patients" p ON w."patientId" = p.id
-                WHERE w."createdAt" <= :oneDayAgo
-                  AND w."feedbackGiven" IS NOT TRUE
-                  AND w."adminWppReminderSentAt" IS NULL
-                ORDER BY w."psychologistId", w."createdAt" DESC
-            `;
-            const clickedIdsObj = await db.sequelize.query(clicksQuery, {
-                replacements: { oneDayAgo },
-                type: db.sequelize.QueryTypes.SELECT
-            }).catch(() => []);
-            
-            // Filtra os IDs
-            const clickedIds = clickedIdsObj.map(row => row.psychologistId || row.PsychologistId).filter(id => id);
-
-            if (clickedIds.length > 0) {
-                const billingCandidates = await db.Psychologist.findAll({
-                    where: {
-                        id: { [Op.in]: clickedIds }
-                    },
-                    attributes: ['id', 'nome', 'telefone']
-                });
-                
-                billingCandidates.forEach(p => {
-                    const clickData = clickedIdsObj.find(r => (r.psychologistId || r.PsychologistId) === p.id);
-                    const pName = clickData ? (clickData.patientName || clickData.guestName || 'um paciente') : 'um paciente';
-                    const token = clickData ? clickData.feedbackToken : '';
                     pendingList.push({ 
                         ...p.toJSON(), 
-                        actionType: 'billing_feedback', 
-                        reason: 'Recebeu clique há mais de 24h',
-                        patientName: pName,
-                        feedbackToken: token
+                        actionType: 'churn', 
+                        reason: 'Trial expirado há >3 dias',
+                        metrics: { appearances, views, clicks, dealClosedCount }
+                    });
+                });
+            }
+        }
+
+        // 4. Cobrança de Feedback (WhatsAppClickLog >= 24h sem feedbackGiven e adminWppReminderSentAt null)
+        if (db.WhatsAppClickLog) {
+            const clicks = await db.WhatsAppClickLog.findAll({
+                where: {
+                    createdAt: { [Op.lte]: oneDayAgo },
+                    feedbackGiven: { [Op.not]: true },
+                    adminWppReminderSentAt: null
+                },
+                order: [['psychologistId', 'ASC'], ['createdAt', 'DESC']]
+            });
+
+            // To emulate DISTINCT ON psychologistId
+            const uniqueClicks = [];
+            const seenPsyIds = new Set();
+            for (const c of clicks) {
+                if (!seenPsyIds.has(c.psychologistId)) {
+                    seenPsyIds.add(c.psychologistId);
+                    uniqueClicks.push(c);
+                }
+            }
+
+            const psiIds = uniqueClicks.map(c => c.psychologistId);
+
+            if (psiIds.length > 0) {
+                const billingCandidates = await db.Psychologist.findAll({
+                    where: {
+                        id: { [Op.in]: psiIds },
+                        deletedAt: null
+                    },
+                    attributes: ['id', 'nome', 'telefone', 'createdAt']
+                });
+
+                billingCandidates.forEach(p => {
+                    const clickData = uniqueClicks.find(c => String(c.psychologistId) === String(p.id));
+                    pendingList.push({
+                        ...p.toJSON(),
+                        actionType: 'billing_feedback',
+                        reason: 'Feedback de paciente (WhatsApp)',
+                        patientName: clickData && clickData.guestName ? clickData.guestName : 'Paciente',
+                        feedbackToken: clickData ? clickData.feedbackToken : ''
                     });
                 });
             }
