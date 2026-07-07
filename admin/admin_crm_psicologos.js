@@ -207,9 +207,10 @@ window.initializePage = function () {
                 });
                 if (!response.ok) throw new Error('Falha ao buscar pendências.');
                 const pendingData = await response.json();
-                renderPendingActionsTable(pendingData);
+                const actionsArray = pendingData.pendingActions || pendingData;
+                renderPendingActionsTable(actionsArray);
                 const infoEl = document.getElementById('pagination-info');
-                if (infoEl) infoEl.textContent = `Mostrando ${pendingData.length} ações`;
+                if (infoEl) infoEl.textContent = `Mostrando ${actionsArray.length} ações`;
                 return;
             } catch (error) {
                 tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--coral-quente);">Erro ao carregar ações pendentes.</td></tr>`;
