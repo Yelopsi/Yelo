@@ -339,10 +339,10 @@ window.initializePage = function() {
 
         // Marcar como enviado no banco
         try {
-            const res = await fetch(\`\${API_BASE_URL}/api/admin/psychologists/\${id}/action-sent\`, {
+            const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/action-sent`, {
                 method: 'PATCH',
                 headers: { 
-                    'Authorization': \`Bearer \${token}\`,
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ actionType })
