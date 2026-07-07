@@ -771,6 +771,19 @@ exports.debugCrm = async (req, res) => {
             ORDER BY w."psychologistId", w."createdAt" DESC
         `;
         result.rawFeedbackCandidates = await db.sequelize.query(clicksQuery, { type: db.sequelize.QueryTypes.SELECT });
+        
+        if (result.rawFeedbackCandidates && result.rawFeedbackCandidates.length > 0) {
+            const psiIds = result.rawFeedbackCandidates.map(c => c.psychologistId);
+            result.billingCandidatesFound = await db.Psychologist.findAll({
+                where: { id: { [Op.in]: psiIds }, deletedAt: null },
+                attributes: ['id', 'status', 'deletedAt']
+            });
+            result.billingCandidatesAll = await db.Psychologist.findAll({
+                where: { id: { [Op.in]: psiIds } },
+                paranoid: false,
+                attributes: ['id', 'status', 'deletedAt']
+            });
+        }
 
         res.status(200).json(result);
     } catch (error) {
