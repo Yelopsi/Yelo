@@ -500,15 +500,37 @@ exports.getPendingActions = async (req, res) => {
                 where: { psychologistId: { [Op.in]: churnIds } },
                 attributes: ['psychologistId', 'dealClosed']
             });
+            
+            const matchEventsCount = await db.sequelize.query(`
+                SELECT "psychologistId", COUNT(*) as count 
+                FROM "MatchEvents" 
+                WHERE "psychologistId" IN (:churnIds) 
+                GROUP BY "psychologistId"
+            `, { replacements: { churnIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+
+            const profileViewsCount = await db.sequelize.query(`
+                SELECT "psychologistId", COUNT(*) as count 
+                FROM "ProfileAppearanceLogs" 
+                WHERE "psychologistId" IN (:churnIds) 
+                GROUP BY "psychologistId"
+            `, { replacements: { churnIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
 
             churnCandidates.forEach(p => {
                 const logs = wppLogs.filter(l => l.psychologistId === p.id);
                 const closedDeals = logs.filter(l => l.dealClosed === 'yes' || l.dealClosed === 'talking');
                 const dealClosedCount = closedDeals.length;
                 
-                let clicks = p.whatsapp_clicks || 0;
-                let appearances = p.profile_appearances || 0;
-                let views = Math.ceil(appearances * 0.45);
+                const clicks = logs.length;
+                
+                const matchEv = matchEventsCount.find(m => m.psychologistId == p.id);
+                let appearances = matchEv ? parseInt(matchEv.count, 10) : 0;
+                
+                const profView = profileViewsCount.find(v => v.psychologistId == p.id);
+                let views = profView ? parseInt(profView.count, 10) : 0;
+                
+                // Fallbacks seguros caso os logs antigos não existam, usa o consolidado do psicólogo
+                if (appearances === 0) appearances = p.profile_appearances || 0;
+                if (clicks === 0) clicks = p.whatsapp_clicks || 0;
 
                 pendingList.push({ 
                     ...p.toJSON(), 
