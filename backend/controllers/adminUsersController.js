@@ -482,16 +482,48 @@ exports.getPendingActions = async (req, res) => {
         });
         incompleteCandidates.forEach(p => pendingList.push({ ...p.toJSON(), actionType: 'incomplete', reason: 'Perfil incompleto há mais de 24h' }));
 
-        // 3. Churn (Inativo E plano expirou > 3 dias E msg_churn_followup_sent_at NULA)
+        // 3. Churn de trial (Trial expirado há >= 3 dias, E msg_churn_followup_sent_at NULA, STATUS inactive)
+        const threeDaysAgo = new Date();
+        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
         const churnCandidates = await db.Psychologist.findAll({
             where: {
                 status: 'inactive',
+                plano: 'trial',
                 planExpiresAt: { [Op.lte]: threeDaysAgo },
-                msg_churn_followup_sent_at: null
+                msg_churn_followup_sent_at: null,
+                deletedAt: null
             },
-            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano']
+            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano', 'profile_appearances', 'whatsapp_clicks']
         });
-        churnCandidates.forEach(p => pendingList.push({ ...p.toJSON(), actionType: 'churn', reason: 'Plano expirado há mais de 3 dias' }));
+
+        if (churnCandidates.length > 0) {
+            const churnIds = churnCandidates.map(c => c.id);
+            const wppLogs = await db.WhatsAppClickLog.findAll({
+                where: { psychologistId: { [Op.in]: churnIds } },
+                attributes: ['psychologistId', 'dealClosed']
+            });
+
+            churnCandidates.forEach(p => {
+                const logs = wppLogs.filter(l => l.psychologistId === p.id);
+                const closedDeals = logs.filter(l => l.dealClosed === 'yes' || l.dealClosed === 'talking');
+                const dealClosedCount = closedDeals.length;
+                
+                let clicks = Math.max(p.whatsapp_clicks || 0, logs.length);
+                let appearances = p.profile_appearances || 0;
+                if (appearances === 0 && clicks > 0) {
+                    appearances = clicks * 5;
+                }
+                let views = Math.ceil(appearances * 0.45);
+
+                pendingList.push({ 
+                    ...p.toJSON(), 
+                    actionType: 'churn', 
+                    reason: 'Trial expirado há >3 dias',
+                    metrics: { appearances, views, clicks, dealClosedCount }
+                });
+            });
+        }
 
         // 4. Feedback / Cobrança (Clique WhatsApp > 24h E msg_feedback_billing_sent_at NULA)
         if (db.WhatsAppClickLog) {

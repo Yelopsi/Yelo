@@ -305,7 +305,7 @@ window.initializePage = function() {
                     <span style="font-size: 0.8rem; color: #64748b;">${item.plano || '-'}</span>
                 </td>
                 <td data-label="Ações CS" style="white-space: nowrap; text-align: right;">
-                    <button class="btn-tabela" onclick="window.sendWhatsAppAction('${item.id}', '${item.telefone}', '${item.nome}', '${item.actionType}', '${item.patientName || ''}', '${item.feedbackToken || ''}')" style="background: #25D366; color: white; border: none; padding: 6px 12px; border-radius: 50px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 4px rgba(37,211,102,0.3);">
+                    <button class="btn-tabela" onclick="window.sendWhatsAppAction('${item.id}', '${item.telefone}', '${item.nome}', '${item.actionType}', '${item.patientName || ''}', '${item.feedbackToken || ''}', '${encodeURIComponent(JSON.stringify(item.metrics || {}))}')" style="background: #25D366; color: white; border: none; padding: 6px 12px; border-radius: 50px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 4px rgba(37,211,102,0.3);">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                         Enviar
                     </button>
@@ -315,13 +315,14 @@ window.initializePage = function() {
         });
     }
 
-    window.sendWhatsAppAction = async function(id, phone, name, actionType, patientName = '', feedbackToken = '') {
+    window.sendWhatsAppAction = async function(id, phone, name, actionType, patientName = '', feedbackToken = '', metricsStr = '{}') {
         if (!phone || phone === 'null') {
             window.showToast('Profissional sem telefone cadastrado.', 'error');
             return;
         }
         const cleanPhone = phone.replace(/\D/g, '');
         const firstName = name.split(' ')[0];
+        const metrics = JSON.parse(decodeURIComponent(metricsStr));
         let msg = '';
         
         if (actionType === 'analysis') {
@@ -350,7 +351,15 @@ window.initializePage = function() {
         } else if (actionType === 'incomplete') {
             msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo. 🌿\n\nVi que você deu o primeiro passo e iniciou o seu cadastro na nossa plataforma, mas acabou não finalizando o preenchimento do seu perfil. Eu sei bem que a rotina de atendimentos acaba engolindo o nosso tempo, né? rs\n\nPassei só para te lembrar que os seus 14 dias de teste gratuito (sem precisar cadastrar cartão de crédito) só começam a contar depois que o seu perfil estiver completo e a sua página disponível para receber pacientes!\n\nÉ a oportunidade perfeita para você testar na prática como a plataforma te conecta com pacientes direto no seu WhatsApp, lembrando que a gente não cobra nenhuma taxa ou comissão pelas suas sessões.\n\nFalta bem pouco para o seu perfil ficar ativo nas buscas. Se precisar de uma mãozinha para preencher a sua bio ou tiver qualquer dúvida, é só me dar um toque respondendo esta mensagem. Sigo super à disposição por aqui!`;
         } else if (actionType === 'churn') {
-            msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo. 🌿\n\nVi que os seus dias de teste acabaram e o seu perfil foi inativado.\n\nComo foi a sua experiência? Tivemos pacientes agendando sessões com você?\nHá algo que poderíamos ter feito melhor para que você continuasse conosco?\n\nSeu feedback é muito importante para nós! Se puder me responder, ficarei muito grato. Sigo à disposição!`;
+            let msgFechou = '';
+            if (metrics.dealClosedCount > 0) {
+                const count = metrics.dealClosedCount;
+                const ptTexto = count === 1 ? 'um paciente que veio selecionado' : `${count} pacientes que vieram selecionados`;
+                msgFechou = `E o melhor de tudo: notei pelo seu feedback que você conseguiu fechar terapia com ${ptTexto} pela Yelo! 🚀\n\nIsso mostra que o algoritmo funcionou e a plataforma já se pagou por meses.`;
+            } else {
+                msgFechou = `Vi pelo seu feedback que o paciente acabou não fechando dessa vez, mas não desanime, isso é super normal no início!`;
+            }
+            msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo.\n\nVi que os seus dias de teste acabaram e o seu perfil foi inativado. \n\nDurante seus dias de teste, o algoritmo te recomendou *${metrics.appearances || 0} vezes* no Match, seu perfil teve cerca de *${metrics.views || 0} visualizações* e *${metrics.clicks || 0} pacientes* clicaram no seu WhatsApp. ${msgFechou}\n\nOs números provam o mais importante: o tráfego existe, os pacientes têm demanda para sua especialidade e a Yelo está te dando visibilidade.\n\nAcesse o seu perfil e finalize a sua assinatura para reativar sua conta e não perder os próximos acessos.`;
         } else if (actionType === 'billing_feedback') {
             let baseUrlFeedback = window.location.origin.includes('localhost') ? 'http://localhost:3000' : 'https://www.yelopsi.com.br';
             let linkFeedback = feedbackToken ? `${baseUrlFeedback}/magic-feedback.html?token=${feedbackToken}` : `${baseUrlFeedback}/psi/dashboard`;
