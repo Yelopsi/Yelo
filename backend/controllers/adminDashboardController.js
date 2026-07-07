@@ -1202,7 +1202,10 @@ exports.getFounderMetrics = async (req, res) => {
             // Conta quantos pagantes já existiam até aquele mês
             const activesAtTime = await db.Psychologist.count({
                 where: { 
-                    createdAt: { [Op.lte]: endD },
+                    [Op.or]: [
+                        { subscribedAt: { [Op.lte]: endD } },
+                        { subscribedAt: null, createdAt: { [Op.lte]: endD } } // Fallback de segurança
+                    ],
                     [Op.or]: [
                         { stripeSubscriptionId: { [Op.not]: null } },
                         { subscriptionId: { [Op.not]: null } },

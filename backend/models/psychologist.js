@@ -202,6 +202,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       comment: 'ID da assinatura no Gateway de Pagamento (ex: sub_12345)'
     },
+    subscribedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: 'Data exata em que o psicólogo realizou a assinatura (conversão)'
+    },
     // --- FIM CONTROLE DE ASSINATURA ---
     // --- CAMPOS NOVOS (Do Questionário) ---
     // (Os campos 'abordagem', 'especialidades', 'cidade', 'online' foram removidos)
