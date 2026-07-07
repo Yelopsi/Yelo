@@ -320,21 +320,21 @@ window.initializePage = function() {
             window.showToast('Profissional sem telefone cadastrado.', 'error');
             return;
         }
-        const cleanPhone = phone.replace(/\\D/g, '');
+        const cleanPhone = phone.replace(/\D/g, '');
         const firstName = name.split(' ')[0];
         let msg = '';
         
         if (actionType === 'analysis') {
-            msg = \`Olá, \${firstName}! Aqui é do time da Yelo. Vimos que você já preencheu seu perfil, parabéns! Ele está aprovado e pronto para atrair pacientes. Se precisar de dicas, estamos aqui!\`;
+            msg = `Olá, ${firstName}! Aqui é do time da Yelo. Vimos que você já preencheu seu perfil, parabéns! Ele está aprovado e pronto para atrair pacientes. Se precisar de dicas, estamos aqui!`;
         } else if (actionType === 'incomplete') {
-            msg = \`Olá, \${firstName}! Sou da Yelo. Notamos que você se cadastrou, mas não finalizou o perfil. Precisa de ajuda com a foto ou biografia?\`;
+            msg = `Olá, ${firstName}! Sou da Yelo. Notamos que você se cadastrou, mas não finalizou o perfil. Precisa de ajuda com a foto ou biografia?`;
         } else if (actionType === 'churn') {
-            msg = \`Olá, \${firstName}! Vimos que seu plano expirou na Yelo. Há algo que poderíamos ter feito melhor? Seu feedback é super importante pra nós!\`;
+            msg = `Olá, ${firstName}! Vimos que seu plano expirou na Yelo. Há algo que poderíamos ter feito melhor? Seu feedback é super importante pra nós!`;
         } else if (actionType === 'billing_feedback') {
-            msg = \`Olá, \${firstName}! Vimos que você recebeu contatos de pacientes pelo perfil recentemente. Conseguiu fechar agendamentos? Não esqueça de dar o feedback na plataforma!\`;
+            msg = `Olá, ${firstName}! Vimos que você recebeu contatos de pacientes pelo perfil recentemente. Conseguiu fechar agendamentos? Não esqueça de dar o feedback na plataforma!`;
         }
 
-        const link = \`https://api.whatsapp.com/send?phone=55\${cleanPhone}&text=\${encodeURIComponent(msg)}\`;
+        const link = `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${encodeURIComponent(msg)}`;
         window.open(link, '_blank');
 
         // Marcar como enviado no banco
