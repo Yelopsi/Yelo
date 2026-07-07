@@ -544,7 +544,7 @@ exports.getPendingActions = async (req, res) => {
             });
         }
 
-        // 4. Feedback / Cobrança (Clique WhatsApp > 24h E msg_feedback_billing_sent_at NULA)
+        // 4. Feedback / Cobrança (Clique WhatsApp > 24h E adminWppReminderSentAt NULA E feedbackGiven = false)
         if (db.WhatsAppClickLog) {
             const clicksQuery = `
                 SELECT DISTINCT ON (w."psychologistId") 
@@ -555,6 +555,8 @@ exports.getPendingActions = async (req, res) => {
                 FROM "WhatsAppClickLogs" w
                 LEFT JOIN "Patients" p ON w."patientId" = p.id
                 WHERE w."createdAt" <= :oneDayAgo
+                  AND w."feedbackGiven" = false
+                  AND w."adminWppReminderSentAt" IS NULL
                 ORDER BY w."psychologistId", w."createdAt" DESC
             `;
             const clickedIdsObj = await db.sequelize.query(clicksQuery, {
@@ -568,8 +570,7 @@ exports.getPendingActions = async (req, res) => {
             if (clickedIds.length > 0) {
                 const billingCandidates = await db.Psychologist.findAll({
                     where: {
-                        id: { [Op.in]: clickedIds },
-                        msg_feedback_billing_sent_at: null
+                        id: { [Op.in]: clickedIds }
                     },
                     attributes: ['id', 'nome', 'telefone']
                 });
@@ -691,7 +692,12 @@ exports.markActionSent = async (req, res) => {
         } else if (actionType === 'churn') {
             await psychologist.update({ msg_churn_followup_sent_at: now });
         } else if (actionType === 'billing_feedback') {
-            await psychologist.update({ msg_feedback_billing_sent_at: now });
+            if (db.WhatsAppClickLog) {
+                await db.WhatsAppClickLog.update(
+                    { adminWppReminderSentAt: now, adminWppReminderCount: 1 }, 
+                    { where: { psychologistId: id, feedbackGiven: false, adminWppReminderSentAt: null } }
+                );
+            }
         } else if (actionType === 'expiring_trial') {
             await psychologist.update({ admin_billing_sent_at: now });
         } else {
