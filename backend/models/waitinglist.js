@@ -26,6 +26,10 @@ module.exports = (sequelize, DataTypes) => {
         isEmail: true
       }
     },
+    telefone: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     crp: {
       type: DataTypes.STRING,
       allowNull: false,
