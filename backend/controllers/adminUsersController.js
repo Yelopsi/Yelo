@@ -483,9 +483,6 @@ exports.getPendingActions = async (req, res) => {
         incompleteCandidates.forEach(p => pendingList.push({ ...p.toJSON(), actionType: 'incomplete', reason: 'Perfil incompleto há mais de 24h' }));
 
         // 3. Churn de trial (Trial expirado há >= 3 dias, E msg_churn_followup_sent_at NULA, STATUS inactive)
-        const threeDaysAgo = new Date();
-        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-
         const churnCandidates = await db.Psychologist.findAll({
             where: {
                 status: 'inactive',
