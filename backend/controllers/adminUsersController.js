@@ -465,7 +465,8 @@ exports.getPendingActions = async (req, res) => {
                 stripeSubscriptionId: null,
                 subscriptionId: null,
                 msg_analysis_sent_at: null,
-                deletedAt: null
+                deletedAt: null,
+                telefone: { [Op.ne]: null, [Op.not]: '' }
             },
             attributes: ['id', 'nome', 'telefone', 'createdAt', 'fotoUrl', 'bio']
         });
@@ -481,7 +482,8 @@ exports.getPendingActions = async (req, res) => {
                     { bio: null },
                     { bio: '' }
                 ],
-                msg_incomplete_profile_sent_at: null
+                msg_incomplete_profile_sent_at: null,
+                telefone: { [Op.ne]: null, [Op.not]: '' }
             },
             attributes: ['id', 'nome', 'telefone', 'createdAt']
         });
@@ -495,7 +497,8 @@ exports.getPendingActions = async (req, res) => {
                 subscriptionId: null,
                 planExpiresAt: { [Op.lte]: threeDaysAgo },
                 msg_churn_followup_sent_at: null,
-                deletedAt: null
+                deletedAt: null,
+                telefone: { [Op.ne]: null, [Op.not]: '' }
             },
             attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano', 'profile_appearances', 'whatsapp_clicks']
         });
@@ -574,7 +577,8 @@ exports.getPendingActions = async (req, res) => {
                 const billingCandidates = await db.Psychologist.findAll({
                     where: {
                         id: { [Op.in]: clickedIds },
-                        deletedAt: null
+                        deletedAt: null,
+                        telefone: { [Op.ne]: null, [Op.not]: '' }
                     },
                     attributes: ['id', 'nome', 'telefone']
                 });
@@ -608,7 +612,8 @@ exports.getPendingActions = async (req, res) => {
                     [Op.gte]: expirationLowerBound
                 },
                 admin_billing_sent_at: null,
-                deletedAt: null
+                deletedAt: null,
+                telefone: { [Op.ne]: null, [Op.not]: '' }
             },
             attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano', 'profile_appearances', 'whatsapp_clicks']
         });
