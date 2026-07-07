@@ -461,6 +461,8 @@ exports.getPendingActions = async (req, res) => {
                 createdAt: { [Op.lte]: oneDayAgo },
                 fotoUrl: { [Op.ne]: null },
                 bio: { [Op.ne]: null },
+                status: 'active',
+                plano: 'trial',
                 msg_analysis_sent_at: null
             },
             attributes: ['id', 'nome', 'telefone', 'createdAt', 'fotoUrl', 'bio']
@@ -471,6 +473,7 @@ exports.getPendingActions = async (req, res) => {
         const incompleteCandidates = await db.Psychologist.findAll({
             where: {
                 createdAt: { [Op.lte]: oneDayAgo },
+                status: 'pending',
                 [Op.or]: [
                     { fotoUrl: null },
                     { bio: null },
