@@ -526,7 +526,7 @@ exports.getPendingActions = async (req, res) => {
                 const closedDeals = logs.filter(l => l.dealClosed === 'yes' || l.dealClosed === 'talking');
                 const dealClosedCount = closedDeals.length;
                 
-                const clicks = logs.length;
+                let clicks = logs.length;
                 
                 const matchEv = matchEventsCount.find(m => m.psychologistId == p.id);
                 let appearances = matchEv ? parseInt(matchEv.count, 10) : 0;
