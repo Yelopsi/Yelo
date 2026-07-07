@@ -104,6 +104,7 @@ exports.updateVipStatus = adminUsersController.updateVipStatus;
 exports.getPsychologistFullDetails = adminUsersController.getPsychologistFullDetails;
 exports.grantTrialToAll = adminUsersController.grantTrialToAll;
 exports.getPendingActions = adminUsersController.getPendingActions;
+exports.resetCrm = adminUsersController.resetCrm;
 exports.markActionSent = adminUsersController.markActionSent;
 
 // =====================================================================
