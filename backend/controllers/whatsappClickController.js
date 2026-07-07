@@ -156,6 +156,11 @@ exports.getPublicFeedbackByToken = async (req, res) => {
                 psychologistId: clickLog.psychologistId,
                 feedbackGiven: false
             },
+            include: [{
+                model: db.Psychologist,
+                as: 'psychologist',
+                attributes: ['nome']
+            }],
             order: [['createdAt', 'ASC']]
         });
 
