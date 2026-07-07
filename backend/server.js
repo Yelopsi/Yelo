@@ -216,6 +216,10 @@ const startServer = async () => {
             
             console.log('🛠️ [DB FIX] Injetando coluna isProfileAnalyzed na tabela Psychologists...');
             await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "isProfileAnalyzed" BOOLEAN DEFAULT false;');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "msg_incomplete_profile_sent_at" TIMESTAMP WITH TIME ZONE;');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "msg_analysis_sent_at" TIMESTAMP WITH TIME ZONE;');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "msg_feedback_billing_sent_at" TIMESTAMP WITH TIME ZONE;');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "msg_churn_followup_sent_at" TIMESTAMP WITH TIME ZONE;');
 
             console.log('🛠️ [DB FIX] Injetando coluna hasSeenWelcome na tabela Psychologists...');
             await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "hasSeenWelcome" BOOLEAN DEFAULT false;');
