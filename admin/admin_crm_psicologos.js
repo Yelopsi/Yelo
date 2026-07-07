@@ -85,7 +85,7 @@ window.initializePage = function () {
         fetchAndRenderPsis(1);
 
         // Scroll suave para a tabela
-        document.querySelector('.kpi-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.querySelector('.tabela-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
     window.currentCrmPage = 1;
@@ -384,7 +384,7 @@ window.initializePage = function () {
         }
         const linkDesktop = `https://web.whatsapp.com/send?phone=55${cleanPhone}&text=${encodeURIComponent(msg)}`;
         const linkMobile = `whatsapp://send?phone=55${cleanPhone}&text=${encodeURIComponent(msg)}`;
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const isMobile = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 800;
         if (isMobile) {
             window.location.href = linkMobile;
         } else {

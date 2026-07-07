@@ -551,7 +551,7 @@ html {
 
 @media (max-width: 480px) {
     .kpi-grid {
-        grid-template-columns: 1fr; /* 1 coluna em celulares */
+        grid-template-columns: 1fr 1fr !important; /* 2 colunas em celulares */
     }
 }
 
