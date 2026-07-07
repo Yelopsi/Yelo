@@ -710,3 +710,37 @@ exports.markActionSent = async (req, res) => {
         res.status(500).json({ error: 'Erro no servidor' });
     }
 };
+
+exports.resetCrm = async (req, res) => {
+    try {
+        const Op = db.Sequelize.Op;
+        await db.Psychologist.update({
+            msg_analysis_sent_at: null,
+            msg_incomplete_profile_sent_at: null,
+            msg_churn_followup_sent_at: null,
+            admin_billing_sent_at: null
+        }, {
+            where: {
+                [Op.or]: [
+                    { msg_analysis_sent_at: { [Op.ne]: null } },
+                    { msg_incomplete_profile_sent_at: { [Op.ne]: null } },
+                    { msg_churn_followup_sent_at: { [Op.ne]: null } },
+                    { admin_billing_sent_at: { [Op.ne]: null } }
+                ]
+            }
+        });
+        if (db.WhatsAppClickLog) {
+            await db.WhatsAppClickLog.update({
+                adminWppReminderSentAt: null,
+                adminWppReminderCount: 0
+            }, {
+                where: {
+                    adminWppReminderSentAt: { [Op.ne]: null }
+                }
+            });
+        }
+        res.status(200).json({ message: 'CRM resetado com sucesso!' });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao resetar CRM' });
+    }
+};
