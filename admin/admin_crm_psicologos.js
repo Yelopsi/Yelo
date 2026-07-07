@@ -281,6 +281,7 @@ window.initializePage = function() {
             else if (item.actionType === 'incomplete') actionBadge = '<span class="status status-pending">Perfil Incompleto</span>';
             else if (item.actionType === 'churn') actionBadge = '<span class="status status-cancelada">Churn</span>';
             else if (item.actionType === 'billing_feedback') actionBadge = '<span class="status" style="background:#e0e7ff; color:#4338ca;">Feedback/Cobrança</span>';
+            else if (item.actionType === 'expiring_trial') actionBadge = '<span class="status" style="background:#fef08a; color:#b45309;">Trial Expirando</span>';
 
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -360,6 +361,22 @@ window.initializePage = function() {
                 msgFechou = `Vi pelo seu feedback que o paciente acabou não fechando dessa vez, mas não desanime, isso é super normal no início!`;
             }
             msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo.\n\nVi que os seus dias de teste acabaram e o seu perfil foi inativado. \n\nDurante seus dias de teste, o algoritmo te recomendou *${metrics.appearances || 0} vezes* no Match, seu perfil teve *${metrics.views || 0} visualizações* e *${metrics.clicks || 0} pacientes* clicaram no seu WhatsApp. ${msgFechou}\n\nOs números provam o mais importante: o tráfego existe, os pacientes têm demanda para sua especialidade e a Yelo está te dando visibilidade.\n\nAcesse o seu perfil e finalize a sua assinatura para reativar sua conta e não perder os próximos acessos.`;
+        } else if (actionType === 'expiring_trial') {
+            let tempoFaltaText = `faltam apenas ${metrics.daysLeft} dias para o seu período premium na plataforma encerrar`;
+            if (metrics.daysLeft < 0) {
+                tempoFaltaText = `o seu período premium na plataforma expirou recentemente`;
+            } else if (metrics.daysLeft === 0) {
+                tempoFaltaText = `o seu período premium na plataforma encerra hoje`;
+            }
+            
+            let msgFechou = `Vi pelo seu feedback que o paciente acabou não fechando dessa vez, mas não desanime, isso é super normal no início!\n\nOs números provam o mais importante: o tráfego existe, os pacientes têm demanda para sua especialidade e a Yelo está te dando visibilidade.`;
+            if (metrics.dealClosed) {
+                const count = metrics.closedDealsCount || 1;
+                const ptTexto = count === 1 ? 'um paciente que veio selecionado' : `${count} pacientes que vieram selecionados`;
+                msgFechou = `E o melhor de tudo: notei pelo seu feedback que você conseguiu fechar terapia com ${ptTexto} pela Yelo! 🚀\n\nIsso mostra que o algoritmo funcionou e a plataforma já se pagou por meses.`;
+            }
+
+            msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo.\n\nVi que ${tempoFaltaText} e decidi te chamar.\n\nDurante seus dias de teste, o algoritmo te recomendou *${metrics.appearances || 0} vezes* no Match, seu perfil teve *${metrics.views || 0} visualizações* e *${metrics.clicks || 0} pacientes* clicaram no seu WhatsApp. ${msgFechou}\n\nComo seu trial expira em breve, acesse o seu perfil e finalize a sua assinatura para manter seu perfil no ar e não perder os próximos acessos.`;
         } else if (actionType === 'billing_feedback') {
             let baseUrlFeedback = window.location.origin.includes('localhost') ? 'http://localhost:3000' : 'https://www.yelopsi.com.br';
             let linkFeedback = feedbackToken ? `${baseUrlFeedback}/magic-feedback.html?token=${feedbackToken}` : `${baseUrlFeedback}/psi/dashboard`;

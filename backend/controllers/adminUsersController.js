@@ -589,6 +589,79 @@ exports.getPendingActions = async (req, res) => {
             }
         }
 
+        // 5. Expirando Trial (Ativos, Trial, expirando em <= 3 dias e >= -2 dias, admin_billing_sent_at NULA)
+        const expirationUpperBound = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+        const expirationLowerBound = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+        
+        const expiringCandidates = await db.Psychologist.findAll({
+            where: {
+                status: 'active',
+                plano: 'trial',
+                planExpiresAt: {
+                    [Op.lte]: expirationUpperBound,
+                    [Op.gte]: expirationLowerBound
+                },
+                admin_billing_sent_at: null
+            },
+            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano', 'profile_appearances', 'whatsapp_clicks']
+        });
+
+        if (expiringCandidates.length > 0) {
+            const expIds = expiringCandidates.map(c => c.id);
+            const wppLogsExp = await db.WhatsAppClickLog.findAll({
+                where: { psychologistId: { [Op.in]: expIds } },
+                attributes: ['psychologistId', 'dealClosed']
+            });
+            
+            const matchEventsExpCount = await db.sequelize.query(`
+                SELECT "psychologistId", COUNT(*) as count 
+                FROM "MatchEvents" 
+                WHERE "psychologistId" IN (:expIds) 
+                GROUP BY "psychologistId"
+            `, { replacements: { expIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+            
+            const profileViewsExpCount = await db.sequelize.query(`
+                SELECT "psychologistId", COUNT(*) as count 
+                FROM "ProfileAppearanceLogs" 
+                WHERE "psychologistId" IN (:expIds) 
+                GROUP BY "psychologistId"
+            `, { replacements: { expIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+
+            expiringCandidates.forEach(p => {
+                const logs = wppLogsExp.filter(l => l.psychologistId === p.id);
+                const closedDeals = logs.filter(l => l.dealClosed === 'yes' || l.dealClosed === 'talking');
+                const dealClosed = closedDeals.length > 0;
+                const closedDealsCount = closedDeals.length;
+                
+                const matchEv = matchEventsExpCount.find(m => m.psychologistId == p.id);
+                const profView = profileViewsExpCount.find(m => m.psychologistId == p.id);
+                
+                let appearances = p.profile_appearances || 0;
+                let views = 0;
+                if (matchEv) appearances = Math.max(appearances, parseInt(matchEv.count));
+                if (profView) views = parseInt(profView.count);
+                const clicks = Math.max(p.whatsapp_clicks || 0, logs.length);
+                
+                // dias restantes
+                const diffTime = new Date(p.planExpiresAt) - now;
+                const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                pendingList.push({
+                    ...p.toJSON(),
+                    actionType: 'expiring_trial',
+                    reason: 'Trial expira em ' + daysLeft + ' dia(s)',
+                    metrics: {
+                        appearances,
+                        views,
+                        clicks,
+                        dealClosed,
+                        closedDealsCount,
+                        daysLeft
+                    }
+                });
+            });
+        }
+
         res.status(200).json(pendingList);
     } catch (error) {
         console.error('Erro em getPendingActions:', error);
@@ -619,6 +692,8 @@ exports.markActionSent = async (req, res) => {
             await psychologist.update({ msg_churn_followup_sent_at: now });
         } else if (actionType === 'billing_feedback') {
             await psychologist.update({ msg_feedback_billing_sent_at: now });
+        } else if (actionType === 'expiring_trial') {
+            await psychologist.update({ admin_billing_sent_at: now });
         } else {
             return res.status(400).json({ error: 'Tipo de ação inválido.' });
         }
