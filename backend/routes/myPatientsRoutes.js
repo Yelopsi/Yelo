@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../models');
 const bcrypt = require('bcryptjs');
 const { verifyTokenLocal } = require('../middlewares/localAuth');
+const { createLinkForPatient } = require('../controllers/onboardingController');
 
 router.get('/', verifyTokenLocal, async (req, res) => {
     try {
@@ -12,7 +13,8 @@ router.get('/', verifyTokenLocal, async (req, res) => {
             return res.status(500).json({ error: 'Modelo de pacientes não encontrado.' });
         }
         const patients = await db.Patient.findAll({
-            where: { psychologistId: decoded.id }
+            where: { psychologistId: decoded.id },
+            include: [{ model: db.PatientOnboardingLink, as: 'onboardingLink' }]
         }); 
         res.json(patients);
     } catch (error) {
@@ -25,7 +27,10 @@ router.get('/:id', verifyTokenLocal, async (req, res) => {
     try {
         const decoded = req.userDecoded;
         const { id } = req.params;
-        const patient = await db.Patient.findOne({ where: { id, psychologistId: decoded.id } });
+        const patient = await db.Patient.findOne({ 
+            where: { id, psychologistId: decoded.id },
+            include: [{ model: db.PatientOnboardingLink, as: 'onboardingLink' }]
+        });
         if (!patient) return res.status(404).json({ error: 'Paciente não encontrado' });
         res.json(patient);
     } catch (error) {
@@ -38,7 +43,7 @@ router.post('/', verifyTokenLocal, async (req, res) => {
     try {
         const decoded = req.userDecoded;
 
-        const { name, phone, email, status, sessionValue, observacoes, recebeMensagens } = req.body;
+        const { name, phone, email, status, sessionValue, observacoes, recebeMensagens, generateOnboarding } = req.body;
         const patient = await db.Patient.create({
             nome: name,
             email: email || null,
@@ -50,6 +55,15 @@ router.post('/', verifyTokenLocal, async (req, res) => {
             senha: await bcrypt.hash('temp123', 8),
             psychologistId: decoded.id
         });
+
+        if (generateOnboarding) {
+            const psi = await db.Psychologist.findByPk(decoded.id);
+            if (psi) {
+                const linkData = await createLinkForPatient(psi, name, patient.id);
+                patient.dataValues.onboardingLink = linkData;
+            }
+        }
+
         res.json(patient);
     } catch (error) {
         console.error("Erro ao criar paciente:", error);

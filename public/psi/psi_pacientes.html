@@ -114,6 +114,8 @@
         border: 1px solid #eee;
         background-color: #f9fafb;
         font-weight: 500;
+        height: 44px;
+        box-sizing: border-box;
         cursor: pointer;
         transition: all 0.2s ease;
         user-select: none;
@@ -637,9 +639,10 @@
             <button id="btn-add-patient" class="btn-secundario" style="padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; background: none; border: 1px solid var(--verde-escuro); cursor: pointer;">+ Novo</button>
         </div>
 
+
         <div class="patient-controls-row" style="display: flex; gap: 15px; margin-bottom: 15px; align-items: center;">
             <div class="search-wrapper" style="flex-grow: 1; margin-bottom: 0;">
-                <input type="text" id="search-patient" placeholder="Buscar por nome..." class="form-control" style="width: 100%; box-sizing: border-box; border-radius: 20px; padding: 12px 20px; border: 1px solid #eee; background-color: #f9fafb;">
+                <input type="text" id="search-patient" placeholder="Buscar por nome..." class="form-control" style="width: 100%; height: 44px; box-sizing: border-box; border-radius: 20px; padding: 0 20px; border: 1px solid #eee; background-color: #f9fafb;">
             </div>
             <button id="btn-add-mobile-inline" class="btn-add-mobile-inline" type="button">+</button>
             <div class="custom-select-wrapper" style="flex-shrink: 0;">
@@ -810,6 +813,35 @@
                         <p style="font-size: 0.8rem; color: #555; margin: 2px 0 0 0; line-height: 1.3;">
                             Avisa automaticamente o paciente 24h antes da sessão agendada.
                         </p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="p-onboarding-container" class="form-group highlight-box assistant-card" style="margin-top: 10px; padding: 15px; border-radius: 12px; margin-bottom: 0; border: 1px solid #cce5d4; background: #f0fdf4;">
+                <div id="p-onboarding-generate-view" style="display: flex; align-items: center; gap: 15px;">
+                    <div class="assistant-icon" style="width: 42px; height: 42px; font-size: 1.4rem; flex-shrink: 0; margin: 0; box-shadow: none; background: #fff; display:flex; align-items:center; justify-content:center;">✍️</div>
+                    <div style="flex-grow: 1;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <label for="p-generate-link" style="font-weight: 700; color: #1B4332; cursor: pointer; font-size: 0.95rem; margin: 0;">Gerar e Enviar Link de Onboarding</label>
+                            <label class="switch-toggle" style="margin: 0;">
+                                <input type="checkbox" id="p-generate-link" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <p style="font-size: 0.8rem; color: #555; margin: 2px 0 0 0; line-height: 1.3;">
+                            Ao salvar o paciente, o sistema gera o link único e anexa ao perfil.
+                        </p>
+                    </div>
+                </div>
+
+                <div id="p-onboarding-status-view" style="display: none; align-items: center; gap: 15px;">
+                    <div id="p-onboarding-icon" class="assistant-icon" style="width: 42px; height: 42px; font-size: 1.4rem; flex-shrink: 0; margin: 0; box-shadow: none; background: #fff; display:flex; align-items:center; justify-content:center;">📄</div>
+                    <div style="flex-grow: 1;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <label id="p-onboarding-title" style="font-weight: 700; color: #1B4332; font-size: 0.95rem; margin: 0;">Contrato Pendente</label>
+                        </div>
+                        <p id="p-onboarding-desc" style="font-size: 0.8rem; color: #555; margin: 2px 0 5px 0; line-height: 1.3;"></p>
+                        <div id="p-onboarding-actions" style="margin-top: 5px;"></div>
                     </div>
                 </div>
             </div>
@@ -1714,6 +1746,35 @@
                     if (currentVal === (patient.notes || '')) {
                         document.getElementById('p-notes').value = fullNotes;
                     }
+                    
+                    if (fullData.onboardingLink) {
+                        document.getElementById('p-onboarding-generate-view').style.display = 'none';
+                        document.getElementById('p-onboarding-status-view').style.display = 'flex';
+                        
+                        const link = fullData.onboardingLink;
+                        const actionsDiv = document.getElementById('p-onboarding-actions');
+                        const iconDiv = document.getElementById('p-onboarding-icon');
+                        const titleEl = document.getElementById('p-onboarding-title');
+                        const descEl = document.getElementById('p-onboarding-desc');
+                        
+                        if (link.status === 'signed') {
+                            iconDiv.textContent = '✅';
+                            titleEl.textContent = 'Contrato Assinado';
+                            descEl.textContent = `Assinado em ${new Date(link.signedAt).toLocaleDateString('pt-BR')}`;
+                            actionsDiv.innerHTML = `<button type="button" onclick="downloadSignedContract('${link.token}')" style="background: white; border: 1px solid #1B4332; color: #1B4332; padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: 600;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Baixar Contrato</button>`;
+                        } else {
+                            iconDiv.textContent = '⏳';
+                            titleEl.textContent = 'Assinatura Pendente';
+                            descEl.textContent = 'O paciente ainda não assinou.';
+                            const url = `${window.location.origin}/b/${link.token}`;
+                            actionsDiv.innerHTML = `<button type="button" onclick="navigator.clipboard.writeText('${url}'); if(window.showToast) window.showToast('Link copiado!', 'success');" style="background: white; border: 1px solid #1B4332; color: #1B4332; padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: 600;">📋 Copiar Link</button>`;
+                        }
+                    } else {
+                        document.getElementById('p-onboarding-generate-view').style.display = 'flex';
+                        document.getElementById('p-onboarding-status-view').style.display = 'none';
+                        const checkGen = document.getElementById('p-generate-link');
+                        if(checkGen) checkGen.checked = false;
+                    }
                 }
             } catch (e) { console.error("Erro ao buscar detalhes do paciente:", e); }
         }
@@ -1780,6 +1841,14 @@
             if (titleEl) titleEl.textContent = 'Novo Paciente';
             // [CORREÇÃO] Reseta o display do botão de excluir usando display flex que configuramos acima
             if (btnDelete) btnDelete.style.display = 'none'; 
+            
+            const genView = document.getElementById('p-onboarding-generate-view');
+            const statusView = document.getElementById('p-onboarding-status-view');
+            const genCheck = document.getElementById('p-generate-link');
+            if (genView) genView.style.display = 'flex';
+            if (statusView) statusView.style.display = 'none';
+            if (genCheck) genCheck.checked = true;
+
             if (modal) modal.style.display = 'flex';
         };
 
@@ -1904,10 +1973,13 @@
                 const automatedMsgInput = form.querySelector('#p-automated-msg');
                 const recebeMensagens = automatedMsgInput ? automatedMsgInput.checked : true;
                 
+                const generateLinkInput = form.querySelector('#p-generate-link');
+                const generateOnboarding = (generateLinkInput && document.getElementById('p-onboarding-generate-view').style.display !== 'none') ? generateLinkInput.checked : false;
+
                 const method = id ? 'PUT' : 'POST';
                 const url = id ? `${BASE_URL}/api/my-patients/${id}` : `${BASE_URL}/api/my-patients`;
                 
-                const payload = { name, phone, email, status, sessionValue, observacoes: notes, recebeMensagens };
+                const payload = { name, phone, email, status, sessionValue, observacoes: notes, recebeMensagens, generateOnboarding };
 
                 try {
                     const res = await fetch(url, {
@@ -2312,4 +2384,157 @@
             });
         }
     })();
+    // --- ONBOARDING LINK LOGIC ---
+    setTimeout(() => {
+        const btnQuick = document.getElementById('btn-quick-onboarding');
+        const inputQuick = document.getElementById('quick-onboarding-name');
+        
+        async function gerarLink(nome) {
+            if (!nome) { window.showToast('Digite o nome do paciente', 'error'); return null; }
+            try {
+                const token = localStorage.getItem('Yelo_token') || localStorage.getItem('token');
+                const res = await fetch('/api/psychologists/me/onboarding/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ patientName: nome })
+                });
+                const data = await res.json();
+                if (res.ok) return data.link;
+                throw new Error(data.error);
+            } catch (e) {
+                window.showToast('Erro ao gerar link.', 'error');
+                return null;
+            }
+        }
+
+        if (btnQuick) {
+            btnQuick.addEventListener('click', async () => {
+                btnQuick.innerHTML = '...';
+                const link = await gerarLink(inputQuick.value.trim());
+                if (link) {
+                    try {
+                        await navigator.clipboard.writeText(link);
+                        window.showToast('Link gerado e copiado para a área de transferência!');
+                    } catch(e) {
+                        window.prompt('Copie o link gerado:', link);
+                    }
+                    inputQuick.value = '';
+                }
+                btnQuick.innerHTML = 'Gerar Link';
+            });
+        }
+
+        const patientForm = document.getElementById('form-patient');
+        if (patientForm) {
+            patientForm.addEventListener('submit', async (e) => {
+                const generateLinkToggle = document.getElementById('p-generate-link');
+                if (generateLinkToggle && generateLinkToggle.checked) {
+                    const pName = document.getElementById('p-name').value;
+                    const pPhone = document.getElementById('p-phone').value;
+                    const link = await gerarLink(pName);
+                    if (link) {
+                        try {
+                            await navigator.clipboard.writeText(link);
+                            window.showToast('Paciente salvo. Link copiado e WhatsApp aberto!');
+                        } catch(err) {
+                            window.showToast('Paciente salvo com sucesso!', 'success');
+                        }
+                        
+                        if (pPhone) {
+                            const cleanPhone = pPhone.replace(/\D/g, '');
+                            if (cleanPhone.length >= 10) {
+                                const msg = `Olá ${pName.split(' ')[0]}, aqui está o seu link de onboarding para preenchimento de dados e assinatura do nosso contrato terapêutico:\n\n${link}\n\nFico à disposição!`;
+                                window.open(`https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${encodeURIComponent(msg)}`, '_blank');
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }, 1000); // Aguarda o DOM estar totalmente pronto
+    
+    window.downloadSignedContract = async (token) => {
+            try {
+                const res = await fetch(`/api/public/onboarding/${token}`);
+                const data = await res.json();
+                
+                let docPsi = data.psychologistDoc;
+                if (docPsi) {
+                    let raw = docPsi.replace(/\D/g, '');
+                    if (raw.length === 11) docPsi = 'CPF: ' + raw.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+                    else if (raw.length === 14) docPsi = 'CNPJ: ' + raw.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+                    else docPsi = (raw.length > 11 ? 'CNPJ: ' : 'CPF: ') + docPsi;
+                } else {
+                    docPsi = 'DOCUMENTO NÃO INFORMADO';
+                }
+
+                let htmlContent = data.contractText
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                    .replace(/\n/g, '<br>')
+                    .replace(/\[NOME_DO_RESPONSAVEL\]/gi, `<strong>${(data.patientData && data.patientData.isMinor) ? data.patientData.guardianName : 'Não se aplica'}</strong>`)
+                    .replace(/\[CPF_DO_RESPONSAVEL\]/gi, `<strong>${(data.patientData && data.patientData.isMinor) ? data.patientData.guardianCpf : 'Não se aplica'}</strong>`);
+
+                const dataAssinatura = new Date(data.signedAt).toLocaleDateString('pt-BR');
+
+                let patientSigName = data.patientData && data.patientData.signatureName ? data.patientData.signatureName : data.patientName;
+                let patientSigCpf = data.patientData && data.patientData.cpf ? data.patientData.cpf : 'CPF não registrado';
+                let securityInfo = data.ipAddress ? `<div style="margin-top: 40px; font-size: 0.7rem; color: #666; text-align: left; border-top: 1px dashed #ccc; padding-top: 10px; page-break-inside: avoid;">
+                    <strong>Registro de Assinatura Eletrônica:</strong><br>
+                    Endereço IP: ${data.ipAddress}<br>
+                    Dispositivo/Navegador: ${data.userAgent || 'Desconhecido'}<br>
+                    Data/Hora do Registro: ${new Date(data.signedAt).toLocaleString('pt-BR')}
+                </div>` : '';
+
+                htmlContent += `
+                    <div style="display: flex; justify-content: space-between; margin-top: 60px; text-align: center; font-size: 0.85rem; page-break-inside: avoid;">
+                        <div style="width: 45%;">
+                            <div style="font-family: 'Brush Script MT', 'Caveat', 'Dancing Script', cursive; font-size: 1.8rem; color: #000; height: 50px; display: flex; align-items: flex-end; justify-content: center; line-height: 1;">
+                                ${data.psychologistName}
+                            </div>
+                            <div style="border-bottom: 1px solid #333; margin-bottom: 10px;"></div>
+                            <strong>${data.psychologistName}</strong><br>
+                            Psicólogo(a) Clínico(a) – CRP ${data.psychologistCrp || '00/00000'}<br>
+                            ${docPsi}
+                        </div>
+                        <div style="width: 45%;">
+                            <div style="font-family: 'Brush Script MT', 'Caveat', 'Dancing Script', cursive; font-size: 1.8rem; color: #000; height: 50px; display: flex; align-items: flex-end; justify-content: center; line-height: 1;">
+                                ${patientSigName}
+                            </div>
+                            <div style="border-bottom: 1px solid #333; margin-bottom: 10px;"></div>
+                            <strong>${patientSigName}</strong><br>
+                            CPF: ${patientSigCpf}<br>
+                            Assinado Eletronicamente em: ${dataAssinatura}
+                        </div>
+                    </div>
+                    ${securityInfo}
+                `;
+
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <html>
+                    <head>
+                        <title>Contrato Terapêutico - ${data.patientName}</title>
+                        <style>
+                            body { font-family: 'Inter', sans-serif; line-height: 1.6; padding: 40px; color: #333; text-align: justify; }
+                            @media print { body { padding: 0; margin: 0; } }
+                        </style>
+                    </head>
+                    <body>
+                        ${htmlContent}
+                        <script>
+                            window.onload = function() {
+                                setTimeout(() => { window.print(); }, 500);
+                            };
+                        <\/script>
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+            } catch (e) {
+                console.error(e);
+                if(window.showToast) window.showToast('Erro ao gerar o PDF.', 'error');
+            }
+        };
 </script>

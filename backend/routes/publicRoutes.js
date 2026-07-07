@@ -9,6 +9,11 @@ const whatsappClickController = require('../controllers/whatsappClickController'
 router.get('/feedback/:token', whatsappClickController.getPublicFeedbackByToken);
 router.post('/feedback/:token', whatsappClickController.submitPublicFeedback);
 
+// Rotas de Onboarding de Paciente
+const onboardingController = require('../controllers/onboardingController');
+router.get('/onboarding/:token', onboardingController.getPublicLinkData);
+router.post('/onboarding/:token/sign', onboardingController.signContract);
+
 router.post('/psychologists/:slug/whatsapp-click', async (req, res) => {
     try {
         const { slug } = req.params;

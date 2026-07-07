@@ -1,0 +1,138 @@
+<div class="main-header">
+    <div class="header-content">
+        <h1>Contrato & Onboarding</h1>
+        <p>Personalize o contrato e chave Pix para novos pacientes.</p>
+    </div>
+</div>
+
+<div class="fade-in-up" id="onboarding-settings-container" style="padding-bottom: 50px;">
+    
+    <div class="profile-block collapsed" data-block-id="vars">
+        <div class="block-header">
+            <h4 class="section-title">Variáveis do Contrato</h4>
+            <div class="block-actions">
+                <span class="block-status"></span>
+                <button type="button" class="btn btn-sm btn-secundario btn-edit">Editar</button>
+                <button type="button" class="btn btn-sm btn-secundario btn-cancel hidden">Cancelar</button>
+                <button type="button" class="btn btn-sm btn-principal btn-save hidden">Salvar</button>
+            </div>
+        </div>
+        <div class="block-content">
+            <p style="color: #666; font-size: 0.95rem; margin-bottom: 20px; margin-top: 10px;">Estes dados são puxados do seu perfil, mas você pode ajustá-los aqui. Eles serão injetados automaticamente no texto do contrato toda vez que um link for gerado.</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div class="form-group">
+                    <label style="font-weight: 700; font-size: 0.85rem; color: #495057; display: block; margin-bottom: 8px;">Sua Cidade <code>[CIDADE_PROFISSIONAL]</code></label>
+                    <input type="text" id="obs-cidade" disabled placeholder="Ex: São Paulo - SP" class="form-control" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ced4da; font-size: 1rem; background-color: #f9fafb;">
+                </div>
+                <div class="form-group">
+                    <label style="font-weight: 700; font-size: 0.85rem; color: #495057; display: block; margin-bottom: 8px;">Seu Documento (CPF/CNPJ) <span style="color:#999; font-weight:normal;">(Preenchido no Perfil)</span></label>
+                    <input type="text" id="obs-documento" disabled readonly class="form-control" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ced4da; font-size: 1rem; background-color: #e9ecef; color: #6c757d;">
+                </div>
+                <div class="form-group">
+                    <label style="font-weight: 700; font-size: 0.85rem; color: #495057; display: block; margin-bottom: 8px;">Valor Padrão da Sessão <code>[VALOR_SESSAO]</code></label>
+                    <input type="number" id="obs-valor" disabled placeholder="150" class="form-control" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ced4da; font-size: 1rem; background-color: #f9fafb;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-block collapsed" data-block-id="rules">
+        <div class="block-header">
+            <h4 class="section-title">Regras de Atendimento</h4>
+            <div class="block-actions">
+                <span class="block-status"></span>
+                <button type="button" class="btn btn-sm btn-secundario btn-edit">Editar</button>
+                <button type="button" class="btn btn-sm btn-secundario btn-cancel hidden">Cancelar</button>
+                <button type="button" class="btn btn-sm btn-principal btn-save hidden">Salvar</button>
+            </div>
+        </div>
+        <div class="block-content">
+            <p style="color: #666; font-size: 0.95rem; margin-bottom: 20px; margin-top: 10px;">Personalize as regras de duração, atraso e cancelamento para seus pacientes.</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div class="form-group">
+                    <label style="font-weight: 700; font-size: 0.85rem; color: #495057; display: block; margin-bottom: 8px;">Duração da Sessão (min) <code>[DURACAO_SESSAO]</code></label>
+                    <input type="number" id="obs-duracao-sessao" disabled placeholder="Ex: 50" class="form-control" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ced4da; font-size: 1rem; background-color: #f9fafb;">
+                </div>
+                <div class="form-group">
+                    <label style="font-weight: 700; font-size: 0.85rem; color: #495057; display: block; margin-bottom: 8px;">Tolerância de Atraso (min) <code>[TOLERANCIA_ATRASO]</code></label>
+                    <input type="number" id="obs-tolerancia-atraso" disabled placeholder="Ex: 15" class="form-control" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ced4da; font-size: 1rem; background-color: #f9fafb;">
+                </div>
+                <div class="form-group">
+                    <label style="font-weight: 700; font-size: 0.85rem; color: #495057; display: block; margin-bottom: 8px;">Prazo de Cancelamento (horas) <code>[PRAZO_CANCELAMENTO]</code></label>
+                    <input type="number" id="obs-prazo-cancelamento" disabled placeholder="Ex: 24" class="form-control" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ced4da; font-size: 1rem; background-color: #f9fafb;">
+                </div>
+                <div class="form-group">
+                    <label style="font-weight: 700; font-size: 0.85rem; color: #495057; display: block; margin-bottom: 8px;">Plataforma <code>[PLATAFORMA_ATENDIMENTO]</code></label>
+                    <input type="text" id="obs-plataforma" disabled placeholder="Ex: Google Meet" class="form-control" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ced4da; font-size: 1rem; background-color: #f9fafb;">
+                </div>
+                <div class="form-group">
+                    <label style="font-weight: 700; font-size: 0.85rem; color: #495057; display: block; margin-bottom: 8px;">Modalidade de Pag. <code>[MODALIDADE_PAGAMENTO]</code></label>
+                    <input type="text" id="obs-modalidade-pagamento" disabled placeholder="Ex: sessão" class="form-control" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ced4da; font-size: 1rem; background-color: #f9fafb;">
+                </div>
+                <div class="form-group">
+                    <label style="font-weight: 700; font-size: 0.85rem; color: #495057; display: block; margin-bottom: 8px;">Frequência <code>[FREQUENCIA_SESSAO]</code></label>
+                    <input type="text" id="obs-frequencia-sessao" disabled placeholder="Ex: semanal" class="form-control" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ced4da; font-size: 1rem; background-color: #f9fafb;">
+                </div>
+                <div class="form-group">
+                    <label style="font-weight: 700; font-size: 0.85rem; color: #495057; display: block; margin-bottom: 8px;">Valor Reajuste (R$) <code>[VALOR_REAJUSTE]</code></label>
+                    <input type="text" id="obs-valor-reajuste" disabled placeholder="Ex: 10,00" class="form-control" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ced4da; font-size: 1rem; background-color: #f9fafb;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-block collapsed" data-block-id="pix">
+        <div class="block-header">
+            <h4 class="section-title">Configuração da Chave Pix</h4>
+            <div class="block-actions">
+                <span class="block-status"></span>
+                <button type="button" class="btn btn-sm btn-secundario btn-edit">Editar</button>
+                <button type="button" class="btn btn-sm btn-secundario btn-cancel hidden">Cancelar</button>
+                <button type="button" class="btn btn-sm btn-principal btn-save hidden">Salvar</button>
+            </div>
+        </div>
+        <div class="block-content">
+            <p style="color: #666; font-size: 0.95rem; margin-bottom: 20px; margin-top: 10px;">Informe a chave Pix que aparecerá no final do processo de assinatura para facilitar o primeiro pagamento do seu paciente.</p>
+            
+            <div class="form-group">
+                <label style="font-weight: 700; font-size: 0.85rem; color: #495057; display: block; margin-bottom: 8px;">Chave Pix</label>
+                <input type="text" id="obs-pix-key" disabled placeholder="Ex: CPF, E-mail, Celular ou Chave Aleatória" class="form-control" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ced4da; font-size: 1rem; background-color: #f9fafb;">
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-block collapsed" data-block-id="contract">
+        <div class="block-header">
+            <h4 class="section-title">Modelo de Contrato Terapêutico</h4>
+            <div class="block-actions">
+                <span class="block-status"></span>
+                <button type="button" class="btn btn-sm btn-secundario btn-edit">Editar</button>
+                <button type="button" class="btn btn-sm btn-secundario btn-cancel hidden">Cancelar</button>
+                <button type="button" class="btn btn-sm btn-principal btn-save hidden">Salvar</button>
+            </div>
+        </div>
+        <div class="block-content">
+            <p style="color: #666; font-size: 0.95rem; margin-bottom: 10px; margin-top: 10px;">Este é o texto base que será gerado quando você enviar o link para o paciente. Você pode alterar qualquer cláusula diretamente no texto abaixo.</p>
+            <div class="highlight-box assistant-card" style="margin-bottom: 20px; padding: 12px 15px; display: flex; align-items: flex-start; gap: 10px;">
+                <div class="assistant-icon" style="font-size: 1.2rem; flex-shrink: 0; width: 30px; height: 30px;">💡</div>
+                <p style="margin: 0; color: #555; font-size: 0.85rem;"><strong>Dica:</strong> Mantenha as tags como <code>[NOME_DO_PACIENTE]</code>, <code>[NOME_DO_PROFISSIONAL]</code>, <code>[DATA_ATUAL]</code> e as outras listadas acima para que o sistema as substitua automaticamente na hora de gerar o link!</p>
+            </div>
+
+            <div class="form-group">
+                <textarea id="obs-contract-template" disabled rows="20" class="form-control" style="width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #ced4da; font-size: 0.95rem; line-height: 1.6; font-family: var(--font-principal); resize: vertical;"></textarea>
+                <div style="text-align: right; margin-top: 10px;">
+                    <button type="button" class="btn btn-sm btn-secundario" id="btn-preview-pdf" style="display: inline-flex; align-items: center; gap: 8px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        Visualizar Prévia
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 25px;">
+        <button type="button" class="btn btn-secundario" onclick="window.loadPage('psi_ajustes_hub.html')" style="padding: 12px 24px; border-radius: 50px;">← Voltar</button>
+    </div>
+</div>

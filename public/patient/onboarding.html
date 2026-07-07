@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Onboarding - Yelo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --verde-escuro: #1B4332;
+            --verde-claro: #D8F3DC;
+            --fundo: #f0f2f5;
+            --texto-principal: #333;
+            --texto-secundario: #666;
+            --primary-btn: #1B4332;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--fundo);
+            color: var(--texto-principal);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .header {
+            background-color: var(--verde-escuro);
+            padding: 20px;
+            color: white;
+            text-align: center;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .container {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            max-width: 500px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .step-container {
+            width: 100%;
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .step-container.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-title {
+            color: var(--verde-escuro);
+            font-size: 1.3rem;
+            margin: 0 0 10px 0;
+            font-weight: 800;
+        }
+
+        .step-desc {
+            color: var(--texto-secundario);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            color: #444;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            background-color: #f9fafb;
+            box-sizing: border-box;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--verde-escuro);
+            background-color: #fff;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            border: none;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-btn);
+            color: white;
+            box-shadow: 0 4px 10px rgba(27,67,50,0.2);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .contract-box {
+            background: #f8f9fa;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .signature-input {
+            font-family: 'Caveat', cursive;
+            font-size: 2rem !important;
+            text-align: center;
+            color: #1B4332;
+            padding: 15px !important;
+            height: 70px;
+        }
+
+        .signature-input::placeholder {
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            color: #aaa;
+            font-weight: 400;
+        }
+
+        .pix-box {
+            background: var(--verde-claro);
+            border: 2px dashed var(--verde-escuro);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            word-break: break-all;
+            font-weight: 700;
+            color: var(--verde-escuro);
+            font-size: 1.1rem;
+        }
+
+        .copy-btn {
+            background: white;
+            color: var(--verde-escuro);
+            border: 1px solid var(--verde-escuro);
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-top: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .progress-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ccc;
+            transition: all 0.3s;
+        }
+
+        .dot.active {
+            background: var(--verde-escuro);
+            transform: scale(1.3);
+        }
+
+        /* Loading Overlay */
+        #loader {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--verde-escuro);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="loader">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="header">
+        <img src="/assets/logos/logo-branca.png" alt="Yelo" style="height: 24px; margin-bottom: 8px;">
+        <h1>Bem-vindo(a)!</h1>
+        <p>Início do Acompanhamento Psicológico</p>
+    </div>
+
+    <div class="container">
+        
+        <div class="progress-dots" id="progress-dots">
+            <div class="dot active"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+
+        <!-- Passo 1: Dados -->
+        <div class="step-container active" id="step-1">
+            <h2 class="step-title">Ficha de Paciente</h2>
+            <p class="step-desc">Preencha seus dados básicos para o nosso prontuário.</p>
+
+            <div class="form-group">
+                <label>Seu Nome (Preenchido pelo Profissional)</label>
+                <input type="text" id="ipt-name" class="form-control" readonly style="background: #e9ecef;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; font-size: 0.95rem; cursor: pointer;">
+                    <input type="checkbox" id="chk-minor" style="width: 18px; height: 18px; cursor: pointer;">
+                    Sou menor de idade (Preencher dados do Responsável Legal)
+                </label>
+            </div>
+
+            <div id="guardian-fields" style="display: none; background-color: #f1f8f5; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #d1e7dd;">
+                <div class="form-group">
+                    <label>Nome Completo do Responsável Legal *</label>
+                    <input type="text" id="ipt-guardian-name" class="form-control" placeholder="Ex: Maria da Silva">
+                </div>
+                <div class="form-group">
+                    <label>CPF do Responsável Legal *</label>
+                    <input type="tel" id="ipt-guardian-cpf" class="form-control" placeholder="000.000.000-00" maxlength="14">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label id="lbl-cpf">Seu CPF *</label>
+                <input type="tel" id="ipt-cpf" class="form-control" placeholder="000.000.000-00" maxlength="14" required>
+            </div>
+            <div class="form-group">
+                <label>Data de Nascimento *</label>
+                <input type="date" id="ipt-dob" class="form-control" required>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group" style="display: flex; flex-direction: column; justify-content: flex-end;">
+                    <label>Contato de Emergência<br>(Nome) *</label>
+                    <input type="text" id="ipt-emergency-name" class="form-control" placeholder="Ex: Maria (Mãe)" required>
+                </div>
+                <div class="form-group" style="display: flex; flex-direction: column; justify-content: flex-end;">
+                    <label>Telefone de Emergência *<br>&nbsp;</label>
+                    <input type="tel" id="ipt-emergency-phone" class="form-control" placeholder="(00) 00000-0000" required>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="nextStep(2)">Continuar</button>
+        </div>
+
+        <!-- Passo 2: Contrato -->
+        <div class="step-container" id="step-2">
+            <h2 class="step-title">Contrato Terapêutico</h2>
+            <p class="step-desc">Leia atentamente os termos e condições do seu acompanhamento.</p>
+
+            <div class="contract-box" id="contract-text">
+                Carregando contrato...
+            </div>
+            
+            <button class="btn btn-primary" onclick="nextStep(3)">Li e Concordo</button>
+        </div>
+
+        <!-- Passo 3: Assinatura -->
+        <div class="step-container" id="step-3">
+            <h2 class="step-title">Assinatura Eletrônica</h2>
+            <p class="step-desc">Para assinar o contrato, digite seu nome completo no campo abaixo.</p>
+
+            <div class="form-group" style="margin-bottom: 25px;">
+                <input type="text" id="ipt-signature" class="form-control signature-input" placeholder="Digite seu nome completo">
+            </div>
+            
+            <button class="btn btn-primary" id="btn-submit" onclick="submitForm()">Assinar Contrato</button>
+            <p style="font-size: 0.75rem; color: #888; text-align: center; margin-top: 15px;">Ao clicar em "Assinar", você aceita legalmente os termos do contrato via Assinatura Eletrônica Simples.</p>
+        </div>
+
+        <!-- Passo 4: Conclusão e Pix -->
+        <div class="step-container" id="step-4">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="width: 60px; height: 60px; background: var(--verde-claro); color: var(--verde-escuro); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 15px auto;">✓</div>
+                <h2 class="step-title" style="margin-bottom: 5px;">Tudo Certo!</h2>
+                <p class="step-desc" style="margin-bottom: 0;">Seu contrato foi assinado e seu cadastro finalizado com sucesso.</p>
+            </div>
+
+            <div id="pix-container">
+                <h3 style="font-size: 1rem; color: #444; margin-bottom: 10px;">Facilite seu pagamento</h3>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Abaixo está a chave Pix do(a) seu(sua) psicólogo(a):</p>
+                
+                <div class="pix-box" id="pix-key-display">
+                    Carregando...
+                </div>
+                
+                <div style="text-align: center;">
+                    <button class="copy-btn" onclick="copyPix()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copiar Chave Pix
+                    </button>
+                </div>
+            </div>
+
+            <p style="font-size: 0.8rem; color: #888; text-align: center; margin-top: 30px; margin-bottom: 10px;">Guarde uma cópia do seu documento:</p>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <button class="btn btn-primary" onclick="downloadSignedContract()" style="background-color: #f0fdf4; color: #1B4332; border: 1px solid #1B4332; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Baixar Contrato Assinado
+                </button>
+            </div>
+
+            <p style="font-size: 0.8rem; color: #888; text-align: center;">Você pode fechar esta tela.</p>
+        </div>
+
+    </div>
+
+    <script>
+        const token = window.location.pathname.split('/').pop();
+        let currentPixKey = '';
+        let globalContractText = '';
+        let globalData = null;
+
+        // Máscara de telefone
+        document.getElementById('ipt-emergency-phone').addEventListener('input', function (e) {
+            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
+            e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+        });
+
+        document.getElementById('chk-minor').addEventListener('change', (e) => {
+            const guardianFields = document.getElementById('guardian-fields');
+            const lblCpf = document.getElementById('lbl-cpf');
+            const iptCpf = document.getElementById('ipt-cpf');
+            const iptGuardianName = document.getElementById('ipt-guardian-name');
+            const iptGuardianCpf = document.getElementById('ipt-guardian-cpf');
+
+            if (e.target.checked) {
+                guardianFields.style.display = 'block';
+                lblCpf.innerHTML = 'Seu CPF (Opcional)';
+                iptCpf.required = false;
+                iptGuardianName.required = true;
+                iptGuardianCpf.required = true;
+                
+                // Update signature text if they already typed it
+                const sigName = document.getElementById('sig-patient-name');
+                if (sigName) sigName.textContent = iptGuardianName.value || 'Nome do Responsável';
+                
+                const sigCpf = document.getElementById('sig-patient-cpf');
+                if (sigCpf) sigCpf.textContent = iptGuardianCpf.value || '______________________';
+            } else {
+                guardianFields.style.display = 'none';
+                lblCpf.innerHTML = 'Seu CPF *';
+                iptCpf.required = true;
+                iptGuardianName.required = false;
+                iptGuardianCpf.required = false;
+                iptGuardianName.value = '';
+                iptGuardianCpf.value = '';
+                
+                // Revert signature text
+                const sigName = document.getElementById('sig-patient-name');
+                if (sigName) sigName.textContent = document.getElementById('ipt-name').value || 'Nome do Paciente';
+                
+                const sigCpf = document.getElementById('sig-patient-cpf');
+                if (sigCpf) sigCpf.textContent = iptCpf.value || '______________________';
+            }
+        });
+
+        // Formata CPF e sincroniza
+        document.getElementById('ipt-cpf').addEventListener('input', function (e) {
+            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,3})(\d{0,2})/);
+            e.target.value = !x[2] ? x[1] : x[1] + '.' + x[2] + (x[3] ? '.' + x[3] : '') + (x[4] ? '-' + x[4] : '');
+            
+            if (!document.getElementById('chk-minor').checked) {
+                const sigCpf = document.getElementById('sig-patient-cpf');
+                if (sigCpf) {
+                    sigCpf.textContent = e.target.value || '______________________';
+                }
+            }
+        });
+
+        document.getElementById('ipt-guardian-cpf').addEventListener('input', function (e) {
+            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,3})(\d{0,2})/);
+            e.target.value = !x[2] ? x[1] : x[1] + '.' + x[2] + (x[3] ? '.' + x[3] : '') + (x[4] ? '-' + x[4] : '');
+            
+            if (document.getElementById('chk-minor').checked) {
+                const sigCpf = document.getElementById('sig-patient-cpf');
+                if (sigCpf) {
+                    sigCpf.textContent = e.target.value || '______________________';
+                }
+            }
+        });
+
+        document.getElementById('ipt-guardian-name').addEventListener('input', (e) => {
+            if (document.getElementById('chk-minor').checked) {
+                const sigName = document.getElementById('sig-patient-name');
+                if (sigName) {
+                    sigName.textContent = e.target.value || 'Nome do Responsável';
+                }
+            }
+        });
+
+        async function loadData() {
+            try {
+                const res = await fetch(`/api/public/onboarding/${token}`);
+                const data = await res.json();
+                
+                if (!res.ok) {
+                    alert(data.error || 'Link inválido.');
+                    document.body.innerHTML = '<div style="padding: 40px; text-align: center;"><h2>Link Inválido ou Expirado</h2></div>';
+                    return;
+                }
+
+                if (data.status === 'signed') {
+                    showStep(4);
+                    document.getElementById('pix-key-display').innerText = data.pixKey || 'Nenhuma chave configurada';
+                    currentPixKey = data.pixKey;
+                    if (!data.pixKey) document.getElementById('pix-container').style.display = 'none';
+                    document.getElementById('loader').style.display = 'none';
+                    return;
+                }
+
+                document.getElementById('ipt-name').value = data.patientName;
+                
+                let docPsi = data.psychologistDoc;
+                if (docPsi) {
+                    let raw = docPsi.replace(/\D/g, '');
+                    if (raw.length === 11) docPsi = 'CPF: ' + raw.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+                    else if (raw.length === 14) docPsi = 'CNPJ: ' + raw.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+                    else docPsi = (raw.length > 11 ? 'CNPJ: ' : 'CPF: ') + docPsi;
+                } else {
+                    docPsi = 'DOCUMENTO NÃO INFORMADO';
+                }
+
+                globalContractText = data.contractText;
+                globalData = data;
+                
+                let htmlContent = globalContractText
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                    .replace(/\n/g, '<br>')
+                    .replace(/\[NOME_DO_RESPONSAVEL\]/gi, `<strong>${(data.patientData && data.patientData.isMinor) ? data.patientData.guardianName : 'Não se aplica'}</strong>`)
+                    .replace(/\[CPF_DO_RESPONSAVEL\]/gi, `<strong>${(data.patientData && data.patientData.isMinor) ? data.patientData.guardianCpf : 'Não se aplica'}</strong>`);
+
+                htmlContent += `
+                    <div style="display: flex; justify-content: space-between; margin-top: 60px; text-align: center; font-size: 0.85rem;">
+                        <div style="width: 45%;">
+                            <div style="border-bottom: 1px solid #333; margin-bottom: 10px;"></div>
+                            <strong>${data.psychologistName}</strong><br>
+                            Psicólogo(a) Clínico(a) – CRP ${data.psychologistCrp || '00/00000'}<br>
+                            ${docPsi}
+                        </div>
+                        <div style="width: 45%;">
+                            <div style="border-bottom: 1px solid #333; margin-bottom: 10px;"></div>
+                            <strong id="sig-patient-name">Nome do Paciente</strong><br>
+                            <span id="sig-patient-subtitle">CPF: </span><span id="sig-patient-cpf">______________________</span>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('contract-text').innerHTML = htmlContent;
+
+                const sigName = document.getElementById('sig-patient-name');
+                if (sigName) sigName.textContent = data.patientName;
+                
+                document.getElementById('loader').style.display = 'none';
+            } catch (e) {
+                console.error(e);
+                alert('Erro ao carregar dados. Verifique a conexão.');
+            }
+        }
+
+        function showStep(n) {
+            document.querySelectorAll('.step-container').forEach(el => el.classList.remove('active'));
+            document.getElementById('step-' + n).classList.add('active');
+            
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((d, idx) => {
+                if (idx < n) d.classList.add('active');
+                else d.classList.remove('active');
+            });
+        }
+
+        function nextStep(n) {
+            if (n === 2) {
+                const cpf = document.getElementById('ipt-cpf').value.trim();
+                const dob = document.getElementById('ipt-dob').value;
+                const isMinor = document.getElementById('chk-minor').checked;
+                const guardianName = document.getElementById('ipt-guardian-name').value.trim();
+                const guardianCpf = document.getElementById('ipt-guardian-cpf').value.trim();
+                const emergencyName = document.getElementById('ipt-emergency-name').value.trim();
+                const emergencyPhone = document.getElementById('ipt-emergency-phone').value.trim();
+
+                if (!dob || !emergencyName || !emergencyPhone) {
+                    alert('Por favor, preencha todos os campos obrigatórios.');
+                    return;
+                }
+
+                if (isMinor) {
+                    if (!guardianName || !guardianCpf) {
+                        alert('Por favor, preencha o Nome e CPF do Responsável Legal.');
+                        return;
+                    }
+                } else {
+                    if (!cpf) {
+                        alert('Por favor, preencha seu CPF.');
+                        return;
+                    }
+                }
+
+                patientData = {
+                    cpf: cpf || null,
+                    dob,
+                    emergencyName,
+                    emergencyPhone,
+                    isMinor,
+                    guardianName,
+                    guardianCpf
+                };
+            }
+            if (n === 3 && globalContractText && patientData) {
+                let htmlContent = globalContractText
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                    .replace(/\n/g, '<br>')
+                    .replace(/\[NOME_DO_RESPONSAVEL\]/gi, `<strong>${patientData.isMinor ? patientData.guardianName : 'Não se aplica'}</strong>`)
+                    .replace(/\[CPF_DO_RESPONSAVEL\]/gi, `<strong>${patientData.isMinor ? patientData.guardianCpf : 'Não se aplica'}</strong>`);
+
+                let docPsi = globalData.psychologistDoc;
+                if (docPsi) {
+                    let raw = docPsi.replace(/\D/g, '');
+                    if (raw.length === 11) docPsi = 'CPF: ' + raw.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+                    else if (raw.length === 14) docPsi = 'CNPJ: ' + raw.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+                    else docPsi = (raw.length > 11 ? 'CNPJ: ' : 'CPF: ') + docPsi;
+                } else {
+                    docPsi = 'DOCUMENTO NÃO INFORMADO';
+                }
+
+                htmlContent += `
+                    <div style="display: flex; justify-content: space-between; margin-top: 60px; text-align: center; font-size: 0.85rem;">
+                        <div style="width: 45%;">
+                            <div style="border-bottom: 1px solid #333; margin-bottom: 10px;"></div>
+                            <strong>${globalData.psychologistName}</strong><br>
+                            Psicólogo(a) Clínico(a) – CRP ${globalData.psychologistCrp || '00/00000'}<br>
+                            ${docPsi}
+                        </div>
+                        <div style="width: 45%;">
+                            <div style="border-bottom: 1px solid #333; margin-bottom: 10px;"></div>
+                            <strong id="sig-patient-name">${patientData.isMinor ? patientData.guardianName : globalData.patientName}</strong><br>
+                            <span id="sig-patient-subtitle">CPF: </span><span id="sig-patient-cpf">${patientData.isMinor ? patientData.guardianCpf : patientData.cpf}</span>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('contract-text').innerHTML = htmlContent;
+            }
+            showStep(n);
+        }
+
+        async function submitForm() {
+            const sig = document.getElementById('ipt-signature').value.trim();
+            if (sig.length < 3) return alert('Digite seu nome completo para assinar.');
+
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerText = 'Assinando...';
+
+            const payload = {
+                cpf: document.getElementById('ipt-cpf').value,
+                dob: document.getElementById('ipt-dob').value,
+                emergencyContact: document.getElementById('ipt-emergency-name').value + ' - ' + document.getElementById('ipt-emergency-phone').value,
+                signatureName: sig,
+                isMinor: patientData.isMinor,
+                guardianName: patientData.guardianName,
+                guardianCpf: patientData.guardianCpf
+            };
+
+            try {
+                const res = await fetch(`/api/public/onboarding/${token}/sign`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    showStep(4);
+                    document.getElementById('pix-key-display').innerText = data.pixKey || 'Nenhuma chave configurada';
+                    currentPixKey = data.pixKey;
+                    if (!data.pixKey) document.getElementById('pix-container').style.display = 'none';
+                    if(window.showToast) window.showToast('Contrato assinado com sucesso!', 'success');
+                } else {
+                    alert(data.error || 'Erro ao assinar contrato.');
+                    btn.disabled = false;
+                    btn.innerText = 'Assinar Eletronicamente e Enviar';
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro de conexão ao assinar contrato.');
+                btn.disabled = false;
+                btn.innerText = 'Assinar Eletronicamente e Enviar';
+            }
+        }
+
+        window.downloadSignedContract = async () => {
+            try {
+                const res = await fetch(`/api/public/onboarding/${token}`);
+                const data = await res.json();
+                
+                let docPsi = data.psychologistDoc;
+                if (docPsi) {
+                    let raw = docPsi.replace(/\D/g, '');
+                    if (raw.length === 11) docPsi = 'CPF: ' + raw.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+                    else if (raw.length === 14) docPsi = 'CNPJ: ' + raw.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+                    else docPsi = (raw.length > 11 ? 'CNPJ: ' : 'CPF: ') + docPsi;
+                } else {
+                    docPsi = 'DOCUMENTO NÃO INFORMADO';
+                }
+
+                let htmlContent = data.contractText
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                    .replace(/\n/g, '<br>');
+
+                const dataAssinatura = new Date(data.signedAt).toLocaleDateString('pt-BR');
+
+                let patientSigName = data.patientData && data.patientData.signatureName ? data.patientData.signatureName : data.patientName;
+                let patientSigCpf = data.patientData && data.patientData.cpf ? data.patientData.cpf : 'CPF não registrado';
+                let securityInfo = data.ipAddress ? `<div style="margin-top: 40px; font-size: 0.7rem; color: #666; text-align: left; border-top: 1px dashed #ccc; padding-top: 10px; page-break-inside: avoid;">
+                    <strong>Registro de Assinatura Eletrônica:</strong><br>
+                    Endereço IP: ${data.ipAddress}<br>
+                    Dispositivo/Navegador: ${data.userAgent || 'Desconhecido'}<br>
+                    Data/Hora do Registro: ${new Date(data.signedAt).toLocaleString('pt-BR')}
+                </div>` : '';
+
+                htmlContent += `
+                    <div style="display: flex; justify-content: space-between; margin-top: 60px; text-align: center; font-size: 0.85rem; page-break-inside: avoid;">
+                        <div style="width: 45%;">
+                            <div style="font-family: 'Brush Script MT', 'Caveat', 'Dancing Script', cursive; font-size: 1.8rem; color: #000; height: 50px; display: flex; align-items: flex-end; justify-content: center; line-height: 1;">
+                                ${data.psychologistName}
+                            </div>
+                            <div style="border-bottom: 1px solid #333; margin-bottom: 10px;"></div>
+                            <strong>${data.psychologistName}</strong><br>
+                            Psicólogo(a) Clínico(a) – CRP ${data.psychologistCrp || '00/00000'}<br>
+                            ${docPsi}
+                        </div>
+                        <div style="width: 45%;">
+                            <div style="font-family: 'Brush Script MT', 'Caveat', 'Dancing Script', cursive; font-size: 1.8rem; color: #000; height: 50px; display: flex; align-items: flex-end; justify-content: center; line-height: 1;">
+                                ${patientSigName}
+                            </div>
+                            <div style="border-bottom: 1px solid #333; margin-bottom: 10px;"></div>
+                            <strong>${patientSigName}</strong><br>
+                            CPF: ${patientSigCpf}<br>
+                            Assinado Eletronicamente em: ${dataAssinatura}
+                        </div>
+                    </div>
+                    ${securityInfo}
+                `;
+
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <html>
+                    <head>
+                        <title>Contrato Terapêutico - ${data.patientName}</title>
+                        <style>
+                            body { font-family: 'Inter', sans-serif; line-height: 1.6; padding: 40px; color: #333; text-align: justify; }
+                            @media print { body { padding: 0; margin: 0; } }
+                        </style>
+                    </head>
+                    <body>
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <img src="${window.location.origin}/assets/logos/logo-escura.png" alt="Yelo" style="height: 30px; opacity: 0.8;">
+                        </div>
+                        ${htmlContent}
+                        <script>
+                            window.onload = function() {
+                                setTimeout(() => { window.print(); }, 500);
+                            };
+                        <\/script>
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+            } catch (e) {
+                console.error(e);
+                alert('Erro ao gerar o PDF do contrato.');
+            }
+        };
+
+        function copyPix() {
+            if (!currentPixKey) return;
+            navigator.clipboard.writeText(currentPixKey).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                const origText = btn.innerHTML;
+                btn.innerHTML = '✓ Copiado!';
+                setTimeout(() => { btn.innerHTML = origText; }, 2000);
+            });
+        }
+
+        loadData();
+    </script>
+</body>
+</html>

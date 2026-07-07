@@ -33,6 +33,12 @@ module.exports = (sequelize, DataTypes) => {
           as: 'appointments'
         });
       }
+      if (models.PatientOnboardingLink) {
+        this.hasOne(models.PatientOnboardingLink, {
+          foreignKey: 'patientId',
+          as: 'onboardingLink'
+        });
+      }
     }
   }
   Patient.init({
@@ -55,6 +61,14 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     },
     fotoUrl: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    responsavel_nome: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    responsavel_cpf: {
       type: DataTypes.STRING,
       allowNull: true
     },

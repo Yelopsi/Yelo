@@ -142,6 +142,11 @@ app.get('/contato', (req, res) => res.render('contato'));
 // Rota para a página de ajuda renderizando o EJS
 app.get('/ajuda', (req, res) => res.render('ajuda'));
 
+// Rota para o Onboarding do Paciente (Contrato Terapêutico)
+app.get('/b/:token', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/patient/onboarding.html'));
+});
+
 // Silencia erro 404 do favicon.ico na raiz 
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
@@ -223,6 +228,14 @@ const startServer = async () => {
             console.log('🛠️ [DB FIX] Injetando coluna evaluationEmailSent na tabela Psychologists...');
             await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "evaluationEmailSent" BOOLEAN DEFAULT false;');
 
+            console.log('🛠️ [DB FIX] Injetando colunas de Onboarding na tabela Psychologists...');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "contractTemplate" TEXT;');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "pixKey" VARCHAR(255);');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "contract_duracao_sessao" VARCHAR(255);');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "contract_prazo_cancelamento" VARCHAR(255);');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "contract_tolerancia_atraso" VARCHAR(255);');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "contract_plataforma" VARCHAR(255);');
+
             console.log('🛠️ [DB FIX] Injetando colunas faltantes na tabela Questions...');
             
             // Garante a criação estrutural das tabelas do fórum/comunidade caso não existam
@@ -232,6 +245,7 @@ const startServer = async () => {
             if (db.WhatsAppClickLog) await db.WhatsAppClickLog.sync({ alter: true });
             if (db.WeeklyEfficiency) await db.WeeklyEfficiency.sync({ alter: true });
             if (db.YeloExpense) await db.YeloExpense.sync({ alter: true });
+            if (db.PatientOnboardingLink) await db.PatientOnboardingLink.sync({ alter: true });
 
             await db.sequelize.query('ALTER TABLE questions ADD COLUMN IF NOT EXISTS title VARCHAR(255);');
             await db.sequelize.query('ALTER TABLE questions ADD COLUMN IF NOT EXISTS slug VARCHAR(255) UNIQUE;');

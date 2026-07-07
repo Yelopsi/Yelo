@@ -13,6 +13,7 @@ const psiDashboardController = require('../controllers/psiDashboardController');
 const whatsappClickController = require('../controllers/whatsappClickController');
 const { protect } = require('../middlewares/authMiddleware');
 const { uploadProfilePhoto, uploadCrpDocument } = require('../middlewares/upload');
+const onboardingController = require('../controllers/onboardingController');
 
 // ===============================================
 // ROTAS PÚBLICAS (Não exigem login)
@@ -164,6 +165,11 @@ router.post('/me/confetti-seen', psychologistController.markConfettiAsSeen);
 // Dados de Dashboards do Psicólogo
 router.get('/me/analytics', psiDashboardController.getAnalyticsData);
 router.post('/me/ai-insights', psiDashboardController.getAiInsights);
+
+// Configurações de Onboarding e Contratos
+router.get('/me/onboarding', onboardingController.getSettings);
+router.put('/me/onboarding', onboardingController.updateSettings);
+router.post('/me/onboarding/generate', onboardingController.generateLink);
 
 router.get('/me/favorites-profile', (req, res) => res.json({ total: 0, temas: {}, faixaValor: {}, genero: {} }));
 router.get('/me/announcements', psiDashboardController.getAnnouncements);

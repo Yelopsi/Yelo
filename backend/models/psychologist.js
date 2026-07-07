@@ -56,6 +56,13 @@ module.exports = (sequelize, DataTypes) => {
               as: 'appointments'
           });
       }
+      // Associação com Onboarding Links
+      if (models.PatientOnboardingLink) {
+          this.hasMany(models.PatientOnboardingLink, {
+              foreignKey: 'psychologistId',
+              as: 'onboardingLinks'
+          });
+      }
       // ------------------------------------
     }
   }
@@ -323,6 +330,43 @@ module.exports = (sequelize, DataTypes) => {
     },
     utm_campaign: {
         type: DataTypes.STRING
+    },
+    // --- ONBOARDING LINK (NOVO) ---
+    contractTemplate: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    contract_duracao_sessao: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    contract_prazo_cancelamento: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    contract_tolerancia_atraso: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    contract_plataforma: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    contract_modalidade_pagamento: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    contract_frequencia_sessao: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    contract_valor_reajuste: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    pixKey: {
+      type: DataTypes.STRING,
+      allowNull: true
     },
     // --- GAMIFICATION (NOVO) ---
     authority_level: {
