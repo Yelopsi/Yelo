@@ -555,7 +555,7 @@ exports.getPendingActions = async (req, res) => {
                 FROM "WhatsAppClickLogs" w
                 LEFT JOIN "Patients" p ON w."patientId" = p.id
                 WHERE w."createdAt" <= :oneDayAgo
-                  AND w."feedbackGiven" = false
+                  AND w."feedbackGiven" IS NOT TRUE
                   AND w."adminWppReminderSentAt" IS NULL
                 ORDER BY w."psychologistId", w."createdAt" DESC
             `;
