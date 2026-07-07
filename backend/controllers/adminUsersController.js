@@ -496,16 +496,22 @@ exports.getPendingActions = async (req, res) => {
         // 4. Feedback / Cobrança (Clique WhatsApp > 24h E msg_feedback_billing_sent_at NULA)
         if (db.WhatsAppClickLog) {
             const clicksQuery = `
-                SELECT DISTINCT "psychologistId" 
-                FROM "WhatsAppClickLogs" 
-                WHERE "createdAt" <= :oneDayAgo
+                SELECT DISTINCT ON (w."psychologistId") 
+                    w."psychologistId", 
+                    w."guestName", 
+                    w."feedbackToken",
+                    p.nome as "patientName"
+                FROM "WhatsAppClickLogs" w
+                LEFT JOIN "Patients" p ON w."patientId" = p.id
+                WHERE w."createdAt" <= :oneDayAgo
+                ORDER BY w."psychologistId", w."createdAt" DESC
             `;
             const clickedIdsObj = await db.sequelize.query(clicksQuery, {
                 replacements: { oneDayAgo },
                 type: db.sequelize.QueryTypes.SELECT
             }).catch(() => []);
             
-            // Lida com cases diferentes caso a tabela tenha sido criada com nome diferente de coluna
+            // Filtra os IDs
             const clickedIds = clickedIdsObj.map(row => row.psychologistId || row.PsychologistId).filter(id => id);
 
             if (clickedIds.length > 0) {
@@ -516,7 +522,19 @@ exports.getPendingActions = async (req, res) => {
                     },
                     attributes: ['id', 'nome', 'telefone']
                 });
-                billingCandidates.forEach(p => pendingList.push({ ...p.toJSON(), actionType: 'billing_feedback', reason: 'Recebeu clique há mais de 24h' }));
+                
+                billingCandidates.forEach(p => {
+                    const clickData = clickedIdsObj.find(r => (r.psychologistId || r.PsychologistId) === p.id);
+                    const pName = clickData ? (clickData.patientName || clickData.guestName || 'um paciente') : 'um paciente';
+                    const token = clickData ? clickData.feedbackToken : '';
+                    pendingList.push({ 
+                        ...p.toJSON(), 
+                        actionType: 'billing_feedback', 
+                        reason: 'Recebeu clique há mais de 24h',
+                        patientName: pName,
+                        feedbackToken: token
+                    });
+                });
             }
         }
 
