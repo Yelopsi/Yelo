@@ -103,6 +103,8 @@ exports.moderatePsychologist = adminUsersController.moderatePsychologist;
 exports.updateVipStatus = adminUsersController.updateVipStatus;
 exports.getPsychologistFullDetails = adminUsersController.getPsychologistFullDetails;
 exports.grantTrialToAll = adminUsersController.grantTrialToAll;
+exports.getPendingActions = adminUsersController.getPendingActions;
+exports.markActionSent = adminUsersController.markActionSent;
 
 // =====================================================================
 // (O RESTANTE DO SEU ARQUIVO PERMANECE IDÊNTICO)

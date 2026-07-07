@@ -442,3 +442,121 @@ exports.restorePatient = async (req, res) => {
         res.status(500).json({ error: 'Erro interno no servidor ao restaurar paciente.' });
     }
 };
+
+/**
+ * Rota: GET /api/admin/pending-actions
+ * Descrição: Busca psicólogos que precisam de contato manual (Follow-up)
+ */
+exports.getPendingActions = async (req, res) => {
+    try {
+        const now = new Date();
+        const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+
+        const pendingList = [];
+
+        // 1. Análise (Cadastrado > 24h E perfil preenchido E msg_analysis_sent_at NULA)
+        const analysisCandidates = await db.Psychologist.findAll({
+            where: {
+                createdAt: { [Op.lte]: oneDayAgo },
+                fotoUrl: { [Op.ne]: null },
+                bio: { [Op.ne]: null },
+                msg_analysis_sent_at: null
+            },
+            attributes: ['id', 'nome', 'telefone', 'createdAt', 'fotoUrl', 'bio']
+        });
+        analysisCandidates.forEach(p => pendingList.push({ ...p.toJSON(), actionType: 'analysis', reason: 'Perfil preenchido há mais de 24h' }));
+
+        // 2. Perfil Incompleto (Cadastrado > 24h E (foto NULA OU bio NULA) E msg_incomplete_profile_sent_at NULA)
+        const incompleteCandidates = await db.Psychologist.findAll({
+            where: {
+                createdAt: { [Op.lte]: oneDayAgo },
+                [Op.or]: [
+                    { fotoUrl: null },
+                    { bio: null },
+                    { bio: '' }
+                ],
+                msg_incomplete_profile_sent_at: null
+            },
+            attributes: ['id', 'nome', 'telefone', 'createdAt']
+        });
+        incompleteCandidates.forEach(p => pendingList.push({ ...p.toJSON(), actionType: 'incomplete', reason: 'Perfil incompleto há mais de 24h' }));
+
+        // 3. Churn (Inativo E plano expirou > 3 dias E msg_churn_followup_sent_at NULA)
+        const churnCandidates = await db.Psychologist.findAll({
+            where: {
+                status: 'inactive',
+                planExpiresAt: { [Op.lte]: threeDaysAgo },
+                msg_churn_followup_sent_at: null
+            },
+            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano']
+        });
+        churnCandidates.forEach(p => pendingList.push({ ...p.toJSON(), actionType: 'churn', reason: 'Plano expirado há mais de 3 dias' }));
+
+        // 4. Feedback / Cobrança (Clique WhatsApp > 24h E msg_feedback_billing_sent_at NULA)
+        if (db.WhatsAppClickLog) {
+            const clicksQuery = `
+                SELECT DISTINCT "psychologistId" 
+                FROM "WhatsAppClickLogs" 
+                WHERE "createdAt" <= :oneDayAgo
+            `;
+            const clickedIdsObj = await db.sequelize.query(clicksQuery, {
+                replacements: { oneDayAgo },
+                type: db.sequelize.QueryTypes.SELECT
+            }).catch(() => []);
+            
+            // Lida com cases diferentes caso a tabela tenha sido criada com nome diferente de coluna
+            const clickedIds = clickedIdsObj.map(row => row.psychologistId || row.PsychologistId).filter(id => id);
+
+            if (clickedIds.length > 0) {
+                const billingCandidates = await db.Psychologist.findAll({
+                    where: {
+                        id: { [Op.in]: clickedIds },
+                        msg_feedback_billing_sent_at: null
+                    },
+                    attributes: ['id', 'nome', 'telefone']
+                });
+                billingCandidates.forEach(p => pendingList.push({ ...p.toJSON(), actionType: 'billing_feedback', reason: 'Recebeu clique há mais de 24h' }));
+            }
+        }
+
+        res.status(200).json(pendingList);
+    } catch (error) {
+        console.error('Erro em getPendingActions:', error);
+        res.status(500).json({ error: 'Erro no servidor' });
+    }
+};
+
+/**
+ * Rota: PATCH /api/admin/psychologists/:id/action-sent
+ * Descrição: Marca que uma ação de follow-up foi realizada
+ */
+exports.markActionSent = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { actionType } = req.body;
+
+        const psychologist = await db.Psychologist.findByPk(id);
+        if (!psychologist) {
+            return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+        }
+
+        const now = new Date();
+        if (actionType === 'analysis') {
+            await psychologist.update({ msg_analysis_sent_at: now });
+        } else if (actionType === 'incomplete') {
+            await psychologist.update({ msg_incomplete_profile_sent_at: now });
+        } else if (actionType === 'churn') {
+            await psychologist.update({ msg_churn_followup_sent_at: now });
+        } else if (actionType === 'billing_feedback') {
+            await psychologist.update({ msg_feedback_billing_sent_at: now });
+        } else {
+            return res.status(400).json({ error: 'Tipo de ação inválido.' });
+        }
+
+        res.status(200).json({ message: 'Ação registrada com sucesso!' });
+    } catch (error) {
+        console.error('Erro em markActionSent:', error);
+        res.status(500).json({ error: 'Erro no servidor' });
+    }
+};

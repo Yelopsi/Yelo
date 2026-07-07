@@ -141,6 +141,23 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: true
     },
+    // --- FOLLOW-UPS CRM ---
+    msg_incomplete_profile_sent_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    msg_analysis_sent_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    msg_feedback_billing_sent_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    msg_churn_followup_sent_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
     plano: {
       type: DataTypes.STRING,
       allowNull: true,

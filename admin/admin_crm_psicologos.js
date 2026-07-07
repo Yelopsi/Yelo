@@ -198,6 +198,25 @@ window.initializePage = function() {
 
         const searchTerm = searchInput.value;
         const status = statusInput.value;
+        
+        // NOVO LÓGICA PARA FOLLOW-UPS
+        if (status === 'pending_actions') {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/pending-actions`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Falha ao buscar pendências.');
+                const pendingData = await response.json();
+                renderPendingActionsTable(pendingData);
+                const infoEl = document.getElementById('pagination-info');
+                if (infoEl) infoEl.textContent = `Mostrando ${pendingData.length} ações`;
+                return;
+            } catch (error) {
+                tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--coral-quente);">Erro ao carregar ações pendentes.</td></tr>`;
+                return;
+            }
+        }
+
         const startDate = document.getElementById('crm-date-start')?.value || '';
         const endDate = document.getElementById('crm-date-end')?.value || '';
         const limit = document.getElementById('crm-per-page')?.value || 20;
@@ -246,6 +265,96 @@ window.initializePage = function() {
             tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--coral-quente);">Erro ao carregar dados.</td></tr>`;
         }
     }
+
+    function renderPendingActionsTable(data) {
+        tableBody.innerHTML = '';
+        if (data.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--cinza-texto);">Nenhuma ação pendente! 🎉</td></tr>`;
+            return;
+        }
+
+        data.forEach(item => {
+            const dateStr = item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR') : '-';
+            let actionBadge = '';
+            
+            if (item.actionType === 'analysis') actionBadge = '<span class="status status-active">Análise Pronta</span>';
+            else if (item.actionType === 'incomplete') actionBadge = '<span class="status status-pending">Perfil Incompleto</span>';
+            else if (item.actionType === 'churn') actionBadge = '<span class="status status-cancelada">Churn</span>';
+            else if (item.actionType === 'billing_feedback') actionBadge = '<span class="status" style="background:#e0e7ff; color:#4338ca;">Feedback/Cobrança</span>';
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td data-label="Profissional">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="display: flex; flex-direction: column;">
+                            <strong style="color: var(--verde-escuro); cursor: pointer;" onclick="window.openCSDrawer('${item.id}')">${item.nome}</strong>
+                            <span style="font-size: 0.75rem; color: #666;">${item.telefone || 'Sem telefone'}</span>
+                        </div>
+                    </div>
+                </td>
+                <td data-label="Status">
+                    ${actionBadge}
+                </td>
+                <td data-label="Motivo">
+                    <span style="font-size: 0.85rem; color: #475569; font-weight: 500;">${item.reason}</span>
+                </td>
+                <td data-label="Data">
+                    <span style="color: #64748b; font-size: 0.9rem;">${dateStr}</span>
+                </td>
+                <td data-label="Extra">
+                    <span style="font-size: 0.8rem; color: #64748b;">${item.plano || '-'}</span>
+                </td>
+                <td data-label="Ações CS" style="white-space: nowrap; text-align: right;">
+                    <button class="btn-tabela" onclick="window.sendWhatsAppAction('${item.id}', '${item.telefone}', '${item.nome}', '${item.actionType}')" style="background: #25D366; color: white; border: none; padding: 6px 12px; border-radius: 50px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 4px rgba(37,211,102,0.3);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                        Enviar
+                    </button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    window.sendWhatsAppAction = async function(id, phone, name, actionType) {
+        if (!phone || phone === 'null') {
+            window.showToast('Profissional sem telefone cadastrado.', 'error');
+            return;
+        }
+        const cleanPhone = phone.replace(/\\D/g, '');
+        const firstName = name.split(' ')[0];
+        let msg = '';
+        
+        if (actionType === 'analysis') {
+            msg = \`Olá, \${firstName}! Aqui é do time da Yelo. Vimos que você já preencheu seu perfil, parabéns! Ele está aprovado e pronto para atrair pacientes. Se precisar de dicas, estamos aqui!\`;
+        } else if (actionType === 'incomplete') {
+            msg = \`Olá, \${firstName}! Sou da Yelo. Notamos que você se cadastrou, mas não finalizou o perfil. Precisa de ajuda com a foto ou biografia?\`;
+        } else if (actionType === 'churn') {
+            msg = \`Olá, \${firstName}! Vimos que seu plano expirou na Yelo. Há algo que poderíamos ter feito melhor? Seu feedback é super importante pra nós!\`;
+        } else if (actionType === 'billing_feedback') {
+            msg = \`Olá, \${firstName}! Vimos que você recebeu contatos de pacientes pelo perfil recentemente. Conseguiu fechar agendamentos? Não esqueça de dar o feedback na plataforma!\`;
+        }
+
+        const link = \`https://api.whatsapp.com/send?phone=55\${cleanPhone}&text=\${encodeURIComponent(msg)}\`;
+        window.open(link, '_blank');
+
+        // Marcar como enviado no banco
+        try {
+            const res = await fetch(\`\${API_BASE_URL}/api/admin/psychologists/\${id}/action-sent\`, {
+                method: 'PATCH',
+                headers: { 
+                    'Authorization': \`Bearer \${token}\`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ actionType })
+            });
+            if (res.ok) {
+                if (window.showToast) window.showToast('Ação registrada com sucesso!', 'success');
+                setTimeout(() => fetchAndRenderPsis(1), 500); // Recarrega a lista
+            }
+        } catch (e) {
+            console.error('Erro ao marcar ação como enviada:', e);
+        }
+    };
 
     function renderTable(psis) {
         tableBody.innerHTML = '';
