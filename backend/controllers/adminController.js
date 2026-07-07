@@ -105,6 +105,7 @@ exports.getPsychologistFullDetails = adminUsersController.getPsychologistFullDet
 exports.grantTrialToAll = adminUsersController.grantTrialToAll;
 exports.getPendingActions = adminUsersController.getPendingActions;
 exports.resetCrm = adminUsersController.resetCrm;
+exports.debugCrm = adminUsersController.debugCrm;
 exports.markActionSent = adminUsersController.markActionSent;
 
 // =====================================================================

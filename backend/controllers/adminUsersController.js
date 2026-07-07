@@ -744,3 +744,36 @@ exports.resetCrm = async (req, res) => {
         res.status(500).json({ error: 'Erro ao resetar CRM' });
     }
 };
+
+exports.debugCrm = async (req, res) => {
+    try {
+        const Op = db.Sequelize.Op;
+        const result = {};
+        
+        result.totalPsychologists = await db.Psychologist.count();
+        result.totalClickLogs = await db.WhatsAppClickLog ? await db.WhatsAppClickLog.count() : 0;
+        
+        result.withMsgAnalysis = await db.Psychologist.count({ where: { msg_analysis_sent_at: { [Op.ne]: null } } });
+        result.withMsgIncomplete = await db.Psychologist.count({ where: { msg_incomplete_profile_sent_at: { [Op.ne]: null } } });
+        result.withMsgChurn = await db.Psychologist.count({ where: { msg_churn_followup_sent_at: { [Op.ne]: null } } });
+        result.withAdminBilling = await db.Psychologist.count({ where: { admin_billing_sent_at: { [Op.ne]: null } } });
+        
+        if (db.WhatsAppClickLog) {
+            result.withWppReminder = await db.WhatsAppClickLog.count({ where: { adminWppReminderSentAt: { [Op.ne]: null } } });
+            result.feedbacksNotTrue = await db.WhatsAppClickLog.count({ where: { feedbackGiven: { [Op.not]: true } } });
+        }
+
+        const clicksQuery = `
+            SELECT DISTINCT ON (w."psychologistId") w."psychologistId"
+            FROM "WhatsAppClickLogs" w
+            WHERE w."feedbackGiven" IS NOT TRUE
+              AND w."adminWppReminderSentAt" IS NULL
+            ORDER BY w."psychologistId", w."createdAt" DESC
+        `;
+        result.rawFeedbackCandidates = await db.sequelize.query(clicksQuery, { type: db.sequelize.QueryTypes.SELECT });
+
+        res.status(200).json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};

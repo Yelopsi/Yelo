@@ -136,6 +136,7 @@ router.delete('/expenses/:id', adminExpenseController.deleteExpense);
 // --- ROTAS DE FOLLOW-UP (AÇÕES MANUAIS NO CRM) ---
 router.get('/pending-actions', adminController.getPendingActions);
 router.get('/reset-crm', adminController.resetCrm);
+router.get('/debug-crm', adminController.debugCrm);
 router.patch('/psychologists/:id/action-sent', adminController.markActionSent);
 
 // --- ROTAS DE FOLLOW-UP (VISITANTES WHATSAPP) ---
