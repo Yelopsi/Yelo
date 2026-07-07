@@ -384,7 +384,9 @@ window.initializePage = function() {
         }
 
         const link = `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${encodeURIComponent(msg)}`;
-        window.open(link, '_blank');
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) window.location.href = link;
+        else window.open(link, '_blank');
 
         // Marcar como enviado no banco
         try {
