@@ -450,8 +450,8 @@ exports.restorePatient = async (req, res) => {
 exports.getPendingActions = async (req, res) => {
     try {
         const now = new Date();
-        const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+        const oneDayAgo = now; // TEMPORARIO PARA TESTE: Sem atraso de 24h
+        const threeDaysAgo = now; // TEMPORARIO PARA TESTE: Sem atraso de 3 dias
 
         const pendingList = [];
 
