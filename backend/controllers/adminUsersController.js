@@ -536,34 +536,15 @@ exports.getPendingActions = async (req, res) => {
                 if (clicks === 0) clicks = p.whatsapp_clicks || 0;
 
                 pendingList.push({ 
-                churnCandidates.forEach(p => {
-                    const logs = wppLogs.filter(l => l.psychologistId === p.id);
-                    const closedDeals = logs.filter(l => l.dealClosed === 'yes' || l.dealClosed === 'talking');
-                    const dealClosedCount = closedDeals.length;
-                    
-                    const clicks = logs.length;
-                    
-                    const matchEv = matchEventsCount.find(m => m.psychologistId == p.id);
-                    let appearances = matchEv ? parseInt(matchEv.count, 10) : 0;
-                    
-                    const profView = profileViewsCount.find(v => v.psychologistId == p.id);
-                    let views = profView ? parseInt(profView.count, 10) : 0;
-                    
-                    // Fallbacks seguros caso os logs antigos não existam, usa o consolidado do psicólogo
-                    if (appearances === 0) appearances = p.profile_appearances || 0;
-                    if (clicks === 0) clicks = p.whatsapp_clicks || 0;
-
-                    pendingList.push({ 
-                        ...p.toJSON(), 
-                        actionType: 'churn', 
-                        reason: 'Trial expirado há >3 dias',
-                        metrics: { appearances, views, clicks, dealClosedCount }
-                    });
+                    ...p.toJSON(), 
+                    actionType: 'churn', 
+                    reason: 'Trial expirado há >3 dias',
+                    metrics: { appearances, views, clicks, dealClosedCount }
                 });
-            }
+            });
         }
 
-        // 4. Cobrança de Feedback (WhatsAppClickLog >= 24h sem feedbackGiven e adminWppReminderSentAt null)
+        // 4. Feedback / Cobrança (Clique WhatsApp > 24h E adminWppReminderSentAt NULA E feedbackGiven = false)
         if (db.WhatsAppClickLog) {
             const clicks = await db.WhatsAppClickLog.findAll({
                 where: {
@@ -574,7 +555,7 @@ exports.getPendingActions = async (req, res) => {
                 order: [['psychologistId', 'ASC'], ['createdAt', 'DESC']]
             });
 
-            // To emulate DISTINCT ON psychologistId
+            // Filtra o clique mais recente por psicólogo
             const uniqueClicks = [];
             const seenPsyIds = new Set();
             for (const c of clicks) {
@@ -584,25 +565,27 @@ exports.getPendingActions = async (req, res) => {
                 }
             }
 
-            const psiIds = uniqueClicks.map(c => c.psychologistId);
+            const clickedIds = uniqueClicks.map(c => c.psychologistId);
 
-            if (psiIds.length > 0) {
+            if (clickedIds.length > 0) {
                 const billingCandidates = await db.Psychologist.findAll({
                     where: {
-                        id: { [Op.in]: psiIds },
+                        id: { [Op.in]: clickedIds },
                         deletedAt: null
                     },
-                    attributes: ['id', 'nome', 'telefone', 'createdAt']
+                    attributes: ['id', 'nome', 'telefone']
                 });
-
+                
                 billingCandidates.forEach(p => {
-                    const clickData = uniqueClicks.find(c => String(c.psychologistId) === String(p.id));
-                    pendingList.push({
-                        ...p.toJSON(),
-                        actionType: 'billing_feedback',
-                        reason: 'Feedback de paciente (WhatsApp)',
-                        patientName: clickData && clickData.guestName ? clickData.guestName : 'Paciente',
-                        feedbackToken: clickData ? clickData.feedbackToken : ''
+                    const clickData = uniqueClicks.find(r => String(r.psychologistId) === String(p.id));
+                    const pName = clickData ? (clickData.guestName || 'um paciente') : 'um paciente';
+                    const token = clickData ? clickData.feedbackToken : '';
+                    pendingList.push({ 
+                        ...p.toJSON(), 
+                        actionType: 'billing_feedback', 
+                        reason: 'Recebeu clique há mais de 24h',
+                        patientName: pName,
+                        feedbackToken: token
                     });
                 });
             }
