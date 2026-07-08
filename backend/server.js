@@ -205,6 +205,8 @@ const startServer = async () => {
         // --- FIX MANUAL DE COLUNAS FALTANTES PARA EVITAR LOCK DO ALTER:TRUE ---
         try {
             console.log('🛠️ [DB FIX] Injetando colunas faltantes nas tabelas...');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "ai_insights_cache" JSONB DEFAULT NULL;');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "subscribedAt" TIMESTAMP WITH TIME ZONE;');
             await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "admin_billing_sent_at" TIMESTAMP WITH TIME ZONE;');
             await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "modalidade_preferida" VARCHAR(255);');
             await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "psychologistId" INTEGER;');
