@@ -1200,14 +1200,7 @@ exports.getFounderMetrics = async (req, res) => {
             // Conta quantos pagantes já existiam até aquele mês
             const activesAtTime = await db.Psychologist.count({
                 where: { 
-                    [Op.or]: [
-                        { subscribedAt: { [Op.lte]: endD } },
-                        { subscribedAt: null, createdAt: { [Op.lte]: endD } } // Fallback de segurança
-                    ],
-                    [Op.or]: [
-                        { subscribedAt: { [Op.not]: null } },
-                        { subscription_payments_count: { [Op.gt]: 0 } }
-                    ]
+                    subscribedAt: { [Op.lte]: endD }
                 }
             });
             growthHistory.push({ month: monthNames[d.getMonth()], users: activesAtTime });
