@@ -329,6 +329,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                 <h3 style="display: flex; align-items: center; gap: 8px; margin: 0;">Auditoria de Contatos (Pacientes ➔ Psicólogos)</h3>
                 <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" id="search-wpp-name" placeholder="Pesquisar por nome..." style="padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; font-size: 0.9rem; outline: none; width: 220px;" onkeyup="applyWppFilter()">
                     <label for="filter-wpp-status" style="font-size: 0.9rem; font-weight: 500; color: #4b5563;">Filtrar:</label>
                     <select id="filter-wpp-status" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; font-size: 0.9rem; outline: none; cursor: pointer;" onchange="applyWppFilter()">
                         <option value="todos">Todos os Contatos</option>

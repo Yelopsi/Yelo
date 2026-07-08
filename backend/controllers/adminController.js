@@ -904,6 +904,20 @@ exports.analyzeProfile = async (req, res) => {
 
         const diasTrialText = diasParaExpirar !== null && diasParaExpirar > 0 ? diasParaExpirar : 'alguns';
 
+        // 3.3. Busca de Métricas Reais do Banco de Dados
+        const [matchEventsRaw] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :id`, { replacements: { id } }).catch(() => [[{count: 0}]]);
+        const matchAppearances = parseInt(matchEventsRaw[0]?.count || 0, 10);
+
+        const [profileViewsRaw] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :id`, { replacements: { id } }).catch(() => [[{count: 0}]]);
+        let profileViews = parseInt(profileViewsRaw[0]?.count || 0, 10);
+        if (profileViews === 0) profileViews = psi.profile_appearances || 0;
+
+        let whatsappClicks = 0;
+        if (db.WhatsAppClickLog) {
+            whatsappClicks = await db.WhatsAppClickLog.count({ where: { psychologistId: id } }).catch(() => 0);
+        }
+        if (whatsappClicks === 0) whatsappClicks = psi.whatsapp_clicks || 0;
+
         // 4. O SUPER PROMPT DA EQUIPE DE GROWTH
         const promptGrowth = `Você atua como a equipe de Growth e Customer Success (CS) da plataforma Yelo, especializada em marketing para clínicas de psicologia.
 Seu objetivo é analisar o perfil deste psicólogo e fornecer uma consultoria acionável para ajudá-lo a crescer, captar mais pacientes e engajar.
@@ -917,7 +931,8 @@ IMPORTANTE SOBRE O TOM DE VOZ E FORMATO (WHATSAPP):
 6. NÃO INCLUA nota percentual de força de perfil.
 
 REGRAS DE ANÁLISE:
-- Sobre conversões: Considere o tempo de cadastro. Faz sentido ter poucas visitas ou nenhuma conversão se o perfil for novo. Nesse caso, tranquilize o psicólogo.
+- Sobre indicadores e conversões: Foque SEMPRE no POSITIVO. Celebre e valorize os números que estiverem altos (como aparições no match ou visualizações). Se os cliques no WhatsApp ou outro indicador estiverem zerados, NÃO evidencie isso e não faça apontamentos negativos. Foque no que está funcionando e sugira melhorias. Se o perfil for novo, tranquilize o psicólogo.
+- Sobre o preço da sessão: NUNCA sugira que o psicólogo mude o preço diretamente. Em vez disso, informe que ele pode usar a "Calculadora de Honorários" e a ferramenta de análise em "Clínica > Métricas e Mercado" para avaliar se o seu valor é o ideal.
 - Comunidade e Blog: Sugira escrever posts no blog ou responder perguntas da comunidade para melhorar a percepção dos pacientes sobre como ele trabalha. Adapte essa recomendação com base na ABORDAGEM TEÓRICA dele (ex: na Psicanálise, entender como o profissional atua é o início da transferência). NÃO sugira que faça isso para "ganhar badges" ou "melhorar ranqueamento". O Fórum é para psis dentro da plataforma, foque em trocar experiências e fortalecer a comunidade.
 
 --- DOSSIÊ DE DADOS DO PSICÓLOGO ---
@@ -929,8 +944,9 @@ Biografria: ${psi.bio && psi.bio.length > 10 ? psi.bio : 'Não preenchida ou mui
 Preço Configurado: ${valorConsulta}
 Temas de Atuação: ${psi.temas_atuacao && psi.temas_atuacao.length > 0 ? psi.temas_atuacao.join(', ') : 'Nenhum'}
 Abordagens: ${psi.abordagens_tecnicas && psi.abordagens_tecnicas.length > 0 ? psi.abordagens_tecnicas.join(', ') : 'Nenhuma'}
-Visualizações do Perfil (Tráfego): ${psi.profile_appearances || 0}
-Cliques no WhatsApp (Leads): ${psi.whatsapp_clicks || 0}
+Aparições no Match (Recomendações): ${matchAppearances}
+Visualizações do Perfil (Tráfego): ${profileViews}
+Cliques no WhatsApp (Leads): ${whatsappClicks}
 Total de Avaliações de Pacientes: ${reviewsCount}
 
 🔥 Top 5 Temas Mais Buscados Pelos Pacientes (Últimos 30 dias):
@@ -953,9 +969,7 @@ Pra iniciarmos nossa parceria, pedi à nossa equipe de *Growth e Customer Succes
 
 🚀 *Plano de Ação sugerido:*
 
-1. *Definição de Honorários:* [Sua recomendação sobre clareza nos preços e usar a Calculadora de Honorários no painel]
-2. *Autoridade no Fórum e Blog:* [Recomendação baseada na abordagem teórica sobre compartilhar conhecimento no Blog e na Comunidade, sem citar badges ou ranking]
-3. *Atenção ao Hub de Evolução:* [Se estiver no teste/trial, informe: "Como o seu período de teste expira em ${diasTrialText} dias, nossa equipe recomenda que você monitore o seu Hub de Evolução diariamente. Ele te dará insights precisos sobre onde ajustar sua abordagem para garantir que os visitantes do seu perfil entrem em contato antes de finalizar sua transição para o plano definitivo." Se não estiver no teste, faça uma recomendação geral sobre acompanhar as métricas do Hub.]
+[Liste de 2 a 3 ações práticas e diretas. SÓ mencione as ferramentas da Yelo SE FIZEREM SENTIDO E FOREM PERTINENTES para o contexto atual do psicólogo. Não é obrigatório citar ferramentas, mas quando pertinente, você pode sugerir de forma breve algumas destas: Calculadora de Honorários, aba Clínica > Métricas e Mercado, Blog, Comunidade/Fórum, Hub de Evolução, Cadastro de Pacientes, Agenda de Atendimentos e Horários Livres, Módulo Financeiro (para analisar despesas/receitas e faturamento), Manual de Conversão e Histórico de Contatos. Lembre-se: se o psicólogo estiver em período de teste/trial, mencione que faltam ${diasTrialText} dias caso faça sentido sugerir o acompanhamento do Hub de Evolução.]
 
 Estamos à disposição para transformar esses acessos em pacientes recorrentes. Vamos juntos?`;
 

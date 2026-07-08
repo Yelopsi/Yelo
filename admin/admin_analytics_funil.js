@@ -433,7 +433,7 @@ window.initializePage = function() {
                 const pName = safeStr(l.guestName);
                 const psiName = l.psychologist ? safeStr(l.psychologist.nome) : 'N/A';
                 const recContato = l.contactReceived === true ? 'Sim' : (l.contactReceived === false ? 'Não' : 'Pendente');
-                const status = l.feedbackGiven ? 'Respondido' : 'Pendente';
+                const status = l.feedbackGiven ? 'Respondido' : (l.adminWppReminderSentAt ? 'Cobrado' : 'Pendente');
                 
                 // Mapeia fechou granularmente
                 let fechou = 'Pendente';
@@ -497,12 +497,21 @@ window.initializePage = function() {
 
     window.applyWppFilter = function() {
         const select = document.getElementById('filter-wpp-status');
+        const searchInput = document.getElementById('search-wpp-name');
         if (!select) return;
         window.wppDataState.currentFilter = select.value;
+        const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
         window.wppDataState.currentPage = 1;
         
         const filterVal = window.wppDataState.currentFilter;
         window.wppDataState.filteredFeedbacks = window.wppDataState.allFeedbacks.filter(f => {
+            if (searchTerm) {
+                const psiName = f.psychologist && f.psychologist.nome ? f.psychologist.nome.toLowerCase() : '';
+                const patientName = f.guestName ? f.guestName.toLowerCase() : '';
+                if (!psiName.includes(searchTerm) && !patientName.includes(searchTerm)) {
+                    return false;
+                }
+            }
             if (filterVal === 'todos') return true;
             if (filterVal === 'cobrar_agora') {
                 if (f.feedbackGiven) return false;
@@ -660,6 +669,11 @@ window.initializePage = function() {
             let contato = '<span style="color:#888;">⏳ Aguardando psi</span>';
             let fechou = '-';
             let status = '<span class="status status-pendente" style="background: #f8f9fa; color: #6c757d; font-size: 0.75rem; border: 1px solid #dee2e6; padding: 4px 10px; border-radius: 20px;">Pendente</span>';
+            
+            if (!f.feedbackGiven && f.adminWppReminderSentAt) {
+                const sentDate = new Date(f.adminWppReminderSentAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                status = `<span class="status status-pendente" title="Follow-up enviado pelo CRM" style="background: #fef08a; color: #854d0e; font-size: 0.75rem; border: 1px solid #fde047; padding: 4px 10px; border-radius: 20px;">Cobrado (${sentDate})</span>`;
+            }
             
             const safePsiId = f.psychologistId || (f.psychologist ? f.psychologist.id : '');
 

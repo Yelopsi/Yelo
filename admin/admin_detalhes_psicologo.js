@@ -121,6 +121,7 @@ function renderDetails(data) {
     }
 
     // 2. Stats
+    document.getElementById('stat-views').textContent = stats.profileViews || 0;
     document.getElementById('stat-matches').textContent = stats.matches || 0;
     document.getElementById('stat-whatsapp').textContent = stats.whatsappClicks || 0;
     document.getElementById('stat-blog').textContent = data.blogPosts?.length || 0;

@@ -170,13 +170,18 @@ exports.getPsychologistFullDetails = async (req, res) => {
             `SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "PsychologistId" = :id`,
             { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
         )).catch(() => [{ count: 0 }]);
+        const profileViewsStats = await db.sequelize.query(
+            `SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :id`,
+            { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => [{ count: psychologist.profile_appearances || 0 }]);
         
         res.json({
             psychologist,
             stats: {
                 matches: matchesCount,
                 whatsappClicks: whatsappStats[0] ? parseInt(whatsappStats[0].count) : 0,
-                forumActivities: forumPosts.length + forumComments.length
+                forumActivities: forumPosts.length + forumComments.length,
+                profileViews: profileViewsStats[0] ? parseInt(profileViewsStats[0].count) : (psychologist.profile_appearances || 0)
             },
             blogPosts,
             forumPosts,
