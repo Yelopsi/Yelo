@@ -138,10 +138,12 @@ exports.incrementWhatsappClick = async (req, res) => {
                 const limit = planLimits[psychologist.plano ? psychologist.plano.toUpperCase() : 'ESSENTIAL'] || 5;
 
                 if (clicksCount === limit + 1) {
+                    /* Email de limite atingido desativado a pedido do usuário
                     const emailService = require('../services/emailService');
                     const primeiroNome = psychologist.nome.split(' ')[0];
                     const htmlContent = `<div style="font-family: Arial, sans-serif; color: #374151; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px;"><h2 style="color: #1B4332;">Seu perfil está bombando! 🚀</h2><p>Olá, ${primeiroNome}!</p><p>Vi aqui que o seu perfil está bombando e você já ultrapassou o limite de conexões do seu plano (<strong>${limit} contatos</strong>).</p><p>Como estamos na fase de lançamento, liberei seu perfil para continuar aparecendo nas buscas <strong>sem custos extras neste mês</strong>, tá?</p><p>Que bom que os pacientes estão gostando do seu perfil! Aproveite os novos contatos.</p><div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;"><p style="margin: 0; color: #6b7280; font-size: 14px;">Com carinho,<br><strong>Equipe Yelo</strong> 💚</p></div></div>`;
                     if (typeof emailService.sendEmail === 'function') emailService.sendEmail(psychologist.email, "Seu perfil está bombando! 🚀", htmlContent).catch(e => {});
+                    */
                 }
             } catch (err) { }
         }
@@ -258,10 +260,24 @@ exports.getAiInsights = async (req, res) => {
         const psychologist = await db.Psychologist.findByPk(psychologistId);
         if (!psychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
 
+        if (psychologist.ai_insights_cache) {
+            const cacheData = psychologist.ai_insights_cache;
+            const diasPassados = (Date.now() - cacheData.timestamp) / (1000 * 60 * 60 * 24);
+            if (diasPassados < 3 && cacheData.tips) {
+                console.log("💡 [Growth Coach Backend] Dicas carregadas do cache do banco de dados.");
+                return res.status(200).json(cacheData.tips);
+            }
+        }
+
         const seoService = require('../services/seoService');
         const insights = await seoService.generateDashboardInsights(stats, psychologist);
         
         if (insights) {
+            psychologist.ai_insights_cache = {
+                timestamp: Date.now(),
+                tips: insights
+            };
+            await psychologist.save();
             res.status(200).json(insights);
         } else {
             res.status(500).json({ error: 'Falha ao gerar insights da IA.' });

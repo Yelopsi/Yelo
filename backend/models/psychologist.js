@@ -104,6 +104,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     },
     // -------------------------------
+    ai_insights_cache: {
+      type: DataTypes.JSONB,
+      allowNull: true
+    },
     fotoUrl: {
       type: DataTypes.STRING,
       allowNull: true
@@ -148,6 +152,23 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: true
     },
+    // --- FOLLOW-UPS CRM ---
+    msg_incomplete_profile_sent_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    msg_analysis_sent_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    msg_feedback_billing_sent_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    msg_churn_followup_sent_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
     plano: {
       type: DataTypes.STRING,
       allowNull: true,
@@ -187,6 +208,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true,
       comment: 'ID da assinatura no Gateway de Pagamento (ex: sub_12345)'
+    },
+    subscribedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: 'Data exata em que o psicólogo realizou a assinatura (conversão)'
     },
     // --- FIM CONTROLE DE ASSINATURA ---
     // --- CAMPOS NOVOS (Do Questionário) ---

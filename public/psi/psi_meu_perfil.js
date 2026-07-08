@@ -290,6 +290,13 @@
                 }
             });
             
+            // Mostra o banner explicativo de limite de temas se o profissional antigo já tiver mais de 4 temas salvos
+            const temasArray = Array.isArray(data['temas_atuacao']) ? data['temas_atuacao'] : (data['temas_atuacao'] ? [data['temas_atuacao']] : []);
+            const bannerTemas = document.getElementById('banner-limite-temas');
+            if (bannerTemas) {
+                bannerTemas.style.display = temasArray.length > 4 ? 'block' : 'none';
+            }
+
             updateProfileInsights();
         }
 
@@ -701,6 +708,7 @@
                     try {
                         const tsConfig = {
                             create: false,
+                            maxItems: el.hasAttribute('data-max-items') ? parseInt(el.getAttribute('data-max-items'), 10) : null,
                             maxOptions: null,
                             controlInput: '<input type="text" autocomplete="off" size="1" tabindex="-1" inputmode="none" readonly>',
                             onInitialize: function() {

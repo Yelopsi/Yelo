@@ -210,6 +210,12 @@ const startServer = async () => {
         // --- FIX MANUAL DE COLUNAS FALTANTES PARA EVITAR LOCK DO ALTER:TRUE ---
         try {
             console.log('🛠️ [DB FIX] Injetando colunas faltantes nas tabelas...');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "ai_insights_cache" JSONB DEFAULT NULL;');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "subscribedAt" TIMESTAMP WITH TIME ZONE;');
+            
+            console.log('🛠️ [DB FIX] Backfill de data de assinatura para pagantes legados...');
+            await db.sequelize.query('UPDATE "Psychologists" SET "subscribedAt" = "createdAt" + interval \'14 days\' WHERE "subscription_payments_count" > 0 AND "subscribedAt" IS NULL;');
+            
             await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "admin_billing_sent_at" TIMESTAMP WITH TIME ZONE;');
             await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "modalidade_preferida" VARCHAR(255);');
             await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "psychologistId" INTEGER;');
@@ -221,6 +227,10 @@ const startServer = async () => {
             
             console.log('🛠️ [DB FIX] Injetando coluna isProfileAnalyzed na tabela Psychologists...');
             await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "isProfileAnalyzed" BOOLEAN DEFAULT false;');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "msg_incomplete_profile_sent_at" TIMESTAMP WITH TIME ZONE;');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "msg_analysis_sent_at" TIMESTAMP WITH TIME ZONE;');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "msg_feedback_billing_sent_at" TIMESTAMP WITH TIME ZONE;');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "msg_churn_followup_sent_at" TIMESTAMP WITH TIME ZONE;');
 
             console.log('🛠️ [DB FIX] Injetando coluna hasSeenWelcome na tabela Psychologists...');
             await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "hasSeenWelcome" BOOLEAN DEFAULT false;');

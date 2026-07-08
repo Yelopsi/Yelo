@@ -274,47 +274,24 @@
                     let aiMarketingTip = null;
                     let aiContentIdea = null;
 
-                    const cacheKey = 'yelo_ai_tips_cache_v2';
-                    const cachedStr = localStorage.getItem(cacheKey);
-                    let useCache = false;
-
-                    if (cachedStr) {
-                        try {
-                            const cachedData = JSON.parse(cachedStr);
-                            const diasPassados = (new Date().getTime() - cachedData.timestamp) / (1000 * 60 * 60 * 24);
-                            if (diasPassados < 3 && cachedData.tips) { // Cache dura 3 dias (para variar a dica de tempos em tempos)
-                                aiMarketingTip = cachedData.tips.marketingTip;
-                                aiContentIdea = cachedData.tips.contentIdea;
-                                useCache = true;
-                                console.log("💡 [Growth Coach] Dicas carregadas do cache local.");
+                    try {
+                        const resAi = await apiFetch(`${API_BASE_URL}/api/psychologists/me/ai-insights`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ stats })
+                        });
+                        
+                        if (resAi.ok) {
+                            const aiTips = await resAi.json();
+                            aiMarketingTip = aiTips.marketingTip;
+                            aiContentIdea = aiTips.contentIdea;
+                            console.log("💡 [Growth Coach] Dicas retornadas pelo backend:", aiTips);
+                            if (aiMarketingTip && aiMarketingTip.title) {
+                                aiMarketingTip.title = "✨ " + aiMarketingTip.title;
                             }
-                        } catch(e) {}
-                    }
-
-                    if (!useCache) {
-                        try {
-                            const resAi = await apiFetch(`${API_BASE_URL}/api/psychologists/me/ai-insights`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ stats })
-                            });
-                            
-                            if (resAi.ok) {
-                                const aiTips = await resAi.json();
-                                aiMarketingTip = aiTips.marketingTip;
-                                aiContentIdea = aiTips.contentIdea;
-                                console.log("💡 [Growth Coach] Dicas geradas:", aiTips);
-                                if (aiMarketingTip) {
-                                    aiMarketingTip.title = "✨ " + aiMarketingTip.title;
-                                }
-                                localStorage.setItem(cacheKey, JSON.stringify({
-                                    timestamp: new Date().getTime(),
-                                    tips: { marketingTip: aiMarketingTip, contentIdea: aiContentIdea }
-                                }));
-                            }
-                        } catch (e) {
-                            console.error("⚠️ Falha na IA, usando regras locais:", e);
                         }
+                    } catch (e) {
+                        console.error("⚠️ Falha ao buscar dicas da IA no backend:", e);
                     }
 
                     // 1. INTEGRAÇÃO DA IA COM TAREFAS RECORRENTES (Blog/Fórum)
@@ -561,6 +538,7 @@
                 periodLabel.textContent = 'Últimos 30 dias';
                 patientsCardHeader.appendChild(periodLabel);
             }
+
 
         } catch (error) {
             showToast('Não foi possível atualizar todas as métricas.', 'error');

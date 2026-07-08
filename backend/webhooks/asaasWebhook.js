@@ -118,13 +118,20 @@ exports.handleWebhook = async (req, res) => {
                 const hoje = new Date();
                 const novaValidade = new Date(hoje.setDate(hoje.getDate() + 30));
 
-                await psi.update({
+                const updatePayload = {
                     status: 'active',
                     planExpiresAt: novaValidade, 
                     plano: planType,
                     stripeSubscriptionId: payment.subscription,
                     subscription_payments_count: currentPayments
-                });
+                };
+
+                // Registra a data da primeira assinatura se ainda não existir
+                if (!psi.subscribedAt) {
+                    updatePayload.subscribedAt = new Date();
+                }
+
+                await psi.update(updatePayload);
 
                 // --- GAMIFICATION: Tenta atribuir a badge de Pioneiro ---
                 gamificationService.assignPioneerBadge(psi.id).catch(e => console.error("Erro no hook de badge Pioneiro (Pagamento):", e));

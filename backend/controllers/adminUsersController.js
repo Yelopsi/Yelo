@@ -170,13 +170,18 @@ exports.getPsychologistFullDetails = async (req, res) => {
             `SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "PsychologistId" = :id`,
             { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
         )).catch(() => [{ count: 0 }]);
+        const profileViewsStats = await db.sequelize.query(
+            `SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :id`,
+            { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => [{ count: psychologist.profile_appearances || 0 }]);
         
         res.json({
             psychologist,
             stats: {
                 matches: matchesCount,
                 whatsappClicks: whatsappStats[0] ? parseInt(whatsappStats[0].count) : 0,
-                forumActivities: forumPosts.length + forumComments.length
+                forumActivities: forumPosts.length + forumComments.length,
+                profileViews: profileViewsStats[0] ? parseInt(profileViewsStats[0].count) : (psychologist.profile_appearances || 0)
             },
             blogPosts,
             forumPosts,
@@ -440,5 +445,364 @@ exports.restorePatient = async (req, res) => {
     } catch (error) {
         console.error('Erro ao restaurar paciente:', error);
         res.status(500).json({ error: 'Erro interno no servidor ao restaurar paciente.' });
+    }
+};
+
+/**
+ * Rota: GET /api/admin/pending-actions
+ * Descrição: Busca psicólogos que precisam de contato manual (Follow-up)
+ */
+exports.getPendingActions = async (req, res) => {
+    try {
+        const now = new Date();
+        const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+
+        const pendingList = [];
+
+        // 1. Análise (Cadastrado > 24h E perfil preenchido E msg_analysis_sent_at NULA)
+        const analysisCandidates = await db.Psychologist.findAll({
+            where: {
+                createdAt: { [Op.lte]: oneDayAgo },
+                fotoUrl: { [Op.ne]: null },
+                bio: { [Op.ne]: null },
+                status: 'active',
+                stripeSubscriptionId: null,
+                subscriptionId: null,
+                msg_analysis_sent_at: null,
+                deletedAt: null,
+                telefone: { [Op.ne]: null, [Op.not]: '' }
+            },
+            attributes: ['id', 'nome', 'telefone', 'createdAt', 'fotoUrl', 'bio']
+        });
+        analysisCandidates.forEach(p => pendingList.push({ ...p.toJSON(), actionType: 'analysis', reason: 'Perfil preenchido há mais de 24h' }));
+
+        // 2. Perfil Incompleto (Cadastrado > 24h E (foto NULA OU bio NULA) E msg_incomplete_profile_sent_at NULA)
+        const incompleteCandidates = await db.Psychologist.findAll({
+            where: {
+                createdAt: { [Op.lte]: oneDayAgo },
+                status: 'pending',
+                [Op.or]: [
+                    { fotoUrl: null },
+                    { bio: null },
+                    { bio: '' }
+                ],
+                msg_incomplete_profile_sent_at: null,
+                telefone: { [Op.ne]: null, [Op.not]: '' }
+            },
+            attributes: ['id', 'nome', 'telefone', 'createdAt']
+        });
+        incompleteCandidates.forEach(p => pendingList.push({ ...p.toJSON(), actionType: 'incomplete', reason: 'Perfil incompleto há mais de 24h' }));
+
+        // 3. Churn de trial (Trial expirado há >= 3 dias, E msg_churn_followup_sent_at NULA, STATUS inactive)
+        const churnCandidates = await db.Psychologist.findAll({
+            where: {
+                status: 'inactive',
+                stripeSubscriptionId: null,
+                subscriptionId: null,
+                planExpiresAt: { [Op.lte]: threeDaysAgo },
+                msg_churn_followup_sent_at: null,
+                deletedAt: null,
+                telefone: { [Op.ne]: null, [Op.not]: '' }
+            },
+            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano', 'profile_appearances', 'whatsapp_clicks']
+        });
+
+        if (churnCandidates.length > 0) {
+            const churnIds = churnCandidates.map(c => c.id);
+            const wppLogs = await db.WhatsAppClickLog.findAll({
+                where: { psychologistId: { [Op.in]: churnIds } },
+                attributes: ['psychologistId', 'dealClosed']
+            });
+            
+            const matchEventsCount = await db.sequelize.query(`
+                SELECT "psychologistId", COUNT(*) as count 
+                FROM "MatchEvents" 
+                WHERE "psychologistId" IN (:churnIds) 
+                GROUP BY "psychologistId"
+            `, { replacements: { churnIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+
+            const profileViewsCount = await db.sequelize.query(`
+                SELECT "psychologistId", COUNT(*) as count 
+                FROM "ProfileAppearanceLogs" 
+                WHERE "psychologistId" IN (:churnIds) 
+                GROUP BY "psychologistId"
+            `, { replacements: { churnIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+
+            churnCandidates.forEach(p => {
+                const logs = wppLogs.filter(l => l.psychologistId === p.id);
+                const closedDeals = logs.filter(l => l.dealClosed === 'yes' || l.dealClosed === 'talking');
+                const dealClosedCount = closedDeals.length;
+                
+                let clicks = logs.length;
+                
+                const matchEv = matchEventsCount.find(m => m.psychologistId == p.id);
+                let appearances = matchEv ? parseInt(matchEv.count, 10) : 0;
+                
+                const profView = profileViewsCount.find(v => v.psychologistId == p.id);
+                let views = profView ? parseInt(profView.count, 10) : 0;
+                
+                // Fallbacks seguros caso os logs antigos não existam, usa o consolidado do psicólogo
+                if (appearances === 0) appearances = p.profile_appearances || 0;
+                if (clicks === 0) clicks = p.whatsapp_clicks || 0;
+
+                pendingList.push({ 
+                    ...p.toJSON(), 
+                    actionType: 'churn', 
+                    reason: 'Trial expirado há >3 dias',
+                    metrics: { appearances, views, clicks, dealClosedCount }
+                });
+            });
+        }
+
+        // 4. Feedback / Cobrança (Clique WhatsApp > 24h E adminWppReminderSentAt NULA E feedbackGiven = false)
+        if (db.WhatsAppClickLog) {
+            const clicks = await db.WhatsAppClickLog.findAll({
+                where: {
+                    createdAt: { [Op.lte]: oneDayAgo },
+                    feedbackGiven: { [Op.not]: true },
+                    adminWppReminderSentAt: null
+                },
+                order: [['psychologistId', 'ASC'], ['createdAt', 'DESC']]
+            });
+
+            // Filtra o clique mais recente por psicólogo
+            const uniqueClicks = [];
+            const seenPsyIds = new Set();
+            for (const c of clicks) {
+                if (!seenPsyIds.has(c.psychologistId)) {
+                    seenPsyIds.add(c.psychologistId);
+                    uniqueClicks.push(c);
+                }
+            }
+
+            const clickedIds = uniqueClicks.map(c => c.psychologistId);
+
+            if (clickedIds.length > 0) {
+                const billingCandidates = await db.Psychologist.findAll({
+                    where: {
+                        id: { [Op.in]: clickedIds },
+                        deletedAt: null,
+                        telefone: { [Op.ne]: null, [Op.not]: '' }
+                    },
+                    attributes: ['id', 'nome', 'telefone']
+                });
+                
+                billingCandidates.forEach(p => {
+                    const clickData = uniqueClicks.find(r => String(r.psychologistId) === String(p.id));
+                    const pName = clickData ? (clickData.guestName || 'um paciente') : 'um paciente';
+                    const token = clickData ? clickData.feedbackToken : '';
+                    pendingList.push({ 
+                        ...p.toJSON(), 
+                        actionType: 'billing_feedback', 
+                        reason: 'Recebeu clique há mais de 24h',
+                        patientName: pName,
+                        feedbackToken: token
+                    });
+                });
+            }
+        }
+
+        // 5. Expirando Trial (Ativos, Trial, expirando em <= 3 dias e >= -2 dias, admin_billing_sent_at NULA)
+        const expirationUpperBound = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+        const expirationLowerBound = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+        
+        const expiringCandidates = await db.Psychologist.findAll({
+            where: {
+                status: 'active',
+                stripeSubscriptionId: null,
+                subscriptionId: null,
+                planExpiresAt: {
+                    [Op.lte]: expirationUpperBound,
+                    [Op.gte]: expirationLowerBound
+                },
+                admin_billing_sent_at: null,
+                deletedAt: null,
+                telefone: { [Op.ne]: null, [Op.not]: '' }
+            },
+            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano', 'profile_appearances', 'whatsapp_clicks']
+        });
+
+        if (expiringCandidates.length > 0) {
+            const expIds = expiringCandidates.map(c => c.id);
+            const wppLogsExp = await db.WhatsAppClickLog.findAll({
+                where: { psychologistId: { [Op.in]: expIds } },
+                attributes: ['psychologistId', 'dealClosed']
+            });
+            
+            const matchEventsExpCount = await db.sequelize.query(`
+                SELECT "psychologistId", COUNT(*) as count 
+                FROM "MatchEvents" 
+                WHERE "psychologistId" IN (:expIds) 
+                GROUP BY "psychologistId"
+            `, { replacements: { expIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+            
+            const profileViewsExpCount = await db.sequelize.query(`
+                SELECT "psychologistId", COUNT(*) as count 
+                FROM "ProfileAppearanceLogs" 
+                WHERE "psychologistId" IN (:expIds) 
+                GROUP BY "psychologistId"
+            `, { replacements: { expIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+
+            expiringCandidates.forEach(p => {
+                const logs = wppLogsExp.filter(l => l.psychologistId === p.id);
+                const closedDeals = logs.filter(l => l.dealClosed === 'yes' || l.dealClosed === 'talking');
+                const dealClosed = closedDeals.length > 0;
+                const closedDealsCount = closedDeals.length;
+                
+                const matchEv = matchEventsExpCount.find(m => m.psychologistId == p.id);
+                const profView = profileViewsExpCount.find(m => m.psychologistId == p.id);
+                
+                let appearances = p.profile_appearances || 0;
+                let views = 0;
+                if (matchEv) appearances = Math.max(appearances, parseInt(matchEv.count));
+                if (profView) views = parseInt(profView.count);
+                const clicks = Math.max(p.whatsapp_clicks || 0, logs.length);
+                
+                // dias restantes
+                const diffTime = new Date(p.planExpiresAt) - now;
+                const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                pendingList.push({
+                    ...p.toJSON(),
+                    actionType: 'expiring_trial',
+                    reason: 'Trial expira em ' + daysLeft + ' dia(s)',
+                    metrics: {
+                        appearances,
+                        views,
+                        clicks,
+                        dealClosed,
+                        closedDealsCount,
+                        daysLeft
+                    }
+                });
+            });
+        }
+
+        res.status(200).json(pendingList);
+    } catch (error) {
+        console.error('Erro em getPendingActions:', error);
+        res.status(500).json({ error: 'Erro no servidor' });
+    }
+};
+
+/**
+ * Rota: PATCH /api/admin/psychologists/:id/action-sent
+ * Descrição: Marca que uma ação de follow-up foi realizada
+ */
+exports.markActionSent = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { actionType } = req.body;
+
+        const psychologist = await db.Psychologist.findByPk(id);
+        if (!psychologist) {
+            return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+        }
+
+        const now = new Date();
+        if (actionType === 'analysis') {
+            await psychologist.update({ msg_analysis_sent_at: now });
+        } else if (actionType === 'incomplete') {
+            await psychologist.update({ msg_incomplete_profile_sent_at: now });
+        } else if (actionType === 'churn') {
+            await psychologist.update({ msg_churn_followup_sent_at: now });
+        } else if (actionType === 'billing_feedback') {
+            if (db.WhatsAppClickLog) {
+                await db.WhatsAppClickLog.update(
+                    { adminWppReminderSentAt: now, adminWppReminderCount: 1 }, 
+                    { where: { psychologistId: id, feedbackGiven: false, adminWppReminderSentAt: null } }
+                );
+            }
+        } else if (actionType === 'expiring_trial') {
+            await psychologist.update({ admin_billing_sent_at: now });
+        } else {
+            return res.status(400).json({ error: 'Tipo de ação inválido.' });
+        }
+
+        res.status(200).json({ message: 'Ação registrada com sucesso!' });
+    } catch (error) {
+        console.error('Erro em markActionSent:', error);
+        res.status(500).json({ error: 'Erro no servidor' });
+    }
+};
+
+exports.resetCrm = async (req, res) => {
+    try {
+        const Op = db.Sequelize.Op;
+        await db.Psychologist.update({
+            msg_analysis_sent_at: null,
+            msg_incomplete_profile_sent_at: null,
+            msg_churn_followup_sent_at: null,
+            admin_billing_sent_at: null
+        }, {
+            where: {
+                [Op.or]: [
+                    { msg_analysis_sent_at: { [Op.ne]: null } },
+                    { msg_incomplete_profile_sent_at: { [Op.ne]: null } },
+                    { msg_churn_followup_sent_at: { [Op.ne]: null } },
+                    { admin_billing_sent_at: { [Op.ne]: null } }
+                ]
+            }
+        });
+        if (db.WhatsAppClickLog) {
+            await db.WhatsAppClickLog.update({
+                adminWppReminderSentAt: null,
+                adminWppReminderCount: 0
+            }, {
+                where: {
+                    adminWppReminderSentAt: { [Op.ne]: null }
+                }
+            });
+        }
+        res.status(200).json({ message: 'CRM resetado com sucesso!' });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao resetar CRM' });
+    }
+};
+
+exports.debugCrm = async (req, res) => {
+    try {
+        const Op = db.Sequelize.Op;
+        const result = {};
+        
+        result.totalPsychologists = await db.Psychologist.count();
+        result.totalClickLogs = await db.WhatsAppClickLog ? await db.WhatsAppClickLog.count() : 0;
+        
+        result.withMsgAnalysis = await db.Psychologist.count({ where: { msg_analysis_sent_at: { [Op.ne]: null } } });
+        result.withMsgIncomplete = await db.Psychologist.count({ where: { msg_incomplete_profile_sent_at: { [Op.ne]: null } } });
+        result.withMsgChurn = await db.Psychologist.count({ where: { msg_churn_followup_sent_at: { [Op.ne]: null } } });
+        result.withAdminBilling = await db.Psychologist.count({ where: { admin_billing_sent_at: { [Op.ne]: null } } });
+        
+        if (db.WhatsAppClickLog) {
+            result.withWppReminder = await db.WhatsAppClickLog.count({ where: { adminWppReminderSentAt: { [Op.ne]: null } } });
+            result.feedbacksNotTrue = await db.WhatsAppClickLog.count({ where: { feedbackGiven: { [Op.not]: true } } });
+        }
+
+        const clicksQuery = `
+            SELECT DISTINCT ON (w."psychologistId") w."psychologistId"
+            FROM "WhatsAppClickLogs" w
+            WHERE w."feedbackGiven" IS NOT TRUE
+              AND w."adminWppReminderSentAt" IS NULL
+            ORDER BY w."psychologistId", w."createdAt" DESC
+        `;
+        result.rawFeedbackCandidates = await db.sequelize.query(clicksQuery, { type: db.sequelize.QueryTypes.SELECT });
+        
+        if (result.rawFeedbackCandidates && result.rawFeedbackCandidates.length > 0) {
+            const psiIds = result.rawFeedbackCandidates.map(c => c.psychologistId);
+            result.billingCandidatesFound = await db.Psychologist.findAll({
+                where: { id: { [Op.in]: psiIds }, deletedAt: null },
+                attributes: ['id', 'status', 'deletedAt']
+            });
+            result.billingCandidatesAll = await db.Psychologist.findAll({
+                where: { id: { [Op.in]: psiIds } },
+                paranoid: false,
+                attributes: ['id', 'status', 'deletedAt']
+            });
+        }
+
+        res.status(200).json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 };

@@ -1,14 +1,14 @@
-window.initializePage = function() {
+window.initializePage = function () {
     const API_BASE_URL = window.API_BASE_URL || '';
     const token = localStorage.getItem('Yelo_token');
-    
+
     const tableBody = document.getElementById('crm-psis-body');
     const searchInput = document.getElementById('crm-search-psi');
     const statusInput = document.getElementById('crm-status-psi');
-    
+
     const drawerOverlay = document.getElementById('drawer-cs-overlay');
     const btnCloseDrawer = document.getElementById('btn-close-cs-drawer');
-    
+
     let searchTimeout;
     let psisDataCache = [];
     let isVipFilterActive = false;
@@ -25,11 +25,11 @@ window.initializePage = function() {
             });
             if (res.ok) {
                 const data = await res.json();
-                
+
                 // MRR
                 const mrrEl = document.getElementById('crm-mrr');
-                if (mrrEl) mrrEl.innerText = `R$ ${data.metrics.currentMRR.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
-                
+                if (mrrEl) mrrEl.innerText = `R$ ${data.metrics.currentMRR.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
                 // Retenção (100% - Churn Pago)
                 const retentionEl = document.getElementById('crm-retention');
                 if (retentionEl) {
@@ -44,8 +44,8 @@ window.initializePage = function() {
     loadAdvancedKpis();
 
     // --- CONTROLES DO DRAWER ---
-    function closeDrawer() { 
-        drawerOverlay.classList.remove('active'); 
+    function closeDrawer() {
+        drawerOverlay.classList.remove('active');
         if (drawerContent) {
             setTimeout(() => {
                 drawerContent.style.removeProperty('transform');
@@ -63,7 +63,7 @@ window.initializePage = function() {
         });
     });
 
-    window.filterByKpi = function(filterVal) {
+    window.filterByKpi = function (filterVal) {
         // Atualiza Pills
         document.querySelectorAll('.crm-pill').forEach(b => b.classList.remove('active'));
         const pill = document.querySelector(`.crm-pill[data-filter="${filterVal}"]`);
@@ -77,23 +77,23 @@ window.initializePage = function() {
         isVipFilterActive = false;
         isNotAnalyzedFilterActive = false;
         statusInput.value = '';
-        
+
         if (filterVal === 'vip') isVipFilterActive = true;
         else if (filterVal === 'not_analyzed') isNotAnalyzedFilterActive = true;
         else statusInput.value = filterVal;
-        
+
         fetchAndRenderPsis(1);
-        
+
         // Scroll suave para a tabela
-        document.querySelector('.kpi-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.querySelector('.tabela-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
     window.currentCrmPage = 1;
-    
+
     document.getElementById('crm-per-page')?.addEventListener('change', () => fetchAndRenderPsis(1));
     document.getElementById('crm-date-start')?.addEventListener('change', () => fetchAndRenderPsis(1));
     document.getElementById('crm-date-end')?.addEventListener('change', () => fetchAndRenderPsis(1));
-    
+
     document.getElementById('btn-prev-page')?.addEventListener('click', () => {
         if (window.currentCrmPage > 1) fetchAndRenderPsis(window.currentCrmPage - 1);
     });
@@ -154,7 +154,7 @@ window.initializePage = function() {
     // Lógica de Swipe Down APENAS NO CABEÇALHO (Para não travar o scroll do conteúdo)
     let startY = 0;
     let currentY = 0;
-    
+
     if (drawerHeader && drawerContent) {
         drawerHeader.addEventListener('touchstart', (e) => {
             if (window.innerWidth > 768) return;
@@ -166,9 +166,9 @@ window.initializePage = function() {
             if (window.innerWidth > 768 || startY === 0) return;
             currentY = e.touches[0].clientY;
             const diffY = currentY - startY;
-            if (diffY > 0) { 
-                drawerContent.style.setProperty('transform', `translateY(${diffY}px)`, 'important'); 
-                e.preventDefault(); 
+            if (diffY > 0) {
+                drawerContent.style.setProperty('transform', `translateY(${diffY}px)`, 'important');
+                e.preventDefault();
             }
         }, { passive: false });
         drawerHeader.addEventListener('touchend', (e) => {
@@ -198,6 +198,26 @@ window.initializePage = function() {
 
         const searchTerm = searchInput.value;
         const status = statusInput.value;
+
+        // NOVO LÓGICA PARA FOLLOW-UPS
+        if (status === 'pending_actions') {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/pending-actions`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Falha ao buscar pendências.');
+                const pendingData = await response.json();
+                const actionsArray = pendingData.pendingActions || pendingData;
+                renderPendingActionsTable(actionsArray);
+                const infoEl = document.getElementById('pagination-info');
+                if (infoEl) infoEl.textContent = `Mostrando ${actionsArray.length} ações`;
+                return;
+            } catch (error) {
+                tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--coral-quente);">Erro ao carregar ações pendentes.</td></tr>`;
+                return;
+            }
+        }
+
         const startDate = document.getElementById('crm-date-start')?.value || '';
         const endDate = document.getElementById('crm-date-end')?.value || '';
         const limit = document.getElementById('crm-per-page')?.value || 20;
@@ -210,7 +230,7 @@ window.initializePage = function() {
 
             const { data, totalPages, currentPage, totalItems, kpis } = await response.json();
             psisDataCache = data;
-            
+
             renderTable(data);
             renderPagination(totalPages, currentPage, totalItems, limit);
 
@@ -225,7 +245,7 @@ window.initializePage = function() {
                 setText('kpi-fila-cs', kpis.fila_cs);
                 setText('kpi-lixeira-psis', kpis.deleted || 0);
                 setText('kpi-alerta-pendentes', kpis.pending || 0);
-                
+
                 // Ativação: (Ativos / Totais) * 100
                 const activationEl = document.getElementById('crm-activation');
                 if (activationEl && kpis.total > 0) {
@@ -247,6 +267,150 @@ window.initializePage = function() {
         }
     }
 
+    function renderPendingActionsTable(data) {
+        tableBody.innerHTML = '';
+        if (data.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--cinza-texto);">Nenhuma ação pendente! 🎉</td></tr>`;
+            return;
+        }
+
+        data.forEach(item => {
+            const dateStr = item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR') : '-';
+            let actionBadge = '';
+
+            if (item.actionType === 'analysis') actionBadge = '<span class="status status-active">Análise Pronta</span>';
+            else if (item.actionType === 'incomplete') actionBadge = '<span class="status status-pending">Perfil Incompleto</span>';
+            else if (item.actionType === 'churn') actionBadge = '<span class="status status-cancelada">Churn</span>';
+            else if (item.actionType === 'billing_feedback') actionBadge = '<span class="status" style="background:#e0e7ff; color:#4338ca;">Feedback/Cobrança</span>';
+            else if (item.actionType === 'expiring_trial') actionBadge = '<span class="status" style="background:#fef08a; color:#b45309;">Trial Expirando</span>';
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td data-label="Profissional">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="display: flex; flex-direction: column;">
+                            <strong style="color: var(--verde-escuro); cursor: pointer;" onclick="window.openCSDrawer('${item.id}')">${item.nome}</strong>
+                            <span style="font-size: 0.75rem; color: #666;">${item.telefone || 'Sem telefone'}</span>
+                        </div>
+                    </div>
+                </td>
+                <td data-label="Status">
+                    ${actionBadge}
+                </td>
+                <td data-label="Motivo">
+                    <span style="font-size: 0.85rem; color: #475569; font-weight: 500;">${item.reason}</span>
+                </td>
+                <td data-label="Data">
+                    <span style="color: #64748b; font-size: 0.9rem;">${dateStr}</span>
+                </td>
+                <td data-label="Extra">
+                    <span style="font-size: 0.8rem; color: #64748b;">${item.plano || '-'}</span>
+                </td>
+                <td data-label="Ações CS" style="white-space: nowrap; text-align: right;">
+                    <button class="btn-tabela" onclick="window.sendWhatsAppAction('${item.id}', '${item.telefone}', '${item.nome}', '${item.actionType}', '${item.patientName || ''}', '${item.feedbackToken || ''}', '${encodeURIComponent(JSON.stringify(item.metrics || {}))}')" style="background: #25D366; color: white; border: none; padding: 6px 12px; border-radius: 50px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 4px rgba(37,211,102,0.3);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                        Enviar
+                    </button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    window.sendWhatsAppAction = async function (id, phone, name, actionType, patientName = '', feedbackToken = '', metricsStr = '{}') {
+        if (!phone || phone === 'null') {
+            window.showToast('Profissional sem telefone cadastrado.', 'error');
+            return;
+        }
+        const cleanPhone = phone.replace(/\D/g, '');
+        const firstName = name.split(' ')[0];
+        const metrics = JSON.parse(decodeURIComponent(metricsStr));
+        let msg = '';
+
+        if (actionType === 'analysis') {
+            try {
+                if (window.showToast) window.showToast('Gerando análise com IA... Aguarde.', 'info');
+                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : token;
+                const resAnalise = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/analyze`, {
+                    headers: { 'Authorization': `Bearer ${tokenAdmin}` }
+                });
+                const data = await resAnalise.json();
+                if (data.message) {
+                    msg = data.message;
+                    await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/analyzed`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tokenAdmin}` },
+                        body: JSON.stringify({ isProfileAnalyzed: true })
+                    });
+                } else {
+                    if (window.showToast) window.showToast("Erro ao gerar análise", "error");
+                    return;
+                }
+            } catch (e) {
+                if (window.showToast) window.showToast("Erro na IA: " + e.message, "error");
+                return;
+            }
+        } else if (actionType === 'incomplete') {
+            msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo. 🌿\n\nVi que você deu o primeiro passo e iniciou o seu cadastro na nossa plataforma, mas acabou não finalizando o preenchimento do seu perfil. Eu sei bem que a rotina de atendimentos acaba engolindo o nosso tempo, né? rs\n\nPassei só para te lembrar que os seus 14 dias de teste gratuito (sem precisar cadastrar cartão de crédito) só começam a contar depois que o seu perfil estiver completo e a sua página disponível para receber pacientes!\n\nÉ a oportunidade perfeita para você testar na prática como a plataforma te conecta com pacientes direto no seu WhatsApp, lembrando que a gente não cobra nenhuma taxa ou comissão pelas suas sessões.\n\nFalta bem pouco para o seu perfil ficar ativo nas buscas. Se precisar de uma mãozinha para preencher a sua bio ou tiver qualquer dúvida, é só me dar um toque respondendo esta mensagem. Sigo super à disposição por aqui!`;
+        } else if (actionType === 'churn') {
+            let msgFechou = '';
+            if (metrics.dealClosedCount > 0) {
+                const count = metrics.dealClosedCount;
+                const ptTexto = count === 1 ? 'um paciente que veio selecionado' : `${count} pacientes que vieram selecionados`;
+                msgFechou = `E o melhor de tudo: notei pelo seu feedback que você conseguiu fechar terapia com ${ptTexto} pela Yelo! 🚀\n\nIsso mostra que o algoritmo funcionou e a plataforma já se pagou por meses.`;
+            } else {
+                msgFechou = `Vi pelo seu feedback que o paciente acabou não fechando dessa vez, mas não desanime, isso é super normal no início!`;
+            }
+            msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo.\n\nVi que os seus dias de teste acabaram e o seu perfil foi inativado. \n\nDurante seus dias de teste, o algoritmo te recomendou *${metrics.appearances || 0} vezes* no Match, seu perfil teve *${metrics.views || 0} visualizações* e *${metrics.clicks || 0} pacientes* clicaram no seu WhatsApp. ${msgFechou}\n\nOs números provam o mais importante: o tráfego existe, os pacientes têm demanda para sua especialidade e a Yelo está te dando visibilidade.\n\nAcesse o seu perfil e finalize a sua assinatura para reativar sua conta e não perder os próximos acessos.`;
+        } else if (actionType === 'expiring_trial') {
+            let tempoFaltaText = `faltam apenas ${metrics.daysLeft} dias para o seu período premium na plataforma encerrar`;
+            if (metrics.daysLeft < 0) {
+                tempoFaltaText = `o seu período premium na plataforma expirou recentemente`;
+            } else if (metrics.daysLeft === 0) {
+                tempoFaltaText = `o seu período premium na plataforma encerra hoje`;
+            }
+
+            let msgFechou = `Vi pelo seu feedback que o paciente acabou não fechando dessa vez, mas não desanime, isso é super normal no início!\n\nOs números provam o mais importante: o tráfego existe, os pacientes têm demanda para sua especialidade e a Yelo está te dando visibilidade.`;
+            if (metrics.dealClosed) {
+                const count = metrics.closedDealsCount || 1;
+                const ptTexto = count === 1 ? 'um paciente que veio selecionado' : `${count} pacientes que vieram selecionados`;
+                msgFechou = `E o melhor de tudo: notei pelo seu feedback que você conseguiu fechar terapia com ${ptTexto} pela Yelo! 🚀\n\nIsso mostra que o algoritmo funcionou e a plataforma já se pagou por meses.`;
+            }
+
+            msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo.\n\nVi que ${tempoFaltaText} e decidi te chamar.\n\nDurante seus dias de teste, o algoritmo te recomendou *${metrics.appearances || 0} vezes* no Match, seu perfil teve *${metrics.views || 0} visualizações* e *${metrics.clicks || 0} pacientes* clicaram no seu WhatsApp. ${msgFechou}\n\nComo seu trial expira em breve, acesse o seu perfil e finalize a sua assinatura para manter seu perfil no ar e não perder os próximos acessos.`;
+        } else if (actionType === 'billing_feedback') {
+            let baseUrlFeedback = window.location.origin.includes('localhost') ? 'http://localhost:3000' : 'https://www.yelopsi.com.br';
+            let linkFeedback = feedbackToken ? `${baseUrlFeedback}/magic-feedback.html?token=${feedbackToken}` : `${baseUrlFeedback}/psi/dashboard`;
+            msg = `Olá, ${firstName}. Como vai?\n\nAqui quem fala é o Anderson, da Yelo.\nPrecisamos da sua ajuda com um retorno rápido.\n\nA paciente ${patientName} entrou em contato com você pela Yelo. Você pode acessar o link abaixo e informar:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\nResponder agora:\n👉 ${linkFeedback}\n\nObrigado! 🌿`;
+        }
+        const linkDesktop = `https://web.whatsapp.com/send?phone=55${cleanPhone}&text=${encodeURIComponent(msg)}`;
+        const linkMobile = `whatsapp://send?phone=55${cleanPhone}&text=${encodeURIComponent(msg)}`;
+        const isMobile = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 800;
+        if (isMobile) {
+            window.location.href = linkMobile;
+        } else {
+            window.open(linkDesktop, '_blank');
+        }
+
+        // Marcar como enviado no banco
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/action-sent`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ actionType })
+            });
+            if (res.ok) {
+                if (window.showToast) window.showToast('Ação registrada com sucesso!', 'success');
+                setTimeout(() => fetchAndRenderPsis(1), 500); // Recarrega a lista
+            }
+        } catch (e) {
+            console.error('Erro ao marcar ação como enviada:', e);
+        }
+    };
+
     function renderTable(psis) {
         tableBody.innerHTML = '';
         if (psis.length === 0) {
@@ -260,7 +424,7 @@ window.initializePage = function() {
         psis.forEach(psy => {
             const isVip = psy.is_exempt === true;
             const isDeleted = psy.deletedAt !== null && psy.deletedAt !== undefined;
-            
+
             // 🧠 Sincronização Híbrida: Lê do Banco de Dados (isProfileAnalyzed) ou do cache local do navegador
             const isCopied = psy.isProfileAnalyzed === true || copiedList.includes(String(psy.id));
             const copyBadge = isCopied ? '<span class="badge-copied" title="Análise Copiada" style="margin-left: 5px; font-size: 0.8rem;">✅</span>' : '';
@@ -337,14 +501,14 @@ window.initializePage = function() {
         });
     }
 
-    window.forceDeletePsy = function(id, name) {
-        if(window.openConfirmationModal) {
+    window.forceDeletePsy = function (id, name) {
+        if (window.openConfirmationModal) {
             window.openConfirmationModal('Excluir Profissional', `Tem certeza que deseja excluir o psicólogo <strong>${name}</strong> permanentemente?`, async () => {
                 try {
                     const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-                    if(res.ok) { window.showToast('Excluído com sucesso.', 'success'); fetchAndRenderPsis(1); }
+                    if (res.ok) { window.showToast('Excluído com sucesso.', 'success'); fetchAndRenderPsis(1); }
                     else throw new Error('Erro ao excluir');
-                } catch(e) { window.showToast(e.message, 'error'); }
+                } catch (e) { window.showToast(e.message, 'error'); }
             });
         }
     };
@@ -354,24 +518,24 @@ window.initializePage = function() {
         const infoEl = document.getElementById('pagination-info');
         const btnPrev = document.getElementById('btn-prev-page');
         const btnNext = document.getElementById('btn-next-page');
-        
+
         if (!infoEl || !btnPrev || !btnNext) return;
 
         const effectiveTotal = totalItems || (totalPages * limit) || 0;
         const startItem = effectiveTotal === 0 ? 0 : ((currentPage - 1) * limit) + 1;
         const endItem = Math.min(currentPage * limit, effectiveTotal);
-        
+
         infoEl.textContent = `Mostrando ${startItem}–${endItem} de ${effectiveTotal}`;
-        
+
         btnPrev.disabled = currentPage <= 1;
         btnNext.disabled = currentPage >= totalPages || totalPages === 0;
     }
-    window.loadCrmPsisPage = function(p) { fetchAndRenderPsis(p); };
+    window.loadCrmPsisPage = function (p) { fetchAndRenderPsis(p); };
 
     // Ouvinte para quando um VIP for atualizado pelo modal global
     window.addEventListener('vipStatusUpdated', () => { fetchAndRenderPsis(1); closeDrawer(); });
 
-    window.cleanupPage = function() {
+    window.cleanupPage = function () {
         window.removeEventListener('vipStatusUpdated', fetchAndRenderPsis);
     };
 
