@@ -1153,8 +1153,7 @@ exports.getFounderMetrics = async (req, res) => {
         const everPaidCount = await db.Psychologist.count({
             where: {
                 [Op.or]: [
-                    { stripeSubscriptionId: { [Op.not]: null } },
-                    { subscriptionId: { [Op.not]: null } },
+                    { subscribedAt: { [Op.not]: null } },
                     { subscription_payments_count: { [Op.gt]: 0 } }
                 ]
             }
@@ -1166,8 +1165,7 @@ exports.getFounderMetrics = async (req, res) => {
             where: { 
                 status: 'inactive',
                 [Op.or]: [
-                    { stripeSubscriptionId: { [Op.not]: null } },
-                    { subscriptionId: { [Op.not]: null } },
+                    { subscribedAt: { [Op.not]: null } },
                     { subscription_payments_count: { [Op.gt]: 0 } }
                 ]
             }
@@ -1207,8 +1205,7 @@ exports.getFounderMetrics = async (req, res) => {
                         { subscribedAt: null, createdAt: { [Op.lte]: endD } } // Fallback de segurança
                     ],
                     [Op.or]: [
-                        { stripeSubscriptionId: { [Op.not]: null } },
-                        { subscriptionId: { [Op.not]: null } },
+                        { subscribedAt: { [Op.not]: null } },
                         { subscription_payments_count: { [Op.gt]: 0 } }
                     ]
                 }
@@ -1239,8 +1236,7 @@ exports.getFounderMetrics = async (req, res) => {
             where: { 
                 createdAt: { [Op.between]: [lastMonthStart, lastMonthEnd] },
                 [Op.or]: [
-                    { stripeSubscriptionId: { [Op.not]: null } },
-                    { subscriptionId: { [Op.not]: null } },
+                    { subscribedAt: { [Op.not]: null } },
                     { subscription_payments_count: { [Op.gt]: 0 } }
                 ]
             }
