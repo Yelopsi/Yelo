@@ -201,6 +201,11 @@ exports.updatePsychologistProfile = async (req, res) => {
         praticas_inclusivas = parseArrayField(praticas_inclusivas);
         disponibilidade_periodo = parseArrayField(disponibilidade_periodo);
         
+        // --- VALIDAÇÃO DE LIMITE DE TEMAS (NOVO) ---
+        if (temas_atuacao && temas_atuacao.length > 4) {
+            return res.status(400).json({ error: 'Você só pode selecionar até 4 Temas de Atuação. Por favor, remova alguns para focar na sua verdadeira especialidade.' });
+        }
+
 
         // --- LÓGICA DE PERSONALIZAÇÃO DO LINK (SLUG) ---
         let finalSlug = psychologist.slug; // Padrão: Mantém o atual

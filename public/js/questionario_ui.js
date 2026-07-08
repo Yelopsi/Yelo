@@ -70,7 +70,7 @@ window.QuestionarioUI = (function() {
             } else if (['text', 'tel', 'multiple-choice', 'rating', 'info'].includes(questionData.type)) { 
                 let buttonText = "Avançar";
                 let buttonAction = "next";
-                if(questionData.id === 'nome') { buttonText = "Finalizar"; buttonAction = "finalize"; }
+                if(questionData.id === 'nome') { buttonText = "Encontrar meu psi"; buttonAction = "finalize"; }
                 if(questionData.type === 'rating') { buttonText = "Finalizar"; buttonAction = "finalize"; }
                 nextButtonHTML = `<button class="cta-button" data-action="${buttonAction}">${buttonText}</button>`; 
             } else if (questionData.type === 'error') { 

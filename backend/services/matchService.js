@@ -67,6 +67,12 @@ const calculateSimilarity = (psy, preferences = {}, priceRange) => {
     if (!hasActivePlan) sOp -= 100;
     if (!hasPhoto) sOp -= 50;
     if (!hasMinBio) sOp -= 50;
+
+    // --- VIP BOOST ---
+    if (isVip) {
+        sOp += 10;
+        explainability.positives.push("Profissional Verificado (VIP)");
+    }
     // --- FIM DOS REQUISITOS MÍNIMOS ---
 
     const temasPsi = getArrayField(psy.temas_atuacao);
@@ -173,6 +179,22 @@ const applyFairness = (scoredCandidates, totalSystemImpressions) => {
 
         // Calcula a pontuação final com as táticas de nivelamento
         let finalScore = (c.rawMatchScore * cooldownPenalty) + (ctr * 10) + Math.min(20, explorationBonus) + mvpBoost;
+
+        // --- CLICK THROTTLE (FREIO) ---
+        // Ajustado após análise de dados: com 122 buscas e 30 cliques totais no mês, um profissional com 15 cliques deteria 50% do mercado.
+        // O freio agora é ativado mais cedo (>= 5 cliques) para garantir giro na base, a menos que ele seja recém chegado e precise de volume inicial.
+        if (clicks >= 5) {
+            finalScore *= 0.80;
+        }
+
+        // --- TRIAL-END BOOST ---
+        // Se estiver nos últimos 3 dias de plano, recebe um forte bônus para gerar demanda antes da cobrança
+        if (c.planExpiresAt) {
+            const daysUntilExpiry = (new Date(c.planExpiresAt) - new Date()) / (1000 * 60 * 60 * 24);
+            if (daysUntilExpiry > 0 && daysUntilExpiry <= 3) {
+                finalScore += 15;
+            }
+        }
 
             if (isNaN(finalScore) || finalScore < 0) finalScore = c.rawMatchScore || 1; // Fallback de segurança matemática absoluta
 
