@@ -469,7 +469,7 @@
             if (comment.likedByMe) likeBtn.classList.add('liked');
 
             likeBtn.onclick = () => toggleCommentLike(comment.id, likeBtn, likesCount);
-            replyBtn.onclick = () => showReplyForm(comment.id, commentEl);
+            replyBtn.onclick = () => showReplyForm(comment.parentId || comment.id, commentEl, comment.parentId ? authorName : null);
 
             const aiReplyBtn = commentEl.querySelector('.comment-ai-reply-btn');
             const adminPsiData = typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null;
@@ -622,7 +622,7 @@
             }
         }
 
-        function showReplyForm(parentId, parentElement) {
+        function showReplyForm(parentId, parentElement, replyToName = null) {
             const existingForm = document.getElementById('reply-form-dynamic');
             if (existingForm) existingForm.remove();
 
@@ -644,6 +644,10 @@
             repliesWrapper.parentNode.insertBefore(formContainer, repliesWrapper);
             const textarea = formContainer.querySelector('textarea');
             
+            if (replyToName) {
+                textarea.value = `@${replyToName.split(' ')[0]} `;
+            }
+
             setupAutoResizeTextarea(textarea);
             textarea.focus();
 
