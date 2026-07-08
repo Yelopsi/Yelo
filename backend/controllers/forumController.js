@@ -110,6 +110,8 @@ exports.getAllPosts = async (req, res) => {
     }
 };
 
+const notificationService = require('../services/notificationService');
+
 exports.createPost = async (req, res) => {
     try {
         const { title, content, category, isAnonymous } = req.body;
@@ -120,6 +122,10 @@ exports.createPost = async (req, res) => {
 
         // --- GAMIFICATION HOOK ---
         gamificationService.processAction(req.user.id, 'forum_post').catch(err => console.error("Gamification hook error (createPost):", err));
+
+        // --- NOTIFICATION HOOK ---
+        notificationService.notifyNewPost(post, 'forum').catch(err => console.error("Notification hook error (createPost):", err));
+
 
         res.json(post);
     } catch (error) {

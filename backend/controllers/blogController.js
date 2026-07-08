@@ -86,6 +86,10 @@ module.exports = {
                 psychologistId: userId
             });
 
+            // --- NOTIFICATION HOOK ---
+            const notificationService = require('../services/notificationService');
+            notificationService.notifyNewPost(novoPost, 'blog').catch(err => console.error("Notification hook error (blog create):", err));
+
             // --- GERAÇÃO AUTOMÁTICA DE SEO COM IA (Gemini) ---
             // Roda após a criação em segundo plano e atualiza via query bruta para evitar erros do Sequelize
             seoService.generateSEO(conteudo, titulo).then(async (seoData) => {
