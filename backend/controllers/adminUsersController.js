@@ -467,7 +467,7 @@ exports.getPendingActions = async (req, res) => {
             where: {
                 createdAt: { [Op.lte]: sixHoursAgo },
                 fotoUrl: { [Op.ne]: null },
-                bio: { [Op.ne]: null },
+                bio: { [Op.notIn]: [null, ''] },
                 status: 'active',
                 stripeSubscriptionId: null,
                 subscriptionId: null,
@@ -495,6 +495,7 @@ exports.getPendingActions = async (req, res) => {
                     }
                 ],
                 msg_incomplete_profile_sent_at: null,
+                deletedAt: null,
                 telefone: { [Op.ne]: null, [Op.not]: '' }
             },
             attributes: ['id', 'nome', 'telefone', 'createdAt']
