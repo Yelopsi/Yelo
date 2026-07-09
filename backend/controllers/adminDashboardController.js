@@ -530,9 +530,23 @@ exports.getFinancials = async (req, res) => {
         }
 
         const payingCondition = {
+            [Op.and]: [
+                {
+                    [Op.or]: [
+                        { stripeSubscriptionId: { [Op.ne]: null } },
+                        { subscriptionId: { [Op.ne]: null } }
+                    ]
+                },
+                { subscription_payments_count: { [Op.gt]: 0 } }
+            ]
+        };
+
+        const trialCondition = {
+            is_exempt: { [Op.not]: true },
             [Op.or]: [
-                { stripeSubscriptionId: { [Op.ne]: null } },
-                { subscriptionId: { [Op.ne]: null } }
+                { stripeSubscriptionId: null, subscriptionId: null },
+                { subscription_payments_count: { [Op.lte]: 0 } },
+                { subscription_payments_count: null }
             ]
         };
 
@@ -551,25 +565,13 @@ exports.getFinancials = async (req, res) => {
 
         // Trial Period Data
         const trialChurnedUsers = await db.Psychologist.findAll({
-            where: { 
-                status: 'inactive', 
-                updatedAt: dateCondition, 
-                is_exempt: { [Op.not]: true },
-                stripeSubscriptionId: null,
-                subscriptionId: null
-            },
+            where: { status: 'inactive', updatedAt: dateCondition, ...trialCondition },
             attributes: ['updatedAt']
         });
         const trialChurnedCount = trialChurnedUsers.length;
         
         const trialNewUsers = await db.Psychologist.findAll({
-            where: { 
-                status: 'active', 
-                createdAt: dateCondition,
-                is_exempt: { [Op.not]: true },
-                stripeSubscriptionId: null,
-                subscriptionId: null
-            },
+            where: { status: 'active', createdAt: dateCondition, ...trialCondition },
             attributes: ['createdAt']
         });
         const trialNewCount = trialNewUsers.length;
@@ -582,13 +584,13 @@ exports.getFinancials = async (req, res) => {
             where: { status: 'active', createdAt: prevDateCondition, ...payingCondition }
         });
         const prevTrialChurnedCount = await db.Psychologist.count({
-            where: { status: 'inactive', updatedAt: prevDateCondition, is_exempt: { [Op.not]: true }, stripeSubscriptionId: null, subscriptionId: null }
+            where: { status: 'inactive', updatedAt: prevDateCondition, ...trialCondition }
         });
         const prevTrialNewCount = await db.Psychologist.count({
-            where: { status: 'active', createdAt: prevDateCondition, is_exempt: { [Op.not]: true }, stripeSubscriptionId: null, subscriptionId: null }
+            where: { status: 'active', createdAt: prevDateCondition, ...trialCondition }
         });
 
-        const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !!(psy.stripeSubscriptionId || psy.subscriptionId)).length;
+        const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !!(psy.stripeSubscriptionId || psy.subscriptionId) && psy.subscription_payments_count > 0).length;
         const totalPaidStart = payingActiveCount + paidChurnedCount - paidNewCount;
         const paidBaseForChurn = totalPaidStart > 0 ? totalPaidStart : 1;
         const paidChurnRate = (paidChurnedCount / paidBaseForChurn) * 100;
@@ -598,7 +600,7 @@ exports.getFinancials = async (req, res) => {
         const prevPaidBaseForChurn = prevPaidStart > 0 ? prevPaidStart : 1;
         const prevPaidChurnRate = (prevPaidChurnedCount / prevPaidBaseForChurn) * 100;
 
-        const trialActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !psy.stripeSubscriptionId && !psy.subscriptionId).length;
+        const trialActiveCount = activePsychologists.filter(psy => !psy.is_exempt && (!(psy.stripeSubscriptionId || psy.subscriptionId) || !(psy.subscription_payments_count > 0))).length;
         const totalTrialStart = trialActiveCount + trialChurnedCount - trialNewCount;
         const trialBaseForChurn = totalTrialStart > 0 ? totalTrialStart : 1;
         const trialChurnRate = (trialChurnedCount / trialBaseForChurn) * 100;
