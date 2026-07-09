@@ -68,12 +68,19 @@ cron.schedule('0 4 * * *', () => {
     const scriptPath = path.join(__dirname, '../scripts', 'scraper.js');
     
     // Executa o script em um processo isolado para não afetar o banco principal
-    exec(`node "${scriptPath}"`, (error, stdout, stderr) => {
-        if (error) {
-            console.error(`[CRON SCRAPER] Erro ao executar: ${error.message}`);
-            return;
-        }
-        console.log(`[CRON SCRAPER] Concluído:\n${stdout}`);
+    const { spawn } = require('child_process');
+    const child = spawn('node', [scriptPath]);
+
+    child.stdout.on('data', (data) => {
+        console.log(`[CRON SCRAPER] ${data}`);
+    });
+
+    child.stderr.on('data', (data) => {
+        console.error(`[CRON SCRAPER ERROR] ${data}`);
+    });
+
+    child.on('close', (code) => {
+        console.log(`[CRON SCRAPER] Processo finalizado com código ${code}`);
     });
 }, {
     scheduled: true,
