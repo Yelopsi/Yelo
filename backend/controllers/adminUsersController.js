@@ -455,15 +455,17 @@ exports.restorePatient = async (req, res) => {
 exports.getPendingActions = async (req, res) => {
     try {
         const now = new Date();
+        const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
         const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
         const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
 
         const pendingList = [];
 
-        // 1. Análise (Cadastrado > 24h E perfil preenchido E msg_analysis_sent_at NULA)
+        // 1. Análise (Cadastrado > 6h E perfil preenchido E msg_analysis_sent_at NULA)
         const analysisCandidates = await db.Psychologist.findAll({
             where: {
-                createdAt: { [Op.lte]: oneDayAgo },
+                createdAt: { [Op.lte]: sixHoursAgo },
                 fotoUrl: { [Op.ne]: null },
                 bio: { [Op.ne]: null },
                 status: 'active',
@@ -475,24 +477,29 @@ exports.getPendingActions = async (req, res) => {
             },
             attributes: ['id', 'nome', 'telefone', 'createdAt', 'fotoUrl', 'bio']
         });
-        analysisCandidates.forEach(p => pendingList.push({ ...p.toJSON(), actionType: 'analysis', reason: 'Perfil preenchido há mais de 24h' }));
+        analysisCandidates.forEach(p => pendingList.push({ ...p.toJSON(), actionType: 'analysis', reason: 'Perfil preenchido há mais de 6h' }));
 
-        // 2. Perfil Incompleto (Cadastrado > 24h E (foto NULA OU bio NULA) E msg_incomplete_profile_sent_at NULA)
+        // 2. Perfil Incompleto (Cadastrado > 6h E (foto NULA OU bio NULA) E msg_incomplete_profile_sent_at NULA)
         const incompleteCandidates = await db.Psychologist.findAll({
             where: {
-                createdAt: { [Op.lte]: oneDayAgo },
-                status: 'pending',
+                createdAt: { [Op.lte]: sixHoursAgo },
                 [Op.or]: [
-                    { fotoUrl: null },
-                    { bio: null },
-                    { bio: '' }
+                    { status: 'pending' },
+                    {
+                        status: 'active',
+                        [Op.or]: [
+                            { fotoUrl: null },
+                            { bio: null },
+                            { bio: '' }
+                        ]
+                    }
                 ],
                 msg_incomplete_profile_sent_at: null,
                 telefone: { [Op.ne]: null, [Op.not]: '' }
             },
             attributes: ['id', 'nome', 'telefone', 'createdAt']
         });
-        incompleteCandidates.forEach(p => pendingList.push({ ...p.toJSON(), actionType: 'incomplete', reason: 'Perfil incompleto há mais de 24h' }));
+        incompleteCandidates.forEach(p => pendingList.push({ ...p.toJSON(), actionType: 'incomplete', reason: 'Perfil incompleto há mais de 6h' }));
 
         // 3. Churn de trial (Trial expirado há >= 3 dias, E msg_churn_followup_sent_at NULA, STATUS inactive)
         const churnCandidates = await db.Psychologist.findAll({
@@ -555,11 +562,11 @@ exports.getPendingActions = async (req, res) => {
             });
         }
 
-        // 4. Feedback / Cobrança (Clique WhatsApp > 24h E adminWppReminderSentAt NULA E feedbackGiven = false)
+        // 4. Feedback / Cobrança (Clique WhatsApp > 48h E adminWppReminderSentAt NULA E feedbackGiven = false)
         if (db.WhatsAppClickLog) {
             const clicks = await db.WhatsAppClickLog.findAll({
                 where: {
-                    createdAt: { [Op.lte]: oneDayAgo },
+                    createdAt: { [Op.lte]: fortyEightHoursAgo },
                     feedbackGiven: { [Op.not]: true },
                     adminWppReminderSentAt: null
                 },
@@ -588,16 +595,41 @@ exports.getPendingActions = async (req, res) => {
                     attributes: ['id', 'nome', 'telefone']
                 });
                 
+                // Buscar todos os feedbacks pendentes para os candidatos, para saber o número total pendente
+                const allPendingClicks = await db.WhatsAppClickLog.findAll({
+                    where: {
+                        psychologistId: { [Op.in]: clickedIds },
+                        feedbackGiven: false
+                    },
+                    attributes: ['psychologistId', 'guestName', 'id']
+                });
+
+                // Buscar se o psicólogo já recebeu cobrança alguma vez (para saber se é 1ª vez ou recorrente)
+                const remindedClicks = await db.WhatsAppClickLog.findAll({
+                    where: {
+                        psychologistId: { [Op.in]: clickedIds },
+                        adminWppReminderSentAt: { [Op.ne]: null }
+                    },
+                    attributes: ['psychologistId']
+                });
+                const remindedPsyIds = new Set(remindedClicks.map(c => c.psychologistId));
+
                 billingCandidates.forEach(p => {
                     const clickData = uniqueClicks.find(r => String(r.psychologistId) === String(p.id));
+                    const psiPendingClicks = allPendingClicks.filter(c => String(c.psychologistId) === String(p.id));
+                    const pendingCount = psiPendingClicks.length;
+                    
                     const pName = clickData ? (clickData.guestName || 'um paciente') : 'um paciente';
                     const token = clickData ? clickData.feedbackToken : '';
+                    const isFirstFeedbackRequest = !remindedPsyIds.has(p.id);
+
                     pendingList.push({ 
                         ...p.toJSON(), 
                         actionType: 'billing_feedback', 
-                        reason: 'Recebeu clique há mais de 24h',
+                        reason: 'Recebeu clique há mais de 48h',
                         patientName: pName,
-                        feedbackToken: token
+                        feedbackToken: token,
+                        metrics: { pendingCount, isFirstFeedbackRequest }
                     });
                 });
             }
