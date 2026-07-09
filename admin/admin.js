@@ -115,6 +115,16 @@ document.addEventListener('DOMContentLoaded', function() {
         window.currentAdminPageUrl = pageUrlWithParams; // Salva para o Pull-to-Refresh Global
         window.pageQueryString = queryString || ''; // Armazena params para o próximo script
 
+        // Fechar todos os drawers 360 ou menus abertos ao navegar
+        document.querySelectorAll('.drawer-overlay.active').forEach(overlay => {
+            overlay.classList.remove('active');
+            const content = overlay.querySelector('.drawer-content');
+            if (content) {
+                content.style.removeProperty('transform');
+                content.style.removeProperty('transition');
+            }
+        });
+
         // Salva a página atual no navegador para manter em caso de refresh
         if (pageUrlWithParams) sessionStorage.setItem('yelo_last_admin_page', pageUrlWithParams);
 
