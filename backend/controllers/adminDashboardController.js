@@ -257,10 +257,23 @@ exports.getDetailedReports = async (req, res) => {
                 return acc + (planPrices[planoKey] || 0);
             }, 0);
 
-            const totalActive = activePsychologists.length;
-            const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt).length;
-            const totalStart = totalActive + churnedCount;
-            const churnRate = totalStart > 0 ? (churnedCount / totalStart) * 100 : 0;
+            const payingCondition = {
+                [Op.or]: [
+                    { stripeSubscriptionId: { [Op.ne]: null } },
+                    { subscriptionId: { [Op.ne]: null } }
+                ]
+            };
+            const churnedPayingCount = await db.Psychologist.count({
+                where: { status: 'inactive', updatedAt: { [Op.between]: [startDate, endDate] }, ...payingCondition }
+            });
+            const newPayingCount = await db.Psychologist.count({
+                where: { status: 'active', createdAt: { [Op.between]: [startDate, endDate] }, ...payingCondition }
+            });
+
+            const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !!(psy.stripeSubscriptionId || psy.subscriptionId)).length;
+            const totalStart = payingActiveCount + churnedPayingCount - newPayingCount;
+            const baseForChurn = totalStart > 0 ? totalStart : 1;
+            const churnRate = (churnedPayingCount / baseForChurn) * 100;
 
             const arpu = payingActiveCount > 0 ? mrr / payingActiveCount : 0;
             const ltv = churnRate > 0 ? arpu / (churnRate / 100) : (arpu * 24);
@@ -516,56 +529,57 @@ exports.getFinancials = async (req, res) => {
             prevDateCondition = { [Op.between]: [sixtyDaysAgo, start] };
         }
 
-        // Current Period Data
+        const payingCondition = {
+            [Op.or]: [
+                { stripeSubscriptionId: { [Op.ne]: null } },
+                { subscriptionId: { [Op.ne]: null } }
+            ]
+        };
+
+        // Current Period Data (Only Paying Users)
         const churnedUsers = await db.Psychologist.findAll({
-            where: { status: 'inactive', updatedAt: dateCondition },
+            where: { status: 'inactive', updatedAt: dateCondition, ...payingCondition },
             attributes: ['updatedAt']
         });
         const churnedCount = churnedUsers.length;
         
         const newUsers = await db.Psychologist.findAll({
-            where: { status: 'active', createdAt: dateCondition },
+            where: { status: 'active', createdAt: dateCondition, ...payingCondition },
             attributes: ['createdAt']
         });
         const newUsersCount = newUsers.length;
 
-        // Previous Period Data
+        // Previous Period Data (Only Paying Users)
         const prevChurnedCount = await db.Psychologist.count({
-            where: { status: 'inactive', updatedAt: prevDateCondition }
+            where: { status: 'inactive', updatedAt: prevDateCondition, ...payingCondition }
         });
         const prevNewUsersCount = await db.Psychologist.count({
-            where: { status: 'active', createdAt: prevDateCondition }
+            where: { status: 'active', createdAt: prevDateCondition, ...payingCondition }
         });
 
-        const totalActiveCount = activePsychologists.length;
-        const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt).length;
+        const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !!(psy.stripeSubscriptionId || psy.subscriptionId)).length;
         const arpu = payingActiveCount > 0 ? mrr / payingActiveCount : 0;
         
-        const totalUsersAtStartOfMonth = totalActiveCount + churnedCount - newUsersCount;
+        const totalUsersAtStartOfMonth = payingActiveCount + churnedCount - newUsersCount;
         const baseForChurn = totalUsersAtStartOfMonth > 0 ? totalUsersAtStartOfMonth : 1;
         const churnRate = (churnedCount / baseForChurn) * 100;
         const ltv = churnRate > 0 ? arpu / (churnRate / 100) : (arpu * 24);
         
         // Previous KPIs Approximation
-            const netGrowth = newUsersCount - churnedCount;
         const prevTotalActiveCount = totalUsersAtStartOfMonth;
         const prevBaseForChurn = (prevTotalActiveCount + prevChurnedCount - prevNewUsersCount) || 1;
         const prevChurnRate = (prevChurnedCount / prevBaseForChurn) * 100;
-        const prevMrr = mrr - (newUsersCount * arpu) + (churnedCount * arpu); 
+        const prevMrr = Math.max(0, mrr - (newUsersCount * arpu) + (churnedCount * arpu)); 
         const prevLtv = prevChurnRate > 0 ? arpu / (prevChurnRate / 100) : (arpu * 24);
 
         const periodDays = Math.max(1, (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-        const dailyNetGrowth = netGrowth / periodDays;
-        const projectedMonthlyUsersGrowth = dailyNetGrowth * 30;
+        const netMrrGrowth = (newUsersCount * arpu) - (churnedCount * arpu);
+        const dailyMrrGrowth = netMrrGrowth / periodDays;
         
-        // Projeção Linear Baseada em Usuários x Ticket Médio
-        const users30 = Math.max(0, totalActiveCount + projectedMonthlyUsersGrowth);
-        const users60 = Math.max(0, totalActiveCount + (projectedMonthlyUsersGrowth * 2));
-        const users90 = Math.max(0, totalActiveCount + (projectedMonthlyUsersGrowth * 3));
-        
-        const proj30 = users30 * arpu;
-        const proj60 = users60 * arpu;
-        const proj90 = users90 * arpu;
+        // Projeção Linear Baseada no Crescimento do MRR
+        const proj30 = Math.max(0, mrr + (dailyMrrGrowth * 30));
+        const proj60 = Math.max(0, mrr + (dailyMrrGrowth * 60));
+        const proj90 = Math.max(0, mrr + (dailyMrrGrowth * 90));
         
         // Sparklines Generation (10 points max)
         const generateSparkline = (dates, type = 'count') => {
@@ -681,7 +695,14 @@ exports.getFinancials = async (req, res) => {
             sparklines: { newUsers: sparkNewUsers, churns: sparkChurns, mrr: sparkMrr },
             insights,
             planDistribution: activePsychologists.reduce((acc, p) => {
-                const pk = p.plano || 'Desconhecido';
+                let pk = p.plano || 'Desconhecido';
+                if (pk !== 'Desconhecido') {
+                    const lower = pk.toLowerCase();
+                    if (['essential', 'essencial'].includes(lower)) pk = 'Essencial';
+                    else if (['clinical', 'clínico'].includes(lower)) pk = 'Clinical';
+                    else if (['reference', 'sol'].includes(lower)) pk = 'Reference';
+                    else pk = pk.charAt(0).toUpperCase() + pk.slice(1).toLowerCase();
+                }
                 acc[pk] = (acc[pk] || 0) + 1;
                 return acc;
             }, {})
