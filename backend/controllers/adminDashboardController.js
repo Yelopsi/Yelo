@@ -495,7 +495,7 @@ exports.getFinancials = async (req, res) => {
 
         const activePsychologists = await db.Psychologist.findAll({
             where: { plano: { [Op.ne]: null }, status: 'active' },
-            attributes: ['id', 'nome', 'plano', 'updatedAt', 'is_exempt', 'planExpiresAt', 'stripeSubscriptionId', 'subscriptionId', 'createdAt'] 
+            attributes: ['id', 'nome', 'plano', 'updatedAt', 'is_exempt', 'planExpiresAt', 'stripeSubscriptionId', 'subscriptionId', 'createdAt', 'subscription_payments_count'] 
         });
 
         const mrr = activePsychologists.reduce((acc, psy) => {
