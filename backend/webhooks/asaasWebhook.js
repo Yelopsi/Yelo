@@ -199,6 +199,9 @@ exports.handleWebhook = async (req, res) => {
                 const now = new Date();
                 if (psi.planExpiresAt && psi.planExpiresAt > now) {
                     console.log(`[ASAAS] Alerta de falha/vencimento ignorado para ${psi.email}. O plano está válido até ${psi.planExpiresAt}.`);
+                } else if (psi.status === 'inactive') {
+                    // TRAVA ANTI-LOOP: Se o Asaas reenviar o webhook por timeout de email, ignoramos se já estiver inativo
+                    console.log(`[ASAAS] Retentativa de falha/vencimento ignorada. Usuário ${psi.email} já está inativo.`);
                 } else {
                     await psi.update({ status: 'inactive', planExpiresAt: new Date() });
                     emailService.sendPaymentFailedEmail(psi, payment.invoiceUrl).catch(e => console.error("Erro email falha:", e));
