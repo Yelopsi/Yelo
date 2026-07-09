@@ -258,19 +258,34 @@
                 <div class="sparkline-container" id="spark-mrr"></div>
             </div>
 
-            <div class="saas-kpi-card" id="card-churn">
+            <div class="saas-kpi-card" id="card-paid-churn">
                 <div>
-                    <div class="kpi-header" data-tooltip="Taxa de cancelamento de assinaturas no período">
+                    <div class="kpi-header" data-tooltip="Taxa de cancelamento de clientes pagantes no período">
                         <div class="kpi-icon" style="background: #fee2e2; color: #dc2626;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20M12 2v20"></path><path d="M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"></path></svg></div>
-                        Churn Rate
+                        Churn (Pagantes)
                     </div>
-                    <div class="kpi-value" id="kpi-churn">--</div>
+                    <div class="kpi-value" id="kpi-paid-churn">--</div>
                     <div class="kpi-meta">
-                        <span class="kpi-trend trend-neutral" id="trend-churn">--</span>
+                        <span class="kpi-trend trend-neutral" id="trend-paid-churn">--</span>
                         <span class="kpi-compare">mês anterior</span>
                     </div>
                 </div>
-                <div class="sparkline-container" id="spark-churn"></div>
+                <div class="sparkline-container" id="spark-paid-churn"></div>
+            </div>
+
+            <div class="saas-kpi-card" id="card-trial-churn">
+                <div>
+                    <div class="kpi-header" data-tooltip="Taxa de abandono durante o período de testes (Trial)">
+                        <div class="kpi-icon" style="background: #ffedd5; color: #ea580c;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path><path d="M2 2l20 20"></path></svg></div>
+                        Churn (Trial)
+                    </div>
+                    <div class="kpi-value" id="kpi-trial-churn">--</div>
+                    <div class="kpi-meta">
+                        <span class="kpi-trend trend-neutral" id="trend-trial-churn">--</span>
+                        <span class="kpi-compare">mês anterior</span>
+                    </div>
+                </div>
+                <div class="sparkline-container" id="spark-trial-churn"></div>
             </div>
 
             <div class="saas-kpi-card" id="card-ltv">

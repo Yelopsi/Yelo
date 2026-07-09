@@ -109,7 +109,8 @@ window.initializePage = function() {
                         
                         // Update KPIs with variations
                         updateKpiCard('mrr', dataFin.kpis.mrr.current, dataFin.kpis.mrr.previous, formatBRL);
-                        updateKpiCard('churn', dataFin.kpis.churnRate.current, dataFin.kpis.churnRate.previous, formatPerc, true); // inverted: lower is better
+                        updateKpiCard('paid-churn', dataFin.kpis.paidChurnRate.current, dataFin.kpis.paidChurnRate.previous, formatPerc, true); // inverted: lower is better
+                        updateKpiCard('trial-churn', dataFin.kpis.trialChurnRate.current, dataFin.kpis.trialChurnRate.previous, formatPerc, true); // inverted: lower is better
                         updateKpiCard('ltv', dataFin.kpis.ltv.current, dataFin.kpis.ltv.previous, formatBRL);
                         updateKpiCard('arpu', dataFin.kpis.arpu.current, dataFin.kpis.arpu.previous, formatBRL);
                         
@@ -118,9 +119,9 @@ window.initializePage = function() {
                         document.getElementById('kpi-proj-90').innerText = formatBRL(dataFin.kpis.proj90 || 0);
                         
                         // Sparklines
+                        renderSparkline('spark-paid-churn', dataFin.sparklines?.paidChurns || []);
+                        renderSparkline('spark-trial-churn', dataFin.sparklines?.trialChurns || []);
                         renderSparkline('spark-mrr', dataFin.sparklines?.mrr || []);
-                        renderSparkline('spark-churn', dataFin.sparklines?.churns || []);
-                        renderSparkline('spark-users', dataFin.sparklines?.newUsers || []);
                         // Proxy ARPU to MRR trend as placeholder since ARPU is mostly constant
                         renderSparkline('spark-arpu', dataFin.sparklines?.mrr || []); 
                     }

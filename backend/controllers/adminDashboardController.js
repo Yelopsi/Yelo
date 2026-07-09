@@ -536,44 +536,86 @@ exports.getFinancials = async (req, res) => {
             ]
         };
 
-        // Current Period Data (Only Paying Users)
-        const churnedUsers = await db.Psychologist.findAll({
+        // Paid Period Data
+        const paidChurnedUsers = await db.Psychologist.findAll({
             where: { status: 'inactive', updatedAt: dateCondition, ...payingCondition },
             attributes: ['updatedAt']
         });
-        const churnedCount = churnedUsers.length;
+        const paidChurnedCount = paidChurnedUsers.length;
         
-        const newUsers = await db.Psychologist.findAll({
+        const paidNewUsers = await db.Psychologist.findAll({
             where: { status: 'active', createdAt: dateCondition, ...payingCondition },
             attributes: ['createdAt']
         });
-        const newUsersCount = newUsers.length;
+        const paidNewCount = paidNewUsers.length;
 
-        // Previous Period Data (Only Paying Users)
-        const prevChurnedCount = await db.Psychologist.count({
+        // Trial Period Data
+        const trialChurnedUsers = await db.Psychologist.findAll({
+            where: { 
+                status: 'inactive', 
+                updatedAt: dateCondition, 
+                is_exempt: { [Op.not]: true },
+                stripeSubscriptionId: null,
+                subscriptionId: null
+            },
+            attributes: ['updatedAt']
+        });
+        const trialChurnedCount = trialChurnedUsers.length;
+        
+        const trialNewUsers = await db.Psychologist.findAll({
+            where: { 
+                status: 'active', 
+                createdAt: dateCondition,
+                is_exempt: { [Op.not]: true },
+                stripeSubscriptionId: null,
+                subscriptionId: null
+            },
+            attributes: ['createdAt']
+        });
+        const trialNewCount = trialNewUsers.length;
+
+        // Previous Period Data
+        const prevPaidChurnedCount = await db.Psychologist.count({
             where: { status: 'inactive', updatedAt: prevDateCondition, ...payingCondition }
         });
-        const prevNewUsersCount = await db.Psychologist.count({
+        const prevPaidNewCount = await db.Psychologist.count({
             where: { status: 'active', createdAt: prevDateCondition, ...payingCondition }
+        });
+        const prevTrialChurnedCount = await db.Psychologist.count({
+            where: { status: 'inactive', updatedAt: prevDateCondition, is_exempt: { [Op.not]: true }, stripeSubscriptionId: null, subscriptionId: null }
+        });
+        const prevTrialNewCount = await db.Psychologist.count({
+            where: { status: 'active', createdAt: prevDateCondition, is_exempt: { [Op.not]: true }, stripeSubscriptionId: null, subscriptionId: null }
         });
 
         const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !!(psy.stripeSubscriptionId || psy.subscriptionId)).length;
-        const arpu = payingActiveCount > 0 ? mrr / payingActiveCount : 0;
-        
-        const totalUsersAtStartOfMonth = payingActiveCount + churnedCount - newUsersCount;
-        const baseForChurn = totalUsersAtStartOfMonth > 0 ? totalUsersAtStartOfMonth : 1;
-        const churnRate = (churnedCount / baseForChurn) * 100;
-        const ltv = churnRate > 0 ? arpu / (churnRate / 100) : (arpu * 24);
-        
-        // Previous KPIs Approximation
-        const prevTotalActiveCount = totalUsersAtStartOfMonth;
-        const prevBaseForChurn = (prevTotalActiveCount + prevChurnedCount - prevNewUsersCount) || 1;
-        const prevChurnRate = (prevChurnedCount / prevBaseForChurn) * 100;
-        const prevMrr = Math.max(0, mrr - (newUsersCount * arpu) + (churnedCount * arpu)); 
-        const prevLtv = prevChurnRate > 0 ? arpu / (prevChurnRate / 100) : (arpu * 24);
+        const totalPaidStart = payingActiveCount + paidChurnedCount - paidNewCount;
+        const paidBaseForChurn = totalPaidStart > 0 ? totalPaidStart : 1;
+        const paidChurnRate = (paidChurnedCount / paidBaseForChurn) * 100;
 
+        const prevPayingActiveCount = totalPaidStart;
+        const prevPaidStart = prevPayingActiveCount + prevPaidChurnedCount - prevPaidNewCount;
+        const prevPaidBaseForChurn = prevPaidStart > 0 ? prevPaidStart : 1;
+        const prevPaidChurnRate = (prevPaidChurnedCount / prevPaidBaseForChurn) * 100;
+
+        const trialActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !psy.stripeSubscriptionId && !psy.subscriptionId).length;
+        const totalTrialStart = trialActiveCount + trialChurnedCount - trialNewCount;
+        const trialBaseForChurn = totalTrialStart > 0 ? totalTrialStart : 1;
+        const trialChurnRate = (trialChurnedCount / trialBaseForChurn) * 100;
+
+        const prevTrialActiveCount = totalTrialStart;
+        const prevTrialStart = prevTrialActiveCount + prevTrialChurnedCount - prevTrialNewCount;
+        const prevTrialBaseForChurn = prevTrialStart > 0 ? prevTrialStart : 1;
+        const prevTrialChurnRate = (prevTrialChurnedCount / prevTrialBaseForChurn) * 100;
+
+        const arpu = payingActiveCount > 0 ? mrr / payingActiveCount : 0;
+        const ltv = paidChurnRate > 0 ? arpu / (paidChurnRate / 100) : (arpu * 24);
+        const prevLtv = prevPaidChurnRate > 0 ? arpu / (prevPaidChurnRate / 100) : (arpu * 24);
+        const prevMrr = Math.max(0, mrr - (paidNewCount * arpu) + (paidChurnedCount * arpu));
+        
+        // MRR Projections Linear Math
         const periodDays = Math.max(1, (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-        const netMrrGrowth = (newUsersCount * arpu) - (churnedCount * arpu);
+        const netMrrGrowth = (paidNewCount * arpu) - (paidChurnedCount * arpu);
         const dailyMrrGrowth = netMrrGrowth / periodDays;
         
         // Projeção Linear Baseada no Crescimento do MRR
@@ -598,20 +640,22 @@ exports.getFinancials = async (req, res) => {
             return result;
         };
 
-        const sparkNewUsers = generateSparkline(newUsers.map(u => u.createdAt));
-        const sparkChurns = generateSparkline(churnedUsers.map(u => u.updatedAt));
+        const sparkPaidNewUsers = generateSparkline(paidNewUsers.map(u => u.createdAt));
+        const sparkPaidChurns = generateSparkline(paidChurnedUsers.map(u => u.updatedAt));
+        const sparkTrialChurns = generateSparkline(trialChurnedUsers.map(u => u.updatedAt));
         
         // Approximate MRR sparkline (Start MRR + cumulative net growth)
         let currentSparkMrr = prevMrr;
         const sparkMrr = [];
         for(let i=0; i<10; i++) {
-            currentSparkMrr += (sparkNewUsers[i] * arpu) - (sparkChurns[i] * arpu);
+            currentSparkMrr += (sparkPaidNewUsers[i] * arpu) - (sparkPaidChurns[i] * arpu);
             sparkMrr.push(Math.max(0, currentSparkMrr));
         }
 
         const kpis = {
             mrr: { current: mrr, previous: prevMrr },
-            churnRate: { current: churnRate, previous: prevChurnRate },
+            paidChurnRate: { current: paidChurnRate, previous: prevPaidChurnRate },
+            trialChurnRate: { current: trialChurnRate, previous: prevTrialChurnRate },
             ltv: { current: ltv, previous: prevLtv },
             arpu: { current: arpu, previous: arpu }, // ARPU is mostly constant for this approximation
             proj30, proj60, proj90
@@ -623,11 +667,11 @@ exports.getFinancials = async (req, res) => {
         if (mrrGrowth > 0) insights.push({ type: 'positive', text: `Receita MRR cresceu ${mrrGrowth.toFixed(1)}% no período.` });
         else if (mrrGrowth < 0) insights.push({ type: 'negative', text: `Receita MRR retraiu ${Math.abs(mrrGrowth).toFixed(1)}% no período.` });
         
-        if (churnRate > 5) insights.push({ type: 'negative', text: `Churn (${churnRate.toFixed(1)}%) está acima da zona saudável (< 5%).` });
-        else insights.push({ type: 'positive', text: `Churn controlado e saudável.` });
+        if (paidChurnRate > 5) insights.push({ type: 'negative', text: `Churn de pagantes (${paidChurnRate.toFixed(1)}%) está acima da zona saudável (< 5%).` });
+        else insights.push({ type: 'positive', text: `Churn de pagantes está controlado e saudável.` });
 
-        if (newUsersCount > churnedCount) insights.push({ type: 'positive', text: `Mais assinantes entraram (${newUsersCount}) do que saíram (${churnedCount}).` });
-        else if (churnedCount > newUsersCount) insights.push({ type: 'warning', text: `Alerta: Base de assinantes está encolhendo.` });
+        if (paidNewCount > paidChurnedCount) insights.push({ type: 'positive', text: `Mais assinantes pagantes entraram (${paidNewCount}) do que saíram (${paidChurnedCount}).` });
+        else if (paidChurnedCount > paidNewCount) insights.push({ type: 'warning', text: `Alerta: Base de assinantes está encolhendo.` });
 
         // Invoices 
         let recentInvoices = [];
@@ -692,7 +736,7 @@ exports.getFinancials = async (req, res) => {
             kpis, 
             recentInvoices, 
             activePlans: activePlans.slice(0, 10), // Limit upcoming payments to 10
-            sparklines: { newUsers: sparkNewUsers, churns: sparkChurns, mrr: sparkMrr },
+            sparklines: { newUsers: sparkPaidNewUsers, paidChurns: sparkPaidChurns, trialChurns: sparkTrialChurns, mrr: sparkMrr },
             insights,
             planDistribution: activePsychologists.reduce((acc, p) => {
                 let pk = p.plano || 'Desconhecido';
