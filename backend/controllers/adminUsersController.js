@@ -479,10 +479,10 @@ exports.getPendingActions = async (req, res) => {
         });
         analysisCandidates.forEach(p => pendingList.push({ ...p.toJSON(), actionType: 'analysis', reason: 'Perfil preenchido há mais de 6h' }));
 
-        // 2. Perfil Incompleto (Cadastrado > 6h E (foto NULA OU bio NULA) E msg_incomplete_profile_sent_at NULA)
+        // 2. Perfil Incompleto (Cadastrado > 48h E (foto NULA OU bio NULA) E msg_incomplete_profile_sent_at NULA)
         const incompleteCandidates = await db.Psychologist.findAll({
             where: {
-                createdAt: { [Op.lte]: sixHoursAgo },
+                createdAt: { [Op.lte]: fortyEightHoursAgo },
                 [Op.or]: [
                     { status: 'pending' },
                     {
@@ -500,7 +500,7 @@ exports.getPendingActions = async (req, res) => {
             },
             attributes: ['id', 'nome', 'telefone', 'createdAt']
         });
-        incompleteCandidates.forEach(p => pendingList.push({ ...p.toJSON(), actionType: 'incomplete', reason: 'Perfil incompleto há mais de 6h' }));
+        incompleteCandidates.forEach(p => pendingList.push({ ...p.toJSON(), actionType: 'incomplete', reason: 'Perfil incompleto há mais de 48h' }));
 
         // 3. Churn de trial (Trial expirado há >= 3 dias, E msg_churn_followup_sent_at NULA, STATUS inactive)
         const churnCandidates = await db.Psychologist.findAll({
