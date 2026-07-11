@@ -435,7 +435,8 @@ window.initializePage = function () {
             });
             if (res.ok) {
                 if (window.showToast) window.showToast('Ação registrada com sucesso!', 'success');
-                if (window.currentCrmTab === 'followups') {
+                const statusInput = document.getElementById('crm-status-psi');
+                if (statusInput && statusInput.value === 'pending_actions') {
                     setTimeout(() => fetchAndRenderPsis(window.currentCrmPage || 1), 500); // Recarrega a lista e remove o item
                 }
             }
