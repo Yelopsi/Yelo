@@ -122,22 +122,26 @@
                     aviso.read = true; // Update local state
                 }
                 
-                // NOVO: Verifica se tem link direto pro Fórum para redirecionar na hora
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = aviso.content;
-                const linkDireto = tempDiv.querySelector('.aviso-link-direto');
-                if (linkDireto && linkDireto.dataset.postId) {
-                    if (typeof window.loadPage === 'function') {
-                        let targetUrl = `psi_forum.html?postId=${linkDireto.dataset.postId}`;
-                        if (linkDireto.dataset.commentId) {
-                            targetUrl += `&commentId=${linkDireto.dataset.commentId}`;
+                const isExpanded = item.classList.contains('expanded');
+                
+                if (isExpanded) {
+                    // NOVO: Verifica se tem link direto pro Fórum para redirecionar na hora (segundo clique)
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = aviso.content;
+                    const linkDireto = tempDiv.querySelector('.aviso-link-direto');
+                    if (linkDireto && linkDireto.dataset.postId) {
+                        if (typeof window.loadPage === 'function') {
+                            let targetUrl = `psi_forum.html?postId=${linkDireto.dataset.postId}`;
+                            if (linkDireto.dataset.commentId) {
+                                targetUrl += `&commentId=${linkDireto.dataset.commentId}`;
+                            }
+                            window.loadPage(targetUrl);
+                            return;
                         }
-                        window.loadPage(targetUrl);
-                        return;
                     }
                 }
 
-                const isExpanded = item.classList.toggle('expanded');
+                item.classList.toggle('expanded');
             });
 
             container.appendChild(item);
