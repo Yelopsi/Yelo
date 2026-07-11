@@ -764,6 +764,30 @@
                 renderComment(newComment, container, true);
                 form.reset();
                 if (parentId) form.parentElement.remove(); 
+                
+                // Atualiza contagem de comentários no card principal (Feed)
+                const feedCard = document.querySelector(`.forum-post-card[data-post-id="${currentPostId}"]`);
+                if (feedCard) {
+                    const commentCountEl = feedCard.querySelector('.post-comments-count');
+                    if (commentCountEl) {
+                        const currentText = commentCountEl.textContent;
+                        const match = currentText.match(/\d+/);
+                        const currentCount = match ? parseInt(match[0]) : 0;
+                        commentCountEl.textContent = `💬 ${currentCount + 1} Comentários`;
+                    }
+                }
+                
+                // Atualiza a contagem na sidebar se existir
+                const relatedItem = document.querySelector(`.related-post-item[data-post-id="${currentPostId}"]`);
+                if (relatedItem) {
+                    const commentCountEl = relatedItem.querySelector('.related-post-comments');
+                    if (commentCountEl) {
+                        const currentText = commentCountEl.textContent;
+                        const match = currentText.match(/\d+/);
+                        const currentCount = match ? parseInt(match[0]) : 0;
+                        commentCountEl.textContent = `💬 ${currentCount + 1}`;
+                    }
+                } 
             } catch (err) { showToast('Erro ao enviar comentário.', 'error'); } 
             finally { btn.disabled = false; }
         }
