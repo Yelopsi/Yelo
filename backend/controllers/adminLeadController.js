@@ -34,30 +34,59 @@ exports.getLeads = async (req, res) => {
         const { filtro } = req.query;
         let whereClause = {};
 
-        if (filtro === 'followup_hoje') {
-            // Filtra contatos cuja data de próximo follow-up seja <= hoje (ou seja, vence hoje ou está atrasado)
-            const hojeFim = new Date();
-            hojeFim.setHours(23, 59, 59, 999);
+        // 1. Buscar todos os psicólogos registrados para filtrar leads que já se cadastraram
+        const registeredPsychologists = await db.Psychologist.findAll({
+            attributes: ['email', 'telefone']
+        });
+        const registeredEmails = new Set(registeredPsychologists.map(p => p.email?.toLowerCase()).filter(Boolean));
+        const registeredPhones = new Set(registeredPsychologists.map(p => p.telefone?.replace(/\D/g, '')).filter(Boolean));
 
-            whereClause = {
-                status_funil: {
-                    [Op.in]: ['Contatado', 'Aguardando']
-                },
-                data_proximo_followup: {
-                    [Op.lte]: hojeFim
-                }
-            };
-        } else if (filtro === 'pendentes') {
-            whereClause = { status_funil: 'Pendente' };
-        }
+        // 2. Buscar Inbound Leads (WaitingList)
+        const rawWaitlist = db.WaitingList ? await db.WaitingList.findAll() : [];
+        const inboundLeads = rawWaitlist.filter(w => {
+            const email = w.email?.toLowerCase();
+            const phone = w.telefone?.replace(/\D/g, '');
+            // Só exibe se NÃO estiver registrado
+            return !registeredEmails.has(email) && !registeredPhones.has(phone);
+        }).map(w => ({
+            id: 'wl_' + w.id,
+            nome: w.nome || 'Lead Inbound',
+            telefone: w.telefone,
+            origem_url: 'Inbound (Questionário)',
+            status_funil: w.status === 'invited' ? 'Contatado' : 'Pendente',
+            data_ultimo_contato: w.status === 'invited' ? w.updatedAt : null,
+            data_proximo_followup: null,
+            createdAt: w.createdAt,
+            isInbound: true
+        }));
 
-        const leads = await db.Lead.findAll({
-            where: whereClause,
+        // 3. Buscar Outbound Leads (Leads)
+        let leadsOutbound = await db.Lead.findAll({
             order: [['createdAt', 'DESC']]
         });
+        leadsOutbound = leadsOutbound.filter(l => {
+            const phone = l.telefone?.replace(/\D/g, '');
+            // Só exibe se NÃO estiver registrado
+            return !registeredPhones.has(phone);
+        }).map(l => l.toJSON());
+
+        // 4. Combinar e Aplicar Filtros
+        let allLeads = [...inboundLeads, ...leadsOutbound].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        if (filtro === 'followup_hoje') {
+            const hojeFim = new Date();
+            hojeFim.setHours(23, 59, 59, 999);
+            allLeads = allLeads.filter(l => 
+                ['Contatado', 'Aguardando'].includes(l.status_funil) && 
+                l.data_proximo_followup && 
+                new Date(l.data_proximo_followup) <= hojeFim
+            );
+        } else if (filtro === 'pendentes') {
+            allLeads = allLeads.filter(l => l.status_funil === 'Pendente');
+        }
 
         res.json({
-            leads: leads,
+            leads: allLeads,
             kpis: { 
                 pendentes, contatados, aguardando, cadastrados, 
                 convitesWhatsapp,
@@ -78,6 +107,16 @@ exports.registrarContatoLead = async (req, res) => {
         if (db.Lead) await db.Lead.sync(); // Garante que a tabela existe
 
         const { id } = req.params;
+
+        if (typeof id === 'string' && id.startsWith('wl_')) {
+            const realId = id.replace('wl_', '');
+            const lead = await db.WaitingList.findByPk(realId);
+            if (!lead) return res.status(404).json({ error: 'Lead Inbound não encontrado.' });
+            
+            await lead.update({ status: 'invited' });
+            return res.json({ message: 'Contato Inbound registrado com sucesso!', lead });
+        }
+
         const lead = await db.Lead.findByPk(id);
 
         if (!lead) {
@@ -108,7 +147,19 @@ exports.registrarContatoLead = async (req, res) => {
 exports.atualizarStatusLead = async (req, res) => {
     try {
         const { status } = req.body;
-        const lead = await db.Lead.findByPk(req.params.id);
+        const { id } = req.params;
+
+        if (typeof id === 'string' && id.startsWith('wl_')) {
+            const realId = id.replace('wl_', '');
+            const lead = await db.WaitingList.findByPk(realId);
+            if (!lead) return res.status(404).json({ error: 'Lead Inbound não encontrado.' });
+            
+            // Mapeia os status do Lead para o WaitingList se possível, ou apenas ignora a atualização visual complexa
+            if (status === 'Contatado') await lead.update({ status: 'invited' });
+            return res.json({ success: true, message: 'Status Inbound atualizado com sucesso!' });
+        }
+
+        const lead = await db.Lead.findByPk(id);
         if (!lead) return res.status(404).json({ error: 'Lead não encontrado.' });
         
         await lead.update({ status_funil: status });
@@ -122,7 +173,18 @@ exports.atualizarStatusLead = async (req, res) => {
 // 4. Remove o lead permanentemente (Recusa // Opt-out)
 exports.excluirLead = async (req, res) => {
     try {
-        const lead = await db.Lead.findByPk(req.params.id);
+        const { id } = req.params;
+
+        if (typeof id === 'string' && id.startsWith('wl_')) {
+            const realId = id.replace('wl_', '');
+            const lead = await db.WaitingList.findByPk(realId);
+            if (!lead) return res.status(404).json({ error: 'Lead Inbound não encontrado.' });
+            
+            await lead.destroy();
+            return res.json({ success: true, message: 'Lead Inbound excluído.' });
+        }
+
+        const lead = await db.Lead.findByPk(id);
         if (!lead) return res.status(404).json({ error: 'Lead não encontrado.' });
 
         await lead.destroy();

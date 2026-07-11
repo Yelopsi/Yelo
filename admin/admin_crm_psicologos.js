@@ -435,7 +435,9 @@ window.initializePage = function () {
             });
             if (res.ok) {
                 if (window.showToast) window.showToast('Ação registrada com sucesso!', 'success');
-                setTimeout(() => fetchAndRenderPsis(1), 500); // Recarrega a lista
+                if (window.currentCrmTab === 'followups') {
+                    setTimeout(() => fetchAndRenderPsis(window.currentCrmPage || 1), 500); // Recarrega a lista e remove o item
+                }
             }
         } catch (e) {
             console.error('Erro ao marcar ação como enviada:', e);

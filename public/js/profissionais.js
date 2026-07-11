@@ -22,12 +22,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     document.documentElement.style.backgroundColor = '#1B4332';
 
-    // --- CAPTURA DE UTMS DA URL ---
+    // --- CAPTURA DE UTMS DA URL E GLOBAL ---
     const urlParams = new URLSearchParams(window.location.search);
+    const globalUtms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{}');
     const utms = {
-        utm_source: urlParams.get('utm_source') || '',
-        utm_medium: urlParams.get('utm_medium') || '',
-        utm_campaign: urlParams.get('utm_campaign') || ''
+        utm_source: urlParams.get('utm_source') || globalUtms.utm_source || '',
+        utm_medium: urlParams.get('utm_medium') || globalUtms.utm_medium || '',
+        utm_campaign: urlParams.get('utm_campaign') || globalUtms.utm_campaign || ''
     };
 
     // Estrutura de dados extraída para o módulo de configuração
