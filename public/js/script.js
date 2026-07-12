@@ -88,7 +88,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const utms = {
                 utm_source: urlParams.get('utm_source') || '',
                 utm_medium: urlParams.get('utm_medium') || '',
-                utm_campaign: urlParams.get('utm_campaign') || ''
+                utm_campaign: urlParams.get('utm_campaign') || '',
+                utm_content: urlParams.get('utm_content') || ''
             };
             localStorage.setItem('yelo_global_utms', JSON.stringify(utms));
         }

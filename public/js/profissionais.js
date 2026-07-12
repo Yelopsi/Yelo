@@ -28,7 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const utms = {
         utm_source: urlParams.get('utm_source') || globalUtms.utm_source || '',
         utm_medium: urlParams.get('utm_medium') || globalUtms.utm_medium || '',
-        utm_campaign: urlParams.get('utm_campaign') || globalUtms.utm_campaign || ''
+        utm_campaign: urlParams.get('utm_campaign') || globalUtms.utm_campaign || '',
+        utm_content: urlParams.get('utm_content') || globalUtms.utm_content || ''
     };
 
     // Estrutura de dados extraída para o módulo de configuração
@@ -512,6 +513,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 userAnswers.utm_source = utms.utm_source;
                 userAnswers.utm_medium = utms.utm_medium;
                 userAnswers.utm_campaign = utms.utm_campaign;
+                userAnswers.utm_content = utms.utm_content;
 
                 localStorage.setItem('psi_questionario_respostas', JSON.stringify(userAnswers));
                 sessionStorage.setItem('questionarioCompleto', 'true');

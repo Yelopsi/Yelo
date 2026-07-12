@@ -350,6 +350,9 @@ module.exports = (sequelize, DataTypes) => {
     utm_campaign: {
         type: DataTypes.STRING
     },
+    utm_content: {
+        type: DataTypes.STRING
+    },
     // --- GAMIFICATION (NOVO) ---
     authority_level: {
         type: DataTypes.STRING,

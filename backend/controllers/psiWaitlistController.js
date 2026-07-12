@@ -32,7 +32,7 @@ exports.checkDemand = async (req, res) => {
 // ----------------------------------------------------------------------
 exports.addToWaitlist = async (req, res) => {
     try {
-        const { nome, email, telefone, crp, genero_identidade, valor_sessao_faixa, temas_atuacao, praticas_afirmativas, abordagens_tecnicas, utm_source, utm_medium, utm_campaign } = req.body;
+        const { nome, email, telefone, crp, genero_identidade, valor_sessao_faixa, temas_atuacao, praticas_afirmativas, abordagens_tecnicas, utm_source, utm_medium, utm_campaign, utm_content } = req.body;
 
         if (!email) {
             return res.status(400).json({ error: 'O e-mail é obrigatório para entrar na lista de espera.' });
@@ -49,7 +49,7 @@ exports.addToWaitlist = async (req, res) => {
         const payload = {
             nome, telefone, crp, genero_identidade, valor_sessao_faixa,
             temas_atuacao, praticas_afirmativas, abordagens_tecnicas,
-            utm_source, utm_medium, utm_campaign, status: 'pending'
+            utm_source, utm_medium, utm_campaign, utm_content, status: 'pending'
         };
 
         if (waitlistEntry) {

@@ -797,12 +797,13 @@
                 const source = urlParams.get('utm_source');
                 const medium = urlParams.get('utm_medium');
                 const campaign = urlParams.get('utm_campaign');
+                const content = urlParams.get('utm_content');
                 
                 let utms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{"source":"direto"}');
                 
                 // Só atualiza o localStorage se houver dados novos na URL
                 if (source || medium) {
-                    utms = { source: source || '', medium: medium || '', campaign: campaign || '' };
+                    utms = { source: source || '', medium: medium || '', campaign: campaign || '', content: content || '' };
                     localStorage.setItem('yelo_global_utms', JSON.stringify(utms));
                 }
 

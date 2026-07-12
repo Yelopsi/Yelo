@@ -62,7 +62,23 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true
     },
-    praticas_afirmativas: DataTypes.ARRAY(DataTypes.STRING)
+    praticas_afirmativas: DataTypes.ARRAY(DataTypes.STRING),
+    utm_source: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    utm_medium: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    utm_campaign: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    utm_content: {
+      type: DataTypes.STRING,
+      allowNull: true
+    }
   }, {
     sequelize,
     modelName: 'WaitingList',
