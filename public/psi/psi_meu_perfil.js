@@ -52,6 +52,7 @@
         if (!inputDoc) return;
         if (documentMaskInstance) documentMaskInstance.destroy();
         documentMaskInstance = IMask(inputDoc, { mask: [{ mask: '000.000.000-00' }, { mask: '00.000.000/0000-00' }] });
+        inputDoc.maskRef = documentMaskInstance;
         documentMaskInstance.on('accept', () => {
             if (groupRazao) groupRazao.classList.toggle('hidden', documentMaskInstance.unmaskedValue.length <= 11);
         });
@@ -60,8 +61,8 @@
         if (typeof IMask === 'undefined') return;
         const tel = document.getElementById('telefone');
         const crp = document.getElementById('crp');
-        if (tel) IMask(tel, { mask: '(00) 00000-0000' });
-        if (crp) IMask(crp, { mask: '00/000000' });
+        if (tel) tel.maskRef = IMask(tel, { mask: '(00) 00000-0000' });
+        if (crp) crp.maskRef = IMask(crp, { mask: '00/000000' });
         setupDocumentMask();
     }
     function setupCepSearch() {
@@ -235,10 +236,12 @@
                 btnPublic.style.pointerEvents = 'auto';
             }
 
-            // Campos simples
-            ['nome', 'email', 'crp', 'telefone', 'bio', 'slug', 'cep', 'cidade', 'estado', 'razao_social', 'formacao_desc', 'ano_inicio_experiencia'].forEach(id => {
+            ['nome', 'email', 'crp', 'telefone', 'bio', 'slug', 'cep', 'cidade', 'estado', 'razao_social', 'formacao_desc', 'ano_inicio_experiencia', 'cpf'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) el.value = data[id] || '';
+                if (el) {
+                    el.value = data[id] || '';
+                    if (el.maskRef) el.maskRef.updateValue();
+                }
                 if (id === 'bio' && quillBio && data.bio) {
                     quillBio.root.innerHTML = data.bio;
                 }
@@ -708,7 +711,7 @@
                     try {
                         const tsConfig = {
                             create: false,
-                            maxItems: el.hasAttribute('data-max-items') ? parseInt(el.getAttribute('data-max-items'), 10) : null,
+                            maxItems: el.hasAttribute('data-max-items') ? parseInt(el.getAttribute('data-max-items'), 10) : (el.multiple ? null : 1),
                             maxOptions: null,
                             controlInput: '<input type="text" autocomplete="off" size="1" tabindex="-1" inputmode="none" readonly>',
                             onInitialize: function() {
