@@ -337,6 +337,10 @@ exports.updatePsychologistProfile = async (req, res) => {
             }
             return res.status(400).json({ error: userMessage });
         }
+        if (error.name === 'SequelizeValidationError') {
+            const userMessage = error.errors.map(e => e.message).join(', ');
+            return res.status(400).json({ error: userMessage });
+        }
         res.status(500).json({ error: 'Erro ao atualizar perfil' });
     }
 };
