@@ -520,7 +520,7 @@
         @media (max-width: 991px) {
             .hero-psi h1 { font-size: 2.5rem; }
             .stats-grid { grid-template-columns: 1fr; gap: 20px; padding: 30px; margin-top: 20px; }
-            .plan-card.featured { transform: none; margin: 20px 0; }
+            .plan-card.featured { transform: none; margin: 0; }
             .cta-section { padding-bottom: 60px; } 
 
             /* Scroll Snap Horizontal para Cards no Mobile */
@@ -534,6 +534,7 @@
                 -webkit-overflow-scrolling: touch;
                 scrollbar-width: none;
                 justify-content: flex-start;
+                align-items: stretch;
             }
             .benefits-grid::-webkit-scrollbar, .plans-grid::-webkit-scrollbar, .diferenciais-grid::-webkit-scrollbar, .depoimentos-grid::-webkit-scrollbar { display: none; }
             
@@ -550,8 +551,14 @@
             .mobile-scroll-hint .mouse {
                 width: 26px; height: 42px; border: 2px solid #1B4332; border-radius: 20px; display: block; position: relative; transform: rotate(90deg);
             }
+            .mobile-scroll-hint .mouse.light {
+                border-color: #fff;
+            }
             .mobile-scroll-hint .wheel {
                 width: 4px; height: 4px; background: #1B4332; border-radius: 50%; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); animation: scrollWheel 1.5s infinite;
+            }
+            .mobile-scroll-hint .mouse.light .wheel {
+                background: #fff;
             }
             @keyframes scrollWheel {
                 0% { top: 8px; opacity: 1; }
@@ -829,7 +836,7 @@
                     </div>
                 </div>
                 <div class="mobile-scroll-hint">
-                    <div class="scroll-indicator-step"><span class="mouse dark"><span class="wheel"></span></span></div>
+                    <div class="scroll-indicator-step"><span class="mouse light"><span class="wheel"></span></span></div>
                 </div>
             </div>
         </section>
