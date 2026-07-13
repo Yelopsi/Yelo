@@ -12,7 +12,7 @@ exports.getStats = async (req, res) => {
         const psychologistId = req.psychologist.id;
         const { period } = req.query; 
 
-        const psychologist = await db.Psychologist.findByPk(psychologistId, { attributes: ['temas_atuacao', 'xp'] });
+        const psychologist = await db.Psychologist.findByPk(psychologistId, { attributes: ['temas_atuacao', 'xp', 'profile_appearances', 'whatsapp_clicks'] });
         const psiTemas = psychologist?.temas_atuacao || [];
 
         let dateCondition = "";
@@ -54,7 +54,9 @@ exports.getStats = async (req, res) => {
         const forumCommentCount = parseInt(forumCommentCountResult[0]?.count || 0, 10);
         const answerCount = parseInt(answerCountResult[0]?.count || 0, 10);
 
-        const whatsappClicks = parseInt(clicksResult[0]?.total || clicksResult[0]?.count || 0, 10);
+        let whatsappClicks = parseInt(clicksResult[0]?.total || clicksResult[0]?.count || 0, 10);
+        if (whatsappClicks === 0 && (!period || period === 'all')) whatsappClicks = psychologist?.whatsapp_clicks || 0;
+        
         const whatsappMatch = parseInt(clicksResult[0]?.match_clicks || 0, 10);
         const whatsappDirect = parseInt(clicksResult[0]?.direct_clicks || 0, 10);
         const whatsappClicksToday = parseInt(clicksResult[0]?.today || 0, 10);
@@ -66,7 +68,9 @@ exports.getStats = async (req, res) => {
         const profileViewsToday = parseInt(appearancesResult[0]?.today || 0, 10);
         const profileViews7d = parseInt(appearancesResult[0]?.last_7d || 0, 10);
         
-        const matchImpressions = parseInt(matchesResult[0]?.total || matchesResult[0]?.count || 0, 10);
+        let matchImpressions = parseInt(matchesResult[0]?.total || matchesResult[0]?.count || 0, 10);
+        if (matchImpressions === 0 && (!period || period === 'all')) matchImpressions = psychologist?.profile_appearances || 0;
+        
         const matchImpressionsToday = parseInt(matchesResult[0]?.today || 0, 10);
         const matchImpressions7d = parseInt(matchesResult[0]?.last_7d || 0, 10);
         
