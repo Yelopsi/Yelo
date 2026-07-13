@@ -123,6 +123,73 @@
         .diferenciais-section { background-color: var(--off-white) !important; }
         .match-section { background-color: #ffffff !important; }
         .faq-psi-section { background-color: #ffffff !important; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            margin: 40px auto 0;
+            background: #fff;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+            border: 1px solid rgba(0,0,0,0.05);
+            position: relative;
+            z-index: 2;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            display: block;
+            font-family: var(--font-titulos);
+            font-size: 2.5rem;
+            color: #1B4332;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* Seção Benefícios (Grid Orgânico) */
+        .benefits-section {
+            padding: 60px 20px;
+            background-color: transparent;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1100px;
+            margin: 50px auto 0;
+            justify-content: center;
+        }
+
+        .benefit-card {
+            background: #fff;
+            padding: 40px 30px;
+            border-radius: 24px 60px 24px 60px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(0,0,0,0.03);
+            text-align: left;
+        }
+        .benefit-card:nth-child(2) { border-radius: 60px 24px 60px 24px; }
+        .benefit-card:nth-child(3) { border-radius: 24px 60px 24px 60px; }
+
+        .benefit-card:hover { transform: translateY(-10px); }
+
+        .benefit-icon { font-size: 2.5rem; margin-bottom: 20px; display: inline-block; background: #fff; width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .benefit-card h3 { font-family: var(--font-titulos); color: #1B4332; margin-bottom: 15px; font-size: 1.4rem; }
+        .benefit-card p { color: #555; line-height: 1.6; }
+
         /* APP-LIKE PRICING SECTION */
         .app-pricing-section {
             background-color: #1B4332;
