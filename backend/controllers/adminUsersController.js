@@ -175,11 +175,9 @@ exports.getPsychologistFullDetails = async (req, res) => {
             { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => [{ count: 0 }]); // Fix: removed incorrect fallback to profile_appearances
         
-        let matchesCountFixed = matches.length;
-        if (matchesCountFixed === 0) matchesCountFixed = psychologist.profile_appearances || 0;
+        let matchesCountFixed = matches.length + (psychologist.profile_appearances || 0);
         
-        let wpClicksFixed = whatsappStats[0] ? parseInt(whatsappStats[0].count) : 0;
-        if (wpClicksFixed === 0) wpClicksFixed = psychologist.whatsapp_clicks || 0;
+        let wpClicksFixed = (whatsappStats[0] ? parseInt(whatsappStats[0].count) : 0) + (psychologist.whatsapp_clicks || 0);
         
         let profileViewsFixed = profileViewsStats[0] ? parseInt(profileViewsStats[0].count) : 0;
 
@@ -546,9 +544,9 @@ exports.getPendingActions = async (req, res) => {
                 const profView = profileViewsCount.find(v => v.psychologistId == p.id);
                 let views = profView ? parseInt(profView.count, 10) : 0;
                 
-                // Fallbacks seguros caso os logs antigos não existam, usa o consolidado do psicólogo
-                if (appearances === 0) appearances = p.profile_appearances || 0;
-                if (clicks === 0) clicks = p.whatsapp_clicks || 0;
+                // Soma segura: Logs Novos + Histórico Antigo (evita zerar histórico quando o primeiro log novo entra)
+                appearances += (p.profile_appearances || 0);
+                clicks += (p.whatsapp_clicks || 0);
 
                 pendingList.push({ 
                     ...p.toJSON(), 
