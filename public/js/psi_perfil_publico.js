@@ -391,6 +391,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             texto.textContent = `${dateStr}, às ${timeStr}`;
                             badge.style.display = 'flex';
                         }
+                        
+                        const badgeMobile = document.getElementById('proximo-horario-badge-mobile');
+                        const textoMobile = document.getElementById('proximo-horario-texto-mobile');
+                        if (badgeMobile && textoMobile) {
+                            textoMobile.textContent = `${dateStr}, às ${timeStr}`;
+                            badgeMobile.style.display = 'flex';
+                        }
                     }
                 }).catch(() => {});
         } catch (e) {}
