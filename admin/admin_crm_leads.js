@@ -220,16 +220,14 @@ window.initializePage = function() {
             
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             
-            // Default link (usado para Web e iOS)
-            let whatsappUrl = `https://wa.me/${telefoneNum}?text=${encodeURIComponent(msgFinal)}`;
-            
-            // Força o WhatsApp Business no Android via Intent (único que suporta 100%)
-            if (/Android/i.test(navigator.userAgent)) {
-                whatsappUrl = `intent://send?phone=${telefoneNum}&text=${encodeURIComponent(msgFinal)}#Intent;package=com.whatsapp.w4b;scheme=whatsapp;end`;
-            }
+            const linkDesktop = `https://web.whatsapp.com/send?phone=${telefoneNum}&text=${encodeURIComponent(msgFinal)}`;
+            const linkMobile = `whatsapp://send?phone=${telefoneNum}&text=${encodeURIComponent(msgFinal)}`;
 
-            if (isMobile) window.location.href = whatsappUrl;
-            else window.open(whatsappUrl, '_blank');
+            if (isMobile) {
+                window.location.href = linkMobile;
+            } else {
+                window.open(linkDesktop, '_blank');
+            }
 
             const req = await fetch(`${window.API_BASE_URL || ''}/api/admin/leads/${id}/contato`, { 
                 method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('Yelo_token')}` } 
