@@ -123,172 +123,163 @@
         .diferenciais-section { background-color: var(--off-white) !important; }
         .match-section { background-color: #ffffff !important; }
         .faq-psi-section { background-color: #ffffff !important; }
-        .plans-section { background-color: #1B4332 !important; color: #fff; }
-
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 30px;
-            max-width: 1000px;
-            margin: 40px auto 0; /* Desce o card para revelar a onda do Hero */
-            background: #fff;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.08);
-            border: 1px solid rgba(0,0,0,0.05);
-            position: relative;
-            z-index: 2;
-        }
-
-        .stat-item {
-            text-align: center;
-        }
-
-        .stat-number {
-            display: block;
-            font-family: var(--font-titulos);
-            font-size: 2.5rem;
-            color: #1B4332;
-            font-weight: 700;
-        }
-
-        .stat-label {
-            font-size: 1rem;
-            color: #666;
-            font-weight: 500;
-        }
-
-        /* Seção Benefícios (Grid Orgânico) */
-        .benefits-section {
-            padding: 60px 20px;
-            background-color: transparent;
-        }
-
-        .benefits-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            max-width: 1100px;
-            margin: 50px auto 0;
-            justify-content: center;
-        }
-
-        .benefit-card {
-            background: #fff;
-            padding: 40px 30px;
-            border-radius: 24px 60px 24px 60px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.03);
-            transition: transform 0.3s ease;
-            border: 1px solid rgba(0,0,0,0.03);
-            text-align: left;
-        }
-        .benefit-card:nth-child(2) { border-radius: 60px 24px 60px 24px; }
-        .benefit-card:nth-child(3) { border-radius: 24px 60px 24px 60px; }
-
-        .benefit-card:hover { transform: translateY(-10px); }
-
-        .benefit-icon { font-size: 2.5rem; margin-bottom: 20px; display: inline-block; background: #fff; width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .benefit-card h3 { font-family: var(--font-titulos); color: #1B4332; margin-bottom: 15px; font-size: 1.4rem; }
-        .benefit-card p { color: #555; line-height: 1.6; }
-
-        /* Seção Planos */
-        .plans-section {
-            padding: 80px 20px 100px 20px;
+        /* APP-LIKE PRICING SECTION */
+        .app-pricing-section {
             background-color: #1B4332;
+            padding: 60px 0 80px 0;
             color: #fff;
-            text-align: center;
             position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
+            text-align: center;
         }
-
-        .plans-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
-            max-width: 1000px;
-            margin: 50px auto 0;
-            justify-content: center;
+        
+        .app-pricing-slider {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            gap: 20px;
+            padding: 20px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
             align-items: stretch;
         }
+        .app-pricing-slider::-webkit-scrollbar { display: none; }
 
-        .plan-card {
-            background: #fff;
-            border: 1px solid #e0e0e0;
+        .app-pricing-card {
+            flex: 0 0 85%;
+            scroll-snap-align: center;
+            background: rgba(255, 255, 255, 0.98);
             border-radius: 24px;
-            padding: 40px 30px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            position: relative;
-            height: 100%;
+            padding: 30px 24px;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.04);
-        }
-        .plan-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 35px rgba(0,0,0,0.1);
+            color: #333;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            position: relative;
+            min-width: 280px;
+            text-decoration: none;
         }
 
-        .plan-card.featured {
+        .app-pricing-card.featured {
             border: 3px solid var(--cor-Yelo);
-            transform: scale(1.05);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            background: #fff;
             z-index: 2;
-            background-color: #fff;
         }
-        .plan-card.featured:hover { transform: scale(1.05) translateY(-8px); }
 
-        .plan-tag {
+        .app-pricing-tag {
+            background: var(--cor-Yelo);
+            color: #1B4332;
+            font-size: 0.8rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 6px 14px;
+            border-radius: 50px;
             position: absolute;
             top: -15px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: var(--cor-Yelo);
-            color: var(--verde-escuro);
-            padding: 6px 20px;
-            border-radius: 50px;
-            font-size: 0.85rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            box-shadow: 0 4px 10px rgba(255, 238, 140, 0.4);
+            white-space: nowrap;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
-        .plan-name { font-family: var(--font-titulos); font-size: 1.5rem; color: #333; margin-bottom: 10px; }
-        .plan-price { font-size: 1.2rem; font-weight: 700; color: #1B4332; margin-bottom: 20px; opacity: 0.8; }
-        .plan-price span { font-size: 1rem; color: #666; font-weight: 400; }
+        .app-pricing-title {
+            font-family: var(--font-titulos);
+            font-size: 1.4rem;
+            margin-bottom: 5px;
+            color: #1B4332;
+        }
         
-        .plan-features { list-style: none; padding: 0; margin: 0 0 30px 0; text-align: left; flex-grow: 1; }
-        .plan-features li { padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05); color: #555; display: flex; gap: 10px; align-items: center; }
-        .plan-features li::before { content: '✓'; color: #1B4332; font-weight: bold; }
+        .app-pricing-subtitle {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 25px;
+            font-weight: 400;
+        }
 
-        /* Botões dos Planos */
-        .plan-card .btn {
+        .app-pricing-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 30px 0;
+            text-align: left;
+            flex-grow: 1;
+        }
+        .app-pricing-features li {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            font-size: 0.95rem;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .app-pricing-features li:last-child {
+            border-bottom: none;
+        }
+
+        .app-pricing-btn {
             margin-top: auto;
             border-radius: 50px;
             padding: 14px 20px;
             font-weight: 700;
             font-size: 1.05rem;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: block;
             text-align: center;
+            transition: all 0.3s ease;
         }
-        .plan-card .btn-outline {
+        .app-pricing-btn-outline {
             color: #1B4332;
             border: 2px solid #1B4332;
             background: transparent;
         }
-        .plan-card .btn-outline:hover { background: #1B4332; color: #fff; }
-        
-        .plan-card .btn-cta-principal {
-            background-color: #1B4332;
+        .app-pricing-card.featured .app-pricing-btn {
+            background: #1B4332;
             color: #fff;
             border: none;
-            box-shadow: 0 4px 15px rgba(27,67,50,0.2);
         }
-        .plan-card .btn-cta-principal:hover { background-color: #143d2e; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(27,67,50,0.3); }
+
+        /* Dots Indicator */
+        .app-pricing-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .app-pricing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+        }
+        .app-pricing-dot.active {
+            background: var(--cor-Yelo);
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        @media (min-width: 992px) {
+            .app-pricing-section { padding: 100px 0 120px 0; }
+            .app-pricing-slider {
+                max-width: 1100px;
+                margin: 40px auto 0;
+                grid-template-columns: repeat(3, 1fr);
+                display: grid;
+                overflow: visible;
+                padding: 0 20px;
+            }
+            .app-pricing-card {
+                flex: auto;
+                padding: 40px 30px;
+            }
+            .app-pricing-card.featured {
+                transform: scale(1.05);
+            }
+            .app-pricing-card:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+            }
+            .app-pricing-card.featured:hover {
+                transform: scale(1.05) translateY(-8px);
+            }
+            .app-pricing-dots { display: none; }
+        }
 
         /* CTA Final */
         .cta-section {
@@ -511,7 +502,7 @@
         /* Responsividade e Ajustes Desktop */
         @media (min-width: 992px) {
             /* Força 3 colunas lado a lado no desktop */
-            .benefits-grid, .plans-grid {
+            .benefits-grid {
                 grid-template-columns: repeat(3, 1fr);
             }
         }
@@ -523,7 +514,7 @@
             .cta-section { padding-bottom: 60px; } 
 
             /* Scroll Snap Horizontal para Cards no Mobile */
-            .benefits-grid, .plans-grid, .diferenciais-grid, .depoimentos-grid {
+            .benefits-grid, .diferenciais-grid, .depoimentos-grid {
                 display: flex;
                 overflow-x: auto;
                 scroll-snap-type: x mandatory;
@@ -535,19 +526,15 @@
                 justify-content: flex-start;
                 align-items: stretch;
             }
-            .benefits-grid::-webkit-scrollbar, .plans-grid::-webkit-scrollbar, .diferenciais-grid::-webkit-scrollbar, .depoimentos-grid::-webkit-scrollbar { display: none; }
+            .benefits-grid::-webkit-scrollbar::-webkit-scrollbar, .diferenciais-grid::-webkit-scrollbar, .depoimentos-grid::-webkit-scrollbar { display: none; }
             
-            .benefit-card, .plan-card, .diferencial-card, .depoimento-card {
+            .benefit-card, .diferencial-card, .depoimento-card {
                 flex: 0 0 85%;
                 scroll-snap-align: center;
                 min-width: 280px;
             }
 
-            .plans-section { padding: 50px 20px 60px 20px; }
-            .plan-card { padding: 30px 20px; border-radius: 16px; }
-            .plan-name { font-size: 1.3rem; }
-            .plan-price { font-size: 1.1rem; }
-            .plan-features li { padding: 8px 0; font-size: 0.95rem; }
+            
 
             /* Dica de Scroll Mobile (Mouse) */
             .mobile-scroll-hint {
@@ -788,61 +775,117 @@
             </div>
         </section>
 
-        <!-- PLANOS -->
-        <section class="plans-section">
+        <!-- PLANOS (App-Like Mobile First) -->
+        <section class="app-pricing-section">
             <div class="wave-divider wave-bottom" style="z-index: 1;">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
                     <path fill="#fdfaf6" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
                 </svg>
             </div>
+            
             <div class="container" style="position: relative; z-index: 2;">
                 <h2 class="titulo-secao" style="color: #fff;">Planos transparentes</h2>
-                <p class="subtitulo-secao" style="color: rgba(255,255,255,0.9);">Escolha a opção que melhor se adapta ao momento da sua carreira. Sem fidelidade, cancele quando quiser.</p>
+                <p class="subtitulo-secao" style="color: rgba(255,255,255,0.9);">Sem fidelidade, cancele quando quiser.</p>
 
-                <div class="plans-grid">
+                <div class="app-pricing-slider" id="pricingSlider">
                     <!-- Plano Essencial -->
-                    <div class="plan-card">
-                        <h3 class="plan-name">Essencial</h3>
-                        <div class="plan-price">Disponível na plataforma</div>
-                        <ul class="plan-features">
-                            <li>Perfil verificado</li>
-                            <li>Match Inteligente</li>
-                            <li>Página Pública de Divulgação</li>
-                            <li>Acesso ao Fórum</li>
+                    <a href="/psi_questionario" class="app-pricing-card">
+                        <h3 class="app-pricing-title">Essencial</h3>
+                        <div class="app-pricing-subtitle">Iniciando na plataforma</div>
+                        <ul class="app-pricing-features">
+                            <li>
+                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                Perfil verificado
+                            </li>
+                            <li>
+                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                Match Inteligente
+                            </li>
+                            <li>
+                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                Página Pública
+                            </li>
                         </ul>
-                    <a href="/psi_questionario" class="btn btn-outline">Começar na Yelo</a>
-                    </div>
+                        <div class="app-pricing-btn app-pricing-btn-outline">Começar na Yelo</div>
+                    </a>
 
                     <!-- Plano Clínico (Destaque) -->
-                    <div class="plan-card featured">
-                        <span class="plan-tag">Mais Popular</span>
-                        <h3 class="plan-name">Clínico</h3>
-                        <div class="plan-price">Disponível na plataforma</div>
-                        <ul class="plan-features">
-                            <li>Perfil destacado</li>
-                            <li>Intervisão e Workshops</li>
-                            <li>Indicadores de Conversão</li>
-                            <li>URL Personalizada</li>
+                    <a href="/psi_questionario" class="app-pricing-card featured">
+                        <div class="app-pricing-tag">Mais Popular</div>
+                        <h3 class="app-pricing-title">Clínico</h3>
+                        <div class="app-pricing-subtitle">Alavanque seus atendimentos</div>
+                        <ul class="app-pricing-features">
+                            <li>
+                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                Perfil destacado
+                            </li>
+                            <li>
+                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                Intervisão e Workshops
+                            </li>
+                            <li>
+                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                Indicadores de Conversão
+                            </li>
                         </ul>
-                    <a href="/psi_questionario" class="btn btn-cta-principal">Começar na Yelo</a>
-                    </div>
+                        <div class="app-pricing-btn">Começar na Yelo</div>
+                    </a>
 
                     <!-- Plano Referência -->
-                    <div class="plan-card">
-                        <h3 class="plan-name">Referência</h3>
-                        <div class="plan-price">Disponível na plataforma</div>
-                        <ul class="plan-features">
-                            <li>Máxima visibilidade</li>
-                            <li>Supervisão Clínica</li>
-                            <li>Destaque nos Resultados</li>
-                            <li>Análise de Perfil com IA</li>
+                    <a href="/psi_questionario" class="app-pricing-card">
+                        <h3 class="app-pricing-title">Referência</h3>
+                        <div class="app-pricing-subtitle">Para profissionais estabelecidos</div>
+                        <ul class="app-pricing-features">
+                            <li>
+                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                Máxima visibilidade
+                            </li>
+                            <li>
+                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                Supervisão Clínica
+                            </li>
+                            <li>
+                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                Destaque em Buscas
+                            </li>
                         </ul>
-                    <a href="/psi_questionario" class="btn btn-outline">Começar na Yelo</a>
-                    </div>
+                        <div class="app-pricing-btn app-pricing-btn-outline">Começar na Yelo</div>
+                    </a>
                 </div>
-                <div class="mobile-scroll-hint">
-                    <div class="scroll-indicator-step"><span class="mouse light"><span class="wheel"></span></span></div>
+
+                <div class="app-pricing-dots" id="pricingDots">
+                    <div class="app-pricing-dot"></div>
+                    <div class="app-pricing-dot active"></div>
+                    <div class="app-pricing-dot"></div>
                 </div>
+                
+                <script>
+                    document.addEventListener("DOMContentLoaded", function() {
+                        const slider = document.getElementById('pricingSlider');
+                        const dots = document.querySelectorAll('#pricingDots .app-pricing-dot');
+                        if(slider && dots.length > 0) {
+                            // Inicialmente tenta centralizar no Clínico se for mobile
+                            if (window.innerWidth < 992) {
+                                setTimeout(() => {
+                                    const cardWidth = slider.children[1].offsetWidth;
+                                    slider.scrollTo({ left: cardWidth - 20, behavior: 'smooth' });
+                                }, 300);
+                            }
+
+                            slider.addEventListener('scroll', () => {
+                                const scrollPos = slider.scrollLeft;
+                                const cardWidth = slider.offsetWidth;
+                                let index = Math.round(scrollPos / cardWidth);
+                                if(index < 0) index = 0;
+                                if(index > 2) index = 2;
+                                dots.forEach((d, i) => {
+                                    if(i === index) d.classList.add('active');
+                                    else d.classList.remove('active');
+                                });
+                            });
+                        }
+                    });
+                </script>
             </div>
         </section>
 
