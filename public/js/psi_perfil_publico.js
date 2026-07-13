@@ -361,6 +361,39 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Configura modal de avaliação
         setupReviewModal();
+
+        // Próximo Horário Disponível (A partir de 2h)
+        try {
+            fetch(`${API_BASE_URL}/api/psychologists/${psi.slug}/availability`)
+                .then(res => res.ok ? res.json() : [])
+                .then(slots => {
+                    if (!Array.isArray(slots)) return;
+                    const nowPlus2h = new Date(Date.now() + 2 * 60 * 60 * 1000);
+                    const futureSlots = slots
+                        .filter(s => new Date(s.start) > nowPlus2h && s.status === 'available')
+                        .sort((a, b) => new Date(a.start) - new Date(b.start));
+                        
+                    if (futureSlots.length > 0) {
+                        const nextSlot = new Date(futureSlots[0].start);
+                        const now = new Date();
+                        const tomorrow = new Date(now);
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        
+                        let dateStr = nextSlot.toDateString() === now.toDateString() ? 'Hoje' 
+                                    : nextSlot.toDateString() === tomorrow.toDateString() ? 'Amanhã' 
+                                    : nextSlot.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                        
+                        const timeStr = nextSlot.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
+                        
+                        const badge = document.getElementById('proximo-horario-badge');
+                        const texto = document.getElementById('proximo-horario-texto');
+                        if (badge && texto) {
+                            texto.textContent = `${dateStr}, às ${timeStr}`;
+                            badge.style.display = 'flex';
+                        }
+                    }
+                }).catch(() => {});
+        } catch (e) {}
     }
 
     function populateTags(containerId, tagsArray) {
