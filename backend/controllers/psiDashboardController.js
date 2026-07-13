@@ -55,7 +55,7 @@ exports.getStats = async (req, res) => {
         const answerCount = parseInt(answerCountResult[0]?.count || 0, 10);
 
         let whatsappClicks = parseInt(clicksResult[0]?.total || clicksResult[0]?.count || 0, 10);
-        if (!period || period === 'all') whatsappClicks += (psychologist?.whatsapp_clicks || 0);
+        if (!period || period === 'all' || period === 'all_time') whatsappClicks += (psychologist?.whatsapp_clicks || 0);
         
         const whatsappMatch = parseInt(clicksResult[0]?.match_clicks || 0, 10);
         const whatsappDirect = parseInt(clicksResult[0]?.direct_clicks || 0, 10);
@@ -69,7 +69,7 @@ exports.getStats = async (req, res) => {
         const profileViews7d = parseInt(appearancesResult[0]?.last_7d || 0, 10);
         
         let matchImpressions = parseInt(matchesResult[0]?.total || matchesResult[0]?.count || 0, 10);
-        if (!period || period === 'all') matchImpressions += (psychologist?.profile_appearances || 0);
+        if (!period || period === 'all' || period === 'all_time') matchImpressions += (psychologist?.profile_appearances || 0);
         
         const matchImpressionsToday = parseInt(matchesResult[0]?.today || 0, 10);
         const matchImpressions7d = parseInt(matchesResult[0]?.last_7d || 0, 10);

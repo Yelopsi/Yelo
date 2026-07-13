@@ -29,8 +29,8 @@
             
             console.log("📊 Dados de Stats recebidos do backend:", stats);
 
-            const profileViews = stats.profileViews || stats.profileAppearances || 0;
-            const matchImpressions = stats.matchImpressions > 0 ? stats.matchImpressions : profileViews;
+            const profileViews = stats.profileViews || 0;
+            const matchImpressions = stats.matchImpressions || 0;
             const whatsappClicks = stats.whatsappClicks || 0;
 
             if(document.getElementById('hero-contacts')) document.getElementById('hero-contacts').innerHTML = stats.last7DaysStats?.whatsappClicks > 0 ? `+${stats.last7DaysStats.whatsappClicks}` : '<span style="font-size: 1.1rem; opacity: 0.8; font-weight: 500;">Nenhum nesta semana</span>';
