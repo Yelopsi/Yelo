@@ -364,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Próximo Horário Disponível (A partir de 2h)
         try {
-            fetch(`${API_BASE_URL}/api/psychologists/${psi.slug}/availability`)
+            fetch(`${API_BASE_URL}/api/public/psychologists/${psi.slug}/availability`)
                 .then(res => res.ok ? res.json() : [])
                 .then(slots => {
                     if (!Array.isArray(slots)) return;
