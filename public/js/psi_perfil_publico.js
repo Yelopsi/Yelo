@@ -397,6 +397,53 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (badgeMobile && textoMobile) {
                             textoMobile.textContent = `${dateStr}, às ${timeStr}`;
                             badgeMobile.style.display = 'flex';
+                            
+                            // Lógica de fechamento (Click/Tap no X)
+                            const closeBtn = document.getElementById('close-badge-mobile');
+                            if (closeBtn) {
+                                closeBtn.onclick = (e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    badgeMobile.style.opacity = '0';
+                                    setTimeout(() => badgeMobile.style.display = 'none', 300);
+                                };
+                            }
+                            
+                            // Lógica de Swipe
+                            let startX = 0;
+                            let currentX = 0;
+                            let isDragging = false;
+                            
+                            badgeMobile.addEventListener('touchstart', (e) => {
+                                startX = e.touches[0].clientX;
+                                currentX = startX;
+                                isDragging = true;
+                                badgeMobile.style.transition = 'none';
+                                badgeMobile.style.animation = 'none';
+                            }, {passive: true});
+                            
+                            badgeMobile.addEventListener('touchmove', (e) => {
+                                if (!isDragging) return;
+                                currentX = e.touches[0].clientX;
+                                const diff = currentX - startX;
+                                badgeMobile.style.transform = `translateX(${diff}px)`;
+                            }, {passive: true});
+                            
+                            badgeMobile.addEventListener('touchend', (e) => {
+                                if (!isDragging) return;
+                                isDragging = false;
+                                const diff = currentX - startX;
+                                badgeMobile.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+                                
+                                if (Math.abs(diff) > 50) {
+                                    badgeMobile.style.transform = `translateX(${diff > 0 ? 150 : -150}%)`;
+                                    badgeMobile.style.opacity = '0';
+                                    setTimeout(() => badgeMobile.style.display = 'none', 300);
+                                } else {
+                                    badgeMobile.style.transform = '';
+                                    setTimeout(() => { badgeMobile.style.animation = ''; }, 300);
+                                }
+                            });
                         }
                     }
                 }).catch(() => {});

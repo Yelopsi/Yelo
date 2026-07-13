@@ -437,10 +437,13 @@
         <div class="mobile-sticky-cta" style="width: 100%; box-sizing: border-box;">
             
             <!-- Gatilho de Próximo Horário (Mobile Fixed) -->
-            <div style="position: absolute; top: -50px; left: 0; width: 100%; display: flex; justify-content: center; pointer-events: none;">
-                <div id="proximo-horario-badge-mobile" style="pointer-events: auto; display: none; align-items: center; justify-content: center; gap: 8px; background: #dcfce7; padding: 8px 16px; border-radius: 50px; border: 1px solid #86efac; text-align: center; animation: float-badge 3s ease-in-out infinite; box-shadow: 0 4px 10px rgba(22, 163, 74, 0.15);">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    <span style="color: #15803d; font-size: 0.85rem; font-weight: 700;">Próximo horário: <span id="proximo-horario-texto-mobile" style="text-decoration: underline;"></span></span>
+            <div style="position: absolute; top: -50px; left: 0; width: 100%; display: flex; justify-content: center; pointer-events: none; overflow: hidden; padding: 0 15px; box-sizing: border-box;">
+                <div id="proximo-horario-badge-mobile" style="pointer-events: auto; display: none; align-items: center; justify-content: center; gap: 8px; background: #dcfce7; padding: 8px 16px; border-radius: 50px; border: 1px solid #86efac; text-align: center; animation: float-badge 3s ease-in-out infinite; box-shadow: 0 4px 10px rgba(22, 163, 74, 0.15); transition: transform 0.3s ease-out, opacity 0.3s ease-out; touch-action: pan-y; width: fit-content; max-width: 100%; position: relative;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span style="color: #15803d; font-size: 0.85rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Próximo horário: <span id="proximo-horario-texto-mobile" style="text-decoration: underline;"></span></span>
+                    <button id="close-badge-mobile" style="background: transparent; border: none; padding: 4px; margin-left: 2px; color: #15803d; opacity: 0.7; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" aria-label="Fechar alerta de horário">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
                 </div>
             </div>
 
