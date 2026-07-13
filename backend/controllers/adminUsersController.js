@@ -173,15 +173,23 @@ exports.getPsychologistFullDetails = async (req, res) => {
         const profileViewsStats = await db.sequelize.query(
             `SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :id`,
             { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
-        ).catch(() => [{ count: psychologist.profile_appearances || 0 }]);
+        ).catch(() => [{ count: 0 }]); // Fix: removed incorrect fallback to profile_appearances
         
+        let matchesCountFixed = matches.length;
+        if (matchesCountFixed === 0) matchesCountFixed = psychologist.profile_appearances || 0;
+        
+        let wpClicksFixed = whatsappStats[0] ? parseInt(whatsappStats[0].count) : 0;
+        if (wpClicksFixed === 0) wpClicksFixed = psychologist.whatsapp_clicks || 0;
+        
+        let profileViewsFixed = profileViewsStats[0] ? parseInt(profileViewsStats[0].count) : 0;
+
         res.json({
             psychologist,
             stats: {
-                matches: matchesCount,
-                whatsappClicks: whatsappStats[0] ? parseInt(whatsappStats[0].count) : 0,
+                matches: matchesCountFixed,
+                whatsappClicks: wpClicksFixed,
                 forumActivities: forumPosts.length + forumComments.length,
-                profileViews: profileViewsStats[0] ? parseInt(profileViewsStats[0].count) : (psychologist.profile_appearances || 0)
+                profileViews: profileViewsFixed
             },
             blogPosts,
             forumPosts,
