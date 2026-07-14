@@ -1181,14 +1181,24 @@ exports.getFounderMetrics = async (req, res) => {
                 FROM "MatchEvents" 
                 WHERE "psychologistId" IN (:activeTrialIds) 
                 GROUP BY "psychologistId"
-            `, { replacements: { activeTrialIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+            `, { replacements: { activeTrialIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`
+                SELECT "PsychologistId" as "psychologistId", COUNT(*) as count 
+                FROM "MatchEvents" 
+                WHERE "PsychologistId" IN (:activeTrialIds) 
+                GROUP BY "PsychologistId"
+            `, { replacements: { activeTrialIds }, type: db.sequelize.QueryTypes.SELECT })).catch(() => []);
 
             profileViewsCount = await db.sequelize.query(`
                 SELECT "psychologistId", COUNT(*) as count 
                 FROM "ProfileAppearanceLogs" 
                 WHERE "psychologistId" IN (:activeTrialIds) 
                 GROUP BY "psychologistId"
-            `, { replacements: { activeTrialIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+            `, { replacements: { activeTrialIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`
+                SELECT "PsychologistId" as "psychologistId", COUNT(*) as count 
+                FROM "ProfileAppearanceLogs" 
+                WHERE "PsychologistId" IN (:activeTrialIds) 
+                GROUP BY "PsychologistId"
+            `, { replacements: { activeTrialIds }, type: db.sequelize.QueryTypes.SELECT })).catch(() => []);
         }
 
         // Associa o status de fechamento ao pipeline e corrige a contagem de cliques
@@ -1198,7 +1208,7 @@ exports.getFounderMetrics = async (req, res) => {
             tp.dealClosed = closedDeals.length > 0;
             tp.closedDealsCount = closedDeals.length;
             
-            tp.whatsapp_clicks = Math.max(tp.whatsapp_clicks || 0, logs.length);
+            tp.whatsapp_clicks = (tp.whatsapp_clicks || 0) + logs.length;
             
             const matchEv = matchEventsCount.find(m => m.psychologistId == tp.id);
             const profView = profileViewsCount.find(m => m.psychologistId == tp.id);
@@ -1206,7 +1216,7 @@ exports.getFounderMetrics = async (req, res) => {
             const exactMatches = matchEv ? parseInt(matchEv.count) : 0;
             const exactViews = profView ? parseInt(profView.count) : 0;
             
-            if (exactMatches > (tp.profile_appearances || 0)) tp.profile_appearances = exactMatches;
+            tp.profile_appearances = (tp.profile_appearances || 0) + exactMatches;
             tp.profile_views = exactViews;
         });
 

@@ -522,14 +522,24 @@ exports.getPendingActions = async (req, res) => {
                 FROM "MatchEvents" 
                 WHERE "psychologistId" IN (:churnIds) 
                 GROUP BY "psychologistId"
-            `, { replacements: { churnIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+            `, { replacements: { churnIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`
+                SELECT "PsychologistId" as "psychologistId", COUNT(*) as count 
+                FROM "MatchEvents" 
+                WHERE "PsychologistId" IN (:churnIds) 
+                GROUP BY "PsychologistId"
+            `, { replacements: { churnIds }, type: db.sequelize.QueryTypes.SELECT })).catch(() => []);
 
             const profileViewsCount = await db.sequelize.query(`
                 SELECT "psychologistId", COUNT(*) as count 
                 FROM "ProfileAppearanceLogs" 
                 WHERE "psychologistId" IN (:churnIds) 
                 GROUP BY "psychologistId"
-            `, { replacements: { churnIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+            `, { replacements: { churnIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`
+                SELECT "PsychologistId" as "psychologistId", COUNT(*) as count 
+                FROM "ProfileAppearanceLogs" 
+                WHERE "PsychologistId" IN (:churnIds) 
+                GROUP BY "PsychologistId"
+            `, { replacements: { churnIds }, type: db.sequelize.QueryTypes.SELECT })).catch(() => []);
 
             churnCandidates.forEach(p => {
                 const logs = wppLogs.filter(l => l.psychologistId === p.id);
@@ -662,14 +672,24 @@ exports.getPendingActions = async (req, res) => {
                 FROM "MatchEvents" 
                 WHERE "psychologistId" IN (:expIds) 
                 GROUP BY "psychologistId"
-            `, { replacements: { expIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+            `, { replacements: { expIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`
+                SELECT "PsychologistId" as "psychologistId", COUNT(*) as count 
+                FROM "MatchEvents" 
+                WHERE "PsychologistId" IN (:expIds) 
+                GROUP BY "PsychologistId"
+            `, { replacements: { expIds }, type: db.sequelize.QueryTypes.SELECT })).catch(() => []);
             
             const profileViewsExpCount = await db.sequelize.query(`
                 SELECT "psychologistId", COUNT(*) as count 
                 FROM "ProfileAppearanceLogs" 
                 WHERE "psychologistId" IN (:expIds) 
                 GROUP BY "psychologistId"
-            `, { replacements: { expIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+            `, { replacements: { expIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`
+                SELECT "PsychologistId" as "psychologistId", COUNT(*) as count 
+                FROM "ProfileAppearanceLogs" 
+                WHERE "PsychologistId" IN (:expIds) 
+                GROUP BY "PsychologistId"
+            `, { replacements: { expIds }, type: db.sequelize.QueryTypes.SELECT })).catch(() => []);
 
             expiringCandidates.forEach(p => {
                 const logs = wppLogsExp.filter(l => l.psychologistId === p.id);
@@ -682,9 +702,9 @@ exports.getPendingActions = async (req, res) => {
                 
                 let appearances = p.profile_appearances || 0;
                 let views = 0;
-                if (matchEv) appearances = Math.max(appearances, parseInt(matchEv.count));
-                if (profView) views = parseInt(profView.count);
-                const clicks = Math.max(p.whatsapp_clicks || 0, logs.length);
+                if (matchEv) appearances += parseInt(matchEv.count, 10);
+                if (profView) views = parseInt(profView.count, 10);
+                const clicks = (p.whatsapp_clicks || 0) + logs.length;
                 
                 // dias restantes
                 const diffTime = new Date(p.planExpiresAt) - now;
