@@ -131,8 +131,8 @@ exports.getCashFlow = async (req, res) => {
         const cashFlowByMonth = {};
 
         allPayments.forEach(payment => {
-            // Usa paymentDate se existir, ou dateCreated, ou clientPaymentDate
-            const dateStr = payment.paymentDate || payment.clientPaymentDate || payment.dateCreated;
+            // Prioriza a data em que o cliente EFETIVAMENTE pagou, e não a data que o Asaas liberou o saldo
+            const dateStr = payment.clientPaymentDate || payment.confirmedDate || payment.paymentDate || payment.dateCreated;
             if (!dateStr) return;
             
             // dateStr vem no formato YYYY-MM-DD
