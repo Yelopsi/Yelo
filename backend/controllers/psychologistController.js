@@ -602,14 +602,25 @@ exports.getUnansweredQuestionsCount = async (req, res) => {
         
         const answeredIds = answeredQuestionIds.map(a => a.questionId);
 
+        // 1.5. Pega os IDs de todas as perguntas que este psicólogo IGNOROU
+        const ignoredQuestionIds = await db.QuestionIgnore ? await db.QuestionIgnore.findAll({
+            where: { psychologistId: psychologistId },
+            attributes: ['questionId'],
+            raw: true
+        }).catch(() => []) : [];
+        
+        const ignoredIds = ignoredQuestionIds.map(a => a.questionId);
+        
+        const excludedIds = [...new Set([...answeredIds, ...ignoredIds])];
+
         // 2. Conta todas as perguntas que estão 'approved' ou 'answered'
-        //    E que NÃO ESTÃO na lista de perguntas já respondidas por este psicólogo
+        //    E que NÃO ESTÃO na lista de perguntas já respondidas ou ignoradas por este psicólogo
         const whereClause = {
             status: { [Op.in]: ['approved', 'answered'] }
         };
 
-        if (answeredIds.length > 0) {
-            whereClause.id = { [Op.notIn]: answeredIds };
+        if (excludedIds.length > 0) {
+            whereClause.id = { [Op.notIn]: excludedIds };
         }
 
         const count = await db.Question.count({
