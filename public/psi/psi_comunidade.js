@@ -94,7 +94,8 @@
                 .then(data => {
                     const alertBox = document.getElementById('qna-new-questions-alert');
                     if (data.count > 0 && alertBox) {
-                        alertBox.innerHTML = `👋 Olá! Temos <strong>${data.count} dúvida(s)</strong> aguardando. Uma resposta sua aproxima você dos pacientes e ajuda a desmistificar o processo terapêutico.`;
+                        const palavra = data.count === 1 ? 'dúvida' : 'dúvidas';
+                        alertBox.innerHTML = `👋 Olá! Temos <strong>${data.count} ${palavra}</strong> aguardando. Uma resposta sua aproxima você dos pacientes e ajuda a desmistificar o processo terapêutico.`;
                         alertBox.style.display = 'block';
                     }
                 }).catch(() => {});
