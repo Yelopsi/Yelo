@@ -95,3 +95,69 @@ exports.deleteExpense = async (req, res) => {
         res.status(500).json({ error: "Erro interno ao excluir despesa." });
     }
 };
+
+// GET /api/admin/cash-flow
+exports.getCashFlow = async (req, res) => {
+    try {
+        let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
+        ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, '');
+        if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
+            ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
+        }
+        const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
+
+        if (!ASAAS_API_KEY) {
+            return res.status(500).json({ error: "ASAAS_API_KEY não configurada." });
+        }
+
+        // Fetch pagamentos CONFIRMED
+        const resConfirmed = await fetch(`${ASAAS_API_URL}/payments?status=CONFIRMED&limit=100`, {
+            headers: { 'access_token': ASAAS_API_KEY }
+        });
+        const dataConfirmed = await resConfirmed.json();
+
+        // Fetch pagamentos RECEIVED
+        const resReceived = await fetch(`${ASAAS_API_URL}/payments?status=RECEIVED&limit=100`, {
+            headers: { 'access_token': ASAAS_API_KEY }
+        });
+        const dataReceived = await resReceived.json();
+
+        const allPayments = [
+            ...(dataConfirmed.data || []),
+            ...(dataReceived.data || [])
+        ];
+
+        // Agrupar por mês
+        const cashFlowByMonth = {};
+
+        allPayments.forEach(payment => {
+            // Usa paymentDate se existir, ou dateCreated, ou clientPaymentDate
+            const dateStr = payment.paymentDate || payment.clientPaymentDate || payment.dateCreated;
+            if (!dateStr) return;
+            
+            // dateStr vem no formato YYYY-MM-DD
+            const monthYear = dateStr.substring(0, 7); // "YYYY-MM"
+
+            if (!cashFlowByMonth[monthYear]) {
+                cashFlowByMonth[monthYear] = {
+                    monthYear,
+                    grossValue: 0,
+                    netValue: 0,
+                    count: 0
+                };
+            }
+
+            cashFlowByMonth[monthYear].grossValue += (payment.value || 0);
+            cashFlowByMonth[monthYear].netValue += (payment.netValue || 0);
+            cashFlowByMonth[monthYear].count += 1;
+        });
+
+        // Converter para array e ordenar (mais recente primeiro)
+        const result = Object.values(cashFlowByMonth).sort((a, b) => b.monthYear.localeCompare(a.monthYear));
+
+        res.json({ cashFlow: result });
+    } catch (error) {
+        console.error("Erro ao buscar fluxo de caixa do Asaas:", error);
+        res.status(500).json({ error: "Erro interno ao buscar fluxo de caixa." });
+    }
+};

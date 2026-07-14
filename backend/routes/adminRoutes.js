@@ -132,6 +132,7 @@ router.get('/analytics/growth', adminGrowthController.getGrowthData);
 router.get('/expenses', adminExpenseController.getExpenses);
 router.post('/expenses', adminExpenseController.createExpense);
 router.delete('/expenses/:id', adminExpenseController.deleteExpense);
+router.get('/cash-flow', adminExpenseController.getCashFlow);
 
 // --- ROTAS DE FOLLOW-UP (AÇÕES MANUAIS NO CRM) ---
 router.get('/pending-actions', adminController.getPendingActions);

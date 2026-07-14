@@ -108,6 +108,39 @@
         </div>
 
     </div>
+    
+    <!-- FLUXO DE CAIXA (RECEITAS) -->
+    <div style="margin-top: 30px; background: white; border-radius: 12px; padding: 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden;">
+        <div style="padding: 20px 25px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <h3 style="margin: 0; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    Histórico de Receita (Asaas)
+                </h3>
+                <p style="margin: 5px 0 0 0; color: #64748b; font-size: 0.85rem;">Pagamentos recebidos e confirmados, mês a mês.</p>
+            </div>
+            <button onclick="carregarFluxoCaixa()" style="background: none; color: #3b82f6; border: 1px solid #bfdbfe; padding: 6px 12px; border-radius: 50px; cursor: pointer; font-weight: 600; font-size: 0.8rem; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v6h6"/></svg>
+                Atualizar
+            </button>
+        </div>
+        
+        <div style="overflow-x: auto; padding: 25px;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; min-width: 500px;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #e2e8f0; color: #475569; font-size: 0.95rem;">
+                        <th style="padding: 10px 15px; font-weight: 600;">Mês/Ano</th>
+                        <th style="padding: 10px 15px; font-weight: 600; text-align: center;">Transações</th>
+                        <th style="padding: 10px 15px; font-weight: 600; text-align: right; color: #64748b;">Valor Bruto</th>
+                        <th style="padding: 10px 15px; font-weight: 600; text-align: right; color: #10b981;">Valor Líquido (Recebido)</th>
+                    </tr>
+                </thead>
+                <tbody id="cash-flow-table-body">
+                    <tr><td colspan="4" style="text-align:center; padding: 30px; color: #94a3b8;">Carregando histórico...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <script src="admin_finance_expenses.js"></script>
