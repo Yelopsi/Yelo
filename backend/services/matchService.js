@@ -155,13 +155,13 @@ const calculateSimilarity = (psy, preferences = {}, priceRange) => {
 const applyFairness = (scoredCandidates, totalSystemImpressions) => {
     return scoredCandidates.map(c => {
         try {
-        // Cooldown Progressivo MVP: Penalidade máxima de 50% decaindo para 0% ao longo de 120 minutos
+        // Cooldown Progressivo MVP: Penalidade máxima de 50% decaindo para 0% ao longo de 24 horas (1440 minutos)
         // Isso força a plataforma a "girar a roleta" e mostrar psicólogos diferentes o dia todo
-        const minutesSinceLastShown = c.last_shown_match_at ? (new Date() - new Date(c.last_shown_match_at)) / 60000 : 9999;
+        const minutesSinceLastShown = c.last_shown_match_at ? (new Date() - new Date(c.last_shown_match_at)) / 60000 : 99999;
         
         let cooldownPenalty = 1.0;
-        if (minutesSinceLastShown < 120) {
-            const decayProgress = minutesSinceLastShown / 120; // De 0 (agora) a 1 (120 min)
+        if (minutesSinceLastShown < 1440) {
+            const decayProgress = minutesSinceLastShown / 1440; // De 0 (agora) a 1 (1440 min)
             cooldownPenalty = 0.50 + (0.50 * decayProgress); // Sobe de 0.50 para 1.00
         }
 
@@ -182,8 +182,8 @@ const applyFairness = (scoredCandidates, totalSystemImpressions) => {
 
         // --- CLICK THROTTLE (FREIO) ---
         // Ajustado após análise de dados: com 122 buscas e 30 cliques totais no mês, um profissional com 15 cliques deteria 50% do mercado.
-        // O freio agora é ativado mais cedo (>= 5 cliques) para garantir giro na base, a menos que ele seja recém chegado e precise de volume inicial.
-        if (clicks >= 5) {
+        // O freio agora é ativado mais cedo (>= 3 cliques) para garantir giro na base, a menos que ele seja recém chegado e precise de volume inicial.
+        if (clicks >= 3) {
             finalScore *= 0.80;
         }
 
@@ -229,8 +229,8 @@ exports.calculateMatches = async (preferences = {}) => {
         const totalSystemImpressions = cachedTotalImpressions;
         const agora = new Date();
 
-        // --- MUDANÇA ESTRATÉGICA: BUSCA AMPLA E PENALIZAÇÃO NO SCORE ---
-        const baseWhereConditions = { status: { [Op.ne]: 'inactive' } };
+        // --- MUDANÇA ESTRATÉGICA: BUSCA RESTRITA A ATIVOS E TRIALS ---
+        const baseWhereConditions = { status: { [Op.in]: ['active', 'trial'] } };
 
         debugLog.push(`[${Date.now() - startTime}ms] 🔍 Buscando candidatos elegíveis no banco de dados...`);
         const allEligiblePsychologists = await db.Psychologist.findAll({ where: baseWhereConditions });

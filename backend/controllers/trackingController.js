@@ -80,3 +80,24 @@ exports.registerQuestionnaireStep = async (req, res) => {
         res.status(500).json({ error: 'Internal error' });
     }
 };
+
+/**
+ * Rota: POST /api/tracking/disqualify
+ * Atualiza o DemandSearch marcando como desqualificado
+ */
+exports.disqualifySearch = async (req, res) => {
+    try {
+        const { searchId, reason } = req.body;
+        if (!searchId) return res.status(400).json({ error: 'searchId required' });
+        
+        await db.sequelize.query(
+            `UPDATE "DemandSearches" SET "is_disqualified" = true WHERE id = :searchId`,
+            { replacements: { searchId: parseInt(searchId, 10) } }
+        );
+
+        res.status(200).json({ success: true });
+    } catch (error) {
+        console.error('Erro ao registrar desqualificação:', error);
+        res.status(500).json({ error: 'Internal error' });
+    }
+};
