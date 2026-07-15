@@ -339,10 +339,42 @@ exports.getAllPatients = async (req, res) => {
             ];
         }
 
-        if (status === 'deleted') {
-            whereClause.deletedAt = { [Op.ne]: null };
-            isParanoid = false; 
+        if (status) {
+            if (status === 'deleted') {
+                whereClause.deletedAt = { [Op.ne]: null };
+                isParanoid = false; 
+            } else if (status === 'utm_whatsapp') {
+                whereClause.utm_source = 'whatsapp';
+            } else if (status === 'utm_meta') {
+                whereClause.utm_source = { [Op.in]: ['meta_ads', 'facebook', 'instagram'] };
+            } else if (status === 'utm_google') {
+                whereClause.utm_source = 'google';
+            } else if (status === 'utm_outros') {
+                whereClause.utm_source = {
+                    [Op.or]: [
+                        { [Op.is]: null },
+                        { [Op.notIn]: ['whatsapp', 'meta_ads', 'facebook', 'instagram', 'google'] }
+                    ]
+                };
+            } else {
+                whereClause.status = status;
+            }
         }
+
+        const kpisQuery = `
+            SELECT 
+                COUNT(*) as total,
+                COUNT(*) FILTER (WHERE status = 'active') as active,
+                COUNT(*) FILTER (WHERE status = 'inactive') as inactive,
+                COUNT(*) FILTER (WHERE utm_source = 'whatsapp') as utm_whatsapp,
+                COUNT(*) FILTER (WHERE utm_source IN ('meta_ads', 'facebook', 'instagram')) as utm_meta,
+                COUNT(*) FILTER (WHERE utm_source = 'google') as utm_google,
+                COUNT(*) FILTER (WHERE utm_source IS NULL OR utm_source NOT IN ('whatsapp', 'meta_ads', 'facebook', 'instagram', 'google')) as utm_outros,
+                COUNT(*) FILTER (WHERE "deletedAt" IS NOT NULL) as deleted
+            FROM "Patients"
+            WHERE ("deletedAt" IS NULL OR "deletedAt" IS NOT NULL)
+        `;
+        const [kpiResults] = await db.sequelize.query(kpisQuery, { type: db.sequelize.QueryTypes.SELECT });
 
         const { count, rows } = await db.Patient.findAndCountAll({
             where: whereClause,
@@ -359,7 +391,13 @@ exports.getAllPatients = async (req, res) => {
             return patientJson;
         });
 
-        res.status(200).json({ data: dataWithId, totalPages: Math.ceil(count / limit), currentPage: page, totalCount: count });
+        res.status(200).json({ 
+            data: dataWithId, 
+            totalPages: Math.ceil(count / limit), 
+            currentPage: page, 
+            totalCount: count,
+            kpis: kpiResults || { total: 0, active: 0, inactive: 0, utm_whatsapp: 0, utm_meta: 0, utm_google: 0, utm_outros: 0, deleted: 0 }
+        });
     } catch (error) {
         console.error('Erro ao buscar lista de pacientes:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });

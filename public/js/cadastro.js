@@ -59,7 +59,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 nome,
                 email,
                 senha,
-                termos
+                termos,
+                utm_source: localStorage.getItem('yelo_utm_source') || null,
+                utm_medium: localStorage.getItem('yelo_utm_medium') || null,
+                utm_campaign: localStorage.getItem('yelo_utm_campaign') || null,
+                utm_content: localStorage.getItem('yelo_utm_content') || null
             };
 
             const response = await fetch(`${BASE_URL}/api/patients/register`, {
@@ -81,6 +85,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch(e) {}
             
+            // Limpa UTMs após sucesso
+            ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].forEach(param => localStorage.removeItem('yelo_' + param));
+
             msgFeedback.textContent = 'Conta criada com sucesso! Redirecionando...';
             msgFeedback.className = 'mensagem-sucesso';
             msgFeedback.style.display = 'block';

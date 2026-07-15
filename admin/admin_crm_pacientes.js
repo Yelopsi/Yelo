@@ -34,13 +34,23 @@ window.initializePage = function() {
         });
     }
 
-    // --- FILTROS PILL ---
+    // --- FILTROS PILL E KPI ---
+    window.filterByKpi = function (filterVal) {
+        document.querySelectorAll('.crm-pill').forEach(b => b.classList.remove('active'));
+        const pill = document.querySelector(`.crm-pill[data-filter="${filterVal}"]`);
+        if (pill) pill.classList.add('active');
+
+        document.querySelectorAll('.kpi-card').forEach(c => c.classList.remove('active'));
+        const card = document.querySelector(`.kpi-card[data-kpi="${filterVal}"]`);
+        if (card) card.classList.add('active');
+
+        if (statusInput) statusInput.value = filterVal;
+        fetchAndRenderPatients(1);
+    };
+
     document.querySelectorAll('.crm-pill').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.crm-pill').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            if (statusInput) statusInput.value = e.target.dataset.filter;
-            fetchAndRenderPatients(1);
+            window.filterByKpi(e.target.dataset.filter);
         });
     });
 
@@ -87,6 +97,11 @@ window.initializePage = function() {
         document.getElementById('drawer-email').textContent = patient.email || 'E-mail não fornecido';
         document.getElementById('drawer-id').textContent = `ID CRM: ${patient.id}`;
         document.getElementById('drawer-date').textContent = `Membro desde: ${new Date(patient.createdAt).toLocaleDateString('pt-BR')}`;
+        
+        document.getElementById('drawer-utm-source').textContent = patient.utm_source || '-';
+        document.getElementById('drawer-utm-medium').textContent = patient.utm_medium || '-';
+        document.getElementById('drawer-utm-campaign').textContent = patient.utm_campaign || '-';
+        document.getElementById('drawer-utm-content').textContent = patient.utm_content || '-';
         
         drawerOverlay.classList.add('active');
 
@@ -157,20 +172,28 @@ window.initializePage = function() {
             
             if (!response.ok) throw new Error('Falha ao buscar pacientes.');
 
-            const { data, totalPages, currentPage } = await response.json();
+            const { data, totalPages, currentPage, kpis } = await response.json();
             patientsDataCache = data; // Atualiza cache
             
+            if (kpis) {
+                const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+                setText('kpi-whatsapp-pacientes', kpis.utm_whatsapp || 0);
+                setText('kpi-meta-pacientes', kpis.utm_meta || 0);
+                setText('kpi-google-pacientes', kpis.utm_google || 0);
+                setText('kpi-outros-pacientes', kpis.utm_outros || 0);
+            }
+
             renderTable(data);
             renderPagination(totalPages, currentPage);
         } catch (error) {
-            tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color: var(--coral-quente);">Erro ao carregar dados.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--coral-quente);">Erro ao carregar dados.</td></tr>`;
         }
     }
 
     function renderTable(patients) {
         tableBody.innerHTML = '';
         if (patients.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color: var(--cinza-texto);">Nenhum paciente encontrado neste filtro.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--cinza-texto);">Nenhum paciente encontrado neste filtro.</td></tr>`;
             return;
         }
 
@@ -183,6 +206,18 @@ window.initializePage = function() {
 
             const statusClass = isDeleted ? 'status-inativo' : 'status-ativo';
             const statusLabel = isDeleted ? 'Na Lixeira' : 'Ativo';
+
+            // UTM Badge
+            let utmBadge = `<span style="color: #94a3b8; font-size: 0.8rem;">Orgânico/Direto</span>`;
+            if (patient.utm_source) {
+                let badgeColor = '#64748b'; let bgBadge = '#f1f5f9';
+                if (patient.utm_source === 'whatsapp') { badgeColor = '#10b981'; bgBadge = '#d1fae5'; }
+                else if (patient.utm_source === 'meta_ads' || patient.utm_source === 'facebook' || patient.utm_source === 'instagram') { badgeColor = '#3b82f6'; bgBadge = '#dbeafe'; }
+                else if (patient.utm_source === 'google') { badgeColor = '#f59e0b'; bgBadge = '#fef3c7'; }
+                
+                utmBadge = `<span style="background: ${bgBadge}; color: ${badgeColor}; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">${patient.utm_source}</span>`;
+                if (patient.utm_medium) utmBadge += `<br><span style="font-size: 0.7rem; color: #64748b; margin-top: 2px; display: inline-block;">${patient.utm_medium}</span>`;
+            }
 
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -198,6 +233,7 @@ window.initializePage = function() {
                     </div>
                 </td>
                 <td data-label="Status Clínico"><span class="status ${statusClass}">${statusLabel}</span></td>
+                <td data-label="Origem (UTM)">${utmBadge}</td>
                 <td data-label="Data de Cadastro" style="color: #666;">${dataCadastro}</td>
                 <td data-label="Ações" style="white-space: nowrap;">
                     <button class="btn-tabela" onclick="window.open360Drawer('${patient.id}')" style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 50px; font-weight: 600;">

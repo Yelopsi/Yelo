@@ -74,6 +74,29 @@
         </div>
     </div>
 
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 25px; gap: 10px;">
+        <!-- 1. WhatsApp -->
+        <div class="kpi-card" data-kpi="utm_whatsapp" style="border-top-color: #10b981; padding: 12px 15px;" onclick="window.filterByKpi('utm_whatsapp')">
+            <h4 style="font-size: 0.85rem; margin-bottom: 2px;"><span style="display:flex; align-items:center; gap:6px;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> WhatsApp</span></h4>
+            <p class="kpi-numero" id="kpi-whatsapp-pacientes" style="color: #10b981; font-size: 1.4rem;">0</p>
+        </div>
+        <!-- 2. Meta Ads -->
+        <div class="kpi-card" data-kpi="utm_meta" style="border-top-color: #3b82f6; padding: 12px 15px;" onclick="window.filterByKpi('utm_meta')">
+            <h4 style="font-size: 0.85rem; margin-bottom: 2px;"><span style="display:flex; align-items:center; gap:6px;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg> Meta / IG</span></h4>
+            <p class="kpi-numero" id="kpi-meta-pacientes" style="color: #3b82f6; font-size: 1.4rem;">0</p>
+        </div>
+        <!-- 3. Google -->
+        <div class="kpi-card" data-kpi="utm_google" style="border-top-color: #f59e0b; padding: 12px 15px;" onclick="window.filterByKpi('utm_google')">
+            <h4 style="font-size: 0.85rem; margin-bottom: 2px;"><span style="display:flex; align-items:center; gap:6px;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg> Google</span></h4>
+            <p class="kpi-numero" id="kpi-google-pacientes" style="color: #f59e0b; font-size: 1.4rem;">0</p>
+        </div>
+        <!-- 4. Outros/Direto -->
+        <div class="kpi-card" data-kpi="utm_outros" style="border-top-color: #64748b; padding: 12px 15px;" onclick="window.filterByKpi('utm_outros')">
+            <h4 style="font-size: 0.85rem; margin-bottom: 2px;"><span style="display:flex; align-items:center; gap:6px;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> Direto / Outros</span></h4>
+            <p class="kpi-numero" id="kpi-outros-pacientes" style="color: #64748b; font-size: 1.4rem;">0</p>
+        </div>
+    </div>
+
     <div class="widget" style="margin-bottom: 25px;">
         <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px;">
             <div class="crm-funnel-tabs" style="display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 5px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
@@ -95,12 +118,13 @@
                     <tr>
                         <th>Identificação</th>
                         <th>Status Clínico</th>
+                        <th>Origem (UTM)</th>
                         <th>Data de Cadastro</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody id="crm-patients-body">
-                    <tr><td colspan="4" class="loading-row" style="text-align: center; padding: 40px;"><span class="loading-spinner-sm"></span> Carregando CRM...</td></tr>
+                    <tr><td colspan="5" class="loading-row" style="text-align: center; padding: 40px;"><span class="loading-spinner-sm"></span> Carregando CRM...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -135,9 +159,31 @@
                         <p style="margin: 0; color: #64748b; font-size: 0.9rem;" id="drawer-email">email@exemplo.com</p>
                     </div>
                 </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
                     <span style="background: #f1f5f9; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; color: #475569;" id="drawer-id">ID: 000</span>
                     <span style="background: #f1f5f9; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; color: #475569;" id="drawer-date">Cadastrado em: 00/00/0000</span>
+                </div>
+                
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 15px; margin-top: 5px;">
+                    <h4 style="font-size: 0.8rem; color: #64748b; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 0.5px;">Origem (UTMs)</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div>
+                            <span style="color: #94a3b8; display: block; font-size: 0.75rem; margin-bottom: 2px;">Source</span>
+                            <strong id="drawer-utm-source" style="color: #334155; font-size: 0.85rem;">-</strong>
+                        </div>
+                        <div>
+                            <span style="color: #94a3b8; display: block; font-size: 0.75rem; margin-bottom: 2px;">Medium</span>
+                            <strong id="drawer-utm-medium" style="color: #334155; font-size: 0.85rem;">-</strong>
+                        </div>
+                        <div>
+                            <span style="color: #94a3b8; display: block; font-size: 0.75rem; margin-bottom: 2px;">Campaign</span>
+                            <strong id="drawer-utm-campaign" style="color: #334155; font-size: 0.85rem;">-</strong>
+                        </div>
+                        <div>
+                            <span style="color: #94a3b8; display: block; font-size: 0.75rem; margin-bottom: 2px;">Content</span>
+                            <strong id="drawer-utm-content" style="color: #334155; font-size: 0.85rem;">-</strong>
+                        </div>
+                    </div>
                 </div>
             </div>
 
