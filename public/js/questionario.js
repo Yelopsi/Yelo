@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'idade', question: "Para começarmos, qual a sua faixa etária?", type: 'choice', choices: ["Menor de 18 anos", "18-24 anos", "25-34 anos", "35-44 anos", "45-54 anos", "55+ anos"], required: true },
         { id: 'responsavel_menor', question: "Você é o responsável legal por este paciente?", subtitle: "Atendimentos para menores de idade exigem o acompanhamento ou autorização de um responsável (pai, mãe ou tutor legal).", type: 'choice', choices: ["Sim, sou o responsável legal", "Não, sou o próprio menor"], required: true },
         { id: 'pref_genero_prof', question: "Você tem preferência pelo gênero do(a) profissional?", subtitle: "Sua segurança e conforto são a nossa prioridade.", type: 'choice', choices: ["Indiferente", "Masculino", "Feminino", "Não-binário"], required: true },
-        { id: 'temas', question: "O que te motivou a procurar terapia agora?", subtitle: "Selecione até 3 temas que você gostaria de explorar.", type: 'multiple-choice', scrollable: true, choices: ["Ansiedade ou Estresse", "Depressão ou Tristeza", "Relacionamentos", "Carreira e Trabalho", "Autoestima", "Luto ou Traumas", "Sexualidade", "Autoconhecimento", "Outro"], required: true },
+        { id: 'temas', question: "O que te motivou a procurar terapia agora?", subtitle: "Qual o foco principal que você gostaria de explorar?", type: 'choice', choices: ["Ansiedade, Estresse ou Tristeza", "Amor, Relacionamentos e Sexualidade", "Autoconhecimento e Autoestima", "Carreira e Trabalho", "Luto ou Traumas", "Outro"], required: true },
         { id: 'abordagem_ideal', question: "Pensando nisso...", subtitle: "Qual formato te atrai mais?", type: 'choice', choices: [], required: true },
         { id: 'caracteristicas_prof', question: "Existem características importantes para você no profissional?", subtitle: "A identidade de quem te escuta pode fazer diferença.", type: 'multiple-choice', choices: ["LGBTQIAPN+ Friendly 🏳️‍🌈", "Faz parte da comunidade LGBTQIAPN+", "Pessoa não-branca ou prática antirracista", "Perspectiva Feminista", "Especialista em Neurodiversidade (TDAH, Autismo)", "Indiferente"], required: true },
         { id: 'faixa_valor', question: "Qual a faixa de valor que você pode investir por sessão?", subtitle: "Para conectarmos você a profissionais dentro do seu orçamento.", type: 'choice', choices: ["Até R$ 50", "R$ 51 - R$ 90", "R$ 91 - R$ 150", "Acima de R$ 150"], required: true },
@@ -497,9 +497,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateAbordagemIdealSlide() {
-        const temasSelecionados = userAnswers['temas'] || [];
-        const temasSintomas = ["Ansiedade ou Estresse", "Depressão ou Tristeza", "Luto ou Traumas"];
-        const temasRelacionais = ["Relacionamentos", "Sexualidade"];
+        const temasSelecionados = [].concat(userAnswers['temas'] || []);
+        const temasSintomas = ["Ansiedade, Estresse ou Tristeza", "Luto ou Traumas"];
+        const temasRelacionais = ["Amor, Relacionamentos e Sexualidade"];
         
         let categoria = "desenvolvimento"; // Default
         if (temasSelecionados.length === 1 && temasSelecionados[0] === "Outro") {
