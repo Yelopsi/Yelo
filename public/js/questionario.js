@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'responsavel_menor', question: "Você é o responsável legal por este paciente?", subtitle: "Atendimentos para menores de idade exigem o acompanhamento ou autorização de um responsável (pai, mãe ou tutor legal).", type: 'choice', choices: ["Sim, sou o responsável legal", "Não, sou o próprio menor"], required: true },
         { id: 'pref_genero_prof', question: "Você tem preferência pelo gênero do(a) profissional?", subtitle: "Sua segurança e conforto são a nossa prioridade.", type: 'choice', choices: ["Indiferente", "Masculino", "Feminino", "Não-binário"], required: true },
         { id: 'temas', question: "O que te motivou a procurar terapia agora?", subtitle: "Selecione até 3 temas que você gostaria de explorar.", type: 'multiple-choice', scrollable: true, choices: ["Ansiedade ou Estresse", "Depressão ou Tristeza", "Relacionamentos", "Carreira e Trabalho", "Autoestima", "Luto ou Traumas", "Sexualidade", "Autoconhecimento", "Outro"], required: true },
+        { id: 'abordagem_ideal', question: "Pensando nisso...", subtitle: "Qual formato te atrai mais?", type: 'choice', choices: [], required: true },
         { id: 'caracteristicas_prof', question: "Existem características importantes para você no profissional?", subtitle: "A identidade de quem te escuta pode fazer diferença.", type: 'multiple-choice', choices: ["LGBTQIAPN+ Friendly 🏳️‍🌈", "Faz parte da comunidade LGBTQIAPN+", "Pessoa não-branca ou prática antirracista", "Perspectiva Feminista", "Especialista em Neurodiversidade (TDAH, Autismo)", "Indiferente"], required: true },
         { id: 'faixa_valor', question: "Qual a faixa de valor que você pode investir por sessão?", subtitle: "Para conectarmos você a profissionais dentro do seu orçamento.", type: 'choice', choices: ["Até R$ 50", "R$ 51 - R$ 90", "R$ 91 - R$ 150", "Acima de R$ 150"], required: true },
         { id: 'modalidade_atendimento', question: "Como você prefere ser atendido(a)?", type: 'choice', choices: ["Online", "Presencial", "Indiferente (Online ou Presencial)"], required: true },
@@ -225,6 +226,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (question.type === 'choice') {
             const selectedButton = document.querySelector(`#slide-${question.id} .choice-button.selected`);
             answer = selectedButton ? selectedButton.dataset.value : undefined;
+            if (question.id === 'abordagem_ideal' && answer) {
+                answer = answer.split(',');
+            }
         } else if (question.type === 'multiple-choice') {
             const selected = [];
             document.querySelectorAll(`#slide-${question.id} .choice-button.selected`).forEach(btn => selected.push(btn.dataset.value));
@@ -284,6 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isValid) {
             collectAnswer();
             if (currentQuestion.id === 'nome') { updateNamePlaceholders(userAnswers.nome); }
+            if (currentQuestion.id === 'temas') { updateAbordagemIdealSlide(); }
 
             const actionButton = currentSlideEl.querySelector('.cta-button');
             const action = actionButton ? actionButton.dataset.action : null;
@@ -489,5 +494,77 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+    }
+
+    function updateAbordagemIdealSlide() {
+        const temasSelecionados = userAnswers['temas'] || [];
+        const temasSintomas = ["Ansiedade ou Estresse", "Depressão ou Tristeza", "Luto ou Traumas"];
+        const temasRelacionais = ["Relacionamentos", "Sexualidade"];
+        
+        let categoria = "desenvolvimento"; // Default
+        if (temasSelecionados.length === 1 && temasSelecionados[0] === "Outro") {
+            categoria = "outro";
+        } else if (temasSelecionados.some(t => temasSintomas.includes(t))) {
+            categoria = "sintomas";
+        } else if (temasSelecionados.some(t => temasRelacionais.includes(t))) {
+            categoria = "relacional";
+        }
+
+        let questionText = "";
+        let choicesHTML = "";
+
+        const valTCC = "Terapia Cognitivo-Comportamental (TCC),Análise do Comportamento";
+        const valPsi = "Psicanálise,Jungiana";
+        const valPsiOnly = "Psicanálise";
+        const valHum = "Humanista,Gestalt-terapia";
+        const valSis = "Sistêmica";
+
+        if (categoria === "sintomas") {
+            questionText = "Lidando com essas questões, como o terapeuta poderia te ajudar melhor?";
+            choicesHTML = `
+                <button class="choice-button" data-value="${valTCC}"><strong>Foco Prático:</strong> Quero ferramentas e exercícios para mudar meus hábitos no dia a dia.</button>
+                <button class="choice-button" data-value="${valPsiOnly}"><strong>Foco Profundo:</strong> Quero um espaço livre para investigar a raiz dos meus problemas.</button>
+                <button class="choice-button" data-value="${valHum}"><strong>Acolhimento:</strong> Quero focar em entender e aceitar meus sentimentos no presente.</button>
+                <button class="choice-button" data-value="${valSis}"><strong>Foco no Ambiente:</strong> Quero entender como as pessoas ao meu redor influenciam o que sinto.</button>
+            `;
+        } else if (categoria === "relacional") {
+            questionText = "Ao focar nas suas relações e intimidade, qual dinâmica de terapia te atrai mais?";
+            choicesHTML = `
+                <button class="choice-button" data-value="${valSis}"><strong>Dinâmica Familiar:</strong> Quero entender como a minha família molda meus relacionamentos.</button>
+                <button class="choice-button" data-value="${valPsi}"><strong>Explorar o Passado:</strong> Quero entender de onde vêm os meus padrões de relacionamento.</button>
+                <button class="choice-button" data-value="${valTCC}"><strong>Estratégias:</strong> Gostaria de dicas diretas para me comunicar melhor e mudar atitudes.</button>
+                <button class="choice-button" data-value="${valHum}"><strong>Expressão Autêntica:</strong> Quero focar na forma como eu me sinto e me expresso na relação agora.</button>
+            `;
+        } else if (categoria === "outro") {
+            questionText = "Independentemente do motivo que te trouxe aqui, como você prefere conduzir a sessão?";
+            choicesHTML = `
+                <button class="choice-button" data-value="${valTCC}"><strong>Foco Prático:</strong> Quero ferramentas e exercícios para mudar meus hábitos no dia a dia.</button>
+                <button class="choice-button" data-value="${valPsi}"><strong>Foco Profundo:</strong> Gosto da ideia de investigar a raiz das questões e o meu inconsciente.</button>
+                <button class="choice-button" data-value="${valHum}"><strong>Acolhimento:</strong> Quero um espaço focado na minha autoaceitação livre de julgamentos.</button>
+                <button class="choice-button" data-value="${valSis}"><strong>Foco no Ambiente:</strong> Quero entender como o meu convívio social influencia quem eu sou.</button>
+            `;
+        } else {
+            questionText = "Buscando desenvolvimento pessoal, como você prefere conduzir a sessão?";
+            choicesHTML = `
+                <button class="choice-button" data-value="${valTCC}"><strong>Metas Claras:</strong> Quero descobrir quais hábitos me travam e agir para mudá-los.</button>
+                <button class="choice-button" data-value="${valPsi}"><strong>Mergulho Interior:</strong> Gosto da ideia de analisar meus sonhos e o meu inconsciente.</button>
+                <button class="choice-button" data-value="${valHum}"><strong>Potencial Humano:</strong> Quero focar na minha autoaceitação livre de julgamentos.</button>
+                <button class="choice-button" data-value="${valSis}"><strong>Padrões Sociais:</strong> Quero entender as expectativas que a sociedade colocou em mim.</button>
+            `;
+        }
+
+        const abordagemSlideIndex = questions.findIndex(q => q.id === 'abordagem_ideal');
+        const slideEl = document.querySelector(`[data-index="${abordagemSlideIndex}"]`);
+        
+        if (slideEl) {
+            const h1 = slideEl.querySelector('h1');
+            if (h1) h1.textContent = questionText;
+            
+            const grid = slideEl.querySelector('.options-grid');
+            if (grid) grid.innerHTML = choicesHTML;
+            
+            // Clear previous selection visually and in data
+            userAnswers['abordagem_ideal'] = undefined;
+        }
     }
 });

@@ -116,6 +116,16 @@ const calculateSimilarity = (psy, preferences = {}, priceRange) => {
         }
     }
 
+    // 1.4 MATCH DE ABORDAGEM IDEAL (NOVO)
+    const abordagemDesejada = getArrayField(preferences.abordagem_ideal);
+    const abordagemPsi = getArrayField(psy.abordagens_tecnicas);
+    if (abordagemDesejada.length > 0 && abordagemPsi.length > 0) {
+        if (abordagemDesejada.some(a => abordagemPsi.includes(a))) {
+            sClinical += 25;
+            explainability.positives.push('Abordagem ideal para o seu perfil');
+        }
+    }
+
     // 2. MATCH OPERACIONAL E ORÇAMENTO
     const prefMod = preferences.modalidade_atendimento; // CORRIGIDO
     if (prefMod && prefMod !== 'Indiferente' && prefMod !== 'Indiferente (Online ou Presencial)') {
