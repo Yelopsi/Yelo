@@ -31,10 +31,35 @@ function initMobileMenu() {
 // Expondo a função para outros scripts (como resultados.js)
 window.initMobileMenu = initMobileMenu;
 
+// --- FUNÇÃO PARA CAPTURAR UTMs E LIMPAR URL ---
+function captureUTMs() {
+    if (!window.location.search) return;
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    let hasUTMs = false;
+    
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].forEach(param => {
+        if (urlParams.has(param)) {
+            localStorage.setItem('yelo_' + param, urlParams.get(param));
+            urlParams.delete(param);
+            hasUTMs = true;
+        }
+    });
+    
+    // Se encontrou alguma UTM, reescreve a URL na barra de endereços para ficar limpa
+    if (hasUTMs) {
+        const newSearch = urlParams.toString() ? '?' + urlParams.toString() : '';
+        const newUrl = window.location.pathname + newSearch + window.location.hash;
+        window.history.replaceState({}, document.title, newUrl);
+    }
+}
+window.captureUTMs = captureUTMs;
+
 // Inicia automaticamente em páginas normais
 document.addEventListener('DOMContentLoaded', () => {
     initMobileMenu();
     checkLoginState();
+    captureUTMs();
     
     // Lógica do Acordeão (FAQ)
     const acordeoes = document.querySelectorAll('.acordeao-titulo');

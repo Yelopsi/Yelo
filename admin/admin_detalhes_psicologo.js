@@ -120,6 +120,17 @@ function renderDetails(data) {
         }
     }
 
+    // UTMs
+    const utmSourceEl = document.getElementById('detail-utm-source');
+    const utmMediumEl = document.getElementById('detail-utm-medium');
+    const utmCampaignEl = document.getElementById('detail-utm-campaign');
+    const utmContentEl = document.getElementById('detail-utm-content');
+    
+    if (utmSourceEl) utmSourceEl.innerHTML = p.utm_source ? `<span style="background: #e2e8f0; color: #334155; padding: 2px 8px; border-radius: 12px; font-weight: bold; text-transform: uppercase; font-size: 0.75rem;">${p.utm_source}</span>` : 'Orgânico / Desconhecido';
+    if (utmMediumEl) utmMediumEl.textContent = p.utm_medium || '-';
+    if (utmCampaignEl) utmCampaignEl.textContent = p.utm_campaign || '-';
+    if (utmContentEl) utmContentEl.textContent = p.utm_content || '-';
+
     // 2. Stats
     document.getElementById('stat-views').textContent = stats.profileViews || 0;
     document.getElementById('stat-matches').textContent = stats.matches || 0;

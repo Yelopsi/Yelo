@@ -241,9 +241,10 @@ window.initializePage = function () {
                 setText('kpi-trial-psis', kpis.active_trial || 0);
                 setText('kpi-pendentes-psis', kpis.pending);
                 setText('kpi-inativos-psis', kpis.inactive);
-                setText('kpi-vip-psis', kpis.vip);
-                setText('kpi-fila-cs', kpis.fila_cs);
-                setText('kpi-lixeira-psis', kpis.deleted || 0);
+                setText('kpi-whatsapp-psis', kpis.utm_whatsapp || 0);
+                setText('kpi-meta-psis', kpis.utm_meta || 0);
+                setText('kpi-google-psis', kpis.utm_google || 0);
+                setText('kpi-outros-psis', kpis.utm_outros || 0);
                 setText('kpi-alerta-pendentes', kpis.pending || 0);
 
                 // Ativação: (Ativos / Totais) * 100
@@ -492,6 +493,18 @@ window.initializePage = function () {
             const xpStr = psy.xp ? `${psy.xp} XP` : '0 XP';
             const levelStr = levelMap[psy.authority_level] || 'Iniciante';
 
+            // UTM Source
+            let utmBadge = `<span style="color: #94a3b8; font-size: 0.8rem;">Orgânico/Direto</span>`;
+            if (psy.utm_source) {
+                let badgeColor = '#64748b'; let bgBadge = '#f1f5f9';
+                if (psy.utm_source === 'whatsapp') { badgeColor = '#10b981'; bgBadge = '#d1fae5'; }
+                else if (psy.utm_source === 'meta_ads' || psy.utm_source === 'facebook' || psy.utm_source === 'instagram') { badgeColor = '#3b82f6'; bgBadge = '#dbeafe'; }
+                else if (psy.utm_source === 'google') { badgeColor = '#f59e0b'; bgBadge = '#fef3c7'; }
+                
+                utmBadge = `<span style="background: ${bgBadge}; color: ${badgeColor}; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">${psy.utm_source}</span>`;
+                if (psy.utm_medium) utmBadge += `<br><span style="font-size: 0.7rem; color: #64748b; margin-top: 2px; display: inline-block;">${psy.utm_medium}</span>`;
+            }
+
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td data-label="Profissional">
@@ -514,6 +527,9 @@ window.initializePage = function () {
                         </div>
                         <span style="font-size: 0.85rem; font-weight: 600; color: ${scoreColor};">${score}%</span>
                     </div>
+                </td>
+                <td data-label="Origem (UTM)">
+                    ${utmBadge}
                 </td>
                 <td data-label="Data de Inscrição">
                     <span style="color: #64748b; font-size: 0.9rem; font-weight: 500;">${dataInscricao}</span>

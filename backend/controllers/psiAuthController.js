@@ -29,7 +29,7 @@ exports.registerPsychologist = async (req, res) => {
         // REVERTIDO: Volta a ler apenas o CPF
         const cpf = req.body.cpf || req.body.documento || null; // Agora é opcional na entrada
         const telefone = req.body.telefone || null; // Captura o telefone vindo do formulário
-        const { googleToken, utm_source, utm_medium, utm_campaign, meta_event_id } = req.body;
+        const { googleToken, utm_source, utm_medium, utm_campaign, utm_content, meta_event_id } = req.body;
 
         // --- Lógica de Registro via Google ---
         if (googleToken) {
@@ -124,7 +124,8 @@ exports.registerPsychologist = async (req, res) => {
             telefone, // Salva o número de telefone no banco
             utm_source,
             utm_medium,
-            utm_campaign
+            utm_campaign,
+            utm_content
         });
 
         // --- 6.1 LIMPEZA DA LISTA DE ESPERA ---

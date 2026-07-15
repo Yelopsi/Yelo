@@ -192,7 +192,11 @@ document.addEventListener('DOMContentLoaded', () => {
             email: emailInput.value.trim().toLowerCase(),
             senha: senha,
             invitationToken: tokenParam,
-            meta_event_id: metaEventId
+            meta_event_id: metaEventId,
+            utm_source: localStorage.getItem('yelo_utm_source') || null,
+            utm_medium: localStorage.getItem('yelo_utm_medium') || null,
+            utm_campaign: localStorage.getItem('yelo_utm_campaign') || null,
+            utm_content: localStorage.getItem('yelo_utm_content') || null
         };
 
         // Se usou conta Google
@@ -216,6 +220,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Se não for admin, limpa o cache. Se for admin, não precisa limpar nada.
                 if (modeParam !== 'admin') {
                     localStorage.removeItem('psi_questionario_respostas');
+                    localStorage.removeItem('yelo_utm_source');
+                    localStorage.removeItem('yelo_utm_medium');
+                    localStorage.removeItem('yelo_utm_campaign');
+                    localStorage.removeItem('yelo_utm_content');
                 }
                 
                 // Pega o valor do e-mail que o usuário digitou no formulário (SANITIZADO)
