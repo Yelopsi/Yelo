@@ -8,14 +8,45 @@
     <!-- Força a escala correta no mobile para evitar efeito de "zoom esticado" -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-    <!-- SEO INJETADO NO SERVIDOR -->
-    <title><%= psicologo.nome %> | Psicólogo(a) na Yelo</title>
+    <!-- VARIÁVEIS DE SEO -->
     <% 
       const bioSnippet = psicologo.meta_description || (psicologo.bio 
         ? psicologo.bio.replace(/<[^>]*>?/gm, '').substring(0, 155) + '...' 
         : `Encontre acolhimento e suporte com ${psicologo.nome}. Psicólogo(a) especialista em saúde mental.`);
+      const currentUrl = `https://www.yelopsi.com.br/${psicologo.slug || ''}`;
+      
+      const imageUrl = psicologo.fotoUrl || 'https://www.yelopsi.com.br/img/logo_yelo_share.png';
+      
+      let especialidadesStr = 'Psicologia';
+      if (psicologo.especialidades) {
+        especialidadesStr = Array.isArray(psicologo.especialidades) 
+          ? psicologo.especialidades.join(', ') 
+          : psicologo.especialidades;
+      }
     %>
+
+    <title><%= psicologo.nome %> | Psicólogo(a) na Yelo</title>
     <meta name="description" content="<%= bioSnippet %>">
+
+    <!-- OPEN GRAPH (WhatsApp, Facebook, LinkedIn) -->
+    <meta property="og:type" content="profile">
+    <meta property="og:title" content="<%= psicologo.nome %> | Psicólogo(a) na Yelo">
+    <meta property="og:description" content="<%= bioSnippet %>">
+    <meta property="og:url" content="<%= currentUrl %>">
+    <meta property="og:image" content="<%= imageUrl %>">
+    
+    <!-- SCHEMA MARKUP: JSON-LD (Google) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Physician",
+      "name": "<%= psicologo.nome.replace(/"/g, '\\"') %>",
+      "description": "<%= bioSnippet.replace(/"/g, '\\"') %>",
+      "image": "<%= imageUrl %>",
+      "url": "<%= currentUrl %>",
+      "knowsAbout": "<%= especialidadesStr.replace(/"/g, '\\"') %>"
+    }
+    </script>
     
     <link rel="stylesheet" href="/css/psi_dashboard.css">
     <style>

@@ -266,12 +266,12 @@ exports.generateSitemap = async (req, res) => {
         let posts = [];
         try {
             posts = await db.sequelize.query(
-                `SELECT id, "updatedAt" FROM "${postTable}"`,
+                `SELECT id, slug, "updatedAt" FROM "${postTable}"`,
                 { type: db.sequelize.QueryTypes.SELECT }
             );
         } catch(e) {
             try {
-                posts = await db.sequelize.query(`SELECT id, "updatedAt" FROM "posts"`, { type: db.sequelize.QueryTypes.SELECT });
+                posts = await db.sequelize.query(`SELECT id, slug, "updatedAt" FROM "posts"`, { type: db.sequelize.QueryTypes.SELECT });
             } catch(e2) { console.error("Erro ao buscar posts para o sitemap:", e2.message); }
         }
 
@@ -281,7 +281,7 @@ exports.generateSitemap = async (req, res) => {
         xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
         // Páginas estáticas principais
-        const staticPages = ['', '/comunidade', '/ajuda', '/contato', '/questionario', '/blog', '/sobre', '/sobre_psis', '/faq'];
+        const staticPages = ['', '/comunidade', '/ajuda', '/contato', '/questionario', '/blog', '/sobre', '/sobre_psis', '/faq', '/profissionais', '/termos', '/privacidade'];
         staticPages.forEach(page => {
             xml += `  <url>\n    <loc>${frontendUrl}${page}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
         });
@@ -298,7 +298,8 @@ exports.generateSitemap = async (req, res) => {
 
         // Páginas de Posts do Blog
         posts.forEach(post => {
-            xml += `  <url>\n    <loc>${frontendUrl}/blog/post/${post.id}</loc>\n    <lastmod>${new Date(post.updatedAt).toISOString()}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+            const identifier = post.slug || post.id;
+            xml += `  <url>\n    <loc>${frontendUrl}/blog/post/${identifier}</loc>\n    <lastmod>${new Date(post.updatedAt).toISOString()}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
         });
 
         xml += '</urlset>';

@@ -256,7 +256,11 @@ module.exports = {
             }
             // CORREÇÃO: Usa .scope(null) para garantir que o campo 'conteudo' seja incluído,
             // ignorando qualquer escopo padrão do modelo que possa o estar excluindo.
-            let post = await Post.scope(null).findByPk(id, queryOptions);
+            const isNumeric = /^\d+$/.test(id);
+            let post = await Post.scope(null).findOne({
+                where: isNumeric ? { id } : { slug: id },
+                ...queryOptions
+            });
 
             if (!post) {
                 // CORREÇÃO DE SOFT 404: Renderizar a página oficial 404 em vez de redirecionar para a home do blog

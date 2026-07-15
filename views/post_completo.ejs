@@ -2,7 +2,55 @@
 <html lang="pt-br">
 <head>
     <title><%= post.titulo %> | Blog Yelo</title>
-    <meta name="description" content="<%= (post.conteudo || '').replace(/<[^>]*>/g, '').substring(0, 160) %>">
+    
+    <!-- VARIÁVEIS DE SEO -->
+    <% 
+      const descSnippet = (post.conteudo || '').replace(/<[^>]*>?/g, '').substring(0, 155).trim() + '...'; 
+      const currentUrl = `https://www.yelopsi.com.br/blog/post/${post.id || post.slug}`;
+      const autorNome = post.autor ? post.autor.nome : 'Equipe Yelo';
+      const imageUrl = post.imagem_url || 'https://www.yelopsi.com.br/img/logo_yelo_share.png';
+    %>
+    
+    <meta name="description" content="<%= descSnippet %>">
+    
+    <!-- OPEN GRAPH (WhatsApp, Facebook, LinkedIn) -->
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="<%= post.titulo %> | Blog Yelo">
+    <meta property="og:description" content="<%= descSnippet %>">
+    <meta property="og:url" content="<%= currentUrl %>">
+    <meta property="og:image" content="<%= imageUrl %>">
+    <meta property="article:author" content="<%= autorNome %>">
+    <meta property="article:published_time" content="<%= new Date(post.createdAt || post.created_at).toISOString() %>">
+
+    <!-- SCHEMA MARKUP: JSON-LD (Google) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "<%= currentUrl %>"
+      },
+      "headline": "<%= post.titulo.replace(/"/g, '\\"') %>",
+      "description": "<%= descSnippet.replace(/"/g, '\\"') %>",
+      "image": "<%= imageUrl %>",
+      "author": {
+        "@type": "Person",
+        "name": "<%= autorNome.replace(/"/g, '\\"') %>"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Yelo",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://www.yelopsi.com.br/img/logo.png" 
+        }
+      },
+      "datePublished": "<%= new Date(post.createdAt || post.created_at).toISOString() %>",
+      "dateModified": "<%= new Date(post.updatedAt || post.updated_at || post.createdAt || post.created_at).toISOString() %>"
+    }
+    </script>
+    
     <%- include('partials/head') %>
     
     <style>
@@ -80,6 +128,48 @@
         }
         .autor-mini img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
         .data-mini { color: #666; font-size: 0.9rem; }
+
+        /* Balão de Convite Flutuante */
+        @keyframes floatUpDown {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+        .autor-convite-balao {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background-color: #e8f5e9;
+            color: #1B4332;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 4px;
+            margin-left: 0;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+            animation: floatUpDown 3s ease-in-out infinite;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+        .autor-convite-balao::after {
+            content: '';
+            position: absolute;
+            top: -6px; 
+            left: 14px; 
+            border-width: 0 6px 6px 6px;
+            border-style: solid;
+            border-color: transparent transparent #e8f5e9 transparent;
+            transition: border-color 0.2s;
+        }
+        .autor-convite-balao:hover {
+            background-color: #c8e6c9;
+            transform: scale(1.02);
+            animation-play-state: paused;
+        }
+        .autor-convite-balao:hover::after {
+            border-bottom-color: #c8e6c9;
+        }
 
         /* Imagem Principal */
         .imagem-destaque-artigo {
@@ -179,11 +269,18 @@
                 <h1 class="titulo-principal"><%= post.titulo %></h1>
                 
                 <div class="meta-info">
-                    <div class="autor-mini <%= post.autor && post.autor.slug ? 'autor-click' : '' %>" <%- post.autor && post.autor.slug ? `onclick="window.location.href='/${post.autor.slug}';"` : '' %> <%- post.autor && post.autor.slug ? `title="Ver perfil de ${post.autor.nome}"` : '' %>>
-                        <img src="<%= post.autor && post.autor.fotoUrl ? formatImageUrl(post.autor.fotoUrl) : 'https://placehold.co/40x40' %>" alt="Autor">
-                        <span>Psi. <%= post.autor ? post.autor.nome.split(' ')[0] : 'Yelo' %></span>
+                    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                        <div class="autor-mini <%= post.autor && post.autor.slug ? 'autor-click' : '' %>" <%- post.autor && post.autor.slug ? `onclick="window.location.href='/${post.autor.slug}';"` : '' %> <%- post.autor && post.autor.slug ? `title="Ver perfil de ${post.autor.nome}"` : '' %>>
+                            <img src="<%= post.autor && post.autor.fotoUrl ? formatImageUrl(post.autor.fotoUrl) : 'https://placehold.co/40x40' %>" alt="Autor">
+                            <span>Psi. <%= post.autor ? post.autor.nome.split(' ')[0] : 'Yelo' %></span>
+                        </div>
+                        <% if (post.autor && post.autor.slug) { %>
+                        <div class="autor-convite-balao" onclick="window.location.href='/<%= post.autor.slug %>'">
+                            💬 Gostou? Conheça mais sobre <%= post.autor.nome.split(' ')[0] %>
+                        </div>
+                        <% } %>
                     </div>
-                    <span class="data-mini">
+                    <span class="data-mini" style="margin-left: auto;">
                         <%= new Date(post.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }) %>
                     </span>
                 </div>
