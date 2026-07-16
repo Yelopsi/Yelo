@@ -574,8 +574,8 @@ window.initializePage = function() {
                 valA = a.contactReceived === true ? 1 : (a.contactReceived === false ? -1 : 0);
                 valB = b.contactReceived === true ? 1 : (b.contactReceived === false ? -1 : 0);
             } else if (col === 'fechou') {
-                valA = a.dealClosed === 'yes' ? 1 : (a.dealClosed === 'no' ? -1 : 0);
-                valB = b.dealClosed === 'yes' ? 1 : (b.dealClosed === 'no' ? -1 : 0);
+                valA = (a.dealClosed === 'yes' || a.dealClosed === 'started') ? 1 : ((a.dealClosed === 'no' || a.dealClosed === 'not_started' || a.dealClosed === 'ghosted') ? -1 : 0);
+                valB = (b.dealClosed === 'yes' || b.dealClosed === 'started') ? 1 : ((b.dealClosed === 'no' || b.dealClosed === 'not_started' || b.dealClosed === 'ghosted') ? -1 : 0);
             } else if (col === 'status') {
                 valA = a.feedbackGiven ? 1 : -1;
                 valB = b.feedbackGiven ? 1 : -1;
@@ -771,7 +771,7 @@ window.initializePage = function() {
         const taxaNaoResposta = total > 0 ? (100 - parseFloat(taxaResposta)).toFixed(1) : 0;
 
         const recebidas = feedbacks.filter(f => f.feedbackGiven && f.contactReceived).length;
-        const fechados = feedbacks.filter(f => f.feedbackGiven && f.contactReceived && f.dealClosed === 'yes').length;
+        const fechados = feedbacks.filter(f => f.feedbackGiven && f.contactReceived && (f.dealClosed === 'yes' || f.dealClosed === 'started')).length;
         const negociacao = feedbacks.filter(f => f.feedbackGiven && f.contactReceived && f.dealClosed === 'talking').length;
         
         const fantasmas = feedbacks.filter(f => f.feedbackGiven && !f.contactReceived).length;
