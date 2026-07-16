@@ -708,8 +708,10 @@ exports.sendPushNotification = async (req, res) => {
  */
 exports.getFollowUps = async (req, res) => {
     try {
-        // Busca os logs unindo com Pacientes e Psicólogos
-        const [results] = await db.sequelize.query(`
+        const formatted = [];
+
+        // 1. Busca os logs de PACIENTES (tabela antiga: WhatsappClickLogs)
+        const [patientResults] = await db.sequelize.query(`
             SELECT 
                 w.id, 
                 w."createdAt" as date, 
@@ -717,32 +719,23 @@ exports.getFollowUps = async (req, res) => {
                 w."message_sent_at",
                 w."guestPhone",
                 w."guestName",
-                w."feedbackGiven",
-                w."dealClosed",
-                w."adminWppReminderSentAt",
-                w."adminWppReminderCount",
                 p.nome as "patientName", 
                 p.telefone as "patientPhone",
                 psi.nome as "psychologistName",
                 psi.telefone as "psychologistPhone"
-            FROM "WhatsAppClickLogs" w
+            FROM "WhatsappClickLogs" w
             LEFT JOIN "Patients" p ON w."patientId" = p.id
             LEFT JOIN "Psychologists" psi ON w."psychologistId" = psi.id
             WHERE COALESCE(w.status, 'pending') != 'deleted'
             ORDER BY w."createdAt" DESC
-            LIMIT 200
+            LIMIT 150
         `);
 
-        // Processa as linhas e cria os tipos de follow-up (Pode haver mais de 1 follow-up para a mesma linha)
-        const formatted = [];
-        
-        results.forEach(item => {
+        patientResults.forEach(item => {
             const patientName = item.patientName || item.guestName || 'Visitante';
             const patientPhone = item.guestPhone || item.patientPhone || '';
             const psiName = item.psychologistName || 'Psicólogo';
-            const psiPhone = item.psychologistPhone || '';
-
-            // 1. Follow-up Clássico (Paciente)
+            
             formatted.push({
                 id: item.id,
                 date: item.date,
@@ -754,16 +747,40 @@ exports.getFollowUps = async (req, res) => {
                 status: item.status || 'pending',
                 message_sent_at: item.message_sent_at
             });
+        });
 
-            // 2. Follow-up Psi: Feedback Pendente (+7 dias após o primeiro aviso)
-            // Lógica: feedbackGiven é falso, e já recebeu aviso há mais de 7 dias
+        // 2. Busca os logs de PSICÓLOGOS (tabela nova: WhatsAppClickLogs)
+        const [psiResults] = await db.sequelize.query(`
+            SELECT 
+                w.id, 
+                w."createdAt" as date, 
+                w."guestName",
+                w."feedbackGiven",
+                w."dealClosed",
+                w."adminWppReminderSentAt",
+                w."adminWppReminderCount",
+                psi.nome as "psychologistName",
+                psi.telefone as "psychologistPhone"
+            FROM "WhatsAppClickLogs" w
+            LEFT JOIN "Psychologists" psi ON w."psychologistId" = psi.id
+            WHERE (w."feedbackGiven" = false AND w."adminWppReminderSentAt" IS NOT NULL)
+               OR (w."feedbackGiven" = true AND w."dealClosed" = 'talking')
+            ORDER BY w."createdAt" DESC
+        `);
+
+        psiResults.forEach(item => {
+            const patientName = item.guestName || 'Visitante';
+            const psiName = item.psychologistName || 'Psicólogo';
+            const psiPhone = item.psychologistPhone || '';
+
+            // Follow-up Psi: Feedback Pendente
             if (item.feedbackGiven === false && item.adminWppReminderSentAt) {
                 const daysSinceReminder = (new Date() - new Date(item.adminWppReminderSentAt)) / (1000 * 60 * 60 * 24);
                 if (daysSinceReminder >= 7) {
                     formatted.push({
                         id: item.id + '_psi_feedback',
                         realId: item.id,
-                        date: item.adminWppReminderSentAt, // Usa a data do último aviso para a ordenação
+                        date: item.adminWppReminderSentAt,
                         type: 'psi_feedback',
                         targetName: psiName,
                         targetPhone: psiPhone,
@@ -775,8 +792,7 @@ exports.getFollowUps = async (req, res) => {
                 }
             }
 
-            // 3. Follow-up Psi: Em Negociação (+7 dias parado em "talking")
-            // Lógica: dealClosed === 'talking', feedbackGiven === true, e já passou 7 dias do contato original
+            // Follow-up Psi: Em Negociação
             if (item.feedbackGiven === true && item.dealClosed === 'talking') {
                 const daysSinceClick = (new Date() - new Date(item.date)) / (1000 * 60 * 60 * 24);
                 if (daysSinceClick >= 7) {
@@ -795,6 +811,9 @@ exports.getFollowUps = async (req, res) => {
                 }
             }
         });
+
+        // Ordenar por data decrescente
+        formatted.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         res.json(formatted);
     } catch (error) {
