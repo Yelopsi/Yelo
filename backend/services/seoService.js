@@ -188,7 +188,7 @@ exports.generateMatchCopy = async (patientPreferences, psychologists) => {
         if (!genAI) return null;
         
         const model = genAI.getGenerativeModel({ 
-            model: "gemini-1.5-flash",
+            model: "gemini-3.1-flash-lite",
             generationConfig: { responseMimeType: "application/json" }
         });
         
@@ -239,7 +239,7 @@ exports.generateQuestionSEO = async (questionTitle, questionContent, answerConte
         }
 
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-3.1-flash-lite",
             generationConfig: { responseMimeType: "application/json" }
         });
 
