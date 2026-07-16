@@ -717,28 +717,84 @@ exports.getFollowUps = async (req, res) => {
                 w."message_sent_at",
                 w."guestPhone",
                 w."guestName",
+                w."feedbackGiven",
+                w."dealClosed",
+                w."adminWppReminderSentAt",
+                w."adminWppReminderCount",
                 p.nome as "patientName", 
                 p.telefone as "patientPhone",
-                psi.nome as "psychologistName"
+                psi.nome as "psychologistName",
+                psi.telefone as "psychologistPhone"
             FROM "WhatsappClickLogs" w
             LEFT JOIN "Patients" p ON w."patientId" = p.id
             LEFT JOIN "Psychologists" psi ON w."psychologistId" = psi.id
             WHERE COALESCE(w.status, 'pending') != 'deleted'
             ORDER BY w."createdAt" DESC
-            LIMIT 100
+            LIMIT 200
         `);
 
-        // Formata para o frontend
-        const formatted = results.map(item => ({
-            id: item.id,
-            date: item.date,
-            patientName: item.patientName || item.guestName || 'Visitante',
-            patientPhone: item.guestPhone || item.patientPhone || '', // Prioriza o telefone do questionário
-            psychologistName: item.psychologistName || 'Psicólogo',
-            status: item.status || 'pending',
-            message_sent_at: item.message_sent_at,
-            consent: true // Assumimos true pois clicou no botão
-        }));
+        // Processa as linhas e cria os tipos de follow-up (Pode haver mais de 1 follow-up para a mesma linha)
+        const formatted = [];
+        
+        results.forEach(item => {
+            const patientName = item.patientName || item.guestName || 'Visitante';
+            const patientPhone = item.guestPhone || item.patientPhone || '';
+            const psiName = item.psychologistName || 'Psicólogo';
+            const psiPhone = item.psychologistPhone || '';
+
+            // 1. Follow-up Clássico (Paciente)
+            formatted.push({
+                id: item.id,
+                date: item.date,
+                type: 'patient_followup',
+                targetName: patientName,
+                targetPhone: patientPhone,
+                psychologistName: psiName,
+                patientName: patientName,
+                status: item.status || 'pending',
+                message_sent_at: item.message_sent_at
+            });
+
+            // 2. Follow-up Psi: Feedback Pendente (+7 dias após o primeiro aviso)
+            // Lógica: feedbackGiven é falso, e já recebeu aviso há mais de 7 dias
+            if (item.feedbackGiven === false && item.adminWppReminderSentAt) {
+                const daysSinceReminder = (new Date() - new Date(item.adminWppReminderSentAt)) / (1000 * 60 * 60 * 24);
+                if (daysSinceReminder >= 7) {
+                    formatted.push({
+                        id: item.id + '_psi_feedback',
+                        realId: item.id,
+                        date: item.adminWppReminderSentAt, // Usa a data do último aviso para a ordenação
+                        type: 'psi_feedback',
+                        targetName: psiName,
+                        targetPhone: psiPhone,
+                        psychologistName: psiName,
+                        patientName: patientName,
+                        status: item.adminWppReminderCount > 1 ? 'sent' : 'pending',
+                        message_sent_at: item.adminWppReminderCount > 1 ? item.adminWppReminderSentAt : null
+                    });
+                }
+            }
+
+            // 3. Follow-up Psi: Em Negociação (+7 dias parado em "talking")
+            // Lógica: dealClosed === 'talking', feedbackGiven === true, e já passou 7 dias do contato original
+            if (item.feedbackGiven === true && item.dealClosed === 'talking') {
+                const daysSinceClick = (new Date() - new Date(item.date)) / (1000 * 60 * 60 * 24);
+                if (daysSinceClick >= 7) {
+                    formatted.push({
+                        id: item.id + '_psi_negotiation',
+                        realId: item.id,
+                        date: item.date,
+                        type: 'psi_negotiation',
+                        targetName: psiName,
+                        targetPhone: psiPhone,
+                        psychologistName: psiName,
+                        patientName: patientName,
+                        status: item.adminWppReminderCount > 0 ? 'sent' : 'pending',
+                        message_sent_at: item.adminWppReminderCount > 0 ? item.adminWppReminderSentAt : null
+                    });
+                }
+            }
+        });
 
         res.json(formatted);
     } catch (error) {
@@ -753,20 +809,48 @@ exports.getFollowUps = async (req, res) => {
  */
 exports.updateFollowUpStatus = async (req, res) => {
     try {
-        const { id } = req.params;
+        let { id } = req.params;
         const { status, message_sent_at } = req.body;
 
-        let query = `UPDATE "WhatsappClickLogs" SET status = :status`;
-        const replacements = { id, status };
-
-        if (message_sent_at) {
-            query += `, "message_sent_at" = :message_sent_at`;
-            replacements.message_sent_at = message_sent_at;
+        // Parse composite ID
+        let isPsiFeedback = false;
+        let isPsiNegotiation = false;
+        if (typeof id === 'string') {
+            if (id.includes('_psi_feedback')) {
+                isPsiFeedback = true;
+                id = id.replace('_psi_feedback', '');
+            } else if (id.includes('_psi_negotiation')) {
+                isPsiNegotiation = true;
+                id = id.replace('_psi_negotiation', '');
+            }
         }
 
-        query += ` WHERE id = :id`;
+        if (isPsiFeedback || isPsiNegotiation) {
+            // Se for um follow-up direcionado ao psicólogo, o clique de "Mensagem enviada" incrementa o contador
+            let query = `UPDATE "WhatsappClickLogs" SET "adminWppReminderCount" = "adminWppReminderCount" + 1`;
+            const replacements = { id };
 
-        await db.sequelize.query(query, { replacements });
+            if (message_sent_at) {
+                query += `, "adminWppReminderSentAt" = :message_sent_at`;
+                replacements.message_sent_at = message_sent_at;
+            }
+
+            query += ` WHERE id = :id`;
+            await db.sequelize.query(query, { replacements });
+        } else {
+            // Lógica padrão para o follow-up do Paciente
+            let query = `UPDATE "WhatsappClickLogs" SET status = :status`;
+            const replacements = { id, status };
+
+            if (message_sent_at) {
+                query += `, "message_sent_at" = :message_sent_at`;
+                replacements.message_sent_at = message_sent_at;
+            }
+
+            query += ` WHERE id = :id`;
+            await db.sequelize.query(query, { replacements });
+        }
+
         res.json({ success: true });
     } catch (error) {
         console.error("Erro ao atualizar follow-up:", error);
@@ -780,15 +864,16 @@ exports.updateFollowUpStatus = async (req, res) => {
  */
 exports.deleteFollowUp = async (req, res) => {
     try {
-        const { id } = req.params;
-        
-        const [updated] = await db.sequelize.query(
-            `UPDATE "WhatsappClickLogs" SET status = 'deleted' WHERE id = :id`,
-            { replacements: { id } }
-        );
+        let { id } = req.params;
 
-        if (updated.rowCount === 0) return res.status(404).json({ error: "Follow-up não encontrado." });
+        if (typeof id === 'string') {
+            if (id.includes('_psi_feedback')) id = id.replace('_psi_feedback', '');
+            else if (id.includes('_psi_negotiation')) id = id.replace('_psi_negotiation', '');
+        }
 
+        await db.sequelize.query(`UPDATE "WhatsappClickLogs" SET status = 'deleted' WHERE id = :id`, {
+            replacements: { id }
+        });
         res.json({ success: true, message: "Contato excluído." });
     } catch (error) {
         console.error("Erro ao excluir follow-up:", error);

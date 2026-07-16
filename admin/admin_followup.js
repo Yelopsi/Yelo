@@ -335,14 +335,29 @@
             const dateObj = new Date(item.date);
             const formattedDate = dateObj.toLocaleDateString('pt-BR');
             
-            // --- CORREÇÃO: Limpeza e Formatação do Telefone para o Link ---
-            let cleanPhone = (item.patientPhone || '').replace(/\D/g, '');
+            // --- Limpeza e Formatação do Telefone para o Link ---
+            let cleanPhone = (item.targetPhone || '').replace(/\D/g, '');
             if (cleanPhone.length >= 10 && cleanPhone.length <= 11) {
                 cleanPhone = '55' + cleanPhone; // Adiciona DDI Brasil se faltar
             }
 
-            // Mensagem pré-formatada para o WhatsApp
-            const msg = `Olá! Tudo bem? Vi que você se interessou pelo perfil de ${item.psychologistName} na Yelo há alguns dias. Conseguiu agendar sua consulta ou precisa de ajuda?`;
+            // Mensagem pré-formatada para o WhatsApp de acordo com o Tipo
+            let msg = '';
+            let labelTipo = '';
+            const firstName = (item.targetName || '').split(' ')[0];
+            const patientName = item.patientName || 'um paciente';
+
+            if (item.type === 'psi_negotiation') {
+                labelTipo = `<span style="background:#fef3c7; color:#d97706; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;">[Psi - Fechamento]</span>`;
+                msg = `Olá, ${firstName}! Tudo bem? Vi aqui que na semana passada você estava em contato com o(a) paciente ${patientName}. Passando para saber se deu tudo certo e se vocês chegaram a iniciar as sessões! 🎉\n\nQuando tiver um tempinho, poderia atualizar o desfecho desse contato lá na Yelo? É só acessar em\n\nwww.yelopsi.com.br/login\n\nir na aba *'Evolução'* > *'Histórico de Contatos'* e alterar a coluna *'Status de Retorno'*. Saber se esse paciente fechou com você nos ajuda muito a otimizar o algoritmo para te enviar mais pacientes com esse exato perfil.\n\nAbraços! 🌿`;
+            } else if (item.type === 'psi_feedback') {
+                labelTipo = `<span style="background:#fee2e2; color:#ef4444; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;">[Psi - Feedback]</span>`;
+                msg = `Olá, ${firstName}! Como vai? \n\nNotamos que o(a) paciente ${patientName} clicou para falar com você já faz um tempinho, mas ainda não recebemos o seu feedback sobre como foi esse contato. Esse preenchimento é super rápido e obrigatório, pois é ele quem 'treina' a nossa Inteligência Artificial a atrair os pacientes que mais combinam com a sua clínica.\n\nVocê consegue nos dar esse retorno rapidinho? \n\nPra facilitar, estou reenviando aqui o link. Nem precisa fazer o login ☺️\n\nwww.yelopsi.com.br/login\n\nQualquer dúvida pode me chamar por aqui. \nUm abraço 🌿`;
+            } else {
+                labelTipo = `<span style="background:#e0e7ff; color:#4f46e5; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;">[Paciente]</span>`;
+                msg = `Olá! Tudo bem? Vi que você se interessou pelo perfil de ${item.psychologistName} na Yelo há alguns dias. Conseguiu agendar sua consulta ou precisa de ajuda?`;
+            }
+
             const whatsappLink = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}` : '#';
             let whatsappTitle = "Enviar Mensagem no WhatsApp";
 
@@ -399,12 +414,17 @@
                     <div style="font-size: 0.95rem; font-weight: 600; color: #333;">${formattedDate}</div>
                     <div style="font-size: 0.8rem; color: #888; margin-top: 2px;">há ${daysDiff} dias</div>
                 </td>
-                <td data-label="Paciente" style="padding: 15px;">
-                    <div style="font-weight: 600; font-size: 0.95rem; color: #333;">${item.patientName}</div>
-                    <div style="font-size: 0.85rem; color: #666; margin-top: 2px;">${formatPhone(item.patientPhone)}</div>
+                <td data-label="Alvo do Follow-up" style="padding: 15px;">
+                    <div style="margin-bottom: 5px;">${labelTipo}</div>
+                    <div style="font-weight: 600; color: #333; margin-bottom: 3px;">${item.targetName}</div>
+                    <div style="color: #666; font-size: 0.85rem; display: flex; align-items: center; gap: 5px;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                        ${formatPhone(item.targetPhone) || 'Sem telefone'}
+                    </div>
                 </td>
-                <td data-label="Psicólogo" style="padding: 15px; font-size: 0.95rem; color: #444; font-weight: 500;">
-                    ${item.psychologistName}
+                <td data-label="Contexto" style="padding: 15px; color: #666; font-size: 0.9rem;">
+                    Paciente: <strong>${item.patientName}</strong><br>
+                    Psi: <strong>${item.psychologistName}</strong>
                 </td>
                 <td data-label="Status" style="padding: 15px;">
                     ${badgeHtml}
