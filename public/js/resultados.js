@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
             reasonsHtml = `
                 <div class="match-reasons-box" style="background-color: #E8F5E9; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
                     <span style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--verde-escuro); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Por que recomendamos</span>
-                    <p style="margin: 0; color: var(--verde-escuro); font-size: 0.85rem; line-height: 1.4;">
+                    <p style="margin: 0; color: var(--verde-escuro); font-size: 0.85rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
                         ${reasonText}
                     </p>
                 </div>

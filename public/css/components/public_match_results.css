@@ -128,7 +128,7 @@
 .match-crp { font-size: 0.85rem; color: #888; margin-bottom: 20px; display: block; font-weight: 500;}
 .match-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
 .match-tag { background: #f0fdf4; color: var(--verde-escuro); border: 1px solid #c8e6c9; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-.match-bio { font-size: 0.95rem; color: #555; line-height: 1.6; margin-bottom: 25px; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; flex-grow: 1; }
+.match-bio { font-size: 0.95rem; color: #555; line-height: 1.6; margin-bottom: 25px; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .match-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
 .match-price span { display: block; font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 2px;}
 .match-price strong { color: var(--verde-escuro); font-size: 1.3rem; font-weight: 800; font-family: var(--font-titulos); }
