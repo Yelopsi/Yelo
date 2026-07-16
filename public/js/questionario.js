@@ -376,6 +376,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     parent.querySelectorAll('.choice-button').forEach(btn => btn.classList.remove('selected'));
                     target.classList.add('selected');
                     collectAnswer();
+                    
+                    if (currentQuestion.id === 'temas') { updateAbordagemIdealSlide(); }
 
                     let proximoPasso = currentStep + 1;
 
