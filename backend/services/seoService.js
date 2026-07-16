@@ -192,8 +192,12 @@ exports.generateMatchCopy = async (patientPreferences, psychologists) => {
             generationConfig: { responseMimeType: "application/json" }
         });
         
+        const temasArray = Array.isArray(patientPreferences.temas) 
+            ? patientPreferences.temas 
+            : (typeof patientPreferences.temas === 'string' ? [patientPreferences.temas] : []);
+
         const patientContext = `Faixa de Valor: ${patientPreferences.faixa_valor || 'Não informada'}
-Temas buscados: ${(patientPreferences.temas || []).join(', ')}
+Temas buscados: ${temasArray.join(', ')}
 Gênero preferido: ${patientPreferences.pref_genero_prof || 'Indiferente'}
 Modalidade: ${patientPreferences.modalidade_atendimento || 'Indiferente'}`;
 
