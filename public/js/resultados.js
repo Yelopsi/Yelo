@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const grid = document.getElementById('results-grid');
     
     function createCard(profile) {
+        console.log("Card Data:", profile);
         // NOVA LÓGICA: Usa os motivos gerados pela IA ou faz fallback para as antigas tags
         let reasonsHtml = '';
         let matchReasons = profile.matchReasons || [];
