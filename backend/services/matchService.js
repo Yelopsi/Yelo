@@ -381,7 +381,7 @@ exports.calculateMatches = async (preferences = {}) => {
                     bio: r.bio || ''
                 }));
                 
-                const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 8000));
+                const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 20000));
                 
                 const aiReasons = await Promise.race([
                     seoService.generateMatchCopy(preferences, psiDataForAI), 
