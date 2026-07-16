@@ -222,12 +222,12 @@ Exemplo de formato esperado:
         const result = await model.generateContent(prompt);
         let rawText = result.response.text();
         const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) return null;
+        if (!jsonMatch) return { error: "Regex não encontrou JSON" };
         
         return JSON.parse(jsonMatch[0]);
     } catch (error) {
         console.error("❌ [SEO Service - Match Copy] Erro:", error.message);
-        return null;
+        return { error: error.message };
     }
 };
 

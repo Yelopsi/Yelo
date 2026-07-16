@@ -386,14 +386,16 @@ exports.calculateMatches = async (preferences = {}) => {
                     bio: r.bio || ''
                 }));
                 
-                const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 30000));
+                const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve({ error: "Gemini Timeout após 30 segundos" }), 30000));
                 
                 const aiReasons = await Promise.race([
                     seoService.generateMatchCopy(preferences, psiDataForAI), 
                     timeoutPromise
                 ]);
 
-                if (aiReasons) {
+                if (aiReasons && aiReasons.error) {
+                    results.forEach(r => r.aiError = aiReasons.error);
+                } else if (aiReasons) {
                     results.forEach(r => {
                         const psiAi = aiReasons[r.id] || aiReasons[String(r.id)];
                         if (psiAi) {

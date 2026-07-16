@@ -210,6 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tags: p.matchDetails || p.temas_atuacao || [],
                 score: p.matchScore || 90,
                 isFavorited: p.isFavorited || false,
+                aiError: p.aiError || null,
                 animationDelay: index * 0.15
             }));
         }
