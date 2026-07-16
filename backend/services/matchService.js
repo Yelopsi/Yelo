@@ -163,10 +163,15 @@ const calculateSimilarity = (psy, preferences = {}, priceRange) => {
 
 // --- L3: FAIRNESS (MULTI-ARMED BANDIT - UCB) ---
 const applyFairness = (scoredCandidates, totalSystemImpressions) => {
-    const totalCurrentImpressions = scoredCandidates.reduce((sum, c) => sum + (c.profile_appearances || 0), 0);
-    const avgAppearances = scoredCandidates.length > 0 ? Math.max(1, totalCurrentImpressions / scoredCandidates.length) : 1;
+    // Calcula a velocidade média de aparições (Aparições por Dia) para não penalizar psicólogos mais antigos
+    const currentVelocities = scoredCandidates.map(c => {
+        const days = Math.max(1, (new Date() - new Date(c.createdAt || Date.now())) / (1000 * 60 * 60 * 24));
+        return (c.profile_appearances || 0) / days;
+    });
+    const totalVelocity = currentVelocities.reduce((sum, val) => sum + val, 0);
+    const avgVelocity = scoredCandidates.length > 0 ? Math.max(0.1, totalVelocity / scoredCandidates.length) : 0.1;
 
-    return scoredCandidates.map(c => {
+    return scoredCandidates.map((c, index) => {
         try {
         // Cooldown Progressivo MVP: Penalidade máxima de 50% decaindo para 0% ao longo de 24 horas (1440 minutos)
         // Isso força a plataforma a "girar a roleta" e mostrar psicólogos diferentes o dia todo
@@ -191,13 +196,14 @@ const applyFairness = (scoredCandidates, totalSystemImpressions) => {
         // Calcula a pontuação final preliminar
         let finalScore = (c.rawMatchScore * cooldownPenalty) + (ctr * 10) + Math.min(20, explorationBonus) + mvpBoost;
 
-        // --- EXPOSURE THROTTLE (Justiça por Aparições) ---
-        // Se o profissional já apareceu muitas vezes em relação à média, o freio é ativado para girar a base.
-        // Se apareceu muito pouco, ele ganha um impulso extra para equilibrar as impressões.
-        if (impressions > avgAppearances * 1.5) {
-            finalScore *= 0.75; // Penalidade de 25% para quem monopoliza
-        } else if (impressions < avgAppearances * 0.5) {
-            finalScore *= 1.25; // Bônus de 25% para quem tem poucas visualizações
+        // --- EXPOSURE THROTTLE (Velocidade de Aparições) ---
+        // Se a velocidade (Aparições/Dia) for muito maior que a média, aplicamos o freio.
+        // Assim protegemos profissionais antigos que acumularam muitas aparições ao longo dos meses.
+        const velocity = currentVelocities[index];
+        if (velocity > avgVelocity * 1.5) {
+            finalScore *= 0.75; // Penalidade para quem monopoliza o tráfego recente
+        } else if (velocity < avgVelocity * 0.5) {
+            finalScore *= 1.25; // Bônus para quem está girando devagar
         }
 
         // --- TRIAL-END BOOST ---
