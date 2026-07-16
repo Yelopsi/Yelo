@@ -9,9 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function createCard(profile) {
         // NOVA LÓGICA: Usa os motivos gerados pela IA ou faz fallback para as antigas tags
         let reasonsHtml = '';
-        const displayReasons = (profile.matchReasons && profile.matchReasons.length > 0) 
-            ? profile.matchReasons.slice(0, 1) 
-            : profile.tags.slice(0, 1);
+        let matchReasons = profile.matchReasons || [];
+        if (typeof matchReasons === 'string') matchReasons = [matchReasons];
+        
+        let tags = profile.tags || [];
+        if (typeof tags === 'string') tags = tags.split(',').map(t => t.trim());
+        
+        const displayReasons = (matchReasons.length > 0) ? matchReasons.slice(0, 1) : tags.slice(0, 1);
 
         if (displayReasons && displayReasons.length > 0) {
             const r = displayReasons[0];
