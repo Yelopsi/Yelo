@@ -725,7 +725,7 @@ exports.getFollowUps = async (req, res) => {
                 p.telefone as "patientPhone",
                 psi.nome as "psychologistName",
                 psi.telefone as "psychologistPhone"
-            FROM "WhatsappClickLogs" w
+            FROM "WhatsAppClickLogs" w
             LEFT JOIN "Patients" p ON w."patientId" = p.id
             LEFT JOIN "Psychologists" psi ON w."psychologistId" = psi.id
             WHERE COALESCE(w.status, 'pending') != 'deleted'
@@ -827,7 +827,7 @@ exports.updateFollowUpStatus = async (req, res) => {
 
         if (isPsiFeedback || isPsiNegotiation) {
             // Se for um follow-up direcionado ao psicólogo, o clique de "Mensagem enviada" incrementa o contador
-            let query = `UPDATE "WhatsappClickLogs" SET "adminWppReminderCount" = "adminWppReminderCount" + 1`;
+            let query = `UPDATE "WhatsAppClickLogs" SET "adminWppReminderCount" = "adminWppReminderCount" + 1`;
             const replacements = { id };
 
             if (message_sent_at) {
@@ -839,7 +839,7 @@ exports.updateFollowUpStatus = async (req, res) => {
             await db.sequelize.query(query, { replacements });
         } else {
             // Lógica padrão para o follow-up do Paciente
-            let query = `UPDATE "WhatsappClickLogs" SET status = :status`;
+            let query = `UPDATE "WhatsAppClickLogs" SET status = :status`;
             const replacements = { id, status };
 
             if (message_sent_at) {
@@ -871,7 +871,7 @@ exports.deleteFollowUp = async (req, res) => {
             else if (id.includes('_psi_negotiation')) id = id.replace('_psi_negotiation', '');
         }
 
-        await db.sequelize.query(`UPDATE "WhatsappClickLogs" SET status = 'deleted' WHERE id = :id`, {
+        await db.sequelize.query(`UPDATE "WhatsAppClickLogs" SET status = 'deleted' WHERE id = :id`, {
             replacements: { id }
         });
         res.json({ success: true, message: "Contato excluído." });
