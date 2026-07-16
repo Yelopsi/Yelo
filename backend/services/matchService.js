@@ -163,6 +163,9 @@ const calculateSimilarity = (psy, preferences = {}, priceRange) => {
 
 // --- L3: FAIRNESS (MULTI-ARMED BANDIT - UCB) ---
 const applyFairness = (scoredCandidates, totalSystemImpressions) => {
+    const totalCurrentImpressions = scoredCandidates.reduce((sum, c) => sum + (c.profile_appearances || 0), 0);
+    const avgAppearances = scoredCandidates.length > 0 ? Math.max(1, totalCurrentImpressions / scoredCandidates.length) : 1;
+
     return scoredCandidates.map(c => {
         try {
         // Cooldown Progressivo MVP: Penalidade máxima de 50% decaindo para 0% ao longo de 24 horas (1440 minutos)
@@ -180,21 +183,21 @@ const applyFairness = (scoredCandidates, totalSystemImpressions) => {
         const ctr = clicks / impressions;
 
         // Bônus UCB para descoberta de novos talentos
-            const explorationBonus = WEIGHTS.UCB_EXPLORATION_RATE * Math.sqrt(Math.log(Math.max(2, totalSystemImpressions || 10)) / impressions);
+        const explorationBonus = WEIGHTS.UCB_EXPLORATION_RATE * Math.sqrt(Math.log(Math.max(2, totalSystemImpressions || 10)) / impressions);
         
         // --- BÔNUS MVP (ZERO TO ONE) ---
-        // Se o profissional NUNCA recebeu um clique no WhatsApp, damos um bônus absurdo
-        // Isso garante que todo mundo na Yelo receba pelo menos um lead para ver o valor da plataforma
         const mvpBoost = (clicks === 0) ? WEIGHTS.MVP_ZERO_CLICK_BOOST : 0;
 
-        // Calcula a pontuação final com as táticas de nivelamento
+        // Calcula a pontuação final preliminar
         let finalScore = (c.rawMatchScore * cooldownPenalty) + (ctr * 10) + Math.min(20, explorationBonus) + mvpBoost;
 
-        // --- CLICK THROTTLE (FREIO) ---
-        // Ajustado após análise de dados: com 122 buscas e 30 cliques totais no mês, um profissional com 15 cliques deteria 50% do mercado.
-        // O freio agora é ativado mais cedo (>= 3 cliques) para garantir giro na base, a menos que ele seja recém chegado e precise de volume inicial.
-        if (clicks >= 3) {
-            finalScore *= 0.80;
+        // --- EXPOSURE THROTTLE (Justiça por Aparições) ---
+        // Se o profissional já apareceu muitas vezes em relação à média, o freio é ativado para girar a base.
+        // Se apareceu muito pouco, ele ganha um impulso extra para equilibrar as impressões.
+        if (impressions > avgAppearances * 1.5) {
+            finalScore *= 0.75; // Penalidade de 25% para quem monopoliza
+        } else if (impressions < avgAppearances * 0.5) {
+            finalScore *= 1.25; // Bônus de 25% para quem tem poucas visualizações
         }
 
         // --- TRIAL-END BOOST ---
