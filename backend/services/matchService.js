@@ -239,8 +239,13 @@ exports.calculateMatches = async (preferences = {}) => {
         const totalSystemImpressions = cachedTotalImpressions;
         const agora = new Date();
 
-        // --- MUDANÇA ESTRATÉGICA: BUSCA RESTRITA A ATIVOS E TRIALS ---
-        const baseWhereConditions = { status: { [Op.in]: ['active', 'trial'] } };
+        // --- MUDANÇA ESTRATÉGICA: BUSCA RESTRITA A ATIVOS E TRIALS COMPLETOS ---
+        const baseWhereConditions = { 
+            status: { [Op.in]: ['active', 'trial'] },
+            bio: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] },
+            cpf: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] },
+            fotoUrl: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] }
+        };
 
         debugLog.push(`[${Date.now() - startTime}ms] 🔍 Buscando candidatos elegíveis no banco de dados...`);
         const allEligiblePsychologists = await db.Psychologist.findAll({ where: baseWhereConditions });
