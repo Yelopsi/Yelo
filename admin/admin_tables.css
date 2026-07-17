@@ -107,7 +107,7 @@
 
 .tabela-container h3 { margin-top: 0; margin-bottom: 5px; }
 .subtitulo-secao { color: var(--cinza-texto); margin-top: 0; margin-bottom: 30px; }
-.tabela-wrapper { overflow-x: visible; }
+.tabela-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
 .tabela-gerenciamento {
     width: 100%;
