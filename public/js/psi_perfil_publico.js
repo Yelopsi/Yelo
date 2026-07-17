@@ -656,6 +656,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 modal.style.display = 'flex';
             };
         }
+
+        // Se URL tiver ?review=true, abre o modal automaticamente (Link Mágico)
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (modal && urlParams.get('review') === 'true') {
+                modal.style.display = 'flex';
+                // Remove o parâmetro da URL para não reabrir em refresh
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        } catch(e) {}
         
         if (btnClose && modal) {
             btnClose.onclick = () => { modal.style.display = 'none'; };
