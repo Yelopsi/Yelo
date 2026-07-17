@@ -788,6 +788,19 @@ exports.getPendingActions = async (req, res) => {
                 const perfData = await perfController.getLowPerformanceData();
                 if (perfData && perfData.psychologists) {
                     perfData.psychologists.forEach(p => {
+                        // Omitir se não tiver WhatsApp
+                        if (!p.telefone || String(p.telefone).trim() === '') return;
+                        
+                        // Omitir se já foi contatado pela IA nos últimos 7 dias
+                        if (p.aiOptimizationHistory && Array.isArray(p.aiOptimizationHistory)) {
+                            const recentlySent = p.aiOptimizationHistory.some(entry => {
+                                if (!entry.sentAt) return false;
+                                const diffDays = (now - new Date(entry.sentAt)) / (1000 * 60 * 60 * 24);
+                                return diffDays <= 7;
+                            });
+                            if (recentlySent) return;
+                        }
+
                         pendingList.push({
                             ...p,
                             actionType: 'low_performance',
