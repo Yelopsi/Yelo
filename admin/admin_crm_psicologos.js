@@ -415,7 +415,7 @@ window.initializePage = function () {
                 msg = `Olá, ${firstName}! Tudo bem?\n\nO seu perfil continua gerando resultados na Yelo! ✨\nPercebemos que ${introTextRecorrente} entrar em contato com você recentemente.\n\nPara mantermos o seu perfil forte e continuarmos te indicando no nosso ranking, precisamos apenas da sua confirmação rápida. Acesse o link abaixo e nos conte:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto!\n\nResponder agora:\n👉 ${linkFeedback}\n\nMuito obrigado pela parceria! 🌿`;
             }
         }
-        const linkDesktop = `https://web.whatsapp.com/send?phone=55${cleanPhone}&text=${encodeURIComponent(msg)}`;
+        const linkDesktop = `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${encodeURIComponent(msg)}`;
         const linkMobile = `whatsapp://send?phone=55${cleanPhone}&text=${encodeURIComponent(msg)}`;
         const isMobile = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 800;
         if (isMobile) {

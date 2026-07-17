@@ -220,7 +220,7 @@ window.initializePage = function() {
             
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             
-            const linkDesktop = `https://web.whatsapp.com/send?phone=${telefoneNum}&text=${encodeURIComponent(msgFinal)}`;
+            const linkDesktop = `https://api.whatsapp.com/send?phone=${telefoneNum}&text=${encodeURIComponent(msgFinal)}`;
             const linkMobile = `whatsapp://send?phone=${telefoneNum}&text=${encodeURIComponent(msgFinal)}`;
 
             if (isMobile) {
