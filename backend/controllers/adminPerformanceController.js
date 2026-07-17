@@ -118,7 +118,7 @@ exports.generateAiDiagnosis = async (req, res) => {
         if (!psi) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
 
         // Coletar Dados do Dossiê para a IA
-        const [blogPosts] = await db.sequelize.query(`SELECT id, title FROM posts WHERE psychologist_id = :id`, { replacements: { id: psiId } }).catch(() => [[], null]);
+        const [blogPosts] = await db.sequelize.query(`SELECT id, titulo FROM posts WHERE psychologist_id = :id`, { replacements: { id: psiId } }).catch(() => [[], null]);
         const [forumAnswers] = await db.sequelize.query(`SELECT id FROM "ForumComments" WHERE "PsychologistId" = :id`, { replacements: { id: psiId } }).catch(() => [[], null]);
         const [reviews] = await db.sequelize.query(`SELECT id, rating FROM "Reviews" WHERE "psychologistId" = :id`, { replacements: { id: psiId } }).catch(() => [[], null]);
         
@@ -141,11 +141,10 @@ Aja em tom amigável, direto, profissional e de parceria. Sem introduções long
 - Cliques no WhatsApp: ${clicks[0]?.count || 0}
 
 [DADOS DO PERFIL]
-- Abordagem: ${psi.abordagem || 'Não preenchido'}
-- Especialidades (Tags): ${psi.tags || 'Não preenchido'}
-- Valor da Sessão: R$ ${psi.valor_sessao || 'Não preenchido'}
+- Abordagem: ${psi.abordagens_tecnicas && psi.abordagens_tecnicas.length > 0 ? (Array.isArray(psi.abordagens_tecnicas) ? psi.abordagens_tecnicas.join(', ') : psi.abordagens_tecnicas) : 'Não preenchido'}
+- Especialidades (Tags): ${psi.temas_atuacao && psi.temas_atuacao.length > 0 ? (Array.isArray(psi.temas_atuacao) ? psi.temas_atuacao.join(', ') : psi.temas_atuacao) : 'Não preenchido'}
+- Valor da Sessão: ${psi.valor_sessao_numero ? 'R$ ' + psi.valor_sessao_numero : 'Não preenchido'}
 - Tem foto? ${psi.fotoUrl ? 'Sim' : 'Não'}
-- Tem vídeo de apresentação? ${psi.videoUrl ? 'Sim' : 'Não'}
 - Bio: "${psi.bio || 'Não preenchida'}"
 
 [USO DE FERRAMENTAS DA YELO]
