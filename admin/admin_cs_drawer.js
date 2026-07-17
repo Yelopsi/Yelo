@@ -223,11 +223,10 @@ window.openCSDrawer = async function(idStr) {
                     });
                 } catch(e) {}
                 
-                const tr = document.getElementById(`name-psy-${psy.id}`)?.closest('tr');
-                if (tr) {
-                    tr.style.transition = 'all 0.4s ease';
-                    tr.style.opacity = '0';
-                    setTimeout(() => tr.remove(), 400);
+                // Em vez de remover a linha, apenas atualiza visualmente com o emoji de contatado
+                const nameEl = document.getElementById(`name-psy-${psy.id}`);
+                if (nameEl && !nameEl.innerHTML.includes('✉️') && !nameEl.innerHTML.includes('📱')) {
+                    nameEl.innerHTML += '<span class="badge-pending" title="Contato Realizado" style="margin-left: 5px; font-size: 0.8rem;">📱</span>';
                 }
             };
             actionsContainer.appendChild(btnZap);
