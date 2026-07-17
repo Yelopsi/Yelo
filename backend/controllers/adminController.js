@@ -763,7 +763,7 @@ exports.getFollowUps = async (req, res) => {
                 psi.telefone as "psychologistPhone"
             FROM "WhatsAppClickLogs" w
             LEFT JOIN "Psychologists" psi ON w."psychologistId" = psi.id
-            WHERE (w."feedbackGiven" = false)
+            WHERE (w."feedbackGiven" = false OR w."feedbackGiven" IS NULL)
                OR (w."feedbackGiven" = true AND w."dealClosed" = 'talking')
             ORDER BY w."createdAt" DESC
         `);
@@ -774,7 +774,7 @@ exports.getFollowUps = async (req, res) => {
             const psiPhone = item.psychologistPhone || '';
 
             // Follow-up Psi: Feedback Pendente
-            if (item.feedbackGiven === false) {
+            if (item.feedbackGiven === false || item.feedbackGiven === null) {
                 if (item.adminWppReminderSentAt) {
                     const daysSinceReminder = (new Date() - new Date(item.adminWppReminderSentAt)) / (1000 * 60 * 60 * 24);
                     if (daysSinceReminder >= 7) {
