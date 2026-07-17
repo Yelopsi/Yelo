@@ -76,7 +76,18 @@ exports.getLowPerformanceData = async () => {
     // 1. Gargalo de Conversão: Matches acima da média, mas CTR menor que 50% da média global
     // 2. Gargalo de Visibilidade: Matches menor que 30% da média global
     // 3. Zero cliques mas com base razoável de matches (>=10)
+    const nowTime = new Date();
     const lowPerformance = statsArray.filter(psi => {
+        // Ignora se o perfil já foi contatado nos últimos 7 dias (período de carência)
+        if (psi.aiOptimizationHistory && Array.isArray(psi.aiOptimizationHistory)) {
+            const recentlySent = psi.aiOptimizationHistory.some(entry => {
+                if (!entry.sentAt) return false;
+                const diffDays = (nowTime - new Date(entry.sentAt)) / (1000 * 60 * 60 * 24);
+                return diffDays <= 7;
+            });
+            if (recentlySent) return false; // Remove da lista de baixa performance temporariamente
+        }
+
         const hasHighMatchesLowCtr = psi.matches_30d >= avgMatches && psi.ctr < (avgCtr * 0.5);
         const hasLowMatches = psi.matches_30d < (avgMatches * 0.3) && avgMatches > 10;
         const isZeroClicks = psi.matches_30d >= 10 && psi.clicks_30d === 0;
@@ -153,7 +164,7 @@ Aja em tom amigável, direto, profissional e de parceria. Sem introduções long
 - Avaliações recebidas de pacientes antigos: ${reviews.length}
 
 [HISTÓRICO ANTERIOR DA IA]
-${history.length > 0 ? `Na última vez que você falou com ele (em ${new Date(history[history.length-1].date).toLocaleDateString()}), você deu a seguinte dica: ${history[history.length-1].aiDiagnosis}` : 'Este é o primeiro contato de otimização de perfil.'}
+${history.length > 0 ? `Na última vez que você falou com ele (em ${new Date(history[history.length-1].sentAt || history[history.length-1].date).toLocaleDateString()}), você deu a seguinte dica: ${history[history.length-1].aiDiagnosis}` : 'Este é o primeiro contato de otimização de perfil.'}
 
 [DIAGNÓSTICO E INSTRUÇÕES DE COPY]
 Analise os dados acima com muita atenção e escreva a mensagem EXATA que será enviada pelo WhatsApp.
@@ -168,7 +179,7 @@ REGRAS DE ANÁLISE:
 3. Se ele tiver baixas Aparições em Buscas e já tiver Tags preenchidas, sugira usar o Blog ou a Comunidade para se aproximar dos pacientes. Se ele NÃO tiver tags, aí sim sugira preenchê-las.
 4. Poucos contatos no WhatsApp: o problema é o convencimento. Se a bio for curta/técnica, sugira deixá-la mais acolhedora. Se tiver poucas avaliações, entregue o Link Mágico (https://www.yelopsi.com.br/${psi.slug}?review=true) e sugira pedir avaliações aos pacientes atuais para gerar confiança.
 5. Inicie EXATAMENTE com: "Olá, [Nome]. Como vai? Estive analisando..." (Substitua [Nome] apenas pelo primeiro nome).
-6. Escreva no máximo 2 dicas diretas. Seja sucinto, natural e amigável.
+6. Escreva de 2 a 3 dicas acionáveis, profundas e muito bem elaboradas. Vá além do básico e mostre COMO aplicar a dica na prática de forma criativa. Mantenha um tom natural e amigável.
 7. Finalize lembrando que estamos juntos na parceria e se colocando à disposição.
 
 Retorne SOMENTE um JSON com a seguinte estrutura (não use marcações markdown como \`\`\`json, apenas o objeto):
