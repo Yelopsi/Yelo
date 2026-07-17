@@ -150,6 +150,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: true
     },
+    aiOptimizationHistory: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: []
+    },
     msg_analysis_sent_at: {
       type: DataTypes.DATE,
       allowNull: true

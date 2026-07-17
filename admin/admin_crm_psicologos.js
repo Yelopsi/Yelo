@@ -218,6 +218,30 @@ window.initializePage = function () {
             }
         }
 
+        if (status === 'low_performance') {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/psychologists/low-performance`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Falha ao buscar performance.');
+                const data = await response.json();
+                
+                const aiKpiEl = document.getElementById('kpi-ai-psis');
+                if (aiKpiEl) aiKpiEl.textContent = data.count || 0;
+
+                psisDataCache = data.psychologists || [];
+                renderTable(psisDataCache);
+                
+                const infoEl = document.getElementById('pagination-info');
+                if (infoEl) infoEl.textContent = `Mostrando ${psisDataCache.length} psicólogos para análise (Média: ${Math.round(data.platformAvgCtr*100)}% conversão | ${Math.round(data.platformAvgMatches)} aparições)`;
+                return;
+            } catch (error) {
+                console.error(error);
+                tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--coral-quente);">Erro ao carregar análise de performance.</td></tr>`;
+                return;
+            }
+        }
+
         const startDate = document.getElementById('crm-date-start')?.value || '';
         const endDate = document.getElementById('crm-date-end')?.value || '';
         const limit = document.getElementById('crm-per-page')?.value || 20;
@@ -284,6 +308,7 @@ window.initializePage = function () {
             else if (item.actionType === 'churn') actionBadge = '<span class="status status-cancelada">Churn</span>';
             else if (item.actionType === 'billing_feedback') actionBadge = '<span class="status" style="background:#e0e7ff; color:#4338ca;">Feedback/Cobrança</span>';
             else if (item.actionType === 'expiring_trial') actionBadge = '<span class="status" style="background:#fef08a; color:#b45309;">Trial Expirando</span>';
+            else if (item.actionType === 'low_performance') actionBadge = '<span class="status" style="background:#f3e8ff; color:#7c3aed;">Análise (IA)</span>';
 
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -308,9 +333,8 @@ window.initializePage = function () {
                     <span style="font-size: 0.8rem; color: #64748b;">${item.plano || '-'}</span>
                 </td>
                 <td data-label="Ações CS" style="white-space: nowrap; text-align: right;">
-                    <button class="btn-tabela" onclick="window.sendWhatsAppAction('${item.id}', '${item.telefone}', '${item.nome}', '${item.actionType}', '${item.patientName || ''}', '${item.feedbackToken || ''}', '${encodeURIComponent(JSON.stringify(item.metrics || {}))}')" style="background: #25D366; color: white; border: none; padding: 6px 12px; border-radius: 50px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 4px rgba(37,211,102,0.3);">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                        Enviar
+                    <button class="btn-tabela" onclick="window.sendWhatsAppAction('${item.id}', '${item.telefone}', '${item.nome}', '${item.actionType}', '${item.patientName || ''}', '${item.feedbackToken || ''}', '${encodeURIComponent(JSON.stringify(item.metrics || {}))}')" style="background: ${item.actionType === 'low_performance' ? '#7c3aed' : '#25D366'}; color: white; border: none; padding: 6px 12px; border-radius: 50px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 4px ${item.actionType === 'low_performance' ? 'rgba(124,58,237,0.3)' : 'rgba(37,211,102,0.3)'};">
+                        ${item.actionType === 'low_performance' ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> Analisar' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> Enviar'}
                     </button>
                 </td>
             `;
@@ -414,6 +438,9 @@ window.initializePage = function () {
                 
                 msg = `Olá, ${firstName}! Tudo bem?\n\nO seu perfil continua gerando resultados na Yelo! ✨\nPercebemos que ${introTextRecorrente} entrar em contato com você recentemente.\n\nPara mantermos o seu perfil forte e continuarmos te indicando no nosso ranking, precisamos apenas da sua confirmação rápida. Acesse o link abaixo e nos conte:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto!\n\nResponder agora:\n👉 ${linkFeedback}\n\nMuito obrigado pela parceria! 🌿`;
             }
+        } else if (actionType === 'low_performance') {
+            window.openCSDrawer(id);
+            return;
         }
         const linkDesktop = `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${encodeURIComponent(msg)}`;
         const linkMobile = `whatsapp://send?phone=55${cleanPhone}&text=${encodeURIComponent(msg)}`;

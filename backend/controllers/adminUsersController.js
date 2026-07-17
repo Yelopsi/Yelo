@@ -781,6 +781,25 @@ exports.getPendingActions = async (req, res) => {
             });
         }
 
+        // 6. Consultor IA (Performance Baixa)
+        try {
+            const perfController = require('./adminPerformanceController');
+            if (perfController && perfController.getLowPerformanceData) {
+                const perfData = await perfController.getLowPerformanceData();
+                if (perfData && perfData.psychologists) {
+                    perfData.psychologists.forEach(p => {
+                        pendingList.push({
+                            ...p,
+                            actionType: 'low_performance',
+                            reason: 'Consultor IA: Baixa performance de acessos/conversão'
+                        });
+                    });
+                }
+            }
+        } catch(e) {
+            console.error('Erro ao buscar Consultor IA em getPendingActions:', e);
+        }
+
         res.status(200).json(pendingList);
     } catch (error) {
         console.error('Erro em getPendingActions:', error);

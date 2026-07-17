@@ -11,6 +11,7 @@ const reviewController = require('../controllers/reviewController');
 const qnaController = require('../controllers/qnaController'); // Importa o controlador de Q&A
 const settingsController = require('../controllers/settingsController');
 const adminEficienciaController = require('../controllers/adminEficienciaController');
+const adminPerformanceController = require('../controllers/adminPerformanceController');
 const { protect, admin } = require('../middlewares/authMiddleware'); // Corrigido para importar ambos
 const { uploadProfilePhoto } = require('../middlewares/upload'); // Importa o Multer unificado
 
@@ -53,6 +54,8 @@ router.put('/me/photo', uploadProfilePhoto.single('profilePhoto'), adminControll
 
 // Rota para buscar todos os psicólogos para a página de gerenciamento
 router.get('/psychologists', adminController.getAllPsychologists);
+router.get('/psychologists/low-performance', adminPerformanceController.getLowPerformancePsychologists);
+router.post('/psychologists/:id/ai-diagnosis', adminPerformanceController.generateAiDiagnosis);
 // Novas rotas para gerenciar psicólogos
 router.get('/psychologists/:id/full-details', adminController.getPsychologistFullDetails); // <--- NOVA ROTA
 router.get('/psychologists/:id/analyze', adminController.analyzeProfile);

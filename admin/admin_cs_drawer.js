@@ -253,6 +253,65 @@ window.openCSDrawer = async function(idStr) {
         btnCopy.onclick = () => window.gerarAnaliseCS(psy.id);
         actionsContainer.appendChild(btnCopy);
         
+        // --- CONSULTOR IA (PERFORMANCE) ---
+        const btnGenAI = document.getElementById('btn-generate-ai');
+        const btnSendAI = document.getElementById('btn-send-ai-whatsapp');
+        const aiDiagnosisContainer = document.getElementById('ai-diagnosis-container');
+        const aiDiagnosisText = document.getElementById('ai-diagnosis-text');
+        const aiCopyText = document.getElementById('ai-copy-text');
+
+        if (btnGenAI) {
+            // Reset state
+            btnGenAI.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg> Gerar Diagnóstico`;
+            btnGenAI.disabled = false;
+            btnSendAI.style.display = 'none';
+            aiDiagnosisContainer.style.display = 'none';
+            aiCopyText.textContent = '';
+            aiDiagnosisText.textContent = '';
+
+            btnGenAI.onclick = async () => {
+                btnGenAI.disabled = true;
+                btnGenAI.innerHTML = '<span class="loading-spinner-sm" style="width:14px; height:14px; margin-right:5px; border-width:2px; display:inline-block;"></span> Gerando...';
+                
+                try {
+                    const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${psy.id}/ai-diagnosis`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = await res.json();
+                    
+                    if (!res.ok) throw new Error(data.error || 'Erro na IA');
+
+                    aiDiagnosisContainer.style.display = 'block';
+                    aiDiagnosisText.textContent = data.diagnosis;
+                    aiCopyText.textContent = data.whatsappCopy;
+
+                    btnGenAI.innerHTML = '✨ Diagnóstico Atualizado';
+                    btnGenAI.disabled = false;
+                    
+                    btnSendAI.style.display = 'inline-flex';
+                    btnSendAI.onclick = () => {
+                        let phone = (psy.telefone || '').replace(/\D/g, '');
+                        if (phone && phone.length === 11 && !phone.startsWith('55')) phone = '55' + phone;
+                        
+                        let whatsappUrl = '';
+                        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                        if (isMobile) {
+                            whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(data.whatsappCopy)}`;
+                        } else {
+                            whatsappUrl = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(data.whatsappCopy)}`;
+                        }
+                        window.open(whatsappUrl, '_blank');
+                    };
+                } catch (err) {
+                    console.error(err);
+                    alert('Erro ao gerar diagnóstico: ' + err.message);
+                    btnGenAI.disabled = false;
+                    btnGenAI.innerHTML = 'Tentar Novamente';
+                }
+            };
+        }
+        
     } catch (err) {
         console.error('Erro ao abrir CS Drawer:', err);
         alert('Erro ao carregar detalhes do usuário.');
