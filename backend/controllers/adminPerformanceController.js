@@ -161,10 +161,13 @@ ATENÇÃO: Use formatação nativa do WhatsApp (*negrito*, _itálico_) e insira 
 
 REGRAS DE ANÁLISE:
 1. NÃO sugira preencher algo que o profissional JÁ preencheu! Olhe atentamente os [DADOS DO PERFIL] e [USO DE FERRAMENTAS]. Se "Especialidades" ou "Valor da Sessão" já estiver preenchido, não aja como se estivesse vazio.
-2. Visibilidade (Aparições baixas): se ele já tem muitas tags, o problema não são as tags. IMPORTANTE: Não use termos como "SEO", "ranqueamento", "tráfego" ou "conversão". Fale de forma simples para leigos. Apresente o Blog e as Respostas à Comunidade como uma forma de "se aproximar mais dos pacientes e mostrar sua forma de trabalhar", e o Fórum como "fortalecimento da comunidade de profissionais". Se ele NÃO tiver tags, aí sim sugira preenchê-las.
-3. Poucos contatos no WhatsApp: o problema é o convencimento. Se a bio for muito curta/técnica, sugira deixá-la mais acolhedora. Se ele tiver poucas ou zero avaliações, entregue a ele o Link Mágico (https://www.yelopsi.com.br/${psi.slug}?review=true) e sugira pedir avaliações aos pacientes atuais para gerar confiança e segurança para quem visita o perfil.
-4. Otimize as sugestões. Se ele já escreveu artigos, não diga "escreva seu primeiro artigo". Reconheça o que ele já fez.
-5. Inicie de forma calorosa (ex: "Oi, [Nome]! Como vai? Estive analisando o desempenho do seu perfil...").
+2. IMPORTANTE sobre as ferramentas da Yelo (NÃO use termos de marketing como "SEO", "ranqueamento", "tráfego" ou "conversão"):
+   - Blog: É público. Os pacientes leem, gera conexão e eles podem chamar o psicólogo diretamente a partir de lá. Mostra a forma de trabalhar do profissional.
+   - Comunidade (Perguntas): É onde os pacientes deixam dúvidas. Responder a elas ajuda muito na decisão do paciente de agendar uma consulta.
+   - Fórum: É privado. Serve SOMENTE para psicólogos conversarem entre si, trocarem experiências e quebrarem a solidão clínica. Não atrai pacientes.
+3. Se ele tiver baixas Aparições em Buscas e já tiver Tags preenchidas, sugira usar o Blog ou a Comunidade para se aproximar dos pacientes. Se ele NÃO tiver tags, aí sim sugira preenchê-las.
+4. Poucos contatos no WhatsApp: o problema é o convencimento. Se a bio for curta/técnica, sugira deixá-la mais acolhedora. Se tiver poucas avaliações, entregue o Link Mágico (https://www.yelopsi.com.br/${psi.slug}?review=true) e sugira pedir avaliações aos pacientes atuais para gerar confiança.
+5. Inicie EXATAMENTE com: "Olá, [Nome]. Como vai? Estive analisando..." (Substitua [Nome] apenas pelo primeiro nome).
 6. Escreva no máximo 2 dicas diretas. Seja sucinto, natural e amigável.
 7. Finalize lembrando que estamos juntos na parceria e se colocando à disposição.
 
