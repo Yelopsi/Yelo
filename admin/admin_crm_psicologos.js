@@ -546,7 +546,7 @@ window.initializePage = function () {
                 <td data-label="Profissional">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         ${psy.fotoUrl ? `<img src="${psy.fotoUrl}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;">` : `<div style="width: 32px; height: 32px; border-radius: 50%; background-color: #f5f3ff; color: #8b5cf6; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem;">${psy.nome.charAt(0).toUpperCase()}</div>`}
-                        <div style="display: flex; flex-direction: column; max-width: 200px;">
+                        <div style="display: flex; flex-direction: column; max-width: 320px;">
                             <strong style="color: var(--verde-escuro); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" onclick="window.openCSDrawer('${psy.id}')" id="name-psy-${psy.id}" title="${psy.nome}">${psy.nome}${copyBadge}${pendingBadge}</strong>
                             <span style="font-size: 0.75rem; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${psy.email}">${psy.email}</span>
                         </div>
