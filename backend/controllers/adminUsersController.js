@@ -837,6 +837,11 @@ exports.markActionSent = async (req, res) => {
             }
         } else if (actionType === 'expiring_trial') {
             await psychologist.update({ admin_billing_sent_at: now });
+        } else if (actionType === 'low_performance') {
+            let history = psychologist.aiOptimizationHistory || [];
+            if (!Array.isArray(history)) history = [];
+            history.push({ sentAt: now, action: 'whatsapp_ai_diagnosis' });
+            await psychologist.update({ aiOptimizationHistory: history });
         } else {
             return res.status(400).json({ error: 'Tipo de ação inválido.' });
         }

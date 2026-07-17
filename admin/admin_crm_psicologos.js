@@ -310,12 +310,21 @@ window.initializePage = function () {
             else if (item.actionType === 'expiring_trial') actionBadge = '<span class="status" style="background:#fef08a; color:#b45309;">Trial Expirando</span>';
             else if (item.actionType === 'low_performance') actionBadge = '<span class="status" style="background:#f3e8ff; color:#7c3aed;">Análise (IA)</span>';
 
+            let nameHtml = `<strong style="color: var(--verde-escuro); cursor: pointer;" onclick="window.openCSDrawer('${item.id}')" id="name-psy-${item.id}">${item.nome}</strong>`;
+            
+            if (item.actionType === 'low_performance' && item.aiOptimizationHistory) {
+                const history = Array.isArray(item.aiOptimizationHistory) ? item.aiOptimizationHistory : [];
+                if (history.some(h => h.action === 'whatsapp_ai_diagnosis')) {
+                    nameHtml = `<strong style="color: var(--verde-escuro); cursor: pointer;" onclick="window.openCSDrawer('${item.id}')" id="name-psy-${item.id}">${item.nome} <span class="badge-pending" title="Contato IA Realizado" style="margin-left: 5px; font-size: 0.8rem;">🤖📱</span></strong>`;
+                }
+            }
+
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td data-label="Profissional">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <div style="display: flex; flex-direction: column;">
-                            <strong style="color: var(--verde-escuro); cursor: pointer;" onclick="window.openCSDrawer('${item.id}')">${item.nome}</strong>
+                            ${nameHtml}
                             <span style="font-size: 0.75rem; color: #666;">${item.telefone || 'Sem telefone'}</span>
                         </div>
                     </div>

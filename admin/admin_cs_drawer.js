@@ -290,7 +290,7 @@ window.openCSDrawer = async function(idStr) {
                     btnGenAI.disabled = false;
                     
                     btnSendAI.style.display = 'inline-flex';
-                    btnSendAI.onclick = () => {
+                    btnSendAI.onclick = async () => {
                         let phone = (psy.telefone || '').replace(/\D/g, '');
                         if (phone && phone.length === 11 && !phone.startsWith('55')) phone = '55' + phone;
                         
@@ -301,6 +301,26 @@ window.openCSDrawer = async function(idStr) {
                         } else {
                             whatsappUrl = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(data.whatsappCopy)}`;
                         }
+                        
+                        try {
+                            await fetch(`${API_BASE_URL}/api/admin/psychologists/${psy.id}/action-sent`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ actionType: 'low_performance' })
+                            });
+                        } catch(e) {
+                            console.warn("Falha ao salvar marcação de low_performance", e);
+                        }
+
+                        // Atualiza visualmente com o emoji de contatado
+                        const nameEl = document.getElementById(`name-psy-${psy.id}`);
+                        if (nameEl && !nameEl.innerHTML.includes('🤖📱')) {
+                            nameEl.innerHTML += '<span class="badge-pending" title="Contato IA Realizado" style="margin-left: 5px; font-size: 0.8rem;">🤖📱</span>';
+                        }
+
                         window.open(whatsappUrl, '_blank');
                     };
                 } catch (err) {

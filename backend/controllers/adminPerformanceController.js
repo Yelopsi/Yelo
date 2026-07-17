@@ -13,7 +13,7 @@ exports.getLowPerformanceData = async () => {
             deletedAt: null,
             createdAt: { [Op.lt]: sevenDaysAgo }
         },
-        attributes: ['id', 'nome', 'telefone', 'fotoUrl', 'slug', 'status', 'is_exempt', 'planExpiresAt', 'plano', 'createdAt']
+        attributes: ['id', 'nome', 'telefone', 'fotoUrl', 'slug', 'status', 'is_exempt', 'planExpiresAt', 'plano', 'createdAt', 'aiOptimizationHistory']
     });
 
     // Fetch matches grouped by psychologist in the last 30 days
@@ -174,7 +174,7 @@ Retorne SOMENTE um JSON com a seguinte estrutura (não use marcações markdown 
 `;
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
 
         const result = await model.generateContent({
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
