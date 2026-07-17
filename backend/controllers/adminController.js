@@ -763,7 +763,7 @@ exports.getFollowUps = async (req, res) => {
                 psi.telefone as "psychologistPhone"
             FROM "WhatsAppClickLogs" w
             LEFT JOIN "Psychologists" psi ON w."psychologistId" = psi.id
-            WHERE (w."feedbackGiven" = false AND w."adminWppReminderSentAt" IS NOT NULL)
+            WHERE (w."feedbackGiven" = false)
                OR (w."feedbackGiven" = true AND w."dealClosed" = 'talking')
             ORDER BY w."createdAt" DESC
         `);
@@ -774,21 +774,39 @@ exports.getFollowUps = async (req, res) => {
             const psiPhone = item.psychologistPhone || '';
 
             // Follow-up Psi: Feedback Pendente
-            if (item.feedbackGiven === false && item.adminWppReminderSentAt) {
-                const daysSinceReminder = (new Date() - new Date(item.adminWppReminderSentAt)) / (1000 * 60 * 60 * 24);
-                if (daysSinceReminder >= 7) {
-                    formatted.push({
-                        id: item.id + '_psi_feedback',
-                        realId: item.id,
-                        date: item.adminWppReminderSentAt,
-                        type: 'psi_feedback',
-                        targetName: psiName,
-                        targetPhone: psiPhone,
-                        psychologistName: psiName,
-                        patientName: patientName,
-                        status: item.adminWppReminderCount > 1 ? 'sent' : 'pending',
-                        message_sent_at: item.adminWppReminderCount > 1 ? item.adminWppReminderSentAt : null
-                    });
+            if (item.feedbackGiven === false) {
+                if (item.adminWppReminderSentAt) {
+                    const daysSinceReminder = (new Date() - new Date(item.adminWppReminderSentAt)) / (1000 * 60 * 60 * 24);
+                    if (daysSinceReminder >= 7) {
+                        formatted.push({
+                            id: item.id + '_psi_feedback',
+                            realId: item.id,
+                            date: item.adminWppReminderSentAt,
+                            type: 'psi_feedback',
+                            targetName: psiName,
+                            targetPhone: psiPhone,
+                            psychologistName: psiName,
+                            patientName: patientName,
+                            status: item.adminWppReminderCount > 1 ? 'sent' : 'pending',
+                            message_sent_at: item.adminWppReminderCount > 1 ? item.adminWppReminderSentAt : null
+                        });
+                    }
+                } else {
+                    const hoursSinceClick = (new Date() - new Date(item.date)) / (1000 * 60 * 60);
+                    if (hoursSinceClick >= 48) {
+                        formatted.push({
+                            id: item.id + '_psi_feedback',
+                            realId: item.id,
+                            date: item.date,
+                            type: 'psi_feedback',
+                            targetName: psiName,
+                            targetPhone: psiPhone,
+                            psychologistName: psiName,
+                            patientName: patientName,
+                            status: 'pending',
+                            message_sent_at: null
+                        });
+                    }
                 }
             }
 
