@@ -229,6 +229,7 @@ const startServer = async () => {
             
             console.log('🛠️ [DB FIX] Injetando coluna utm_content nas tabelas...');
             await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "utm_content" VARCHAR(255);');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "aiOptimizationHistory" JSONB DEFAULT NULL;');
             await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "utm_content" VARCHAR(255);');
             await db.sequelize.query('ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "utm_content" VARCHAR(255);');
 
