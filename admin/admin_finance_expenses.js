@@ -50,17 +50,14 @@ async function carregarDespesas() {
                 const dataFormatada = new Date(exp.createdAt).toLocaleDateString('pt-BR');
                 
                 const tr = document.createElement('tr');
-                tr.style.borderBottom = '1px solid #e2e8f0';
                 
                 tr.innerHTML = `
-                    <td style="padding: 15px 25px; color: #1e293b; font-weight: 500;">${exp.name}</td>
-                    <td style="padding: 15px 25px;">
-                        <span style="background: #f1f5f9; padding: 4px 10px; border-radius: 50px; font-size: 0.8rem; color: #475569;">${exp.category}</span>
-                    </td>
-                    <td style="padding: 15px 25px; color: #64748b; font-size: 0.9rem;">${dataFormatada}</td>
-                    <td style="padding: 15px 25px; text-align: right; color: #ef4444; font-weight: 600;">- ${formatarMoeda(exp.amount)}</td>
-                    <td style="padding: 15px 25px; text-align: center;">
-                        <button onclick="excluirDespesa(${exp.id})" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 5px; opacity: 0.7; transition: opacity 0.2s;" title="Excluir">
+                    <td style="font-weight: 600;">${exp.name}</td>
+                    <td><span class="fin-badge">${exp.category}</span></td>
+                    <td style="color: var(--fin-muted);">${dataFormatada}</td>
+                    <td style="text-align: right; color: var(--fin-danger); font-weight: 600;">- ${formatarMoeda(exp.amount)}</td>
+                    <td style="text-align: center;">
+                        <button onclick="excluirDespesa(${exp.id})" style="background: none; border: none; color: var(--fin-danger); cursor: pointer; padding: 5px; opacity: 0.6; transition: all 0.2s;" onmouseover="this.style.opacity=1; this.style.transform='scale(1.1)'" onmouseout="this.style.opacity=0.6; this.style.transform='scale(1)'" title="Excluir">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                         </button>
                     </td>
@@ -155,14 +152,13 @@ async function carregarFluxoCaixa() {
             const dataFormatada = `${mes}/${ano}`;
             
             const tr = document.createElement('tr');
-            tr.style.borderBottom = '1px solid #e2e8f0';
             tr.innerHTML = `
-                <td style="padding: 15px 15px; color: #1e293b; font-weight: 500;">${dataFormatada}</td>
-                <td style="padding: 15px 15px; text-align: center; color: #475569;">
-                    <span style="background: #f1f5f9; padding: 4px 10px; border-radius: 50px; font-size: 0.85rem;">${item.count} pagamentos</span>
+                <td style="font-weight: 600;">${dataFormatada}</td>
+                <td style="text-align: center;">
+                    <span class="fin-badge">${item.count} pagamentos</span>
                 </td>
-                <td style="padding: 15px 15px; text-align: right; color: #64748b; font-weight: 500;">${formatarMoeda(item.grossValue)}</td>
-                <td style="padding: 15px 15px; text-align: right; color: #10b981; font-weight: bold;">${formatarMoeda(item.netValue)}</td>
+                <td style="text-align: right; color: var(--fin-muted);">${formatarMoeda(item.grossValue)}</td>
+                <td style="text-align: right; color: var(--fin-success); font-weight: 700;">${formatarMoeda(item.netValue)}</td>
             `;
             tbody.appendChild(tr);
         });
