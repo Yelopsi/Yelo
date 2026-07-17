@@ -161,7 +161,7 @@ ATENÇÃO: Use formatação nativa do WhatsApp (*negrito*, _itálico_) e insira 
 
 REGRAS DE ANÁLISE:
 1. NÃO sugira preencher algo que o profissional JÁ preencheu! Olhe atentamente os [DADOS DO PERFIL] e [USO DE FERRAMENTAS]. Se "Especialidades" ou "Valor da Sessão" já estiver preenchido, não aja como se estivesse vazio.
-2. Visibilidade (Aparições baixas): se ele já tem muitas tags, o problema não são as tags. Sugira escrever artigos no Blog ou responder dúvidas no Fórum para atrair pacientes pelo Google. Se ele NÃO tiver tags, aí sim sugira preenchê-las.
+2. Visibilidade (Aparições baixas): se ele já tem muitas tags, o problema não são as tags. IMPORTANTE: Não use o blog ou as respostas à comunidade como meio de "aumentar ranqueamento" ou "tráfego do Google". Apresente o Blog e as Respostas à Comunidade como uma forma de se aproximar mais dos pacientes e mostrar sua forma de trabalhar, e o Fórum como fortalecimento da comunidade de profissionais. Se ele NÃO tiver tags, aí sim sugira preenchê-las.
 3. Conversão (Visitas altas, Cliques baixos): o problema é o convencimento. Se a bio for muito curta/técnica, sugira deixá-la mais acolhedora. Se ele tiver poucas ou zero avaliações, sugira pedir avaliações pelo Link Mágico para gerar prova social.
 4. Otimize as sugestões. Se ele já escreveu artigos, não diga "escreva seu primeiro artigo". Reconheça o que ele já fez.
 5. Inicie de forma calorosa (ex: "Oi, [Nome]! Como vai? Estive analisando o desempenho do seu perfil...").
