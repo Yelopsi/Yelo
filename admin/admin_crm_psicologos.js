@@ -570,12 +570,6 @@ window.initializePage = function () {
                 <td data-label="Data de Inscrição">
                     <span style="color: #64748b; font-size: 0.9rem; font-weight: 500;">${dataInscricao}</span>
                 </td>
-                <td data-label="Gamificação">
-                    <div style="display: flex; flex-direction: column;">
-                        <strong style="color: #3b82f6; font-size: 0.9rem;">${levelStr}</strong>
-                        <span style="font-size: 0.75rem; color: #64748b;">${xpStr}</span>
-                    </div>
-                </td>
                 <td data-label="Ações CS" style="white-space: nowrap; text-align: right;">
                     <button class="btn-tabela" onclick="window.openCSDrawer('${psy.id}')" style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 50px; font-weight: 600;">
                         Visão 360
