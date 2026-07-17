@@ -1,3 +1,22 @@
+<style>
+    .crm-section-title {
+        margin-top: -30px !important;
+        margin-bottom: -20px !important;
+        color: var(--verde-escuro);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .crm-section-title.first {
+        margin-top: 0 !important;
+    }
+    
+    /* Reduz a margem inferior dos grids especificamente nesta página */
+    .kpi-grid {
+        margin-bottom: 0px !important;
+    }
+</style>
+
 <div class="modern-dashboard-layout" style="padding-bottom: 120px;">
     <div class="main-header" style="background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%); padding: 25px 30px; margin-bottom: 30px; border-radius: 16px;">
         <div>
@@ -7,7 +26,7 @@
     </div>
 
     <!-- Módulos de Gestão e Operação -->
-    <h3 style="margin-bottom: 15px; color: var(--verde-escuro); display: flex; align-items: center; gap: 8px;">
+    <h3 class="crm-section-title first">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
         Gestão de Entidades
     </h3>
@@ -63,7 +82,7 @@
     </div>
 
     <!-- Inteligência e Negócios -->
-    <h3 style="margin-bottom: 15px; color: var(--verde-escuro); display: flex; align-items: center; gap: 8px;">
+    <h3 class="crm-section-title">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
         Inteligência Financeira e Analytics
     </h3>
@@ -80,7 +99,7 @@
             <p style="color: #64748b; font-size: 0.9rem; line-height: 1.4; margin: 0;">Métricas de MRR, Trials e Crescimento focado em resultados.</p>
         </div>
         <!-- Evolução da Base (Crescimento) -->
-        <div class="kpi-card" onclick="window.navigateToPage('admin_growth_analytics.html')" style="cursor: pointer; border-top-color: #3b82f6;">
+        <div class="kpi-card" onclick="window.navigateToPage('admin_founder_dashboard.html')" style="cursor: pointer; border-top-color: #3b82f6;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <div style="background: #eff6ff; padding: 12px; border-radius: 10px; color: #3b82f6;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
@@ -123,21 +142,10 @@
             <p style="color: #64748b; font-size: 0.9rem; line-height: 1.4; margin: 0;">MRR, taxa de Churn, Life Time Value (LTV) e faturas Asaas.</p>
         </div>
 
-        <!-- Eficiência e Stop-Loss -->
-        <div class="kpi-card" onclick="window.navigateToPage('admin_eficiencia.html')" style="cursor: pointer; border-top-color: #10b981;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <div style="background: #ecfdf5; padding: 12px; border-radius: 10px; color: #10b981;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                </div>
-                <span style="font-size: 0.75rem; background: #10b981; padding: 4px 10px; border-radius: 20px; color: white; font-weight: bold; text-transform: uppercase;">IA Gemini</span>
-            </div>
-            <h4 style="font-size: 1.15rem; color: #1e293b; margin-bottom: 8px;">Painel de Eficiência e Stop-Loss</h4>
-            <p style="color: #64748b; font-size: 0.9rem; line-height: 1.4; margin: 0;">CAC, CPL e Insights com IA para tráfego pago (Meta/Google).</p>
-        </div>
     </div>
 
     <!-- Qualidade e Retenção -->
-    <h3 style="margin-top: 25px; margin-bottom: 15px; color: var(--verde-escuro); display: flex; align-items: center; gap: 8px;">
+    <h3 class="crm-section-title">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
         Qualidade e Experiência do Cliente
     </h3>
@@ -167,7 +175,7 @@
     </div>
 
     <!-- Comunicação Omnichannel -->
-    <h3 style="margin-top: 25px; margin-bottom: 15px; color: var(--verde-escuro); display: flex; align-items: center; gap: 8px;">
+    <h3 class="crm-section-title">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
         Comunicação Omnichannel
     </h3>

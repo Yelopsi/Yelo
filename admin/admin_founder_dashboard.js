@@ -1,5 +1,20 @@
 window.initializePage = function() {
     loadFounderMetrics();
+    
+    // Configura datas padrão se vazio e carrega dados da aba de Crescimento
+    if (!window.currentStartDate || !window.currentEndDate) {
+        const hoje = new Date();
+        const trintaDiasAtras = new Date();
+        trintaDiasAtras.setDate(hoje.getDate() - 30);
+        window.currentStartDate = trintaDiasAtras.toISOString().split('T')[0];
+        window.currentEndDate = hoje.toISOString().split('T')[0];
+    }
+    const inputStart = document.getElementById('filter-start-date');
+    const inputEnd = document.getElementById('filter-end-date');
+    if (inputStart) inputStart.value = window.currentStartDate;
+    if (inputEnd) inputEnd.value = window.currentEndDate;
+
+    if (typeof window.carregarDados === 'function') window.carregarDados();
 };
 
 window.currentFounderGoals = {};
@@ -327,4 +342,247 @@ window.saveFounderGoals = async function() {
         console.error(err);
         alert('Erro ao salvar metas.');
     }
+};
+
+// --- FUNÇÃO PARA ALTERNAR AS ABAS (PÍLULAS) ---
+window.switchFounderTab = function(btn) {
+    document.querySelectorAll('.content-tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    
+    document.querySelectorAll('.analytics-tab-content').forEach(tab => {
+        tab.style.display = 'none';
+    });
+    
+    const targetId = btn.getAttribute('data-target');
+    const targetEl = document.getElementById(targetId);
+    if (targetEl) targetEl.style.display = 'block';
+};
+
+// ==========================================
+// LÓGICA DA ABA DE CRESCIMENTO (GROWTH)
+// ==========================================
+window.chartCumulativoInstance = window.chartCumulativoInstance || null;
+window.chartPeriodoInstance = window.chartPeriodoInstance || null;
+window.currentStartDate = window.currentStartDate || '';
+window.currentEndDate = window.currentEndDate || '';
+
+window.aplicarFiltroData = function() {
+    const start = document.getElementById('filter-start-date').value;
+    const end = document.getElementById('filter-end-date').value;
+    
+    if (start && end) {
+        window.currentStartDate = start;
+        window.currentEndDate = end;
+        window.carregarDados();
+    } else {
+        alert("Por favor, selecione as duas datas.");
+    }
+};
+
+window.carregarDados = async function() {
+    try {
+        const response = await fetch(`/api/admin/analytics/growth?startDate=${window.currentStartDate}&endDate=${window.currentEndDate}`);
+        if (!response.ok) throw new Error('Erro ao buscar dados de crescimento');
+        const data = await response.json();
+
+        window.atualizarKPIs(data.kpis);
+        window.renderizarGraficoCumulativo(data.graficos);
+        window.renderizarGraficoPeriodo(data.graficos);
+        window.atualizarMacroFinanceiro(data);
+    } catch (error) {
+        console.error("Erro:", error);
+    }
+};
+
+window.formatarMoeda = function(valor) {
+    return `R$ ${parseFloat(valor || 0).toFixed(2).replace('.', ',')}`;
+};
+
+window.atualizarMacroFinanceiro = function(data) {
+    if (!data.finance) return;
+    
+    const elMrr = document.getElementById('macro-mrr');
+    if (elMrr) elMrr.textContent = window.formatarMoeda(data.finance.mrr);
+    
+    const elCustos = document.getElementById('macro-custos');
+    if (elCustos) elCustos.textContent = window.formatarMoeda(data.finance.expenses);
+    
+    const kpiLucro = document.getElementById('macro-lucro');
+    if (kpiLucro) {
+        kpiLucro.textContent = window.formatarMoeda(data.finance.profit);
+        if (data.finance.profit < 0) kpiLucro.style.color = '#ef4444';
+        else kpiLucro.style.color = '#3b82f6';
+    }
+
+    const graficos = data.graficos;
+    let totalNovosPagantes = 0;
+    if (graficos && graficos.entrantes && graficos.entrantes.pagantes) {
+        totalNovosPagantes = graficos.entrantes.pagantes.reduce((a, b) => a + parseInt(b), 0);
+    }
+    
+    const elCac = document.getElementById('macro-cac');
+    if (elCac) {
+        if (totalNovosPagantes > 0) {
+            const cac = data.finance.expenses / totalNovosPagantes;
+            elCac.textContent = window.formatarMoeda(cac);
+        } else {
+            elCac.textContent = data.finance.expenses > 0 ? 'Sem Pagantes' : window.formatarMoeda(0);
+        }
+    }
+};
+
+window.atualizarKPIs = function(kpis) {
+    const trySet = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    trySet('kpi-trials', kpis.total_trials || 0);
+    trySet('kpi-pagantes', kpis.total_pagantes || 0);
+    trySet('kpi-conversao', (kpis.conversao_pagantes || 0) + '%');
+    trySet('kpi-churn', kpis.total_churn || 0);
+    trySet('kpi-taxa-churn', `Taxa de Churn: ${kpis.taxa_churn || 0}%`);
+};
+
+window.renderizarGraficoCumulativo = function(graficos) {
+    const canvas = document.getElementById('chartCumulativo');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    if (window.chartCumulativoInstance) {
+        window.chartCumulativoInstance.destroy();
+    }
+
+    const isChecked = (id) => {
+        const el = document.getElementById(id);
+        return el ? el.checked : true;
+    };
+    
+    const dadosGrafico = graficos.periodo || graficos.cumulativo || {};
+
+    window.chartCumulativoInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: graficos.labels,
+            datasets: [
+                {
+                    label: 'Pagantes (Período)',
+                    data: dadosGrafico.pagantes || [],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.3,
+                    hidden: !isChecked('togglePagantes')
+                },
+                {
+                    label: 'Trials Ativos (Período)',
+                    data: dadosGrafico.trialsAtivos || dadosGrafico.trials || [],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.3,
+                    hidden: !isChecked('toggleTrialsAtivos')
+                },
+                {
+                    label: 'Trials Expirados (Período)',
+                    data: dadosGrafico.trialsExpirados || [],
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.3,
+                    hidden: !isChecked('toggleTrialsExpirados')
+                },
+                {
+                    label: 'Churn (Período)',
+                    data: dadosGrafico.churn || [],
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    hidden: !isChecked('toggleChurn')
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: { mode: 'index', intersect: false }
+            },
+            interaction: { mode: 'nearest', axis: 'x', intersect: false },
+            scales: { y: { beginAtZero: true, stacked: false } }
+        }
+    });
+};
+
+window.updateCumulativoVisibility = function() {
+    if (!window.chartCumulativoInstance) return;
+    
+    const pagantes = document.getElementById('togglePagantes')?.checked ?? true;
+    const trialsAtivos = document.getElementById('toggleTrialsAtivos')?.checked ?? true;
+    const trialsExpirados = document.getElementById('toggleTrialsExpirados')?.checked ?? true;
+    const churn = document.getElementById('toggleChurn')?.checked ?? true;
+    
+    window.chartCumulativoInstance.data.datasets[0].hidden = !pagantes;
+    window.chartCumulativoInstance.data.datasets[1].hidden = !trialsAtivos;
+    window.chartCumulativoInstance.data.datasets[2].hidden = !trialsExpirados;
+    window.chartCumulativoInstance.data.datasets[3].hidden = !churn;
+    
+    window.chartCumulativoInstance.update();
+};
+
+window.renderizarGraficoPeriodo = function(graficos) {
+    const canvas = document.getElementById('chartPeriodo');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    if (window.chartPeriodoInstance) {
+        window.chartPeriodoInstance.destroy();
+    }
+
+    window.chartPeriodoInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: graficos.labels,
+            datasets: [
+                {
+                    label: 'Novos Pagantes',
+                    data: graficos.entrantes.pagantes,
+                    backgroundColor: '#10b981',
+                    borderRadius: 4
+                },
+                {
+                    label: 'Novos Trials',
+                    data: graficos.entrantes.trials,
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 4
+                },
+                {
+                    type: 'line',
+                    label: 'Churn (Perda)',
+                    data: graficos.entrantes.churn,
+                    borderColor: '#ef4444',
+                    backgroundColor: '#ef4444',
+                    borderWidth: 2,
+                    tension: 0.1,
+                    pointRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: { mode: 'index', intersect: false }
+            },
+            scales: {
+                y: { beginAtZero: true, stacked: true },
+                x: { stacked: true }
+            }
+        }
+    });
 };
