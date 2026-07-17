@@ -152,7 +152,7 @@ function renderTimeline(data) {
     const events = [];
 
     // Normaliza eventos
-    if(data.blogPosts) data.blogPosts.forEach(x => events.push({ type: 'blog', date: x.createdAt, data: x }));
+    if(data.blogPosts) data.blogPosts.forEach(x => events.push({ type: 'blog', date: x.createdAt || x.created_at, data: x }));
     if(data.forumPosts) data.forumPosts.forEach(x => events.push({ type: 'forum_post', date: x.createdAt, data: x }));
     if(data.forumComments) data.forumComments.forEach(x => events.push({ type: 'forum_comment', date: x.createdAt, data: x }));
     if(data.reviews) data.reviews.forEach(x => events.push({ type: 'review', date: x.createdAt, data: x }));
