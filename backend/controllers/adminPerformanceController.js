@@ -122,20 +122,20 @@ exports.generateAiDiagnosis = async (req, res) => {
         const [forumAnswers] = await db.sequelize.query(`SELECT id FROM "ForumComments" WHERE "PsychologistId" = :id`, { replacements: { id: psiId } }).catch(() => [[], null]);
         const [reviews] = await db.sequelize.query(`SELECT id, rating FROM "Reviews" WHERE "psychologistId" = :id`, { replacements: { id: psiId } }).catch(() => [[], null]);
         
-        // Coletar Métricas dos últimos 30 dias
-        const [matches] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :id AND "createdAt" >= NOW() - INTERVAL '30 days'`, { replacements: { id: psiId } }).catch(() => [[{count:0}], null]);
-        const [clicks] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "psychologistId" = :id AND "createdAt" >= NOW() - INTERVAL '30 days'`, { replacements: { id: psiId } }).catch(() => [[{count:0}], null]);
-        const [views] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :id AND "createdAt" >= NOW() - INTERVAL '30 days'`, { replacements: { id: psiId } }).catch(() => [[{count:0}], null]);
+        // Coletar Métricas dos últimos 7 dias
+        const [matches] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :id AND "createdAt" >= NOW() - INTERVAL '7 days'`, { replacements: { id: psiId } }).catch(() => [[{count:0}], null]);
+        const [clicks] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "psychologistId" = :id AND "createdAt" >= NOW() - INTERVAL '7 days'`, { replacements: { id: psiId } }).catch(() => [[{count:0}], null]);
+        const [views] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :id AND "createdAt" >= NOW() - INTERVAL '7 days'`, { replacements: { id: psiId } }).catch(() => [[{count:0}], null]);
 
         // Historico de otimizacao anterior
         const history = psi.aiOptimizationHistory || [];
 
         const prompt = `
 Atue como Anderson, gerente de Customer Success da plataforma de saúde mental Yelo. 
-Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome}, oferecendo uma consultoria rápida baseada nos dados do perfil dele nos últimos 30 dias.
+Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome}, oferecendo uma consultoria rápida baseada nos dados do perfil dele nos últimos 7 dias.
 Aja em tom amigável, direto, profissional e de parceria. Sem introduções longas.
 
-[DADOS DO PSICÓLOGO NOS ÚLTIMOS 30 DIAS]
+[DADOS DO PSICÓLOGO NOS ÚLTIMOS 7 DIAS]
 - Aparições em Buscas (Matches): ${matches[0]?.count || 0}
 - Visitas no Perfil: ${views[0]?.count || 0}
 - Cliques no WhatsApp: ${clicks[0]?.count || 0}
