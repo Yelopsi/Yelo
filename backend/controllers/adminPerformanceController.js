@@ -156,14 +156,17 @@ Aja em tom amigável, direto, profissional e de parceria. Sem introduções long
 ${history.length > 0 ? `Na última vez que você falou com ele (em ${new Date(history[history.length-1].date).toLocaleDateString()}), você deu a seguinte dica: ${history[history.length-1].aiDiagnosis}` : 'Este é o primeiro contato de otimização de perfil.'}
 
 [DIAGNÓSTICO E INSTRUÇÕES DE COPY]
-Analise os dados acima e escreva a mensagem EXATA que será enviada pelo WhatsApp.
-1. Se as "Aparições em Buscas" estiverem muito baixas (ex: menos de 20), ele precisa adicionar mais "Tags" / "Especialidades" que reflitam dores reais (ex: ansiedade, luto) para ser achado nas buscas.
-2. Se "Visitas no Perfil" estiverem altas mas "Cliques no WhatsApp" zerados, o problema é conversão: bio muito técnica, preço fora da média ou ausência de Vídeo/Reviews.
-3. Cruze a dificuldade dele com o [USO DE FERRAMENTAS DA YELO]. Por exemplo, se ele tem poucas visitas, sugira escrever 1 artigo no Blog da Yelo para atrair tráfego orgânico do Google, ou responder dúvidas no Fórum. Se a conversão for baixa, sugira pedir Avaliações usando o Link Mágico ou gravar um vídeo curto.
-4. Se houver [HISTÓRICO ANTERIOR DA IA], analise se ele aplicou a dica. Se não aplicou, seja empático (reconheça a correria clínica) e lembre da importância. Se aplicou e ainda está ruim, mude a estratégia para outra ferramenta.
-5. Inicie com algo como "Oi, [Nome]! Como vai? Estive analisando o desempenho do seu perfil nesta semana..."
-6. Escreva no máximo 3 dicas diretas.
-7. Finalize dizendo que estamos juntos nessa parceria e se colocando à disposição para ajudar.
+Analise os dados acima com muita atenção e escreva a mensagem EXATA que será enviada pelo WhatsApp.
+ATENÇÃO: Use formatação nativa do WhatsApp (*negrito*, _itálico_) e insira quebras de linha (\n\n) para tornar o texto escaneável. Separe bem os parágrafos e as dicas. Não retorne um bloco de texto contínuo!
+
+REGRAS DE ANÁLISE:
+1. NÃO sugira preencher algo que o profissional JÁ preencheu! Olhe atentamente os [DADOS DO PERFIL] e [USO DE FERRAMENTAS]. Se "Especialidades" ou "Valor da Sessão" já estiver preenchido, não aja como se estivesse vazio.
+2. Visibilidade (Aparições baixas): se ele já tem muitas tags, o problema não são as tags. Sugira escrever artigos no Blog ou responder dúvidas no Fórum para atrair pacientes pelo Google. Se ele NÃO tiver tags, aí sim sugira preenchê-las.
+3. Conversão (Visitas altas, Cliques baixos): o problema é o convencimento. Se a bio for muito curta/técnica, sugira deixá-la mais acolhedora. Se ele tiver poucas ou zero avaliações, sugira pedir avaliações pelo Link Mágico para gerar prova social.
+4. Otimize as sugestões. Se ele já escreveu artigos, não diga "escreva seu primeiro artigo". Reconheça o que ele já fez.
+5. Inicie de forma calorosa (ex: "Oi, [Nome]! Como vai? Estive analisando o desempenho do seu perfil...").
+6. Escreva no máximo 2 dicas diretas. Seja sucinto e direto.
+7. Finalize lembrando que estamos juntos na parceria e se colocando à disposição.
 
 Retorne SOMENTE um JSON com a seguinte estrutura (não use marcações markdown como \`\`\`json, apenas o objeto):
 {
