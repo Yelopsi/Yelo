@@ -93,7 +93,7 @@ async function loadFounderMetrics() {
         }
 
         // 4. META DO MÊS
-        document.getElementById('f-month-goal').innerText = `+${goals.newPerMonth} pagantes`;
+        document.getElementById('f-month-goal').innerText = `+${goals.newPerMonth} pagantes líquidos`;
         // Simulando pagantes adicionados neste mes (apenas para viz)
         // Precisaríamos do count exato do mês atual, mas usaremos a variação do ultimo mes historico
         const lastMonthGrowth = growthHistory.length > 0 ? growthHistory[growthHistory.length-1].users - (growthHistory.length > 1 ? growthHistory[growthHistory.length-2].users : 0) : 0;

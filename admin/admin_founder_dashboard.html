@@ -59,6 +59,12 @@
 }
 .crm-pill:hover { background: #e2e8f0; color: #1e293b; }
 .crm-pill.active { background: #1B4332; color: white; border-color: #1B4332; box-shadow: 0 2px 4px rgba(27, 67, 50, 0.2); }
+
+@media (max-width: 1024px) {
+    .responsive-founder-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
 </style>
 
 <div class="modern-dashboard-layout" style="background-color: #fafafa; min-height: 100vh; padding-bottom: 50px;">
@@ -178,7 +184,7 @@
 
             <!-- Meta do mês -->
             <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <h3 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin: 0 0 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; display: flex; align-items: center; justify-content: space-between;">Meta do Mês <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Compara o total de novos pagantes do último mês com a sua meta mensal de crescimento (cadastrada como Novos p/ Mês).</span></span></h3>
+                <h3 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin: 0 0 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; display: flex; align-items: center; justify-content: space-between;">Meta do Mês <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Compara o crescimento líquido (novos pagantes subtraídos os cancelamentos/churn) do último mês com a sua meta mensal de crescimento (cadastrada como Novos p/ Mês).</span></span></h3>
                 <div style="font-size: 2rem; font-weight: 900; color: #111827; text-align: center; margin-bottom: 10px;" id="f-month-goal">+-- pagantes líquidos</div>
                 <div style="height: 12px; background: #f3f4f6; border-radius: 6px; overflow: hidden; margin-bottom: 10px;">
                     <div id="f-month-bar" style="height: 100%; background: #3b82f6; width: 0%;"></div>
@@ -322,7 +328,7 @@
         </div>
 
         <!-- Crescimento e Score -->
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+        <div class="responsive-founder-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
             <!-- Crescimento -->
             <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: visible;">
                 <h3 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin: 0 0 20px; display: flex; align-items: center; justify-content: space-between;">Crescimento Mensal <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Mostra o total acumulado de pagantes ao final de cada um dos últimos 5 meses.</span></span></h3>
