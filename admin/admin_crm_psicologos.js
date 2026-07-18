@@ -267,6 +267,7 @@ window.initializePage = function () {
                 setText('kpi-inativos-psis', kpis.inactive);
                 setText('kpi-whatsapp-psis', kpis.utm_whatsapp || 0);
                 setText('kpi-meta-psis', kpis.utm_meta || 0);
+                setText('kpi-instagram-psis', kpis.utm_instagram_bio || 0);
                 setText('kpi-google-psis', kpis.utm_google || 0);
                 setText('kpi-outros-psis', kpis.utm_outros || 0);
                 setText('kpi-alerta-pendentes', kpis.pending || 0);
@@ -535,6 +536,7 @@ window.initializePage = function () {
                 let badgeColor = '#64748b'; let bgBadge = '#f1f5f9';
                 if (psy.utm_source === 'whatsapp') { badgeColor = '#10b981'; bgBadge = '#d1fae5'; }
                 else if (psy.utm_source === 'meta_ads' || psy.utm_source === 'facebook' || psy.utm_source === 'instagram') { badgeColor = '#3b82f6'; bgBadge = '#dbeafe'; }
+                else if (psy.utm_source === 'instagram_bio') { badgeColor = '#ec4899'; bgBadge = '#fce7f3'; }
                 else if (psy.utm_source === 'google') { badgeColor = '#f59e0b'; bgBadge = '#fef3c7'; }
                 
                 utmBadge = `<span style="background: ${bgBadge}; color: ${badgeColor}; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">${psy.utm_source}</span>`;
