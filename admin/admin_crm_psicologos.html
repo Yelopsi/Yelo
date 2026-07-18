@@ -95,6 +95,73 @@
     
     .pagination-btn-modern:hover:not(:disabled) { background: #f8f9fa !important; }
     .pagination-btn-modern:disabled { opacity: 0.5; cursor: not-allowed !important; }
+
+    /* Fixes para responsividade dos cards e filtros */
+    .kpi-grid { display: grid; width: 100%; }
+    
+    @media (max-width: 768px) {
+        .kpi-grid {
+            gap: 10px !important;
+        }
+        
+        .kpi-grid[style*="220px"] {
+            grid-template-columns: 1fr !important;
+        }
+        
+        .kpi-grid[style*="150px"] {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+        
+        .kpi-card {
+            padding: 12px 10px !important;
+            min-width: 0 !important;
+        }
+        
+        .kpi-card h4 {
+            font-size: 0.85rem !important;
+            white-space: normal !important;
+        }
+        
+        .kpi-numero {
+            font-size: 1.5rem !important;
+        }
+        
+        /* Cabeçalho superior (MRR, Ativação) */
+        .main-header {
+            padding: 20px 15px !important;
+        }
+        
+        .main-header > div:last-child {
+            width: 100%;
+        }
+        
+        .main-header > div:last-child > div {
+            flex: 1 1 calc(50% - 10px) !important;
+            min-width: auto !important;
+        }
+        
+        /* Ações Prioritárias */
+        div[style*="min-width: 200px"] {
+            min-width: 100% !important;
+            flex: 0 0 100% !important;
+        }
+        
+        /* Filtros horizontais (tabs) */
+        .crm-funnel-tabs {
+            padding-bottom: 10px !important;
+        }
+        
+        .crm-pill {
+            padding: 6px 14px !important;
+            font-size: 0.85rem !important;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .main-header > div:last-child > div {
+            flex: 1 1 100% !important; /* Stack vertically on very small screens */
+        }
+    }
 </style>
 
 <div class="modern-dashboard-layout" style="padding-bottom: 120px;">
