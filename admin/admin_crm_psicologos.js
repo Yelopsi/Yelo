@@ -546,9 +546,9 @@ window.initializePage = function () {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td data-label="Profissional">
-                    <div style="display: flex; align-items: center; gap: 10px; justify-content: flex-end; width: 100%;">
+                    <div style="display: flex; align-items: center; gap: 10px; width: 100%;">
                         ${psy.fotoUrl ? `<img src="${psy.fotoUrl}" style="width:32px; height:32px; border-radius:50%; object-fit:cover; flex-shrink:0;">` : `<div style="width: 32px; height: 32px; border-radius: 50%; background-color: #f5f3ff; color: #8b5cf6; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem; flex-shrink:0;">${psy.nome.charAt(0).toUpperCase()}</div>`}
-                        <div style="display: flex; flex-direction: column; max-width: calc(100% - 42px); text-align: right;">
+                        <div style="display: flex; flex-direction: column; max-width: calc(100% - 42px);">
                             <strong style="color: var(--verde-escuro); cursor: pointer; white-space: normal; word-break: break-word; line-height: 1.3;" onclick="window.openCSDrawer('${psy.id}')" id="name-psy-${psy.id}" title="${psy.nome}">${psy.nome}${copyBadge}${pendingBadge}</strong>
                             <span style="font-size: 0.75rem; color: #666; white-space: normal; word-break: break-word; margin-top: 2px;" title="${psy.email}">${psy.email}</span>
                         </div>
