@@ -195,15 +195,26 @@ router.get('/sobre_psis', async (req, res) => {
         if (db && db.Review) {
             const reviews = await db.Review.findAll({ 
                 where: { status: 'approved' },
-                attributes: ['rating'] 
+                include: [{ model: db.Patient, as: 'patient', attributes: ['nome'] }],
+                order: [['createdAt', 'DESC']]
             });
             const totalAvaliacoes = reviews.length;
             const mediaAvaliacoes = totalAvaliacoes > 0 
                 ? (reviews.reduce((acc, r) => acc + (r.rating || 0), 0) / totalAvaliacoes).toFixed(1)
                 : '0.0';
-            res.render('sobre_psis', { totalAvaliacoes, mediaAvaliacoes });
+            
+            // Get initials of up to the last 3 reviewers
+            let iniciais = ['M', 'C', 'F']; // fallback
+            if (reviews.length >= 3) {
+                iniciais = reviews.slice(0, 3).map(r => {
+                    const nome = r.patient && r.patient.nome ? r.patient.nome.trim() : 'A';
+                    return nome.charAt(0).toUpperCase();
+                });
+            }
+
+            res.render('sobre_psis', { totalAvaliacoes, mediaAvaliacoes, iniciais });
         } else {
-            res.render('sobre_psis', { totalAvaliacoes: 0, mediaAvaliacoes: '0.0' });
+            res.render('sobre_psis', { totalAvaliacoes: 0, mediaAvaliacoes: '0.0', iniciais: ['M', 'C', 'F'] });
         }
     } catch (error) {
         console.error('Erro ao buscar stats de avaliações para sobre_psis:', error);
