@@ -353,6 +353,51 @@ window.initializePage = function() {
         });
     }
 
+    window.carregarFluxoCaixa = async function() {
+        const tbody = document.getElementById('cash-flow-table-body');
+        if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 30px; color: #94a3b8;">Buscando dados no Asaas...</td></tr>';
+        
+        try {
+            const response = await fetch('/api/admin/cash-flow');
+            if (!response.ok) throw new Error("Erro ao buscar fluxo de caixa");
+            
+            const data = await response.json();
+            const cashFlow = data.cashFlow || [];
+            
+            tbody.innerHTML = '';
+            
+            if (cashFlow.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 30px; color: #94a3b8;">Nenhum pagamento encontrado.</td></tr>';
+                return;
+            }
+            
+            cashFlow.forEach(item => {
+                const [ano, mes] = item.monthYear.split('-');
+                const dataFormatada = `${mes}/${ano}`;
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid #e2e8f0';
+                const brutoStr = item.grossValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                const liquidoStr = item.netValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                
+                tr.innerHTML = `
+                    <td data-label="Mês/Ano" style="padding: 12px; font-weight: 500; color: #1e293b;">${dataFormatada}</td>
+                    <td data-label="Transações" style="padding: 12px; text-align: center;">
+                        <span style="background: #f1f5f9; padding: 4px 10px; border-radius: 50px; font-size: 12px; color: #475569;">${item.count} pagamentos</span>
+                    </td>
+                    <td data-label="Valor Bruto" style="padding: 12px; text-align: right; color: var(--cinza-texto);">${brutoStr}</td>
+                    <td data-label="Valor Líquido (Recebido)" style="padding: 12px; text-align: right; color: #10b981; font-weight: bold;">${liquidoStr}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+        } catch (error) {
+            console.error(error);
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 30px; color: #ef4444;">Erro ao carregar os dados do Asaas.</td></tr>';
+        }
+    };
+
     // Execução Inicial
     loadConsolidatedData();
+    if(window.carregarFluxoCaixa) window.carregarFluxoCaixa();
 };

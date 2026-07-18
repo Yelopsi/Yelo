@@ -383,5 +383,38 @@
             </div>
         </div>
 
+        <!-- 6. Histórico de Receita (Asaas) -->
+        <div class="saas-section" style="padding: 0; overflow: hidden; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
+            <div style="padding: 20px 25px; border-bottom: 1px solid var(--cinza-borda); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h3 style="margin: 0; color: var(--verde-escuro); display: flex; align-items: center; gap: 8px; font-family: var(--font-titulos);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                        Histórico de Receita (Asaas)
+                    </h3>
+                    <p style="margin: 5px 0 0 0; color: var(--cinza-texto); font-size: 0.85rem;">Pagamentos recebidos e confirmados, mês a mês.</p>
+                </div>
+                <button onclick="carregarFluxoCaixa()" class="btn-tabela" style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; background: white;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v6h6"></path></svg>
+                    Atualizar
+                </button>
+            </div>
+            
+            <div class="tabela-wrapper" style="padding: 0 10px 10px 10px;">
+                <table class="tabela-gerenciamento" style="width: 100%; text-align: left; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <th style="padding: 12px; color: #64748b; font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">Mês/Ano</th>
+                            <th style="padding: 12px; color: #64748b; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; text-align: center;">Transações</th>
+                            <th style="padding: 12px; color: #64748b; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; text-align: right;">Valor Bruto</th>
+                            <th style="padding: 12px; color: #64748b; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; text-align: right; color: #10b981;">Valor Líquido (Recebido)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cash-flow-table-body">
+                        <tr><td colspan="4"><div class="skeleton" style="height: 30px;"></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 </div>
