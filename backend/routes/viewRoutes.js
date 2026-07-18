@@ -189,7 +189,27 @@ router.get('/profissionais', async (req, res) => {
 
     res.render('profissionais', { depoimentosPsi });
 });
-router.get('/sobre_psis', (req, res) => res.render('sobre_psis'));
+router.get('/sobre_psis', async (req, res) => {
+    try {
+        const db = require('../models');
+        if (db && db.Review) {
+            const reviews = await db.Review.findAll({ 
+                where: { status: 'approved' },
+                attributes: ['rating'] 
+            });
+            const totalAvaliacoes = reviews.length;
+            const mediaAvaliacoes = totalAvaliacoes > 0 
+                ? (reviews.reduce((acc, r) => acc + (r.rating || 0), 0) / totalAvaliacoes).toFixed(1)
+                : '0.0';
+            res.render('sobre_psis', { totalAvaliacoes, mediaAvaliacoes });
+        } else {
+            res.render('sobre_psis', { totalAvaliacoes: 0, mediaAvaliacoes: '0.0' });
+        }
+    } catch (error) {
+        console.error('Erro ao buscar stats de avaliações para sobre_psis:', error);
+        res.render('sobre_psis', { totalAvaliacoes: 0, mediaAvaliacoes: '0.0' });
+    }
+});
 
 // Rota para a página Sobre
 router.get('/sobre', (req, res) => res.render('sobre'));
