@@ -336,14 +336,15 @@
                     <p>"A tecnologia conecta, mas é o ser humano que acolhe. Acreditamos que a cura nasce da identificação, por isso nossa comunidade vai muito além do currículo: reunimos pessoas apaixonadas por ouvir gente."</p>
                     <p>"Aqui você encontra profissionais com vivências plurais e escuta ativa, prontos para entender seu mundo — seja para lidar com ansiedade, carreira ou relacionamentos — sem nenhum tipo de julgamento."</p>
                     
-                    <div style="display: flex; gap: 20px; margin-bottom: 35px; flex-wrap: wrap;">
-                        <div style="background: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; flex: 1; min-width: 140px; border-top: 4px solid var(--verde-escuro);">
-                            <h4 style="margin: 0; color: #666; font-size: 0.9rem;">Avaliações Públicas</h4>
-                            <div style="font-size: 2.2rem; font-weight: bold; color: var(--verde-escuro);"><%= typeof totalAvaliacoes !== 'undefined' ? totalAvaliacoes : '--' %></div>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 30px; position: relative; z-index: 2;">
+                        <div style="display: flex; margin-right: -5px;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #F8F3ED; margin-right: -12px; z-index: 3; background: #FFF8E1; color: #1B4332; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold;">M</div>
+                            <div style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #F8F3ED; margin-right: -12px; z-index: 2; background: #E6F4F1; color: #1B4332; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold;">C</div>
+                            <div style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #F8F3ED; z-index: 1; background: #dcfce7; color: #1B4332; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold;">F</div>
                         </div>
-                        <div style="background: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; flex: 1; min-width: 140px; border-top: 4px solid #F59E0B;">
-                            <h4 style="margin: 0; color: #666; font-size: 0.9rem;">Nota Média</h4>
-                            <div style="font-size: 2.2rem; font-weight: bold; color: #F59E0B;"><%= typeof mediaAvaliacoes !== 'undefined' ? mediaAvaliacoes : '--' %> <span style="font-size:1.2rem;">⭐</span></div>
+                        <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                            <span style="color: #F59E0B; font-size: 0.9rem; letter-spacing: 1px; line-height: 1;">★★★★★</span>
+                            <span style="color: #666; font-size: 0.85rem; margin-top: 3px;"><strong><%= typeof mediaAvaliacoes !== 'undefined' ? mediaAvaliacoes : '0.0' %>/5</strong> (<%= typeof totalAvaliacoes !== 'undefined' ? totalAvaliacoes : '0' %> avaliações)</span>
                         </div>
                     </div>
 
