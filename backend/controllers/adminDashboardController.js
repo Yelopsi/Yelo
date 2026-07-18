@@ -669,8 +669,8 @@ exports.getFinancials = async (req, res) => {
         if (mrrGrowth > 0) insights.push({ type: 'positive', text: `Receita MRR cresceu ${mrrGrowth.toFixed(1)}% no período.` });
         else if (mrrGrowth < 0) insights.push({ type: 'negative', text: `Receita MRR retraiu ${Math.abs(mrrGrowth).toFixed(1)}% no período.` });
         
-        if (paidChurnRate > 5) insights.push({ type: 'negative', text: `Churn de pagantes (${paidChurnRate.toFixed(1)}%) está acima da zona saudável (< 5%).` });
-        else insights.push({ type: 'positive', text: `Churn de pagantes está controlado e saudável.` });
+        if (paidChurnRate > 15) insights.push({ type: 'negative', text: `Churn de pagantes (${paidChurnRate.toFixed(1)}%) está acima da zona aceitável para empresas nascentes (< 15%).` });
+        else insights.push({ type: 'positive', text: `Churn de pagantes está controlado e dentro da média inicial.` });
 
         if (paidNewCount > paidChurnedCount) insights.push({ type: 'positive', text: `Mais assinantes pagantes entraram (${paidNewCount}) do que saíram (${paidChurnedCount}).` });
         else if (paidChurnedCount > paidNewCount) insights.push({ type: 'warning', text: `Alerta: Base de assinantes está encolhendo.` });
