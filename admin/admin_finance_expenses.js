@@ -37,97 +37,9 @@ async function carregarDespesas() {
             kpiLucro.style.color = '#3b82f6'; // Azul
         }
 
-        // Renderizar Tabela
-        const tbody = document.getElementById('expenses-table-body');
-        const emptyState = document.getElementById('expenses-empty-state');
-        
-        tbody.innerHTML = '';
-        
-        if (data.expenses && data.expenses.length > 0) {
-            emptyState.style.display = 'none';
-            
-            data.expenses.forEach(exp => {
-                const dataFormatada = new Date(exp.createdAt).toLocaleDateString('pt-BR');
-                
-                const tr = document.createElement('tr');
-                tr.style.borderBottom = '1px solid #e2e8f0';
-                
-                tr.innerHTML = `
-                    <td data-label="Descrição" style="font-weight: 500;">${exp.name}</td>
-                    <td data-label="Categoria">
-                        <span style="background: #f1f5f9; padding: 4px 10px; border-radius: 50px; font-size: 12px; color: #475569;">${exp.category}</span>
-                    </td>
-                    <td data-label="Data" style="color: var(--cinza-texto);">${dataFormatada}</td>
-                    <td data-label="Valor" style="text-align: right; color: var(--coral-quente); font-weight: 600;">- ${formatarMoeda(exp.amount)}</td>
-                    <td data-label="Ações" style="text-align: center;">
-                        <button onclick="excluirDespesa(${exp.id})" class="btn-tabela btn-tabela-perigo" style="padding: 5px; border: none; background: transparent;" title="Excluir">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        } else {
-            emptyState.style.display = 'block';
-        }
-
     } catch (error) {
         console.error(error);
         alert("Falha ao carregar os dados financeiros.");
-    }
-}
-
-async function salvarDespesa(event) {
-    event.preventDefault();
-    const btnSave = document.getElementById('btn-save-expense');
-    
-    const name = document.getElementById('expense-name').value;
-    const category = document.getElementById('expense-category').value;
-    const amount = document.getElementById('expense-amount').value;
-    const monthYear = document.getElementById('filter-month').value;
-    
-    if (!name || !amount || !monthYear) return;
-
-    btnSave.textContent = "Salvando...";
-    btnSave.disabled = true;
-
-    try {
-        const response = await fetch('/api/admin/expenses', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, category, amount, monthYear })
-        });
-        
-        if (!response.ok) throw new Error("Erro ao salvar despesa");
-        
-        document.getElementById('form-despesa').reset();
-        
-        // Re-carregar para atualizar KPIs e Tabela
-        await carregarDespesas();
-        
-    } catch (error) {
-        console.error(error);
-        alert("Ocorreu um erro ao salvar o custo.");
-    } finally {
-        btnSave.textContent = "+ Lançar Custo";
-        btnSave.disabled = false;
-    }
-}
-
-async function excluirDespesa(id) {
-    if (!confirm("Tem certeza que deseja excluir este lançamento?")) return;
-    
-    try {
-        const response = await fetch(`/api/admin/expenses/${id}`, {
-            method: 'DELETE'
-        });
-        
-        if (!response.ok) throw new Error("Erro ao excluir");
-        
-        await carregarDespesas();
-    } catch (error) {
-        console.error(error);
-        alert("Erro ao excluir o lançamento.");
     }
 }
 
