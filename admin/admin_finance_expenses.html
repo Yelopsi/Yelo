@@ -84,76 +84,7 @@
         </div>
     </div>
 
-    <div class="content-wrapper" style="display: flex; flex-wrap: wrap; gap: 30px;">
-        <!-- FORMULÁRIO DE NOVA DESPESA -->
-        <div class="fin-card form-side" style="flex: 1; min-width: 300px; height: fit-content;">
-            <h3 style="margin: 0 0 20px 0; color: var(--verde-escuro); font-family: var(--font-titulos); border-bottom: 1px solid var(--cinza-borda); padding-bottom: 15px;">Adicionar Novo Custo</h3>
-            
-            <form id="form-despesa" onsubmit="salvarDespesa(event)">
-                <div style="margin-bottom: 15px;">
-                    <label class="fin-label">Nome do Custo</label>
-                    <input type="text" id="expense-name" class="fin-input" required placeholder="Ex: Servidor AWS, Contador...">
-                </div>
-                
-                <div style="margin-bottom: 15px;">
-                    <label class="fin-label">Categoria</label>
-                    <select id="expense-category" class="fin-input">
-                        <option value="Domínio">Domínio</option>
-                        <option value="Render">Render</option>
-                        <option value="Google Ads">Google Ads</option>
-                        <option value="Meta Ads">Meta Ads</option>
-                        <option value="IA">IA (Gemini/OpenAI)</option>
-                        <option value="Redes Sociais">Redes Sociais</option>
-                        <option value="Equipe">Equipe</option>
-                        <option value="Impostos">Impostos</option>
-                        <option value="Outros" selected>Outros</option>
-                    </select>
-                </div>
 
-                <div style="margin-bottom: 25px;">
-                    <label class="fin-label">Valor (R$)</label>
-                    <input type="number" id="expense-amount" class="fin-input" required step="0.01" min="0" placeholder="0.00">
-                </div>
-
-                <button type="submit" id="btn-save-expense" class="btn-primario" style="width: 100%;">
-                    + Lançar Custo
-                </button>
-            </form>
-        </div>
-
-        <!-- LISTAGEM DE DESPESAS -->
-        <div class="fin-card list-side" style="flex: 2; min-width: 350px; padding: 0; overflow: hidden;">
-            <div style="padding: 20px 25px; border-bottom: 1px solid var(--cinza-borda); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <h3 style="margin: 0; color: var(--verde-escuro); font-family: var(--font-titulos);">Extrato do Mês</h3>
-                <button onclick="window.navigateToPage('admin_founder_dashboard.html')" class="btn-primario btn-sm" style="background-color: #10b981; display: flex; align-items: center; gap: 6px;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                    Ver Crescimento
-                </button>
-            </div>
-            
-            <div class="tabela-wrapper" style="padding: 0 10px;">
-                <table class="tabela-gerenciamento">
-                    <thead>
-                        <tr>
-                            <th>Descrição</th>
-                            <th>Categoria</th>
-                            <th>Data</th>
-                            <th style="text-align: right;">Valor</th>
-                            <th style="text-align: center;">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="expenses-table-body">
-                        <!-- Conteúdo populado por JS -->
-                    </tbody>
-                </table>
-                <div id="expenses-empty-state" style="padding: 40px; text-align: center; color: var(--cinza-texto); display: none;">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 10px; opacity: 0.5;"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-                    <p style="margin: 0;">Nenhuma despesa lançada para esta competência.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
     <!-- FLUXO DE CAIXA (RECEITAS) -->
     <div class="fin-card" style="margin-top: 30px; padding: 0; overflow: hidden;">
         <div style="padding: 20px 25px; border-bottom: 1px solid var(--cinza-borda); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
