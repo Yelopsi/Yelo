@@ -147,12 +147,11 @@
             display: flex !important;
             flex-wrap: nowrap !important;
             gap: 12px;
-            overflow-x: auto;
-            padding-bottom: 8px;
+            overflow: visible; /* Permite que o tooltip vaze para cima e evita scrollbar */
         }
         .kpi-card {
             flex: 1 1 0;
-            min-width: 140px;
+            min-width: 0; /* Permite encolher sem causar overflow */
         }
     }
     .kpi-card {
@@ -166,7 +165,7 @@
         min-height: 28px;
     }
     .kpi-card .kpi-numero {
-        font-size: 4rem !important;
+        font-size: 2.2rem !important; /* Diminuído de 4rem para evitar expansão do card */
         font-weight: 700;
         margin: 8px 0 !important;
         transition: color 0.3s ease;
