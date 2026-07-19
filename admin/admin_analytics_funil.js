@@ -140,9 +140,12 @@ window.initializePage = function() {
             }
 
             // --- FUNÇÃO AUXILIAR PARA RENDERIZAR AS METAS VISUAIS ---
-            const renderGoalBar = (currentPct, goalPct, label) => {
+            const getColorForGoal = (currentPct, goalPct) => {
                 const isGood = parseFloat(currentPct) >= goalPct;
-                const barColor = isGood ? '#10b981' : (parseFloat(currentPct) >= (goalPct * 0.6) ? '#f59e0b' : '#ef4444');
+                return isGood ? '#10b981' : (parseFloat(currentPct) >= (goalPct * 0.6) ? '#f59e0b' : '#ef4444');
+            };
+
+            const renderGoalBar = (currentPct, goalPct, label, barColor) => {
                 const pctFill = Math.min(100, (parseFloat(currentPct) / goalPct) * 100);
                 return `
                     <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:5px;">
@@ -153,6 +156,15 @@ window.initializePage = function() {
                         <div style="width:${pctFill}%; height:100%; background:${barColor}; border-radius:4px; transition:width 0.5s ease-out;"></div>
                     </div>
                 `;
+            };
+
+            const applyColorToKpi = (kpiId, color) => {
+                const el = document.getElementById(kpiId);
+                if (el) {
+                    el.style.color = color;
+                    const card = el.closest('.kpi-card');
+                    if (card) card.style.borderTopColor = color;
+                }
             };
 
             // --- 1. POPULA KPIs SUPERIORES ---
@@ -172,16 +184,22 @@ window.initializePage = function() {
             if(kpiDesqualificados) kpiDesqualificados.textContent = (data.desqualificados || 0).toLocaleString();
 
             const taxaInicio = data.visitas > 0 ? ((data.iniciaram / data.visitas) * 100).toFixed(1) : 0;
+            const corTaxaInicio = getColorForGoal(taxaInicio, 15);
             const elTaxaInicio = document.getElementById('taxa-inicio');
-            if (elTaxaInicio) elTaxaInicio.innerHTML = renderGoalBar(taxaInicio, 15, 'das visitas');
+            if (elTaxaInicio) elTaxaInicio.innerHTML = renderGoalBar(taxaInicio, 15, 'das visitas', corTaxaInicio);
+            applyColorToKpi('kpi-iniciaram', corTaxaInicio);
 
             const taxaCompletaram = data.iniciaram > 0 ? ((data.completaram / data.iniciaram) * 100).toFixed(1) : 0;
+            const corTaxaCompletaram = getColorForGoal(taxaCompletaram, 65);
             const elTaxaCompletaram = document.getElementById('taxa-completaram');
-            if (elTaxaCompletaram) elTaxaCompletaram.innerHTML = renderGoalBar(taxaCompletaram, 65, 'dos iniciados');
+            if (elTaxaCompletaram) elTaxaCompletaram.innerHTML = renderGoalBar(taxaCompletaram, 65, 'dos iniciados', corTaxaCompletaram);
+            applyColorToKpi('kpi-completaram', corTaxaCompletaram);
 
             const taxaGlobal = data.visitas > 0 ? ((data.whatsappClicks / data.visitas) * 100).toFixed(2) : 0;
+            const corTaxaGlobal = getColorForGoal(taxaGlobal, 3);
             const elTaxaGlobal = document.getElementById('taxa-conclusao-final');
-            if (elTaxaGlobal) elTaxaGlobal.innerHTML = renderGoalBar(taxaGlobal, 3, 'do tráfego');
+            if (elTaxaGlobal) elTaxaGlobal.innerHTML = renderGoalBar(taxaGlobal, 3, 'do tráfego', corTaxaGlobal);
+            applyColorToKpi('kpi-whatsapp', corTaxaGlobal);
 
 
 
@@ -230,6 +248,33 @@ window.initializePage = function() {
             document.getElementById('funnel-visual-container').innerHTML = funilHtml;
 
             // --- 3. RANKING DE ABANDONO (DROP-OFFS) ---
+            const kpiTxDesistencia = document.getElementById('kpi-tx-desistencia');
+            const kpiTxDesistenciaGlobal = document.getElementById('kpi-tx-desistencia-global');
+            
+            if (data.iniciaram > 0) {
+                const abandonosCount = Math.max(0, data.iniciaram - data.completaram);
+                const taxaDesistenciaPct = ((abandonosCount / data.iniciaram) * 100).toFixed(1);
+                const desistenciaColor = taxaDesistenciaPct <= 30 ? '#10b981' : '#dc2626';
+                
+                if (kpiTxDesistencia) {
+                    kpiTxDesistencia.textContent = `${taxaDesistenciaPct}%`;
+                    kpiTxDesistencia.style.color = desistenciaColor; 
+                }
+                if (kpiTxDesistenciaGlobal) {
+                    kpiTxDesistenciaGlobal.textContent = `${taxaDesistenciaPct}%`;
+                    applyColorToKpi('kpi-tx-desistencia-global', desistenciaColor);
+                }
+            } else {
+                if (kpiTxDesistencia) {
+                    kpiTxDesistencia.textContent = '--%';
+                    kpiTxDesistencia.style.color = '#64748b';
+                }
+                if (kpiTxDesistenciaGlobal) {
+                    kpiTxDesistenciaGlobal.textContent = '--%';
+                    applyColorToKpi('kpi-tx-desistencia-global', '#64748b');
+                }
+            }
+
             const containerAbandonos = document.getElementById('lista-abandonos');
             if(containerAbandonos) {
                 containerAbandonos.innerHTML = '';
