@@ -7,19 +7,23 @@
     </div>
 
     <div class="dashboard-header-actions" style="margin-bottom: 20px;">
-        <div class="filtros-container" style="flex-grow: 1; display: flex; gap: 10px; align-items: center;">
-            <input type="text" id="log-search" class="campo-busca" placeholder="Buscar por email, mensagem ou tipo de erro...">
-            <select id="log-filter" class="filtro-select">
-                <option value="error">Todos os Erros</option>
-                <option value="all" selected>Todos os Logs</option>
-                <option value="info">Apenas Informações</option>
-                <option value="payment">Apenas Pagamentos</option>
+        <div class="search-wrapper" style="flex-grow: 1; position: relative; min-width: 200px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="log-search" class="campo-busca" placeholder="Buscar por email, mensagem ou tipo de erro..." style="width: 100%; padding-left: 42px;">
+        </div>
+        <div class="select-wrapper" style="position: relative; min-width: 200px;">
+            <select id="log-filter" class="filtro-select" style="width: 100%; appearance: none; padding-right: 35px; cursor: pointer;">
+                <option value="error">🚨 Todos os Erros</option>
+                <option value="all" selected>📋 Todos os Logs</option>
+                <option value="info">ℹ️ Apenas Informações</option>
+                <option value="payment">💳 Apenas Pagamentos</option>
             </select>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </div>
 
         <button id="btn-refresh-logs" class="btn-refresh">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-            Atualizar Agora
+            <svg class="refresh-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            <span>Atualizar Agora</span>
         </button>
     </div>
 </div>
@@ -45,36 +49,45 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        flex-wrap: wrap; /* Permite quebrar em telas menores */
-        gap: 15px;
+        flex-wrap: nowrap;
+        gap: 12px;
+        height: 48px;
     }
-
-    .filtros-container {
+    .search-wrapper, .select-wrapper {
+        height: 48px;
+        margin: 0;
+        padding: 0;
         display: flex;
-        gap: 15px;
-        flex-grow: 1;
-        flex-wrap: wrap;
     }
 
     .campo-busca, .filtro-select {
-        padding: 10px 15px;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
+        display: block;
+        width: 100%;
+        height: 48px;
+        box-sizing: border-box;
+        padding: 0 20px;
+        margin: 0;
+        border: 1px solid #d1d5db;
+        border-radius: 50px; /* Formato Pílula */
         font-size: 0.95rem;
         font-family: var(--font-principal);
         background-color: #fff;
-        transition: all 0.2s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         outline: none;
+        color: #374151;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) inset;
     }
 
-    .campo-busca {
-        flex-grow: 1;
-        min-width: 250px;
+    .campo-busca::placeholder { color: #9ca3af; font-weight: 400; }
+
+    .campo-busca:hover, .filtro-select:hover {
+        border-color: #9ca3af;
     }
 
     .campo-busca:focus, .filtro-select:focus {
-        border-color: var(--verde-escuro);
-        box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
+        border-color: #1B4332;
+        box-shadow: 0 0 0 4px rgba(27, 67, 50, 0.12);
+        background-color: #fcfcfc;
     }
 
     /* --- ESTILOS MODERNOS PARA A LISTA DE LOGS --- */
@@ -171,11 +184,90 @@
         justify-content: space-between;
         border-left: 4px solid #ccc; /* Cor padrão */
         transition: border-color 0.3s;
+        position: relative;
     }
 
     .health-info h4 { margin: 0 0 5px 0; font-size: 0.9rem; color: #666; }
     .health-info p { margin: 0; font-weight: bold; font-size: 1.1rem; color: #333; }
     
+    /* Tooltip de Informação (i) */
+    .info-tooltip {
+        cursor: help;
+        color: #9ca3af;
+        font-size: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        transition: all 0.2s;
+        flex-shrink: 0;
+        position: relative;
+        font-weight: bold;
+        font-family: monospace;
+    }
+    .info-tooltip:hover { color: #1B4332; border-color: #1B4332; background-color: #f0fdf4; }
+    .info-tooltip::after {
+        content: attr(data-tooltip); position: absolute; bottom: 130%; right: 0; 
+        background-color: #1f2937; color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 0.75rem;
+        width: 200px; text-align: left; opacity: 0; visibility: hidden; transition: all 0.2s ease;
+        pointer-events: none; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        font-weight: 500; line-height: 1.4; font-family: var(--font-principal); white-space: normal;
+    }
+    .info-tooltip:hover::after, .info-tooltip:active::after { opacity: 1; visibility: visible; transform: translateY(-5px); }
+
+    /* Responsividade Mobile - KPIs Quadrados 2x2 */
+    @media (max-width: 768px) {
+        .dashboard-header-actions {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+            height: auto;
+        }
+        .search-wrapper, .select-wrapper {
+            width: 100%;
+            min-width: unset;
+            height: 48px;
+        }
+        .btn-refresh {
+            width: 100%;
+            justify-content: center;
+        }
+        .health-grid {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 10px;
+        }
+        .health-card {
+            aspect-ratio: 1 / 1;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+            padding: 12px;
+            border-left: none !important;
+            border-top: 4px solid #ccc;
+        }
+        .health-card[style*="border-left-color: #2ecc71"] { border-top-color: #2ecc71 !important; border-left-color: transparent !important; }
+        .health-card[style*="border-left-color: #e74c3c"] { border-top-color: #e74c3c !important; border-left-color: transparent !important; }
+        .health-card[style*="border-left-color: #f1c40f"] { border-top-color: #f1c40f !important; border-left-color: transparent !important; }
+        
+        .health-info h4 { font-size: 1rem; justify-content: center; flex-wrap: wrap; text-align: center; font-weight: 600; }
+        .health-info p { font-size: 1.5rem; margin-top: 8px; font-weight: 700; line-height: 1.2; }
+        .info-tooltip::after { width: 160px; }
+        .health-card:nth-child(odd) .info-tooltip::after { left: -20px; right: auto; }
+        .health-card:nth-child(even) .info-tooltip::after { right: -20px; left: auto; }
+        
+        .health-card .status-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            margin-left: 0 !important;
+            width: 10px; height: 10px;
+        }
+    }
+
     /* Clínicoes Indicadoras (Bolinhas) */
     .status-indicator {
         width: 15px;
@@ -213,20 +305,36 @@
 
     /* Estilo do Botão de Atualizar */
     .btn-refresh {
-        background-color: #1B4332; /* Verde Institucional Yelo */
+        background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%);
         color: #ffffff;
         border: none;
-        border-radius: 8px;
+        border-radius: 50px; /* Formato Pílula */
         cursor: pointer;
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 10px 20px;
-        font-weight: 500;
+        gap: 10px;
+        height: 48px;
+        box-sizing: border-box;
+        padding: 0 24px;
+        margin: 0;
+        font-weight: 600;
+        font-size: 0.95rem;
         font-family: 'Inter', sans-serif;
-        transition: all 0.2s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 6px -1px rgba(27, 67, 50, 0.2), 0 2px 4px -1px rgba(27, 67, 50, 0.1);
+        overflow: hidden;
+        position: relative;
     }
-    .btn-refresh:hover { background-color: #2D6A4F; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(27, 67, 50, 0.25); }
-    .btn-refresh:active { transform: translateY(0); box-shadow: none; }
-    .btn-refresh:disabled { background-color: #bdc3c7; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-refresh::after {
+        content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: all 0.5s ease;
+    }
+    .btn-refresh:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(27, 67, 50, 0.3); }
+    .btn-refresh:hover::after { left: 100%; }
+    .btn-refresh:active { transform: translateY(0); box-shadow: 0 4px 6px -1px rgba(27, 67, 50, 0.2); }
+    .btn-refresh:disabled { background: #e5e7eb; color: #9ca3af; cursor: not-allowed; transform: none; box-shadow: none; }
+    
+    @keyframes spin-soft { 100% { transform: rotate(360deg); } }
+    .btn-refresh.updating .refresh-icon { animation: spin-soft 1s linear infinite; }
 </style>

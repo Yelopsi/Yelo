@@ -369,7 +369,7 @@ exports.getSystemLogs = async (req, res) => {
                 db.Patient.count({ where: { createdAt: { [Op.gte]: oneDayAgo } } }),
                 db.Psychologist.count({ where: { createdAt: { [Op.gte]: oneDayAgo } } }),
                 db.SystemLog.count({ where: { level: 'error', createdAt: { [Op.gte]: oneDayAgo } } }),
-                db.SystemLog.count({ where: { level: 'error', message: { [Op.iLike]: '%stripe%' }, createdAt: { [Op.gte]: oneDayAgo } } }),
+                db.SystemLog.count({ where: { level: 'error', message: { [Op.iLike]: '%asaas%' }, createdAt: { [Op.gte]: oneDayAgo } } }),
                 db.DemandSearch.count({ where: { status: 'started', createdAt: { [Op.gte]: oneDayAgo } } }),
                 db.DemandSearch.count({ where: { status: 'completed', createdAt: { [Op.gte]: oneDayAgo } } }),
                 db.SystemLog.count({ where: { message: { [Op.iLike]: '%Falha de login%' }, createdAt: { [Op.gte]: oneDayAgo } } }),

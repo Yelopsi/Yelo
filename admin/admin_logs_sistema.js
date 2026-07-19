@@ -84,77 +84,92 @@ window.initializePage = async function () {
             return;
         }
 
-        // Configuração dos Cards
+        // Configuração dos Cards com avaliação rigorosa
         const cards = [
             {
                 title: "Banco de Dados",
                 value: health.database.status === 'online' ? "Online & Conectado" : "Erro de Conexão",
-                status: health.database.status === 'online' ? 'green' : 'red'
+                status: health.database.status === 'online' ? 'green' : 'red',
+                tooltip: "Mede conectividade. Falha aqui derruba toda a aplicação instantaneamente."
             },
             {
                 title: "Cadastros (24h)",
-                value: health.registration.count === '?' ? "Dados indisponíveis" : (health.registration.count > 0 ? `${health.registration.count} Novos Usuários` : "Sem novos cadastros"),
-                status: health.registration.status === 'active' ? 'green' : 'yellow'
+                value: health.registration.count === '?' ? "N/A" : (health.registration.count > 0 ? `${health.registration.count} Novos` : "Zero cadastros"),
+                status: health.registration.status === 'active' ? 'green' : (health.registration.count === 0 ? 'yellow' : 'red'),
+                tooltip: "Zero novos leads prolongados acendem um alerta crítico no frontend ou tráfego."
             },
             {
                 title: "Pagamentos",
-                value: health.payment.status === 'healthy' ? "Operando Normalmente" : `${health.payment.errors} Erros Detectados`,
-                status: health.payment.status === 'healthy' ? 'green' : 'red'
+                value: health.payment.status === 'healthy' ? "Operando" : `${health.payment.errors} Erros Detectados`,
+                status: health.payment.status === 'healthy' ? 'green' : 'red',
+                tooltip: "Erros nos gateways implicam perda de faturamento."
             },
             {
-                title: "Disparo de E-mails",
+                title: "Serviço de E-mails",
                 value: (health.email && health.email.status === 'healthy') ? "Operacional" : `${health.email ? health.email.errors : 0} Falhas (24h)`,
-                status: (health.email && health.email.status === 'healthy') ? 'green' : ((health.email && health.email.status === 'warning') ? 'yellow' : 'red')
+                status: (health.email && health.email.status === 'healthy') ? 'green' : ((health.email && health.email.status === 'warning') ? 'yellow' : 'red'),
+                tooltip: "Falhas em SMTP atrasam recuperações de senha e travas operacionais."
             },
             {
-                title: "Erros do Sistema",
-                value: health.system.status === 'healthy' ? "Estável" : `${health.system.errors} Erros Recentes`,
-                status: health.system.status === 'healthy' ? 'green' : 'red'
+                title: "Erros de Sistema (Bugs)",
+                value: health.system.status === 'healthy' ? "Estável (0)" : `${health.system.errors} Exceções Detectadas`,
+                status: health.system.status === 'healthy' ? 'green' : 'red',
+                tooltip: "Exceções não tratadas. Manter em zero é vital para saúde do backend."
             },
             {
                 title: "Funil de Busca",
-                value: health.funnel.status === 'critical' ? "ALERTA: 0% de Conversão" : `${health.funnel.completed} Concluídos / ${health.funnel.started} Iniciados`,
-                status: health.funnel.status === 'healthy' ? 'green' : 'red'
+                value: health.funnel.status === 'critical' ? "ALERTA (Trava)" : `${health.funnel.completed} Completos / ${health.funnel.started} Iniciados`,
+                status: health.funnel.status === 'healthy' ? 'green' : 'red',
+                tooltip: "Acompanha se o questionário PLG quebra antes de gerar contatos no WhatsApp."
             },
             {
-                title: "Segurança (Logins)",
-                value: health.security.failures > 0 ? `${health.security.failures} Falhas de Acesso` : "Nenhuma Atividade Suspeita",
-                status: health.security.status === 'healthy' ? 'green' : 'yellow'
+                title: "Segurança de Logins",
+                value: health.security.failures > 0 ? `${health.security.failures} Falhas (Brute-force?)` : "Nenhum Alerta",
+                status: health.security.status === 'healthy' ? 'green' : 'yellow',
+                tooltip: "Monitora senhas erradas e picos anômalos de falha de autenticação."
             },
             {
-                title: "Performance (Ping)",
-                value: `${health.performance.latency}ms de Latência`,
-                status: health.performance.latency < 500 ? 'green' : (health.performance.latency < 1500 ? 'yellow' : 'red')
+                title: "Latência (API Ping)",
+                value: `${health.performance.latency}ms`,
+                status: health.performance.latency < 500 ? 'green' : (health.performance.latency < 1500 ? 'yellow' : 'red'),
+                tooltip: "Tempo de resposta. >1500ms afeta agressivamente a experiência do usuário."
             },
             {
-                title: "Servidor de Chat",
-                value: health.socket.connected ? "Conectado (Socket.IO)" : "Desconectado",
-                status: health.socket.connected ? 'green' : 'red'
+                title: "WebSocket Chat",
+                value: health.socket.connected ? "Conectado Ativo" : "Desconectado",
+                status: health.socket.connected ? 'green' : 'red',
+                tooltip: "Mantém notificações e o chat de CS online. Se offline, requer refresh manual."
             },
             {
-                title: "Acessos Simultâneos",
+                title: "Concorrência",
                 value: (health.concurrentUsers !== undefined && health.concurrentUsers !== null) ? `${health.concurrentUsers} Usuários Online` : "N/A",
-                status: health.concurrentUsers > 50 ? 'yellow' : 'green' // Lógica de exemplo: amarelo se > 50
+                status: (health.concurrentUsers > 150) ? 'red' : ((health.concurrentUsers > 50) ? 'yellow' : 'green'),
+                tooltip: "Sessões ativas no momento. Picos anormais podem engargalar o Node.js."
             },
             {
-                title: "Tempo Médio de Sessão",
+                title: "Sessão Média",
                 value: (health.avgSessionTime !== undefined && health.avgSessionTime !== null) ? `${Math.round(health.avgSessionTime)} min` : "N/A",
-                status: 'green'
+                status: 'green',
+                tooltip: "Quanto tempo o usuário permanece ativo. Auxilia em diagnósticos de retenção."
             },
             {
-                title: "Uso de Memória",
-                value: health.infrastructure ? `${health.infrastructure.memory} MB Utilizados` : "N/A",
-                status: health.infrastructure ? health.infrastructure.status : 'green'
+                title: "Memória RAM",
+                value: health.infrastructure ? `${health.infrastructure.memory} MB Uso` : "N/A",
+                status: health.infrastructure ? health.infrastructure.status : 'green',
+                tooltip: "Alocação do Node. Memory Leaks fazem o status ficar vermelho."
             }
         ];
 
         container.innerHTML = cards.map(card => `
             <div class="health-card" style="border-left-color: ${card.status === 'green' ? '#2ecc71' : (card.status === 'red' ? '#e74c3c' : '#f1c40f')}">
-                <div class="health-info">
-                    <h4>${card.title}</h4>
+                <div class="health-info" style="width: 100%;">
+                    <h4 style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                        ${card.title}
+                        ${card.tooltip ? `<span class="info-tooltip" data-tooltip="${card.tooltip}">i</span>` : ''}
+                    </h4>
                     <p>${card.value}</p>
                 </div>
-                <div class="status-indicator status-${card.status}"></div>
+                <div class="status-indicator status-${card.status}" style="flex-shrink: 0; margin-left: 15px;"></div>
             </div>
         `).join('');
     }
@@ -262,11 +277,16 @@ window.initializePage = async function () {
     const btnRefresh = document.getElementById('btn-refresh-logs');
     if (btnRefresh) {
         btnRefresh.addEventListener('click', async () => {
-            const originalContent = btnRefresh.innerHTML;
-            btnRefresh.innerHTML = '⏳ Atualizando...';
+            btnRefresh.classList.add('updating');
+            const span = btnRefresh.querySelector('span');
+            const originalText = span ? span.textContent : 'Atualizar Agora';
+            if (span) span.textContent = 'Atualizando...';
             btnRefresh.disabled = true;
+            
             await fetchSystemData();
-            btnRefresh.innerHTML = originalContent;
+            
+            if (span) span.textContent = originalText;
+            btnRefresh.classList.remove('updating');
             btnRefresh.disabled = false;
         });
     }
