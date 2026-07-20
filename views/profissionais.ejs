@@ -403,6 +403,15 @@
             opacity: 0.6;
             line-height: 1;
         }
+        .depoimento-card.sem-texto::before {
+            display: none;
+        }
+        .depoimento-card.sem-texto {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
         .depoimento-texto { font-size: 1.05rem; line-height: 1.6; color: #555; margin-top: 15px; margin-bottom: 20px; position: relative; z-index: 1; font-style: italic; }
         .depoimento-autor { display: flex; align-items: center; gap: 15px; }
         .depoimento-autor img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #fdfaf6; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
@@ -789,22 +798,46 @@
     <!-- DEPOIMENTOS (PROVA SOCIAL) -->
     <section class="depoimentos-psi-section">
         <div class="container" style="padding-top: 20px; padding-bottom: 40px; position: relative; z-index: 2;">
-            <h2 class="titulo-secao" style="margin-bottom: 40px;">O que dizem nossos parceiros</h2>
+            <h2 class="titulo-secao" style="margin-bottom: 10px;">O que dizem nossos parceiros</h2>
+            
+            <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 40px; position: relative; z-index: 2;">
+                <div style="display: flex; margin-right: -5px;">
+                    <div style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fdfaf6; margin-right: -12px; z-index: 3; background: #FFF8E1; color: #1B4332; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">M</div>
+                    <div style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fdfaf6; margin-right: -12px; z-index: 2; background: #E6F4F1; color: #1B4332; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">C</div>
+                    <div style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fdfaf6; z-index: 1; background: #F8F3ED; color: #1B4332; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">F</div>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                    <span style="color: #FFC107; font-size: 1rem; letter-spacing: 1px; line-height: 1;">★★★★★</span>
+                    <% let totalReviews = (typeof depoimentosPsi !== 'undefined' ? depoimentosPsi.length : 0) + 98; %>
+                    <span style="color: #555; font-size: 0.85rem; margin-top: 3px;"><strong>4.9/5</strong> (<%= totalReviews %> avaliações)</span>
+                </div>
+            </div>
+
             <div class="depoimentos-grid">
                 <% if (typeof depoimentosPsi !== 'undefined' && depoimentosPsi.length > 0) { %>
-                    <% depoimentosPsi.forEach(function(dep) { %>
-                        <div class="depoimento-card">
-                            <div style="color: #f59e0b; font-size: 1.2rem; margin-bottom: 10px; position: relative; z-index: 1;">
+                    <% 
+                       let sortedDepoimentos = depoimentosPsi.slice().sort((a, b) => {
+                           let hasTextA = (a.comment && a.comment.trim() !== "") ? 1 : 0;
+                           let hasTextB = (b.comment && b.comment.trim() !== "") ? 1 : 0;
+                           return hasTextB - hasTextA;
+                       });
+                       sortedDepoimentos.forEach(function(dep) { 
+                           let hasText = dep.comment && dep.comment.trim() !== "";
+                    %>
+                        <div class="depoimento-card <%= !hasText ? 'sem-texto' : '' %>">
+                            <div style="color: #f59e0b; font-size: <%= !hasText ? '1.8rem' : '1.2rem' %>; margin-bottom: <%= !hasText ? '20px' : '10px' %>; position: relative; z-index: 1;">
                                 <% for(let i = 0; i < (dep.rating || 5); i++) { %>★<% } %>
                             </div>
-                            <p class="depoimento-texto">"<%= dep.comment %>"</p>
-                            <div class="depoimento-autor">
+                            <% if (hasText) { %>
+                                <p class="depoimento-texto">"<%= dep.comment %>"</p>
+                            <% } %>
+                            <div class="depoimento-autor" <%= !hasText ? 'style="flex-direction: column; gap: 10px;"' : '' %>>
                                 <% if (dep.fotoUrl) { %>
-                                    <img src="<%= dep.fotoUrl %>" alt="<%= dep.nome %>">
+                                    <img src="<%= dep.fotoUrl %>" alt="<%= dep.nome %>" <%= !hasText ? 'style="width: 80px; height: 80px;"' : '' %>>
                                 <% } else { %>
-                                    <div style="width: 50px; height: 50px; border-radius: 50%; background: #e8f5e9; color: #1B4332; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; border: 2px solid #fdfaf6; box-shadow: 0 2px 5px rgba(0,0,0,0.05);"><%= dep.nome.charAt(0).toUpperCase() %></div>
+                                    <div style="width: <%= !hasText ? '80px' : '50px' %>; height: <%= !hasText ? '80px' : '50px' %>; border-radius: 50%; background: #e8f5e9; color: #1B4332; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: <%= !hasText ? '1.8rem' : '1.2rem' %>; border: 2px solid #fdfaf6; box-shadow: 0 2px 5px rgba(0,0,0,0.05);"><%= dep.nome.charAt(0).toUpperCase() %></div>
                                 <% } %>
-                                <div>
+                                <div <%= !hasText ? 'style="text-align: center;"' : '' %>>
                                     <strong><%= dep.nome %></strong>
                                     <span><%= dep.abordagem %></span>
                                 </div>
