@@ -135,7 +135,11 @@ const calculateSimilarity = (psy, preferences = {}, priceRange) => {
         }
     }
 
-    const valorPsi = parseFloat(psy.valor_sessao_numero || 0);
+    let valorPsi = parseFloat(psy.valor_sessao_numero || 0);
+    if (valorPsi === 0 && psy.tipo_cobranca === 'mensal' && parseFloat(psy.valor_mensal_numero || 0) > 0) {
+        valorPsi = parseFloat(psy.valor_mensal_numero) / 4;
+    }
+    
     if (valorPsi > 0) {
         if (valorPsi >= priceRange.min && valorPsi <= priceRange.max) {
             sOp += 30; 
