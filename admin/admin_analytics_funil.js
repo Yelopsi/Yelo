@@ -471,7 +471,7 @@ window.initializePage = function() {
             if (!wppData || wppData.length === 0) return alert("Nenhum dado de conversão para exportar.");
             
             let csvContent = `RELATÓRIO DE CONVERSÕES (PLG)\nPeríodo: ${periodStr}\n\n`;
-            csvContent += `Data;Paciente (Visitante);Psicólogo;Recebeu Contato?;Fechou Negócio?;Status\n`;
+            csvContent += `Data;Origem (UTM);Paciente (Visitante);Psicólogo;Recebeu Contato?;Fechou Negócio?;Status\n`;
             
             wppData.forEach(l => {
                 const dataFormatada = new Date(l.createdAt).toLocaleDateString('pt-BR');
@@ -487,7 +487,8 @@ window.initializePage = function() {
                 else if (l.dealClosed === 'talking') fechou = 'Em Negociação';
                 else if (l.dealClosed) fechou = 'Sem Contato';
 
-                csvContent += `${dataFormatada};${pName};${psiName};${recContato};${fechou};${status}\n`;
+                const origemUTM = safeStr(l.utmSource) || 'N/A';
+                csvContent += `${dataFormatada};${origemUTM};${pName};${psiName};${recContato};${fechou};${status}\n`;
             });
             downloadCSV(`yelo_conversoes_${new Date().toISOString().split('T')[0]}.csv`, csvContent);
 
@@ -582,7 +583,7 @@ window.initializePage = function() {
             window.wppDataState.sortDirection = 'asc';
         }
         
-        ['data', 'psi', 'paciente', 'recebeu', 'fechou', 'status'].forEach(col => {
+        ['data', 'origem', 'psi', 'paciente', 'recebeu', 'fechou', 'status'].forEach(col => {
             const icon = document.getElementById(`sort-wpp-${col}`);
             if (icon) {
                 if (col === column) {
@@ -609,6 +610,9 @@ window.initializePage = function() {
             if (col === 'data') {
                 valA = new Date(a.createdAt).getTime();
                 valB = new Date(b.createdAt).getTime();
+            } else if (col === 'origem') {
+                valA = (a.utmSource || '').toLowerCase();
+                valB = (b.utmSource || '').toLowerCase();
             } else if (col === 'psi') {
                 valA = a.psychologist && a.psychologist.nome ? a.psychologist.nome.toLowerCase() : '';
                 valB = b.psychologist && b.psychologist.nome ? b.psychologist.nome.toLowerCase() : '';
@@ -798,6 +802,7 @@ window.initializePage = function() {
             
             return `<tr>
                 <td data-label="Data do Clique" style="color: #666; font-size: 0.9rem;">${dataClique}</td>
+                <td data-label="Origem (UTM)" style="color: #666; font-size: 0.85rem;">${f.utmSource || '-'}</td>
                 <td data-label="Psicólogo"><strong style="color: var(--verde-escuro); cursor: pointer; text-decoration: underline;" onclick="openFunnelPsiDrawer('${safePsiId}')">${f.psychologist ? f.psychologist.nome : 'Psi Removido'}</strong></td>
                 <td data-label="Paciente / Lead">${f.guestName || 'Visitante'}</td>
                 <td data-label="Recebeu Mensagem?" style="text-align: center;">${contato}</td>

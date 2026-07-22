@@ -14,6 +14,10 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: true,
             defaultValue: 'Visitante'
         },
+        utmSource: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
         feedbackGiven: {
             type: DataTypes.BOOLEAN,
             defaultValue: false // Só vira true quando o psi responder o modal

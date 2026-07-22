@@ -21,7 +21,7 @@ const ensureTableExists = async () => {
 exports.registerClick = async (req, res) => {
     try {
         await ensureTableExists();
-        const { psychologistId, guestName } = req.body;
+        const { psychologistId, guestName, utmSource } = req.body;
 
         if (!psychologistId) {
             return res.status(400).json({ error: 'psychologistId é obrigatório.' });
@@ -30,6 +30,7 @@ exports.registerClick = async (req, res) => {
         const clickLog = await db.WhatsAppClickLog.create({
             psychologistId,
             guestName: guestName || 'um paciente',
+            utmSource: utmSource || null,
             feedbackGiven: false,
             feedbackToken: uuidv4()
         });

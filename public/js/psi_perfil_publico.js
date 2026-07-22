@@ -308,10 +308,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     // --- Tracking específico para o Modal PLG de Conversão ---
                     const guestName = localStorage.getItem('yelo_guest_name') || 'um paciente';
+                    const utmSource = localStorage.getItem('yelo_utm_source') || 'Direto/Orgânico';
                     fetch(`${API_BASE_URL}/api/psychologists/public/whatsapp-click-log`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ psychologistId: psi.id, guestName })
+                        body: JSON.stringify({ psychologistId: psi.id, guestName, utmSource })
                     }).catch(() => {});
                     // ---------------------------------------------------------------
 
