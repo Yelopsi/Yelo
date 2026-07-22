@@ -192,6 +192,26 @@
         .crm-date-filter input { flex: 1; margin-left: 10px; width: auto !important; }
         .crm-date-filter button, #btn-export-csv { width: 100%; justify-content: center; }
     }
+
+    /* Ajustes da tabela de Auditoria (WPP) para evitar rolagem horizontal indesejada */
+    #tab-conversoes .tabela-gerenciamento {
+        min-width: 100% !important;
+        table-layout: auto;
+    }
+    #tab-conversoes .tabela-gerenciamento th,
+    #tab-conversoes .tabela-gerenciamento td {
+        white-space: normal !important;
+        word-break: break-word;
+        padding: 10px 8px !important; /* Reduz padding para caber mais info */
+    }
+    
+    /* Protege botões e badges (status) para não quebrarem linha internamente */
+    #tab-conversoes .tabela-gerenciamento .status,
+    #tab-conversoes .tabela-gerenciamento a,
+    #tab-conversoes .tabela-gerenciamento button {
+        white-space: nowrap !important;
+        word-break: normal !important;
+    }
 </style>
 
 <div class="modern-dashboard-layout">
@@ -392,9 +412,9 @@
                     <thead>
                         <tr>
                             <th onclick="window.sortWppData('data')" style="cursor: pointer; user-select: none;">Data do Clique <span style="font-size: 0.8rem; opacity: 0.5; margin-left: 5px;" id="sort-wpp-data">↕</span></th>
-                            <th onclick="window.sortWppData('origem')" style="cursor: pointer; user-select: none;">Origem (UTM) <span style="font-size: 0.8rem; opacity: 0.5; margin-left: 5px;" id="sort-wpp-origem">↕</span></th>
                             <th onclick="window.sortWppData('psi')" style="cursor: pointer; user-select: none;">Psicólogo <span style="font-size: 0.8rem; opacity: 0.5; margin-left: 5px;" id="sort-wpp-psi">↕</span></th>
                             <th onclick="window.sortWppData('paciente')" style="cursor: pointer; user-select: none;">Paciente / Lead <span style="font-size: 0.8rem; opacity: 0.5; margin-left: 5px;" id="sort-wpp-paciente">↕</span></th>
+                            <th onclick="window.sortWppData('origem')" style="cursor: pointer; user-select: none;">Origem (UTM) <span style="font-size: 0.8rem; opacity: 0.5; margin-left: 5px;" id="sort-wpp-origem">↕</span></th>
                             <th onclick="window.sortWppData('recebeu')" style="cursor: pointer; user-select: none; text-align: center;">Recebeu Mensagem? <span style="font-size: 0.8rem; opacity: 0.5; margin-left: 5px;" id="sort-wpp-recebeu">↕</span></th>
                             <th onclick="window.sortWppData('fechou')" style="cursor: pointer; user-select: none; text-align: center;">Fechou Negócio? <span style="font-size: 0.8rem; opacity: 0.5; margin-left: 5px;" id="sort-wpp-fechou">↕</span></th>
                             <th onclick="window.sortWppData('status')" style="cursor: pointer; user-select: none; text-align: center;">Status da Resposta <span style="font-size: 0.8rem; opacity: 0.5; margin-left: 5px;" id="sort-wpp-status">↕</span></th>
