@@ -471,7 +471,7 @@ window.initializePage = function() {
             if (!wppData || wppData.length === 0) return alert("Nenhum dado de conversão para exportar.");
             
             let csvContent = `RELATÓRIO DE CONVERSÕES (PLG)\nPeríodo: ${periodStr}\n\n`;
-            csvContent += `Data;Origem (UTM);Paciente (Visitante);Psicólogo;Recebeu Contato?;Fechou Negócio?;Status\n`;
+            csvContent += `Data;Psicólogo;Paciente (Visitante);Origem (UTM);Recebeu Contato?;Fechou Negócio?;Status\n`;
             
             wppData.forEach(l => {
                 const dataFormatada = new Date(l.createdAt).toLocaleDateString('pt-BR');
@@ -488,7 +488,7 @@ window.initializePage = function() {
                 else if (l.dealClosed) fechou = 'Sem Contato';
 
                 const origemUTM = safeStr(l.utmSource) || 'N/A';
-                csvContent += `${dataFormatada};${origemUTM};${pName};${psiName};${recContato};${fechou};${status}\n`;
+                csvContent += `${dataFormatada};${psiName};${pName};${origemUTM};${recContato};${fechou};${status}\n`;
             });
             downloadCSV(`yelo_conversoes_${new Date().toISOString().split('T')[0]}.csv`, csvContent);
 
@@ -802,9 +802,9 @@ window.initializePage = function() {
             
             return `<tr>
                 <td data-label="Data do Clique" style="color: #666; font-size: 0.9rem;">${dataClique}</td>
-                <td data-label="Origem (UTM)" style="color: #666; font-size: 0.85rem;">${f.utmSource || '-'}</td>
                 <td data-label="Psicólogo"><strong style="color: var(--verde-escuro); cursor: pointer; text-decoration: underline;" onclick="openFunnelPsiDrawer('${safePsiId}')">${f.psychologist ? f.psychologist.nome : 'Psi Removido'}</strong></td>
                 <td data-label="Paciente / Lead">${f.guestName || 'Visitante'}</td>
+                <td data-label="Origem (UTM)" style="color: #666; font-size: 0.85rem;">${f.utmSource || '-'}</td>
                 <td data-label="Recebeu Mensagem?" style="text-align: center;">${contato}</td>
                 <td data-label="Fechou Negócio?" style="text-align: center;">${fechou}</td>
                 <td data-label="Status da Resposta" style="text-align: center;">${status}</td>
