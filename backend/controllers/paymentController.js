@@ -112,13 +112,26 @@ exports.createPreference = async (req, res) => {
         if (customerSearch.data && customerSearch.data.length > 0) {
             customerIdAsaas = customerSearch.data[0].id;
             const existingCpf = customerSearch.data[0].cpfCnpj;
+            const existingPostalCode = customerSearch.data[0].postalCode;
 
-            // --- FIX: O Asaas exige CPF para PIX. Se o cliente antigo não tinha, atualizamos agora ---
-            if (!existingCpf && cleanCpfCnpj) {
+            const existingAddress = customerSearch.data[0].address;
+
+            // --- FIX: O Asaas exige CPF para PIX. Se o cliente antigo não tinha, atualizamos agora. Também garantimos o envio do CEP e Endereço para NFs. ---
+            const updatePayload = {};
+            if (!existingCpf && cleanCpfCnpj) updatePayload.cpfCnpj = cleanCpfCnpj;
+            if (!existingPostalCode && psychologist.cep) updatePayload.postalCode = psychologist.cep;
+            if (!existingAddress && psychologist.rua) {
+                updatePayload.address = psychologist.rua;
+                updatePayload.addressNumber = psychologist.numero;
+                updatePayload.province = psychologist.bairro;
+                if (psychologist.complemento) updatePayload.complement = psychologist.complemento;
+            }
+
+            if (Object.keys(updatePayload).length > 0) {
                 await fetch(`${ASAAS_API_URL}/customers/${customerIdAsaas}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
-                    body: JSON.stringify({ cpfCnpj: cleanCpfCnpj })
+                    body: JSON.stringify(updatePayload)
                 });
             }
         } else {
@@ -134,6 +147,11 @@ exports.createPreference = async (req, res) => {
                     email: psychologist.email,
                     cpfCnpj: cleanCpfCnpj,
                     mobilePhone: phone, // Usa o telefone sanitizado
+                    postalCode: psychologist.cep, // <--- ENVIANDO O CEP PARA O ASAAS
+                    address: psychologist.rua,
+                    addressNumber: psychologist.numero,
+                    province: psychologist.bairro,
+                    complement: psychologist.complemento,
                     notificationDisabled: true // <--- DESATIVA E-MAILS NATIVOS DO ASAAS (Usaremos os da Yelo)
                 })
             }).then(r => r.json());

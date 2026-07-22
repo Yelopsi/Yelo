@@ -282,7 +282,8 @@ exports.loginPsychologist = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(500).json({ error: 'Erro interno no servidor.' });
+        console.error("LOGIN ERROR:", error);
+        res.status(500).json({ error: 'Erro interno no servidor.', details: error.message, stack: error.stack });
     }
 };
 

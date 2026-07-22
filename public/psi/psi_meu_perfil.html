@@ -282,6 +282,33 @@
                         <input type="text" id="estado" name="estado" readonly style="background-color: #f0f2f5; cursor: not-allowed; border-color: transparent;" required>
                     </div>
                 </div>
+
+                <!-- Novos Campos de Endereço Completo para Emissão de NF -->
+                <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-top: 15px; margin-bottom: 15px;">
+                    <strong style="color: #334155; font-size: 0.9rem; display: block; margin-bottom: 5px;">📄 Dados para Emissão de Nota Fiscal</strong>
+                    <p style="color: #64748b; font-size: 0.85rem; margin-top: 0; margin-bottom: 15px;">Estes dados são exigidos pela Prefeitura para a emissão da Nota Fiscal (NFS-e) referente à sua assinatura na Yelo. Eles são confidenciais e não ficarão públicos no seu perfil.</p>
+                    
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 2;">
+                            <label for="rua" style="margin-bottom: 2px;">Logradouro (Rua/Avenida) *</label>
+                            <input type="text" id="rua" name="rua" placeholder="Ex: Av. Paulista" required>
+                        </div>
+                        <div class="form-group" style="flex: 0.5;">
+                            <label for="numero" style="margin-bottom: 2px;">Número *</label>
+                            <input type="text" id="numero" name="numero" placeholder="Ex: 1000" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 1;">
+                            <label for="bairro" style="margin-bottom: 2px;">Bairro *</label>
+                            <input type="text" id="bairro" name="bairro" placeholder="Ex: Bela Vista" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label for="complemento" style="margin-bottom: 2px;">Complemento (Opcional)</label>
+                            <input type="text" id="complemento" name="complemento" placeholder="Ex: Sala 42">
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

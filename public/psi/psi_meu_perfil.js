@@ -85,18 +85,25 @@
                 
                 const inputCidade = document.getElementById('cidade');
                 const inputEstado = document.getElementById('estado');
+                const inputRua = document.getElementById('rua');
+                const inputBairro = document.getElementById('bairro');
                 
                 if (data.erro) {
                     showToast('CEP não encontrado.', 'error');
                     if (inputCidade) inputCidade.value = '';
                     if (inputEstado) inputEstado.value = '';
+                    if (inputRua) inputRua.value = '';
+                    if (inputBairro) inputBairro.value = '';
                 } else {
                     if (inputCidade) inputCidade.value = data.localidade || '';
                     if (inputEstado) inputEstado.value = data.uf || '';
+                    if (inputRua) inputRua.value = data.logradouro || '';
+                    if (inputBairro) inputBairro.value = data.bairro || '';
                 }
                 
                 // Dispara o evento de input para o form reconhecer a mudança e liberar o botão "Salvar"
                 if (inputCidade) inputCidade.dispatchEvent(new Event('input', { bubbles: true }));
+                if (inputRua) inputRua.dispatchEvent(new Event('input', { bubbles: true }));
             } catch (err) { 
                 showToast('Erro ao buscar CEP. Verifique sua conexão.', 'error'); 
             }
@@ -236,7 +243,7 @@
                 btnPublic.style.pointerEvents = 'auto';
             }
 
-            ['nome', 'email', 'crp', 'telefone', 'bio', 'slug', 'cep', 'cidade', 'estado', 'razao_social', 'formacao_desc', 'ano_inicio_experiencia', 'cpf'].forEach(id => {
+            ['nome', 'email', 'crp', 'telefone', 'bio', 'slug', 'cep', 'cidade', 'estado', 'rua', 'numero', 'bairro', 'complemento', 'razao_social', 'formacao_desc', 'ano_inicio_experiencia', 'cpf'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
                     el.value = data[id] || '';

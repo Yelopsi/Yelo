@@ -88,6 +88,22 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true
     },
+    rua: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    numero: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    bairro: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    complemento: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     cidade: {
       type: DataTypes.STRING,
       allowNull: true

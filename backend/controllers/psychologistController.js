@@ -143,6 +143,7 @@ exports.updatePsychologistProfile = async (req, res) => {
         // Extrai os dados enviados pelo Dashboard
         let {
             nome, telefone, bio, crp, cep, cidade, estado,
+            rua, numero, bairro, complemento,
             temas_atuacao, abordagens_tecnicas, modalidade,
             publico_alvo, estilo_terapia, praticas_inclusivas, // NOVOS CAMPOS
             valor_sessao_numero, disponibilidade_periodo, genero_identidade,
@@ -248,6 +249,10 @@ exports.updatePsychologistProfile = async (req, res) => {
         if (cep !== undefined) updatePayload.cep = cep;
         if (cidade !== undefined) updatePayload.cidade = cidade;
         if (estado !== undefined) updatePayload.estado = estado;
+        if (rua !== undefined) updatePayload.rua = rua;
+        if (numero !== undefined) updatePayload.numero = numero;
+        if (bairro !== undefined) updatePayload.bairro = bairro;
+        if (complemento !== undefined) updatePayload.complemento = complemento;
         if (formacao_nivel !== undefined) updatePayload.formacao_nivel = formacao_nivel;
         if (formacao_desc !== undefined) updatePayload.formacao_desc = formacao_desc;
         if (tipo_cobranca !== undefined) updatePayload.tipo_cobranca = tipo_cobranca;
