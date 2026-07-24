@@ -57,29 +57,35 @@
         </div>
         </div>
         <!-- DADOS DE AQUISIÇÃO (UTMs) -->
-        <div style="padding: 15px 25px; border-top: 1px solid #e2e8f0; background: #f8fafc; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
-            <h4 style="font-size: 0.85rem; color: #64748b; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: text-bottom; margin-right: 4px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-8.21l-5.67-5.67"></path></svg> Origem / Marketing (UTMs)</h4>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; font-size: 0.9rem;">
-                <div>
-                    <span style="color: #94a3b8; display: block; font-size: 0.8rem; margin-bottom: 2px;">Source (Origem)</span>
-                    <strong id="detail-utm-source" style="color: #334155;">-</strong>
+        <div style="padding: 20px 25px; border-top: 1px solid #e2e8f0; background: #ffffff; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; margin-bottom: 24px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="background: #f1f5f9; padding: 6px; border-radius: 8px; color: #64748b;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-8.21l-5.67-5.67"></path></svg>
+                    </div>
+                    <span style="font-size: 0.85rem; color: #475569; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Aquisição (UTMs)</span>
                 </div>
-                <div>
-                    <span style="color: #94a3b8; display: block; font-size: 0.8rem; margin-bottom: 2px;">Medium (Mídia)</span>
-                    <strong id="detail-utm-medium" style="color: #334155;">-</strong>
-                </div>
-                <div>
-                    <span style="color: #94a3b8; display: block; font-size: 0.8rem; margin-bottom: 2px;">Campaign (Campanha)</span>
-                    <strong id="detail-utm-campaign" style="color: #334155;">-</strong>
-                </div>
-                <div>
-                    <span style="color: #94a3b8; display: block; font-size: 0.8rem; margin-bottom: 2px;">Content (Conteúdo/Anúncio)</span>
-                    <strong id="detail-utm-content" style="color: #334155;">-</strong>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.85rem;">
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; padding: 4px 12px; display: flex; align-items: center; gap: 6px;">
+                        <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase;">Source:</span>
+                        <strong id="detail-utm-source" style="color: #0f172a;">-</strong>
+                    </div>
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; padding: 4px 12px; display: flex; align-items: center; gap: 6px;">
+                        <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase;">Medium:</span>
+                        <strong id="detail-utm-medium" style="color: #0f172a;">-</strong>
+                    </div>
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; padding: 4px 12px; display: flex; align-items: center; gap: 6px;">
+                        <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase;">Campaign:</span>
+                        <strong id="detail-utm-campaign" style="color: #0f172a;">-</strong>
+                    </div>
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; padding: 4px 12px; display: flex; align-items: center; gap: 6px;">
+                        <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase;">Content:</span>
+                        <strong id="detail-utm-content" style="color: #0f172a;">-</strong>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-
+        
     <!-- Grid de Estatísticas -->
     <div class="stats-grid-details">
         <div class="stat-box">
@@ -93,6 +99,10 @@
         <div class="stat-box">
             <h3>Cliques WhatsApp</h3>
             <span class="stat-number" id="stat-whatsapp">0</span>
+        </div>
+        <div class="stat-box">
+            <h3>Conversões (PLG)</h3>
+            <span class="stat-number" id="stat-conversao-plg">0</span>
         </div>
         <div class="stat-box">
             <h3>Posts Blog</h3>
@@ -110,6 +120,7 @@
         <button class="tab-btn" onclick="switchDetailTab('blog')">Blog & Artigos</button>
         <button class="tab-btn" onclick="switchDetailTab('forum')">Atividade no Fórum</button>
         <button class="tab-btn" onclick="switchDetailTab('reviews')">Avaliações & Feedback</button>
+        <button class="tab-btn" onclick="switchDetailTab('whatsapp')">Leads WhatsApp</button>
     </div>
 
     <div class="tab-content" id="tab-timeline">
@@ -133,6 +144,12 @@
     <div class="tab-content" id="tab-reviews" style="display: none;">
         <div class="content-list" id="reviews-list">
             <p class="empty-state">Nenhuma avaliação registrada.</p>
+        </div>
+    </div>
+
+    <div class="tab-content" id="tab-whatsapp" style="display: none;">
+        <div class="content-list" id="whatsapp-list">
+            <p class="empty-state">Nenhum clique registrado no WhatsApp.</p>
         </div>
     </div>
 </div>

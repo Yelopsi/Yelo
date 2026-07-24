@@ -261,8 +261,10 @@ window.openCSDrawer = async function(idStr) {
         const aiCopyText = document.getElementById('ai-copy-text');
 
         if (btnGenAI) {
+            const isChurn = psy.status === 'inactive' && psy.planExpiresAt && new Date(psy.planExpiresAt) < new Date();
+
             // Reset state
-            btnGenAI.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg> Gerar Diagnóstico`;
+            btnGenAI.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg> ${isChurn ? 'Gerar Resgate de Churn' : 'Gerar Diagnóstico'}`;
             btnGenAI.disabled = false;
             btnSendAI.style.display = 'none';
             aiDiagnosisContainer.style.display = 'none';
@@ -274,7 +276,8 @@ window.openCSDrawer = async function(idStr) {
                 btnGenAI.innerHTML = '<span class="loading-spinner-sm" style="width:14px; height:14px; margin-right:5px; border-width:2px; display:inline-block;"></span> Gerando...';
                 
                 try {
-                    const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${psy.id}/ai-diagnosis`, {
+                    const endpoint = isChurn ? 'ai-churn-message' : 'ai-diagnosis';
+                    const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${psy.id}/${endpoint}`, {
                         method: 'POST',
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -283,10 +286,10 @@ window.openCSDrawer = async function(idStr) {
                     if (!res.ok) throw new Error(data.error || 'Erro na IA');
 
                     aiDiagnosisContainer.style.display = 'block';
-                    aiDiagnosisText.textContent = data.diagnosis;
+                    aiDiagnosisText.textContent = data.diagnosis || 'Análise de métricas e cálculo de ROI de sessão concluídos. Veja a copy abaixo:';
                     aiCopyText.textContent = data.whatsappCopy;
 
-                    btnGenAI.innerHTML = '✨ Diagnóstico Atualizado';
+                    btnGenAI.innerHTML = isChurn ? '✨ Resgate Atualizado' : '✨ Diagnóstico Atualizado';
                     btnGenAI.disabled = false;
                     
                     btnSendAI.style.display = 'inline-flex';

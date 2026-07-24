@@ -86,10 +86,6 @@ const calculateSimilarity = (psy, preferences = {}, priceRange) => {
         explainability.positives.push(`Especialista em ${matches[0]}`);
     }
 
-    if (temasPsi.length > 12) {
-        sClinical -= 15; // Penalidade para "SEO Frankenstein"
-    }
-
     // 1.2 MATCH DE GÊNERO
     const prefGenero = preferences.pref_genero_prof; // CORRIGIDO
     if (prefGenero && prefGenero !== 'Indiferente') {

@@ -56,6 +56,8 @@ router.put('/me/photo', uploadProfilePhoto.single('profilePhoto'), adminControll
 router.get('/psychologists', adminController.getAllPsychologists);
 router.get('/psychologists/low-performance', adminPerformanceController.getLowPerformancePsychologists);
 router.post('/psychologists/:id/ai-diagnosis', adminPerformanceController.generateAiDiagnosis);
+router.post('/psychologists/:id/ai-churn-message', adminPerformanceController.generateAiChurnMessage);
+router.post('/psychologists/:id/ai-expiring-trial-message', adminPerformanceController.generateAiExpiringTrialMessage);
 // Novas rotas para gerenciar psicólogos
 router.get('/psychologists/:id/full-details', adminController.getPsychologistFullDetails); // <--- NOVA ROTA
 router.get('/psychologists/:id/analyze', adminController.analyzeProfile);

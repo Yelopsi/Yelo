@@ -170,6 +170,14 @@ exports.getPsychologistFullDetails = async (req, res) => {
             `SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "PsychologistId" = :id`,
             { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
         )).catch(() => [{ count: 0 }]);
+        
+        const whatsappLogs = await db.sequelize.query(
+            `SELECT * FROM "WhatsappClickLogs" WHERE "psychologistId" = :id ORDER BY "createdAt" DESC LIMIT 100`,
+            { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => db.sequelize.query(
+            `SELECT * FROM "WhatsappClickLogs" WHERE "PsychologistId" = :id ORDER BY "createdAt" DESC LIMIT 100`,
+            { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        )).catch(() => []);
         const profileViewsStats = await db.sequelize.query(
             `SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :id`,
             { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
@@ -193,7 +201,8 @@ exports.getPsychologistFullDetails = async (req, res) => {
             forumPosts,
             forumComments: forumComments.map(c => c.toJSON ? { ...c.toJSON(), postTitle: c.ForumPost?.titulo } : c),
             reviews,
-            matches: matches.map(m => ({ ...m, createdAt: m.createdAt || m.created_at })) || []
+            matches: matches.map(m => ({ ...m, createdAt: m.createdAt || m.created_at })) || [],
+            whatsappLogs
         });
 
     } catch (error) {
@@ -817,6 +826,48 @@ exports.getPendingActions = async (req, res) => {
             }
         } catch(e) {
             console.error('Erro ao buscar Consultor IA em getPendingActions:', e);
+        }
+
+        // MOCK PARA TESTE LOCAL
+        if (req.hostname === 'localhost' || req.hostname === '127.0.0.1') {
+            pendingList.push({
+                id: 99999,
+                nome: 'MOCK CHURN - Dr. Local',
+                telefone: '5511999999999',
+                status: 'inactive',
+                plano: 'premium_mensal',
+                planExpiresAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+                actionType: 'churn',
+                reason: 'MOCK: Trial expirado há 5 dias (Apenas Local)',
+                metrics: { appearances: 200, views: 15, clicks: 2, dealClosedCount: 1 }
+            });
+
+            pendingList.push({
+                id: 99999,
+                nome: 'MOCK EXPIRANDO - Dr. Local',
+                telefone: '5511999999999',
+                status: 'active',
+                plano: 'premium_mensal',
+                planExpiresAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+                actionType: 'expiring_trial',
+                reason: 'MOCK: Trial expira em 2 dias (Apenas Local)',
+                metrics: { appearances: 180, views: 10, clicks: 3, dealClosedCount: 0, daysLeft: 2 }
+            });
+
+            pendingList.push({
+                id: 99999,
+                nome: 'MOCK BAIXA PERFORMANCE - Dr. Local',
+                telefone: '5511999999999',
+                status: 'active',
+                plano: 'premium_mensal',
+                planExpiresAt: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
+                actionType: 'low_performance',
+                reason: 'MOCK: Gargalo de Conversão (Apenas Local)',
+                matches_30d: 150,
+                views_30d: 20,
+                clicks_30d: 0,
+                ctr: 0
+            });
         }
 
         res.status(200).json(pendingList);

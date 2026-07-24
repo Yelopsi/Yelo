@@ -388,31 +388,43 @@ window.initializePage = function () {
         } else if (actionType === 'incomplete') {
             msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo. 🌿\n\nVi que você deu o primeiro passo e iniciou o seu cadastro na nossa plataforma, mas acabou não finalizando o preenchimento do seu perfil. Eu sei bem que a rotina de atendimentos acaba engolindo o nosso tempo, né? rs\n\nPassei só para te lembrar que os seus 14 dias de teste gratuito (sem precisar cadastrar cartão de crédito) só começam a contar depois que o seu perfil estiver completo e a sua página disponível para receber pacientes!\n\nÉ a oportunidade perfeita para você testar na prática como a plataforma te conecta com pacientes direto no seu WhatsApp, lembrando que a gente não cobra nenhuma taxa ou comissão pelas suas sessões.\n\nFalta bem pouco para o seu perfil ficar ativo nas buscas. Se precisar de uma mãozinha para preencher a sua bio ou tiver qualquer dúvida, é só me dar um toque respondendo esta mensagem. Sigo super à disposição por aqui!`;
         } else if (actionType === 'churn') {
-            let msgFechou = '';
-            if (metrics.dealClosedCount > 0) {
-                const count = metrics.dealClosedCount;
-                const ptTexto = count === 1 ? 'um paciente que veio selecionado' : `${count} pacientes que vieram selecionados`;
-                msgFechou = `E o melhor de tudo: notei pelo seu feedback que você conseguiu fechar terapia com ${ptTexto} pela Yelo! 🚀\n\nIsso mostra que o algoritmo funcionou e a plataforma já se pagou por meses.`;
-            } else {
-                msgFechou = `Vi pelo seu feedback que o paciente acabou não fechando dessa vez, mas não desanime, isso é super normal no início!`;
+            try {
+                if (window.showToast) window.showToast('Gerando copy de resgate com IA... Aguarde.', 'info');
+                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : token;
+                const resAi = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/ai-churn-message`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${tokenAdmin}` }
+                });
+                const data = await resAi.json();
+                if (data.whatsappCopy) {
+                    msg = data.whatsappCopy;
+                } else {
+                    if (window.showToast) window.showToast("Erro ao gerar copy de resgate", "error");
+                    return;
+                }
+            } catch (e) {
+                if (window.showToast) window.showToast("Erro na IA: " + e.message, "error");
+                return;
             }
-            msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo.\n\nVi que os seus dias de teste acabaram e o seu perfil foi inativado. \n\nDurante seus dias de teste, o algoritmo te recomendou *${metrics.appearances || 0} vezes* no Match, seu perfil teve *${metrics.views || 0} visualizações* e *${metrics.clicks || 0} pacientes* clicaram no seu WhatsApp. ${msgFechou}\n\nOs números provam o mais importante: o tráfego existe, os pacientes têm demanda para sua especialidade e a Yelo está te dando visibilidade.\n\nAcesse o seu perfil e finalize a sua assinatura para reativar sua conta e não perder os próximos acessos.`;
         } else if (actionType === 'expiring_trial') {
-            let tempoFaltaText = `faltam apenas ${metrics.daysLeft} dias para o seu período premium na plataforma encerrar`;
-            if (metrics.daysLeft < 0) {
-                tempoFaltaText = `o seu período premium na plataforma expirou recentemente`;
-            } else if (metrics.daysLeft === 0) {
-                tempoFaltaText = `o seu período premium na plataforma encerra hoje`;
+            try {
+                if (window.showToast) window.showToast('Gerando mensagem consultiva com IA... Aguarde.', 'info');
+                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : token;
+                const resAi = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/ai-expiring-trial-message`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${tokenAdmin}` }
+                });
+                const data = await resAi.json();
+                if (data.whatsappCopy) {
+                    msg = data.whatsappCopy;
+                } else {
+                    if (window.showToast) window.showToast("Erro ao gerar copy consultiva", "error");
+                    return;
+                }
+            } catch (e) {
+                if (window.showToast) window.showToast("Erro na IA: " + e.message, "error");
+                return;
             }
-
-            let msgFechou = `Vi pelo seu feedback que o paciente acabou não fechando dessa vez, mas não desanime, isso é super normal no início!\n\nOs números provam o mais importante: o tráfego existe, os pacientes têm demanda para sua especialidade e a Yelo está te dando visibilidade.`;
-            if (metrics.dealClosed) {
-                const count = metrics.closedDealsCount || 1;
-                const ptTexto = count === 1 ? 'um paciente que veio selecionado' : `${count} pacientes que vieram selecionados`;
-                msgFechou = `E o melhor de tudo: notei pelo seu feedback que você conseguiu fechar terapia com ${ptTexto} pela Yelo! 🚀\n\nIsso mostra que o algoritmo funcionou e a plataforma já se pagou por meses.`;
-            }
-
-            msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo.\n\nVi que ${tempoFaltaText} e decidi te chamar.\n\nDurante seus dias de teste, o algoritmo te recomendou *${metrics.appearances || 0} vezes* no Match, seu perfil teve *${metrics.views || 0} visualizações* e *${metrics.clicks || 0} pacientes* clicaram no seu WhatsApp. ${msgFechou}\n\nComo seu trial expira em breve, acesse o seu perfil e finalize a sua assinatura para manter seu perfil no ar e não perder os próximos acessos.`;
         } else if (actionType === 'billing_feedback') {
             let baseUrlFeedback = window.location.origin.includes('localhost') ? 'http://localhost:3000' : 'https://www.yelopsi.com.br';
             let linkFeedback = feedbackToken ? `${baseUrlFeedback}/magic-feedback.html?token=${feedbackToken}` : `${baseUrlFeedback}/psi/dashboard`;
@@ -449,8 +461,24 @@ window.initializePage = function () {
                 msg = `Olá, ${firstName}! Tudo bem?\n\nO seu perfil continua gerando resultados na Yelo! ✨\nPercebemos que ${introTextRecorrente} entrar em contato com você recentemente.\n\nPara mantermos o seu perfil forte e continuarmos te indicando no nosso ranking, precisamos apenas da sua confirmação rápida. Acesse o link abaixo e nos conte:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto!\n\nResponder agora:\n👉 ${linkFeedback}\n\nMuito obrigado pela parceria! 🌿`;
             }
         } else if (actionType === 'low_performance') {
-            window.openCSDrawer(id);
-            return;
+            try {
+                if (window.showToast) window.showToast('Gerando consultoria com IA... Aguarde.', 'info');
+                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : token;
+                const resAi = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/ai-diagnosis`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${tokenAdmin}` }
+                });
+                const data = await resAi.json();
+                if (data.whatsappCopy) {
+                    msg = data.whatsappCopy;
+                } else {
+                    if (window.showToast) window.showToast("Erro ao gerar consultoria", "error");
+                    return;
+                }
+            } catch (e) {
+                if (window.showToast) window.showToast("Erro na IA: " + e.message, "error");
+                return;
+            }
         }
         const linkDesktop = `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${encodeURIComponent(msg)}`;
         const linkMobile = `whatsapp://send?phone=55${cleanPhone}&text=${encodeURIComponent(msg)}`;

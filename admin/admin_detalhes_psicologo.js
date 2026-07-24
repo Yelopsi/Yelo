@@ -126,15 +126,30 @@ function renderDetails(data) {
     const utmCampaignEl = document.getElementById('detail-utm-campaign');
     const utmContentEl = document.getElementById('detail-utm-content');
     
-    if (utmSourceEl) utmSourceEl.innerHTML = p.utm_source ? `<span style="background: #e2e8f0; color: #334155; padding: 2px 8px; border-radius: 12px; font-weight: bold; text-transform: uppercase; font-size: 0.75rem;">${p.utm_source}</span>` : 'Orgânico / Desconhecido';
+    if (utmSourceEl) utmSourceEl.textContent = p.utm_source || 'Orgânico / Desconhecido';
     if (utmMediumEl) utmMediumEl.textContent = p.utm_medium || '-';
     if (utmCampaignEl) utmCampaignEl.textContent = p.utm_campaign || '-';
     if (utmContentEl) utmContentEl.textContent = p.utm_content || '-';
 
     // 2. Stats
-    document.getElementById('stat-views').textContent = stats.profileViews || 0;
+    const views = stats.profileViews || 0;
+    const whatsappClicks = stats.whatsappClicks || 0;
+    
+    document.getElementById('stat-views').textContent = views;
     document.getElementById('stat-matches').textContent = stats.matches || 0;
-    document.getElementById('stat-whatsapp').textContent = stats.whatsappClicks || 0;
+    document.getElementById('stat-whatsapp').textContent = whatsappClicks;
+    
+    // PLG Conversions
+    const logs = data.whatsappLogs || [];
+    let agendados = 0;
+    logs.forEach(l => {
+        if (l.dealClosed === 'yes' || l.dealClosed === 'started') {
+            agendados++;
+        }
+    });
+    const conversaoPlgEl = document.getElementById('stat-conversao-plg');
+    if (conversaoPlgEl) conversaoPlgEl.textContent = agendados;
+
     document.getElementById('stat-blog').textContent = data.blogPosts?.length || 0;
     document.getElementById('stat-forum').textContent = stats.forumActivities || ((data.forumPosts?.length || 0) + (data.forumComments?.length || 0));
 
@@ -145,6 +160,7 @@ function renderDetails(data) {
     renderList('blog-list', data.blogPosts, renderBlogItem);
     renderList('forum-list', [...(data.forumPosts || []), ...(data.forumComments || [])], renderForumItem);
     renderList('reviews-list', data.reviews, renderReviewItem);
+    renderList('whatsapp-list', data.whatsappLogs, renderWhatsappLogItem);
 }
 
 function renderTimeline(data) {
@@ -262,6 +278,33 @@ function renderReviewItem(review) {
             <div class="review-stars">${'★'.repeat(nota)}${'☆'.repeat(5-nota)}</div>
             <p>"${comentario}"</p>
             <small>Por: ${autor} em ${new Date(review.createdAt).toLocaleDateString()}</small>
+        </div>
+    `;
+}
+
+function renderWhatsappLogItem(log) {
+    const nome = log.guestName || 'Anônimo / Não informado';
+    let badges = '';
+    
+    if (log.feedbackGiven) {
+        if (log.dealClosed) {
+            badges += `<span style="background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; margin-left: 5px;">✅ Agendou</span>`;
+        } else if (log.contactReceived) {
+            badges += `<span style="background: #fef9c3; color: #854d0e; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; margin-left: 5px;">💬 Conversou</span>`;
+        } else {
+            badges += `<span style="background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; margin-left: 5px;">❌ Não Contatou</span>`;
+        }
+    } else {
+        badges += `<span style="background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; margin-left: 5px;">⏳ Sem feedback</span>`;
+    }
+
+    return `
+        <div class="content-card" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h4 style="margin: 0; font-size: 0.95rem; color: #0f172a;">${nome} ${badges}</h4>
+                <p style="margin: 5px 0 0 0; font-size: 0.8rem; color: #64748b;">${new Date(log.createdAt).toLocaleString('pt-BR')}</p>
+            </div>
+            ${log.guestPhone ? `<a href="https://wa.me/${log.guestPhone.replace(/\D/g, '')}" target="_blank" style="color: #10b981; font-size: 0.8rem; text-decoration: none; font-weight: bold;">WhatsApp</a>` : ''}
         </div>
     `;
 }
