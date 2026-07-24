@@ -363,7 +363,7 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({ 
-            model: "gemini-2.0-flash", 
+            model: "gemini-3.1-flash-lite", 
             systemInstruction: "Você é o gerente de CS e Growth da Yelo. Retorne APENAS o texto exato da mensagem de WhatsApp sem aspas extras, blocos markdown (```) ou comentários.",
             generationConfig: {
                 temperature: 0.7,
@@ -484,7 +484,7 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({ 
-            model: "gemini-2.0-flash", 
+            model: "gemini-3.1-flash-lite", 
             systemInstruction: "Você é o gerente de CS e Growth da Yelo. Retorne APENAS o texto exato da mensagem de WhatsApp sem aspas extras, blocos markdown (```) ou comentários.",
             generationConfig: {
                 temperature: 0.7,
