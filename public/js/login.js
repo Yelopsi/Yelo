@@ -170,11 +170,31 @@ document.addEventListener('DOMContentLoaded', () => {
                         localStorage.setItem('Yelo_user_photo', user.fotoUrl);
                     }
 
-                    // Mensagem de sucesso
+                    // Mensagem de sucesso personalizada
                     let msgBemVindo = "Bem-vindo(a) de volta!";
-                    if (finalUserType === 'patient') msgBemVindo = "Bem-vindo(a), Paciente!";
-                    else if (finalUserType === 'psychologist') msgBemVindo = "Bem-vindo(a), Psi!";
-                    else if (finalUserType === 'admin') msgBemVindo = "Bem-vindo(a), Admin!";
+                    
+                    if (finalUserType === 'patient') {
+                        if (nomeSalvo) {
+                            msgBemVindo = `Bem-vindo(a), ${nomeSalvo.split(' ')[0]}!`;
+                        } else {
+                            msgBemVindo = "Bem-vindo(a), Paciente!";
+                        }
+                    } else if (finalUserType === 'psychologist') {
+                        let genero = result.data.genero || (user && user.genero) || '';
+                        let saudacao = "Bem-vindo(a)";
+                        
+                        if (genero === 'Feminino' || genero === 'Mulher Cis' || genero === 'Mulher Trans') saudacao = "Bem-vinda";
+                        else if (genero === 'Masculino' || genero === 'Homem Cis' || genero === 'Homem Trans') saudacao = "Bem-vindo";
+                        else if (genero === 'Não-binário' || genero === 'Gênero fluido') saudacao = "Boas-vindas";
+
+                        if (nomeSalvo) {
+                            msgBemVindo = `${saudacao}, ${nomeSalvo.split(' ')[0]}!`;
+                        } else {
+                            msgBemVindo = `${saudacao}, Psi!`;
+                        }
+                    } else if (finalUserType === 'admin') {
+                        msgBemVindo = "Bem-vindo(a), Admin!";
+                    }
                     
                     window.showToast(msgBemVindo, 'success');
                     // Redireciona

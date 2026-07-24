@@ -274,6 +274,7 @@ exports.loginPsychologist = async (req, res) => {
             email: psychologist.email,
             slug: psychologist.slug,
             fotoUrl: psychologist.fotoUrl,
+            genero: psychologist.genero_identidade,
             is_exempt: psychologist.is_exempt,
             token: token,
             redirect: redirectUrl,
