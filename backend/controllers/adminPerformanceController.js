@@ -160,7 +160,7 @@ exports.generateAiDiagnosis = async (req, res) => {
 
         const prompt = `
 Atue como Anderson, gerente de Customer Success da plataforma de saúde mental Yelo. 
-Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome}, oferecendo uma consultoria rápida baseada nos dados do perfil dele nos últimos 7 dias.
+Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}, oferecendo uma consultoria rápida baseada nos dados do perfil dele nos últimos 7 dias.
 Aja em tom amigável, direto, profissional e de parceria. Sem introduções longas.
 
 [DADOS DO PSICÓLOGO NOS ÚLTIMOS 7 DIAS]
@@ -220,7 +220,7 @@ Retorne SOMENTE um JSON com a seguinte estrutura (não use marcações markdown 
             console.warn("⚠️ MOCK: Utilizando texto gerado localmente para o Diagnóstico IA.");
             const mockResponse = {
                 diagnosis: "Baixa taxa de cliques no WhatsApp (0) e há 2 feedbacks pendentes de pacientes que entraram em contato antes. A bio está muito curta e precisa de avaliação social.",
-                whatsappCopy: `Olá, ${psi.nome}. Como vai? Aqui é o Anderson, da equipe de Sucesso da Yelo. Fiz uma análise detalhada da sua performance e decidi te trazer alguns pontos super estratégicos para te ajudar a destravar mais pacientes.\n\nA plataforma entregou uma excelente visibilidade para o seu perfil nos últimos dias: você teve *${matches[0]?.count || 0} aparições nas buscas* e *${views[0]?.count || 0} pacientes visitaram a sua página*. No entanto, não registramos *nenhum clique* recente no seu WhatsApp.\n\nIsso mostra um gargalo na sua vitrine, mas super simples de corrigir! Recomendo focarmos em duas ações:\n\n1. *Acesse o "Manual de Conversão":* Vi que você já tem cliques antigos, mas a nossa plataforma tem um manual focado em como não perder pacientes que chegam no WhatsApp. Ele fica lá no seu Hub de Evolução!\n\n2. *Construa Prova Social:* Peça avaliações no seu perfil usando o seu link (https://www.yelopsi.com.br/${psi.slug}?review=true). A opinião de outras pessoas é o maior gatilho para destravar o agendamento de quem está em dúvida.\n\n⚠️ Ah, um ponto importante: notei que você tem *${pendingFeedbacks[0]?.count || 0} pacientes* que te chamaram pelo WhatsApp recentemente e você ainda não nos deu o *Feedback de Fechamento* lá na plataforma. Precisamos que você entre na Yelo e nos avise se eles fecharam ou não. O nosso algoritmo precisa dessa confirmação para continuar impulsionando o seu ranking, combinado?\n\nQualquer dúvida sobre como aplicar tudo isso, é só me chamar. Estamos juntos! 🌿`
+                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}. Como vai? Aqui é o Anderson, da equipe de Sucesso da Yelo. Fiz uma análise detalhada da sua performance e decidi te trazer alguns pontos super estratégicos para te ajudar a destravar mais pacientes.\n\nA plataforma entregou uma excelente visibilidade para o seu perfil nos últimos dias: você teve *${matches[0]?.count || 0} aparições nas buscas* e *${views[0]?.count || 0} pacientes visitaram a sua página*. No entanto, não registramos *nenhum clique* recente no seu WhatsApp.\n\nIsso mostra um gargalo na sua vitrine, mas super simples de corrigir! Recomendo focarmos em duas ações:\n\n1. *Acesse o "Manual de Conversão":* Vi que você já tem cliques antigos, mas a nossa plataforma tem um manual focado em como não perder pacientes que chegam no WhatsApp. Ele fica lá no seu Hub de Evolução!\n\n2. *Construa Prova Social:* Peça avaliações no seu perfil usando o seu link (https://www.yelopsi.com.br/${psi.slug}?review=true). A opinião de outras pessoas é o maior gatilho para destravar o agendamento de quem está em dúvida.\n\n⚠️ Ah, um ponto importante: notei que você tem *${pendingFeedbacks[0]?.count || 0} pacientes* que te chamaram pelo WhatsApp recentemente e você ainda não nos deu o *Feedback de Fechamento* lá na plataforma. Precisamos que você entre na Yelo e nos avise se eles fecharam ou não. O nosso algoritmo precisa dessa confirmação para continuar impulsionando o seu ranking, combinado?\n\nQualquer dúvida sobre como aplicar tudo isso, é só me chamar. Estamos juntos! 🌿`
             };
             return res.status(200).json({ 
                 diagnosis: mockResponse.diagnosis,
@@ -309,7 +309,7 @@ exports.generateAiChurnMessage = async (req, res) => {
 
         const prompt = `
 Atue como Anderson, gerente de Customer Success da plataforma de saúde mental Yelo. 
-Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome}, cujo período de testes (Trial) de 14 dias expirou recentemente (Churn).
+Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}, cujo período de testes (Trial) de 14 dias expirou recentemente (Churn).
 O objetivo da mensagem é convencer o profissional a reativar sua assinatura (que custa R$ 99,00/mês).
 
 Aja de forma humanizada, direta, e TOTALMENTE PROFISSIONAL. NÃO use NENHUMA gíria (como "dar um tchan", "dar um grito", etc.).
@@ -357,7 +357,7 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
             }
 
             return res.status(200).json({ 
-                whatsappCopy: `Olá, ${psi.nome}! Tudo bem? Aqui é o Anderson da equipe da Yelo. 🌿\n\nPassei para agradecer por você ter testado a plataforma com a gente nesses últimos dias! O seu período gratuito acabou encerrando, mas eu estava analisando as suas métricas e os resultados foram bem legais.\n\nDurante os testes, o seu perfil obteve ${matches[0]?.count || 0} aparições nas buscas, ${views[0]?.count || 0} visualizações na sua página e gerou ${clicksCount} cliques no WhatsApp. ${feedbackText}\n\nPensando pelo seu lado financeiro, a assinatura da Yelo é apenas R$ 99,00 mensais. Como a sua sessão é de R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nFaria sentido para você reativar a sua página para não perder esse fluxo de pacientes que já estão te encontrando? Caso queira manter seu perfil no ar, basta acessar a sua conta na Yelo, clicar em "Ajustes" e depois ir em "Assinaturas e Planos". Qualquer dúvida, estou por aqui!`
+                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson da equipe da Yelo. 🌿\n\nPassei para agradecer por você ter testado a plataforma com a gente nesses últimos dias! O seu período gratuito acabou encerrando, mas eu estava analisando as suas métricas e os resultados foram bem legais.\n\nDurante os testes, o seu perfil obteve ${matches[0]?.count || 0} aparições nas buscas, ${views[0]?.count || 0} visualizações na sua página e gerou ${clicksCount} cliques no WhatsApp. ${feedbackText}\n\nPensando pelo seu lado financeiro, a assinatura da Yelo é apenas R$ 99,00 mensais. Como a sua sessão é de R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nFaria sentido para você reativar a sua página para não perder esse fluxo de pacientes que já estão te encontrando? Caso queira manter seu perfil no ar, basta acessar a sua conta na Yelo, clicar em "Ajustes" e depois ir em "Assinaturas e Planos". Qualquer dúvida, estou por aqui!`
             });
         }
 
@@ -435,7 +435,7 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
 
         const prompt = `
 Atue como Anderson, gerente de Customer Success da Yelo. 
-Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome}.
+Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}.
 Situação atual: O período de testes gratuito (Trial) de 14 dias deste profissional vai expirar em exatos ${daysLeft} dias.
 
 Aja de forma humanizada, empática e consultiva. NÃO seja agressivamente vendedor e não use gírias como "dar um tchan".
@@ -478,7 +478,7 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
             }
 
             return res.status(200).json({ 
-                whatsappCopy: `Olá, ${psi.nome}! Tudo bem? Aqui é o Anderson da equipe da Yelo. 🌿\n\nVi que faltam apenas ${daysLeft} dias para o seu período gratuito encerrar, então vim dar uma olhada nas suas métricas. Os resultados de visibilidade foram ótimos!\n\nSeu perfil obteve ${matches[0]?.count || 0} aparições nas buscas, ${views[0]?.count || 0} visitas na página e ${clicksCount} pacientes te chamaram no WhatsApp. ${feedbackText}\n\nPensando no seu lado financeiro: a assinatura da Yelo será de R$ 99 mensais. Como a sua sessão é R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nVale muito a pena continuar colhendo os frutos do perfil ativo. Para não perdermos esse fluxo de pacientes, basta acessar sua conta na Yelo, ir na opção "Ajustes" e depois em "Assinaturas e Planos". Se precisar de ajuda, estou por aqui!`
+                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson da equipe da Yelo. 🌿\n\nVi que faltam apenas ${daysLeft} dias para o seu período gratuito encerrar, então vim dar uma olhada nas suas métricas. Os resultados de visibilidade foram ótimos!\n\nSeu perfil obteve ${matches[0]?.count || 0} aparições nas buscas, ${views[0]?.count || 0} visitas na página e ${clicksCount} pacientes te chamaram no WhatsApp. ${feedbackText}\n\nPensando no seu lado financeiro: a assinatura da Yelo será de R$ 99 mensais. Como a sua sessão é R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nVale muito a pena continuar colhendo os frutos do perfil ativo. Para não perdermos esse fluxo de pacientes, basta acessar sua conta na Yelo, ir na opção "Ajustes" e depois em "Assinaturas e Planos". Se precisar de ajuda, estou por aqui!`
             });
         }
 
