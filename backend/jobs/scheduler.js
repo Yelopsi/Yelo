@@ -5,6 +5,7 @@ const { findDemandGaps } = require('./demandMonitor');
 const { manageExpiredInvitations } = require('./invitationManager');
 const { sendPendingSubscriptionEmails } = require('./remarketingCron.js');
 const { checkAndSendEvaluationEmails } = require('./evaluationMonitor');
+const { simulateBlogLikes } = require('./blogLikesMonitor');
 const { exec } = require('child_process');
 const path = require('path');
 
@@ -54,6 +55,18 @@ cron.schedule('0 10 * * *', () => {
 cron.schedule('0 11 * * *', () => {
     console.log('Executando tarefa agendada: checkAndSendEvaluationEmails');
     checkAndSendEvaluationEmails();
+}, {
+    scheduled: true,
+    timezone: "America/Sao_Paulo"
+});
+
+/**
+ * Tarefa 6: Simular curtidas orgânicas nos posts do blog.
+ * Roda todos os dias às 03h da manhã.
+ */
+cron.schedule('0 3 * * *', () => {
+    console.log('Executando tarefa agendada: simulateBlogLikes');
+    simulateBlogLikes();
 }, {
     scheduled: true,
     timezone: "America/Sao_Paulo"
@@ -114,6 +127,9 @@ cron.schedule('0 4 * * *', () => {
     } else if (taskToRun === 'evaluation') {
         console.log('Executando manualmente: checkAndSendEvaluationEmails');
         await checkAndSendEvaluationEmails();
+    } else if (taskToRun === 'simulate-likes') {
+        console.log('Executando manualmente: simulateBlogLikes');
+        await simulateBlogLikes();
     }
 
     process.exit(0); // Encerra o processo após a execução da tarefa manual
