@@ -13,8 +13,8 @@ window.showToast = function(message, type = 'success') {
     const bgColor = type === 'success' ? '#1B4332' : '#dc2626';
     const iconHtml = type === 'success' ? '✅' : '❌';
 
-    pill.style.cssText = `background: ${bgColor}; color: white; padding: 12px 24px; border-radius: 50px; display: flex; align-items: center; gap: 8px; font-weight: 600; box-shadow: 0 8px 20px rgba(0,0,0,0.15); font-family: sans-serif; font-size: 0.95rem; opacity: 0; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);`;
-    pill.innerHTML = `<span class="icon">${iconHtml}</span><span>${message}</span>`;
+    pill.style.cssText = `background: ${bgColor}; color: white; padding: 12px 24px; border-radius: 50px; display: flex; align-items: center; gap: 8px; font-weight: 600; box-shadow: 0 8px 20px rgba(0,0,0,0.15); font-family: sans-serif; font-size: 0.95rem; white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis; opacity: 0; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);`;
+    pill.innerHTML = `<span class="icon" style="flex-shrink: 0;">${iconHtml}</span><span style="overflow: hidden; text-overflow: ellipsis;">${message}</span>`;
     
     container.appendChild(pill);
 
@@ -171,29 +171,45 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     // Mensagem de sucesso personalizada
-                    let msgBemVindo = "Bem-vindo(a) de volta!";
+                    let msgBemVindo = "Bem-vindo(a)!";
+                    
+                    // Verifica se é o primeiro acesso neste dispositivo/browser
+                    const userId = result.data.id || email;
+                    const accessKey = `Yelo_has_logged_${finalUserType}_${userId}`;
+                    const isFirstAccess = !localStorage.getItem(accessKey);
+                    localStorage.setItem(accessKey, 'true'); // Marca que já logou
                     
                     if (finalUserType === 'patient') {
                         if (nomeSalvo) {
-                            msgBemVindo = `Bem-vindo(a), ${nomeSalvo.split(' ')[0]}!`;
+                            msgBemVindo = isFirstAccess ? `Bem-vindo(a), ${nomeSalvo.split(' ')[0]}!` : `Bem-vindo(a) de volta, ${nomeSalvo.split(' ')[0]}!`;
                         } else {
-                            msgBemVindo = "Bem-vindo(a), Paciente!";
+                            msgBemVindo = isFirstAccess ? "Bem-vindo(a), Paciente!" : "Bem-vindo(a) de volta, Paciente!";
                         }
                     } else if (finalUserType === 'psychologist') {
                         let genero = result.data.genero || (user && user.genero) || '';
                         let saudacao = "Bem-vindo(a)";
+                        let saudacaoVolta = "Bem-vindo(a) de volta";
                         
-                        if (genero === 'Feminino' || genero === 'Mulher Cis' || genero === 'Mulher Trans') saudacao = "Bem-vinda";
-                        else if (genero === 'Masculino' || genero === 'Homem Cis' || genero === 'Homem Trans') saudacao = "Bem-vindo";
-                        else if (genero === 'Não-binário' || genero === 'Gênero fluido') saudacao = "Boas-vindas";
+                        if (genero === 'Feminino' || genero === 'Mulher Cis' || genero === 'Mulher Trans') {
+                            saudacao = "Bem-vinda";
+                            saudacaoVolta = "Bem-vinda de volta";
+                        } else if (genero === 'Masculino' || genero === 'Homem Cis' || genero === 'Homem Trans') {
+                            saudacao = "Bem-vindo";
+                            saudacaoVolta = "Bem-vindo de volta";
+                        } else if (genero === 'Não-binário' || genero === 'Gênero fluido') {
+                            saudacao = "Boas-vindas";
+                            saudacaoVolta = "Boas-vindas de volta";
+                        }
+
+                        let saudacaoFinal = isFirstAccess ? saudacao : saudacaoVolta;
 
                         if (nomeSalvo) {
-                            msgBemVindo = `${saudacao}, ${nomeSalvo.split(' ')[0]}!`;
+                            msgBemVindo = `${saudacaoFinal}, ${nomeSalvo.split(' ')[0]}!`;
                         } else {
-                            msgBemVindo = `${saudacao}, Psi!`;
+                            msgBemVindo = `${saudacaoFinal}, Psi!`;
                         }
                     } else if (finalUserType === 'admin') {
-                        msgBemVindo = "Bem-vindo(a), Admin!";
+                        msgBemVindo = isFirstAccess ? "Bem-vindo(a), Admin!" : "Bem-vindo(a) de volta, Admin!";
                     }
                     
                     window.showToast(msgBemVindo, 'success');
