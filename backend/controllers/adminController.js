@@ -1026,19 +1026,19 @@ exports.analyzeProfile = async (req, res) => {
 
         const diasTrialText = diasParaExpirar !== null && diasParaExpirar > 0 ? diasParaExpirar : 'alguns';
 
-        // 3.3. Busca de Métricas Reais do Banco de Dados
-        const [matchEventsRaw] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :id`, { replacements: { id } }).catch(() => [[{count: 0}]]);
-        const matchAppearances = parseInt(matchEventsRaw[0]?.count || 0, 10);
+        // 3.3. Busca de Métricas Reais do Banco de Dados (Padronizadas)
+        const numericId = parseInt(id, 10);
+        const [matchEventsRaw] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :id`, { replacements: { id: numericId } }).catch(() => db.sequelize.query(`SELECT COUNT(*) as count FROM "MatchEvents" WHERE "PsychologistId" = :id`, { replacements: { id: numericId } })).catch(() => [[{count: 0}]]);
+        const matchAppearances = (parseInt(matchEventsRaw[0]?.count || 0, 10)) + (psi.profile_appearances || 0);
 
-        const [profileViewsRaw] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :id`, { replacements: { id } }).catch(() => [[{count: 0}]]);
-        let profileViews = parseInt(profileViewsRaw[0]?.count || 0, 10);
-        if (profileViews === 0) profileViews = psi.profile_appearances || 0;
+        const [profileViewsRaw] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :id`, { replacements: { id: numericId } }).catch(() => db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "PsychologistId" = :id`, { replacements: { id: numericId } })).catch(() => [[{count: 0}]]);
+        const profileViews = parseInt(profileViewsRaw[0]?.count || 0, 10);
 
         let whatsappClicks = 0;
         if (db.WhatsAppClickLog) {
-            whatsappClicks = await db.WhatsAppClickLog.count({ where: { psychologistId: id } }).catch(() => 0);
+            whatsappClicks = await db.WhatsAppClickLog.count({ where: { [db.Sequelize.Op.or]: [{ psychologistId: numericId }, { PsychologistId: numericId }] } }).catch(() => 0);
         }
-        if (whatsappClicks === 0) whatsappClicks = psi.whatsapp_clicks || 0;
+        whatsappClicks += (psi.whatsapp_clicks || 0);
 
         // 4. O SUPER PROMPT DA EQUIPE DE GROWTH
         const promptGrowth = `Você atua como a equipe de Growth e Customer Success (CS) da plataforma Yelo, especializada em marketing para clínicas de psicologia.

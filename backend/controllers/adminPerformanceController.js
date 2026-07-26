@@ -1,6 +1,38 @@
 const db = require('../models');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
+async function getStandardMetrics(psiId, psi) {
+    const numericId = parseInt(psiId, 10);
+    const matchesStats = await db.sequelize.query(
+        `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :id`,
+        { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+    ).catch(() => db.sequelize.query(
+        `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "PsychologistId" = :id`,
+        { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+    )).catch(() => [{ count: 0 }]);
+    const matchesCount = (matchesStats[0] ? parseInt(matchesStats[0].count, 10) : 0) + (psi ? (psi.profile_appearances || 0) : 0);
+
+    const viewsStats = await db.sequelize.query(
+        `SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :id`,
+        { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+    ).catch(() => db.sequelize.query(
+        `SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "PsychologistId" = :id`,
+        { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+    )).catch(() => [{ count: 0 }]);
+    const viewsCount = viewsStats[0] ? parseInt(viewsStats[0].count, 10) : 0;
+
+    const clicksStats = await db.sequelize.query(
+        `SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "psychologistId" = :id`,
+        { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+    ).catch(() => db.sequelize.query(
+        `SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "PsychologistId" = :id`,
+        { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+    )).catch(() => [{ count: 0 }]);
+    const clicksCount = (clicksStats[0] ? parseInt(clicksStats[0].count, 10) : 0) + (psi ? (psi.whatsapp_clicks || 0) : 0);
+
+    return { matchesCount, viewsCount, clicksCount };
+}
+
 exports.getLowPerformanceData = async () => {
     const Op = db.Sequelize.Op;
     const sevenDaysAgo = new Date();
@@ -122,17 +154,21 @@ exports.generateAiDiagnosis = async (req, res) => {
         const { id } = req.params;
         const psiId = parseInt(id, 10);
 
-        let psi, blogPosts, forumAnswers, reviews, matches, clicks, views, pendingFeedbacks, history;
+        let psi, blogPosts, forumAnswers, reviews, matchesCount, clicksCount, viewsCount, unansweredLogs, talkingLogs, closedLogs, latestFeedbackToken, magicLink, history;
 
         if (psiId === 99999) {
             psi = { nome: 'Dr. Local', slug: 'dr-local', bio: 'Formado há 10 anos.', abordagens_tecnicas: ['TCC'], temas_atuacao: ['Ansiedade'], valor_sessao_numero: 150, fotoUrl: 'url_foto' };
             blogPosts = [];
             forumAnswers = [];
             reviews = [];
-            matches = [{count: 150}];
-            clicks = [{count: 0}];
-            views = [{count: 20}];
-            pendingFeedbacks = [{count: 2}];
+            matchesCount = 150;
+            clicksCount = 0;
+            viewsCount = 20;
+            unansweredLogs = [{ guestName: 'Visitante', feedbackToken: 'mock_token' }];
+            talkingLogs = [];
+            closedLogs = [];
+            latestFeedbackToken = 'mock_token';
+            magicLink = `https://www.yelopsi.com.br/magic-feedback.html?token=mock_token`;
             history = [];
         } else {
             psi = await db.Psychologist.findByPk(psiId, {
@@ -141,18 +177,31 @@ exports.generateAiDiagnosis = async (req, res) => {
 
             if (!psi) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
 
+            // Coletar Métricas Padronizadas (idênticas à página de detalhes)
+            const metrics = await getStandardMetrics(psiId, psi);
+            matchesCount = metrics.matchesCount;
+            viewsCount = metrics.viewsCount;
+            clicksCount = metrics.clicksCount;
+
             // Coletar Dados do Dossiê para a IA
             [blogPosts] = await db.sequelize.query(`SELECT id, titulo FROM posts WHERE psychologist_id = :id`, { replacements: { id: psiId } }).catch(() => [[], null]);
             [forumAnswers] = await db.sequelize.query(`SELECT id FROM "ForumComments" WHERE "PsychologistId" = :id`, { replacements: { id: psiId } }).catch(() => [[], null]);
             [reviews] = await db.sequelize.query(`SELECT id, rating FROM "Reviews" WHERE "psychologistId" = :id`, { replacements: { id: psiId } }).catch(() => [[], null]);
             
-            // Coletar Métricas dos últimos 7 dias
-            [matches] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :id AND "createdAt" >= NOW() - INTERVAL '7 days'`, { replacements: { id: psiId } }).catch(() => [[{count:0}], null]);
-            [clicks] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "psychologistId" = :id AND "createdAt" >= NOW() - INTERVAL '7 days'`, { replacements: { id: psiId } }).catch(() => [[{count:0}], null]);
-            [views] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :id AND "createdAt" >= NOW() - INTERVAL '7 days'`, { replacements: { id: psiId } }).catch(() => [[{count:0}], null]);
+            // Coletar Feedbacks de WhatsApp recentes (para status real e link rápido)
+            const [recentLogs] = await db.sequelize.query(
+                `SELECT "feedbackToken", "feedbackGiven", "dealClosed", "guestName" 
+                 FROM "WhatsAppClickLogs" 
+                 WHERE ("psychologistId" = :id OR "PsychologistId" = :id) 
+                 ORDER BY "createdAt" DESC LIMIT 15`,
+                { replacements: { id: psiId } }
+            ).catch(() => [[], null]);
 
-            // Coletar Feedbacks Pendentes de WhatsApp (para PLG)
-            [pendingFeedbacks] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "psychologistId" = :id AND "feedbackGiven" = false`, { replacements: { id: psiId } }).catch(() => [[{count:0}], null]);
+            unansweredLogs = recentLogs.filter(l => l.feedbackGiven === false || l.feedbackGiven === null);
+            talkingLogs = recentLogs.filter(l => l.feedbackGiven === true && l.dealClosed === 'talking');
+            closedLogs = recentLogs.filter(l => l.feedbackGiven === true && (l.dealClosed === 'yes' || l.dealClosed === 'started'));
+            latestFeedbackToken = unansweredLogs[0]?.feedbackToken || talkingLogs[0]?.feedbackToken || recentLogs[0]?.feedbackToken || '';
+            magicLink = latestFeedbackToken ? `https://www.yelopsi.com.br/magic-feedback.html?token=${latestFeedbackToken}` : `https://www.yelopsi.com.br/psi/dashboard`;
 
             // Historico de otimizacao anterior
             history = psi.aiOptimizationHistory || [];
@@ -160,39 +209,40 @@ exports.generateAiDiagnosis = async (req, res) => {
 
         const prompt = `
 Atue como Anderson, gerente de Customer Success da plataforma de saúde mental Yelo. 
-Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}, oferecendo uma consultoria rápida baseada nos dados do perfil dele nos últimos 7 dias.
+Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}, oferecendo uma consultoria rápida baseada nos dados de desempenho dele na plataforma.
 Aja em tom amigável, direto, profissional e de parceria. Sem introduções longas.
 
-[DADOS DO PSICÓLOGO NOS ÚLTIMOS 7 DIAS]
-- Aparições em Buscas (Matches): ${matches[0]?.count || 0}
-- Visitas no Perfil: ${views[0]?.count || 0}
-- Cliques no WhatsApp: ${clicks[0]?.count || 0}
+[DADOS DO DESEMPENHO NA PLATAFORMA]
+- Aparições em Buscas (Matches): ${matchesCount}
+- Visitas no Perfil: ${viewsCount}
+- Cliques no WhatsApp: ${clicksCount}
 
 [DADOS DO PERFIL]
+- Gênero/Identidade: ${psi.genero_identidade || 'Não informado'}
+- Práticas Inclusivas/Afirmativas: ${(psi.praticas_inclusivas && psi.praticas_inclusivas.length > 0) ? (Array.isArray(psi.praticas_inclusivas) ? psi.praticas_inclusivas.join(', ') : psi.praticas_inclusivas) : ((psi.praticas_vivencias && psi.praticas_vivencias.length > 0) ? (Array.isArray(psi.praticas_vivencias) ? psi.praticas_vivencias.join(', ') : psi.praticas_vivencias) : 'Não preenchido')}
 - Abordagem: ${psi.abordagens_tecnicas && psi.abordagens_tecnicas.length > 0 ? (Array.isArray(psi.abordagens_tecnicas) ? psi.abordagens_tecnicas.join(', ') : psi.abordagens_tecnicas) : 'Não preenchido'}
 - Especialidades (Tags): ${psi.temas_atuacao && psi.temas_atuacao.length > 0 ? (Array.isArray(psi.temas_atuacao) ? psi.temas_atuacao.join(', ') : psi.temas_atuacao) : 'Não preenchido'}
 - Valor da Sessão: ${psi.valor_sessao_numero ? 'R$ ' + psi.valor_sessao_numero : 'Não preenchido'}
 - Tem foto? ${psi.fotoUrl ? 'Sim' : 'Não'}
 - Bio: "${psi.bio || 'Não preenchida'}"
 
-[USO DE FERRAMENTAS DA YELO]
-- Artigos no Blog publicados: ${blogPosts.length}
-- Respostas no Fórum de Dúvidas: ${forumAnswers.length}
-- Especialidades: ${psi.temas_atuacao ? psi.temas_atuacao.length : 0} cadastradas
-- Bio: ${psi.bio ? psi.bio.length : 0} caracteres
-- Abordagem: ${psi.abordagens_tecnicas ? psi.abordagens_tecnicas.length : 0} cadastradas
-- Valor da Sessão: R$ ${psi.valor_sessao_numero || 'Não informado'}
-- Tem Foto de Perfil: ${psi.fotoUrl ? 'Sim' : 'Não'}
+[FEEDBACKS DE CONTATOS VIA WHATSAPP]
+- Há feedbacks pendentes (sem resposta)? ${unansweredLogs.length > 0 ? `Sim (${unansweredLogs.length} paciente(s) sem resposta de status)` : 'Não, todos os contatos recentes foram respondidos pelo psicólogo!'}
+- Em negociação ativa? ${talkingLogs.length > 0 ? `Sim (${talkingLogs.length} em negociação)` : 'Não'}
+- Pacientes fechados (agendados): ${closedLogs.length}
+- Link rápido de resposta de feedback (sem precisar de login): ${magicLink}
 
-[USO DE FERRAMENTAS E ENGAJAMENTO]
-- Artigos no Blog: ${blogPosts.length}
-- Respostas na Comunidade: ${forumAnswers.length}
+[USO DE FERRAMENTAS DA YELO E ENGAJAMENTO]
+- Artigos no Blog publicados: ${blogPosts.length}
+- Respostas no Fórum de Dúvidas / Comunidade: ${forumAnswers.length}
 - Avaliações (Reviews): ${reviews.length}
+- Especialidades cadastradas: ${psi.temas_atuacao ? psi.temas_atuacao.length : 0}
+- Tamanho da Bio: ${psi.bio ? psi.bio.length : 0} caracteres
 
 ATENÇÃO: Use formatação nativa do WhatsApp (*negrito*, _itálico_) e insira quebras de linha (\\n\\n) para tornar o texto escaneável. Separe bem os parágrafos e as dicas. Não retorne um bloco de texto contínuo!
 
 REGRAS DE ANÁLISE DO FUNIL (Siga rigorosamente para dar as dicas certas):
-1. Gargalo de Aparições (Baixos Matches): O perfil não está ganhando pontos no algoritmo de busca. Acolha dizendo que no começo é assim mesmo. Explique que o nosso algoritmo prioriza: (A) Preenchimento completo das 4 Especialidades (Tags); (B) Valor da sessão estar alinhado com a média do mercado; (C) Informar Gênero e Práticas Inclusivas/Afirmativas (gera bônus alto de ranqueamento); (D) Abordagem e Modalidade corretas. Dê exemplos de como a busca do paciente cruza com esses dados.
+1. Gargalo de Aparições (Baixos Matches): O perfil não está ganhando pontos no algoritmo de busca. Acolha dizendo que no começo é assim mesmo. Explique que o nosso algoritmo prioriza: (A) Preenchimento completo das 4 Especialidades (Tags); (B) Valor da sessão estar alinhado com a média do mercado; (C) Informar Gênero e Práticas Inclusivas/Afirmativas (gera bônus alto de ranqueamento); (D) Abordagem e Modalidade corretas. Dê exemplos de como a busca do paciente cruza com esses dados. ATENÇÃO: ANTES de sugerir que o psicólogo preencha ou detalhe qualquer informação (como Gênero, Práticas Inclusivas/Afirmativas, Abordagem, Especialidades ou Valor da sessão), VERIFIQUE OBRIGATORIAMENTE em [DADOS DO PERFIL] se ele JÁ PREENCHEU esses campos. SE ELE JÁ TIVER PREENCHIDO (exemplo: Gênero ou Práticas Inclusivas/Afirmativas já estão preenchidos no perfil), PARABENIZE-O por já ter incluído essas informações estratégicas (pois geram excelente pontuação no ranking) e NUNCA sugira ou cobre para ele adicionar o que já foi cadastrado! Foque apenas no que realmente estiver faltando ou na otimização da bio e foto.
 2. Gargalo de Visitas (Altos Matches, Baixos Views): Ele aparece bem nas buscas, mas os pacientes não clicam no card. O problema está na vitrine. Explique que o paciente decide o clique em 2 segundos. Sugira revisar a Foto de Perfil (precisa estar profissional, com boa luz, transmitindo acolhimento) e a primeira frase da Bio. Um Valor de Sessão ausente ou irreal também espanta. Dê um exemplo do que torna uma foto ou frase atrativa.
 3. Gargalo de Conversão (Altas Visitas, Baixos Cliques no WhatsApp): Os pacientes abrem a página completa dele, leem, mas saem sem chamar no WhatsApp. O algoritmo pune perfis com Bio menor que 10 caracteres, mas para converter, a Bio precisa ser focada na dor do paciente. Sugira reescrever a Bio (ex: "Em vez de listar currículo, comece falando sobre como você pode ajudar na ansiedade"). Sugira pedir Avaliações usando o link (https://www.yelopsi.com.br/${psi.slug}?review=true) explicando que Prova Social é o maior gatilho de confiança na internet.
 4. Ferramentas Estratégicas (USE QUANDO FIZER SENTIDO): Temos algumas páginas e ferramentas gratuitas dentro da plataforma. Você pode sugerir:
@@ -200,7 +250,10 @@ REGRAS DE ANÁLISE DO FUNIL (Siga rigorosamente para dar as dicas certas):
    - "Manual de Conversão" (para psicólogos que recebem cliques no WhatsApp mas não conseguem fechar a venda da sessão).
    - "Meu Analytics" (recomende para que eles mesmos acompanhem seu funil diariamente).
    - "Hub de Evolução" (para aprenderem estratégias de marketing para consultório).
-5. Cobrança Suave (Feedbacks Pendentes): SE o número de "Feedbacks de WhatsApp Pendentes" for maior que 0, adicione um parágrafo amigável alertando: "Vi que você tem pacientes que te chamaram no WhatsApp, mas não nos contou se eles fecharam ou não. Precisamos que acesse a plataforma e nos avise para o algoritmo continuar te recomendando!" (Use palavras parecidas, mantendo o tom parceiro).
+5. Acompanhamento de Feedbacks de WhatsApp (USE COM ATENÇÃO EXTREMA):
+   - VERIFIQUE em [FEEDBACKS DE CONTATOS VIA WHATSAPP] a situação dos contatos dele:
+   - SE "Há feedbacks pendentes (sem resposta)?" for NÃO (ou seja, ele já respondeu os feedbacks na plataforma): JAMAIS diga que ele "não informou se a sessão foi fechada" ou cobre atualização de status! Se houver pacientes "Em negociação ativa", você pode perguntar amigavelmente como estão as conversas e se precisa de alguma ajuda para fechar o agendamento. Se já fechou pacientes, comemore!
+   - SE "Há feedbacks pendentes (sem resposta)?" for SIM: adicione uma solicitação amigável e parceira pedindo para ele nos avisar o status dos atendimentos. OBRIGATÓRIO: Forneça SEMPRE o link rápido para ele responder sem precisar acessar a plataforma (${magicLink}). Exemplo: "Vi que você recebeu contatos no WhatsApp recentemente! Para que nosso algoritmo continue impulsionando seu perfil nas buscas, por favor nos atualize sobre o status desses atendimentos através deste link rápido (não precisa nem fazer login na plataforma): ${magicLink}". NUNCA peça para ele acessar ou logar na plataforma para dar feedback se temos o link rápido!
 
 ESTRUTURA OBRIGATÓRIA E TOM DE VOZ:
 5. Inicie com um gatilho de parceria: "Olá, [Nome]. Como vai? Aqui é o Anderson, da equipe de Sucesso da Yelo. Fiz uma análise detalhada da sua performance e..." (Substitua [Nome] pelo primeiro nome).
@@ -219,8 +272,8 @@ Retorne SOMENTE um JSON com a seguinte estrutura (não use marcações markdown 
         if (psiId === 99999 || !process.env.GEMINI_API_KEY) {
             console.warn("⚠️ MOCK: Utilizando texto gerado localmente para o Diagnóstico IA.");
             const mockResponse = {
-                diagnosis: "Baixa taxa de cliques no WhatsApp (0) e há 2 feedbacks pendentes de pacientes que entraram em contato antes. A bio está muito curta e precisa de avaliação social.",
-                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}. Como vai? Aqui é o Anderson, da equipe de Sucesso da Yelo. Fiz uma análise detalhada da sua performance e decidi te trazer alguns pontos super estratégicos para te ajudar a destravar mais pacientes.\n\nA plataforma entregou uma excelente visibilidade para o seu perfil nos últimos dias: você teve *${matches[0]?.count || 0} aparições nas buscas* e *${views[0]?.count || 0} pacientes visitaram a sua página*. No entanto, não registramos *nenhum clique* recente no seu WhatsApp.\n\nIsso mostra um gargalo na sua vitrine, mas super simples de corrigir! Recomendo focarmos em duas ações:\n\n1. *Acesse o "Manual de Conversão":* Vi que você já tem cliques antigos, mas a nossa plataforma tem um manual focado em como não perder pacientes que chegam no WhatsApp. Ele fica lá no seu Hub de Evolução!\n\n2. *Construa Prova Social:* Peça avaliações no seu perfil usando o seu link (https://www.yelopsi.com.br/${psi.slug}?review=true). A opinião de outras pessoas é o maior gatilho para destravar o agendamento de quem está em dúvida.\n\n⚠️ Ah, um ponto importante: notei que você tem *${pendingFeedbacks[0]?.count || 0} pacientes* que te chamaram pelo WhatsApp recentemente e você ainda não nos deu o *Feedback de Fechamento* lá na plataforma. Precisamos que você entre na Yelo e nos avise se eles fecharam ou não. O nosso algoritmo precisa dessa confirmação para continuar impulsionando o seu ranking, combinado?\n\nQualquer dúvida sobre como aplicar tudo isso, é só me chamar. Estamos juntos! 🌿`
+                diagnosis: "Baixa taxa de cliques no WhatsApp (0) e há feedbacks pendentes de pacientes que entraram em contato antes. A bio está muito curta e precisa de avaliação social.",
+                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}. Como vai? Aqui é o Anderson, da equipe de Sucesso da Yelo. Fiz uma análise detalhada da sua performance e decidi te trazer alguns pontos super estratégicos para te ajudar a destravar mais pacientes.\n\nA plataforma entregou uma excelente visibilidade para o seu perfil nos últimos dias: você teve *${matchesCount} aparições nas buscas* e *${viewsCount} pacientes visitaram a sua página*. No entanto, não registramos *nenhum clique* recente no seu WhatsApp.\n\nIsso mostra um gargalo na sua vitrine, mas super simples de corrigir! Recomendo focarmos em duas ações:\n\n1. *Acesse o "Manual de Conversão":* Vi que você já tem cliques antigos, mas a nossa plataforma tem um manual focado em como não perder pacientes que chegam no WhatsApp. Ele fica lá no seu Hub de Evolução!\n\n2. *Construa Prova Social:* Peça avaliações no seu perfil usando o seu link (https://www.yelopsi.com.br/${psi.slug}?review=true). A opinião de outras pessoas é o maior gatilho para destravar o agendamento de quem está em dúvida.\n\n⚠️ Ah, um ponto importante: notei que você tem contatos recentes e ainda há *${unansweredLogs.length} paciente(s)* sem status de fechamento informado. Para que nosso algoritmo continue impulsionando seu perfil nas buscas, por favor nos atualize sobre o status desses atendimentos através deste link rápido (não precisa nem fazer login na plataforma): ${magicLink}\n\nQualquer dúvida sobre como aplicar tudo isso, é só me chamar. Estamos juntos! 🌿`
             };
             return res.status(200).json({ 
                 diagnosis: mockResponse.diagnosis,
@@ -268,13 +321,13 @@ exports.generateAiChurnMessage = async (req, res) => {
         const { id } = req.params;
         const psiId = parseInt(id, 10);
 
-        let psi, matches, views, clicksCount, dealYes, dealGhosted, dealNo, dealTalking;
+        let psi, matchesCount, viewsCount, clicksCount, dealYes, dealGhosted, dealNo, dealTalking;
 
         if (psiId === 99999) {
             // MOCK LOCAL (APENAS DADOS)
             psi = { nome: 'Dr. Local', valor_sessao_numero: 150 };
-            matches = [{ count: 200 }];
-            views = [{ count: 15 }];
+            matchesCount = 200;
+            viewsCount = 15;
             clicksCount = 2;
             dealYes = 1;
             dealGhosted = 0;
@@ -288,11 +341,11 @@ exports.generateAiChurnMessage = async (req, res) => {
 
             if (!psi) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
 
-            // Coletar Métricas do Trial
-            const m = await db.sequelize.query(`SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :id`, { replacements: { id: psiId } }).catch(() => [[{count:0}], null]);
-            matches = m[0];
-            const v = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :id`, { replacements: { id: psiId } }).catch(() => [[{count:0}], null]);
-            views = v[0];
+            // Coletar Métricas Padronizadas (idênticas à página de detalhes)
+            const metrics = await getStandardMetrics(psiId, psi);
+            matchesCount = metrics.matchesCount;
+            viewsCount = metrics.viewsCount;
+            clicksCount = metrics.clicksCount;
             
             // Feedbacks
             const wppLogs = await db.WhatsAppClickLog.findAll({
@@ -300,7 +353,7 @@ exports.generateAiChurnMessage = async (req, res) => {
                 attributes: ['dealClosed']
             });
             
-            clicksCount = wppLogs.length;
+            clicksCount = wppLogs.length > 0 ? wppLogs.length + (psi.whatsapp_clicks || 0) : clicksCount;
             dealYes = wppLogs.filter(l => l.dealClosed === 'yes' || l.dealClosed === 'started').length;
             dealGhosted = wppLogs.filter(l => l.dealClosed === 'ghosted').length;
             dealNo = wppLogs.filter(l => l.dealClosed === 'no' || l.dealClosed === 'not_started').length;
@@ -316,8 +369,8 @@ Aja de forma humanizada, direta, e TOTALMENTE PROFISSIONAL. NÃO use NENHUMA gí
 
 [DADOS OBRIGATÓRIOS DO DESEMPENHO NO TRIAL]
 Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma clara:
-1. Aparições em Buscas (Matches): ${matches[0]?.count || 0}
-2. Visitas na Página (Views): ${views[0]?.count || 0}
+1. Aparições em Buscas (Matches): ${matchesCount}
+2. Visitas na Página (Views): ${viewsCount}
 3. Cliques no WhatsApp: ${clicksCount}
 
 [FEEDBACKS E RESULTADOS (SE HOUVER CLIQUES)]
@@ -334,13 +387,14 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
 1. A mensagem deve ser enviada via WhatsApp. Use formatação nativa (*negrito*, _itálico_) e quebras de linha (\n\n).
 2. Cumprimente o psicólogo pelo nome e se apresente. Comece em um tom acolhedor e agradeça por ele ter testado a plataforma.
 3. Seja SUAVE ao informar que o Trial de 14 dias expirou. Exemplo: "O seu período gratuito encerrou, mas eu estava analisando as suas métricas e os resultados foram super interessantes..."
-4. Apresente os resultados dele (os 3 indicadores numéricos são obrigatórios).
+4. Apresente os resultados dele (os 3 indicadores numéricos são obrigatórios: Aparições, Visitas e Cliques).
 5. Analise os resultados de fechamento de forma consultiva e empática:
    - Se ele fechou pacientes, parabenize-o! É o maior argumento de que a plataforma funciona.
    - Se não fechou ou teve fantasmas, use uma frase de conforto como "Apesar de não ter fechado com nenhum paciente dessa vez, isso é super normal no início para quem está ajustando o público."
    - Se ele não teve cliques, diga que os pacientes estão encontrando ele nas buscas e visitando a página (se aplicável), e que juntos podem ajustar o perfil para melhorar a conversão.
-6. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE, mas faça de forma amigável e parceira: cite explicitamente o valor que ele cobra por sessão (R$ ${psi.valor_sessao_numero || 'X'}) e compare com a mensalidade (R$ 99,00). Prove que fechar apenas X pacientes já paga a mensalidade toda. (Ex: "Como a sua sessão é R$ 150,00, fechando apenas 1 paciente você já paga a plataforma").
+6. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE, mas faça de forma amigável e parceira: cite explicitamente o valor que ele cobra por sessão (R$ ${psi.valor_sessao_numero || 'X'}) e compare com a mensalidade (R$ 99,00). Prove que fechar apenas 1 sessão já paga a mensalidade toda. (Ex: "Como a sua sessão é R$ 150,00, fechando apenas 1 sessão você já cobre todo o custo da plataforma e garante o seu lucro. É um investimento que se paga com um único atendimento"). NUNCA use a expressão "fechar 1 paciente", use SEMPRE "fechar 1 sessão".
 7. Finalize de forma super acolhedora perguntando se faz sentido para ele manter o perfil ativo. Se sim, instrua-o a reativar acessando a conta na Yelo, indo na opção "Ajustes" e depois "Assinaturas e Planos".
+8. REGRAS EXTRAS E ASSINATURA: NUNCA coloque despedidas ou assinaturas no final do texto (como "Um abraço, Anderson - CS & Growth Yelo", "Equipe Yelo", etc.). Finalize diretamente após perguntar se faz sentido reativar ou dar as instruções para ativar o plano.
 `;
 
         if (psiId === 99999 || !process.env.GEMINI_API_KEY) {
@@ -349,15 +403,15 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
             let mathText = "";
 
             if (dealYes > 0) {
-                feedbackText = `E notei pelo seu feedback que você já conseguiu fechar com ${dealYes} paciente! 🎉`;
-                mathText = `esse paciente que você fechou já paga o investimento da plataforma do mês todo e ainda sobra lucro.`;
+                feedbackText = `E notei pelo seu feedback que você já conseguiu fechar ${dealYes} sessão(ões)! 🎉`;
+                mathText = `essa sessão que você fechou já paga o investimento da plataforma do mês todo e ainda sobra lucro.`;
             } else {
                 feedbackText = `Apesar de os pacientes não terem fechado negócio dessa vez, não desanime, isso é super normal nesse período de adaptação de público!`;
-                mathText = `fechar apenas 1 paciente já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.`;
+                mathText = `fechar apenas 1 sessão já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.`;
             }
 
             return res.status(200).json({ 
-                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson da equipe da Yelo. 🌿\n\nPassei para agradecer por você ter testado a plataforma com a gente nesses últimos dias! O seu período gratuito acabou encerrando, mas eu estava analisando as suas métricas e os resultados foram bem legais.\n\nDurante os testes, o seu perfil obteve ${matches[0]?.count || 0} aparições nas buscas, ${views[0]?.count || 0} visualizações na sua página e gerou ${clicksCount} cliques no WhatsApp. ${feedbackText}\n\nPensando pelo seu lado financeiro, a assinatura da Yelo é apenas R$ 99,00 mensais. Como a sua sessão é de R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nFaria sentido para você reativar a sua página para não perder esse fluxo de pacientes que já estão te encontrando? Caso queira manter seu perfil no ar, basta acessar a sua conta na Yelo, clicar em "Ajustes" e depois ir em "Assinaturas e Planos". Qualquer dúvida, estou por aqui!`
+                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson da equipe da Yelo. 🌿\n\nPassei para agradecer por você ter testado a plataforma com a gente nesses últimos dias! O seu período gratuito acabou encerrando, mas eu estava analisando as suas métricas e os resultados foram bem legais.\n\nDurante os testes, o seu perfil obteve ${matchesCount} aparições nas buscas, ${viewsCount} visualizações na sua página e gerou ${clicksCount} cliques no WhatsApp. ${feedbackText}\n\nPensando pelo seu lado financeiro, a assinatura da Yelo é apenas R$ 99,00 mensais. Como a sua sessão é de R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nFaria sentido para você reativar a sua página para não perder esse fluxo de pacientes que já estão te encontrando? Caso queira manter seu perfil no ar, basta acessar a sua conta na Yelo, clicar em "Ajustes" e depois ir em "Assinaturas e Planos". Qualquer dúvida, estou por aqui!`
             });
         }
 
@@ -387,13 +441,13 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
         const { id } = req.params;
         const psiId = parseInt(id, 10);
 
-        let psi, matches, views, clicksCount, dealYes, dealGhosted, dealNo, dealTalking, daysLeft;
+        let psi, matchesCount, viewsCount, clicksCount, dealYes, dealGhosted, dealNo, dealTalking, daysLeft;
 
         if (psiId === 99999) {
             // MOCK LOCAL (APENAS DADOS)
             psi = { nome: 'Dr. Local', valor_sessao_numero: 150 };
-            matches = [{ count: 180 }];
-            views = [{ count: 10 }];
+            matchesCount = 180;
+            viewsCount = 10;
             clicksCount = 3;
             dealYes = 0;
             dealGhosted = 1;
@@ -414,11 +468,11 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
                 daysLeft = 0;
             }
 
-            // Coletar Métricas do Trial
-            const m = await db.sequelize.query(`SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :id`, { replacements: { id: psiId } }).catch(() => [[{count:0}], null]);
-            matches = m[0];
-            const v = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :id`, { replacements: { id: psiId } }).catch(() => [[{count:0}], null]);
-            views = v[0];
+            // Coletar Métricas Padronizadas
+            const metrics = await getStandardMetrics(psiId, psi);
+            matchesCount = metrics.matchesCount;
+            viewsCount = metrics.viewsCount;
+            clicksCount = metrics.clicksCount;
             
             // Feedbacks
             const wppLogs = await db.WhatsAppClickLog.findAll({
@@ -426,7 +480,7 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
                 attributes: ['dealClosed']
             });
             
-            clicksCount = wppLogs.length;
+            clicksCount = wppLogs.length > 0 ? wppLogs.length + (psi.whatsapp_clicks || 0) : clicksCount;
             dealYes = wppLogs.filter(l => l.dealClosed === 'yes' || l.dealClosed === 'started').length;
             dealGhosted = wppLogs.filter(l => l.dealClosed === 'ghosted').length;
             dealNo = wppLogs.filter(l => l.dealClosed === 'no' || l.dealClosed === 'not_started').length;
@@ -438,12 +492,12 @@ Atue como Anderson, gerente de Customer Success da Yelo.
 Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}.
 Situação atual: O período de testes gratuito (Trial) de 14 dias deste profissional vai expirar em exatos ${daysLeft} dias.
 
-Aja de forma humanizada, empática e consultiva. NÃO seja agressivamente vendedor e não use gírias como "dar um tchan".
+Aja de forma humanizada, empática e consultiva. NÃO seja agressivamente vendedor e não use gírias.
 
 [DADOS OBRIGATÓRIOS DO DESEMPENHO NO TRIAL]
 Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma clara:
-1. Aparições em Buscas (Matches): ${matches[0]?.count || 0}
-2. Visitas na Página (Views): ${views[0]?.count || 0}
+1. Aparições em Buscas (Matches): ${matchesCount}
+2. Visitas na Página (Views): ${viewsCount}
 3. Cliques no WhatsApp: ${clicksCount}
 
 [FEEDBACKS E RESULTADOS (SE HOUVER CLIQUES)]
@@ -453,15 +507,16 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
 - Não fechou (achou caro ou desistiu): ${dealNo}
 
 [INSTRUÇÕES DA COPY (MENSAGEM)]
-1. A mensagem deve ser enviada via WhatsApp. Use formatação nativa (*negrito*, _itálico_) e quebras de linha (\\n\\n).
-2. Cumprimente pelo nome. Seja SUAVE ao informar que faltam apenas ${daysLeft} dia(s) para o Trial expirar. Diga que resolveu dar uma olhada nas métricas e que os resultados foram interessantes.
+1. A mensagem deve ser enviada via WhatsApp. Use formatação nativa (*negrito*, _itálico_) e quebras de linha (\n\n).
+2. Cumprimente pelo nome. Seja SUAVE ao informar que faltam apenas ${daysLeft} dia(s) para o Trial expirar.
 3. Apresente os resultados dele (Aparições, Visitas, Cliques e Fechamentos).
 4. Analise os resultados de fechamento de forma consultiva e parceira.
    - Se ele fechou pacientes, parabenize-o! É a maior prova de que vale a pena assinar.
    - Se não fechou ou teve fantasmas, use uma frase de conforto como "Apesar de não ter fechado com nenhum paciente dessa vez, isso é super normal no início para quem está ajustando o público."
    - Se não teve cliques, diga que ele está sendo visto, mas a bio ou foto precisam de ajustes para converter melhor.
-5. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE: Compare amigavelmente o valor da sessão dele (R$ ${psi.valor_sessao_numero || 'X'}) com a mensalidade da Yelo (R$ 99,00). Prove que fechar apenas X pacientes já paga a mensalidade toda. (Ex: "Como a sua sessão é R$ 150,00, fechando apenas 1 paciente você já paga a plataforma").
-6. Finalize perguntando de forma aberta se faz sentido para ele ativar a assinatura para não perder a página e os pacientes que já estão chegando. Instrua-o a reativar acessando a conta na Yelo, indo em "Ajustes" e depois em "Assinaturas e Planos". Não fale em enviar links.
+5. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE: Compare amigavelmente o valor da sessão dele (R$ ${psi.valor_sessao_numero || 'X'}) com a mensalidade da Yelo (R$ 99,00). Prove que fechar apenas 1 sessão já paga a mensalidade toda. (Ex: "Como a sua sessão é R$ 150,00, fechando apenas 1 sessão você já cobre todo o custo da plataforma e garante o seu lucro. É um investimento que se paga com um único atendimento"). NUNCA use a expressão "fechar 1 paciente", use SEMPRE "fechar 1 sessão".
+6. Finalize perguntando de forma aberta se faz sentido para ele ativar a assinatura para não perder a página e os pacientes que já estão chegando. Instrua-o a reativar acessando a conta na Yelo, indo em "Ajustes" e depois em "Assinaturas e Planos".
+7. REGRAS EXTRAS E ASSINATURA: NUNCA coloque despedidas ou assinaturas no final do texto. Finalize diretamente após perguntar se faz sentido ativar a assinatura ou colocar "Se precisar de ajuda, estou por aqui!".
 `;
 
         if (psiId === 99999 || !process.env.GEMINI_API_KEY) {
@@ -470,15 +525,15 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
             let mathText = "";
 
             if (dealYes > 0) {
-                feedbackText = `Notei que você conseguiu fechar terapia com ${dealYes} deles! 🎉`;
-                mathText = `esse paciente que você fechou já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.`;
+                feedbackText = `Notei que você conseguiu fechar terapia com ${dealYes} sessão(ões)! 🎉`;
+                mathText = `essa sessão que você fechou já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.`;
             } else {
                 feedbackText = `Apesar de os pacientes não terem fechado negócio dessa vez, não desanime, isso é super normal nesse período de adaptação de público!`;
-                mathText = `fechar apenas 1 paciente já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.`;
+                mathText = `fechar apenas 1 sessão já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.`;
             }
 
             return res.status(200).json({ 
-                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson da equipe da Yelo. 🌿\n\nVi que faltam apenas ${daysLeft} dias para o seu período gratuito encerrar, então vim dar uma olhada nas suas métricas. Os resultados de visibilidade foram ótimos!\n\nSeu perfil obteve ${matches[0]?.count || 0} aparições nas buscas, ${views[0]?.count || 0} visitas na página e ${clicksCount} pacientes te chamaram no WhatsApp. ${feedbackText}\n\nPensando no seu lado financeiro: a assinatura da Yelo será de R$ 99 mensais. Como a sua sessão é R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nVale muito a pena continuar colhendo os frutos do perfil ativo. Para não perdermos esse fluxo de pacientes, basta acessar sua conta na Yelo, ir na opção "Ajustes" e depois em "Assinaturas e Planos". Se precisar de ajuda, estou por aqui!`
+                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson da equipe da Yelo. 🌿\n\nVi que faltam apenas ${daysLeft} dias para o seu período gratuito encerrar, então vim dar uma olhada nas suas métricas. Os resultados de visibilidade foram ótimos!\n\nSeu perfil obteve ${matchesCount} aparições nas buscas, ${viewsCount} visitas na página e ${clicksCount} pacientes te chamaram no WhatsApp. ${feedbackText}\n\nPensando no seu lado financeiro: a assinatura da Yelo será de R$ 99 mensais. Como a sua sessão é R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nVale muito a pena continuar colhendo os frutos do perfil ativo. Para não perdermos esse fluxo de pacientes, basta acessar sua conta na Yelo, ir na opção "Ajustes" e depois em "Assinaturas e Planos". Se precisar de ajuda, estou por aqui!`
             });
         }
 
