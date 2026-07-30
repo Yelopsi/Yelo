@@ -966,8 +966,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     e.preventDefault(); 
                     loadPage(l.getAttribute('data-page'));
                     // FECHA O MENU NO MOBILE AO CLICAR
-                    if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains('is-open')) {
-                        sidebar.classList.remove('is-open');
+                    const sidebarEl = document.querySelector('.dashboard-sidebar');
+                    if (window.innerWidth <= 992 && sidebarEl && sidebarEl.classList.contains('is-open')) {
+                        sidebarEl.classList.remove('is-open');
                     }
                 };
             });

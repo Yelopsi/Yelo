@@ -116,7 +116,12 @@
             const personalizedContent = aviso.content.replace(/\[nome\]/g, userName);
             fullContent.innerHTML = personalizedContent.replace(/\n/g, '<br>');
 
-            item.addEventListener('click', () => {
+            item.addEventListener('click', (e) => {
+                if (e.target.closest('.aviso-link-direto')) {
+                    // O link já tem o seu próprio onclick
+                    return;
+                }
+
                 if (!aviso.read) {
                     markAsRead(aviso.id, item);
                     aviso.read = true; // Update local state
