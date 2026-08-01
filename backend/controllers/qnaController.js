@@ -482,7 +482,7 @@ exports.getAllQuestions = async (req, res) => {
 exports.moderateQuestion = async (req, res) => {
     try {
         const { questionId } = req.params;
-        const { action } = req.body; // 'approve' ou 'reject'
+        const { action, title, content } = req.body; // 'approve' ou 'reject'
 
         const question = await db.Question.findByPk(questionId);
         if (!question) {
@@ -490,8 +490,21 @@ exports.moderateQuestion = async (req, res) => {
         }
 
         if (action === 'approve') {
+            if (title !== undefined) question.title = title;
+            if (content !== undefined) question.content = content;
+            
             question.status = 'approved';
             await question.save();
+            
+            // Bypass via raw query para garantir que title e content atualizem caso o modelo não mapeie perfeitamente
+            const qTable = db.Question.tableName;
+            try {
+                await db.sequelize.query(
+                    `UPDATE "${qTable}" SET "title" = :title, "content" = :content WHERE id = :id`,
+                    { replacements: { title: question.title, content: question.content, id: question.id } }
+                );
+            } catch(e) {}
+
             return res.json({ success: true, message: "Pergunta aprovada e publicada!" });
         } else if (action === 'reject') {
             await question.destroy(); // Remove do banco se for rejeitada

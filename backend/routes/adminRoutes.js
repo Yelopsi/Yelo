@@ -171,6 +171,9 @@ router.get('/analytics/ranking', adminController.getPsiRanking);
 
 // --- ROTAS DE MODERAÇÃO DE PERGUNTAS (Q&A) ---
 
+// Rota para listar TODAS as perguntas na aba de remoção
+router.get('/content/qna', qnaController.getAllQuestions);
+
 // Rota para buscar todas as perguntas com status 'pending_review'
 router.get('/qna/pending', qnaController.getPendingQuestions);
 

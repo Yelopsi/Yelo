@@ -678,10 +678,10 @@ window.initializePage = function () {
                         <div style="text-align: left; color: #64748b; font-size: 0.85rem; padding: 10px 0;">${dateStr}</div>
                     </td>
                     <td data-label="Conteúdo">
-                        <div style="text-align: left; color: #334155; font-size: 0.9rem; font-style: italic; white-space: pre-wrap; word-break: break-word; padding: 10px 0;">"${q.content}"</div>
+                        <textarea id="edit-content-${q.id}" style="width: 100%; min-height: 80px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 0.9rem; color: #334155; resize: vertical; margin: 10px 0; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#1B4332'" onblur="this.style.borderColor='#cbd5e1'">${q.content}</textarea>
                     </td>
                     <td data-label="Título SEO">
-                        <div style="text-align: left; color: #1e293b; font-weight: 500; font-size: 0.9rem; white-space: pre-wrap; word-break: break-word; padding: 10px 0;">${q.title || 'Sem título'}</div>
+                        <textarea id="edit-title-${q.id}" style="width: 100%; min-height: 60px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 0.9rem; font-weight: 500; color: #1e293b; resize: vertical; margin: 10px 0; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#1B4332'" onblur="this.style.borderColor='#cbd5e1'">${q.title || ''}</textarea>
                     </td>
                     <td data-label="Ações">
                         <div style="text-align: right; padding: 10px 0; display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
@@ -698,6 +698,22 @@ window.initializePage = function () {
     }
 
     window.moderateQuestion = async function(id, action) {
+        let title = undefined;
+        let content = undefined;
+        
+        if (action === 'approve') {
+            const titleEl = document.getElementById(`edit-title-${id}`);
+            const contentEl = document.getElementById(`edit-content-${id}`);
+            if (titleEl) title = titleEl.value.trim();
+            if (contentEl) content = contentEl.value.trim();
+            
+            if (!content) {
+                if (window.showToast) window.showToast("O conteúdo da pergunta não pode estar vazio.", "error");
+                else alert("O conteúdo da pergunta não pode estar vazio.");
+                return;
+            }
+        }
+
         try {
             const res = await fetch(`${API_BASE_URL}/api/admin/qna/${id}/moderate`, {
                 method: 'PUT',
@@ -705,7 +721,7 @@ window.initializePage = function () {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ action })
+                body: JSON.stringify({ action, title, content })
             });
             
             const data = await res.json();

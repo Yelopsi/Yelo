@@ -94,13 +94,14 @@ window.initializePage = function() {
      */
     async function handleQuestionModeration(questionId, action) {
         try {
+            const payloadAction = action === 'approved' ? 'approve' : 'reject';
             const response = await fetch(`${API_BASE_URL}/api/admin/qna/${questionId}/moderate`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ status: action })
+                body: JSON.stringify({ action: payloadAction })
             });
 
             const result = await response.json();
