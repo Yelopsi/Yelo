@@ -649,5 +649,100 @@ window.initializePage = function () {
         window.removeEventListener('vipStatusUpdated', fetchAndRenderPsis);
     };
 
+    // ==============================================
+    // LÓGICA DE APROVAÇÃO DE PERGUNTAS IA (Q&A)
+    // ==============================================
+    async function loadPendingQuestions() {
+        const tbody = document.getElementById('crm-qna-pending-body');
+        if (!tbody) return;
+        
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/admin/qna/pending`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Falha ao buscar perguntas.');
+            
+            const questions = await res.json();
+            tbody.innerHTML = '';
+            
+            if (questions.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: #64748b;">Nenhuma pergunta pendente no momento.</td></tr>`;
+                return;
+            }
+            
+            questions.forEach(q => {
+                const tr = document.createElement('tr');
+                const dateStr = new Date(q.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                tr.innerHTML = `
+                    <td data-label="Data">
+                        <div style="text-align: left; color: #64748b; font-size: 0.85rem; padding: 10px 0;">${dateStr}</div>
+                    </td>
+                    <td data-label="Conteúdo">
+                        <div style="text-align: left; color: #334155; font-size: 0.9rem; font-style: italic; white-space: pre-wrap; word-break: break-word; padding: 10px 0;">"${q.content}"</div>
+                    </td>
+                    <td data-label="Título SEO">
+                        <div style="text-align: left; color: #1e293b; font-weight: 500; font-size: 0.9rem; white-space: pre-wrap; word-break: break-word; padding: 10px 0;">${q.title || 'Sem título'}</div>
+                    </td>
+                    <td data-label="Ações">
+                        <div style="text-align: right; padding: 10px 0; display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
+                            <button onclick="window.moderateQuestion(${q.id}, 'approve')" style="background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: bold; width: 100px;">Aprovar</button>
+                            <button onclick="window.moderateQuestion(${q.id}, 'reject')" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: bold; width: 100px;">Rejeitar</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: #ef4444;">Erro ao carregar perguntas: ${e.message}</td></tr>`;
+        }
+    }
+
+    window.moderateQuestion = async function(id, action) {
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/admin/qna/${id}/moderate`, {
+                method: 'PUT',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ action })
+            });
+            
+            const data = await res.json();
+            if (res.ok) {
+                if (window.showToast) window.showToast(data.message, 'success');
+                loadPendingQuestions();
+            } else {
+                throw new Error(data.error || 'Erro na moderação');
+            }
+        } catch (e) {
+            if (window.showToast) window.showToast(e.message, 'error');
+            else alert(e.message);
+        }
+    };
+    
+    window.gerarPerguntaIA = async function() {
+        try {
+            if (window.showToast) window.showToast('🤖 Gerando pergunta... Isso pode levar alguns segundos.', 'info');
+            const res = await fetch(`${API_BASE_URL}/api/admin/qna/generate`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                if (window.showToast) window.showToast(data.message, 'success');
+                setTimeout(loadPendingQuestions, 1000);
+            } else {
+                throw new Error(data.error || 'Erro ao gerar pergunta');
+            }
+        } catch (e) {
+            if (window.showToast) window.showToast(e.message, 'error');
+            else alert(e.message);
+        }
+    };
+
+    loadPendingQuestions();
+    // ==============================================
+
     fetchAndRenderPsis(1);
 };

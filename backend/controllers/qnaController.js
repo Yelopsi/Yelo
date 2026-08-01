@@ -480,7 +480,29 @@ exports.getAllQuestions = async (req, res) => {
 };
 
 exports.moderateQuestion = async (req, res) => {
-    res.json({ success: true, message: "Função placeholder" });
+    try {
+        const { questionId } = req.params;
+        const { action } = req.body; // 'approve' ou 'reject'
+
+        const question = await db.Question.findByPk(questionId);
+        if (!question) {
+            return res.status(404).json({ error: "Pergunta não encontrada" });
+        }
+
+        if (action === 'approve') {
+            question.status = 'approved';
+            await question.save();
+            return res.json({ success: true, message: "Pergunta aprovada e publicada!" });
+        } else if (action === 'reject') {
+            await question.destroy(); // Remove do banco se for rejeitada
+            return res.json({ success: true, message: "Pergunta rejeitada e excluída." });
+        } else {
+            return res.status(400).json({ error: "Ação inválida. Use 'approve' ou 'reject'." });
+        }
+    } catch (error) {
+        console.error("Erro na moderação:", error);
+        res.status(500).json({ error: "Erro ao moderar pergunta." });
+    }
 };
 
 exports.deleteQuestion = async (req, res) => {

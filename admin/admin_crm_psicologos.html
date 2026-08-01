@@ -368,4 +368,35 @@
             </div>
         </div>
     </div>
+
+    <!-- ============================================== -->
+    <!-- FILA DE APROVAÇÃO DE PERGUNTAS IA (COMUNIDADE) -->
+    <!-- ============================================== -->
+    <div style="margin-top: 40px; background: white; padding: 25px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <h3 style="font-size: 1.2rem; color: #1e293b; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    ✨ Perguntas Pendentes (Comunidade / IA)
+                </h3>
+                <p style="margin: 5px 0 0 0; color: #64748b; font-size: 0.9rem;">Revise as perguntas orgânicas antes de liberá-las para os psicólogos.</p>
+            </div>
+            <button onclick="window.gerarPerguntaIA()" class="btn-principal" style="background: #1B4332; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9rem;">+ Gerar Pergunta Agora</button>
+        </div>
+        
+        <div class="tabela-wrapper" style="border: 1px solid #e2e8f0; border-radius: 12px; overflow-x: auto;">
+            <table class="tabela-gerenciamento" style="width: 100%; border-collapse: collapse;">
+                <thead style="background: #f8f9fa; text-align: left; border-bottom: 1px solid #e2e8f0;">
+                    <tr>
+                        <th style="padding: 12px 15px; font-weight: 600; color: #475569; font-size: 0.9rem;">Data</th>
+                        <th style="padding: 12px 15px; font-weight: 600; color: #475569; font-size: 0.9rem; width: 40%;">Conteúdo Original (Cru)</th>
+                        <th style="padding: 12px 15px; font-weight: 600; color: #475569; font-size: 0.9rem; width: 30%;">Título SEO (Gerado)</th>
+                        <th style="padding: 12px 15px; font-weight: 600; color: #475569; font-size: 0.9rem; text-align: right;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="crm-qna-pending-body">
+                    <tr><td colspan="4" style="text-align: center; padding: 20px; color: #64748b;">Carregando perguntas pendentes...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
