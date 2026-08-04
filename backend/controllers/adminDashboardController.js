@@ -95,11 +95,20 @@ exports.getDashboardStats = async (req, res) => {
             'essencial': 99.00, 'clínico': 159.00, 'sol': 259.00 
         };
         let mrr = 0;
+        let payingCount = 0;
+        let vipCount = 0;
         
         psisByPlan.forEach(p => {
             const plano = p.plano;
             const isExempt = p.is_exempt;
             const hasSubscription = !!(p.stripeSubscriptionId || p.subscriptionId);
+            
+            if (isExempt) {
+                vipCount++;
+            } else if (hasSubscription) {
+                payingCount++;
+            }
+
             if (!plano) return;
             
             let planKey = plano.toLowerCase();
@@ -124,7 +133,7 @@ exports.getDashboardStats = async (req, res) => {
             newPsis30d: parseInt(psychologistStats?.new30d || 0, 10),
             questToday: parseInt(demandStats?.today || 0, 10),
             patients: { total: parseInt(patientStats?.total || 0, 10), active: parseInt(patientStats?.active || 0, 10), deleted: parseInt(patientStats?.deleted || 0, 10) },
-            psychologists: { total: parseInt(psychologistStats?.total || 0, 10), active: parseInt(psychologistStats?.active || 0, 10), deleted: parseInt(psychologistStats?.deleted || 0, 10), byPlan: plansCount },
+            psychologists: { total: parseInt(psychologistStats?.total || 0, 10), active: parseInt(psychologistStats?.active || 0, 10), deleted: parseInt(psychologistStats?.deleted || 0, 10), byPlan: plansCount, paying: payingCount, vip: vipCount },
             questionnaires: { total: parseInt(demandStats?.total || 0, 10), deleted: parseInt(demandStats?.abandoned || 0, 10) },
             waitingListCount: waitingListCount,
             pendingReviewsCount: pendingReviewsCount,

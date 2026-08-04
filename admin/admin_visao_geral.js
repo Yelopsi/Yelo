@@ -48,10 +48,9 @@ window.initializePage = function() {
         'kpi-geral-conversao', 'kpi-total-matches', 'kpi-total-cliques'
     ];
     const smallKpis = [
-        'kpi-pat-total', 'kpi-pat-active', 'kpi-pat-deleted',
         'kpi-psi-total', 'kpi-psi-active', 'kpi-psi-deleted',
         'kpi-plan-Essencial', 'kpi-plan-Clínico', 'kpi-plan-sol',
-        'kpi-quest-total', 'kpi-quest-deleted',
+        'kpi-psi-paying', 'kpi-psi-vip',
         'waiting-list-count', 'pending-reviews-count'
     ];
 
@@ -107,20 +106,12 @@ window.initializePage = function() {
              updateSafe('kpi-questionnaires-today', stats.questToday || 0); // Aqui entra o contador consertado
  
              // --- 2. RAIO-X (EMBAIXO) ---
-             if(stats.patients) {
-                 updateSafe('kpi-pat-total', stats.patients.total);
-                 updateSafe('kpi-pat-active', stats.patients.active);
-                 updateSafe('kpi-pat-deleted', stats.patients.deleted);
-             } else {
-                 updateSafe('kpi-pat-total', '--');
-                 updateSafe('kpi-pat-active', '--');
-                 updateSafe('kpi-pat-deleted', '--');
-             }
- 
              if(stats.psychologists) {
                  updateSafe('kpi-psi-total', stats.psychologists.total);
                  updateSafe('kpi-psi-active', stats.psychologists.active);
                  updateSafe('kpi-psi-deleted', stats.psychologists.deleted);
+                 updateSafe('kpi-psi-paying', stats.psychologists.paying);
+                 updateSafe('kpi-psi-vip', stats.psychologists.vip);
                  
                  const plans = stats.psychologists.byPlan || {};
                  updateSafe('kpi-plan-Essencial', plans['Essencial'] || 0);
@@ -130,17 +121,11 @@ window.initializePage = function() {
                  updateSafe('kpi-psi-total', '--');
                  updateSafe('kpi-psi-active', '--');
                  updateSafe('kpi-psi-deleted', '--');
+                 updateSafe('kpi-psi-paying', '--');
+                 updateSafe('kpi-psi-vip', '--');
                  updateSafe('kpi-plan-Essencial', '--');
                  updateSafe('kpi-plan-Clínico', '--');
                  updateSafe('kpi-plan-sol', '--');
-             }
- 
-             if(stats.questionnaires) {
-                 updateSafe('kpi-quest-total', stats.questionnaires.total);
-                 updateSafe('kpi-quest-deleted', stats.questionnaires.deleted);
-             } else {
-                 updateSafe('kpi-quest-total', '--');
-                 updateSafe('kpi-quest-deleted', '--');
              }
  
              // --- 3. WIDGETS LATERAIS ---

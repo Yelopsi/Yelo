@@ -50,22 +50,22 @@
                 
                 <div class="patients-metrics-group" style="gap: 15px; flex-wrap: wrap;">
                     <div class="p-metric">
-                        <div class="p-metric-val" id="kpi-pat-active">-</div>
-                        <div class="p-metric-label" style="display: flex; align-items: center; justify-content: center; gap: 6px;">Pacientes Ativos <span class="info-tooltip" data-tooltip="Total de pacientes atualmente com contas ativas (desconta os excluídos).">i</span></div>
-                        <div style="font-size: 0.8rem; margin-top: 5px;">Total: <strong id="kpi-pat-total" style="color: #666;">-</strong> | Excluídos: <strong id="kpi-pat-deleted" style="color: #ef4444;">-</strong></div>
-                    </div>
-                    <div class="p-metric">
-                        <div class="p-metric-val" id="kpi-psi-active">-</div>
+                        <div class="p-metric-val" id="kpi-psi-active" style="transition: color 0.3s;">-</div>
                         <div class="p-metric-label" style="display: flex; align-items: center; justify-content: center; gap: 6px;">Psicólogos Ativos <span class="info-tooltip" data-tooltip="Psicólogos com assinaturas vigentes, isentos e perfil visível.">i</span></div>
-                        <div style="font-size: 0.8rem; margin-top: 5px;">Total: <strong id="kpi-psi-total" style="color: #666;">-</strong> | Excluídos: <strong id="kpi-psi-deleted" style="color: #ef4444;">-</strong></div>
+                        <div style="font-size: 0.8rem; margin-top: 5px;">Total: <strong id="kpi-psi-total" style="color: #666; transition: color 0.3s;">-</strong> | Excluídos: <strong id="kpi-psi-deleted" style="color: #ef4444; transition: color 0.3s;">-</strong></div>
                         <div style="font-size: 0.75rem; margin-top: 5px; color: #666;">
-                            Essencial: <span id="kpi-plan-Essencial">0</span> | Clínico: <span id="kpi-plan-Clínico">0</span> | Ref: <span id="kpi-plan-sol">0</span>
+                            Essencial: <span id="kpi-plan-Essencial" style="transition: color 0.3s;">0</span> | Clínico: <span id="kpi-plan-Clínico" style="transition: color 0.3s;">0</span> | Ref: <span id="kpi-plan-sol" style="transition: color 0.3s;">0</span>
                         </div>
                     </div>
+                    
+                    <div class="p-metric">
+                        <div class="p-metric-val" id="kpi-psi-paying" style="transition: color 0.3s;">-</div>
+                        <div class="p-metric-label" style="display: flex; align-items: center; justify-content: center; gap: 6px;">Psicólogos Pagantes <span class="info-tooltip" data-tooltip="Psicólogos com assinaturas vigentes (sem isenção).">i</span></div>
+                    </div>
+                    
                     <div class="p-metric" style="border: none;">
-                        <div class="p-metric-val" id="kpi-quest-total">-</div>
-                        <div class="p-metric-label" style="display: flex; align-items: center; justify-content: center; gap: 6px;">Questionários Concluídos <span class="info-tooltip" data-tooltip="Total de pacientes que preencheram todas as etapas do funil de matchmaking.">i</span></div>
-                        <div style="font-size: 0.8rem; margin-top: 5px;">Desistências: <strong id="kpi-quest-deleted" style="color: #ef4444;">-</strong></div>
+                        <div class="p-metric-val" id="kpi-psi-vip" style="transition: color 0.3s;">-</div>
+                        <div class="p-metric-label" style="display: flex; align-items: center; justify-content: center; gap: 6px;">Psicólogos VIPs <span class="info-tooltip" data-tooltip="Psicólogos com isenção de pagamento.">i</span></div>
                     </div>
                 </div>
 
