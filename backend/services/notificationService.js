@@ -30,7 +30,7 @@ const notifyNewPost = async (post, type) => {
         
         if (type === 'blog') {
             const blogIdentifier = post.slug || post.id;
-            conteudoAviso += `<br><br><a href="/blog/${blogIdentifier}" target="_blank" class="aviso-link-direto" data-blog-id="${post.id}" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para ler o artigo</a>.`;
+            conteudoAviso += `<br><br><a href="/blog/post/${blogIdentifier}" target="_blank" class="aviso-link-direto" data-blog-id="${post.id}" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para ler o artigo</a>.`;
         } else if (type === 'forum') {
             conteudoAviso += `<br><br><a href="#" class="aviso-link-direto" data-post-id="${post.id}" onclick="window.loadPage('psi_forum.html?postId=${post.id}'); return false;" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para acessar o tópico</a>.`;
         }
