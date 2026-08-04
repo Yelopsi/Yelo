@@ -151,6 +151,12 @@
                         // Fallback para notificações antigas que não tinham o link injetado
                         window.open('/blog', '_blank');
                         return;
+                    } else if (aviso.title.toLowerCase().includes('fórum') || aviso.title.toLowerCase().includes('tópico') || aviso.title.toLowerCase().includes('comentário') || aviso.title.toLowerCase().includes('resposta')) {
+                        // Fallback para notificações antigas do fórum
+                        if (typeof window.loadPage === 'function') {
+                            window.loadPage('psi_forum.html');
+                            return;
+                        }
                     }
                 }
 
