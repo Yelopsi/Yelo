@@ -164,18 +164,18 @@ exports.getPsychologistFullDetails = async (req, res) => {
         }
 
         const whatsappStats = await db.sequelize.query(
-            `SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "psychologistId" = :id`,
+            `SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "psychologistId" = :id`,
             { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => db.sequelize.query(
-            `SELECT COUNT(*) as count FROM "WhatsappClickLogs" WHERE "PsychologistId" = :id`,
+            `SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "PsychologistId" = :id`,
             { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
         )).catch(() => [{ count: 0 }]);
         
         const whatsappLogs = await db.sequelize.query(
-            `SELECT * FROM "WhatsappClickLogs" WHERE "psychologistId" = :id ORDER BY "createdAt" DESC LIMIT 100`,
+            `SELECT * FROM "WhatsAppClickLogs" WHERE "psychologistId" = :id ORDER BY "createdAt" DESC LIMIT 100`,
             { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => db.sequelize.query(
-            `SELECT * FROM "WhatsappClickLogs" WHERE "PsychologistId" = :id ORDER BY "createdAt" DESC LIMIT 100`,
+            `SELECT * FROM "WhatsAppClickLogs" WHERE "PsychologistId" = :id ORDER BY "createdAt" DESC LIMIT 100`,
             { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
         )).catch(() => []);
         const profileViewsStats = await db.sequelize.query(

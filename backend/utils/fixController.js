@@ -45,7 +45,7 @@ exports.cleanSoftDeleted = async (req, res) => {
 
         if (ids.length > 0) {
             const tabelasComPsychologistId = [
-                '"GamificationLogs"', '"WhatsappClickLogs"', '"ProfileAppearanceLogs"',
+                '"GamificationLogs"', '"WhatsAppClickLogs"', '"ProfileAppearanceLogs"',
                 '"MatchEvents"', '"Appointments"', '"Expenses"', '"ExitSurveys"',
                 '"Reviews"', '"Conversations"', '"Answers"', '"QuestionIgnores"'
             ];

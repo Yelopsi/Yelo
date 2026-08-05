@@ -18,6 +18,26 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: true
         },
+        patientId: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+        guestPhone: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        source: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        status: {
+            type: DataTypes.STRING,
+            defaultValue: 'pending'
+        },
+        message_sent_at: {
+            type: DataTypes.DATE,
+            allowNull: true
+        },
         feedbackGiven: {
             type: DataTypes.BOOLEAN,
             defaultValue: false // Só vira true quando o psi responder o modal

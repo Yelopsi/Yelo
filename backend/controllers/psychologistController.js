@@ -68,7 +68,7 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
         
         const globalClicksResult = await db.sequelize.query(
             `SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, "guestName", "id"::varchar)) as count 
-             FROM "WhatsappClickLogs" WHERE "createdAt" >= :thirtyDaysAgo`,
+             FROM "WhatsAppClickLogs" WHERE "createdAt" >= :thirtyDaysAgo`,
             { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => [{ count: 0 }]);
         const realMatches = parseInt(globalMatchesResult[0]?.count || 0, 10);

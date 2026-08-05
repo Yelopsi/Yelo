@@ -26,7 +26,7 @@ router.post('/psychologists/:slug/whatsapp-click', async (req, res) => {
         // }
 
         await db.sequelize.query(
-            `INSERT INTO "WhatsappClickLogs" ("psychologistId", "patientId", "guestPhone", "guestName", "createdAt", "updatedAt") VALUES (:id, :patId, :phone, :name, NOW(), NOW())`,
+            `INSERT INTO "WhatsAppClickLogs" ("psychologistId", "patientId", "guestPhone", "guestName", "createdAt", "updatedAt") VALUES (:id, :patId, :phone, :name, NOW(), NOW())`,
             { replacements: { id: psychologist.id, patId: patientId || null, phone: guestPhone || null, name: guestName || null } }
         );
         await db.sequelize.query(

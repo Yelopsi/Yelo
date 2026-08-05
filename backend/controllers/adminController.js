@@ -449,7 +449,7 @@ exports.getPsiRanking = async (req, res) => {
         // 1. Busca Cliques do WhatsApp
         const clicksData = await db.sequelize.query(`
             SELECT "psychologistId", COUNT(id) as total_cliques
-            FROM "WhatsappClickLogs"
+            FROM "WhatsAppClickLogs"
             ${dateFilter}
             GROUP BY "psychologistId"
         `, { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
@@ -723,7 +723,7 @@ exports.getFollowUps = async (req, res) => {
                 p.telefone as "patientPhone",
                 psi.nome as "psychologistName",
                 psi.telefone as "psychologistPhone"
-            FROM "WhatsappClickLogs" w
+            FROM "WhatsAppClickLogs" w
             LEFT JOIN "Patients" p ON w."patientId" = p.id
             LEFT JOIN "Psychologists" psi ON w."psychologistId" = psi.id
             WHERE COALESCE(w.status, 'pending') != 'deleted'
