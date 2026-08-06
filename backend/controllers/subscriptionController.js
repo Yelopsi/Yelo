@@ -219,21 +219,43 @@ exports.cancelSubscription = async (req, res) => {
 
         } else {
             // --- CENÁRIO B: CANCELAMENTO AGENDADO (> 7 DIAS) ---
-            if (subData.nextDueDate) {
-                // Atualiza a assinatura definindo o fim para a próxima cobrança
+            
+            // Se o usuário já está inativo, ele não tem período restante. Excluímos direto.
+            if (psychologist.status === 'inactive') {
+                await fetch(`${ASAAS_API_URL}/subscriptions/${subData.id}`, {
+                    method: 'DELETE',
+                    headers: { 'access_token': ASAAS_API_KEY }
+                });
+                
+                await psychologist.update({
+                    cancelAtPeriodEnd: false,
+                    stripeSubscriptionId: null,
+                    subscriptionId: null
+                });
+                return res.json({ message: 'Assinatura cancelada com sucesso.' });
+            }
+
+            // Se está ativo, cancelamos a renovação mas mantemos o acesso até o planExpiresAt atual
+            // O Asaas precisa saber quando a assinatura acaba. Passamos a data atual de expiração se existir.
+            if (psychologist.planExpiresAt) {
+                const endDateStr = new Date(psychologist.planExpiresAt).toISOString().split('T')[0];
                 await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
-                    body: JSON.stringify({ endDate: subData.nextDueDate })
+                    body: JSON.stringify({ endDate: endDateStr })
+                });
+            } else {
+                // Fallback, deleta no Asaas se não tiver data
+                await fetch(`${ASAAS_API_URL}/subscriptions/${subData.id}`, {
+                    method: 'DELETE',
+                    headers: { 'access_token': ASAAS_API_KEY }
                 });
             }
 
             // 2. ATUALIZA O BANCO LOCAL
-            const updateData = { cancelAtPeriodEnd: true };
-            if (subData.nextDueDate) {
-                updateData.planExpiresAt = subData.nextDueDate;
-            }
-            await psychologist.update(updateData);
+            // NÃO atualizamos o planExpiresAt baseado no Asaas, pois o Asaas joga a data muito pra frente
+            // O planExpiresAt local já reflete exatamente o que o psicólogo pagou.
+            await psychologist.update({ cancelAtPeriodEnd: true });
 
             res.json({ message: 'Renovação automática cancelada. Seu acesso continua até o fim do período.' });
         }
