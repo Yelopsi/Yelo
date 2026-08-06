@@ -272,7 +272,8 @@
 
         if (temPlano && cardResumo) {
             cardResumo.style.display = 'flex';
-            const isCancelado = psychologistData.cancelAtPeriodEnd || psychologistData.cancel_at_period_end || psychologistData.status === 'canceled';
+            cardResumo.style.display = 'flex';
+            const isCancelado = psychologistData.cancelAtPeriodEnd || psychologistData.cancel_at_period_end || psychologistData.status === 'canceled' || psychologistData.status === 'inactive';
             if (areaCancelamento) areaCancelamento.style.display = (isCancelado || !hasSubscription) ? 'none' : 'block';
 
             const mapNomes = { 'ESSENTIAL': 'Essencial', 'CLINICAL': 'Clínico', 'REFERENCE': 'Referência' };
@@ -292,8 +293,10 @@
             const dataFormatada = dataDisplay.toLocaleDateString('pt-BR');
 
             if (isCancelado) {
-                if (elData) elData.textContent = `Acesso até: ${dataFormatada}`;
-                if (elBadge) elBadge.innerHTML = `<span style="width: 8px; height: 8px; background: #FFC107; border-radius: 50%;"></span> Cancelado`;
+                if (elData) elData.textContent = psychologistData.status === 'inactive' ? `Inativo desde: ${dataFormatada}` : `Acesso até: ${dataFormatada}`;
+                if (elBadge) elBadge.innerHTML = psychologistData.status === 'inactive' 
+                    ? `<span style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%;"></span> Inativo / Pendente`
+                    : `<span style="width: 8px; height: 8px; background: #FFC107; border-radius: 50%;"></span> Cancelado`;
             } else {
                 if (elData) elData.textContent = `Renova em: ${dataFormatada}`;
                 if (elBadge) elBadge.innerHTML = `<span style="width: 8px; height: 8px; background: #4ade80; border-radius: 50%;"></span> Ativo`;
@@ -317,12 +320,21 @@
 
             const planoUsuario = temPlano ? psychologistData.plano.toUpperCase() : '';
             const isCurrent = planoUsuario === planoAlvo.toUpperCase();
-            const isCancelado = psychologistData.cancel_at_period_end || psychologistData.status === 'canceled' || psychologistData.cancelado_localmente;
+            const isCancelado = psychologistData.cancel_at_period_end || psychologistData.status === 'canceled' || psychologistData.cancelado_localmente || psychologistData.status === 'inactive';
 
             if(isCurrent) {
                 const novoSelo = document.createElement('div'); novoSelo.className = 'selo-plano-atual'; novoSelo.textContent = 'Seu Plano Atual'; novoSelo.style.cssText = "background:#1B4332; color:#fff; padding:5px 10px; border-radius:4px; margin-bottom:10px; font-size:0.8rem; display:inline-block; font-weight:bold;";
                 card.insertBefore(novoSelo, card.firstChild); card.classList.add('plano-card--ativo');
-                if (isCancelado) { btn.textContent = "Reativar Assinatura"; btn.disabled = false; btn.classList.add('btn-reativar'); btn.onclick = (e) => { e.preventDefault(); reativarAssinatura(btn); }; } 
+                if (isCancelado) { 
+                    btn.textContent = psychologistData.status === 'inactive' ? "Assinar Novamente" : "Reativar Assinatura"; 
+                    btn.disabled = false; 
+                    btn.classList.add('btn-reativar'); 
+                    btn.onclick = (e) => { 
+                        e.preventDefault(); 
+                        if (psychologistData.status === 'inactive') { window.iniciarPagamento(planoAlvo, btn); } 
+                        else { reativarAssinatura(btn); }
+                    }; 
+                } 
                 else { btn.textContent = "Plano Ativo"; btn.disabled = true; btn.style.opacity = "0.7"; }
             } else {
                 if (!temPlano) { btn.innerHTML = "ASSINAR AGORA"; btn.classList.add('btn-upgrade', 'btn-pulse-effect'); } 

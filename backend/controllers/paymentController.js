@@ -177,6 +177,21 @@ exports.createPreference = async (req, res) => {
         let existingSubId = psychologist.stripeSubscriptionId || psychologist.subscriptionId;
 
         const saveAsaasSubscription = async (payload) => {
+            // Se o psicólogo está INATIVO mas tem uma assinatura antiga, 
+            // NÃO podemos reaproveitá-la, senão o Asaas agenda a cobrança para o ciclo antigo (ex: dia 11 do mês que vem)
+            // e o psicólogo fica sem acesso até lá.
+            if (existingSubId && psychologist.status === 'inactive') {
+                try {
+                    await fetch(`${ASAAS_API_URL}/subscriptions/${existingSubId}`, {
+                        method: 'DELETE',
+                        headers: { 'access_token': ASAAS_API_KEY }
+                    });
+                } catch (e) {
+                    console.warn(`Aviso: falha ao deletar assinatura antiga ${existingSubId}`, e);
+                }
+                existingSubId = null;
+            }
+
             payload.updatePendingPayments = true; // Garante que faturas em aberto adotem o novo valor/forma de pagamento
             
             if (existingSubId) {
