@@ -381,7 +381,13 @@ router.get('/:slug', async (req, res, next) => {
         }
 
         try {
-            return res.render('psi_perfil_publico', { psicologo: psychologist });
+            const clicksCount = await db.sequelize.query(
+                `SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, "guestName", "id"::varchar)) as count FROM "WhatsAppClickLogs" WHERE "psychologistId" = :psiId`,
+                { replacements: { psiId: psychologist.id }, type: db.sequelize.QueryTypes.SELECT }
+            );
+            const pacientesAtendidosCount = clicksCount[0] ? parseInt(clicksCount[0].count, 10) : 0;
+            
+            return res.render('psi_perfil_publico', { psicologo: psychologist, pacientesAtendidosCount });
         } catch (renderErr) {
             return res.status(404).render('404');
         }

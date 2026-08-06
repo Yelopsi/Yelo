@@ -200,21 +200,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (priceContainer) {
                     priceContainer.innerHTML = `
                         <div class="price-display" style="font-family: var(--font-titulos); font-size: 2.0rem; font-weight: 700; color: var(--verde-escuro); margin: 5px 0 0 0; line-height: 1;">R$ ${parseFloat(psi.valor_mensal_numero).toFixed(2).replace('.', ',')}</div>
-                        <div class="price-suffix" style="font-size: 0.9rem; color: #999; font-weight: 500;">por mês</div>
+                        <div class="price-suffix" style="font-size: 0.9rem; color: #999; font-weight: 500;">por mês <br> (1 sessão por semana)</div>
                     `;
                 }
                 if (priceContainerMobile) {
-                    priceContainerMobile.innerHTML = `<span class="label">Mensal</span><span class="value">R$ ${parseFloat(psi.valor_mensal_numero).toFixed(2).replace('.', ',')}</span>`;
+                    priceContainerMobile.innerHTML = `
+                        <span class="label" style="font-size: 0.7rem; color: #888; font-weight: 700; text-transform: uppercase; margin-bottom: 2px;">Mensal</span>
+                        <span class="value">R$ ${parseFloat(psi.valor_mensal_numero).toFixed(2).replace('.', ',')}</span>
+                        <span class="sub-label" style="font-size: 0.65rem; color: #999; margin-top: 2px;">1 sessão por semana</span>
+                    `;
                 }
             } else {
                 if (priceContainer) {
                     priceContainer.innerHTML = `
                         <div class="price-display" style="font-family: var(--font-titulos); font-size: 2.0rem; font-weight: 700; color: var(--verde-escuro); margin: 5px 0 0 0; line-height: 1;">A combinar</div>
-                        <div class="price-suffix" style="font-size: 0.9rem; color: #999; font-weight: 500;">por mês</div>
+                        <div class="price-suffix" style="font-size: 0.9rem; color: #999; font-weight: 500;">por mês <br> (1 sessão por semana)</div>
                     `;
                 }
                 if (priceContainerMobile) {
-                    priceContainerMobile.innerHTML = `<span class="label">Mensal</span><span class="value" style="font-size: 1.5rem;">A combinar</span>`;
+                    priceContainerMobile.innerHTML = `
+                        <span class="label" style="font-size: 0.7rem; color: #888; font-weight: 700; text-transform: uppercase; margin-bottom: 2px;">Mensal</span>
+                        <span class="value" style="font-size: 1.5rem;">A combinar</span>
+                        <span class="sub-label" style="font-size: 0.65rem; color: #999; margin-top: 2px;">1 sessão por semana</span>
+                    `;
                 }
             }
         } else {
