@@ -26,17 +26,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Auth
-    firebase.auth().onAuthStateChanged(user => {
-        if (user) {
-            user.getIdToken(true).then(token => {
-                window.adminToken = token;
-                fetchData();
-            });
-        } else {
-            window.location.href = '/login.html';
-        }
-    });
+    // Iniciar carga
+    fetchData();
 });
 
 async function fetchData() {
@@ -47,10 +38,13 @@ async function fetchData() {
     try {
         const start = document.getElementById('filter-start').value;
         const end = document.getElementById('filter-end').value;
+        const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
         const url = `${API_BASE_URL}/api/admin/analytics/visibility?startDate=${start}&endDate=${end}`;
 
+        const token = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : localStorage.getItem('Yelo_token');
+
         const response = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${window.adminToken}` }
+            headers: { 'Authorization': `Bearer ${token}` }
         });
 
         if (!response.ok) throw new Error('Falha ao buscar dados');
