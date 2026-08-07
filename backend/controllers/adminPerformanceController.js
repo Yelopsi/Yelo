@@ -441,8 +441,6 @@ exports.generateAiPaidChurnMessage = async (req, res) => {
     try {
         const { id } = req.params;
         const psiId = parseInt(id, 10);
-        const db = require('../models');
-        const { getStandardMetrics } = require('./adminPerformanceController');
 
         let psi, matchesCount, viewsCount, clicksCount, dealYes, dealGhosted, dealNo, dealTalking;
 
