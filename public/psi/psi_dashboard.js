@@ -1006,7 +1006,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         try {
                                             await apiFetch(`${API_BASE_URL}/api/psychologists/me/whatsapp-feedback`, {
                                                 method: 'POST',
-                                                headers: { 'Content-Type': 'application/json', 'Authorization': \`Bearer \${localStorage.getItem('Yelo_token')}\` },
+                                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('Yelo_token')}` },
                                                 body: JSON.stringify({ clickLogId: id, contact_received, deal_closed })
                                             });
                                         } catch(e) {}
@@ -1030,7 +1030,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         try {
                                             await apiFetch(`${API_BASE_URL}/api/psychologists/me/postpone-negotiation`, {
                                                 method: 'PATCH',
-                                                headers: { 'Content-Type': 'application/json', 'Authorization': \`Bearer \${localStorage.getItem('Yelo_token')}\` },
+                                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('Yelo_token')}` },
                                                 body: JSON.stringify({ clickLogId: id })
                                             });
                                         } catch(e) {}
