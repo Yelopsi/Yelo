@@ -68,11 +68,6 @@ const calculateSimilarity = (psy, preferences = {}, priceRange) => {
     if (!hasPhoto) sOp -= 50;
     if (!hasMinBio) sOp -= 50;
 
-    // --- VIP BOOST ---
-    if (isVip) {
-        sOp += 10;
-        explainability.positives.push("Profissional Verificado (VIP)");
-    }
     // --- FIM DOS REQUISITOS MÍNIMOS ---
 
     const temasPsi = getArrayField(psy.temas_atuacao);
@@ -135,6 +130,9 @@ const calculateSimilarity = (psy, preferences = {}, priceRange) => {
     if (valorPsi === 0 && psy.tipo_cobranca === 'mensal' && parseFloat(psy.valor_mensal_numero || 0) > 0) {
         valorPsi = parseFloat(psy.valor_mensal_numero) / 4;
     }
+    if (valorPsi === 0) {
+        valorPsi = 100; // Assumir valor médio da plataforma para burlar o filtro de preço
+    }
     
     if (valorPsi > 0) {
         if (valorPsi >= priceRange.min && valorPsi <= priceRange.max) {
@@ -193,8 +191,8 @@ const applyFairness = (scoredCandidates, totalSystemImpressions) => {
         // --- BÔNUS MVP (ZERO TO ONE) ---
         const mvpBoost = (clicks === 0) ? WEIGHTS.MVP_ZERO_CLICK_BOOST : 0;
 
-        // Calcula a pontuação final preliminar
-        let finalScore = (c.rawMatchScore * cooldownPenalty) + (ctr * 10) + Math.min(20, explorationBonus) + mvpBoost;
+        // Calcula a pontuação final preliminar (SEM COOLDOWN AINDA)
+        let finalScore = c.rawMatchScore + (ctr * 10) + Math.min(20, explorationBonus) + mvpBoost;
 
         // --- EXPOSURE THROTTLE (Velocidade de Aparições) ---
         // Se a velocidade (Aparições/Dia) for muito maior que a média, aplicamos o freio.
@@ -211,9 +209,12 @@ const applyFairness = (scoredCandidates, totalSystemImpressions) => {
         if (c.planExpiresAt) {
             const daysUntilExpiry = (new Date(c.planExpiresAt) - new Date()) / (1000 * 60 * 60 * 24);
             if (daysUntilExpiry > 0 && daysUntilExpiry <= 3) {
-                finalScore += 15;
+                finalScore += 5; // Reduzido de 15 para 5
             }
         }
+
+        // Aplica o cooldown no score FINAL para penalizar de verdade quem já apareceu muito hoje
+        finalScore *= cooldownPenalty;
 
             if (isNaN(finalScore) || finalScore < 0) finalScore = c.rawMatchScore || 1; // Fallback de segurança matemática absoluta
 
