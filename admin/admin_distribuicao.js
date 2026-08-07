@@ -1,7 +1,11 @@
 let globalPsyData = [];
 let currentSort = { column: 'fairnessScore', desc: true };
 
-document.addEventListener("DOMContentLoaded", () => {
+window.initializePage = function() {
+    globalPsyData = [];
+    currentSort = { column: 'fairnessScore', desc: true };
+
+
     // Definir data padrão (últimos 30 dias)
     const today = new Date();
     const thirtyDaysAgo = new Date();
@@ -28,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Iniciar carga
     fetchData();
-});
+};
 
 async function fetchData() {
     const btn = document.getElementById('btn-update');
