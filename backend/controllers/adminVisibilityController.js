@@ -123,11 +123,17 @@ exports.getVisibilityMetrics = async (req, res) => {
         const idealCapacity = activePsyCount * 10;
 
         if (totalDemand < idealCapacity * 0.5) {
-            suggestion = "🚨 Aumentar Investimento em Tráfego Pago (Ads). Há mais capacidade na rede do que pacientes buscando no período selecionado.";
+            const missingDemand = idealCapacity - totalDemand;
+            suggestion = `🚨 <b>Aumentar Ads (Tráfego Pago).</b> A rede atual suporta pelo menos mais ${missingDemand} buscas por mês. A demanda atual (${totalDemand}) não é suficiente para alimentar os ${activePsyCount} psicólogos de forma justa.`;
             alertLevel = "warning";
         } else if (totalDemand > idealCapacity * 1.5) {
-            suggestion = "🔥 Alta Demanda! Captar Mais Psicólogos. A demanda atual excede a capacidade ideal da rede de profissionais ativos.";
+            const totalPsyNeeded = Math.ceil(totalDemand / 10);
+            const missingPsy = totalPsyNeeded - activePsyCount;
+            suggestion = `🔥 <b>Captar Mais Profissionais!</b> A demanda está superaquecida (${totalDemand} buscas). Para não sobrecarregar e garantir agendamentos, o ideal seria ter <b>mais ${missingPsy} psicólogos</b> na plataforma imediatamente.`;
             alertLevel = "danger";
+        } else {
+            suggestion = `✅ <b>Sistema Equilibrado.</b> A proporção atual de buscas (${totalDemand}) atende de forma sustentável os ${activePsyCount} psicólogos ativos. Mantenha o ritmo atual.`;
+            alertLevel = "success";
         }
 
         res.json({
