@@ -828,6 +828,34 @@ exports.getPendingActions = async (req, res) => {
             console.error('Erro ao buscar Consultor IA em getPendingActions:', e);
         }
 
+        // 7. Churn de Pagantes (Assinatura não renovada ou cancelada)
+        // Regra: inativo, JÁ TEVE assinatura (stripeSubscriptionId NOT NULL),
+        // planExpiresAt expirou há mais de 1 dia, e msg_paid_churn_sent_at é NULL.
+        const paidChurnCandidates = await db.Psychologist.findAll({
+            where: {
+                status: 'inactive',
+                stripeSubscriptionId: { [Op.ne]: null },
+                planExpiresAt: { [Op.lte]: oneDayAgo },
+                msg_paid_churn_sent_at: null,
+                deletedAt: null,
+                telefone: { [Op.ne]: null, [Op.not]: '' }
+            },
+            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano']
+        });
+
+        paidChurnCandidates.forEach(p => {
+            pendingList.push({
+                id: p.id,
+                nome: p.nome,
+                telefone: p.telefone,
+                status: 'inactive',
+                plano: p.plano,
+                planExpiresAt: p.planExpiresAt,
+                actionType: 'paid_churn',
+                reason: 'Churn de Pagante (Assinatura não renovada)'
+            });
+        });
+
         // MOCK PARA TESTE LOCAL
         if (req.hostname === 'localhost' || req.hostname === '127.0.0.1') {
             pendingList.push({
@@ -892,12 +920,16 @@ exports.markActionSent = async (req, res) => {
         }
 
         const now = new Date();
+        const updateData = {};
+        
         if (actionType === 'analysis') {
-            await psychologist.update({ msg_analysis_sent_at: now });
+            updateData.msg_analysis_sent_at = now;
         } else if (actionType === 'incomplete') {
-            await psychologist.update({ msg_incomplete_profile_sent_at: now });
+            updateData.msg_incomplete_profile_sent_at = now;
         } else if (actionType === 'churn') {
-            await psychologist.update({ msg_churn_followup_sent_at: now });
+            updateData.msg_churn_followup_sent_at = now;
+        } else if (actionType === 'paid_churn') {
+            updateData.msg_paid_churn_sent_at = now;
         } else if (actionType === 'billing_feedback') {
             if (db.WhatsAppClickLog) {
                 await db.WhatsAppClickLog.update(
@@ -906,7 +938,7 @@ exports.markActionSent = async (req, res) => {
                 );
             }
         } else if (actionType === 'expiring_trial') {
-            await psychologist.update({ admin_billing_sent_at: now });
+            updateData.admin_billing_sent_at = now;
         } else if (actionType === 'low_performance') {
             let history = psychologist.aiOptimizationHistory ? [...psychologist.aiOptimizationHistory] : [];
             history.push({ sentAt: now, action: 'whatsapp_ai_diagnosis' });
@@ -915,6 +947,10 @@ exports.markActionSent = async (req, res) => {
             await psychologist.save();
         } else {
             return res.status(400).json({ error: 'Tipo de ação inválido.' });
+        }
+
+        if (Object.keys(updateData).length > 0) {
+            await psychologist.update(updateData);
         }
 
         res.status(200).json({ message: 'Ação registrada com sucesso!' });
@@ -931,14 +967,16 @@ exports.resetCrm = async (req, res) => {
             msg_analysis_sent_at: null,
             msg_incomplete_profile_sent_at: null,
             msg_churn_followup_sent_at: null,
-            admin_billing_sent_at: null
+            admin_billing_sent_at: null,
+            msg_paid_churn_sent_at: null
         }, {
             where: {
                 [Op.or]: [
                     { msg_analysis_sent_at: { [Op.ne]: null } },
                     { msg_incomplete_profile_sent_at: { [Op.ne]: null } },
                     { msg_churn_followup_sent_at: { [Op.ne]: null } },
-                    { admin_billing_sent_at: { [Op.ne]: null } }
+                    { admin_billing_sent_at: { [Op.ne]: null } },
+                    { msg_paid_churn_sent_at: { [Op.ne]: null } }
                 ]
             }
         });

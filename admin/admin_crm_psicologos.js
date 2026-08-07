@@ -306,7 +306,8 @@ window.initializePage = function () {
 
             if (item.actionType === 'analysis') actionBadge = '<span class="status status-active">Análise Pronta</span>';
             else if (item.actionType === 'incomplete') actionBadge = '<span class="status status-pending">Perfil Incompleto</span>';
-            else if (item.actionType === 'churn') actionBadge = '<span class="status status-cancelada">Churn</span>';
+            else if (item.actionType === 'churn') actionBadge = '<span class="status status-cancelada">Churn Trial</span>';
+            else if (item.actionType === 'paid_churn') actionBadge = '<span class="status status-cancelada" style="background:#ffe4e6; color:#be123c;">Churn Pago</span>';
             else if (item.actionType === 'billing_feedback') actionBadge = '<span class="status" style="background:#e0e7ff; color:#4338ca;">Feedback/Cobrança</span>';
             else if (item.actionType === 'expiring_trial') actionBadge = '<span class="status" style="background:#fef08a; color:#b45309;">Trial Expirando</span>';
             else if (item.actionType === 'low_performance') actionBadge = '<span class="status" style="background:#f3e8ff; color:#7c3aed;">Análise (IA)</span>';
@@ -387,7 +388,27 @@ window.initializePage = function () {
             }
         } else if (actionType === 'incomplete') {
             msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo. 🌿\n\nVi que você deu o primeiro passo e iniciou o seu cadastro na nossa plataforma, mas acabou não finalizando o preenchimento do seu perfil. Eu sei bem que a rotina de atendimentos acaba engolindo o nosso tempo, né? rs\n\nPassei só para te lembrar que os seus 14 dias de teste gratuito (sem precisar cadastrar cartão de crédito) só começam a contar depois que o seu perfil estiver completo e a sua página disponível para receber pacientes!\n\nÉ a oportunidade perfeita para você testar na prática como a plataforma te conecta com pacientes direto no seu WhatsApp, lembrando que a gente não cobra nenhuma taxa ou comissão pelas suas sessões.\n\nFalta bem pouco para o seu perfil ficar ativo nas buscas. Se precisar de uma mãozinha para preencher a sua bio ou tiver qualquer dúvida, é só me dar um toque respondendo esta mensagem. Sigo super à disposição por aqui!`;
-        } else if (actionType === 'churn') {
+        
+        } else if (actionType === 'paid_churn') {
+            try {
+                if (window.showToast) window.showToast('Gerando copy de resgate (Pago) com IA... Aguarde.', 'info');
+                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : token;
+                const resAi = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/ai-paid-churn-message`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${tokenAdmin}` }
+                });
+                const data = await resAi.json();
+                if (data.whatsappCopy) {
+                    msg = data.whatsappCopy;
+                } else {
+                    if (window.showToast) window.showToast("Erro ao gerar copy de resgate (Pago)", "error");
+                    return;
+                }
+            } catch (e) {
+                if (window.showToast) window.showToast("Erro na IA: " + e.message, "error");
+                return;
+            }
+} else if (actionType === 'churn') {
             try {
                 if (window.showToast) window.showToast('Gerando copy de resgate com IA... Aguarde.', 'info');
                 const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : token;

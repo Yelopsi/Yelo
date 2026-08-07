@@ -436,6 +436,96 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
     }
 };
 
+
+exports.generateAiPaidChurnMessage = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const psiId = parseInt(id, 10);
+        const db = require('../models');
+        const { getStandardMetrics } = require('./adminPerformanceController');
+
+        let psi, matchesCount, viewsCount, clicksCount, dealYes, dealGhosted, dealNo, dealTalking;
+
+        if (psiId === 99999) {
+            psi = { nome: 'Dr. Local', valor_sessao_numero: 150 };
+            matchesCount = 450;
+            viewsCount = 62;
+            clicksCount = 12;
+            dealYes = 3;
+            dealGhosted = 0;
+            dealNo = 0;
+            dealTalking = 1;
+        } else {
+            psi = await db.Psychologist.findByPk(psiId, {
+                attributes: { exclude: ['senha'] }
+            });
+            if (!psi) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+
+            // Coletar Métricas Padronizadas
+            const metrics = await getStandardMetrics(psiId, psi);
+            matchesCount = metrics.matchesCount;
+            viewsCount = metrics.viewsCount;
+            clicksCount = metrics.clicksCount;
+            
+            // Feedbacks
+            const wppLogs = await db.WhatsAppClickLog.findAll({
+                where: { psychologistId: psiId },
+                attributes: ['dealClosed']
+            });
+            
+            clicksCount = wppLogs.length > 0 ? wppLogs.length + (psi.whatsapp_clicks || 0) : clicksCount;
+        }
+
+        const prompt = `
+Atue como Anderson, gerente de Customer Success da plataforma de saúde mental Yelo. 
+Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}. 
+Situação atual: Este profissional já era assinante do plano Essencial (R$ 99,00), mas a sua assinatura expirou/foi cancelada recentemente (Churn de Pagante). 
+O objetivo da mensagem é entender o que houve e convencê-lo a reativar a assinatura.
+
+Aja de forma humanizada, parceira, e TOTALMENTE PROFISSIONAL. NÃO use NENHUMA gíria.
+
+[DADOS HISTÓRICOS DE DESEMPENHO]
+Você DEVE SEMPRE citar esses três indicadores no corpo do texto para lembrá-lo do valor que a plataforma já gerou:
+1. Total de Aparições em Buscas (Matches): ${matchesCount}
+2. Total de Visitas na Página (Views): ${viewsCount}
+3. Total de Cliques no WhatsApp: ${clicksCount}
+
+[ANÁLISE FINANCEIRA]
+- O psicólogo cobra R$ ${psi.valor_sessao_numero ? psi.valor_sessao_numero : '(Valor não preenchido)'} por sessão.
+- A mensalidade da Yelo custa R$ 99,00.
+
+[INSTRUÇÕES DA COPY (MENSAGEM)]
+1. A mensagem deve ser enviada via WhatsApp. Use formatação nativa (*negrito*, _itálico_).
+2. Cumprimente pelo nome. Comece dizendo que você notou que a assinatura dele na Yelo expirou e o perfil acabou saindo do ar, e pergunte se houve algum problema com o cartão ou se foi uma decisão de pausa.
+3. Apresente os resultados históricos dele (Aparições, Visitas e Cliques) para gerar ancoragem de valor. Mostre que o perfil dele já tem relevância e que recomeçar depois pode ser mais lento.
+4. Seja empático. Se ele teve bons cliques no passado, lembre-o de que o perfil dele atrai pacientes. Se o problema for conversão, ofereça ajuda: 'Se o volume de fechamentos não estava como você gostaria, eu posso revisar seu perfil junto com você para melhorarmos isso!'
+5. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE: cite o valor que ele cobra por sessão e compare com a mensalidade (R$ 99,00). Mostre que manter o perfil ativo é um investimento muito baixo comparado ao retorno. (Ex: 'Lembrando que como a sua sessão é R$ 150,00, manter seu perfil no ar custa menos do que 1 única sessão fechada no mês inteiro').
+6. Finalize deixando a porta aberta. Pergunte como você pode ajudá-lo hoje a reativar o perfil, ou informe para acessar "Ajustes > Assinaturas e Planos" no app.
+7. REGRAS EXTRAS E ASSINATURA: NUNCA coloque despedidas ou assinaturas no final do texto.
+`;
+
+        if (psiId === 99999 || !process.env.GEMINI_API_KEY) {
+            console.warn("⚠️ MOCK: Utilizando texto gerado localmente para Paid Churn.");
+            return res.json({
+                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson, da Yelo.\n\nNotei aqui no sistema que a sua assinatura expirou nos últimos dias e, por conta disso, seu perfil acabou sendo ocultado das buscas dos pacientes. Houve algum problema com a renovação do cartão ou você decidiu dar uma pausa?\n\nFui dar uma olhada no seu histórico e vi que seu perfil construiu uma relevância bem legal com a gente! Ao todo, você já apareceu em *${matchesCount} buscas*, teve *${viewsCount} visitas* e recebeu *${clicksCount} cliques* no WhatsApp.\n\nComo a sua sessão particular é de R$ ${psi.valor_sessao_numero || '150,00'}, queria te lembrar que manter a sua assinatura na Yelo (R$ 99,00) acaba custando menos do que 1 única sessão fechada no mês todo.\n\nSe o motivo da pausa foi não estar conseguindo converter esses contatos, me avisa! Posso revisar o seu perfil com você.\n\nFaz sentido para você reativarmos o seu perfil hoje e não perder esse fluxo?`
+            });
+        }
+
+        const { GoogleGenerativeAI } = require("@google/generative-ai");
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        res.json({ whatsappCopy: text.trim() });
+    } catch (e) {
+        console.error('Erro generateAiPaidChurnMessage:', e);
+        res.status(500).json({ error: 'Erro interno no servidor de IA.' });
+    }
+};
+
 exports.generateAiExpiringTrialMessage = async (req, res) => {
     try {
         const { id } = req.params;

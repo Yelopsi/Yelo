@@ -183,6 +183,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: true
     },
+    msg_paid_churn_sent_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
     plano: {
       type: DataTypes.STRING,
       allowNull: true,
