@@ -623,6 +623,12 @@
                             btnEssencial.style.cursor = 'default';
                         }
                     }
+                } else if (user.plano === 'ESSENTIAL' && user.status === 'inactive') {
+                    // Usuário inativo, mas já teve o plano Essencial (falhou cobrança)
+                    const btnEssencial = document.querySelector('#card-plano-essencial .btn-mudar-plano');
+                    if (btnEssencial) {
+                        btnEssencial.textContent = 'Reativar Assinatura';
+                    }
                 }
             }
         }
