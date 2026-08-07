@@ -819,8 +819,9 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(async () => {
                 try {
                     const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/pending-whatsapp-feedback`);
+                    let data = {};
                     if (res.ok) {
-                        const data = await res.json();
+                        data = await res.json();
                         if (data && data.pending && data.pending.length > 0) {
                             const modal = document.createElement('div');
                             modal.id = 'modal-feedback-wpp';
