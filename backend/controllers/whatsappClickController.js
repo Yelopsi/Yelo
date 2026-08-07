@@ -201,3 +201,64 @@ exports.submitPublicFeedback = async (req, res) => {
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };
+
+// 7. Busca se há negociações pendentes (status 'talking' > 3 dias)
+exports.getPendingNegotiations = async (req, res) => {
+    try {
+        await ensureTableExists();
+        
+        const psychologistId = req.psychologist?.id || req.user?.id || req.userDecoded?.id; 
+        if (!psychologistId) {
+            return res.status(401).json({ error: 'Usuário não autenticado.' });
+        }
+        
+        const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+
+        const pendingNegotiations = await db.WhatsAppClickLog.findAll({
+            where: {
+                psychologistId,
+                dealClosed: 'talking',
+                updatedAt: {
+                    [Op.lte]: threeDaysAgo
+                }
+            },
+            order: [['updatedAt', 'ASC']]
+        });
+
+        res.status(200).json({ pending: pendingNegotiations || [] });
+    } catch (error) {
+        console.error('❌ ERRO NO PENDING NEGOTIATIONS:', error);
+        res.status(500).json({ error: 'Erro interno no servidor.', details: error.message });
+    }
+};
+
+// 8. Adia a atualização da negociação
+exports.postponeNegotiation = async (req, res) => {
+    try {
+        await ensureTableExists();
+        
+        const psychologistId = req.psychologist?.id || req.user?.id || req.userDecoded?.id;
+        if (!psychologistId) {
+            return res.status(401).json({ error: 'Usuário não autenticado.' });
+        }
+        
+        const { clickLogId } = req.body;
+
+        const clickLog = await db.WhatsAppClickLog.findOne({
+            where: { id: clickLogId, psychologistId }
+        });
+
+        if (!clickLog) {
+            return res.status(404).json({ error: 'Registro não encontrado.' });
+        }
+
+        // Força atualização da coluna updatedAt para o momento atual (adiando para +3 dias)
+        clickLog.changed('updatedAt', true);
+        await clickLog.save();
+
+        res.status(200).json({ message: 'Adiado com sucesso' });
+    } catch (error) {
+        console.error('Erro ao adiar negociação:', error);
+        res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};

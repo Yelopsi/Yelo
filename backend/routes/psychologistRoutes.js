@@ -132,6 +132,8 @@ const safeProtect = async (req, res, next) => {
 
 // Rotas do Feedback do WhatsApp puxadas para cima (Bypass do middleware global)
 router.get('/me/pending-whatsapp-feedback', safeProtect, whatsappClickController.getPendingFeedback);
+router.get('/me/pending-negotiation-feedback', safeProtect, whatsappClickController.getPendingNegotiations);
+router.patch('/me/postpone-negotiation', safeProtect, whatsappClickController.postponeNegotiation);
 router.post('/me/whatsapp-feedback', safeProtect, whatsappClickController.submitFeedback);
 router.get('/me/contact-history', safeProtect, whatsappClickController.getContactHistory);
 

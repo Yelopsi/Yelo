@@ -956,6 +956,101 @@ document.addEventListener('DOMContentLoaded', function() {
                             };
                         }
                     }
+                    // NOVO MODAL: Em Negociação (se não houver feedback inicial pendente)
+                    if (!data.pending || data.pending.length === 0) {
+                        try {
+                            if (!localStorage.getItem('yelo_negotiation_adiado_ate') || new Date().getTime() > parseInt(localStorage.getItem('yelo_negotiation_adiado_ate'))) {
+                                const resNeg = await apiFetch(`${API_BASE_URL}/api/psychologists/me/pending-negotiation-feedback`);
+                                const dataNeg = await resNeg.json();
+                                if (dataNeg.pending && dataNeg.pending.length > 0) {
+                                    let modalNeg = document.createElement('div');
+                                    modalNeg.id = 'modal-negotiation-wpp';
+                                    modalNeg.className = 'modal-overlay';
+                                    modalNeg.style.zIndex = '99999';
+                                    modalNeg.innerHTML = `
+                                        <div class="welcome-modal-box feedback-wpp-box">
+                                            <div style="text-align:center; margin-bottom:20px;">
+                                                <h2 style="font-family: var(--font-titulos); color:var(--verde-escuro); font-size:1.6rem; margin:0;">Atualização de Contatos ⏳</h2>
+                                                <p style="color:#555; margin-top:5px; font-size:1.05rem;">Você tem contatos em negociação há alguns dias. Conseguiram iniciar a terapia?</p>
+                                            </div>
+                                            <div id="pending-neg-list" style="max-height: 50vh; overflow-y: auto; margin-bottom: 20px;">
+                                                ${dataNeg.pending.map(item => `
+                                                    <div id="neg-item-${item.id}" style="background: #f9fafb; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #eee;">
+                                                        <div style="font-weight: bold; color: #333; margin-bottom: 5px; font-size: 1.1rem;">👤 ${item.guestName}</div>
+                                                        <div style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">Em negociação desde ${new Date(item.updatedAt).toLocaleDateString('pt-BR')}</div>
+                                                        <div style="display:flex; flex-direction:column; gap:8px;">
+                                                            <button onclick="window.submitNegotiationFeedback('${item.id}', true, 'started')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:10px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">✅ Fechamos (Iniciou a terapia)</button>
+                                                            <button onclick="window.submitNegotiationFeedback('${item.id}', true, 'not_started')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:10px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">❌ Decidiu não iniciar</button>
+                                                            <button onclick="window.submitNegotiationFeedback('${item.id}', true, 'ghosted')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:10px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">👻 O paciente sumiu</button>
+                                                            <button onclick="window.postponeNegotiation('${item.id}')" class="btn-list-opt" style="background:transparent; border:none; text-decoration:underline; text-align:center; padding:10px; cursor:pointer; color:#666; font-size:0.9rem;">Ainda negociando (Perguntar amanhã)</button>
+                                                        </div>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                            <div id="pending-neg-done-msg" style="display:none; text-align:center; padding:30px; font-size:1.2rem; color:var(--verde-escuro); font-weight:bold;">
+                                                🎉 Status atualizado! Muito obrigado.
+                                            </div>
+                                            <button onclick="document.getElementById('modal-negotiation-wpp').style.display='none'; localStorage.setItem('yelo_negotiation_adiado_ate', new Date().getTime() + 86400000);" style="width:100%; background:transparent; border:1px solid #ccc; color:#555; padding:15px; border-radius:50px; cursor:pointer; font-weight:bold;">Responder Mais Tarde</button>
+                                        </div>
+                                    `;
+                                    document.body.appendChild(modalNeg);
+
+                                    let totalNeg = dataNeg.pending.length;
+                                    let answeredNeg = 0;
+
+                                    window.submitNegotiationFeedback = async (id, contact_received, deal_closed) => {
+                                        const itemDiv = document.getElementById(`neg-item-${id}`);
+                                        itemDiv.style.opacity = '0.5';
+                                        itemDiv.style.pointerEvents = 'none';
+                                        itemDiv.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--verde-escuro); font-weight: 500; line-height: 1.4;">✅ Status atualizado!</div>`;
+                                        try {
+                                            await apiFetch(`${API_BASE_URL}/api/psychologists/me/whatsapp-feedback`, {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json', 'Authorization': \`Bearer \${localStorage.getItem('Yelo_token')}\` },
+                                                body: JSON.stringify({ clickLogId: id, contact_received, deal_closed })
+                                            });
+                                        } catch(e) {}
+                                        answeredNeg++;
+                                        if (answeredNeg >= totalNeg) {
+                                            document.getElementById('pending-neg-list').style.display = 'none';
+                                            document.getElementById('pending-neg-done-msg').style.display = 'block';
+                                            setTimeout(() => {
+                                                modalNeg.style.transition = 'opacity 0.3s ease';
+                                                modalNeg.style.opacity = '0';
+                                                setTimeout(() => modalNeg.remove(), 300);
+                                            }, 1500);
+                                        }
+                                    };
+
+                                    window.postponeNegotiation = async (id) => {
+                                        const itemDiv = document.getElementById(`neg-item-${id}`);
+                                        itemDiv.style.opacity = '0.5';
+                                        itemDiv.style.pointerEvents = 'none';
+                                        itemDiv.innerHTML = `<div style="text-align:center; padding: 20px; color: #666; font-weight: 500; line-height: 1.4;">Adiado! Perguntaremos de novo em 3 dias.</div>`;
+                                        try {
+                                            await apiFetch(`${API_BASE_URL}/api/psychologists/me/postpone-negotiation`, {
+                                                method: 'PATCH',
+                                                headers: { 'Content-Type': 'application/json', 'Authorization': \`Bearer \${localStorage.getItem('Yelo_token')}\` },
+                                                body: JSON.stringify({ clickLogId: id })
+                                            });
+                                        } catch(e) {}
+                                        answeredNeg++;
+                                        if (answeredNeg >= totalNeg) {
+                                            document.getElementById('pending-neg-list').style.display = 'none';
+                                            document.getElementById('pending-neg-done-msg').style.display = 'block';
+                                            setTimeout(() => {
+                                                modalNeg.style.transition = 'opacity 0.3s ease';
+                                                modalNeg.style.opacity = '0';
+                                                setTimeout(() => modalNeg.remove(), 300);
+                                            }, 1500);
+                                        }
+                                    };
+                                }
+                            }
+                        } catch (err) {
+                            console.error('Erro no modal de negociação:', err);
+                        }
+                    }
                 } catch (err) {}
             }, 4000);
 
