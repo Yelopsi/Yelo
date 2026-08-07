@@ -533,8 +533,9 @@
                     promoCard.classList.remove('promo-ativa');
                 }
 
-                // Se o plano atual for o Essencial, ajusta o botão para indicar isso
-                if (user.plano === 'ESSENTIAL') {
+                // Se o plano atual for o Essencial e estiver ATIVO, ajusta o botão para indicar isso.
+                // Se estiver INATIVO (ex: pagamento falhou), ignoramos para que ela possa clicar em "Assinar" e renovar.
+                if (user.plano === 'ESSENTIAL' && user.status === 'active') {
                     const btnEssencial = document.querySelector('#card-plano-essencial .btn-mudar-plano');
                     if (btnEssencial) {
                         // LÓGICA DE REATIVAÇÃO
