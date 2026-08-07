@@ -1,14 +1,14 @@
 // Arquivo: psi_dashboard.js (VERSÃO FINAL 2.1)
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // --- SHADOW TRACKING (TELEMETRIA DE USO) ---
-    document.body.addEventListener('click', function(e) {
+    document.body.addEventListener('click', function (e) {
         // Captura cliques em elementos com classe track-feature ou em links de navegação do menu principal
         const trackEl = e.target.closest('.track-feature') || e.target.closest('.sidebar-nav a') || e.target.closest('.bottom-nav-item');
-        
+
         if (trackEl) {
             let funcionalidade = trackEl.getAttribute('data-feature');
-            
+
             // Fallback: se não tiver data-feature explícito, extrai do data-page (ex: 'psi_financeiro.html' vira 'financeiro')
             if (!funcionalidade) {
                 const page = trackEl.getAttribute('data-page') || trackEl.getAttribute('data-target-page');
@@ -16,9 +16,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     funcionalidade = page.replace('psi_', '').replace('.html', '');
                 }
             }
-            
+
             if (!funcionalidade) return;
-            
+
             const token = localStorage.getItem('Yelo_token');
             if (!token) return;
 
@@ -28,12 +28,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ feature: funcionalidade })
-            }).catch(err => {});
+            }).catch(err => { });
         }
     });
 
     // --- FIX BLINDADO: Eventos Globais Delegados (Benchmarking e Botões Dinâmicos) ---
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         // 1. Procura por um link com data-page dentro dos cards de KPI
         const link = e.target.closest('.kpi-card a[data-page]');
         if (link) {
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.loadPage(pageToLoad);
             }
         }
-        
+
         // 2. Fix para o botão "Melhorar meu perfil" que carrega dinamicamente
         const btnMelhorarPerfil = e.target.closest('.modern-hero-cta');
         if (btnMelhorarPerfil) {
@@ -54,16 +54,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, true); // Usa capture phase para garantir que o clique não seja bloqueado por outros elementos
 
-    
-    let psychologistData = null; 
-    
+
+    let psychologistData = null;
+
     // --- EXPOSIÇÃO DE ESTADO PARA MÓDULOS ---
     window.getPsychologistData = () => psychologistData;
     window.setPsychologistData = (data) => { psychologistData = data; };
     window.atualizarInterfaceLateral = atualizarInterfaceLateral;
 
     const mainContent = document.getElementById('main-content');
-    
+
     // Estado global para contar conversas não lidas
     window.psiUnreadConversations = new Set();
 
@@ -189,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // if (pageName === 'psi_caixa_de_entrada.html') {
         //     targetPage = 'psi_ajustes_hub.html';
         // }
-        
+
         const updateBadgeOnElement = (element, isBottomNav = false) => {
             if (!element) return;
             let badge = element.querySelector('.sidebar-badge');
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 element.appendChild(badge);
             }
-            
+
             // Permite receber um número direto ou boolean
             let num = 0;
             if (typeof show === 'number') {
@@ -225,12 +225,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 badge.style.display = 'none';
             }
         };
-        
+
         // Atualiza na sidebar desktop
         updateBadgeOnElement(document.querySelector(`.sidebar-nav a[data-page="${targetPage}"]`), false);
         // Atualiza na bottom nav mobile
         updateBadgeOnElement(document.querySelector(`.bottom-nav-item[data-target-page="${targetPage}"]`), true);
-        
+
         // Atualiza no sino do header mobile (Avisos)
         if (targetPage === 'psi_avisos.html') {
             const mobileAvisosTrigger = document.getElementById('mobile-avisos-trigger');
@@ -248,7 +248,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     badge.style.fontSize = '9px';
                     mobileAvisosTrigger.appendChild(badge);
                 }
-                
+
                 let num = 0;
                 if (typeof show === 'number') num = show;
                 else if (show === true) num = window.psiUnreadConversations ? window.psiUnreadConversations.size : 0;
@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- LÓGICA DO BOTÃO SAIR (LOGOUT) ---
     const btnsLogout = document.querySelectorAll('.btn-logout-action, #btn-logout, #btn-logout-mobile');
     btnsLogout.forEach(btn => {
-        btn.addEventListener('click', function(e) {
+        btn.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation(); // Impede interferência de cliques da sidebar
             const span = this.querySelector('span') || this;
@@ -294,26 +294,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const apiFetch = window.apiFetch;
 
     // --- FUNÇÃO AUXILIAR: TRADUZ MARKDOWN PARA HTML E MANTÉM QUEBRAS DE LINHA ---
-    window.formatTextContent = function(text) {
+    window.formatTextContent = function (text) {
         if (!text) return '';
         let formatted = text;
-        
+
         // Formatações (Ordem importa para não haver conflito de caracteres)
         formatted = formatted.replace(/'''([\s\S]*?)'''/g, '<code style="background:#f4f4f4; padding:2px 6px; border-radius:4px; font-family:monospace; color:#333; font-size:0.9em;">$1</code>');
         formatted = formatted.replace(/__([\s\S]*?)__/g, '<u>$1</u>');
         formatted = formatted.replace(/\*([\s\S]*?)\*/g, '<strong>$1</strong>');
         formatted = formatted.replace(/_([\s\S]*?)_/g, '<em>$1</em>');
         formatted = formatted.replace(/~([\s\S]*?)~/g, '<del>$1</del>');
-        
+
         // Quebras de linha por último
         formatted = formatted.replace(/\n/g, '<br>');
-        
+
         return formatted;
     }
 
     async function fetchPsychologistData() {
         const token = localStorage.getItem('Yelo_token');
-        if (!token) { 
+        if (!token) {
             localStorage.removeItem('yelo_last_psi_page'); // Limpa resquícios da versão antiga
             sessionStorage.removeItem('yelo_last_psi_page');
             // Salva intenção de post caso o usuário não esteja logado e tenha vindo do e-mail
@@ -321,15 +321,15 @@ document.addEventListener('DOMContentLoaded', function() {
             if (urlParams.has('postId')) {
                 localStorage.setItem('yelo_intent_post', urlParams.get('postId'));
             }
-            window.location.href = '/'; 
-            return false; 
+            window.location.href = '/';
+            return false;
         }
         try {
             // Adicionado timestamp (?t=...) para evitar que o navegador use dados velhos do cache
             const response = await fetch(`${API_BASE_URL}/api/psychologists/me?t=${new Date().getTime()}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            
+
             if (response.ok) {
                 psychologistData = await response.json();
 
@@ -340,27 +340,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (psychologistData.fotoUrl) {
                     localStorage.setItem('Yelo_user_photo', psychologistData.fotoUrl);
                 }
-                
+
                 // --- SANITIZAÇÃO DE DADOS LEGADOS (GHOST TAGS) ---
                 // Impede que tags antigas fiquem presas e invisíveis no painel de edição
                 const sanitizeTags = (field) => {
                     if (!psychologistData[field]) return;
                     let arr = psychologistData[field];
-                    
-                    if (typeof arr === 'string') { 
+
+                    if (typeof arr === 'string') {
                         if (arr.trim().startsWith('[')) {
-                            try { arr = JSON.parse(arr); } catch(e) { arr = [arr]; } 
+                            try { arr = JSON.parse(arr); } catch (e) { arr = [arr]; }
                         } else {
-                            arr = [arr]; 
+                            arr = [arr];
                         }
                     }
-                    
+
                     if (Array.isArray(arr)) {
                         let clean = [];
                         arr.flat(Infinity).forEach(tag => {
                             if (!tag) return;
                             let t = typeof tag === 'string' ? tag.trim() : tag;
-                            
+
                             // Divide strings legadas concatenadas por vírgula (Ignora vírgula dentro de parênteses como no TDAH)
                             let subTags = [t];
                             if (typeof t === 'string' && t.includes(',')) {
@@ -385,11 +385,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         psychologistData[field] = [...new Set(clean)];
                     }
                 };
-                
+
                 const multiSelectFields = ['temas_atuacao', 'publico_alvo', 'praticas_inclusivas', 'abordagens_tecnicas', 'modalidade', 'disponibilidade_periodo', 'estilo_terapia'];
                 multiSelectFields.forEach(f => sanitizeTags(f));
 
-                atualizarInterfaceLateral(); 
+                atualizarInterfaceLateral();
                 return true;
             } else if (response.status === 401) {
                 // Apenas 401 (Não autorizado) deve causar logout
@@ -415,20 +415,20 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!psychologistData) return;
         const nameEl = document.getElementById('psi-sidebar-name');
         const imgEl = document.getElementById('psi-sidebar-photo');
-        if(nameEl) nameEl.textContent = psychologistData.nome;
-        if(imgEl) {
+        if (nameEl) nameEl.textContent = psychologistData.nome;
+        if (imgEl) {
             imgEl.src = formatImageUrl(psychologistData.fotoUrl);
             // Correção para imagem quebrada (404)
-            imgEl.onerror = function() { this.src = 'https://placehold.co/70x70/1B4332/FFFFFF?text=Psi'; };
+            imgEl.onerror = function () { this.src = 'https://placehold.co/70x70/1B4332/FFFFFF?text=Psi'; };
         }
         const btnLink = document.getElementById('btn-view-public-profile');
-        if(btnLink && psychologistData.slug) btnLink.href = `/${psychologistData.slug}`;
-        
+        if (btnLink && psychologistData.slug) btnLink.href = `/${psychologistData.slug}`;
+
         // --- NOVO: Atualiza a foto na tela de Ajustes de Perfil (Modo Mobile) ---
         const mobileImgEl = document.getElementById('mobile-profile-photo-preview');
         if (mobileImgEl) {
             mobileImgEl.src = formatImageUrl(psychologistData.fotoUrl);
-            mobileImgEl.onerror = function() { this.src = 'https://placehold.co/120x120/1B4332/FFFFFF?text=Psi'; };
+            mobileImgEl.onerror = function () { this.src = 'https://placehold.co/120x120/1B4332/FFFFFF?text=Psi'; };
         }
 
         // --- NOVO: Atualiza o Nível Globalmente na Sidebar ---
@@ -453,11 +453,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!psychologistData) return;
 
         // Páginas permitidas mesmo com o status inativo (para assinar, ajustar perfil, suporte ou exclusão)
-        const paginasPermitidas = ['psi_assinatura.html', 'psi_ajustes_hub.html', 'psi_caixa_de_entrada.html', 'psi_excluir_conta.html']; 
+        const paginasPermitidas = ['psi_assinatura.html', 'psi_ajustes_hub.html', 'psi_caixa_de_entrada.html', 'psi_excluir_conta.html'];
 
         // O Paywall de fim de teste é acionado quando o status muda para inactive
         const estaInativo = psychologistData.status === 'inactive';
-        
+
         const mainEl = document.querySelector('.dashboard-main');
         const paywallOverlay = document.getElementById('paywall-overlay');
         const bannerAnterior = document.querySelector('.restriction-floating-banner');
@@ -465,7 +465,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
         if (!mainEl) return;
-        
+
         // 1. Limpa os bloqueios visuais da tela anterior
         mainEl.classList.remove('blocked-view');
         mainEl.classList.remove('restricted-mode');
@@ -479,7 +479,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // 2. Aplica o Paywall se estiver inativo e em página restrita
         if (estaInativo && !paginasPermitidas.includes(url)) {
             mainEl.classList.add('blocked-view');
-            
+
             if (paywallOverlay) {
                 paywallOverlay.style.display = 'flex';
             } else {
@@ -490,7 +490,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 banner.innerHTML = `<span>🔒 Seu período de teste expirou. Ative o Premium para continuar.</span><button onclick="window.loadPage('psi_assinatura.html')">Assinar Agora</button>`;
                 document.body.appendChild(banner);
             }
-         } else if (psychologistData.showTrialBanner && trialPremiumBanner) {
+        } else if (psychologistData.showTrialBanner && trialPremiumBanner) {
             // Exibe o banner de trial premium se a flag do backend for true
             trialPremiumBanner.style.display = 'flex';
             const titleEl = document.getElementById('trial-premium-title');
@@ -505,10 +505,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const interactionReminder = document.getElementById('interaction-reminder-card');
         if (interactionReminder && psychologistData) {
             const prog = psychologistData.gamificationProgress || {};
-            const totalInteractions = (prog.semeador || prog.blogPostCount || 0) + 
-                                      (prog.vozAtiva || prog.forumActivityCount || 0) + 
-                                      (prog.conselheiro || prog.answerCount || 0);
-            
+            const totalInteractions = (prog.semeador || prog.blogPostCount || 0) +
+                (prog.vozAtiva || prog.forumActivityCount || 0) +
+                (prog.conselheiro || prog.answerCount || 0);
+
             const dismissedUntil = localStorage.getItem('Yelo_interaction_dismissed');
             const isDismissed = dismissedUntil && Date.now() < parseInt(dismissedUntil, 10);
 
@@ -535,12 +535,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let currentPageUrl = 'psi_visao_geral.html';
 
-    window.loadPage = function(url) {
+    window.loadPage = function (url) {
         if (!url) return;
-        
+
         window.appHistory = window.appHistory || [];
         window.appForwardHistory = window.appForwardHistory || [];
-        
+
         if (!window.isHistoryNav) {
             if (window.appHistory[window.appHistory.length - 1] !== url) {
                 window.appHistory.push(url);
@@ -579,21 +579,21 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="loader-wrapper" style="height: 100%; min-height: 400px; align-items: center;">
                 <div class="loader-spinner"></div>
             </div>`;
-            
+
         document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
         document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
 
         // Garante que o menu inferior reapareça se estivesse oculto pelo Smart Scroll
         const bNav = document.querySelector('.mobile-bottom-nav');
         if (bNav) bNav.classList.remove('nav-hidden');
-        
+
         // Garante que o header mobile reapareça caso tenha sido oculto por alguma tela full-screen (como posts do fórum)
         const mHeader = document.querySelector('.mobile-header');
         if (mHeader) mHeader.style.display = '';
 
         let activeLink = document.querySelector(`.sidebar-nav a[data-page="${url}"]`);
         let activeBottomLink = document.querySelector(`.bottom-nav-item[data-target-page="${url}"]`);
-        
+
         if (!activeLink || !activeBottomLink) {
             let hubPage = '';
             if (['psi_pacientes.html', 'psi_financeiro.html', 'psi_analytics.html', 'psi_favoritos_analytics.html', 'psi_calculadora_honorarios.html', 'psi_manual_conversao.html'].includes(url)) {
@@ -612,7 +612,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (activeLink) activeLink.closest('li').classList.add('active');
         if (activeBottomLink) activeBottomLink.classList.add('active');
-        
+
         // Destaca o sino no header se for a página de avisos
         const mobileAvisosTrigger = document.getElementById('mobile-avisos-trigger');
         if (mobileAvisosTrigger) {
@@ -628,13 +628,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // --- OTIMIZAÇÃO: PRÉ-FETCH DE DADOS (Paralelismo) ---
         // Dispara a busca de dados IMEDIATAMENTE, sem esperar o HTML carregar
         let dataPromise = null;
-        if (url.includes('psi_blog.html')) { 
-             dataPromise = apiFetch(`${API_BASE_URL}/api/psychologists/me/posts?page=1&limit=3`).then(r => r.ok ? r.json() : null).catch(() => null);
+        if (url.includes('psi_blog.html')) {
+            dataPromise = apiFetch(`${API_BASE_URL}/api/psychologists/me/posts?page=1&limit=3`).then(r => r.ok ? r.json() : null).catch(() => null);
         } else if (url.includes('psi_comunidade.html')) {
-             dataPromise = apiFetch(`${API_BASE_URL}/api/qna?page=1&limit=15`).then(r => r.ok ? r.json() : null).catch(() => null);
+            dataPromise = apiFetch(`${API_BASE_URL}/api/qna?page=1&limit=15`).then(r => r.ok ? r.json() : null).catch(() => null);
         } else if (url.includes('psi_forum.html')) {
-             // Busca 4 itens (3 para exibir + 1 para checar se tem mais), informando o tamanho real da página para o offset
-             dataPromise = apiFetch(`${API_BASE_URL}/api/forum/posts?filter=recentes&search=&page=1&limit=4&pageSize=3`).then(r => r.ok ? r.json() : null).catch(() => null);
+            // Busca 4 itens (3 para exibir + 1 para checar se tem mais), informando o tamanho real da página para o offset
+            dataPromise = apiFetch(`${API_BASE_URL}/api/forum/posts?filter=recentes&search=&page=1&limit=4&pageSize=3`).then(r => r.ok ? r.json() : null).catch(() => null);
         }
 
         // Se for a caixa de entrada, remove a badge
@@ -648,7 +648,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(fetchUrl).then(r => r.ok ? r.text() : Promise.reject(url))
             .then(html => {
                 mainContent.innerHTML = html;
-                
+
                 // --- VERIFICAÇÃO DE BLOQUEIO ---
                 verificarBloqueioGeral(url);
                 verificarLembreteInteracao();
@@ -659,7 +659,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 else if (url.includes('visao_geral')) { if (window.inicializarVisaoGeral) window.inicializarVisaoGeral(); }
                 else if (url.includes('comunidade')) { if (window.inicializarComunidade) window.inicializarComunidade(dataPromise); }
                 else if (url.includes('psi_hub')) { if (window.inicializarHubComunidade) window.inicializarHubComunidade(); }
-                else if (url.includes('psi_ajustes_hub')) inicializarAjustesHub(); 
+                else if (url.includes('psi_ajustes_hub')) inicializarAjustesHub();
                 else if (url.includes('psi_blog')) { if (window.inicializarBlog) window.inicializarBlog(dataPromise); }
                 else if (url.includes('psi_forum')) { if (window.inicializarForum) window.inicializarForum(dataPromise); }
                 else if (url.includes('psi_meu_perfil')) { if (window.inicializarLogicaDoPerfil) window.inicializarLogicaDoPerfil(); }
@@ -668,7 +668,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     /// a página se auto-inicializa, mas garantimos que o cleanup de outras páginas rode.
                 }
                 // Adicione outras inicializações de página aqui
-                
+
                 // SEMPRE atualiza a bolinha do sino ao navegar entre as páginas do painel
                 if (typeof window.carregarAvisosBackground === 'function') {
                     window.carregarAvisosBackground();
@@ -709,16 +709,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (psychologistData.hasSeenWelcome === false) {
                 // Atualiza o estado local para não repetir na mesma sessão
                 psychologistData.hasSeenWelcome = true;
-                
+
                 // Salva no banco de dados para garantir que a flag persista entre celular e computador (Acesso Absoluto)
-                apiFetch(`${API_BASE_URL}/api/psychologists/me/welcome-seen`, { method: 'POST' }).catch(() => {});
-                
+                apiFetch(`${API_BASE_URL}/api/psychologists/me/welcome-seen`, { method: 'POST' }).catch(() => { });
+
                 const welcomeModal = document.createElement('div');
                 welcomeModal.id = 'modal-boas-vindas-psi';
                 welcomeModal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.65); display: flex; z-index: 100000; animation: fadeIn 0.3s ease; backdrop-filter: blur(4px);';
-                
+
                 const firstName = psychologistData.nome ? psychologistData.nome.split(' ')[0] : 'colega';
-                
+
                 welcomeModal.innerHTML = `
                     <style>
                         #modal-boas-vindas-psi {
@@ -798,13 +798,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const modalInstabilidade = document.getElementById('modal-aviso-instabilidade');
                 const btnEntendi = document.getElementById('btn-entendi-instabilidade');
                 const nomeEl = document.getElementById('aviso-instabilidade-nome');
-                
+
                 if (modalInstabilidade) {
                     if (nomeEl && psychologistData && psychologistData.nome) {
                         nomeEl.textContent = psychologistData.nome.split(' ')[0];
                     }
                     modalInstabilidade.style.display = 'flex';
-                    
+
                     if (btnEntendi) {
                         btnEntendi.onclick = () => {
                             modalInstabilidade.style.display = 'none';
@@ -827,7 +827,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             modal.id = 'modal-feedback-wpp';
                             // Adicionado backdrop-filter forte e pointer-events auto para bloquear a tela inteira
                             modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 100000; animation: fadeIn 0.3s ease; backdrop-filter: blur(12px);';
-                            
+
                             const pendingListHtml = data.pending.map((item, index) => {
                                 let gName = item.guestName || 'um paciente';
                                 if (gName === 'Visitante') gName = 'um paciente';
@@ -930,19 +930,19 @@ document.addEventListener('DOMContentLoaded', function() {
                                 const itemDiv = document.getElementById(`pending-item-${id}`);
                                 itemDiv.style.opacity = '0.5';
                                 itemDiv.style.pointerEvents = 'none';
-                                const thanksMsg = contact_received 
+                                const thanksMsg = contact_received
                                     ? 'Obrigado! Estas informações ajudam a Yelo a melhorar as próximas indicações.'
                                     : 'Obrigado! Vamos acompanhar esse caso e usar essa informação para melhorar as próximas conexões.';
 
                                 itemDiv.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--verde-escuro); font-weight: 500; line-height: 1.4;">✅ Resposta enviada!<br><br><span style="font-size: 0.9rem; color: #555;">${thanksMsg}</span></div>`;
-                                
+
                                 try {
                                     await apiFetch(`${API_BASE_URL}/api/psychologists/me/whatsapp-feedback`, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('Yelo_token')}` },
                                         body: JSON.stringify({ clickLogId: id, contact_received, deal_closed })
                                     });
-                                } catch(e) {}
+                                } catch (e) { }
 
                                 answeredCount++;
                                 if (answeredCount >= totalPending) {
@@ -971,6 +971,27 @@ document.addEventListener('DOMContentLoaded', function() {
                                     modalNeg.id = 'modal-negotiation-wpp';
                                     modalNeg.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 100000; animation: fadeIn 0.3s ease; backdrop-filter: blur(12px);';
                                     modalNeg.innerHTML = `
+                                        <style>
+                                            .feedback-wpp-box {
+                                                background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.2); position: relative; max-height: 85vh; display: flex; flex-direction: column; animation: slideUpWelcome 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                                            }
+                                            @media (max-width: 768px) {
+                                                .feedback-wpp-box {
+                                                    width: 100% !important;
+                                                    max-width: 100% !important;
+                                                    border-radius: 20px 20px 0 0 !important;
+                                                    position: absolute !important;
+                                                    bottom: 0 !important;
+                                                    margin: 0 !important;
+                                                    max-height: 90vh !important;
+                                                    animation: slideUpMobile 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                                                }
+                                            }
+                                            @keyframes slideUpMobile {
+                                                from { transform: translateY(100%); }
+                                                to { transform: translateY(0); }
+                                            }
+                                        </style>
                                         <div class="welcome-modal-box feedback-wpp-box">
                                             <div style="text-align:center; margin-bottom:20px;">
                                                 <h2 style="font-family: var(--font-titulos); color:var(--verde-escuro); font-size:1.6rem; margin:0;">Atualização de Contatos ⏳</h2>
@@ -985,7 +1006,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                             <button onclick="window.submitNegotiationFeedback('${item.id}', true, 'started')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:10px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">✅ Fechamos (Iniciou a terapia)</button>
                                                             <button onclick="window.submitNegotiationFeedback('${item.id}', true, 'not_started')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:10px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">❌ Decidiu não iniciar</button>
                                                             <button onclick="window.submitNegotiationFeedback('${item.id}', true, 'ghosted')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:10px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">👻 O paciente sumiu</button>
-                                                            <button onclick="window.postponeNegotiation('${item.id}')" class="btn-list-opt" style="background:transparent; border:none; text-decoration:underline; text-align:center; padding:10px; cursor:pointer; color:#666; font-size:0.9rem;">Ainda negociando (Perguntar amanhã)</button>
+                                                            <button onclick="window.postponeNegotiation('${item.id}')" class="btn-list-opt" style="background:transparent; border:none; text-decoration:underline; text-align:center; padding:10px; cursor:pointer; color:#666; font-size:0.9rem;">Ainda negociando (Perguntar depois)</button>
                                                         </div>
                                                     </div>
                                                 `).join('')}
@@ -1012,7 +1033,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('Yelo_token')}` },
                                                 body: JSON.stringify({ clickLogId: id, contact_received, deal_closed })
                                             });
-                                        } catch(e) {}
+                                        } catch (e) { }
                                         answeredNeg++;
                                         if (answeredNeg >= totalNeg) {
                                             document.getElementById('pending-neg-list').style.display = 'none';
@@ -1036,7 +1057,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('Yelo_token')}` },
                                                 body: JSON.stringify({ clickLogId: id })
                                             });
-                                        } catch(e) {}
+                                        } catch (e) { }
                                         answeredNeg++;
                                         if (answeredNeg >= totalNeg) {
                                             document.getElementById('pending-neg-list').style.display = 'none';
@@ -1054,14 +1075,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             console.error('Erro no modal de negociação:', err);
                         }
                     }
-                } catch (err) {}
+                } catch (err) { }
             }, 4000);
 
             document.getElementById('dashboard-container').style.display = 'flex';
             document.querySelectorAll('.sidebar-nav a').forEach(l => {
                 if (l.classList.contains('btn-logout-action')) return; // Ignora o botão de sair pois já tem listener próprio
-                l.onclick = (e) => { 
-                    e.preventDefault(); 
+                l.onclick = (e) => {
+                    e.preventDefault();
                     loadPage(l.getAttribute('data-page'));
                     // FECHA O MENU NO MOBILE AO CLICAR
                     const sidebarEl = document.querySelector('.dashboard-sidebar');
@@ -1081,7 +1102,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } else if (urlParams.has('postId') || intentPost) {
                 if (intentPost) localStorage.removeItem('yelo_intent_post');
-                
+
                 if (urlParams.has('postId')) {
                     window.yeloPostToOpen = urlParams.get('postId');
                     if (urlParams.has('commentId')) {
@@ -1090,13 +1111,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (intentPost) {
                     window.yeloPostToOpen = intentPost;
                 }
-                
+
                 window.history.replaceState({}, document.title, window.location.pathname);
                 loadPage('psi_forum.html');
             } else {
                 // Carrega a última página visitada ou a visão geral como padrão.
                 let lastPage = sessionStorage.getItem('yelo_last_psi_page');
-                
+
                 // Se o usuário acabou de vir da tela de login ou cadastro, ignora a última página e zera a memória
                 if (document.referrer && (document.referrer.includes('/login') || document.referrer.includes('/cadastro') || document.referrer.includes('/registro'))) {
                     lastPage = null;
@@ -1105,7 +1126,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 loadPage(lastPage || 'psi_visao_geral.html');
             }
-            
+
             // --- LÓGICA DE SMART SCROLL (OCULTAR MENU INFERIOR AO ROLAR) ---
             function setupSmartScroll() {
                 // Só executa em telas mobile
@@ -1114,7 +1135,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const bottomNav = document.querySelector('.mobile-bottom-nav');
                 // O elemento que de fato rola é o .dashboard-main
                 const scrollableContent = document.querySelector('.dashboard-main');
-                
+
                 if (!bottomNav || !scrollableContent) return;
 
                 // Adiciona listener para expandir ao clicar na barra encolhida (executa uma vez)
@@ -1145,7 +1166,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // --- NOVO: INICIA A LÓGICA DE TOOLTIPS MOBILE ---
             setupMobileBadgeTooltips();
-            
+
             // --- NOVO: INICIA A LÓGICA DE NOTIFICAÇÕES DE NAVEGADOR ---
             if (typeof window.setupSessionNotifications === 'function') {
                 window.setupSessionNotifications();
@@ -1177,7 +1198,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    window.setupMobileBadgeTooltips = function() {
+    window.setupMobileBadgeTooltips = function () {
         if (document.body.dataset.tooltipsSetup) return;
         document.body.dataset.tooltipsSetup = 'true';
 
@@ -1190,7 +1211,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (activeTooltip) activeTooltip.remove();
 
             const tooltip = document.createElement('div');
-            tooltip.className = 'mobile-badge-tooltip'; 
+            tooltip.className = 'mobile-badge-tooltip';
             tooltip.textContent = title;
             document.body.appendChild(tooltip);
             activeTooltip = tooltip;
@@ -1206,7 +1227,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 tooltip.classList.remove('bottom');
                 tooltip.classList.add('top');
             }
-            
+
             let left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
             if (left < 10) left = 10;
             if (left + tooltipRect.width > window.innerWidth - 10) left = window.innerWidth - tooltipRect.width - 10;
@@ -1217,19 +1238,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const removeTooltip = () => { if (activeTooltip) { activeTooltip.remove(); activeTooltip = null; } };
 
-        document.body.addEventListener('click', function(e) {
+        document.body.addEventListener('click', function (e) {
             const target = e.target.closest('.badge-card, .badge-item');
             if (!target) { removeTooltip(); return; }
             if (window.innerWidth <= 992) { e.preventDefault(); e.stopPropagation(); createTooltip(target); }
         });
 
-        document.body.addEventListener('mouseover', function(e) {
+        document.body.addEventListener('mouseover', function (e) {
             if (window.innerWidth <= 992) return;
             const target = e.target.closest('.badge-card, .badge-item');
             if (target) createTooltip(target);
         });
 
-        document.body.addEventListener('mouseout', function(e) {
+        document.body.addEventListener('mouseout', function (e) {
             if (window.innerWidth <= 992) return;
             const target = e.target.closest('.badge-card, .badge-item');
             if (target) removeTooltip();
