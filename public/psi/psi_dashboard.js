@@ -965,8 +965,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 if (dataNeg.pending && dataNeg.pending.length > 0) {
                                     let modalNeg = document.createElement('div');
                                     modalNeg.id = 'modal-negotiation-wpp';
-                                    modalNeg.className = 'modal-overlay';
-                                    modalNeg.style.zIndex = '99999';
+                                    modalNeg.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 100000; animation: fadeIn 0.3s ease; backdrop-filter: blur(12px);';
                                     modalNeg.innerHTML = `
                                         <div class="welcome-modal-box feedback-wpp-box">
                                             <div style="text-align:center; margin-bottom:20px;">
