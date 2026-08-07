@@ -856,6 +856,65 @@ exports.getPendingActions = async (req, res) => {
             });
         });
 
+        // 8. Negociação prolongada (dealClosed === 'talking' > 7 dias, adminWppReminderCount < 2)
+        if (db.WhatsAppClickLog) {
+            const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            const negotiationLogs = await db.WhatsAppClickLog.findAll({
+                where: {
+                    dealClosed: 'talking',
+                    updatedAt: { [Op.lte]: sevenDaysAgo },
+                    [Op.or]: [
+                        { adminWppReminderCount: { [Op.lt]: 2 } },
+                        { adminWppReminderCount: null }
+                    ]
+                },
+                order: [['psychologistId', 'ASC'], ['updatedAt', 'ASC']]
+            });
+
+            const groupedNegotiations = {};
+            negotiationLogs.forEach(log => {
+                if (!groupedNegotiations[log.psychologistId]) {
+                    groupedNegotiations[log.psychologistId] = [];
+                }
+                groupedNegotiations[log.psychologistId].push(log);
+            });
+
+            const negotiationPsiIds = Object.keys(groupedNegotiations);
+            if (negotiationPsiIds.length > 0) {
+                const negCandidates = await db.Psychologist.findAll({
+                    where: {
+                        id: { [Op.in]: negotiationPsiIds },
+                        deletedAt: null,
+                        telefone: { [Op.ne]: null, [Op.not]: '' }
+                    },
+                    attributes: ['id', 'nome', 'telefone']
+                });
+
+                negCandidates.forEach(p => {
+                    const logs = groupedNegotiations[p.id];
+                    const pendingCount = logs.length;
+                    let pName = 'um paciente';
+                    if (pendingCount > 1) {
+                        pName = 'Alguns pacientes';
+                    } else if (logs[0].guestName && logs[0].guestName !== 'Visitante' && logs[0].guestName.trim() !== '') {
+                        pName = logs[0].guestName;
+                    }
+                    
+                    const token = logs[0].feedbackToken || '';
+                    const dataNeg = logs[0].updatedAt.toLocaleDateString('pt-BR');
+
+                    pendingList.push({ 
+                        ...p.toJSON(), 
+                        actionType: 'negotiation', 
+                        reason: `Em negociação > 7 dias (${pendingCount} leads)`,
+                        patientName: pName,
+                        feedbackToken: token,
+                        metrics: { pendingCount, dataNeg }
+                    });
+                });
+            }
+        }
+
         // MOCK PARA TESTE LOCAL
         if (req.hostname === 'localhost' || req.hostname === '127.0.0.1') {
             pendingList.push({
@@ -945,6 +1004,13 @@ exports.markActionSent = async (req, res) => {
             psychologist.aiOptimizationHistory = history;
             psychologist.changed('aiOptimizationHistory', true);
             await psychologist.save();
+        } else if (actionType === 'negotiation') {
+            if (db.WhatsAppClickLog) {
+                await db.WhatsAppClickLog.update(
+                    { adminWppReminderSentAt: now, adminWppReminderCount: 2 }, 
+                    { where: { psychologistId: id, dealClosed: 'talking' } }
+                );
+            }
         } else {
             return res.status(400).json({ error: 'Tipo de ação inválido.' });
         }
