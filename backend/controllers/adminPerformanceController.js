@@ -511,13 +511,23 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do texto para lembrá-l
 
         const { GoogleGenerativeAI } = require("@google/generative-ai");
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-3.1-flash-lite",
+            systemInstruction: "Você é o gerente de CS e Growth da Yelo. Retorne APENAS o texto exato da mensagem de WhatsApp sem aspas extras, blocos markdown (```) ou comentários.",
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 800
+            }
+        });
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const text = response.text();
+        let text = response.text();
+        
+        // Remove blocos markdown de resposta crua, caso a IA ainda retorne
+        text = text.replace(/```(?:html|json)?\n?/g, '').replace(/```/g, '').trim();
 
-        res.json({ whatsappCopy: text.trim() });
+        res.json({ whatsappCopy: text });
     } catch (e) {
         console.error('Erro generateAiPaidChurnMessage:', e);
         res.status(500).json({ error: 'Erro interno no servidor de IA.' });
