@@ -195,37 +195,126 @@ exports.excluirLead = async (req, res) => {
     }
 };
 
-// 5. Dispara o robô (Scraper) em background
-exports.runScraper = async (req, res) => {
-    try {
-        const { exec } = require('child_process');
-        const path = require('path');
-        const scriptPath = path.join(__dirname, '..', 'scripts', 'scraper.js');
-        
-        // Roda o processo desvinculado da thread HTTP principal
-        exec(`node "${scriptPath}"`, (error, stdout, stderr) => {
-            let totalSalvos = 0;
-            if (stdout) {
-                // Expressão regular para encontrar o número de leads salvos no log do robô
-                const match = stdout.match(/Total de (\d+) novos leads adicionados/);
-                if (match) totalSalvos = parseInt(match[1], 10);
-            }
-            
-            if (req.io) {
-                req.io.to('admins').emit('scraper_finished', {
-                    success: !error,
-                    total: totalSalvos,
-                    message: error ? error.message : `Robô finalizado! ${totalSalvos} novos leads capturados.`
-                });
-            }
-        });
-        
-        // Responde de imediato para não dar Timeout no Render (que cai após 60 seg)
-        res.json({ message: 'Robô ativado em segundo plano! Você será avisado quando ele terminar a busca.' });
-    } catch (error) {
-        console.error('[Admin] Erro ao iniciar scraper:', error);
-        res.status(500).json({ error: 'Erro ao iniciar robô de prospecção.' });
+// Função principal do scraper, separada para poder ser chamada pelo cron job e pela rota
+exports.runScraperJob = async (io = null) => {
+    // 2. Tentar usar Serper.dev (Buscador alternativo mais fácil e sem restrições)
+    const SERPER_API_KEY = process.env.SERPER_API_KEY;
+
+    if (!SERPER_API_KEY) {
+      if (io) {
+        io.to('admins').emit('scraper_finished', { success: false, total: 0, message: 'Chave do Serper.dev não configurada (SERPER_API_KEY).' });
+      }
+      return;
     }
+
+    const dorkQuery = process.env.SCRAPER_DORK_QUERY || 'site:instagram.com psicologo crp wa.me';
+    console.log(`[SCRAPER API] Iniciando busca no Serper.dev com query: ${dorkQuery}`);
+
+    try {
+        const response = await fetch('https://google.serper.dev/search', {
+            method: 'POST',
+            headers: {
+                'X-API-KEY': SERPER_API_KEY,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                q: dorkQuery,
+                gl: 'br',
+                hl: 'pt-br'
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(`Erro do Serper: ${data.message || response.statusText}`);
+        }
+
+        if (!data.organic || data.organic.length === 0) {
+            if (io) io.to('admins').emit('scraper_finished', { success: true, total: 0, message: 'Nenhum resultado encontrado.' });
+            return;
+        }
+
+        console.log(`[SCRAPER API] Encontrados ${data.organic.length} resultados orgânicos.`);
+
+        const resultados = [];
+        for (const item of data.organic) {
+            let nome = item.title || 'Colega do Instagram';
+            const url = item.link;
+            const snippetText = item.snippet || "";
+
+            // Limpeza Inteligente do Nome
+            nome = nome.replace(/Psicólog[oa]\s*[-|]?\s*/ig, '');
+            nome = nome.replace(/^[-|]\s*/, '');
+            nome = nome.split('(@')[0].split('|')[0].split('-')[0].trim();
+            if (!nome || nome.toLowerCase() === 'instagram') nome = 'Colega do Instagram';
+
+            // Extração do Telefone via Regex no Snippet
+            let telefone = '';
+            const waMatch = snippetText.match(/wa\.me\/?(\d+)/i) || 
+                            snippetText.match(/(?:whatsapp|wa|wpp|contato|psi|telefone).*?(\d{10,11})/i) ||
+                            snippetText.match(/(?:55)?\+?\(?(?:\d{2})\)?\s*(?:9\d{4}|\d{4})[-.\s]?\d{4}/);
+            
+            if (waMatch) {
+                const numStr = (waMatch[1] && waMatch[1].length > 2) ? waMatch[1] : waMatch[0];
+                telefone = numStr.replace(/\D/g, '');
+                if (telefone.length === 10 || telefone.length === 11) {
+                    telefone = '55' + telefone;
+                }
+            }
+
+            if (telefone && telefone.length >= 10) {
+                resultados.push({ nome, telefone, url });
+            }
+        }
+
+        console.log(`[SCRAPER API] Dentre eles, ${resultados.length} possuem WhatsApp válido. Salvando no banco...`);
+        
+        let totalSalvos = 0;
+        for (const lead of resultados) {
+            const [registro, created] = await db.Lead.findOrCreate({
+                where: { telefone: lead.telefone },
+                defaults: {
+                    nome: lead.nome,
+                    telefone: lead.telefone,
+                    origem_url: lead.url,
+                    status_funil: 'Pendente'
+                }
+            });
+                
+            if (!created && registro.nome.includes('Instagram') && !lead.nome.includes('Instagram')) {
+                await registro.update({ nome: lead.nome });
+            }
+
+            if (created) {
+                totalSalvos++;
+            }
+        }
+        
+        console.log(`[SCRAPER API] Prospecção Concluída! ${totalSalvos} novos leads.`);
+
+        if (io) {
+            io.to('admins').emit('scraper_finished', {
+                success: true,
+                total: totalSalvos,
+                message: `Robô finalizado! ${totalSalvos} novos leads capturados via API.`
+            });
+        }
+    } catch (error) {
+        console.error('[SCRAPER API] Erro na prospecção:', error);
+        if (io) {
+            io.to('admins').emit('scraper_finished', { success: false, total: 0, message: 'Erro ao buscar novos leads.' });
+        }
+    }
+};
+
+// 5. Dispara o robô (Scraper) em background via Google Custom Search API
+exports.runScraper = async (req, res) => {
+    // Responde de imediato para não dar Timeout na rota (o processo rodará em background)
+    res.json({ message: 'Robô ativado em segundo plano! Você será avisado quando ele terminar a busca.' });
+
+    // Chama o job passando o socket io
+    exports.runScraperJob(req.io);
 };
 
 // 6. Teste manual de disparo de WhatsApp

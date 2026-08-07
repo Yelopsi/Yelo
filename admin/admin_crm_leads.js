@@ -369,17 +369,40 @@ window.initializePage = function() {
         btn.disabled = true;
         btn.innerHTML = '<span class="loading-spinner-sm" style="margin-right: 5px;"></span> Capturando...';
 
+        // Garante que só há um ouvinte para não duplicar alertas
+        if (window.adminSocket) {
+            window.adminSocket.off('scraper_finished');
+            window.adminSocket.on('scraper_finished', (data) => {
+                btn.disabled = false;
+                btn.innerHTML = `Capturar Prospectos`;
+                if (data.success) {
+                    if (window.showToast) window.showToast(data.message || `Robô finalizado! ${data.total} novos leads.`, 'success');
+                    window.carregarLeads(); // Recarrega a tabela automaticamente
+                } else {
+                    if (window.showToast) window.showToast(data.message || "Falha na raspagem via API.", "error");
+                }
+            });
+        }
+
         try {
             const req = await fetch(`${window.API_BASE_URL || ''}/api/admin/leads/scrape`, { 
                 method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('Yelo_token')}` }
             });
             if (req.ok) {
                 if (window.showToast) window.showToast('Robô de aquisição iniciado em segundo plano.', 'info');
-                setTimeout(() => { if (btn.disabled) { btn.disabled = false; btn.innerHTML = `Caçar Prospectos`; window.carregarLeads(); } }, 60000);
+                // Fallback de segurança se o socket não responder em 60s
+                setTimeout(() => { 
+                    if (btn.disabled) { 
+                        btn.disabled = false; 
+                        btn.innerHTML = `Capturar Prospectos`; 
+                        window.carregarLeads(); 
+                    } 
+                }, 60000);
             } else throw new Error();
         } catch (e) {
             if (window.showToast) window.showToast("Falha ao iniciar robô scraper.", "error");
-            btn.disabled = false; btn.innerHTML = `Caçar Prospectos`;
+            btn.disabled = false; 
+            btn.innerHTML = `Capturar Prospectos`;
         }
     };
 

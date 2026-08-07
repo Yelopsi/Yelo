@@ -153,6 +153,7 @@ const startCronJobs = () => {
     let lastSummaryMinute = "";
     let lastAuditDay = -1;
     let lastAiQnaHour = -1;
+    let lastScraperDay = -1;
 
     setInterval(async () => {
         const now = new Date();
@@ -183,6 +184,13 @@ const startCronJobs = () => {
         if ([9, 13, 17, 21].includes(currentBrtHour) && currentBrtHour !== lastAiQnaHour) {
             lastAiQnaHour = currentBrtHour;
             generateAiQuestion().catch(e => console.error("Erro na geração de pergunta IA:", e));
+        }
+
+        // 6. ROBÔ DE PROSPECÇÃO (Scraper) DIÁRIO (Roda uma vez às 9h da manhã)
+        if (currentBrtHour === 9 && currentDay !== lastScraperDay) {
+            lastScraperDay = currentDay;
+            const { runScraperJob } = require('../controllers/adminLeadController');
+            runScraperJob().catch(e => console.error("Erro no job diário do scraper:", e));
         }
     }, 60000); 
 };
