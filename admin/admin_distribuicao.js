@@ -115,16 +115,16 @@ function renderTable() {
 
         return `
             <tr>
-                <td style="font-weight: 500;">
+                <td style="font-weight: 500;" data-label="Profissional">
                     ${p.nome}<br>
                     <span style="font-size:0.8rem; color:#888;">${p.diasAtivo} dias na Yelo</span>
                 </td>
-                <td>${p.matches}</td>
-                <td>${p.visualizacoes}</td>
-                <td>${p.whatsapp_clicks}</td>
-                <td>${p.conversando}</td>
-                <td><strong style="color: var(--verde-escuro);">${p.conversoes}</strong></td>
-                <td>${fairnessBadge}</td>
+                <td data-label="Matches (Sempre)">${p.matches}</td>
+                <td data-label="Visitas Perfil">${p.visualizacoes}</td>
+                <td data-label="Cliques WPP">${p.whatsapp_clicks}</td>
+                <td data-label="Em Negociação">${p.conversando}</td>
+                <td data-label="Conversões"><strong style="color: var(--verde-escuro);">${p.conversoes}</strong></td>
+                <td data-label="Índice Visibilidade" style="padding-top: 15px;">${fairnessBadge}</td>
             </tr>
         `;
     }).join('');

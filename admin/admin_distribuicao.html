@@ -86,6 +86,30 @@
                 gap: 10px;
                 padding: 15px;
             }
+
+            /* Tabela em formato de card (App-like) */
+            .tabela-gerenciamento thead { display: none; }
+            .tabela-gerenciamento, .tabela-gerenciamento tbody, .tabela-gerenciamento tr, .tabela-gerenciamento td { display: block; width: 100%; box-sizing: border-box; }
+            .tabela-gerenciamento tr { margin-bottom: 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); padding: 15px; border: 1px solid #f1f5f9; }
+            
+            .tabela-gerenciamento td { 
+                display: flex; justify-content: space-between; align-items: center; 
+                text-align: right; border-bottom: 1px solid #f1f5f9; padding: 10px 0; 
+            }
+            .tabela-gerenciamento td:last-child { border-bottom: none; padding-bottom: 0; }
+            
+            .tabela-gerenciamento td::before { 
+                content: attr(data-label); font-weight: 600; color: #64748b; font-size: 0.8rem; text-transform: uppercase; 
+            }
+            
+            /* O primeiro TD vira o cabeçalho do card */
+            .tabela-gerenciamento td:first-child { 
+                display: block; text-align: left; background: #f8fafc; padding: 15px; margin: -15px -15px 12px -15px; 
+                border-radius: 12px 12px 0 0; border-bottom: 2px solid #e2e8f0;
+            }
+            .tabela-gerenciamento td:first-child::before { display: none; }
+            
+            .table-wrapper { background: transparent; box-shadow: none; overflow: visible; padding-bottom: 40px; }
         }
 
         .suggestion-box {
