@@ -88,28 +88,32 @@
             }
 
             /* Tabela em formato de card (App-like) */
-            .tabela-gerenciamento thead { display: none; }
-            .tabela-gerenciamento, .tabela-gerenciamento tbody, .tabela-gerenciamento tr { display: block; width: 100%; box-sizing: border-box; }
-            .tabela-gerenciamento tr { margin-bottom: 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); padding: 15px; border: 1px solid #f1f5f9; }
+            .tabela-gerenciamento thead { display: none !important; }
+            .tabela-gerenciamento, .tabela-gerenciamento tbody, .tabela-gerenciamento tr { display: block !important; width: 100% !important; box-sizing: border-box !important; }
+            .tabela-gerenciamento tr { margin-bottom: 20px !important; background: #fff !important; border-radius: 12px !important; box-shadow: 0 4px 15px rgba(0,0,0,0.06) !important; padding: 15px !important; border: 1px solid #f1f5f9 !important; }
             
             .tabela-gerenciamento td { 
-                display: flex !important; justify-content: space-between; align-items: center; 
-                text-align: right; border-bottom: 1px solid #f1f5f9; padding: 12px 0; width: 100%; box-sizing: border-box; gap: 15px;
+                display: flex !important; justify-content: space-between !important; align-items: center !important; 
+                text-align: right !important; border-bottom: 1px solid #f1f5f9 !important; padding: 12px 0 !important; width: 100% !important; box-sizing: border-box !important; gap: 15px !important;
             }
-            .tabela-gerenciamento td:last-child { border-bottom: none; padding-bottom: 0; }
+            .tabela-gerenciamento td:last-child { border-bottom: none !important; padding-bottom: 0 !important; }
             
             .tabela-gerenciamento td::before { 
-                content: attr(data-label); font-weight: 600; color: #64748b; font-size: 0.8rem; text-transform: uppercase; text-align: left; white-space: normal;
+                content: attr(data-label) !important; font-weight: 600 !important; color: #64748b !important; font-size: 0.8rem !important; text-transform: uppercase !important; text-align: left !important; white-space: normal !important; display: block !important; flex: 1 !important;
+            }
+            
+            .tabela-gerenciamento td > span, .tabela-gerenciamento td > strong {
+                flex: 1 !important; text-align: right !important; display: block !important;
             }
             
             /* O primeiro TD vira o cabeçalho do card */
             .tabela-gerenciamento td:first-child { 
-                display: block !important; text-align: left; background: #f8fafc; padding: 15px; margin: -15px -15px 12px -15px; 
-                border-radius: 12px 12px 0 0; border-bottom: 2px solid #e2e8f0; width: calc(100% + 30px);
+                display: block !important; text-align: left !important; background: #f8fafc !important; padding: 15px !important; margin: -15px -15px 12px -15px !important; 
+                border-radius: 12px 12px 0 0 !important; border-bottom: 2px solid #e2e8f0 !important; width: calc(100% + 30px) !important; box-sizing: border-box !important;
             }
-            .tabela-gerenciamento td:first-child::before { display: none; }
+            .tabela-gerenciamento td:first-child::before { display: none !important; }
             
-            .table-wrapper { background: transparent; box-shadow: none; overflow-x: hidden; padding-bottom: 40px; margin: 0; }
+            .table-wrapper { background: transparent !important; box-shadow: none !important; overflow: hidden !important; padding-bottom: 40px !important; margin: 0 !important; width: 100% !important; }
         }
 
         .suggestion-box {
