@@ -85,8 +85,12 @@ async function fetchData() {
 
 function renderTable() {
     const tbody = document.getElementById('tbody-visibility');
+    const mobileContainer = document.getElementById('mobile-cards-container');
+    
     if (!globalPsyData || globalPsyData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px;">Nenhum profissional ativo encontrado.</td></tr>';
+        const emptyMsg = 'Nenhum profissional ativo encontrado.';
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 30px;">${emptyMsg}</td></tr>`;
+        mobileContainer.innerHTML = `<div style="text-align: center; padding: 30px; color: #666;">${emptyMsg}</div>`;
         return;
     }
 
@@ -103,7 +107,10 @@ function renderTable() {
         return 0;
     });
 
-    tbody.innerHTML = sorted.map(p => {
+    let desktopHtml = '';
+    let mobileHtml = '';
+
+    sorted.forEach(p => {
         let fairnessBadge = '';
         if (p.fairnessScore > 150) {
             fairnessBadge = `<span class="badge badge-high">Monopolizando (${p.fairnessScore}%)</span>`;
@@ -113,19 +120,61 @@ function renderTable() {
             fairnessBadge = `<span class="badge badge-fair">Equilibrado (${p.fairnessScore}%)</span>`;
         }
 
-        return `
+        // --- DESKTOP TABLE ROW ---
+        desktopHtml += `
             <tr>
-                <td style="font-weight: 500;" data-label="Profissional">
+                <td style="font-weight: 500;">
                     ${p.nome}<br>
                     <span style="font-size:0.8rem; color:#888;">${p.diasAtivo} dias na Yelo</span>
                 </td>
-                <td data-label="Matches (Sempre)">${p.matches}</td>
-                <td data-label="Visitas Perfil">${p.visualizacoes}</td>
-                <td data-label="Cliques WPP">${p.whatsapp_clicks}</td>
-                <td data-label="Em Negociação">${p.conversando}</td>
-                <td data-label="Conversões"><strong style="color: var(--verde-escuro);">${p.conversoes}</strong></td>
-                <td data-label="Índice Visibilidade" style="padding-top: 15px;">${fairnessBadge}</td>
+                <td>${p.matches}</td>
+                <td>${p.visualizacoes}</td>
+                <td>${p.whatsapp_clicks}</td>
+                <td>${p.conversando}</td>
+                <td><strong style="color: var(--verde-escuro);">${p.conversoes}</strong></td>
+                <td>${fairnessBadge}</td>
             </tr>
         `;
-    }).join('');
+
+        // --- MOBILE CARD ---
+        mobileHtml += `
+            <div class="mobile-psy-card">
+                <div class="mobile-psy-header">
+                    <div>
+                        <div class="mobile-psy-name">${p.nome}</div>
+                        <div class="mobile-psy-days">${p.diasAtivo} dias na Yelo</div>
+                    </div>
+                </div>
+                <div class="mobile-psy-body">
+                    <div class="mobile-psy-stat">
+                        <span class="mobile-stat-label">Índice Visibilidade</span>
+                        <span class="mobile-stat-value">${fairnessBadge}</span>
+                    </div>
+                    <div class="mobile-psy-stat">
+                        <span class="mobile-stat-label">Matches (Sempre)</span>
+                        <span class="mobile-stat-value">${p.matches}</span>
+                    </div>
+                    <div class="mobile-psy-stat">
+                        <span class="mobile-stat-label">Visitas Perfil</span>
+                        <span class="mobile-stat-value">${p.visualizacoes}</span>
+                    </div>
+                    <div class="mobile-psy-stat">
+                        <span class="mobile-stat-label">Cliques WPP</span>
+                        <span class="mobile-stat-value">${p.whatsapp_clicks}</span>
+                    </div>
+                    <div class="mobile-psy-stat">
+                        <span class="mobile-stat-label">Em Negociação</span>
+                        <span class="mobile-stat-value">${p.conversando}</span>
+                    </div>
+                    <div class="mobile-psy-stat">
+                        <span class="mobile-stat-label">Conversões</span>
+                        <span class="mobile-stat-value" style="color: var(--verde-escuro); font-size: 1.1rem;">${p.conversoes}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    tbody.innerHTML = desktopHtml;
+    mobileContainer.innerHTML = mobileHtml;
 }

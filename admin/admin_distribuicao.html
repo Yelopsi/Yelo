@@ -87,33 +87,71 @@
                 padding: 15px;
             }
 
-            /* Tabela em formato de card (App-like) */
-            .tabela-gerenciamento thead { display: none !important; }
-            .tabela-gerenciamento, .tabela-gerenciamento tbody, .tabela-gerenciamento tr { display: block !important; width: 100% !important; box-sizing: border-box !important; }
-            .tabela-gerenciamento tr { margin-bottom: 20px !important; background: #fff !important; border-radius: 12px !important; box-shadow: 0 4px 15px rgba(0,0,0,0.06) !important; padding: 15px !important; border: 1px solid #f1f5f9 !important; }
-            
-            .tabela-gerenciamento td { 
-                display: flex !important; justify-content: space-between !important; align-items: center !important; 
-                text-align: right !important; border-bottom: 1px solid #f1f5f9 !important; padding: 12px 0 !important; width: 100% !important; box-sizing: border-box !important; gap: 15px !important;
-            }
-            .tabela-gerenciamento td:last-child { border-bottom: none !important; padding-bottom: 0 !important; }
-            
-            .tabela-gerenciamento td::before { 
-                content: attr(data-label) !important; font-weight: 600 !important; color: #64748b !important; font-size: 0.8rem !important; text-transform: uppercase !important; text-align: left !important; white-space: normal !important; display: block !important; flex: 1 !important;
-            }
-            
-            .tabela-gerenciamento td > span, .tabela-gerenciamento td > strong {
-                flex: 1 !important; text-align: right !important; display: block !important;
-            }
-            
-            /* O primeiro TD vira o cabeçalho do card */
-            .tabela-gerenciamento td:first-child { 
-                display: block !important; text-align: left !important; background: #f8fafc !important; padding: 15px !important; margin: -15px -15px 12px -15px !important; 
-                border-radius: 12px 12px 0 0 !important; border-bottom: 2px solid #e2e8f0 !important; width: calc(100% + 30px) !important; box-sizing: border-box !important;
-            }
-            .tabela-gerenciamento td:first-child::before { display: none !important; }
-            
-            .table-wrapper { background: transparent !important; box-shadow: none !important; overflow: hidden !important; padding-bottom: 40px !important; margin: 0 !important; width: 100% !important; }
+            /* Esconde a tabela inteira no mobile */
+            .table-wrapper { display: none !important; }
+            /* Mostra os cards */
+            .mobile-cards-wrapper { display: flex !important; flex-direction: column; gap: 15px; }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-cards-wrapper { display: none !important; }
+        }
+
+        /* Estilização dos Cards Nativos para Mobile */
+        .mobile-psy-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            border: 1px solid #f1f5f9;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .mobile-psy-header {
+            background: #f8fafc;
+            padding: 15px 20px;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .mobile-psy-name {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 1.1rem;
+            margin-bottom: 2px;
+        }
+        .mobile-psy-days {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+        .mobile-psy-body {
+            padding: 15px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .mobile-psy-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px dashed #e2e8f0;
+            padding-bottom: 8px;
+        }
+        .mobile-psy-stat:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .mobile-stat-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .mobile-stat-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
         }
 
         .suggestion-box {
@@ -252,6 +290,12 @@
                     <tr><td colspan="7" style="text-align: center; padding: 30px;">Carregando métricas...</td></tr>
                 </tbody>
             </table>
+        </div>
+
+        <!-- Container Exclusivo para Mobile -->
+        <div class="mobile-cards-wrapper" id="mobile-cards-container">
+            <!-- Cards injetados via JS -->
+            <div style="text-align: center; padding: 30px; color: #666;">Carregando métricas...</div>
         </div>
     </div>
 
