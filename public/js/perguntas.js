@@ -122,9 +122,8 @@ function initPerguntas() {
                 if (sortedAnswers.length > 1) {
                     const btnVerMais = document.createElement('button');
                     btnVerMais.className = 'btn-read-more';
-                    btnVerMais.style.cssText = "background: transparent; border: none; color: #1B4332; font-weight: 600; padding: 0; margin-top: 5px; cursor: pointer; font-size: 0.9rem; align-self: flex-end; text-decoration: underline;";
-                    btnVerMais.textContent = `Ver outras ${sortedAnswers.length - 1} respostas`;
-                    
+                    btnVerMais.style.cssText = "background: #d8f3dc; border: none; color: #1B4332; font-weight: 600; padding: 4px 12px; border-radius: 20px; margin-top: 5px; cursor: pointer; font-size: 0.85rem; align-self: flex-end; transition: background 0.2s ease;";
+                    btnVerMais.textContent = `Ver outras ${sortedAnswers.length - 1} respostas`;                    
                     btnVerMais.onclick = (e) => {
                         e.stopPropagation();
                         abrirDetalhesPergunta(q);
