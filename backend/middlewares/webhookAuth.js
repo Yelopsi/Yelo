@@ -5,8 +5,16 @@ const verifyWhatsAppSignature = (req, res, next) => {
     const META_APP_SECRET = process.env.META_APP_SECRET;
     
     if (!META_APP_SECRET) {
-        console.error("🚨 [WHATSAPP WEBHOOK] ERRO CRÍTICO: META_APP_SECRET não configurado.");
-        return res.status(500).json({ error: 'Configuração do servidor ausente.' });
+        // WhatsApp Business ainda não está ativado.
+        // Para ativar:
+        //   1. Acesse developers.facebook.com → seu app → Configurações → Básico
+        //   2. Copie o campo "Chave secreta do app"
+        //   3. No Render Dashboard → Environment → adicione META_APP_SECRET=<valor>
+        //   4. O Render vai fazer um novo deploy automaticamente
+        //   5. Teste com: curl -X POST https://yelo.onrender.com/api/webhooks/whatsapp -H "x-hub-signature-256: sha256=INVALID" -d '{}'
+        //      Deve retornar HTTP 401 (não mais 503)
+        console.warn('⚠️  [WHATSAPP WEBHOOK] Integração inativa: META_APP_SECRET não configurado. Configure no Render para ativar.');
+        return res.status(503).json({ error: 'Integração WhatsApp não ativada.' });
     }
 
     const signature = req.headers['x-hub-signature-256'];
