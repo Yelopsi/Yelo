@@ -176,14 +176,14 @@ exports.handleWebhook = async (req, res) => {
                 } else {
                     await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(), cancelAtPeriodEnd: false });
                     emailService.sendSubscriptionCancelledEmail(psi).catch(e => console.error("Erro email cancelamento:", e));
-
-                
-                if (db.SystemLog) {
-                    db.SystemLog.create({
-                        level: 'warning',
-                        message: `[ASAAS] Pagamento Estornado/Cancelado: ${psi.email}`,
-                        meta: { event: event.event, psychologistId: psi.id }
-                    }).catch(() => {});
+                    
+                    if (db.SystemLog) {
+                        db.SystemLog.create({
+                            level: 'warning',
+                            message: `[ASAAS] Pagamento Estornado/Cancelado: ${psi.email}`,
+                            meta: { event: event.event, psychologistId: psi.id }
+                        }).catch(() => {});
+                    }
                 }
             }
         } catch (err) { console.error('❌ [ASAAS] Erro ao processar estorno no banco:', err); }
