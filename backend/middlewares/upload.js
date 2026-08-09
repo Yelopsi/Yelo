@@ -1,38 +1,29 @@
 // backend/middleware/upload.js
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 
-// Define o caminho absoluto para backend/uploads
-const uploadDir = path.join(__dirname, '../uploads');
-
-// Cria a pasta se não existir
-if (!fs.existsSync(uploadDir)){
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        // Salva sempre na pasta correta
-        cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-    }
-});
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    const mime = file.mimetype.toLowerCase();
+    const ext = path.extname(file.originalname).toLowerCase();
+    
+    // Proteção rigorosa contra SVG / Stored XSS
+    if (mime.includes('svg') || ext === '.svg') {
+        return cb(new Error('Arquivos SVG não são permitidos por segurança.'), false);
+    }
+
+    if (mime.startsWith('image/') && (mime.includes('jpeg') || mime.includes('jpg') || mime.includes('png') || mime.includes('webp'))) {
         cb(null, true);
     } else {
-        cb(new Error('Apenas imagens são permitidas!'), false);
+        cb(new Error('Apenas arquivos de imagem (JPEG, PNG, WebP) são permitidos!'), false);
     }
 };
 
 const upload = multer({ 
     storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 } // Aumentado para 10MB
+    limits: { fileSize: 10 * 1024 * 1024 }, // Limite de 10MB
+    fileFilter: fileFilter
 });
 
 exports.uploadProfilePhoto = upload;

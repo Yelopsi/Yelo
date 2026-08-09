@@ -11,11 +11,73 @@ exports.handleWebhook = async (req, res) => {
     const asaasToken = req.headers['asaas-access-token'];
     const expectedToken = process.env.ASAAS_WEBHOOK_TOKEN;
     
-    if (expectedToken && asaasToken !== expectedToken) {
+    // FAIL-CLOSED OBRIGATÓRIO
+    if (!expectedToken) {
+        console.error("🚨 ERRO CRÍTICO DE CONFIGURAÇÃO: ASAAS_WEBHOOK_TOKEN ausente. Negando requisições por segurança (Fail-Closed).");
+        return res.status(401).json({ error: 'Configuração de webhook ausente no servidor.' });
+    }
+    if (asaasToken !== expectedToken) {
         console.error("🚨 [ALERTA DE SEGURANÇA] Webhook bloqueado. Token esperado não confere com o recebido.");
         return res.status(401).json({ error: 'Token de Webhook inválido.' });
-    } else if (!expectedToken) {
-        console.warn("⚠️ [AVISO] ASAAS_WEBHOOK_TOKEN não configurado no .env. Webhook aceito sem validação (Recomendado configurar por segurança).");
+    }
+
+    if (!event || !event.payment || !event.payment.id) {
+        return res.status(400).json({ error: 'Payload de webhook inválido ou incompleto.' });
+    }
+
+    // ZERO TRUST: Consultar o Asaas diretamente
+    let asaasPayment = null;
+    try {
+        let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
+        if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
+            ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
+        }
+
+        const asaasRes = await fetch(`${ASAAS_API_URL}/payments/${event.payment.id}`, {
+            headers: {
+                'access_token': process.env.ASAAS_API_KEY,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!asaasRes.ok) {
+            console.error(`❌ [ASAAS] Falha ao consultar pagamento real ${event.payment.id}: ${asaasRes.status}`);
+            return res.status(400).json({ error: 'Falha ao validar pagamento na API do Asaas.' });
+        }
+
+        asaasPayment = await asaasRes.json();
+        
+        if (!asaasPayment || !asaasPayment.id) {
+            return res.status(400).json({ error: 'Resposta inválida da API do Asaas ou sem ID.' });
+        }
+    } catch (err) {
+        console.error(`❌ [ASAAS] Erro de rede ao consultar pagamento:`, err.message);
+        return res.status(500).json({ error: 'Erro interno ao validar pagamento.' });
+    }
+
+    // OVERRIDE: Substitui o payment forjado pelo payment REAL retornado pela API
+    event.payment = asaasPayment;
+
+    // --- PROTEÇÃO ANTI-SPOOFING DE EVENTOS ---
+    const isPaidStatus = ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'].includes(asaasPayment.status);
+    
+    // Se o evento for de ativação, o status real TEM que ser de um pagamento efetivado.
+    if (['PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED'].includes(event.event)) {
+        if (!isPaidStatus) {
+            console.error(`🚨 Spoofing detectado: Evento de ativação (${event.event}) mas pagamento não está pago (${asaasPayment.status}).`);
+            return res.status(400).json({ error: 'Status financeiro real incompatível com o evento recebido.' });
+        }
+    }
+
+    // Se o evento for de desativação/falha, o status real NÃO PODE ser de um pagamento pendente ou efetivado. Tem que ser explicitamente negativo.
+    const negativeEvents = ['PAYMENT_REFUNDED', 'PAYMENT_REVERSED', 'PAYMENT_CHARGEBACK_REQUESTED', 'PAYMENT_DELETED', 'PAYMENT_REFUND_IN_PROGRESS', 'PAYMENT_OVERDUE', 'PAYMENT_CREDIT_CARD_CAPTURE_REFUSED', 'PAYMENT_REPROVED_BY_RISK_ANALYSIS'];
+    const negativeStatuses = ['OVERDUE', 'REFUNDED', 'REFUND_IN_PROGRESS', 'CHARGEBACK_REQUESTED', 'CHARGEBACK_DISPUTE', 'AWAITING_CHARGEBACK_REVERSAL'];
+    
+    if (negativeEvents.includes(event.event)) {
+        if (!negativeStatuses.includes(asaasPayment.status)) {
+            console.error(`🚨 Spoofing detectado: Evento negativo (${event.event}) visando desativação, mas pagamento real não está em estado de falha/estorno (${asaasPayment.status}).`);
+            return res.status(400).json({ error: 'Status financeiro real incompatível com evento negativo.' });
+        }
     }
 
     // --- NOVOS EVENTOS DE NOTIFICAÇÃO PERSONALIZADA YELO ---
@@ -99,70 +161,74 @@ exports.handleWebhook = async (req, res) => {
         if (description.includes('REFERENCE')) planType = 'REFERENCE';
 
         try {
-            const psi = await db.Psychologist.findByPk(psychologistId);
-            if (psi) {
-                // --- FIX: RELOAD PARA EVITAR RACE CONDITION ---
-                await psi.reload();
-
-                // --- PROTEÇÃO CONTRA IDEMPOTÊNCIA (Pagamentos Duplicados) ---
-                if (db.SystemLog && payment.id) {
-                    const existingLog = await db.SystemLog.findOne({
-                        where: {
-                            message: { [db.Sequelize.Op.iLike]: '%Pagamento Confirmado%' },
-                            meta: { [db.Sequelize.Op.contains]: { paymentId: payment.id } }
+            await db.sequelize.transaction(async (t) => {
+                const psi = await db.Psychologist.findOne({
+                    where: { id: psychologistId },
+                    lock: t.LOCK.UPDATE,
+                    transaction: t
+                });
+                if (psi) {
+                    // --- PROTEÇÃO CONTRA IDEMPOTÊNCIA E CONCORRÊNCIA ---
+                    if (db.SystemLog && payment.id) {
+                        const existingLog = await db.SystemLog.findOne({
+                            where: {
+                                message: { [db.Sequelize.Op.iLike]: '%Pagamento Confirmado%' },
+                                meta: { [db.Sequelize.Op.contains]: { paymentId: payment.id } }
+                            },
+                            transaction: t
+                        });
+                        if (existingLog) {
+                            console.log(`[ASAAS] Webhook duplicado ignorado. Fatura ${payment.id} já processada para ${psi.email}.`);
+                            return res.json({ received: true, ignored: true, reason: 'Already processed' });
                         }
-                    });
-                    if (existingLog) {
-                        console.log(`[ASAAS] Webhook duplicado ignorado. Fatura ${payment.id} já processada para ${psi.email}.`);
-                        return res.json({ received: true, ignored: true, reason: 'Already processed' });
                     }
+
+                    // --- PROTEÇÃO CONTRA WEBHOOKS ANTIGOS ---
+                    if (psi.status === 'active' && payment.subscription && psi.stripeSubscriptionId && psi.stripeSubscriptionId !== payment.subscription) {
+                         return res.json({received: true});
+                    }
+                    
+                    if (psi.status === 'inactive' && !psi.stripeSubscriptionId) {
+                        return res.json({received: true});
+                    }
+
+                    const currentPayments = (psi.subscription_payments_count || 0) + 1;
+
+                    const hoje = new Date();
+                    const novaValidade = new Date(hoje.setDate(hoje.getDate() + 30));
+
+                    const updatePayload = {
+                        status: 'active',
+                        planExpiresAt: novaValidade, 
+                        plano: planType,
+                        stripeSubscriptionId: payment.subscription,
+                        subscription_payments_count: currentPayments
+                    };
+
+                    // Registra a data da primeira assinatura se ainda não existir
+                    if (!psi.subscribedAt) {
+                        updatePayload.subscribedAt = new Date();
+                    }
+
+                    await psi.update(updatePayload, { transaction: t });
+
+                    // --- GAMIFICATION: Tenta atribuir a badge de Pioneiro ---
+                    gamificationService.assignPioneerBadge(psi.id).catch(e => console.error("Erro no hook de badge Pioneiro (Pagamento):", e));
+
+                    // [LOG DE SUCESSO PARA RASTREAMENTO E IDEMPOTÊNCIA]
+                    if (db.SystemLog) {
+                        await db.SystemLog.create({
+                            level: 'info',
+                            message: `[ASAAS] Pagamento Confirmado: ${psi.email} (Plano ${planType})`,
+                            meta: { userEmail: psi.email, psychologistId: psi.id, paymentId: payment.id }
+                        }, { transaction: t });
+                    }
+
+                    // --- ENVIA E-MAIL PERSONALIZADO YELO ---
+                    emailService.sendPaymentConfirmationEmail(psi, planType, payment.value)
+                        .catch(err => console.error("Erro ao enviar email de confirmação (background):", err.message));
                 }
-
-                // --- PROTEÇÃO CONTRA RACE CONDITION // WEBHOOKS ANTIGOS ---
-                if (psi.status === 'active' && payment.subscription && psi.stripeSubscriptionId && psi.stripeSubscriptionId !== payment.subscription) {
-                     return res.json({received: true});
-                }
-                
-                if (psi.status === 'inactive' && !psi.stripeSubscriptionId) {
-                    return res.json({received: true});
-                }
-
-                const currentPayments = (psi.subscription_payments_count || 0) + 1;
-
-                const hoje = new Date();
-                const novaValidade = new Date(hoje.setDate(hoje.getDate() + 30));
-
-                const updatePayload = {
-                    status: 'active',
-                    planExpiresAt: novaValidade, 
-                    plano: planType,
-                    stripeSubscriptionId: payment.subscription,
-                    subscription_payments_count: currentPayments
-                };
-
-                // Registra a data da primeira assinatura se ainda não existir
-                if (!psi.subscribedAt) {
-                    updatePayload.subscribedAt = new Date();
-                }
-
-                await psi.update(updatePayload);
-
-                // --- GAMIFICATION: Tenta atribuir a badge de Pioneiro ---
-                gamificationService.assignPioneerBadge(psi.id).catch(e => console.error("Erro no hook de badge Pioneiro (Pagamento):", e));
-
-                // [LOG DE SUCESSO PARA RASTREAMENTO NO DASHBOARD E IDEMPOTÊNCIA]
-                if (db.SystemLog) {
-                    db.SystemLog.create({
-                        level: 'info',
-                        message: `[ASAAS] Pagamento Confirmado: ${psi.email} (Plano ${planType})`,
-                        meta: { userEmail: psi.email, psychologistId: psi.id, paymentId: payment.id }
-                    }).catch(() => {});
-                }
-
-                // --- ENVIA E-MAIL PERSONALIZADO YELO ---
-                emailService.sendPaymentConfirmationEmail(psi, planType, payment.value)
-                    .catch(err => console.error("Erro ao enviar email de confirmação (background):", err.message));
-            }
+            });
         } catch (err) {
             console.error('Erro ao atualizar banco:', err);
             if (db.SystemLog) {

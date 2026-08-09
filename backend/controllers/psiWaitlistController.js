@@ -38,28 +38,39 @@ exports.addToWaitlist = async (req, res) => {
             return res.status(400).json({ error: 'O e-mail é obrigatório para entrar na lista de espera.' });
         }
 
+        const successMessage = 'E-mail recebido com sucesso. Caso haja disponibilidade, entraremos em contato.';
+
         // Verifica se já é um Psicólogo cadastrado e ativo (Evita colocar quem já tem conta na lista)
         const isRegistered = await db.Psychologist.findOne({ where: { email: { [Op.iLike]: email } } });
         if (isRegistered) {
-            return res.status(200).json({ message: 'Usuário já registrado. Ignorando lista de espera.' });
+            return res.status(200).json({ message: successMessage });
         }
 
-        let waitlistEntry = await db.WaitingList.findOne({ where: { email } });
+        let waitlistEntry = await db.WaitingList.findOne({ where: { email: { [Op.iLike]: email } } });
         
-        const payload = {
-            nome, telefone, crp, genero_identidade, valor_sessao_faixa,
-            temas_atuacao, praticas_afirmativas, abordagens_tecnicas,
-            utm_source, utm_medium, utm_campaign, utm_content, status: 'pending'
-        };
-
         if (waitlistEntry) {
-            // Se já tentou antes, atualiza com os dados mais recentes de UTM
+            // Se já tentou antes e o status for avançado, IGNORA a atualização silenciosamente
+            if (['invited', 'accepted', 'active'].includes(waitlistEntry.status)) {
+                return res.status(200).json({ message: successMessage });
+            }
+
+            // Apenas atualiza dados de quem AINDA está pendente (sem alterar o status)
+            const payload = {
+                nome, telefone, crp, genero_identidade, valor_sessao_faixa,
+                temas_atuacao, praticas_afirmativas, abordagens_tecnicas,
+                utm_source, utm_medium, utm_campaign, utm_content
+            };
             await waitlistEntry.update(payload);
         } else {
+            const payload = {
+                nome, telefone, crp, genero_identidade, valor_sessao_faixa,
+                temas_atuacao, praticas_afirmativas, abordagens_tecnicas,
+                utm_source, utm_medium, utm_campaign, utm_content, status: 'pending'
+            };
             waitlistEntry = await db.WaitingList.create({ email, ...payload });
         }
 
-        res.status(201).json({ message: 'E-mail adicionado à lista de espera com sucesso.' });
+        res.status(201).json({ message: successMessage });
     } catch (error) {
         res.status(500).json({ error: 'Erro interno no servidor ao salvar na lista de espera.' });
     }
@@ -110,7 +121,7 @@ exports.inviteFromWaitlist = async (req, res) => {
         });
 
         const frontendUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
-        const invitationLink = `${frontendUrl}/psi-registro?token=${invitationToken}&email=${encodeURIComponent(candidate.email)}`;
+        const invitationLink = `${frontendUrl}/psi-registro?token=${invitationToken}`;
         
         const emailService = require('../services/emailService');
         const htmlContent = `<h2>Olá, ${candidate.nome}!</h2><p>Temos uma ótima notícia: uma vaga foi liberada para você na Yelo!</p><p>Clique no link abaixo para concluir seu cadastro e começar a atender pacientes:</p><a href="${invitationLink}" style="display:inline-block; padding:10px 20px; background:#1B4332; color:#fff; text-decoration:none; border-radius:5px;">Concluir Cadastro</a><p>Seja bem-vindo(a)!</p>`;

@@ -14,8 +14,10 @@ const adminEficienciaController = require('../controllers/adminEficienciaControl
 const adminPerformanceController = require('../controllers/adminPerformanceController');
 const { protect, admin } = require('../middlewares/authMiddleware'); // Corrigido para importar ambos
 const { uploadProfilePhoto } = require('../middlewares/upload'); // Importa o Multer unificado
+const { adminLimiter } = require('../middlewares/rateLimiters');
+
 // Rota pública para login do admin
-router.post('/login', adminController.loginAdmin);
+router.post('/login', adminLimiter, adminController.loginAdmin);
 
 // Aplica proteção para garantir que apenas admins logados acessem
 router.use(protect);

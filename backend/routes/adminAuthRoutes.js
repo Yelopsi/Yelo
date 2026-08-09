@@ -4,7 +4,9 @@ const db = require('../models');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-router.post('/login-admin-check', async (req, res) => {
+const { adminLimiter } = require('../middlewares/rateLimiters');
+
+router.post('/login-admin-check', adminLimiter, async (req, res) => {
     try {
         const email = req.body.email;
         const senha = req.body.senha || req.body.password || req.body['senha-login'];

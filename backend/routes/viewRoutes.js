@@ -42,19 +42,7 @@ router.get(['/admin', '/admin/'], (req, res) => {
     res.sendFile(path.join(__dirname, '../../admin/admin.html'));
 });
 
-// --- ROTA DE RESGATE DE IMAGENS (UPLOADS) ---
-router.get('/uploads/profiles/:filename', (req, res) => {
-    const filename = req.params.filename;
-    const possiblePaths = [
-        path.join(__dirname, '../../uploads', filename),
-        path.join(__dirname, '../../uploads/profiles', filename),
-        path.join(__dirname, '../uploads', filename),
-        path.join(__dirname, '../uploads/profiles', filename)
-    ];
-    const foundPath = possiblePaths.find(p => fs.existsSync(p));
-    if (foundPath) res.sendFile(foundPath);
-    else res.status(404).send('Imagem não encontrada');
-});
+// Rota de uploads de profile removida: migrada inteiramente para Cloudinary.
 
 // --- HOME ---
 router.get('/', async (req, res) => {

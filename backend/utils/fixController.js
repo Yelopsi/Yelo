@@ -98,7 +98,7 @@ exports.runInviteAllWaitlist = async (req, res) => {
 
             await candidate.update({ status: 'invited', invitationToken, invitationExpiresAt: expirationDate });
 
-            const link = `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/psi-registro?token=${invitationToken}&email=${encodeURIComponent(candidate.email)}`;
+            const link = `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/psi-registro?token=${invitationToken}`;
             const htmlContent = `<h2>Olá, ${candidate.nome}!</h2><p>Uma vaga foi liberada para você na Yelo!</p><a href="${link}" style="display:inline-block; padding:10px 20px; background:#1B4332; color:#fff; text-decoration:none; border-radius:5px;">Concluir Cadastro</a>`;
 
             try {

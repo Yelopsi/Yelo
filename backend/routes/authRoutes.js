@@ -3,23 +3,22 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const db = require('../models');
 
-router.post('/google', authController.unifiedGoogleLogin);
+const { emailSpamLimiter, authLimiter } = require('../middlewares/rateLimiters');
+
+router.post('/google', authLimiter, authController.unifiedGoogleLogin);
 
 // --- ROTA AUXILIAR PARA IDENTIFICAR TIPO DE USUÁRIO (RECUPERAÇÃO DE SENHA) ---
-router.post('/identify-user', async (req, res) => {
+router.post('/identify-user', emailSpamLimiter, async (req, res) => {
     try {
         const { email } = req.body;
         if (!email) return res.status(400).json({ error: 'E-mail obrigatório' });
 
-        // Verifica na tabela de Pacientes
-        const [patients] = await db.sequelize.query('SELECT 1 FROM "Patients" WHERE email ILIKE :email LIMIT 1', { replacements: { email: email.trim() } });
-        if (patients.length > 0) return res.json({ type: 'patient' });
-
-        // Verifica na tabela de Psicólogos
-        const [psis] = await db.sequelize.query('SELECT 1 FROM "Psychologists" WHERE email ILIKE :email LIMIT 1', { replacements: { email: email.trim() } });
-        if (psis.length > 0) return res.json({ type: 'psychologist' });
-
-        return res.status(404).json({ error: 'E-mail não encontrado em nossa base de dados.' });
+        // A lógica real de redefinição de senha para ambas as tabelas (Paciente e Psicólogo)
+        // foi unificada no endpoint de Psicólogos (fallback do frontend).
+        // Ao retornar sempre um tipo fixo ('unified'), o frontend fará uma única requisição
+        // para a mesma rota, eliminando 100% da enumeração de contas,
+        // enquanto o backend processa o e-mail corretamente, independentemente de quem seja.
+        return res.json({ type: 'unified' });
     } catch (error) {
         console.error('Erro ao identificar usuário:', error);
         res.status(500).json({ error: 'Erro interno ao verificar e-mail.' });

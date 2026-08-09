@@ -4,17 +4,41 @@ const db = require('../models');
 const { Op } = require('sequelize');
 const gamificationService = require('../services/gamificationService');
 const whatsappClickController = require('../controllers/whatsappClickController');
+const { emailSpamLimiter, clickLimiter } = require('../middlewares/rateLimiters');
+const jwt = require('jsonwebtoken');
 
 // Rotas de Magic Link de Feedback (PLG)
 router.get('/feedback/:token', whatsappClickController.getPublicFeedbackByToken);
 router.post('/feedback/:token', whatsappClickController.submitPublicFeedback);
 
-router.post('/psychologists/:slug/whatsapp-click', async (req, res) => {
+router.post('/psychologists/:slug/whatsapp-click', clickLimiter, async (req, res) => {
     try {
         const { slug } = req.params;
         const { patientId, guestPhone, guestName } = req.body;
         const psychologist = await db.Psychologist.findOne({ where: { slug } });
         if (!psychologist) return res.status(404).send('Psicólogo não encontrado.');
+
+        // --- PROTEÇÃO ANTI-AUTO-CLIQUE (Psicólogo clicando em si mesmo) ---
+        let token = req.headers.authorization?.split(' ')[1] || req.cookies?.token;
+        if (token && token !== 'null' && token !== 'cookie_auth_active') {
+            try {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                if (decoded.id === psychologist.id) {
+                    console.log(`[Segurança] Auto-clique ignorado: Psicólogo ${psychologist.id}`);
+                    return res.status(200).json({ message: 'Auto-clique ignorado' });
+                }
+            } catch (e) { /* Token inválido, continua como visitante */ }
+        }
+
+        // --- PROTEÇÃO DE IDEMPOTÊNCIA (Cookie de 24h) ---
+        const cookieName = `clicked_psi_${psychologist.id}`;
+        if (req.cookies && req.cookies[cookieName]) {
+            console.log(`[Segurança] Clique duplicado bloqueado pelo cookie: Psicólogo ${psychologist.id}`);
+            return res.status(200).json({ message: 'Clique já contabilizado recentemente' });
+        }
+        
+        // Seta o cookie para impedir novos cliques nas próximas 24 horas
+        res.cookie(cookieName, 'true', { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
 
         const MAX_TRIAL_CLICKS = 3;
         const isAssinante = psychologist.status === 'active' || psychologist.is_exempt;
@@ -91,7 +115,7 @@ router.get('/psychologists/:slug/availability', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Erro interno ao buscar agenda.' }); }
 });
 
-router.post('/contato', async (req, res) => {
+router.post('/contato', emailSpamLimiter, async (req, res) => {
     try {
         const { nome, email, assunto, mensagem } = req.body;
         if (!nome || !email || !mensagem) return res.status(400).json({ success: false, error: 'Preencha todos os campos obrigatórios.' });

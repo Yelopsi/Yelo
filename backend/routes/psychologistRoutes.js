@@ -11,31 +11,32 @@ const psiWaitlistController = require('../controllers/psiWaitlistController');
 const matchController = require('../controllers/matchController');
 const psiDashboardController = require('../controllers/psiDashboardController');
 const whatsappClickController = require('../controllers/whatsappClickController');
-const { protect } = require('../middlewares/authMiddleware');
+const { protect, admin } = require('../middlewares/authMiddleware');
 const { uploadProfilePhoto, uploadCrpDocument } = require('../middlewares/upload');
+const { authLimiter, emailSpamLimiter, registerLimiter, matchLimiter, clickLimiter } = require('../middlewares/rateLimiters');
 
 // ===============================================
 // ROTAS PÚBLICAS (Não exigem login)
 // ===============================================
-router.post('/register', psiAuthController.registerPsychologist);
-router.post('/login', psiAuthController.loginPsychologist);
+router.post('/register', registerLimiter, psiAuthController.registerPsychologist);
+router.post('/login', authLimiter, psiAuthController.loginPsychologist);
 router.post('/check-demand', psiWaitlistController.checkDemand);
-router.post('/add-to-waitlist', psiWaitlistController.addToWaitlist);
+router.post('/add-to-waitlist', emailSpamLimiter, psiWaitlistController.addToWaitlist);
 router.get('/showcase', matchController.getShowcasePsychologists);
 router.get('/slug/:slug', matchController.getProfileBySlug);
-router.post('/match', matchController.getAnonymousMatches); 
+router.post('/match', matchLimiter, matchController.getAnonymousMatches); 
 router.get('/:id/reviews', matchController.getPsychologistReviews);
 
 // Rota para SOLICITAR o envio do e-mail de redefinição (PÚBLICA)
-router.post('/forgot-password', psiAuthController.requestPasswordReset);
+router.post('/forgot-password', emailSpamLimiter, psiAuthController.requestPasswordReset);
 
 // Rota para o usuário ENVIAR a nova senha com o token (PÚBLICA)
 router.post('/reset-password/:token', psiAuthController.resetPassword); 
 
 // Rotas de Tracking/Analytics de Conversão (PÚBLICAS)
-router.post('/:slug/whatsapp-click', psiDashboardController.incrementWhatsappClick);
+router.post('/:slug/whatsapp-click', clickLimiter, psiDashboardController.incrementWhatsappClick);
 router.post('/:id/appearance', psiDashboardController.incrementProfileAppearance);
-router.post('/public/whatsapp-click-log', whatsappClickController.registerClick);
+router.post('/public/whatsapp-click-log', clickLimiter, whatsappClickController.registerClick);
 
 // ===============================================
 // ROTAS PROTEGIDAS (Exigem login)
@@ -197,10 +198,10 @@ router.post('/me/platform-review', psiDashboardController.savePlatformReview);
 router.post('/me/exit-survey', psychologistController.saveExitSurvey);
 
 // Outras rotas protegidas
-router.get('/matches', matchController.getPatientMatches);
-router.get('/waiting-list', psiWaitlistController.getWaitingList);
-router.post('/waiting-list/invite', psiWaitlistController.inviteFromWaitlist);
-router.delete('/waiting-list/:id', psiWaitlistController.deleteFromWaitlist);
+router.get('/matches', matchLimiter, matchController.getPatientMatches);
+router.get('/waiting-list', admin, psiWaitlistController.getWaitingList);
+router.post('/waiting-list/invite', admin, psiWaitlistController.inviteFromWaitlist);
+router.delete('/waiting-list/:id', admin, psiWaitlistController.deleteFromWaitlist);
 
 // ===============================================
 // ROTA PÚBLICA GENÉRICA (DEVE SER A ÚLTIMA)

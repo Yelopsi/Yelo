@@ -4,18 +4,19 @@ const patientController = require('../controllers/patientController');
 const { protect, admin } = require('../middlewares/authMiddleware'); // Importa o Middleware e Admin
 const { uploadProfilePhoto } = require('../middlewares/upload'); // Importa o multer configurado
 const db = require('../models'); // Necessário para as queries diretas de favoritos
+const { authLimiter, emailSpamLimiter, registerLimiter } = require('../middlewares/rateLimiters');
 
 // Rota de Registro: /api/patients/register (Acesso Público)
-router.post('/register', patientController.registerPatient);
+router.post('/register', registerLimiter, patientController.registerPatient);
 
 // Rota de Login: /api/patients/login (Acesso Público)
-router.post('/login', patientController.loginPatient);
+router.post('/login', authLimiter, patientController.loginPatient);
 
 // Rota de Login com Google: /api/patients/google (Acesso Público)
-router.post('/google', patientController.googleLogin);
+router.post('/google', authLimiter, patientController.googleLogin);
 
 // Rota de Recuperação de Senha: /api/patients/forgot-password (Acesso Público)
-router.post('/forgot-password', patientController.requestPasswordReset);
+router.post('/forgot-password', emailSpamLimiter, patientController.requestPasswordReset);
 
 // Rota de Redefinição de Senha: /api/patients/reset-password/:token (Acesso Público)
 router.post('/reset-password/:token', patientController.resetPassword);

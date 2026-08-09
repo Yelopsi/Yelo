@@ -62,21 +62,39 @@ module.exports = {
     criarPost: async (req, res) => {
         try {
             let { titulo, conteudo, imagem_url } = req.body;
-            if (!titulo || !conteudo) return res.status(400).json({ error: "Título/Conteúdo obrigatórios." });
+            if (!titulo || !conteudo) {
+                if (req.file) try { await fs.unlink(req.file.path); } catch(e){}
+                return res.status(400).json({ error: "Título/Conteúdo obrigatórios." });
+            }
 
-            // [CORREÇÃO] Obtém o ID corretamente
             const userId = req.psychologist?.id || req.user?.id || req.userId;
-
             let finalImageUrl = imagem_url;
 
-            // --- UPLOAD PARA CLOUDINARY SE HOUVER ARQUIVO ---
             if (req.file) {
-                const result = await cloudinary.uploader.upload(req.file.path, {
-                    folder: 'yelo/blog',
-                    transformation: [{ width: 1000, crop: 'limit' }, { quality: 'auto' }, { fetch_format: 'auto' }]
-                });
-                finalImageUrl = result.secure_url;
-                try { await fs.unlink(req.file.path); } catch (e) {} // Limpa temp
+                // --- VALIDAÇÃO MAGIC BYTES ---
+                const buffer = await fs.readFile(req.file.path, { encoding: null, length: 12 });
+                const hex = buffer.toString('hex').toUpperCase();
+                const isJpeg = hex.startsWith('FFD8FF');
+                const isPng = hex.startsWith('89504E47');
+                const isWebp = hex.startsWith('52494646') && hex.substring(16, 24) === '57454250'; // RIFF....WEBP
+
+                if (!isJpeg && !isPng && !isWebp) {
+                    try { await fs.unlink(req.file.path); } catch(e){}
+                    return res.status(400).json({ error: "Arquivo com assinatura inválida (Magic Bytes)." });
+                }
+
+                // --- UPLOAD CLOUDINARY ---
+                try {
+                    const result = await cloudinary.uploader.upload(req.file.path, {
+                        folder: 'yelo/blog',
+                        transformation: [{ width: 1000, crop: 'limit' }, { quality: 'auto' }, { fetch_format: 'auto' }]
+                    });
+                    finalImageUrl = result.secure_url;
+                } catch (cloudErr) {
+                    throw new Error("Erro no upload da imagem");
+                } finally {
+                    try { await fs.unlink(req.file.path); } catch (e) {} // Limpa temp
+                }
             }
 
             const novoPost = await Post.create({
@@ -91,29 +109,25 @@ module.exports = {
             notificationService.notifyNewPost(novoPost, 'blog').catch(err => console.error("Notification hook error (blog create):", err));
 
             // --- GERAÇÃO AUTOMÁTICA DE SEO COM IA (Gemini) ---
-            // Roda após a criação em segundo plano e atualiza via query bruta para evitar erros do Sequelize
             seoService.generateSEO(conteudo, titulo).then(async (seoData) => {
                 try {
                     const queryParams = {
                         replacements: { meta: seoData.meta_description, tags: JSON.stringify(seoData.tags), id: novoPost.id }
                     };
-                    // Tenta atualizar a tabela (com fallback de case sensitivity)
                     await db.sequelize.query(
                         `UPDATE "posts" SET "meta_description" = :meta, "tags" = CAST(:tags AS JSONB) WHERE "id" = :id`, queryParams
                     ).catch(() => db.sequelize.query(
                         `UPDATE "Posts" SET "meta_description" = :meta, "tags" = CAST(:tags AS JSONB) WHERE "id" = :id`, queryParams
                     ));
-                } catch (seoErr) {
-                    console.error("Erro ao salvar SEO no banco:", seoErr);
-                }
+                } catch (seoErr) { console.error("Erro ao salvar SEO no banco:", seoErr); }
             });
 
-            // --- GAMIFICATION HOOK ---
             gamificationService.processAction(userId, 'blog_post').catch(err => console.error("Gamification hook error:", err));
 
             return res.status(201).json(novoPost);
         } catch (error) {
             console.error("Erro criarPost:", error);
+            if (req.file) try { await fs.unlink(req.file.path); } catch(e){}
             res.status(500).json({ error: "Erro ao salvar." });
         }
     },
@@ -134,12 +148,30 @@ module.exports = {
             let finalImageUrl = imagem_url;
 
             if (req.file) {
-                const result = await cloudinary.uploader.upload(req.file.path, {
-                    folder: 'yelo/blog',
-                    transformation: [{ width: 1000, crop: 'limit' }, { quality: 'auto' }, { fetch_format: 'auto' }]
-                });
-                finalImageUrl = result.secure_url;
-                try { await fs.unlink(req.file.path); } catch (e) {}
+                // --- VALIDAÇÃO MAGIC BYTES ---
+                const buffer = await fs.readFile(req.file.path, { encoding: null, length: 12 });
+                const hex = buffer.toString('hex').toUpperCase();
+                const isJpeg = hex.startsWith('FFD8FF');
+                const isPng = hex.startsWith('89504E47');
+                const isWebp = hex.startsWith('52494646') && hex.substring(16, 24) === '57454250'; // RIFF....WEBP
+
+                if (!isJpeg && !isPng && !isWebp) {
+                    try { await fs.unlink(req.file.path); } catch(e){}
+                    return res.status(400).json({ error: "Arquivo com assinatura inválida (Magic Bytes)." });
+                }
+
+                // --- UPLOAD CLOUDINARY ---
+                try {
+                    const result = await cloudinary.uploader.upload(req.file.path, {
+                        folder: 'yelo/blog',
+                        transformation: [{ width: 1000, crop: 'limit' }, { quality: 'auto' }, { fetch_format: 'auto' }]
+                    });
+                    finalImageUrl = result.secure_url;
+                } catch (cloudErr) {
+                    throw new Error("Erro no upload da imagem");
+                } finally {
+                    try { await fs.unlink(req.file.path); } catch (e) {} // Limpa temp
+                }
             }
 
             await post.update({ titulo, conteudo, imagem_url: finalImageUrl });

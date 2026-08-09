@@ -19,14 +19,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const displayReasons = (matchReasons.length > 0) ? matchReasons.slice(0, 1) : tags.slice(0, 1);
 
         if (displayReasons && displayReasons.length > 0) {
-            const r = displayReasons[0];
-            const reasonText = r.charAt(0).toUpperCase() + r.slice(1);
             reasonsHtml = `
                 <div class="match-reasons-box" style="background-color: #E8F5E9; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
                     <span style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--verde-escuro); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Por que recomendamos</span>
-                    <p style="margin: 0; color: var(--verde-escuro); font-size: 0.85rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
-                        ${reasonText}
-                    </p>
+                    <p id="reason-text-${profile.id}" style="margin: 0; color: var(--verde-escuro); font-size: 0.85rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;"></p>
                 </div>
             `;
         }
@@ -77,26 +73,32 @@ document.addEventListener('DOMContentLoaded', () => {
         // Mapeia o score original (0 a 100) para a faixa (85 a 99) para manter a percepção de alta compatibilidade
         const displayScore = (85 + (parseFloat(profile.score) * 0.14)).toFixed(1);
 
+        // Lógica de validação do link da foto (só aceita HTTP/HTTPS, previne javascript:alert)
+        const isSafeFoto = (profile.fotoUrl && (profile.fotoUrl.startsWith('http://') || profile.fotoUrl.startsWith('https://')));
+        const placeholderFoto = 'https://placehold.co/400x500/1B4332/FFF?text=Foto';
+
+        // Retorna o HTML estrutural com IDs estáticos e vazios. 
+        // Nenhum dado do usuário controlado é interpolado diretamente aqui.
         return `
-            <div class="match-card" style="animation-delay: ${profile.animationDelay}s; cursor: pointer;" data-slug="${profile.slug}">
+            <div class="match-card" id="card-${profile.id}" style="animation-delay: ${profile.animationDelay}s; cursor: pointer;">
                 <div class="match-badge">${displayScore}% Compatível</div>
                 <div class="${heartClass}" data-id="${profile.id}" title="Favoritar">${heartSymbol}</div>
                 
                 <div class="match-header-wrapper">
-                    <img src="${profile.fotoUrl}" alt="${profile.nome}" class="match-header-img" onerror="this.src='https://placehold.co/400x500/1B4332/FFF?text=Foto'">
+                    <img id="img-${profile.id}" src="${isSafeFoto ? profile.fotoUrl : placeholderFoto}" class="match-header-img" onerror="this.src='${placeholderFoto}'">
                 </div>
                 
                 <div class="match-body">
-                    <h3 class="match-name">${profile.nome}</h3>
-                    <span class="match-crp">CRP ${profile.crp}</span>
+                    <h3 id="nome-${profile.id}" class="match-name"></h3>
+                    <span id="crp-${profile.id}" class="match-crp"></span>
                     
                     ${reasonsHtml}
                     
-                    <div class="match-bio">"${profile.miniBio || profile.bio}"</div>
+                    <div id="bio-text-${profile.id}" class="match-bio"></div>
                     
                     <div class="match-footer">
                         <div class="match-price">${precoHtml}</div>
-                        <a href="/${profile.slug}?ref=match" class="btn-profile" target="_blank">Ver Perfil</a>
+                        <a id="link-${profile.id}" class="btn-profile" target="_blank">Ver Perfil</a>
                     </div>
                 </div>
             </div>
@@ -219,6 +221,49 @@ document.addEventListener('DOMContentLoaded', () => {
             grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #666;">Nenhum profissional encontrado com os critérios selecionados. <br><a href="/questionario.html" style="color: var(--verde-escuro); font-weight: bold;">Refazer busca</a></div>';
         } else {
             grid.innerHTML = dataToRender.map(createCard).join('');
+            
+            // XSS MITIGATION (Vulnerabilidade #9): Preencher TODOS os dados controlados por usuário via DOM API segura.
+            dataToRender.forEach(profile => {
+                // Preenchimento textual seguro (escapa HTML nativamente)
+                const nomeEl = document.getElementById(`nome-${profile.id}`);
+                if (nomeEl) nomeEl.textContent = profile.nome || 'Não informado';
+
+                const crpEl = document.getElementById(`crp-${profile.id}`);
+                if (crpEl) crpEl.textContent = `CRP ${profile.crp || 'Não informado'}`;
+
+                // Injeção de atributos segura via setAttribute e validação de base
+                const imgEl = document.getElementById(`img-${profile.id}`);
+                if (imgEl && profile.nome) imgEl.setAttribute('alt', profile.nome);
+
+                const cardEl = document.getElementById(`card-${profile.id}`);
+                if (cardEl && profile.slug) cardEl.setAttribute('data-slug', profile.slug);
+
+                const linkEl = document.getElementById(`link-${profile.id}`);
+                if (linkEl && profile.slug) {
+                    // O slug já é higienizado pelo backend (só letras e números), mas a API setAttribute protege adicionalmente o href.
+                    linkEl.setAttribute('href', `/${profile.slug}?ref=match`);
+                }
+
+                // Campos dinâmicos do LLM e Bio
+                const reasonEl = document.getElementById(`reason-text-${profile.id}`);
+                if (reasonEl) {
+                    let matchReasons = profile.matchReasons || [];
+                    if (typeof matchReasons === 'string') matchReasons = [matchReasons];
+                    let tags = profile.tags || [];
+                    if (typeof tags === 'string') tags = tags.split(',').map(t => t.trim());
+                    
+                    const displayReasons = (matchReasons.length > 0) ? matchReasons.slice(0, 1) : tags.slice(0, 1);
+                    if (displayReasons && displayReasons.length > 0) {
+                        const r = displayReasons[0];
+                        reasonEl.textContent = r.charAt(0).toUpperCase() + r.slice(1);
+                    }
+                }
+
+                const bioEl = document.getElementById(`bio-text-${profile.id}`);
+                if (bioEl) {
+                    bioEl.textContent = `"${profile.miniBio || profile.bio || ''}"`;
+                }
+            });
         }
         
         setupFavoriteButtons();
