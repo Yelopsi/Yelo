@@ -104,6 +104,20 @@ exports.handleWebhook = async (req, res) => {
                 // --- FIX: RELOAD PARA EVITAR RACE CONDITION ---
                 await psi.reload();
 
+                // --- PROTEÇÃO CONTRA IDEMPOTÊNCIA (Pagamentos Duplicados) ---
+                if (db.SystemLog && payment.id) {
+                    const existingLog = await db.SystemLog.findOne({
+                        where: {
+                            message: { [db.Sequelize.Op.iLike]: '%Pagamento Confirmado%' },
+                            meta: { [db.Sequelize.Op.contains]: { paymentId: payment.id } }
+                        }
+                    });
+                    if (existingLog) {
+                        console.log(`[ASAAS] Webhook duplicado ignorado. Fatura ${payment.id} já processada para ${psi.email}.`);
+                        return res.json({ received: true, ignored: true, reason: 'Already processed' });
+                    }
+                }
+
                 // --- PROTEÇÃO CONTRA RACE CONDITION // WEBHOOKS ANTIGOS ---
                 if (psi.status === 'active' && payment.subscription && psi.stripeSubscriptionId && psi.stripeSubscriptionId !== payment.subscription) {
                      return res.json({received: true});
@@ -136,12 +150,12 @@ exports.handleWebhook = async (req, res) => {
                 // --- GAMIFICATION: Tenta atribuir a badge de Pioneiro ---
                 gamificationService.assignPioneerBadge(psi.id).catch(e => console.error("Erro no hook de badge Pioneiro (Pagamento):", e));
 
-                // [LOG DE SUCESSO PARA RASTREAMENTO NO DASHBOARD]
+                // [LOG DE SUCESSO PARA RASTREAMENTO NO DASHBOARD E IDEMPOTÊNCIA]
                 if (db.SystemLog) {
                     db.SystemLog.create({
                         level: 'info',
                         message: `[ASAAS] Pagamento Confirmado: ${psi.email} (Plano ${planType})`,
-                        meta: { userEmail: psi.email, psychologistId: psi.id }
+                        meta: { userEmail: psi.email, psychologistId: psi.id, paymentId: payment.id }
                     }).catch(() => {});
                 }
 
