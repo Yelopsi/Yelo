@@ -251,21 +251,25 @@ exports.calculateMatches = async (preferences = {}) => {
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         
         debugLog.push(`[${Date.now() - startTime}ms] 📊 Carregando CRM e calculando Cota Justa...`);
-        const logs30d = await db.WhatsAppClickLog.findAll({
-            where: { createdAt: { [Op.gte]: thirtyDaysAgo } },
-            attributes: ['psychologistId', 'dealClosed']
-        });
+        const logs30d = await db.sequelize.query(`
+            SELECT "psychologistId", "dealClosed", COUNT(*) as count 
+            FROM "WhatsAppClickLogs" 
+            WHERE "createdAt" >= :thirtyDaysAgo 
+            GROUP BY "psychologistId", "dealClosed"
+        `, { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT });
         
         let totalConversoes30d = 0;
         const psyStats = {};
         
         logs30d.forEach(log => {
             const pid = log.psychologistId;
+            const count = parseInt(log.count, 10);
             if (!psyStats[pid]) psyStats[pid] = { leads: 0, conversoes: 0 };
-            psyStats[pid].leads++;
+            
+            psyStats[pid].leads += count;
             if (log.dealClosed === 'closed') {
-                psyStats[pid].conversoes++;
-                totalConversoes30d++;
+                psyStats[pid].conversoes += count;
+                totalConversoes30d += count;
             }
         });
 

@@ -124,6 +124,26 @@ exports.incrementWhatsappClick = async (req, res) => {
         const psychologist = await db.Psychologist.findOne({ where: { slug } });
 
         if (psychologist) {
+            const jwt = require('jsonwebtoken');
+
+            // --- PROTEÇÃO ANTI-AUTO-CLIQUE (Psicólogo clicando em si mesmo) ---
+            let token = req.headers.authorization?.split(' ')[1] || req.cookies?.token;
+            if (token && token !== 'null' && token !== 'cookie_auth_active') {
+                try {
+                    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                    if (decoded.id === psychologist.id) {
+                        return res.status(200).json({ success: true, message: 'Auto-clique ignorado' });
+                    }
+                } catch (e) { /* Token inválido, continua como visitante */ }
+            }
+
+            // --- PROTEÇÃO DE IDEMPOTÊNCIA (Cookie de 24h) ---
+            const cookieName = `clicked_psi_${psychologist.id}`;
+            if (req.cookies && req.cookies[cookieName]) {
+                return res.status(200).json({ success: true, message: 'Clique duplicado bloqueado' });
+            }
+            res.cookie(cookieName, 'true', { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
+
             gamificationService.processAction(psychologist.id, 'whatsapp_click').catch(e => {});
             const { patientId, guestPhone, guestName, source } = req.body || {};
 

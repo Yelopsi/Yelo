@@ -600,12 +600,42 @@ exports.updateProfilePhoto = async (req, res) => {
             return res.status(401).json({ error: 'Paciente não autenticado.' });
         }
 
-        // O multer salva o arquivo e disponibiliza o filename. O caminho relativo será este:
-        const fotoUrl = `/uploads/profiles/${req.file.filename}`;
+        // Integração com Cloudinary
+        const cloudinary = require('cloudinary').v2;
+        cloudinary.config({
+            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+            api_key: process.env.CLOUDINARY_API_KEY,
+            api_secret: process.env.CLOUDINARY_API_SECRET
+        });
+
+        // 2. Upload para o Cloudinary via Stream
+        const fotoUrl = await new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+                {
+                    folder: 'yelo/profiles', // Pasta no Cloudinary
+                    public_id: `patient-profile-${patient.id}`, // ID fixo para substituir a foto antiga
+                    overwrite: true,
+                    transformation: [
+                        { width: 500, height: 500, crop: 'fill', gravity: 'face' }, // Foca no rosto e corta quadrado
+                        { quality: 'auto' }, // Otimização automática de qualidade
+                        { fetch_format: 'auto' } // Converte para WebP/AVIF se o navegador suportar
+                    ]
+                },
+                (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result.secure_url);
+                }
+            );
+            uploadStream.end(req.file.buffer);
+        });
+
         patient.fotoUrl = fotoUrl;
         await patient.save();
         res.status(200).json({ message: 'Foto atualizada com sucesso!', fotoUrl });
     } catch (error) {
+        if (error && error.message && (error.message.includes('format') || error.message.includes('invalid') || error.message.includes('supported') || error.message.includes('corrupt') || error.message.includes('image'))) {
+            return res.status(400).json({ error: 'Formato ou conteúdo de arquivo de imagem inválido.' });
+        }
         res.status(500).json({ error: 'Erro interno ao salvar a imagem.' });
     }
 };

@@ -267,20 +267,9 @@ exports.updateAdminPhoto = async (req, res) => {
 
         let fotoUrl = '';
         try {
-            if (req.file.path) {
-                const result = await cloudinary.uploader.upload(req.file.path, {
-                    folder: 'yelo/profiles',
-                    public_id: `admin-profile-${userId}-${Date.now()}`,
-                    overwrite: true,
-                    transformation: [{ width: 500, height: 500, crop: 'fill', gravity: 'face' }, { quality: 'auto' }, { fetch_format: 'auto' }]
-                });
-                fotoUrl = result.secure_url;
-                
-                const fs = require('fs').promises;
-                try { await fs.unlink(req.file.path); } catch (e) { console.warn("Erro ao deletar arquivo local:", e); }
-            } else if (req.file.buffer) {
+            if (req.file.buffer) {
                 fotoUrl = await new Promise((resolve, reject) => {
-                    cloudinary.uploader.upload_stream(
+                    const uploadStream = cloudinary.uploader.upload_stream(
                         {
                             folder: 'yelo/profiles',
                             public_id: `admin-profile-${userId}-${Date.now()}`,
@@ -291,7 +280,8 @@ exports.updateAdminPhoto = async (req, res) => {
                             if (error) reject(error);
                             else resolve(result.secure_url);
                         }
-                    ).end(req.file.buffer);
+                    );
+                    uploadStream.end(req.file.buffer);
                 });
             } else {
                 throw new Error('Formato de arquivo não suportado');
@@ -318,7 +308,10 @@ exports.updateAdminPhoto = async (req, res) => {
         return res.status(200).json({ message: 'Foto atualizada!', fotoUrl });
     } catch (error) {
         console.error('Falha Fatal ao atualizar foto do admin:', error);
-        return res.status(500).json({ error: `Erro fatal no servidor: ${error.message} - Veja o terminal do NodeJS.` });
+        if (error && error.message && (error.message.includes('format') || error.message.includes('invalid') || error.message.includes('supported') || error.message.includes('corrupt') || error.message.includes('image'))) {
+            return res.status(400).json({ error: 'Formato ou conteúdo de arquivo de imagem inválido.' });
+        }
+        return res.status(500).json({ error: `Erro interno no servidor ao fazer upload da foto.` });
     }
 };
 

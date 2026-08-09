@@ -17,7 +17,6 @@ const ensureTableExists = async () => {
     }
 };
 
-// 1. Registra o clique vindo da página pública do psicólogo
 exports.registerClick = async (req, res) => {
     try {
         await ensureTableExists();
@@ -26,6 +25,12 @@ exports.registerClick = async (req, res) => {
         if (!psychologistId) {
             return res.status(400).json({ error: 'psychologistId é obrigatório.' });
         }
+
+        const cookieName = `logged_psi_${psychologistId}`;
+        if (req.cookies && req.cookies[cookieName]) {
+            return res.status(200).json({ message: 'Log duplicado bloqueado.' });
+        }
+        res.cookie(cookieName, 'true', { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
 
         const clickLog = await db.WhatsAppClickLog.create({
             psychologistId,

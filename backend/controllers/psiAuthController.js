@@ -55,6 +55,20 @@ exports.registerPsychologist = async (req, res) => {
         if (!emailRegex.test(email)) return res.status(400).json({ error: 'Formato de e-mail inválido.' });
         if (passwordInput.length < 6) return res.status(400).json({ error: 'A senha deve ter no mínimo 6 caracteres.' });
 
+        // Validação Semântica de Nome
+        if (typeof nome !== 'string') return res.status(400).json({ error: 'Nome inválido.' });
+        nome = nome.replace(/[\x00-\x1F\x7F]/g, '').trim().replace(/\s+/g, ' '); // Remove caracteres de controle e excesso de espaços
+        if (nome.length < 2 || nome.length > 100) return res.status(400).json({ error: 'O nome deve ter entre 2 e 100 caracteres.' });
+        if (!/^[\p{L}\s\-'\.,]+$/u.test(nome)) return res.status(400).json({ error: 'O nome contém caracteres inválidos. Use apenas letras, espaços, hifens, apóstrofos, pontos ou vírgulas.' });
+
+        // Validação Semântica de CRP
+        if (crp) {
+            if (typeof crp !== 'string') return res.status(400).json({ error: 'CRP inválido.' });
+            const cleanCrp = crp.replace(/[\x00-\x1F\x7F]/g, '').trim();
+            if (cleanCrp.length < 4 || cleanCrp.length > 20) return res.status(400).json({ error: 'O CRP deve ter entre 4 e 20 caracteres.' });
+            if (!/^[A-Za-z0-9\/\-\s]+$/.test(cleanCrp)) return res.status(400).json({ error: 'Formato de CRP inválido. Use apenas números, letras, barras e hifens.' });
+        }
+
         // REVERTIDO: Limpeza simples de CPF
         const cleanCpf = cpf ? cpf.replace(/\D/g, '') : null;
 
@@ -299,24 +313,33 @@ exports.requestPasswordReset = async (req, res) => {
             return res.status(400).json({ error: 'E-mail é obrigatório.' });
         }
 
-        const psychologist = await db.Psychologist.findOne({ 
+        let user = await db.Psychologist.findOne({ 
             where: { email: { [Op.iLike]: email.trim() } },
             paranoid: false 
         });
+        let userType = 'psychologist';
 
-        if (!psychologist) {
+        if (!user) {
+            user = await db.Patient.findOne({
+                where: { email: { [Op.iLike]: email.trim() } },
+                paranoid: false
+            });
+            userType = 'patient';
+        }
+
+        if (!user) {
             return res.status(200).json({ message: 'Se um usuário com este e-mail existir, um link de redefinição foi enviado.' });
         }
 
         const resetToken = crypto.randomBytes(32).toString('hex');
-        psychologist.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-        psychologist.resetPasswordExpires = Date.now() + 3600000; // 1 hora
+        user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hora
 
-        await psychologist.save();
+        await user.save();
         
         const frontendUrl = process.env.FRONTEND_URL || req.headers.origin || 'https://www.yelopsi.com.br';
-        const resetLink = `${frontendUrl}/redefinir-senha?token=${resetToken}&type=psychologist`;
-        await sendPasswordResetEmail(psychologist, resetLink);
+        const resetLink = `${frontendUrl}/redefinir-senha?token=${resetToken}&type=${userType}`;
+        await sendPasswordResetEmail(user, resetLink);
 
         res.status(200).json({ message: 'Se um usuário com este e-mail existir, um link de redefinição foi enviado.' });
 

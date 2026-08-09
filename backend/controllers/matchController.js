@@ -4,17 +4,172 @@ const { Op } = require('sequelize');
 const crypto = require('crypto');
 const matchService = require('../services/matchService'); // Algoritmo unificado de Match
 
-// --- CACHE DE IDEMPOTÊNCIA PARA EVITAR SUPERCONTAGEM (F5) ---
-const recentMatchesCache = new Map();
-setInterval(() => {
-    const now = Date.now();
-    for (const [key, timestamp] of recentMatchesCache.entries()) {
-        if (now - timestamp > 15 * 60 * 1000) recentMatchesCache.delete(key); // Limpa após 15 min
+// --- CACHE LRU (Evitar Denial of Wallet e DB Exhaustion) ---
+class MatchLRUCache {
+    constructor(maxSize, ttlMs) {
+        this.cache = new Map();
+        this.maxSize = maxSize;
+        this.ttlMs = ttlMs;
     }
-}, 5 * 60 * 1000);
+    get(key) {
+        if (!this.cache.has(key)) return null;
+        const entry = this.cache.get(key);
+        if (Date.now() - entry.timestamp > this.ttlMs) {
+            this.cache.delete(key);
+            return null;
+        }
+        // LRU Update: remove e reinsere no final
+        this.cache.delete(key);
+        this.cache.set(key, entry);
+        return entry.data;
+    }
+    set(key, data) {
+        if (this.cache.has(key)) this.cache.delete(key);
+        if (this.cache.size >= this.maxSize) {
+            this.cache.delete(this.cache.keys().next().value); // Evicção do mais antigo
+        }
+        this.cache.set(key, { data, timestamp: Date.now() });
+    }
+}
+const recentMatchesCache = new MatchLRUCache(1000, 5 * 60 * 1000); // Max 1000 items, 5 minutos TTL
+
+// --- INPUT VALIDATION & SANITIZATION ---
+const validateAndSanitizeMatchPreferences = (prefs) => {
+    // 1. Rejeita estruturalmente inválido
+    if (!prefs || typeof prefs !== 'object') throw new Error('Preferências inválidas.');
+    if (JSON.stringify(prefs).length > 2000) throw new Error('Payload excessivo.');
+
+    const sanitizeString = (str) => {
+        if (typeof str !== 'string') return '';
+        return str.substring(0, 50).trim();
+    };
+
+    const sanitizeArray = (arr) => {
+        if (Array.isArray(arr)) {
+            if (arr.length > 5) throw new Error('Número máximo de opções excedido.');
+            return arr.map(sanitizeString);
+        } else if (typeof arr === 'string') {
+            return [sanitizeString(arr)];
+        }
+        return [];
+    };
+
+    return {
+        faixa_valor: sanitizeString(prefs.faixa_valor),
+        temas: sanitizeArray(prefs.temas),
+        pref_genero_prof: sanitizeString(prefs.pref_genero_prof),
+        caracteristicas_prof: sanitizeArray(prefs.caracteristicas_prof),
+        idade: sanitizeString(prefs.idade),
+        modalidade_atendimento: sanitizeString(prefs.modalidade_atendimento),
+        abordagem_ideal: sanitizeString(prefs.abordagem_ideal)
+    };
+};
 
 // Flag global de otimização: Evita executar ALTER TABLE em todas as buscas de Match
 let matchSchemaChecked = false;
+
+// --- SINGLE FLIGHT (Deduplicação de Promises em Voo) ---
+const inFlightMatches = new Map();
+
+async function executeMatchSingleFlight(safePreferences, matchHash, patient) {
+    if (inFlightMatches.has(matchHash)) {
+        return await inFlightMatches.get(matchHash);
+    }
+
+    const matchPromise = (async () => {
+        const matchResult = await matchService.calculateMatches(safePreferences);
+
+        // Garante que os valores financeiros sejam enviados ao frontend
+        if (matchResult && matchResult.results) {
+            for (let psi of matchResult.results) {
+                if (psi.valor_sessao_numero === undefined || psi.tipo_cobranca === undefined) {
+                    const dbPsi = await db.Psychologist.findByPk(psi.id, { attributes: ['valor_sessao_numero', 'valor_mensal_numero', 'tipo_cobranca'] });
+                    if (dbPsi) {
+                        psi.valor_sessao_numero = dbPsi.valor_sessao_numero;
+                        psi.valor_mensal_numero = dbPsi.valor_mensal_numero;
+                        psi.tipo_cobranca = dbPsi.tipo_cobranca;
+                    }
+                }
+            }
+        }
+
+        // --- LOG DE EVENTO DE MATCH E UPDATE DE FAIRNESS ---
+        if (matchResult && matchResult.results && matchResult.results.length > 0) {
+            const matchEvents = matchResult.results.map(psi => ({
+                psychologistId: psi.id,
+                patientId: patient ? patient.id : null,
+                matchScore: psi.matchScore,
+                source: patient ? 'patient_dashboard' : 'questionnaire'
+            }));
+            try {
+                if (!matchSchemaChecked) {
+                    await db.sequelize.query(`
+                        CREATE TABLE IF NOT EXISTS "MatchEvents" (
+                            "id" SERIAL PRIMARY KEY,
+                            "psychologistId" INTEGER,
+                            "patientId" INTEGER,
+                            "matchTags" TEXT[], 
+                            "matchScore" FLOAT,
+                            "source" VARCHAR(255),
+                            "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                            "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                        );
+                    `).catch(() => {});
+                    await db.sequelize.query(`ALTER TABLE "MatchEvents" ADD COLUMN IF NOT EXISTS "patientId" INTEGER, ADD COLUMN IF NOT EXISTS "source" VARCHAR(255), ADD COLUMN IF NOT EXISTS "matchScore" FLOAT;`).catch(() => {});
+                    await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "last_shown_match_at" TIMESTAMP WITH TIME ZONE;`).catch(() => {});
+                    matchSchemaChecked = true;
+                }
+
+                for (const event of matchEvents) {
+                    await db.sequelize.query(
+                        `INSERT INTO "MatchEvents" ("psychologistId", "patientId", "matchScore", "source", "createdAt", "updatedAt") VALUES (:psychologistId, :patientId, :matchScore, :source, NOW(), NOW())`,
+                        { replacements: event, type: db.sequelize.QueryTypes.INSERT }
+                    );
+                }
+
+                const idsParaAtualizar = matchResult.results.map(psi => psi.id);
+                if (idsParaAtualizar.length > 0) {
+                    await db.sequelize.query(
+                        `UPDATE "Psychologists" 
+                         SET profile_appearances = profile_appearances + 1, 
+                             last_shown_match_at = NOW() 
+                         WHERE id IN (:ids)`,
+                        { 
+                            replacements: { ids: idsParaAtualizar }, 
+                            type: db.sequelize.QueryTypes.UPDATE 
+                        }
+                    );
+                }
+            } catch (err) {
+                console.error("Erro ao registrar evento de match: ", err);
+            }
+        }
+
+        // O payload exato que a rota devolverá
+        const finalPayload = {
+            message: matchResult.matchTier === 'ideal' ? 'Psicólogos compatíveis encontrados!' : 'Psicólogos próximos encontrados!',
+            matchTier: matchResult.matchTier,
+            results: matchResult.results,
+            compromiseText: matchResult.compromiseText
+        };
+        
+        // Salva no cache LRU ANTES de resolver a promise
+        recentMatchesCache.set(matchHash, finalPayload);
+        
+        return finalPayload;
+    })();
+
+    inFlightMatches.set(matchHash, matchPromise);
+
+    try {
+        return await matchPromise;
+    } finally {
+        // Remove do inFlight, garantindo que não cresça indefinidamente 
+        // e que novas requisições em caso de falha possam ser retentadas
+        inFlightMatches.delete(matchHash);
+    }
+}
+
 
 // Função auxiliar para proteger a privacidade do paciente nas avaliações (Ex: "Suzana Gomes" -> "Suzana G.")
 const formatPatientName = (name) => {
@@ -56,89 +211,21 @@ exports.getPatientMatches = async (req, res) => {
             });
         }
 
-        // Gera Hash Único da Busca para evitar contar F5 repetido na mesma sessão
-        const matchHash = crypto.createHash('md5').update(JSON.stringify(patientPreferences) + patient.id).digest('hex');
-        const isDuplicate = recentMatchesCache.has(matchHash);
-        recentMatchesCache.set(matchHash, Date.now());
+        const safePreferences = validateAndSanitizeMatchPreferences(patientPreferences);
 
-        // --- A MÁGICA ACONTECE AQUI ---
-        const matchResult = await matchService.calculateMatches(patientPreferences);
-
-        // --- FIX DOS PREÇOS ---
-        // Garante que os valores financeiros sejam enviados ao frontend (caso o algoritmo matchService os omita)
-        if (matchResult && matchResult.results) {
-            for (let psi of matchResult.results) {
-                if (psi.valor_sessao_numero === undefined || psi.tipo_cobranca === undefined) {
-                    const dbPsi = await db.Psychologist.findByPk(psi.id, { attributes: ['valor_sessao_numero', 'valor_mensal_numero', 'tipo_cobranca'] });
-                    if (dbPsi) {
-                        psi.valor_sessao_numero = dbPsi.valor_sessao_numero;
-                        psi.valor_mensal_numero = dbPsi.valor_mensal_numero;
-                        psi.tipo_cobranca = dbPsi.tipo_cobranca;
-                    }
-                }
-            }
+        // Gera Hash Único da Busca para cachear o resultado
+        const matchHash = crypto.createHash('md5').update(JSON.stringify(safePreferences) + patient.id).digest('hex');
+        
+        // --- EARLY RETURN (CACHE HIT) ---
+        const cachedResult = recentMatchesCache.get(matchHash);
+        if (cachedResult) {
+            return res.status(200).json(cachedResult);
         }
 
-        // --- LOG DE EVENTO DE MATCH E UPDATE DE FAIRNESS ---
-        if (!isDuplicate && matchResult && matchResult.results && matchResult.results.length > 0) {
-            const matchEvents = matchResult.results.map(psi => ({
-                psychologistId: psi.id,
-                patientId: patient ? patient.id : null, // Suporta tanto usuário logado quanto anônimo
-                matchScore: psi.matchScore,
-                source: patient ? 'patient_dashboard' : 'questionnaire'
-            }));
-            try {
-                // 1. Garantia de Colunas (Executa apenas UMA VEZ na vida útil do servidor para evitar gargalo de I/O)
-                if (!matchSchemaChecked) {
-                    await db.sequelize.query(`
-                        CREATE TABLE IF NOT EXISTS "MatchEvents" (
-                            "id" SERIAL PRIMARY KEY,
-                            "psychologistId" INTEGER,
-                            "patientId" INTEGER,
-                            "matchTags" TEXT[], 
-                            "matchScore" FLOAT,
-                            "source" VARCHAR(255),
-                            "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                            "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                        );
-                    `).catch(() => {});
-                    await db.sequelize.query(`ALTER TABLE "MatchEvents" ADD COLUMN IF NOT EXISTS "patientId" INTEGER, ADD COLUMN IF NOT EXISTS "source" VARCHAR(255), ADD COLUMN IF NOT EXISTS "matchScore" FLOAT;`).catch(() => {});
-                    await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "last_shown_match_at" TIMESTAMP WITH TIME ZONE;`).catch(() => {});
-                    matchSchemaChecked = true;
-                }
-
-                for (const event of matchEvents) {
-                    await db.sequelize.query(
-                        `INSERT INTO "MatchEvents" ("psychologistId", "patientId", "matchScore", "source", "createdAt", "updatedAt") VALUES (:psychologistId, :patientId, :matchScore, :source, NOW(), NOW())`,
-                        { replacements: event, type: db.sequelize.QueryTypes.INSERT }
-                    );
-                }
-
-                // 2. ATUALIZA O COOLDOWN E AS IMPRESSÕES (A Mágica do UCB)
-                const idsParaAtualizar = matchResult.results.map(psi => psi.id);
-                if (idsParaAtualizar.length > 0) {
-                    await db.sequelize.query(
-                        `UPDATE "Psychologists" 
-                         SET profile_appearances = profile_appearances + 1, 
-                             last_shown_match_at = NOW() 
-                         WHERE id IN (:ids)`,
-                        { 
-                            replacements: { ids: idsParaAtualizar }, 
-                            type: db.sequelize.QueryTypes.UPDATE 
-                        }
-                    );
-                }
-            } catch (err) {
-                console.error("Erro ao registrar evento de match: ", err);
-            }
-        }
-
-        res.status(200).json({
-            message: matchResult.matchTier === 'ideal' ? 'Psicólogos compatíveis encontrados!' : 'Psicólogos próximos encontrados!',
-            matchTier: matchResult.matchTier,
-            results: matchResult.results,
-            compromiseText: matchResult.compromiseText
-        });
+        const authenticatedPatient = await db.Patient.findByPk(req.user.id);
+        const finalPayload = await executeMatchSingleFlight(safePreferences, matchHash, authenticatedPatient);
+        
+        res.status(200).json(finalPayload);
 
     } catch (error) {
         res.status(500).json({ error: 'Erro interno no servidor ao buscar psicólogos compatíveis.' });
@@ -158,87 +245,25 @@ exports.getAnonymousMatches = async (req, res) => {
              return res.status(400).json({ error: 'Faixa de valor é obrigatória.' });
         }
 
+        let safePreferences;
+        try {
+            safePreferences = validateAndSanitizeMatchPreferences(patientPreferences);
+        } catch (err) {
+            return res.status(400).json({ error: err.message });
+        }
+
         // Gera Hash Único da Busca usando o IP para anônimos
         const userIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'anon';
-        const matchHash = crypto.createHash('md5').update(JSON.stringify(patientPreferences) + userIp).digest('hex');
-        const isDuplicate = recentMatchesCache.has(matchHash);
-        recentMatchesCache.set(matchHash, Date.now());
-
-        // Reutiliza a MESMA lógica do usuário logado
-        const matchResult = await matchService.calculateMatches(patientPreferences);
-
-        // --- FIX DOS PREÇOS ---
-        // Garante que os valores financeiros sejam enviados ao frontend (caso o algoritmo matchService os omita)
-        if (matchResult && matchResult.results) {
-            for (let psi of matchResult.results) {
-                if (psi.valor_sessao_numero === undefined || psi.tipo_cobranca === undefined) {
-                    const dbPsi = await db.Psychologist.findByPk(psi.id, { attributes: ['valor_sessao_numero', 'valor_mensal_numero', 'tipo_cobranca'] });
-                    if (dbPsi) {
-                        psi.valor_sessao_numero = dbPsi.valor_sessao_numero;
-                        psi.valor_mensal_numero = dbPsi.valor_mensal_numero;
-                        psi.tipo_cobranca = dbPsi.tipo_cobranca;
-                    }
-                }
-            }
+        const matchHash = crypto.createHash('md5').update(JSON.stringify(safePreferences) + userIp).digest('hex');
+        
+        // --- EARLY RETURN (CACHE HIT) ---
+        const cachedResult = recentMatchesCache.get(matchHash);
+        if (cachedResult) {
+            return res.status(200).json(cachedResult);
         }
 
-        const patient = null; // Declarado para não quebrar o bloco unificado
-
-        // --- LOG DE EVENTO DE MATCH E UPDATE DE FAIRNESS ---
-        if (!isDuplicate && matchResult && matchResult.results && matchResult.results.length > 0) {
-            const matchEvents = matchResult.results.map(psi => ({
-                psychologistId: psi.id,
-                patientId: patient ? patient.id : null, // Suporta tanto usuário logado quanto anônimo
-                matchScore: psi.matchScore,
-                source: patient ? 'patient_dashboard' : 'questionnaire'
-            }));
-            try {
-                // 1. Garantia de Colunas (Executa apenas UMA VEZ na vida útil do servidor para evitar gargalo de I/O)
-                if (!matchSchemaChecked) {
-                    await db.sequelize.query(`
-                        CREATE TABLE IF NOT EXISTS "MatchEvents" (
-                            "id" SERIAL PRIMARY KEY,
-                            "psychologistId" INTEGER,
-                            "patientId" INTEGER,
-                            "matchTags" TEXT[], 
-                            "matchScore" FLOAT,
-                            "source" VARCHAR(255),
-                            "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                            "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                        );
-                    `).catch(() => {});
-                    await db.sequelize.query(`ALTER TABLE "MatchEvents" ADD COLUMN IF NOT EXISTS "patientId" INTEGER, ADD COLUMN IF NOT EXISTS "source" VARCHAR(255), ADD COLUMN IF NOT EXISTS "matchScore" FLOAT;`).catch(() => {});
-                    await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "last_shown_match_at" TIMESTAMP WITH TIME ZONE;`).catch(() => {});
-                    matchSchemaChecked = true;
-                }
-
-                for (const event of matchEvents) {
-                    await db.sequelize.query(
-                        `INSERT INTO "MatchEvents" ("psychologistId", "patientId", "matchScore", "source", "createdAt", "updatedAt") VALUES (:psychologistId, :patientId, :matchScore, :source, NOW(), NOW())`,
-                        { replacements: event, type: db.sequelize.QueryTypes.INSERT }
-                    );
-                }
-
-                // 2. ATUALIZA O COOLDOWN E AS IMPRESSÕES (A Mágica do UCB)
-                const idsParaAtualizar = matchResult.results.map(psi => psi.id);
-                if (idsParaAtualizar.length > 0) {
-                    await db.sequelize.query(
-                        `UPDATE "Psychologists" 
-                         SET profile_appearances = profile_appearances + 1, 
-                             last_shown_match_at = NOW() 
-                         WHERE id IN (:ids)`,
-                        { 
-                            replacements: { ids: idsParaAtualizar }, 
-                            type: db.sequelize.QueryTypes.UPDATE 
-                        }
-                    );
-                }
-            } catch (err) {
-                console.error("Erro ao registrar evento de match: ", err);
-            }
-        }
-
-        res.status(200).json(matchResult);
+        const finalPayload = await executeMatchSingleFlight(safePreferences, matchHash, null);
+        res.status(200).json(finalPayload);
 
     } catch (error) {
         res.status(500).json({ error: 'Erro interno no servidor ao buscar recomendações.' });

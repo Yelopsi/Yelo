@@ -164,6 +164,21 @@ exports.updatePsychologistProfile = async (req, res) => {
             else if (req.body.especialidades) temas_atuacao = req.body.especialidades;
         }
 
+        // --- VALIDAÇÃO SEMÂNTICA (Defesa contra XSS Cross-Account e Payload Injection) ---
+        if (nome !== undefined) {
+            if (typeof nome !== 'string') return res.status(400).json({ error: 'Nome inválido.' });
+            nome = nome.replace(/[\x00-\x1F\x7F]/g, '').trim().replace(/\s+/g, ' ');
+            if (nome.length < 2 || nome.length > 100) return res.status(400).json({ error: 'O nome deve ter entre 2 e 100 caracteres.' });
+            if (!/^[\p{L}\s\-'.,]+$/u.test(nome)) return res.status(400).json({ error: 'O nome contém caracteres inválidos. Use apenas letras, espaços, hifens, apóstrofos, pontos ou vírgulas.' });
+        }
+
+        if (crp !== undefined) {
+            if (typeof crp !== 'string') return res.status(400).json({ error: 'CRP inválido.' });
+            crp = crp.replace(/[\x00-\x1F\x7F]/g, '').trim();
+            if (crp.length < 4 || crp.length > 20) return res.status(400).json({ error: 'O CRP deve ter entre 4 e 20 caracteres.' });
+            if (!/^[A-Za-z0-9\/\-\s]+$/.test(crp)) return res.status(400).json({ error: 'Formato de CRP inválido. Use apenas números, letras, barras e hifens.' });
+        }
+
         // --- CORREÇÃO ROBUSTA DE ARRAYS ---
         // Garante que qualquer campo que deva ser array, SEJA array, mesmo se vier como string JSON.
         const parseArrayField = (fieldValue) => {
@@ -542,37 +557,43 @@ exports.updateProfilePhoto = async (req, res) => {
             return res.status(404).json({ error: 'Psicólogo não encontrado no banco de dados.' });
         }
 
-        // 2. Upload para o Cloudinary
-        // O arquivo está em req.file.path (salvo temporariamente pelo multer)
-        const result = await cloudinary.uploader.upload(req.file.path, {
-            folder: 'yelo/profiles', // Pasta no Cloudinary
-            public_id: `profile-${psychologistToUpdate.id}`, // ID fixo para substituir a foto antiga automaticamente
-            overwrite: true,
-            transformation: [
-                { width: 500, height: 500, crop: 'fill', gravity: 'face' }, // Foca no rosto e corta quadrado
-                { quality: 'auto' }, // Otimização automática de qualidade
-                { fetch_format: 'auto' } // Converte para WebP/AVIF se o navegador suportar
-            ]
+        // 2. Upload para o Cloudinary via Stream
+        const fotoUrl = await new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+                {
+                    folder: 'yelo/profiles', // Pasta no Cloudinary
+                    public_id: `profile-${psychologistToUpdate.id}`, // ID fixo para substituir a foto antiga
+                    overwrite: true,
+                    transformation: [
+                        { width: 500, height: 500, crop: 'fill', gravity: 'face' }, // Foca no rosto e corta quadrado
+                        { quality: 'auto' }, // Otimização automática de qualidade
+                        { fetch_format: 'auto' } // Converte para WebP/AVIF se o navegador suportar
+                    ]
+                },
+                (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result.secure_url);
+                }
+            );
+            uploadStream.end(req.file.buffer);
         });
 
         // 3. Atualiza o banco com a URL segura do Cloudinary
-        await psychologistToUpdate.update({ fotoUrl: result.secure_url });
+        await psychologistToUpdate.update({ fotoUrl });
 
         // --- GAMIFICATION HOOK (BADGE AUTÊNTICO) ---
         await gamificationService.checkProfileCompletion(psychologistToUpdate.id);
 
-        // 4. Limpeza: Remove o arquivo local temporário
-        try {
-            await fs.unlink(req.file.path);
-        } catch (e) { }
-
         // 5. Resposta
         res.status(200).json({
             message: 'Foto atualizada com sucesso!',
-            fotoUrl: result.secure_url
+            fotoUrl: fotoUrl
         });
 
     } catch (error) {
+        if (error && error.message && (error.message.includes('format') || error.message.includes('invalid') || error.message.includes('supported') || error.message.includes('corrupt') || error.message.includes('image'))) {
+            return res.status(400).json({ error: 'Formato ou conteúdo de arquivo de imagem inválido.' });
+        }
         res.status(500).json({ error: 'Erro interno no servidor ao fazer upload da foto.' });
     }
 };

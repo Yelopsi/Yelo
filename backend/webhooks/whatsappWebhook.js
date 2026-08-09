@@ -1,7 +1,11 @@
 const db = require('../models');
 const { Op } = require('sequelize');
 
-const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || 'yelo_webhook_123';
+const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
+
+if (!WHATSAPP_VERIFY_TOKEN) {
+    console.warn('⚠️  [WHATSAPP WEBHOOK] WHATSAPP_VERIFY_TOKEN não configurado. Verificação de webhook desabilitada.');
+}
 
 exports.verifyWebhook = (req, res) => {
     const mode = req.query['hub.mode'];

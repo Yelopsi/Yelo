@@ -56,6 +56,15 @@ router.post('/', verifyTokenLocal, async (req, res) => {
         const decoded = req.userDecoded;
         const { title, start, end, patientId, phone, status } = req.body;
 
+        if (patientId) {
+            const validPatient = await db.Patient.findOne({
+                where: { id: patientId, psychologistId: decoded.id }
+            });
+            if (!validPatient) {
+                return res.status(403).json({ error: 'Paciente inválido ou não pertence a você.' });
+            }
+        }
+
         const appt = await db.Appointment.create({
             title, start: start, end: end, patientId,
             psychologistId: decoded.id,
@@ -71,8 +80,11 @@ router.post('/', verifyTokenLocal, async (req, res) => {
 
 router.put('/:id', verifyTokenLocal, async (req, res) => {
     try {
+        const decoded = req.userDecoded;
         const { status, start, end, value, phone, title } = req.body;
-        const appt = await db.Appointment.findByPk(req.params.id);
+        const appt = await db.Appointment.findOne({
+            where: { id: req.params.id, psychologistId: decoded.id }
+        });
         
         if (!appt) return res.status(404).json({ error: 'Agendamento não encontrado' });
         
@@ -107,7 +119,10 @@ router.post('/:id/remind', verifyTokenLocal, async (req, res) => {
 
 router.delete('/:id', verifyTokenLocal, async (req, res) => {
     try {
-        await db.Appointment.destroy({ where: { id: req.params.id } });
+        const decoded = req.userDecoded;
+        await db.Appointment.destroy({ 
+            where: { id: req.params.id, psychologistId: decoded.id } 
+        });
         res.json({ success: true });
     } catch (error) {
         console.error("Erro em DELETE /api/appointments/:id :", error);
