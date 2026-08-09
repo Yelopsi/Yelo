@@ -2,16 +2,12 @@ const db = require('../models');
 const { Op } = require('sequelize');
 const seoService = require('./seoService'); // Importa a IA para gerar os textos de conexão
 
-// Variaveis globais de cache para o Motor de Match (Ponto 3)
-let cachedTotalImpressions = null;
-let lastImpressionCacheTime = 0;
+// Variaveis globais de cache para o Motor de Match
+// (Removido cache de impressões pois usaremos Cotas Dinâmicas baseadas em conversões)
 
-// Pesos Globais da Yelo
 const WEIGHTS = {
     CLINICAL: 0.65,
-    OPERATIONAL: 0.35,
-    UCB_EXPLORATION_RATE: 3.0, // Aumentado para dar mais chance aos novatos
-    MVP_ZERO_CLICK_BOOST: 25   // Bônus massivo para quem nunca recebeu um clique no WhatsApp
+    OPERATIONAL: 0.35
 };
 
 const MAPA_CARACTERISTICAS = {
@@ -71,7 +67,7 @@ const calculateSimilarity = (psy, preferences = {}, priceRange) => {
     // --- FIM DOS REQUISITOS MÍNIMOS ---
 
     const temasPsi = getArrayField(psy.temas_atuacao);
-    const temasBuscados = preferences.temas || []; // CORRIGIDO
+    const temasBuscados = getArrayField(preferences.temas); // CORRIGIDO
     
     // 1. MATCH CLÍNICO
     const matches = temasBuscados.filter(t => temasPsi.includes(t));
@@ -91,7 +87,7 @@ const calculateSimilarity = (psy, preferences = {}, priceRange) => {
     }
 
     // 1.3 MATCH DE PRÁTICAS INCLUSIVAS / AFIRMATIVAS
-    const praticasDesejadas = preferences.caracteristicas_prof || []; // CORRIGIDO
+    const praticasDesejadas = getArrayField(preferences.caracteristicas_prof); // CORRIGIDO
     const praticasPsi = getArrayField(psy.praticas_inclusivas).concat(getArrayField(psy.praticas_vivencias));
     if (praticasDesejadas.length > 0 && !praticasDesejadas.includes('Indiferente')) {
         let praticasAtendidas = 0;
@@ -159,66 +155,51 @@ const calculateSimilarity = (psy, preferences = {}, priceRange) => {
     }
 };
 
-// --- L3: FAIRNESS (MULTI-ARMED BANDIT - UCB) ---
-const applyFairness = (scoredCandidates, totalSystemImpressions) => {
-    // Calcula a velocidade média de aparições (Aparições por Dia) para não penalizar psicólogos mais antigos
-    const currentVelocities = scoredCandidates.map(c => {
-        const days = Math.max(1, (new Date() - new Date(c.createdAt || Date.now())) / (1000 * 60 * 60 * 24));
-        return (c.profile_appearances || 0) / days;
-    });
-    const totalVelocity = currentVelocities.reduce((sum, val) => sum + val, 0);
-    const avgVelocity = scoredCandidates.length > 0 ? Math.max(0.1, totalVelocity / scoredCandidates.length) : 0.1;
-
-    return scoredCandidates.map((c, index) => {
+// --- L3: FAIRNESS (FAIR SHARE V5) ---
+const applyFairness = (scoredCandidates, fairShare) => {
+    return scoredCandidates.map((c) => {
         try {
-        // Cooldown Progressivo MVP: Penalidade máxima de 50% decaindo para 0% ao longo de 24 horas (1440 minutos)
-        // Isso força a plataforma a "girar a roleta" e mostrar psicólogos diferentes o dia todo
-        const minutesSinceLastShown = c.last_shown_match_at ? (new Date() - new Date(c.last_shown_match_at)) / 60000 : 99999;
-        
-        let cooldownPenalty = 1.0;
-        if (minutesSinceLastShown < 1440) {
-            const decayProgress = minutesSinceLastShown / 1440; // De 0 (agora) a 1 (1440 min)
-            cooldownPenalty = 0.50 + (0.50 * decayProgress); // Sobe de 0.50 para 1.00
-        }
-
-        const impressions = Math.max(1, c.profile_appearances || 1);
-        const clicks = c.whatsapp_clicks || 0;
-        const ctr = clicks / impressions;
-
-        // Bônus UCB para descoberta de novos talentos
-        const explorationBonus = WEIGHTS.UCB_EXPLORATION_RATE * Math.sqrt(Math.log(Math.max(2, totalSystemImpressions || 10)) / impressions);
-        
-        // --- BÔNUS MVP (ZERO TO ONE) ---
-        const mvpBoost = (clicks === 0) ? WEIGHTS.MVP_ZERO_CLICK_BOOST : 0;
-
-        // Calcula a pontuação final preliminar (SEM COOLDOWN AINDA)
-        let finalScore = c.rawMatchScore + (ctr * 10) + Math.min(20, explorationBonus) + mvpBoost;
-
-        // --- EXPOSURE THROTTLE (Velocidade de Aparições) ---
-        // Se a velocidade (Aparições/Dia) for muito maior que a média, aplicamos o freio.
-        // Assim protegemos profissionais antigos que acumularam muitas aparições ao longo dos meses.
-        const velocity = currentVelocities[index];
-        if (velocity > avgVelocity * 1.5) {
-            finalScore *= 0.75; // Penalidade para quem monopoliza o tráfego recente
-        } else if (velocity < avgVelocity * 0.5) {
-            finalScore *= 1.25; // Bônus para quem está girando devagar
-        }
-
-        // --- TRIAL-END BOOST ---
-        // Se estiver nos últimos 3 dias de plano, recebe um forte bônus para gerar demanda antes da cobrança
-        if (c.planExpiresAt) {
-            const daysUntilExpiry = (new Date(c.planExpiresAt) - new Date()) / (1000 * 60 * 60 * 24);
-            if (daysUntilExpiry > 0 && daysUntilExpiry <= 3) {
-                finalScore += 5; // Reduzido de 15 para 5
+            // Cooldown Progressivo MVP: Penalidade máxima de 50% decaindo para 0% ao longo de 24 horas
+            const minutesSinceLastShown = c.last_shown_match_at ? (new Date() - new Date(c.last_shown_match_at)) / 60000 : 99999;
+            
+            let cooldownPenalty = 1.0;
+            if (minutesSinceLastShown < 1440) {
+                const decayProgress = minutesSinceLastShown / 1440; // De 0 a 1
+                cooldownPenalty = 0.50 + (0.50 * decayProgress); 
             }
-        }
 
-        // Aplica o cooldown no score FINAL para penalizar de verdade quem já apareceu muito hoje
-        finalScore *= cooldownPenalty;
+            let finalScore = c.rawMatchScore;
 
-            if (isNaN(finalScore) || finalScore < 0) finalScore = c.rawMatchScore || 1; // Fallback de segurança matemática absoluta
+            // --- BÔNUS DE FOME (Cota Justa) ---
+            const conversoes = c.conversoes30d || 0;
+            const leads = c.leads30d || 0;
 
-        return { ...c, finalScore };
+            if (conversoes === 0) {
+                finalScore += 50; // Maior bônus para quem não fechou ninguém
+            } else if (conversoes < fairShare) {
+                finalScore += 25; // Bônus médio para quem ainda não bateu a cota
+            }
+
+            // --- PENALIDADE DE DESPERDÍCIO (Bad Sales) ---
+            // 7 ou mais cliques nos últimos 30 dias com ZERO conversões
+            if (leads >= 7 && conversoes === 0) {
+                finalScore *= 0.60; // Penalidade severa (-40%) no score final
+            }
+
+            // --- TRIAL-END BOOST ---
+            if (c.planExpiresAt) {
+                const daysUntilExpiry = (new Date(c.planExpiresAt) - new Date()) / (1000 * 60 * 60 * 24);
+                if (daysUntilExpiry > 0 && daysUntilExpiry <= 3) {
+                    finalScore += 5; 
+                }
+            }
+
+            // Aplica o cooldown no score FINAL
+            finalScore *= cooldownPenalty;
+
+            if (isNaN(finalScore) || finalScore < 0) finalScore = c.rawMatchScore || 1;
+
+            return { ...c, finalScore };
         } catch(e) {
             console.error("🔥 [MATCH ENGINE] Erro no applyFairness:", e.message);
             return { ...c, finalScore: c.rawMatchScore || 1 };
@@ -241,12 +222,6 @@ exports.calculateMatches = async (preferences = {}) => {
     console.log("🧩 PREFERÊNCIAS DO PACIENTE:", JSON.stringify(preferences));
     
     try {
-        const now = Date.now();
-        if (!cachedTotalImpressions || now - lastImpressionCacheTime > 5 * 60 * 1000) {
-            cachedTotalImpressions = parseInt(await db.Psychologist.sum('profile_appearances').catch(() => 1000), 10) || 1000;
-            lastImpressionCacheTime = now;
-        }
-        const totalSystemImpressions = cachedTotalImpressions;
         const agora = new Date();
 
         // --- MUDANÇA ESTRATÉGICA: BUSCA RESTRITA A ATIVOS E TRIALS COMPLETOS ---
@@ -271,15 +246,50 @@ exports.calculateMatches = async (preferences = {}) => {
             };
         }
 
+        // --- MATCH V5: FAIRNESS POR CONVERSÕES REAIS ---
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        debugLog.push(`[${Date.now() - startTime}ms] 📊 Carregando CRM e calculando Cota Justa...`);
+        const logs30d = await db.WhatsAppClickLog.findAll({
+            where: { createdAt: { [Op.gte]: thirtyDaysAgo } },
+            attributes: ['psychologistId', 'dealClosed']
+        });
+        
+        let totalConversoes30d = 0;
+        const psyStats = {};
+        
+        logs30d.forEach(log => {
+            const pid = log.psychologistId;
+            if (!psyStats[pid]) psyStats[pid] = { leads: 0, conversoes: 0 };
+            psyStats[pid].leads++;
+            if (log.dealClosed === 'closed') {
+                psyStats[pid].conversoes++;
+                totalConversoes30d++;
+            }
+        });
+
+        const fairShare = allEligiblePsychologists.length > 0 
+            ? Math.max(1, Math.ceil(totalConversoes30d / allEligiblePsychologists.length))
+            : 1;
+
+        debugLog.push(`[${Date.now() - startTime}ms] 🎯 Cota Justa (Fair Share) de Conversões / mês: ${fairShare}`);
+
         const priceRange = parsePriceRange(preferences.faixa_valor);
         debugLog.push(`[${Date.now() - startTime}ms] 💯 Calculando pontuação de similaridade para ${allEligiblePsychologists.length} candidatos...`);
         
         let scored = allEligiblePsychologists.map(psy => {
             const { rawMatchScore, explainability } = calculateSimilarity(psy, preferences, priceRange);
             const psyJSON = psy.toJSON ? psy.toJSON() : psy;
-            debugLog.push(`   - ID: ${psyJSON.id} | Nome: ${psyJSON.nome.substring(0,15)}... | Score Bruto: ${rawMatchScore.toFixed(2)}`);
+            
+            const stats = psyStats[psyJSON.id] || { leads: 0, conversoes: 0 };
+            
+            debugLog.push(`   - ID: ${psyJSON.id} | Score Clínico: ${rawMatchScore.toFixed(2)} | Leads 30d: ${stats.leads} | Fechados 30d: ${stats.conversoes}`);
+            
             return { 
                 ...psyJSON, 
+                leads30d: stats.leads,
+                conversoes30d: stats.conversoes,
                 rawMatchScore, 
                 matchDetails: [...new Set(explainability.positives)],
                 explainability 
@@ -292,78 +302,68 @@ exports.calculateMatches = async (preferences = {}) => {
         // descartado prematuramente por uma pontuação baixa.
         debugLog.push(`[${Date.now() - startTime}ms] 🗑️ Filtro de score bruto > 20 foi REMOVIDO. Todos os ${scored.length} candidatos seguem para a próxima fase.`);
 
-        debugLog.push(`[${Date.now() - startTime}ms] ⚖️ Aplicando algoritmos de fairness (UCB, Cooldown, MVP Boost)...`);
-        scored = applyFairness(scored, totalSystemImpressions);
+        debugLog.push(`[${Date.now() - startTime}ms] ⚖️ Aplicando algoritmos de fairness V5 (Bônus Fome, Penalidade Desperdício)...`);
+        scored = applyFairness(scored, fairShare);
 
-        scored.sort((a, b) => (b.finalScore || 0) - (a.finalScore || 0));
-        debugLog.push(`[${Date.now() - startTime}ms] 📊 Candidatos ordenados por pontuação final (Top 10):`);
-        scored.slice(0, 10).forEach((c, i) => {
-            debugLog.push(`   ${i+1}. ID: ${c.id} | Nome: ${c.nome.substring(0,15)}... | Score Final: ${c.finalScore.toFixed(2)} (Bruto: ${c.rawMatchScore.toFixed(2)})`);
-        });
+        debugLog.push(`[${Date.now() - startTime}ms] 📊 Candidatos elegíveis (Nota de Corte >= 50)...`);
+        
+        let eligibleForSlots = [...scored].filter(c => c.rawMatchScore >= 50);
+        if (eligibleForSlots.length === 0) {
+            debugLog.push(`   ⚠️ Ninguém passou no corte (>=50). Flexibilizando para os melhores disponíveis.`);
+            eligibleForSlots = [...scored];
+        }
 
-        // 1. Pegamos os 4 Melhores Absolutos (Mérito Clínico Puro - Mantém a qualidade alta)
-        const topMerit = scored.slice(0, 4);
+        const results = [];
 
-        // 2. Buscamos 2 candidatos "Ociosos" (Round-Robin para quem está no limbo)
-        // Regras: Não estar no Top 4, ter match >= 40 (segurança clínica), ordenados pelos menos leads (whatsapp_clicks)
-        const idleCandidates = scored
-            .filter(c => !topMerit.some(t => t.id === c.id))
-            .filter(c => c.rawMatchScore >= 40)
-            .sort((a, b) => {
-                const daysUntilExpiryA = a.planExpiresAt ? (new Date(a.planExpiresAt) - new Date()) / (1000 * 60 * 60 * 24) : 999;
-                const daysUntilExpiryB = b.planExpiresAt ? (new Date(b.planExpiresAt) - new Date()) / (1000 * 60 * 60 * 24) : 999;
-                
-                const isRiskA = (daysUntilExpiryA > 0 && daysUntilExpiryA <= 3);
-                const isRiskB = (daysUntilExpiryB > 0 && daysUntilExpiryB <= 3);
+        // --- VAGA 1: MAIOR MÉRITO CLÍNICO ---
+        let slot1Candidates = [...eligibleForSlots].sort((a, b) => b.rawMatchScore - a.rawMatchScore);
+        if (slot1Candidates.length > 0) {
+            results.push(slot1Candidates[0]);
+            debugLog.push(`   🥇 Vaga 1 (Maior Score Clínico): ID ${slot1Candidates[0].id} (Score: ${slot1Candidates[0].rawMatchScore})`);
+            eligibleForSlots = eligibleForSlots.filter(c => c.id !== slot1Candidates[0].id);
+        }
 
-                if (isRiskA && !isRiskB) return -1; // Dá preferência total ao psicólogo na zona de risco
-                if (isRiskB && !isRiskA) return 1;
+        // --- VAGA 2: O MAIS OCIOSO (Justiça) ---
+        if (eligibleForSlots.length > 0) {
+            // Ordenado pelo Bônus Total (finalScore), que já tem bônus para quem tem 0 conversões.
+            let slot2Candidates = [...eligibleForSlots].sort((a, b) => b.finalScore - a.finalScore);
+            results.push(slot2Candidates[0]);
+            debugLog.push(`   ⚖️ Vaga 2 (Justiça/Ocioso): ID ${slot2Candidates[0].id} (Score Final c/ Bônus: ${slot2Candidates[0].finalScore})`);
+            eligibleForSlots = eligibleForSlots.filter(c => c.id !== slot2Candidates[0].id);
+        }
 
-                if ((a.whatsapp_clicks || 0) !== (b.whatsapp_clicks || 0)) {
-                    return (a.whatsapp_clicks || 0) - (b.whatsapp_clicks || 0);
-                }
-                const lastA = a.last_shown_match_at ? new Date(a.last_shown_match_at).getTime() : 0;
-                const lastB = b.last_shown_match_at ? new Date(b.last_shown_match_at).getTime() : 0;
-                return lastA - lastB;
+        // --- VAGA 3: SORTEIO LINEAR C/ HARD COOLDOWN ---
+        if (eligibleForSlots.length > 0) {
+            // Elimina quem já apareceu na vitrine nas últimas 3 horas (180 mins)
+            let slot3Eligible = eligibleForSlots.filter(c => {
+                if (!c.last_shown_match_at) return true;
+                const mins = (new Date() - new Date(c.last_shown_match_at)) / 60000;
+                return mins > 180;
             });
 
-        const topIdle = idleCandidates.slice(0, 2);
-
-        // 3. Junta os Pools (Máximo de 6 candidatos irão para o sorteio roleta)
-        const topCandidates = [...topMerit, ...topIdle];
-        debugLog.push(`[${Date.now() - startTime}ms] 🎰 Selecionando ${topCandidates.length} candidatos (${topMerit.length} por mérito, ${topIdle.length} ociosos) para o sorteio ponderado.`);
-        const results = [];
-        
-        let loopCounter = 0;
-        while (results.length < 3 && topCandidates.length > 0 && loopCounter < 20) {
-            loopCounter++;
-            const totalWeight = topCandidates.reduce((acc, val) => acc + Math.pow(val.finalScore || 1, 2), 0);
-            
-            if (isNaN(totalWeight) || totalWeight <= 0) {
-                results.push(topCandidates.shift());
-                continue;
+            if (slot3Eligible.length === 0) {
+                debugLog.push(`   ⚠️ Todos da base estão em cooldown < 3h. Relaxando regra da Vaga 3.`);
+                slot3Eligible = eligibleForSlots;
             }
 
+            const totalWeight = slot3Eligible.reduce((acc, val) => acc + (val.finalScore || 1), 0);
             let randomPoint = Math.random() * totalWeight;
             
-            let selected = false;
-            for (let i = 0; i < topCandidates.length; i++) {
-                randomPoint -= Math.pow(topCandidates[i].finalScore || 1, 2);
+            let winner3 = null;
+            for (let i = 0; i < slot3Eligible.length; i++) {
+                randomPoint -= (slot3Eligible[i].finalScore || 1);
                 if (randomPoint <= 0) {
-                    results.push(topCandidates[i]);
-                    topCandidates.splice(i, 1);
-                    selected = true;
+                    winner3 = slot3Eligible[i];
                     break;
                 }
             }
+            if (!winner3) winner3 = slot3Eligible[0]; // Fallback
             
-            if (!selected && topCandidates.length > 0) {
-                results.push(topCandidates.shift());
-            }
+            results.push(winner3);
+            debugLog.push(`   🎲 Vaga 3 (Sorteio): ID ${winner3.id} (Peso de Sorteio Linear: ${winner3.finalScore})`);
         }
 
-        debugLog.push(`[${Date.now() - startTime}ms] ✅ Sorteio concluído! Retornando ${results.length} profissionais.`);
-        debugLog.push(`   - IDs Sorteados: ${results.map(r => r.id).join(', ')}`);
+        debugLog.push(`[${Date.now() - startTime}ms] ✅ Seleção de Slots concluída!`);
 
         let tier = 'ideal';
         let compromiseText = "";

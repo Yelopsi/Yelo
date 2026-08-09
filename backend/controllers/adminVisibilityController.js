@@ -129,7 +129,7 @@ exports.getVisibilityMetrics = async (req, res) => {
         } else if (totalDemand > idealCapacity * 1.5) {
             const totalPsyNeeded = Math.ceil(totalDemand / 10);
             const missingPsy = totalPsyNeeded - activePsyCount;
-            suggestion = `🔥 <b>Captar Mais Profissionais!</b> A demanda está superaquecida (${totalDemand} buscas). Para não sobrecarregar e garantir agendamentos, o ideal seria ter <b>mais ${missingPsy} psicólogos</b> na plataforma imediatamente.`;
+            suggestion = `🔥 <b>Captar Mais Profissionais!</b> A demanda está superaquecida (${totalDemand} buscas). Para não sobrecarregar e garantir agendamentos, você precisa adicionar <b>${missingPsy} novos psicólogos</b> na plataforma imediatamente (totalizando ${totalPsyNeeded} ativos).`;
             alertLevel = "danger";
         } else {
             suggestion = `✅ <b>Sistema Equilibrado.</b> A proporção atual de buscas (${totalDemand}) atende de forma sustentável os ${activePsyCount} psicólogos ativos. Mantenha o ritmo atual.`;

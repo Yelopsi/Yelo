@@ -170,8 +170,13 @@ exports.handleWebhook = async (req, res) => {
             if (!psi && payment.subscription) psi = await db.Psychologist.findOne({ where: { stripeSubscriptionId: payment.subscription } });
 
             if (psi) {
-                await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(), cancelAtPeriodEnd: false });
-                emailService.sendSubscriptionCancelledEmail(psi).catch(e => console.error("Erro email cancelamento:", e));
+                // TRAVA DE SEGURANÇA: Se o estorno for de uma assinatura antiga e o usuário já tem uma assinatura nova ativa
+                if (payment.subscription && psi.stripeSubscriptionId && psi.stripeSubscriptionId !== payment.subscription) {
+                    console.log(`[ASAAS] Estorno ignorado para ${psi.email}. Assinatura estornada (${payment.subscription}) difere da atual ativa.`);
+                } else {
+                    await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(), cancelAtPeriodEnd: false });
+                    emailService.sendSubscriptionCancelledEmail(psi).catch(e => console.error("Erro email cancelamento:", e));
+
                 
                 if (db.SystemLog) {
                     db.SystemLog.create({

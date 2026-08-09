@@ -259,15 +259,19 @@ exports.getAllPsychologists = async (req, res) => {
                 isParanoid = false; 
             } else if (status === 'active_paying') {
                 whereClause.status = 'active';
+                whereClause.is_exempt = { [Op.or]: [null, false] };
+                whereClause.subscription_payments_count = { [Op.gt]: 0 };
                 whereClause[Op.or] = [
                     { stripeSubscriptionId: { [Op.ne]: null } },
                     { subscriptionId: { [Op.ne]: null } }
                 ];
             } else if (status === 'active_trial') {
                 whereClause.status = 'active';
-                whereClause.stripeSubscriptionId = null;
-                whereClause.subscriptionId = null;
                 whereClause.is_exempt = { [Op.or]: [null, false] };
+                whereClause[Op.or] = [
+                    { stripeSubscriptionId: null, subscriptionId: null },
+                    { subscription_payments_count: { [Op.or]: [null, 0] } }
+                ];
             } else if (status === 'utm_whatsapp') {
                 whereClause.utm_source = 'whatsapp';
             } else if (status === 'utm_meta') {
@@ -297,8 +301,8 @@ exports.getAllPsychologists = async (req, res) => {
         const kpisQuery = `
             SELECT 
                 COUNT(*) as total,
-                COUNT(*) FILTER (WHERE status = 'active' AND ("stripeSubscriptionId" IS NOT NULL OR "subscriptionId" IS NOT NULL)) as active_paying,
-                COUNT(*) FILTER (WHERE status = 'active' AND ("stripeSubscriptionId" IS NULL AND "subscriptionId" IS NULL) AND (is_exempt IS NULL OR is_exempt = false)) as active_trial,
+                COUNT(*) FILTER (WHERE status = 'active' AND ("stripeSubscriptionId" IS NOT NULL OR "subscriptionId" IS NOT NULL) AND (is_exempt IS NULL OR is_exempt = false) AND subscription_payments_count > 0) as active_paying,
+                COUNT(*) FILTER (WHERE status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND (("stripeSubscriptionId" IS NULL AND "subscriptionId" IS NULL) OR (subscription_payments_count IS NULL OR subscription_payments_count = 0))) as active_trial,
                 COUNT(*) FILTER (WHERE status = 'pending') as pending,
                 COUNT(*) FILTER (WHERE status = 'inactive') as inactive,
                 COUNT(*) FILTER (WHERE is_exempt = true) as vip,
