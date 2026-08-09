@@ -14,8 +14,6 @@ const adminEficienciaController = require('../controllers/adminEficienciaControl
 const adminPerformanceController = require('../controllers/adminPerformanceController');
 const { protect, admin } = require('../middlewares/authMiddleware'); // Corrigido para importar ambos
 const { uploadProfilePhoto } = require('../middlewares/upload'); // Importa o Multer unificado
-const { generateAiQuestion } = require('../jobs/generateAiQuestion'); // Importa o job de geração
-
 // Rota pública para login do admin
 router.post('/login', adminController.loginAdmin);
 
@@ -181,15 +179,7 @@ router.get('/qna/pending', qnaController.getPendingQuestions);
 // Rota para moderar (aprova/rejeita) uma pergunta específica
 router.put('/qna/:questionId/moderate', qnaController.moderateQuestion);
 
-// Rota para gerar uma nova pergunta com IA sob demanda
-router.post('/qna/generate', async (req, res) => {
-    try {
-        await generateAiQuestion();
-        res.json({ success: true, message: "Pergunta orgânica gerada com sucesso!" });
-    } catch (error) {
-        res.status(500).json({ error: "Erro ao forçar geração da pergunta." });
-    }
-});
+
 
 // --- ROTAS DE MODERAÇÃO DE DENÚNCIAS DO FÓRUM (NOVO) ---
 router.get('/forum/reports', adminCommunityController.getForumReports);

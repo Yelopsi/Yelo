@@ -1,7 +1,5 @@
 const db = require('../models');
 const { Op } = require('sequelize');
-const { generateAiQuestion } = require('./generateAiQuestion');
-
 // ============================================================================
 // 1. AUDITORIA DE INTEGRIDADE DA BASE DE DADOS (Limpeza de Inadimplentes)
 // ============================================================================
@@ -152,7 +150,6 @@ const startCronJobs = () => {
     let lastReminderHour = -1;
     let lastSummaryMinute = "";
     let lastAuditDay = -1;
-    let lastAiQnaHour = -1;
     let lastScraperDay = -1;
 
     setInterval(async () => {
@@ -180,11 +177,7 @@ const startCronJobs = () => {
             await checkFeedbackReminders(now);
         }
 
-        // 5. GERAÇÃO DE PERGUNTAS IA (9h, 13h, 17h, 21h)
-        if ([9, 13, 17, 21].includes(currentBrtHour) && currentBrtHour !== lastAiQnaHour) {
-            lastAiQnaHour = currentBrtHour;
-            generateAiQuestion().catch(e => console.error("Erro na geração de pergunta IA:", e));
-        }
+
 
         // 6. ROBÔ DE PROSPECÇÃO (Scraper) DIÁRIO (Roda uma vez às 9h da manhã)
         if (currentBrtHour === 9 && currentDay !== lastScraperDay) {

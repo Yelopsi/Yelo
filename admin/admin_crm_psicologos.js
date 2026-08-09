@@ -763,26 +763,6 @@ window.initializePage = function () {
         }
     };
     
-    window.gerarPerguntaIA = async function() {
-        try {
-            if (window.showToast) window.showToast('🤖 Gerando pergunta... Isso pode levar alguns segundos.', 'info');
-            const res = await fetch(`${API_BASE_URL}/api/admin/qna/generate`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            if (res.ok) {
-                if (window.showToast) window.showToast(data.message, 'success');
-                setTimeout(loadPendingQuestions, 1000);
-            } else {
-                throw new Error(data.error || 'Erro ao gerar pergunta');
-            }
-        } catch (e) {
-            if (window.showToast) window.showToast(e.message, 'error');
-            else alert(e.message);
-        }
-    };
-
     loadPendingQuestions();
     // ==============================================
 
