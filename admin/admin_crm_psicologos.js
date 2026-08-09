@@ -766,5 +766,143 @@ window.initializePage = function () {
     loadPendingQuestions();
     // ==============================================
 
+    // ==============================================
+    // MODERAÇÃO DE IA (MOTOR EDITORIAL)
+    // ==============================================
+    
+    window.toggleAiDrawer = function() {
+        const drawer = document.getElementById('ai-drawer');
+        if (drawer) {
+            drawer.classList.toggle('active');
+            if (drawer.classList.contains('active')) {
+                loadAiDrafts();
+            }
+        }
+    };
+
+    async function loadAiDrafts() {
+        const listContainer = document.getElementById('ai-drafts-list');
+        if (!listContainer) return;
+        
+        listContainer.innerHTML = '<div style="text-align: center; color: #94a3b8; margin-top: 40px;">Carregando rascunhos...</div>';
+        
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/admin/qna/ai-drafts`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const drafts = await res.json();
+            
+            if (!res.ok) throw new Error(drafts.error || 'Erro ao carregar rascunhos da IA');
+            
+            listContainer.innerHTML = '';
+            
+            if (!drafts || drafts.length === 0) {
+                listContainer.innerHTML = '<div style="text-align: center; color: #94a3b8; margin-top: 40px; padding: 20px;">Nenhum rascunho de IA pendente no momento.</div>';
+                return;
+            }
+            
+            drafts.forEach(draft => {
+                const card = document.createElement('div');
+                card.style.cssText = "background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 10px;";
+                
+                const dateStr = new Date(draft.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <span style="font-size: 0.75rem; color: #64748b; background: #f1f5f9; padding: 3px 8px; border-radius: 12px; font-weight: 600;">🤖 IA Gerador</span>
+                        <span style="font-size: 0.75rem; color: #94a3b8;">${dateStr}</span>
+                    </div>
+                    <!-- O título será gerado pela Inteligência SEO no backend ao aprovar -->
+                    <div style="position: relative; margin-top: 5px;">
+                        <textarea id="ai-content-${draft.id}" style="width: 100%; border: 1px dashed transparent; font-size: 0.9rem; color: #475569; outline: none; resize: vertical; min-height: 80px; background: #f8fafc; border-radius: 8px; padding: 10px; padding-right: 30px; transition: all 0.2s;" onfocus="this.style.border='1px solid #1B4332'; this.style.background='white';" onblur="this.style.border='1px dashed transparent'; this.style.background='#f8fafc';" placeholder="Conteúdo da pergunta">${draft.content}</textarea>
+                        <svg onclick="document.getElementById('ai-content-${draft.id}').focus()" style="position: absolute; right: 10px; top: 10px; cursor: pointer; color: #94a3b8;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 5px;">
+                        <button onclick="window.moderateAiDraft(${draft.id}, 'reject')" style="flex: 1; padding: 8px; border: 1px solid #ef4444; background: white; color: #ef4444; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;">❌ Rejeitar</button>
+                        <button onclick="window.moderateAiDraft(${draft.id}, 'approve')" style="flex: 1; padding: 8px; border: none; background: #1B4332; color: white; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;">✅ Aprovar (Gera SEO)</button>
+                    </div>
+                `;
+                
+                listContainer.appendChild(card);
+            });
+            
+        } catch (error) {
+            listContainer.innerHTML = `<div style="text-align: center; color: #ef4444; margin-top: 40px; padding: 20px;">Erro: ${error.message}</div>`;
+        }
+    }
+
+    window.moderateAiDraft = async function(id, action) {
+        let content = '';
+        
+        if (action === 'approve') {
+            const contentEl = document.getElementById(`ai-content-${id}`);
+            if (contentEl) content = contentEl.value.trim();
+            
+            if (!content) {
+                if (window.showToast) window.showToast("O conteúdo não pode estar vazio.", "error");
+                else alert("O conteúdo não pode estar vazio.");
+                return;
+            }
+        }
+
+        try {
+            const method = action === 'approve' ? 'PUT' : 'DELETE';
+            const url = action === 'approve' ? `${API_BASE_URL}/api/admin/qna/ai-drafts/${id}/approve` : `${API_BASE_URL}/api/admin/qna/ai-drafts/${id}`;
+            
+            const res = await fetch(url, {
+                method,
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: action === 'approve' ? JSON.stringify({ content }) : undefined
+            });
+            
+            const data = await res.json();
+            if (res.ok) {
+                if (window.showToast) window.showToast(data.message, 'success');
+                loadAiDrafts();
+            } else {
+                throw new Error(data.error || 'Erro na moderação do rascunho');
+            }
+        } catch (e) {
+            if (window.showToast) window.showToast(e.message, 'error');
+            else alert(e.message);
+        }
+    };
+
+    window.forceAiGeneration = async function() {
+        const btn = document.getElementById('btn-force-ai');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner-sm" style="margin-right: 5px;"></span> Solicitando...';
+        }
+        
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/admin/qna/ai-drafts/generate-now`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            const data = await res.json();
+            if (res.ok) {
+                if (window.showToast) window.showToast(data.message, 'success');
+                // Recarrega a lista para mostrar a nova pergunta
+                loadAiDrafts();
+            } else {
+                throw new Error(data.error || 'Erro ao forçar geração.');
+            }
+        } catch (e) {
+            if (window.showToast) window.showToast(e.message, 'error');
+            else alert(e.message);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg> Forçar Geração Agora';
+            }
+        }
+    };
+
     fetchAndRenderPsis(1);
 };

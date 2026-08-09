@@ -179,6 +179,12 @@ router.get('/qna/pending', qnaController.getPendingQuestions);
 // Rota para moderar (aprova/rejeita) uma pergunta específica
 router.put('/qna/:questionId/moderate', qnaController.moderateQuestion);
 
+// --- Rotas da IA (Drafts) ---
+const aiQnaController = require('../controllers/aiQnaController');
+router.get('/qna/ai-drafts', aiQnaController.getAiDrafts);
+router.post('/qna/ai-drafts/generate-now', aiQnaController.generateNow);
+router.put('/qna/ai-drafts/:id/approve', aiQnaController.approveDraft);
+router.delete('/qna/ai-drafts/:id', aiQnaController.rejectDraft);
 
 
 // --- ROTAS DE MODERAÇÃO DE DENÚNCIAS DO FÓRUM (NOVO) ---

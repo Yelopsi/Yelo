@@ -151,6 +151,8 @@ const startCronJobs = () => {
     let lastSummaryMinute = "";
     let lastAuditDay = -1;
     let lastScraperDay = -1;
+    let lastAiScheduleDay = -1;
+    let aiScheduleTimes = [];
 
     setInterval(async () => {
         const now = new Date();
@@ -177,7 +179,30 @@ const startCronJobs = () => {
             await checkFeedbackReminders(now);
         }
 
+        // 5. MOTOR EDITORIAL DA COMUNIDADE (Geração Aleatória de Perguntas IA)
+        // Resetamos e definimos a agenda de IA uma vez por dia, à meia-noite (ou no primeiro minuto que o app rodar no dia)
+        if (currentDay !== lastAiScheduleDay) {
+            lastAiScheduleDay = currentDay;
+            aiScheduleTimes = [];
+            const numJobs = Math.floor(Math.random() * 4) + 3; // Gera entre 3 e 6
+            for (let i = 0; i < numJobs; i++) {
+                // Sorteia uma hora entre 08h e 22h, e um minuto entre 0 e 59
+                const h = Math.floor(Math.random() * (22 - 8 + 1)) + 8;
+                const m = Math.floor(Math.random() * 60);
+                const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                aiScheduleTimes.push(timeStr);
+            }
+            console.log(`🤖 [CRON IA] Sorteada a agenda editorial de hoje: ${aiScheduleTimes.length} rascunhos. Horários: ${aiScheduleTimes.join(', ')}`);
+        }
 
+        // Se o minuto atual bater com algum horário sorteado, dispara o robô da IA
+        if (aiScheduleTimes.includes(currentHM)) {
+            console.log(`🤖 [CRON IA] Horário sorteado atingido (${currentHM}). Iniciando Motor Editorial...`);
+            const generateAiQuestionV2 = require('./generateAiQuestionV2');
+            generateAiQuestionV2().catch(err => console.error("Erro na geração da IA:", err));
+            // Opcional: remover o horário para não rodar mais de uma vez naquele minuto,
+            // mas o SetInterval já roda a cada 60s, então o "currentHM" muda e não roda duplo.
+        }
 
         // 6. ROBÔ DE PROSPECÇÃO (Scraper) DIÁRIO (Roda uma vez às 9h da manhã)
         if (currentBrtHour === 9 && currentDay !== lastScraperDay) {
