@@ -499,11 +499,23 @@ Cliques no WhatsApp: ${stats.whatsappClicks || 0}`;
 
         const result = await model.generateContent(prompt);
         let rawText = result.response.text();
-        const parsed = JSON.parse(rawText);
+        
+        // 1. Tratamento Anti-Falhas e Anti-Markdown
+        let parsed;
+        try {
+            parsed = JSON.parse(rawText);
+        } catch (e) {
+            // Se falhar, busca o JSON usando regex (ignora possíveis crases ````json)
+            const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) {
+                throw new Error("O Google Gemini não retornou um JSON identificável.");
+            }
+            parsed = JSON.parse(jsonMatch[0]);
+        }
         
         // Validação pós-parse
-        if (!parsed.marketingTip || !parsed.contentIdea) {
-            throw new Error("JSON não possui chaves requeridas.");
+        if (!parsed || !parsed.marketingTip || !parsed.contentIdea) {
+            throw new Error("JSON incompleto. Faltam chaves requeridas.");
         }
         
         // Remove potenciais tags HTML escapadas no texto gerado

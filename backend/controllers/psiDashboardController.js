@@ -294,18 +294,35 @@ exports.getAiInsights = async (req, res) => {
         }
 
         const seoService = require('../services/seoService');
-        const insights = await seoService.generateDashboardInsights(stats, psychologist);
+        let insights = await seoService.generateDashboardInsights(stats, psychologist);
         
-        if (insights) {
-            psychologist.ai_insights_cache = {
-                timestamp: Date.now(),
-                tips: insights
-            };
-            await psychologist.save();
-            res.status(200).json(insights);
-        } else {
-            res.status(500).json({ error: 'Falha ao gerar insights da IA.' });
+        // Dicas padrões seguras caso a API do Google caia ou atinja limites de quota
+        const fallbackInsights = {
+            marketingTip: {
+                title: "Deixe seu perfil reluzente",
+                impact: "Garantir que as informações como valores, fotos e atuação estejam bem preenchidos atrai as pessoas certas nas buscas da plataforma.",
+                url: "/psi/meu-perfil"
+            },
+            contentIdea: {
+                title: "Construa sua autoridade online",
+                impact: "Muitos pacientes fecham sessão após lerem dúvidas respondidas de forma acolhedora e empática pelos especialistas na comunidade.",
+                url: "/psi/comunidade"
+            }
+        };
+        
+        if (!insights || !insights.marketingTip || !insights.contentIdea) {
+            console.log("⚠️ [Growth Coach] Google Gemini falhou, devolvendo dicas de Fallback seguras.");
+            insights = fallbackInsights;
         }
+
+        // Atualiza cache mesmo se for fallback (previne ficar chamando API que está fora do ar toda hora)
+        psychologist.ai_insights_cache = {
+            timestamp: Date.now(),
+            tips: insights
+        };
+        await psychologist.save();
+        
+        res.status(200).json(insights);
     } catch (error) {
         console.error("Erro em getAiInsights:", error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
