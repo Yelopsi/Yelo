@@ -189,43 +189,5 @@
 
     </div>
 
-    <!-- Script para buscar os dados -->
-    <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            const token = localStorage.getItem('yelo_admin_token');
-            if (!token) {
-                window.location.href = 'login.html';
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/admin/analytics/whatsapp-ab', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (response.status === 401 || response.status === 403) {
-                    window.location.href = 'login.html';
-                    return;
-                }
-
-                const data = await response.json();
-                
-                const clicksA = data.A || 0;
-                const clicksB = data.B || 0;
-                const total = clicksA + clicksB;
-
-                document.getElementById('clicks-a').textContent = clicksA;
-                document.getElementById('clicks-b').textContent = clicksB;
-
-                if (total > 0) {
-                    document.getElementById('rate-a').textContent = ((clicksA / total) * 100).toFixed(1) + '%';
-                    document.getElementById('rate-b').textContent = ((clicksB / total) * 100).toFixed(1) + '%';
-                }
-
-            } catch (error) {
-                console.error("Erro ao carregar dados do Teste A/B", error);
-            }
-        });
-    </script>
 </body>
 </html>
