@@ -6,6 +6,7 @@ const { manageExpiredInvitations } = require('./invitationManager');
 const { sendPendingSubscriptionEmails } = require('./remarketingCron.js');
 const { checkAndSendEvaluationEmails } = require('./evaluationMonitor');
 const { simulateBlogLikes } = require('./blogLikesMonitor');
+const { executeAutoWithdrawal } = require('./asaasWithdrawalJob'); // ADICIONADO: Saque automático Asaas
 const { exec } = require('child_process');
 const path = require('path');
 
@@ -43,6 +44,18 @@ cron.schedule('0 2 * * *', () => {
 cron.schedule('0 10 * * *', () => {
     console.log('Executando tarefa agendada: sendPendingSubscriptionEmails');
     sendPendingSubscriptionEmails();
+}, {
+    scheduled: true,
+    timezone: "America/Sao_Paulo"
+});
+
+/**
+ * Tarefa 4: Realizar Saque Automático Pix via Asaas
+ * Roda todos os dias às 08h da manhã.
+ */
+cron.schedule('0 8 * * *', () => {
+    console.log('Executando tarefa agendada: executeAutoWithdrawal (Asaas Pix)');
+    executeAutoWithdrawal();
 }, {
     scheduled: true,
     timezone: "America/Sao_Paulo"
