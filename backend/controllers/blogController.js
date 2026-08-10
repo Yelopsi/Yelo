@@ -25,6 +25,18 @@ const formatImageUrl = (path) => {
     return cleanPath;
 };
 
+const generateSlug = (text) => {
+    if (!text) return '';
+    return text.toString().toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // remove acentos
+        .replace(/\s+/g, '-') // espaços por hífen
+        .replace(/[^\w\-]+/g, '') // remove não alfanuméricos
+        .replace(/\-\-+/g, '-') // hifens múltiplos
+        .replace(/^-+/, '') // trim início
+        .replace(/-+$/, ''); // trim fim
+};
+
 module.exports = {
     // --- ÁREA RESTRITA (DASHBOARD) ---
     listarMeusPosts: async (req, res) => {
@@ -97,10 +109,19 @@ module.exports = {
                 }
             }
 
+            let baseSlug = generateSlug(titulo);
+            let finalSlug = baseSlug;
+            let counter = 1;
+            while(await Post.findOne({ where: { slug: finalSlug } })) {
+                finalSlug = `${baseSlug}-${counter}`;
+                counter++;
+            }
+
             const novoPost = await Post.create({
                 titulo,
                 conteudo,
                 imagem_url: finalImageUrl,
+                slug: finalSlug,
                 psychologistId: userId
             });
 
@@ -174,7 +195,16 @@ module.exports = {
                 }
             }
 
-            await post.update({ titulo, conteudo, imagem_url: finalImageUrl });
+            let baseSlug = generateSlug(titulo);
+            let finalSlug = baseSlug;
+            let counter = 1;
+            const Op = db.Sequelize.Op;
+            while(await Post.findOne({ where: { slug: finalSlug, id: { [Op.ne]: id } } })) {
+                finalSlug = `${baseSlug}-${counter}`;
+                counter++;
+            }
+
+            await post.update({ titulo, conteudo, imagem_url: finalImageUrl, slug: finalSlug });
 
             // --- REGERA O SEO COM IA (Em segundo plano) ---
             seoService.generateSEO(conteudo, titulo).then(async (seoData) => {

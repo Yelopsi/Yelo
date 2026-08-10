@@ -6,7 +6,7 @@
     <!-- VARIÁVEIS DE SEO -->
     <% 
       const descSnippet = (post.conteudo || '').replace(/<[^>]*>?/g, '').substring(0, 155).trim() + '...'; 
-      const currentUrl = `https://www.yelopsi.com.br/blog/post/${post.id || post.slug}`;
+      const currentUrl = `https://www.yelopsi.com.br/blog/post/${post.slug || post.id}`;
       const autorNome = post.autor ? post.autor.nome : 'Equipe Yelo';
       const imageUrl = post.imagem_url || 'https://www.yelopsi.com.br/img/logo_yelo_share.png';
     %>
@@ -394,7 +394,7 @@
             
             <% if (recentes && recentes.length > 0) { %>
                 <% recentes.forEach(item => { %>
-                    <a href="/blog/post/<%= item.id %>" class="card-lateral">
+                    <a href="/blog/post/<%= item.slug || item.id %>" class="card-lateral">
                         <% if (item.imagem_url) { %>
                         <img src="<%= item.imagem_url %>" alt="Capa">
                         <% } %>

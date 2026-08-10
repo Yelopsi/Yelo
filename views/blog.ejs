@@ -205,7 +205,7 @@
         <% if (posts && posts.length > 0) { %>
             
             <% const destaque = posts[0]; %>
-            <a href="/blog/post/<%= destaque.id %>" class="post-destaque" <%= !destaque.imagem_url ? 'style="grid-template-columns: 1fr;"' : '' %>>
+            <a href="/blog/post/<%= destaque.slug || destaque.id %>" class="post-destaque" <%= !destaque.imagem_url ? 'style="grid-template-columns: 1fr;"' : '' %>>
                 <% if (destaque.imagem_url) { %>
                 <div class="destaque-img-wrapper">
                     <img src="<%= destaque.imagem_url %>" alt="<%= destaque.titulo %>">
@@ -229,7 +229,7 @@
                 <div class="blog-grid" id="blog-grid">
                     <% outros.forEach((post, index) => { %>
                         <article class="post-card post-item" style="<%= index >= 6 ? 'display: none;' : '' %>">
-                            <a href="/blog/post/<%= post.id %>" class="card-link">
+                            <a href="/blog/post/<%= post.slug || post.id %>" class="card-link">
                                 <% if (post.imagem_url) { %>
                                 <img src="<%= post.imagem_url %>" alt="<%= post.titulo %>" class="card-img">
                                 <% } %>
