@@ -7,16 +7,36 @@ const db = require('../models');
  * Middleware para proteger rotas. Verifica se o token JWT é válido.
  */
 const protect = async (req, res, next) => {
-    let token;
+    // CSRF DEFENSE (Fail-Closed)
+    const method = req.method.toUpperCase();
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+        const origin = req.headers.origin;
+        const referer = req.headers.referer;
+        
+        // Domínios estritamente permitidos
+        const allowedHosts = ['www.yelopsi.com.br', 'yelopsi.com.br', 'localhost'];
+        
+        if (!origin && !referer) {
+            console.warn(`⚠️ [CSRF BLOQUEADO] Requisição mutável sem Origin e sem Referer`);
+            return res.status(403).json({ error: 'CSRF Blocked: Missing Origin/Referer' });
+        }
 
-    // 1. Prioriza pegar do Cookie (HttpOnly - Mais Seguro)
-    if (req.cookies && req.cookies.token) {
-        token = req.cookies.token;
-    } 
-    // 2. Fallback para o Header (Padrão Bearer - Para não quebrar o frontend atual)
-    else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        token = req.headers.authorization.split(' ')[1];
+        try {
+            const checkUrl = origin || referer;
+            const parsedHost = new URL(checkUrl).hostname;
+            
+            if (!allowedHosts.includes(parsedHost)) {
+                console.warn(`⚠️ [CSRF BLOQUEADO] Host não permitido: ${parsedHost}`);
+                return res.status(403).json({ error: 'CSRF Blocked: Host mismatch' });
+            }
+        } catch (e) {
+            console.warn(`⚠️ [CSRF BLOQUEADO] URL de Origin/Referer malformada`);
+            return res.status(403).json({ error: 'CSRF Blocked: Invalid URL' });
+        }
     }
+
+    // 1. A ÚNICA fonte da verdade é o Cookie (HttpOnly - Proteção LGPD-2 / XSS)
+    const token = req.cookies && req.cookies.token ? req.cookies.token : null;
 
     if (token) {
         try {

@@ -141,7 +141,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Em vez de salvar o JWT real (que agora vive no Cookie HttpOnly),
                     // salvamos apenas uma flag. Isso engana o código antigo do frontend
                     // fazendo-o achar que o usuário está logado, sem expor o token!
-                    if (token) localStorage.setItem('Yelo_token', 'cookie_auth_active');
+                    if (token) {
+                        localStorage.setItem('Yelo_token', 'cookie_auth_active');
+                    }
                     
                     const finalUserType = type || result.fallbackType;
                     localStorage.setItem('Yelo_user_type', finalUserType);

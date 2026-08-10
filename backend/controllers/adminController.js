@@ -68,7 +68,8 @@ exports.loginAdmin = async (req, res) => {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 maxAge: 8 * 60 * 60 * 1000 // 8 horas
-            });
+            , sameSite: 'lax' 
+        });
 
             res.status(200).json({ 
                 token: token,

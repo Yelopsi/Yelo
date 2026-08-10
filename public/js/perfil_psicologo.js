@@ -47,7 +47,7 @@ const initProfilePage = async () => {
                             }
 
                                 let patientId = null;
-                                const token = localStorage.getItem('Yelo_token');
+                                const token = "cookie_auth_active";
                                 if (token && token !== 'cookie_auth_active') {
                                     try {
                                         const payload = JSON.parse(atob(token.split('.')[1]));
@@ -221,7 +221,7 @@ const initProfilePage = async () => {
             };
 
             // 1. Verifica Login
-            let token = localStorage.getItem('Yelo_token');
+            let token = "cookie_auth_active";
             if (token === 'cookie_auth_active') {
                 localStorage.removeItem('Yelo_token');
                 token = null;
@@ -261,7 +261,7 @@ const initProfilePage = async () => {
                                 
                                 if (authRes.ok) {
                                     const authData = await authRes.json();
-                                    localStorage.setItem('Yelo_token', authData.token);
+                                    // localStorage removido por segurança (LGPD-2)
                                     localStorage.setItem('Yelo_user_type', 'patient');
                                     localStorage.setItem('Yelo_user_name', authData.nome);
                                     
@@ -305,7 +305,7 @@ const initProfilePage = async () => {
         btn.parentNode.replaceChild(newBtn, btn);
         const activeBtn = document.getElementById('btn-favorite');
 
-        let token = localStorage.getItem('Yelo_token');
+        let token = "cookie_auth_active";
         if (token === 'cookie_auth_active') {
             localStorage.removeItem('Yelo_token');
             token = null;
@@ -361,7 +361,7 @@ const initProfilePage = async () => {
                                 
                                 if (authRes.ok) {
                                     const authData = await authRes.json();
-                                    localStorage.setItem('Yelo_token', authData.token);
+                                    // localStorage removido por segurança (LGPD-2)
                                     localStorage.setItem('Yelo_user_type', 'patient');
                                     localStorage.setItem('Yelo_user_name', authData.nome);
                                     
@@ -451,7 +451,7 @@ const initProfilePage = async () => {
             // A. Lógica de Auto-Favoritar (se aplicável, vindo de um redirect)
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('autoFavorite') === 'true') {
-                let token = localStorage.getItem('Yelo_token');
+                let token = "cookie_auth_active";
                 if (token === 'cookie_auth_active') {
                     localStorage.removeItem('Yelo_token');
                     token = null;

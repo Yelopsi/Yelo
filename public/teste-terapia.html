@@ -1,15 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-11236864912"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
     
-      gtag('config', 'AW-11236864912');
-    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Qual a Terapia Ideal para Você? | Yelo</title>
@@ -59,6 +51,28 @@
         @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
     </style>
+
+    <!-- Consent Manager Injected -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      window.gtag = window.gtag || gtag;
+      function fbq(){
+          if(window.fbq && window.fbq.callMethod) { window.fbq.apply(window, arguments); } 
+          else { window._fbqQueue = window._fbqQueue || []; window._fbqQueue.push(arguments); }
+      }
+    </script>
+    <script src="/js/consent-manager.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+          window.ConsentManager.injectGTAG(['AW-11236864912']);
+          // Se for o questionario, injetamos tb o FB
+          if(window.location.pathname.includes('psi_questionario')) {
+              window.ConsentManager.injectMetaPixel(['2009156873008197']);
+          }
+      });
+    </script>
+    
 </head>
 <body>
     <header class="quiz-header">

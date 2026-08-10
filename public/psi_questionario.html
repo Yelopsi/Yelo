@@ -1,16 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-5NFD83MGSM"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
     
-      gtag('config', 'G-5NFD83MGSM');
-      gtag('config', 'AW-11236864912');
-    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
@@ -45,21 +36,29 @@
         }
     </style>
     
-    <!-- Meta Pixel Code -->
+    
+
+    <!-- Consent Manager Injected -->
     <script>
-        !function(f,b,e,v,n,t,s)
-        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];
-        s.parentNode.insertBefore(t,s)}(window, document,'script',
-        'https://connect.facebook.net/en_US/fbevents.js');
-        fbq('init', '2009156873008197'); // Pixel ID da Yelo
-        fbq('track', 'PageView');
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      window.gtag = window.gtag || gtag;
+      function fbq(){
+          if(window.fbq && window.fbq.callMethod) { window.fbq.apply(window, arguments); } 
+          else { window._fbqQueue = window._fbqQueue || []; window._fbqQueue.push(arguments); }
+      }
     </script>
-    <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=2009156873008197&ev=PageView&noscript=1"/></noscript>
-    <!-- End Meta Pixel Code -->
+    <script src="/js/consent-manager.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+          window.ConsentManager.injectGTAG(['AW-11236864912']);
+          // Se for o questionario, injetamos tb o FB
+          if(window.location.pathname.includes('psi_questionario')) {
+              window.ConsentManager.injectMetaPixel(['2009156873008197']);
+          }
+      });
+    </script>
+    
 </head>
 
 <body class="pagina-questionario">

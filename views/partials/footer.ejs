@@ -222,21 +222,21 @@
 
 <div id="cookie-consent-banner" class="cookie-banner">
     <div class="cookie-content">
-        <p>Utilizamos cookies para melhorar sua experiência e segurança. Ao continuar navegando, você concorda com nossa <a href="/privacidade">Política de Privacidade</a>.</p>
+        <p>A Yelo usa cookies essenciais para funcionar. Também gostaríamos de usar cookies de Analytics e Marketing para melhorar nosso serviço. <a href="/privacidade">Saiba mais</a>.</p>
     </div>
-    <div class="cookie-actions">
-        <button id="btn-accept-cookies" class="btn-cookie-accept">Entendi e Aceito</button>
+    <div class="cookie-actions" style="gap: 10px;">
+        <button id="btn-reject-cookies" class="btn-cookie-accept" style="background-color: transparent; color: #1B4332; border: 1px solid #1B4332;">Apenas Essenciais</button>
+        <button id="btn-accept-cookies" class="btn-cookie-accept">Aceitar Todos</button>
     </div>
 </div>
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // Verifica se já aceitou
         const cookieBanner = document.getElementById('cookie-consent-banner');
         const acceptBtn = document.getElementById('btn-accept-cookies');
+        const rejectBtn = document.getElementById('btn-reject-cookies');
         
-        if (!localStorage.getItem('Yelo_cookies_accepted')) {
-            // Se não aceitou, mostra com um pequeno delay para ser suave
+        if (window.ConsentManager && !window.ConsentManager.hasInteracted()) {
             setTimeout(() => {
                 cookieBanner.style.display = 'flex';
             }, 500);
@@ -244,18 +244,14 @@
 
         if (acceptBtn) {
             acceptBtn.addEventListener('click', function() {
-                // Salva a decisão
-                localStorage.setItem('Yelo_cookies_accepted', 'true');
-                // Atualiza o consentimento no GA4 e Ads na mesma hora
-                if (typeof gtag === 'function') {
-                    gtag('consent', 'update', {
-                        'ad_storage': 'granted',
-                        'ad_user_data': 'granted',
-                        'ad_personalization': 'granted',
-                        'analytics_storage': 'granted'
-                    });
-                }
-                // Esconde o banner
+                window.ConsentManager.acceptAll();
+                cookieBanner.style.display = 'none';
+            });
+        }
+        
+        if (rejectBtn) {
+            rejectBtn.addEventListener('click', function() {
+                window.ConsentManager.rejectAll();
                 cookieBanner.style.display = 'none';
             });
         }

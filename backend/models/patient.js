@@ -48,7 +48,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     senha: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: true
     },
     telefone: {
       type: DataTypes.STRING,
@@ -141,6 +141,10 @@ module.exports = (sequelize, DataTypes) => {
     status: {
       type: DataTypes.STRING,
       defaultValue: 'ativo'
+    },
+    is_ghost_profile: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     },
     observacoes: {
       type: DataTypes.TEXT,

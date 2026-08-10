@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (loginRes.ok) {
                         const loginData = await loginRes.json();
                         
-                        if (loginData.token) localStorage.setItem('Yelo_token', 'cookie_auth_active');
+                        if (loginData.token) // localStorage removido por segurança (LGPD-2)
                         localStorage.setItem('Yelo_user_type', 'patient');
                         
                         // CORREÇÃO: Garante que o nome seja salvo (da API ou do formulário)

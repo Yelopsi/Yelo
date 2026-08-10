@@ -801,7 +801,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
 
-            let token = localStorage.getItem('Yelo_token');
+            let token = "cookie_auth_active";
             if (token === 'cookie_auth_active') {
                 localStorage.removeItem('Yelo_token');
                 token = null;
@@ -826,7 +826,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     
                                     if (authRes.ok) {
                                         const authData = await authRes.json();
-                                        localStorage.setItem('Yelo_token', authData.token);
+                                        // localStorage removido por segurança (LGPD-2)
                                         
                                         const modernOverlay = document.getElementById('modern-modal-overlay') || document.querySelector('div[style*="z-index:999999"]') || document.querySelector('div[style*="z-index: 999999"]');
                                         if (modernOverlay) modernOverlay.remove();

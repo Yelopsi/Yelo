@@ -74,7 +74,8 @@ exports.unifiedGoogleLogin = async (req, res) => {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 maxAge: 30 * 24 * 60 * 60 * 1000
-            });
+            , sameSite: 'lax' 
+        });
 
             return res.status(200).json({
                 user: {
@@ -135,7 +136,8 @@ exports.unifiedGoogleLogin = async (req, res) => {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 maxAge: 30 * 24 * 60 * 60 * 1000
-            });
+            , sameSite: 'lax' 
+        });
 
             return res.status(200).json({
                 user: { id: patient.id, nome: patient.nome, email: patient.email, type: 'patient' },
@@ -178,6 +180,7 @@ exports.unifiedGoogleLogin = async (req, res) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             maxAge: 30 * 24 * 60 * 60 * 1000
+        , sameSite: 'lax' 
         });
 
         return res.status(201).json({

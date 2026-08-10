@@ -539,24 +539,16 @@ exports.getFinancials = async (req, res) => {
         }
 
         const payingCondition = {
-            [Op.and]: [
-                {
-                    [Op.or]: [
-                        { stripeSubscriptionId: { [Op.ne]: null } },
-                        { subscriptionId: { [Op.ne]: null } }
-                    ]
-                },
-                { subscription_payments_count: { [Op.gt]: 0 } }
+            [Op.or]: [
+                { stripeSubscriptionId: { [Op.ne]: null } },
+                { subscriptionId: { [Op.ne]: null } }
             ]
         };
 
         const trialCondition = {
             is_exempt: { [Op.not]: true },
-            [Op.or]: [
-                { stripeSubscriptionId: null, subscriptionId: null },
-                { subscription_payments_count: { [Op.lte]: 0 } },
-                { subscription_payments_count: null }
-            ]
+            stripeSubscriptionId: null,
+            subscriptionId: null
         };
 
         // Paid Period Data
@@ -599,7 +591,7 @@ exports.getFinancials = async (req, res) => {
             where: { status: 'active', createdAt: prevDateCondition, ...trialCondition }
         });
 
-        const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !!(psy.stripeSubscriptionId || psy.subscriptionId) && psy.subscription_payments_count > 0).length;
+        const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !!(psy.stripeSubscriptionId || psy.subscriptionId)).length;
         const totalPaidStart = payingActiveCount + paidChurnedCount - paidNewCount;
         const paidBaseForChurn = totalPaidStart > 0 ? totalPaidStart : 1;
         const paidChurnRate = (paidChurnedCount / paidBaseForChurn) * 100;
@@ -609,7 +601,7 @@ exports.getFinancials = async (req, res) => {
         const prevPaidBaseForChurn = prevPaidStart > 0 ? prevPaidStart : 1;
         const prevPaidChurnRate = (prevPaidChurnedCount / prevPaidBaseForChurn) * 100;
 
-        const trialActiveCount = activePsychologists.filter(psy => !psy.is_exempt && (!(psy.stripeSubscriptionId || psy.subscriptionId) || !(psy.subscription_payments_count > 0))).length;
+        const trialActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !(psy.stripeSubscriptionId || psy.subscriptionId)).length;
         const totalTrialStart = trialActiveCount + trialChurnedCount - trialNewCount;
         const trialBaseForChurn = totalTrialStart > 0 ? totalTrialStart : 1;
         const trialChurnRate = (trialChurnedCount / trialBaseForChurn) * 100;
@@ -1240,7 +1232,8 @@ exports.getFounderMetrics = async (req, res) => {
             where: {
                 [Op.or]: [
                     { subscribedAt: { [Op.not]: null } },
-                    { subscription_payments_count: { [Op.gt]: 0 } }
+                    { stripeSubscriptionId: { [Op.ne]: null } },
+                    { subscriptionId: { [Op.ne]: null } }
                 ]
             }
         });
@@ -1252,7 +1245,8 @@ exports.getFounderMetrics = async (req, res) => {
                 status: 'inactive',
                 [Op.or]: [
                     { subscribedAt: { [Op.not]: null } },
-                    { subscription_payments_count: { [Op.gt]: 0 } }
+                    { stripeSubscriptionId: { [Op.ne]: null } },
+                    { subscriptionId: { [Op.ne]: null } }
                 ]
             }
         });
@@ -1316,7 +1310,8 @@ exports.getFounderMetrics = async (req, res) => {
                 createdAt: { [Op.between]: [lastMonthStart, lastMonthEnd] },
                 [Op.or]: [
                     { subscribedAt: { [Op.not]: null } },
-                    { subscription_payments_count: { [Op.gt]: 0 } }
+                    { stripeSubscriptionId: { [Op.ne]: null } },
+                    { subscriptionId: { [Op.ne]: null } }
                 ]
             }
         });

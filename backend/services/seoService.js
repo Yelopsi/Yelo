@@ -338,11 +338,47 @@ Resposta do Especialista: ${answerContent.substring(0, 1000)}
     }
 };
 
+// Função auxiliar de sanitização de texto livre (Camada 3)
+const sanitizeFreeText = (text) => {
+    if (!text) return text;
+    // Remove CPFs (com ou sem pontuação)
+    let safeText = text.replace(/(?:\d{3}[\.\s-]*){3}\d{2}/g, '[CPF_REMOVIDO]');
+    // Remove Telefones (padrão Brasil)
+    safeText = safeText.replace(/(?:\+?55)?\s*\(?\d{2}\)?\s*\d{4,5}[-\s]*\d{4}/g, '[TELEFONE_REMOVIDO]');
+    // Remove E-mails
+    safeText = safeText.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[EMAIL_REMOVIDO]');
+    // Remove URLs
+    safeText = safeText.replace(/https?:\/\/[^\s]+/g, '[URL_REMOVIDA]');
+    return safeText;
+};
+
 exports.generatePatientQuestionSEO = async (questionContent) => {
     try {
         const genAI = getGenAI();
         if (!genAI) return null;
+
+        // Camada 1 & 2: Limitar o escopo ao necessário para a função de SEO.
+        // Analisamos que 700 chars é suficiente para a IA inferir a queixa principal.
+        let rawContent = questionContent.substring(0, 700);
         
+        // Camada 3: Sanitização de Texto Livre (Regex PII Óbvia)
+        let safeContent = sanitizeFreeText(rawContent);
+
+        // Camada 4: Validação do Payload Final
+        // Se após a sanitização ainda restar um bloco contínuo de 8+ números, barra a chamada.
+        if (/\d{8,}/.test(safeContent)) {
+            console.warn("⚠️ [Privacy Filter] Payload bloqueado: PII não classificada ou documento genérico vazado.");
+            return { 
+                title: "Dúvida sobre Saúde Mental", 
+                meta_description: "Dúvida anônima acolhida pela comunidade Yelo. Nossos especialistas estão preparando a resposta." 
+            };
+        }
+        
+        // Camada 5: Envio (Abordagem Realista LGPD)
+        // Como o LLM precisa ler a dúvida para extrair o sentido e o título, 
+        // assumimos que nomes e contexto semântico VÃO chegar ao Google.
+        console.warn("WARNING: Texto livre enviado ao LLM. Dependência de DPA para conformidade LGPD.");
+
         const model = genAI.getGenerativeModel({
             model: "gemini-3.1-flash-lite",
             generationConfig: { responseMimeType: "application/json" }
@@ -350,8 +386,8 @@ exports.generatePatientQuestionSEO = async (questionContent) => {
 
         const prompt = `
 Você é um especialista em SEO e saúde mental.
-Um paciente enviou a seguinte dúvida anônima para nossa comunidade de psicólogos:
-"${questionContent.substring(0, 1000)}"
+Um paciente enviou a seguinte dúvida para nossa comunidade:
+"${safeContent}"
 
 Sua tarefa é extrair e otimizar essa dúvida criando:
 1. "title": Um título claro, empático e com alta intenção de busca no Google, formatado como pergunta (máximo 60 caracteres).
@@ -365,7 +401,8 @@ Retorne um JSON estrito com as chaves "title" e "meta_description".
         if (!jsonMatch) throw new Error("JSON inválido");
         return JSON.parse(jsonMatch[0]);
     } catch (error) {
-        console.error("❌ [SEO Service - Dúvida Paciente] Erro:", error.message);
+        // Não loga o 'questionContent' que gerou o erro no console de produção.
+        console.error("❌ [SEO Service - Privacy Filter] Falha na geração do SEO. Gerando fallback seguro.");
         return null;
     }
 };

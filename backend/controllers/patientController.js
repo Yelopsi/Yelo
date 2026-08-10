@@ -90,6 +90,7 @@ exports.registerPatient = async (req, res) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             maxAge: 30 * 24 * 60 * 60 * 1000
+        , sameSite: 'lax' 
         });
 
         res.status(201).json({
@@ -194,11 +195,14 @@ exports.loginPatient = async (req, res) => {
             return res.status(400).json({ error: 'Email e senha são obrigatórios.' });
         }
 
-        // FIX: Busca inclusive usuários deletados (paranoid: false) para permitir restauração
         const patient = await db.Patient.findOne({ where: { email }, paranoid: false });
 
         if (!patient) {
             return res.status(401).json({ error: 'Email ou senha inválidos.' });
+        }
+
+        if (patient.is_ghost_profile) {
+            return res.status(403).json({ error: 'Esta é uma conta de gestão do prontuário do seu psicólogo e não possui acesso web' });
         }
 
         const isPasswordMatch = await bcrypt.compare(senha, patient.senha);
@@ -227,7 +231,8 @@ exports.loginPatient = async (req, res) => {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 maxAge: 30 * 24 * 60 * 60 * 1000
-            });
+            , sameSite: 'lax' 
+        });
 
             res.status(200).json({
                 id: patient.id,
@@ -578,8 +583,30 @@ exports.deletePatientAccount = async (req, res) => {
             }
         }
 
-        await patientWithPassword.destroy();
-        res.status(200).json({ message: 'Sua conta foi excluída com sucesso.' });
+        // Lógica de Exclusão Híbrida (Hard Delete vs Soft Delete)
+        const appointmentsCount = await db.Appointment.count({ where: { patientId: req.patient.id } });
+        const messagesCount = await db.Message.count({
+            where: {
+                [db.Sequelize.Op.or]: [
+                    { senderId: req.patient.id, senderType: 'patient' },
+                    { recipientId: req.patient.id, recipientType: 'patient' }
+                ]
+            }
+        });
+
+        if (appointmentsCount === 0 && messagesCount === 0) {
+            await patientWithPassword.destroy({ force: true }); // Hard Delete
+            res.status(200).json({ message: 'Sua conta foi excluída permanentemente com sucesso.' });
+        } else {
+            await patientWithPassword.update({
+                nome: 'Paciente Excluído',
+                email: `deleted_${patientWithPassword.id}@yelopsi.com.br`,
+                telefone: null,
+                fotoUrl: null
+            });
+            await patientWithPassword.destroy(); // Soft delete
+            res.status(200).json({ message: 'Sua conta foi desativada e anonimizada com sucesso.' });
+        }
     } catch (error) {
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }

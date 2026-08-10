@@ -47,7 +47,8 @@ router.post('/', verifyTokenLocal, async (req, res) => {
             sessionValue: sessionValue || 0,
             observacoes: observacoes || '',
             recebe_mensagens: recebeMensagens !== undefined ? recebeMensagens : true,
-            senha: await bcrypt.hash('temp123', 8),
+            senha: null,
+            is_ghost_profile: true,
             psychologistId: decoded.id
         });
         res.json(patient);

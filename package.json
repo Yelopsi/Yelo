@@ -4,7 +4,7 @@
   "description": "Plataforma de Saude Mental Yelo - MVP",
   "main": "backend/server.js",
   "scripts": {
-    "start": "node backend/server.js",
+    "start": "cd backend && npx sequelize-cli db:migrate && cd .. && node backend/server.js",
     "dev": "nodemon backend/server.js",
     "test": "node testar-match.js",
     "deploy": "npm run test && git push origin main",

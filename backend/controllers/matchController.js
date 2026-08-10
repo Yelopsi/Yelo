@@ -99,7 +99,9 @@ async function executeMatchSingleFlight(safePreferences, matchHash, patient) {
                 psychologistId: psi.id,
                 patientId: patient ? patient.id : null,
                 matchScore: psi.matchScore,
-                source: patient ? 'patient_dashboard' : 'questionnaire'
+                source: patient ? 'patient_dashboard' : 'questionnaire',
+                explainability_log: psi.explainability ? JSON.stringify(psi.explainability) : null,
+                ai_justification: psi.matchReasons || null
             }));
             try {
                 if (!matchSchemaChecked) {
@@ -111,18 +113,20 @@ async function executeMatchSingleFlight(safePreferences, matchHash, patient) {
                             "matchTags" TEXT[], 
                             "matchScore" FLOAT,
                             "source" VARCHAR(255),
+                            "explainability_log" JSONB,
+                            "ai_justification" TEXT,
                             "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                             "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                         );
                     `).catch(() => {});
-                    await db.sequelize.query(`ALTER TABLE "MatchEvents" ADD COLUMN IF NOT EXISTS "patientId" INTEGER, ADD COLUMN IF NOT EXISTS "source" VARCHAR(255), ADD COLUMN IF NOT EXISTS "matchScore" FLOAT;`).catch(() => {});
+                    await db.sequelize.query(`ALTER TABLE "MatchEvents" ADD COLUMN IF NOT EXISTS "patientId" INTEGER, ADD COLUMN IF NOT EXISTS "source" VARCHAR(255), ADD COLUMN IF NOT EXISTS "matchScore" FLOAT, ADD COLUMN IF NOT EXISTS "explainability_log" JSONB, ADD COLUMN IF NOT EXISTS "ai_justification" TEXT;`).catch(() => {});
                     await db.sequelize.query(`ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "last_shown_match_at" TIMESTAMP WITH TIME ZONE;`).catch(() => {});
                     matchSchemaChecked = true;
                 }
 
                 for (const event of matchEvents) {
                     await db.sequelize.query(
-                        `INSERT INTO "MatchEvents" ("psychologistId", "patientId", "matchScore", "source", "createdAt", "updatedAt") VALUES (:psychologistId, :patientId, :matchScore, :source, NOW(), NOW())`,
+                        `INSERT INTO "MatchEvents" ("psychologistId", "patientId", "matchScore", "source", "explainability_log", "ai_justification", "createdAt", "updatedAt") VALUES (:psychologistId, :patientId, :matchScore, :source, :explainability_log, :ai_justification, NOW(), NOW())`,
                         { replacements: event, type: db.sequelize.QueryTypes.INSERT }
                     );
                 }
