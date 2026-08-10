@@ -115,24 +115,51 @@ exports.getVisibilityMetrics = async (req, res) => {
             p.fairnessScore = Math.round((p.velocity / safeAvg) * 100);
         });
 
-        // 6. Global Suggestion Engine
+        // 6. Global Suggestion Engine (Refatorado Baseado em Conversão Real)
+        
+        // A) Calcular total de Leads Reais (Cliques no WPP) gerados no período
+        let totalLeads = 0;
+        wppLogs.forEach(log => {
+            totalLeads += parseInt(log.count || 0);
+        });
+
+        // B) Calcular a Taxa de Conversão do Funil (Buscas -> WhatsApp)
+        // Fallback seguro de 5% (0.05) para evitar divisões por zero ou sistemas muito novos
+        let conversionRate = totalDemand > 0 ? (totalLeads / totalDemand) : 0.05;
+        if (conversionRate === 0) conversionRate = 0.05; 
+
+        // C) Definir meta e proporcionalidade de dias
+        const TARGET_LEADS_PER_PSY_MONTHLY = 10; // Ideal de contatos no WPP por mês
+        
+        const msInDay = 1000 * 60 * 60 * 24;
+        const periodDays = Math.max(1, (end - start) / msInDay);
+        
+        // Ajusta a meta de acordo com o filtro de data (ex: filtro de 15 dias = meta de 5 leads)
+        const periodTargetLeads = (TARGET_LEADS_PER_PSY_MONTHLY / 30) * periodDays;
+
+        // D) Calcular a Necessidade Total do Sistema
+        const totalLeadsNeeded = activePsyCount * periodTargetLeads;
+
+        // E) Capacidade Ideal: Quantas "Buscas" são necessárias para bater a meta de leads
+        const idealCapacity = Math.ceil(totalLeadsNeeded / conversionRate);
+
         let suggestion = "Sistema Equilibrado. Mantenha os investimentos atuais.";
         let alertLevel = "success";
-        
-        // Cada psicólogo quer idealmente 10-15 contatos. Então capacidade "ideal" = ativos * 10
-        const idealCapacity = activePsyCount * 10;
 
-        if (totalDemand < idealCapacity * 0.5) {
+        // Margem de tolerância: 20% para mais ou para menos, para evitar flutuações agressivas
+        if (totalDemand < idealCapacity * 0.8) {
             const missingDemand = idealCapacity - totalDemand;
-            suggestion = `🚨 <b>Aumentar Ads (Tráfego Pago).</b> A rede atual suporta pelo menos mais ${missingDemand} buscas por mês. A demanda atual (${totalDemand}) não é suficiente para alimentar os ${activePsyCount} psicólogos de forma justa.`;
+            suggestion = `🚨 <b>Aumentar Ads (Tráfego Pago).</b> Para gerar leads suficientes (${TARGET_LEADS_PER_PSY_MONTHLY}/mês por psicólogo), precisamos de aprox. ${idealCapacity} buscas totais. Faltam ${missingDemand} buscas. A taxa de conversão atual é de ${(conversionRate * 100).toFixed(1)}%.`;
             alertLevel = "warning";
-        } else if (totalDemand > idealCapacity * 1.5) {
-            const totalPsyNeeded = Math.ceil(totalDemand / 10);
-            const missingPsy = totalPsyNeeded - activePsyCount;
-            suggestion = `🔥 <b>Captar Mais Profissionais!</b> A demanda está superaquecida (${totalDemand} buscas). Para não sobrecarregar e garantir agendamentos, você precisa adicionar <b>${missingPsy} novos psicólogos</b> na plataforma imediatamente (totalizando ${totalPsyNeeded} ativos).`;
+        } else if (totalDemand > idealCapacity * 1.2) {
+            // Quantos psicólogos a demanda atual consegue sustentar com a conversão de hoje?
+            const supportedPsys = Math.floor((totalDemand * conversionRate) / periodTargetLeads);
+            const missingPsy = supportedPsys - activePsyCount;
+            
+            suggestion = `🔥 <b>Captar Mais Profissionais!</b> A demanda está superaquecida. Com a conversão atual de ${(conversionRate * 100).toFixed(1)}%, as ${totalDemand} buscas sustentam confortavelmente ${supportedPsys} psicólogos. Adicione <b>${missingPsy > 0 ? missingPsy : 1} novos profissionais</b> imediatamente.`;
             alertLevel = "danger";
         } else {
-            suggestion = `✅ <b>Sistema Equilibrado.</b> A proporção atual de buscas (${totalDemand}) atende de forma sustentável os ${activePsyCount} psicólogos ativos. Mantenha o ritmo atual.`;
+            suggestion = `✅ <b>Sistema Equilibrado.</b> A demanda atual atende os ${activePsyCount} profissionais de forma justa, entregando a meta de leads com uma conversão de ${(conversionRate * 100).toFixed(1)}%.`;
             alertLevel = "success";
         }
 
@@ -141,7 +168,8 @@ exports.getVisibilityMetrics = async (req, res) => {
                 totalDemand,
                 activePsyCount,
                 avgVelocity: avgVelocity.toFixed(2),
-                idealCapacity
+                idealCapacity, // Agora exporta a capacidade com base na matemática real
+                conversionRate: (conversionRate * 100).toFixed(1) + '%'
             },
             suggestion,
             alertLevel,
