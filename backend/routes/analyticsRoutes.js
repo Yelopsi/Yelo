@@ -63,6 +63,32 @@ router.post('/tracking/uso-feature', verifyTokenLocal, async (req, res) => {
 router.get('/admin/analytics/funnel', verifyTokenLocal, adminDashboardController.getFunnelAnalytics);
 router.get('/admin/analytics/visibility', verifyTokenLocal, adminVisibilityController.getVisibilityMetrics);
 
+router.get('/admin/analytics/whatsapp-ab', verifyTokenLocal, async (req, res) => {
+    try {
+        if (req.userDecoded.role !== 'admin' && req.userDecoded.type !== 'admin') {
+            return res.status(403).json({ error: 'Acesso negado' });
+        }
+        
+        const results = await db.sequelize.query(`
+            SELECT ab_variant, COUNT(*) as count 
+            FROM "WhatsAppClickLogs" 
+            WHERE ab_variant IS NOT NULL 
+            GROUP BY ab_variant
+        `, { type: db.sequelize.QueryTypes.SELECT });
+
+        const data = { A: 0, B: 0 };
+        results.forEach(r => {
+            if (r.ab_variant === 'A') data.A = parseInt(r.count);
+            if (r.ab_variant === 'B') data.B = parseInt(r.count);
+        });
+
+        res.json(data);
+    } catch (error) {
+        console.error("Erro no analytics do A/B:", error);
+        res.status(500).json({ error: 'Erro interno' });
+    }
+});
+
 router.get('/admin/analytics/visits', verifyTokenLocal, async (req, res) => {
     try {
         if (req.userDecoded.role !== 'admin' && req.userDecoded.type !== 'admin') return res.status(403).json({ error: 'Acesso negado' });

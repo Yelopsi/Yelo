@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste A/B WhatsApp - Yelo Admin</title>
+    <link rel="icon" href="/assets/favicon.png" type="image/png">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="admin.css">
+    
+    <style>
+        .modern-dashboard-layout {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            font-family: var(--font-principal);
+        }
+        
+        .main-header {
+            background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%); 
+            padding: 25px 30px; 
+            margin-bottom: 20px; 
+            border-radius: 16px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-top: 4px solid #8b5cf6;
+        }
+
+        .reminder-banner {
+            background: #fef3c7;
+            border-left: 5px solid #d97706;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #92400e;
+        }
+
+        .variant-card {
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+        }
+        .variant-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        .variant-message {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            font-style: italic;
+            color: #475569;
+            margin-bottom: 15px;
+        }
+        .variant-stats {
+            display: flex;
+            gap: 30px;
+        }
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .stat-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #8b5cf6;
+        }
+    </style>
+</head>
+<body class="admin-body">
+
+    <!-- Navbar simplificada -->
+    <nav class="admin-navbar" style="position: sticky; top: 0; z-index: 100; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <div class="nav-container" style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px; height: 60px;">
+            <div class="nav-logo" style="display: flex; align-items: center; gap: 15px;">
+                <button onclick="window.history.back()" style="background: none; border: none; cursor: pointer; color: #64748b; display: flex; align-items: center;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                </button>
+                <img src="/assets/logo_yelo.png" alt="Yelo" style="height: 30px;">
+                <span style="font-family: var(--font-secundaria); font-weight: 600; color: #1B4332; font-size: 1.2rem;">| Admin</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="modern-dashboard-layout">
+        <header class="main-header">
+            <h1 style="color: #fff; margin: 0; font-family: var(--font-secundaria); font-size: 1.8rem; display: flex; align-items: center; gap: 10px;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                Teste A/B de WhatsApp
+            </h1>
+            <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0 0; font-size: 1rem;">Acompanhe o desempenho das chamadas para ação.</p>
+        </header>
+
+        <div class="reminder-banner">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <div>
+                <strong>Lembrete de Tomada de Decisão:</strong> <br>
+                Este teste foi iniciado em 10 de Agosto de 2026. Revise os dados e tome uma decisão definitiva em <strong>09 de Setembro de 2026</strong> (30 dias).
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <!-- Variante A -->
+            <div class="variant-card" style="border-top: 4px solid #3b82f6;">
+                <div class="variant-title">Variante A (Foco em Dúvidas)</div>
+                <div class="variant-message">"Olá, {nome}! Encontrei seu perfil na Yelo e gostaria de tirar algumas dúvidas sobre como funciona o seu atendimento."</div>
+                <div class="variant-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Cliques Totais</span>
+                        <span class="stat-value" id="clicks-a">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Taxa Relativa</span>
+                        <span class="stat-value" id="rate-a" style="color: #64748b; font-size: 1.2rem; margin-top: auto;">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Variante B -->
+            <div class="variant-card" style="border-top: 4px solid #10b981;">
+                <div class="variant-title">Variante B (Foco em Agendamento)</div>
+                <div class="variant-message">"Olá, {nome}! Encontrei seu perfil na Yelo e gostaria de saber se você tem horários disponíveis para novos pacientes."</div>
+                <div class="variant-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Cliques Totais</span>
+                        <span class="stat-value" id="clicks-b" style="color: #10b981;">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Taxa Relativa</span>
+                        <span class="stat-value" id="rate-b" style="color: #64748b; font-size: 1.2rem; margin-top: auto;">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Script para buscar os dados -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('yelo_admin_token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/analytics/whatsapp-ab', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const data = await response.json();
+                
+                const clicksA = data.A || 0;
+                const clicksB = data.B || 0;
+                const total = clicksA + clicksB;
+
+                document.getElementById('clicks-a').textContent = clicksA;
+                document.getElementById('clicks-b').textContent = clicksB;
+
+                if (total > 0) {
+                    document.getElementById('rate-a').textContent = ((clicksA / total) * 100).toFixed(1) + '%';
+                    document.getElementById('rate-b').textContent = ((clicksB / total) * 100).toFixed(1) + '%';
+                }
+
+            } catch (error) {
+                console.error("Erro ao carregar dados do Teste A/B", error);
+            }
+        });
+    </script>
+</body>
+</html>
