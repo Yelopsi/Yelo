@@ -127,39 +127,40 @@ exports.getVisibilityMetrics = async (req, res) => {
         let conversionRate = totalDemand > 0 ? (totalLeads / totalDemand) : 0.05;
         if (conversionRate === 0) conversionRate = 0.05; 
 
-        // C) Descobrir a Taxa de Fechamento (WhatsApp -> Paciente Pago) Global Histórica
+        // C) Descobrir a Taxa de Leads Autênticos (Excluir Fantasmas e Sem Resposta) Histórica
         const globalWppStats = await db.sequelize.query(
             `SELECT 
-                COUNT(*) as total_clicks,
-                SUM(CASE WHEN "dealClosed" = 'started' THEN 1 ELSE 0 END) as total_sales
+                SUM(CASE WHEN "dealClosed" IS NOT NULL AND "dealClosed" != 'unknown' THEN 1 ELSE 0 END) as total_feedbacks,
+                SUM(CASE WHEN "dealClosed" IN ('no_contact', 'wpp_issue') THEN 1 ELSE 0 END) as ghost_leads
              FROM "WhatsAppClickLogs"`,
              { type: db.sequelize.QueryTypes.SELECT }
         );
         
-        const histClicks = parseInt(globalWppStats[0]?.total_clicks || 0);
-        const histSales = parseInt(globalWppStats[0]?.total_sales || 0);
+        const totalFeedbacks = parseInt(globalWppStats[0]?.total_feedbacks || 0);
+        const ghostLeads = parseInt(globalWppStats[0]?.ghost_leads || 0);
+        const realLeads = totalFeedbacks - ghostLeads;
         
-        let salesConversionRate = histClicks > 0 ? (histSales / histClicks) : 0.10;
-        if (salesConversionRate === 0) salesConversionRate = 0.10; // Fallback 10%
+        let leadAuthenticityRate = totalFeedbacks > 0 ? (realLeads / totalFeedbacks) : 0.80; // Fallback 80%
+        if (leadAuthenticityRate === 0) leadAuthenticityRate = 0.80; 
 
-        // Quantos cliques são necessários para fechar 1 paciente?
-        const clicksForOneSale = 1 / salesConversionRate;
+        // Quantos cliques totais (com fantasmas) são necessários para garantir 1 lead real/autêntico?
+        const clicksForOneRealLead = 1 / leadAuthenticityRate;
         
-        // A META REAL (Sem Achismo): Garantir 1.5 pacientes novos por mês para manter o psicólogo lucrando e retido na Yelo
-        const TARGET_NEW_PATIENTS_MONTHLY = 1.5;
-        const TARGET_LEADS_PER_PSY_MONTHLY = Math.ceil(clicksForOneSale * TARGET_NEW_PATIENTS_MONTHLY);
+        // A META: Garantir 10 leads REAIS (autênticos) por mês para o psicólogo
+        const TARGET_REAL_LEADS_MONTHLY = 10;
+        const TARGET_CLICKS_PER_PSY_MONTHLY = Math.ceil(clicksForOneRealLead * TARGET_REAL_LEADS_MONTHLY);
         
         const msInDay = 1000 * 60 * 60 * 24;
         const periodDays = Math.max(1, (end - start) / msInDay);
         
-        // Ajusta a meta de acordo com o filtro de data
-        const periodTargetLeads = (TARGET_LEADS_PER_PSY_MONTHLY / 30) * periodDays;
+        // Ajusta a meta de cliques brutos de acordo com o filtro de data
+        const periodTargetClicks = (TARGET_CLICKS_PER_PSY_MONTHLY / 30) * periodDays;
 
         // D) Calcular a Necessidade Total do Sistema
-        const totalLeadsNeeded = activePsyCount * periodTargetLeads;
+        const totalClicksNeeded = activePsyCount * periodTargetClicks;
 
-        // E) Capacidade Ideal: Quantas "Buscas" são necessárias para bater a meta de leads
-        const idealCapacity = Math.ceil(totalLeadsNeeded / conversionRate);
+        // E) Capacidade Ideal: Quantas "Buscas" são necessárias para bater a meta de cliques reais
+        const idealCapacity = Math.ceil(totalClicksNeeded / conversionRate);
 
         let suggestion = "Sistema Equilibrado. Mantenha os investimentos atuais.";
         let alertLevel = "success";
@@ -167,16 +168,16 @@ exports.getVisibilityMetrics = async (req, res) => {
         // Margem de tolerância: 20% para mais ou para menos
         if (totalDemand < idealCapacity * 0.8) {
             const missingDemand = idealCapacity - totalDemand;
-            suggestion = `🚨 <b>Aumentar Ads (Tráfego Pago).</b> Para garantir a meta de ${TARGET_NEW_PATIENTS_MONTHLY} novos pacientes/mês por profissional (exige ~${TARGET_LEADS_PER_PSY_MONTHLY} cliques), precisamos de aprox. ${idealCapacity} buscas totais. Faltam ${missingDemand} buscas. A taxa de conversão do site é ${(conversionRate * 100).toFixed(1)}%.`;
+            suggestion = `🚨 <b>Aumentar Ads (Tráfego Pago).</b> Para garantir a meta de ${TARGET_REAL_LEADS_MONTHLY} leads reais/mês por profissional (exige ~${TARGET_CLICKS_PER_PSY_MONTHLY} cliques brutos considerando os fantasmas), precisamos de aprox. ${idealCapacity} buscas totais no funil. Faltam ${missingDemand} buscas. A conversão da busca pro WhatsApp está em ${(conversionRate * 100).toFixed(1)}%.`;
             alertLevel = "warning";
         } else if (totalDemand > idealCapacity * 1.2) {
-            const supportedPsys = Math.floor((totalDemand * conversionRate) / periodTargetLeads);
+            const supportedPsys = Math.floor((totalDemand * conversionRate) / periodTargetClicks);
             const missingPsy = supportedPsys - activePsyCount;
             
-            suggestion = `🔥 <b>Captar Mais Profissionais!</b> Com as taxas atuais, as ${totalDemand} buscas sustentam confortavelmente ${supportedPsys} psicólogos lucrando ${TARGET_NEW_PATIENTS_MONTHLY} pacientes/mês. Adicione <b>${missingPsy > 0 ? missingPsy : 1} novos profissionais</b> imediatamente.`;
+            suggestion = `🔥 <b>Captar Mais Profissionais!</b> Com as taxas atuais, as ${totalDemand} buscas sustentam confortavelmente ${supportedPsys} psicólogos recebendo ${TARGET_REAL_LEADS_MONTHLY} leads quentes/mês. Adicione <b>${missingPsy > 0 ? missingPsy : 1} novos profissionais</b> imediatamente.`;
             alertLevel = "danger";
         } else {
-            suggestion = `✅ <b>Sistema Equilibrado.</b> A demanda atual atende os ${activePsyCount} profissionais, entregando a meta de ${TARGET_NEW_PATIENTS_MONTHLY} novos pacientes com base nas conversões reais.`;
+            suggestion = `✅ <b>Sistema Equilibrado.</b> A demanda atual atende os ${activePsyCount} profissionais, entregando a meta de ${TARGET_REAL_LEADS_MONTHLY} contatos reais no WhatsApp com base nas conversões e feedbacks atuais.`;
             alertLevel = "success";
         }
 
