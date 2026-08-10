@@ -4,12 +4,16 @@ const db = require('../models');
 const { Op } = require('sequelize');
 const gamificationService = require('../services/gamificationService');
 const whatsappClickController = require('../controllers/whatsappClickController');
+const whatsappController = require('../controllers/whatsappController');
 const { emailSpamLimiter, clickLimiter } = require('../middlewares/rateLimiters');
 const jwt = require('jsonwebtoken');
 
 // Rotas de Magic Link de Feedback (PLG)
 router.get('/feedback/:token', whatsappClickController.getPublicFeedbackByToken);
 router.post('/feedback/:token', whatsappClickController.submitPublicFeedback);
+
+// Rota de Teste A/B de Redirecionamento do WhatsApp
+router.get('/whatsapp/link/:psychologistId', clickLimiter, whatsappController.getWhatsAppLink);
 
 router.post('/psychologists/:slug/whatsapp-click', clickLimiter, async (req, res) => {
     try {

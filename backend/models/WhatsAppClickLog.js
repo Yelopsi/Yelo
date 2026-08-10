@@ -38,6 +38,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.DATE,
             allowNull: true
         },
+        ab_variant: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
         feedbackGiven: {
             type: DataTypes.BOOLEAN,
             defaultValue: false // Só vira true quando o psi responder o modal

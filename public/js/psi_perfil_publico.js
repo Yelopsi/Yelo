@@ -294,17 +294,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const setupZapButton = (btnId) => {
             const btnAgendar = document.getElementById(btnId);
             if (btnAgendar) {
-                let mensagem = `Olá, ${psi.nome}! Encontrei seu perfil na Yelo e gostaria de tirar algumas dúvidas sobre como funciona o seu atendimento.`;
-                if (psi.tipo_cobranca === 'mensal') {
-                    mensagem = `Olá, ${psi.nome}! Encontrei seu perfil na Yelo e gostaria de tirar algumas dúvidas sobre como funciona o seu atendimento.`;
-                }
-                const whatsappLink = `https://api.whatsapp.com/send?phone=55${(psi.telefone || '').replace(/\D/g, '')}&text=${encodeURIComponent(mensagem)}`;
-                btnAgendar.href = whatsappLink;
-                btnAgendar.onclick = (e) => {
-                    e.preventDefault(); // Evita a "Race Condition" bloqueando a saída imediata
+                btnAgendar.href = '#';
+                btnAgendar.onclick = async (e) => {
+                    e.preventDefault();
                     if (btnAgendar.dataset.clicked) return;
                     btnAgendar.dataset.clicked = "true";
-                    setTimeout(() => delete btnAgendar.dataset.clicked, 2000); // Debounce de 2s
+                    
+                    const originalText = btnAgendar.innerHTML;
+                    btnAgendar.innerHTML = 'Abrindo WhatsApp...';
                     
                     // Dispara evento para o Google Analytics (GA4)
                     try {
@@ -317,22 +314,37 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     } catch(e) {}
 
-                    // 1. Dispara tracking interno (Fire and Forget)
+                    // 1. Dispara tracking antigo (legado)
                     fetch(`${API_BASE_URL}/api/psychologists/${psi.slug}/whatsapp-click`, { method: 'POST' }).catch(() => {});
                     
-                    // --- Tracking específico para o Modal PLG de Conversão ---
-                    const guestName = localStorage.getItem('yelo_guest_name') || 'um paciente';
-                    const utmSource = localStorage.getItem('yelo_utm_source') || 'Direto/Orgânico';
-                    fetch(`${API_BASE_URL}/api/psychologists/public/whatsapp-click-log`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ psychologistId: psi.id, guestName, utmSource })
-                    }).catch(() => {});
-                    // ---------------------------------------------------------------
-
-                    const goToWhatsApp = () => window.open(whatsappLink, '_blank');
+                    let whatsappLink = '';
                     
-                    // 2. Dispara a Conversão do Google Ads com fallback seguro
+                    try {
+                        // Faz a requisição pro backend pra pegar a URL com a Variante A/B já montada
+                        const res = await fetch(`${API_BASE_URL}/api/public/whatsapp/link/${psi.id}`);
+                        const data = await res.json();
+                        
+                        if (data.success && data.url) {
+                            whatsappLink = data.url;
+                        } else {
+                            throw new Error('Falha ao gerar link do WhatsApp');
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        // Fallback seguro caso a API falhe
+                        const cleanPhone = (psi.telefone || '').replace(/\\D/g, '');
+                        whatsappLink = `https://wa.me/55${cleanPhone}`;
+                    }
+
+                    const goToWhatsApp = () => {
+                        window.location.href = whatsappLink;
+                        setTimeout(() => {
+                            btnAgendar.innerHTML = originalText;
+                            delete btnAgendar.dataset.clicked;
+                        }, 1500); // Restaura o botão após redirecionar
+                    };
+                    
+                    // 2. Dispara a Conversão do Google Ads com delay de 300ms para carregar
                     let redirectDone = false;
                     if (typeof gtag === 'function') {
                         gtag('event', 'conversion', {
@@ -340,16 +352,21 @@ document.addEventListener('DOMContentLoaded', () => {
                             'event_callback': function() {
                                 if (!redirectDone) {
                                     redirectDone = true;
-                                    goToWhatsApp();
+                                    setTimeout(goToWhatsApp, 300); // Delay extra para Ads processar
                                 }
                             }
                         });
                         
-                        // Fallback: Se o script do Ads falhar/demorar, libera o clique após 600ms
-                        setTimeout(() => { if (!redirectDone) { redirectDone = true; goToWhatsApp(); } }, 600);
+                        // Fallback: Se o script do Ads falhar/demorar, libera o clique
+                        setTimeout(() => { 
+                            if (!redirectDone) { 
+                                redirectDone = true; 
+                                goToWhatsApp(); 
+                            } 
+                        }, 600);
                     } else {
-                        // Se houver AdBlocker impedindo o gtag, redireciona normalmente
-                        goToWhatsApp();
+                        // Se houver AdBlocker impedindo o gtag, espera 300ms e redireciona
+                        setTimeout(goToWhatsApp, 300);
                     }
                 };
             }
