@@ -124,17 +124,35 @@ exports.getVisibilityMetrics = async (req, res) => {
         });
 
         // B) Calcular a Taxa de Conversão do Funil (Buscas -> WhatsApp)
-        // Fallback seguro de 5% (0.05) para evitar divisões por zero ou sistemas muito novos
         let conversionRate = totalDemand > 0 ? (totalLeads / totalDemand) : 0.05;
         if (conversionRate === 0) conversionRate = 0.05; 
 
-        // C) Definir meta e proporcionalidade de dias
-        const TARGET_LEADS_PER_PSY_MONTHLY = 10; // Ideal de contatos no WPP por mês
+        // C) Descobrir a Taxa de Fechamento (WhatsApp -> Paciente Pago) Global Histórica
+        const globalWppStats = await db.sequelize.query(
+            `SELECT 
+                COUNT(*) as total_clicks,
+                SUM(CASE WHEN "dealClosed" = 'started' THEN 1 ELSE 0 END) as total_sales
+             FROM "WhatsAppClickLogs"`,
+             { type: db.sequelize.QueryTypes.SELECT }
+        );
+        
+        const histClicks = parseInt(globalWppStats[0]?.total_clicks || 0);
+        const histSales = parseInt(globalWppStats[0]?.total_sales || 0);
+        
+        let salesConversionRate = histClicks > 0 ? (histSales / histClicks) : 0.10;
+        if (salesConversionRate === 0) salesConversionRate = 0.10; // Fallback 10%
+
+        // Quantos cliques são necessários para fechar 1 paciente?
+        const clicksForOneSale = 1 / salesConversionRate;
+        
+        // A META REAL (Sem Achismo): Garantir 1.5 pacientes novos por mês para manter o psicólogo lucrando e retido na Yelo
+        const TARGET_NEW_PATIENTS_MONTHLY = 1.5;
+        const TARGET_LEADS_PER_PSY_MONTHLY = Math.ceil(clicksForOneSale * TARGET_NEW_PATIENTS_MONTHLY);
         
         const msInDay = 1000 * 60 * 60 * 24;
         const periodDays = Math.max(1, (end - start) / msInDay);
         
-        // Ajusta a meta de acordo com o filtro de data (ex: filtro de 15 dias = meta de 5 leads)
+        // Ajusta a meta de acordo com o filtro de data
         const periodTargetLeads = (TARGET_LEADS_PER_PSY_MONTHLY / 30) * periodDays;
 
         // D) Calcular a Necessidade Total do Sistema
@@ -146,20 +164,19 @@ exports.getVisibilityMetrics = async (req, res) => {
         let suggestion = "Sistema Equilibrado. Mantenha os investimentos atuais.";
         let alertLevel = "success";
 
-        // Margem de tolerância: 20% para mais ou para menos, para evitar flutuações agressivas
+        // Margem de tolerância: 20% para mais ou para menos
         if (totalDemand < idealCapacity * 0.8) {
             const missingDemand = idealCapacity - totalDemand;
-            suggestion = `🚨 <b>Aumentar Ads (Tráfego Pago).</b> Para gerar leads suficientes (${TARGET_LEADS_PER_PSY_MONTHLY}/mês por psicólogo), precisamos de aprox. ${idealCapacity} buscas totais. Faltam ${missingDemand} buscas. A taxa de conversão atual é de ${(conversionRate * 100).toFixed(1)}%.`;
+            suggestion = `🚨 <b>Aumentar Ads (Tráfego Pago).</b> Para garantir a meta de ${TARGET_NEW_PATIENTS_MONTHLY} novos pacientes/mês por profissional (exige ~${TARGET_LEADS_PER_PSY_MONTHLY} cliques), precisamos de aprox. ${idealCapacity} buscas totais. Faltam ${missingDemand} buscas. A taxa de conversão do site é ${(conversionRate * 100).toFixed(1)}%.`;
             alertLevel = "warning";
         } else if (totalDemand > idealCapacity * 1.2) {
-            // Quantos psicólogos a demanda atual consegue sustentar com a conversão de hoje?
             const supportedPsys = Math.floor((totalDemand * conversionRate) / periodTargetLeads);
             const missingPsy = supportedPsys - activePsyCount;
             
-            suggestion = `🔥 <b>Captar Mais Profissionais!</b> A demanda está superaquecida. Com a conversão atual de ${(conversionRate * 100).toFixed(1)}%, as ${totalDemand} buscas sustentam confortavelmente ${supportedPsys} psicólogos. Adicione <b>${missingPsy > 0 ? missingPsy : 1} novos profissionais</b> imediatamente.`;
+            suggestion = `🔥 <b>Captar Mais Profissionais!</b> Com as taxas atuais, as ${totalDemand} buscas sustentam confortavelmente ${supportedPsys} psicólogos lucrando ${TARGET_NEW_PATIENTS_MONTHLY} pacientes/mês. Adicione <b>${missingPsy > 0 ? missingPsy : 1} novos profissionais</b> imediatamente.`;
             alertLevel = "danger";
         } else {
-            suggestion = `✅ <b>Sistema Equilibrado.</b> A demanda atual atende os ${activePsyCount} profissionais de forma justa, entregando a meta de leads com uma conversão de ${(conversionRate * 100).toFixed(1)}%.`;
+            suggestion = `✅ <b>Sistema Equilibrado.</b> A demanda atual atende os ${activePsyCount} profissionais, entregando a meta de ${TARGET_NEW_PATIENTS_MONTHLY} novos pacientes com base nas conversões reais.`;
             alertLevel = "success";
         }
 
