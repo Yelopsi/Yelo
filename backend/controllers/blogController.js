@@ -347,7 +347,7 @@ module.exports = {
             // Usamos db.Sequelize.Op para fazer a exclusão "Not Equal" (ne)
             const Op = db.Sequelize.Op; 
             const recentes = await Post.findAll({
-                where: { id: { [Op.ne]: id } }, // Exclui o ID atual
+                where: { id: { [Op.ne]: post.id } }, // Exclui o ID atual
                 limit: 3, // Traz 3 sugestões
                 order: [['createdAt', 'DESC']]
             });
