@@ -483,6 +483,8 @@ Retorne estritamente o JSON definido pelo schema. Use tom amigável.`;
             }
         });
 
+        const diasDePerfil = psychologistData.createdAt ? Math.floor((Date.now() - new Date(psychologistData.createdAt).getTime()) / (1000 * 60 * 60 * 24)) : 30;
+
         const prompt = `DADOS DO PSICÓLOGO:
 Especialidades: ${safeTemas}
 Valor da Sessão: ${psychologistData.valor_sessao_numero || 'Não informado'}
