@@ -53,10 +53,10 @@ router.post('/psychologists/:slug/whatsapp-click', clickLimiter, async (req, res
         //     return res.status(403).json({ error: 'Profissional com agenda lotada no momento.' });
         // }
 
-        await db.sequelize.query(
-            `INSERT INTO "WhatsAppClickLogs" ("psychologistId", "patientId", "guestPhone", "guestName", "createdAt", "updatedAt") VALUES (:id, :patId, :phone, :name, NOW(), NOW())`,
-            { replacements: { id: psychologist.id, patId: patientId || null, phone: guestPhone || null, name: guestName || null } }
-        );
+        // O log detalhado (WhatsAppClickLogs) é gerado exclusivamente pelo endpoint A/B:
+        // GET /api/public/whatsapp/link/:psychologistId (whatsappController.js)
+        // Esta rota legada mantém apenas: contador de cliques + gamificação + e-mail de primeiro lead.
+
         await db.sequelize.query(
             `UPDATE "Psychologists" SET "whatsapp_clicks" = COALESCE("whatsapp_clicks", 0) + 1 WHERE id = :id`,
             { replacements: { id: psychologist.id } }
@@ -68,11 +68,6 @@ router.post('/psychologists/:slug/whatsapp-click', clickLimiter, async (req, res
             const emailService = require('../services/emailService');
             emailService.sendFirstLeadEmail(psychologist).catch(e => console.error('[EMAIL] Erro:', e));
         }
-        // E-mail de limite desativado temporariamente
-        // else if (!isAssinante && clicksAtuais === (MAX_TRIAL_CLICKS - 1)) {
-        //     const emailService = require('../services/emailService');
-        //     emailService.sendLimitReachedEmail(psychologist, MAX_TRIAL_CLICKS).catch(e => console.error('[EMAIL] Erro:', e));
-        // }
         res.status(200).send('Clique registrado com sucesso.');
     } catch (error) { res.status(500).send('Erro interno do servidor.'); }
 });
