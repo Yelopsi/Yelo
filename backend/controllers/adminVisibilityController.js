@@ -17,15 +17,15 @@ exports.getVisibilityMetrics = async (req, res) => {
         let end = parseDateBRT(req.query.endDate, true);
 
         if (!start) {
-            start = new Date(); 
-            start.setHours(start.getHours() - 3); 
-            start.setDate(start.getDate() - 30); 
+            start = new Date();
+            start.setHours(start.getHours() - 3);
+            start.setDate(start.getDate() - 30);
             start.setUTCHours(3, 0, 0, 0);
         }
         if (!end) {
-            end = new Date(); 
-            end.setHours(end.getHours() - 3); 
-            end.setUTCHours(2, 59, 59, 999); 
+            end = new Date();
+            end.setHours(end.getHours() - 3);
+            end.setUTCHours(2, 59, 59, 999);
             end.setDate(end.getDate() + 1);
         }
 
@@ -90,7 +90,7 @@ exports.getVisibilityMetrics = async (req, res) => {
                 psiMap[log.psychologistId].whatsapp_clicks += count;
                 if (log.dealClosed === 'talking') {
                     psiMap[log.psychologistId].conversando += count;
-                } else if (log.dealClosed === 'started') {
+                } else if (log.dealClosed === 'started' || log.dealClosed === 'yes') {
                     psiMap[log.psychologistId].conversoes += count;
                 }
             }
@@ -106,7 +106,7 @@ exports.getVisibilityMetrics = async (req, res) => {
         let totalVelocity = 0;
         const resultList = Object.values(psiMap);
         resultList.forEach(p => totalVelocity += p.velocity);
-        
+
         const avgVelocity = resultList.length > 0 ? (totalVelocity / resultList.length) : 0.1;
         const safeAvg = Math.max(0.1, avgVelocity);
 
@@ -116,7 +116,7 @@ exports.getVisibilityMetrics = async (req, res) => {
         });
 
         // 6. Global Suggestion Engine (Refatorado Baseado em Conversão Real)
-        
+
         // A) Calcular total de Leads Reais (Cliques no WPP) gerados no período
         let totalLeads = 0;
         wppLogs.forEach(log => {
@@ -125,7 +125,7 @@ exports.getVisibilityMetrics = async (req, res) => {
 
         // B) Calcular a Taxa de Conversão do Funil (Buscas -> WhatsApp)
         let conversionRate = totalDemand > 0 ? (totalLeads / totalDemand) : 0.05;
-        if (conversionRate === 0) conversionRate = 0.05; 
+        if (conversionRate === 0) conversionRate = 0.05;
 
         // C) Descobrir a Taxa de Leads Autênticos (Excluir Fantasmas e Sem Resposta) Histórica
         const globalWppStats = await db.sequelize.query(
@@ -133,26 +133,37 @@ exports.getVisibilityMetrics = async (req, res) => {
                 SUM(CASE WHEN "dealClosed" IS NOT NULL AND "dealClosed" != 'unknown' THEN 1 ELSE 0 END) as total_feedbacks,
                 SUM(CASE WHEN "dealClosed" IN ('no_contact', 'wpp_issue') THEN 1 ELSE 0 END) as ghost_leads
              FROM "WhatsAppClickLogs"`,
-             { type: db.sequelize.QueryTypes.SELECT }
+            { type: db.sequelize.QueryTypes.SELECT }
         );
-        
+
         const totalFeedbacks = parseInt(globalWppStats[0]?.total_feedbacks || 0);
         const ghostLeads = parseInt(globalWppStats[0]?.ghost_leads || 0);
         const realLeads = totalFeedbacks - ghostLeads;
-        
+
         let leadAuthenticityRate = totalFeedbacks > 0 ? (realLeads / totalFeedbacks) : 0.80; // Fallback 80%
-        if (leadAuthenticityRate === 0) leadAuthenticityRate = 0.80; 
+        if (leadAuthenticityRate === 0) leadAuthenticityRate = 0.80;
 
         // Quantos cliques totais (com fantasmas) são necessários para garantir 1 lead real/autêntico?
         const clicksForOneRealLead = 1 / leadAuthenticityRate;
+
+        // A META DINÂMICA: Baseada exclusivamente no histórico dos ÚLTIMOS 30 DIAS
+        const past30Days = new Date();
+        past30Days.setDate(past30Days.getDate() - 30);
         
-        // A META: Garantir 10 leads REAIS (autênticos) por mês para o psicólogo
-        const TARGET_REAL_LEADS_MONTHLY = 10;
+        const last30ClicksResult = await db.sequelize.query(
+            `SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "createdAt" >= :past30`,
+            { replacements: { past30: past30Days }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => [{ count: 0 }]);
+        const totalWppClicks30 = parseInt(last30ClicksResult[0]?.count || 0);
+        
+        const avgClicksPerPsy30 = activePsyCount > 0 ? (totalWppClicks30 / activePsyCount) : 10;
+        
+        // A média já corresponde ao mês
+        const TARGET_REAL_LEADS_MONTHLY = Math.max(1, Math.round(avgClicksPerPsy30 * leadAuthenticityRate));
         const TARGET_CLICKS_PER_PSY_MONTHLY = Math.ceil(clicksForOneRealLead * TARGET_REAL_LEADS_MONTHLY);
-        
+
         const msInDay = 1000 * 60 * 60 * 24;
         const periodDays = Math.max(1, (end - start) / msInDay);
-        
         // Ajusta a meta de cliques brutos de acordo com o filtro de data
         const periodTargetClicks = (TARGET_CLICKS_PER_PSY_MONTHLY / 30) * periodDays;
 
@@ -173,7 +184,7 @@ exports.getVisibilityMetrics = async (req, res) => {
         } else if (totalDemand > idealCapacity * 1.2) {
             const supportedPsys = Math.floor((totalDemand * conversionRate) / periodTargetClicks);
             const missingPsy = supportedPsys - activePsyCount;
-            
+
             suggestion = `🔥 <b>Captar Mais Profissionais!</b> Com as taxas atuais, as ${totalDemand} buscas sustentam confortavelmente ${supportedPsys} psicólogos recebendo ${TARGET_REAL_LEADS_MONTHLY} leads quentes/mês. Adicione <b>${missingPsy > 0 ? missingPsy : 1} novos profissionais</b> imediatamente.`;
             alertLevel = "danger";
         } else {

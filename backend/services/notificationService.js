@@ -62,7 +62,12 @@ const notifyNewPost = async (post, type) => {
 
         // 3. Montar e disparar e-mails
         const frontendUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
-        const link = `${frontendUrl}/login`;
+        let link;
+        if (type === 'blog') {
+            link = `${frontendUrl}/blog/post/${post.slug}`;
+        } else {
+            link = `${frontendUrl}/psi/psi_dashboard?postId=${post.id}`;
+        }
         
         for (const psi of activePsis) {
             const psiName = psi.nome.split(' ')[0] || 'Psicólogo(a)';

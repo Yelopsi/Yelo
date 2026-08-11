@@ -4,228 +4,382 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Feedback de Encaminhamento - Yelo</title>
+    
+    <!-- Fonts and Yelo Styles -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/01-variables.css">
+    <link rel="stylesheet" href="/style.css">
+    
     <style>
+        /* Fallbacks em caso de falha no carregamento dos CSS originais */
         :root {
             --verde-escuro: #1B4332;
             --verde-claro: #2D6A4F;
-            --verde-fundo: #E8F3EF;
-            --cinza-texto: #555555;
-            --cinza-claro: #F4F8F6;
         }
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: linear-gradient(135deg, var(--verde-fundo) 0%, #ffffff 100%);
-            margin: 0;
-            padding: 0;
+
+        body.pagina-questionario {
+            background-color: var(--verde-escuro);
+            min-height: 100dvh;
             display: flex;
-            justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            color: #333;
-            overflow: hidden;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Inter', -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
         }
-        .container {
-            background: white;
-            padding: 40px 30px;
-            border-radius: 32px;
-            width: 90%;
-            max-width: 500px;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(27, 67, 50, 0.08);
+        
+        .questionario-container {
+            width: 100%;
+            max-width: 540px;
+            margin: 0 auto;
             position: relative;
-            display: flex;
-            flex-direction: column;
-            max-height: 85vh;
+            z-index: 10;
         }
-        .logo {
-            width: 120px;
-            margin-bottom: 30px;
-            margin-left: auto;
-            margin-right: auto;
+        
+        .feedback-slide {
+            display: none;
+            background: white;
+            border-radius: 24px;
+            padding: 35px 30px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .feedback-slide.active {
+            display: block;
+        }
+
+        /* Card de Paciente Pendente */
+        .pending-patient-card {
+            display: none;
+            background: white;
+            border-radius: 24px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .pending-patient-card.active {
             display: block;
         }
         
-        /* Oculta barra de rolagem mas permite o scroll */
-        ::-webkit-scrollbar { display: none; }
-        * { scrollbar-width: none; -ms-overflow-style: none; }
-
-        .step { display: none; width: 100%; }
-        .step.active { display: flex; flex-direction: column; animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); flex: 1; min-height: 0; }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* Radio Cards (Opções) */
+        .option-card {
+            background: #F8FAFC;
+            border: 2px solid #E2E8F0;
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: var(--verde-escuro);
+            font-weight: 600;
+            text-align: left;
+            width: 100%;
+            font-size: 1rem;
         }
+        .option-card:hover, .option-card:active {
+            border-color: var(--verde-claro);
+            background: #E8F3EF;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(45, 106, 79, 0.1);
+        }
+        .emoji-icon {
+            font-size: 1.5rem;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));
+        }
+        
+        /* Utilities */
+        .back-btn {
+            background: none;
+            border: none;
+            color: #64748B;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            text-decoration: none;
+            padding: 10px;
+            transition: color 0.2s;
+        }
+        .back-btn:hover { color: var(--verde-escuro); }
 
         .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid var(--verde-escuro);
+            border: 4px solid rgba(255,255,255,0.2);
+            border-top: 4px solid white;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
             animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
             margin: 0 auto 20px;
         }
+        
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Estilos dos botões */
-        .btn-pill {
-            padding: 14px 20px;
-            border-radius: 50px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.95rem;
-            transition: all 0.2s ease;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-family: 'Inter', sans-serif;
-        }
-        .btn-primary {
-            background: var(--verde-escuro);
-            color: white;
-            box-shadow: 0 4px 15px rgba(27, 67, 50, 0.2);
-        }
-        .btn-primary:hover {
-            background: #143326;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(27, 67, 50, 0.25);
-        }
-        .btn-primary:active { transform: translateY(0); }
-
-        .btn-outline {
-            background: white;
-            color: var(--cinza-texto);
-            border: 1px solid #E0E0E0;
-        }
-        .btn-outline:hover {
-            background: #F9F9F9;
-            border-color: #D0D0D0;
-            transform: translateY(-2px);
+        @keyframes slideUp { 
+            from { transform: translateY(20px); opacity: 0; } 
+            to { transform: translateY(0); opacity: 1; } 
         }
 
-        .btn-list-opt {
-            background: white;
-            border: 1px solid #EAEAEA;
-            padding: 14px 20px;
-            border-radius: 16px;
-            text-align: left;
-            cursor: pointer;
-            color: #333;
-            font-weight: 500;
-            font-size: 0.95rem;
-            transition: all 0.2s ease;
-            display: block;
-            width: 100%;
-        }
-        .btn-list-opt:hover {
-            background: var(--cinza-claro);
-            border-color: #D1E6DD;
-            transform: translateX(4px);
-        }
-
-        /* Cards de Pendência */
-        .pending-item {
-            background: var(--cinza-claro);
-            padding: 24px;
-            border-radius: 20px;
-            margin-bottom: 16px;
-            text-align: left;
-            transition: opacity 0.3s ease;
-            border: 1px solid transparent;
-        }
-        .pending-item:hover {
-            border-color: rgba(27, 67, 50, 0.1);
-        }
-
-        /* Mobile Adjustments (Bottom Sheet) */
+        /* Ajustes Mobile (Bottom Sheet Nativo) */
         @media (max-width: 768px) {
-            body { 
-                align-items: flex-end; 
-                background: var(--verde-fundo); 
+
+            html,
+            body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0 !important;
+                overflow: hidden;
             }
-            .logo { 
-                position: absolute;
-                top: 40px;
-                left: 50%;
-                transform: translateX(-50%);
-                z-index: 0;
+
+            body.pagina-questionario {
+                min-height: 100dvh;
+                height: 100dvh;
+                display: block !important;
+                padding: 0 !important;
+                position: relative;
+                overflow: hidden;
             }
-            .container { 
-                max-width: 100%; 
-                margin: 0; 
-                padding: 30px 20px 40px 20px;
-                width: 100%; 
-                border-radius: 32px 32px 0 0;
-                max-height: 85vh;
-                animation: slideUpMobile 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
-                box-shadow: 0 -10px 40px rgba(27, 67, 50, 0.1);
+
+            .questionario-container {
+                position: relative !important;
+                width: 100% !important;
+                max-width: none !important;
+                height: 100dvh !important;
+                min-height: 100dvh !important;
+                margin: 0 !important;
+                padding: 0 !important;
                 z-index: 10;
-                box-sizing: border-box;
             }
-            /* Drag Handle */
-            .container::before {
-                content: '';
+
+            .logo-container {
+                position: fixed !important;
+                top: 40px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                margin: 0 !important;
+                z-index: 20;
+            }
+
+            .logo-container img {
+                width: 120px !important;
+            }
+
+            #step-list > div:first-child {
+                position: fixed !important;
+                top: 115px;
+                left: 24px;
+                right: 24px;
+                width: auto;
+                margin: 0 !important;
+                z-index: 15;
+            }
+
+            #pending-wpp-list {
+                position: static;
+                width: 100%;
+            }
+
+            /*
+            * BOTTOM SHEET
+            */
+            .pending-patient-card,
+            .feedback-slide {
+                position: fixed !important;
+
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+
+                width: 100% !important;
+                max-width: none !important;
+
+                margin: 0 !important;
+
+                background: #fff;
+
+                border-radius: 30px 30px 0 0 !important;
+
+                padding: 0 24px 0 24px !important;
+
+                box-sizing: border-box;
+
+                max-height: 90dvh;
+
+                overflow-y: auto;
+                overflow-x: hidden;
+
+                -webkit-overflow-scrolling: touch;
+
+                box-shadow:
+                    0 -8px 30px rgba(0, 0, 0, 0.16),
+                    0 -2px 8px rgba(0, 0, 0, 0.06) !important;
+
+                z-index: 30;
+
+                animation: bottomSheetUp
+                    0.35s
+                    cubic-bezier(0.16, 1, 0.3, 1);
+            }
+
+            .pending-patient-card.active,
+            .feedback-slide.active {
+                display: block;
+            }
+
+            /*
+            * SPACER DE RODAPÉ (Corrige bug do Chrome que engole padding-bottom no scroll)
+            */
+            .pending-patient-card::after,
+            .feedback-slide::after {
+                content: "";
+                display: block;
+                width: 100%;
+                height: calc(60px + env(safe-area-inset-bottom));
+                flex-shrink: 0;
+            }
+
+            /*
+            * HANDLE FIXO NO TOPO
+            */
+            .drag-handle-area {
+                position: sticky;
+                top: 0;
+                margin: 0 -24px;
+                height: 38px;
+                background-color: #fff;
+                border-radius: 30px 30px 0 0;
+                cursor: grab;
+                z-index: 50;
+            }
+
+            .drag-handle-area::before {
+                content: "";
                 position: absolute;
-                top: 12px;
+                top: 15px;
                 left: 50%;
                 transform: translateX(-50%);
                 width: 40px;
                 height: 5px;
-                background: #E0E0E0;
+                background-color: #E2E8F0;
                 border-radius: 10px;
             }
+
+            .option-card {
+                width: 100% !important;
+                box-sizing: border-box;
+
+                min-height: 52px;
+
+                padding: 14px 16px !important;
+
+                margin-bottom: 10px;
+
+                border-radius: 14px;
+
+                font-size: 0.95rem;
+            }
+
+            /*
+            * Evita comportamento de hover de desktop
+            * em dispositivos touch.
+            */
+            .option-card:hover {
+                transform: none;
+                box-shadow: none;
+            }
+
+            .option-card:active {
+                transform: scale(0.98);
+            }
+
+            .back-btn {
+                margin-top: 8px;
+                margin-bottom: 0;
+            }
+
+            #pending-wpp-done-msg {
+                z-index: 40;
+            }
+
+
+            @keyframes bottomSheetUp {
+                from {
+                    transform: translateY(100%);
+                    opacity: 0;
+                }
+
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
         }
-        @keyframes slideUpMobile {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
+
+        @media (max-width: 768px) and (max-height: 700px) {
+            .pending-patient-card,
+            .feedback-slide {
+                max-height: 78dvh;
+            }
         }
     </style>
 </head>
-<body>
-    <img src="/assets/logos/logo-escura.png" alt="Yelo Logo" class="logo" onerror="this.style.display='none'">
+<body class="pagina-questionario">
 
-    <div class="container">
+    <main class="questionario-container">
         
-        <!-- Loading -->
-        <div id="step-loading" class="step active" style="align-items: center; justify-content: center; min-height: 200px;">
-            <div class="loader"></div>
-            <p style="color: var(--cinza-texto); font-weight: 500;">Preparando ambiente seguro...</p>
+        <!-- Logo Branca Centralizada -->
+        <div class="logo-container" style="text-align: center; margin-bottom: 35px; position: relative;">
+            <img src="/assets/logos/logo-branca.png" alt="Yelo" style="width: 140px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));" onerror="this.style.display='none'">
         </div>
 
-        <!-- Erro -->
-        <div id="step-error" class="step" style="align-items: center; justify-content: center; min-height: 200px;">
+        <!-- Passo de Loading -->
+        <div id="step-loading" style="text-align: center; color: white; display: flex; flex-direction: column; align-items: center;">
+            <div class="loader"></div>
+            <p style="font-size: 1.1rem; font-weight: 500; opacity: 0.9;">Carregando ambiente seguro...</p>
+        </div>
+
+        <!-- Passo de Erro / Link Inválido -->
+        <div id="step-error" class="feedback-slide">
+            <div class="drag-handle-area"></div>
             <div style="font-size: 3.5rem; margin-bottom: 15px;">👀</div>
-            <h2 style="color: var(--verde-escuro); margin: 0 0 10px 0;">Ops!</h2>
-            <p id="error-message" style="color: var(--cinza-texto); line-height: 1.5;">Este link é inválido ou o feedback já foi preenchido.</p>
+            <h2 style="color: var(--verde-escuro); margin: 0 0 10px 0; font-weight: 700;">Ops!</h2>
+            <p id="error-message" style="color: #64748B; line-height: 1.5; margin-bottom: 0;">Este link é inválido ou o feedback já foi preenchido.</p>
         </div>
 
         <!-- Passo da Lista Unificada -->
-        <div id="step-list" class="step">
-            <div style="text-align: center; margin-bottom: 24px;">
-                <div style="font-size: 3rem; margin-bottom: 12px; animation: bounce 2s infinite;">💬</div>
-                <h3 style="color: var(--verde-escuro); margin: 0 0 10px 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px;">Olá, <span id="psi-name-header">[NomedoPsi]</span>!</h3>
-                <p style="color: var(--cinza-texto); line-height: 1.5; margin: 0; font-size: 0.95rem;">
-                    Os pacientes abaixo entraram em contato com você pelo WhatsApp? Essa informação nos ajuda a entender a conexão e melhorar indicações.
-                </p>
+        <div id="step-list" style="display: none;">
+            <div style="text-align: center; color: white; margin-bottom: 20px; animation: slideUp 0.4s ease;">
+                <h2 style="font-size: 1.8rem; margin: 0 0 10px 0; font-weight: 700; letter-spacing: -0.5px;">Olá, <span id="psi-name-header">Psi</span>!</h2>
+                <p style="opacity: 0.9; margin: 0; line-height: 1.5; font-size: 0.95rem;">Precisamos da sua ajuda para atualizar o status dos pacientes abaixo. Leva só alguns segundos e ajuda a melhorar suas indicações.</p>
+                <div id="feedback-counter" style="margin-top: 15px; display: inline-block; background: rgba(255,255,255,0.1); padding: 6px 16px; border-radius: 20px; font-weight: 600; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.2);">
+                    Paciente 1 de 1
+                </div>
             </div>
             
-            <div id="pending-wpp-list" style="overflow-y: auto; flex: 1; padding-bottom: 20px;">
+            <div id="pending-wpp-list">
                 <!-- Preenchido via JS -->
             </div>
             
-            <div id="pending-wpp-done-msg" style="display:none; text-align: center; margin-top: 30px;">
-                <div style="font-size: 3rem; margin-bottom: 15px;">🎉</div>
-                <h3 style="color: var(--verde-escuro); margin: 0 0 10px 0;">Tudo respondido!</h3>
-                <p style="color: var(--cinza-texto); margin: 0;">Obrigado por nos ajudar a construir uma Yelo melhor.</p>
-                <button onclick="window.close()" class="btn-pill btn-outline" style="margin-top: 25px; max-width: 200px; margin-left: auto; margin-right: auto;">Fechar janela</button>
+            <!-- Mensagem de Sucesso (Todos respondidos) -->
+            <div id="pending-wpp-done-msg" class="feedback-slide">
+                <div class="drag-handle-area"></div>
+                <div style="font-size: 3.5rem; margin-bottom: 15px;">🎉</div>
+                <h3 style="color: var(--verde-escuro); margin: 0 0 10px 0; font-weight: 700;">Tudo atualizado!</h3>
+                <p style="color: #64748B; margin: 0 0 25px 0; line-height: 1.5;">Obrigado por nos ajudar a construir uma Yelo cada vez melhor.</p>
+                <button onclick="closeOrRedirect()" style="background: var(--verde-escuro); color: white; border: none; padding: 16px 30px; border-radius: 50px; font-weight: 600; font-size: 1rem; cursor: pointer; width: 100%; transition: background 0.2s;">Fechar Janela</button>
             </div>
         </div>
-    </div>
+    </main>
 
     <script>
         const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:3001' : window.location.origin;
@@ -233,16 +387,24 @@
         const token = urlParams.get('token');
         let answeredCount = 0;
         let totalPending = 0;
+        let currentCardIndex = 0;
+        let pendingItems = [];
 
-        function goToStep(stepId) {
-            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
-            document.getElementById(stepId).classList.add('active');
+        function showElement(id) {
+            document.getElementById('step-loading').style.display = 'none';
+            document.getElementById('step-error').classList.remove('active');
+            
+            if (id === 'step-error') {
+                document.getElementById('step-error').classList.add('active');
+            } else if (id === 'step-list') {
+                document.getElementById('step-list').style.display = 'block';
+            }
         }
 
         async function init() {
             if (!token) {
                 document.getElementById('error-message').innerText = 'Link inválido (Token ausente).';
-                goToStep('step-error');
+                showElement('step-error');
                 return;
             }
 
@@ -254,7 +416,7 @@
                 
                 if (!data.pending || data.pending.length === 0) {
                     document.getElementById('error-message').innerText = 'Obrigado! Todos os feedbacks desta lista já foram respondidos anteriormente.';
-                    goToStep('step-error');
+                    showElement('step-error');
                     return;
                 }
 
@@ -264,56 +426,105 @@
                 }
 
                 totalPending = data.pending.length;
-                renderPendingList(data.pending);
-                goToStep('step-list');
+                pendingItems = data.pending;
+                
+                renderPendingList(pendingItems);
+                updateCounter();
+                showCurrentCard();
+                
+                showElement('step-list');
             } catch (err) {
-                goToStep('step-error');
+                showElement('step-error');
+            }
+        }
+        
+        function updateCounter() {
+            if (currentCardIndex < totalPending) {
+                document.getElementById('feedback-counter').innerText = `Paciente ${currentCardIndex + 1} de ${totalPending}`;
+            }
+        }
+        
+        function showCurrentCard() {
+            document.querySelectorAll('.pending-patient-card').forEach(el => el.classList.remove('active'));
+            if (currentCardIndex < totalPending) {
+                const currentId = pendingItems[currentCardIndex].id;
+                document.getElementById(`pending-item-${currentId}`).classList.add('active');
             }
         }
 
         function renderPendingList(pending) {
             const listContainer = document.getElementById('pending-wpp-list');
-            listContainer.innerHTML = pending.map(item => {
+            listContainer.innerHTML = pending.map((item, index) => {
                 let gName = item.guestName || 'um paciente';
                 if (gName === 'Visitante') gName = 'um paciente';
                 const dStr = new Date(item.createdAt).toLocaleDateString('pt-BR');
                 const itemToken = item.feedbackToken || token; 
+                
+                // Delayzinho de animação na entrada pra ficar elegante
+                const animDelay = index * 0.1;
 
                 return `
-                    <div class="pending-item" id="pending-item-${item.id}">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 16px; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 12px;">
-                            <h4 style="margin: 0; color: var(--verde-escuro); font-size: 1.1rem; font-weight: 700;">${gName}</h4>
-                            <span style="font-size: 0.75rem; color: #888; font-weight: 500; background: white; padding: 4px 10px; border-radius: 20px;">${dStr}</span>
+                    <div class="pending-patient-card" id="pending-item-${item.id}">
+                        <div class="drag-handle-area"></div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center; border-bottom: 1px solid #F1F5F9; padding-bottom: 15px;">
+                            <h4 style="margin: 0; color: var(--verde-escuro); font-size: 1.2rem; font-weight: 700;">${gName}</h4>
+                            <span style="font-size: 0.8rem; color: #64748B; font-weight: 600; background: #F8FAFC; padding: 4px 10px; border-radius: 20px; border: 1px solid #E2E8F0;">${dStr}</span>
                         </div>
                         
+                        <!-- STEP 1 -->
                         <div id="step1-${item.id}">
-                            <p style="margin: 0 0 16px 0; font-size: 0.95rem; color: #444; font-weight: 600;">O paciente entrou em contato?</p>
-                            <div style="display: flex; flex-direction: column; gap: 10px;">
-                                <button onclick="goToStep2Wpp('${item.id}', true)" class="btn-pill btn-primary">✅ Sim, conversamos</button>
-                                <button onclick="goToStep2Wpp('${item.id}', false)" class="btn-pill btn-outline">❌ Ainda não recebi</button>
+                            <p style="margin: 0 0 20px 0; font-size: 1.05rem; color: #334155; font-weight: 600;">O paciente entrou em contato?</p>
+                            
+                            <button class="option-card" onclick="goToStep2Wpp('${item.id}', true)">
+                                <span class="emoji-icon">💬</span> Sim, conversamos
+                            </button>
+                            <button class="option-card" onclick="submitListFeedback('${item.id}', '${itemToken}', false, 'no_contact')">
+                                <span class="emoji-icon">⏳</span> Ainda não
+                            </button>
+                        </div>
+
+                        <!-- STEP 2A -->
+                        <div id="step2a-${item.id}" style="display: none; animation: slideUp 0.3s ease;">
+                            <p style="margin: 0 0 20px 0; font-size: 1.05rem; color: #334155; font-weight: 600;">Como está esse atendimento?</p>
+                            
+                            <button class="option-card" onclick="submitListFeedback('${item.id}', '${itemToken}', true, 'started')">
+                                <span class="emoji-icon">✅</span> Já iniciou a terapia
+                            </button>
+                            <button class="option-card" onclick="submitListFeedback('${item.id}', '${itemToken}', true, 'talking')">
+                                <span class="emoji-icon">🤝</span> Estamos negociando
+                            </button>
+                            <button class="option-card" onclick="goToStep3Wpp('${item.id}')">
+                                <span class="emoji-icon">❌</span> Decidiu não iniciar
+                            </button>
+                            <button class="option-card" onclick="submitListFeedback('${item.id}', '${itemToken}', true, 'ghosted')">
+                                <span class="emoji-icon">👻</span> Parou de responder
+                            </button>
+
+                            <div style="text-align: center;">
+                                <button class="back-btn" onclick="backToStep1Wpp('${item.id}')">← Voltar</button>
                             </div>
                         </div>
 
-                        <div id="step2a-${item.id}" style="display: none;">
-                            <p style="margin: 0 0 16px 0; font-size: 0.95rem; color: #444; font-weight: 600; text-align: center;">Como está esse atendimento?</p>
-                            <div style="display: flex; flex-direction: column; gap: 8px;">
-                                <button onclick="submitListFeedback('${item.id}', '${itemToken}', true, 'started')" class="btn-list-opt">✅ Já iniciou a terapia</button>
-                                <button onclick="submitListFeedback('${item.id}', '${itemToken}', true, 'talking')" class="btn-list-opt">⏳ Ainda estamos conversando</button>
-                                <button onclick="submitListFeedback('${item.id}', '${itemToken}', true, 'not_started')" class="btn-list-opt">❌ Decidiu não iniciar</button>
-                                <button onclick="submitListFeedback('${item.id}', '${itemToken}', true, 'ghosted')" class="btn-list-opt">👻 O paciente não respondeu mais</button>
+                        <!-- STEP 3 (MOTIVOS DE PERDA) -->
+                        <div id="step3-${item.id}" style="display: none; animation: slideUp 0.3s ease;">
+                            <p style="margin: 0 0 20px 0; font-size: 1.05rem; color: #334155; font-weight: 600;">Qual foi o motivo principal?</p>
+                            
+                            <button class="option-card" onclick="submitListFeedback('${item.id}', '${itemToken}', true, 'not_started_price')">
+                                <span class="emoji-icon">💰</span> Preço incompatível
+                            </button>
+                            <button class="option-card" onclick="submitListFeedback('${item.id}', '${itemToken}', true, 'not_started_schedule')">
+                                <span class="emoji-icon">⏰</span> Horário incompatível
+                            </button>
+                            <button class="option-card" onclick="submitListFeedback('${item.id}', '${itemToken}', true, 'not_started_other')">
+                                <span class="emoji-icon">🤷‍♂️</span> Outro motivo
+                            </button>
+
+                            <div style="text-align: center;">
+                                <button class="back-btn" onclick="backToStep2Wpp('${item.id}')">← Voltar</button>
                             </div>
-                            <div style="text-align: center;"><button onclick="backToStep1Wpp('${item.id}')" style="margin-top: 15px; background: transparent; border: none; color: #888; font-size:0.85rem; cursor:pointer; font-weight: 600; text-decoration: underline;">Voltar</button></div>
                         </div>
 
-                        <div id="step2b-${item.id}" style="display: none;">
-                            <p style="margin: 0 0 16px 0; font-size: 0.95rem; color: #444; font-weight: 600; text-align: center;">O que aconteceu?</p>
-                            <div style="display: flex; flex-direction: column; gap: 8px;">
-                                <button onclick="submitListFeedback('${item.id}', '${itemToken}', false, 'no_contact')" class="btn-list-opt">⏳ O paciente ainda não entrou em contato</button>
-                                <button onclick="submitListFeedback('${item.id}', '${itemToken}', false, 'wpp_issue')" class="btn-list-opt">📱 Acho que houve algum problema no WhatsApp</button>
-                                <button onclick="submitListFeedback('${item.id}', '${itemToken}', false, 'unknown')" class="btn-list-opt">🤷 Não sei informar</button>
-                            </div>
-                            <div style="text-align: center;"><button onclick="backToStep1Wpp('${item.id}')" style="margin-top: 15px; background: transparent; border: none; color: #888; font-size:0.85rem; cursor:pointer; font-weight: 600; text-decoration: underline;">Voltar</button></div>
-                        </div>
+                        <!-- O STEP 2B foi removido conforme solicitação -->
                     </div>
                 `;
             }).join('');
@@ -323,33 +534,38 @@
             document.getElementById(`step1-${id}`).style.display = 'none';
             if (received) {
                 document.getElementById(`step2a-${id}`).style.display = 'block';
-            } else {
-                document.getElementById(`step2b-${id}`).style.display = 'block';
             }
+        };
+
+        window.goToStep3Wpp = (id) => {
+            document.getElementById(`step2a-${id}`).style.display = 'none';
+            document.getElementById(`step3-${id}`).style.display = 'block';
+        };
+
+        window.backToStep2Wpp = (id) => {
+            document.getElementById(`step3-${id}`).style.display = 'none';
+            document.getElementById(`step2a-${id}`).style.display = 'block';
         };
 
         window.backToStep1Wpp = (id) => {
             document.getElementById(`step2a-${id}`).style.display = 'none';
-            document.getElementById(`step2b-${id}`).style.display = 'none';
+            document.getElementById(`step3-${id}`).style.display = 'none';
             document.getElementById(`step1-${id}`).style.display = 'block';
         };
 
         window.submitListFeedback = async (id, itemToken, contact_received, deal_closed) => {
             const itemDiv = document.getElementById(`pending-item-${id}`);
-            itemDiv.style.opacity = '0.5';
+            
+            // Estado de carregamento suave
+            itemDiv.style.opacity = '0.6';
             itemDiv.style.pointerEvents = 'none';
+            itemDiv.style.transform = 'scale(0.98)';
+            itemDiv.style.transition = 'all 0.3s ease';
             
             const thanksMsg = contact_received 
-                ? 'Estas informações ajudam a Yelo a melhorar as próximas indicações.'
-                : 'Vamos acompanhar esse caso e usar essa informação para melhorar as próximas conexões.';
+                ? 'Essas informações ajudam a Yelo a conectar você com os pacientes certos.'
+                : 'Vamos monitorar e usar este dado para melhorar a plataforma.';
 
-            itemDiv.innerHTML = `
-                <div style="text-align:center; padding: 30px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
-                    <div style="width: 40px; height: 40px; background: var(--verde-escuro); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(27,67,50,0.2);">✓</div>
-                    <strong style="color: var(--verde-escuro); font-size: 1.1rem; margin-bottom: 8px;">Resposta enviada!</strong>
-                    <span style="font-size: 0.9rem; color: var(--cinza-texto); line-height: 1.4;">${thanksMsg}</span>
-                </div>`;
-            
             try {
                 await fetch(`${API_BASE_URL}/api/public/feedback/${itemToken}`, {
                     method: 'POST',
@@ -360,14 +576,131 @@
                 console.error('Erro ao enviar', e);
             }
 
+            // Sucesso Visual
+            itemDiv.style.opacity = '1';
+            itemDiv.style.transform = 'scale(1)';
+            itemDiv.innerHTML = `
+                <div style="text-align:center; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; animation: slideUp 0.3s ease;">
+                    <div style="width: 50px; height: 50px; background: #10b981; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 15px; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);">✓</div>
+                    <strong style="color: var(--verde-escuro); font-size: 1.15rem; margin-bottom: 8px;">Feedback enviado!</strong>
+                    <span style="font-size: 0.95rem; color: #64748B; line-height: 1.5;">${thanksMsg}</span>
+                </div>`;
+            
             answeredCount++;
-            if (answeredCount >= totalPending) {
-                document.getElementById('pending-wpp-list').style.display = 'none';
-                document.getElementById('step-list').querySelector('div:first-child').style.display = 'none';
-                document.getElementById('pending-wpp-done-msg').style.display = 'block';
-            }
+            
+            setTimeout(() => {
+                currentCardIndex++;
+                if (currentCardIndex < totalPending) {
+                    updateCounter();
+                    showCurrentCard();
+                } else {
+                    document.getElementById('pending-wpp-list').style.display = 'none';
+                    document.getElementById('step-list').querySelector('div:first-child').style.display = 'none';
+                    document.getElementById('pending-wpp-done-msg').classList.add('active');
+                }
+            }, 1000); // Dá um tempo maior (1 segundo) para o usuário ler a mensagem de sucesso antes de sumir
         };
 
+        // --- Lógica de Arrastar (Drag) o Bottom Sheet ---
+        let startY = 0;
+        let startHeight = 0;
+        let isDragging = false;
+        let currentSheet = null;
+        let maxAllowedHeight = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            const handle = e.target.closest('.drag-handle-area');
+            if (!handle) return;
+            
+            currentSheet = handle.closest('.feedback-slide, .pending-patient-card');
+            if (!currentSheet) return;
+
+            isDragging = true;
+            startY = e.touches[0].clientY;
+            
+            // Pega a altura atual (apenas salva na memória, não trava ainda)
+            startHeight = currentSheet.getBoundingClientRect().height;
+            
+            // Permite que o modal cresça até 95% da tela, sem ser travado pelo texto do fundo
+            maxAllowedHeight = window.innerHeight * 0.95;
+        }, { passive: true });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isDragging || !currentSheet) return;
+            
+            const currentY = e.touches[0].clientY;
+            const deltaY = startY - currentY; // Positivo = arrastar para CIMA
+            
+            // Se foi apenas um toque sem arrastar muito, ignora para não congelar o layout
+            if (Math.abs(deltaY) < 5 && !currentSheet.style.height) return;
+
+            // Se for o primeiro movimento válido de arrastar, trava a altura atual para iniciar a animação fluida
+            if (!currentSheet.style.height) {
+                currentSheet.style.height = `${startHeight}px`;
+                currentSheet.style.transition = 'none';
+                currentSheet.style.maxHeight = '100dvh';
+            }
+
+            // Impede o scroll nativo (da página ou das alternativas) enquanto estiver arrastando a alça
+            e.preventDefault();
+            
+            let newHeight = startHeight + deltaY;
+            
+            const minHeight = window.innerHeight * 0.40;
+            
+            // Se puxar pra baixo além do mínimo ou pra cima além do máximo, cria uma "resistência" (borracha)
+            if (newHeight < minHeight) {
+                newHeight = minHeight - (minHeight - newHeight) * 0.2;
+            }
+            if (newHeight > maxAllowedHeight) {
+                newHeight = maxAllowedHeight + (newHeight - maxAllowedHeight) * 0.2;
+            }
+            
+            // Altera diretamente o HEIGHT para o card "esticar" visualmente (fica mais soft e real)
+            currentSheet.style.height = `${newHeight}px`;
+        }, { passive: false });
+
+        document.addEventListener('touchend', () => {
+            if (!isDragging || !currentSheet) return;
+            isDragging = false;
+            
+            // Se o usuário apenas tocou (sem arrastar de verdade), não faça nada
+            if (!currentSheet.style.height) {
+                currentSheet = null;
+                return;
+            }
+            
+            const currentHeight = currentSheet.getBoundingClientRect().height;
+            const minHeight = window.innerHeight * 0.40;
+            
+            let finalHeight = currentHeight;
+            if (currentHeight > maxAllowedHeight) {
+                finalHeight = maxAllowedHeight;
+            } else if (currentHeight < minHeight) {
+                finalHeight = minHeight;
+            }
+            
+            // O SEGREDO DO SUCESSO: Ao soltar, removemos o "height" engessado e aplicamos o novo tamanho no "max-height".
+            // Assim o card volta a abraçar o conteúdo perfeitamente, sem sobrar espaço em branco no fundo!
+            currentSheet.style.transition = 'max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+            currentSheet.style.height = ''; 
+            currentSheet.style.maxHeight = `${finalHeight}px`;
+            
+            currentSheet = null;
+        });
+
+        // Função para Fechar Janela (com fallback seguro para mobile)
+        window.closeOrRedirect = function() {
+            // Tenta fechar a aba (funciona apenas se foi aberta via window.open ou _blank em alguns navegadores)
+            window.close();
+            // Fallback: Se o navegador bloquear o fechamento (muito comum em Safari Mobile/Chrome), 
+            // redireciona o usuário para o site da Yelo.
+            setTimeout(() => {
+                window.location.href = 'https://yelopsi.com.br';
+            }, 300);
+        };
+
+        // Inicia
         init();
     </script>
 </body>

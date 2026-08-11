@@ -483,7 +483,7 @@ window.initializePage = function() {
                 // Mapeia fechou granularmente
                 let fechou = 'Pendente';
                 if (l.dealClosed === 'yes' || l.dealClosed === 'started') fechou = 'Sim';
-                else if (l.dealClosed === 'no' || l.dealClosed === 'not_started' || l.dealClosed === 'ghosted') fechou = 'Não';
+                else if (l.dealClosed === 'no' || l.dealClosed === 'not_started' || l.dealClosed === 'ghosted' || (l.dealClosed && l.dealClosed.startsWith('not_started_'))) fechou = 'Não';
                 else if (l.dealClosed === 'talking') fechou = 'Em Negociação';
                 else if (l.dealClosed) fechou = 'Sem Contato';
 
@@ -623,8 +623,8 @@ window.initializePage = function() {
                 valA = a.contactReceived === true ? 1 : (a.contactReceived === false ? -1 : 0);
                 valB = b.contactReceived === true ? 1 : (b.contactReceived === false ? -1 : 0);
             } else if (col === 'fechou') {
-                valA = (a.dealClosed === 'yes' || a.dealClosed === 'started') ? 1 : ((a.dealClosed === 'no' || a.dealClosed === 'not_started' || a.dealClosed === 'ghosted') ? -1 : 0);
-                valB = (b.dealClosed === 'yes' || b.dealClosed === 'started') ? 1 : ((b.dealClosed === 'no' || b.dealClosed === 'not_started' || b.dealClosed === 'ghosted') ? -1 : 0);
+                valA = (a.dealClosed === 'yes' || a.dealClosed === 'started') ? 1 : ((a.dealClosed === 'no' || a.dealClosed === 'not_started' || a.dealClosed === 'ghosted' || (a.dealClosed && a.dealClosed.startsWith('not_started_'))) ? -1 : 0);
+                valB = (b.dealClosed === 'yes' || b.dealClosed === 'started') ? 1 : ((b.dealClosed === 'no' || b.dealClosed === 'not_started' || b.dealClosed === 'ghosted' || (b.dealClosed && b.dealClosed.startsWith('not_started_'))) ? -1 : 0);
             } else if (col === 'status') {
                 valA = a.feedbackGiven ? 1 : -1;
                 valB = b.feedbackGiven ? 1 : -1;
@@ -730,10 +730,11 @@ window.initializePage = function() {
                 status = '<span class="status status-ativo" style="background: #e0f2fe; color: #0369a1; font-size: 0.75rem; border: 1px solid #bae6fd; padding: 4px 10px; border-radius: 20px;">Respondido</span>';
                 if (f.contactReceived) {
                     contato = '✅ Sim';
-                    if (f.dealClosed === 'yes' || f.dealClosed === 'started') fechou = '✅ <strong style="color:#16a34a">Fechou!</strong>';
-                    else if (f.dealClosed === 'talking') fechou = '⏳ <span style="color:#ca8a04">Em negociação</span>';
-                    else if (f.dealClosed === 'no' || f.dealClosed === 'not_started' || f.dealClosed === 'ghosted') fechou = '❌ <span style="color:#dc2626">Não</span>';
-                    else if (f.dealClosed === 'no_contact' || f.dealClosed === 'wpp_issue' || f.dealClosed === 'unknown') fechou = '👻 <span style="color:#6b7280">Fantasma</span>';
+                    if (f.dealClosed === 'yes' || f.dealClosed === 'started') fechou = '✅ <strong style="color:#16a34a">Iniciou</strong>';
+                    else if (f.dealClosed === 'talking') fechou = '🤝 <span style="color:#ca8a04">Em negociação</span>';
+                    else if (f.dealClosed === 'ghosted') fechou = '👻 <span style="color:#6b7280">Parou de responder</span>';
+                    else if (f.dealClosed === 'no' || f.dealClosed === 'not_started' || (f.dealClosed && f.dealClosed.startsWith('not_started_'))) fechou = '❌ <span style="color:#dc2626">Não iniciou</span>';
+                    else if (f.dealClosed === 'no_contact' || f.dealClosed === 'wpp_issue' || f.dealClosed === 'unknown') fechou = '🤷‍♂️ <span style="color:#6b7280">Desconhecido</span>';
                     else fechou = '❌ Não';
                 } else {
                     contato = '❌ Não chegou';
@@ -823,15 +824,17 @@ window.initializePage = function() {
         const recebidas = feedbacks.filter(f => f.feedbackGiven && f.contactReceived).length;
         const fechados = feedbacks.filter(f => f.feedbackGiven && f.contactReceived && (f.dealClosed === 'yes' || f.dealClosed === 'started')).length;
         const negociacao = feedbacks.filter(f => f.feedbackGiven && f.contactReceived && f.dealClosed === 'talking').length;
+        const perdidos = feedbacks.filter(f => f.feedbackGiven && f.contactReceived && (f.dealClosed === 'ghosted' || f.dealClosed === 'not_started' || f.dealClosed === 'not_started_price' || f.dealClosed === 'not_started_schedule' || f.dealClosed === 'not_started_other')).length;
         
         const fantasmas = feedbacks.filter(f => f.feedbackGiven && !f.contactReceived).length;
         const taxaFechamento = recebidas > 0 ? ((fechados / recebidas) * 100).toFixed(1) : 0;
-        const taxaNaoFechamento = recebidas > 0 ? (100 - parseFloat(taxaFechamento)).toFixed(1) : 0;
+        const taxaNaoFechamento = recebidas > 0 ? ((perdidos / recebidas) * 100).toFixed(1) : 0;
 
         const elWppTotal = document.getElementById('kpi-wpp-total-feedbacks');
         const elWppRec = document.getElementById('kpi-wpp-recebidas');
         const elWppFec = document.getElementById('kpi-wpp-fechados');
         const elWppNeg = document.getElementById('kpi-wpp-negociacao');
+        const elWppPerd = document.getElementById('kpi-wpp-perdidos');
         const elWppFant = document.getElementById('kpi-wpp-fantasmas');
 
         const elWppTx = document.getElementById('kpi-wpp-tx-resposta');
@@ -843,6 +846,7 @@ window.initializePage = function() {
         if (elWppRec) elWppRec.innerText = recebidas;
         if (elWppFec) elWppFec.innerText = fechados;
         if (elWppNeg) elWppNeg.innerText = negociacao;
+        if (elWppPerd) elWppPerd.innerText = perdidos;
         if (elWppFant) elWppFant.innerText = fantasmas;
 
         if (elWppTx) elWppTx.innerText = taxaResposta + '%';

@@ -841,8 +841,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                         
                                         <div id="step1-${item.id}">
                                             <div style="display: flex; flex-direction: column; gap: 8px;">
-                                                <button onclick="window.goToStep2Wpp('${item.id}', true)" style="padding: 12px; border-radius: 50px; border:none; background: var(--verde-escuro); color: white; cursor: pointer; font-weight: bold; font-size: 0.95rem;">✅ Sim, conversamos</button>
-                                                <button onclick="window.goToStep2Wpp('${item.id}', false)" style="padding: 12px; border-radius: 50px; border: 1px solid #ccc; background: white; color: #555; cursor: pointer; font-weight: bold; font-size: 0.95rem;">❌ Ainda não recebi nenhuma mensagem</button>
+                                                <button onclick="window.goToStep2Wpp('${item.id}', true)" style="padding: 12px; border-radius: 50px; border:none; background: var(--verde-escuro); color: white; cursor: pointer; font-weight: bold; font-size: 0.95rem;">💬 Sim, conversamos</button>
+                                                <button onclick="window.submitListFeedback('${item.id}', false, 'no_contact')" style="padding: 12px; border-radius: 50px; border: 1px solid #ccc; background: white; color: #555; cursor: pointer; font-weight: bold; font-size: 0.95rem;">⏳ Ainda não</button>
                                             </div>
                                         </div>
 
@@ -850,21 +850,21 @@ document.addEventListener('DOMContentLoaded', function () {
                                             <p style="margin: 0 0 12px 0; font-size: 0.95rem; color: #444; font-weight: bold; text-align: center;">Como está esse atendimento?</p>
                                             <div style="display: flex; flex-direction: column; gap: 6px;">
                                                 <button onclick="window.submitListFeedback('${item.id}', true, 'started')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:12px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">✅ Já iniciou a terapia</button>
-                                                <button onclick="window.submitListFeedback('${item.id}', true, 'talking')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:12px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">⏳ Ainda estamos conversando</button>
-                                                <button onclick="window.submitListFeedback('${item.id}', true, 'not_started')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:12px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">❌ Decidiu não iniciar</button>
-                                                <button onclick="window.submitListFeedback('${item.id}', true, 'ghosted')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:12px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">👻 O paciente não respondeu mais</button>
+                                                <button onclick="window.submitListFeedback('${item.id}', true, 'talking')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:12px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">🤝 Estamos negociando</button>
+                                                <button onclick="window.goToStep3Wpp('${item.id}')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:12px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">❌ Decidiu não iniciar</button>
+                                                <button onclick="window.submitListFeedback('${item.id}', true, 'ghosted')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:12px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">👻 Parou de responder</button>
                                             </div>
                                             <div style="text-align: center;"><button onclick="window.backToStep1Wpp('${item.id}')" style="margin-top: 10px; background: transparent; border: none; color: #888; font-size:0.85rem; cursor:pointer; font-weight: 500;">⬅ Voltar</button></div>
                                         </div>
 
-                                        <div id="step2b-${item.id}" style="display: none;">
-                                            <p style="margin: 0 0 12px 0; font-size: 0.95rem; color: #444; font-weight: bold; text-align: center;">O que aconteceu?</p>
+                                        <div id="step3-${item.id}" style="display: none;">
+                                            <p style="margin: 0 0 12px 0; font-size: 0.95rem; color: #444; font-weight: bold; text-align: center;">Qual foi o motivo principal?</p>
                                             <div style="display: flex; flex-direction: column; gap: 6px;">
-                                                <button onclick="window.submitListFeedback('${item.id}', false, 'no_contact')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:12px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">⏳ O paciente ainda não entrou em contato</button>
-                                                <button onclick="window.submitListFeedback('${item.id}', false, 'wpp_issue')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:12px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">📱 Acho que houve algum problema no WhatsApp</button>
-                                                <button onclick="window.submitListFeedback('${item.id}', false, 'unknown')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:12px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">🤷 Não sei informar</button>
+                                                <button onclick="window.submitListFeedback('${item.id}', true, 'not_started_price')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:12px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">💰 Preço incompatível</button>
+                                                <button onclick="window.submitListFeedback('${item.id}', true, 'not_started_schedule')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:12px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">⏰ Horário incompatível</button>
+                                                <button onclick="window.submitListFeedback('${item.id}', true, 'not_started_other')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:12px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">🤷‍♂️ Outro motivo</button>
                                             </div>
-                                            <div style="text-align: center;"><button onclick="window.backToStep1Wpp('${item.id}')" style="margin-top: 10px; background: transparent; border: none; color: #888; font-size:0.85rem; cursor:pointer; font-weight: 500;">⬅ Voltar</button></div>
+                                            <div style="text-align: center;"><button onclick="window.backToStep2Wpp('${item.id}')" style="margin-top: 10px; background: transparent; border: none; color: #888; font-size:0.85rem; cursor:pointer; font-weight: 500;">⬅ Voltar</button></div>
                                         </div>
                                     </div>
                                 `;
@@ -881,12 +881,31 @@ document.addEventListener('DOMContentLoaded', function () {
                                         .feedback-wpp-box {
                                             width: 100% !important;
                                             max-width: 100% !important;
-                                            border-radius: 20px 20px 0 0 !important;
+                                            border-radius: 30px 30px 0 0 !important;
                                             position: absolute !important;
                                             bottom: 0 !important;
                                             margin: 0 !important;
-                                            max-height: 90vh !important;
+                                            max-height: 90dvh !important;
+                                            padding: 0 24px 0 24px !important;
+                                            box-sizing: border-box;
                                             animation: slideUpMobile 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                                        }
+                                        .drag-handle-area {
+                                            position: sticky;
+                                            top: 0;
+                                            margin: 0 -24px;
+                                            height: 38px;
+                                            background-color: #fff;
+                                            border-radius: 30px 30px 0 0;
+                                            cursor: grab;
+                                            z-index: 50;
+                                        }
+                                        .drag-handle-area::before {
+                                            content: ""; position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 40px; height: 5px; background-color: #E2E8F0; border-radius: 10px;
+                                        }
+                                        /* Spacer para o problema do Chrome no Android */
+                                        .feedback-wpp-box::after {
+                                            content: ""; display: block; width: 100%; height: calc(60px + env(safe-area-inset-bottom)); flex-shrink: 0;
                                         }
                                     }
                                     @keyframes slideUpMobile {
@@ -895,6 +914,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     }
                                 </style>
                                 <div class="welcome-modal-box feedback-wpp-box">
+                                    <div class="drag-handle-area"></div>
                                     <div style="font-size: 3rem; margin-bottom: 10px;">💬</div>
                                     <h3 style="color: var(--verde-escuro, #1B4332); margin-bottom: 10px; font-family: var(--font-titulos, 'Fraunces', serif); font-size: 1.4rem; line-height: 1.3;">Olá, ${psiFirstName}!</h3>
                                     <p style="color: #666; line-height: 1.5; margin-bottom: 20px; font-size: 0.95rem; font-family: var(--font-principal, 'Inter', sans-serif);">
@@ -917,9 +937,20 @@ document.addEventListener('DOMContentLoaded', function () {
                                 }
                             };
 
+                            window.goToStep3Wpp = (id) => {
+                                document.getElementById(`step2a-${id}`).style.display = 'none';
+                                document.getElementById(`step3-${id}`).style.display = 'block';
+                            };
+
+                            window.backToStep2Wpp = (id) => {
+                                document.getElementById(`step3-${id}`).style.display = 'none';
+                                document.getElementById(`step2a-${id}`).style.display = 'block';
+                            };
+
                             window.backToStep1Wpp = (id) => {
                                 document.getElementById(`step2a-${id}`).style.display = 'none';
                                 document.getElementById(`step2b-${id}`).style.display = 'none';
+                                document.getElementById(`step3-${id}`).style.display = 'none';
                                 document.getElementById(`step1-${id}`).style.display = 'block';
                             };
 
@@ -979,12 +1010,31 @@ document.addEventListener('DOMContentLoaded', function () {
                                                 .feedback-wpp-box {
                                                     width: 100% !important;
                                                     max-width: 100% !important;
-                                                    border-radius: 20px 20px 0 0 !important;
+                                                    border-radius: 30px 30px 0 0 !important;
                                                     position: absolute !important;
                                                     bottom: 0 !important;
                                                     margin: 0 !important;
-                                                    max-height: 90vh !important;
+                                                    max-height: 90dvh !important;
+                                                    padding: 0 24px 0 24px !important;
+                                                    box-sizing: border-box;
                                                     animation: slideUpMobile 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                                                }
+                                                .drag-handle-area {
+                                                    position: sticky;
+                                                    top: 0;
+                                                    margin: 0 -24px;
+                                                    height: 38px;
+                                                    background-color: #fff;
+                                                    border-radius: 30px 30px 0 0;
+                                                    cursor: grab;
+                                                    z-index: 50;
+                                                }
+                                                .drag-handle-area::before {
+                                                    content: ""; position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 40px; height: 5px; background-color: #E2E8F0; border-radius: 10px;
+                                                }
+                                                /* Spacer para o problema do Chrome no Android */
+                                                .feedback-wpp-box::after {
+                                                    content: ""; display: block; width: 100%; height: calc(60px + env(safe-area-inset-bottom)); flex-shrink: 0;
                                                 }
                                             }
                                             @keyframes slideUpMobile {
@@ -993,6 +1043,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                             }
                                         </style>
                                         <div class="welcome-modal-box feedback-wpp-box">
+                                            <div class="drag-handle-area"></div>
                                             <div style="text-align:center; margin-bottom:20px;">
                                                 <h2 style="font-family: var(--font-titulos); color:var(--verde-escuro); font-size:1.6rem; margin:0;">Atualização de Contatos ⏳</h2>
                                                 <p style="color:#555; margin-top:5px; font-size:1.05rem;">Você tem contatos em negociação há alguns dias. Conseguiram iniciar a terapia?</p>
@@ -1002,11 +1053,18 @@ document.addEventListener('DOMContentLoaded', function () {
                                                     <div id="neg-item-${item.id}" style="background: #f9fafb; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #eee;">
                                                         <div style="font-weight: bold; color: #333; margin-bottom: 5px; font-size: 1.1rem;">👤 ${item.guestName}</div>
                                                         <div style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">Em negociação desde ${new Date(item.updatedAt).toLocaleDateString('pt-BR')}</div>
-                                                        <div style="display:flex; flex-direction:column; gap:8px;">
-                                                            <button onclick="window.submitNegotiationFeedback('${item.id}', true, 'started')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:10px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">✅ Fechamos (Iniciou a terapia)</button>
-                                                            <button onclick="window.submitNegotiationFeedback('${item.id}', true, 'not_started')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:10px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">❌ Decidiu não iniciar</button>
-                                                            <button onclick="window.submitNegotiationFeedback('${item.id}', true, 'ghosted')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:10px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">👻 O paciente sumiu</button>
-                                                            <button onclick="window.postponeNegotiation('${item.id}')" class="btn-list-opt" style="background:transparent; border:none; text-decoration:underline; text-align:center; padding:10px; cursor:pointer; color:#666; font-size:0.9rem;">Ainda negociando (Perguntar depois)</button>
+                                                        <div style="display:flex; flex-direction:column; gap:8px;" id="neg-btns-${item.id}">
+                                                            <button onclick="window.submitNegotiationFeedback('${item.id}', true, 'started')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:10px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">✅ Já iniciou a terapia</button>
+                                                            <button onclick="window.postponeNegotiation('${item.id}')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:10px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">🤝 Estamos negociando</button>
+                                                            <button onclick="window.showNegStep3('${item.id}')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:10px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">❌ Decidiu não iniciar</button>
+                                                            <button onclick="window.submitNegotiationFeedback('${item.id}', true, 'ghosted')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:10px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">👻 Parou de responder</button>
+                                                        </div>
+                                                        <div style="display:none; flex-direction:column; gap:8px;" id="neg-step3-${item.id}">
+                                                            <p style="margin: 0 0 5px 0; font-size: 0.9rem; color: #444; font-weight: bold; text-align: center;">Qual o motivo?</p>
+                                                            <button onclick="window.submitNegotiationFeedback('${item.id}', true, 'not_started_price')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:10px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">💰 Preço incompatível</button>
+                                                            <button onclick="window.submitNegotiationFeedback('${item.id}', true, 'not_started_schedule')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:10px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">⏰ Horário incompatível</button>
+                                                            <button onclick="window.submitNegotiationFeedback('${item.id}', true, 'not_started_other')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:10px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">🤷‍♂️ Outro motivo</button>
+                                                            <button onclick="window.hideNegStep3('${item.id}')" style="background:transparent; border:none; color:#888; text-align:center; padding:5px; cursor:pointer; font-size:0.85rem;">⬅ Voltar</button>
                                                         </div>
                                                     </div>
                                                 `).join('')}
@@ -1021,6 +1079,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
                                     let totalNeg = dataNeg.pending.length;
                                     let answeredNeg = 0;
+
+                                    window.showNegStep3 = (id) => {
+                                        document.getElementById(`neg-btns-${id}`).style.display = 'none';
+                                        document.getElementById(`neg-step3-${id}`).style.display = 'flex';
+                                    };
+                                    
+                                    window.hideNegStep3 = (id) => {
+                                        document.getElementById(`neg-step3-${id}`).style.display = 'none';
+                                        document.getElementById(`neg-btns-${id}`).style.display = 'flex';
+                                    };
 
                                     window.submitNegotiationFeedback = async (id, contact_received, deal_closed) => {
                                         const itemDiv = document.getElementById(`neg-item-${id}`);

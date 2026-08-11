@@ -350,30 +350,21 @@
 
     <!-- ABA 2: CONVERSÕES PLG -->
     <div id="tab-conversoes" class="analytics-tab-content" style="display: none;">
-        <div class="kpi-grid">
-            <!-- ABSOLUTOS -->
+        <!-- LINHA 1: TOPO DE FUNIL & QUALIDADE DOS DADOS -->
+        <h4 style="margin: 0 0 10px 0; color: #1e293b; font-size: 1rem; font-weight: 600;">Topo de Funil & Qualidade dos Dados</h4>
+        <div class="kpi-grid" style="margin-bottom: 20px;">
             <div class="kpi-card" style="border-top-color: #3498db;">
                 <h4 style="display: flex; align-items: center; gap: 8px;">Cliques no WhatsApp <span class="info-tooltip" data-tooltip="Total BRUTO de cliques. Se 1 paciente chamar 3 psicólogos, gera 3 cliques aqui.">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-total-feedbacks" style="color: #3498db;">0</p>
+            </div>
+            <div class="kpi-card" style="border-top-color: #f43f5e;">
+                <h4 style="display: flex; align-items: center; gap: 8px;">Falhas de Conexão <span class="info-tooltip" data-tooltip="Pacientes Fantasmas: Quantidade de vezes que o paciente clicou mas nunca mandou a primeira mensagem (Fricção da Plataforma).">i</span></h4>
+                <p class="kpi-numero" id="kpi-wpp-fantasmas" style="color: #f43f5e;">0</p>
             </div>
             <div class="kpi-card" style="border-top-color: var(--verde-sucesso);">
                 <h4 style="display: flex; align-items: center; gap: 8px;">Contatos Realizados <span class="info-tooltip" data-tooltip="Quantidade de vezes que o psicólogo confirmou que a mensagem do paciente realmente chegou no WhatsApp dele.">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-recebidas" style="color: var(--verde-sucesso);">0</p>
             </div>
-            <div class="kpi-card" style="border-top-color: #16a34a;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Negócios Fechados <span class="info-tooltip" data-tooltip="Quantidade de vezes que o psicólogo confirmou que o lead se tornou um paciente pagante na vida real.">i</span></h4>
-                <p class="kpi-numero" id="kpi-wpp-fechados" style="color: #16a34a;">0</p>
-            </div>
-            <div class="kpi-card" style="border-top-color: #eab308;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Em Negociação <span class="info-tooltip" data-tooltip="Pacientes que o psicólogo marcou como ainda conversando/negociando.">i</span></h4>
-                <p class="kpi-numero" id="kpi-wpp-negociacao" style="color: #eab308;">0</p>
-            </div>
-            <div class="kpi-card" style="border-top-color: #ef4444;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Pacientes Fantasmas <span class="info-tooltip" data-tooltip="Quantidade de vezes que o psicólogo marcou 'Ainda não recebi mensagem' (Desperdício de clique).">i</span></h4>
-                <p class="kpi-numero" id="kpi-wpp-fantasmas" style="color: #ef4444;">0</p>
-            </div>
-
-            <!-- PORCENTAGENS -->
             <div class="kpi-card" style="border-top-color: #f59e0b;">
                 <h4 style="display: flex; align-items: center; gap: 8px;">Taxa de Resposta (Psi) <span class="info-tooltip" data-tooltip="Porcentagem de psicólogos que responderam à nossa pesquisa de feedback perguntando se o lead fechou negócio.">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-tx-resposta" style="color: #f59e0b;">0%</p>
@@ -381,6 +372,23 @@
             <div class="kpi-card" style="border-top-color: #64748b;">
                 <h4 style="display: flex; align-items: center; gap: 8px;">Taxa de Não Resposta <span class="info-tooltip" data-tooltip="Porcentagem de interações onde os psicólogos ignoraram/fecharam o popup sem nos dar o feedback.">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-tx-nao-resposta" style="color: #64748b;">0%</p>
+            </div>
+        </div>
+
+        <!-- LINHA 2: FUNDO DE FUNIL & PERFORMANCE DE VENDAS -->
+        <h4 style="margin: 0 0 10px 0; color: #1e293b; font-size: 1rem; font-weight: 600;">Performance de Vendas</h4>
+        <div class="kpi-grid">
+            <div class="kpi-card" style="border-top-color: #eab308;">
+                <h4 style="display: flex; align-items: center; gap: 8px;">Em Negociação <span class="info-tooltip" data-tooltip="Pacientes que o psicólogo marcou como ainda conversando/negociando.">i</span></h4>
+                <p class="kpi-numero" id="kpi-wpp-negociacao" style="color: #eab308;">0</p>
+            </div>
+            <div class="kpi-card" style="border-top-color: #16a34a;">
+                <h4 style="display: flex; align-items: center; gap: 8px;">Negócios Fechados <span class="info-tooltip" data-tooltip="Quantidade de vezes que o psicólogo confirmou que o lead se tornou um paciente pagante na vida real.">i</span></h4>
+                <p class="kpi-numero" id="kpi-wpp-fechados" style="color: #16a34a;">0</p>
+            </div>
+            <div class="kpi-card" style="border-top-color: #ef4444;">
+                <h4 style="display: flex; align-items: center; gap: 8px;">Negócios Perdidos <span class="info-tooltip" data-tooltip="Pacientes que enviaram mensagem mas desistiram ou deram vácuo no orçamento.">i</span></h4>
+                <p class="kpi-numero" id="kpi-wpp-perdidos" style="color: #ef4444;">0</p>
             </div>
             <div class="kpi-card" style="border-top-color: #8b5cf6;">
                 <h4 style="display: flex; align-items: center; gap: 8px;">Taxa de Fechamento <span class="info-tooltip" data-tooltip="Dos pacientes que REALMENTE mandaram mensagem (Contatos Realizados), qual a porcentagem que se tornou paciente pagante.">i</span></h4>

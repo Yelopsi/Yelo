@@ -184,3 +184,84 @@ window.setupSwipeNavigation = function() {
         isSwiping = false;
     });
 };
+
+/**
+ * Lógica universal de Bottom Sheet (Arrastar para redimensionar)
+ * Funciona para qualquer modal mobile que possua a classe .drag-handle-area
+ */
+(function setupBottomSheetDrag() {
+    let isDragging = false;
+    let startY = 0;
+    let startHeight = 0;
+    let currentSheet = null;
+    let maxAllowedHeight = 0;
+
+    document.addEventListener('touchstart', (e) => {
+        const handle = e.target.closest('.drag-handle-area');
+        if (!handle) return;
+        
+        currentSheet = handle.closest('.feedback-wpp-box, .welcome-modal-box');
+        if (!currentSheet) return;
+
+        isDragging = true;
+        startY = e.touches[0].clientY;
+        
+        // Pega a altura atual
+        startHeight = currentSheet.getBoundingClientRect().height;
+        
+        // Permite que o modal cresça até 95% da tela
+        maxAllowedHeight = window.innerHeight * 0.95;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+        if (!isDragging || !currentSheet) return;
+        
+        const currentY = e.touches[0].clientY;
+        const deltaY = startY - currentY; // Positivo = arrastar para CIMA
+        
+        if (Math.abs(deltaY) < 5 && !currentSheet.style.height) return;
+
+        if (!currentSheet.style.height) {
+            currentSheet.style.height = `${startHeight}px`;
+            currentSheet.style.transition = 'none';
+            currentSheet.style.maxHeight = '100dvh';
+        }
+
+        e.preventDefault(); // Impede o scroll nativo
+        
+        let newHeight = startHeight + deltaY;
+        const minHeight = window.innerHeight * 0.40;
+        
+        if (newHeight < minHeight) {
+            newHeight = minHeight - (minHeight - newHeight) * 0.2;
+        }
+        
+        currentSheet.style.height = `${newHeight}px`;
+    }, { passive: false });
+
+    document.addEventListener('touchend', () => {
+        if (!isDragging || !currentSheet) return;
+        isDragging = false;
+        
+        if (!currentSheet.style.height) {
+            currentSheet = null;
+            return;
+        }
+        
+        const currentHeight = currentSheet.getBoundingClientRect().height;
+        const minHeight = window.innerHeight * 0.40;
+        
+        let finalHeight = currentHeight;
+        if (currentHeight > maxAllowedHeight) {
+            finalHeight = maxAllowedHeight;
+        } else if (currentHeight < minHeight) {
+            finalHeight = minHeight;
+        }
+        
+        currentSheet.style.transition = 'max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+        currentSheet.style.height = ''; 
+        currentSheet.style.maxHeight = `${finalHeight}px`;
+        
+        currentSheet = null;
+    });
+})();

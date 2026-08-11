@@ -1,7 +1,7 @@
 let globalPsyData = [];
 let currentSort = { column: 'fairnessScore', desc: true };
 
-window.initializePage = function() {
+window.initializePage = function () {
     globalPsyData = [];
     currentSort = { column: 'fairnessScore', desc: true };
 
@@ -10,7 +10,7 @@ window.initializePage = function() {
     const today = new Date();
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(today.getDate() - 30);
-    
+
     document.getElementById('filter-end').value = today.toISOString().split('T')[0];
     document.getElementById('filter-start').value = thirtyDaysAgo.toISOString().split('T')[0];
 
@@ -54,7 +54,7 @@ async function fetchData() {
         if (!response.ok) throw new Error('Falha ao buscar dados');
 
         const data = await response.json();
-        
+
         // Atualizar KPIs
         document.getElementById('kpi-demand').textContent = data.metrics.totalDemand;
         document.getElementById('kpi-psys').textContent = data.metrics.activePsyCount;
@@ -65,10 +65,10 @@ async function fetchData() {
         const suggBox = document.getElementById('suggestion-box');
         suggBox.className = `suggestion-box suggestion-${data.alertLevel}`;
         let emoji = '🤖';
-        if(data.alertLevel === 'warning') emoji = '🚨';
-        if(data.alertLevel === 'danger') emoji = '🔥';
-        if(data.alertLevel === 'success') emoji = '✅';
-        
+        if (data.alertLevel === 'warning') emoji = '🚨';
+        if (data.alertLevel === 'danger') emoji = '🔥';
+        if (data.alertLevel === 'success') emoji = '✅';
+
         suggBox.innerHTML = `<span style="font-size: 1.8rem;">${emoji}</span><div>${data.suggestion}</div>`;
 
         globalPsyData = data.psychologists;
@@ -86,7 +86,7 @@ async function fetchData() {
 function renderTable() {
     const tbody = document.getElementById('tbody-visibility');
     const mobileContainer = document.getElementById('mobile-cards-container');
-    
+
     if (!globalPsyData || globalPsyData.length === 0) {
         const emptyMsg = 'Nenhum profissional ativo encontrado.';
         tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 30px;">${emptyMsg}</td></tr>`;
@@ -98,7 +98,7 @@ function renderTable() {
     const sorted = [...globalPsyData].sort((a, b) => {
         let valA = a[currentSort.column];
         let valB = b[currentSort.column];
-        
+
         if (typeof valA === 'string') valA = valA.toLowerCase();
         if (typeof valB === 'string') valB = valB.toLowerCase();
 

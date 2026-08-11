@@ -123,8 +123,21 @@ window.abrirModalStatus = function(id, contact_received, deal_closed) {
 
     if (isTalking) {
         container.innerHTML += `<button class="yelo-modal-btn" onclick="window.updateStatus('${id}', true, 'started')">✅ Fechamos Negócio!</button>`;
-        container.innerHTML += `<button class="yelo-modal-btn" onclick="window.updateStatus('${id}', true, 'not_started')">❌ Paciente Desistiu</button>`;
+        container.innerHTML += `<button class="yelo-modal-btn" onclick="window.showHistoricoStep3('${id}')">❌ Paciente Desistiu</button>`;
+        
+        container.innerHTML += `
+            <div id="historico-step3-${id}" style="display:none; flex-direction:column; gap:10px; margin-top:10px;">
+                <p style="margin: 0 0 5px 0; font-size: 0.9rem; color: #444; font-weight: bold; text-align: center;">Qual o motivo?</p>
+                <button class="yelo-modal-btn" onclick="window.updateStatus('${id}', true, 'not_started_price')">💰 Preço incompatível</button>
+                <button class="yelo-modal-btn" onclick="window.updateStatus('${id}', true, 'not_started_schedule')">⏰ Horário incompatível</button>
+                <button class="yelo-modal-btn" onclick="window.updateStatus('${id}', true, 'not_started_other')">🤷‍♂️ Outro motivo</button>
+            </div>
+        `;
     }
+
+    window.showHistoricoStep3 = function(logId) {
+        document.getElementById(`historico-step3-${logId}`).style.display = 'flex';
+    };
 
     modal.style.display = 'flex';
 };
