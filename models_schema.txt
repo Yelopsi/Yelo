@@ -1,0 +1,562 @@
+◇ injected env (33) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
+=== MODELS OVERVIEW ===
+
+Model: CommunityEvent
+  - id (INTEGER)
+  - titulo (STRING)
+  - subtitulo (STRING)
+  - data_hora (STRING)
+  - tipo (STRING)
+  - link_acao (STRING)
+  - texto_botao (STRING)
+  - ativo (BOOLEAN)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+
+
+Model: CommunityResource
+  - id (INTEGER)
+  - link_intervisao (STRING)
+  - link_biblioteca (STRING)
+  - link_cursos (STRING)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+
+
+Model: ExitSurvey
+  - id (INTEGER)
+  - psychologistId (INTEGER)
+  - motivo (STRING)
+  - avaliacao (INTEGER)
+  - sugestao (TEXT)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+ Associations:
+  -> BelongsTo psychologist (Target: Psychologist, FK: psychologistId)
+
+
+Model: ForumComment
+  - id (INTEGER)
+  - content (TEXT)
+  - isAnonymous (BOOLEAN)
+  - likes (INTEGER)
+  - parentId (INTEGER)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+  - PsychologistId (INTEGER)
+  - ForumPostId (INTEGER)
+ Associations:
+  -> BelongsTo Psychologist (Target: Psychologist, FK: PsychologistId)
+  -> BelongsTo ForumPost (Target: ForumPost, FK: ForumPostId)
+  -> HasMany Replies (Target: ForumComment, FK: parentId)
+  -> HasMany ForumCommentVotes (Target: ForumCommentVote, FK: ForumCommentId)
+
+
+Model: ForumCommentVote
+  - id (INTEGER)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+  - ForumCommentId (INTEGER)
+  - PsychologistId (INTEGER)
+ Associations:
+  -> BelongsTo Psychologist (Target: Psychologist, FK: PsychologistId)
+  -> BelongsTo ForumComment (Target: ForumComment, FK: ForumCommentId)
+
+
+Model: ForumPost
+  - id (INTEGER)
+  - title (STRING)
+  - content (TEXT)
+  - category (STRING)
+  - isAnonymous (BOOLEAN)
+  - votes (INTEGER)
+  - status (STRING)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+  - PsychologistId (INTEGER)
+ Associations:
+  -> BelongsTo Psychologist (Target: Psychologist, FK: PsychologistId)
+  -> HasMany ForumComments (Target: ForumComment, FK: ForumPostId)
+  -> HasMany ForumVotes (Target: ForumVote, FK: ForumPostId)
+
+
+Model: ForumReport
+  - id (INTEGER)
+  - type (STRING)
+  - itemId (INTEGER)
+  - status (STRING)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+  - reporterId (INTEGER)
+ Associations:
+  -> BelongsTo Reporter (Target: Psychologist, FK: reporterId)
+
+
+Model: ForumVote
+  - id (INTEGER)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+  - ForumPostId (INTEGER)
+  - PsychologistId (INTEGER)
+ Associations:
+  -> BelongsTo Psychologist (Target: Psychologist, FK: PsychologistId)
+  -> BelongsTo ForumPost (Target: ForumPost, FK: ForumPostId)
+
+
+Model: GamificationLog
+  - id (INTEGER)
+  - psychologistId (INTEGER)
+  - actionType (STRING)
+  - points (INTEGER)
+  - metadata (JSONB)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+ Associations:
+  -> BelongsTo Psychologist (Target: Psychologist, FK: psychologistId)
+
+
+Model: Post
+  - id (INTEGER)
+  - titulo (STRING)
+  - conteudo (TEXT)
+  - imagem_url (STRING)
+  - tags (STRING)
+  - slug (STRING)
+  - psychologistId (INTEGER)
+  - curtidas (INTEGER)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+  - created_at (DATE)
+  - updated_at (DATE)
+ Associations:
+  -> BelongsTo autor (Target: Psychologist, FK: psychologistId)
+
+
+Model: QuestionIgnore
+  - id (INTEGER)
+  - psychologistId (INTEGER)
+  - questionId (INTEGER)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+
+
+Model: SupportMessage
+  - id (INTEGER)
+  - psychologist_id (INTEGER)
+  - sender_type (STRING)
+  - content (TEXT)
+  - is_read (BOOLEAN)
+  - created_at (DATE)
+
+
+Model: SystemSetting
+  - id (INTEGER)
+  - maintenance_mode (BOOLEAN)
+  - allow_registrations (BOOLEAN)
+  - price_Essencial (DECIMAL)
+  - price_Clínico (DECIMAL)
+  - price_sol (DECIMAL)
+  - whatsapp_support (STRING)
+  - email_support (STRING)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+
+
+Model: WhatsAppClickLog
+  - id (INTEGER)
+  - psychologistId (INTEGER)
+  - guestName (STRING)
+  - utmSource (STRING)
+  - patientId (INTEGER)
+  - guestPhone (STRING)
+  - source (STRING)
+  - status (STRING)
+  - message_sent_at (DATE)
+  - ab_variant (STRING)
+  - feedbackGiven (BOOLEAN)
+  - feedbackToken (UUID)
+  - contactReceived (BOOLEAN)
+  - dealClosed (STRING)
+  - reminderEmailSent (BOOLEAN)
+  - adminWppReminderSentAt (DATE)
+  - adminWppReminderCount (INTEGER)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+ Associations:
+  -> BelongsTo psychologist (Target: Psychologist, FK: psychologistId)
+
+
+Model: AiQuestionDraft
+  - id (INTEGER)
+  - title (STRING)
+  - content (TEXT)
+  - meta_description (TEXT)
+  - status (ENUM)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+  - PatientId (INTEGER)
+ Associations:
+  -> BelongsTo Patient (Target: Patient, FK: PatientId)
+
+
+Model: Answer
+  - id (INTEGER)
+  - content (TEXT)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+  - questionId (INTEGER)
+  - psychologistId (INTEGER)
+ Associations:
+  -> BelongsTo question (Target: Question, FK: questionId)
+  -> BelongsTo psychologist (Target: Psychologist, FK: psychologistId)
+
+
+Model: Appointment
+  - id (INTEGER)
+  - title (STRING)
+  - start (DATE)
+  - end (DATE)
+  - status (STRING)
+  - value (FLOAT)
+  - psychologistId (INTEGER)
+  - patientId (INTEGER)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+ Associations:
+  -> BelongsTo psychologist (Target: Psychologist, FK: psychologistId)
+  -> BelongsTo patient (Target: Patient, FK: patientId)
+
+
+Model: Aviso
+  - id (INTEGER)
+  - title (STRING)
+  - content (TEXT)
+  - author (STRING)
+  - status (STRING)
+  - psychologistId (INTEGER)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+ Associations:
+  -> HasMany leituras (Target: AvisoLido, FK: avisoId)
+  -> BelongsTo psychologist (Target: Psychologist, FK: psychologistId)
+
+
+Model: AvisoLido
+  - id (INTEGER)
+  - psychologistId (INTEGER)
+  - avisoId (INTEGER)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+ Associations:
+  -> BelongsTo aviso (Target: Aviso, FK: avisoId)
+  -> BelongsTo psychologist (Target: Psychologist, FK: psychologistId)
+
+
+Model: Conversation
+  - id (INTEGER)
+  - patientId (INTEGER)
+  - psychologistId (INTEGER)
+  - status (STRING)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+ Associations:
+  -> HasMany Messages (Target: Message, FK: conversationId)
+  -> BelongsTo Patient (Target: Patient, FK: patientId)
+  -> BelongsTo Psychologist (Target: Psychologist, FK: psychologistId)
+
+
+Model: DemandSearch
+  - id (INTEGER)
+  - searchParams (JSONB)
+  - status (STRING)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+  - deletedAt (DATE)
+
+
+Model: Expense
+  - id (INTEGER)
+  - description (STRING)
+  - value (FLOAT)
+  - date (DATEONLY)
+  - psychologistId (INTEGER)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+ Associations:
+  -> BelongsTo psychologist (Target: Psychologist, FK: psychologistId)
+
+
+Model: Lead
+  - id (INTEGER)
+  - nome (STRING)
+  - telefone (STRING)
+  - origem_url (STRING)
+  - status_funil (ENUM)
+  - data_ultimo_contato (DATE)
+  - data_proximo_followup (DATE)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+
+
+Model: MatchEvent
+  - id (INTEGER)
+  - psychologistId (INTEGER)
+  - patientId (INTEGER)
+  - matchTags (ARRAY)
+  - matchScore (FLOAT)
+  - source (STRING)
+  - explainability_log (JSONB)
+  - ai_justification (TEXT)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+ Associations:
+  -> BelongsTo psychologist (Target: Psychologist, FK: psychologistId)
+  -> BelongsTo patient (Target: Patient, FK: patientId)
+
+
+Model: Message
+  - id (INTEGER)
+  - conversationId (INTEGER)
+  - senderId (INTEGER)
+  - senderType (STRING)
+  - recipientId (INTEGER)
+  - recipientType (STRING)
+  - content (TEXT)
+  - isRead (BOOLEAN)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+ Associations:
+  -> BelongsTo Conversation (Target: Conversation, FK: conversationId)
+  -> BelongsTo senderPatient (Target: Patient, FK: senderId)
+  -> BelongsTo senderPsychologist (Target: Psychologist, FK: senderId)
+  -> BelongsTo recipientPatient (Target: Patient, FK: recipientId)
+  -> BelongsTo recipientPsychologist (Target: Psychologist, FK: recipientId)
+
+
+Model: Patient
+  - id (INTEGER)
+  - nome (STRING)
+  - email (STRING)
+  - senha (STRING)
+  - telefone (STRING)
+  - fotoUrl (STRING)
+  - valor_sessao_faixa (STRING)
+  - temas_buscados (ARRAY)
+  - abordagem_desejada (ARRAY)
+  - genero_profissional (STRING)
+  - praticas_afirmativas (ARRAY)
+  - modalidade_preferida (STRING)
+  - disponibilidade_periodo (ARRAY)
+  - ip_registro (STRING)
+  - termos_aceitos (BOOLEAN)
+  - marketing_aceito (BOOLEAN)
+  - sessionValue (FLOAT)
+  - faixa_etaria (STRING)
+  - idade (STRING)
+  - identidade_genero (STRING)
+  - utm_source (STRING)
+  - utm_medium (STRING)
+  - utm_campaign (STRING)
+  - utm_content (STRING)
+  - status (STRING)
+  - is_ghost_profile (BOOLEAN)
+  - observacoes (TEXT)
+  - resetPasswordToken (STRING)
+  - resetPasswordExpires (BIGINT)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+  - deletedAt (DATE)
+ Associations:
+  -> HasMany reviews (Target: Review, FK: patientId)
+  -> BelongsToMany favorites (Target: Psychologist, FK: PatientId)
+  -> HasMany Questions (Target: Question, FK: PatientId)
+  -> HasMany appointments (Target: Appointment, FK: patientId)
+
+
+Model: Psychologist
+  - id (INTEGER)
+  - nome (STRING)
+  - crp (STRING)
+  - email (STRING)
+  - senha (STRING)
+  - telefone (STRING)
+  - cep (STRING)
+  - rua (STRING)
+  - numero (STRING)
+  - bairro (STRING)
+  - complemento (STRING)
+  - cidade (STRING)
+  - estado (STRING)
+  - ai_insights_cache (JSONB)
+  - fotoUrl (STRING)
+  - cpf (STRING)
+  - cnpj (STRING)
+  - razao_social (STRING)
+  - bio (TEXT)
+  - slug (STRING)
+  - isAdmin (BOOLEAN)
+  - is_exempt (BOOLEAN)
+  - admin_billing_sent_at (DATE)
+  - msg_incomplete_profile_sent_at (DATE)
+  - aiOptimizationHistory (JSONB)
+  - msg_analysis_sent_at (DATE)
+  - msg_feedback_billing_sent_at (DATE)
+  - msg_churn_followup_sent_at (DATE)
+  - msg_paid_churn_sent_at (DATE)
+  - plano (STRING)
+  - status (STRING)
+  - isProfileAnalyzed (BOOLEAN)
+  - hasSeenWelcome (BOOLEAN)
+  - evaluationEmailSent (BOOLEAN)
+  - cancelAtPeriodEnd (BOOLEAN)
+  - planExpiresAt (DATE)
+  - subscriptionId (STRING)
+  - subscribedAt (DATE)
+  - valor_sessao_numero (FLOAT)
+  - tipo_cobranca (STRING)
+  - valor_mensal_numero (FLOAT)
+  - ano_inicio_experiencia (INTEGER)
+  - formacao_nivel (STRING)
+  - formacao_desc (TEXT)
+  - temas_atuacao (JSONB)
+  - abordagens_tecnicas (JSONB)
+  - genero_identidade (STRING)
+  - praticas_vivencias (JSONB)
+  - disponibilidade_periodo (JSONB)
+  - publico_alvo (JSONB)
+  - estilo_terapia (JSONB)
+  - praticas_inclusivas (JSONB)
+  - modalidade (JSONB)
+  - linkedin_url (STRING)
+  - instagram_url (STRING)
+  - facebook_url (STRING)
+  - tiktok_url (STRING)
+  - x_url (STRING)
+  - whatsapp_clicks (INTEGER)
+  - profile_appearances (INTEGER)
+  - last_shown_match_at (DATE)
+  - stripeSubscriptionId (STRING)
+  - subscription_payments_count (INTEGER)
+  - xp (INTEGER)
+  - remarketing_step (INTEGER)
+  - last_remarketing_at (DATE)
+  - utm_source (STRING)
+  - utm_medium (STRING)
+  - utm_campaign (STRING)
+  - utm_content (STRING)
+  - authority_level (STRING)
+  - crpDocumentUrl (TEXT)
+  - dailySummaryTime (STRING)
+  - reminderHoursBefore (INTEGER)
+  - badges (JSONB)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+  - deletedAt (DATE)
+ Associations:
+  -> HasMany reviews (Target: Review, FK: psychologistId)
+  -> BelongsToMany favoritedBy (Target: Patient, FK: PsychologistId)
+  -> HasMany posts (Target: Post, FK: psychologistId)
+  -> HasMany ForumPosts (Target: ForumPost, FK: PsychologistId)
+  -> HasMany ForumComments (Target: ForumComment, FK: PsychologistId)
+  -> HasMany ForumCommentVotes (Target: ForumCommentVote, FK: PsychologistId)
+  -> HasMany appointments (Target: Appointment, FK: psychologistId)
+
+
+Model: Question
+  - id (INTEGER)
+  - title (STRING)
+  - content (TEXT)
+  - status (ENUM)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+  - PatientId (INTEGER)
+ Associations:
+  -> HasMany answers (Target: Answer, FK: questionId)
+  -> BelongsTo Patient (Target: Patient, FK: PatientId)
+
+
+Model: Review
+  - id (INTEGER)
+  - patientId (INTEGER)
+  - psychologistId (INTEGER)
+  - rating (INTEGER)
+  - comment (TEXT)
+  - status (STRING)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+ Associations:
+  -> BelongsTo patient (Target: Patient, FK: patientId)
+  -> BelongsTo psychologist (Target: Psychologist, FK: psychologistId)
+
+
+Model: SiteVisit
+  - id (INTEGER)
+  - page (STRING)
+  - createdAt (DATE)
+
+
+Model: SystemLog
+  - id (INTEGER)
+  - level (STRING)
+  - message (TEXT)
+  - meta (JSONB)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+
+
+Model: WaitingList
+  - id (INTEGER)
+  - nome (STRING)
+  - email (STRING)
+  - telefone (STRING)
+  - crp (STRING)
+  - status (STRING)
+  - invitationToken (STRING)
+  - invitationExpiresAt (DATE)
+  - valor_sessao_faixa (STRING)
+  - temas_atuacao (ARRAY)
+  - abordagens_tecnicas (ARRAY)
+  - genero_identidade (STRING)
+  - praticas_afirmativas (ARRAY)
+  - utm_source (STRING)
+  - utm_medium (STRING)
+  - utm_campaign (STRING)
+  - utm_content (STRING)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+
+
+Model: WeeklyEfficiency
+  - id (INTEGER)
+  - week_start (DATEONLY)
+  - meta_ads (DECIMAL)
+  - meta_impressions (INTEGER)
+  - meta_clicks (INTEGER)
+  - google_ads (DECIMAL)
+  - google_impressions (INTEGER)
+  - google_clicks (INTEGER)
+  - novos_trials (INTEGER)
+  - meta_trials (INTEGER)
+  - google_trials (INTEGER)
+  - organic_trials (INTEGER)
+  - novos_pagantes (INTEGER)
+  - meta_pagantes (INTEGER)
+  - google_pagantes (INTEGER)
+  - organic_pagantes (INTEGER)
+  - cpl (DECIMAL)
+  - cac (DECIMAL)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+
+
+Model: YeloExpense
+  - id (INTEGER)
+  - name (STRING)
+  - amount (FLOAT)
+  - monthYear (STRING)
+  - category (STRING)
+  - createdAt (DATE)
+  - updatedAt (DATE)
+
+
