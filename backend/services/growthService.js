@@ -17,7 +17,10 @@ class GrowthService {
         const pagantesAtivos = await db.Psychologist.findAll({
             where: {
                 ...activeFilter,
-                subscribedAt: { [Op.not]: null }
+                [Op.or]: [
+                    { stripeSubscriptionId: { [Op.not]: null } },
+                    { subscriptionId: { [Op.not]: null } }
+                ]
             },
             attributes: ['id', 'valor_mensal_numero', 'plano', 'planExpiresAt', 'cancelAtPeriodEnd']
         });
@@ -52,9 +55,16 @@ class GrowthService {
         const totalAtivos = activeIds.length;
 
         // 3. Novos Pagantes (no período)
+        // Como o webhook do Stripe não grava data exata de conversão em todos os casos legados,
+        // consideramos 'novos pagantes' aqueles criados recentemente (período + trial) que têm assinatura,
+        // ou usamos a data de update como proxy para quem assinou no período.
         const novosPagantes = await db.Psychologist.count({
             where: {
-                subscribedAt: { [Op.gte]: periodStart }
+                [Op.or]: [
+                    { stripeSubscriptionId: { [Op.not]: null } },
+                    { subscriptionId: { [Op.not]: null } }
+                ],
+                updatedAt: { [Op.gte]: periodStart }
             }
         });
 
@@ -74,7 +84,6 @@ class GrowthService {
         const trialsAtivos = await db.Psychologist.count({
             where: {
                 ...activeFilter,
-                subscribedAt: null,
                 stripeSubscriptionId: null,
                 subscriptionId: null,
                 planExpiresAt: { [Op.gte]: now } // Ainda não expirou
@@ -100,7 +109,10 @@ class GrowthService {
             where: {
                 is_exempt: { [Op.or]: [false, null] },
                 createdAt: { [Op.gte]: cohortStart, [Op.lte]: cohortEnd },
-                subscribedAt: { [Op.not]: null }
+                [Op.or]: [
+                    { stripeSubscriptionId: { [Op.not]: null } },
+                    { subscriptionId: { [Op.not]: null } }
+                ]
             }
         });
 

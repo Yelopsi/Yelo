@@ -47,7 +47,7 @@ class GrowthAcquisitionService {
                 createdAt: { [Op.gte]: periodStart },
                 is_exempt: { [Op.or]: [false, null] }
             },
-            attributes: ['id', 'telefone', 'subscribedAt']
+            attributes: ['id', 'telefone', 'stripeSubscriptionId', 'subscriptionId']
         });
 
         let trialsIniciados = 0;
@@ -65,7 +65,8 @@ class GrowthAcquisitionService {
                 // Se a aquisição é validada pelo telefone do lead:
                 if (matched) {
                     trialsIniciados++;
-                    if (p.subscribedAt) {
+                    const hasSub = !!(p.stripeSubscriptionId || p.subscriptionId);
+                    if (hasSub) {
                         viraramPagantes++;
                     }
                 }

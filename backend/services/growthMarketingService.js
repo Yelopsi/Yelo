@@ -36,8 +36,12 @@ class GrowthMarketingService {
         // Precisamos dos novos pagantes no período
         const novosPagantes = await db.Psychologist.count({
             where: {
-                subscribedAt: { [Op.gte]: periodStart },
-                is_exempt: { [Op.or]: [false, null] }
+                is_exempt: { [Op.or]: [false, null] },
+                [Op.or]: [
+                    { stripeSubscriptionId: { [Op.not]: null } },
+                    { subscriptionId: { [Op.not]: null } }
+                ],
+                updatedAt: { [Op.gte]: periodStart }
             }
         });
 
@@ -52,7 +56,10 @@ class GrowthMarketingService {
         const pagantesAtivos = await db.Psychologist.findAll({
             where: {
                 ...activeFilter,
-                subscribedAt: { [Op.not]: null }
+                [Op.or]: [
+                    { stripeSubscriptionId: { [Op.not]: null } },
+                    { subscriptionId: { [Op.not]: null } }
+                ]
             },
             attributes: ['id', 'valor_mensal_numero', 'plano', 'planExpiresAt', 'cancelAtPeriodEnd']
         });

@@ -63,8 +63,12 @@ class GrowthDemandService {
 
         const pagantesAtivos = await db.Psychologist.findAll({
             where: {
-                ...activeFilter,
-                subscribedAt: { [Op.not]: null }
+                status: 'active',
+                is_exempt: { [Op.or]: [false, null] },
+                [Op.or]: [
+                    { stripeSubscriptionId: { [Op.not]: null } },
+                    { subscriptionId: { [Op.not]: null } }
+                ]
             },
             attributes: ['id', 'nome', 'plano', 'valor_mensal_numero', 'planExpiresAt', 'cancelAtPeriodEnd', 'createdAt']
         });
