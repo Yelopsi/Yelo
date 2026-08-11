@@ -24,6 +24,11 @@ exports.approveDraft = async (req, res) => {
         if (!draft) return res.status(404).json({ error: 'Rascunho não encontrado.' });
         if (draft.status !== 'pending') return res.status(400).json({ error: 'Rascunho não está pendente.' });
 
+        // Aceita a edição do frontend, se enviada
+        if (req.body.content) {
+            draft.content = req.body.content;
+        }
+
         // 2. Garante o paciente Anônimo
         let patient = await db.Patient.findOne({ where: { email: 'anonimo@yelopsi.com.br' }, paranoid: false });
         if (patient && patient.deletedAt) await patient.restore();
