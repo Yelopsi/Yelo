@@ -1,0 +1,161 @@
+const { Op } = require('sequelize');
+const db = require('../models');
+
+class GrowthService {
+    async getOverview(periodDays = 30) {
+        const now = new Date();
+        const periodStart = new Date();
+        periodStart.setDate(periodStart.getDate() - periodDays);
+
+        const activeFilter = {
+            status: 'active',
+            is_exempt: { [Op.or]: [false, null] }
+        };
+
+        // 1. MRR
+        // Calculado com base nos psicólogos pagantes ativos
+        const pagantesAtivos = await db.Psychologist.findAll({
+            where: {
+                ...activeFilter,
+                subscribedAt: { [Op.not]: null }
+            },
+            attributes: ['id', 'valor_mensal_numero', 'plano', 'planExpiresAt', 'cancelAtPeriodEnd']
+        });
+
+        // Tentar usar o SystemSetting para pegar os preços se valor_mensal_numero for nulo
+        const settings = await db.SystemSetting.findOne() || {};
+        const priceEssencial = settings.price_Essencial || 147;
+        const priceClinico = settings.price_Clínico || 247;
+
+        let mrrTotal = 0;
+        const activeIds = [];
+        
+        for (const p of pagantesAtivos) {
+            // Ignora se estiver cancelado e já tiver passado da data de expiração (caso status não tenha atualizado)
+            if (p.cancelAtPeriodEnd && p.planExpiresAt && new Date(p.planExpiresAt) < now) {
+                continue;
+            }
+            activeIds.push(p.id);
+            if (p.valor_mensal_numero) {
+                mrrTotal += Number(p.valor_mensal_numero);
+            } else if (p.plano === 'ESSENTIAL' || p.plano === 'Essencial') {
+                mrrTotal += Number(priceEssencial);
+            } else if (p.plano === 'CLINICAL' || p.plano === 'Clínico') {
+                mrrTotal += Number(priceClinico);
+            }
+        }
+
+        // 2. Psicólogos Ativos (Pagantes)
+        const totalAtivos = activeIds.length;
+
+        // 3. Novos Pagantes (no período)
+        const novosPagantes = await db.Psychologist.count({
+            where: {
+                subscribedAt: { [Op.gte]: periodStart }
+            }
+        });
+
+        // 4. Churn (Cancelamentos Efetivos no período)
+        // Churn = status inativo ou cancelAtPeriodEnd e planExpiresAt no período
+        const churn = await db.Psychologist.count({
+            where: {
+                is_exempt: { [Op.or]: [false, null] },
+                [Op.or]: [
+                    { status: 'inactive', updatedAt: { [Op.gte]: periodStart } },
+                    { cancelAtPeriodEnd: true, planExpiresAt: { [Op.gte]: periodStart, [Op.lte]: now } }
+                ]
+            }
+        });
+
+        // 5. Trials Ativos
+        const trialsAtivos = await db.Psychologist.count({
+            where: {
+                ...activeFilter,
+                subscribedAt: null,
+                stripeSubscriptionId: null,
+                subscriptionId: null,
+                planExpiresAt: { [Op.gte]: now } // Ainda não expirou
+            }
+        });
+
+        // 6. Trial -> Pagante (Cohorts maduras)
+        // Cohort Madura = cadastrados (createdAt) há mais de 14 dias dentro de um período mais amplo,
+        // mas vamos olhar para quem foi CRIADO entre (now - periodDays - 14) e (now - 14).
+        const cohortStart = new Date(periodStart);
+        cohortStart.setDate(cohortStart.getDate() - 14); // Pega uma janela equivalente
+        const cohortEnd = new Date(now);
+        cohortEnd.setDate(cohortEnd.getDate() - 14);
+
+        const trialsMaduros = await db.Psychologist.count({
+            where: {
+                is_exempt: { [Op.or]: [false, null] },
+                createdAt: { [Op.gte]: cohortStart, [Op.lte]: cohortEnd }
+            }
+        });
+
+        const trialsConvertidos = await db.Psychologist.count({
+            where: {
+                is_exempt: { [Op.or]: [false, null] },
+                createdAt: { [Op.gte]: cohortStart, [Op.lte]: cohortEnd },
+                subscribedAt: { [Op.not]: null }
+            }
+        });
+
+        const trialConversionRate = trialsMaduros > 0 ? (trialsConvertidos / trialsMaduros) * 100 : 0;
+
+        // 7. Demanda / Contatos de Pacientes (no período)
+        const contatos = await db.WhatsAppClickLog.findAll({
+            where: {
+                createdAt: { [Op.gte]: periodStart }
+            },
+            attributes: ['psychologistId']
+        });
+        
+        const totalContatos = contatos.length;
+        
+        // 8. % de Psicólogos com Demanda e MRR segmentado
+        // Contamos apenas os psicólogos ativos pagantes que receberam demanda no período
+        const setPsiComDemanda = new Set(contatos.map(c => c.psychologistId));
+        
+        let mrrComDemanda = 0;
+        let mrrSemDemanda = 0;
+        let pagantesComDemandaCount = 0;
+
+        for (const p of pagantesAtivos) {
+            if (p.cancelAtPeriodEnd && p.planExpiresAt && new Date(p.planExpiresAt) < now) continue;
+            
+            let valor = 0;
+            if (p.valor_mensal_numero) valor = Number(p.valor_mensal_numero);
+            else if (p.plano === 'ESSENTIAL' || p.plano === 'Essencial') valor = Number(priceEssencial);
+            else if (p.plano === 'CLINICAL' || p.plano === 'Clínico') valor = Number(priceClinico);
+
+            if (setPsiComDemanda.has(p.id)) {
+                pagantesComDemandaCount++;
+                mrrComDemanda += valor;
+            } else {
+                mrrSemDemanda += valor;
+            }
+        }
+
+        const pctDemanda = totalAtivos > 0 ? (pagantesComDemandaCount / totalAtivos) * 100 : 0;
+
+        return {
+            mrrTotal,
+            mrrComDemanda,
+            mrrSemDemanda,
+            totalAtivos,
+            novosPagantes,
+            churn,
+            trialsAtivos,
+            trialsMaduros,
+            trialsConvertidos,
+            trialConversionRate,
+            totalContatos,
+            pagantesComDemandaCount,
+            pctDemanda,
+            periodDays
+        };
+    }
+}
+
+module.exports = new GrowthService();

@@ -134,6 +134,11 @@ router.post('/founder-goals', adminDashboardController.saveFounderGoals);
 // --- FIX: ROTA INLINE PARA INDICADORES (Evita erro 500 se controller falhar) ---
 router.get('/questionnaire-analytics', adminAnalyticsController.getQuestionnaireAnalytics);
 router.get('/analytics/growth', adminGrowthController.getGrowthData);
+router.get('/growth/overview', adminGrowthController.getOverview);
+router.get('/growth/acquisition', adminGrowthController.getAcquisition);
+router.get('/growth/demand', adminGrowthController.getDemand);
+router.get('/growth/marketing', adminGrowthController.getMarketing);
+router.get('/growth/cohorts', adminGrowthController.getCohorts);
 
 // --- ROTAS FINANCEIRAS E DESPESAS ---
 router.get('/expenses', adminExpenseController.getExpenses);

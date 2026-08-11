@@ -44,454 +44,401 @@
     opacity: 1;
 }
 
-/* Pílulas de filtro e botões */
-.crm-pill {
-    background: #f8f9fa;
-    color: #64748b;
-    border: 1px solid #e2e8f0;
-    padding: 8px 18px;
-    border-radius: 50px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
+.stat-card {
+    background: white; 
+    border: 1px solid #eaeaea; 
+    border-radius: 12px; 
+    padding: 20px; 
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
 }
-.crm-pill:hover { background: #e2e8f0; color: #1e293b; }
-.crm-pill.active { background: #1B4332; color: white; border-color: #1B4332; box-shadow: 0 2px 4px rgba(27, 67, 50, 0.2); }
-
-@media (max-width: 1024px) {
-    .responsive-founder-grid {
-        grid-template-columns: 1fr !important;
+.stat-card-title {
+    color: #6b7280; 
+    font-size: 0.85rem; 
+    font-weight: 600; 
+    text-transform: uppercase; 
+    letter-spacing: 0.05em; 
+    margin-bottom: 8px; 
+    display: flex; 
+    align-items: center;
+}
+.stat-card-value {
+    font-size: 1.8rem; 
+    font-weight: 800; 
+    color: #111827;
+}
+.stat-card-sub {
+    color: #6b7280; 
+    font-size: 0.85rem; 
+    margin-top: 5px;
+}
+.funnel-step {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    position: relative;
+    flex: 1;
+}
+.funnel-step:not(:last-child)::after {
+    content: "↓";
+    position: absolute;
+    right: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.5rem;
+    color: #94a3b8;
+    z-index: 10;
+}
+@media (max-width: 768px) {
+    .funnel-step:not(:last-child)::after {
+        right: 50%;
+        top: auto;
+        bottom: -25px;
+        transform: translateX(50%);
     }
 }
+.funnel-value { font-size: 1.5rem; font-weight: 800; color: #1e293b; }
+.funnel-label { font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase; }
+.funnel-conv { font-size: 0.75rem; color: #10b981; font-weight: 700; margin-top: 5px; background: #d1fae5; padding: 2px 6px; border-radius: 10px; display: inline-block;}
 </style>
 
 <div class="modern-dashboard-layout" style="background-color: #fafafa; min-height: 100vh; padding-bottom: 50px;">
     <!-- HEADER -->
     <div class="main-header" style="padding: 25px 30px; margin-bottom: 30px; background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%); border-radius: 16px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 15px;">
             <div>
-                <h1 style="font-size: 2rem; color: white; font-weight: 800; margin: 0 0 5px 0; font-family: var(--font-titulos);">Painel do Fundador ⚡</h1>
-                <p class="subtitulo-header" style="color: rgba(255,255,255,0.8); font-size: 1.05rem; margin: 0;">Visão executiva hiper-focada em crescimento e MRR.</p>
+                <h1 style="font-size: 2rem; color: white; font-weight: 800; margin: 0 0 5px 0; font-family: var(--font-titulos);">Growth 📈</h1>
+                <p class="subtitulo-header" style="color: rgba(255,255,255,0.8); font-size: 1.05rem; margin: 0;">Visão completa de aquisição, conversão, retenção e economia do Yelo.</p>
             </div>
-            <div>
-                <button onclick="window.openFounderGoalsModal()" style="background: white; color: #1B4332; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">Ajustar Metas</button>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <select id="growth-period" onchange="loadGrowthData()" style="padding: 10px 15px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; outline: none;">
+                    <option value="7">Últimos 7 dias</option>
+                    <option value="30" selected>Últimos 30 dias</option>
+                    <option value="90">Últimos 3 meses</option>
+                    <option value="180">Últimos 6 meses</option>
+                    <option value="365">Últimos 12 meses</option>
+                </select>
+                <button onclick="loadGrowthData()" style="background: white; color: #1B4332; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">Atualizar Dados</button>
             </div>
         </div>
+        <div style="color: rgba(255,255,255,0.6); font-size: 0.85rem; margin-top: 10px;" id="growth-last-updated">Dados atualizados há 0 minutos</div>
     </div>
 
-    <div class="content-tabs" style="margin-bottom: 25px; padding: 0 25px; display: flex; gap: 10px; overflow-x: auto; white-space: nowrap;">
-        <button class="crm-pill active content-tab-btn" data-target="tab-founder" onclick="switchFounderTab(this)">⚡ Painel Executivo</button>
-        <button class="crm-pill content-tab-btn" data-target="tab-growth" onclick="switchFounderTab(this)">📈 Crescimento Yelo</button>
+    <!-- LOADING STATE -->
+    <div id="growth-loading" style="text-align: center; padding: 50px; display: none;">
+        <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid rgba(27,67,50,0.1); border-radius: 50%; border-top-color: #1B4332; animation: spin 1s ease-in-out infinite;"></div>
+        <div style="margin-top: 15px; color: #6b7280; font-weight: 600;">Calculando métricas de Growth...</div>
+        <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
     </div>
 
-    <!-- AREA DE ALERTAS CRÍTICOS -->
-    <div id="founder-alerts-area" style="padding: 0 25px; margin-bottom: 25px; display: none;"></div>
-
-    <div id="tab-founder" class="analytics-tab-content">
-
-    <div style="padding: 0 25px;">
-        <!-- Kpis Principais (Top Row) -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
-            <!-- Meta -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; display: flex; align-items: center;">🎯 Objetivo (MRR) <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Sua meta principal de faturamento recorrente mensal e o número de psicólogos pagantes que você quer atingir no prazo estabelecido.</span></span></div>
-                <div style="font-size: 1.8rem; font-weight: 800; color: #111827;" id="f-goal-mrr">R$ --</div>
-                <div style="color: #6b7280; font-size: 0.85rem; margin-top: 5px;">Meta de Pagantes: <span id="f-goal-users">--</span></div>
-            </div>
-
-            <!-- Progresso -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; display: flex; align-items: center;">📈 Progresso <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Mostra a quantidade atual de assinantes ativos e o percentual em relação à sua meta final de assinantes.</span></span></div>
-                <div style="display: flex; align-items: baseline; gap: 8px;">
-                    <div style="font-size: 1.8rem; font-weight: 800; color: #111827;" id="f-current-users">--</div>
-                    <div style="font-size: 1.1rem; color: #6b7280; font-weight: 600;">/ <span id="f-goal-users-display">--</span></div>
+    <!-- DASHBOARD CONTENT -->
+    <div id="growth-content" style="padding: 0 25px;">
+        
+        <!-- SEÇÃO 1: SAÚDE (V1) -->
+        <div style="margin-bottom: 30px;">
+            <h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin-bottom: 15px;">Saúde Financeira e Base</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
+                <div class="stat-card" style="border-left: 4px solid #10b981;">
+                    <div class="stat-card-title">💰 MRR <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Receita Recorrente Mensal das assinaturas ativas.</span></span></div>
+                    <div class="stat-card-value" style="color: #10b981;" id="g-mrr-total">R$ 0,00</div>
+                    <div class="stat-card-sub" id="g-mrr-demanda-split">Carregando...</div>
                 </div>
-                <div style="color: #10b981; font-weight: 700; font-size: 0.95rem; margin-top: 5px;" id="f-progress-pct">--%</div>
-            </div>
-
-            <!-- MRR -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); position: relative; overflow: visible;">
-                <div style="position: absolute; top: -10px; right: -10px; opacity: 0.05; font-size: 80px; z-index: 1;">💰</div>
-                <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; position: relative; z-index: 2; display: flex; align-items: center;">💰 MRR Atual <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">O Monthly Recurring Revenue (Receita Recorrente Mensal) atualizado em tempo real com base nas assinaturas ativas.</span></span></div>
-                <div style="font-size: 1.8rem; font-weight: 800; color: #10b981;" id="f-current-mrr">R$ --</div>
-            </div>
-
-            <!-- Trials -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; display: flex; align-items: center;">🚀 Trials Ativos <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Psicólogos que estão com perfil aprovado utilizando a plataforma gratuitamente antes do prazo de assinatura expirar.</span></span></div>
-                <div style="font-size: 1.8rem; font-weight: 800; color: #111827;" id="f-trials-count">--</div>
-                <div style="color: #6b7280; font-size: 0.85rem; margin-top: 5px;">Potenciais próximos clientes</div>
-            </div>
-
-            <!-- Conversão -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; display: flex; align-items: center;">🔥 Conversão Trial → Pago <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Taxa que representa quantos psicólogos que iniciaram o trial chegaram a pagar alguma vez pela plataforma.</span></span></div>
-                <div style="font-size: 1.8rem; font-weight: 800; color: #f59e0b;" id="f-conv-rate">--%</div>
-            </div>
-
-            <!-- Churn Pago -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; display: flex; align-items: center;">⚠️ Churn (Pagos) <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Porcentagem de clientes pagantes que cancelaram (ficaram inativos) em relação ao total de usuários pagantes.</span></span></div>
-                <div style="font-size: 1.8rem; font-weight: 800; color: #ef4444;" id="f-churn-rate">--%</div>
-            </div>
-
-            <!-- Churn Trial -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; display: flex; align-items: center;">⚠️ Curiosos Não Convertidos <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Porcentagem de psicólogos que iniciaram o trial, não converteram, e o prazo expirou. (Quebra de Funil)</span></span></div>
-                <div style="font-size: 1.8rem; font-weight: 800; color: #f97316;" id="f-trial-churn-rate">--%</div>
-                <div style="color: #6b7280; font-size: 0.85rem; margin-top: 5px;">Perdidos: <span id="f-trial-churn-count">--</span></div>
-            </div>
-        </div>
-
-        <!-- Barra de Progresso Master -->
-        <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 30px;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px;">
-                <div>
-                    <h3 style="font-size: 1.3rem; font-weight: 800; margin: 0; color: #111827; display: flex; align-items: center;">Evolução do Negócio <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Barra que representa visualmente o progresso total do seu MRR atual comparado com a sua meta configurada de MRR.</span></span></h3>
-                    <p style="margin: 5px 0 0; color: #6b7280; font-size: 0.95rem;">Progresso geral até a meta de MRR</p>
+                <div class="stat-card">
+                    <div class="stat-card-title">👥 Psicólogos Ativos <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Número de psicólogos com assinatura ativa no momento.</span></span></div>
+                    <div class="stat-card-value" id="g-ativos">0</div>
+                    <div class="stat-card-sub"><span id="g-novos-pagantes">0</span> novos no período</div>
                 </div>
-                <div style="text-align: right;">
-                    <div style="font-size: 2.2rem; font-weight: 900; color: #111827;" id="f-big-pct">--%</div>
-                    <div style="color: #6b7280; font-size: 0.95rem; font-weight: 600;" id="f-big-left">Faltam R$ --</div>
+                <div class="stat-card">
+                    <div class="stat-card-title">⚠️ Churn <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Cancelamentos efetivos (planExpiresAt expirou) no período.</span></span></div>
+                    <div class="stat-card-value" style="color: #ef4444;" id="g-churn-count">0</div>
+                    <div class="stat-card-sub">cancelamentos efetivos</div>
                 </div>
-            </div>
-            <div style="height: 24px; background: #f3f4f6; border-radius: 12px; overflow: hidden;">
-                <div id="f-big-bar" style="height: 100%; background: linear-gradient(90deg, #10b981 0%, #34d399 100%); width: 0%; transition: width 1s ease-in-out;"></div>
-            </div>
-        </div>
-
-        <!-- 3 Colunas: Meta do Mes, Break-even, Receita Prevista -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
-            
-            <!-- Break-even -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <h3 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin: 0 0 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; display: flex; align-items: center; justify-content: space-between;">Previsão de Meta <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Analisa o tempo percorrido desde a data de início até o prazo. Compara se o seu crescimento atual de MRR está no ritmo necessário para bater a meta.</span></span></h3>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                    <span style="color: #6b7280; font-weight: 600;">Prazo</span>
-                    <strong style="color: #111827;" id="f-be-goal">-- meses</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                    <span style="color: #6b7280; font-weight: 600;">Status do MRR</span>
-                    <strong style="color: #111827;" id="f-be-current">--</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 25px;">
-                    <span style="color: #6b7280; font-weight: 600;">Ritmo</span>
-                    <strong id="f-be-status" style="padding: 4px 10px; border-radius: 20px; font-size: 0.85rem;">--</strong>
-                </div>
-            </div>
-
-            <!-- Meta do mês -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <h3 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin: 0 0 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; display: flex; align-items: center; justify-content: space-between;">Meta do Mês <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Compara o crescimento líquido (novos pagantes subtraídos os cancelamentos/churn) do último mês com a sua meta mensal de crescimento (cadastrada como Novos p/ Mês).</span></span></h3>
-                <div style="font-size: 2rem; font-weight: 900; color: #111827; text-align: center; margin-bottom: 10px;" id="f-month-goal">+-- pagantes líquidos</div>
-                <div style="height: 12px; background: #f3f4f6; border-radius: 6px; overflow: hidden; margin-bottom: 10px;">
-                    <div id="f-month-bar" style="height: 100%; background: #3b82f6; width: 0%;"></div>
-                </div>
-                <div style="text-align: center; color: #6b7280; font-weight: 600;" id="f-month-progress">-- / --</div>
-            </div>
-
-            <!-- Receita Prevista -->
-            <div style="background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%); color: white; border-radius: 12px; padding: 25px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
-                <h3 style="font-size: 1.1rem; font-weight: 800; color: #f3f4f6; margin: 0 0 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; display: flex; align-items: center; justify-content: space-between;">Receita Prevista <span class="yelo-tooltip" style="color: white; opacity: 1;">ⓘ<span class="yelo-tooltip-content" style="background: #1B4332; color: white;">Calcula o faturamento esperado multiplicando a quantidade de Trials Ativos pela Taxa Histórica de Conversão e o Ticket Médio das assinaturas atuais.</span></span></h3>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #9ca3af;">
-                    <span>Trials Ativos</span>
-                    <strong id="f-prev-trials" style="color: white;">--</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #9ca3af;">
-                    <span>× Conversão Histórica</span>
-                    <strong id="f-prev-conv" style="color: white;">--%</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; color: #9ca3af; border-bottom: 1px solid #374151; padding-bottom: 15px;">
-                    <span>× Ticket Médio</span>
-                    <strong id="f-prev-ticket" style="color: white;">R$ --</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-weight: 600; color: #f3f4f6;">Novo MRR Previsto</span>
-                    <strong id="f-prev-mrr" style="color: #10b981; font-size: 1.5rem; font-weight: 900;">R$ --</strong>
+                <div class="stat-card">
+                    <div class="stat-card-title">🚀 Trials Ativos</div>
+                    <div class="stat-card-value" id="g-trials-ativos">0</div>
+                    <div class="stat-card-sub">potenciais assinantes</div>
                 </div>
             </div>
         </div>
 
-        <!-- Análise de Conversão Avançada -->
-        <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 30px;">
-            <h3 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin: 0 0 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; display: flex; align-items: center;">Análise de Conversão <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Visão profunda de como seus trials estão virando pagantes, comparando histórico, mês anterior e projeção do mês atual.</span></span></h3>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                
-                <!-- Histórico Total -->
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px;">
-                    <div style="font-size: 0.85rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 10px;">Geral (Histórico)</div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="color: #475569; font-size: 0.9rem;">Trials Totais</span>
-                        <strong style="color: #0f172a;" id="f-conv-tot-trials">--</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="color: #475569; font-size: 0.9rem;">Já Pagaram</span>
-                        <strong style="color: #0f172a;" id="f-conv-tot-paid">--</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 10px; border-top: 1px solid #cbd5e1; padding-top: 10px;">
-                        <span style="color: #475569; font-weight: 600;">Conversão Total</span>
-                        <strong style="color: #0ea5e9; font-size: 1.2rem;" id="f-conv-tot-rate">--%</strong>
-                    </div>
+        <!-- SEÇÃO 2: UNIT ECONOMICS & MARKETING -->
+        <div style="margin-bottom: 30px;">
+            <h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin-bottom: 15px;">Economia Unitária e Ads</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                <div class="stat-card">
+                    <div class="stat-card-title">CAC <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Custo de Aquisição de Clientes (Gasto Marketing / Novos Pagantes).</span></span></div>
+                    <div class="stat-card-value" id="g-cac">R$ 0,00</div>
+                    <div class="stat-card-sub" id="g-spend-total">Gasto Total: R$ 0,00</div>
                 </div>
-
-                <!-- Mês Anterior -->
-                <div style="background: #fdf4ff; border: 1px solid #fbcfe8; border-radius: 8px; padding: 15px;">
-                    <div style="font-size: 0.85rem; color: #a21caf; font-weight: 600; text-transform: uppercase; margin-bottom: 10px;">Mês Anterior</div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="color: #701a75; font-size: 0.9rem;">Novos Trials</span>
-                        <strong style="color: #4a044e;" id="f-conv-last-trials">--</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="color: #701a75; font-size: 0.9rem;">Novos Pagantes</span>
-                        <strong style="color: #4a044e;" id="f-conv-last-paid">--</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 10px; border-top: 1px solid #fbcfe8; padding-top: 10px;">
-                        <span style="color: #701a75; font-weight: 600;">Conversão Mês</span>
-                        <strong style="color: #d946ef; font-size: 1.2rem;" id="f-conv-last-rate">--%</strong>
-                    </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">ARPU <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Receita Média por Usuário (MRR / Base).</span></span></div>
+                    <div class="stat-card-value" id="g-arpu">R$ 0,00</div>
                 </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">LTV Estimado <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Lifetime Value: ARPU / Churn Rate.</span></span></div>
+                    <div class="stat-card-value" style="color: #8b5cf6;" id="g-ltv">R$ 0,00</div>
+                    <div class="stat-card-sub" id="g-ltv-warn"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">Payback <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Meses para o cliente se pagar (CAC / ARPU).</span></span></div>
+                    <div class="stat-card-value" id="g-payback">0m</div>
+                </div>
+            </div>
+        </div>
 
-                <!-- Projeção Mês Atual -->
-                <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 15px;">
-                    <div style="font-size: 0.85rem; color: #047857; font-weight: 600; text-transform: uppercase; margin-bottom: 10px;">Projeção Mês Atual</div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="color: #065f46; font-size: 0.9rem;">Trials até agora</span>
-                        <strong style="color: #022c22;" id="f-conv-cur-trials">--</strong>
+        <!-- SEÇÃO 3: FUNIL MOTOR 2 (OFERTA) -->
+        <div style="margin-bottom: 30px;">
+            <h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin-bottom: 15px;">Funil de Aquisição de Psicólogos</h2>
+            <div style="display: flex; gap: 30px; background: white; padding: 25px; border-radius: 12px; border: 1px solid #eaeaea; overflow-x: auto;">
+                <div class="funnel-step">
+                    <div class="funnel-label">Leads (Mapeados)</div>
+                    <div class="funnel-value" id="f-acq-leads">0</div>
+                </div>
+                <div class="funnel-step">
+                    <div class="funnel-label">Contatados</div>
+                    <div class="funnel-value" id="f-acq-contact">0</div>
+                    <div class="funnel-conv" id="f-acq-conv-1">0%</div>
+                </div>
+                <div class="funnel-step">
+                    <div class="funnel-label">Responderam</div>
+                    <div class="funnel-value" id="f-acq-reply">0</div>
+                    <div class="funnel-conv" id="f-acq-conv-2">0%</div>
+                </div>
+                <div class="funnel-step">
+                    <div class="funnel-label">Cadastros (Trial)</div>
+                    <div class="funnel-value" id="f-acq-trial">0</div>
+                    <div class="funnel-conv" id="f-acq-conv-3">0%</div>
+                </div>
+                <div class="funnel-step">
+                    <div class="funnel-label">Pagantes</div>
+                    <div class="funnel-value" style="color:#10b981;" id="f-acq-paid">0</div>
+                    <div class="funnel-conv" id="f-acq-conv-4">0%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEÇÃO 4: FUNIL MOTOR 1 E MARKETPLACE HEALTH -->
+        <div style="margin-bottom: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div style="background: white; padding: 25px; border-radius: 12px; border: 1px solid #eaeaea;">
+                <h2 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin-bottom: 15px;">Funil de Demanda (Pacientes)</h2>
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f1f5f9; padding-bottom:10px;">
+                        <span style="color:#64748b; font-weight:600;">Visitas Totais</span>
+                        <span style="font-weight:800;" id="f-dem-visits">0</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="color: #065f46; font-size: 0.9rem;">Fim do Mês (Proj.)</span>
-                        <strong style="color: #022c22;" id="f-conv-cur-proj">--</strong>
-                    </div>
-                    <div style="display: flex; flex-direction: column; margin-top: 10px; border-top: 1px solid #a7f3d0; padding-top: 10px; gap: 5px;">
-                        <div style="display: flex; justify-content: space-between;">
-                            <span style="color: #065f46; font-weight: 600; font-size: 0.85rem;">Proj. Pagantes (Geral)</span>
-                            <strong style="color: #10b981; font-size: 1rem;" id="f-conv-cur-paid-tot">--</strong>
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f1f5f9; padding-bottom:10px;">
+                        <span style="color:#64748b; font-weight:600;">Questionários Iniciados</span>
+                        <div>
+                            <span style="font-weight:800;" id="f-dem-searches">0</span>
+                            <span style="font-size:0.75rem; color:#10b981; margin-left:5px;" id="f-dem-c1">0%</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between;">
-                            <span style="color: #065f46; font-weight: 600; font-size: 0.85rem;">Proj. Pagantes (Mês Anterior)</span>
-                            <strong style="color: #10b981; font-size: 1rem;" id="f-conv-cur-paid-last">--</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f1f5f9; padding-bottom:10px;">
+                        <span style="color:#64748b; font-weight:600;">Concluídos / Matched</span>
+                        <div>
+                            <span style="font-weight:800;" id="f-dem-matches">0</span>
+                            <span style="font-size:0.75rem; color:#10b981; margin-left:5px;" id="f-dem-c2">0%</span>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span style="color:#64748b; font-weight:600;">Contatos (WhatsApp)</span>
+                        <div>
+                            <span style="font-weight:800; color:#3b82f6;" id="f-dem-wpp">0</span>
+                            <span style="font-size:0.75rem; color:#10b981; margin-left:5px;" id="f-dem-c3">0%</span>
                         </div>
                     </div>
                 </div>
-
             </div>
-        </div>
 
-        <!-- Gráfico Funil e Pipeline Trials -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
-            <!-- Funil -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: visible;">
-                <h3 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin: 0 0 25px; display: flex; align-items: center; justify-content: space-between;">Funil de Aquisição <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">O fluxo histórico completo: desde acessos no site até quantos cadastros existem, quantos viraram trials aprovados, e o total que pagou em algum momento.</span></span></h3>
-                
-                <div style="display: flex; flex-direction: column; gap: 15px; align-items: center;">
-                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; width: 100%; text-align: center; padding: 15px; border-radius: 8px;">
-                        <div style="font-size: 0.85rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Cadastros (Signups)</div>
-                        <div style="font-size: 1.5rem; font-weight: 800; color: #0f172a;" id="f-funnel-signup">--</div>
+            <div style="background: white; padding: 25px; border-radius: 12px; border: 1px solid #eaeaea;">
+                <h2 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin-bottom: 15px;">Saúde do Marketplace (Psis Pagantes)</h2>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display:flex; justify-content:space-between; font-size: 0.95rem;">
+                        <span>Receberam 0 contatos:</span> <span style="font-weight:700; color:#ef4444;" id="mh-0">0</span>
                     </div>
-                    <div style="color: #94a3b8; font-size: 1.2rem;">↓</div>
-                    
-                    <div style="background: #fef3c7; border: 1px solid #fde68a; width: 80%; text-align: center; padding: 15px; border-radius: 8px;">
-                        <div style="font-size: 0.85rem; color: #b45309; font-weight: 600; text-transform: uppercase;">Iniciaram Trial</div>
-                        <div style="font-size: 1.5rem; font-weight: 800; color: #78350f;" id="f-funnel-trial">--</div>
+                    <div style="display:flex; justify-content:space-between; font-size: 0.95rem;">
+                        <span>Receberam 1 ou 2:</span> <span style="font-weight:700;" id="mh-1">0</span>
                     </div>
-                    <div style="color: #94a3b8; font-size: 1.2rem;">↓</div>
-                    
-                    <div style="background: #ecfdf5; border: 1px solid #a7f3d0; width: 70%; text-align: center; padding: 15px; border-radius: 8px; position: relative;">
-                        <div style="font-size: 0.85rem; color: #047857; font-weight: 600; text-transform: uppercase;">Assinantes Ativos</div>
-                        <div style="font-size: 1.5rem; font-weight: 800; color: #064e3b;" id="f-funnel-current">--</div>
-                        <div style="font-size: 0.75rem; color: #059669; font-weight: 600; margin-top: 5px;">Já Assinaram (Histórico): <span id="f-funnel-paid">--</span></div>
+                    <div style="display:flex; justify-content:space-between; font-size: 0.95rem;">
+                        <span>Receberam 3 a 5:</span> <span style="font-weight:700;" id="mh-3">0</span>
                     </div>
-                </div>
-            </div>
-
-            <!-- Pipeline dos Trials -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: visible; display: flex; flex-direction: column;">
-                <h3 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin: 0 0 20px; display: flex; align-items: center; justify-content: space-between;">Pipeline dos Trials <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Lista de todos os psicólogos que estão rodando na esteira gratuita com o tempo que falta para precisarem assinar o plano.</span></span></h3>
-                <div style="overflow-y: auto; flex-grow: 1;">
-                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                        <thead>
-                            <tr style="border-bottom: 2px solid #f1f5f9;">
-                                <th style="padding: 12px; color: #64748b; font-size: 0.85rem; font-weight: 600; text-transform: uppercase;">Psicólogo</th>
-                                <th style="padding: 12px; color: #64748b; font-size: 0.85rem; font-weight: 600; text-transform: uppercase;">Tempo Restante</th>
-                                <th style="padding: 12px; color: #64748b; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; text-align: right;">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="f-trials-table">
-                            <!-- Injetado via JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Crescimento e Score -->
-        <div class="responsive-founder-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
-            <!-- Crescimento -->
-            <div style="background: white; border: 1px solid #eaeaea; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: visible;">
-                <h3 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin: 0 0 20px; display: flex; align-items: center; justify-content: space-between;">Crescimento Mensal <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Mostra o total acumulado de pagantes ao final de cada um dos últimos 5 meses.</span></span></h3>
-                <div style="height: 250px; display: flex; align-items: flex-end; justify-content: space-around; gap: 10px;" id="f-growth-chart">
-                    <!-- Barras injetadas via JS -->
-                </div>
-            </div>
-
-            <!-- Yelo Score -->
-            <div style="background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%); color: white; border-radius: 12px; padding: 30px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-                <h3 style="font-size: 1.2rem; font-weight: 800; color: #f3f4f6; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center;">Yelo Score <span class="yelo-tooltip" style="color: white; opacity: 1;">ⓘ<span class="yelo-tooltip-content" style="background: white; color: #1B4332; font-weight: 600;">Uma métrica interna agregada de 0 a 100 que pondera seu MRR Atual (15%), Adoção da Meta (40%), Conversão (25%) e Retenção/Churn (20%) para dar uma nota sobre a saúde do negócio.</span></span></h3>
-                <p style="color: #9ca3af; font-size: 0.9rem; margin: 0 0 25px;">Indicador Geral de Saúde do Negócio</p>
-                <div style="position: relative; width: 160px; height: 160px;">
-                    <svg viewBox="0 0 36 36" style="width: 100%; height: 100%;">
-                        <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#374151" stroke-width="3" />
-                        <path id="f-score-circle" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#10b981" stroke-width="3" stroke-dasharray="0, 100" />
-                    </svg>
-                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                        <span style="font-size: 3rem; font-weight: 900; line-height: 1;" id="f-score-val">--</span>
-                        <span style="color: #9ca3af; font-size: 0.8rem; font-weight: 600;">/ 100</span>
+                    <div style="display:flex; justify-content:space-between; font-size: 0.95rem;">
+                        <span>Receberam 6+:</span> <span style="font-weight:700; color:#10b981;" id="mh-5">0</span>
+                    </div>
+                    <hr style="border-top:1px solid #e2e8f0; margin: 10px 0;">
+                    <div style="display:flex; justify-content:space-between; font-size: 0.95rem; font-weight: 700;">
+                        <span>Média de Contatos:</span> <span id="mh-media">0</span>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- SEÇÃO 5: COHORTS -->
+        <div style="margin-bottom: 30px;">
+            <h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin-bottom: 15px;">Retenção de Cohorts</h2>
+            <div style="background: white; border-radius: 12px; border: 1px solid #eaeaea; overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 0.9rem;">
+                    <thead style="background: #f8fafc; color: #64748b; font-weight: 600;">
+                        <tr>
+                            <th style="padding: 15px; text-align: left;">Mês Safra</th>
+                            <th style="padding: 15px;">Tamanho</th>
+                            <th style="padding: 15px;">M0</th>
+                            <th style="padding: 15px;">M1</th>
+                            <th style="padding: 15px;">M2</th>
+                            <th style="padding: 15px;">M3</th>
+                            <th style="padding: 15px;">M4</th>
+                            <th style="padding: 15px;">M5</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cohorts-tbody">
+                        <tr><td colspan="8" style="padding:20px;">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
-    </div> <!-- Fim de tab-founder -->
+</div>
 
-    <!-- INICIO TAB GROWTH -->
-    <div id="tab-growth" class="analytics-tab-content" style="display: none; padding: 0 25px;">
-        <div style="background: white; padding: 25px 30px; margin-bottom: 30px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; border: 1px solid #eaeaea;">
-            <div>
-                <h1 style="color: #111827; margin: 0 0 5px 0; font-size: 1.5rem; font-family: var(--font-titulos);">Crescimento da Base</h1>
-                <p style="color: #6b7280; margin: 0; font-size: 0.95rem;">Acompanhamento de Trials, Assinaturas Confirmadas e Churn no período.</p>
-            </div>
+<script>
+let lastUpdate = new Date();
+
+async function loadGrowthData() {
+    const periodDays = document.getElementById('growth-period').value;
+    document.getElementById('growth-content').style.display = 'none';
+    document.getElementById('growth-loading').style.display = 'block';
+
+    try {
+        const [overviewRes, acqRes, demRes, mktRes, cohortRes] = await Promise.all([
+            fetch(`/api/admin/growth/overview?days=${periodDays}`),
+            fetch(`/api/admin/growth/acquisition?days=${periodDays}`),
+            fetch(`/api/admin/growth/demand?days=${periodDays}`),
+            fetch(`/api/admin/growth/marketing?days=${periodDays}`),
+            fetch(`/api/admin/growth/cohorts`)
+        ]);
+
+        const formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
+        // 1. OVERVIEW (Saúde)
+        if (overviewRes.ok) {
+            const result = await overviewRes.json();
+            const data = result.data;
+            document.getElementById('g-mrr-total').innerText = formatBRL(data.mrrTotal);
+            document.getElementById('g-mrr-demanda-split').innerHTML = `
+                <span style="color:#10b981">C/ demanda: ${formatBRL(data.mrrComDemanda)}</span> | 
+                <span style="color:#ef4444">S/ demanda: ${formatBRL(data.mrrSemDemanda)}</span>
+            `;
+            document.getElementById('g-ativos').innerText = data.totalAtivos;
+            document.getElementById('g-novos-pagantes').innerText = data.novosPagantes;
+            document.getElementById('g-churn-count').innerText = data.churn;
+            document.getElementById('g-trials-ativos').innerText = data.trialsAtivos;
+        }
+
+        // 2. ACQUISITION FUNNEL
+        if (acqRes.ok) {
+            const result = await acqRes.json();
+            const d = result.data;
+            document.getElementById('f-acq-leads').innerText = d.leadsIdentificados;
+            document.getElementById('f-acq-contact').innerText = d.primeiroContato;
+            document.getElementById('f-acq-reply').innerText = d.responderam;
+            document.getElementById('f-acq-trial').innerText = d.trialsIniciados;
+            document.getElementById('f-acq-paid').innerText = d.viraramPagantes;
+
+            const c1 = d.leadsIdentificados > 0 ? (d.primeiroContato/d.leadsIdentificados*100) : 0;
+            const c2 = d.primeiroContato > 0 ? (d.responderam/d.primeiroContato*100) : 0;
+            const c3 = d.responderam > 0 ? (d.trialsIniciados/d.responderam*100) : 0;
+            const c4 = d.trialsIniciados > 0 ? (d.viraramPagantes/d.trialsIniciados*100) : 0;
+
+            document.getElementById('f-acq-conv-1').innerText = c1.toFixed(1)+'%';
+            document.getElementById('f-acq-conv-2').innerText = c2.toFixed(1)+'%';
+            document.getElementById('f-acq-conv-3').innerText = c3.toFixed(1)+'%';
+            document.getElementById('f-acq-conv-4').innerText = c4.toFixed(1)+'%';
+        }
+
+        // 3. DEMAND FUNNEL & MARKETPLACE
+        if (demRes.ok) {
+            const result = await demRes.json();
+            const { funnel, health } = result.data;
+            document.getElementById('f-dem-visits').innerText = funnel.visitas;
+            document.getElementById('f-dem-searches').innerText = funnel.questionariosIniciados;
+            document.getElementById('f-dem-matches').innerText = funnel.questionariosConcluidos;
+            document.getElementById('f-dem-wpp').innerText = funnel.contatos;
+
+            const d1 = funnel.visitas > 0 ? (funnel.questionariosIniciados/funnel.visitas*100) : 0;
+            const d2 = funnel.questionariosIniciados > 0 ? (funnel.questionariosConcluidos/funnel.questionariosIniciados*100) : 0;
+            const d3 = funnel.questionariosConcluidos > 0 ? (funnel.contatos/funnel.questionariosConcluidos*100) : 0;
+            document.getElementById('f-dem-c1').innerText = d1.toFixed(1)+'%';
+            document.getElementById('f-dem-c2').innerText = d2.toFixed(1)+'%';
+            document.getElementById('f-dem-c3').innerText = d3.toFixed(1)+'%';
+
+            document.getElementById('mh-0').innerText = health.distribuicao.zero;
+            document.getElementById('mh-1').innerText = health.distribuicao.um_a_dois;
+            document.getElementById('mh-3').innerText = health.distribuicao.tres_a_cinco;
+            document.getElementById('mh-5').innerText = health.distribuicao.seis_ou_mais;
+            document.getElementById('mh-media').innerText = health.media;
+        }
+
+        // 4. MARKETING
+        if (mktRes.ok) {
+            const result = await mktRes.json();
+            const d = result.data;
+            document.getElementById('g-cac').innerText = formatBRL(d.cac);
+            document.getElementById('g-arpu').innerText = formatBRL(d.arpu);
+            document.getElementById('g-ltv').innerText = formatBRL(d.ltv);
+            document.getElementById('g-payback').innerText = d.payback.toFixed(1) + 'm';
+            document.getElementById('g-spend-total').innerText = 'Gasto Total: ' + formatBRL(d.totalMarketingSpend);
             
-            <div class="filter-tabs" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                <style>
-                    .date-input { padding: 8px 15px; border: 1px solid #e2e8f0; border-radius: 50px; background: #f8f9fa; color: #1e293b; font-weight: 500; outline: none; font-family: 'Inter', sans-serif; }
-                    .btn-filtrar { padding: 8px 20px; border: none; border-radius: 50px; background: #1B4332; color: white; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-                    .btn-filtrar:hover { background: #0f2b20; transform: translateY(-1px); }
-                </style>
-                <input type="date" id="filter-start-date" class="date-input" title="Data Inicial">
-                <span style="color: #6b7280; font-weight: 600;">até</span>
-                <input type="date" id="filter-end-date" class="date-input" title="Data Final">
-                <button class="btn-filtrar" onclick="aplicarFiltroData()">Filtrar</button>
-            </div>
-        </div>
+            if (!d.amostraSuficienteLTV) {
+                document.getElementById('g-ltv-warn').innerText = '(Baixa confiança - amostra pequena)';
+                document.getElementById('g-ltv-warn').style.color = '#f59e0b';
+            }
+        }
 
-        <!-- KPIs GERAIS -->
-        <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 30px;">
-            <div class="kpi-card" style="border-top-color: #3b82f6;" title="Soma total de todos os psicólogos que estão atualmente em período de teste gratuito.">
-                <h4 style="color: #64748b; margin-bottom: 10px;">Total Trials Ativos</h4>
-                <p class="kpi-numero" id="kpi-trials" style="color: #3b82f6; font-size: 2rem; margin: 0;">0</p>
-            </div>
-            <div class="kpi-card" style="border-top-color: #10b981;" title="Soma total de todos os psicólogos que assinaram um plano e estão ativos no momento.">
-                <h4 style="color: #64748b; margin-bottom: 10px;">Assinaturas (Pagantes)</h4>
-                <p class="kpi-numero" id="kpi-pagantes" style="color: #10b981; font-size: 2rem; margin: 0;">0</p>
-            </div>
-            <div class="kpi-card" style="border-top-color: #f59e0b;" title="A taxa de quantos usuários em Trial viraram Pagantes em relação ao total de usuários ativos atualmente.">
-                <h4 style="color: #64748b; margin-bottom: 10px;">Conversão (Pagantes / Ativos)</h4>
-                <p class="kpi-numero" id="kpi-conversao" style="color: #f59e0b; font-size: 2rem; margin: 0;">0%</p>
-            </div>
-            <div class="kpi-card" style="border-top-color: #ef4444;" title="Número total de psicólogos que cancelaram a conta ou foram excluídos de toda a história da plataforma.">
-                <h4 style="color: #64748b; margin-bottom: 10px;">Churn Histórico</h4>
-                <p class="kpi-numero" id="kpi-churn" style="color: #ef4444; font-size: 2rem; margin: 0;">0</p>
-                <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: #64748b;" id="kpi-taxa-churn">0% da base</p>
-            </div>
-        </div>
-
-        <!-- MACRO VISÃO FINANCEIRA -->
-        <div class="chart-card" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; padding: 25px; margin-bottom: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s;" onclick="window.navigateToPage('admin_crm_analytics.html')" title="Clique para visualizar o fluxo de caixa">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
-                <div style="flex: 1; min-width: 300px;">
-                    <h3 style="margin: 0 0 10px 0; color: white; font-family: var(--font-titulos);">Resumo Financeiro (Mês Atual)</h3>
-                    <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 0.9rem;">Custo de Aquisição de Cliente estimado com base nos custos totais do mês divididos pelos novos pagantes do período selecionado acima.</p>
-                </div>
+        // 5. COHORTS
+        if (cohortRes.ok) {
+            const result = await cohortRes.json();
+            const tbody = document.getElementById('cohorts-tbody');
+            tbody.innerHTML = '';
+            result.data.forEach(c => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid #f1f5f9';
                 
-                <div style="display: flex; gap: 30px; flex-wrap: wrap; background: rgba(0,0,0,0.2); padding: 15px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
-                    <div title="Monthly Recurring Revenue: Receita mensal recorrente gerada pelas assinaturas ativas neste exato momento.">
-                        <p style="margin: 0 0 5px 0; font-size: 0.75rem; color: rgba(255,255,255,0.6); text-transform: uppercase;">MRR Atual</p>
-                        <h4 style="margin: 0; font-size: 1.5rem; color: #10b981;" id="macro-mrr">R$ 0,00</h4>
-                    </div>
-                    <div title="Soma de todos os gastos operacionais cadastrados para o mês atual.">
-                        <p style="margin: 0 0 5px 0; font-size: 0.75rem; color: rgba(255,255,255,0.6); text-transform: uppercase;">Custos</p>
-                        <h4 style="margin: 0; font-size: 1.5rem; color: #ef4444;" id="macro-custos">R$ 0,00</h4>
-                    </div>
-                    <div title="Custo de Aquisição de Cliente: Total de custos do mês atual dividido pela quantidade de Novos Pagantes no período filtrado.">
-                        <p style="margin: 0 0 5px 0; font-size: 0.75rem; color: rgba(255,255,255,0.6); text-transform: uppercase;">CAC (Estimado)</p>
-                        <h4 style="margin: 0; font-size: 1.5rem; color: #f59e0b;" id="macro-cac">R$ 0,00</h4>
-                    </div>
-                    <div style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 30px;" title="Seu MRR Atual subtraído do Total de Custos deste mês.">
-                        <p style="margin: 0 0 5px 0; font-size: 0.75rem; color: rgba(255,255,255,0.6); text-transform: uppercase;">Lucro Líquido</p>
-                        <h4 style="margin: 0; font-size: 1.5rem; color: #3b82f6;" id="macro-lucro">R$ 0,00</h4>
-                    </div>
-                </div>
-            </div>
-        </div>
+                const getTd = (val) => {
+                    if (val === null) return `<td style="padding:15px; color:#cbd5e1;">-</td>`;
+                    const alpha = val / 100;
+                    return `<td style="padding:15px; background:rgba(16,185,129,${alpha}); font-weight:600;">${val}%</td>`;
+                };
 
-        <div style="display: grid; grid-template-columns: 1fr; gap: 30px;">
-            <!-- Gráfico Cumulativo -->
-            <div class="chart-card" style="background: white; border-radius: 12px; padding: 20px 20px 40px 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);" title="Mostra a evolução total da base de psicólogos da Yelo ao longo do tempo.">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; margin-bottom: 20px; gap: 15px;">
-                    <div>
-                        <h3 style="margin: 0 0 5px 0; color: #1e293b;">Evolução do Período</h3>
-                        <p style="margin: 0; color: #64748b; font-size: 0.9rem;">Valores exatos (não cumulativos) de cada dia/semana dentro do período selecionado.</p>
-                    </div>
-                    <div style="display: flex; gap: 15px; flex-wrap: wrap; background: #f8f9fa; padding: 10px 15px; border-radius: 8px; border: 1px solid #e9ecef;">
-                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: #10b981;">
-                            <input type="checkbox" id="togglePagantes" checked onchange="updateCumulativoVisibility()"> Pagantes
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: #3b82f6;">
-                            <input type="checkbox" id="toggleTrialsAtivos" checked onchange="updateCumulativoVisibility()"> Trials Ativos
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: #8b5cf6;">
-                            <input type="checkbox" id="toggleTrialsExpirados" onchange="updateCumulativoVisibility()"> Expirados
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: #ef4444;">
-                            <input type="checkbox" id="toggleChurn" onchange="updateCumulativoVisibility()"> Churn
-                        </label>
-                    </div>
-                </div>
-                <div style="position: relative; height: 300px; width: 100%;">
-                    <canvas id="chartCumulativo"></canvas>
-                </div>
-            </div>
+                tr.innerHTML = `
+                    <td style="padding:15px; text-align:left; font-weight:700;">${c.month}</td>
+                    <td style="padding:15px; font-weight:600;">${c.cohortSize}</td>
+                    ${getTd(c.retention.M0)}
+                    ${getTd(c.retention.M1)}
+                    ${getTd(c.retention.M2)}
+                    ${getTd(c.retention.M3)}
+                    ${getTd(c.retention.M4)}
+                    ${getTd(c.retention.M5)}
+                `;
+                tbody.appendChild(tr);
+            });
+        }
 
-            <!-- Gráfico Por Período -->
-            <div class="chart-card" style="background: white; border-radius: 12px; padding: 20px 20px 40px 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);" title="Analise mês a mês quantos profissionais entraram e quantos cancelaram.">
-                <h3 style="margin: 0 0 5px 0; color: #1e293b;">Aquisição vs Perda (Novos por Período)</h3>
-                <p style="margin: 0 0 20px 0; color: #64748b; font-size: 0.9rem;">Análise de novas entradas (Trials + Pagantes) vs Cancelamentos na mesma janela.</p>
-                <div style="position: relative; height: 300px; width: 100%;">
-                    <canvas id="chartPeriodo"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+        document.getElementById('growth-loading').style.display = 'none';
+        document.getElementById('growth-content').style.display = 'block';
+        lastUpdate = new Date();
+        updateTimeAgo();
 
-<!-- Modal Metas -->
-<div id="modal-founder-goals" class="modal-overlay" style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
-    <div style="background:white; padding:30px; border-radius:12px; width:400px; max-width:90%; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);">
-        <h3 style="margin:0 0 20px; font-weight:800; font-size:1.4rem;">Configurar Metas</h3>
-        
-        <label style="display:block; margin-bottom:15px;">
-            <span style="display:block; font-size:0.9rem; font-weight:600; color:#374151; margin-bottom:5px;">Meta de MRR (R$)</span>
-            <input type="number" id="input-goal-mrr" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:6px;">
-        </label>
-        <label style="display:block; margin-bottom:15px;">
-            <span style="display:block; font-size:0.9rem; font-weight:600; color:#374151; margin-bottom:5px;">Meta de Pagantes Ativos</span>
-            <input type="number" id="input-goal-users" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:6px;">
-        </label>
-        <label style="display:block; margin-bottom:15px;">
-            <span style="display:block; font-size:0.9rem; font-weight:600; color:#374151; margin-bottom:5px;">Prazo da Meta (Meses)</span>
-            <input type="number" id="input-goal-months" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:6px;">
-        </label>
-        <label style="display:block; margin-bottom:15px;">
-            <span style="display:block; font-size:0.9rem; font-weight:600; color:#374151; margin-bottom:5px;">Meta de Novos p/ Mês (Líquido)</span>
-            <input type="number" id="input-goal-new" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:6px;">
-        </label>
-        
-        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:25px;">
-            <button onclick="document.getElementById('modal-founder-goals').style.display='none'" style="padding:10px 15px; border:1px solid #d1d5db; background:white; border-radius:6px; cursor:pointer;">Cancelar</button>
-            <button onclick="saveFounderGoals()" style="padding:10px 20px; border:none; background:#1B4332; color:white; border-radius:6px; font-weight:600; cursor:pointer;">Salvar</button>
-        </div>
-    </div>
-</div>
+    } catch (err) {
+        console.error(err);
+        alert('Erro ao carregar dados do Growth Dashboard');
+    }
+}
+
+function updateTimeAgo() {
+    const diffMins = Math.floor((new Date() - lastUpdate) / 60000);
+    document.getElementById('growth-last-updated').innerText = `Dados atualizados há ${diffMins} minutos`;
+}
+setInterval(updateTimeAgo, 60000);
+document.addEventListener("DOMContentLoaded", loadGrowthData);
+</script>

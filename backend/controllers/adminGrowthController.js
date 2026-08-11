@@ -216,3 +216,64 @@ exports.getGrowthData = async (req, res) => {
         res.status(500).json({ error: "Erro interno no servidor ao processar os analytics de crescimento." });
     }
 };
+
+const growthService = require('../services/growthService');
+const growthAcquisitionService = require('../services/growthAcquisitionService');
+const growthDemandService = require('../services/growthDemandService');
+const growthMarketingService = require('../services/growthMarketingService');
+const growthCohortService = require('../services/growthCohortService');
+
+exports.getOverview = async (req, res) => {
+    try {
+        const periodDays = parseInt(req.query.days) || 30;
+        const data = await growthService.getOverview(periodDays);
+        res.json({ success: true, data });
+    } catch (error) {
+        console.error('Error fetching growth overview:', error);
+        res.status(500).json({ success: false, message: 'Erro ao carregar dados de growth' });
+    }
+};
+
+exports.getAcquisition = async (req, res) => {
+    try {
+        const periodDays = parseInt(req.query.days) || 30;
+        const data = await growthAcquisitionService.getFunnel(periodDays);
+        res.json({ success: true, data });
+    } catch (error) {
+        console.error('Error fetching acquisition funnel:', error);
+        res.status(500).json({ success: false, message: 'Erro ao carregar funil de aquisição' });
+    }
+};
+
+exports.getDemand = async (req, res) => {
+    try {
+        const periodDays = parseInt(req.query.days) || 30;
+        const funnel = await growthDemandService.getFunnel(periodDays);
+        const health = await growthDemandService.getMarketplaceHealth(periodDays);
+        res.json({ success: true, data: { funnel, health } });
+    } catch (error) {
+        console.error('Error fetching demand funnel:', error);
+        res.status(500).json({ success: false, message: 'Erro ao carregar funil de demanda' });
+    }
+};
+
+exports.getMarketing = async (req, res) => {
+    try {
+        const periodDays = parseInt(req.query.days) || 30;
+        const data = await growthMarketingService.getUnitEconomics(periodDays);
+        res.json({ success: true, data });
+    } catch (error) {
+        console.error('Error fetching marketing data:', error);
+        res.status(500).json({ success: false, message: 'Erro ao carregar unit economics' });
+    }
+};
+
+exports.getCohorts = async (req, res) => {
+    try {
+        const data = await growthCohortService.getRetentionCohorts(6);
+        res.json({ success: true, data });
+    } catch (error) {
+        console.error('Error fetching cohorts:', error);
+        res.status(500).json({ success: false, message: 'Erro ao carregar cohorts' });
+    }
+};
