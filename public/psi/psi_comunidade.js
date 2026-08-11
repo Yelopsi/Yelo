@@ -161,7 +161,12 @@
 
                 if(cardElement) cardElement.style.position = 'relative';
 
-                clone.querySelector('.qna-question-title').textContent = q.titulo || q.title || 'Dúvida da Comunidade';
+                const rawQuestionText = q.conteudo || q.content || 'Dúvida da Comunidade';
+                let displayTitle = rawQuestionText;
+                if (displayTitle.length > 70) {
+                    displayTitle = displayTitle.substring(0, 70) + '...';
+                }
+                clone.querySelector('.qna-question-title').textContent = displayTitle;
                 
                 const cardBody = clone.querySelector('.qna-card-body');
                 if (cardBody) {
