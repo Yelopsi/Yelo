@@ -111,7 +111,14 @@ class GrowthMarketingService {
         }
 
         // 5. Payback (Meses para recuperar CAC)
-        const payback = arpu > 0 ? cac / arpu : 0;
+        let payback = null;
+        if (totalMarketingSpend > 0 && arpu > 0) {
+            payback = cac / arpu;
+        }
+
+        // Flags de confiabilidade
+        const hasMarketingSpend = totalMarketingSpend > 0;
+        const amostraSuficienteLTV = churnCount >= 3 && activeCount >= 10;
 
         return {
             totalMarketingSpend,
@@ -124,7 +131,8 @@ class GrowthMarketingService {
             ltv,
             payback,
             periodDays,
-            amostraSuficienteLTV: churnCount >= 3 && activeCount >= 10 // Flag para o frontend exibir alerta de baixa confiança
+            hasMarketingSpend,
+            amostraSuficienteLTV
         };
     }
 }

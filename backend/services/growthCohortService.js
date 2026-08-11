@@ -10,27 +10,38 @@ class GrowthCohortService {
             const startOfMonth = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const endOfMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59);
             
-            // Quantos psicólogos criaram a conta (iniciaram trial) neste mês
-            const usuariosCohort = await db.Psychologist.findAll({
+            // 1. COHORT DE AQUISIÇÃO (Trials)
+            const usuariosTrials = await db.Psychologist.findAll({
                 where: {
                     createdAt: { [Op.gte]: startOfMonth, [Op.lte]: endOfMonth },
                     is_exempt: { [Op.or]: [false, null] }
                 },
-                attributes: ['id', 'status', 'cancelAtPeriodEnd', 'planExpiresAt', 'updatedAt']
+                attributes: ['id', 'status', 'stripeSubscriptionId', 'subscriptionId']
             });
 
-            const cohortSize = usuariosCohort.length;
+            const trialCohortSize = usuariosTrials.length;
+            let trialsConvertidos = 0;
+            
+            usuariosTrials.forEach(u => {
+                if (u.stripeSubscriptionId || u.subscriptionId) {
+                    trialsConvertidos++;
+                }
+            });
+            const trialConvRate = trialCohortSize > 0 ? Math.round((trialsConvertidos / trialCohortSize) * 100) : 0;
+
+            // 2. COHORT DE RETENÇÃO (Pagantes)
+            // Aqui deveríamos usar a data em que o psicólogo ASSINOU (virou pagante). 
+            // Na falta de um event log puro no sistema legado, usamos a data de criação filtrando quem É pagante.
+            // Para maior fidelidade, pegamos apenas os pagantes que foram adquiridos nesse mês.
+            const pagantesCohortSize = trialsConvertidos;
             const retention = { M0: 100, M1: null, M2: null, M3: null, M4: null, M5: null };
             
-            if (cohortSize > 0) {
-                // Simplificação heurística para M1 a M5 baseada no estado atual
-                // O ideal é ter snapshots ou event logs. Na falta deles, se o usuário está ativo, ele foi retido.
-                // Se ele está inativo, a gente estima o mês do cancelamento pelo updatedAt ou planExpiresAt.
-                const cancelMonths = usuariosCohort.map(u => {
-                    if (u.status === 'active' && (!u.cancelAtPeriodEnd || new Date(u.planExpiresAt) > now)) {
-                        return 999; // Continua ativo
-                    }
-                    const exitDate = u.planExpiresAt ? new Date(u.planExpiresAt) : new Date(u.updatedAt);
+            if (pagantesCohortSize > 0) {
+                const pagantes = usuariosTrials.filter(u => u.stripeSubscriptionId || u.subscriptionId);
+                
+                const cancelMonths = pagantes.map(u => {
+                    if (u.status === 'active') return 999;
+                    const exitDate = new Date(u.updatedAt);
                     const monthsDiff = (exitDate.getFullYear() - startOfMonth.getFullYear()) * 12 + (exitDate.getMonth() - startOfMonth.getMonth());
                     return monthsDiff >= 0 ? monthsDiff : 0;
                 });
@@ -38,14 +49,21 @@ class GrowthCohortService {
                 for (let m = 1; m <= 5; m++) {
                     if (i < m) break; // Mês futuro
                     const retidos = cancelMonths.filter(cm => cm >= m).length;
-                    retention[`M${m}`] = Math.round((retidos / cohortSize) * 100);
+                    retention[`M${m}`] = Math.round((retidos / pagantesCohortSize) * 100);
                 }
             }
 
             cohorts.push({
                 month: startOfMonth.toLocaleString('pt-BR', { month: 'short', year: 'numeric' }),
-                cohortSize,
-                retention
+                acquisition: {
+                    size: trialCohortSize,
+                    converted: trialsConvertidos,
+                    conversionRate: trialConvRate
+                },
+                retention: {
+                    size: pagantesCohortSize,
+                    ...retention
+                }
             });
         }
 

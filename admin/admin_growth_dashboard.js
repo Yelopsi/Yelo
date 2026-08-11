@@ -94,15 +94,29 @@ window.loadGrowthData = async function() {
             const result = await mktRes.json();
             const d = result.data;
             window.growthDataState.marketing = d;
-            document.getElementById('g-cac').innerText = formatBRL(d.cac);
+            
+            if (d.hasMarketingSpend) {
+                document.getElementById('g-cac').innerText = formatBRL(d.cac);
+                document.getElementById('g-payback').innerText = d.payback ? d.payback.toFixed(1) + 'm' : '0m';
+            } else {
+                document.getElementById('g-cac').innerText = 'N/A';
+                document.getElementById('g-payback').innerText = 'N/A';
+                document.getElementById('g-cac').style.color = '#94a3b8';
+                document.getElementById('g-payback').style.color = '#94a3b8';
+            }
+            
             document.getElementById('g-arpu').innerText = formatBRL(d.arpu);
-            document.getElementById('g-ltv').innerText = formatBRL(d.ltv);
-            document.getElementById('g-payback').innerText = d.payback.toFixed(1) + 'm';
+            document.getElementById('g-ltv').innerText = d.amostraSuficienteLTV ? formatBRL(d.ltv) : 'S/ Dados';
+            if (!d.amostraSuficienteLTV) document.getElementById('g-ltv').style.color = '#94a3b8';
+            else document.getElementById('g-ltv').style.color = '#8b5cf6';
+            
             document.getElementById('g-spend-total').innerText = 'Gasto Total: ' + formatBRL(d.totalMarketingSpend);
             
             if (!d.amostraSuficienteLTV) {
-                document.getElementById('g-ltv-warn').innerText = '(Baixa confiança - amostra pequena)';
+                document.getElementById('g-ltv-warn').innerText = '(Amostra insuficiente p/ Churn)';
                 document.getElementById('g-ltv-warn').style.color = '#f59e0b';
+            } else {
+                document.getElementById('g-ltv-warn').innerText = '';
             }
         }
 
@@ -123,7 +137,8 @@ window.loadGrowthData = async function() {
 
                 tr.innerHTML = `
                     <td style="padding:15px; text-align:left; font-weight:700;">${c.month}</td>
-                    <td style="padding:15px; font-weight:600;">${c.cohortSize}</td>
+                    <td style="padding:15px; font-weight:600; border-right:2px solid #e2e8f0; background:#f8fafc;" title="${c.acquisition.converted} pagantes convertidos de ${c.acquisition.size} trials">${c.acquisition.size} <span style="font-size:0.75rem; color:#10b981;">(${c.acquisition.conversionRate}%)</span></td>
+                    <td style="padding:15px; font-weight:600;">${c.retention.size}</td>
                     ${getTd(c.retention.M0)}
                     ${getTd(c.retention.M1)}
                     ${getTd(c.retention.M2)}

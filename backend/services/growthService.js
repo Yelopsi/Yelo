@@ -72,6 +72,7 @@ class GrowthService {
         });
 
         // 4. Churn (Cancelamento efetivo, separando quem era pagante de quem era trial)
+        // Precisamos saber quem cancelou DENTRO do período.
         const allChurners = await db.Psychologist.findAll({
             where: {
                 is_exempt: { [Op.or]: [false, null] },
@@ -91,6 +92,12 @@ class GrowthService {
             if (hasSub) churnPagantes++;
             else churnTrial++;
         });
+        
+        // 4.1 Ativos no INÍCIO do período (para o Churn Rate correto)
+        // Ativos Iniciais = Ativos Finais + Cancelados no Período - Adquiridos no Período
+        const ativosFinais = pagantesAtivos.length;
+        const ativosIniciais = (ativosFinais + churnPagantes) - novosPagantes;
+        const taxaChurnPagantes = ativosIniciais > 0 ? (churnPagantes / ativosIniciais) * 100 : 0;
 
         // 5. Trials Ativos
         const trialsAtivos = await db.Psychologist.count({
@@ -171,6 +178,8 @@ class GrowthService {
             mrrComDemanda,
             mrrSemDemanda,
             totalAtivos: pagantesAtivos.length,
+            ativosIniciais,
+            taxaChurnPagantes,
             novosPagantes,
             churnPagantes,
             churnTrial,

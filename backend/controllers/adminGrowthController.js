@@ -277,3 +277,94 @@ exports.getCohorts = async (req, res) => {
         res.status(500).json({ success: false, message: 'Erro ao carregar cohorts' });
     }
 };
+
+exports.getAudit = async (req, res) => {
+    try {
+        const periodDays = parseInt(req.query.days) || 30;
+        const now = new Date();
+        const periodStart = new Date();
+        periodStart.setDate(periodStart.getDate() - periodDays);
+
+        // 1. Demand Funnel
+        const visitas = await db.SiteVisit.count({ where: { createdAt: { [Op.gte]: periodStart } } });
+        const startedCount = await db.DemandSearch.count({ where: { createdAt: { [Op.gte]: periodStart }, status: 'started' } });
+        const matchedCount = await db.DemandSearch.count({ where: { createdAt: { [Op.gte]: periodStart }, status: { [Op.in]: ['completed', 'matched'] } } });
+        const totalInitiatedCount = await db.DemandSearch.count({ where: { createdAt: { [Op.gte]: periodStart } } });
+        
+        // 2. Pagantes Ativos & MRR
+        const pagantesAtivos = await db.Psychologist.findAll({
+            where: {
+                status: 'active',
+                is_exempt: { [Op.or]: [false, null] },
+                [Op.or]: [
+                    { stripeSubscriptionId: { [Op.not]: null } },
+                    { subscriptionId: { [Op.not]: null } }
+                ]
+            },
+            attributes: ['id', 'cancelAtPeriodEnd', 'planExpiresAt', 'plano', 'status']
+        });
+        
+        const activeIds = [];
+        let expiredButNotStatusUpdated = 0;
+        pagantesAtivos.forEach(p => {
+            if (p.cancelAtPeriodEnd && p.planExpiresAt && new Date(p.planExpiresAt) < now) {
+                expiredButNotStatusUpdated++;
+            } else {
+                activeIds.push(p.id);
+            }
+        });
+
+        // 3. Churn
+        const allChurners = await db.Psychologist.findAll({
+            where: {
+                is_exempt: { [Op.or]: [false, null] },
+                [Op.or]: [
+                    { status: 'inactive', updatedAt: { [Op.gte]: periodStart } },
+                    { cancelAtPeriodEnd: true, planExpiresAt: { [Op.gte]: periodStart, [Op.lte]: now } }
+                ]
+            },
+            attributes: ['id', 'stripeSubscriptionId', 'subscriptionId', 'createdAt']
+        });
+        
+        let churnPagantes = 0;
+        let churnTrial = 0;
+        allChurners.forEach(c => {
+            if (c.stripeSubscriptionId || c.subscriptionId) churnPagantes++;
+            else churnTrial++;
+        });
+
+        // 4. Marketing Expenses
+        const expenses = await db.YeloExpense.findAll({ where: { createdAt: { [Op.gte]: periodStart } } });
+        const expenseCategories = expenses.map(e => e.category).join(', ');
+
+        res.json({
+            success: true,
+            diagnostics: {
+                demandFunnel: {
+                    visitas,
+                    abandonedSearches: startedCount,
+                    completedOrMatched: matchedCount,
+                    totalInitiated: totalInitiatedCount
+                },
+                actives: {
+                    rawTotal: pagantesAtivos.length,
+                    expiredButNotStatusUpdated,
+                    cleanActives: activeIds.length,
+                    activeIds
+                },
+                churn: {
+                    totalChurnersFound: allChurners.length,
+                    churnPagantes,
+                    churnTrial
+                },
+                marketing: {
+                    expenseCount: expenses.length,
+                    categories: expenseCategories
+                }
+            }
+        });
+    } catch (e) {
+        console.error('Audit Error:', e);
+        res.status(500).json({ error: e.message });
+    }
+};

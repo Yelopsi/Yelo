@@ -139,6 +139,7 @@ router.get('/growth/acquisition', adminGrowthController.getAcquisition);
 router.get('/growth/demand', adminGrowthController.getDemand);
 router.get('/growth/marketing', adminGrowthController.getMarketing);
 router.get('/growth/cohorts', adminGrowthController.getCohorts);
+router.get('/growth/audit', adminGrowthController.getAudit);
 
 // --- ROTAS FINANCEIRAS E DESPESAS ---
 router.get('/expenses', adminExpenseController.getExpenses);

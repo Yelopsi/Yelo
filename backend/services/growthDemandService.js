@@ -12,8 +12,15 @@ class GrowthDemandService {
             where: { createdAt: { [Op.gte]: periodStart } }
         });
 
-        // 2. Questionários Iniciados (DemandSearch status = started)
+        // 2. Questionários Iniciados (Qualquer status, representa todos que começaram)
         const questionariosIniciados = await db.DemandSearch.count({
+            where: { 
+                createdAt: { [Op.gte]: periodStart }
+            }
+        });
+
+        // Opcional: Questionários Abandonados (status = started)
+        const questionariosAbandonados = await db.DemandSearch.count({
             where: { 
                 createdAt: { [Op.gte]: periodStart },
                 status: 'started'
@@ -45,6 +52,7 @@ class GrowthDemandService {
             visitas,
             questionariosIniciados,
             questionariosConcluidos,
+            questionariosAbandonados,
             matches,
             contatos,
             periodDays
