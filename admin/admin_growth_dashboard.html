@@ -39,7 +39,8 @@
     border-style: solid;
     border-color: #1f2937 transparent transparent transparent;
 }
-.yelo-tooltip:hover .yelo-tooltip-content {
+.yelo-tooltip:hover .yelo-tooltip-content,
+.yelo-tooltip:active .yelo-tooltip-content {
     visibility: visible;
     opacity: 1;
 }
@@ -71,6 +72,14 @@
     font-size: 0.85rem; 
     margin-top: 5px;
 }
+.funnel-wrapper {
+    display: flex; 
+    gap: 30px; 
+    background: white; 
+    padding: 25px; 
+    border-radius: 12px; 
+    border: 1px solid #eaeaea;
+}
 .funnel-step {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
@@ -81,26 +90,65 @@
     flex: 1;
 }
 .funnel-step:not(:last-child)::after {
-    content: "↓";
+    content: "→";
     position: absolute;
-    right: -20px;
+    right: -25px;
     top: 50%;
     transform: translateY(-50%);
     font-size: 1.5rem;
     color: #94a3b8;
     z-index: 10;
 }
-@media (max-width: 768px) {
-    .funnel-step:not(:last-child)::after {
-        right: 50%;
-        top: auto;
-        bottom: -25px;
-        transform: translateX(50%);
-    }
-}
 .funnel-value { font-size: 1.5rem; font-weight: 800; color: #1e293b; }
 .funnel-label { font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase; }
 .funnel-conv { font-size: 0.75rem; color: #10b981; font-weight: 700; margin-top: 5px; background: #d1fae5; padding: 2px 6px; border-radius: 10px; display: inline-block;}
+
+/* RESPONSIVO BÁSICO */
+.grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+.header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .funnel-wrapper {
+        flex-direction: column;
+        gap: 20px;
+    }
+    .funnel-step:not(:last-child)::after {
+        content: "↓";
+        right: 50%;
+        top: auto;
+        bottom: -22px;
+        transform: translateX(50%);
+    }
+    .grid-2col {
+        grid-template-columns: 1fr;
+    }
+    .header-actions {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .header-actions select, .header-actions button {
+        width: 100%;
+    }
+    .main-header {
+        padding: 20px 15px !important;
+    }
+    .yelo-tooltip-content {
+        left: 0;
+        transform: translateX(-80%);
+    }
+    .yelo-tooltip-content::after {
+        left: 80%;
+    }
+}
 </style>
 
 <div class="modern-dashboard-layout" style="background-color: #fafafa; min-height: 100vh; padding-bottom: 50px;">
@@ -111,7 +159,7 @@
                 <h1 style="font-size: 2rem; color: white; font-weight: 800; margin: 0 0 5px 0; font-family: var(--font-titulos);">Growth 📈</h1>
                 <p class="subtitulo-header" style="color: rgba(255,255,255,0.8); font-size: 1.05rem; margin: 0;">Visão completa de aquisição, conversão, retenção e economia do Yelo.</p>
             </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
+            <div class="header-actions">
                 <select id="growth-period" onchange="loadGrowthData()" style="padding: 10px 15px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; outline: none;">
                     <option value="7">Últimos 7 dias</option>
                     <option value="30" selected>Últimos 30 dias</option>
@@ -195,7 +243,7 @@
         <!-- SEÇÃO 3: FUNIL MOTOR 2 (OFERTA) -->
         <div style="margin-bottom: 30px;">
             <h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin-bottom: 15px;">Funil de Aquisição de Psicólogos</h2>
-            <div style="display: flex; gap: 30px; background: white; padding: 25px; border-radius: 12px; border: 1px solid #eaeaea; overflow-x: auto;">
+            <div class="funnel-wrapper">
                 <div class="funnel-step">
                     <div class="funnel-label">Leads (Mapeados)</div>
                     <div class="funnel-value" id="f-acq-leads">0</div>
@@ -219,7 +267,7 @@
         </div>
 
         <!-- SEÇÃO 4: FUNIL MOTOR 1 E MARKETPLACE HEALTH -->
-        <div style="margin-bottom: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="grid-2col" style="margin-bottom: 30px;">
             <div style="background: white; padding: 25px; border-radius: 12px; border: 1px solid #eaeaea;">
                 <h2 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin-bottom: 15px;">Funil de Demanda (Pacientes)</h2>
                 <div style="display: flex; flex-direction: column; gap: 15px;">
@@ -277,7 +325,7 @@
         <!-- SEÇÃO 5: COHORTS -->
         <div style="margin-bottom: 30px;">
             <h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin-bottom: 15px;">Retenção de Cohorts</h2>
-            <div style="background: white; border-radius: 12px; border: 1px solid #eaeaea; overflow: hidden;">
+            <div style="background: white; border-radius: 12px; border: 1px solid #eaeaea; overflow-x: auto; -webkit-overflow-scrolling: touch;">
                 <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 0.9rem;">
                     <thead style="background: #f8fafc; color: #64748b; font-weight: 600;">
                         <tr>
