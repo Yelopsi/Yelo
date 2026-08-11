@@ -187,7 +187,90 @@
             </div>
         </div>
 
+        <p id="ab-note" style="text-align: center; margin-top: 15px; font-size: 0.95rem; color: #64748b; font-style: italic;">Carregando dados...</p>
+
     </div>
 
+    <script src="/config.js"></script>
+    <script>
+        async function loadAbTestData() {
+            const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
+            const token = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : localStorage.getItem('Yelo_token');
+
+            const setLoading = (loading) => {
+                const els = ['clicks-a', 'clicks-b', 'rate-a', 'rate-b'];
+                els.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el && loading) el.textContent = '...';
+                });
+            };
+
+            setLoading(true);
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/admin/analytics/whatsapp-ab`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                const data = await res.json();
+                const cliquesA = data.A || 0;
+                const cliquesB = data.B || 0;
+                const total = cliquesA + cliquesB;
+
+                document.getElementById('clicks-a').textContent = cliquesA;
+                document.getElementById('clicks-b').textContent = cliquesB;
+
+                const rateA = total > 0 ? ((cliquesA / total) * 100).toFixed(1) : '0';
+                const rateB = total > 0 ? ((cliquesB / total) * 100).toFixed(1) : '0';
+                document.getElementById('rate-a').textContent = `${rateA}%`;
+                document.getElementById('rate-b').textContent = `${rateB}%`;
+
+                // Destaca o vencedor
+                if (total > 0) {
+                    if (cliquesA > cliquesB) {
+                        document.getElementById('clicks-a').style.color = '#3b82f6';
+                        document.getElementById('rate-a').parentElement.closest('.variant-card').style.boxShadow = '0 0 0 2px #3b82f6';
+                    } else if (cliquesB > cliquesA) {
+                        document.getElementById('clicks-b').style.color = '#10b981';
+                        document.getElementById('rate-b').parentElement.closest('.variant-card').style.boxShadow = '0 0 0 2px #10b981';
+                    }
+                }
+
+                // Adiciona nota de amostra insuficiente se total for baixo
+                const noteEl = document.getElementById('ab-note');
+                if (noteEl) {
+                    if (total === 0) {
+                        noteEl.textContent = '⚠️ Nenhum dado ainda. Os cliques aparecerão aqui conforme pacientes usarem o botão de WhatsApp.';
+                        noteEl.style.color = '#d97706';
+                    } else if (total < 50) {
+                        noteEl.textContent = `ℹ️ Amostra atual: ${total} cliques. Resultados estatisticamente relevantes a partir de ~50 cliques por variante.`;
+                        noteEl.style.color = '#0369a1';
+                    } else {
+                        noteEl.textContent = `✅ Amostra robusta: ${total} cliques totais.`;
+                        noteEl.style.color = '#15803d';
+                    }
+                }
+
+            } catch(e) {
+                console.error('Erro ao carregar dados do Teste A/B:', e);
+                ['clicks-a', 'clicks-b', 'rate-a', 'rate-b'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = '-';
+                });
+            }
+        }
+
+        window.initializePage = function() {
+            loadAbTestData();
+        };
+
+        // Carrega automaticamente se estiver em contexto standalone
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadAbTestData);
+        } else {
+            loadAbTestData();
+        }
+    </script>
 </body>
 </html>
