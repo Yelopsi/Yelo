@@ -26,7 +26,12 @@ class GrowthService {
         });
 
         // Tentar usar o SystemSetting, mas com fallback para os preços reais praticados
-        const settings = await db.SystemSetting.findOne() || {};
+        let settings = {};
+        try {
+            settings = await db.SystemSetting.findOne() || {};
+        } catch(e) {
+            console.warn('⚠️ SystemSetting findOne failed (likely missing columns), using default prices');
+        }
         const priceEssencial = settings.price_Essencial > 0 ? settings.price_Essencial : 99.00;
         const priceClinico = settings.price_Clínico > 0 ? settings.price_Clínico : 159.00;
         const priceReference = settings.price_sol > 0 ? settings.price_sol : 259.00;

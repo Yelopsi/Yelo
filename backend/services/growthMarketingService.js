@@ -64,7 +64,12 @@ class GrowthMarketingService {
             attributes: ['id', 'valor_mensal_numero', 'plano', 'planExpiresAt', 'cancelAtPeriodEnd']
         });
 
-        const settings = await db.SystemSetting.findOne() || {};
+        let settings = {};
+        try {
+            settings = await db.SystemSetting.findOne() || {};
+        } catch(e) {
+            console.warn('⚠️ SystemSetting findOne failed, using default prices');
+        }
         const priceEssencial = settings.price_Essencial > 0 ? settings.price_Essencial : 99.00;
         const priceClinico = settings.price_Clínico > 0 ? settings.price_Clínico : 159.00;
         const priceReference = settings.price_sol > 0 ? settings.price_sol : 259.00;
