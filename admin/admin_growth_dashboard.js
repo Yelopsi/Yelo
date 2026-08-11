@@ -6,10 +6,17 @@ window.initializePage = function() {
 
 window.loadGrowthData = async function() {
     const periodDays = document.getElementById('growth-period').value;
+    
     document.getElementById('growth-content').style.display = 'none';
     document.getElementById('growth-loading').style.display = 'block';
 
-    window.growthDataState = null;
+    window.growthDataState = {
+        overview: null,
+        acquisition: null,
+        demand: null,
+        marketing: null,
+        cohorts: null
+    };
 
     try {
         const [overviewRes, acqRes, demRes, mktRes, cohortRes] = await Promise.all([
@@ -26,6 +33,7 @@ window.loadGrowthData = async function() {
         if (overviewRes.ok) {
             const result = await overviewRes.json();
             const data = result.data;
+            window.growthDataState.overview = data;
             document.getElementById('g-mrr-total').innerText = formatBRL(data.mrrTotal);
             document.getElementById('g-mrr-demanda-split').innerHTML = `
                 <span style="color:#10b981">C/ demanda: ${formatBRL(data.mrrComDemanda)}</span> | 
@@ -42,6 +50,7 @@ window.loadGrowthData = async function() {
         if (acqRes.ok) {
             const result = await acqRes.json();
             const d = result.data;
+            window.growthDataState.acquisition = d;
             document.getElementById('f-acq-leads').innerText = d.leadsIdentificados;
             document.getElementById('f-acq-contact').innerText = d.primeiroContato;
             document.getElementById('f-acq-trial').innerText = d.trialsIniciados;
@@ -60,6 +69,7 @@ window.loadGrowthData = async function() {
         if (demRes.ok) {
             const result = await demRes.json();
             const { funnel, health } = result.data;
+            window.growthDataState.demand = result.data;
             document.getElementById('f-dem-visits').innerText = funnel.visitas;
             document.getElementById('f-dem-searches').innerText = funnel.questionariosIniciados;
             document.getElementById('f-dem-matches').innerText = funnel.questionariosConcluidos;
@@ -83,6 +93,7 @@ window.loadGrowthData = async function() {
         if (mktRes.ok) {
             const result = await mktRes.json();
             const d = result.data;
+            window.growthDataState.marketing = d;
             document.getElementById('g-cac').innerText = formatBRL(d.cac);
             document.getElementById('g-arpu').innerText = formatBRL(d.arpu);
             document.getElementById('g-ltv').innerText = formatBRL(d.ltv);
@@ -123,13 +134,6 @@ window.loadGrowthData = async function() {
                 tbody.appendChild(tr);
             });
         }
-
-        window.growthDataState = {
-            overview: overviewRes.ok ? (await overviewRes.clone().json()).data : null,
-            acquisition: acqRes.ok ? (await acqRes.clone().json()).data : null,
-            demand: demRes.ok ? (await demRes.clone().json()).data : null,
-            marketing: mktRes.ok ? (await mktRes.clone().json()).data : null
-        };
 
         document.getElementById('growth-loading').style.display = 'none';
         document.getElementById('growth-content').style.display = 'block';
