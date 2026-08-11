@@ -9,6 +9,8 @@ window.loadGrowthData = async function() {
     document.getElementById('growth-content').style.display = 'none';
     document.getElementById('growth-loading').style.display = 'block';
 
+    window.growthDataState = null;
+
     try {
         const [overviewRes, acqRes, demRes, mktRes, cohortRes] = await Promise.all([
             fetch(`/api/admin/growth/overview?days=${periodDays}`),
@@ -122,6 +124,13 @@ window.loadGrowthData = async function() {
             });
         }
 
+        window.growthDataState = {
+            overview: overviewRes.ok ? (await overviewRes.clone().json()).data : null,
+            acquisition: acqRes.ok ? (await acqRes.clone().json()).data : null,
+            demand: demRes.ok ? (await demRes.clone().json()).data : null,
+            marketing: mktRes.ok ? (await mktRes.clone().json()).data : null
+        };
+
         document.getElementById('growth-loading').style.display = 'none';
         document.getElementById('growth-content').style.display = 'block';
         window.growthLastUpdate = new Date();
@@ -141,4 +150,76 @@ window.updateTimeAgo = function() {
 if (!window.growthIntervalSet) {
     setInterval(window.updateTimeAgo, 60000);
     window.growthIntervalSet = true;
+}
+
+window.exportGrowthCSV = function() {
+    if (!window.growthDataState) {
+        alert("Aguarde os dados carregarem primeiro.");
+        return;
+    }
+    const d = window.growthDataState;
+    const periodDays = document.getElementById('growth-period').value;
+    const formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
+    let csv = `\uFEFFRelatorio de Growth (Ultimos ${periodDays} dias) - Yelo\n`;
+    csv += `Gerado em: ${new Date().toLocaleString()}\n\n`;
+
+    if (d.overview) {
+        csv += `--- SAUDE FINANCEIRA E BASE ---\n`;
+        csv += `MRR Total;${formatBRL(d.overview.mrrTotal)}\n`;
+        csv += `MRR Com Demanda;${formatBRL(d.overview.mrrComDemanda)}\n`;
+        csv += `MRR Sem Demanda;${formatBRL(d.overview.mrrSemDemanda)}\n`;
+        csv += `Psicologos Ativos (Total);${d.overview.totalAtivos}\n`;
+        csv += `Novos Pagantes;${d.overview.novosPagantes}\n`;
+        csv += `Churn (Pagantes);${d.overview.churnPagantes}\n`;
+        csv += `Churn (Trial);${d.overview.churnTrial}\n`;
+        csv += `Trials Ativos;${d.overview.trialsAtivos}\n\n`;
+    }
+
+    if (d.marketing) {
+        csv += `--- ECONOMIA E MARKETING ---\n`;
+        csv += `CAC (Custo de Aquisicao);${formatBRL(d.marketing.cac)}\n`;
+        csv += `ARPU (Receita Media);${formatBRL(d.marketing.arpu)}\n`;
+        csv += `LTV Estimado;${formatBRL(d.marketing.ltv)}\n`;
+        csv += `Payback (Meses);${d.marketing.payback.toFixed(1)}\n`;
+        csv += `Gasto Total Marketing;${formatBRL(d.marketing.totalMarketingSpend)}\n\n`;
+    }
+
+    if (d.acquisition) {
+        const a = d.acquisition;
+        csv += `--- FUNIL DE AQUISICAO DE PSICOLOGOS ---\n`;
+        csv += `Leads Mapeados;${a.leadsIdentificados}\n`;
+        csv += `Contatados;${a.primeiroContato}\n`;
+        csv += `Cadastros (Trial);${a.trialsIniciados}\n`;
+        csv += `Pagantes;${a.viraramPagantes}\n\n`;
+    }
+
+    if (d.demand && d.demand.funnel) {
+        const f = d.demand.funnel;
+        csv += `--- FUNIL DE DEMANDA (PACIENTES) ---\n`;
+        csv += `Visitas Totais;${f.visitas}\n`;
+        csv += `Questionarios Iniciados;${f.questionariosIniciados}\n`;
+        csv += `Concluidos (Matched);${f.questionariosConcluidos}\n`;
+        csv += `Contatos WhatsApp;${f.contatos}\n\n`;
+    }
+    
+    if (d.demand && d.demand.health) {
+        const h = d.demand.health.distribuicao;
+        csv += `--- SAUDE DO MARKETPLACE ---\n`;
+        csv += `Receberam 0 contatos;${h.zero}\n`;
+        csv += `Receberam 1 ou 2 contatos;${h.um_a_dois}\n`;
+        csv += `Receberam 3 a 5 contatos;${h.tres_a_cinco}\n`;
+        csv += `Receberam 6+ contatos;${h.seis_ou_mais}\n`;
+        csv += `Media de contatos por psicologo;${d.demand.health.media}\n\n`;
+    }
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Yelo_Growth_Report_${periodDays}dias_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
