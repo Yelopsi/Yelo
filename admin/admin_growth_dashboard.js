@@ -1,4 +1,4 @@
-let lastUpdate = new Date();
+window.growthLastUpdate = new Date();
 
 window.initializePage = function() {
     loadGrowthData();
@@ -124,8 +124,8 @@ window.loadGrowthData = async function() {
 
         document.getElementById('growth-loading').style.display = 'none';
         document.getElementById('growth-content').style.display = 'block';
-        lastUpdate = new Date();
-        updateTimeAgo();
+        window.growthLastUpdate = new Date();
+        window.updateTimeAgo();
 
     } catch (err) {
         console.error(err);
@@ -133,9 +133,12 @@ window.loadGrowthData = async function() {
     }
 }
 
-function updateTimeAgo() {
-    const diffMins = Math.floor((new Date() - lastUpdate) / 60000);
+window.updateTimeAgo = function() {
+    const diffMins = Math.floor((new Date() - window.growthLastUpdate) / 60000);
     const el = document.getElementById('growth-last-updated');
     if (el) el.innerText = `Dados atualizados há ${diffMins} minutos`;
 }
-setInterval(updateTimeAgo, 60000);
+if (!window.growthIntervalSet) {
+    setInterval(window.updateTimeAgo, 60000);
+    window.growthIntervalSet = true;
+}
