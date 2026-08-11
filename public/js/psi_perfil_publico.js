@@ -321,7 +321,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     try {
                         // Faz a requisição pro backend pra pegar a URL com a Variante A/B já montada
-                        const res = await fetch(`${API_BASE_URL}/api/public/whatsapp/link/${psi.id}`);
+                        // Passa o UTM salvo no localStorage e o nome do visitante (se disponível)
+                        const utmSource = localStorage.getItem('yelo_utm_source') || '';
+                        const guestName = localStorage.getItem('yelo_guest_name') || '';
+                        const abParams = new URLSearchParams();
+                        if (utmSource) abParams.append('utm_source', utmSource);
+                        if (guestName) abParams.append('guest_name', guestName);
+                        const abQuery = abParams.toString() ? `?${abParams.toString()}` : '';
+                        const res = await fetch(`${API_BASE_URL}/api/public/whatsapp/link/${psi.id}${abQuery}`);
                         const data = await res.json();
                         
                         if (data.success && data.url) {
