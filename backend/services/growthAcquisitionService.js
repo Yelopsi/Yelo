@@ -10,7 +10,7 @@ class GrowthAcquisitionService {
         // 1. Buscamos TODOS os Leads gerados no período
         const leads = await db.Lead.findAll({
             where: { createdAt: { [Op.gte]: periodStart } },
-            attributes: ['id', 'status_funil']
+            attributes: ['id', 'status_funil', 'telefone']
         });
 
         const pendentes = leads.filter(l => l.status_funil === 'Pendente').length;
@@ -21,24 +21,50 @@ class GrowthAcquisitionService {
         const leadsIdentificados = leads.length;
         const primeiroContato = contatados + aguardando + cadastrados;
 
-        // 2. Buscamos conversões reais via UTM (WPP manual)
-        const convitesWhatsappRaw = await db.Psychologist.findAll({
+        // Extrai telefones limpos dos leads para o Match Probabilístico
+        const leadsPhones = new Set();
+        leads.forEach(l => {
+            if (l.telefone) {
+                const rawPhone = l.telefone.replace(/\D/g, '');
+                if (rawPhone.length >= 8) {
+                    leadsPhones.add(rawPhone);
+                    if (rawPhone.startsWith('55') && rawPhone.length > 10) {
+                        leadsPhones.add(rawPhone.substring(2));
+                    }
+                }
+            }
+        });
+
+        // 2. Buscamos todos os psicólogos cadastrados no período
+        const psychologists = await db.Psychologist.findAll({
             where: {
-                createdAt: { [Op.gte]: periodStart },
-                utm_source: 'whatsapp',
-                utm_medium: 'convite_manual'
+                createdAt: { [Op.gte]: periodStart }
             },
-            attributes: ['status', 'stripeSubscriptionId', 'subscriptionId']
+            attributes: ['id', 'status', 'telefone', 'utm_source', 'utm_medium', 'stripeSubscriptionId', 'subscriptionId']
         });
 
         let trialsIniciados = 0;
         let viraramPagantes = 0;
 
-        convitesWhatsappRaw.forEach(p => {
-            if (p.status === 'active') {
-                trialsIniciados++; // Todo ativo passou pelo trial
-                const hasSub = !!(p.stripeSubscriptionId || p.subscriptionId);
-                if (hasSub) viraramPagantes++;
+        psychologists.forEach(p => {
+            // Verifica se tem tag UTM
+            const hasUtm = (p.utm_source === 'whatsapp' && p.utm_medium === 'convite_manual');
+            
+            // Verifica se o telefone bate com a base de Leads
+            let hasPhoneMatch = false;
+            if (p.telefone) {
+                const pPhone = p.telefone.replace(/\D/g, '');
+                if (leadsPhones.has(pPhone)) hasPhoneMatch = true;
+                else if (pPhone.startsWith('55') && pPhone.length > 10 && leadsPhones.has(pPhone.substring(2))) hasPhoneMatch = true;
+            }
+
+            // Se for do funil B2B (seja por link UTM ou probabilidade de telefone)
+            if (hasUtm || hasPhoneMatch) {
+                if (p.status === 'active') {
+                    trialsIniciados++;
+                    const hasSub = !!(p.stripeSubscriptionId || p.subscriptionId);
+                    if (hasSub) viraramPagantes++;
+                }
             }
         });
 
