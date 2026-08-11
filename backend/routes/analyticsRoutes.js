@@ -69,17 +69,34 @@ router.get('/admin/analytics/whatsapp-ab', verifyTokenLocal, async (req, res) =>
             return res.status(403).json({ error: 'Acesso negado' });
         }
         
+        // Retorna métricas completas de funil por variante:
+        // cliques → feedback recebido → contato efetivo → negócio fechado
         const results = await db.sequelize.query(`
-            SELECT ab_variant, COUNT(*) as count 
-            FROM "WhatsAppClickLogs" 
-            WHERE ab_variant IS NOT NULL 
+            SELECT 
+                ab_variant,
+                COUNT(*) as total_cliques,
+                COUNT(CASE WHEN "feedbackGiven" = true THEN 1 END) as feedbacks_recebidos,
+                COUNT(CASE WHEN "contactReceived" = true THEN 1 END) as contato_recebido,
+                COUNT(CASE WHEN "dealClosed" IN ('yes','started') THEN 1 END) as negocio_fechado,
+                COUNT(CASE WHEN "dealClosed" = 'talking' THEN 1 END) as em_negociacao
+            FROM "WhatsAppClickLogs"
+            WHERE ab_variant IS NOT NULL
             GROUP BY ab_variant
+            ORDER BY ab_variant
         `, { type: db.sequelize.QueryTypes.SELECT });
 
-        const data = { A: 0, B: 0 };
+        const empty = { cliques: 0, feedbacks: 0, contatoRecebido: 0, negocioFechado: 0, emNegociacao: 0 };
+        const data = { A: { ...empty }, B: { ...empty } };
+
         results.forEach(r => {
-            if (r.ab_variant === 'A') data.A = parseInt(r.count);
-            if (r.ab_variant === 'B') data.B = parseInt(r.count);
+            const key = r.ab_variant === 'A' ? 'A' : 'B';
+            data[key] = {
+                cliques: parseInt(r.total_cliques) || 0,
+                feedbacks: parseInt(r.feedbacks_recebidos) || 0,
+                contatoRecebido: parseInt(r.contato_recebido) || 0,
+                negocioFechado: parseInt(r.negocio_fechado) || 0,
+                emNegociacao: parseInt(r.em_negociacao) || 0,
+            };
         });
 
         res.json(data);
@@ -88,6 +105,7 @@ router.get('/admin/analytics/whatsapp-ab', verifyTokenLocal, async (req, res) =>
         res.status(500).json({ error: 'Erro interno' });
     }
 });
+
 
 router.get('/admin/analytics/visits', verifyTokenLocal, async (req, res) => {
     try {

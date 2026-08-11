@@ -153,38 +153,90 @@
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
             <!-- Variante A -->
-            <div class="variant-card" style="border-top: 4px solid #3b82f6;">
-                <div class="variant-title">Variante A (Foco em Dúvidas)</div>
+            <div class="variant-card" id="card-a" style="border-top: 4px solid #3b82f6;">
+                <div class="variant-title" style="display:flex; align-items:center; gap:8px;">
+                    <span style="background:#dbeafe; color:#1d4ed8; padding:2px 10px; border-radius:20px; font-size:0.85rem;">A</span>
+                    Foco em Dúvidas
+                </div>
                 <div class="variant-message">"Olá, {nome}! Encontrei seu perfil na Yelo e gostaria de tirar algumas dúvidas sobre como funciona o seu atendimento."</div>
+
                 <div class="variant-stats">
                     <div class="stat-item">
-                        <span class="stat-label">Cliques Totais</span>
-                        <span class="stat-value" id="clicks-a">0</span>
+                        <span class="stat-label">Cliques</span>
+                        <span class="stat-value" id="clicks-a">-</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">Taxa Relativa</span>
-                        <span class="stat-value" id="rate-a" style="color: #64748b; font-size: 1.2rem; margin-top: auto;">0%</span>
+                        <span class="stat-label" title="Psicólogos que confirmaram ter recebido contato">📥 Contato Real</span>
+                        <span class="stat-value" id="contato-a" style="color:#0369a1;">-</span>
                     </div>
+                    <div class="stat-item">
+                        <span class="stat-label" title="Iniciaram ou fecharam terapia">✅ Fechou</span>
+                        <span class="stat-value" id="fechou-a" style="color:#15803d;">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Em Neg.</span>
+                        <span class="stat-value" id="neg-a" style="color:#d97706; font-size:1.2rem;">-</span>
+                    </div>
+                </div>
+
+                <div style="margin-top:15px; padding-top:12px; border-top:1px solid #f1f5f9;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#64748b; font-weight:600; margin-bottom:4px;">
+                        <span>Taxa de Conversão Final</span>
+                        <span id="taxa-a">-</span>
+                    </div>
+                    <div style="background:#e2e8f0; height:8px; border-radius:8px; overflow:hidden;">
+                        <div id="bar-a" style="height:100%; background:#3b82f6; border-radius:8px; width:0%; transition:width 0.6s ease;"></div>
+                    </div>
+                    <div style="font-size:0.75rem; color:#94a3b8; margin-top:4px;" id="feedback-note-a"></div>
                 </div>
             </div>
 
             <!-- Variante B -->
-            <div class="variant-card" style="border-top: 4px solid #10b981;">
-                <div class="variant-title">Variante B (Foco em Agendamento)</div>
+            <div class="variant-card" id="card-b" style="border-top: 4px solid #10b981;">
+                <div class="variant-title" style="display:flex; align-items:center; gap:8px;">
+                    <span style="background:#d1fae5; color:#065f46; padding:2px 10px; border-radius:20px; font-size:0.85rem;">B</span>
+                    Foco em Agendamento
+                </div>
                 <div class="variant-message">"Olá, {nome}! Encontrei seu perfil na Yelo e gostaria de saber se você tem horários disponíveis para novos pacientes."</div>
+
                 <div class="variant-stats">
                     <div class="stat-item">
-                        <span class="stat-label">Cliques Totais</span>
-                        <span class="stat-value" id="clicks-b" style="color: #10b981;">0</span>
+                        <span class="stat-label">Cliques</span>
+                        <span class="stat-value" id="clicks-b" style="color:#10b981;">-</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">Taxa Relativa</span>
-                        <span class="stat-value" id="rate-b" style="color: #64748b; font-size: 1.2rem; margin-top: auto;">0%</span>
+                        <span class="stat-label" title="Psicólogos que confirmaram ter recebido contato">📥 Contato Real</span>
+                        <span class="stat-value" id="contato-b" style="color:#0369a1;">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label" title="Iniciaram ou fecharam terapia">✅ Fechou</span>
+                        <span class="stat-value" id="fechou-b" style="color:#15803d;">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Em Neg.</span>
+                        <span class="stat-value" id="neg-b" style="color:#d97706; font-size:1.2rem;">-</span>
                     </div>
                 </div>
+
+                <div style="margin-top:15px; padding-top:12px; border-top:1px solid #f1f5f9;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#64748b; font-weight:600; margin-bottom:4px;">
+                        <span>Taxa de Conversão Final</span>
+                        <span id="taxa-b">-</span>
+                    </div>
+                    <div style="background:#e2e8f0; height:8px; border-radius:8px; overflow:hidden;">
+                        <div id="bar-b" style="height:100%; background:#10b981; border-radius:8px; width:0%; transition:width 0.6s ease;"></div>
+                    </div>
+                    <div style="font-size:0.75rem; color:#94a3b8; margin-top:4px;" id="feedback-note-b"></div>
+                </div>
             </div>
+        </div>
+
+        <!-- Nota de contexto sobre o método -->
+        <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:14px 18px; margin-top:20px; font-size:0.9rem; color:#0c4a6e; display:flex; gap:10px; align-items:flex-start;">
+            <span style="font-size:1.2rem;">ℹ️</span>
+            <div><strong>Como funciona:</strong> A variante é sorteada (50/50) no momento em que o paciente clica no botão WhatsApp. O psicólogo depois responde ao feedback se recebeu o contato e se fechou negócio. A <strong>Taxa de Conversão Final</strong> = negócios fechados ÷ cliques da variante.</div>
         </div>
 
         <p id="ab-note" style="text-align: center; margin-top: 15px; font-size: 0.95rem; color: #64748b; font-style: italic;">Carregando dados...</p>
@@ -197,67 +249,80 @@
             const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
             const token = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : localStorage.getItem('Yelo_token');
 
-            const setLoading = (loading) => {
-                const els = ['clicks-a', 'clicks-b', 'rate-a', 'rate-b'];
-                els.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el && loading) el.textContent = '...';
-                });
-            };
+            ['clicks-a','clicks-b','contato-a','contato-b','fechou-a','fechou-b','neg-a','neg-b','taxa-a','taxa-b']
+                .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '...'; });
 
-            setLoading(true);
             try {
                 const res = await fetch(`${API_BASE_URL}/api/admin/analytics/whatsapp-ab`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
                 const data = await res.json();
-                const cliquesA = data.A || 0;
-                const cliquesB = data.B || 0;
-                const total = cliquesA + cliquesB;
+                const totalCliques = (data.A.cliques || 0) + (data.B.cliques || 0);
 
-                document.getElementById('clicks-a').textContent = cliquesA;
-                document.getElementById('clicks-b').textContent = cliquesB;
+                // Preenche métricas de cada variante
+                ['A', 'B'].forEach(v => {
+                    const d = data[v];
+                    const suf = v.toLowerCase();
+                    const cliques = d.cliques || 0;
+                    const feedbacks = d.feedbacks || 0;
+                    const contato = d.contatoRecebido || 0;
+                    const fechou = d.negocioFechado || 0;
+                    const neg = d.emNegociacao || 0;
 
-                const rateA = total > 0 ? ((cliquesA / total) * 100).toFixed(1) : '0';
-                const rateB = total > 0 ? ((cliquesB / total) * 100).toFixed(1) : '0';
-                document.getElementById('rate-a').textContent = `${rateA}%`;
-                document.getElementById('rate-b').textContent = `${rateB}%`;
+                    document.getElementById(`clicks-${suf}`).textContent = cliques;
+                    document.getElementById(`contato-${suf}`).textContent = contato;
+                    document.getElementById(`fechou-${suf}`).textContent = fechou;
+                    document.getElementById(`neg-${suf}`).textContent = neg;
 
-                // Destaca o vencedor
-                if (total > 0) {
-                    if (cliquesA > cliquesB) {
-                        document.getElementById('clicks-a').style.color = '#3b82f6';
-                        document.getElementById('rate-a').parentElement.closest('.variant-card').style.boxShadow = '0 0 0 2px #3b82f6';
-                    } else if (cliquesB > cliquesA) {
-                        document.getElementById('clicks-b').style.color = '#10b981';
-                        document.getElementById('rate-b').parentElement.closest('.variant-card').style.boxShadow = '0 0 0 2px #10b981';
+                    // Taxa de conversão final = fechados / cliques (métrica principal do teste)
+                    const taxa = cliques > 0 ? ((fechou / cliques) * 100).toFixed(1) : '0.0';
+                    document.getElementById(`taxa-${suf}`).textContent = `${taxa}%`;
+                    document.getElementById(`bar-${suf}`).style.width = `${Math.min(100, parseFloat(taxa) * 5)}%`;
+
+                    // Nota de cobertura de feedbacks
+                    const noteEl = document.getElementById(`feedback-note-${suf}`);
+                    if (noteEl) {
+                        if (cliques === 0) {
+                            noteEl.textContent = 'Nenhum clique ainda.';
+                        } else {
+                            const cobPct = ((feedbacks / cliques) * 100).toFixed(0);
+                            noteEl.textContent = `${feedbacks} de ${cliques} cliques com feedback (${cobPct}% de cobertura)`;
+                        }
+                    }
+                });
+
+                // Destaca o vencedor (por taxa de conversão final)
+                const taxaA = data.A.cliques > 0 ? data.A.negocioFechado / data.A.cliques : 0;
+                const taxaB = data.B.cliques > 0 ? data.B.negocioFechado / data.B.cliques : 0;
+                if (totalCliques >= 10) {
+                    if (taxaA > taxaB) {
+                        document.getElementById('card-a').style.boxShadow = '0 0 0 2px #3b82f6';
+                        document.getElementById('card-a').style.background = '#f0f7ff';
+                    } else if (taxaB > taxaA) {
+                        document.getElementById('card-b').style.boxShadow = '0 0 0 2px #10b981';
+                        document.getElementById('card-b').style.background = '#f0fdf9';
                     }
                 }
 
-                // Adiciona nota de amostra insuficiente se total for baixo
+                // Nota global de status
                 const noteEl = document.getElementById('ab-note');
                 if (noteEl) {
-                    if (total === 0) {
-                        noteEl.textContent = '⚠️ Nenhum dado ainda. Os cliques aparecerão aqui conforme pacientes usarem o botão de WhatsApp.';
+                    if (totalCliques === 0) {
+                        noteEl.textContent = '⚠️ Nenhum clique com variante ainda. Os dados aparecerão conforme pacientes usarem o botão WhatsApp.';
                         noteEl.style.color = '#d97706';
-                    } else if (total < 50) {
-                        noteEl.textContent = `ℹ️ Amostra atual: ${total} cliques. Resultados estatisticamente relevantes a partir de ~50 cliques por variante.`;
-                        noteEl.style.color = '#0369a1';
                     } else {
-                        noteEl.textContent = `✅ Amostra robusta: ${total} cliques totais.`;
-                        noteEl.style.color = '#15803d';
+                        const totalFechou = (data.A.negocioFechado || 0) + (data.B.negocioFechado || 0);
+                        noteEl.textContent = `${totalCliques} cliques no total · ${totalFechou} negócios fechados combinados`;
+                        noteEl.style.color = '#64748b';
                     }
                 }
 
             } catch(e) {
                 console.error('Erro ao carregar dados do Teste A/B:', e);
-                ['clicks-a', 'clicks-b', 'rate-a', 'rate-b'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.textContent = '-';
-                });
+                ['clicks-a','clicks-b','contato-a','contato-b','fechou-a','fechou-b','neg-a','neg-b','taxa-a','taxa-b']
+                    .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '-'; });
             }
         }
 
@@ -265,7 +330,6 @@
             loadAbTestData();
         };
 
-        // Carrega automaticamente se estiver em contexto standalone
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', loadAbTestData);
         } else {
