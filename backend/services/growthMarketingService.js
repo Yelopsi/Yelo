@@ -58,8 +58,9 @@ class GrowthMarketingService {
         });
 
         const settings = await db.SystemSetting.findOne() || {};
-        const priceEssencial = settings.price_Essencial || 147;
-        const priceClinico = settings.price_Clínico || 247;
+        const priceEssencial = settings.price_Essencial > 0 ? settings.price_Essencial : 99.00;
+        const priceClinico = settings.price_Clínico > 0 ? settings.price_Clínico : 159.00;
+        const priceReference = settings.price_sol > 0 ? settings.price_sol : 259.00;
 
         let mrrTotal = 0;
         let activeCount = 0;
@@ -69,6 +70,7 @@ class GrowthMarketingService {
             if (p.valor_mensal_numero) mrrTotal += Number(p.valor_mensal_numero);
             else if (p.plano === 'ESSENTIAL' || p.plano === 'Essencial') mrrTotal += Number(priceEssencial);
             else if (p.plano === 'CLINICAL' || p.plano === 'Clínico') mrrTotal += Number(priceClinico);
+            else if (p.plano === 'REFERENCE' || p.plano === 'Sol' || p.plano === 'SOL') mrrTotal += Number(priceReference);
         }
 
         const arpu = activeCount > 0 ? mrrTotal / activeCount : 0;

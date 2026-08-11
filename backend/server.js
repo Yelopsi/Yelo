@@ -207,6 +207,9 @@ const startServer = async () => {
             console.log('🛠️ [DB FIX] Injetando colunas faltantes nas tabelas...');
             await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "ai_insights_cache" JSONB DEFAULT NULL;');
             await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "subscribedAt" TIMESTAMP WITH TIME ZONE;');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "planExpiresAt" TIMESTAMP WITH TIME ZONE;');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "subscriptionId" VARCHAR(255);');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "cancelAtPeriodEnd" BOOLEAN DEFAULT false;');
             
             console.log('🛠️ [DB FIX] Backfill de data de assinatura para pagantes legados...');
             await db.sequelize.query('UPDATE "Psychologists" SET "subscribedAt" = "createdAt" + interval \'14 days\' WHERE "subscription_payments_count" > 0 AND "subscribedAt" IS NULL;');

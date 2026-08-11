@@ -22,10 +22,11 @@ class GrowthService {
             attributes: ['id', 'valor_mensal_numero', 'plano', 'planExpiresAt', 'cancelAtPeriodEnd']
         });
 
-        // Tentar usar o SystemSetting para pegar os preços se valor_mensal_numero for nulo
+        // Tentar usar o SystemSetting, mas com fallback para os preços reais praticados
         const settings = await db.SystemSetting.findOne() || {};
-        const priceEssencial = settings.price_Essencial || 147;
-        const priceClinico = settings.price_Clínico || 247;
+        const priceEssencial = settings.price_Essencial > 0 ? settings.price_Essencial : 99.00;
+        const priceClinico = settings.price_Clínico > 0 ? settings.price_Clínico : 159.00;
+        const priceReference = settings.price_sol > 0 ? settings.price_sol : 259.00;
 
         let mrrTotal = 0;
         const activeIds = [];
@@ -42,6 +43,8 @@ class GrowthService {
                 mrrTotal += Number(priceEssencial);
             } else if (p.plano === 'CLINICAL' || p.plano === 'Clínico') {
                 mrrTotal += Number(priceClinico);
+            } else if (p.plano === 'REFERENCE' || p.plano === 'Sol' || p.plano === 'SOL') {
+                mrrTotal += Number(priceReference);
             }
         }
 
@@ -128,6 +131,7 @@ class GrowthService {
             if (p.valor_mensal_numero) valor = Number(p.valor_mensal_numero);
             else if (p.plano === 'ESSENTIAL' || p.plano === 'Essencial') valor = Number(priceEssencial);
             else if (p.plano === 'CLINICAL' || p.plano === 'Clínico') valor = Number(priceClinico);
+            else if (p.plano === 'REFERENCE' || p.plano === 'Sol' || p.plano === 'SOL') valor = Number(priceReference);
 
             if (setPsiComDemanda.has(p.id)) {
                 pagantesComDemandaCount++;
