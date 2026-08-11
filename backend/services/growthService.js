@@ -71,16 +71,25 @@ class GrowthService {
             }
         });
 
-        // 4. Churn (Cancelamentos Efetivos no período)
-        // Churn = status inativo ou cancelAtPeriodEnd e planExpiresAt no período
-        const churn = await db.Psychologist.count({
+        // 4. Churn (Cancelamento efetivo, separando quem era pagante de quem era trial)
+        const allChurners = await db.Psychologist.findAll({
             where: {
                 is_exempt: { [Op.or]: [false, null] },
                 [Op.or]: [
                     { status: 'inactive', updatedAt: { [Op.gte]: periodStart } },
                     { cancelAtPeriodEnd: true, planExpiresAt: { [Op.gte]: periodStart, [Op.lte]: now } }
                 ]
-            }
+            },
+            attributes: ['stripeSubscriptionId', 'subscriptionId']
+        });
+
+        let churnPagantes = 0;
+        let churnTrial = 0;
+
+        allChurners.forEach(c => {
+            const hasSub = !!(c.stripeSubscriptionId || c.subscriptionId);
+            if (hasSub) churnPagantes++;
+            else churnTrial++;
         });
 
         // 5. Trials Ativos
@@ -161,9 +170,10 @@ class GrowthService {
             mrrTotal,
             mrrComDemanda,
             mrrSemDemanda,
-            totalAtivos,
+            totalAtivos: pagantesAtivos.length,
             novosPagantes,
-            churn,
+            churnPagantes,
+            churnTrial,
             trialsAtivos,
             trialsMaduros,
             trialsConvertidos,

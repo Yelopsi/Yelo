@@ -150,9 +150,14 @@
                     <div class="stat-card-sub"><span id="g-novos-pagantes">0</span> novos no período</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-card-title">⚠️ Churn <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Cancelamentos efetivos (planExpiresAt expirou) no período.</span></span></div>
-                    <div class="stat-card-value" style="color: #ef4444;" id="g-churn-count">0</div>
+                    <div class="stat-card-title">⚠️ Churn (Pagantes) <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Cancelamentos de psicólogos que eram pagantes no período.</span></span></div>
+                    <div class="stat-card-value" style="color: #ef4444;" id="g-churn-pagantes">0</div>
                     <div class="stat-card-sub">cancelamentos efetivos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">📉 Churn (Trial) <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Psicólogos que não assinaram após os 14 dias gratuitos.</span></span></div>
+                    <div class="stat-card-value" style="color: #f59e0b;" id="g-churn-trial">0</div>
+                    <div class="stat-card-sub">não converteram</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-card-title">🚀 Trials Ativos</div>
@@ -199,11 +204,6 @@
                     <div class="funnel-label">Contatados</div>
                     <div class="funnel-value" id="f-acq-contact">0</div>
                     <div class="funnel-conv" id="f-acq-conv-1">0%</div>
-                </div>
-                <div class="funnel-step">
-                    <div class="funnel-label">Responderam</div>
-                    <div class="funnel-value" id="f-acq-reply">0</div>
-                    <div class="funnel-conv" id="f-acq-conv-2">0%</div>
                 </div>
                 <div class="funnel-step">
                     <div class="funnel-label">Cadastros (Trial)</div>

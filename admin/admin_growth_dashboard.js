@@ -31,7 +31,8 @@ window.loadGrowthData = async function() {
             `;
             document.getElementById('g-ativos').innerText = data.totalAtivos;
             document.getElementById('g-novos-pagantes').innerText = data.novosPagantes;
-            document.getElementById('g-churn-count').innerText = data.churn;
+            document.getElementById('g-churn-pagantes').innerText = data.churnPagantes;
+            document.getElementById('g-churn-trial').innerText = data.churnTrial;
             document.getElementById('g-trials-ativos').innerText = data.trialsAtivos;
         }
 
@@ -41,17 +42,14 @@ window.loadGrowthData = async function() {
             const d = result.data;
             document.getElementById('f-acq-leads').innerText = d.leadsIdentificados;
             document.getElementById('f-acq-contact').innerText = d.primeiroContato;
-            document.getElementById('f-acq-reply').innerText = d.responderam;
             document.getElementById('f-acq-trial').innerText = d.trialsIniciados;
             document.getElementById('f-acq-paid').innerText = d.viraramPagantes;
 
             const c1 = d.leadsIdentificados > 0 ? (d.primeiroContato/d.leadsIdentificados*100) : 0;
-            const c2 = d.primeiroContato > 0 ? (d.responderam/d.primeiroContato*100) : 0;
-            const c3 = d.responderam > 0 ? (d.trialsIniciados/d.responderam*100) : 0;
+            const c3 = d.primeiroContato > 0 ? (d.trialsIniciados/d.primeiroContato*100) : 0;
             const c4 = d.trialsIniciados > 0 ? (d.viraramPagantes/d.trialsIniciados*100) : 0;
 
             document.getElementById('f-acq-conv-1').innerText = c1.toFixed(1)+'%';
-            document.getElementById('f-acq-conv-2').innerText = c2.toFixed(1)+'%';
             document.getElementById('f-acq-conv-3').innerText = c3.toFixed(1)+'%';
             document.getElementById('f-acq-conv-4').innerText = c4.toFixed(1)+'%';
         }
