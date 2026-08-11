@@ -230,7 +230,7 @@ exports.getOverview = async (req, res) => {
         res.json({ success: true, data });
     } catch (error) {
         console.error('Error fetching growth overview:', error);
-        res.status(500).json({ success: false, message: 'Erro ao carregar dados de growth' });
+        res.status(500).json({ success: false, message: 'Erro ao carregar dados de growth', error: error.message, stack: error.stack });
     }
 };
 
@@ -264,7 +264,7 @@ exports.getMarketing = async (req, res) => {
         res.json({ success: true, data });
     } catch (error) {
         console.error('Error fetching marketing data:', error);
-        res.status(500).json({ success: false, message: 'Erro ao carregar unit economics' });
+        res.status(500).json({ success: false, message: 'Erro ao carregar unit economics', error: error.message, stack: error.stack });
     }
 };
 
