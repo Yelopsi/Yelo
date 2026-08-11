@@ -45,9 +45,7 @@ class GrowthService {
                 continue;
             }
             activeIds.push(p.id);
-            if (p.valor_mensal_numero) {
-                mrrTotal += Number(p.valor_mensal_numero);
-            } else if (p.plano === 'ESSENTIAL' || p.plano === 'Essencial') {
+            if (p.plano === 'ESSENTIAL' || p.plano === 'Essencial') {
                 mrrTotal += Number(priceEssencial);
             } else if (p.plano === 'CLINICAL' || p.plano === 'Clínico') {
                 mrrTotal += Number(priceClinico);
@@ -145,8 +143,7 @@ class GrowthService {
             if (p.cancelAtPeriodEnd && p.planExpiresAt && new Date(p.planExpiresAt) < now) continue;
             
             let valor = 0;
-            if (p.valor_mensal_numero) valor = Number(p.valor_mensal_numero);
-            else if (p.plano === 'ESSENTIAL' || p.plano === 'Essencial') valor = Number(priceEssencial);
+            if (p.plano === 'ESSENTIAL' || p.plano === 'Essencial') valor = Number(priceEssencial);
             else if (p.plano === 'CLINICAL' || p.plano === 'Clínico') valor = Number(priceClinico);
             else if (p.plano === 'REFERENCE' || p.plano === 'Sol' || p.plano === 'SOL') valor = Number(priceReference);
 
