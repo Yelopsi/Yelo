@@ -112,6 +112,38 @@
         padding: 50px 20px;
         color: #666;
     }
+    .pagination-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        border-top: 1px solid #eaeaea;
+        background: #fcfcfc;
+    }
+    .pagination-btn {
+        padding: 8px 16px;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #334155;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .pagination-btn:hover:not(:disabled) {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+    }
+    .pagination-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .pagination-info {
+        font-size: 0.9rem;
+        color: #64748b;
+        font-weight: 500;
+    }
 
     .yelo-modal-title {
         font-family: var(--font-titulos);
@@ -283,6 +315,11 @@
                 </tr>
             </tbody>
         </table>
+        <div id="pagination-controls" class="pagination-controls" style="display: none;">
+            <button class="pagination-btn" id="prev-page-btn" disabled>← Anterior</button>
+            <span class="pagination-info" id="page-info">Página 1 de 1</span>
+            <button class="pagination-btn" id="next-page-btn" disabled>Próxima →</button>
+        </div>
     </div>
 </div>
 

@@ -1,27 +1,59 @@
 // Arquivo: psi_historico_contatos.js
 // Responsável por carregar o histórico de contatos do WhatsApp do psicólogo logado.
 
+window.yeloContactLogs = [];
+window.yeloContactPage = 1;
+window.yeloContactItemsPerPage = 10;
+
 window.loadContactHistory = async function() {
     const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : 'http://localhost:3001';
     const tbody = document.getElementById('history-table-body');
-    const kpiCliques = document.getElementById('kpi-cliques');
-    const kpiRecebidos = document.getElementById('kpi-recebidos');
-    const kpiFechados = document.getElementById('kpi-fechados');
-    const kpiConversao = document.getElementById('kpi-conversao');
 
     try {
         const response = await window.apiFetch(`${API_BASE_URL}/api/psychologists/me/contact-history`);
         if (!response.ok) throw new Error('Falha ao carregar histórico.');
-        const history = await response.json();
+        window.yeloContactLogs = await response.json();
 
-        renderHistory(history);
+        window.calculateKPIs(window.yeloContactLogs);
+        window.renderHistoryPage(window.yeloContactPage);
     } catch (err) {
         console.error('Erro ao carregar histórico de contatos:', err);
         if (tbody) tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: red;">Erro ao carregar os dados.</td></tr>`;
     }
+};
 
-    function renderHistory(logs) {
-        if (!logs || logs.length === 0) {
+window.calculateKPIs = function(logs) {
+    const kpiCliques = document.getElementById('kpi-cliques');
+    const kpiRecebidos = document.getElementById('kpi-recebidos');
+    const kpiFechados = document.getElementById('kpi-fechados');
+    const kpiConversao = document.getElementById('kpi-conversao');
+    
+    let totalCliques = logs.length;
+    let mensagensRecebidas = 0;
+    let negociosFechados = 0;
+
+    logs.forEach(log => {
+        if (log.contactReceived === true) mensagensRecebidas++;
+        if (log.dealClosed === 'yes' || log.dealClosed === 'started') negociosFechados++;
+    });
+
+    if (kpiCliques) kpiCliques.textContent = totalCliques;
+    if (kpiRecebidos) kpiRecebidos.textContent = mensagensRecebidas;
+    if (kpiFechados) kpiFechados.textContent = negociosFechados;
+    
+    if (kpiConversao) {
+        const taxa = mensagensRecebidas > 0 ? Math.round((negociosFechados / mensagensRecebidas) * 100) : 0;
+        kpiConversao.textContent = `${taxa}%`;
+    }
+};
+
+window.renderHistoryPage = function(page) {
+    const tbody = document.getElementById('history-table-body');
+    const paginationControls = document.getElementById('pagination-controls');
+    const logs = window.yeloContactLogs;
+
+    if (!logs || logs.length === 0) {
+        if (tbody) {
             tbody.innerHTML = `
                 <tr>
                     <td colspan="3">
@@ -35,14 +67,18 @@ window.loadContactHistory = async function() {
             return;
         }
 
-        let totalCliques = logs.length;
-        let mensagensRecebidas = 0;
-        let negociosFechados = 0;
+        const totalPages = Math.ceil(logs.length / window.yeloContactItemsPerPage);
+        if (page < 1) page = 1;
+        if (page > totalPages) page = totalPages;
+        window.yeloContactPage = page;
 
-        tbody.innerHTML = '';
-        logs.forEach(log => {
-            if (log.contactReceived === true) mensagensRecebidas++;
-            if (log.dealClosed === 'yes' || log.dealClosed === 'started') negociosFechados++;
+        const startIndex = (page - 1) * window.yeloContactItemsPerPage;
+        const endIndex = startIndex + window.yeloContactItemsPerPage;
+        const paginatedLogs = logs.slice(startIndex, endIndex);
+
+        if (tbody) tbody.innerHTML = '';
+        
+        paginatedLogs.forEach(log => {
 
             const dataFormatada = new Date(log.createdAt).toLocaleDateString('pt-BR', {
                 day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -88,21 +124,32 @@ window.loadContactHistory = async function() {
                 <td data-label="Paciente / Contato" style="font-weight: 500;">${log.guestName || 'Um paciente'}</td>
                 <td data-label="Status do Retorno"><span class="status-badge ${badgeClass}" ${badgeStyle} ${clickAction}>${badgeText}</span></td>
             `;
-            tbody.appendChild(tr);
+            if (tbody) tbody.appendChild(tr);
         });
 
-        // Atualiza KPIs
-        if (kpiCliques) kpiCliques.textContent = totalCliques;
-        if (kpiRecebidos) kpiRecebidos.textContent = mensagensRecebidas;
-        if (kpiFechados) kpiFechados.textContent = negociosFechados;
-        
-        if (kpiConversao) {
-            // A taxa de conversão agora é calculada sobre os contatos reais recebidos, não sobre os cliques!
-            const taxa = mensagensRecebidas > 0 ? Math.round((negociosFechados / mensagensRecebidas) * 100) : 0;
-            kpiConversao.textContent = `${taxa}%`;
+        // Atualiza UI de paginação
+        if (paginationControls) {
+            if (totalPages > 1) {
+                paginationControls.style.display = 'flex';
+                const pageInfo = document.getElementById('page-info');
+                if (pageInfo) pageInfo.textContent = `Página ${page} de ${totalPages}`;
+                
+                const prevBtn = document.getElementById('prev-page-btn');
+                const nextBtn = document.getElementById('next-page-btn');
+                
+                if (prevBtn) {
+                    prevBtn.disabled = page === 1;
+                    prevBtn.onclick = () => window.renderHistoryPage(page - 1);
+                }
+                if (nextBtn) {
+                    nextBtn.disabled = page === totalPages;
+                    nextBtn.onclick = () => window.renderHistoryPage(page + 1);
+                }
+            } else {
+                paginationControls.style.display = 'none';
+            }
         }
     }
-};
 
 window.abrirModalStatus = function(id, contact_received, deal_closed) {
     const modal = document.getElementById('yelo-status-modal');
