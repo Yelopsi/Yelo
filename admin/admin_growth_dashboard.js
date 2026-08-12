@@ -311,25 +311,24 @@ window.openPmfDrilldown = async function(groupName) {
         } else {
             data.forEach(psi => {
                 const phoneUrl = psi.telefone ? `https://wa.me/${psi.telefone.replace(/\D/g, '')}` : '#';
+                const planBadge = psi.plano ? `<span style="font-size: 0.75rem; color: #047857; background: #d1fae5; padding: 3px 8px; border-radius: 12px; font-weight: 600;">✨ ${psi.plano.toUpperCase()}</span>` : `<span style="font-size: 0.75rem; color: #64748b; background: #f1f5f9; padding: 3px 8px; border-radius: 12px; font-weight: 600;">TRIAL</span>`;
+                
                 html += `
-                    <div class="pmf-item-card">
-                        <h4 style="margin:0 0 8px 0; font-size:1.05rem; color:#0f172a; display:flex; justify-content:space-between; align-items:center;">
-                            ${psi.nome}
-                            <span style="font-size:0.75rem; background:#f1f5f9; color:#475569; padding:3px 8px; border-radius:12px; font-weight:600;">${Math.floor(psi.days_active) || 0} dias ativos</span>
-                        </h4>
-                        <div style="font-size:0.85rem; color:#64748b; margin-bottom:12px;">
-                            <span style="display:block; margin-bottom: 5px; display:flex; align-items:center; gap:5px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                                Plano Atual: <b style="color:#334155;">${psi.plano || 'Trial'}</b>
-                            </span>
+                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.02)'">
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            ${planBadge}
+                            <span style="font-size: 0.75rem; color: #94a3b8;">⏳ ${Math.floor(psi.days_active) || 0} dias ativos</span>
                         </div>
-                        <div style="display:flex; gap:10px;">
-                            <a href="${phoneUrl}" target="_blank" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; background:#10b981; color:white; padding:10px; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.85rem; transition:background 0.2s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg> Contatar
-                            </a>
-                            <a href="/admin/psychologists/${psi.id}/full-details" target="_blank" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; background:#f1f5f9; color:#0f172a; padding:10px; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.85rem; border:1px solid #e2e8f0; transition:background 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
-                                Abrir CRM <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                            </a>
+                        
+                        <div style="margin-top: 5px;">
+                            <h4 style="margin: 0; font-size: 1rem; color: #1e293b;">${psi.nome}</h4>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px; margin-top: 5px;">
+                            <a href="${phoneUrl}" target="_blank" style="flex: 1; padding: 8px; border: none; background: #10b981; color: white; border-radius: 8px; font-weight: 600; text-align: center; text-decoration: none; font-size: 0.85rem; transition: all 0.2s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">💬 WhatsApp</a>
+                            
+                            <a href="/admin/psychologists/${psi.id}/full-details" target="_blank" style="flex: 1; padding: 8px; border: 1px solid #e2e8f0; background: white; color: #475569; border-radius: 8px; font-weight: 600; text-align: center; text-decoration: none; font-size: 0.85rem; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">Abrir CRM ↗</a>
                         </div>
                     </div>
                 `;
