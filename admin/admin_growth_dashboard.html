@@ -173,6 +173,17 @@
 .funnel-label { font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase; }
 .funnel-conv { font-size: 0.75rem; color: #10b981; font-weight: 700; margin-top: 5px; background: #d1fae5; padding: 2px 6px; border-radius: 10px; display: inline-block;}
 
+.top-kpis-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+}
+@media (min-width: 1200px) {
+    .top-kpis-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
 /* RESPONSIVO BÁSICO */
 .grid-2col {
     display: grid;
@@ -265,7 +276,7 @@
         </div>
         <!-- PRIMEIRA VIEWPORT: DECISÃO EXECUTIVA -->
         <div style="margin-bottom: 35px;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px;">
+            <div class="top-kpis-grid">
                 
                 <!-- 1. CRESCIMENTO -->
                 <div class="stat-card" style="border-left: 4px solid #10b981;">
