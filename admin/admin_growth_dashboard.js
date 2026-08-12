@@ -145,12 +145,6 @@ window.loadGrowthData = async function() {
             const d4 = baseWpp > 0 ? (funnel.contatos / baseWpp * 100) : 0;
             document.getElementById('f-dem-c4').innerText = d4.toFixed(1)+'%';
 
-            // MARKETPLACE HEALTH DIST
-            document.getElementById('mh-0').innerText = health.distribuicao.zero;
-            document.getElementById('mh-1').innerText = health.distribuicao.um_a_dois;
-            document.getElementById('mh-3').innerText = health.distribuicao.tres_a_cinco;
-            document.getElementById('mh-5').innerText = health.distribuicao.seis_ou_mais;
-            document.getElementById('mh-media').innerText = health.media;
         }
 
         // 4. MARKETING
