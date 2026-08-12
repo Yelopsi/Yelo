@@ -448,3 +448,24 @@ exports.getPMFDetails = async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 };
+
+const seoService = require('../services/seoService');
+
+exports.getAIInsights = async (req, res) => {
+    try {
+        const growthData = req.body;
+        if (!growthData || Object.keys(growthData).length === 0) {
+            return res.status(400).json({ error: "Payload de dados vazio." });
+        }
+        
+        const insights = await seoService.generateGrowthInsights(growthData);
+        if (!insights) {
+            return res.status(500).json({ error: "Falha ao gerar insights da IA." });
+        }
+        
+        res.json({ success: true, insights });
+    } catch (e) {
+        console.error('Error fetching Growth AI Insights:', e);
+        res.status(500).json({ error: e.message });
+    }
+};

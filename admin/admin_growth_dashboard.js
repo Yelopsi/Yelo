@@ -437,3 +437,70 @@ window.closePmfDrilldown = function() {
     document.getElementById('pmf-overlay').classList.remove('active');
     document.getElementById('pmf-sidebar').classList.remove('active');
 };
+
+window.fetchGrowthAIInsights = async function() {
+    const btn = document.getElementById('btn-ai-insights');
+    const loading = document.getElementById('ai-insights-loading');
+    const error = document.getElementById('ai-insights-error');
+    const content = document.getElementById('ai-insights-content');
+
+    // Desabilita o botão e mostra loading
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    btn.innerText = 'Processando...';
+    
+    loading.style.display = 'block';
+    error.style.display = 'none';
+    content.style.display = 'none';
+
+    try {
+        // Envia o estado de dados atual da tela (que está em cache no window)
+        const payload = window.growthDataState || {};
+        
+        const response = await fetch('/api/admin/analytics/growth/ai-insights', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Erro desconhecido ao chamar a API');
+        }
+
+        // Renderiza os cards de recomendação
+        content.innerHTML = '';
+        const icones = ['🎯', '⚖️', '🚀']; // Ícones para cada card
+
+        data.insights.forEach((insight, index) => {
+            const card = document.createElement('div');
+            card.style.cssText = 'background: white; border-radius: 10px; border: 1px solid #e2e8f0; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); display: flex; gap: 15px; align-items: flex-start;';
+            
+            card.innerHTML = `
+                <div style="font-size: 2rem; line-height: 1;">${icones[index % icones.length]}</div>
+                <div>
+                    <h3 style="margin: 0 0 5px 0; font-size: 1.1rem; color: #1e293b;">${insight.titulo}</h3>
+                    <p style="margin: 0 0 12px 0; color: #64748b; font-size: 0.9rem; line-height: 1.5;"><strong>Diagnóstico:</strong> ${insight.diagnostico}</p>
+                    <div style="background: #f8fafc; border-left: 3px solid #8b5cf6; padding: 10px 15px; border-radius: 4px;">
+                        <p style="margin: 0; color: #334155; font-size: 0.9rem; font-weight: 500;"><span style="color:#8b5cf6;">Ação Recomendada:</span> ${insight.acao}</p>
+                    </div>
+                </div>
+            `;
+            content.appendChild(card);
+        });
+
+        loading.style.display = 'none';
+        content.style.display = 'flex';
+
+    } catch (err) {
+        console.error("Erro no Gemini:", err);
+        loading.style.display = 'none';
+        error.style.display = 'block';
+        document.getElementById('ai-error-text').innerText = err.message || 'Falha na comunicação com o Gemini.';
+    } finally {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.innerText = 'Gerar Análise com IA';
+    }
+};

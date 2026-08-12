@@ -566,3 +566,80 @@ Cliques no WhatsApp: ${stats.whatsappClicks || 0}`;
         return null;
     }
 };
+
+exports.generateGrowthInsights = async (growthData) => {
+    try {
+        const genAI = getGenAI();
+        if (!genAI) return null;
+
+        const responseSchema = {
+            type: SchemaType.ARRAY,
+            items: {
+                type: SchemaType.OBJECT,
+                properties: {
+                    titulo: { type: SchemaType.STRING },
+                    diagnostico: { type: SchemaType.STRING },
+                    acao: { type: SchemaType.STRING }
+                },
+                required: ["titulo", "diagnostico", "acao"]
+            }
+        };
+
+        const systemInstruction = `Você é o Growth Hacker (Consultor de Negócios) da Yelo.
+Sua missão é analisar os dados de crescimento, aquisição e economia unitária da startup (que serão fornecidos em JSON) e devolver 3 recomendações cruciais de negócio baseadas nesses dados.
+
+Regras OBRIGATÓRIAS:
+- Seja extremamente pragmático, analítico e ágil. Use um tom executivo mas moderno (estilo startup).
+- Baseie os diagnósticos estritamente na matemática dos dados enviados (Ex: se o LTV for menor que o CAC, alerte sobre insustentabilidade. Se as "Buscas Iniciadas" não converterem para "Concluídas", foque em fricção de UI/UX, etc).
+- Para cada recomendação, crie um "titulo" chamativo, um "diagnostico" que explique matematicamente o porquê, e uma "acao" descrevendo a melhor estratégia de mitigação ou alavancagem.
+- NUNCA invente métricas que não estejam no JSON fornecido.
+- Retorne apenas um JSON array de 3 objetos, conforme o schema configurado.`;
+
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-3.1-flash-lite",
+            systemInstruction,
+            generationConfig: { 
+                responseMimeType: "application/json",
+                responseSchema: responseSchema,
+                maxOutputTokens: 600,
+                temperature: 0.3
+            }
+        });
+
+        const prompt = `DADOS DE GROWTH (Painel Admin):
+${JSON.stringify(growthData, null, 2)}`;
+
+        const result = await model.generateContent(prompt);
+        let rawText = result.response.text();
+        
+        let parsed;
+        try {
+            parsed = JSON.parse(rawText);
+        } catch (e) {
+            const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+            if (!jsonMatch) {
+                throw new Error("O Google Gemini não retornou um JSON identificável.");
+            }
+            parsed = JSON.parse(jsonMatch[0]);
+        }
+        
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+            throw new Error("JSON incompleto ou formato inválido.");
+        }
+
+        // Limita a 3 recomendações e sanitiza
+        const sanitizeString = (str) => typeof str === 'string' ? str.replace(/[<>]/g, '') : '';
+        return parsed.slice(0, 3).map(rec => ({
+            titulo: sanitizeString(rec.titulo),
+            diagnostico: sanitizeString(rec.diagnostico),
+            acao: sanitizeString(rec.acao)
+        }));
+    } catch (error) {
+        console.error("❌ [SEO Service - Growth Insights] Erro:", error.message);
+        return [{
+            titulo: "Serviço de IA Indisponível",
+            diagnostico: "Houve um problema de comunicação com o modelo.",
+            acao: "Tente gerar os insights novamente mais tarde."
+        }];
+    }
+};
