@@ -287,10 +287,12 @@ function renderWhatsappLogItem(log) {
     let badges = '';
     
     if (log.feedbackGiven) {
-        if (log.dealClosed) {
+        if (['yes', 'started'].includes(log.dealClosed)) {
             badges += `<span style="background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; margin-left: 5px;">✅ Agendou</span>`;
-        } else if (log.contactReceived) {
-            badges += `<span style="background: #fef9c3; color: #854d0e; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; margin-left: 5px;">💬 Conversou</span>`;
+        } else if (log.dealClosed === 'talking') {
+            badges += `<span style="background: #ffedd5; color: #c2410c; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; margin-left: 5px;">⏳ Em negociação</span>`;
+        } else if (['no', 'not_started', 'ghosted'].includes(log.dealClosed) || (log.dealClosed && log.contactReceived)) {
+            badges += `<span style="background: #fef9c3; color: #854d0e; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; margin-left: 5px;">💬 Não Agendou</span>`;
         } else {
             badges += `<span style="background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; margin-left: 5px;">❌ Não Contatou</span>`;
         }
