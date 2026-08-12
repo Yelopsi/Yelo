@@ -160,7 +160,7 @@ body.chat-mobile-open {
 /* Centraliza o conteúdo (Banner e Widgets) horizontalmente */
 #main-content {
     width: 100%;
-    max-width: 1200px; /* Alargado para suportar o novo layout moderno */
+    max-width: 1400px; /* Alargado para suportar o novo layout moderno */
     margin: 0 auto;
     display: block; /* Deixa o layout moderno gerenciar as colunas e espaçamentos */
     transform: none !important; /* FIX: Impede que o JS do zoom quebre o 'position: sticky' dos cards flutuantes */
