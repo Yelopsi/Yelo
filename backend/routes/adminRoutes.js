@@ -140,7 +140,8 @@ router.get('/growth/demand', adminGrowthController.getDemand);
 router.get('/growth/marketing', adminGrowthController.getMarketing);
 router.get('/growth/cohorts', adminGrowthController.getCohorts);
 router.get('/growth/audit', adminGrowthController.getAudit);
-
+router.get('/growth/pmf', adminGrowthController.getPMFReport);
+router.get('/growth/pmf/details', adminGrowthController.getPMFDetails);
 // --- ROTAS FINANCEIRAS E DESPESAS ---
 router.get('/expenses', adminExpenseController.getExpenses);
 router.post('/expenses', adminExpenseController.createExpense);

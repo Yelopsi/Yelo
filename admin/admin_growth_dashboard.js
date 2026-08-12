@@ -19,12 +19,13 @@ window.loadGrowthData = async function() {
     };
 
     try {
-        const [overviewRes, acqRes, demRes, mktRes, cohortRes] = await Promise.all([
+        const [overviewRes, acqRes, demRes, mktRes, cohortRes, pmfRes] = await Promise.all([
             fetch(`/api/admin/growth/overview?days=${periodDays}`),
             fetch(`/api/admin/growth/acquisition?days=${periodDays}`),
             fetch(`/api/admin/growth/demand?days=${periodDays}`),
             fetch(`/api/admin/growth/marketing?days=${periodDays}`),
-            fetch(`/api/admin/growth/cohorts`)
+            fetch(`/api/admin/growth/cohorts`),
+            fetch(`/api/admin/growth/pmf`)
         ]);
 
         const formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -150,6 +151,51 @@ window.loadGrowthData = async function() {
             });
         }
 
+        // 6. PMF V3
+        if (pmfRes && pmfRes.ok) {
+            const result = await pmfRes.json();
+            const tbody = document.getElementById('pmf-tbody');
+            tbody.innerHTML = '';
+            
+            let hasRisk = false;
+            let riskCount = 0;
+
+            result.data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid #f1f5f9';
+                tr.style.cursor = 'pointer';
+                tr.title = "Clique para detalhar";
+                tr.onclick = () => window.openPmfDrilldown(row.contact_group);
+                
+                // Destacar a linha de risco
+                if (row.contact_group === '0 contatos' && row.active_psis > 0) {
+                    tr.style.background = '#fef2f2';
+                }
+
+                tr.innerHTML = `
+                    <td style="padding:15px; font-weight:700; color:#0f172a;">${row.contact_group}</td>
+                    <td style="padding:15px;">${row.total_psis}</td>
+                    <td style="padding:15px; font-weight:600; color:#10b981;">${row.active_psis}</td>
+                    <td style="padding:15px; color:#ef4444;">${row.churned_psis}</td>
+                    <td style="padding:15px; font-weight:600;">${row.churn_rate}%</td>
+                `;
+                tbody.appendChild(tr);
+
+                if (row.contact_group === '0 contatos' && row.active_psis > 0) {
+                    hasRisk = true;
+                    riskCount = row.active_psis;
+                }
+            });
+
+            const alertBanner = document.getElementById('pmf-risk-alert');
+            if (hasRisk) {
+                alertBanner.style.display = 'block';
+                document.getElementById('pmf-risk-text').innerText = `${riskCount} psicólogos estão pagando sem receber contatos nos últimos 30 dias.`;
+            } else {
+                alertBanner.style.display = 'none';
+            }
+        }
+
         document.getElementById('growth-loading').style.display = 'none';
         document.getElementById('growth-content').style.display = 'block';
         window.growthLastUpdate = new Date();
@@ -242,3 +288,51 @@ window.exportGrowthCSV = function() {
     link.click();
     document.body.removeChild(link);
 }
+
+window.openPmfDrilldown = async function(groupName) {
+    document.getElementById('pmf-sidebar-title').innerText = `Grupo de Risco: ${groupName}`;
+    document.getElementById('pmf-sidebar-subtitle').innerText = 'Carregando psicólogos...';
+    document.getElementById('pmf-sidebar-content').innerHTML = '<div style="text-align:center; padding: 20px;">Carregando...</div>';
+    
+    document.getElementById('pmf-overlay').classList.add('active');
+    document.getElementById('pmf-sidebar').classList.add('active');
+
+    try {
+        const res = await fetch(`/api/admin/growth/pmf/details?group=${encodeURIComponent(groupName)}`);
+        if (!res.ok) throw new Error('Falha ao carregar detalhes');
+        const json = await res.json();
+        const data = json.data;
+
+        document.getElementById('pmf-sidebar-subtitle').innerText = `${data.length} profissionais neste grupo (Ativos)`;
+        
+        let html = '';
+        if (data.length === 0) {
+            html = '<div style="text-align:center; color:#64748b; padding:20px;">Nenhum profissional encontrado.</div>';
+        } else {
+            data.forEach(psi => {
+                const phoneUrl = psi.telefone ? `https://wa.me/${psi.telefone.replace(/\D/g, '')}` : '#';
+                html += `
+                    <div class="pmf-item-card">
+                        <h4 style="margin:0 0 5px 0; font-size:1rem; color:#0f172a;">${psi.nome}</h4>
+                        <div style="font-size:0.8rem; color:#64748b; margin-bottom:10px;">
+                            <span style="display:block; margin-bottom: 3px;">Plano: <b>${psi.plano || 'Sem Plano'}</b></span>
+                            <span style="display:block;">Tempo de plataforma: <b>${Math.floor(psi.days_active) || 0} dias</b></span>
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <a href="${phoneUrl}" target="_blank" style="flex:1; text-align:center; background:#22c55e; color:white; padding:8px; border-radius:6px; text-decoration:none; font-weight:600; font-size:0.85rem;">WhatsApp</a>
+                            <a href="/admin/psychologists/${psi.id}/full-details" target="_blank" style="flex:1; text-align:center; background:#e2e8f0; color:#0f172a; padding:8px; border-radius:6px; text-decoration:none; font-weight:600; font-size:0.85rem;">Abrir CRM</a>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        document.getElementById('pmf-sidebar-content').innerHTML = html;
+    } catch (e) {
+        document.getElementById('pmf-sidebar-content').innerHTML = `<div style="color:red; text-align:center; padding:20px;">Erro ao carregar dados.</div>`;
+    }
+};
+
+window.closePmfDrilldown = function() {
+    document.getElementById('pmf-overlay').classList.remove('active');
+    document.getElementById('pmf-sidebar').classList.remove('active');
+};
