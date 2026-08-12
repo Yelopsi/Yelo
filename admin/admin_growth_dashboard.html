@@ -267,9 +267,10 @@
         
         <!-- BLOCO DE DIAGNÓSTICO -->
         <div style="margin-bottom: 25px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;">
-            <h2 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-top: 0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            <h2 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-top: 0; margin-bottom: 0; display: flex; align-items: center; gap: 8px;">
                 <span>🤖</span> Diagnóstico 
             </h2>
+            <p style="color: #64748b; font-size: 0.85rem; margin-top: 5px; margin-bottom: 15px;">Alertas automáticos baseados nos dados do período selecionado.</p>
             <ul id="diagnostic-list" style="margin: 0; padding-left: 25px; color: #334155; font-size: 0.95rem; line-height: 1.6;">
                 <li>Carregando diagnóstico...</li>
             </ul>
@@ -339,7 +340,8 @@
         <div class="grid-2col" style="margin-bottom: 30px;">
             <!-- FUNIL PACIENTES -->
             <div style="background: white; padding: 25px; border-radius: 12px; border: 1px solid #eaeaea;">
-                <h2 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin-bottom: 5px;">Funil de Aquisição de Pacientes</h2>
+                <h2 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin-bottom: 0;">Funil de Aquisição de Pacientes</h2>
+                <p style="color: #64748b; font-size: 0.85rem; margin-top: 5px; margin-bottom: 15px;">Jornada dos pacientes desde a visita no site até a conclusão do questionário.</p>
                 <div style="margin-bottom: 15px; color: #ef4444; font-size: 0.8rem; font-weight: 600; display: none;" id="alert-demanda-1">⚠️ Inconsistência de dados identificada.</div>
                 
                 <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;">
@@ -363,7 +365,8 @@
                     </div>
                 </div>
 
-                <h2 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin-bottom: 5px; margin-top: 15px;">Funil de Matchmaking</h2>
+                <h2 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin-bottom: 0; margin-top: 15px;">Funil de Matchmaking</h2>
+                <p style="color: #64748b; font-size: 0.85rem; margin-top: 5px; margin-bottom: 15px;">Eficiência do sistema em conectar pacientes aos psicólogos (Cliques no WhatsApp).</p>
                 <div style="margin-bottom: 15px; color: #ef4444; font-size: 0.8rem; font-weight: 600; display: none;" id="alert-demanda-2">⚠️ Inconsistência de dados identificada.</div>
 
                 <div style="display: flex; flex-direction: column; gap: 15px;">
@@ -390,7 +393,8 @@
 
             <!-- FUNIL PSICÓLOGOS (AQUISIÇÃO) -->
             <div style="background: white; padding: 25px; border-radius: 12px; border: 1px solid #eaeaea;">
-                <h2 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin-bottom: 15px;">Funil de Aquisição B2B</h2>
+                <h2 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin-bottom: 0;">Funil de Aquisição B2B</h2>
+                <p style="color: #64748b; font-size: 0.85rem; margin-top: 5px; margin-bottom: 15px;">Conversão de leads prospectados em psicólogos assinantes da plataforma.</p>
                 <div style="display: flex; flex-direction: column; gap: 15px;">
                     <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f1f5f9; padding-bottom:10px;">
                         <span style="color:#64748b; font-weight:600;">Leads (Mapeados)</span>
@@ -424,7 +428,7 @@
         <!-- SEÇÃO: DEMANDA X RETENÇÃO -->
         <div style="margin-bottom: 30px;">
             <h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin-bottom: 0;">Demanda × Retenção</h2>
-            <p style="color: #64748b; font-size: 0.85rem; margin-top: 5px; margin-bottom: 15px;">Associação observada — não implica causalidade (Últimos 30 dias)</p>
+            <p style="color: #64748b; font-size: 0.85rem; margin-top: 5px; margin-bottom: 15px;">Relação entre geração de leads e evasão de profissionais (Associação não implica causalidade).</p>
             <div style="background: white; border-radius: 12px; border: 1px solid #eaeaea; overflow: hidden;">
                 <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
                     <thead style="background: #f8fafc; border-bottom: 1px solid #eaeaea; color: #475569;">
@@ -445,7 +449,8 @@
 
         <!-- SEÇÃO: COHORTS DE RETENÇÃO -->
         <div style="margin-bottom: 30px;">
-            <h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin-bottom: 15px;">Retenção de Cohorts</h2>
+            <h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin-bottom: 0;">Retenção de Cohorts</h2>
+            <p style="color: #64748b; font-size: 0.85rem; margin-top: 5px; margin-bottom: 15px;">Sobrevivência da base de psicólogos assinantes quebrada pelo mês em que se cadastraram.</p>
             <div style="background: white; border-radius: 12px; border: 1px solid #eaeaea; overflow-x: auto; -webkit-overflow-scrolling: touch;">
                 <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 0.9rem;">
                     <thead style="background: #f8fafc; color: #64748b; font-weight: 600;">
@@ -470,7 +475,8 @@
 
         <!-- SEÇÃO: UNIT ECONOMICS E MARKETING (DEMOTED) -->
         <div style="margin-bottom: 30px; opacity: 0.85;">
-            <h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin-bottom: 15px;">Economia Unitária (Unit Economics)</h2>
+            <h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin-bottom: 0;">Economia Unitária (Unit Economics)</h2>
+            <p style="color: #64748b; font-size: 0.85rem; margin-top: 5px; margin-bottom: 15px;">Custo de Aquisição (CAC) e Valor Vitalício (LTV) baseados em investimentos de marketing.</p>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
                 <div class="stat-card">
                     <div class="stat-card-title">CAC Psicólogos (B2B) <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Custo atribuível diretamente à aquisição de psicólogos.</span></span></div>
