@@ -24,7 +24,7 @@ exports.getExpenses = async (req, res) => {
                 plano: { [Op.ne]: null },
                 status: 'active'
             },
-            attributes: ['plano', 'is_exempt', 'stripeSubscriptionId', 'subscriptionId']
+            attributes: ['plano', 'is_exempt', 'subscriptionId']
         });
 
         const planPrices = { 
@@ -34,7 +34,7 @@ exports.getExpenses = async (req, res) => {
 
         const currentMRR = activePsychologists.reduce((acc, psy) => {
             if (psy.is_exempt) return acc;
-            const hasSub = !!(psy.stripeSubscriptionId || psy.subscriptionId);
+            const hasSub = !!(psy.subscriptionId);
             if (!hasSub) return acc;
             return acc + (planPrices[psy.plano ? psy.plano.toLowerCase() : ''] || 0);
         }, 0);

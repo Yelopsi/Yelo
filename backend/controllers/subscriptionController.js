@@ -42,15 +42,14 @@ exports.deletePsychologistAccount = async (req, res) => {
         }
 
         // --- PONTO CRÍTICO: CANCELAMENTO NO ASAAS ---
-        if (psychologist.stripeSubscriptionId) {
+        if (psychologist.subscriptionId) {
             try {
-                await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.stripeSubscriptionId}`, {
+                await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.subscriptionId}`, {
                     method: 'DELETE',
                     headers: { 'access_token': ASAAS_API_KEY }
                 });
             } catch (asaasError) {
-                // Decisão de Produto: Não impedimos a exclusão se o Stripe falhar, 
-                // mas logamos o erro para auditoria manual se necessário.
+                // Log error but continue deletion
             }
         }
 
@@ -98,7 +97,7 @@ exports.cancelSubscription = async (req, res) => {
         if (!psychologist) return res.status(404).json({ error: 'Psi não encontrado' });
 
         // [CORREÇÃO] Verifica ambas as colunas possíveis para o ID da assinatura
-        const subId = psychologist.stripeSubscriptionId || psychologist.subscriptionId;
+        const subId = psychologist.subscriptionId;
 
         if (!subId) {
              // [CORREÇÃO DEFINITIVA] FALLBACK DE SEGURANÇA:
@@ -109,7 +108,6 @@ exports.cancelSubscription = async (req, res) => {
                 plano: null,
                 planExpiresAt: new Date(),
                 cancelAtPeriodEnd: false,
-                stripeSubscriptionId: null,
                 subscriptionId: null
              });
              return res.status(200).json({ message: 'Assinatura cancelada localmente (Vínculo de pagamento não encontrado).' });
@@ -125,12 +123,12 @@ exports.cancelSubscription = async (req, res) => {
         if (!subData.id) {
              // Se não achou no Asaas, assume cancelamento manual local e limpa tudo
              await psychologist.update({ 
-                 status: 'inactive',
-                 plano: null,
-                 planExpiresAt: new Date(),
-                 cancelAtPeriodEnd: false,
-                 stripeSubscriptionId: null
-             });
+                  status: 'inactive',
+                  plano: null,
+                  planExpiresAt: new Date(),
+                  cancelAtPeriodEnd: false,
+                  subscriptionId: null
+              });
              return res.json({ message: 'Assinatura cancelada localmente (Não encontrada no provedor).' });
         }
 
@@ -206,8 +204,7 @@ exports.cancelSubscription = async (req, res) => {
                 plano: null,
                 planExpiresAt: new Date(), // Expira já
                 cancelAtPeriodEnd: false,
-                stripeSubscriptionId: null, // FIX: Limpa o ID para impedir que o webhook reative
-                subscriptionId: null, // Limpa também a coluna legada se existir
+                subscriptionId: null, // Limpa o ID da assinatura
                 badges: currentBadges // Atualiza as badges
             });
 
@@ -229,7 +226,6 @@ exports.cancelSubscription = async (req, res) => {
                 
                 await psychologist.update({
                     cancelAtPeriodEnd: false,
-                    stripeSubscriptionId: null,
                     subscriptionId: null
                 });
                 return res.json({ message: 'Assinatura cancelada com sucesso.' });
@@ -267,7 +263,7 @@ exports.cancelSubscription = async (req, res) => {
 
 // ----------------------------------------------------------------------
 // Rota: POST /api/psychologists/me/reactivate-subscription
-// Descrição: Remove o agendamento de cancelamento no Stripe e mantém o plano ativo.
+// Descrição: Remove o agendamento de cancelamento no Asaas e mantém o plano ativo.
 // ----------------------------------------------------------------------
 exports.reactivateSubscription = async (req, res) => {
     try {
@@ -279,7 +275,7 @@ exports.reactivateSubscription = async (req, res) => {
         const psychologist = await db.Psychologist.findByPk(req.psychologist.id);
 
         // [CORREÇÃO] Verifica ambas as colunas
-        const subId = psychologist.stripeSubscriptionId || psychologist.subscriptionId;
+        const subId = psychologist.subscriptionId;
 
         if (!subId) {
              return res.status(400).json({ error: 'Nenhuma assinatura encontrada para reativar.' });

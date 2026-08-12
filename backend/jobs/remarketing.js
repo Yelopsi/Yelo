@@ -16,7 +16,7 @@ async function processRemarketing() {
         const targetPsis = await db.Psychologist.findAll({
             where: {
                 status: { [Op.in]: ['pending', 'inactive'] },
-                stripeSubscriptionId: null, // Prova cabal de que não tem assinatura rodando
+                subscriptionId: null, // Sem assinatura Asaas ativa
                 is_exempt: { [Op.not]: true }, // Remove convidados/VIPs
                 isAdmin: { [Op.not]: true }
             }

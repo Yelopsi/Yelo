@@ -16,37 +16,78 @@ if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api
 
 const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
 
-// 1. CRIA A ASSINATURA NO ASAAS (Checkout Transparente)
+const { v4: uuidv4 } = require('uuid');
+
+// 1. CRIA A ASSINATURA NO ASAAS (Checkout Transparente com Intent e Idempotência)
 exports.createPreference = async (req, res) => {
+    let intent = null;
+    let localPsychologist = null;
+    
     try {
         const { planType, cupom, creditCard, billingType } = req.body;
         const psychologistId = req.psychologist.id;
-        const psychologist = await db.Psychologist.findByPk(psychologistId);
+        localPsychologist = await db.Psychologist.findByPk(psychologistId);
+        if (!localPsychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+
+        // --- IDEMPOTÊNCIA: RECUPERAÇÃO DA OPERAÇÃO ---
+        const idempotencyKey = req.headers['idempotency-key'] || uuidv4();
+        intent = await db.SubscriptionIntent.findOne({ where: { idempotencyKey } });
+        
+        if (intent) {
+            if (['COMPLETED', 'ASAAS_SUCCESS'].includes(intent.status)) {
+                return res.json({ success: true, subscriptionId: intent.asaasSubscriptionId, message: 'Operação concluída anteriormente.' });
+            }
+            if (['CREATING', 'SENT_TO_ASAAS', 'RECONCILIATION_REQUIRED'].includes(intent.status)) {
+                return res.status(409).json({ error: 'Operação em andamento. Aguarde a confirmação.' });
+            }
+            if (['FAILED_LOCAL', 'CANCELED'].includes(intent.status)) {
+                return res.status(400).json({ error: 'Chave de transação já falhou. Atualize a página e tente novamente.' });
+            }
+        }
+
+        // --- IDEMPOTÊNCIA: CRIAÇÃO DO INTENT (Proteção Concorrente via DB Constraint) ---
+        try {
+            intent = await db.SubscriptionIntent.create({
+                psychologistId,
+                idempotencyKey,
+                planId: planType,
+                billingType: billingType || 'CREDIT_CARD',
+                status: 'CREATING',
+                expiresAt: new Date(Date.now() + 15 * 60000) // Expira em 15 minutos
+            });
+        } catch (e) {
+            if (e.name === 'SequelizeUniqueConstraintError') {
+                return res.status(409).json({ error: 'Você já possui um pagamento em andamento. Aguarde alguns instantes.' });
+            }
+            throw e;
+        }
 
         // Lógica do Cupom VIP (Agora depende do .env para segurança)
         const validCoupon = process.env.VIP_COUPON;
         if (cupom && validCoupon && cupom.toUpperCase() === validCoupon.toUpperCase()) {
-            const psi = await db.Psychologist.findByPk(psychologistId);
-            const hoje = new Date();
-            const trintaDias = new Date(hoje.setDate(hoje.getDate() + 30));
-
-            await psi.update({
-                status: 'active',
-                planExpiresAt: trintaDias, // FIX: Nome da coluna padronizado
-                plano: 'Sol'
-            });
+            await localPsychologist.update({ 
+                  status: 'inactive',
+                  plano: null,
+                  planExpiresAt: new Date(),
+                  cancelAtPeriodEnd: false,
+                  subscriptionId: null
+              });
+            await intent.update({ status: 'CANCELED' }); // Cancela a intenção pois usou cupom
             return res.json({ couponSuccess: true, message: 'Cupom VIP aplicado!' });
         }
 
         // Validação de dados do titular e do cartão (Apenas se não for PIX)
         if (billingType !== 'PIX') {
             if (!creditCard || !creditCard.holderName || !creditCard.holderCpf || !creditCard.holderPhone) {
+                await intent.update({ status: 'FAILED_LOCAL' });
                 return res.status(400).json({ error: 'Dados do titular incompletos.' });
             }
             if (!creditCard.number || !creditCard.expiry || !creditCard.ccv) {
+                await intent.update({ status: 'FAILED_LOCAL' });
                 return res.status(400).json({ error: 'Dados do cartão incompletos.' });
             }
             if (!creditCard.expiry.includes('/')) {
+                await intent.update({ status: 'FAILED_LOCAL' });
                 return res.status(400).json({ error: 'Data de validade inválida.' });
             }
         }
@@ -56,320 +97,298 @@ exports.createPreference = async (req, res) => {
             case 'ESSENTIAL': value = 99.00; break;
             case 'CLINICAL': value = 159.00; break;
             case 'REFERENCE': value = 259.00; break;
-            default: return res.status(400).json({ error: 'Plano inválido: ' + planType });
+            default: 
+                await intent.update({ status: 'FAILED_LOCAL' });
+                return res.status(400).json({ error: 'Plano inválido: ' + planType });
         }
 
-        // --- FIX: SANITIZAÇÃO DE DADOS DO TITULAR ---
+        // --- SANITIZAÇÃO DE DADOS DO TITULAR ---
         const postalCode = creditCard && creditCard.postalCode ? creditCard.postalCode.replace(/\D/g, '') : '';
         let phone = creditCard && creditCard.holderPhone ? creditCard.holderPhone.replace(/\D/g, '') : '';
-        // Se o telefone do titular for inválido/curto, tenta usar o do perfil do psicólogo
         if (phone.length < 10) {
-             const psiPhone = psychologist.telefone ? psychologist.telefone.replace(/\D/g, '') : '';
+             const psiPhone = localPsychologist.telefone ? localPsychologist.telefone.replace(/\D/g, '') : '';
              if (psiPhone.length >= 10) phone = psiPhone;
         }
 
-        // --- FIX: Limpeza de CPF e Atualização Dinâmica ---
-        const cleanCpfCnpj = (creditCard && creditCard.holderCpf) ? creditCard.holderCpf.replace(/\D/g, '') : (psychologist.cpf || psychologist.cnpj || '');
+        const cleanCpfCnpj = (creditCard && creditCard.holderCpf) ? creditCard.holderCpf.replace(/\D/g, '') : (localPsychologist.cpf || localPsychologist.cnpj || '');
 
-        // Atualiza o banco local se o psicólogo ainda não tinha CPF salvo
-        if (cleanCpfCnpj && !psychologist.cpf) {
-            try {
-                await psychologist.update({ cpf: cleanCpfCnpj });
-            } catch (err) {
-                console.warn(`[AVISO] CPF ${cleanCpfCnpj} já pertence a outra conta local. Seguindo com o pagamento no Asaas...`);
-            }
+        if (cleanCpfCnpj && !localPsychologist.cpf) {
+            try { await localPsychologist.update({ cpf: cleanCpfCnpj }); } 
+            catch (err) { console.warn(`[AVISO] CPF já pertence a outra conta local.`); }
         }
 
-        // 1. Cria ou Recupera o Cliente no Asaas
-        // (Simplificação: Cria um novo ou busca por email se a API permitir, aqui vamos tentar criar direto e tratar erro se duplicado ou buscar antes)
-        // Para robustez, buscamos primeiro.
+        // --- BUSCA/CRIAÇÃO DE CUSTOMER NO ASAAS ---
         let customerIdAsaas = null;
         
-        // --- DEBUG: LOG DA URL ---
-        const urlCliente = `${ASAAS_API_URL}/customers?email=${encodeURIComponent(psychologist.email)}`;
-        
-        const customerResponse = await fetch(urlCliente, {
-            headers: { 'access_token': ASAAS_API_KEY }
-        });
-
-        // Tenta ler o corpo como texto primeiro para poder logar se der erro no JSON
-        const responseText = await customerResponse.text();
-        let customerSearch;
-        
         try {
-            customerSearch = JSON.parse(responseText);
-        } catch (e) {
-            throw Object.assign(new Error(`Erro de comunicação com Asaas (Resposta não é JSON). Verifique os logs do servidor.`), { cause: e });
-        }
-        
-        // Verifica se a resposta JSON contém erros lógicos da API
-        if (customerSearch.errors) {
-            const err = new Error(customerSearch.errors[0].description);
-            err.asaasErrors = customerSearch.errors;
-            throw err;
-        }
-
-        if (customerSearch.data && customerSearch.data.length > 0) {
-            customerIdAsaas = customerSearch.data[0].id;
-            const existingCpf = customerSearch.data[0].cpfCnpj;
-            const existingPostalCode = customerSearch.data[0].postalCode;
-
-            const existingAddress = customerSearch.data[0].address;
-
-            // --- FIX: O Asaas exige CPF para PIX. Se o cliente antigo não tinha, atualizamos agora. Também garantimos o envio do CEP e Endereço para NFs. ---
-            const updatePayload = {};
-            if (!existingCpf && cleanCpfCnpj) updatePayload.cpfCnpj = cleanCpfCnpj;
-            if (!existingPostalCode && psychologist.cep) updatePayload.postalCode = psychologist.cep;
-            if (!existingAddress && psychologist.rua) {
-                updatePayload.address = psychologist.rua;
-                updatePayload.addressNumber = psychologist.numero;
-                updatePayload.province = psychologist.bairro;
-                if (psychologist.complemento) updatePayload.complement = psychologist.complemento;
-            }
-
-            if (Object.keys(updatePayload).length > 0) {
-                await fetch(`${ASAAS_API_URL}/customers/${customerIdAsaas}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
-                    body: JSON.stringify(updatePayload)
-                });
-            }
-        } else {
-            // Cria novo cliente
-            const newCustomer = await fetch(`${ASAAS_API_URL}/customers`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'access_token': ASAAS_API_KEY 
-                },
-                body: JSON.stringify({
-                    name: psychologist.nome,
-                    email: psychologist.email,
-                    cpfCnpj: cleanCpfCnpj,
-                    mobilePhone: phone, // Usa o telefone sanitizado
-                    postalCode: psychologist.cep, // <--- ENVIANDO O CEP PARA O ASAAS
-                    address: psychologist.rua,
-                    addressNumber: psychologist.numero,
-                    province: psychologist.bairro,
-                    complement: psychologist.complemento,
-                    notificationDisabled: true // <--- DESATIVA E-MAILS NATIVOS DO ASAAS (Usaremos os da Yelo)
-                })
-            }).then(r => r.json());
-
-            if (newCustomer.errors) {
-                const err = new Error(newCustomer.errors[0].description);
-                err.asaasErrors = newCustomer.errors;
-                throw err;
-            }
-            customerIdAsaas = newCustomer.id;
-        }
-
-        // --- LÓGICA INTELIGENTE DE DATA DE COBRANÇA ---
-        let nextDueDate = new Date(Date.now() - 10800000).toISOString().split('T')[0];
-
-        // Se o psicólogo ainda está dentro do trial ou plano vigente, agenda para quando acabar
-        if (psychologist.planExpiresAt && new Date(psychologist.planExpiresAt) > new Date()) {
-            nextDueDate = new Date(psychologist.planExpiresAt).toISOString().split('T')[0];
-        } else {
-        }
-
-        // --- LÓGICA INTELIGENTE DE ATUALIZAÇÃO OU CRIAÇÃO ---
-        let existingSubId = psychologist.stripeSubscriptionId || psychologist.subscriptionId;
-
-        const saveAsaasSubscription = async (payload) => {
-            // Se o psicólogo está INATIVO mas tem uma assinatura antiga, 
-            // NÃO podemos reaproveitá-la, senão o Asaas agenda a cobrança para o ciclo antigo (ex: dia 11 do mês que vem)
-            // e o psicólogo fica sem acesso até lá.
-            if (existingSubId && psychologist.status === 'inactive') {
-                try {
-                    await fetch(`${ASAAS_API_URL}/subscriptions/${existingSubId}`, {
-                        method: 'DELETE',
-                        headers: { 'access_token': ASAAS_API_KEY }
-                    });
-                } catch (e) {
-                    console.warn(`Aviso: falha ao deletar assinatura antiga ${existingSubId}`, e);
-                }
-                existingSubId = null;
-            }
-
-            payload.updatePendingPayments = true; // Garante que faturas em aberto adotem o novo valor/forma de pagamento
+            const urlCliente = `${ASAAS_API_URL}/customers?email=${encodeURIComponent(localPsychologist.email)}`;
+            const customerResponse = await fetch(urlCliente, { headers: { 'access_token': ASAAS_API_KEY } });
+            const responseText = await customerResponse.text();
             
-            if (existingSubId) {
-                let res = await fetch(`${ASAAS_API_URL}/subscriptions/${existingSubId}`, {
-                    method: 'POST', // O Asaas usa POST para atualizar assinaturas
-                    headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
-                    body: JSON.stringify(payload)
-                });
-                let text = await res.text();
-                let data;
-                try { data = JSON.parse(text); } catch(e) { throw Object.assign(new Error(`Erro Asaas Update Parse: ${text}`), { cause: e }); }
-                
-                // Se a assinatura não pode ser atualizada (foi removida, está inativa ou não encontrada)
-                if (res.status === 404 || (res.status === 400 && data.errors && data.errors.some(e => e.code === 'invalid_action' || e.code === 'deleted'))) {
-                    existingSubId = null; // Reseta o ID para forçar a criação abaixo
-                } else {
-                    return { res, data };
-                }
-            }
+            let customerSearch;
+            try { customerSearch = JSON.parse(responseText); } 
+            catch (e) { throw Object.assign(new Error(`Erro de comunicação (Não JSON)`), { cause: e }); }
+            
+            if (customerSearch.errors) throw new Error(customerSearch.errors[0].description);
 
-            // Se não existia ou falhou o update, cria uma nova
-            if (!existingSubId) {
-                let res = await fetch(`${ASAAS_API_URL}/subscriptions`, {
+            if (customerSearch.data && customerSearch.data.length > 0) {
+                customerIdAsaas = customerSearch.data[0].id;
+                const existingCpf = customerSearch.data[0].cpfCnpj;
+                const existingPostalCode = customerSearch.data[0].postalCode;
+                const existingAddress = customerSearch.data[0].address;
+
+                const updatePayload = {};
+                if (!existingCpf && cleanCpfCnpj) updatePayload.cpfCnpj = cleanCpfCnpj;
+                if (!existingPostalCode && localPsychologist.cep) updatePayload.postalCode = localPsychologist.cep;
+                if (!existingAddress && localPsychologist.rua) {
+                    updatePayload.address = localPsychologist.rua;
+                    updatePayload.addressNumber = localPsychologist.numero;
+                    updatePayload.province = localPsychologist.bairro;
+                    if (localPsychologist.complemento) updatePayload.complement = localPsychologist.complemento;
+                }
+
+                if (Object.keys(updatePayload).length > 0) {
+                    await fetch(`${ASAAS_API_URL}/customers/${customerIdAsaas}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                        body: JSON.stringify(updatePayload)
+                    });
+                }
+            } else {
+                const newCustomerReq = await fetch(`${ASAAS_API_URL}/customers`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({
+                        name: localPsychologist.nome,
+                        email: localPsychologist.email,
+                        cpfCnpj: cleanCpfCnpj,
+                        mobilePhone: phone,
+                        postalCode: localPsychologist.cep,
+                        address: localPsychologist.rua,
+                        addressNumber: localPsychologist.numero,
+                        province: localPsychologist.bairro,
+                        complement: localPsychologist.complemento,
+                        notificationDisabled: true
+                    })
                 });
-                let text = await res.text();
-                let data;
-                try { data = JSON.parse(text); } catch(e) { throw Object.assign(new Error(`Erro Asaas Create Parse: ${text}`), { cause: e }); }
-                return { res, data };
+                const newCustomer = await newCustomerReq.json();
+                if (newCustomer.errors) {
+                    const err = new Error(newCustomer.errors[0].description);
+                    err.asaasErrors = newCustomer.errors;
+                    throw err;
+                }
+                customerIdAsaas = newCustomer.id;
             }
-        };
+        } catch (custError) {
+            // Se falhou ao achar/criar customer, Asaas não tem assinatura vinculada.
+            await intent.update({ status: 'FAILED_LOCAL' });
+            return res.status(400).json({ error: `Erro no Cliente Asaas: ${custError.message}` });
+        }
 
-        // --- FLUXO PIX ---
+        // --- PREPARAÇÃO DO PAYLOAD DA ASSINATURA ---
+        let nextDueDate = new Date(Date.now() - 10800000).toISOString().split('T')[0];
+        if (localPsychologist.planExpiresAt && new Date(localPsychologist.planExpiresAt) > new Date()) {
+            nextDueDate = new Date(localPsychologist.planExpiresAt).toISOString().split('T')[0];
+        }
+
+        let subscriptionPayload;
         if (billingType === 'PIX') {
-            const subscriptionPayload = {
+            subscriptionPayload = {
                 customer: customerIdAsaas,
                 billingType: 'PIX',
                 value: value,
                 nextDueDate: nextDueDate,
-                cycle: 'MONTHLY', // Adicionado: Ciclo mensal obrigatório
+                cycle: 'MONTHLY',
                 description: `Assinatura Yelo - Plano ${planType}`,
                 externalReference: String(psychologistId),
             };
-            
-            let { res: subscriptionRes, data: subscriptionData } = await saveAsaasSubscription(subscriptionPayload);
-            
-            // --- FALLBACK: Se PIX não for permitido para assinatura, tenta BOLETO (que tem PIX embutido) ---
-            if (subscriptionRes.status === 400 && subscriptionData.errors && subscriptionData.errors[0].description.includes('forma de pagamento')) {
-                subscriptionPayload.billingType = 'BOLETO';
-                
-                const fallbackResult = await saveAsaasSubscription(subscriptionPayload);
-                subscriptionRes = fallbackResult.res;
-                subscriptionData = fallbackResult.data;
-            }
-            
-            if (subscriptionData.errors) {
-                const err = new Error(subscriptionData.errors[0].description);
-                err.asaasErrors = subscriptionData.errors;
-                throw err;
-            }
-            
-            // Busca a primeira cobrança para pegar o QR Code
-            // FIX: Filtro ?status=PENDING garante que estamos pegando a fatura em aberto, e não uma velha já paga (caso seja update)
-            const paymentsRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subscriptionData.id}/payments?status=PENDING`, {
-                headers: { 'access_token': ASAAS_API_KEY }
-            });
-            const paymentsData = await paymentsRes.json();
-            
-            if (!paymentsData.data || paymentsData.data.length === 0) {
-                throw new Error("Assinatura criada/atualizada, mas cobrança pendente não encontrada.");
-            }
-            
-            const firstPayment = paymentsData.data[0];
-            
-            // Pega o QR Code
-            const qrRes = await fetch(`${ASAAS_API_URL}/payments/${firstPayment.id}/pixQrCode`, {
-                headers: { 'access_token': ASAAS_API_KEY }
-            });
-            const qrData = await qrRes.json();
-            
-            // Salva ID da assinatura (Pendente)
-            await psychologist.update({
-                stripeSubscriptionId: subscriptionData.id // Salva apenas a referência (Aguardando Webhook)
-            });
-
-            return res.json({ 
-                success: true, 
-                subscriptionId: subscriptionData.id, 
-                billingType: 'PIX',
-                pix: {
-                    encodedImage: qrData.encodedImage,
-                    payload: qrData.payload
-                }
-            });
-        }
-
-        // 2. Cria a Assinatura com Cartão de Crédito
-        let expiryMonth = '', expiryYear = '';
-        if (billingType !== 'PIX') {
+        } else {
+            let expiryMonth = '', expiryYear = '';
             [expiryMonth, expiryYear] = creditCard.expiry.split('/');
+            subscriptionPayload = {
+                customer: customerIdAsaas,
+                billingType: 'CREDIT_CARD',
+                value: value,
+                nextDueDate: nextDueDate,
+                cycle: 'MONTHLY',
+                description: `Assinatura Yelo - Plano ${planType}`,
+                externalReference: String(psychologistId),
+                softDescriptor: 'Yelo Saude',
+                creditCard: {
+                    holderName: creditCard.holderName,
+                    number: creditCard.number,
+                    expiryMonth: expiryMonth,
+                    expiryYear: expiryYear.length === 2 ? `20${expiryYear}` : expiryYear,
+                    ccv: creditCard.ccv
+                },
+                creditCardHolderInfo: {
+                    name: creditCard.holderName,
+                    email: localPsychologist.email,
+                    cpfCnpj: creditCard.holderCpf,
+                    postalCode: postalCode,
+                    addressNumber: creditCard.addressNumber,
+                    addressComplement: creditCard.addressComplement || null,
+                    phone: phone
+                }
+            };
         }
 
-        const subscriptionPayload = {
-            customer: customerIdAsaas,
-            billingType: 'CREDIT_CARD',
-            value: value,
-            nextDueDate: nextDueDate,
-            cycle: 'MONTHLY', // Adicionado: Ciclo mensal obrigatório
-            description: `Assinatura Yelo - Plano ${planType}`,
-            externalReference: String(psychologistId),
-            softDescriptor: 'Yelo Saude', // Texto na fatura (O Asaas permite no máximo 13 caracteres)
-            creditCard: {
-                holderName: creditCard.holderName,
-                number: creditCard.number,
-                expiryMonth: expiryMonth,
-                expiryYear: expiryYear.length === 2 ? `20${expiryYear}` : expiryYear,
-                ccv: creditCard.ccv
-            },
-            creditCardHolderInfo: {
-                name: creditCard.holderName,
-                email: psychologist.email,
-                cpfCnpj: creditCard.holderCpf,
-                postalCode: postalCode,
-                addressNumber: creditCard.addressNumber,
-                addressComplement: creditCard.addressComplement || null,
-                phone: phone
+        // --- ALTERA O ESTADO PARA AVISAR QUE A REQUISIÇÃO VAI SAIR (PONTO SEM VOLTA) ---
+        await intent.update({ status: 'SENT_TO_ASAAS' });
+
+        // --- DISPARO DA REQUISIÇÃO PARA O ASAAS ---
+        let subscriptionRes, subscriptionData;
+        let subId = localPsychologist.subscriptionId;
+        
+        try {
+            if (subId) {
+                // Tenta Deletar/Cancelar a antiga sem falhar o bloco todo
+                try {
+                    await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
+                        method: 'DELETE',
+                        headers: { 'access_token': ASAAS_API_KEY }
+                    });
+                } catch (asaasError) { /* ignora erro no cancelamento legado */ }
+
+                subscriptionPayload.updatePendingPayments = true;
+                
+                let resUpdate = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                    body: JSON.stringify(subscriptionPayload)
+                });
+                let dataUpdate = await resUpdate.json();
+                
+                if (resUpdate.status === 404 || (resUpdate.status === 400 && dataUpdate.errors && dataUpdate.errors.some(e => e.code === 'invalid_action' || e.code === 'deleted'))) {
+                    subId = null; 
+                } else {
+                    subscriptionRes = resUpdate;
+                    subscriptionData = dataUpdate;
+                }
             }
-        };
 
-        const { res: subscriptionRes, data: subscriptionData } = await saveAsaasSubscription(subscriptionPayload);
+            if (!subId) {
+                let resCreate = await fetch(`${ASAAS_API_URL}/subscriptions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                    body: JSON.stringify(subscriptionPayload)
+                });
+                subscriptionRes = resCreate;
+                subscriptionData = await resCreate.json();
+            }
 
-        if (subscriptionData.errors) {
-            const err = new Error(subscriptionData.errors[0].description);
-            err.asaasErrors = subscriptionData.errors;
-            throw err;
+            // Fallback para BOLETO se PIX falhar
+            if (billingType === 'PIX' && subscriptionRes.status === 400 && subscriptionData.errors && subscriptionData.errors[0].description.includes('forma de pagamento')) {
+                subscriptionPayload.billingType = 'BOLETO';
+                let resCreate = await fetch(`${ASAAS_API_URL}/subscriptions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                    body: JSON.stringify(subscriptionPayload)
+                });
+                subscriptionRes = resCreate;
+                subscriptionData = await resCreate.json();
+            }
+
+        } catch (networkError) {
+            // Timeout/Erro de DNS ao chamar Asaas. A requisição pode ter chegado lá.
+            await intent.update({ status: 'RECONCILIATION_REQUIRED' });
+            return res.status(500).json({ error: 'Erro de comunicação com o gateway. Verificando o estado do pagamento. Aguarde e confira seu plano em instantes.' });
         }
 
-        // Atualiza salvando a referência da assinatura e o plano selecionado.
-        /// a data de expiração não é aumentada aqui; o webhook atualizará o planExpiresAt 
-        // quando o pagamento for de fato confirmado (se a cobrança for imediata).
-        await psychologist.update({
-            stripeSubscriptionId: subscriptionData.id,
-            plano: planType
-        });
+        // --- TRATAMENTO DE RETORNO DO ASAAS ---
+        if (!subscriptionRes.ok || subscriptionData.errors) {
+            const errCode = subscriptionRes.status;
+            if (errCode >= 500) {
+                // Erro 500 deles. A transação pode ter passado lá dentro e crachou na hora de montar a resposta.
+                await intent.update({ status: 'RECONCILIATION_REQUIRED' });
+                return res.status(500).json({ error: 'Gateway instável. Verificaremos seu pagamento em instantes.' });
+            }
+            // Falha semântica explícita (Ex: Cartão Recusado). Asaas retornou HTTP 400 = 100% certeza de não ter criado.
+            await intent.update({ status: 'FAILED_LOCAL' });
+            const errorMsg = subscriptionData.errors ? subscriptionData.errors[0].description : 'Operação recusada pelo cartão/banco.';
+            return res.status(400).json({ error: errorMsg });
+        }
+
+        // --- SUCESSO NO ASAAS ---
+        try {
+            await intent.update({ asaasSubscriptionId: subscriptionData.id });
+        } catch (intentErr) {
+            // Se o Banco Yelo falhar, o Recovery processará o status SENT_TO_ASAAS expirado e retificará.
+            console.error("Erro fatal ao dar update no Intent: ", intentErr);
+            throw intentErr; 
+        }
+
+        try {
+            // Persistência nas tabelas financeiras
+            await db.Subscription.upsert({
+                id: subscriptionData.id,
+                psychologistId: psychologistId,
+                asaasCustomerId: customerIdAsaas,
+                plan: planType,
+                status: subscriptionData.status || 'ACTIVE'
+            });
+
+            // Atualiza o Psychologist
+            await localPsychologist.update({
+                subscriptionId: subscriptionData.id,
+                plano: planType
+            });
+            
+            // Sucesso Completo
+            await intent.update({ status: 'COMPLETED' });
+        } catch (dbError) {
+            // Yelo DB Error: A assinatura Asaas existe e o Intent foi marcado com o ID, mas as tabelas locais (Psychologist) falharam.
+            await intent.update({ status: 'RECONCILIATION_REQUIRED' });
+            throw dbError;
+        }
+
+        // Retornos ao Client
+        if (billingType === 'PIX') {
+            try {
+                const paymentsRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subscriptionData.id}/payments?status=PENDING`, {
+                    headers: { 'access_token': ASAAS_API_KEY }
+                });
+                const paymentsData = await paymentsRes.json();
+                
+                if (paymentsData.data && paymentsData.data.length > 0) {
+                    const firstPayment = paymentsData.data[0];
+                    const qrRes = await fetch(`${ASAAS_API_URL}/payments/${firstPayment.id}/pixQrCode`, {
+                        headers: { 'access_token': ASAAS_API_KEY }
+                    });
+                    const qrData = await qrRes.json();
+                    
+                    return res.json({ 
+                        success: true, 
+                        subscriptionId: subscriptionData.id, 
+                        billingType: 'PIX',
+                        pix: { encodedImage: qrData.encodedImage, payload: qrData.payload }
+                    });
+                }
+            } catch (pixErr) {
+                console.error("Assinatura criada mas falha ao obter QRCode PIX", pixErr);
+            }
+            return res.json({ success: true, subscriptionId: subscriptionData.id, message: 'Assinatura PIX criada.' });
+        }
 
         res.json({ success: true, subscriptionId: subscriptionData.id });
 
     } catch (error) {
-        // GRAVA O ERRO NO SISTEMA PARA O DASHBOARD VER
         try {
             if (db.SystemLog) {
-                let logMessage = `Erro ao criar pagamento Asaas: ${error.message}`;
-                let logMeta = null;
-
-                if (error.asaasErrors && error.asaasErrors.length > 0) {
-                    const firstErr = error.asaasErrors[0];
-                    logMessage = `[Asaas] Falha no Pagamento (${firstErr.code || 'unknown'}): ${firstErr.description || error.message}`;
-                    logMeta = { 
-                        asaasResponse: error.asaasErrors,
-                        psychologistId: req.psychologist ? req.psychologist.id : null, // Adiciona o ID do psicólogo
-                        userEmail: psychologist ? psychologist.email : null // Adiciona o email para correlação
-                    };
-                }
-
                 await db.SystemLog.create({
                     level: 'error',
-                    message: logMessage,
-                    meta: logMeta || { 
-                        level: 'error',
-                        psychologistId: req.psychologist ? req.psychologist.id : null, 
-                        userEmail: psychologist ? psychologist.email : null 
+                    message: `Erro na criação Asaas: ${error.message}`,
+                    meta: { 
+                        errorStack: error.stack,
+                        psychologistId: req.psychologist ? req.psychologist.id : null,
                     }
                 });
             }
-        } catch (logErr) { console.error("Falha ao gravar log:", logErr.message); }
+            if (intent && ['CREATING', 'SENT_TO_ASAAS'].includes(intent.status)) {
+                await intent.update({ status: 'RECONCILIATION_REQUIRED' });
+            }
+        } catch (logErr) {}
         
-        res.status(500).json({ error: error.message || 'Erro ao processar pagamento' });
+        res.status(500).json({ error: error.message || 'Erro inesperado ao processar pagamento' });
     }
 };

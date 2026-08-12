@@ -559,6 +559,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             if (ratingSummary) ratingSummary.innerHTML = `<span style="color: #666; font-size: 0.9rem; font-weight: 600;">${novoText}</span>`;
+            
+            const mobileStickyRating = document.getElementById('mobile-sticky-rating');
+            if (mobileStickyRating) {
+                mobileStickyRating.innerHTML = `<span style="color: #666; font-size: 0.85rem; font-weight: 600;">${novoText}</span>`;
+            }
+
             if (scrollIndicator) scrollIndicator.style.display = 'none';
             return;
         }
@@ -574,6 +580,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (ratingSummary) {
             ratingSummary.innerHTML = `${starsHtml} <span style="color: #666; font-size: 0.9rem; font-weight: 600; margin-left: 5px;">${avgRating} de 5</span>`;
+        }
+
+        const mobileStickyRating = document.getElementById('mobile-sticky-rating');
+        if (mobileStickyRating) {
+            mobileStickyRating.innerHTML = `<span style="color: #f59e0b;">⭐</span> ${avgRating.replace('.', ',')} de 5`;
         }
 
         // Função para converter o nome completo em iniciais (ex: "Anderson Costa" -> "A. C.")

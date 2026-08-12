@@ -67,7 +67,7 @@ exports.getEfficiencyDashboard = async (req, res) => {
                 plano: { [Op.ne]: null },
                 status: 'active'
             },
-            attributes: ['plano', 'is_exempt', 'stripeSubscriptionId', 'subscriptionId'] 
+            attributes: ['plano', 'is_exempt', 'subscriptionId'] 
         });
 
         const planPrices = { 
@@ -75,11 +75,11 @@ exports.getEfficiencyDashboard = async (req, res) => {
             'essencial': 99.00, 'clínico': 159.00, 'sol': 259.00 
         };
 
-        const payingUsersCount = activePsychologists.filter(psy => !psy.is_exempt && !!(psy.stripeSubscriptionId || psy.subscriptionId)).length;
+        const payingUsersCount = activePsychologists.filter(psy => !psy.is_exempt && !!(psy.subscriptionId)).length;
 
         const currentMRR = activePsychologists.reduce((acc, psy) => {
             if (psy.is_exempt) return acc;
-            const hasSub = !!(psy.stripeSubscriptionId || psy.subscriptionId);
+            const hasSub = !!(psy.subscriptionId);
             if (!hasSub) return acc;
             return acc + (planPrices[psy.plano ? psy.plano.toLowerCase() : ''] || 0);
         }, 0);

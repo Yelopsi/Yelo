@@ -77,7 +77,7 @@ exports.updateVipStatus = async (req, res) => {
             newPlan = null;
             message = 'Isenção removida com sucesso.';
             
-            if (!psychologist.stripeSubscriptionId) {
+            if (!psychologist.subscriptionId) {
                 updatePayload.status = 'inactive';
             }
         }
@@ -227,7 +227,7 @@ exports.grantTrialToAll = async (req, res) => {
                 "planExpiresAt" = :trialEndDate 
             WHERE status IN ('pending', 'inactive') 
             AND ("is_exempt" IS NULL OR "is_exempt" = false) 
-            AND "stripeSubscriptionId" IS NULL
+            AND "subscriptionId" IS NULL
         `, { replacements: { trialEndDate } });
 
         console.log(`[Admin] 14 dias de teste liberados para os psicólogos.`);
@@ -261,13 +261,12 @@ exports.getAllPsychologists = async (req, res) => {
                 whereClause.status = 'active';
                 whereClause.is_exempt = { [Op.or]: [null, false] };
                 whereClause[Op.or] = [
-                    { stripeSubscriptionId: { [Op.ne]: null } },
                     { subscriptionId: { [Op.ne]: null } }
                 ];
             } else if (status === 'active_trial') {
                 whereClause.status = 'active';
                 whereClause.is_exempt = { [Op.or]: [null, false] };
-                whereClause.stripeSubscriptionId = null;
+                whereClause.subscriptionId = null;
                 whereClause.subscriptionId = null;
             } else if (status === 'utm_whatsapp') {
                 whereClause.utm_source = 'whatsapp';
@@ -298,8 +297,8 @@ exports.getAllPsychologists = async (req, res) => {
         const kpisQuery = `
             SELECT 
                 COUNT(*) as total,
-                COUNT(*) FILTER (WHERE status = 'active' AND ("stripeSubscriptionId" IS NOT NULL OR "subscriptionId" IS NOT NULL) AND (is_exempt IS NULL OR is_exempt = false)) as active_paying,
-                COUNT(*) FILTER (WHERE status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND ("stripeSubscriptionId" IS NULL AND "subscriptionId" IS NULL)) as active_trial,
+                COUNT(*) FILTER (WHERE status = 'active' AND ("subscriptionId" IS NOT NULL) AND (is_exempt IS NULL OR is_exempt = false)) as active_paying,
+                COUNT(*) FILTER (WHERE status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND "subscriptionId" IS NULL) as active_trial,
                 COUNT(*) FILTER (WHERE status = 'pending') as pending,
                 COUNT(*) FILTER (WHERE status = 'inactive') as inactive,
                 COUNT(*) FILTER (WHERE is_exempt = true) as vip,
@@ -544,7 +543,7 @@ exports.getPendingActions = async (req, res) => {
             where: {
                 createdAt: { [Op.lte]: sixHoursAgo },
                 status: 'active',
-                stripeSubscriptionId: null,
+                subscriptionId: null,
                 subscriptionId: null,
                 msg_analysis_sent_at: null,
                 deletedAt: null,
@@ -571,7 +570,6 @@ exports.getPendingActions = async (req, res) => {
         const churnCandidates = await db.Psychologist.findAll({
             where: {
                 status: 'inactive',
-                stripeSubscriptionId: null,
                 subscriptionId: null,
                 planExpiresAt: { [Op.lte]: threeDaysAgo },
                 msg_churn_followup_sent_at: null,
@@ -718,7 +716,6 @@ exports.getPendingActions = async (req, res) => {
         const expiringCandidates = await db.Psychologist.findAll({
             where: {
                 status: 'active',
-                stripeSubscriptionId: null,
                 subscriptionId: null,
                 planExpiresAt: {
                     [Op.lte]: expirationUpperBound,
@@ -830,12 +827,12 @@ exports.getPendingActions = async (req, res) => {
         }
 
         // 7. Churn de Pagantes (Assinatura não renovada ou cancelada)
-        // Regra: inativo, JÁ TEVE assinatura (stripeSubscriptionId NOT NULL),
+        // Regra: inativo, JÁ TEVE assinatura (subscriptionId NOT NULL),
         // planExpiresAt expirou há mais de 1 dia, e msg_paid_churn_sent_at é NULL.
         const paidChurnCandidates = await db.Psychologist.findAll({
             where: {
                 status: 'inactive',
-                stripeSubscriptionId: { [Op.ne]: null },
+                subscriptionId: { [Op.ne]: null },
                 planExpiresAt: { [Op.lte]: oneDayAgo },
                 msg_paid_churn_sent_at: null,
                 deletedAt: null,

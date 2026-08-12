@@ -69,7 +69,7 @@ exports.getDashboardStats = async (req, res) => {
             db.WaitingList.count({ where: { status: 'pending' } }).catch(() => 0),
             db.Review.count({ where: { status: 'pending' } }).catch(() => 0),
             db.Psychologist.findAll({
-                attributes: ['plano', 'is_exempt', 'stripeSubscriptionId', 'subscriptionId'],
+                attributes: ['plano', 'is_exempt', 'subscriptionId'],
                 where: { 
                     status: 'active', 
                     plano: { [Op.ne]: null },
@@ -101,7 +101,7 @@ exports.getDashboardStats = async (req, res) => {
         psisByPlan.forEach(p => {
             const plano = p.plano;
             const isExempt = p.is_exempt;
-            const hasSubscription = !!(p.stripeSubscriptionId || p.subscriptionId);
+            const hasSubscription = !!(p.subscriptionId);
             
             if (isExempt) {
                 vipCount++;
@@ -239,7 +239,7 @@ exports.getDetailedReports = async (req, res) => {
                     status: 'active',
                     [Op.or]: [ { is_exempt: true }, { planExpiresAt: { [Op.gt]: new Date() } } ]
                 }, 
-                attributes: ['plano', 'is_exempt', 'stripeSubscriptionId', 'subscriptionId'] 
+                attributes: ['plano', 'is_exempt', 'subscriptionId'] 
             }),
             db.Psychologist.count({ where: { status: 'inactive', updatedAt: { [Op.between]: [startDate, endDate] } } }),
             db.sequelize.query(`SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, "guestName", "id"::varchar)) as count FROM "WhatsAppClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: startDate, end: endDate }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
@@ -260,17 +260,14 @@ exports.getDetailedReports = async (req, res) => {
             };
             const mrr = activePsychologists.reduce((acc, psy) => {
                 if (psy.is_exempt) return acc;
-                const hasSub = !!(psy.stripeSubscriptionId || psy.subscriptionId);
+                const hasSub = !!(psy.subscriptionId);
                 if (!hasSub) return acc;
                 const planoKey = (psy.plano || '').toLowerCase();
                 return acc + (planPrices[planoKey] || 0);
             }, 0);
 
             const payingCondition = {
-                [Op.or]: [
-                    { stripeSubscriptionId: { [Op.ne]: null } },
-                    { subscriptionId: { [Op.ne]: null } }
-                ]
+                subscriptionId: { [Op.ne]: null }
             };
             const churnedPayingCount = await db.Psychologist.count({
                 where: { status: 'inactive', updatedAt: { [Op.between]: [startDate, endDate] }, ...payingCondition }
@@ -279,7 +276,7 @@ exports.getDetailedReports = async (req, res) => {
                 where: { status: 'active', createdAt: { [Op.between]: [startDate, endDate] }, ...payingCondition }
             });
 
-            const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !!(psy.stripeSubscriptionId || psy.subscriptionId)).length;
+            const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !!(psy.subscriptionId)).length;
             const totalStart = payingActiveCount + churnedPayingCount - newPayingCount;
             const baseForChurn = totalStart > 0 ? totalStart : 1;
             const churnRate = (churnedPayingCount / baseForChurn) * 100;
@@ -504,12 +501,12 @@ exports.getFinancials = async (req, res) => {
 
         const activePsychologists = await db.Psychologist.findAll({
             where: { plano: { [Op.ne]: null }, status: 'active' },
-            attributes: ['id', 'nome', 'plano', 'updatedAt', 'is_exempt', 'planExpiresAt', 'stripeSubscriptionId', 'subscriptionId', 'createdAt', 'subscription_payments_count'] 
+            attributes: ['id', 'nome', 'plano', 'updatedAt', 'is_exempt', 'planExpiresAt', 'subscriptionId', 'createdAt', 'subscription_payments_count'] 
         });
 
         const mrr = activePsychologists.reduce((acc, psy) => {
             if (psy.is_exempt) return acc;
-            const hasSub = !!(psy.stripeSubscriptionId || psy.subscriptionId);
+            const hasSub = !!(psy.subscriptionId);
             if (!hasSub) return acc;
             const planoKey = (psy.plano || '').toLowerCase();
             return acc + (planPrices[planoKey] || 0);
@@ -539,15 +536,11 @@ exports.getFinancials = async (req, res) => {
         }
 
         const payingCondition = {
-            [Op.or]: [
-                { stripeSubscriptionId: { [Op.ne]: null } },
-                { subscriptionId: { [Op.ne]: null } }
-            ]
+            subscriptionId: { [Op.ne]: null }
         };
 
         const trialCondition = {
             is_exempt: { [Op.not]: true },
-            stripeSubscriptionId: null,
             subscriptionId: null
         };
 
@@ -591,7 +584,7 @@ exports.getFinancials = async (req, res) => {
             where: { status: 'active', createdAt: prevDateCondition, ...trialCondition }
         });
 
-        const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !!(psy.stripeSubscriptionId || psy.subscriptionId)).length;
+        const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !!(psy.subscriptionId)).length;
         const totalPaidStart = payingActiveCount + paidChurnedCount - paidNewCount;
         const paidBaseForChurn = totalPaidStart > 0 ? totalPaidStart : 1;
         const paidChurnRate = (paidChurnedCount / paidBaseForChurn) * 100;
@@ -601,7 +594,7 @@ exports.getFinancials = async (req, res) => {
         const prevPaidBaseForChurn = prevPaidStart > 0 ? prevPaidStart : 1;
         const prevPaidChurnRate = (prevPaidChurnedCount / prevPaidBaseForChurn) * 100;
 
-        const trialActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !(psy.stripeSubscriptionId || psy.subscriptionId)).length;
+        const trialActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !(psy.subscriptionId)).length;
         const totalTrialStart = trialActiveCount + trialChurnedCount - trialNewCount;
         const trialBaseForChurn = totalTrialStart > 0 ? totalTrialStart : 1;
         const trialChurnRate = (trialChurnedCount / trialBaseForChurn) * 100;
@@ -719,7 +712,7 @@ exports.getFinancials = async (req, res) => {
         }
 
         let activePlans = activePsychologists.map(psy => {
-            const hasSub = !!(psy.stripeSubscriptionId || psy.subscriptionId);
+            const hasSub = !!(psy.subscriptionId);
             const planKey = (psy.plano || '').toLowerCase();
             return {
                 psychologistName: psy.nome,
@@ -1109,7 +1102,7 @@ exports.getFounderMetrics = async (req, res) => {
                     }
                 ]
             },
-            attributes: ['id', 'nome', 'telefone', 'plano', 'status', 'stripeSubscriptionId', 'subscriptionId', 'planExpiresAt', 'cancelAtPeriodEnd', 'createdAt', 'fotoUrl', 'bio', 'whatsapp_clicks', 'profile_appearances', 'admin_billing_sent_at']
+            attributes: ['id', 'nome', 'telefone', 'plano', 'status', 'subscriptionId', 'planExpiresAt', 'cancelAtPeriodEnd', 'createdAt', 'fotoUrl', 'bio', 'whatsapp_clicks', 'profile_appearances', 'admin_billing_sent_at']
         });
 
         let currentMRR = 0;
@@ -1121,7 +1114,7 @@ exports.getFounderMetrics = async (req, res) => {
         const activeTrialIds = [];
 
         activePsis.forEach(p => {
-            const hasSub = !!(p.stripeSubscriptionId || p.subscriptionId);
+            const hasSub = !!(p.subscriptionId);
             
             let planEndsInFuture = false;
             let expiredSundayKeepMonday = false;
@@ -1232,7 +1225,6 @@ exports.getFounderMetrics = async (req, res) => {
             where: {
                 [Op.or]: [
                     { subscribedAt: { [Op.not]: null } },
-                    { stripeSubscriptionId: { [Op.ne]: null } },
                     { subscriptionId: { [Op.ne]: null } }
                 ]
             }
@@ -1245,7 +1237,6 @@ exports.getFounderMetrics = async (req, res) => {
                 status: 'inactive',
                 [Op.or]: [
                     { subscribedAt: { [Op.not]: null } },
-                    { stripeSubscriptionId: { [Op.ne]: null } },
                     { subscriptionId: { [Op.ne]: null } }
                 ]
             }
@@ -1310,7 +1301,6 @@ exports.getFounderMetrics = async (req, res) => {
                 createdAt: { [Op.between]: [lastMonthStart, lastMonthEnd] },
                 [Op.or]: [
                     { subscribedAt: { [Op.not]: null } },
-                    { stripeSubscriptionId: { [Op.ne]: null } },
                     { subscriptionId: { [Op.ne]: null } }
                 ]
             }

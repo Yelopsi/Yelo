@@ -346,10 +346,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         comment: 'Registra a última vez que apareceu no Top 3 do Match para aplicar o cooldown'
     },
-    stripeSubscriptionId: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
+    // stripeSubscriptionId field removed
     subscription_payments_count: {
       type: DataTypes.INTEGER,
       defaultValue: 0

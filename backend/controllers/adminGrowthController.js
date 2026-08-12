@@ -32,10 +32,10 @@ exports.getGrowthData = async (req, res) => {
             SELECT 
                 DATE_TRUNC('${truncPeriod}', "createdAt") as periodo,
                 COUNT(*) as total_entrantes,
-                SUM(CASE WHEN "subscriptionId" IS NOT NULL OR "stripeSubscriptionId" IS NOT NULL THEN 1 ELSE 0 END) as pagantes,
-                SUM(CASE WHEN "subscriptionId" IS NULL AND "stripeSubscriptionId" IS NULL AND ("planExpiresAt" IS NULL OR "planExpiresAt" >= NOW()) THEN 1 ELSE 0 END) as trials_ativos,
-                SUM(CASE WHEN "subscriptionId" IS NULL AND "stripeSubscriptionId" IS NULL AND "planExpiresAt" < NOW() THEN 1 ELSE 0 END) as trials_expirados,
-                SUM(CASE WHEN "subscriptionId" IS NULL AND "stripeSubscriptionId" IS NULL THEN 1 ELSE 0 END) as trials
+                SUM(CASE WHEN "subscriptionId" IS NOT NULL THEN 1 ELSE 0 END) as pagantes,
+                SUM(CASE WHEN "subscriptionId" IS NULL AND ("planExpiresAt" IS NULL OR "planExpiresAt" >= NOW()) THEN 1 ELSE 0 END) as trials_ativos,
+                SUM(CASE WHEN "subscriptionId" IS NULL AND "planExpiresAt" < NOW() THEN 1 ELSE 0 END) as trials_expirados,
+                SUM(CASE WHEN "subscriptionId" IS NULL THEN 1 ELSE 0 END) as trials
             FROM "Psychologists"
             WHERE "createdAt" >= ${dateFilter} AND "createdAt" <= ${dateFilterEnd}
             GROUP BY 1
@@ -73,10 +73,10 @@ exports.getGrowthData = async (req, res) => {
         // Primeiro, pega a contagem histórica *antes* do filtro de data para o gráfico cumulativo começar correto
         const queryHistoricaAntesFiltro = `
             SELECT 
-                SUM(CASE WHEN "subscriptionId" IS NOT NULL OR "stripeSubscriptionId" IS NOT NULL THEN 1 ELSE 0 END) as pagantes,
-                SUM(CASE WHEN "subscriptionId" IS NULL AND "stripeSubscriptionId" IS NULL AND ("planExpiresAt" IS NULL OR "planExpiresAt" >= NOW()) THEN 1 ELSE 0 END) as trials_ativos,
-                SUM(CASE WHEN "subscriptionId" IS NULL AND "stripeSubscriptionId" IS NULL AND "planExpiresAt" < NOW() THEN 1 ELSE 0 END) as trials_expirados,
-                SUM(CASE WHEN "subscriptionId" IS NULL AND "stripeSubscriptionId" IS NULL THEN 1 ELSE 0 END) as trials
+                SUM(CASE WHEN "subscriptionId" IS NOT NULL THEN 1 ELSE 0 END) as pagantes,
+                SUM(CASE WHEN "subscriptionId" IS NULL AND ("planExpiresAt" IS NULL OR "planExpiresAt" >= NOW()) THEN 1 ELSE 0 END) as trials_ativos,
+                SUM(CASE WHEN "subscriptionId" IS NULL AND "planExpiresAt" < NOW() THEN 1 ELSE 0 END) as trials_expirados,
+                SUM(CASE WHEN "subscriptionId" IS NULL THEN 1 ELSE 0 END) as trials
             FROM "Psychologists"
             WHERE "createdAt" < ${dateFilter} AND "deletedAt" IS NULL;
         `;
@@ -155,7 +155,7 @@ exports.getGrowthData = async (req, res) => {
         // 1. Calcular o MRR Atual
         const activePsychologists = await db.Psychologist.findAll({
             where: { plano: { [Op.ne]: null }, status: 'active' },
-            attributes: ['plano', 'is_exempt', 'stripeSubscriptionId', 'subscriptionId']
+            attributes: ['plano', 'is_exempt', 'subscriptionId']
         });
 
         const planPrices = { 
@@ -165,7 +165,7 @@ exports.getGrowthData = async (req, res) => {
 
         const currentMRR = activePsychologists.reduce((acc, psy) => {
             if (psy.is_exempt) return acc;
-            const hasSub = !!(psy.stripeSubscriptionId || psy.subscriptionId);
+            const hasSub = !!psy.subscriptionId;
             if (!hasSub) return acc;
             return acc + (planPrices[psy.plano ? psy.plano.toLowerCase() : ''] || 0);
         }, 0);
@@ -297,7 +297,7 @@ exports.getAudit = async (req, res) => {
                 status: 'active',
                 is_exempt: { [Op.or]: [false, null] },
                 [Op.or]: [
-                    { stripeSubscriptionId: { [Op.not]: null } },
+                    { subscriptionId: { [Op.not]: null } },
                     { subscriptionId: { [Op.not]: null } }
                 ]
             },
@@ -323,13 +323,13 @@ exports.getAudit = async (req, res) => {
                     { cancelAtPeriodEnd: true, planExpiresAt: { [Op.gte]: periodStart, [Op.lte]: now } }
                 ]
             },
-            attributes: ['id', 'stripeSubscriptionId', 'subscriptionId', 'createdAt']
+            attributes: ['id', 'subscriptionId', 'createdAt']
         });
         
         let churnPagantes = 0;
         let churnTrial = 0;
         allChurners.forEach(c => {
-            if (c.stripeSubscriptionId || c.subscriptionId) churnPagantes++;
+            if (c.subscriptionId) churnPagantes++;
             else churnTrial++;
         });
 

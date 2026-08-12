@@ -744,6 +744,6 @@ exports.cancelSubscription = subscriptionController.cancelSubscription;
 
 // ----------------------------------------------------------------------
 // Rota: POST /api/psychologists/me/reactivate-subscription
-// Descrição: Remove o agendamento de cancelamento no Stripe e mantém o plano ativo.
+// Descrição: Remove o agendamento de cancelamento no Asaas e mantém o plano ativo.
 // ----------------------------------------------------------------------
 exports.reactivateSubscription = subscriptionController.reactivateSubscription;

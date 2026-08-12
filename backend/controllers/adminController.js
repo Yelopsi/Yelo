@@ -935,7 +935,7 @@ exports.analyzeProfile = async (req, res) => {
                 'nome', 'bio', 'valor_sessao_numero', 'valor_mensal_numero', 'tipo_cobranca', 
                 'temas_atuacao', 'abordagens_tecnicas', 'fotoUrl', 'authority_level', 'xp',
                 'profile_appearances', 'whatsapp_clicks', 'createdAt',
-                'planExpiresAt', 'stripeSubscriptionId', 'subscriptionId', 'status', 'plano', 'is_exempt',
+                'planExpiresAt', 'subscriptionId', 'status', 'plano', 'is_exempt',
                 'utm_source', 'genero_identidade'
             ]
         });
@@ -992,7 +992,7 @@ exports.analyzeProfile = async (req, res) => {
         // 3.2. Formatação de Status Financeiro/Ciclo de Vida
         const dataCadastro = new Date(psi.createdAt).toLocaleDateString('pt-BR');
         let statusPagamento = 'Desconhecido';
-        const hasSubscription = !!(psi.stripeSubscriptionId || psi.subscriptionId);
+        const hasSubscription = !!(psi.subscriptionId);
         const isVip = psi.is_exempt;
         const agora = new Date();
         const expiracao = psi.planExpiresAt ? new Date(psi.planExpiresAt) : null;

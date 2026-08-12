@@ -40,7 +40,7 @@ class GrowthAcquisitionService {
             where: {
                 createdAt: { [Op.gte]: periodStart }
             },
-            attributes: ['id', 'status', 'telefone', 'utm_source', 'utm_medium', 'stripeSubscriptionId', 'subscriptionId']
+            attributes: ['id', 'status', 'telefone', 'utm_source', 'utm_medium', 'subscriptionId']
         });
 
         let trialsIniciados = 0;
@@ -62,7 +62,7 @@ class GrowthAcquisitionService {
             if (hasUtm || hasPhoneMatch) {
                 if (p.status === 'active') {
                     trialsIniciados++;
-                    const hasSub = !!(p.stripeSubscriptionId || p.subscriptionId);
+                    const hasSub = !!(p.subscriptionId);
                     if (hasSub) viraramPagantes++;
                 }
             }

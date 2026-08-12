@@ -17,10 +17,7 @@ class GrowthService {
         const pagantesAtivos = await db.Psychologist.findAll({
             where: {
                 ...activeFilter,
-                [Op.or]: [
-                    { stripeSubscriptionId: { [Op.not]: null } },
-                    { subscriptionId: { [Op.not]: null } }
-                ]
+                subscriptionId: { [Op.not]: null }
             },
             attributes: ['id', 'valor_mensal_numero', 'plano', 'planExpiresAt', 'cancelAtPeriodEnd']
         });
@@ -58,15 +55,11 @@ class GrowthService {
         const totalAtivos = activeIds.length;
 
         // 3. Novos Pagantes (no período)
-        // Como o webhook do Stripe não grava data exata de conversão em todos os casos legados,
         // consideramos 'novos pagantes' aqueles criados recentemente (período + trial) que têm assinatura,
         // ou usamos a data de update como proxy para quem assinou no período.
         const novosPagantes = await db.Psychologist.count({
             where: {
-                [Op.or]: [
-                    { stripeSubscriptionId: { [Op.not]: null } },
-                    { subscriptionId: { [Op.not]: null } }
-                ],
+                subscriptionId: { [Op.not]: null },
                 updatedAt: { [Op.gte]: periodStart }
             }
         });
@@ -81,14 +74,14 @@ class GrowthService {
                     { cancelAtPeriodEnd: true, planExpiresAt: { [Op.gte]: periodStart, [Op.lte]: now } }
                 ]
             },
-            attributes: ['stripeSubscriptionId', 'subscriptionId']
+            attributes: ['subscriptionId']
         });
 
         let churnPagantes = 0;
         let churnTrial = 0;
 
         allChurners.forEach(c => {
-            const hasSub = !!(c.stripeSubscriptionId || c.subscriptionId);
+            const hasSub = !!(c.subscriptionId);
             if (hasSub) churnPagantes++;
             else churnTrial++;
         });
@@ -103,7 +96,6 @@ class GrowthService {
         const trialsAtivos = await db.Psychologist.count({
             where: {
                 ...activeFilter,
-                stripeSubscriptionId: null,
                 subscriptionId: null,
                 planExpiresAt: { [Op.gte]: now } // Ainda não expirou
             }
@@ -128,10 +120,7 @@ class GrowthService {
             where: {
                 is_exempt: { [Op.or]: [false, null] },
                 createdAt: { [Op.gte]: cohortStart, [Op.lte]: cohortEnd },
-                [Op.or]: [
-                    { stripeSubscriptionId: { [Op.not]: null } },
-                    { subscriptionId: { [Op.not]: null } }
-                ]
+                subscriptionId: { [Op.not]: null }
             }
         });
 

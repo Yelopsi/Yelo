@@ -29,7 +29,7 @@ router.post('/analytics/session-end', async (req, res) => {
 router.post('/analytics/pwa-install', async (req, res) => {
     try {
         const userAgent = req.headers['user-agent'] || 'Unknown';
-        const { platform } = req.body; 
+        const { platform } = req.body;
         await db.sequelize.query(
             `INSERT INTO "PwaInstallLogs" ("userAgent", "platform", "createdAt") VALUES (:ua, :plat, NOW())`,
             { replacements: { ua: userAgent, plat: platform || 'unknown' } }
@@ -68,7 +68,7 @@ router.get('/admin/analytics/whatsapp-ab', verifyTokenLocal, async (req, res) =>
         if (req.userDecoded.role !== 'admin' && req.userDecoded.type !== 'admin') {
             return res.status(403).json({ error: 'Acesso negado' });
         }
-        
+
         // Retorna métricas completas de funil por variante:
         // cliques → feedback recebido → contato efetivo → negócio fechado
         const results = await db.sequelize.query(`
@@ -110,7 +110,7 @@ router.get('/admin/analytics/whatsapp-ab', verifyTokenLocal, async (req, res) =>
 router.get('/admin/analytics/visits', verifyTokenLocal, async (req, res) => {
     try {
         if (req.userDecoded.role !== 'admin' && req.userDecoded.type !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
-        
+
         const { startDate, endDate } = req.query;
         let dateFilter = ''; const replacements = {};
         if (startDate) { dateFilter += ' AND "createdAt" >= :startDate'; replacements.startDate = startDate; }

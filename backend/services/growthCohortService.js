@@ -16,14 +16,14 @@ class GrowthCohortService {
                     createdAt: { [Op.gte]: startOfMonth, [Op.lte]: endOfMonth },
                     is_exempt: { [Op.or]: [false, null] }
                 },
-                attributes: ['id', 'status', 'stripeSubscriptionId', 'subscriptionId']
+                attributes: ['id', 'status', 'subscriptionId']
             });
 
             const trialCohortSize = usuariosTrials.length;
             let trialsConvertidos = 0;
             
             usuariosTrials.forEach(u => {
-                if (u.stripeSubscriptionId || u.subscriptionId) {
+                if (u.subscriptionId) {
                     trialsConvertidos++;
                 }
             });
@@ -37,7 +37,7 @@ class GrowthCohortService {
             const retention = { M0: 100, M1: null, M2: null, M3: null, M4: null, M5: null };
             
             if (pagantesCohortSize > 0) {
-                const pagantes = usuariosTrials.filter(u => u.stripeSubscriptionId || u.subscriptionId);
+                const pagantes = usuariosTrials.filter(u => u.subscriptionId);
                 
                 const cancelMonths = pagantes.map(u => {
                     if (u.status === 'active') return 999;

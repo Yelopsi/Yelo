@@ -28,7 +28,7 @@ exports.debugJuliana = async (req, res) => {
         else if (validade && validade > agora) motivo = "PASSOU PORQUE A DATA DE VENCIMENTO ESTÁ NO FUTURO";
         
         res.json({
-            DADOS_DO_BANCO: { email: psy.email, status: psy.status, is_exempt: psy.is_exempt, planExpiresAt: psy.planExpiresAt, createdAt: psy.createdAt, stripeSubscriptionId: psy.stripeSubscriptionId, plano: psy.plano },
+            DADOS_DO_BANCO: { email: psy.email, status: psy.status, is_exempt: psy.is_exempt, planExpiresAt: psy.planExpiresAt, createdAt: psy.createdAt, subscriptionId: psy.subscriptionId, plano: psy.plano },
             LEITURA_DO_SISTEMA: { considerado_vip: isVip, dias_desde_criacao: daysSinceCreation, vencimento_maior_que_hoje: validade && validade > agora },
             CONCLUSAO: motivo
         });
@@ -160,8 +160,8 @@ exports.runNotifyTrial = async (req, res) => {
                     { status: 'active', plano: 'Essencial' }
                 ],
                 is_exempt: { [db.Sequelize.Op.not]: true },
-                stripeSubscriptionId: null,
                 subscriptionId: null
+
             }
         });
 
@@ -191,7 +191,7 @@ exports.dispararErrataTrial = async (req, res) => {
                 status: 'active',
                 plano: 'Essencial',
                 is_exempt: { [db.Sequelize.Op.not]: true },
-                stripeSubscriptionId: null
+                subscriptionId: null
             }
         });
 
@@ -251,7 +251,7 @@ exports.runInadimplentes = async (req, res) => {
 
             let acao = '-';
             let asaasInfo = '-';
-            const subId = psi.stripeSubscriptionId || psi.subscriptionId;
+            const subId = psi.subscriptionId;
             
             if ((psi.status === 'active' || (psi.plano && psi.plano.trim() !== '')) && psi.is_exempt !== true) {
                 if (!subId) {
@@ -285,7 +285,7 @@ exports.runInadimplentes = async (req, res) => {
                                 if (isTrial) {
                                     acao = '<span style="color:blue; font-weight:bold;">Mantido (Trial // Aguardando 1ª Cobrança)</span>';
                                 } else {
-                                    await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0), stripeSubscriptionId: null });
+                                    await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0) });
                                     acao = '<span style="color:red; font-weight:bold;">Revogado (Nenhum pagamento e Trial Expirado)</span>';
                                 }
                             } else {
@@ -298,13 +298,13 @@ exports.runInadimplentes = async (req, res) => {
                             }
                         } else {
                             asaasInfo = '<span style="color:orange;">Nenhuma cobrança gerada ainda</span>';
-                            await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0), stripeSubscriptionId: null });
+                            await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0) });
                             acao = '<span style="color:red; font-weight:bold;">Revogado (Sem Cobranças)</span>';
                         }
                     } else {
                         asaasInfo = `<span style="color:red;">Erro API Asaas: ${asaasRes.status}</span>`;
                         if (asaasRes.status === 404) {
-                            await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0), stripeSubscriptionId: null });
+                            await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0) });
                             acao = '<span style="color:red; font-weight:bold;">Revogado (Assinatura Excluída no Asaas)</span>';
                         } else {
                             acao = 'Pulado (Falha de comunicação)';
@@ -366,7 +366,7 @@ exports.extendPlan = async (req, res) => {
         novaData.setDate(novaData.getDate() + dias);
 
         const updateData = { planExpiresAt: novaData, status: 'active', plano };
-        if (subId) updateData.stripeSubscriptionId = subId;
+        if (subId) updateData.subscriptionId = subId;
 
         await psychologist.update(updateData);
         
