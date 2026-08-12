@@ -345,45 +345,34 @@
         <div class="grid-2col" style="margin-bottom: 30px;">
             <!-- FUNIL PACIENTES -->
             <div style="background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">
-                <h2 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin-bottom: 0;">Funil de Aquisição de Pacientes</h2>
-                <p style="color: #64748b; font-size: 0.85rem; margin-top: 5px; margin-bottom: 15px;">Jornada dos pacientes desde a visita no site até a conclusão do questionário.</p>
+                <h2 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin-bottom: 0;">Jornada dos Pacientes (B2C)</h2>
+                <p style="color: #64748b; font-size: 0.85rem; margin-top: 5px; margin-bottom: 15px;">Da visita no site até o clique no WhatsApp do psicólogo.</p>
                 <div style="margin-bottom: 15px; color: #ef4444; font-size: 0.8rem; font-weight: 600; display: none;" id="alert-demanda-1">⚠️ Inconsistência de dados identificada.</div>
                 
-                <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;">
+                <div style="display: flex; flex-direction: column; gap: 15px;">
                     <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f1f5f9; padding-bottom:10px;">
                         <span style="color:#64748b; font-weight:600;">Visitas no Site</span>
                         <span style="font-weight:800;" id="f-dem-visits">0</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f1f5f9; padding-bottom:10px;">
-                        <span style="color:#64748b; font-weight:600;">Questionários Iniciados</span>
+                        <span style="color:#64748b; font-weight:600;">Buscas Iniciadas</span>
                         <div>
                             <span style="font-weight:800;" id="f-dem-searches">0</span>
                             <span style="font-size:0.75rem; color:#10b981; margin-left:5px;" id="f-dem-c1">0%</span>
                         </div>
                     </div>
-                    <div style="display:flex; justify-content:space-between;">
-                        <span style="color:#64748b; font-weight:600;">Questionários Concluídos</span>
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f1f5f9; padding-bottom:10px;">
+                        <span style="color:#64748b; font-weight:600;">Buscas Concluídas</span>
                         <div>
                             <span style="font-weight:800;" id="f-dem-concluidos">0</span>
                             <span style="font-size:0.75rem; color:#10b981; margin-left:5px;" id="f-dem-c2">0%</span>
                         </div>
                     </div>
-                </div>
-
-                <h2 style="font-size: 1.1rem; font-weight: 800; color: #111827; margin-bottom: 0; margin-top: 15px;">Funil de Matchmaking</h2>
-                <p style="color: #64748b; font-size: 0.85rem; margin-top: 5px; margin-bottom: 15px;">Eficiência do sistema em conectar pacientes aos psicólogos (Cliques no WhatsApp).</p>
-                <div style="margin-bottom: 15px; color: #ef4444; font-size: 0.8rem; font-weight: 600; display: none;" id="alert-demanda-2">⚠️ Inconsistência de dados identificada.</div>
-
-                <div style="display: flex; flex-direction: column; gap: 15px;">
-                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f1f5f9; padding-bottom:10px;">
-                        <span style="color:#64748b; font-weight:600;">Questionários Concluídos</span>
-                        <span style="font-weight:800;" id="f-dem-concluidos-2">0</span>
-                    </div>
                     <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f1f5f9; padding-bottom:10px;">
                         <span style="color:#64748b; font-weight:600;">Psicólogos Indicados (Vitrine)</span>
                         <div>
                             <span style="font-weight:800;" id="f-dem-matches">0</span>
-                            <span style="font-size:0.75rem; color:#10b981; margin-left:5px;" id="f-dem-c3">0%</span>
+                            <span style="font-size:0.75rem; color:#10b981; margin-left:5px;" id="f-dem-c3">0 psis/busca</span>
                         </div>
                     </div>
                     <div style="display:flex; justify-content:space-between;">

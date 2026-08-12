@@ -122,9 +122,7 @@ window.loadGrowthData = async function() {
                 document.getElementById('alert-demanda-1').style.display = 'none';
             }
 
-            // FUNIL 2: MATCHMAKING
-            document.getElementById('f-dem-concluidos-2').innerText = funnel.questionariosConcluidos;
-            
+            // FUNIL 2: (Agora integrado no funil de aquisição)
             if (funnel.matches === null) {
                 document.getElementById('f-dem-matches').innerHTML = '<span style="font-size:0.8rem; color:#f59e0b;">Dados insuficientes</span>';
                 document.getElementById('f-dem-c3').innerText = '';
@@ -133,13 +131,6 @@ window.loadGrowthData = async function() {
                 // Exibe a média de indicações por questionário concluído
                 const d3 = funnel.questionariosConcluidos > 0 ? (funnel.matches/funnel.questionariosConcluidos) : 0;
                 document.getElementById('f-dem-c3').innerText = d3.toFixed(1)+' psis/busca';
-                
-                // O sistema pode recomendar até 3 psicólogos por questionário
-                if (funnel.matches > (funnel.questionariosConcluidos * 3)) {
-                    document.getElementById('alert-demanda-2').style.display = 'block';
-                } else {
-                    document.getElementById('alert-demanda-2').style.display = 'none';
-                }
             }
 
             document.getElementById('f-dem-wpp').innerText = funnel.contatos;
