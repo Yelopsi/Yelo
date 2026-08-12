@@ -565,7 +565,7 @@ window.initializePage = function () {
                 statusClass = 'status-cancelada';
             } else if (psy.status === 'active') {
                 if (isVip) statusLabel = 'VIP';
-                else if (!psy.stripeSubscriptionId && psy.planExpiresAt && new Date(psy.planExpiresAt) > new Date()) {
+                else if (!psy.subscriptionId && psy.planExpiresAt && new Date(psy.planExpiresAt) > new Date()) {
                     statusLabel = 'Trial';
                     statusClass = 'status-pending';
                 } else statusLabel = 'Ativo';

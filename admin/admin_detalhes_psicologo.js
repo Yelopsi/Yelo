@@ -69,7 +69,7 @@ function renderDetails(data) {
     if (p.status === 'active') {
         if (p.is_exempt) {
             detailStatusLabel = 'VIP';
-        } else if (!p.stripeSubscriptionId && p.planExpiresAt && new Date(p.planExpiresAt) > new Date()) {
+        } else if (!p.subscriptionId && p.planExpiresAt && new Date(p.planExpiresAt) > new Date()) {
             detailStatusLabel = 'TRIAL';
         } else {
             detailStatusLabel = 'ATIVO';
