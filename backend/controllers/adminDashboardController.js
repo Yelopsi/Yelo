@@ -900,16 +900,16 @@ exports.getFunnelAnalytics = async (req, res) => {
             end = new Date(); end.setHours(end.getHours() - 3); end.setUTCHours(2, 59, 59, 999); end.setDate(end.getDate() + 1);
         }
 
-        const visitsResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "SiteVisits" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
+        const visitsResult = await db.sequelize.query(`SELECT COUNT(DISTINCT "ipAddress") as count FROM "SiteVisits" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
         const visitas = parseInt(visitsResult[0]?.count || 0);
 
         const iniciaram = await db.DemandSearch.count({ where: { createdAt: { [Op.between]: [start, end] } } }).catch(() => 0);
-        const completaram = await db.DemandSearch.count({ where: { status: 'completed', createdAt: { [Op.between]: [start, end] } } }).catch(() => 0);
+        const completaram = await db.DemandSearch.count({ where: { status: { [Op.in]: ['completed', 'matched'] }, createdAt: { [Op.between]: [start, end] } } }).catch(() => 0);
 
         const profileViewsResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "createdAt" BETWEEN :start AND :end AND "source" = 'profile_click_funnel'`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
         const profileViews = parseInt(profileViewsResult[0]?.count || 0);
 
-        const whatsappClicksResult = await db.sequelize.query(`SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, "guestName", "id"::varchar)) as count FROM "WhatsAppClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
+        const whatsappClicksResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
         const whatsappClicks = parseInt(whatsappClicksResult[0]?.count || 0);
 
         const desqualificadosResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "DemandSearches" WHERE "is_disqualified" = true AND "createdAt" BETWEEN :start AND :end`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
@@ -935,17 +935,17 @@ exports.getFunnelAnalytics = async (req, res) => {
         const jsonCol = 'CAST("searchParams" AS JSONB)';
         
         const topTemas = await db.sequelize.query(
-            `SELECT value, COUNT(*) as count FROM "DemandSearches", jsonb_array_elements_text(${jsonCol}->'temas') as value WHERE status = 'completed' AND "createdAt" BETWEEN :start AND :end AND ${jsonCol}->'temas' IS NOT NULL AND jsonb_typeof(${jsonCol}->'temas') = 'array' GROUP BY value ORDER BY count DESC LIMIT 10`,
+            `SELECT value, COUNT(*) as count FROM "DemandSearches", jsonb_array_elements_text(${jsonCol}->'temas') as value WHERE status IN ('completed', 'matched') AND "createdAt" BETWEEN :start AND :end AND ${jsonCol}->'temas' IS NOT NULL AND jsonb_typeof(${jsonCol}->'temas') = 'array' GROUP BY value ORDER BY count DESC LIMIT 10`,
             { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => []);
 
         const faixaValor = await db.sequelize.query(
-            `SELECT ${jsonCol}->>'faixa_valor' as value, COUNT(*) as count FROM "DemandSearches" WHERE status = 'completed' AND "createdAt" BETWEEN :start AND :end AND ${jsonCol}->>'faixa_valor' IS NOT NULL GROUP BY value ORDER BY count DESC`,
+            `SELECT ${jsonCol}->>'faixa_valor' as value, COUNT(*) as count FROM "DemandSearches" WHERE status IN ('completed', 'matched') AND "createdAt" BETWEEN :start AND :end AND ${jsonCol}->>'faixa_valor' IS NOT NULL GROUP BY value ORDER BY count DESC`,
             { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => []);
 
         const modalidades = await db.sequelize.query(
-            `SELECT ${jsonCol}->>'modalidade_atendimento' as value, COUNT(*) as count FROM "DemandSearches" WHERE status = 'completed' AND "createdAt" BETWEEN :start AND :end AND ${jsonCol}->>'modalidade_atendimento' IS NOT NULL GROUP BY value ORDER BY count DESC`,
+            `SELECT ${jsonCol}->>'modalidade_atendimento' as value, COUNT(*) as count FROM "DemandSearches" WHERE status IN ('completed', 'matched') AND "createdAt" BETWEEN :start AND :end AND ${jsonCol}->>'modalidade_atendimento' IS NOT NULL GROUP BY value ORDER BY count DESC`,
             { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => []);
 
