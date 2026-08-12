@@ -64,87 +64,56 @@
 
 /* PMF Sidebar / Bottom Sheet */
 .pmf-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.4);
-    backdrop-filter: blur(2px);
-    z-index: 99998;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 .pmf-overlay.active {
     opacity: 1;
     visibility: visible;
 }
 .pmf-sidebar {
-    position: fixed;
-    top: 0; right: -450px;
-    width: 450px; max-width: 100vw;
-    height: 100vh;
-    background: #f8fafc;
-    z-index: 99999;
-    box-shadow: -4px 0 25px rgba(0,0,0,0.1);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.pmf-sidebar.active {
-    transform: translateX(-450px);
+.pmf-overlay.active .pmf-sidebar {
+    transform: translateX(0);
+}
+.btn-close-pmf { 
+    background: none; 
+    border: none; 
+    cursor: pointer; 
+    color: #64748b; 
+    padding: 5px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    transition: transform 0.3s ease; 
+}
+.btn-close-pmf:hover { 
+    transform: rotate(90deg); 
+    color: #1e293b; 
 }
 @media (max-width: 768px) {
     .pmf-sidebar {
-        top: auto; bottom: -85vh; right: 0;
-        width: 100vw; height: 85vh;
-        border-radius: 20px 20px 0 0;
+        width: 100% !important;
+        max-width: 100% !important;
+        transform: translateY(100%);
+        border-radius: 24px 24px 0 0;
+        margin-top: 60px;
+        height: calc(100% - 60px) !important;
     }
-    .pmf-sidebar.active {
-        transform: translateY(-85vh);
+    .pmf-overlay.active .pmf-sidebar {
+        transform: translateY(0) !important;
+    }
+    .pmf-sidebar-header::before {
+        content: ''; display: block; width: 40px; height: 5px; background: #cbd5e1; border-radius: 5px; margin: 0 auto 15px auto;
+    }
+    .pmf-sidebar-content {
+        padding-bottom: 120px !important;
     }
 }
-.pmf-sidebar-header {
-    padding: 20px 25px;
-    background: white;
-    border-bottom: 1px solid #e2e8f0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.pmf-sidebar-content {
-    padding: 20px 25px;
-    overflow-y: auto;
-    flex: 1;
-}
-.pmf-item-card {
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 18px;
-    margin-bottom: 15px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-.pmf-item-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-.btn-close-sidebar {
-    background: #f1f5f9;
-    border: none;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #64748b;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.btn-close-sidebar:hover {
-    background: #e2e8f0;
-    color: #0f172a;
-}
+
 
 .stat-card {
     background: white; 
@@ -484,21 +453,26 @@
 </div>
 
 <!-- PMF DRILL-DOWN SIDEBAR -->
-<div id="pmf-overlay" class="pmf-overlay" onclick="closePmfDrilldown()"></div>
-<div id="pmf-sidebar" class="pmf-sidebar">
-    <div class="pmf-sidebar-header">
-        <div>
-            <h3 style="margin: 0; font-size: 1.2rem; color: #1e293b; display: flex; align-items: center; gap: 8px;" id="pmf-sidebar-title">
-                🚨 Risco de Churn
-            </h3>
-            <p style="margin: 3px 0 0 0; font-size: 0.85rem; color: #64748b;" id="pmf-sidebar-subtitle">Carregando...</p>
+<div id="pmf-overlay" class="pmf-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100000; display: flex; justify-content: flex-end;" onclick="if(event.target===this) closePmfDrilldown()">
+    <div id="pmf-sidebar" class="pmf-sidebar" style="background: #f8f9fa; width: 100%; max-width: 450px; height: 100%; box-shadow: -5px 0 25px rgba(0,0,0,0.1); display: flex; flex-direction: column;">
+        
+        <div class="pmf-sidebar-header" style="background: white; padding: 20px 25px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; flex-wrap: wrap;">
+            <div>
+                <h2 style="margin: 0; font-size: 1.3rem; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    <span id="pmf-sidebar-title">Risco de Churn</span>
+                </h2>
+                <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: #64748b;" id="pmf-sidebar-subtitle">Carregando...</p>
+            </div>
+            <button onclick="closePmfDrilldown()" class="btn-close-pmf">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
         </div>
-        <button onclick="closePmfDrilldown()" class="btn-close-sidebar">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
-    </div>
-    <div class="pmf-sidebar-content" id="pmf-sidebar-content">
-        <!-- Renderizado via JS -->
+        
+        <div class="pmf-sidebar-content" id="pmf-sidebar-content" style="padding: 25px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 20px;">
+            <!-- Renderizado via JS -->
+        </div>
+
     </div>
 </div>
 
