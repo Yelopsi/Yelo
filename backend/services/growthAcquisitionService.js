@@ -68,11 +68,43 @@ class GrowthAcquisitionService {
             }
         });
 
+        // 3. Tempo até Primeiro Contato (Mediana)
+        // Pegamos os psicólogos criados no período e buscamos seu primeiro WhatsAppClickLog
+        const psiIds = psychologists.map(p => p.id);
+        const firstClicks = await db.WhatsAppClickLog.findAll({
+            where: { psychologistId: { [Op.in]: psiIds } },
+            attributes: ['psychologistId', [db.sequelize.fn('min', db.sequelize.col('createdAt')), 'firstClickAt']],
+            group: ['psychologistId']
+        });
+
+        const timesToContact = [];
+        firstClicks.forEach(click => {
+            const psi = psychologists.find(p => p.id === click.psychologistId);
+            if (psi) {
+                // Cálculo usando createdAt pois trialStartedAt não está disponível/confiável
+                const diffTime = Math.abs(new Date(click.getDataValue('firstClickAt')) - new Date(psi.createdAt));
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                timesToContact.push(diffDays);
+            }
+        });
+
+        timesToContact.sort((a, b) => a - b);
+        let medianTimeToContact = null;
+        if (timesToContact.length >= 5) {
+            const mid = Math.floor(timesToContact.length / 2);
+            medianTimeToContact = timesToContact.length % 2 !== 0 ? timesToContact[mid] : (timesToContact[mid - 1] + timesToContact[mid]) / 2;
+        }
+
         return {
             leadsIdentificados,
             primeiroContato,
             trialsIniciados,
             viraramPagantes,
+            timeToFirstContact: {
+                medianDays: medianTimeToContact,
+                sampleSize: timesToContact.length,
+                note: "Calculado usando Psychologist.createdAt -> Primeiro Clique WhatsApp"
+            },
             periodDays
         };
     }

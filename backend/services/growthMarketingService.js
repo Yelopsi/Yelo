@@ -42,7 +42,10 @@ class GrowthMarketingService {
             }
         });
 
-        const cac = novosPagantes > 0 ? totalMarketingSpend / novosPagantes : 0;
+        // Como YeloExpense não tem atribuição clara (B2B vs B2C), adotamos postura conservadora
+        const cac = null; // N/D
+        const cacDemanda = null; // N/D
+        const marketingNaoAtribuido = totalMarketingSpend;
 
         // 3. ARPU (Average Revenue Per User) e MRR Atual
         const activeFilter = {
@@ -92,8 +95,6 @@ class GrowthMarketingService {
             }
         });
 
-        // Aproximação do Churn Rate mensal
-        // Consideraremos o período como se fosse mensal para simplificar a taxa, ou normalizaremos
         let churnRate = 0;
         if (activeCount > 0) {
             churnRate = churnCount / (activeCount + churnCount); // Base simplificada
@@ -105,10 +106,8 @@ class GrowthMarketingService {
         }
 
         // 5. Payback (Meses para recuperar CAC)
+        // Como o CAC é inatribuível, o payback também é N/D
         let payback = null;
-        if (totalMarketingSpend > 0 && arpu > 0) {
-            payback = cac / arpu;
-        }
 
         // Flags de confiabilidade
         const hasMarketingSpend = totalMarketingSpend > 0;
@@ -116,9 +115,11 @@ class GrowthMarketingService {
 
         return {
             totalMarketingSpend,
+            marketingNaoAtribuido,
             spendByChannel,
             novosPagantes,
             cac,
+            cacDemanda,
             mrrTotal,
             arpu,
             churnRate,

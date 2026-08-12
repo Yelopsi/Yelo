@@ -30,28 +30,52 @@ window.loadGrowthData = async function() {
 
         const formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
-        // 1. OVERVIEW (Saúde)
+        // 1. OVERVIEW (Primeira Viewport)
         if (overviewRes.ok) {
             const result = await overviewRes.json();
             const data = result.data;
             window.growthDataState.overview = data;
+            
+            // 1. CRESCIMENTO
             document.getElementById('g-mrr-total').innerText = formatBRL(data.mrrTotal);
-            document.getElementById('g-mrr-demanda-split').innerHTML = `
-                <span style="color:#10b981">C/ demanda: ${formatBRL(data.mrrComDemanda)}</span> | 
-                <span style="color:#ef4444">S/ demanda: ${formatBRL(data.mrrSemDemanda)}</span>
-            `;
-            document.getElementById('g-ativos').innerText = data.totalAtivos;
-            document.getElementById('g-novos-pagantes').innerText = data.novosPagantes;
-            document.getElementById('g-churn-pagantes').innerText = data.churnPagantes;
-            document.getElementById('g-churn-trial').innerText = data.churnTrial;
+            
+            const netNew = data.netNewMrr || 0;
+            const netNewColor = netNew > 0 ? '#10b981' : (netNew < 0 ? '#ef4444' : '#64748b');
+            const netNewSignal = netNew > 0 ? '+' : '';
+            document.getElementById('g-net-new-mrr').innerHTML = `<span style="color:${netNewColor};">${netNewSignal}${formatBRL(netNew)} Net New MRR</span>`;
+            
+            const mrrAnt = data.mrrAnterior || 0;
+            let varPct = 0;
+            if (mrrAnt > 0) varPct = ((data.mrrTotal - mrrAnt) / mrrAnt) * 100;
+            const varColor = varPct > 0 ? '#10b981' : (varPct < 0 ? '#ef4444' : '#64748b');
+            document.getElementById('g-mrr-anterior').innerHTML = `vs ${formatBRL(mrrAnt)} (<span style="color:${varColor};">${varPct > 0 ? '+' : ''}${varPct.toFixed(1)}%</span>)`;
+
+            // 2. VENDAS
+            document.getElementById('g-novos-pagantes-main').innerText = data.novosPagantes;
+            document.getElementById('g-trial-conv').innerText = data.trialConversionRate ? data.trialConversionRate.toFixed(1) + '%' : '0%';
             document.getElementById('g-trials-ativos').innerText = data.trialsAtivos;
+
+            // 3. VALOR (HEALTH RATE)
+            document.getElementById('g-health-rate').innerText = data.pctDemanda ? data.pctDemanda.toFixed(1) + '%' : '0%';
+            document.getElementById('g-health-fraction').innerText = `${data.pagantesComDemandaCount} de ${data.totalAtivos}`;
+            
+            // 4. AÇÃO (SEM DEMANDA)
+            const semDemandaCount = data.totalAtivos - data.pagantesComDemandaCount;
+            document.getElementById('g-sem-demanda-count').innerText = semDemandaCount;
+            document.getElementById('g-mrr-sem-demanda').innerText = formatBRL(data.mrrSemDemanda);
+
+            // 5. RETENÇÃO
+            document.getElementById('g-churn-pagantes-main').innerText = data.churnPagantes;
+            document.getElementById('g-churn-rate').innerText = data.taxaChurnPagantes ? data.taxaChurnPagantes.toFixed(1) + '%' : '0%';
+            document.getElementById('g-mrr-perdido').innerText = `- ${formatBRL(data.mrrPerdido || 0)} MRR perdido`;
         }
 
-        // 2. ACQUISITION FUNNEL
+        // 2. ACQUISITION FUNNEL (E TEMPO ATÉ PRIMEIRO CONTATO)
         if (acqRes.ok) {
             const result = await acqRes.json();
             const d = result.data;
             window.growthDataState.acquisition = d;
+            
             document.getElementById('f-acq-leads').innerText = d.leadsIdentificados;
             document.getElementById('f-acq-contact').innerText = d.primeiroContato;
             document.getElementById('f-acq-trial').innerText = d.trialsIniciados;
@@ -64,6 +88,16 @@ window.loadGrowthData = async function() {
             document.getElementById('f-acq-conv-1').innerText = c1.toFixed(1)+'%';
             document.getElementById('f-acq-conv-3').innerText = c3.toFixed(1)+'%';
             document.getElementById('f-acq-conv-4').innerText = c4.toFixed(1)+'%';
+
+            if (d.timeToFirstContact) {
+                if (d.timeToFirstContact.medianDays !== null) {
+                    let text = d.timeToFirstContact.medianDays + ' dias';
+                    if (d.timeToFirstContact.sampleSize < 5) text += ' (baixa conf.)';
+                    document.getElementById('g-time-contact').innerText = text;
+                } else {
+                    document.getElementById('g-time-contact').innerText = 'N/D';
+                }
+            }
         }
 
         // 3. DEMAND FUNNEL & MARKETPLACE
@@ -71,18 +105,47 @@ window.loadGrowthData = async function() {
             const result = await demRes.json();
             const { funnel, health } = result.data;
             window.growthDataState.demand = result.data;
+            
+            // FUNIL 1: PACIENTES
             document.getElementById('f-dem-visits').innerText = funnel.visitas;
             document.getElementById('f-dem-searches').innerText = funnel.questionariosIniciados;
-            document.getElementById('f-dem-matches').innerText = funnel.questionariosConcluidos;
-            document.getElementById('f-dem-wpp').innerText = funnel.contatos;
-
+            document.getElementById('f-dem-concluidos').innerText = funnel.questionariosConcluidos;
+            
             const d1 = funnel.visitas > 0 ? (funnel.questionariosIniciados/funnel.visitas*100) : 0;
             const d2 = funnel.questionariosIniciados > 0 ? (funnel.questionariosConcluidos/funnel.questionariosIniciados*100) : 0;
-            const d3 = funnel.questionariosConcluidos > 0 ? (funnel.contatos/funnel.questionariosConcluidos*100) : 0;
             document.getElementById('f-dem-c1').innerText = d1.toFixed(1)+'%';
             document.getElementById('f-dem-c2').innerText = d2.toFixed(1)+'%';
-            document.getElementById('f-dem-c3').innerText = d3.toFixed(1)+'%';
 
+            if (funnel.questionariosIniciados > funnel.visitas || funnel.questionariosConcluidos > funnel.questionariosIniciados) {
+                document.getElementById('alert-demanda-1').style.display = 'block';
+            } else {
+                document.getElementById('alert-demanda-1').style.display = 'none';
+            }
+
+            // FUNIL 2: MATCHMAKING
+            document.getElementById('f-dem-concluidos-2').innerText = funnel.questionariosConcluidos;
+            
+            if (funnel.matches === null) {
+                document.getElementById('f-dem-matches').innerHTML = '<span style="font-size:0.8rem; color:#f59e0b;">Dados insuficientes</span>';
+                document.getElementById('f-dem-c3').innerText = '';
+            } else {
+                document.getElementById('f-dem-matches').innerText = funnel.matches;
+                const d3 = funnel.questionariosConcluidos > 0 ? (funnel.matches/funnel.questionariosConcluidos*100) : 0;
+                document.getElementById('f-dem-c3').innerText = d3.toFixed(1)+'%';
+                if (funnel.matches > funnel.questionariosConcluidos) {
+                    document.getElementById('alert-demanda-2').style.display = 'block';
+                } else {
+                    document.getElementById('alert-demanda-2').style.display = 'none';
+                }
+            }
+
+            document.getElementById('f-dem-wpp').innerText = funnel.contatos;
+            // Se matches é nulo, converte direto de concluidos, senao de matches
+            const baseWpp = funnel.matches !== null ? funnel.matches : funnel.questionariosConcluidos;
+            const d4 = baseWpp > 0 ? (funnel.contatos / baseWpp * 100) : 0;
+            document.getElementById('f-dem-c4').innerText = d4.toFixed(1)+'%';
+
+            // MARKETPLACE HEALTH DIST
             document.getElementById('mh-0').innerText = health.distribuicao.zero;
             document.getElementById('mh-1').innerText = health.distribuicao.um_a_dois;
             document.getElementById('mh-3').innerText = health.distribuicao.tres_a_cinco;
@@ -96,28 +159,21 @@ window.loadGrowthData = async function() {
             const d = result.data;
             window.growthDataState.marketing = d;
             
-            if (d.hasMarketingSpend) {
-                document.getElementById('g-cac').innerText = formatBRL(d.cac);
-                document.getElementById('g-payback').innerText = d.payback ? d.payback.toFixed(1) + 'm' : '0m';
-            } else {
-                document.getElementById('g-cac').innerText = 'N/A';
-                document.getElementById('g-payback').innerText = 'N/A';
-                document.getElementById('g-cac').style.color = '#94a3b8';
-                document.getElementById('g-payback').style.color = '#94a3b8';
-            }
+            // Política: CAC é N/D por falta de atribuição
+            document.getElementById('g-cac-b2b').innerText = 'N/D';
+            document.getElementById('g-cac-b2c').innerText = 'N/D';
+            document.getElementById('g-marketing-na').innerText = formatBRL(d.marketingNaoAtribuido || d.totalMarketingSpend);
             
-            document.getElementById('g-arpu').innerText = formatBRL(d.arpu);
-            document.getElementById('g-ltv').innerText = d.amostraSuficienteLTV ? formatBRL(d.ltv) : 'S/ Dados';
-            if (!d.amostraSuficienteLTV) document.getElementById('g-ltv').style.color = '#94a3b8';
-            else document.getElementById('g-ltv').style.color = '#8b5cf6';
+            document.getElementById('g-payback').innerText = 'N/D';
             
-            document.getElementById('g-spend-total').innerText = 'Gasto Total: ' + formatBRL(d.totalMarketingSpend);
-            
-            if (!d.amostraSuficienteLTV) {
-                document.getElementById('g-ltv-warn').innerText = '(Amostra insuficiente p/ Churn)';
-                document.getElementById('g-ltv-warn').style.color = '#f59e0b';
-            } else {
+            if (d.amostraSuficienteLTV && d.ltv > 0) {
+                document.getElementById('g-ltv').innerText = formatBRL(d.ltv);
+                document.getElementById('g-ltv').style.color = '#8b5cf6';
                 document.getElementById('g-ltv-warn').innerText = '';
+            } else {
+                document.getElementById('g-ltv').innerText = d.ltv > 0 ? formatBRL(d.ltv) : 'N/D';
+                document.getElementById('g-ltv').style.color = '#94a3b8';
+                document.getElementById('g-ltv-warn').innerText = 'LTV estimado — baixa confiança';
             }
         }
 
@@ -151,15 +207,12 @@ window.loadGrowthData = async function() {
             });
         }
 
-        // 6. PMF V3
+        // 6. PMF V3 (Demanda x Retenção)
         if (pmfRes && pmfRes.ok) {
             const result = await pmfRes.json();
             const tbody = document.getElementById('pmf-tbody');
             tbody.innerHTML = '';
             
-            let hasRisk = false;
-            let riskCount = 0;
-
             result.data.forEach(row => {
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid #f1f5f9';
@@ -167,11 +220,6 @@ window.loadGrowthData = async function() {
                 tr.title = "Clique para detalhar";
                 tr.onclick = () => window.openPmfDrilldown(row.contact_group);
                 
-                // Destacar a linha de risco
-                if (row.contact_group === '0 contatos' && row.active_psis > 0) {
-                    tr.style.background = '#fef2f2';
-                }
-
                 tr.innerHTML = `
                     <td style="padding:15px; font-weight:700; color:#0f172a;">${row.contact_group}</td>
                     <td style="padding:15px;">${row.total_psis}</td>
@@ -180,21 +228,11 @@ window.loadGrowthData = async function() {
                     <td style="padding:15px; font-weight:600;">${row.churn_rate}%</td>
                 `;
                 tbody.appendChild(tr);
-
-                if (row.contact_group === '0 contatos' && row.active_psis > 0) {
-                    hasRisk = true;
-                    riskCount = row.active_psis;
-                }
             });
-
-            const alertBanner = document.getElementById('pmf-risk-alert');
-            if (hasRisk) {
-                alertBanner.style.display = 'block';
-                document.getElementById('pmf-risk-text').innerText = `${riskCount} psicólogos estão pagando sem receber contatos nos últimos 30 dias.`;
-            } else {
-                alertBanner.style.display = 'none';
-            }
         }
+
+        // 7. DIAGNÓSTICO
+        generateDiagnostics();
 
         document.getElementById('growth-loading').style.display = 'none';
         document.getElementById('growth-content').style.display = 'block';
@@ -205,6 +243,61 @@ window.loadGrowthData = async function() {
         console.error(err);
         alert('Erro ao carregar dados do Growth Dashboard');
     }
+}
+
+window.generateDiagnostics = function() {
+    const list = document.getElementById('diagnostic-list');
+    list.innerHTML = '';
+    const state = window.growthDataState;
+    if (!state || !state.overview) {
+        list.innerHTML = '<li>Não foi possível gerar diagnóstico.</li>';
+        return;
+    }
+
+    const o = state.overview;
+    const bullets = [];
+
+    // 1. MRR Growth
+    const netNew = o.netNewMrr || 0;
+    const mrrAnt = o.mrrAnterior || 0;
+    if (mrrAnt > 0) {
+        const pct = (netNew / mrrAnt) * 100;
+        if (pct > 0) {
+            bullets.push(`🟢 <strong>MRR cresceu ${pct.toFixed(1)}%</strong> vs período anterior, puxado por ${o.novosPagantes} novos pagantes.`);
+        } else if (pct < 0) {
+            bullets.push(`🔴 <strong>MRR retraiu ${Math.abs(pct).toFixed(1)}%</strong> vs período anterior (Perdemos ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(o.mrrPerdido)} em cancelamentos).`);
+        } else {
+            bullets.push(`🟡 <strong>MRR estagnado</strong> vs período anterior.`);
+        }
+    } else {
+        if (netNew > 0) bullets.push(`🟢 <strong>MRR cresceu</strong> (Adicionamos ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(netNew)}).`);
+    }
+
+    // 2. Health Rate
+    const semDem = o.totalAtivos - o.pagantesComDemandaCount;
+    if (o.pctDemanda >= 80) {
+        bullets.push(`🟢 <strong>${o.pctDemanda.toFixed(1)}%</strong> dos psicólogos ativos receberam demanda (Excelente engajamento).`);
+    } else if (o.pctDemanda >= 50) {
+        bullets.push(`🟡 <strong>${o.pctDemanda.toFixed(1)}%</strong> da base recebeu demanda. Existem ${semDem} psicólogos sem contatos que requerem atenção.`);
+    } else {
+        bullets.push(`🔴 <strong>${semDem} de ${o.totalAtivos} psicólogos ativos</strong> (${(100 - o.pctDemanda).toFixed(1)}%) NÃO receberam nenhum contato no período.`);
+    }
+
+    // 3. Churn
+    if (o.churnPagantes > 0) {
+        let text = `🟡 <strong>${o.churnPagantes} assinantes cancelaram</strong> neste período (Taxa: ${o.taxaChurnPagantes.toFixed(1)}%).`;
+        if (o.churnPagantes < 3) text += ` <span style="font-size:0.8rem; color:#f59e0b;">(Baixa confiança p/ análise de tendência)</span>`;
+        bullets.push(text);
+    } else {
+        bullets.push(`🟢 <strong>Nenhum churn</strong> de assinantes registrado no período selecionado.`);
+    }
+
+    bullets.forEach(b => {
+        const li = document.createElement('li');
+        li.style.marginBottom = '8px';
+        li.innerHTML = b;
+        list.appendChild(li);
+    });
 }
 
 window.updateTimeAgo = function() {

@@ -74,7 +74,7 @@ class GrowthService {
                     { cancelAtPeriodEnd: true, planExpiresAt: { [Op.gte]: periodStart, [Op.lte]: now } }
                 ]
             },
-            attributes: ['subscriptionId']
+            attributes: ['subscriptionId', 'plano']
         });
 
         let churnPagantes = 0;
@@ -162,8 +162,47 @@ class GrowthService {
 
         const pctDemanda = totalAtivos > 0 ? (pagantesComDemandaCount / totalAtivos) * 100 : 0;
 
+        // 9. MRR Adicionado e MRR Perdido (Net New MRR)
+        let mrrAdicionado = 0;
+        let mrrPerdido = 0;
+
+        // MRR Adicionado (aproximação usando novosPagantes)
+        // pagantesAtivos que atualizaram recentemente são considerados novos assinantes
+        for (const p of pagantesAtivos) {
+            if (new Date(p.updatedAt) >= periodStart) {
+                let valor = 0;
+                if (p.plano === 'ESSENTIAL' || p.plano === 'Essencial') valor = Number(priceEssencial);
+                else if (p.plano === 'CLINICAL' || p.plano === 'Clínico') valor = Number(priceClinico);
+                else if (p.plano === 'REFERENCE' || p.plano === 'Sol' || p.plano === 'SOL') valor = Number(priceReference);
+                
+                // Se foi criado no período ou atualizado (ex: trial para pagante)
+                mrrAdicionado += valor;
+            }
+        }
+
+        // MRR Perdido (calculado usando os churners com subscrição)
+        for (const c of allChurners) {
+            if (c.subscriptionId) {
+                let valor = 0;
+                if (c.plano === 'ESSENTIAL' || c.plano === 'Essencial') valor = Number(priceEssencial);
+                else if (c.plano === 'CLINICAL' || c.plano === 'Clínico') valor = Number(priceClinico);
+                else if (c.plano === 'REFERENCE' || c.plano === 'Sol' || c.plano === 'SOL') valor = Number(priceReference);
+                else valor = Number(priceEssencial); // estimativa conservadora se não tiver plano
+
+                mrrPerdido += valor;
+            }
+        }
+
+        const netNewMrr = mrrAdicionado - mrrPerdido;
+        // MRR no período anterior = MRR Atual - Adicionado + Perdido (Equação de Balanço)
+        const mrrAnterior = mrrTotal - mrrAdicionado + mrrPerdido;
+
         return {
             mrrTotal,
+            mrrAnterior,
+            mrrAdicionado,
+            mrrPerdido,
+            netNewMrr,
             mrrComDemanda,
             mrrSemDemanda,
             totalAtivos: pagantesAtivos.length,

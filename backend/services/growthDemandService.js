@@ -35,8 +35,7 @@ class GrowthDemandService {
             }
         });
 
-        // 4. Matches (MatchEvent) - Usando count, assumindo que a tabela exista ou inferindo
-        let matches = 0;
+        let matches = null;
         if (db.MatchEvent) {
             matches = await db.MatchEvent.count({
                 where: { createdAt: { [Op.gte]: periodStart } }
