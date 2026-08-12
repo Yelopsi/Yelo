@@ -585,28 +585,23 @@ exports.getFinancials = async (req, res) => {
         });
 
         const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !!(psy.subscriptionId)).length;
-        const totalPaidStart = payingActiveCount + paidChurnedCount - paidNewCount;
-        const paidBaseForChurn = totalPaidStart > 0 ? totalPaidStart : 1;
-        const paidChurnRate = (paidChurnedCount / paidBaseForChurn) * 100;
-
-        const prevPayingActiveCount = totalPaidStart;
-        const prevPaidStart = prevPayingActiveCount + prevPaidChurnedCount - prevPaidNewCount;
-        const prevPaidBaseForChurn = prevPaidStart > 0 ? prevPaidStart : 1;
-        const prevPaidChurnRate = (prevPaidChurnedCount / prevPaidBaseForChurn) * 100;
+        const prevPayingActiveCount = payingActiveCount; // Simplificação para mantermos a mesma base no período anterior
+        
+        const paidChurnRateReal = payingActiveCount > 0 ? paidChurnedCount / (payingActiveCount + paidChurnedCount) : 0;
+        const prevPaidChurnRateReal = prevPayingActiveCount > 0 ? prevPaidChurnedCount / (prevPayingActiveCount + prevPaidChurnedCount) : 0;
+        
+        const paidChurnRate = paidChurnRateReal * 100;
+        const prevPaidChurnRate = prevPaidChurnRateReal * 100;
 
         const trialActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !(psy.subscriptionId)).length;
-        const totalTrialStart = trialActiveCount + trialChurnedCount - trialNewCount;
-        const trialBaseForChurn = totalTrialStart > 0 ? totalTrialStart : 1;
-        const trialChurnRate = (trialChurnedCount / trialBaseForChurn) * 100;
+        const prevTrialActiveCount = trialActiveCount;
 
-        const prevTrialActiveCount = totalTrialStart;
-        const prevTrialStart = prevTrialActiveCount + prevTrialChurnedCount - prevTrialNewCount;
-        const prevTrialBaseForChurn = prevTrialStart > 0 ? prevTrialStart : 1;
-        const prevTrialChurnRate = (prevTrialChurnedCount / prevTrialBaseForChurn) * 100;
+        const trialChurnRate = trialActiveCount > 0 ? (trialChurnedCount / (trialActiveCount + trialChurnedCount)) * 100 : 0;
+        const prevTrialChurnRate = prevTrialActiveCount > 0 ? (prevTrialChurnedCount / (prevTrialActiveCount + prevTrialChurnedCount)) * 100 : 0;
 
         const arpu = payingActiveCount > 0 ? mrr / payingActiveCount : 0;
-        const ltv = paidChurnRate > 0 ? arpu / (paidChurnRate / 100) : (arpu * 24);
-        const prevLtv = prevPaidChurnRate > 0 ? arpu / (prevPaidChurnRate / 100) : (arpu * 24);
+        const ltv = paidChurnRateReal > 0 ? arpu / paidChurnRateReal : (arpu * 24);
+        const prevLtv = prevPaidChurnRateReal > 0 ? arpu / prevPaidChurnRateReal : (arpu * 24);
         const prevMrr = Math.max(0, mrr - (paidNewCount * arpu) + (paidChurnedCount * arpu));
         
         // MRR Projections Linear Math
