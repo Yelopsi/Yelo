@@ -260,14 +260,13 @@ exports.getAllPsychologists = async (req, res) => {
             } else if (status === 'active_paying') {
                 whereClause.status = 'active';
                 whereClause.is_exempt = { [Op.or]: [null, false] };
-                whereClause[Op.or] = [
-                    { subscriptionId: { [Op.ne]: null } }
-                ];
+                whereClause.subscriptionId = { [Op.ne]: null };
+                whereClause.planExpiresAt = { [Op.gt]: new Date() };
             } else if (status === 'active_trial') {
                 whereClause.status = 'active';
                 whereClause.is_exempt = { [Op.or]: [null, false] };
                 whereClause.subscriptionId = null;
-                whereClause.subscriptionId = null;
+                whereClause.planExpiresAt = { [Op.gt]: new Date() };
             } else if (status === 'utm_whatsapp') {
                 whereClause.utm_source = 'whatsapp';
             } else if (status === 'utm_meta') {
@@ -297,10 +296,10 @@ exports.getAllPsychologists = async (req, res) => {
         const kpisQuery = `
             SELECT 
                 COUNT(*) as total,
-                COUNT(*) FILTER (WHERE status = 'active' AND ("subscriptionId" IS NOT NULL) AND (is_exempt IS NULL OR is_exempt = false)) as active_paying,
-                COUNT(*) FILTER (WHERE status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND "subscriptionId" IS NULL) as active_trial,
+                COUNT(*) FILTER (WHERE status = 'active' AND ("subscriptionId" IS NOT NULL) AND (is_exempt IS NULL OR is_exempt = false) AND "planExpiresAt" > NOW()) as active_paying,
+                COUNT(*) FILTER (WHERE status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND "subscriptionId" IS NULL AND "planExpiresAt" > NOW()) as active_trial,
                 COUNT(*) FILTER (WHERE status = 'pending') as pending,
-                COUNT(*) FILTER (WHERE status = 'inactive') as inactive,
+                COUNT(*) FILTER (WHERE status = 'inactive' OR ("status" = 'active' AND "planExpiresAt" < NOW())) as inactive,
                 COUNT(*) FILTER (WHERE is_exempt = true) as vip,
                 COUNT(*) FILTER (WHERE (status = 'active' OR status = 'pending') AND ("isProfileAnalyzed" IS NULL OR "isProfileAnalyzed" = false)) as fila_cs,
                 COUNT(*) FILTER (WHERE utm_source = 'whatsapp') as utm_whatsapp,
