@@ -590,6 +590,11 @@
                 if (bioEl && window.YELO_PROFILE_DATA && window.YELO_PROFILE_DATA.bio) {
                     let text = window.YELO_PROFILE_DATA.bio;
                     
+                    // Decode HTML entities caso venham escapados do banco (ex: &lt;p&gt; -> <p>)
+                    const txt = document.createElement('textarea');
+                    txt.innerHTML = text;
+                    text = txt.value;
+
                     // Se não tiver tags HTML (texto legado plano), aplica a formatação markdown nativa
                     if (!/<\/?[a-z][\s\S]*>/i.test(text)) {
                         text = text.replace(/'''([\s\S]*?)'''/g, '<code style="background:#f4f4f4; padding:2px 6px; border-radius:4px; font-family:monospace; color:#333; font-size:0.9em; word-break: break-word; white-space: pre-wrap;">$1</code>');
