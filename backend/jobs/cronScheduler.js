@@ -160,7 +160,15 @@ const startCronJobs = () => {
         const currentBrtHour = parseInt(now.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit' }), 10);
         const currentDay = now.getDate();
         
-        // 1. RESUMO DIÁRIO (Verifica a cada minuto)
+        // 1. PROCESSADOR DE WEBHOOKS (Roda a cada minuto)
+        try {
+            const WebhookProcessor = require('../workers/webhookProcessor');
+            await WebhookProcessor.processPendingWebhooks();
+        } catch(e) {
+            console.error('Erro no processador de webhooks:', e.message);
+        }
+
+        // 2. RESUMO DIÁRIO (Verifica a cada minuto)
         if (currentHM !== lastSummaryMinute) {
             lastSummaryMinute = currentHM;
             await sendDailySummaries(now, currentHM);
