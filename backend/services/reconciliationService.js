@@ -203,10 +203,9 @@ class ReconciliationService {
                 try {
                     const pData = await this.fetchAsaas(`/payments?subscription=${sub.id}`);
                     const payments = pData.data || [];
-                    const hasPaid = payments.some(p => p.status === 'RECEIVED' || p.status === 'CONFIRMED');
                     const hasOverdue = payments.some(p => p.status === 'OVERDUE');
 
-                    if (hasPaid && !hasOverdue) {
+                    if (!hasOverdue) {
                         truePayingIds.add(localPsi.id);
                         const nextDueDate = new Date(sub.nextDueDate);
                         nextDueDate.setDate(nextDueDate.getDate() + 3);

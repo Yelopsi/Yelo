@@ -45,10 +45,9 @@ async function fixStatuses() {
             const pData = await pRes.json();
             const payments = pData.data || [];
             
-            const hasPaid = payments.some(p => p.status === 'RECEIVED' || p.status === 'CONFIRMED');
             const hasOverdue = payments.some(p => p.status === 'OVERDUE');
 
-            if (hasPaid && !hasOverdue) {
+            if (!hasOverdue) {
                 truePayingIds.add(localPsi.id);
                 const nextDueDate = new Date(sub.nextDueDate);
                 
