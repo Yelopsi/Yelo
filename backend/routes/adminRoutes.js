@@ -135,6 +135,7 @@ router.post('/founder-goals', adminDashboardController.saveFounderGoals);
 router.get('/questionnaire-analytics', adminAnalyticsController.getQuestionnaireAnalytics);
 router.get('/analytics/growth', adminGrowthController.getGrowthData);
 router.get('/analytics/growth/pmf', adminGrowthController.getPMFDetails);
+router.get('/analytics/whatsapp-ab', adminAnalyticsController.getWhatsAppABStats);
 router.post('/analytics/growth/ai-insights', adminGrowthController.getAIInsights);
 router.get('/growth/overview', adminGrowthController.getOverview);
 router.get('/growth/acquisition', adminGrowthController.getAcquisition);

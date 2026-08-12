@@ -172,3 +172,43 @@ exports.getLeadsRecentes = async (req, res) => {
         res.status(500).json({ error: "Erro ao buscar a auditoria de leads." });
     }
 };
+
+exports.getWhatsAppABStats = async (req, res) => {
+    try {
+        const stats = await db.WhatsAppClickLog.findAll({
+            attributes: [
+                'ab_variant',
+                'feedbackGiven',
+                'contactReceived',
+                'dealClosed',
+                [db.Sequelize.fn('COUNT', db.Sequelize.col('id')), 'count']
+            ],
+            group: ['ab_variant', 'feedbackGiven', 'contactReceived', 'dealClosed'],
+            raw: true
+        });
+
+        const result = {
+            A: { cliques: 0, feedbacks: 0, contatoRecebido: 0, negocioFechado: 0, emNegociacao: 0 },
+            B: { cliques: 0, feedbacks: 0, contatoRecebido: 0, negocioFechado: 0, emNegociacao: 0 }
+        };
+
+        stats.forEach(row => {
+            const v = row.ab_variant;
+            if (v === 'A' || v === 'B') {
+                const count = parseInt(row.count, 10);
+                result[v].cliques += count;
+                if (row.feedbackGiven) {
+                    result[v].feedbacks += count;
+                    if (row.contactReceived) result[v].contatoRecebido += count;
+                    if (row.dealClosed === 'yes') result[v].negocioFechado += count;
+                    else if (row.dealClosed && row.dealClosed !== 'no') result[v].emNegociacao += count;
+                }
+            }
+        });
+
+        res.json(result);
+    } catch (error) {
+        console.error("Erro em getWhatsAppABStats:", error);
+        res.status(500).json({ error: "Erro interno" });
+    }
+};
