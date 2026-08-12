@@ -130,9 +130,12 @@ window.loadGrowthData = async function() {
                 document.getElementById('f-dem-c3').innerText = '';
             } else {
                 document.getElementById('f-dem-matches').innerText = funnel.matches;
-                const d3 = funnel.questionariosConcluidos > 0 ? (funnel.matches/funnel.questionariosConcluidos*100) : 0;
-                document.getElementById('f-dem-c3').innerText = d3.toFixed(1)+'%';
-                if (funnel.matches > funnel.questionariosConcluidos) {
+                // Exibe a média de indicações por questionário concluído
+                const d3 = funnel.questionariosConcluidos > 0 ? (funnel.matches/funnel.questionariosConcluidos) : 0;
+                document.getElementById('f-dem-c3').innerText = d3.toFixed(1)+' psis/busca';
+                
+                // O sistema pode recomendar até 3 psicólogos por questionário
+                if (funnel.matches > (funnel.questionariosConcluidos * 3)) {
                     document.getElementById('alert-demanda-2').style.display = 'block';
                 } else {
                     document.getElementById('alert-demanda-2').style.display = 'none';
