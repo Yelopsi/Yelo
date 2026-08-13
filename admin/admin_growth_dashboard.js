@@ -19,13 +19,14 @@ window.loadGrowthData = async function() {
     };
 
     try {
-        const [overviewRes, acqRes, demRes, mktRes, cohortRes, pmfRes] = await Promise.all([
+        const [overviewRes, acqRes, demRes, mktRes, cohortRes, pmfRes, trialsRes] = await Promise.all([
             fetch(`/api/admin/growth/overview?days=${periodDays}`),
             fetch(`/api/admin/growth/acquisition?days=${periodDays}`),
             fetch(`/api/admin/growth/demand?days=${periodDays}`),
             fetch(`/api/admin/growth/marketing?days=${periodDays}`),
             fetch(`/api/admin/growth/cohorts`),
-            fetch(`/api/admin/growth/pmf`)
+            fetch(`/api/admin/growth/pmf`),
+            fetch(`/api/admin/growth/upcoming-trials`)
         ]);
 
         const formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -217,6 +218,36 @@ window.loadGrowthData = async function() {
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        // PRÓXIMOS FINS DE TRIAL
+        if (trialsRes && trialsRes.ok) {
+            const result = await trialsRes.json();
+            const tbody = document.getElementById('upcoming-trials-tbody');
+            tbody.innerHTML = '';
+            
+            if (!result.data || result.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="padding:20px; text-align: center; color:#94a3b8;">Nenhum trial finalizando nos próximos 7 dias.</td></tr>';
+            } else {
+                result.data.forEach(psi => {
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid #f1f5f9';
+                    
+                    const expires = new Date(psi.planExpiresAt);
+                    const diffDays = Math.ceil((expires - new Date()) / (1000 * 60 * 60 * 24));
+                    const daysColor = diffDays <= 2 ? '#ef4444' : '#f59e0b';
+                    
+                    const wppBtn = psi.telefone ? `<a href="https://wa.me/${psi.telefone.replace(/\\D/g, '')}" target="_blank" style="background:#25D366; color:white; padding:5px 10px; border-radius:6px; text-decoration:none; font-size:0.8rem; font-weight:600;">Chamar</a>` : '-';
+                    
+                    tr.innerHTML = `
+                        <td style="padding:15px; font-weight:600; color:#0f172a;">${psi.nome || 'Sem Nome'}</td>
+                        <td style="padding:15px; color:#64748b;">${psi.telefone || 'N/D'}</td>
+                        <td style="padding:15px; font-weight:700; color:${daysColor};">${diffDays} dias</td>
+                        <td style="padding:15px; text-align: right;">${wppBtn}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
         }
 
         // 7. DIAGNÓSTICO

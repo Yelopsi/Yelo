@@ -469,3 +469,32 @@ exports.getAIInsights = async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 };
+
+exports.getUpcomingTrials = async (req, res) => {
+    try {
+        const { Op } = require('sequelize');
+        const db = require('../models');
+        const now = new Date();
+        const next7Days = new Date(now);
+        next7Days.setDate(next7Days.getDate() + 7);
+
+        const trials = await db.Psychologist.findAll({
+            where: {
+                status: 'active',
+                is_exempt: { [Op.or]: [false, null] },
+                subscriptionId: null,
+                planExpiresAt: {
+                    [Op.gte]: now,
+                    [Op.lte]: next7Days
+                }
+            },
+            attributes: ['id', 'nome', 'telefone', 'planExpiresAt'],
+            order: [['planExpiresAt', 'ASC']]
+        });
+
+        res.json({ success: true, data: trials });
+    } catch (e) {
+        console.error('Error fetching upcoming trials:', e);
+        res.status(500).json({ error: e.message });
+    }
+};
