@@ -265,6 +265,9 @@ window.loadGrowthData = async function() {
         // 7. DIAGNÓSTICO
         generateDiagnostics();
 
+        // 8. CHART PAGAMENTOS
+        loadPaymentsEvolutionChart();
+
         document.getElementById('growth-loading').style.display = 'none';
         document.getElementById('growth-content').style.display = 'block';
         window.growthLastUpdate = new Date();
@@ -545,5 +548,83 @@ window.fetchGrowthAIInsights = async function() {
         btn.disabled = false;
         btn.style.opacity = '1';
         btn.innerText = 'Gerar Análise com IA';
+    }
+    }
+};
+
+// --- GRÁFICO DE EVOLUÇÃO DE PAGAMENTOS ---
+window.paymentsEvolutionChartInstance = null;
+window.loadPaymentsEvolutionChart = async function() {
+    try {
+        const res = await fetch('/api/admin/growth/payments-evolution');
+        if (!res.ok) throw new Error('Falha ao buscar evolução de pagamentos');
+        const result = await res.json();
+        
+        if (!result.success || !result.labels || !result.data) return;
+
+        const ctx = document.getElementById('paymentsEvolutionChart');
+        if (!ctx) return;
+
+        if (window.paymentsEvolutionChartInstance) {
+            window.paymentsEvolutionChartInstance.destroy();
+        }
+
+        const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(139, 92, 246, 0.4)');
+        gradient.addColorStop(1, 'rgba(139, 92, 246, 0.0)');
+
+        window.paymentsEvolutionChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: result.labels,
+                datasets: [{
+                    label: 'Mensalidades Pagas',
+                    data: result.data,
+                    borderColor: '#8b5cf6',
+                    backgroundColor: gradient,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#8b5cf6',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1f2937',
+                        padding: 12,
+                        titleFont: { size: 13, family: 'Inter' },
+                        bodyFont: { size: 14, family: 'Inter', weight: 'bold' },
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return context.parsed.y + ' pagamentos recebidos';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f1f5f9', drawBorder: false },
+                        ticks: { stepSize: 1, font: { family: 'Inter', color: '#64748b' } }
+                    },
+                    x: {
+                        grid: { display: false, drawBorder: false },
+                        ticks: { font: { family: 'Inter', color: '#64748b' } }
+                    }
+                },
+                interaction: { mode: 'index', intersect: false }
+            }
+        });
+    } catch (err) {
+        console.error('Erro ao carregar gráfico de pagamentos:', err);
     }
 };

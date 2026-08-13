@@ -560,3 +560,46 @@ exports.getUpcomingTrials = async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 };
+
+exports.getPaymentsEvolution = async (req, res) => {
+    try {
+        const query = `
+            SELECT TO_CHAR("createdAt", 'YYYY-MM') as month, COUNT(*) as count 
+            FROM "SystemLogs" 
+            WHERE message LIKE '[ASAAS] Pagamento Confirmado%' 
+            GROUP BY month 
+            ORDER BY month ASC
+        `;
+        
+        const [results] = await db.sequelize.query(query);
+        
+        // Formatar para retorno (Garantir meses sequenciais)
+        // Mapear "2026-05" -> count
+        const evolutionMap = {};
+        results.forEach(r => {
+            evolutionMap[r.month] = parseInt(r.count, 10);
+        });
+        
+        // Gerar os últimos 6 meses até o mês atual para ter linha contínua no gráfico
+        const labels = [];
+        const data = [];
+        
+        const today = new Date();
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+            const monthStr = d.toISOString().slice(0, 7); // YYYY-MM
+            
+            // Format label as "Jan/26"
+            const ptMonths = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            const labelStr = `${ptMonths[d.getMonth()]}/${d.getFullYear().toString().slice(2)}`;
+            
+            labels.push(labelStr);
+            data.push(evolutionMap[monthStr] || 0);
+        }
+        
+        res.json({ success: true, labels, data });
+    } catch (e) {
+        console.error('Error fetching payments evolution:', e);
+        res.status(500).json({ error: e.message });
+    }
+};
