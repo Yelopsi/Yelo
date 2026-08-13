@@ -11,6 +11,9 @@
       const imageUrl = post.imagem_url || 'https://www.yelopsi.com.br/img/logo_yelo_share.png';
     %>
     
+    <!-- PROTEÇÃO CONTRA CONTEÚDO DUPLICADO -->
+    <link rel="canonical" href="<%= currentUrl %>">
+    
     <meta name="description" content="<%= descSnippet %>">
     
     <!-- OPEN GRAPH (WhatsApp, Facebook, LinkedIn) -->
