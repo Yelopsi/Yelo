@@ -1,40 +1,84 @@
-document.addEventListener('DOMContentLoaded', async () => {
-    const token = localStorage.getItem('yelo_admin_token');
-    if (!token) {
-        window.location.href = 'login.html';
-        return;
-    }
+async function loadAbTestData() {
+    const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
+    const token = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : localStorage.getItem('Yelo_token');
+
+    ['clicks-a','clicks-b','contato-a','contato-b','fechou-a','fechou-b','neg-a','neg-b','taxa-a','taxa-b']
+        .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '...'; });
 
     try {
-        const response = await fetch('/api/admin/analytics/whatsapp-ab', {
+        const res = await fetch(`${API_BASE_URL}/api/admin/analytics/whatsapp-ab`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        if (response.status === 401 || response.status === 403) {
-            window.location.href = 'login.html';
-            return;
+        const data = await res.json();
+        const totalCliques = (data.A.cliques || 0) + (data.B.cliques || 0);
+
+        // Preenche métricas de cada variante
+        ['A', 'B'].forEach(v => {
+            const d = data[v];
+            const suf = v.toLowerCase();
+            const cliques = d.cliques || 0;
+            const feedbacks = d.feedbacks || 0;
+            const contato = d.contatoRecebido || 0;
+            const fechou = d.negocioFechado || 0;
+            const neg = d.emNegociacao || 0;
+
+            document.getElementById(`clicks-${suf}`).textContent = cliques;
+            document.getElementById(`contato-${suf}`).textContent = contato;
+            document.getElementById(`fechou-${suf}`).textContent = fechou;
+            document.getElementById(`neg-${suf}`).textContent = neg;
+
+            // Taxa de conversão final = fechados / cliques (métrica principal do teste)
+            const taxa = cliques > 0 ? ((fechou / cliques) * 100).toFixed(1) : '0.0';
+            document.getElementById(`taxa-${suf}`).textContent = `${taxa}%`;
+            document.getElementById(`bar-${suf}`).style.width = `${Math.min(100, parseFloat(taxa) * 5)}%`;
+
+            // Nota de cobertura de feedbacks
+            const noteEl = document.getElementById(`feedback-note-${suf}`);
+            if (noteEl) {
+                if (cliques === 0) {
+                    noteEl.textContent = 'Nenhum clique ainda.';
+                } else {
+                    const cobPct = ((feedbacks / cliques) * 100).toFixed(0);
+                    noteEl.textContent = `${feedbacks} de ${cliques} cliques com feedback (${cobPct}% de cobertura)`;
+                }
+            }
+        });
+
+        // Destaca o vencedor (por taxa de conversão final)
+        const taxaA = data.A.cliques > 0 ? data.A.negocioFechado / data.A.cliques : 0;
+        const taxaB = data.B.cliques > 0 ? data.B.negocioFechado / data.B.cliques : 0;
+        if (totalCliques >= 10) {
+            if (taxaA > taxaB) {
+                document.getElementById('card-a').style.boxShadow = '0 0 0 2px #3b82f6';
+                document.getElementById('card-a').style.background = '#f0f7ff';
+            } else if (taxaB > taxaA) {
+                document.getElementById('card-b').style.boxShadow = '0 0 0 2px #10b981';
+                document.getElementById('card-b').style.background = '#f0fdf9';
+            }
         }
 
-        const data = await response.json();
-        
-        const clicksA = data.A || 0;
-        const clicksB = data.B || 0;
-        const total = clicksA + clicksB;
-
-        const elClicksA = document.getElementById('clicks-a');
-        const elClicksB = document.getElementById('clicks-b');
-        const elRateA = document.getElementById('rate-a');
-        const elRateB = document.getElementById('rate-b');
-
-        if (elClicksA) elClicksA.textContent = clicksA;
-        if (elClicksB) elClicksB.textContent = clicksB;
-
-        if (total > 0) {
-            if (elRateA) elRateA.textContent = ((clicksA / total) * 100).toFixed(1) + '%';
-            if (elRateB) elRateB.textContent = ((clicksB / total) * 100).toFixed(1) + '%';
+        // Nota global de status
+        const noteEl = document.getElementById('ab-note');
+        if (noteEl) {
+            if (totalCliques === 0) {
+                noteEl.textContent = '⚠️ Nenhum clique com variante ainda. Os dados aparecerão conforme pacientes usarem o botão WhatsApp.';
+                noteEl.style.color = '#d97706';
+            } else {
+                const totalFechou = (data.A.negocioFechado || 0) + (data.B.negocioFechado || 0);
+                noteEl.textContent = `${totalCliques} cliques no total · ${totalFechou} negócios fechados combinados`;
+                noteEl.style.color = '#64748b';
+            }
         }
 
-    } catch (error) {
-        console.error("Erro ao carregar dados do Teste A/B", error);
+    } catch(e) {
+        console.error('Erro ao carregar dados do Teste A/B:', e);
+        ['clicks-a','clicks-b','contato-a','contato-b','fechou-a','fechou-b','neg-a','neg-b','taxa-a','taxa-b']
+            .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '-'; });
     }
-});
+}
+
+window.initializePage = function() {
+    loadAbTestData();
+};
