@@ -488,11 +488,42 @@ exports.getUpcomingTrials = async (req, res) => {
                     [Op.lte]: next7Days
                 }
             },
-            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'admin_billing_sent_at'],
+            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'admin_billing_sent_at', 'fotoUrl', 'sobre', 'abordagem', 'crp', 'preco'],
             order: [['planExpiresAt', 'ASC']]
         });
 
-        res.json({ success: true, data: trials });
+        // Calculate probability for each trial
+        const enrichedTrials = await Promise.all(trials.map(async (psi) => {
+            const psiData = psi.toJSON();
+            let probability = 10; // Base probability 10%
+            
+            // Profile completion factors
+            if (psiData.fotoUrl && psiData.fotoUrl !== 'default.jpg') probability += 20;
+            if (psiData.sobre && psiData.sobre.length > 50) probability += 15;
+            if (psiData.abordagem) probability += 10;
+            if (psiData.crp) probability += 5;
+            if (psiData.preco) probability += 10;
+
+            // Demand factor
+            let clickCount = 0;
+            if (db.WhatsAppClickLog) {
+                clickCount = await db.WhatsAppClickLog.count({
+                    where: { psychologistId: psiData.id }
+                });
+            }
+            
+            if (clickCount > 0) {
+                probability += (clickCount * 15); // +15% per click
+            }
+
+            // Cap at 95% to be realistic
+            if (probability > 95) probability = 95;
+            
+            psiData.probability = probability;
+            return psiData;
+        }));
+
+        res.json({ success: true, data: enrichedTrials });
     } catch (e) {
         console.error('Error fetching upcoming trials:', e);
         res.status(500).json({ error: e.message });
