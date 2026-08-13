@@ -238,7 +238,7 @@
                                         <%= new Date(post.createdAt || post.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }) %>
                                     </span>
                                     <h3><%= post.titulo %></h3>
-                                    <p><%= (post.conteudo || '').replace(/<[^>]*>/g, '').substring(0, 100) %>...</p>
+                                    <p><%= post.meta_description ? (post.meta_description.length > 120 ? post.meta_description.substring(0, 120) + '...' : post.meta_description) : (post.conteudo || '').replace(/<[^>]*>?/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 120) + '...' %></p>
                                     
                                     <div class="post-card-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 15px; border-top: 1px solid #eee;">
                                         

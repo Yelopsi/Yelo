@@ -10,9 +10,29 @@
 
     <!-- VARIÁVEIS DE SEO -->
     <% 
+      let genVal = psicologo.genero_identidade;
+      if (typeof genVal === 'string' && genVal.startsWith('[')) {
+          try { genVal = JSON.parse(genVal)[0]; } catch(e) {}
+      } else if (Array.isArray(genVal)) {
+          genVal = genVal[0];
+      }
+      
+      let profTitleBase = "Psicólogo(a)";
+      let profTitle = "Psicólogo(a) Clínico(a)";
+      if (genVal === 'Feminino') {
+          profTitleBase = "Psicóloga";
+          profTitle = "Psicóloga Clínica";
+      } else if (genVal === 'Masculino') {
+          profTitleBase = "Psicólogo";
+          profTitle = "Psicólogo Clínico";
+      } else if (genVal === 'Não-binário' || genVal === 'Outro') {
+          profTitleBase = "Psicólogue";
+          profTitle = "Psicólogue Clínique";
+      }
+
       const bioSnippet = psicologo.meta_description || (psicologo.bio 
         ? psicologo.bio.replace(/<[^>]*>?/gm, '').substring(0, 155) + '...' 
-        : `Encontre acolhimento e suporte com ${psicologo.nome}. Psicólogo(a) especialista em saúde mental.`);
+        : `Encontre acolhimento e suporte com ${psicologo.nome}. ${profTitleBase} especialista em saúde mental.`);
       const currentUrl = `https://www.yelopsi.com.br/${psicologo.slug || ''}`;
       
       const imageUrl = psicologo.fotoUrl || 'https://www.yelopsi.com.br/img/logo_yelo_share.png';
@@ -25,12 +45,13 @@
       }
     %>
 
-    <title><%= psicologo.nome %> | Psicólogo(a) na Yelo</title>
+    <title><%= psicologo.nome %> | <%= profTitleBase %><% if(psicologo.cidade) { %> em <%= psicologo.cidade %><% } else { %> Online<% } %> | Yelo</title>
     <meta name="description" content="<%= bioSnippet %>">
+    <link rel="canonical" href="<%= currentUrl %>">
 
     <!-- OPEN GRAPH (WhatsApp, Facebook, LinkedIn) -->
     <meta property="og:type" content="profile">
-    <meta property="og:title" content="<%= psicologo.nome %> | Psicólogo(a) na Yelo">
+    <meta property="og:title" content="<%= psicologo.nome %> | <%= profTitleBase %> na Yelo">
     <meta property="og:description" content="<%= bioSnippet %>">
     <meta property="og:url" content="<%= currentUrl %>">
     <meta property="og:image" content="<%= imageUrl %>">
@@ -45,6 +66,13 @@
       "image": "<%= imageUrl %>",
       "url": "<%= currentUrl %>",
       "knowsAbout": "<%= especialidadesStr.replace(/"/g, '\\"') %>"
+      <% if (reviewCount > 0) { %>
+      ,"aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "<%= averageRating %>",
+        "reviewCount": "<%= reviewCount %>"
+      }
+      <% } %>
     }
     </script>
     
@@ -181,21 +209,7 @@
                                     <% } %>
                                 </h1>
                                 <% 
-                                    let profTitle = "Psicólogo(a) Clínico(a)";
-                                    let genVal = psicologo.genero_identidade;
-                                    if (typeof genVal === 'string' && genVal.startsWith('[')) {
-                                        try { genVal = JSON.parse(genVal)[0]; } catch(e) {}
-                                    } else if (Array.isArray(genVal)) {
-                                        genVal = genVal[0];
-                                    }
-                                    if (genVal === 'Feminino') {
-                                        profTitle = "Psicóloga Clínica";
-                                    } else if (genVal === 'Masculino') {
-                                        profTitle = "Psicólogo Clínico";
-                                    } else if (genVal === 'Não-binário' || genVal === 'Outro') {
-                                        profTitle = "Psicólogue Clínique";
-                                    }
-                                    
+                                    // profTitle já foi calculado na tag <head>
                                     let abordagemText = "";
                                     let abordagens = psicologo.abordagens_tecnicas;
                                     if (typeof abordagens === 'string' && abordagens.startsWith('[')) {
@@ -211,7 +225,27 @@
                                 
                                 <!-- Resumo clicável das avaliações -->
                                 <div id="psi-rating-summary" class="hero-rating-clickable" onclick="document.getElementById('reviews-section').scrollIntoView({behavior: 'smooth'})">
-                                    <!-- Preenchido via JS -->
+                                    <% if (reviewCount === 0) { %>
+                                        <% 
+                                            let novoText = 'Novo(a) na Yelo';
+                                            if (psicologo.genero_identidade === 'Feminino') {
+                                                novoText = 'Nova na Yelo';
+                                            } else if (psicologo.genero_identidade === 'Masculino') {
+                                                novoText = 'Novo na Yelo';
+                                            } else if (psicologo.genero_identidade === 'Não-binário' || psicologo.genero_identidade === 'Outro') {
+                                                novoText = 'Nove na Yelo';
+                                            }
+                                        %>
+                                        <span style="color: #666; font-size: 0.9rem; font-weight: 600;"><%= novoText %></span>
+                                    <% } else { %>
+                                        <% 
+                                            let starsHtml = '';
+                                            for (let i = 1; i <= 5; i++) {
+                                                starsHtml += `<span style="color: ${i <= Math.round(averageRating) ? '#f59e0b' : '#e5e7eb'}; font-size: 1.2rem;">★</span>`;
+                                            }
+                                        %>
+                                        <%- starsHtml %> <span style="color: #666; font-size: 0.9rem; font-weight: 600; margin-left: 5px;"><%= averageRating %> de 5</span>
+                                    <% } %>
                                 </div>
                                 <% 
                                     let expTextSSR = '';
@@ -358,9 +392,9 @@
                         </div>
                     </div>
                     
-                    <!-- SEÇÃO DE AVALIAÇÕES (Movido para fora do card, mas ainda na coluna esquerda) -->
+                    <!-- SEÇÃO DE AVALIAÇÕES -->
                     <div id="reviews-section" class="profile-info-card">
-                        <h3 class="profile-section-title" style="font-size: 1.8rem;">Avaliações dos Pacientes <span id="review-count-wrapper" style="display: none;">(<span id="review-count">0</span>)</span></h3>
+                        <h3 class="profile-section-title" style="font-size: 1.8rem;">Avaliações dos Pacientes <span id="review-count-wrapper" style="<% if (reviewCount === 0) { %>display: none;<% } %>">(<span id="review-count"><%= reviewCount %></span>)</span></h3>
                         <p style="color: #666; font-size: 0.95rem; margin: 0 0 20px 0;">Experiências e relatos de pessoas que acompanhei.</p>
                         
                         <div style="margin-bottom: 20px;">
@@ -368,7 +402,30 @@
                         </div>
 
                         <div id="reviews-list-container" style="display: flex; gap: 15px; padding-bottom: 15px;">
-                            <!-- Lista de avaliações será inserida aqui via JS -->
+                            <% if (reviewCount === 0) { %>
+                                <p style="color: #666; font-style: italic; width: 100%;">Este profissional ingressou recentemente. Se você já conhece o trabalho, seja o primeiro a deixar um depoimento!</p>
+                            <% } else { %>
+                                <% 
+                                    const visibleCount = 5;
+                                    const reviewsToShow = reviews.slice(0, visibleCount);
+                                    reviewsToShow.forEach(review => {
+                                        let reviewStars = '';
+                                        for (let i = 1; i <= 5; i++) {
+                                            reviewStars += `<span style="color: ${i <= review.rating ? '#f59e0b' : '#e5e7eb'};">★</span>`;
+                                        }
+                                %>
+                                <article class="review-card" style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 16px; padding: 20px; width: 85vw; max-width: 350px; flex-shrink: 0; scroll-snap-align: start; cursor: pointer; transition: background 0.2s; box-sizing: border-box;" onmouseover="this.style.background = '#f0fdf4'" onmouseout="this.style.background = '#f8f9fa'" onclick="document.getElementById('all-reviews-view').style.display='block'; document.body.style.overflow='hidden';">
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                                        <h4 style="margin: 0; font-family: var(--font-principal); color: #333; font-size: 1rem;"><%= review.patientName %></h4>
+                                        <div><%- reviewStars %></div>
+                                    </div>
+                                    <p style="margin: 0; color: #555; font-style: italic; font-size: 0.95rem; line-height: 1.5;">"<%= review.comment %>"</p>
+                                </article>
+                                <% }); %>
+                                <% if (reviewCount > visibleCount) { %>
+                                <button class="btn-more-reviews" style="display: flex; align-items: center; justify-content: center; min-width: 200px; flex-shrink: 0; scroll-snap-align: start; background: transparent; border: 2px solid var(--verde-escuro); color: var(--verde-escuro); padding: 10px 24px; border-radius: 16px; font-weight: bold; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background = 'rgba(27, 67, 50, 0.05)'" onmouseout="this.style.background = 'transparent'" onclick="document.getElementById('all-reviews-view').style.display='block'; document.body.style.overflow='hidden';">Ver todas as <%= reviewCount %> avaliações</button>
+                                <% } %>
+                            <% } %>
                         </div>
 
                         <!-- Scroll Indicator (Exibido via JS) -->
@@ -381,6 +438,28 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Artigos Publicados -->
+                    <% if (typeof postsAutor !== 'undefined' && postsAutor.length > 0) { %>
+                    <div id="artigos-autor-section" class="profile-info-card" style="margin-top: 30px;">
+                        <h3 class="profile-section-title">Artigos publicados por <%= psicologo.nome.split(' ')[0] %></h3>
+                        <div class="artigos-autor-lista" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+                            <% postsAutor.forEach(postAutor => { %>
+                                <a href="/blog/post/<%= postAutor.slug %>" style="display: flex; gap: 15px; padding: 15px; border: 1px solid #eee; border-radius: 12px; text-decoration: none; color: inherit; transition: all 0.2s; align-items: center; background: #fff;">
+                                    <% if (postAutor.imagem_url) { %>
+                                        <div style="width: 80px; height: 80px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background-color: #f1f5f9;">
+                                            <img src="<%= postAutor.imagem_url %>" alt="<%= postAutor.titulo %>" style="width: 100%; height: 100%; object-fit: cover;">
+                                        </div>
+                                    <% } %>
+                                    <div style="flex-grow: 1;">
+                                        <h4 style="margin: 0 0 5px 0; font-family: var(--font-principal); font-size: 1.05rem; color: #1B4332; line-height: 1.3;"><%= postAutor.titulo %></h4>
+                                        <div style="font-size: 0.8rem; color: #888;"><%= new Date(postAutor.createdAt).toLocaleDateString('pt-BR') %></div>
+                                    </div>
+                                </a>
+                            <% }); %>
+                        </div>
+                    </div>
+                    <% } %>
 
                     <!-- Redes Sociais (Isolado no fim da página) -->
                     <div id="redes-sociais-section" class="profile-info-card" style="margin-top: 30px; margin-bottom: 160px;">
@@ -490,6 +569,11 @@
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <div style="display: flex; flex-direction: column; gap: 2px;">
                     <div id="mobile-sticky-rating" style="font-size: 0.95rem; font-weight: 700; color: #333; display: flex; align-items: center; gap: 4px;">
+                        <% if (reviewCount === 0) { %>
+                            <span style="color: #666; font-size: 0.85rem; font-weight: 600;">Novo(a) na Yelo</span>
+                        <% } else { %>
+                            <span style="color: #f59e0b;">⭐</span> <%= averageRating.toString().replace('.', ',') %> de 5
+                        <% } %>
                     </div>
                 </div>
 
@@ -543,10 +627,25 @@
             <button id="btn-close-all-reviews" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #1B4332; display: flex; align-items: center; justify-content: center; padding: 5px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             </button>
-            <h3 style="margin: 0; color: #1B4332; font-size: 1.2rem;">Todas as Avaliações (<span id="all-reviews-count">0</span>)</h3>
+            <h3 style="margin: 0; color: #1B4332; font-size: 1.2rem;">Todas as Avaliações (<span id="all-reviews-count"><%= reviewCount %></span>)</h3>
         </div>
         <div id="all-reviews-list-container" style="padding: 20px; max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px; box-sizing: border-box; width: 100%;">
-            <!-- Todas as avaliações entram aqui -->
+            <% if (reviewCount > 0) { %>
+                <% reviews.forEach(review => {
+                    let reviewStars = '';
+                    for (let i = 1; i <= 5; i++) {
+                        reviewStars += `<span style="color: ${i <= review.rating ? '#f59e0b' : '#e5e7eb'};">★</span>`;
+                    }
+                %>
+                <div style="background: #fff; border: 1px solid #e9ecef; border-radius: 16px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); box-sizing: border-box; width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                        <h4 style="margin: 0; font-family: var(--font-principal); color: #333; font-size: 1rem;"><%= review.patientName %></h4>
+                        <div><%- reviewStars %></div>
+                    </div>
+                    <p style="margin: 0; color: #555; font-style: italic; font-size: 0.95rem; line-height: 1.5;">"<%= review.comment %>"</p>
+                </div>
+                <% }); %>
+            <% } %>
         </div>
     </div>
 

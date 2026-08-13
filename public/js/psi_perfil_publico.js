@@ -13,30 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // BUSCA DADOS FRESCOS VIA API PARA GARANTIR COLUNAS NOVAS E ESPELHAR CORRETAMENTE
-    if (psi.slug) {
-        // Busca diretamente da rota correta definida no backend (psychologistController.js)
-        fetch(`${API_BASE_URL}/api/psychologists/slug/${psi.slug}?t=${new Date().getTime()}`, { cache: 'no-store', headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' } })
-            .then(res => {
-                if (!res.ok) {
-                    return null;
-                }
-                return res.json();
-            })
-            .then(freshData => {
-                if (freshData) Object.assign(psi, freshData);
-                populatePage(psi);
-                if (loaderContainer) loaderContainer.style.display = 'none';
-                if (profileContainer) profileContainer.style.display = 'block';
-            })
-            .catch(error => {
-                showError('Erro ao processar as informações do perfil.');
-            });
-    } else {
-        populatePage(psi);
-        if (loaderContainer) loaderContainer.style.display = 'none';
-        if (profileContainer) profileContainer.style.display = 'block';
-    }
+    // OTIMIZAÇÃO SSR E SEO: Os dados já estão completos em window.YELO_PROFILE_DATA (psi)
+    populatePage(psi);
+    if (loaderContainer) loaderContainer.style.display = 'none';
+    if (profileContainer) profileContainer.style.display = 'block';
 
     function showError(message) {
         if (loaderContainer) {
@@ -45,8 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function populatePage(psi) {
-        // Título da Página
-        document.title = `${psi.nome} | Psicólogo(a) na Yelo`;
+        // Título da Página agora é renderizado via SSR no backend (EJS)
 
         // Rastreamento GA4: Visualização do Perfil
         try {
@@ -407,10 +386,8 @@ document.addEventListener('DOMContentLoaded', () => {
         populateTags('psi-abordagem-container', psi.abordagens_tecnicas);
         populateTags('psi-praticas-container', psi.praticas_inclusivas);
 
-        // Avaliações
-        
-        let avaliacoes = psi.reviews || [];
-        populateReviews(avaliacoes, psi);
+        // Avaliações (Renderizadas via SSR no backend)
+        setupReviewsModalControls();
 
         // Redes Sociais
         populateSocialLinks(psi);
@@ -552,163 +529,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function populateReviews(reviews, psi) {
-        const reviewsSection = document.getElementById('reviews-section');
-        const reviewsListContainer = document.getElementById('reviews-list-container');
-        const scrollIndicator = document.getElementById('reviews-scroll-indicator');
-        const ratingSummary = document.getElementById('psi-rating-summary');
-        
-        const reviewCountSpan = document.getElementById('review-count');
-        const reviewCountWrapper = document.getElementById('review-count-wrapper');
-        
-        if (reviewCountSpan) reviewCountSpan.textContent = reviews.length;
-
-        if (reviews.length === 0) {
-            if (reviewCountWrapper) reviewCountWrapper.style.display = 'none';
-            if (reviewsListContainer) reviewsListContainer.innerHTML = '<p style="color: #666; font-style: italic; width: 100%;">Este profissional ingressou recentemente. Se você já conhece o trabalho, seja o primeiro a deixar um depoimento!</p>';
-            
-            let novoText = 'Novo(a) na Yelo';
-            if (psi) {
-                if (psi.genero_identidade === 'Feminino') {
-                    novoText = 'Nova na Yelo';
-                } else if (psi.genero_identidade === 'Masculino') {
-                    novoText = 'Novo na Yelo';
-                } else if (psi.genero_identidade === 'Não-binário' || psi.genero_identidade === 'Outro') {
-                    novoText = 'Nove na Yelo';
-                }
-            }
-            
-            if (ratingSummary) ratingSummary.innerHTML = `<span style="color: #666; font-size: 0.9rem; font-weight: 600;">${novoText}</span>`;
-            
-            const mobileStickyRating = document.getElementById('mobile-sticky-rating');
-            if (mobileStickyRating) {
-                mobileStickyRating.innerHTML = `<span style="color: #666; font-size: 0.85rem; font-weight: 600;">${novoText}</span>`;
-            }
-
-            if (scrollIndicator) scrollIndicator.style.display = 'none';
-            return;
-        }
-
-        if (reviewCountWrapper) reviewCountWrapper.style.display = 'inline';
-
-        const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
-        const avgRating = (totalRating / reviews.length).toFixed(1);
-        let starsHtml = '';
-        for (let i = 1; i <= 5; i++) {
-            starsHtml += `<span style="color: ${i <= Math.round(avgRating) ? '#f59e0b' : '#e5e7eb'}; font-size: 1.2rem;">★</span>`;
-        }
-        
-        if (ratingSummary) {
-            ratingSummary.innerHTML = `${starsHtml} <span style="color: #666; font-size: 0.9rem; font-weight: 600; margin-left: 5px;">${avgRating} de 5</span>`;
-        }
-
-        const mobileStickyRating = document.getElementById('mobile-sticky-rating');
-        if (mobileStickyRating) {
-            mobileStickyRating.innerHTML = `<span style="color: #f59e0b;">⭐</span> ${avgRating.replace('.', ',')} de 5`;
-        }
-
-        // Função para converter o nome completo em iniciais (ex: "Anderson Costa" -> "A. C.")
-        const getInitials = (fullName) => {
-            if (!fullName || fullName === 'Anônimo') return 'Anônimo';
-            return fullName.trim().split(/\s+/).map(n => n[0].toUpperCase() + '.').join(' ');
-        };
-
-        if (scrollIndicator) {
-            // Mostra o indicador de scroll se tiver mais de 1 avaliação (para rolar o carrossel)
-            scrollIndicator.style.display = reviews.length > 1 ? 'flex' : 'none';
-        }
-
-        const visibleCount = 5; // Limita a quantidade inicial no carrossel
-
-        const renderList = () => {
-            if (!reviewsListContainer) return;
-            
-            reviewsListContainer.innerHTML = '';
-            const reviewsToShow = reviews.slice(0, visibleCount);
-            
-            reviewsToShow.forEach(review => {
-                const reviewCard = document.createElement('div');
-                reviewCard.style.cssText = 'background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 16px; padding: 20px; width: 85vw; max-width: 350px; flex-shrink: 0; scroll-snap-align: start; cursor: pointer; transition: background 0.2s; box-sizing: border-box;';
-                reviewCard.onmouseover = () => { reviewCard.style.background = '#f0fdf4'; };
-                reviewCard.onmouseout = () => { reviewCard.style.background = '#f8f9fa'; };
-                reviewCard.onclick = () => { openAllReviewsView(reviews); };
-                let reviewStars = '';
-                for (let i = 1; i <= 5; i++) {
-                    reviewStars += `<span style="color: ${i <= review.rating ? '#f59e0b' : '#e5e7eb'};">★</span>`;
-                }
-                
-                const authorInitials = getInitials(review.patientName);
-
-                reviewCard.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h4 style="margin: 0; font-family: var(--font-principal); color: #333; font-size: 1rem;">${authorInitials}</h4>
-                        <div>${reviewStars}</div>
-                    </div>
-                    <p style="margin: 0; color: #555; font-style: italic; font-size: 0.95rem; line-height: 1.5;">"${review.comment}"</p>
-                `;
-                reviewsListContainer.appendChild(reviewCard);
-            });
-
-            // Se houver mais avaliações do que a quantidade visível, mostra o botão
-            if (reviews.length > visibleCount) {
-                const btnMore = document.createElement('button');
-                btnMore.textContent = `Ver todas as ${reviews.length} avaliações`;
-                btnMore.style.cssText = 'display: flex; align-items: center; justify-content: center; min-width: 200px; flex-shrink: 0; scroll-snap-align: start; background: transparent; border: 2px solid var(--verde-escuro); color: var(--verde-escuro); padding: 10px 24px; border-radius: 16px; font-weight: bold; cursor: pointer; transition: all 0.2s;';
-                btnMore.onmouseover = () => { btnMore.style.background = 'rgba(27, 67, 50, 0.05)'; };
-                btnMore.onmouseout = () => { btnMore.style.background = 'transparent'; };
-                btnMore.onclick = () => { openAllReviewsView(reviews); };
-                reviewsListContainer.appendChild(btnMore);
-            }
-        };
-
-        renderList();
-    }
-
-    function openAllReviewsView(reviews) {
+    // AVALIAÇÕES - CONTROLE DO MODAL DE VER TODAS (Substitui antiga populateReviews que foi para SSR)
+    function setupReviewsModalControls() {
         const view = document.getElementById('all-reviews-view');
-        const listContainer = document.getElementById('all-reviews-list-container');
-        const countSpan = document.getElementById('all-reviews-count');
         const closeBtn = document.getElementById('btn-close-all-reviews');
 
-        if (!view || !listContainer) return;
-
-        // Função para converter o nome completo em iniciais
-        const getInitials = (fullName) => {
-            if (!fullName || fullName === 'Anônimo') return 'Anônimo';
-            return fullName.trim().split(/\s+/).map(n => n[0].toUpperCase() + '.').join(' ');
-        };
-
-        countSpan.textContent = reviews.length;
-        listContainer.innerHTML = '';
-
-        reviews.forEach(review => {
-            const reviewCard = document.createElement('div');
-            reviewCard.style.cssText = 'background: #fff; border: 1px solid #e9ecef; border-radius: 16px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); box-sizing: border-box; width: 100%;';
-            let reviewStars = '';
-            for (let i = 1; i <= 5; i++) {
-                reviewStars += `<span style="color: ${i <= review.rating ? '#f59e0b' : '#e5e7eb'};">★</span>`;
-            }
-            
-            const authorInitials = getInitials(review.patientName);
-            const dateStr = review.createdAt ? new Date(review.createdAt).toLocaleDateString('pt-BR') : '';
-
-            reviewCard.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                    <div>
-                        <h4 style="margin: 0 0 5px 0; font-family: var(--font-principal); color: #333; font-size: 1.05rem;">${authorInitials}</h4>
-                        <div style="font-size: 0.85rem; color: #888;">${dateStr}</div>
-                    </div>
-                    <div style="font-size: 1.1rem;">${reviewStars}</div>
-                </div>
-                <p style="margin: 10px 0 0 0; color: #444; font-size: 0.95rem; line-height: 1.6;">"${review.comment}"</p>
-            `;
-            listContainer.appendChild(reviewCard);
-        });
-
-        view.style.display = 'block';
-        document.body.style.overflow = 'hidden'; // Impede rolagem do fundo
-
-        if (closeBtn) {
+        if (closeBtn && view) {
             closeBtn.onclick = () => {
                 view.style.display = 'none';
                 document.body.style.overflow = '';

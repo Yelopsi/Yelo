@@ -132,15 +132,18 @@ module.exports = {
             // --- GERAÇÃO AUTOMÁTICA DE SEO COM IA (Gemini) ---
             seoService.generateSEO(conteudo, titulo).then(async (seoData) => {
                 try {
-                    const queryParams = {
-                        replacements: { meta: seoData.meta_description, tags: JSON.stringify(seoData.tags), id: novoPost.id }
-                    };
-                    await db.sequelize.query(
-                        `UPDATE "posts" SET "meta_description" = :meta, "tags" = CAST(:tags AS JSONB) WHERE "id" = :id`, queryParams
-                    ).catch(() => db.sequelize.query(
-                        `UPDATE "Posts" SET "meta_description" = :meta, "tags" = CAST(:tags AS JSONB) WHERE "id" = :id`, queryParams
-                    ));
-                } catch (seoErr) { console.error("Erro ao salvar SEO no banco:", seoErr); }
+                    await Post.update(
+                        { 
+                            meta_description: seoData.meta_description,
+                            tags: JSON.stringify(seoData.tags)
+                        },
+                        { where: { id: novoPost.id } }
+                    );
+                } catch (seoErr) { 
+                    console.error(`Erro ao persistir SEO gerado para o post ${novoPost.id}:`, seoErr.message); 
+                }
+            }).catch(err => {
+                console.error("Falha ao contatar seoService.generateSEO:", err.message);
             });
 
             gamificationService.processAction(userId, 'blog_post').catch(err => console.error("Gamification hook error:", err));
@@ -209,15 +212,18 @@ module.exports = {
             // --- REGERA O SEO COM IA (Em segundo plano) ---
             seoService.generateSEO(conteudo, titulo).then(async (seoData) => {
                 try {
-                    const queryParams = {
-                        replacements: { meta: seoData.meta_description, tags: JSON.stringify(seoData.tags), id: post.id }
-                    };
-                    await db.sequelize.query(
-                        `UPDATE "posts" SET "meta_description" = :meta, "tags" = CAST(:tags AS JSONB) WHERE "id" = :id`, queryParams
-                    ).catch(() => db.sequelize.query(
-                        `UPDATE "Posts" SET "meta_description" = :meta, "tags" = CAST(:tags AS JSONB) WHERE "id" = :id`, queryParams
-                    ));
-                } catch (seoErr) { console.error("Erro ao salvar SEO no banco:", seoErr); }
+                    await Post.update(
+                        { 
+                            meta_description: seoData.meta_description,
+                            tags: JSON.stringify(seoData.tags)
+                        },
+                        { where: { id: post.id } }
+                    );
+                } catch (seoErr) { 
+                    console.error(`Erro ao persistir SEO gerado para o post ${post.id}:`, seoErr.message); 
+                }
+            }).catch(err => {
+                console.error("Falha ao contatar seoService.generateSEO (update):", err.message);
             });
             
             res.json({ message: "Atualizado!", post });
@@ -323,6 +329,12 @@ module.exports = {
                 where: isNumeric ? { id } : { slug: id },
                 ...queryOptions
             });
+
+            // REDIRECT 301: Se a busca foi por ID numérico e o post possui slug válido,
+            // força o redirecionamento permanente para consolidar a URL (SEO).
+            if (post && isNumeric && post.slug) {
+                return res.redirect(301, `/blog/post/${post.slug}`);
+            }
 
             if (!post) {
                 // CORREÇÃO DE SOFT 404: Renderizar a página oficial 404 em vez de redirecionar para a home do blog

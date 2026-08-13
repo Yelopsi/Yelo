@@ -5,7 +5,8 @@
     
     <!-- VARIÁVEIS DE SEO -->
     <% 
-      const descSnippet = (post.conteudo || '').replace(/<[^>]*>?/g, '').substring(0, 155).trim() + '...'; 
+      const rawFallback = (post.conteudo || '').replace(/<[^>]*>?/g, ' ').replace(/\s+/g, ' ').trim();
+      const descSnippet = post.meta_description ? post.meta_description : (rawFallback.substring(0, 155) + '...'); 
       const currentUrl = `https://www.yelopsi.com.br/blog/post/${post.slug || post.id}`;
       const autorNome = post.autor ? post.autor.nome : 'Equipe Yelo';
       const imageUrl = post.imagem_url || 'https://www.yelopsi.com.br/img/logo_yelo_share.png';
@@ -296,6 +297,24 @@
             <div class="conteudo-texto">
                 <%- post.conteudo || '' %>
             </div>
+
+            <!-- TAGS (SEO e UX) -->
+            <% if (post.tags) { 
+                let parsedTags = [];
+                try {
+                    parsedTags = typeof post.tags === 'string' ? JSON.parse(post.tags) : post.tags;
+                } catch(e) {}
+                
+                if (parsedTags && parsedTags.length > 0) {
+            %>
+            <div style="margin-top: 30px; display: flex; gap: 8px; flex-wrap: wrap;">
+                <% parsedTags.forEach(tag => { %>
+                    <span style="background: #f1f5f9; color: #475569; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 500;">
+                        <%= tag %>
+                    </span>
+                <% }); %>
+            </div>
+            <% } } %>
 
             <div style="margin: 40px 0; padding: 20px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
                 

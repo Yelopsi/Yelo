@@ -375,8 +375,53 @@ router.get('/:slug', async (req, res, next) => {
             );
             const pacientesAtendidosCount = clicksCount[0] ? parseInt(clicksCount[0].count, 10) : 0;
             
-            return res.render('psi_perfil_publico', { psicologo: psychologist, pacientesAtendidosCount });
+            // --- INÍCIO: Buscar Avaliações para SSR e SEO ---
+            const formatPatientName = (name) => {
+                if (!name || name === 'Anônimo') return 'Anônimo';
+                return name.trim().split(/\s+/).map(n => n[0].toUpperCase() + '.').join(' ');
+            };
+
+            const dbReviews = await db.Review.findAll({
+                where: { psychologistId: psychologist.id },
+                include: [{ model: db.Patient, as: 'patient', attributes: ['nome'] }],
+                order: [['createdAt', 'DESC']]
+            });
+
+            const totalRating = dbReviews.reduce((sum, r) => sum + r.rating, 0);
+            const averageRating = dbReviews.length > 0 ? (totalRating / dbReviews.length).toFixed(1) : 0;
+            
+            const formattedReviews = dbReviews.map(r => {
+                return {
+                    id: r.id,
+                    rating: r.rating,
+                    comment: (r.comment === 'null' || r.comment === null) ? '' : r.comment,
+                    patientName: formatPatientName(r.patient?.nome),
+                    createdAt: r.createdAt
+                };
+            });
+            // --- FIM: Buscar Avaliações para SSR e SEO ---
+
+            // --- BUSCAR POSTS DO BLOG PARA INTERNAL LINKING (E-E-A-T) ---
+            const postsAutor = await db.Post.findAll({
+                where: { 
+                    psychologistId: psychologist.id,
+                    slug: { [db.Sequelize.Op.not]: null } 
+                },
+                limit: 3,
+                order: [['createdAt', 'DESC']],
+                attributes: ['id', 'titulo', 'slug', 'imagem_url', 'createdAt'] // Apenas campos essenciais para a lista
+            });
+
+            return res.render('psi_perfil_publico', { 
+                psicologo: psychologist, 
+                pacientesAtendidosCount,
+                reviews: formattedReviews,
+                averageRating,
+                reviewCount: formattedReviews.length,
+                postsAutor: postsAutor || []
+            });
         } catch (renderErr) {
+            console.error('ERRO NO RENDER:', renderErr);
             return res.status(404).render('404');
         }
     } catch (dbErr) {

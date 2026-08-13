@@ -266,12 +266,12 @@ exports.generateSitemap = async (req, res) => {
         let posts = [];
         try {
             posts = await db.sequelize.query(
-                `SELECT id, slug, "updatedAt" FROM "${postTable}"`,
+                `SELECT id, slug, "updated_at" as "updatedAt" FROM "${postTable}" WHERE "slug" IS NOT NULL`,
                 { type: db.sequelize.QueryTypes.SELECT }
             );
         } catch(e) {
             try {
-                posts = await db.sequelize.query(`SELECT id, slug, "updatedAt" FROM "posts"`, { type: db.sequelize.QueryTypes.SELECT });
+                posts = await db.sequelize.query(`SELECT id, slug, "updated_at" as "updatedAt" FROM "posts" WHERE "slug" IS NOT NULL`, { type: db.sequelize.QueryTypes.SELECT });
             } catch(e2) { console.error("Erro ao buscar posts para o sitemap:", e2.message); }
         }
 
