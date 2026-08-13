@@ -48,3 +48,56 @@ exports.handleWebhook = async (req, res) => {
         return res.status(500).json({ error: 'Erro interno ao processar evento.' });
     }
 };
+
+exports.validateWithdrawal = async (req, res) => {
+    try {
+        console.log("🛡️ [ASAAS WEBHOOK] Recebida solicitação de validação de saque...");
+        
+        // 1. Validação de segurança com Token
+        const asaasToken = req.headers['asaas-access-token'];
+        const expectedToken = process.env.ASAAS_WEBHOOK_TOKEN;
+        
+        if (!expectedToken) {
+            console.error("🚨 ERRO CRÍTICO DE CONFIGURAÇÃO: ASAAS_WEBHOOK_TOKEN ausente. Negando validação (Fail-Closed).");
+            return res.json({ status: "REFUSED", refuseReason: "Configuração do servidor incorreta." });
+        }
+        
+        if (asaasToken !== expectedToken) {
+            console.error("🚨 [ALERTA DE SEGURANÇA] Validação de saque recusada: Token inválido.");
+            return res.json({ status: "REFUSED", refuseReason: "Token de acesso inválido." });
+        }
+        
+        const payload = req.body;
+        
+        // 2. Validação do tipo de operação
+        if (!payload || payload.type !== 'TRANSFER' || !payload.transfer || !payload.transfer.id) {
+            console.error("⚠️ [ASAAS WEBHOOK] Tipo de operação inválido ou ID de transferência ausente.");
+            return res.json({ status: "REFUSED", refuseReason: "Estrutura de payload inválida ou não é TRANSFER." });
+        }
+        
+        const transferId = payload.transfer.id;
+        
+        // 3. Verifica no banco se fomos nós que solicitamos (comparando com o SystemLog)
+        // Procuramos por logs recentes que mencionem esse transferId no meta.
+        const recentLogs = await db.SystemLog.findAll({
+            where: { level: 'info' },
+            order: [['createdAt', 'DESC']],
+            limit: 50
+        });
+        
+        const isLegit = recentLogs.find(log => log.meta && log.meta.transferId === transferId);
+        
+        if (isLegit) {
+            console.log(`✅ [ASAAS WEBHOOK] Saque ${transferId} reconhecido pelo nosso sistema. Autorizando...`);
+            return res.json({ status: "APPROVED" });
+        } else {
+            console.warn(`🚨 [ASAAS WEBHOOK] Saque ${transferId} NÃO ENCONTRADO nos nossos registros recentes. Recusando operação.`);
+            return res.json({ status: "REFUSED", refuseReason: "Transferência não encontrada no nosso sistema." });
+        }
+        
+    } catch (error) {
+        console.error("❌ [ASAAS WEBHOOK] Erro ao validar saque:", error);
+        // Em caso de erro na nossa ponta, recusamos por segurança.
+        return res.json({ status: "REFUSED", refuseReason: "Erro interno no servidor de validação." });
+    }
+};
