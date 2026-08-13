@@ -895,7 +895,7 @@ exports.getFunnelAnalytics = async (req, res) => {
             end = new Date(); end.setHours(end.getHours() - 3); end.setUTCHours(2, 59, 59, 999); end.setDate(end.getDate() + 1);
         }
 
-        const visitsResult = await db.sequelize.query(`SELECT COUNT(DISTINCT "ipAddress") as count FROM "SiteVisits" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
+        const visitsResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "SiteVisits" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
         const visitas = parseInt(visitsResult[0]?.count || 0);
 
         const iniciaram = await db.DemandSearch.count({ where: { createdAt: { [Op.between]: [start, end] } } }).catch(() => 0);
