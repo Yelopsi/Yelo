@@ -675,8 +675,8 @@ exports.generateTrialProbabilities = async (trials) => {
 Regras para cálculo:
 1. Comece com uma base de 10%.
 2. Se fotoUrl não for vazia nem default, adicione pontos (ex: +20%).
-3. Se tiver 'sobre' (bio preenchida), adicione pontos (+15%).
-4. Se tiver preço, abordagem e crp, some mais pontos (+10% cada).
+3. Se tiver 'bio' (bio preenchida), adicione pontos (+15%).
+4. Se tiver preço (valor_sessao_numero) e crp, some mais pontos (+10% cada).
 5. Se o trialStats.clicks (Cliques no WhatsApp) for maior que 0, isso é um GRANDE SINAL. Adicione +20% a +40% dependendo da quantidade.
 6. Limite a probabilidade a no máximo 95%.
 
@@ -692,7 +692,7 @@ Retorne ESTRITAMENTE um array JSON seguindo o schema.`;
             }
         };
 
-        const prompt = `Avalie estes psicólogos:\n${JSON.stringify(trials.map(t => ({ id: t.id, fotoUrl: t.fotoUrl, sobre: t.sobre, abordagem: t.abordagem, crp: t.crp, preco: t.preco, trialStats: { clicks: t.clickCount } })), null, 2)}`;
+        const prompt = `Avalie estes psicólogos:\n${JSON.stringify(trials.map(t => ({ id: t.id, fotoUrl: t.fotoUrl, bio: t.bio, crp: t.crp, valor_sessao_numero: t.valor_sessao_numero, trialStats: { clicks: t.clickCount } })), null, 2)}`;
         
         const result = await model.generateContent({ contents: [{ role: 'user', parts: [{ text: prompt }] }], ...modelConfig });
         let rawText = result.response.text();

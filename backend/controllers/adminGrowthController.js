@@ -489,7 +489,7 @@ exports.getUpcomingTrials = async (req, res) => {
                     [Op.lte]: next7Days
                 }
             },
-            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'admin_billing_sent_at', 'fotoUrl', 'sobre', 'abordagem', 'crp', 'preco'],
+            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'admin_billing_sent_at', 'fotoUrl', 'bio', 'crp', 'valor_sessao_numero'],
             order: [['planExpiresAt', 'ASC']]
         });
 
@@ -529,11 +529,9 @@ exports.getUpcomingTrials = async (req, res) => {
             
             // Fallback: Heuristic
             if (psiData.fotoUrl && psiData.fotoUrl !== 'default.jpg') probability += 20;
-            if (psiData.sobre && psiData.sobre.length > 50) probability += 15;
-            if (psiData.abordagem) probability += 10;
-            if (psiData.crp) probability += 5;
-            if (psiData.preco) probability += 10;
-
+            if (psiData.bio && psiData.bio.length > 50) probability += 15;
+            if (psiData.crp) probability += 10;
+            if (psiData.valor_sessao_numero) probability += 15;
             if (psiData.clickCount > 0) {
                 probability += (psiData.clickCount * 15); // +15% per click
             }
