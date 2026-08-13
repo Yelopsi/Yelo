@@ -155,9 +155,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const bioEl = document.getElementById('psi-bio-text');
         if (bioEl) {
-            // XSS MITIGATION: Preenchimento usando textContent e whiteSpace
-            bioEl.textContent = psi.bio || 'Biografia não informada.';
-            bioEl.style.whiteSpace = 'pre-wrap';
+            let text = psi.bio || 'Biografia não informada.';
+            
+            // Decodifica entidades HTML repetidamente (proteção contra double-escaping do DB)
+            let previous = "";
+            while (text !== previous && text.includes('&')) {
+                previous = text;
+                const txt = document.createElement('textarea');
+                txt.innerHTML = text;
+                text = txt.value;
+            }
+
+            // Se não tiver tags HTML (texto legado plano), aplica a formatação markdown nativa
+            if (!/<\/?[a-z][\s\S]*>/i.test(text)) {
+                text = text.replace(/'''([\s\S]*?)'''/g, '<code style="background:#f4f4f4; padding:2px 6px; border-radius:4px; font-family:monospace; color:#333; font-size:0.9em; word-break: break-word; white-space: pre-wrap;">$1</code>');
+                text = text.replace(/__([\s\S]*?)__/g, '<u>$1</u>');
+                text = text.replace(/\*([\s\S]*?)\*/g, '<strong>$1</strong>');
+                text = text.replace(/_([\s\S]*?)_/g, '<em>$1</em>');
+                text = text.replace(/~([\s\S]*?)~/g, '<del>$1</del>');
+                text = text.replace(/\n/g, '<br>');
+                bioEl.style.whiteSpace = 'pre-wrap';
+            } else {
+                bioEl.style.whiteSpace = 'normal'; // HTML lida com quebras usando <p> e <br>
+            }
+            
+            bioEl.innerHTML = text;
             
             // Lógica de colapsar texto longo (UX moderna)
             if (psi.bio && psi.bio.length > 350) {
