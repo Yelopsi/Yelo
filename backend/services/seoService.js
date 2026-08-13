@@ -664,9 +664,10 @@ exports.generateTrialProbabilities = async (trials) => {
                 type: SchemaType.OBJECT,
                 properties: {
                     id: { type: SchemaType.NUMBER, description: "ID of the psychologist" },
-                    probability: { type: SchemaType.NUMBER, description: "Estimated probability (0 to 95) of subscribing based on the profile data and clicks." }
+                    probability: { type: SchemaType.NUMBER, description: "Estimated probability (0 to 95) of subscribing based on the profile data and clicks." },
+                    reason: { type: SchemaType.STRING, description: "Curto e direto: explique o motivo principal da probabilidade em no máximo 100 caracteres." }
                 },
-                required: ["id", "probability"]
+                required: ["id", "probability", "reason"]
             }
         };
 
@@ -679,6 +680,8 @@ Regras para cálculo:
 4. Se tiver preço (valor_sessao_numero) e crp, some mais pontos (+10% cada).
 5. Se o trialStats.clicks (Cliques no WhatsApp) for maior que 0, isso é um GRANDE SINAL. Adicione +20% a +40% dependendo da quantidade.
 6. Limite a probabilidade a no máximo 95%.
+
+Importante: Você deve obrigatoriamente retornar a justificativa (reason) explicando por que a chance é alta ou baixa com base na completude do perfil ou demanda (ex: 'Perfil completo com demanda gerada').
 
 Retorne ESTRITAMENTE um array JSON seguindo o schema.`;
 

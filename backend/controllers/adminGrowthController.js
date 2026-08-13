@@ -530,23 +530,26 @@ exports.getUpcomingTrials = async (req, res) => {
                 const aiItem = aiProbabilities.find(a => a.id === psiData.id);
                 if (aiItem && typeof aiItem.probability === 'number') {
                     psiData.probability = aiItem.probability;
+                    psiData.reason = aiItem.reason || "Calculado por inteligência algorítmica baseada no perfil.";
                     psiData.ai_powered = true;
                     return psiData;
                 }
             }
             
             // Fallback: Heuristic
-            if (psiData.fotoUrl && psiData.fotoUrl !== 'default.jpg') probability += 20;
-            if (psiData.bio && psiData.bio.length > 50) probability += 15;
-            if (psiData.crp) probability += 10;
-            if (psiData.valor_sessao_numero) probability += 15;
-            if (psiData.clickCount > 0) {
-                probability += (psiData.clickCount * 15); // +15% per click
-            }
-
-            if (probability > 95) probability = 95;
+            let reasons = [];
+            if (psiData.fotoUrl && psiData.fotoUrl !== 'default.jpg') { probability += 20; reasons.push("Possui foto"); }
+            if (psiData.bio && psiData.bio.length > 50) { probability += 15; reasons.push("Bio descritiva"); }
+            if (psiData.crp) { probability += 10; reasons.push("CRP validado"); }
+            if (psiData.valor_sessao_numero) { probability += 10; reasons.push("Valor configurado"); }
             
+            if (psiData.clickCount > 5) { probability += 40; reasons.push("Alta demanda"); }
+            else if (psiData.clickCount > 0) { probability += 20; reasons.push("Recebeu demanda"); }
+            else { reasons.push("Sem demanda recente"); }
+            
+            if (probability > 95) probability = 95;
             psiData.probability = probability;
+            psiData.reason = `Heurística: ${reasons.join(', ')}`;
             psiData.ai_powered = false;
             return psiData;
         });
