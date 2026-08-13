@@ -245,13 +245,16 @@ window.loadGrowthData = async function() {
                     }
                     
                     const probColor = psi.probability >= 70 ? '#10b981' : (psi.probability >= 40 ? '#f59e0b' : '#ef4444');
-                    const aiSparkle = psi.ai_powered ? `<span title="Calculado por IA Gemini" style="font-size: 0.8rem; margin-left: 4px;">✨</span>` : '';
+                    const aiSparkle = psi.ai_powered ? `<span style="font-size: 0.8rem; margin-left: 4px;">✨</span>` : '';
+                    const tooltipText = psi.reason ? psi.reason.replace(/"/g, '&quot;') : 'Calculado por inteligência algorítmica.';
                     
                     tr.innerHTML = `
                         <td data-label="Psicólogo" style="padding:15px; font-weight:600; color:#0f172a;">${psi.nome || 'Sem Nome'}</td>
                         <td data-label="WhatsApp" style="padding:15px; color:#64748b;">${psi.telefone || 'N/D'}</td>
                         <td data-label="Expira em" style="padding:15px; font-weight:700; color:${daysColor};">${diffDays} dias</td>
-                        <td data-label="Chance" style="padding:15px; font-weight:700; color:${probColor};">${psi.probability}%${aiSparkle}</td>
+                        <td data-label="Chance" style="padding:15px; font-weight:700; color:${probColor};">
+                            <span class="yelo-tooltip" style="cursor:help; border-bottom:1px dashed ${probColor};">${psi.probability}%${aiSparkle}<span class="yelo-tooltip-content" style="font-weight:400;">${tooltipText}</span></span>
+                        </td>
                         <td data-label="Ação" style="padding:15px; text-align: right;">${actionHtml}</td>
                     `;
                     tbody.appendChild(tr);
