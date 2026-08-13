@@ -459,9 +459,9 @@ window.openPmfDrilldown = async function(groupName) {
                             <a href="${phoneUrl}" target="_blank" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; background:#10b981; color:white; padding:10px; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.85rem; transition:background 0.2s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
                                 WhatsApp
                             </a>
-                            <a href="/admin/psychologists/${psi.id}/full-details" target="_blank" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; background:#f8fafc; color:#0f172a; padding:10px; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.85rem; border:1px solid #e2e8f0; transition:background 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f8fafc'">
+                            <button onclick="window.openCSDrawer('${psi.id}')" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; background:#f8fafc; color:#0f172a; padding:10px; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.85rem; border:1px solid #e2e8f0; cursor: pointer; transition:background 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f8fafc'">
                                 Visão 360º ↗
-                            </a>
+                            </button>
                         </div>
                     </div>
                 `;
