@@ -469,7 +469,7 @@
             if (comment.likedByMe) likeBtn.classList.add('liked');
 
             likeBtn.onclick = () => toggleCommentLike(comment.id, likeBtn, likesCount);
-            replyBtn.onclick = () => showReplyForm(comment.parentId || comment.id, commentEl, comment.parentId ? authorName : null);
+            replyBtn.onclick = () => showReplyForm(comment.id, commentEl, authorName);
 
             const aiReplyBtn = commentEl.querySelector('.comment-ai-reply-btn');
             const adminPsiData = typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null;
@@ -761,6 +761,19 @@
                 const container = parentId ? document.querySelector(`.comment-card[data-comment-id="${parentId}"] .comment-replies-container`) : document.getElementById('comment-thread');
                 if (!container) throw new Error('Container não encontrado');
                 
+                if (parentId) {
+                    const toggleBtn = container.parentElement.previousElementSibling;
+                    if (toggleBtn && toggleBtn.classList.contains('yt-toggle-replies') && toggleBtn.innerHTML.includes('↳')) {
+                        toggleBtn.click();
+                    } else {
+                        container.style.display = 'block';
+                        const threadLine = container.previousElementSibling;
+                        if (threadLine && threadLine.classList.contains('yt-thread-line')) {
+                            threadLine.classList.remove('hidden');
+                        }
+                    }
+                }
+
                 renderComment(newComment, container, true);
                 form.reset();
                 if (parentId) form.parentElement.remove(); 

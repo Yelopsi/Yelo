@@ -186,23 +186,15 @@ exports.getComments = async (req, res) => {
         const pageSize = req.query.pageSize ? parseInt(req.query.pageSize) : limit;
         const offset = (page - 1) * pageSize;
 
-        // 1. Busca comentários e suas respostas aninhadas de uma vez
-        const comments = await ForumComment.findAll({
+        // 1. Busca os comentários de nível superior (paginados)
+        const topLevelComments = await ForumComment.findAll({
             where: { 
                 ForumPostId: req.params.id,
                 parentId: null 
             },
             include: [
-                { model: Psychologist, attributes: ['nome', 'fotoUrl', 'badges', 'authority_level', 'slug', 'status', 'planExpiresAt', 'is_exempt'], required: false },
-                // Inclui as respostas aninhadas
-                { 
-                    model: ForumComment, 
-                    as: 'Replies', 
-                    include: [{ model: Psychologist, attributes: ['nome', 'fotoUrl', 'badges', 'authority_level', 'slug', 'status', 'planExpiresAt', 'is_exempt'], required: false }],
-                    required: false
-                }
+                { model: Psychologist, attributes: ['nome', 'fotoUrl', 'badges', 'authority_level', 'slug', 'status', 'planExpiresAt', 'is_exempt'], required: false }
             ],
-            // Comentários: Mais curtidos no topo, depois os mais recentes
             order: [
                 ['likes', 'DESC'],
                 ['createdAt', 'DESC']
@@ -211,16 +203,24 @@ exports.getComments = async (req, res) => {
             offset
         });
 
-        // 2. Otimização N+1: Coleta todos os IDs de comentários e respostas de uma vez
-        const allCommentIds = [];
-        comments.forEach(c => {
-            allCommentIds.push(c.id);
-            if (c.Replies) {
-                c.Replies.forEach(r => allCommentIds.push(r.id));
-            }
-        });
+        const topLevelIds = topLevelComments.map(c => c.id);
 
-        // 3. Otimização N+1: Busca todos os votos do usuário para esses comentários em uma única query
+        let allReplies = [];
+        if (topLevelIds.length > 0) {
+            // 2. Busca TODAS as respostas para o post
+            allReplies = await ForumComment.findAll({
+                where: {
+                    ForumPostId: req.params.id,
+                    parentId: { [Op.ne]: null }
+                },
+                include: [
+                    { model: Psychologist, attributes: ['nome', 'fotoUrl', 'badges', 'authority_level', 'slug', 'status', 'planExpiresAt', 'is_exempt'], required: false }
+                ]
+            });
+        }
+
+        // 3. Busca todos os votos do usuário para esses comentários (top level e respostas)
+        const allCommentIds = [...topLevelIds, ...allReplies.map(r => r.id)];
         let likedCommentIds = new Set();
         if (allCommentIds.length > 0 && ForumCommentVote) {
             const userVotes = await ForumCommentVote.findAll({
@@ -235,81 +235,56 @@ exports.getComments = async (req, res) => {
 
         const agora = new Date();
 
-        // 4. Mapeia os dados com a informação de 'like' já em mãos (muito mais rápido)
-        const data = comments.map(c => {
-            const authorName = c.isAnonymous ? 'Anônimo' : (c.Psychologist ? c.Psychologist.nome : 'Usuário Desconhecido');
-            const authorPhoto = c.isAnonymous ? null : (c.Psychologist ? c.Psychologist.fotoUrl : null);
-            const authorBadges = c.isAnonymous ? {} : c.Psychologist?.badges;
-            const authorLevel = c.isAnonymous ? null : c.Psychologist?.authority_level;
+        // 4. Função recursiva para mapear comentários e construir a árvore
+        const processComment = (commentObj) => {
+            const authorName = commentObj.isAnonymous ? 'Anônimo' : (commentObj.Psychologist ? commentObj.Psychologist.nome : 'Usuário Desconhecido');
+            const authorPhoto = commentObj.isAnonymous ? null : (commentObj.Psychologist ? commentObj.Psychologist.fotoUrl : null);
+            const authorBadges = commentObj.isAnonymous ? {} : commentObj.Psychologist?.badges;
+            const authorLevel = commentObj.isAnonymous ? null : commentObj.Psychologist?.authority_level;
             
-            let authorSlug = c.isAnonymous ? null : c.Psychologist?.slug;
-            if (c.Psychologist && !c.isAnonymous) {
-                let isActive = c.Psychologist.status === 'active';
-                const isVip = c.Psychologist.is_exempt === true || String(c.Psychologist.is_exempt).toLowerCase() === 'true' || c.Psychologist.is_exempt === 1;
-                if (!isVip && (!c.Psychologist.planExpiresAt || new Date(c.Psychologist.planExpiresAt) <= agora)) {
+            let authorSlug = commentObj.isAnonymous ? null : commentObj.Psychologist?.slug;
+            if (commentObj.Psychologist && !commentObj.isAnonymous) {
+                let isActive = commentObj.Psychologist.status === 'active';
+                const isVip = commentObj.Psychologist.is_exempt === true || String(commentObj.Psychologist.is_exempt).toLowerCase() === 'true' || commentObj.Psychologist.is_exempt === 1;
+                if (!isVip && (!commentObj.Psychologist.planExpiresAt || new Date(commentObj.Psychologist.planExpiresAt) <= agora)) {
                     isActive = false;
                 }
                 if (!isActive) authorSlug = null;
             }
 
-            // Processa as respostas (Replies) para incluir authorName e likedByMe
-            let processedReplies = [];
-            if (c.Replies && c.Replies.length > 0) {
-                processedReplies = c.Replies.map(r => {
-                    const rAuthorName = r.isAnonymous ? 'Anônimo' : (r.Psychologist ? r.Psychologist.nome : 'Usuário Desconhecido');
-                    const rAuthorPhoto = r.isAnonymous ? null : (r.Psychologist ? r.Psychologist.fotoUrl : null);
-                    const rAuthorBadges = r.isAnonymous ? {} : r.Psychologist?.badges;
-                    const rAuthorLevel = r.isAnonymous ? null : r.Psychologist?.authority_level;
-                    
-                    let rAuthorSlug = r.isAnonymous ? null : r.Psychologist?.slug;
-                    if (r.Psychologist && !r.isAnonymous) {
-                        let isActive = r.Psychologist.status === 'active';
-                        const isVip = r.Psychologist.is_exempt === true || String(r.Psychologist.is_exempt).toLowerCase() === 'true' || r.Psychologist.is_exempt === 1;
-                        if (!isVip && (!r.Psychologist.planExpiresAt || new Date(r.Psychologist.planExpiresAt) <= agora)) {
-                            isActive = false;
-                        }
-                        if (!isActive) rAuthorSlug = null;
-                    }
-                    
-                    return {
-                        id: r.id,
-                        content: r.content,
-                        createdAt: r.createdAt,
-                        isAnonymous: r.isAnonymous,
-                        authorName: rAuthorName,
-                        authorPhoto: rAuthorPhoto,
-                        authorBadges: rAuthorBadges,
-                        authorLevel: rAuthorLevel,
-                        authorSlug: rAuthorSlug,
-                        likes: r.likes,
-                        likedByMe: likedCommentIds.has(r.id), // Checagem O(1)
-                        isMine: r.PsychologistId === userId, // Verifica autoria da resposta
-                        parentId: c.id
-                    };
-                });
-                // Ordena respostas por likes e data (mais recentes primeiro)
-                processedReplies.sort((a, b) => {
-                    if (b.likes !== a.likes) return b.likes - a.likes;
-                    return new Date(b.createdAt) - new Date(a.createdAt);
-                });
-            }
+            // Pega as respostas diretas desse comentário
+            const directReplies = allReplies.filter(r => r.parentId === commentObj.id);
+            
+            // Processa as respostas recursivamente
+            let processedReplies = directReplies.map(r => processComment(r));
+            
+            // Ordena respostas por likes e data (mais recentes primeiro)
+            processedReplies.sort((a, b) => {
+                if (b.likes !== a.likes) return b.likes - a.likes;
+                return new Date(b.createdAt) - new Date(a.createdAt);
+            });
 
             return {
-                id: c.id,
-                content: c.content,
-                createdAt: c.createdAt,
-                isAnonymous: c.isAnonymous,
+                id: commentObj.id,
+                content: commentObj.content,
+                createdAt: commentObj.createdAt,
+                isAnonymous: commentObj.isAnonymous,
                 authorName: authorName,
                 authorPhoto: authorPhoto,
                 authorBadges: authorBadges,
                 authorLevel: authorLevel,
                 authorSlug: authorSlug,
-                likes: c.likes,
-                likedByMe: likedCommentIds.has(c.id), // Checagem O(1)
-                isMine: c.PsychologistId === userId, // Verifica autoria do comentário
+                likes: commentObj.likes || 0,
+                likedByMe: likedCommentIds.has(commentObj.id),
+                isMine: commentObj.PsychologistId === userId,
+                parentId: commentObj.parentId || null,
                 replies: processedReplies
             };
-        });
+        };
+
+        // 5. Monta o resultado final processando os comentários de nível superior
+        const data = topLevelComments.map(c => processComment(c));
+        
         res.json(data);
     } catch (error) {
         console.error("Erro em getComments:", error);
