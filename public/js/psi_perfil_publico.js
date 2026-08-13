@@ -314,9 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     } catch(e) {}
 
-                    // 1. Dispara tracking antigo (legado)
-                    fetch(`${API_BASE_URL}/api/psychologists/${psi.slug}/whatsapp-click`, { method: 'POST' }).catch(() => {});
-                    
+                    // 1. O tracking detalhado e o incremento são feitos exclusivamente pela nova API A/B
                     let whatsappLink = '';
                     
                     try {
