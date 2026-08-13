@@ -237,13 +237,18 @@ window.loadGrowthData = async function() {
                     const diffDays = Math.ceil((expires - new Date()) / (1000 * 60 * 60 * 24));
                     const daysColor = diffDays <= 2 ? '#ef4444' : '#f59e0b';
                     
-                    const wppBtn = psi.telefone ? `<a href="https://wa.me/${psi.telefone.replace(/\\D/g, '')}" target="_blank" style="background:#25D366; color:white; padding:5px 10px; border-radius:6px; text-decoration:none; font-size:0.8rem; font-weight:600;">Chamar</a>` : '-';
+                    let actionHtml = '-';
+                    if (psi.admin_billing_sent_at) {
+                        actionHtml = `<span style="background:#e0e7ff; color:#4338ca; padding:5px 10px; border-radius:6px; font-size:0.8rem; font-weight:600;">✅ Contatado</span>`;
+                    } else if (psi.telefone) {
+                        actionHtml = `<a href="https://wa.me/${psi.telefone.replace(/\\D/g, '')}" target="_blank" style="background:#25D366; color:white; padding:5px 10px; border-radius:6px; text-decoration:none; font-size:0.8rem; font-weight:600;">Chamar</a>`;
+                    }
                     
                     tr.innerHTML = `
                         <td style="padding:15px; font-weight:600; color:#0f172a;">${psi.nome || 'Sem Nome'}</td>
                         <td style="padding:15px; color:#64748b;">${psi.telefone || 'N/D'}</td>
                         <td style="padding:15px; font-weight:700; color:${daysColor};">${diffDays} dias</td>
-                        <td style="padding:15px; text-align: right;">${wppBtn}</td>
+                        <td style="padding:15px; text-align: right;">${actionHtml}</td>
                     `;
                     tbody.appendChild(tr);
                 });

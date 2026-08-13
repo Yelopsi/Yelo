@@ -488,7 +488,7 @@ exports.getUpcomingTrials = async (req, res) => {
                     [Op.lte]: next7Days
                 }
             },
-            attributes: ['id', 'nome', 'telefone', 'planExpiresAt'],
+            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'admin_billing_sent_at'],
             order: [['planExpiresAt', 'ASC']]
         });
 
