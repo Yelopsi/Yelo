@@ -178,8 +178,28 @@ class PaymentStateService {
             }
 
             const currentPayments = (lockedPsi.subscription_payments_count || 0) + 1;
-            const hoje = new Date();
-            const novaValidade = new Date(hoje.setDate(hoje.getDate() + 30));
+            
+            // Calcula nova validade baseada na data de vencimento da fatura (dueDate).
+            // Assim, múltiplos webhooks (CONFIRMED e RECEIVED) do mesmo pagamento não 
+            // somarão meses a mais acidentalmente, e pagamentos em atraso/adiantados
+            // respeitarão o ciclo correto de faturamento do Asaas.
+            let novaValidade;
+            if (payment.dueDate) {
+                // Extrai partes para evitar timezone issues se dueDate for apenas "YYYY-MM-DD"
+                const parts = payment.dueDate.split('-'); 
+                if (parts.length >= 3) {
+                    novaValidade = new Date(parts[0], parts[1] - 1, parts[2]); 
+                } else {
+                    novaValidade = new Date(payment.dueDate);
+                }
+                novaValidade.setMonth(novaValidade.getMonth() + 1);
+            } else {
+                // Fallback: Adiciona 1 mês na validade atual se estiver no futuro, ou em hoje.
+                const dataBase = (lockedPsi.planExpiresAt && new Date(lockedPsi.planExpiresAt) > new Date()) 
+                    ? new Date(lockedPsi.planExpiresAt) 
+                    : new Date();
+                novaValidade = new Date(dataBase.setMonth(dataBase.getMonth() + 1));
+            }
 
             const updatePayload = {
                 status: 'active',
