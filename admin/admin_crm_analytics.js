@@ -226,11 +226,11 @@ window.initializePage = function() {
             if (inv.status === 'Pendente') badgeClass = 'badge-pending';
             
             tbody.innerHTML += `<tr>
-                <td><div class="user-cell"><div class="avatar">${getInitials(inv.psychologistName)}</div> ${inv.psychologistName}</div></td>
-                <td><span style="color:var(--saas-muted);">${new Date(inv.date).toLocaleDateString('pt-BR')}</span></td>
-                <td style="font-weight: 500;">R$ ${inv.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                <td><span class="status-badge ${badgeClass}">${inv.status}</span></td>
-                <td><button class="btn-detail" onclick="if('${inv.psiId}' && '${inv.psiId}' !== 'null') { window.openCSDrawer('${inv.psiId}') } else { alert('Cliente externo sem ID vinculado.'); }">Detalhes &rarr;</button></td>
+                <td data-label="Cliente"><div class="user-cell"><div class="avatar">${getInitials(inv.psychologistName)}</div> ${inv.psychologistName}</div></td>
+                <td data-label="Data"><span style="color:var(--saas-muted);">${new Date(inv.date).toLocaleDateString('pt-BR')}</span></td>
+                <td data-label="Valor" style="font-weight: 500;">R$ ${inv.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td data-label="Status"><span class="status-badge ${badgeClass}">${inv.status}</span></td>
+                <td data-label="Ação"><button class="btn-detail" onclick="if('${inv.psiId}' && '${inv.psiId}' !== 'null') { window.openCSDrawer('${inv.psiId}') } else { alert('Cliente externo sem ID vinculado.'); }">Detalhes &rarr;</button></td>
             </tr>`;
         });
     }
@@ -264,9 +264,9 @@ window.initializePage = function() {
         }
         plans.forEach(plan => {
             tbody.innerHTML += `<tr>
-                <td><div class="user-cell"><div class="avatar">${getInitials(plan.psychologistName)}</div> ${plan.psychologistName}</div></td>
-                <td><span style="background: var(--saas-bg); border: 1px solid var(--saas-border); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; color: var(--saas-text);">${plan.planName}</span></td>
-                <td>${getRelativeDateLabel(plan.nextBilling)}</td>
+                <td data-label="Cliente"><div class="user-cell"><div class="avatar">${getInitials(plan.psychologistName)}</div> ${plan.psychologistName}</div></td>
+                <td data-label="Plano"><span style="background: var(--saas-bg); border: 1px solid var(--saas-border); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; color: var(--saas-text);">${plan.planName}</span></td>
+                <td data-label="Vencimento">${getRelativeDateLabel(plan.nextBilling)}</td>
             </tr>`;
         });
     }

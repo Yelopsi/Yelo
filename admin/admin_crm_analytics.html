@@ -29,10 +29,13 @@
     .saas-header h1 { font-size: 1.5rem; font-weight: 700; color: white; margin: 0 0 4px 0; letter-spacing: -0.02em; }
     .saas-header p { font-size: 0.9rem; color: rgba(255,255,255,0.8); margin: 0; }
     
-    .saas-toolbar { display: flex; gap: 8px; padding: 0 40px; }
+    .saas-toolbar { display: flex; gap: 8px; padding: 0 40px; align-items: center; flex-wrap: wrap; }
     .toolbar-chip { background: #f8f9fa; color: #64748b; border: 1px solid #e2e8f0; padding: 8px 18px; border-radius: 50px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
     .toolbar-chip:hover { background: #e2e8f0; color: #1e293b; }
     .toolbar-chip.active { background: #1B4332; color: white; border-color: #1B4332; box-shadow: 0 2px 4px rgba(27, 67, 50, 0.2); }
+    
+    .custom-date-picker { display: none; align-items: center; gap: 8px; }
+    .crm-date-input { padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.85rem; font-family: inherit; outline: none; }
     
     .btn-refresh { background: white; border: 1px solid var(--saas-border); padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
     .btn-refresh:hover { background: var(--saas-hover); }
@@ -125,7 +128,32 @@
         content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
         border: 4px solid transparent; border-top-color: #1B4332; margin-bottom: 0px; z-index: 10; opacity: 0; pointer-events: none; animation: fadeInTooltip 0.2s forwards;
     }
-    @keyframes fadeInTooltip { to { opacity: 1; } }
+    /* Native Mobile Card Layout for SaaS Tables */
+    @media (max-width: 768px) {
+        .saas-table, .saas-table tbody, .saas-table tr, .saas-table td { display: block; width: 100%; box-sizing: border-box; }
+        .saas-table thead { display: none; }
+        
+        .saas-table tr { 
+            margin-bottom: 15px; border: 1px solid var(--saas-border); border-radius: 8px; 
+            background: #fff; position: relative; padding: 5px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .saas-table td { 
+            border: none; border-bottom: 1px solid #f1f5f9; position: relative; 
+            padding: 12px 15px 12px 40%; text-align: right; min-height: 45px; 
+            display: flex; align-items: center; justify-content: flex-end;
+        }
+        .saas-table td:last-child { border-bottom: 0; }
+        
+        .saas-table td::before { 
+            content: attr(data-label); position: absolute; left: 15px; width: 35%; text-align: left; 
+            font-size: 0.75rem; font-weight: 700; color: var(--saas-muted); text-transform: uppercase;
+        }
+
+        .btn-detail { opacity: 1; color: var(--verde-escuro); background: #f0fdf4; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+        .avatar { width: 24px; height: 24px; font-size: 0.65rem; margin-right: 8px; }
+        .user-cell { justify-content: flex-end; }
+        .status-badge { padding: 4px 8px; font-size: 0.7rem; white-space: nowrap; }
+    }
 </style>
 
 <div class="modern-dashboard-layout">
@@ -363,23 +391,31 @@
             <!-- 4. Faturas Recentes -->
             <div class="saas-table-card">
                 <div class="saas-table-header">Faturas Recentes</div>
-                <table class="saas-table">
-                    <thead><tr><th>Cliente</th><th>Data</th><th>Valor</th><th>Status</th><th></th></tr></thead>
-                    <tbody id="faturas-recentes-body">
-                        <tr><td colspan="5"><div class="skeleton" style="height: 30px;"></div></td></tr>
-                    </tbody>
-                </table>
+                <div style="padding: 15px 20px 20px 20px;">
+                    <div style="border: 1px solid var(--saas-border); border-radius: 8px; overflow-x: auto;">
+                        <table class="saas-table">
+                            <thead><tr><th>Cliente</th><th>Data</th><th>Valor</th><th>Status</th><th></th></tr></thead>
+                            <tbody id="faturas-recentes-body">
+                                <tr><td colspan="5"><div class="skeleton" style="height: 30px;"></div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <!-- 5. Próximos Pagamentos -->
             <div class="saas-table-card">
                 <div class="saas-table-header">Próximos Pagamentos</div>
-                <table class="saas-table">
-                    <thead><tr><th>Cliente</th><th>Plano</th><th>Vencimento</th></tr></thead>
-                    <tbody id="planos-ativos-body">
-                        <tr><td colspan="3"><div class="skeleton" style="height: 30px;"></div></td></tr>
-                    </tbody>
-                </table>
+                <div style="padding: 15px 20px 20px 20px;">
+                    <div style="border: 1px solid var(--saas-border); border-radius: 8px; overflow-x: auto;">
+                        <table class="saas-table">
+                            <thead><tr><th>Cliente</th><th>Plano</th><th>Vencimento</th></tr></thead>
+                            <tbody id="planos-ativos-body">
+                                <tr><td colspan="3"><div class="skeleton" style="height: 30px;"></div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -400,20 +436,22 @@
                 </button>
             </div>
             
-            <div class="tabela-wrapper" style="padding: 0 10px 10px 10px;">
-                <table class="tabela-gerenciamento" style="width: 100%; text-align: left; border-collapse: collapse;">
-                    <thead>
-                        <tr style="border-bottom: 1px solid #e2e8f0;">
-                            <th style="padding: 12px; color: #64748b; font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">Mês/Ano</th>
-                            <th style="padding: 12px; color: #64748b; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; text-align: center;">Transações</th>
-                            <th style="padding: 12px; color: #64748b; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; text-align: right;">Valor Bruto</th>
-                            <th style="padding: 12px; color: #64748b; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; text-align: right; color: #10b981;">Valor Líquido (Recebido)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="cash-flow-table-body">
-                        <tr><td colspan="4"><div class="skeleton" style="height: 30px;"></div></td></tr>
-                    </tbody>
-                </table>
+            <div class="tabela-wrapper" style="padding: 15px 25px 25px 25px;">
+                <div style="border: 1px solid var(--saas-border); border-radius: 8px; overflow-x: auto;">
+                    <table class="tabela-gerenciamento" style="width: 100%; text-align: left; border-collapse: collapse;">
+                        <thead style="background: #f8fafc;">
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <th style="padding: 12px; color: #64748b; font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">Mês/Ano</th>
+                                <th style="padding: 12px; color: #64748b; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; text-align: center;">Transações</th>
+                                <th style="padding: 12px; color: #64748b; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; text-align: right;">Valor Bruto</th>
+                                <th style="padding: 12px; color: #64748b; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; text-align: right; color: #10b981;">Valor Líquido (Recebido)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cash-flow-table-body">
+                            <tr><td colspan="4"><div class="skeleton" style="height: 30px;"></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
         </div>

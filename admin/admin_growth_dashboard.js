@@ -175,22 +175,22 @@ window.loadGrowthData = async function() {
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid #f1f5f9';
                 
-                const getTd = (val) => {
-                    if (val === null) return `<td style="padding:15px; color:#cbd5e1;">-</td>`;
+                const getTd = (val, label) => {
+                    if (val === null) return `<td data-label="${label}" style="padding:15px; color:#cbd5e1;">-</td>`;
                     const alpha = val / 100;
-                    return `<td style="padding:15px; background:rgba(16,185,129,${alpha}); font-weight:600;">${val}%</td>`;
+                    return `<td data-label="${label}" style="padding:15px; background:rgba(16,185,129,${alpha}); font-weight:600;">${val}%</td>`;
                 };
 
                 tr.innerHTML = `
-                    <td style="padding:15px; text-align:left; font-weight:700;">${c.month}</td>
-                    <td style="padding:15px; font-weight:600; border-right:2px solid #e2e8f0; background:#f8fafc;" title="${c.acquisition.converted} pagantes convertidos de ${c.acquisition.size} trials">${c.acquisition.size} <span style="font-size:0.75rem; color:#10b981;">(${c.acquisition.conversionRate}%)</span></td>
-                    <td style="padding:15px; font-weight:600;">${c.retention.size}</td>
-                    ${getTd(c.retention.M0)}
-                    ${getTd(c.retention.M1)}
-                    ${getTd(c.retention.M2)}
-                    ${getTd(c.retention.M3)}
-                    ${getTd(c.retention.M4)}
-                    ${getTd(c.retention.M5)}
+                    <td data-label="Mês Safra" style="padding:15px; text-align:left; font-weight:700;">${c.month}</td>
+                    <td data-label="Trials" style="padding:15px; font-weight:600; border-right:2px solid #e2e8f0; background:#f8fafc;" title="${c.acquisition.converted} pagantes convertidos de ${c.acquisition.size} trials">${c.acquisition.size} <span style="font-size:0.75rem; color:#10b981;">(${c.acquisition.conversionRate}%)</span></td>
+                    <td data-label="Pagantes" style="padding:15px; font-weight:600;">${c.retention.size}</td>
+                    ${getTd(c.retention.M0, 'M0')}
+                    ${getTd(c.retention.M1, 'M1')}
+                    ${getTd(c.retention.M2, 'M2')}
+                    ${getTd(c.retention.M3, 'M3')}
+                    ${getTd(c.retention.M4, 'M4')}
+                    ${getTd(c.retention.M5, 'M5')}
                 `;
                 tbody.appendChild(tr);
             });
@@ -210,11 +210,11 @@ window.loadGrowthData = async function() {
                 tr.onclick = () => window.openPmfDrilldown(row.contact_group);
                 
                 tr.innerHTML = `
-                    <td style="padding:15px; font-weight:700; color:#0f172a;">${row.contact_group}</td>
-                    <td style="padding:15px;">${row.total_psis}</td>
-                    <td style="padding:15px; font-weight:600; color:#10b981;">${row.active_psis}</td>
-                    <td style="padding:15px; color:#ef4444;">${row.churned_psis}</td>
-                    <td style="padding:15px; font-weight:600;">${row.churn_rate}%</td>
+                    <td data-label="Grupo" style="padding:15px; font-weight:700; color:#0f172a;">${row.contact_group}</td>
+                    <td data-label="Base" style="padding:15px;">${row.total_psis}</td>
+                    <td data-label="Ativos" style="padding:15px; font-weight:600; color:#10b981;">${row.active_psis}</td>
+                    <td data-label="Inativos" style="padding:15px; color:#ef4444;">${row.churned_psis}</td>
+                    <td data-label="Taxa Churn" style="padding:15px; font-weight:600;">${row.churn_rate}%</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -248,11 +248,11 @@ window.loadGrowthData = async function() {
                     const aiSparkle = psi.ai_powered ? `<span title="Calculado por IA Gemini" style="font-size: 0.8rem; margin-left: 4px;">✨</span>` : '';
                     
                     tr.innerHTML = `
-                        <td style="padding:15px; font-weight:600; color:#0f172a;">${psi.nome || 'Sem Nome'}</td>
-                        <td style="padding:15px; color:#64748b;">${psi.telefone || 'N/D'}</td>
-                        <td style="padding:15px; font-weight:700; color:${daysColor};">${diffDays} dias</td>
-                        <td style="padding:15px; font-weight:700; color:${probColor};">${psi.probability}%${aiSparkle}</td>
-                        <td style="padding:15px; text-align: right;">${actionHtml}</td>
+                        <td data-label="Psicólogo" style="padding:15px; font-weight:600; color:#0f172a;">${psi.nome || 'Sem Nome'}</td>
+                        <td data-label="WhatsApp" style="padding:15px; color:#64748b;">${psi.telefone || 'N/D'}</td>
+                        <td data-label="Expira em" style="padding:15px; font-weight:700; color:${daysColor};">${diffDays} dias</td>
+                        <td data-label="Chance" style="padding:15px; font-weight:700; color:${probColor};">${psi.probability}%${aiSparkle}</td>
+                        <td data-label="Ação" style="padding:15px; text-align: right;">${actionHtml}</td>
                     `;
                     tbody.appendChild(tr);
                 });
