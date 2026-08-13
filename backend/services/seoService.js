@@ -643,3 +643,72 @@ ${JSON.stringify(growthData, null, 2)}`;
         }];
     }
 };
+
+exports.generateTrialProbabilities = async (trials) => {
+    try {
+        const genAI = getGenAI();
+        if (!genAI) {
+            console.warn("[SEO Service] Gemini API key missing, returning basic probability");
+            return null; // Fallback
+        }
+        
+        if (!trials || trials.length === 0) return [];
+
+        const model = genAI.getGenerativeModel({
+            model: "gemini-3.1-flash-lite"
+        });
+        
+        const responseSchema = {
+            type: SchemaType.ARRAY,
+            items: {
+                type: SchemaType.OBJECT,
+                properties: {
+                    id: { type: SchemaType.NUMBER, description: "ID of the psychologist" },
+                    probability: { type: SchemaType.NUMBER, description: "Estimated probability (0 to 95) of subscribing based on the profile data and clicks." }
+                },
+                required: ["id", "probability"]
+            }
+        };
+
+        const systemInstruction = `Você é um Cientista de Dados de Growth da plataforma Yelo. Você vai receber uma lista de psicólogos que estão no trial gratuito e próximos de expirar. Sua missão é calcular a "probabilidade de assinatura" (0% a 95%) para cada um deles.
+        
+Regras para cálculo:
+1. Comece com uma base de 10%.
+2. Se fotoUrl não for vazia nem default, adicione pontos (ex: +20%).
+3. Se tiver 'sobre' (bio preenchida), adicione pontos (+15%).
+4. Se tiver preço, abordagem e crp, some mais pontos (+10% cada).
+5. Se o trialStats.clicks (Cliques no WhatsApp) for maior que 0, isso é um GRANDE SINAL. Adicione +20% a +40% dependendo da quantidade.
+6. Limite a probabilidade a no máximo 95%.
+
+Retorne ESTRITAMENTE um array JSON seguindo o schema.`;
+
+        const modelConfig = {
+            systemInstruction,
+            generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: responseSchema,
+                maxOutputTokens: 800,
+                temperature: 0.2
+            }
+        };
+
+        const prompt = `Avalie estes psicólogos:\n${JSON.stringify(trials.map(t => ({ id: t.id, fotoUrl: t.fotoUrl, sobre: t.sobre, abordagem: t.abordagem, crp: t.crp, preco: t.preco, trialStats: { clicks: t.clickCount } })), null, 2)}`;
+        
+        const result = await model.generateContent({ contents: [{ role: 'user', parts: [{ text: prompt }] }], ...modelConfig });
+        let rawText = result.response.text();
+        
+        let parsed;
+        try {
+            parsed = JSON.parse(rawText);
+        } catch (e) {
+            const jsonMatch = rawText.match(/\\[[\\s\\S]*\\]/);
+            if (!jsonMatch) throw new Error("Gemini invalid JSON");
+            parsed = JSON.parse(jsonMatch[0]);
+        }
+        
+        return parsed;
+    } catch (error) {
+        console.error("❌ [SEO Service - Trial Probabilities] Erro:", error.message);
+        return null; // Signals controller to fallback to heuristic
+    }
+};

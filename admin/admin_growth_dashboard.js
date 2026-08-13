@@ -245,12 +245,13 @@ window.loadGrowthData = async function() {
                     }
                     
                     const probColor = psi.probability >= 70 ? '#10b981' : (psi.probability >= 40 ? '#f59e0b' : '#ef4444');
+                    const aiSparkle = psi.ai_powered ? `<span title="Calculado por IA Gemini" style="font-size: 0.8rem; margin-left: 4px;">✨</span>` : '';
                     
                     tr.innerHTML = `
                         <td style="padding:15px; font-weight:600; color:#0f172a;">${psi.nome || 'Sem Nome'}</td>
                         <td style="padding:15px; color:#64748b;">${psi.telefone || 'N/D'}</td>
                         <td style="padding:15px; font-weight:700; color:${daysColor};">${diffDays} dias</td>
-                        <td style="padding:15px; font-weight:700; color:${probColor};">${psi.probability}%</td>
+                        <td style="padding:15px; font-weight:700; color:${probColor};">${psi.probability}%${aiSparkle}</td>
                         <td style="padding:15px; text-align: right;">${actionHtml}</td>
                     `;
                     tbody.appendChild(tr);

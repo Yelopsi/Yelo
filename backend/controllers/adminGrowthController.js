@@ -474,6 +474,7 @@ exports.getUpcomingTrials = async (req, res) => {
     try {
         const { Op } = require('sequelize');
         const db = require('../models');
+        const seoService = require('../services/seoService');
         const now = new Date();
         const next7Days = new Date(now);
         next7Days.setDate(next7Days.getDate() + 7);
@@ -492,36 +493,57 @@ exports.getUpcomingTrials = async (req, res) => {
             order: [['planExpiresAt', 'ASC']]
         });
 
-        // Calculate probability for each trial
-        const enrichedTrials = await Promise.all(trials.map(async (psi) => {
+        // First format trials for AI consumption
+        const trialsForAI = await Promise.all(trials.map(async (psi) => {
             const psiData = psi.toJSON();
-            let probability = 10; // Base probability 10%
-            
-            // Profile completion factors
-            if (psiData.fotoUrl && psiData.fotoUrl !== 'default.jpg') probability += 20;
-            if (psiData.sobre && psiData.sobre.length > 50) probability += 15;
-            if (psiData.abordagem) probability += 10;
-            if (psiData.crp) probability += 5;
-            if (psiData.preco) probability += 10;
-
-            // Demand factor
             let clickCount = 0;
             if (db.WhatsAppClickLog) {
                 clickCount = await db.WhatsAppClickLog.count({
                     where: { psychologistId: psiData.id }
                 });
             }
+            psiData.clickCount = clickCount;
+            return psiData;
+        }));
+
+        // Ask AI for probabilities
+        let aiProbabilities = null;
+        try {
+            aiProbabilities = await seoService.generateTrialProbabilities(trialsForAI);
+        } catch (err) {
+            console.error("AI Error:", err.message);
+        }
+
+        const enrichedTrials = trialsForAI.map((psiData) => {
+            let probability = 10; // Base probability 10%
             
-            if (clickCount > 0) {
-                probability += (clickCount * 15); // +15% per click
+            // If AI returned data, use it!
+            if (aiProbabilities && Array.isArray(aiProbabilities)) {
+                const aiItem = aiProbabilities.find(a => a.id === psiData.id);
+                if (aiItem && typeof aiItem.probability === 'number') {
+                    psiData.probability = aiItem.probability;
+                    psiData.ai_powered = true;
+                    return psiData;
+                }
+            }
+            
+            // Fallback: Heuristic
+            if (psiData.fotoUrl && psiData.fotoUrl !== 'default.jpg') probability += 20;
+            if (psiData.sobre && psiData.sobre.length > 50) probability += 15;
+            if (psiData.abordagem) probability += 10;
+            if (psiData.crp) probability += 5;
+            if (psiData.preco) probability += 10;
+
+            if (psiData.clickCount > 0) {
+                probability += (psiData.clickCount * 15); // +15% per click
             }
 
-            // Cap at 95% to be realistic
             if (probability > 95) probability = 95;
             
             psiData.probability = probability;
+            psiData.ai_powered = false;
             return psiData;
-        }));
+        });
 
         res.json({ success: true, data: enrichedTrials });
     } catch (e) {
