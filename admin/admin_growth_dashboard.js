@@ -549,7 +549,6 @@ window.fetchGrowthAIInsights = async function() {
         btn.style.opacity = '1';
         btn.innerText = 'Gerar Análise com IA';
     }
-    }
 };
 
 // --- GRÁFICO DE EVOLUÇÃO DE PAGAMENTOS ---
