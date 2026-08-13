@@ -417,7 +417,14 @@ exports.getPMFDetails = async (req, res) => {
         
         let condition = "";
         if (group === "0 contatos") condition = "COALESCE(c.total_contacts, 0) = 0";
-        else if (group === "sem_demanda_cs") condition = "p.plano IS NOT NULL AND COALESCE(c.total_contacts, 0) = 0";
+        else if (group === "sem_demanda_cs") {
+            condition = `
+                p."subscriptionId" IS NOT NULL 
+                AND (p.is_exempt IS NULL OR p.is_exempt = false)
+                AND NOT (p."cancelAtPeriodEnd" = true AND p."planExpiresAt" < NOW())
+                AND COALESCE(c.total_contacts, 0) = 0
+            `;
+        }
         else if (group === "1-2 contatos") condition = "COALESCE(c.total_contacts, 0) BETWEEN 1 AND 2";
         else if (group === "3-5 contatos") condition = "COALESCE(c.total_contacts, 0) BETWEEN 3 AND 5";
         else if (group === "6+ contatos") condition = "COALESCE(c.total_contacts, 0) >= 6";
