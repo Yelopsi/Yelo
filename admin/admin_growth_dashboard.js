@@ -589,8 +589,7 @@ window.loadPaymentsEvolutionChart = async function() {
                     pointBorderColor: '#8b5cf6',
                     pointBorderWidth: 2,
                     pointRadius: 4,
-                    pointHoverRadius: 8,
-                    hitRadius: 20,
+                    pointHoverRadius: 6,
                     fill: true,
                     tension: 0.4
                 }]
@@ -599,7 +598,7 @@ window.loadPaymentsEvolutionChart = async function() {
                 responsive: true,
                 maintainAspectRatio: false,
                 layout: {
-                    padding: { right: 50, top: 10, left: 10 }
+                    padding: { right: 20 }
                 },
                 plugins: {
                     legend: { display: false },
@@ -609,6 +608,7 @@ window.loadPaymentsEvolutionChart = async function() {
                         titleFont: { size: 13, family: 'Inter' },
                         bodyFont: { size: 14, family: 'Inter', weight: 'bold' },
                         displayColors: false,
+                        xAlign: 'left',
                         callbacks: {
                             label: function(context) {
                                 return context.parsed.y + ' pagamentos recebidos';
@@ -627,7 +627,7 @@ window.loadPaymentsEvolutionChart = async function() {
                         ticks: { font: { family: 'Inter', color: '#64748b' } }
                     }
                 },
-                interaction: { mode: 'nearest', intersect: true }
+                interaction: { mode: 'index', intersect: false }
             }
         });
     } catch (err) {
