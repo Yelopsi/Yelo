@@ -556,7 +556,10 @@ window.paymentsEvolutionChartInstance = null;
 window.loadPaymentsEvolutionChart = async function() {
     try {
         const res = await fetch('/api/admin/growth/payments-evolution');
-        if (!res.ok) throw new Error('Falha ao buscar evolução de pagamentos');
+        if (!res.ok) {
+            const errBody = await res.json().catch(() => ({}));
+            throw new Error('Falha ao buscar evolução de pagamentos: ' + (errBody.error || errBody.message || res.status));
+        }
         const result = await res.json();
         
         if (!result.success || !result.labels || !result.data) return;

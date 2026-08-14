@@ -611,6 +611,6 @@ exports.getPaymentsEvolution = async (req, res) => {
         res.json({ success: true, labels, data });
     } catch (e) {
         console.error('Error fetching payments evolution:', e);
-        res.status(500).json({ error: e.message });
+        res.status(500).json({ error: e.stack });
     }
 };
