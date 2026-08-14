@@ -25,7 +25,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     psychologistId: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true
     },
     status: {
       type: DataTypes.STRING,

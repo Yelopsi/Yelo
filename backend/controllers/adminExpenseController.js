@@ -99,8 +99,8 @@ exports.deleteExpense = async (req, res) => {
 // GET /api/admin/cash-flow
 exports.getCashFlow = async (req, res) => {
     try {
-        // Busca todos os pagamentos confirmados ou recebidos no banco de dados local
-        const allPayments = await db.Payment.findAll({
+        // 1. Busca todos os pagamentos confirmados ou recebidos no banco de dados local
+        const localPayments = await db.Payment.findAll({
             where: {
                 status: {
                     [Op.in]: ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH']
@@ -108,6 +108,52 @@ exports.getCashFlow = async (req, res) => {
             },
             raw: true
         });
+
+        const mergedPayments = {};
+        
+        // Insere os pagamentos locais no dicionário
+        localPayments.forEach(p => {
+            mergedPayments[p.id] = p;
+        });
+
+        // 2. Tenta buscar o histórico diretamente do Asaas para preencher pagamentos antigos 
+        // (antes da implementação da tabela local)
+        try {
+            const fetchAsaas = async (endpoint) => {
+                const url = `${process.env.ASAAS_API_URL || 'https://www.asaas.com/api/v3'}${endpoint}`;
+                const response = await fetch(url, {
+                    headers: { 'access_token': process.env.ASAAS_API_KEY }
+                });
+                if (!response.ok) return { data: [] };
+                return await response.json();
+            };
+
+            const dataConfirmed = await fetchAsaas('/payments?status=CONFIRMED&limit=100');
+            const dataReceived = await fetchAsaas('/payments?status=RECEIVED&limit=100');
+            const dataReceivedInCash = await fetchAsaas('/payments?status=RECEIVED_IN_CASH&limit=100');
+
+            const asaasPayments = [
+                ...(dataConfirmed.data || []),
+                ...(dataReceived.data || []),
+                ...(dataReceivedInCash.data || [])
+            ];
+
+            asaasPayments.forEach(p => {
+                if (!mergedPayments[p.id]) {
+                    mergedPayments[p.id] = {
+                        id: p.id,
+                        value: p.value,
+                        paymentDate: p.paymentDate || p.clientPaymentDate || p.creditDate || p.dateCreated,
+                        dueDate: p.dueDate,
+                        status: p.status
+                    };
+                }
+            });
+        } catch (asaasErr) {
+            console.error("Aviso: Falha ao buscar histórico do Asaas, usando apenas banco local.", asaasErr);
+        }
+
+        const allPayments = Object.values(mergedPayments);
 
         // Agrupar por mês
         const cashFlowByMonth = {};
@@ -137,12 +183,7 @@ exports.getCashFlow = async (req, res) => {
 
             // Converter os valores que podem vir como string do banco
             const grossVal = parseFloat(payment.value) || 0;
-            // Assumindo taxa fixa padrão do Asaas (R$ 0,99 a 1,99) ou o netValue se tivesse salvo no banco
-            // Como o banco salva apenas value, calcularemos um net estimado ou usaremos o value
-            // (Ideal seria ter a coluna netValue no db.Payment. Como não há, usaremos uma estimativa simplificada ou deixamos igual)
-            // Se fosse boleto/pix no Asaas Pix é R$ 0,99, Cartão é % + fixo. 
-            // Para ser exato precisaria ter salvado netValue. Por enquanto, estimamos -R$ 1,99 por transação ou deixamos bruto.
-            const netVal = grossVal - 1.99; // Estimativa de taxa Asaas caso não esteja salvo
+            const netVal = grossVal - 1.99; // Estimativa de taxa Asaas
 
             cashFlowByMonth[monthYear].grossValue += grossVal;
             cashFlowByMonth[monthYear].netValue += netVal > 0 ? netVal : grossVal;
@@ -154,7 +195,7 @@ exports.getCashFlow = async (req, res) => {
 
         res.json({ cashFlow: result });
     } catch (error) {
-        console.error("Erro ao buscar fluxo de caixa do banco de dados local:", error);
+        console.error("Erro ao buscar fluxo de caixa:", error);
         res.status(500).json({ error: "Erro interno ao buscar fluxo de caixa." });
     }
 };
