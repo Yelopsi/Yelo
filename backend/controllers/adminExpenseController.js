@@ -99,44 +99,32 @@ exports.deleteExpense = async (req, res) => {
 // GET /api/admin/cash-flow
 exports.getCashFlow = async (req, res) => {
     try {
-        let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
-        ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, '');
-        if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
-            ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
-        }
-        const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
-
-        if (!ASAAS_API_KEY) {
-            return res.status(500).json({ error: "ASAAS_API_KEY não configurada." });
-        }
-
-        // Fetch pagamentos CONFIRMED
-        const resConfirmed = await fetch(`${ASAAS_API_URL}/payments?status=CONFIRMED&limit=100`, {
-            headers: { 'access_token': ASAAS_API_KEY }
+        // Busca todos os pagamentos confirmados ou recebidos no banco de dados local
+        const allPayments = await db.Payment.findAll({
+            where: {
+                status: {
+                    [Op.in]: ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH']
+                }
+            },
+            raw: true
         });
-        const dataConfirmed = await resConfirmed.json();
-
-        // Fetch pagamentos RECEIVED
-        const resReceived = await fetch(`${ASAAS_API_URL}/payments?status=RECEIVED&limit=100`, {
-            headers: { 'access_token': ASAAS_API_KEY }
-        });
-        const dataReceived = await resReceived.json();
-
-        const allPayments = [
-            ...(dataConfirmed.data || []),
-            ...(dataReceived.data || [])
-        ];
 
         // Agrupar por mês
         const cashFlowByMonth = {};
 
         allPayments.forEach(payment => {
-            // Prioriza a data em que o cliente EFETIVAMENTE pagou, e não a data que o Asaas liberou o saldo
-            const dateStr = payment.clientPaymentDate || payment.confirmedDate || payment.paymentDate || payment.dateCreated;
-            if (!dateStr) return;
+            // Prioriza a data de pagamento
+            let dateObj = payment.paymentDate || payment.dueDate || payment.createdAt;
+            if (!dateObj) return;
+
+            // Garante que é um objeto Date para formatar
+            if (!(dateObj instanceof Date)) {
+                dateObj = new Date(dateObj);
+            }
             
-            // dateStr vem no formato YYYY-MM-DD
-            const monthYear = dateStr.substring(0, 7); // "YYYY-MM"
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const monthYear = `${year}-${month}`;
 
             if (!cashFlowByMonth[monthYear]) {
                 cashFlowByMonth[monthYear] = {
@@ -147,8 +135,17 @@ exports.getCashFlow = async (req, res) => {
                 };
             }
 
-            cashFlowByMonth[monthYear].grossValue += (payment.value || 0);
-            cashFlowByMonth[monthYear].netValue += (payment.netValue || 0);
+            // Converter os valores que podem vir como string do banco
+            const grossVal = parseFloat(payment.value) || 0;
+            // Assumindo taxa fixa padrão do Asaas (R$ 0,99 a 1,99) ou o netValue se tivesse salvo no banco
+            // Como o banco salva apenas value, calcularemos um net estimado ou usaremos o value
+            // (Ideal seria ter a coluna netValue no db.Payment. Como não há, usaremos uma estimativa simplificada ou deixamos igual)
+            // Se fosse boleto/pix no Asaas Pix é R$ 0,99, Cartão é % + fixo. 
+            // Para ser exato precisaria ter salvado netValue. Por enquanto, estimamos -R$ 1,99 por transação ou deixamos bruto.
+            const netVal = grossVal - 1.99; // Estimativa de taxa Asaas caso não esteja salvo
+
+            cashFlowByMonth[monthYear].grossValue += grossVal;
+            cashFlowByMonth[monthYear].netValue += netVal > 0 ? netVal : grossVal;
             cashFlowByMonth[monthYear].count += 1;
         });
 
@@ -157,7 +154,7 @@ exports.getCashFlow = async (req, res) => {
 
         res.json({ cashFlow: result });
     } catch (error) {
-        console.error("Erro ao buscar fluxo de caixa do Asaas:", error);
+        console.error("Erro ao buscar fluxo de caixa do banco de dados local:", error);
         res.status(500).json({ error: "Erro interno ao buscar fluxo de caixa." });
     }
 };

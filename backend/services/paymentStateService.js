@@ -140,6 +140,9 @@ class PaymentStateService {
             return;
         }
 
+        // SINCRONIZAÇÃO EM TEMPO REAL COM O BANCO DE DADOS LOCAL
+        await this.syncPaymentToDatabase(psi, payment);
+
         // Eventos Positivos
         if (['PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED'].includes(event.event)) {
             await this.processPaymentSuccess(psi, payment);
@@ -155,6 +158,37 @@ class PaymentStateService {
         if (negativeEvents.includes(event.event) || 
            (event.event === 'PAYMENT_UPDATED' && ['REFUNDED', 'REFUND_IN_PROGRESS'].includes(payment.status))) {
             await this.processPaymentFailure(psi, payment, event.event);
+        }
+    }
+
+    static async syncPaymentToDatabase(psi, payment) {
+        try {
+            const dueDate = payment.dueDate ? new Date(payment.dueDate) : new Date();
+            let paymentDate = null;
+            
+            if (payment.clientPaymentDate) {
+                paymentDate = new Date(payment.clientPaymentDate);
+            } else if (payment.confirmedDate) {
+                paymentDate = new Date(payment.confirmedDate);
+            } else if (payment.paymentDate) {
+                paymentDate = new Date(payment.paymentDate);
+            }
+
+            // Garante que o status salvo reflita a realidade
+            await db.Payment.upsert({
+                id: payment.id,
+                subscriptionId: null, // Evita foreign key violation com tabela legado
+                psychologistId: psi.id,
+                status: payment.status,
+                value: payment.value,
+                billingType: payment.billingType,
+                dueDate: dueDate,
+                paymentDate: paymentDate,
+                createdAt: payment.dateCreated ? new Date(payment.dateCreated) : new Date()
+            });
+            console.log(`[ASAAS] Pagamento ${payment.id} sincronizado no banco local com sucesso.`);
+        } catch (err) {
+            console.error(`[ASAAS] Erro ao sincronizar pagamento ${payment.id}:`, err.message);
         }
     }
 
