@@ -282,7 +282,7 @@ exports.getDetailedReports = async (req, res) => {
             const churnRate = (churnedPayingCount / baseForChurn) * 100;
 
             const arpu = payingActiveCount > 0 ? mrr / payingActiveCount : 0;
-            const ltv = churnRate > 0 ? arpu / (churnRate / 100) : (arpu * 24);
+            const ltv = (churnRate > 0 && churnedPayingCount >= 3 && payingActiveCount >= 10) ? arpu / (churnRate / 100) : 0;
 
             financialStats = {
                 mrr: parseFloat(mrr.toFixed(2)),
@@ -600,8 +600,8 @@ exports.getFinancials = async (req, res) => {
         const prevTrialChurnRate = prevTrialActiveCount > 0 ? (prevTrialChurnedCount / (prevTrialActiveCount + prevTrialChurnedCount)) * 100 : 0;
 
         const arpu = payingActiveCount > 0 ? mrr / payingActiveCount : 0;
-        const ltv = paidChurnRateReal > 0 ? arpu / paidChurnRateReal : (arpu * 24);
-        const prevLtv = prevPaidChurnRateReal > 0 ? arpu / prevPaidChurnRateReal : (arpu * 24);
+        const ltv = (paidChurnRateReal > 0 && paidChurnedCount >= 3 && payingActiveCount >= 10) ? arpu / paidChurnRateReal : 0;
+        const prevLtv = (prevPaidChurnRateReal > 0 && prevPaidChurnedCount >= 3 && prevPayingActiveCount >= 10) ? arpu / prevPaidChurnRateReal : 0;
         const prevMrr = Math.max(0, mrr - (paidNewCount * arpu) + (paidChurnedCount * arpu));
         
         // MRR Projections Linear Math

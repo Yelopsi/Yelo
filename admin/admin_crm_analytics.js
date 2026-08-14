@@ -111,7 +111,19 @@ window.initializePage = function() {
                         updateKpiCard('mrr', dataFin.kpis.mrr.current, dataFin.kpis.mrr.previous, formatBRL);
                         updateKpiCard('paid-churn', dataFin.kpis.paidChurnRate.current, dataFin.kpis.paidChurnRate.previous, formatPerc, true); // inverted: lower is better
                         updateKpiCard('trial-churn', dataFin.kpis.trialChurnRate.current, dataFin.kpis.trialChurnRate.previous, formatPerc, true); // inverted: lower is better
-                        updateKpiCard('ltv', dataFin.kpis.ltv.current, dataFin.kpis.ltv.previous, formatBRL);
+                        
+                        if (dataFin.kpis.ltv.current > 0) {
+                            updateKpiCard('ltv', dataFin.kpis.ltv.current, dataFin.kpis.ltv.previous, formatBRL);
+                        } else {
+                            document.getElementById('kpi-ltv').innerText = 'N/D';
+                            document.getElementById('kpi-ltv').title = 'Dados insuficientes (mín. 10 assinantes e 3 cancelamentos)';
+                            const trendEl = document.getElementById('trend-ltv');
+                            if(trendEl) {
+                                trendEl.innerText = '-';
+                                trendEl.className = 'kpi-trend trend-neutral';
+                            }
+                        }
+                        
                         updateKpiCard('arpu', dataFin.kpis.arpu.current, dataFin.kpis.arpu.previous, formatBRL);
                         
                         document.getElementById('kpi-proj-30').innerText = formatBRL(dataFin.kpis.proj30 || 0);
