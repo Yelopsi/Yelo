@@ -573,12 +573,30 @@ exports.getPaymentsEvolution = async (req, res) => {
             evolutionMap[r.monthYear] = parseInt(r.count, 10);
         });
         
-        // Gerar os últimos 6 meses até o mês atual para ter linha contínua no gráfico
+        // Descobrir qual o mês mais antigo com pagamento
+        const keys = Object.keys(evolutionMap).sort();
+        let startMonthObj;
+        if (keys.length > 0) {
+            const firstKey = keys[0]; // "YYYY-MM"
+            startMonthObj = new Date(parseInt(firstKey.substring(0, 4)), parseInt(firstKey.substring(5, 7)) - 1, 1);
+        } else {
+            // Se não houver nenhum pagamento, mostra apenas os últimos 5 meses como default
+            const today = new Date();
+            startMonthObj = new Date(today.getFullYear(), today.getMonth() - 5, 1);
+        }
+        
         const labels = [];
         const data = [];
         
         const today = new Date();
-        for (let i = 5; i >= 0; i--) {
+        const startYear = startMonthObj.getFullYear();
+        const startMonthIndex = startMonthObj.getMonth();
+        
+        // Quantos meses existem entre o primeiro pagamento e hoje
+        const totalMonths = (today.getFullYear() - startYear) * 12 + (today.getMonth() - startMonthIndex);
+        const monthsToIterate = Math.max(0, totalMonths);
+        
+        for (let i = monthsToIterate; i >= 0; i--) {
             const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
             const monthStr = d.toISOString().slice(0, 7); // YYYY-MM
             
