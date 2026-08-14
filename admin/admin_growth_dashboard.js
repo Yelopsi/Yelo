@@ -555,7 +555,9 @@ window.fetchGrowthAIInsights = async function() {
 window.paymentsEvolutionChartInstance = null;
 window.loadPaymentsEvolutionChart = async function() {
     try {
-        const res = await fetch('/api/admin/growth/payments-evolution');
+        const res = await window.fetch('/api/admin/growth/payments-evolution', {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('adminToken') }
+        });
         if (!res.ok) {
             const errBody = await res.json().catch(() => ({}));
             throw new Error('Falha ao buscar evolução de pagamentos: ' + (errBody.error || errBody.message || res.status));
@@ -597,8 +599,9 @@ window.loadPaymentsEvolutionChart = async function() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                events: [],
                 layout: {
-                    padding: { right: 20 }
+                    padding: { left: 12, right: 12 }
                 },
                 plugins: {
                     legend: { display: false },
@@ -608,7 +611,14 @@ window.loadPaymentsEvolutionChart = async function() {
                         titleFont: { size: 13, family: 'Inter' },
                         bodyFont: { size: 14, family: 'Inter', weight: 'bold' },
                         displayColors: false,
-                        xAlign: 'left',
+                        xAlign: function(tooltipItem) {
+                            if (tooltipItem.tooltip.dataPoints && tooltipItem.tooltip.dataPoints.length > 0) {
+                                const index = tooltipItem.tooltip.dataPoints[0].dataIndex;
+                                const total = tooltipItem.chart.data.labels.length;
+                                return index === total - 1 ? 'left' : 'auto';
+                            }
+                            return 'auto';
+                        },
                         callbacks: {
                             label: function(context) {
                                 return context.parsed.y + ' pagamentos recebidos';
@@ -624,12 +634,111 @@ window.loadPaymentsEvolutionChart = async function() {
                     },
                     x: {
                         grid: { display: false, drawBorder: false },
-                        ticks: { font: { family: 'Inter', color: '#64748b' } }
+                        ticks: { font: { family: 'Inter', color: '#64748b' } },
+                        offset: false
                     }
                 },
-                interaction: { mode: 'index', intersect: false }
+                interaction: { 
+                    mode: 'point', 
+                    intersect: true 
+                }
             }
         });
+
+        // ==========================================
+        // LISTENER DE MOUSE MANUAL (CÁLCULO ESCALADO)
+        // ==========================================
+        
+        // Remove listeners antigos se existirem para evitar duplicidade
+        if (ctx._mouseMoveHandler) {
+            ctx.removeEventListener('mousemove', ctx._mouseMoveHandler);
+            ctx.removeEventListener('mouseout', ctx._mouseOutHandler);
+        }
+
+        const chart = window.paymentsEvolutionChartInstance;
+
+        ctx._mouseMoveHandler = function(e) {
+            if (!chart || !chart.chartArea || !chart.scales.x) return;
+
+            const rect = ctx.getBoundingClientRect();
+            
+            // FATOR DE ESCALA:
+            // O canvas está sendo espremido pelo CSS (ex: rect.width = 956)
+            // mas o Chart.js desenha num mundo lógico maior (ex: clientWidth = 1087)
+            const scaleX = chart.canvas.clientWidth / rect.width;
+            const scaleY = chart.canvas.clientHeight / rect.height;
+
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleY;
+
+            const { left, right, top, bottom } = chart.chartArea;
+
+            // 2. Esconder tooltip se fora da área do gráfico
+            if (mouseX < left || mouseX > right || mouseY < top || mouseY > bottom) {
+                chart.tooltip.setActiveElements([], {});
+                chart.setActiveElements([]);
+                chart.update();
+                return;
+            }
+
+            // 3. Obter posições reais de cada ponto
+            const xScale = chart.scales.x;
+            const labelsCount = chart.data.labels.length;
+            
+            const positions = [];
+            for (let i = 0; i < labelsCount; i++) {
+                positions.push(xScale.getPixelForValue(i));
+            }
+
+            // 4. Calcular boundaries (pontos médios entre cada posição)
+            const boundaries = [];
+            
+            if (labelsCount > 1) {
+                boundaries.push(positions[0] - (positions[1] - positions[0]) / 2);
+                for (let i = 0; i < labelsCount - 1; i++) {
+                    boundaries.push((positions[i] + positions[i + 1]) / 2);
+                }
+                boundaries.push(positions[labelsCount - 1] + (positions[labelsCount - 1] - positions[labelsCount - 2]) / 2);
+            } else {
+                boundaries.push(left, right);
+            }
+
+            // 5. Determinar em qual região o mouse está
+            let targetIndex = 0;
+            for (let i = 0; i < labelsCount; i++) {
+                if (mouseX >= boundaries[i] && mouseX <= boundaries[i + 1]) {
+                    targetIndex = i;
+                    break;
+                }
+            }
+
+            if (mouseX > boundaries[boundaries.length - 1]) targetIndex = labelsCount - 1;
+            if (mouseX < boundaries[0]) targetIndex = 0;
+
+            // 6. Ativar explicitamente o tooltip ancorado no ponto visual
+            const meta = chart.getDatasetMeta(0);
+            const point = meta.data[targetIndex];
+
+            chart.tooltip.setActiveElements(
+                [{ datasetIndex: 0, index: targetIndex }],
+                { x: point ? point.x : mouseX, y: point ? point.y : mouseY }
+            );
+            chart.setActiveElements(
+                [{ datasetIndex: 0, index: targetIndex }]
+            );
+            chart.update();
+        };
+
+        ctx._mouseOutHandler = function() {
+            if (!chart) return;
+            chart.tooltip.setActiveElements([], {});
+            chart.setActiveElements([]);
+            chart.update();
+        };
+
+        ctx.addEventListener('mousemove', ctx._mouseMoveHandler);
+        ctx.addEventListener('mouseout', ctx._mouseOutHandler);
+
     } catch (err) {
         console.error('Erro ao carregar gráfico de pagamentos:', err);
     }
