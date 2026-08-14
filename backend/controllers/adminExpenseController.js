@@ -143,7 +143,7 @@ exports.getCashFlow = async (req, res) => {
                     mergedPayments[p.id] = {
                         id: p.id,
                         value: p.value,
-                        paymentDate: p.paymentDate || p.clientPaymentDate || p.creditDate || p.dateCreated,
+                        paymentDate: p.clientPaymentDate || p.confirmedDate || p.paymentDate || p.creditDate || p.dateCreated,
                         dueDate: p.dueDate,
                         status: p.status
                     };
@@ -163,14 +163,19 @@ exports.getCashFlow = async (req, res) => {
             let dateObj = payment.paymentDate || payment.dueDate || payment.createdAt;
             if (!dateObj) return;
 
-            // Garante que é um objeto Date para formatar
-            if (!(dateObj instanceof Date)) {
-                dateObj = new Date(dateObj);
-            }
+            let monthYear = '';
             
-            const year = dateObj.getFullYear();
-            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const monthYear = `${year}-${month}`;
+            // Se for string no formato YYYY-MM-DD ou ISO, pega os primeiros 7 caracteres diretamente para evitar bug de fuso horário
+            if (typeof dateObj === 'string' && dateObj.length >= 7) {
+                monthYear = dateObj.substring(0, 7);
+            } else if (dateObj instanceof Date) {
+                // Se for objeto Date, converte para string local (considerando fuso) ou padroniza YYYY-MM
+                const year = dateObj.getFullYear();
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                monthYear = `${year}-${month}`;
+            } else {
+                return; // Formato inválido
+            }
 
             if (!cashFlowByMonth[monthYear]) {
                 cashFlowByMonth[monthYear] = {
