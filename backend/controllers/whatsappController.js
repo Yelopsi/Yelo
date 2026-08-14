@@ -17,7 +17,7 @@ exports.getWhatsAppLink = async (req, res) => {
         // 1. Busca o psicólogo
         const psi = await db.Psychologist.findOne({
             where: { id: psychologistId },
-            attributes: ['id', 'nome', 'telefone', 'slug', 'status', 'is_exempt', 'whatsapp_clicks']
+            attributes: ['id', 'nome', 'telefone', 'email', 'slug', 'status', 'is_exempt', 'whatsapp_clicks']
         });
 
         if (!psi || !psi.telefone) {
