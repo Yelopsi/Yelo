@@ -563,21 +563,14 @@ exports.getUpcomingTrials = async (req, res) => {
 
 exports.getPaymentsEvolution = async (req, res) => {
     try {
-        const query = `
-            SELECT TO_CHAR("createdAt", 'YYYY-MM') as month, COUNT(*) as count 
-            FROM "SystemLogs" 
-            WHERE message LIKE '[ASAAS] Pagamento Confirmado%' 
-            GROUP BY month 
-            ORDER BY month ASC
-        `;
-        
-        const [results] = await db.sequelize.query(query);
+        const adminExpenseController = require('./adminExpenseController');
+        const cashFlowData = await adminExpenseController.buildCashFlowData();
         
         // Formatar para retorno (Garantir meses sequenciais)
         // Mapear "2026-05" -> count
         const evolutionMap = {};
-        results.forEach(r => {
-            evolutionMap[r.month] = parseInt(r.count, 10);
+        cashFlowData.forEach(r => {
+            evolutionMap[r.monthYear] = parseInt(r.count, 10);
         });
         
         // Gerar os últimos 6 meses até o mês atual para ter linha contínua no gráfico
