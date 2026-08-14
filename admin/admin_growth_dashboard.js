@@ -627,7 +627,7 @@ window.loadPaymentsEvolutionChart = async function() {
                         ticks: { font: { family: 'Inter', color: '#64748b' } }
                     }
                 },
-                interaction: { mode: 'index', intersect: false }
+                interaction: { mode: 'nearest', intersect: true }
             }
         });
     } catch (err) {
