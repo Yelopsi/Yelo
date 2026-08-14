@@ -589,7 +589,8 @@ window.loadPaymentsEvolutionChart = async function() {
                     pointBorderColor: '#8b5cf6',
                     pointBorderWidth: 2,
                     pointRadius: 4,
-                    pointHoverRadius: 6,
+                    pointHoverRadius: 8,
+                    hitRadius: 20,
                     fill: true,
                     tension: 0.4
                 }]
@@ -598,7 +599,7 @@ window.loadPaymentsEvolutionChart = async function() {
                 responsive: true,
                 maintainAspectRatio: false,
                 layout: {
-                    padding: { right: 20 }
+                    padding: { right: 50, top: 10, left: 10 }
                 },
                 plugins: {
                     legend: { display: false },
