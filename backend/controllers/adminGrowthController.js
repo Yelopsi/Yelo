@@ -563,8 +563,8 @@ exports.getUpcomingTrials = async (req, res) => {
 
 exports.getPaymentsEvolution = async (req, res) => {
     try {
-        const adminExpenseController = require('./adminExpenseController');
-        const cashFlowData = await adminExpenseController.buildCashFlowData();
+        const cashFlowService = require('../services/cashFlowService');
+        const cashFlowData = await cashFlowService.buildCashFlowData();
         
         // Formatar para retorno (Garantir meses sequenciais)
         // Mapear "2026-05" -> count
