@@ -598,7 +598,11 @@ exports.getPaymentsEvolution = async (req, res) => {
         
         for (let i = monthsToIterate; i >= 0; i--) {
             const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-            const monthStr = d.toISOString().slice(0, 7); // YYYY-MM
+            
+            // Corrige o fuso horário (Evita que o toISOString volte um dia para o mês anterior em UTC-3)
+            const yearLocal = d.getFullYear();
+            const monthLocal = String(d.getMonth() + 1).padStart(2, '0');
+            const monthStr = `${yearLocal}-${monthLocal}`; // YYYY-MM
             
             // Format label as "Jan/26"
             const ptMonths = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];

@@ -213,26 +213,43 @@ class PaymentStateService {
 
             const currentPayments = (lockedPsi.subscription_payments_count || 0) + 1;
             
-            // Calcula nova validade baseada na data de vencimento da fatura (dueDate).
-            // Assim, múltiplos webhooks (CONFIRMED e RECEIVED) do mesmo pagamento não 
-            // somarão meses a mais acidentalmente, e pagamentos em atraso/adiantados
-            // respeitarão o ciclo correto de faturamento do Asaas.
+            // Calcula nova validade baseada no nextDueDate real da Assinatura no Asaas
             let novaValidade;
-            if (payment.dueDate) {
-                // Extrai partes para evitar timezone issues se dueDate for apenas "YYYY-MM-DD"
-                const parts = payment.dueDate.split('-'); 
-                if (parts.length >= 3) {
-                    novaValidade = new Date(parts[0], parts[1] - 1, parts[2]); 
-                } else {
-                    novaValidade = new Date(payment.dueDate);
+            if (payment.subscription) {
+                try {
+                    let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
+                    if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
+                        ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
+                    }
+                    const asaasRes = await fetch(`${ASAAS_API_URL}/subscriptions/${payment.subscription}`, {
+                        headers: {
+                            'access_token': process.env.ASAAS_API_KEY,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    const asaasSub = await asaasRes.json();
+                    if (asaasSub && asaasSub.nextDueDate) {
+                        const parts = asaasSub.nextDueDate.split('-');
+                        // Define validade para 23:59:59 do dia de vencimento no fuso horário local (Brasil/UTC-3)
+                        novaValidade = new Date(`${parts[0]}-${parts[1]}-${parts[2]}T23:59:59.999-03:00`);
+                    }
+                } catch (err) {
+                    console.error('[ASAAS] Erro ao buscar assinatura real:', err);
                 }
-                novaValidade.setMonth(novaValidade.getMonth() + 1);
-            } else {
-                // Fallback: Adiciona 1 mês na validade atual se estiver no futuro, ou em hoje.
-                const dataBase = (lockedPsi.planExpiresAt && new Date(lockedPsi.planExpiresAt) > new Date()) 
-                    ? new Date(lockedPsi.planExpiresAt) 
-                    : new Date();
-                novaValidade = new Date(dataBase.setMonth(dataBase.getMonth() + 1));
+            }
+
+            // Fallback (se por acaso falhar a busca acima)
+            if (!novaValidade) {
+                if (payment.dueDate) {
+                    const parts = payment.dueDate.split('-'); 
+                    novaValidade = new Date(`${parts[0]}-${parts[1]}-${parts[2]}T23:59:59.999-03:00`);
+                    novaValidade.setMonth(novaValidade.getMonth() + 1);
+                } else {
+                    const dataBase = (lockedPsi.planExpiresAt && new Date(lockedPsi.planExpiresAt) > new Date()) 
+                        ? new Date(lockedPsi.planExpiresAt) 
+                        : new Date();
+                    novaValidade = new Date(dataBase.setMonth(dataBase.getMonth() + 1));
+                }
             }
 
             const updatePayload = {

@@ -44,12 +44,40 @@ async function cleanUpData() {
     }
 }
 
+async function expirePsychologists() {
+    console.log('[DataLifecycle] Verificando planos expirados (Lazy Evaluation Fallback)...');
+    try {
+        const now = new Date();
+        const [updatedCount] = await db.Psychologist.update(
+            { status: 'inactive' },
+            {
+                where: {
+                    status: 'active',
+                    is_exempt: { [Op.ne]: true },
+                    planExpiresAt: { [Op.lte]: now }
+                }
+            }
+        );
+        if (updatedCount > 0) {
+            console.log(`[DataLifecycle] ⏰ ${updatedCount} psicólogos tiveram os planos expirados e foram inativados.`);
+        }
+    } catch (error) {
+        console.error('[DataLifecycle] Erro ao expirar psicólogos:', error);
+    }
+}
+
 // Inicializa o CRON - Roda todos os dias às 03:00 da manhã
 function initDataLifecycleJob() {
     cron.schedule('0 3 * * *', () => {
         cleanUpData();
     });
-    console.log('[DataLifecycle] Reaper Job agendado para as 03:00 AM diariamente.');
+    
+    // Roda de hora em hora no minuto 0 para derrubar quem venceu (Substitui Lazy Evaluation)
+    cron.schedule('0 * * * *', () => {
+        expirePsychologists();
+    });
+    
+    console.log('[DataLifecycle] Reaper Job agendado para as 03:00 AM (Expurgo) e de hora em hora (Expiração).');
 }
 
 module.exports = { cleanUpData, initDataLifecycleJob };

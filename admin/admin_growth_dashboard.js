@@ -597,6 +597,9 @@ window.loadPaymentsEvolutionChart = async function() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: {
+                    padding: { right: 20 }
+                },
                 plugins: {
                     legend: { display: false },
                     tooltip: {

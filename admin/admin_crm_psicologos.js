@@ -564,13 +564,24 @@ window.initializePage = function () {
                 statusLabel = 'excluído';
                 statusClass = 'status-cancelada';
             } else if (psy.status === 'active') {
-                if (isVip) statusLabel = 'VIP';
-                else if (!psy.subscriptionId && psy.planExpiresAt && new Date(psy.planExpiresAt) > new Date()) {
+                if (isVip) {
+                    statusLabel = 'VIP';
+                } else if (psy.planExpiresAt && new Date(psy.planExpiresAt) <= new Date()) {
+                    // Força status "Expirado" no front caso a data já tenha passado (Lazy Evaluation Fallback)
+                    statusLabel = 'Expirado';
+                    statusClass = 'status-inactive';
+                } else if (!psy.subscriptionId) {
                     statusLabel = 'Trial';
-                    statusClass = 'status-pending';
-                } else statusLabel = 'Ativo';
-            } else if (psy.status === 'pending') statusLabel = 'Incompleto';
-            else if (psy.status === 'inactive') statusLabel = 'Expirado';
+                    statusClass = 'status-pending'; // Trial usa cor amarela/pendente
+                } else {
+                    statusLabel = 'Ativo';
+                    // statusClass já é status-active
+                }
+            } else if (psy.status === 'pending') {
+                statusLabel = 'Incompleto';
+            } else if (psy.status === 'inactive') {
+                statusLabel = 'Expirado';
+            }
 
             const planoName = psy.plano ? (psy.plano.charAt(0).toUpperCase() + psy.plano.slice(1).toLowerCase()) : 'Nenhum';
             const { score } = calculateProfileHealth(psy);
