@@ -171,8 +171,8 @@ const applyFairness = (scoredCandidates, fairShare) => {
             let finalScore = c.rawMatchScore;
 
             // --- BÔNUS DE FOME (Cota Justa) ---
-            const conversoes = c.conversoes30d || 0;
-            const leads = c.leads30d || 0;
+            const conversoes = c.conversoes14d || 0;
+            const leads = c.leads14d || 0;
 
             if (conversoes === 0) {
                 finalScore += 50; // Maior bônus para quem não fechou ninguém
@@ -181,7 +181,7 @@ const applyFairness = (scoredCandidates, fairShare) => {
             }
 
             // --- PENALIDADE DE DESPERDÍCIO (Bad Sales) ---
-            // 7 ou mais cliques nos últimos 30 dias com ZERO conversões
+            // 7 ou mais cliques nos últimos 14 dias com ZERO conversões
             if (leads >= 7 && conversoes === 0) {
                 finalScore *= 0.60; // Penalidade severa (-40%) no score final
             }
@@ -247,21 +247,21 @@ exports.calculateMatches = async (preferences = {}) => {
         }
 
         // --- MATCH V5: FAIRNESS POR CONVERSÕES REAIS ---
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const fourteenDaysAgo = new Date();
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
         
         debugLog.push(`[${Date.now() - startTime}ms] 📊 Carregando CRM e calculando Cota Justa...`);
-        const logs30d = await db.sequelize.query(`
+        const logs14d = await db.sequelize.query(`
             SELECT "psychologistId", "dealClosed", COUNT(*) as count 
             FROM "WhatsAppClickLogs" 
-            WHERE "createdAt" >= :thirtyDaysAgo 
+            WHERE "createdAt" >= :fourteenDaysAgo 
             GROUP BY "psychologistId", "dealClosed"
-        `, { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT });
+        `, { replacements: { fourteenDaysAgo }, type: db.sequelize.QueryTypes.SELECT });
         
-        let totalConversoes30d = 0;
+        let totalConversoes14d = 0;
         const psyStats = {};
         
-        logs30d.forEach(log => {
+        logs14d.forEach(log => {
             const pid = log.psychologistId;
             const count = parseInt(log.count, 10);
             if (!psyStats[pid]) psyStats[pid] = { leads: 0, conversoes: 0 };
@@ -269,12 +269,12 @@ exports.calculateMatches = async (preferences = {}) => {
             psyStats[pid].leads += count;
             if (log.dealClosed === 'closed') {
                 psyStats[pid].conversoes += count;
-                totalConversoes30d += count;
+                totalConversoes14d += count;
             }
         });
 
         const fairShare = allEligiblePsychologists.length > 0 
-            ? Math.max(1, Math.ceil(totalConversoes30d / allEligiblePsychologists.length))
+            ? Math.max(1, Math.ceil(totalConversoes14d / allEligiblePsychologists.length))
             : 1;
 
         debugLog.push(`[${Date.now() - startTime}ms] 🎯 Cota Justa (Fair Share) de Conversões / mês: ${fairShare}`);
@@ -288,12 +288,12 @@ exports.calculateMatches = async (preferences = {}) => {
             
             const stats = psyStats[psyJSON.id] || { leads: 0, conversoes: 0 };
             
-            debugLog.push(`   - ID: ${psyJSON.id} | Score Clínico: ${rawMatchScore.toFixed(2)} | Leads 30d: ${stats.leads} | Fechados 30d: ${stats.conversoes}`);
+            debugLog.push(`   - ID: ${psyJSON.id} | Score Clínico: ${rawMatchScore.toFixed(2)} | Leads 14d: ${stats.leads} | Fechados 14d: ${stats.conversoes}`);
             
             return { 
                 ...psyJSON, 
-                leads30d: stats.leads,
-                conversoes30d: stats.conversoes,
+                leads14d: stats.leads,
+                conversoes14d: stats.conversoes,
                 rawMatchScore, 
                 matchDetails: [...new Set(explainability.positives)],
                 explainability 

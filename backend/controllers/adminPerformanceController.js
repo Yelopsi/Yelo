@@ -3,32 +3,35 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 async function getStandardMetrics(psiId, psi) {
     const numericId = parseInt(psiId, 10);
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
     const matchesStats = await db.sequelize.query(
-        `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :id`,
-        { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :id AND "createdAt" >= :fourteenDaysAgo`,
+        { replacements: { id: numericId, fourteenDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
     ).catch(() => db.sequelize.query(
-        `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "PsychologistId" = :id`,
-        { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "PsychologistId" = :id AND "createdAt" >= :fourteenDaysAgo`,
+        { replacements: { id: numericId, fourteenDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
     )).catch(() => [{ count: 0 }]);
-    const matchesCount = (matchesStats[0] ? parseInt(matchesStats[0].count, 10) : 0) + (psi ? (psi.profile_appearances || 0) : 0);
+    const matchesCount = matchesStats[0] ? parseInt(matchesStats[0].count, 10) : 0;
 
     const viewsStats = await db.sequelize.query(
-        `SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :id`,
-        { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        `SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :id AND "createdAt" >= :fourteenDaysAgo`,
+        { replacements: { id: numericId, fourteenDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
     ).catch(() => db.sequelize.query(
-        `SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "PsychologistId" = :id`,
-        { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        `SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "PsychologistId" = :id AND "createdAt" >= :fourteenDaysAgo`,
+        { replacements: { id: numericId, fourteenDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
     )).catch(() => [{ count: 0 }]);
     const viewsCount = viewsStats[0] ? parseInt(viewsStats[0].count, 10) : 0;
 
     const clicksStats = await db.sequelize.query(
-        `SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "psychologistId" = :id`,
-        { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        `SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "psychologistId" = :id AND "createdAt" >= :fourteenDaysAgo`,
+        { replacements: { id: numericId, fourteenDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
     ).catch(() => db.sequelize.query(
-        `SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "PsychologistId" = :id`,
-        { replacements: { id: numericId }, type: db.sequelize.QueryTypes.SELECT }
+        `SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "PsychologistId" = :id AND "createdAt" >= :fourteenDaysAgo`,
+        { replacements: { id: numericId, fourteenDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
     )).catch(() => [{ count: 0 }]);
-    const clicksCount = (clicksStats[0] ? parseInt(clicksStats[0].count, 10) : 0) + (psi ? (psi.whatsapp_clicks || 0) : 0);
+    const clicksCount = clicksStats[0] ? parseInt(clicksStats[0].count, 10) : 0;
 
     return { matchesCount, viewsCount, clicksCount };
 }
@@ -48,27 +51,27 @@ exports.getLowPerformanceData = async () => {
         attributes: ['id', 'nome', 'telefone', 'fotoUrl', 'slug', 'status', 'is_exempt', 'planExpiresAt', 'plano', 'createdAt', 'aiOptimizationHistory']
     });
 
-    // Fetch matches grouped by psychologist in the last 30 days
+    // Fetch matches grouped by psychologist in the last 14 days
     const [matches] = await db.sequelize.query(`
         SELECT "psychologistId" as "id", COUNT(*) as count 
         FROM "MatchEvents" 
-        WHERE "createdAt" >= NOW() - INTERVAL '30 days' AND "psychologistId" IS NOT NULL
+        WHERE "createdAt" >= NOW() - INTERVAL '14 days' AND "psychologistId" IS NOT NULL
         GROUP BY "psychologistId"
     `).catch(() => [[], null]);
 
-    // Fetch clicks grouped by psychologist in the last 30 days
+    // Fetch clicks grouped by psychologist in the last 14 days
     const [clicks] = await db.sequelize.query(`
         SELECT "psychologistId" as "id", COUNT(*) as count 
         FROM "WhatsAppClickLogs" 
-        WHERE "createdAt" >= NOW() - INTERVAL '30 days' AND "psychologistId" IS NOT NULL
+        WHERE "createdAt" >= NOW() - INTERVAL '14 days' AND "psychologistId" IS NOT NULL
         GROUP BY "psychologistId"
     `).catch(() => [[], null]);
 
-    // Fetch profile views grouped by psychologist in the last 30 days
+    // Fetch profile views grouped by psychologist in the last 14 days
     const [views] = await db.sequelize.query(`
         SELECT "psychologistId" as "id", COUNT(*) as count 
         FROM "ProfileAppearanceLogs" 
-        WHERE "createdAt" >= NOW() - INTERVAL '30 days' AND "psychologistId" IS NOT NULL
+        WHERE "createdAt" >= NOW() - INTERVAL '14 days' AND "psychologistId" IS NOT NULL
         GROUP BY "psychologistId"
     `).catch(() => [[], null]);
 
@@ -94,9 +97,9 @@ exports.getLowPerformanceData = async () => {
 
         return {
             ...psi.toJSON(),
-            matches_30d: psiMatches,
-            clicks_30d: psiClicks,
-            views_30d: psiViews,
+            matches_14d: psiMatches,
+            clicks_14d: psiClicks,
+            views_14d: psiViews,
             ctr: psiMatches > 0 ? (psiClicks / psiMatches) : 0
         };
     });
@@ -120,9 +123,9 @@ exports.getLowPerformanceData = async () => {
             if (recentlySent) return false; // Remove da lista de baixa performance temporariamente
         }
 
-        const hasHighMatchesLowCtr = psi.matches_30d >= avgMatches && psi.ctr < (avgCtr * 0.5);
-        const hasLowMatches = psi.matches_30d < (avgMatches * 0.3) && avgMatches > 10;
-        const isZeroClicks = psi.matches_30d >= 10 && psi.clicks_30d === 0;
+        const hasHighMatchesLowCtr = psi.matches_14d >= avgMatches && psi.ctr < (avgCtr * 0.5);
+        const hasLowMatches = psi.matches_14d < (avgMatches * 0.3) && avgMatches > 10;
+        const isZeroClicks = psi.matches_14d >= 10 && psi.clicks_14d === 0;
 
         if (hasHighMatchesLowCtr || hasLowMatches || isZeroClicks) {
             psi.low_performance_reason = hasHighMatchesLowCtr ? 'high_matches_low_ctr' : (hasLowMatches ? 'low_matches' : 'zero_clicks');
@@ -241,26 +244,23 @@ Aja em tom amigável, direto, profissional e de parceria. Sem introduções long
 
 ATENÇÃO: Use formatação nativa do WhatsApp (*negrito*, _itálico_) e insira quebras de linha (\\n\\n) para tornar o texto escaneável. Separe bem os parágrafos e as dicas. Não retorne um bloco de texto contínuo!
 
-REGRAS DE ANÁLISE DO FUNIL (Siga rigorosamente para dar as dicas certas):
-1. Gargalo de Aparições (Baixos Matches): O perfil não está ganhando pontos no algoritmo de busca. Acolha dizendo que no começo é assim mesmo. Explique que o nosso algoritmo prioriza: (A) Preenchimento completo das 4 Especialidades (Tags); (B) Valor da sessão estar alinhado com a média do mercado; (C) Informar Gênero e Práticas Inclusivas/Afirmativas (gera bônus alto de ranqueamento); (D) Abordagem e Modalidade corretas. Dê exemplos de como a busca do paciente cruza com esses dados. ATENÇÃO: ANTES de sugerir que o psicólogo preencha ou detalhe qualquer informação (como Gênero, Práticas Inclusivas/Afirmativas, Abordagem, Especialidades ou Valor da sessão), VERIFIQUE OBRIGATORIAMENTE em [DADOS DO PERFIL] se ele JÁ PREENCHEU esses campos. SE ELE JÁ TIVER PREENCHIDO (exemplo: Gênero ou Práticas Inclusivas/Afirmativas já estão preenchidos no perfil), PARABENIZE-O por já ter incluído essas informações estratégicas (pois geram excelente pontuação no ranking) e NUNCA sugira ou cobre para ele adicionar o que já foi cadastrado! Foque apenas no que realmente estiver faltando ou na otimização da bio e foto.
-2. Gargalo de Visitas (Altos Matches, Baixos Views): Ele aparece bem nas buscas, mas os pacientes não clicam no card. O problema está na vitrine. Explique que o paciente decide o clique em 2 segundos. Sugira revisar a Foto de Perfil (precisa estar profissional, com boa luz, transmitindo acolhimento) e a primeira frase da Bio. Um Valor de Sessão ausente ou irreal também espanta. Dê um exemplo do que torna uma foto ou frase atrativa.
-3. Gargalo de Conversão (Altas Visitas, Baixos Cliques no WhatsApp): Os pacientes abrem a página completa dele, leem, mas saem sem chamar no WhatsApp. O algoritmo pune perfis com Bio menor que 10 caracteres, mas para converter, a Bio precisa ser focada na dor do paciente. Sugira reescrever a Bio (ex: "Em vez de listar currículo, comece falando sobre como você pode ajudar na ansiedade"). Sugira pedir Avaliações usando o link (https://www.yelopsi.com.br/${psi.slug}?review=true) explicando que Prova Social é o maior gatilho de confiança na internet.
-4. Ferramentas Estratégicas (USE QUANDO FIZER SENTIDO): Temos algumas páginas e ferramentas gratuitas dentro da plataforma. Você pode sugerir:
-   - "Calculadora de Honorários" (para ajudar quem tem dúvidas sobre precificação).
-   - "Manual de Conversão" (para psicólogos que recebem cliques no WhatsApp mas não conseguem fechar a venda da sessão).
-   - "Meu Analytics" (recomende para que eles mesmos acompanhem seu funil diariamente).
-   - "Hub de Evolução" (para aprenderem estratégias de marketing para consultório).
-5. Acompanhamento de Feedbacks de WhatsApp (USE COM ATENÇÃO EXTREMA):
+REGRAS DA CONSULTORIA (SEJA HIPER-PERSONALIZADO E DIRETO):
+1. ATENÇÃO MÁXIMA SOBRE EDIÇÃO DE PERFIL: Na nossa plataforma, os campos "Temas de Atuação", "Público Alvo", "Abordagem" e "Práticas Inclusivas" SÃO SELEÇÕES FECHADAS (DROPDOWNS). O psicólogo NÃO pode escrever textos livres neles. O ÚNICO campo onde ele pode "nichar", escrever de forma livre, falar sobre dores específicas e se diferenciar é a **BIO**. Nunca mande ele "alterar os temas para ser mais específico", mande ele **usar a Bio** para criar esse nicho hiper-específico!
+2. Aja como um Cirurgião de Marketing: escolha o principal gargalo dele com base nos números (Match, Visitas, Cliques).
+3. ESTRUTURA DA MENSAGEM: Você deve obrigatoriamente estruturar seu feedback no corpo do texto em duas partes claras: "*O que está ótimo ✅*" e "*O que poderia melhorar 🔧*".
+4. Em "*O que está ótimo ✅*": Olhe as variáveis em [DADOS DO PERFIL]. Elogie tudo o que ele já fez certo (Ex: "Vi que sua sessão está R$ X, um valor super competitivo", "Parabéns por já ter preenchido suas práticas inclusivas", "Você escolheu ótimos temas de atuação"). Prove que você leu os dados do perfil dele.
+5. Em "*O que poderia melhorar 🔧*": Dê 1 ou 2 orientações cirúrgicas do que ele deve alterar HOJE. Se o Gargalo é de Vitrine (Ex: apareceu em buscas mas não recebeu cliques) e a Bio for muito focada em currículo acadêmico, sugira fortemente: "A sua bio começa parecendo um currículo, o paciente em crise não busca diplomas. Tente alterar as primeiras linhas da Bio para focar na dor do paciente."
+
+6. Acompanhamento de Feedbacks de WhatsApp (USE COM ATENÇÃO EXTREMA):
    - VERIFIQUE em [FEEDBACKS DE CONTATOS VIA WHATSAPP] a situação dos contatos dele:
    - SE "Há feedbacks pendentes (sem resposta)?" for NÃO (ou seja, ele já respondeu os feedbacks na plataforma): JAMAIS diga que ele "não informou se a sessão foi fechada" ou cobre atualização de status! Se houver pacientes "Em negociação ativa", você pode perguntar amigavelmente como estão as conversas e se precisa de alguma ajuda para fechar o agendamento. Se já fechou pacientes, comemore!
    - SE "Há feedbacks pendentes (sem resposta)?" for SIM: adicione uma solicitação amigável e parceira pedindo para ele nos avisar o status dos atendimentos. OBRIGATÓRIO: Forneça SEMPRE o link rápido para ele responder sem precisar acessar a plataforma (${magicLink}). Exemplo: "Vi que você recebeu contatos no WhatsApp recentemente! Para que nosso algoritmo continue impulsionando seu perfil nas buscas, por favor nos atualize sobre o status desses atendimentos através deste link rápido (não precisa nem fazer login na plataforma): ${magicLink}". NUNCA peça para ele acessar ou logar na plataforma para dar feedback se temos o link rápido!
 
 ESTRUTURA OBRIGATÓRIA E TOM DE VOZ:
-5. Inicie com um gatilho de parceria: "Olá, [Nome]. Como vai? Aqui é o Anderson, da equipe de Sucesso da Yelo. Fiz uma análise detalhada da sua performance e..." (Substitua [Nome] pelo primeiro nome).
-6. Aja de forma EXTREMAMENTE EMPÁTICA, PARCEIRA e HUMANIZADA. Você está lá para ajudá-lo a ganhar dinheiro, mostre que o sucesso dele é o nosso sucesso. ZERO GÍRIAS.
-7. Informe no texto os números EXATOS de Matches, Visitas no Perfil e Cliques no WhatsApp, justificando onde está o gargalo dele.
-8. Para cada dica que você der, explique O PORQUÊ aquilo funciona na cabeça do paciente e DÊ UM EXEMPLO PRÁTICO de como fazer.
-9. Finalize com um gatilho de comprometimento: "Esses pequenos ajustes costumam destravar a agenda de muitos profissionais por aqui. Qualquer dúvida sobre como aplicar isso, é só me chamar. Estamos juntos nessa jornada para encher a sua clínica! 🌿"
+7. Inicie com um gatilho de parceria EXATAMENTE com esta estrutura, trocando apenas o nome: "Olá, [Nome]. Como vai? Aqui é o Anderson, da equipe de Sucesso da Yelo. Fiz uma análise detalhada da sua performance nos últimos 14 dias e trouxe alguns pontos para potencializarmos seus resultados: você teve ${matchesCount} aparições em resultados de matches, ${viewsCount} visitas no perfil e ${clicksCount} cliques no WhatsApp."
+8. Aja de forma EXTREMAMENTE EMPÁTICA, PARCEIRA e HUMANIZADA. Você está lá para ajudá-lo a ganhar dinheiro, mostre que o sucesso dele é o nosso sucesso. ZERO GÍRIAS.
+9. Após a introdução do passo 7, justifique onde está o gargalo dele (ex: "O nosso gargalo hoje está na conversão da visita para o contato...").
+10. Finalize com um gatilho de comprometimento: "Esses pequenos ajustes costumam destravar a agenda de muitos profissionais por aqui. Qualquer dúvida sobre como aplicar isso, é só me chamar. Estamos juntos nessa jornada para encher a sua clínica! 🌿"
 
 Retorne SOMENTE um JSON com a seguinte estrutura (não use marcações markdown como \`\`\`json, apenas o objeto):
 {
