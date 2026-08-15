@@ -43,7 +43,7 @@ exports.generateSEO = async (postContent, postTitle) => {
 Você é um especialista em SEO para a área da saúde e psicologia.
 Sua tarefa é analisar o artigo de um psicólogo e retornar um JSON estrito contendo:
 1. "meta_description": Um texto persuasivo de até 155 caracteres focado na dor do paciente e na intenção de busca.
-2. "tags": Um array com 5 palavras-chave de cauda longa (long-tail keywords) mais relevantes para ranquear o artigo no Google.
+2. "tags": Um array com EXATAMENTE 3 palavras-chave curtas (máximo 30 caracteres cada) relevantes para o artigo. NÃO passe de 3 tags.
 
 Título do Artigo: ${postTitle}
 
