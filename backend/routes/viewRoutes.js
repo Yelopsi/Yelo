@@ -139,24 +139,13 @@ router.get('/api/status-seo-tags', async (req, res) => {
 
 router.get('/api/trigger-seo-batch', async (req, res) => {
     try {
-        const db = require('../models');
-        const seoService = require('../services/seoService');
-        const { Op } = require('sequelize');
+        const seoBatch = require('../utils/seoBatch');
+        // Roda em background (não bloqueia a resposta)
+        seoBatch.run();
         
-        const post = await db.Post.findOne({
-            where: { tags: { [Op.or]: [null, '', '[]'] } }
-        });
-        
-        if (!post) {
-            return res.json({ status: 'Nenhum post pendente.' });
-        }
-        
-        const seoData = await seoService.generateSEO(post.conteudo, post.titulo);
         res.json({
-            post_id: post.id,
-            post_titulo: post.titulo,
-            seoData_raw: seoData,
-            genAi_key_exists: !!process.env.GEMINI_API_KEY
+            status: 'Batch iniciado em background com sucesso.',
+            message: 'O servidor está agora processando os posts de 4 em 4 segundos.'
         });
     } catch (e) {
         res.status(500).json({ error: e.message, stack: e.stack });

@@ -309,7 +309,18 @@ const startServer = async () => {
         
         isDbSynced = true;
         console.log('✅ [SERVER] Sistema totalmente operacional.');
+        
         if(typeof startCronJobs === 'function') startCronJobs();    
+        
+        // --- INICIA O PROCESSAMENTO EM LOTE DO SEO (BACKGROUND) ---
+        try {
+            const seoBatch = require('./utils/seoBatch');
+            seoBatch.run();
+            console.log('✅ [SEO BATCH] Processo de geração de tags em background iniciado.');
+        } catch (e) {
+            console.error('❌ [SEO BATCH] Erro ao iniciar:', e.message);
+        }
+
     } catch (e) {
         console.error('❌ [DB SYNC] Erro crítico durante a aplicação de correções de schema:', e.message);
     }
