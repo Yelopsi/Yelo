@@ -18,9 +18,7 @@ const cspMiddleware = (req, res, next) => {
     const nonce = crypto.randomBytes(16).toString('base64');
     res.locals.nonce = nonce;
 
-    const scriptSrc = process.env.NODE_ENV === 'development' 
-        ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://www.googletagmanager.com https://*.google-analytics.com https://www.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://*.google.com https://tagmanager.google.com https://connect.facebook.net https://unpkg.com https://cdn.jsdelivr.net https://accounts.google.com https://cdnjs.cloudflare.com https://cdn.quilljs.com https://npmcdn.com https://*.clarity.ms https://clarity.ms https://vlibras.gov.br`
-        : `script-src 'self' 'nonce-${nonce}' https://*.googletagmanager.com https://www.googletagmanager.com https://*.google-analytics.com https://www.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://*.google.com https://tagmanager.google.com https://connect.facebook.net https://unpkg.com https://cdn.jsdelivr.net https://accounts.google.com https://cdnjs.cloudflare.com https://cdn.quilljs.com https://npmcdn.com https://*.clarity.ms https://clarity.ms https://vlibras.gov.br`;
+    const scriptSrc = `script-src 'self' 'unsafe-inline' https://*.googletagmanager.com https://www.googletagmanager.com https://*.google-analytics.com https://www.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://*.google.com https://tagmanager.google.com https://connect.facebook.net https://unpkg.com https://cdn.jsdelivr.net https://accounts.google.com https://cdnjs.cloudflare.com https://cdn.quilljs.com https://npmcdn.com https://*.clarity.ms https://clarity.ms https://vlibras.gov.br`;
 
     const csp = [
         "default-src 'self'",
