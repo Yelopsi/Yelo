@@ -42,8 +42,8 @@ exports.run = async () => {
                 console.error(`❌ [SEO BATCH] Erro ao gerar SEO para o post ID ${post.id}:`, err.message);
             }
 
-            // Aguarda 2 segundos entre cada chamada para evitar block de rate limit (Google Gemini free tier)
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Aguarda 4 segundos entre cada chamada para evitar block de rate limit (Google Gemini free tier max 15 RPM)
+            await new Promise(resolve => setTimeout(resolve, 4000));
         }
 
         console.log("🎉 [SEO BATCH] Varredura e atualização de SEO concluída com sucesso!");

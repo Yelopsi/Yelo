@@ -120,6 +120,23 @@ router.get('/blog/post/:id', blogController.exibirPostUnico);
 router.post('/blog/post/:id/like', blogController.curtirPost);
 
 // --- ROTAS ESTÁTICAS ESPECÍFICAS (Workaround) ---
+router.get('/api/debug-seo-tags', async (req, res) => {
+    try {
+        const db = require('../models');
+        const posts = await db.Post.findAll({ attributes: ['id', 'titulo', 'tags', 'conteudo', 'updatedAt'] });
+        const result = posts.map(p => ({
+            id: p.id,
+            titulo: p.titulo,
+            content_length: p.conteudo ? p.conteudo.length : 0,
+            tags: p.tags,
+            updatedAt: p.updatedAt
+        }));
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Movidas para antes dos redirecionamentos e da rota :slug para garantir que sejam capturadas.
 router.get('/questionario', (req, res) => {
     res.sendFile(path.join(__dirname, '../../public/questionario.html'));
