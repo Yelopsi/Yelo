@@ -120,7 +120,7 @@ router.get('/blog/post/:id', blogController.exibirPostUnico);
 router.post('/blog/post/:id/like', blogController.curtirPost);
 
 // --- ROTAS ESTÁTICAS ESPECÍFICAS (Workaround) ---
-router.get('/api/debug-seo-tags', async (req, res) => {
+router.get('/api/status-seo-tags', async (req, res) => {
     try {
         const db = require('../models');
         const posts = await db.Post.findAll({ attributes: ['id', 'titulo', 'tags', 'conteudo', 'updatedAt'] });
