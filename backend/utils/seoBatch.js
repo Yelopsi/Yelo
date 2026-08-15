@@ -4,6 +4,15 @@ const seoService = require('../services/seoService');
 exports.run = async () => {
     try {
         console.log("🚀 [SEO BATCH] Iniciando varredura de posts sem SEO gerado...");
+        
+        // FIX: Aumenta o tamanho da coluna 'tags' no banco para caber o JSON array (evita o erro 'value too long for type character varying(255)')
+        try {
+            await db.sequelize.query('ALTER TABLE "posts" ALTER COLUMN "tags" TYPE TEXT;');
+            console.log("✅ [SEO BATCH] Coluna 'tags' redimensionada para TEXT com sucesso.");
+        } catch (e) {
+            console.log("⚠️ [SEO BATCH] Erro ao alterar coluna (já pode estar como TEXT):", e.message);
+        }
+
         const { Op } = require('sequelize');
         const posts = await db.Post.findAll({
             where: {
