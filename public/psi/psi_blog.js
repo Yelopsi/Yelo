@@ -270,7 +270,7 @@
             document.getElementById('form-titulo-acao').textContent = "Editar Artigo";
             document.getElementById('blog-id').value = post.id;
             document.getElementById('blog-titulo').value = post.titulo;
-            if (quill && post.conteudo) quill.clipboard.dangerouslyPasteHTML(0, post.conteudo);
+            if (quill && post.conteudo) quill.clipboard.dangerouslyPasteHTML(post.conteudo);
             
             if (inputImagemHidden) inputImagemHidden.value = post.imagem_url || '';
             const btnRemoveImagemLocal2 = document.getElementById('btn-remove-imagem');

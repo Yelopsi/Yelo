@@ -313,7 +313,13 @@ module.exports = {
         try {
             const { id } = req.params;
             
-            // 1. Busca o Post Principal
+            // --- PREVENÇÃO DE CACHE DE NAVEGADOR ---
+            // Garante que ao editar um post e clicar para ver, o navegador busque a versão fresca do servidor
+            res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+            res.set('Pragma', 'no-cache');
+            res.set('Expires', '0');
+            res.set('Surrogate-Control', 'no-store');
+
             let queryOptions = {};
             if (Psychologist) {
                 queryOptions.include = [{
