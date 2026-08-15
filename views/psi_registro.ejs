@@ -4,7 +4,7 @@
     <title>Registro de Psicólogo - Yelo</title>
     <%- include('partials/head') %>
     
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script nonce="<%= nonce %>" src="https://accounts.google.com/gsi/client" async defer></script>
     <link rel="stylesheet" href="/style.css"> 
     <meta name="mobile-web-app-capable" content="yes">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
@@ -152,10 +152,10 @@
             <p class="link-auth">Já tem uma conta? <a href="/login">Faça login aqui</a></p>
     </div>
 
-    <script src="https://unpkg.com/imask"></script>
-    <script src="/config.js"></script>
-    <script src="/js/psi_registro.js?v=2"></script>
-    <script>
+    <script nonce="<%= nonce %>" src="https://unpkg.com/imask"></script>
+    <script nonce="<%= nonce %>" src="/config.js"></script>
+    <script nonce="<%= nonce %>" src="/js/psi_registro.js?v=2"></script>
+    <script nonce="<%= nonce %>">
         function toggleSenha(id, btn) {
             const input = document.getElementById(id);
             if (!btn) btn = input.nextElementSibling; // Pega o botão do ícone se não for passado

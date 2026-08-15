@@ -958,7 +958,7 @@
                     <div class="app-pricing-dot"></div>
                 </div>
                 
-                <script>
+                <script nonce="<%= nonce %>">
                     document.addEventListener("DOMContentLoaded", function() {
                         const slider = document.getElementById('pricingSlider');
                         const dots = document.querySelectorAll('#pricingDots .app-pricing-dot');
@@ -1001,11 +1001,11 @@
     </main>
 
     <!-- Módulos Extraídos da Página de Profissionais -->
-    <script src="/js/profissionais_config.js" defer></script>
-    <script src="/js/profissionais_api.js" defer></script>
+    <script nonce="<%= nonce %>" src="/js/profissionais_config.js" defer></script>
+    <script nonce="<%= nonce %>" src="/js/profissionais_api.js" defer></script>
     <%- include('partials/footer') %>
 
-    <script>
+    <script nonce="<%= nonce %>">
         document.addEventListener('DOMContentLoaded', function() {
             // Animação dos Números (Stats)
             const observerOptions = {

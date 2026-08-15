@@ -13,7 +13,7 @@ const settingsController = require('../controllers/settingsController');
 const adminEficienciaController = require('../controllers/adminEficienciaController');
 const adminPerformanceController = require('../controllers/adminPerformanceController');
 const { protect, admin } = require('../middlewares/authMiddleware'); // Corrigido para importar ambos
-const { uploadProfilePhoto } = require('../middlewares/upload'); // Importa o Multer unificado
+const { uploadProfilePhoto, magicBytesValidator } = require('../middlewares/upload'); // Importa o Multer unificado
 const { adminLimiter } = require('../middlewares/rateLimiters');
 
 // Rota pública para login do admin
@@ -51,7 +51,7 @@ router.get('/me', adminController.getAdminData);
 router.put('/me', adminController.updateAdminData);
 
 router.put('/me/password', adminController.updateAdminPassword);
-router.put('/me/photo', uploadProfilePhoto.single('profilePhoto'), adminController.updateAdminPhoto);
+router.put('/me/photo', uploadProfilePhoto.single('profilePhoto'), magicBytesValidator, adminController.updateAdminPhoto);
 
 // Rota para buscar todos os psicólogos para a página de gerenciamento
 router.get('/psychologists', adminController.getAllPsychologists);

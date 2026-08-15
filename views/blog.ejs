@@ -283,7 +283,7 @@
 
 <%- include('partials/footer') %>
 
-<script>
+<script nonce="<%= nonce %>">
     // 1. Ao carregar a página: Verifica o localStorage e pinta os corações já curtidos
     document.addEventListener("DOMContentLoaded", function() {
         document.querySelectorAll('[data-post-id]').forEach(btn => {

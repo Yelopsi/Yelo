@@ -49,12 +49,12 @@
             <button id="btn-close-rating-modal" style="background-color: var(--verde-escuro); color: white; border: none; padding: 12px 24px; border-radius: 50px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; transition: transform 0.2s;">Avaliar agora</button>
         </div>
     </div>
-    <script src="/config.js"></script>
-    <script src="https://unpkg.com/imask"></script>
-    <script>console.log("✅ View EJS do Questionário Paciente carregada. Chamando JS...");</script>
+    <script nonce="<%= nonce %>" src="/config.js"></script>
+    <script nonce="<%= nonce %>" src="https://unpkg.com/imask"></script>
+    <script nonce="<%= nonce %>">console.log("✅ View EJS do Questionário Paciente carregada. Chamando JS...");</script>
     <!-- Adicione os módulos de UI e Service antes do arquivo principal -->
-    <script src="/js/questionario_ui.js"></script>
-    <script src="/js/questionario_services.js"></script>
-    <script src="/js/questionario.js?v=2"></script> 
+    <script nonce="<%= nonce %>" src="/js/questionario_ui.js"></script>
+    <script nonce="<%= nonce %>" src="/js/questionario_services.js"></script>
+    <script nonce="<%= nonce %>" src="/js/questionario.js?v=2"></script> 
 </body>
 </html>

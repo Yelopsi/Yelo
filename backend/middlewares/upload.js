@@ -26,5 +26,29 @@ const upload = multer({
     fileFilter: fileFilter
 });
 
+// Validação rigorosa de Magic Bytes (Header do Arquivo) para prevenir spoofing de extensão/MIME
+const magicBytesValidator = (req, res, next) => {
+    if (!req.file) return next();
+
+    const buffer = req.file.buffer;
+    if (!buffer || buffer.length < 4) {
+        return res.status(400).json({ error: 'Arquivo corrompido ou vazio.' });
+    }
+
+    const hex = buffer.toString('hex', 0, 4).toUpperCase();
+    
+    // Assinaturas conhecidas (Magic Numbers)
+    const isJPEG = hex.startsWith('FFD8FF');
+    const isPNG = hex.startsWith('89504E47');
+    const isWEBP = hex.startsWith('52494646') && buffer.toString('hex', 8, 12).toUpperCase() === '57454250';
+
+    if (!isJPEG && !isPNG && !isWEBP) {
+        return res.status(415).json({ error: 'Formato de arquivo inválido. Assinatura binária não corresponde a uma imagem segura.' });
+    }
+
+    next();
+};
+
 exports.uploadProfilePhoto = upload;
 exports.uploadCrpDocument = upload;
+exports.magicBytesValidator = magicBytesValidator;

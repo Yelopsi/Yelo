@@ -156,7 +156,10 @@ exports.sendBroadcastMessage = async (req, res) => {
         if (!title || !content) return res.status(400).json({ error: 'Título e conteúdo são obrigatórios.' });
 
         const aviso = await db.Aviso.create({ title, content, author: adminName, status: 'published' });
-        if (req.io) req.io.emit('new_announcement', aviso.toJSON());
+        if (req.io) {
+            const { dtoAnnouncement } = require('../utils/socketDataMinimization');
+            req.io.emit('new_announcement', dtoAnnouncement(aviso.toJSON()));
+        }
 
         res.status(201).json({ message: 'Aviso enviado com sucesso para todos os psicólogos.', aviso });
     } catch (error) {

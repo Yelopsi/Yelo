@@ -8,7 +8,7 @@
     <meta property="og:description" content="Junte-se à Yelo para cuidar da sua saúde mental. Cadastro rápido e gratuito.">
 
     <%- include('partials/head') %>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script nonce="<%= nonce %>" src="https://accounts.google.com/gsi/client" async defer></script>
     
     <style>
         :root {
@@ -204,9 +204,9 @@
             </div>
         </div>
     
-    <script src="/js/config.js"></script>
-    <script src="/js/cadastro.js"></script>
-    <script>
+    <script nonce="<%= nonce %>" src="/js/config.js"></script>
+    <script nonce="<%= nonce %>" src="/js/cadastro.js"></script>
+    <script nonce="<%= nonce %>">
         // Callback do Google (Reutilizável)
         async function handleCredentialResponse(response) {
             try {

@@ -136,9 +136,13 @@ router.get('/admin/stats/pwa', verifyTokenLocal, async (req, res) => {
 // =============================================================
 // FEEDBACKS E EXIT SURVEYS (ADMIN)
 // =============================================================
-router.get('/admin/feedbacks', demandController.getRatings);
-router.get('/admin/exit-surveys', async (req, res) => {
+router.get('/admin/feedbacks', verifyTokenLocal, demandController.getRatings);
+router.get('/admin/exit-surveys', verifyTokenLocal, async (req, res) => {
     try {
+        if (req.userDecoded.role !== 'admin' && req.userDecoded.type !== 'admin') {
+            return res.status(403).json({ error: 'Acesso negado' });
+        }
+        
         const { motivo, nota, startDate, endDate } = req.query;
         let whereClause = 'WHERE 1=1'; const replacements = {};
         if (motivo) { whereClause += ' AND "motivo" ILIKE :motivo'; replacements.motivo = `%${motivo}%`; }

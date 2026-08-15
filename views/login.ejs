@@ -13,7 +13,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Mulish:wght@400;500;600&display=swap" rel="stylesheet">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script nonce="<%= nonce %>" src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         :root {
             --fonte-titulo: 'Lora', serif;
@@ -163,8 +163,8 @@
             </div>
         </div>
 
-    <script src="/js/login.js?v=1.7"></script>
-    <script>
+    <script nonce="<%= nonce %>" src="/js/login.js?v=1.7"></script>
+    <script nonce="<%= nonce %>">
       // Função reutilizável para alternar a senha
       function setupPasswordToggle(toggleId, inputId) {
         const toggle = document.getElementById(toggleId);
@@ -189,7 +189,7 @@
       }
       setupPasswordToggle("toggleSenhaLogin", "senha-login");
     </script>
-    <script>
+    <script nonce="<%= nonce %>">
         // Callback do Google
         async function handleCredentialResponse(response) {
             try {
@@ -217,7 +217,7 @@
             }
         }
     </script>
-    <script>
+    <script nonce="<%= nonce %>">
         document.addEventListener('DOMContentLoaded', () => {
             // 1. Tenta ler os parâmetros da URL
             const urlParams = new URLSearchParams(window.location.search);

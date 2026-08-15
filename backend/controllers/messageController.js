@@ -138,8 +138,8 @@ exports.sendMessage = async (req, res) => {
             const adminRoom = io.sockets.adapter.rooms.get('admin_room');
             const numAdmins = adminRoom ? adminRoom.size : 0;
             // ----------------------------
-
-            const msgPayload = newMessage.toJSON();
+            const { dtoMessage } = require('../utils/socketDataMinimization');
+            const msgPayload = dtoMessage(newMessage.toJSON());
             
             // Se o destinatário for Admin, envia para a sala 'admin_room'
             if (recipientType === 'admin' || !recipientId) {

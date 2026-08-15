@@ -202,7 +202,8 @@ exports.runScraperJob = async (io = null) => {
 
     if (!SERPER_API_KEY) {
       if (io) {
-        io.to('admins').emit('scraper_finished', { success: false, total: 0, message: 'Chave do Serper.dev não configurada (SERPER_API_KEY).' });
+        const { dtoScraperResult } = require('../utils/socketDataMinimization');
+        io.to('admins').emit('scraper_finished', dtoScraperResult(false, 0, 'Chave do Serper.dev não configurada (SERPER_API_KEY).'));
       }
       return;
     }
@@ -231,7 +232,10 @@ exports.runScraperJob = async (io = null) => {
         }
 
         if (!data.organic || data.organic.length === 0) {
-            if (io) io.to('admins').emit('scraper_finished', { success: true, total: 0, message: 'Nenhum resultado encontrado.' });
+            if (io) {
+                const { dtoScraperResult } = require('../utils/socketDataMinimization');
+                io.to('admins').emit('scraper_finished', dtoScraperResult(true, 0, 'Nenhum resultado encontrado.'));
+            }
             return;
         }
 
@@ -294,16 +298,14 @@ exports.runScraperJob = async (io = null) => {
         console.log(`[SCRAPER API] Prospecção Concluída! ${totalSalvos} novos leads.`);
 
         if (io) {
-            io.to('admins').emit('scraper_finished', {
-                success: true,
-                total: totalSalvos,
-                message: `Robô finalizado! ${totalSalvos} novos leads capturados via API.`
-            });
+            const { dtoScraperResult } = require('../utils/socketDataMinimization');
+            io.to('admins').emit('scraper_finished', dtoScraperResult(true, totalSalvos, 'Robô finalizado! Novos leads capturados via API.'));
         }
     } catch (error) {
         console.error('[SCRAPER API] Erro na prospecção:', error);
         if (io) {
-            io.to('admins').emit('scraper_finished', { success: false, total: 0, message: 'Erro ao buscar novos leads.' });
+            const { dtoScraperResult } = require('../utils/socketDataMinimization');
+            io.to('admins').emit('scraper_finished', dtoScraperResult(false, 0, 'Erro ao buscar novos leads.'));
         }
     }
 };

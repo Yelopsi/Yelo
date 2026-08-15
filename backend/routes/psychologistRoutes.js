@@ -12,7 +12,7 @@ const matchController = require('../controllers/matchController');
 const psiDashboardController = require('../controllers/psiDashboardController');
 const whatsappClickController = require('../controllers/whatsappClickController');
 const { protect, admin } = require('../middlewares/authMiddleware');
-const { uploadProfilePhoto, uploadCrpDocument } = require('../middlewares/upload');
+const { uploadProfilePhoto, uploadCrpDocument, magicBytesValidator } = require('../middlewares/upload');
 const { authLimiter, emailSpamLimiter, registerLimiter, matchLimiter, clickLimiter } = require('../middlewares/rateLimiters');
 
 // ===============================================
@@ -177,8 +177,8 @@ router.post('/me/announcements/:avisoId/read', psiDashboardController.markAnnoun
 
 // Nota: O frontend envia para /me/foto via POST com campo 'foto'. 
 // Mantive conforme seu código original, mas verifique se o frontend bate com 'profilePhoto'
-router.put('/me/photo', uploadProfilePhoto.single('profilePhoto'), psychologistController.updateProfilePhoto);
-router.post('/me/foto', uploadProfilePhoto.single('foto'), psychologistController.updateProfilePhoto); // Rota alternativa para compatibilidade
+router.put('/me/photo', uploadProfilePhoto.single('profilePhoto'), magicBytesValidator, psychologistController.updateProfilePhoto);
+router.post('/me/foto', uploadProfilePhoto.single('foto'), magicBytesValidator, psychologistController.updateProfilePhoto); // Rota alternativa para compatibilidade
 
 // router.put('/me/crp-document', uploadCrpDocument.single('crpDocument'), psychologistController.uploadCrpDocument); // Função não existe no controller
 router.get('/me/qna-unanswered-count', psychologistController.getUnansweredQuestionsCount);

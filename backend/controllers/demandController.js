@@ -71,6 +71,10 @@ exports.recordSearch = async (req, res) => {
  */
 exports.getRatings = async (req, res) => {
     try {
+        if (!req.userDecoded || (req.userDecoded.role !== 'admin' && req.userDecoded.type !== 'admin')) {
+            return res.status(403).json({ error: 'Acesso negado' });
+        }
+        
         // SQL Otimizado para ler campos dentro do JSONB (searchParams ->> 'rating')
         /// a sintaxe (searchParams->>'rating') extrai o valor como texto
         

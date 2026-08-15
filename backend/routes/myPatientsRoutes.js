@@ -12,7 +12,8 @@ router.get('/', verifyTokenLocal, async (req, res) => {
             return res.status(500).json({ error: 'Modelo de pacientes não encontrado.' });
         }
         const patients = await db.Patient.findAll({
-            where: { psychologistId: decoded.id }
+            where: { psychologistId: decoded.id },
+            attributes: ['id', 'nome', 'telefone', 'email', 'status', 'sessionValue', 'observacoes', 'recebe_mensagens', 'createdAt']
         }); 
         res.json(patients);
     } catch (error) {
@@ -25,7 +26,10 @@ router.get('/:id', verifyTokenLocal, async (req, res) => {
     try {
         const decoded = req.userDecoded;
         const { id } = req.params;
-        const patient = await db.Patient.findOne({ where: { id, psychologistId: decoded.id } });
+        const patient = await db.Patient.findOne({ 
+            where: { id, psychologistId: decoded.id },
+            attributes: ['id', 'nome', 'telefone', 'email', 'status', 'sessionValue', 'observacoes', 'recebe_mensagens', 'createdAt']
+        });
         if (!patient) return res.status(404).json({ error: 'Paciente não encontrado' });
         res.json(patient);
     } catch (error) {

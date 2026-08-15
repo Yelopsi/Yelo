@@ -143,9 +143,12 @@ exports.getCommunityResources = async (req, res) => {
 
 exports.updateCommunityResources = async (req, res) => {
     try {
+        const { whatsapp_group_link, guides_folder_link } = req.body;
+        const payload = { whatsapp_group_link, guides_folder_link };
+
         let resources = await db.CommunityResource.findOne();
-        if (resources) await resources.update(req.body);
-        else await db.CommunityResource.create(req.body);
+        if (resources) await resources.update(payload);
+        else await db.CommunityResource.create(payload);
         res.json({ success: true });
     } catch (error) { res.status(500).json({ error: "Erro ao salvar recursos" }); }
 };
@@ -162,9 +165,11 @@ exports.getCommunityEvent = async (req, res) => {
 exports.updateCommunityEvent = async (req, res) => {
     try {
         const { titulo, subtitulo, data_hora, tipo, link_acao, texto_botao, ativo } = req.body;
+        const payload = { titulo, subtitulo, data_hora, tipo, link_acao, texto_botao, ativo };
+        
         let event = await db.CommunityEvent.findOne({ order: [['updatedAt', 'DESC']] });
-        if (event) await event.update({ titulo, subtitulo, data_hora, tipo, link_acao, texto_botao, ativo });
-        else event = await db.CommunityEvent.create(req.body);
+        if (event) await event.update(payload);
+        else event = await db.CommunityEvent.create(payload);
         res.json({ success: true, event });
     } catch (error) { res.status(500).json({ error: "Erro ao salvar" }); }
 };

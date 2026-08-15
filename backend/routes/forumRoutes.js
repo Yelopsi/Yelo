@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const forumController = require('../controllers/forumController');
-const { protect } = require('../middlewares/authMiddleware'); // Corrigido o caminho e o import
+const { protect, admin } = require('../middlewares/authMiddleware'); // Corrigido o caminho e o import
 
 // Todas as rotas são protegidas
 router.use(protect);
@@ -20,8 +20,8 @@ router.delete('/comments/:id', forumController.deleteComment); // Rota para excl
 router.post('/comments/:id/vote', forumController.toggleCommentVote); // <-- NOVA ROTA
 router.post('/ai/generate-comment', forumController.generateAiComment); // Rota para gerar comentario com IA
 
-// Rotas de Admin (Idealmente deveriam ter middleware de admin, mas usaremos o protect por enquanto)
-router.get('/admin/reports', forumController.getReports);
-router.post('/admin/reports/:id/resolve', forumController.resolveReport);
+// Rotas de Admin (Protegidas corretamente com BOLA mitigado)
+router.get('/admin/reports', admin, forumController.getReports);
+router.post('/admin/reports/:id/resolve', admin, forumController.resolveReport);
 
 module.exports = router;

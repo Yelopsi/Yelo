@@ -191,7 +191,7 @@
 
     <%- include('partials/footer') %>
 
-    <script>
+    <script nonce="<%= nonce %>">
         document.addEventListener('DOMContentLoaded', () => {
             const buscaInput = document.getElementById('faq-busca');
             const categorias = document.querySelectorAll('.faq-categoria');

@@ -494,7 +494,7 @@
     </footer>
 
     <!-- Script básico para animação de scroll (Reaproveitado do index) -->
-    <script>
+    <script nonce="<%= nonce %>">
         document.addEventListener("DOMContentLoaded", () => {
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach((entry) => {
@@ -524,7 +524,7 @@
     </script>
 
     <!-- RASTREAMENTO YELO FUNIL (UTMs e Visita Inicial) -->
-    <script>
+    <script nonce="<%= nonce %>">
         document.addEventListener("DOMContentLoaded", function() {
             try {
                 const urlParams = new URLSearchParams(window.location.search);

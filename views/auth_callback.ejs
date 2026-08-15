@@ -13,7 +13,7 @@
         <h1>Autenticando...</h1>
         <p>Você será redirecionado em breve.</p>
     </div>
-    <script>
+    <script nonce="<%= nonce %>">
         document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             const token = params.get('token');

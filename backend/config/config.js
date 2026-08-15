@@ -17,14 +17,11 @@ module.exports = {
     dialect: 'postgres',
   },
 
-  // Configuração de TESTE
+  // Configuração de TESTE (Red Team Isolado)
   test: {
-    username: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT, // <--- ADICIONADO
-    dialect: 'postgres'
+    dialect: 'sqlite',
+    storage: ':memory:', // Banco temporário em memória para testes dinâmicos isolados
+    logging: false
   },
 
   // Configuração de PRODUÇÃO (Render)

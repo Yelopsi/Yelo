@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const patientController = require('../controllers/patientController');
 const { protect, admin } = require('../middlewares/authMiddleware'); // Importa o Middleware e Admin
-const { uploadProfilePhoto } = require('../middlewares/upload'); // Importa o multer configurado
+const { uploadProfilePhoto, magicBytesValidator } = require('../middlewares/upload'); // Importa o multer configurado
 const db = require('../models'); // Necessário para as queries diretas de favoritos
 const { authLimiter, emailSpamLimiter, registerLimiter } = require('../middlewares/rateLimiters');
 
@@ -27,7 +27,7 @@ router.post('/reset-password/:token', patientController.resetPassword);
 router.get('/me', protect, patientController.getPatientData);
 
 // Rota de Upload da Foto do Paciente: /api/patients/me/foto (Acesso PRIVADO)
-router.post('/me/foto', protect, uploadProfilePhoto.single('foto'), patientController.updateProfilePhoto);
+router.post('/me/foto', protect, uploadProfilePhoto.single('foto'), magicBytesValidator, patientController.updateProfilePhoto);
 
 // Rota para vincular conta do Google: /api/patients/me/link-google (Acesso PRIVADO)
 router.post('/me/link-google', protect, patientController.linkGoogleAccount);

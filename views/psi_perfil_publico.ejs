@@ -57,7 +57,7 @@
     <meta property="og:image" content="<%= imageUrl %>">
     
     <!-- SCHEMA MARKUP: JSON-LD (Google) -->
-    <script type="application/ld+json">
+    <script nonce="<%= nonce %>" type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Physician",
@@ -675,11 +675,11 @@
         </div>
     </div>
 
-    <script>
+    <script nonce="<%= nonce %>">
         // Repassa os dados básicos pro frontend (útil para SEO e pre-load)
         window.YELO_PROFILE_DATA = <%- JSON.stringify(psicologo) %>;
     </script>
-    <script src="/js/psi_perfil_publico.js"></script>
+    <script nonce="<%= nonce %>" src="/js/psi_perfil_publico.js"></script>
 
 
 </body>

@@ -21,7 +21,7 @@
     <%- include('partials/head') %>
 
     <!-- SEO: Dados Estruturados (JSON-LD) para FAQ -->
-    <script type="application/ld+json">
+    <script nonce="<%= nonce %>" type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "FAQPage",
@@ -790,7 +790,7 @@
     <%- include('partials/footer') %>
 
     <!-- RASTREAMENTO YELO FUNIL (UTMs e Visita Inicial) -->
-    <script>
+    <script nonce="<%= nonce %>">
         document.addEventListener("DOMContentLoaded", function() {
             try {
                 const urlParams = new URLSearchParams(window.location.search);
@@ -819,7 +819,7 @@
     </script>
 
     <!-- RASTREAMENTO YELO FUNIL: Iniciar Questionário -->
-    <script>
+    <script nonce="<%= nonce %>">
         document.addEventListener("DOMContentLoaded", function() {
             const ctaButtons = document.querySelectorAll('.btn-cta-principal');
             ctaButtons.forEach(btn => {
@@ -835,7 +835,7 @@
     </script>
 
     <!-- ANIMACÃO DE SCROLL: Revelar seções ao descer a página -->
-    <script>
+    <script nonce="<%= nonce %>">
         document.addEventListener("DOMContentLoaded", function() {
             const observer = new IntersectionObserver((entries, observer) => {
                 entries.forEach(entry => {

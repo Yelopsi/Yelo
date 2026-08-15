@@ -230,7 +230,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="<%= nonce %>">
     document.addEventListener("DOMContentLoaded", function() {
         const cookieBanner = document.getElementById('cookie-consent-banner');
         const acceptBtn = document.getElementById('btn-accept-cookies');
@@ -264,12 +264,12 @@
         <div class="vw-plugin-top-wrapper"></div>
     </div>
 </div>
-<script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
-<script>
+<script nonce="<%= nonce %>" src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+<script nonce="<%= nonce %>">
     new window.VLibras.Widget('https://vlibras.gov.br/app');
 </script>
 
-<script>
+<script nonce="<%= nonce %>">
     document.addEventListener("DOMContentLoaded", () => {
         // Analytics simples
         fetch('/api/demand/visit', { 
@@ -289,12 +289,12 @@
 </script>
 
 <!-- Script da Newsletter -->
-<script src="/js/newsletter.js"></script>
+<script nonce="<%= nonce %>" src="/js/newsletter.js"></script>
 
-<script src="/js/script.js"></script>
+<script nonce="<%= nonce %>" src="/js/script.js"></script>
 
 <!-- SCRIPT DE DESBLOQUEIO (Emergência) -->
-<script>
+<script nonce="<%= nonce %>">
     // Este script roda por último para garantir que o usuário possa usar o botão direito
     document.addEventListener('DOMContentLoaded', () => {
         // Limpa eventos antigos que bloqueavam o clique

@@ -32,12 +32,12 @@
             <p style="text-align: center; color: white; padding: 40px; font-family: var(--font-principal), sans-serif;">Carregando questionário de profissionais...</p>
         </div>
     </main>
-    <script src="https://unpkg.com/imask" defer></script>
-    <script src="/config.js?v=1.6" defer></script>
-    <script>console.log("✅ View EJS de Profissionais carregada. Chamando JS...");</script>
-    <script src="/js/questionario_ui.js?v=1.6" defer></script>
-    <script src="/js/profissionais_config.js?v=1.6" defer></script>
-    <script src="/js/profissionais_api.js?v=1.6" defer></script>
-    <script src="/js/profissionais.js?v=1.6" defer></script>
+    <script nonce="<%= nonce %>" src="https://unpkg.com/imask" defer></script>
+    <script nonce="<%= nonce %>" src="/config.js?v=1.6" defer></script>
+    <script nonce="<%= nonce %>">console.log("✅ View EJS de Profissionais carregada. Chamando JS...");</script>
+    <script nonce="<%= nonce %>" src="/js/questionario_ui.js?v=1.6" defer></script>
+    <script nonce="<%= nonce %>" src="/js/profissionais_config.js?v=1.6" defer></script>
+    <script nonce="<%= nonce %>" src="/js/profissionais_api.js?v=1.6" defer></script>
+    <script nonce="<%= nonce %>" src="/js/profissionais.js?v=1.6" defer></script>
 </body>
 </html>

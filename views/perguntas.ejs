@@ -149,10 +149,10 @@
         </div>
     </div>
 
-    <script src="/config.js"></script>
+    <script nonce="<%= nonce %>" src="/config.js"></script>
     
     <!-- Script Inline de Garantia (Bypass de Cache para o Contador) -->
-    <script>
+    <script nonce="<%= nonce %>">
         document.addEventListener('DOMContentLoaded', () => {
             const txtArea = document.getElementById('question-text');
             const btnSubmit = document.getElementById('submit-question-btn');
@@ -179,6 +179,6 @@
         });
     </script>
 
-    <script src="/js/perguntas.js?v=<%= new Date().getTime() %>"></script>
+    <script nonce="<%= nonce %>" src="/js/perguntas.js?v=<%= new Date().getTime() %>"></script>
 </body>
 </html>

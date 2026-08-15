@@ -632,7 +632,7 @@ exports.getReports = async (req, res) => {
 exports.resolveReport = async (req, res) => {
     try {
         const { action } = req.body; // 'delete_content' ou 'dismiss'
-        const report = await ForumReport.findByPk(req.params.id);
+        const report = await ForumReport.findByPk(req.params.id); // BOLA-Safe: Rota protegida por middleware admin
 
         if (!report) return res.status(404).json({ error: 'Denúncia não encontrada' });
 

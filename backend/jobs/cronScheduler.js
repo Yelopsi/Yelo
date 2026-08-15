@@ -152,6 +152,7 @@ const startCronJobs = () => {
     let lastAuditDay = -1;
     let lastScraperDay = -1;
     let lastAiScheduleDay = -1;
+    let lastPrivacyPruningDay = -1;
     let aiScheduleTimes = [];
 
     setInterval(async () => {
@@ -217,6 +218,14 @@ const startCronJobs = () => {
             lastScraperDay = currentDay;
             const { runScraperJob } = require('../controllers/adminLeadController');
             runScraperJob().catch(e => console.error("Erro no job diário do scraper:", e));
+        }
+
+        // 7. ROBÔ DE PRIVACIDADE E EXPURGO LGPD (Roda uma vez às 3h da manhã)
+        if (currentBrtHour === 3 && currentDay !== lastPrivacyPruningDay) {
+            lastPrivacyPruningDay = currentDay;
+            const { runPrivacyPruning } = require('./privacyPruningJob');
+            // Executando como live-run na madrugada para descarte de dados expirados
+            runPrivacyPruning({ dryRun: false }).catch(e => console.error("Erro no job de privacy:", e));
         }
     }, 60000); 
 };

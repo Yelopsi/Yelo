@@ -387,7 +387,7 @@
 
     <%- include('partials/footer') %>
 
-    <script>
+    <script nonce="<%= nonce %>">
         document.addEventListener('DOMContentLoaded', async () => {
             const grid = document.getElementById('dynamic-therapist-grid');
             if (!grid) return;

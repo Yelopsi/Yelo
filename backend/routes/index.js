@@ -24,11 +24,13 @@ const fixRoutes = require('./fixRoutes');
 const extraRoutes = require('./extraRoutes');
 const viewRoutes = require('./viewRoutes');
 
+const { authLimiter, expensiveLimiter, webhookLimiter } = require('../middlewares/rateLimiter');
+
 module.exports = (app) => {
-    app.use('/api/auth', authRoutes);
+    app.use('/api/auth', authLimiter, authRoutes);
     app.use('/api/newsletter', newsletterRoutes); 
     app.use('/api/tracking', trackingRoutes);
-    app.use('/api/webhooks', webhookRoutes);
+    app.use('/api/webhooks', webhookLimiter, webhookRoutes);
     app.use('/api', analyticsRoutes);
     app.use('/api/public', publicRoutes);
     app.use('/api', adminAuthRoutes);

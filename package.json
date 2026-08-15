@@ -5,9 +5,12 @@
   "main": "backend/server.js",
   "scripts": {
     "start": "cd backend && npx sequelize-cli db:migrate && cd .. && node backend/server.js",
-    "dev": "nodemon backend/server.js",
+    "prestart": "npm run security:gate",
+    "prebuild": "npm run security:gate",
+    "dev": "NODE_ENV=development nodemon backend/server.js",
     "test": "node testar-match.js",
-    "deploy": "npm run test && git push origin main",
+    "deploy": "npm run security:gate && echo '✅ Verificações locais concluídas. Executando git push...' && git push origin main",
+    "security:gate": "node security/gate.js",
     "postinstall": "cd backend && npm install && cd .. && npx puppeteer browsers install chrome",
     "lint": "eslint .",
     "investigate-psychologist": "node scripts/investigate_psychologist_charge.js"
@@ -24,7 +27,7 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "bcryptjs": "^3.0.3",
-    "cloudinary": "^1.41.3",
+    "cloudinary": "^2.10.0",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -37,7 +40,7 @@
     "multer": "^2.0.2",
     "multer-storage-cloudinary": "^4.0.0",
     "node-cron": "^4.2.1",
-    "nodemailer": "^7.0.12",
+    "nodemailer": "^9.0.5",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "pg": "^8.23.0",
@@ -52,6 +55,9 @@
     "@eslint/js": "^10.0.1",
     "eslint": "^10.3.0",
     "globals": "^17.6.0",
-    "nodemon": "^3.1.0"
+    "nodemon": "^3.1.0",
+    "socket.io-client": "^4.8.3",
+    "sqlite3": "^6.0.1",
+    "supertest": "^7.2.2"
   }
 }

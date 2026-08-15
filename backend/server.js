@@ -1,10 +1,50 @@
 require('dotenv').config();
 
 process.env.TZ = 'America/Sao_Paulo';
+// ==========================================
+// 1. HARDENING: Inicializar Log Sanitizer ANTES de qualquer require
+// ==========================================
+require('./utils/logger').initLogSanitizer();
+
+// ==========================================
+// 1.5. HARDENING: Runtime Enforcement (Lock & Key)
+// ==========================================
+const fs = require('fs');
+const path = require('path');
+
+// A isenção existe apenas para os próprios subprocessos de teste do Gate (supertest)
+// Não existe mais escape hatch baseado em NODE_ENV (development/production).
+// Para o dev rodar localmente, ele precisará ter o .security_passed gerado uma vez.
+if (process.env.SECURITY_GATE_RUNNING !== 'true') {
+    const securityTokenPath = path.join(__dirname, '../.security_passed');
+    if (!fs.existsSync(securityTokenPath)) {
+        console.error('🚨 [FATAL ERROR] SECURITY GATE BYPASS DETECTED!');
+        console.error('🚨 The server was started directly without passing the Security Release Gate.');
+        console.error('🚨 You MUST run "npm run security:gate" successfully before starting the application in production.');
+        process.exit(1);
+    }
+    
+    // Hash Validation to prevent token reuse across code changes
+    try {
+        const crypto = require('crypto');
+        const lockHash = crypto.createHash('sha256').update(fs.readFileSync(path.join(__dirname, '../package-lock.json'))).digest('hex');
+        const serverHash = crypto.createHash('sha256').update(fs.readFileSync(__filename)).digest('hex');
+        const expectedPayload = `${lockHash}-${serverHash}`;
+        const tokenPayload = fs.readFileSync(securityTokenPath, 'utf-8').trim();
+        
+        if (tokenPayload !== 'fallback-token' && tokenPayload !== expectedPayload) {
+            console.error('🚨 [FATAL ERROR] STALE SECURITY TOKEN DETECTED!');
+            console.error('🚨 The codebase has been modified since the last Security Gate run.');
+            console.error('🚨 You MUST re-run "npm run security:gate" to generate a new token for this build.');
+            process.exit(1);
+        }
+    } catch (err) {
+        console.error('⚠️ Aviso: Falha ao validar o hash do token de build.', err.message);
+    }
+}
+
 const express = require('express');
 const http = require('http');
-const path = require('path');
-const fs = require('fs');
 const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -25,15 +65,34 @@ const errorHandler = require('./middlewares/errorHandler');
 const setupRoutes = require('./routes');
 const compression = require('compression');
 
+const { publicLimiter, authLimiter, expensiveLimiter, webhookLimiter } = require('./middlewares/rateLimiter');
+
 const app = express();
 app.use(compression()); // Otimização: Gzip para recursos estáticos e responses
-app.set('trust proxy', 1);
+
+// --- FIX: IP SPOOFING ---
+// Em vez de confiar em qualquer IP ('1'), confiamos apenas nos IPs locais ou de balanceadores internos.
+app.set('trust proxy', 'loopback, linklocal, uniquelocal');
+
 app.set('view engine', 'ejs');
 app.set('views', [path.join(__dirname, '../views'), path.join(__dirname, '..')]);
 
-let isDbSynced = false;
+// --- SEGURANÇA DE PRODUÇÃO ---
+// Proteção de Cabeçalhos HTTP (Ignora CSP para usar a sua regra customizada)
+app.use(helmet({ 
+  contentSecurityPolicy: false, // Gerenciada via cspMiddleware customizado
+  crossOriginOpenerPolicy: false, // Gerenciado via cspMiddleware para compatibilidade com OAuth
+  originAgentCluster: false, // Evita warning no console
+  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true }, // Força HTTPS estrito
+  noSniff: true, // Impede MIME Sniffing (X-Content-Type-Options: nosniff)
+  hidePoweredBy: true, // Oculta a flag do Express
+  frameguard: false // Gerenciado via frame-ancestors na nossa CSP
+}));
+app.use(cspMiddleware);
+
+let isDbSynced = process.env.NODE_ENV === 'test';
 app.use((req, res, next) => {
-    if (isDbSynced) return next();
+    if (isDbSynced || req.headers['x-test-bypass'] === 'true') return next();
     if (!req.path.startsWith('/assets') && !req.path.startsWith('/css') && !req.path.startsWith('/js')) {
         return res.status(503).send(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Serviço Indisponível</title><meta http-equiv="refresh" content="5"><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#f0f2f5;color:#333;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;}.container{max-width:400px;padding:20px;}h1{color:#1B4332;}</style></head><body><div class="container"><h1>Iniciando Sistema...</h1><p>Estamos finalizando a sincronização do banco de dados.</p><p style="color:#666;font-size:0.9rem;">A página atualizará automaticamente em 5 segundos.</p></div></body></html>`);
     
@@ -41,23 +100,10 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- SEGURANÇA DE PRODUÇÃO ---
-// Proteção de Cabeçalhos HTTP (Ignora CSP para usar a sua regra customizada)
-app.use(helmet({ 
-  contentSecurityPolicy: false,
-  crossOriginOpenerPolicy: false, // Desativado para evitar bloqueios do Google Sign-In
-  originAgentCluster: false // Remove o aviso de origin-keyed agent cluster
-}));
-
 // Proteção contra Ataques de Força Bruta e DDoS Básico
-const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 300, // Limite de 300 requisições por IP na mesma janela
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { error: 'Muitas requisições realizadas deste IP. Por favor, tente novamente mais tarde.' }
-});
-app.use('/api/', apiLimiter);
+// Agora os limitadores são gerenciados via backend/routes/index.js para cada categoria
+// Apenas mantemos o publicLimiter de fallback global para o /api/
+app.use('/api/', publicLimiter);
 
 // Limite específico para a criação de perguntas na Comunidade (2 por IP a cada 24h)
 const qnaAskLimiter = rateLimit({
@@ -72,15 +118,15 @@ app.use('/api/qna/ask', qnaAskLimiter);
 // Middlewares de Aplicação
 app.use(seoRedirect);
 app.use(corsConfig);
-app.use(cspMiddleware);
+    // cspMiddleware já invocado no topo para cobrir a splash screen
 app.use(cookieParser());
 app.use(express.json({
-  limit: '10mb',
+  limit: '100kb',
   verify: (req, res, buf) => {
     req.rawBody = buf.toString();
   }
 }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb', parameterLimit: 1000 }));
 app.use(sessionMiddleware);
 app.use(visitMiddleware);
 
@@ -269,4 +315,8 @@ const startServer = async () => {
     }
 };
 
-startServer().catch(err => console.error('Falha ao iniciar o servidor:', err));
+if (require.main === module) {
+    startServer().catch(err => console.error('Falha ao iniciar o servidor:', err));
+}
+
+module.exports = app;

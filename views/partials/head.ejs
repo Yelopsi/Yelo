@@ -22,7 +22,7 @@
 <link rel="manifest" href="/manifest.json">
 
 <!-- Polyfills de Tracking para evitar erros de scripts soltos na página -->
-<script>
+<script nonce="<%= nonce %>">
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   window.gtag = window.gtag || gtag;
@@ -32,8 +32,8 @@
   }
 </script>
 
-<script src="/js/consent-manager.js"></script>
-<script>
+<script nonce="<%= nonce %>" src="/js/consent-manager.js"></script>
+<script nonce="<%= nonce %>">
     document.addEventListener("DOMContentLoaded", function() {
         let uid = null;
         <% if (typeof user !== 'undefined' && user && user.id) { %>

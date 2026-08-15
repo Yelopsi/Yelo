@@ -666,3 +666,4 @@ exports.updateProfilePhoto = async (req, res) => {
         res.status(500).json({ error: 'Erro interno ao salvar a imagem.' });
     }
 };
+
