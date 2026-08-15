@@ -4,9 +4,16 @@ const seoService = require('../services/seoService');
 exports.run = async () => {
     try {
         console.log("🚀 [SEO BATCH] Iniciando varredura de posts sem SEO gerado...");
+        const { Op } = require('sequelize');
         const posts = await db.Post.findAll({
             where: {
-                tags: null
+                tags: {
+                    [Op.or]: [
+                        null,
+                        '',
+                        '[]'
+                    ]
+                }
             }
         });
 
