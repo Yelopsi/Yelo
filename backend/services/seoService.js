@@ -156,17 +156,20 @@ exports.optimizeArticle = async (nome, especialidades, currentTitle, currentCont
             generationConfig: { responseMimeType: "application/json" }
         });
         
-        const prompt = `Você é um copywriter e revisor experiente em marketing para a área da saúde.
-Sua tarefa é otimizar o artigo escrito pelo psicólogo ${nome} (especialidades: ${especialidades || 'Psicologia Clínica'}).
+        const prompt = `Você é um revisor ortográfico e gramatical rigoroso.
+Sua tarefa é EXCLUSIVAMENTE corrigir erros de português, concordância, pontuação e digitação do artigo escrito pelo psicólogo ${nome}.
 
-O profissional já escreveu um rascunho. Você deve melhorar a coesão, corrigir erros gramaticais, melhorar o SEO e tornar a leitura mais envolvente para pacientes, mantendo o tom de voz profissional e ético.
+REGRAS INEGOCIÁVEIS:
+1. Aja APENAS como corretor ortográfico e gramatical.
+2. NÃO reescreva o texto, NÃO mude o estilo de escrita do autor e NÃO invente ou adicione novas informações.
+3. Mantenha as palavras exatas do autor sempre que estiverem corretas. Apenas conserte os erros.
 
-Rascunho do Título: "${currentTitle}"
-Rascunho do Conteúdo: "${currentContent}"
+Título Escrito pelo Usuário: "${currentTitle}"
+Conteúdo Escrito pelo Usuário: "${currentContent}"
 
 Crie um JSON estrito com as chaves:
-1. "titulo": Título otimizado e atrativo (máximo 70 caracteres).
-2. "conteudo": Conteúdo otimizado em HTML (use as tags <p>, <strong>, <h3>, <ul> para estruturar bem o texto).
+1. "titulo": O mesmo título, mas com eventuais erros de português corrigidos.
+2. "conteudo": O mesmo conteúdo corrigido em HTML (preserve rigorosamente todas as tags HTML originais como <p>, <strong>, <br>, <h3>).
 
 Retorne APENAS o JSON estrito.`;
 
