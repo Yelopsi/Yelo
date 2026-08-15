@@ -6,9 +6,12 @@ const bcrypt = require('bcryptjs');
 const { sendWelcomeEmail } = require('../services/emailService');
 const { Op } = require('sequelize');
 
+if (!process.env.JWT_SECRET) {
+    throw new Error('CRITICAL SECURITY ERROR: JWT_SECRET environment variable is not defined. The application cannot start safely.');
+}
 // Função Auxiliar: Gera Token JWT
 const generateToken = (id, type) => {
-    return jwt.sign({ id, type }, process.env.JWT_SECRET || '***REMOVED_JWT_SECRET***', {
+    return jwt.sign({ id, type }, process.env.JWT_SECRET, {
         expiresIn: '30d',
     });
 };

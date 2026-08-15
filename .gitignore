@@ -1,4 +1,4 @@
-﻿node_modules/
+node_modules/
 .env
 backend/node_modules/
 backend/.env
@@ -13,3 +13,10 @@ node_modules/
 node_modules/
 
 .wwebjs_auth
+
+# Security: Ignore all temporary scratch scripts
+*.test.js
+test_*.js
+query_*.js
+check_*.js
+scratch/
