@@ -6,10 +6,36 @@
     <!-- VARIÁVEIS DE SEO -->
     <% 
       const rawFallback = (post.conteudo || '').replace(/<[^>]*>?/g, ' ').replace(/\s+/g, ' ').trim();
-      const descSnippet = post.meta_description ? post.meta_description : (rawFallback.substring(0, 155) + '...'); 
+      const descSnippet = (post.meta_description ? post.meta_description : (rawFallback.substring(0, 155) + '...')).replace(/[\r\n]+/g, ' '); 
       const currentUrl = `https://www.yelopsi.com.br/blog/post/${post.slug || post.id}`;
       const autorNome = post.autor ? post.autor.nome : 'Equipe Yelo';
       const imageUrl = post.imagem_url || 'https://www.yelopsi.com.br/img/logo_yelo_share.png';
+      
+      const schemaMarkup = {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": currentUrl
+        },
+        "headline": post.titulo,
+        "description": descSnippet,
+        "image": imageUrl,
+        "author": {
+          "@type": "Person",
+          "name": autorNome
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Yelo",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://www.yelopsi.com.br/img/logo.png" 
+          }
+        },
+        "datePublished": new Date(post.createdAt || post.created_at).toISOString(),
+        "dateModified": new Date(post.updatedAt || post.updated_at || post.createdAt || post.created_at).toISOString()
+      };
     %>
     
     <!-- PROTEÇÃO CONTRA CONTEÚDO DUPLICADO -->
@@ -28,31 +54,7 @@
 
     <!-- SCHEMA MARKUP: JSON-LD (Google) -->
     <script nonce="<%= nonce %>" type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "BlogPosting",
-      "mainEntityOfPage": {
-        "@type": "WebPage",
-        "@id": "<%= currentUrl %>"
-      },
-      "headline": "<%= post.titulo.replace(/"/g, '\\"') %>",
-      "description": "<%= descSnippet.replace(/"/g, '\\"') %>",
-      "image": "<%= imageUrl %>",
-      "author": {
-        "@type": "Person",
-        "name": "<%= autorNome.replace(/"/g, '\\"') %>"
-      },
-      "publisher": {
-        "@type": "Organization",
-        "name": "Yelo",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://www.yelopsi.com.br/img/logo.png" 
-        }
-      },
-      "datePublished": "<%= new Date(post.createdAt || post.created_at).toISOString() %>",
-      "dateModified": "<%= new Date(post.updatedAt || post.updated_at || post.createdAt || post.created_at).toISOString() %>"
-    }
+      <%- JSON.stringify(schemaMarkup) %>
     </script>
     
     <%- include('partials/head') %>
