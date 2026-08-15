@@ -39,23 +39,9 @@ exports.run = async () => {
             try {
                 const seoData = await seoService.generateSEO(post.conteudo, post.titulo);
                 if (seoData && seoData.tags && seoData.tags.length > 0) {
-                    let tagsArray = seoData.tags;
-                    let tagsString = JSON.stringify(tagsArray);
-                    
-                    // Fallback de segurança: Garante que nunca vai passar de 255 chars no banco de dados
-                    while (tagsString.length > 250 && tagsArray.length > 1) {
-                        tagsArray.pop(); // Remove a última tag
-                        tagsString = JSON.stringify(tagsArray);
-                    }
-                    
-                    // Se ainda for maior que 250 (uma única tag gigantesca), corta grosseiramente
-                    if (tagsString.length > 250) {
-                        tagsString = tagsString.substring(0, 250);
-                    }
-
                     await post.update({
                         meta_description: seoData.meta_description,
-                        tags: tagsString
+                        tags: JSON.stringify(seoData.tags)
                     });
                     console.log(`✅ [SEO BATCH] SEO salvo com sucesso para o post ID ${post.id}.`);
                 } else {
