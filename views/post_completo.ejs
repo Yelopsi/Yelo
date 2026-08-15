@@ -309,12 +309,15 @@
                 
                 if (parsedTags && parsedTags.length > 0) {
             %>
-            <div style="margin-top: 30px; display: flex; gap: 8px; flex-wrap: wrap;">
-                <% parsedTags.forEach(tag => { %>
-                    <span style="background: #f1f5f9; color: #475569; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 500;">
-                        <%= tag %>
-                    </span>
-                <% }); %>
+            <div style="margin-top: 30px;">
+                <h4 style="margin: 0 0 10px 0; color: #1B4332; font-family: var(--font-principal); font-size: 0.9rem; letter-spacing: 0.5px;">TAGS</h4>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <% parsedTags.forEach(tag => { %>
+                        <span style="background: #f1f5f9; color: #475569; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 500;">
+                            <%= tag %>
+                        </span>
+                    <% }); %>
+                </div>
             </div>
             <% } } %>
 
