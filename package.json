@@ -11,7 +11,7 @@
     "test": "node testar-match.js",
     "deploy": "npm run security:gate && echo '✅ Verificações locais concluídas. Executando git push...' && git push origin main",
     "security:gate": "node security/gate.js",
-    "postinstall": "cd backend && npm install && cd .. && npx puppeteer browsers install chrome",
+    "postinstall": "cd backend && npm install && cd .. && npx puppeteer browsers install chrome && npm run security:gate",
     "lint": "eslint .",
     "investigate-psychologist": "node scripts/investigate_psychologist_charge.js"
   },
