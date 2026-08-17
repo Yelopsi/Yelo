@@ -1,7 +1,7 @@
 async function initHealthDashboard() {
     console.log("=== STARTING HEALTH DASHBOARD INITIALIZATION ===");
     try {
-        const token = localStorage.getItem('yelo_admin_token');
+        const token = localStorage.getItem('Yelo_token');
         if (!token) {
             console.error("Token não encontrado!");
             return;
