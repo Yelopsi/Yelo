@@ -646,44 +646,44 @@ exports.getCompanyHealthDashboard = async (req, res) => {
 
         // 3. Heuristic: Invest Recommendation
         let investRecommendation = 'MANTER';
-        let investReason = 'Sem dados de gastos em Ads suficientes no mês para calcular o Payback seguro.';
+        let investReason = 'Sem dados de gastos em Ads suficientes no mês para calcular o Payback seguro. Ação: Configure a importação de dados de Marketing.';
         
         if (unitEconomics.payback > 0 && unitEconomics.payback <= 3 && unitEconomics.hasMarketingSpend) {
             investRecommendation = 'AUMENTAR';
-            investReason = `Acelere os anúncios! O CAC Payback está excelente (${unitEconomics.payback.toFixed(1)} meses), trazendo retorno rápido.`;
+            investReason = `Acelere os anúncios! O CAC Payback está excelente (${unitEconomics.payback.toFixed(1)} meses). Ação: Dobre o orçamento da sua melhor campanha.`;
         } else if (unitEconomics.payback > 6 && unitEconomics.hasMarketingSpend) {
             investRecommendation = 'REDUZIR';
-            investReason = `Pause ou otimize as campanhas. O CAC de R$ ${unitEconomics.cac} demora ${unitEconomics.payback.toFixed(1)} meses para se pagar.`;
+            investReason = `O CAC de R$ ${unitEconomics.cac} demora ${unitEconomics.payback.toFixed(1)} meses para se pagar. Ação: Pause campanhas ruins e revise público/criativos.`;
         } else if (unitEconomics.payback > 3 && unitEconomics.payback <= 6 && unitEconomics.hasMarketingSpend) {
             investRecommendation = 'MANTER';
-            investReason = `Retorno em ${unitEconomics.payback.toFixed(1)} meses. Mantenha as campanhas, mas busque otimizar conversão.`;
+            investReason = `Retorno em ${unitEconomics.payback.toFixed(1)} meses. Ação: Mantenha o orçamento e faça testes A/B na Landing Page para reduzir o CAC.`;
         }
 
         // 4. Heuristic: Bottleneck
         let bottleneck = 'Atração (Topo de Funil)';
-        let bottleneckReason = 'Crescimento orgânico e retenção estão bem, falta volume de novos leads.';
+        let bottleneckReason = 'Retenção e conversão estão boas, mas falta volume. Ação: Escale o tráfego pago e feche novas parcerias de conteúdo.';
         
         if (unitEconomics.novosPagantes === 0 && unitEconomics.hasMarketingSpend) {
             bottleneck = 'Conversão de Vendas';
-            bottleneckReason = 'Você atrai leads, mas eles não se tornam assinantes pagantes.';
+            bottleneckReason = 'Você atrai leads, mas não assinam. Ação: Reduza a fricção no checkout e ofereça uma garantia forte ou trial guiado.';
         } else if (overview.taxaChurnPagantes > 10.0) {
             bottleneck = 'Retenção (Churn Alto)';
-            bottleneckReason = `O balde está furado: a evasão de ${overview.taxaChurnPagantes.toFixed(1)}% está anulando suas vendas.`;
+            bottleneckReason = `A evasão de ${overview.taxaChurnPagantes.toFixed(1)}% anula as vendas. Ação: Melhore o onboarding e fale com os últimos 5 clientes que cancelaram.`;
         }
 
         // 5. Heuristic: Company Health
         let companyHealth = 'ATENÇÃO';
-        let companyHealthReason = `Atenção: Com MRR atual de R$ ${overview.mrrTotal} e Churn de ${overview.taxaChurnPagantes.toFixed(1)}%, monitore de perto os cancelamentos.`;
+        let companyHealthReason = `MRR de R$ ${overview.mrrTotal} e Churn de ${overview.taxaChurnPagantes.toFixed(1)}%. Ação: Foco em reengajar usuários inativos para evitar cancelamentos.`;
         
         if (pagamentosMes >= 70 && overview.taxaChurnPagantes < 8.0) {
             companyHealth = 'SAUDÁVEL';
-            companyHealthReason = `Excelente! O modelo está previsível, com MRR sólido e Churn controlado em ${overview.taxaChurnPagantes.toFixed(1)}%.`;
+            companyHealthReason = `MRR sólido e Churn controlado (${overview.taxaChurnPagantes.toFixed(1)}%). Ação: Máquina validada. Foque 100% em expandir os canais de aquisição.`;
         } else if (overview.taxaChurnPagantes > 15.0 || overview.mrrTotal < 1000) {
             companyHealth = 'PROBLEMA';
-            companyHealthReason = `Alerta Vermelho! ${overview.taxaChurnPagantes > 15.0 ? 'A evasão de clientes está destruindo a base.' : 'A receita está muito baixa para sustentar a operação.'}`;
+            companyHealthReason = `Alerta Vermelho! ${overview.taxaChurnPagantes > 15.0 ? 'A evasão está destruindo a base.' : 'A receita está muito baixa.'} Ação: Pare a máquina de vendas e conserte o produto base primeiro.`;
         } else if (pagamentosMes >= 20 && overview.taxaChurnPagantes <= 10.0) {
             companyHealth = 'SAUDÁVEL';
-            companyHealthReason = `Boa tração. O negócio validou receita e mantém a perda em níveis aceitáveis.`;
+            companyHealthReason = `Boa tração. O negócio validou receita. Ação: Aumente gradualmente o orçamento de Ads para crescer a base mais rápido.`;
         }
 
         // 6. Projections
