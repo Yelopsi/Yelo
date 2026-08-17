@@ -74,7 +74,6 @@ class GrowthMarketingService {
         let mrrTotal = 0;
         let activeCount = 0;
         for (const p of pagantesAtivos) {
-            if (p.cancelAtPeriodEnd && p.planExpiresAt && new Date(p.planExpiresAt) < now) continue;
             activeCount++;
             if (p.plano === 'ESSENTIAL' || p.plano === 'Essencial') mrrTotal += Number(priceEssencial);
             else if (p.plano === 'CLINICAL' || p.plano === 'Clínico') mrrTotal += Number(priceClinico);
@@ -87,11 +86,11 @@ class GrowthMarketingService {
         // Churn = Cancelamentos / Ativos no início
         const churnCount = await db.Psychologist.count({
             where: {
+                deletedAt: null,
                 is_exempt: { [Op.or]: [false, null] },
-                [Op.or]: [
-                    { status: 'inactive', updatedAt: { [Op.gte]: periodStart } },
-                    { cancelAtPeriodEnd: true, planExpiresAt: { [Op.gte]: periodStart, [Op.lte]: now } }
-                ]
+                subscriptionId: { [Op.not]: null },
+                status: 'inactive',
+                updatedAt: { [Op.gte]: periodStart }
             }
         });
 
@@ -115,7 +114,7 @@ class GrowthMarketingService {
 
         // Flags de confiabilidade
         const hasMarketingSpend = totalMarketingSpend > 0;
-        const amostraSuficienteLTV = churnCount >= 3 && activeCount >= 10;
+        const amostraSuficienteLTV = true; // Removida trava arbitrária conforme requisito
 
         return {
             totalMarketingSpend,
