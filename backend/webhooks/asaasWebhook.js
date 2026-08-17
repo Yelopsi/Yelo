@@ -19,8 +19,14 @@ exports.handleWebhook = async (req, res) => {
     }
 
     // --- ZERO TRUST: Validação de Payload ---
-    if (!event || !event.payment || !event.payment.id || !event.event) {
+    if (!event || !event.event) {
         return res.status(400).json({ error: 'Payload de webhook inválido ou incompleto.' });
+    }
+    
+    // Pix Automático retries could use paymentInstruction or payment
+    const paymentData = event.payment || event.paymentInstruction;
+    if (!paymentData || !paymentData.id) {
+        return res.status(400).json({ error: 'Objeto payment ou paymentInstruction ausente.' });
     }
 
     const eventId = event.id;

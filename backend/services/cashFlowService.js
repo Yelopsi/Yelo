@@ -117,6 +117,63 @@ class CashFlowService {
             throw error;
         }
     }
+    async getAsaasMRR() {
+        const fetch = require('node-fetch');
+        try {
+            const ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/api/v3';
+            const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
+            
+            let allSubscriptions = [];
+            let offset = 0;
+            const limit = 100;
+            let hasMore = true;
+
+            while (hasMore) {
+                const res = await fetch(`${ASAAS_API_URL}/subscriptions?limit=${limit}&offset=${offset}&status=ACTIVE`, {
+                    headers: { 'access_token': ASAAS_API_KEY }
+                });
+                const data = await res.json();
+                if (data && data.data) {
+                    allSubscriptions = allSubscriptions.concat(data.data);
+                    hasMore = data.hasMore;
+                    offset += limit;
+                } else {
+                    hasMore = false;
+                }
+            }
+            
+            let overdueSubscriptions = new Set();
+            let offsetOverdue = 0;
+            let hasMoreOverdue = true;
+
+            while (hasMoreOverdue) {
+                const res = await fetch(`${ASAAS_API_URL}/payments?status=OVERDUE&limit=100&offset=${offsetOverdue}`, {
+                    headers: { 'access_token': ASAAS_API_KEY }
+                });
+                const data = await res.json();
+                if (data && data.data) {
+                    data.data.forEach(p => {
+                        if (p.subscription) overdueSubscriptions.add(p.subscription);
+                    });
+                    hasMoreOverdue = data.hasMore;
+                    offsetOverdue += 100;
+                } else {
+                    hasMoreOverdue = false;
+                }
+            }
+            
+            let mrr = 0;
+            allSubscriptions.forEach(sub => {
+                if (!overdueSubscriptions.has(sub.id)) {
+                    mrr += sub.value;
+                }
+            });
+            return mrr;
+        } catch (error) {
+            console.error("Erro ao buscar MRR no Asaas:", error);
+            return 0;
+        }
+    }
 }
 
 module.exports = new CashFlowService();

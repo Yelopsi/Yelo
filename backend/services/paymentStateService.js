@@ -7,6 +7,11 @@ class PaymentStateService {
      * Processa um evento assíncrono do Asaas e projeta as mudanças no estado financeiro
      */
     static async processAsaasEvent(event) {
+        if (event && event.event === 'PIX_AUTOMATIC_RECURRING_PAYMENT_INSTRUCTION_REFUSED') {
+            await this.processPixAutomaticRefused(event);
+            return;
+        }
+
         if (!event || !event.payment || !event.payment.id) {
             throw new Error('Payload do evento inválido ou ausente.');
         }
@@ -158,6 +163,56 @@ class PaymentStateService {
         if (negativeEvents.includes(event.event) || 
            (event.event === 'PAYMENT_UPDATED' && ['REFUNDED', 'REFUND_IN_PROGRESS'].includes(payment.status))) {
             await this.processPaymentFailure(psi, payment, event.event);
+        }
+    }
+
+    static async processPixAutomaticRefused(event) {
+        const instruction = event.paymentInstruction || event.payment;
+        if (!instruction || !instruction.id) return;
+
+        const attempt = instruction.retryAttempt || 0; 
+        
+        // Se já for a tentativa 3 (já esgotou a política 3R), não faz nada. 
+        if (attempt >= 3) {
+            console.log(`[ASAAS] Pix Automático: Retentativas esgotadas (Tentativa ${attempt}). A cobrança pai permanecerá OVERDUE.`);
+            return;
+        }
+
+        // Calcula a nova dueDate
+        const now = new Date();
+        let daysToAdd = 1;
+        if (attempt === 0) daysToAdd = 1;      // Falha original -> Tenta D+1
+        else if (attempt === 1) daysToAdd = 2; // Falha T1 -> Tenta em +2 dias (D+3 no total)
+        else if (attempt === 2) daysToAdd = 2; // Falha T2 -> Tenta em +2 dias (D+5 no total)
+
+        const nextRetryDate = new Date(now.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
+        const dueDateStr = nextRetryDate.toISOString().split('T')[0];
+
+        try {
+            console.log(`[ASAAS] Pix Automático: Agendando retentativa ${attempt + 1} para instrução ${instruction.id} na data ${dueDateStr}`);
+            
+            let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
+            ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, '');
+            if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
+                ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
+            }
+            const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
+
+            const fetch = require('node-fetch');
+            const res = await fetch(`${ASAAS_API_URL}/pix/automatic/paymentInstructions/${instruction.id}/retries`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                body: JSON.stringify({ dueDate: dueDateStr })
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                console.error(`[ASAAS] Erro ao agendar retentativa de Pix Automático:`, err);
+            } else {
+                console.log(`[ASAAS] Retentativa de Pix Automático agendada com sucesso.`);
+            }
+        } catch (e) {
+            console.error(`[ASAAS] Exceção ao agendar retentativa de Pix Automático:`, e);
         }
     }
 

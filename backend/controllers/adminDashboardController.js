@@ -258,13 +258,20 @@ exports.getDetailedReports = async (req, res) => {
                 'essential': 99.00, 'clinical': 159.00, 'reference': 259.00,
                 'essencial': 99.00, 'clínico': 159.00, 'sol': 259.00 
             };
-            const mrr = activePsychologists.reduce((acc, psy) => {
+            const cashFlowService = require('../services/cashFlowService');
+            const asaasMRR = await cashFlowService.getAsaasMRR();
+            
+            let mrr = activePsychologists.reduce((acc, psy) => {
                 if (psy.is_exempt) return acc;
                 const hasSub = !!(psy.subscriptionId);
                 if (!hasSub) return acc;
                 const planoKey = (psy.plano || '').toLowerCase();
                 return acc + (planPrices[planoKey] || 0);
             }, 0);
+            
+            if (asaasMRR > 0) {
+                mrr = asaasMRR;
+            }
 
             const payingCondition = {
                 subscriptionId: { [Op.ne]: null }
@@ -524,8 +531,11 @@ exports.getFinancials = async (req, res) => {
 
         const metrics = await MetricsService.getMetrics(start, end);
         const prevMetrics = await MetricsService.getMetrics(prevStart, prevEnd);
+        
+        const cashFlowService = require('../services/cashFlowService');
+        const asaasMRR = await cashFlowService.getAsaasMRR();
 
-        const mrr = metrics.mrrTotal;
+        const mrr = asaasMRR > 0 ? asaasMRR : metrics.mrrTotal;
         const prevMrr = prevMetrics.mrrTotal;
         const paidChurnRate = metrics.weightedChurnRate;
         const prevPaidChurnRate = prevMetrics.weightedChurnRate;

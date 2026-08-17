@@ -201,6 +201,7 @@ exports.createPreference = async (req, res) => {
                 cycle: 'MONTHLY',
                 description: `Assinatura Yelo - Plano ${planType}`,
                 externalReference: String(psychologistId),
+                retryPolicy: 'ALLOW_THREE_IN_SEVEN_DAYS',
             };
         } else {
             let expiryMonth = '', expiryYear = '';
