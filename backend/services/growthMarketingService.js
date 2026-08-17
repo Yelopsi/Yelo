@@ -39,7 +39,8 @@ class GrowthMarketingService {
                 is_exempt: { [Op.or]: [false, null] },
                 subscriptionId: { [Op.not]: null },
                 updatedAt: { [Op.gte]: periodStart }
-            }
+            },
+            paranoid: false
         });
 
         // Como YeloExpense não tem atribuição clara (B2B vs B2C), adotamos postura conservadora
@@ -58,7 +59,8 @@ class GrowthMarketingService {
                 ...activeFilter,
                 subscriptionId: { [Op.not]: null }
             },
-            attributes: ['id', 'valor_mensal_numero', 'plano', 'planExpiresAt', 'cancelAtPeriodEnd']
+            attributes: ['id', 'valor_mensal_numero', 'plano', 'planExpiresAt', 'cancelAtPeriodEnd'],
+            paranoid: false
         });
 
         let settings = {};
@@ -86,12 +88,12 @@ class GrowthMarketingService {
         // Churn = Cancelamentos / Ativos no início
         const churnCount = await db.Psychologist.count({
             where: {
-                deletedAt: null,
                 is_exempt: { [Op.or]: [false, null] },
                 subscriptionId: { [Op.not]: null },
                 status: 'inactive',
                 updatedAt: { [Op.gte]: periodStart }
-            }
+            },
+            paranoid: false
         });
 
         let c_inicio = activeCount + churnCount - novosPagantes;

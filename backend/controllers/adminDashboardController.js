@@ -241,7 +241,7 @@ exports.getDetailedReports = async (req, res) => {
                 }, 
                 attributes: ['plano', 'is_exempt', 'subscriptionId'] 
             }),
-            db.Psychologist.count({ where: { status: 'inactive', updatedAt: { [Op.between]: [startDate, endDate] } } }),
+            db.Psychologist.count({ where: { status: 'inactive', updatedAt: { [Op.between]: [startDate, endDate] } }, paranoid: false }),
             db.sequelize.query(`SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, "guestName", "id"::varchar)) as count FROM "WhatsAppClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: startDate, end: endDate }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
             db.sequelize.query(`SELECT COUNT(*) as count FROM "SiteVisits" WHERE "createdAt" >= NOW() - INTERVAL '24 hours'`, { type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
             db.sequelize.query(`SELECT feature, COUNT(*) as count FROM "FeatureTrackingLogs" GROUP BY feature ORDER BY count DESC`).catch(() => [[
@@ -501,7 +501,8 @@ exports.getFinancials = async (req, res) => {
 
         const activePsychologists = await db.Psychologist.findAll({
             where: { plano: { [Op.ne]: null }, status: 'active' },
-            attributes: ['id', 'nome', 'plano', 'updatedAt', 'is_exempt', 'planExpiresAt', 'subscriptionId', 'createdAt', 'subscription_payments_count'] 
+            attributes: ['id', 'nome', 'plano', 'updatedAt', 'is_exempt', 'planExpiresAt', 'subscriptionId', 'createdAt', 'subscription_payments_count'],
+            paranoid: false
         });
 
         const mrr = activePsychologists.reduce((acc, psy) => {
@@ -547,41 +548,49 @@ exports.getFinancials = async (req, res) => {
         // Paid Period Data
         const paidChurnedUsers = await db.Psychologist.findAll({
             where: { status: 'inactive', updatedAt: dateCondition, ...payingCondition },
-            attributes: ['updatedAt']
+            attributes: ['updatedAt'],
+            paranoid: false
         });
         const paidChurnedCount = paidChurnedUsers.length;
         
         const paidNewUsers = await db.Psychologist.findAll({
             where: { status: 'active', createdAt: dateCondition, ...payingCondition },
-            attributes: ['createdAt']
+            attributes: ['createdAt'],
+            paranoid: false
         });
         const paidNewCount = paidNewUsers.length;
 
         // Trial Period Data
         const trialChurnedUsers = await db.Psychologist.findAll({
             where: { status: 'inactive', updatedAt: dateCondition, ...trialCondition },
-            attributes: ['updatedAt']
+            attributes: ['updatedAt'],
+            paranoid: false
         });
         const trialChurnedCount = trialChurnedUsers.length;
         
         const trialNewUsers = await db.Psychologist.findAll({
             where: { status: 'active', createdAt: dateCondition, ...trialCondition },
-            attributes: ['createdAt']
+            attributes: ['createdAt'],
+            paranoid: false
         });
         const trialNewCount = trialNewUsers.length;
 
         // Previous Period Data
         const prevPaidChurnedCount = await db.Psychologist.count({
-            where: { status: 'inactive', updatedAt: prevDateCondition, ...payingCondition }
+            where: { status: 'inactive', updatedAt: prevDateCondition, ...payingCondition },
+            paranoid: false
         });
         const prevPaidNewCount = await db.Psychologist.count({
-            where: { status: 'active', createdAt: prevDateCondition, ...payingCondition }
+            where: { status: 'active', createdAt: prevDateCondition, ...payingCondition },
+            paranoid: false
         });
         const prevTrialChurnedCount = await db.Psychologist.count({
-            where: { status: 'inactive', updatedAt: prevDateCondition, ...trialCondition }
+            where: { status: 'inactive', updatedAt: prevDateCondition, ...trialCondition },
+            paranoid: false
         });
         const prevTrialNewCount = await db.Psychologist.count({
-            where: { status: 'active', createdAt: prevDateCondition, ...trialCondition }
+            where: { status: 'active', createdAt: prevDateCondition, ...trialCondition },
+            paranoid: false
         });
 
         const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !!(psy.subscriptionId)).length;
