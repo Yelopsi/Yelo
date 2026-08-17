@@ -7,8 +7,8 @@ async function initHealthDashboard() {
             return;
         }
 
-        console.log("Fetching /api/admin/growth/health...");
-        const response = await fetch('/api/admin/growth/health', {
+        console.log("Fetching /api/admin/analytics/growth/health...");
+        const response = await fetch('/api/admin/analytics/growth/health', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
