@@ -346,7 +346,7 @@
 
                 <!-- 5. RETENÇÃO -->
                 <div class="stat-card" style="border-left: 4px solid #ef4444;">
-                    <div class="stat-card-title">Retenção (Churn)</div>
+                    <div class="stat-card-title">Retenção (Churn Financeiro)</div>
                     <div class="stat-card-value" style="color: #ef4444;" id="g-churn-pagantes-main">0</div>
                     <div class="stat-card-sub" style="margin-top: 8px;">
                         <span id="g-churn-rate" style="font-weight: 700;">0%</span> da base <br>
@@ -570,14 +570,24 @@
                     <div class="stat-card-sub">Gasto total sem atribuição</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-card-title">LTV Estimado <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Lifetime Value: ARPU / Churn Rate.</span></span></div>
+                    <div class="stat-card-title">LTV Projetado <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">Lifetime Value Projetado: ARPU / Taxa de Churn Média Mensal.</span></span></div>
                     <div class="stat-card-value" style="color: #8b5cf6;" id="g-ltv">N/D</div>
                     <div class="stat-card-sub" id="g-ltv-warn" style="font-size: 0.75rem; color:#f59e0b;"></div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-card-title">Payback</div>
+                    <div class="stat-card-title">LTV Observado <span class="yelo-tooltip">ⓘ<span class="yelo-tooltip-content">LTV Real: Receita recebida de psicólogos que já cancelaram (histórico completo).</span></span></div>
+                    <div class="stat-card-value" style="color: #10b981;" id="g-ltv-observado">N/D</div>
+                    <div class="stat-card-sub" id="g-ltv-obs-warn" style="font-size: 0.75rem; color:#64748b;"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">Payback Projetado</div>
                     <div class="stat-card-value" id="g-payback">N/D</div>
-                    <div class="stat-card-sub" style="font-size:0.75rem;">CAC atribuível insuficiente</div>
+                    <div class="stat-card-sub" style="font-size:0.75rem;" id="g-payback-warn">CAC atribuível insuficiente</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">Confiabilidade Estatística</div>
+                    <div class="stat-card-value" style="font-size: 1rem; color: #475569;" id="g-sample-size">Amostra: 0 clientes</div>
+                    <div class="stat-card-sub" style="font-size: 0.75rem;" id="g-sample-unknowns">0 sem data de início</div>
                 </div>
             </div>
             </div>

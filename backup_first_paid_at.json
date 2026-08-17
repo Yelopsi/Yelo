@@ -1,0 +1,26 @@
+[
+  {
+    "psychologistId": 127,
+    "firstPaidAt": null,
+    "lifetimeRevenue": 0,
+    "timestamp": "2026-08-17T18:01:00.435Z"
+  },
+  {
+    "psychologistId": 160,
+    "firstPaidAt": null,
+    "lifetimeRevenue": 0,
+    "timestamp": "2026-08-17T18:01:00.435Z"
+  },
+  {
+    "psychologistId": 195,
+    "firstPaidAt": null,
+    "lifetimeRevenue": 0,
+    "timestamp": "2026-08-17T18:01:00.435Z"
+  },
+  {
+    "psychologistId": 218,
+    "firstPaidAt": null,
+    "lifetimeRevenue": 0,
+    "timestamp": "2026-08-17T18:01:00.435Z"
+  }
+]

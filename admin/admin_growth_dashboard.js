@@ -153,16 +153,40 @@ window.loadGrowthData = async function() {
             document.getElementById('g-cac-b2c').innerText = 'N/D';
             document.getElementById('g-marketing-na').innerText = formatBRL(d.marketingNaoAtribuido || d.totalMarketingSpend);
             
-            document.getElementById('g-payback').innerText = 'N/D';
-            
-            if (d.amostraSuficienteLTV && d.ltv > 0) {
-                document.getElementById('g-ltv').innerText = formatBRL(d.ltv);
+            // LTV Projetado
+            if (d.ltvProjetado > 0) {
+                document.getElementById('g-ltv').innerText = formatBRL(d.ltvProjetado);
                 document.getElementById('g-ltv').style.color = '#8b5cf6';
-                document.getElementById('g-ltv-warn').innerText = '';
+                if (d.amostraSuficienteLTV) {
+                    document.getElementById('g-ltv-warn').innerText = `Taxa: ${(d.weightedChurnRate*100).toFixed(1)}%`;
+                } else {
+                    document.getElementById('g-ltv-warn').innerText = `Exposição baixa (${d.sampleData?.somaBaseInicial || 0} meses-cliente). Instável.`;
+                }
             } else {
-                document.getElementById('g-ltv').innerText = d.ltv > 0 ? formatBRL(d.ltv) : 'N/D';
+                document.getElementById('g-ltv').innerText = 'N/D';
                 document.getElementById('g-ltv').style.color = '#94a3b8';
                 document.getElementById('g-ltv-warn').innerText = 'LTV estimado — baixa confiança';
+            }
+
+            // LTV Observado
+            if (d.ltvObservado > 0) {
+                document.getElementById('g-ltv-observado').innerText = formatBRL(d.ltvObservado);
+            } else {
+                document.getElementById('g-ltv-observado').innerText = 'N/D';
+            }
+            if (d.sampleData) {
+                document.getElementById('g-ltv-obs-warn').innerText = `Baseado em ${d.sampleData.totalHistoricalPaidChurned} pagantes encerrados`;
+                document.getElementById('g-sample-size').innerText = `Amostra: ${d.sampleData.totalCustomersAnalyzed} clientes`;
+                document.getElementById('g-sample-unknowns').innerText = `${d.sampleData.unknowns} sem data de início (Unknowns)`;
+            }
+
+            // Payback
+            if (d.payback && d.payback > 0) {
+                document.getElementById('g-payback').innerText = `${d.payback.toFixed(1)} meses`;
+                document.getElementById('g-payback-warn').innerText = '';
+            } else {
+                document.getElementById('g-payback').innerText = 'N/D';
+                document.getElementById('g-payback-warn').innerText = 'CAC atribuível insuficiente';
             }
         }
 

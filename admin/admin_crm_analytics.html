@@ -290,7 +290,7 @@
                 <div>
                     <div class="kpi-header" data-tooltip="Taxa de cancelamento de clientes pagantes no período">
                         <div class="kpi-icon" style="background: #fee2e2; color: #dc2626;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20M12 2v20"></path><path d="M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"></path></svg></div>
-                        Churn (Pagantes)
+                        Churn Financeiro (Pagantes)
                     </div>
                     <div class="kpi-value" id="kpi-paid-churn">--</div>
                     <div class="kpi-meta">
@@ -305,7 +305,7 @@
                 <div>
                     <div class="kpi-header" data-tooltip="Taxa de abandono durante o período de testes (Trial)">
                         <div class="kpi-icon" style="background: #ffedd5; color: #ea580c;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path><path d="M2 2l20 20"></path></svg></div>
-                        Churn (Trial)
+                        Cancelamentos de Trial
                     </div>
                     <div class="kpi-value" id="kpi-trial-churn">--</div>
                     <div class="kpi-meta">
@@ -316,16 +316,36 @@
                 <div class="sparkline-container" id="spark-trial-churn"></div>
             </div>
 
+            <div class="saas-kpi-card" id="card-inadimplencia">
+                <div>
+                    <div class="kpi-header" data-tooltip="Assinantes com histórico de pagamento, mas que perderam o status devido à inadimplência/expiração.">
+                        <div class="kpi-icon" style="background: #fef08a; color: #a16207;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg></div>
+                        Inadimplência
+                    </div>
+                    <div class="kpi-value" id="kpi-inadimplentes">--</div>
+                    <div class="kpi-meta">
+                        <span class="kpi-trend trend-neutral" id="trend-inadimplentes">--</span>
+                        <span class="kpi-compare">mês anterior</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="saas-kpi-card" id="card-ltv">
                 <div>
-                    <div class="kpi-header" data-tooltip="Lifetime Value (Valor vitalício estimado do cliente)">
+                    <div class="kpi-header" data-tooltip="Lifetime Value (Projeção matemática vs Observado real na base)">
                         <div class="kpi-icon" style="background: #ede9fe; color: #7c3aed;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
-                        LTV
+                        LTV (Projetado)
                     </div>
-                    <div class="kpi-value" id="kpi-ltv">--</div>
-                    <div class="kpi-meta">
-                        <span class="kpi-trend trend-neutral" id="trend-ltv">--</span>
-                        <span class="kpi-compare">mês anterior</span>
+                    <div class="kpi-value" id="kpi-ltv" style="color: #8b5cf6;">--</div>
+                    <div class="kpi-meta" style="display: flex; flex-direction: column; gap: 4px; margin-top: 8px;">
+                        <div>
+                            <span class="kpi-trend trend-neutral" id="trend-ltv">--</span>
+                            <span class="kpi-compare">mês anterior</span>
+                        </div>
+                        <div style="font-size: 0.75rem; color: #64748b;">
+                            Obs: <span id="kpi-ltv-observado" style="font-weight: 600; color: #10b981;">--</span>
+                        </div>
+                        <div style="font-size: 0.7rem; color: #94a3b8;" id="kpi-sample-info">--</div>
                     </div>
                 </div>
                 <div class="sparkline-container" id="spark-users"></div>

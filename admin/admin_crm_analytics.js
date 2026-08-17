@@ -106,22 +106,36 @@ window.initializePage = function() {
                     if (dataFin.kpis) {
                         const formatBRL = (v) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`;
                         const formatPerc = (v) => `${v.toFixed(1)}%`;
+                        const formatNum = (v) => `${v} usuários`;
                         
                         // Update KPIs with variations
                         updateKpiCard('mrr', dataFin.kpis.mrr.current, dataFin.kpis.mrr.previous, formatBRL);
                         updateKpiCard('paid-churn', dataFin.kpis.paidChurnRate.current, dataFin.kpis.paidChurnRate.previous, formatPerc, true); // inverted: lower is better
-                        updateKpiCard('trial-churn', dataFin.kpis.trialChurnRate.current, dataFin.kpis.trialChurnRate.previous, formatPerc, true); // inverted: lower is better
+                        updateKpiCard('trial-churn', dataFin.kpis.trialChurnCount.current, dataFin.kpis.trialChurnCount.previous, formatNum, true); // inverted: lower is better
                         
-                        if (dataFin.kpis.ltv.current > 0) {
-                            updateKpiCard('ltv', dataFin.kpis.ltv.current, dataFin.kpis.ltv.previous, formatBRL);
+                        if (dataFin.kpis.inadimplentesCount) {
+                            updateKpiCard('inadimplentes', dataFin.kpis.inadimplentesCount.current, dataFin.kpis.inadimplentesCount.previous, formatNum, true);
+                        }
+
+                        if (dataFin.kpis.ltv.projected > 0) {
+                            updateKpiCard('ltv', dataFin.kpis.ltv.projected, dataFin.kpis.ltv.previous, formatBRL);
                         } else {
                             document.getElementById('kpi-ltv').innerText = 'N/D';
-                            document.getElementById('kpi-ltv').title = 'Dados insuficientes (mín. 10 assinantes e 3 cancelamentos)';
+                            document.getElementById('kpi-ltv').title = 'Dados insuficientes';
                             const trendEl = document.getElementById('trend-ltv');
                             if(trendEl) {
                                 trendEl.innerText = '-';
                                 trendEl.className = 'kpi-trend trend-neutral';
                             }
+                        }
+                        
+                        const obsEl = document.getElementById('kpi-ltv-observado');
+                        if (obsEl) {
+                            obsEl.innerText = dataFin.kpis.ltv.current > 0 ? formatBRL(dataFin.kpis.ltv.current) : 'R$ 0';
+                        }
+                        const sampleEl = document.getElementById('kpi-sample-info');
+                        if (sampleEl) {
+                            sampleEl.innerText = dataFin.kpis.cacPayback?.current ? `Payback: ${dataFin.kpis.cacPayback.current.toFixed(1)} meses` : '';
                         }
                         
                         updateKpiCard('arpu', dataFin.kpis.arpu.current, dataFin.kpis.arpu.previous, formatBRL);

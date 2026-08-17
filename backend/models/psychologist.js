@@ -232,6 +232,28 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       comment: 'Data exata em que o psicólogo realizou a assinatura (conversão)'
     },
+    // --- TIMELINE METRICS (LTV/CHURN) ---
+    firstPaidAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: 'Primeiro pagamento. O começo real da vida pagante do cliente.'
+    },
+    canceledAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: 'Data efetiva em que o usuário parou de pagar.'
+    },
+    reactivatedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: 'Se um usuário que cancelou voltar a pagar, esta é a data.'
+    },
+    lifetimeRevenue: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+      defaultValue: 0,
+      comment: 'Receita total historicamente gerada pelo cliente.'
+    },
     // --- FIM CONTROLE DE ASSINATURA ---
     // --- CAMPOS NOVOS (Do Questionário) ---
     // (Os campos 'abordagem', 'especialidades', 'cidade', 'online' foram removidos)

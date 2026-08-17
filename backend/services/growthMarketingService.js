@@ -32,100 +32,32 @@ class GrowthMarketingService {
             }
         }
 
-        // 2. CAC (Customer Acquisition Cost)
-        // Precisamos dos novos pagantes no período
-        const novosPagantes = await db.Psychologist.count({
-            where: {
-                is_exempt: { [Op.or]: [false, null] },
-                [Op.or]: [
-                    { subscriptionId: { [Op.not]: null } },
-                    { subscription_payments_count: { [Op.gt]: 0 } }
-                ],
-                updatedAt: { [Op.gte]: periodStart }
-            },
-            paranoid: false
-        });
-
-        // Como YeloExpense não tem atribuição clara (B2B vs B2C), adotamos postura conservadora
+        // 2. Import and call MetricsService for all growth metrics
+        const MetricsService = require('./metricsService');
+        const metrics = await MetricsService.getMetrics(periodStart, periodEnd);
+        
+        const novosPagantes = metrics.novosCount;
+        
+        // 3. CAC & Payback (Conservative / Not fully attributed yet)
         const cac = null; // N/D
         const cacDemanda = null; // N/D
         const marketingNaoAtribuido = totalMarketingSpend;
+        let payback = metrics.cacPaybackMonths;
 
-        // 3. ARPU (Average Revenue Per User) e MRR Atual
-        const activeFilter = {
-            status: 'active',
-            is_exempt: { [Op.or]: [false, null] }
-        };
-
-        const pagantesAtivos = await db.Psychologist.findAll({
-            where: {
-                ...activeFilter,
-                [Op.or]: [
-                    { subscriptionId: { [Op.not]: null } },
-                    { subscription_payments_count: { [Op.gt]: 0 } }
-                ]
-            },
-            attributes: ['id', 'valor_mensal_numero', 'plano', 'planExpiresAt', 'cancelAtPeriodEnd'],
-            paranoid: false
-        });
-
-        let settings = {};
-        try {
-            settings = await db.SystemSetting.findOne() || {};
-        } catch(e) {
-            console.warn('⚠️ SystemSetting findOne failed, using default prices');
-        }
-        const priceEssencial = settings.price_Essencial > 0 ? settings.price_Essencial : 99.00;
-        const priceClinico = settings.price_Clínico > 0 ? settings.price_Clínico : 159.00;
-        const priceReference = settings.price_sol > 0 ? settings.price_sol : 259.00;
-
-        let mrrTotal = 0;
-        let activeCount = 0;
-        for (const p of pagantesAtivos) {
-            activeCount++;
-            if (p.plano === 'ESSENTIAL' || p.plano === 'Essencial') mrrTotal += Number(priceEssencial);
-            else if (p.plano === 'CLINICAL' || p.plano === 'Clínico') mrrTotal += Number(priceClinico);
-            else if (p.plano === 'REFERENCE' || p.plano === 'Sol' || p.plano === 'SOL') mrrTotal += Number(priceReference);
-        }
-
-        const arpu = activeCount > 0 ? mrrTotal / activeCount : 0;
-
-        // 4. LTV (Lifetime Value)
-        // Churn = Cancelamentos / Ativos no início
-        const churnCount = await db.Psychologist.count({
-            where: {
-                is_exempt: { [Op.or]: [false, null] },
-                [Op.or]: [
-                    { subscriptionId: { [Op.not]: null } },
-                    { subscription_payments_count: { [Op.gt]: 0 } }
-                ],
-                status: 'inactive',
-                updatedAt: { [Op.gte]: periodStart }
-            },
-            paranoid: false
-        });
-
-        let c_inicio = activeCount + churnCount - novosPagantes;
-        if (c_inicio < 0) c_inicio = 0;
-
-        let churnRate = 0;
-        if (c_inicio > 0) {
-            churnRate = churnCount / c_inicio;
-        } else if (churnCount > 0) {
-            churnRate = 1;
-        }
-
-        const ticketMedio = arpu > 0 ? arpu : 99.00;
-        const lifetime = churnRate > 0 ? 1 / churnRate : 60; // 60 months max if no churn
-        const ltv = ticketMedio * lifetime;
-
-        // 5. Payback (Meses para recuperar CAC)
-        // Como o CAC é inatribuível, o payback também é N/D
-        let payback = null;
+        // 4. LTV, MRR, ARPU & Churn
+        const mrrTotal = metrics.mrrTotal;
+        const arpu = metrics.arpu;
+        const churnRate = metrics.churnRateMedioMensal / 100;
+        const weightedChurnRate = metrics.weightedChurnRate / 100;
+        const paidChurnCount = metrics.paidChurnCount;
+        const trialChurnCount = metrics.trialChurnCount;
+        const ltvObservado = metrics.ltvObservado;
+        const ltvProjetado = metrics.ltvProjetado;
+        const sampleData = metrics.sampleData;
 
         // Flags de confiabilidade
         const hasMarketingSpend = totalMarketingSpend > 0;
-        const amostraSuficienteLTV = true; // Removida trava arbitrária conforme requisito
+        const amostraSuficienteLTV = sampleData && sampleData.somaBaseInicial > 30; // Min exposure threshold
 
         return {
             totalMarketingSpend,
@@ -137,11 +69,15 @@ class GrowthMarketingService {
             mrrTotal,
             arpu,
             churnRate,
-            ltv,
+            weightedChurnRate,
+            paidChurnCount,
+            trialChurnCount,
+            ltvObservado,
+            ltvProjetado,
             payback,
-            periodDays,
             hasMarketingSpend,
-            amostraSuficienteLTV
+            amostraSuficienteLTV,
+            sampleData
         };
     }
 }
