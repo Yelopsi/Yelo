@@ -89,5 +89,6 @@ function renderDashboard(dashboard) {
     if(document.getElementById('kpi-payback')) document.getElementById('kpi-payback').textContent = dashboard.cacPayback;
 }
 
-// Inicia ao carregar o script
-setTimeout(initHealthDashboard, 100);
+window.initializePage = function() {
+    initHealthDashboard();
+};
