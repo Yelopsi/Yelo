@@ -486,7 +486,6 @@ exports.getNewUsersPerMonth = async (req, res) => {
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };
-
 /**
  * Rota: GET /api/admin/financials
  * Descrição: Busca dados financeiros para o dashboard.
@@ -494,6 +493,7 @@ exports.getNewUsersPerMonth = async (req, res) => {
 exports.getFinancials = async (req, res) => {
     try {
         const { Op } = require('sequelize'); // Ensure Op is available if not globally scoped
+        const { startDate, endDate } = req.query; // capture query params
         const planPrices = { 
             'essential': 99.00, 'clinical': 159.00, 'reference': 259.00,
             'essencial': 99.00, 'clínico': 159.00, 'sol': 259.00 
