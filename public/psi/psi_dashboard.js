@@ -992,12 +992,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (!data.pending || data.pending.length === 0) {
                         try {
                             if (!localStorage.getItem('yelo_negotiation_adiado_ate') || new Date().getTime() > parseInt(localStorage.getItem('yelo_negotiation_adiado_ate'))) {
-                                console.log("⏳ Iniciando checagem de negociações paradas...");
+                            // Checagem silenciosa de pendências
                                 const resNeg = await apiFetch(`${API_BASE_URL}/api/psychologists/me/pending-negotiation-feedback`);
                                 const dataNeg = await resNeg.json();
-                                console.log("📊 Resposta da API de negociações:", dataNeg);
+                                // Apenas segue fluxo sem logs
                                 if (dataNeg.pending && dataNeg.pending.length > 0) {
-                                    console.log("✅ Injetando modal de negociações na tela!");
+                                    // Modal Injetado
                                     let modalNeg = document.createElement('div');
                                     modalNeg.id = 'modal-negotiation-wpp';
                                     modalNeg.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 100000; animation: fadeIn 0.3s ease; backdrop-filter: blur(12px);';

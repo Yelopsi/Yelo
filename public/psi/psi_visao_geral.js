@@ -27,7 +27,7 @@
             const resStats = await apiFetch(`${API_BASE_URL}/api/psychologists/me/stats?period=last30days&t=${new Date().getTime()}`);
             const stats = resStats.ok ? await resStats.json() : {};
             
-            console.log("📊 Dados de Stats recebidos do backend:", stats);
+            // Inicializa visualizações sem log no console
 
             const profileViews = stats.profileViews || 0;
             const matchImpressions = stats.matchImpressions || 0;
@@ -285,7 +285,7 @@
                             const aiTips = await resAi.json();
                             aiMarketingTip = aiTips.marketingTip;
                             aiContentIdea = aiTips.contentIdea;
-                            console.log("💡 [Growth Coach] Dicas retornadas pelo backend:", aiTips);
+                            // Atualiza dicas visuais no painel sem log no console
                             if (aiMarketingTip && aiMarketingTip.title) {
                                 aiMarketingTip.title = "✨ " + aiMarketingTip.title;
                             }

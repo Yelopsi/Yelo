@@ -1273,7 +1273,6 @@
         
         // --- API FUNCTIONS ---
         async function fetchData() {
-            console.log("fetchData: Iniciando busca de dados...");
             try {
                 // 1. Buscar Pacientes
                 const resPatients = await fetch(`${BASE_URL}/api/my-patients`, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -1299,7 +1298,6 @@
             } catch (e) { 
                 console.error("Erro ao carregar dados:", e); 
             } finally {
-                console.log("fetchData: Finalizado. Chamando renderizadores.");
                 // Garante que a UI renderize mesmo com erro (com dados vazios se necessário)
                 renderList('', 'ativo');
                 renderNextSessions();
@@ -1451,7 +1449,6 @@
 
         // 2. Inicializar Calendário (FullCalendar)
         function initCalendar() {
-            console.log("initCalendar: Iniciando..."); 
             const calendarEl = document.getElementById('calendar-wrapper');
             if (!calendarEl) {
                 console.warn("initCalendar: Elemento #calendar-wrapper não encontrado. Ignorando (usuário mudou de aba).");
@@ -1464,15 +1461,12 @@
                 const script = document.createElement('script');
                 script.src = 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js';
                 script.onload = () => {
-                    console.log("FullCalendar carregado dinamicamente.");
                     initCalendar();
                 };
                 script.onerror = (e) => console.error("Erro ao carregar FullCalendar:", e);
                 document.head.appendChild(script);
                 return;
             }
-
-            console.log("initCalendar: FullCalendar disponível. Configurando...");
 
             const mobile = window.innerWidth < 768;
             const isDesktop = window.innerWidth >= 992;
@@ -1644,7 +1638,6 @@
 
             // Renderiza com um pequeno delay para garantir que o DOM esteja pronto e visível
             setTimeout(() => {
-                console.log("initCalendar: Renderizando calendário...");
                 const loader = document.getElementById('calendar-loading');
                 if(loader) loader.style.display = 'none';
                 
@@ -1652,7 +1645,6 @@
                     calendar.render();
                     calendar.updateSize(); // Força recálculo de tamanho (Crítico para Mobile)
                     updateCalHeader();
-                    console.log("initCalendar: Calendário renderizado com sucesso.");
                 } catch (renderError) {
                     console.error("initCalendar: Erro ao renderizar:", renderError);
                 }
