@@ -213,43 +213,23 @@ class PaymentStateService {
 
             const currentPayments = (lockedPsi.subscription_payments_count || 0) + 1;
             
-            // Calcula nova validade baseada no nextDueDate real da Assinatura no Asaas
+            // Calcula nova validade baseada no dueDate da fatura que acabou de ser paga
             let novaValidade;
-            if (payment.subscription) {
-                try {
-                    let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
-                    if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
-                        ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
-                    }
-                    const asaasRes = await fetch(`${ASAAS_API_URL}/subscriptions/${payment.subscription}`, {
-                        headers: {
-                            'access_token': process.env.ASAAS_API_KEY,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    const asaasSub = await asaasRes.json();
-                    if (asaasSub && asaasSub.nextDueDate) {
-                        const parts = asaasSub.nextDueDate.split('-');
-                        // Define validade para 23:59:59 do dia de vencimento no fuso horário local (Brasil/UTC-3)
-                        novaValidade = new Date(`${parts[0]}-${parts[1]}-${parts[2]}T23:59:59.999-03:00`);
-                    }
-                } catch (err) {
-                    console.error('[ASAAS] Erro ao buscar assinatura real:', err);
-                }
+            if (payment.dueDate) {
+                const parts = payment.dueDate.split('-'); 
+                novaValidade = new Date(`${parts[0]}-${parts[1]}-${parts[2]}T23:59:59.999-03:00`);
+            } else {
+                // Fallback de segurança caso dueDate não venha no payload
+                novaValidade = (lockedPsi.planExpiresAt && new Date(lockedPsi.planExpiresAt) > new Date()) 
+                    ? new Date(lockedPsi.planExpiresAt) 
+                    : new Date();
             }
 
-            // Fallback (se por acaso falhar a busca acima)
-            if (!novaValidade) {
-                if (payment.dueDate) {
-                    const parts = payment.dueDate.split('-'); 
-                    novaValidade = new Date(`${parts[0]}-${parts[1]}-${parts[2]}T23:59:59.999-03:00`);
-                    novaValidade.setMonth(novaValidade.getMonth() + 1);
-                } else {
-                    const dataBase = (lockedPsi.planExpiresAt && new Date(lockedPsi.planExpiresAt) > new Date()) 
-                        ? new Date(lockedPsi.planExpiresAt) 
-                        : new Date();
-                    novaValidade = new Date(dataBase.setMonth(dataBase.getMonth() + 1));
-                }
+            // Adiciona 1 mês de forma segura (previne bug do Javascript de pular meses curtos ex: 31 Jan -> 03 Mar)
+            const targetMonth = novaValidade.getMonth() + 1;
+            novaValidade.setMonth(targetMonth);
+            if (novaValidade.getMonth() !== targetMonth % 12) {
+                novaValidade.setDate(0); // Recua para o último dia do mês correto
             }
 
             const updatePayload = {
