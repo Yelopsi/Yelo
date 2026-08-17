@@ -44,14 +44,22 @@ class CashFlowService {
                 ];
 
                 asaasPayments.forEach(p => {
+                    const asaasDate = p.clientPaymentDate || p.confirmedDate || p.paymentDate || p.creditDate || p.dateCreated;
                     if (!mergedPayments[p.id]) {
                         mergedPayments[p.id] = {
                             id: p.id,
                             value: p.value,
-                            paymentDate: p.clientPaymentDate || p.confirmedDate || p.paymentDate || p.creditDate || p.dateCreated,
+                            paymentDate: asaasDate,
                             dueDate: p.dueDate,
                             status: p.status
                         };
+                    } else {
+                        if (asaasDate) {
+                            mergedPayments[p.id].paymentDate = asaasDate;
+                        }
+                        if (p.status) {
+                            mergedPayments[p.id].status = p.status;
+                        }
                     }
                 });
             } catch (asaasErr) {
