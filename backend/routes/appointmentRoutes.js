@@ -78,6 +78,33 @@ router.post('/', verifyTokenLocal, async (req, res) => {
     }
 });
 
+router.post('/bulk', verifyTokenLocal, async (req, res) => {
+    try {
+        const decoded = req.userDecoded;
+        const { appointments } = req.body;
+        
+        if (!appointments || !Array.isArray(appointments)) {
+            return res.status(400).json({ error: 'Formato inválido. Esperado um array de agendamentos.' });
+        }
+
+        const apptsToCreate = appointments.map(appt => ({
+            title: appt.title,
+            start: appt.start,
+            end: appt.end,
+            patientId: appt.patientId || null,
+            psychologistId: decoded.id,
+            status: appt.status || 'scheduled',
+            value: appt.value || 0
+        }));
+
+        const createdAppts = await db.Appointment.bulkCreate(apptsToCreate);
+        res.json({ success: true, count: createdAppts.length });
+    } catch (error) {
+        console.error("Erro detalhado ao criar agendamentos em lote:", error);
+        res.status(500).json({ error: 'Erro ao agendar em lote: ' + error.message });
+    }
+});
+
 router.put('/:id', verifyTokenLocal, async (req, res) => {
     try {
         const decoded = req.userDecoded;
@@ -114,6 +141,28 @@ router.post('/:id/remind', verifyTokenLocal, async (req, res) => {
     } catch (error) {
         console.error("Erro ao enviar lembrete manual:", error);
         res.status(500).json({ error: 'Erro ao enviar lembrete.' });
+    }
+});
+
+router.delete('/bulk', verifyTokenLocal, async (req, res) => {
+    try {
+        const decoded = req.userDecoded;
+        const { ids } = req.body;
+        
+        if (!ids || !Array.isArray(ids)) {
+            return res.status(400).json({ error: 'Formato inválido. Esperado um array de IDs.' });
+        }
+
+        await db.Appointment.destroy({ 
+            where: { 
+                id: { [Op.in]: ids },
+                psychologistId: decoded.id 
+            } 
+        });
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Erro em DELETE /api/appointments/bulk :", error);
+        res.status(500).json({ error: 'Erro ao excluir em lote.' });
     }
 });
 

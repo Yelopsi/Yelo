@@ -1999,33 +1999,22 @@
             }
 
             try {
-                // Envia as requisições em pequenos lotes (chunks) para não sobrecarregar o banco de dados
-                const results = [];
-                const chunkSize = 15;
-                for (let i = 0; i < occurrences.length; i += chunkSize) {
-                    const chunk = occurrences.slice(i, i + chunkSize);
-                    const promises = chunk.map(payload => 
-                        fetch(`${BASE_URL}/api/appointments`, {
-                            method: 'POST',
-                            headers: { 
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${token}` 
-                            },
-                            body: JSON.stringify(payload)
-                        })
-                    );
-                    const chunkResults = await Promise.all(promises);
-                    results.push(...chunkResults);
-                }
+                // Envia todos os agendamentos usando o novo endpoint em lote para prevenir 429 Too Many Requests
+                const res = await fetch(`${BASE_URL}/api/appointments/bulk`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({ appointments: occurrences })
+                });
 
-                const allOk = results.every(res => res.ok);
-
-                if (allOk) {
+                if (res.ok) {
                     fetchData(); // Recarrega calendário
                     closeApptModal();
                     if(window.showToast) window.showToast(type === 'available' ? 'Horário(s) disponível(is) criado(s).' : 'Agendado(s) e notificado!', 'success');
                 } else {
-                    if(window.showToast) window.showToast('Falha em alguns agendamentos.', 'error'); else alert('Erro ao criar agendamentos.');
+                    if(window.showToast) window.showToast('Falha ao agendar.', 'error'); else alert('Erro ao criar agendamentos.');
                 }
             } catch (e) {
                 if(window.showToast) window.showToast('Erro ao agendar.', 'error'); else alert('Erro ao agendar.');
@@ -2236,21 +2225,22 @@
                     idsToDelete = idsToDelete.concat(futureEvents.map(e => e.id));
                 }
                 
-                // Excluir em lotes de 15 para não travar a conexão
-                const chunkSize = 15;
-                for (let i = 0; i < idsToDelete.length; i += chunkSize) {
-                    const chunk = idsToDelete.slice(i, i + chunkSize);
-                    await Promise.all(chunk.map(id => 
-                        fetch(`${BASE_URL}/api/appointments/${id}`, {
-                            method: 'DELETE',
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        })
-                    ));
+                // Excluir usando endpoint bulk para evitar 429 Too Many Requests
+                const res = await fetch(`${BASE_URL}/api/appointments/bulk`, {
+                    method: 'DELETE',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({ ids: idsToDelete })
+                });
+                
+                if (res.ok) {
+                    fetchData();
+                    if (window.showToast) window.showToast(deleteAllFuture ? `${idsToDelete.length} agendamentos excluídos.` : 'Agendamento excluído.', 'success');
+                } else {
+                    if(window.showToast) window.showToast('Erro ao excluir agendamentos.', 'error'); else alert('Erro ao excluir.');
                 }
-                
-                fetchData();
-                if (window.showToast) window.showToast(deleteAllFuture ? `${idsToDelete.length} agendamentos excluídos.` : 'Agendamento excluído.', 'success');
-                
             } catch (e) {
                 if(window.showToast) window.showToast('Erro de conexão ao excluir.', 'error'); else alert('Erro de conexão ao excluir.');
             }
