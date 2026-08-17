@@ -34,7 +34,7 @@ class GrowthMarketingService {
 
         // 2. Import and call MetricsService for all growth metrics
         const MetricsService = require('./metricsService');
-        const metrics = await MetricsService.getMetrics(periodStart, periodEnd);
+        const metrics = await MetricsService.getMetrics(periodStart, now);
         
         const novosPagantes = metrics.novosCount;
         

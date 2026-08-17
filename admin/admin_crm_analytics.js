@@ -169,7 +169,9 @@ window.initializePage = function() {
     // --- FUNÇÕES DE RENDERIZAÇÃO FINANCEIRO (PREMIUM) ---
 
     function updateKpiCard(id, current, previous, formatter, lowerIsBetter = false) {
-        document.getElementById(`kpi-${id}`).innerText = formatter(current);
+        const valEl = document.getElementById(`kpi-${id}`);
+        if (!valEl) return;
+        valEl.innerText = formatter(current);
         const trendEl = document.getElementById(`trend-${id}`);
         if(previous === 0 && current === 0) {
             trendEl.innerText = '-';
