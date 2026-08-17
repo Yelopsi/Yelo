@@ -646,41 +646,44 @@ exports.getCompanyHealthDashboard = async (req, res) => {
 
         // 3. Heuristic: Invest Recommendation
         let investRecommendation = 'MANTER';
-        let investReason = 'Coletando dados consistentes.';
+        let investReason = 'Sem dados de gastos em Ads suficientes no mês para calcular o Payback seguro.';
         
         if (unitEconomics.payback > 0 && unitEconomics.payback <= 3 && unitEconomics.hasMarketingSpend) {
             investRecommendation = 'AUMENTAR';
-            investReason = 'CAC Payback extremamente rápido (< 3 meses) com gastos ativos.';
-        } else if (unitEconomics.payback > 6) {
+            investReason = `Acelere os anúncios! O CAC Payback está excelente (${unitEconomics.payback.toFixed(1)} meses), trazendo retorno rápido.`;
+        } else if (unitEconomics.payback > 6 && unitEconomics.hasMarketingSpend) {
             investRecommendation = 'REDUZIR';
-            investReason = 'CAC Payback acima de 6 meses. Necessário otimizar canais.';
+            investReason = `Pause ou otimize as campanhas. O CAC de R$ ${unitEconomics.cac} demora ${unitEconomics.payback.toFixed(1)} meses para se pagar.`;
+        } else if (unitEconomics.payback > 3 && unitEconomics.payback <= 6 && unitEconomics.hasMarketingSpend) {
+            investRecommendation = 'MANTER';
+            investReason = `Retorno em ${unitEconomics.payback.toFixed(1)} meses. Mantenha as campanhas, mas busque otimizar conversão.`;
         }
 
         // 4. Heuristic: Bottleneck
-        let bottleneck = 'Crescimento de Topo de Funil';
-        let bottleneckReason = 'Sempre precisamos de mais leads.';
+        let bottleneck = 'Atração (Topo de Funil)';
+        let bottleneckReason = 'Crescimento orgânico e retenção estão bem, falta volume de novos leads.';
         
         if (unitEconomics.novosPagantes === 0 && unitEconomics.hasMarketingSpend) {
-            bottleneck = 'Conversão';
-            bottleneckReason = 'Há investimento, mas zero conversão para pagantes.';
-        } else if (unitEconomics.weightedChurnRate > 0.10) {
+            bottleneck = 'Conversão de Vendas';
+            bottleneckReason = 'Você atrai leads, mas eles não se tornam assinantes pagantes.';
+        } else if (overview.taxaChurnPagantes > 10.0) {
             bottleneck = 'Retenção (Churn Alto)';
-            bottleneckReason = 'Taxa de churn ponderada acima de 10%. Risco de leaky bucket.';
+            bottleneckReason = `O balde está furado: a evasão de ${overview.taxaChurnPagantes.toFixed(1)}% está anulando suas vendas.`;
         }
 
         // 5. Heuristic: Company Health
         let companyHealth = 'ATENÇÃO';
-        let companyHealthReason = 'Métricas em nível de atenção. Monitore o Churn e MRR.';
+        let companyHealthReason = `Atenção: Com MRR atual de R$ ${overview.mrrTotal} e Churn de ${overview.taxaChurnPagantes.toFixed(1)}%, monitore de perto os cancelamentos.`;
         
         if (pagamentosMes >= 70 && overview.taxaChurnPagantes < 8.0) {
             companyHealth = 'SAUDÁVEL';
-            companyHealthReason = 'MRR sólido e Churn muito bem controlado.';
+            companyHealthReason = `Excelente! O modelo está previsível, com MRR sólido e Churn controlado em ${overview.taxaChurnPagantes.toFixed(1)}%.`;
         } else if (overview.taxaChurnPagantes > 15.0 || overview.mrrTotal < 1000) {
             companyHealth = 'PROBLEMA';
-            companyHealthReason = 'Alerta vermelho. Churn altíssimo ou MRR abaixo da viabilidade.';
+            companyHealthReason = `Alerta Vermelho! ${overview.taxaChurnPagantes > 15.0 ? 'A evasão de clientes está destruindo a base.' : 'A receita está muito baixa para sustentar a operação.'}`;
         } else if (pagamentosMes >= 20 && overview.taxaChurnPagantes <= 10.0) {
             companyHealth = 'SAUDÁVEL';
-            companyHealthReason = 'Boa tração inicial. Crescimento e Retenção dentro da meta.';
+            companyHealthReason = `Boa tração. O negócio validou receita e mantém a perda em níveis aceitáveis.`;
         }
 
         // 6. Projections
