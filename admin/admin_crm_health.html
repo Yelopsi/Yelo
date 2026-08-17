@@ -1,0 +1,213 @@
+<style>
+    :root {
+        --saas-bg: #f9fafb;
+        --saas-card: #ffffff;
+        --saas-border: #e5e7eb;
+        --saas-text: #111827;
+        --saas-muted: #6b7280;
+        --saas-blue: #3b82f6;
+        --saas-green: #10b981;
+        --saas-red: #ef4444;
+        --saas-purple: #8b5cf6;
+        --saas-orange: #f59e0b;
+        --saas-hover: #f3f4f6;
+    }
+    
+    .modern-dashboard-layout { background-color: var(--saas-bg); padding-bottom: 120px; font-family: 'Inter', sans-serif; }
+
+    .saas-header { display: flex; background: linear-gradient(135deg, #064e3b 0%, #065f46 100%); border-radius: 16px; margin: 20px 40px; color: white; justify-content: space-between; align-items: center; padding: 30px 40px 20px; }
+    .saas-header h1 { font-size: 1.5rem; font-weight: 700; color: white; margin: 0 0 4px 0; letter-spacing: -0.02em; }
+    .saas-header p { font-size: 0.9rem; color: rgba(255,255,255,0.8); margin: 0; }
+    
+    .saas-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; padding: 0 40px; margin-bottom: 30px; }
+    .saas-kpi-card { background: var(--saas-card); border: 1px solid var(--saas-border); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; }
+    .saas-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    
+    .kpi-header { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 500; color: var(--saas-muted); margin-bottom: 12px; }
+    .kpi-icon { width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+    .kpi-value { font-size: 1.8rem; font-weight: 700; color: var(--saas-text); letter-spacing: -0.02em; line-height: 1; margin-bottom: 8px; }
+    .kpi-meta { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
+    
+    .trend-up { color: var(--saas-green); font-weight: 600; display: flex; align-items: center; gap: 2px;}
+    .trend-down { color: var(--saas-red); font-weight: 600; display: flex; align-items: center; gap: 2px;}
+    .trend-neutral { color: var(--saas-muted); font-weight: 600; }
+    
+    .section-title { padding: 0 40px; font-size: 1.1rem; font-weight: 700; color: var(--saas-text); margin: 40px 0 20px; border-bottom: 1px solid var(--saas-border); padding-bottom: 10px; }
+
+    /* Progress Bar for Marcos */
+    .progress-wrapper { width: 100%; background: #e5e7eb; border-radius: 8px; height: 10px; overflow: hidden; margin-top: 10px; }
+    .progress-fill { height: 100%; transition: width 1s ease-in-out; border-radius: 8px; }
+
+    .health-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+    .bg-green { background: #d1fae5; color: #059669; }
+    .bg-yellow { background: #fef3c7; color: #d97706; }
+    .bg-red { background: #fee2e2; color: #dc2626; }
+    .bg-blue { background: #dbeafe; color: #2563eb; }
+
+    /* Diagnosis Cards Layout */
+    .diagnosis-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 0 40px; margin-bottom: 30px; }
+    .diagnosis-card { background: white; border-radius: 12px; border: 1px solid var(--saas-border); padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+    .diagnosis-card h3 { font-size: 1.1rem; margin-top: 0; margin-bottom: 15px; color: var(--saas-text); display: flex; align-items: center; gap: 8px;}
+    
+    .status-indicator { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; margin-bottom: 10px; }
+    .status-AUMENTAR { background: #d1fae5; color: #059669; }
+    .status-MANTER { background: #fef3c7; color: #d97706; }
+    .status-REDUZIR { background: #fee2e2; color: #dc2626; }
+    .status-SAUDÁVEL { background: #d1fae5; color: #059669; }
+    .status-ATENÇÃO { background: #fef3c7; color: #d97706; }
+    .status-PROBLEMA { background: #fee2e2; color: #dc2626; }
+    
+    /* Loading overlay */
+    #loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; border-radius: 16px; }
+    .spinner { border: 3px solid #f3f3f3; border-top: 3px solid var(--saas-green); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    @media (max-width: 768px) {
+        .saas-header { margin: 10px 20px; padding: 20px; }
+        .saas-kpi-grid, .diagnosis-grid, .section-title { padding: 0 20px; }
+        .diagnosis-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="modern-dashboard-layout" style="position: relative; min-height: 500px;">
+    
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p style="color: var(--saas-muted); font-weight: 500;">Calculando Unit Economics e Saúde...</p>
+    </div>
+
+    <div class="saas-header">
+        <div>
+            <h1>Saúde & Crescimento</h1>
+            <p>Painel Executivo: Unit Economics, Marcos e Retenção</p>
+        </div>
+        <div>
+            <button onclick="window.navigateToPage('admin_crm_hub.html')" class="btn-refresh" style="background: rgba(255,255,255,0.2); border: none; color: white;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Voltar ao CRM
+            </button>
+        </div>
+    </div>
+
+    <!-- DIAGNÓSTICO EXECUTIVO -->
+    <h2 class="section-title">Diagnóstico Executivo</h2>
+    <div class="diagnosis-grid">
+        <!-- Saúde -->
+        <div class="diagnosis-card">
+            <h3>🩺 Saúde Geral</h3>
+            <div id="health-status-icon" class="status-indicator">...</div>
+            <h4 id="health-status-text" style="font-size: 1.4rem; margin: 0 0 10px 0; color: var(--saas-text);">Analisando...</h4>
+            <p style="color: var(--saas-muted); font-size: 0.9rem; margin: 0;">Baseado no MRR, Churn e Payback.</p>
+        </div>
+
+        <!-- Recomendação -->
+        <div class="diagnosis-card">
+            <h3>📈 Investimento (Ads)</h3>
+            <div id="invest-status-icon" class="status-indicator">...</div>
+            <h4 id="invest-status-text" style="font-size: 1.4rem; margin: 0 0 10px 0; color: var(--saas-text);">Analisando...</h4>
+            <p id="invest-reason" style="color: var(--saas-muted); font-size: 0.9rem; margin: 0;"></p>
+        </div>
+
+        <!-- Gargalo -->
+        <div class="diagnosis-card">
+            <h3>⚠️ Principal Gargalo</h3>
+            <div class="status-indicator bg-red"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
+            <h4 id="bottleneck-issue" style="font-size: 1.2rem; margin: 0 0 10px 0; color: var(--saas-text);">Analisando...</h4>
+            <p id="bottleneck-reason" style="color: var(--saas-muted); font-size: 0.9rem; margin: 0;"></p>
+        </div>
+    </div>
+
+    <!-- MARCOS FINANCEIROS -->
+    <h2 class="section-title">Marcos Financeiros (Pagamentos no Mês)</h2>
+    <div class="saas-kpi-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <!-- Marco 20 -->
+        <div class="saas-kpi-card" style="border-top: 3px solid #6366f1;">
+            <div class="kpi-header">
+                Marco Operacional (20)
+            </div>
+            <div class="kpi-value"><span id="marco-20-atual">0</span> <span style="font-size: 1rem; color: var(--saas-muted);">/ 20</span></div>
+            <div class="progress-wrapper">
+                <div id="marco-20-bar" class="progress-fill" style="width: 0%; background: #6366f1;"></div>
+            </div>
+            <div class="kpi-meta" style="margin-top: 10px; justify-content: space-between;">
+                <span class="health-badge" style="background: #e0e7ff; color: #4f46e5;" id="marco-20-percent">0%</span>
+                <span id="marco-20-proj" style="color: var(--saas-muted);">Projetando...</span>
+            </div>
+        </div>
+
+        <!-- Marco 70 -->
+        <div class="saas-kpi-card" style="border-top: 3px solid #8b5cf6;">
+            <div class="kpi-header">
+                Saída do MEI (70)
+            </div>
+            <div class="kpi-value"><span id="marco-70-atual">0</span> <span style="font-size: 1rem; color: var(--saas-muted);">/ 70</span></div>
+            <div class="progress-wrapper">
+                <div id="marco-70-bar" class="progress-fill" style="width: 0%; background: #8b5cf6;"></div>
+            </div>
+            <div class="kpi-meta" style="margin-top: 10px; justify-content: space-between;">
+                <span class="health-badge" style="background: #ede9fe; color: #7c3aed;" id="marco-70-percent">0%</span>
+                <span id="marco-70-proj" style="color: var(--saas-muted);">Projetando...</span>
+            </div>
+        </div>
+
+        <!-- Marco 120 -->
+        <div class="saas-kpi-card" style="border-top: 3px solid #ec4899;">
+            <div class="kpi-header">
+                Pró-labore Sustentável (120)
+            </div>
+            <div class="kpi-value"><span id="marco-120-atual">0</span> <span style="font-size: 1rem; color: var(--saas-muted);">/ 120</span></div>
+            <div class="progress-wrapper">
+                <div id="marco-120-bar" class="progress-fill" style="width: 0%; background: #ec4899;"></div>
+            </div>
+            <div class="kpi-meta" style="margin-top: 10px; justify-content: space-between;">
+                <span class="health-badge" style="background: #fce7f3; color: #db2777;" id="marco-120-percent">0%</span>
+                <span id="marco-120-proj" style="color: var(--saas-muted);">Projetando...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MÉTRICAS DE UNIT ECONOMICS -->
+    <h2 class="section-title">Métricas Base (Últimos 30 dias)</h2>
+    <div class="saas-kpi-grid">
+        <!-- MRR -->
+        <div class="saas-kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon bg-green"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
+                MRR
+            </div>
+            <div class="kpi-value" id="kpi-mrr">R$ 0</div>
+            <div class="kpi-meta"><span id="kpi-arpu">ARPU: R$ 0</span></div>
+        </div>
+
+        <!-- Pagantes -->
+        <div class="saas-kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon bg-blue"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
+                Base de Assinantes
+            </div>
+            <div class="kpi-value" id="kpi-base">0</div>
+            <div class="kpi-meta"><span class="trend-up">+ <span id="kpi-novos">0</span> novos</span> <span style="margin: 0 4px;">|</span> <span class="trend-down">- <span id="kpi-cancelados">0</span> cancel.</span></div>
+        </div>
+
+        <!-- Churn -->
+        <div class="saas-kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon bg-red"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h4l2-9 5 18 2-9h5"></path></svg></div>
+                Weighted Churn Rate
+            </div>
+            <div class="kpi-value" id="kpi-churn">0%</div>
+            <div class="kpi-meta">Alvo ideal: < 10%</div>
+        </div>
+
+        <!-- LTV/CAC -->
+        <div class="saas-kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon bg-yellow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
+                LTV & CAC
+            </div>
+            <div class="kpi-value" style="font-size: 1.4rem;"><span id="kpi-ltv">LTV: R$ 0</span></div>
+            <div class="kpi-meta" style="margin-top: 4px;">CAC: <span id="kpi-cac">R$ 0</span> | Payback: <span id="kpi-payback">0 meses</span></div>
+        </div>
+    </div>
+</div>
+
+<script src="admin_crm_health.js"></script>

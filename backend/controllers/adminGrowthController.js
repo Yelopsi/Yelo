@@ -618,3 +618,119 @@ exports.getPaymentsEvolution = async (req, res) => {
         res.status(500).json({ error: e.stack });
     }
 };
+
+exports.getCompanyHealthDashboard = async (req, res) => {
+    try {
+        const CashFlowService = require('../services/cashFlowService');
+        const GrowthMarketingService = require('../services/growthMarketingService');
+        const MetricsService = require('../services/metricsService');
+
+        // 1. Get Marketing & Growth Unit Economics
+        const unitEconomics = await GrowthMarketingService.getUnitEconomics(30);
+        
+        // 2. Get Cash Flow Data (for pagamentos no mês)
+        const cashFlowData = await CashFlowService.buildCashFlowData();
+        
+        // Determine the current month payments
+        const today = new Date();
+        const yearLocal = today.getFullYear();
+        const monthLocal = String(today.getMonth() + 1).padStart(2, '0');
+        const currentMonthStr = `${yearLocal}-${monthLocal}`;
+        const currentMonthFlow = cashFlowData.find(c => c.monthYear === currentMonthStr) || { count: 0 };
+        const pagamentosMes = currentMonthFlow.count;
+
+        // 3. Heuristic: Invest Recommendation
+        let investRecommendation = 'MANTER';
+        let investReason = 'Coletando dados consistentes.';
+        
+        if (unitEconomics.payback > 0 && unitEconomics.payback <= 3 && unitEconomics.hasMarketingSpend) {
+            investRecommendation = 'AUMENTAR';
+            investReason = 'CAC Payback extremamente rápido (< 3 meses) com gastos ativos.';
+        } else if (unitEconomics.payback > 6) {
+            investRecommendation = 'REDUZIR';
+            investReason = 'CAC Payback acima de 6 meses. Necessário otimizar canais.';
+        }
+
+        // 4. Heuristic: Bottleneck
+        let bottleneck = 'Crescimento de Topo de Funil';
+        let bottleneckReason = 'Sempre precisamos de mais leads.';
+        
+        if (unitEconomics.novosPagantes === 0 && unitEconomics.hasMarketingSpend) {
+            bottleneck = 'Conversão';
+            bottleneckReason = 'Há investimento, mas zero conversão para pagantes.';
+        } else if (unitEconomics.weightedChurnRate > 0.10) {
+            bottleneck = 'Retenção (Churn Alto)';
+            bottleneckReason = 'Taxa de churn ponderada acima de 10%. Risco de leaky bucket.';
+        }
+
+        // 5. Heuristic: Company Health
+        let companyHealth = 'ATENÇÃO';
+        if (pagamentosMes >= 70 && unitEconomics.weightedChurnRate < 0.08) {
+            companyHealth = 'SAUDÁVEL';
+        } else if (unitEconomics.weightedChurnRate > 0.15 || unitEconomics.mrrTotal < 1000) {
+            companyHealth = 'PROBLEMA';
+        } else if (pagamentosMes >= 20 && unitEconomics.weightedChurnRate <= 0.10) {
+            companyHealth = 'SAUDÁVEL';
+        }
+
+        // 6. Projections
+        // Simple linear projection based on payments trend (last 3 months)
+        let projectionRate = 0;
+        if (cashFlowData.length >= 3) {
+            const m1 = cashFlowData[0].count; // Current
+            const m2 = cashFlowData[1].count;
+            const m3 = cashFlowData[2].count;
+            projectionRate = ((m1 - m2) + (m2 - m3)) / 2;
+        } else if (cashFlowData.length >= 2) {
+            projectionRate = cashFlowData[0].count - cashFlowData[1].count;
+        }
+        
+        const calcProjection = (target) => {
+            if (pagamentosMes >= target) return 'Atingido';
+            if (projectionRate <= 0) return 'DADOS INSUFICIENTES PARA PROJEÇÃO.';
+            const monthsToTarget = Math.ceil((target - pagamentosMes) / projectionRate);
+            const targetDate = new Date();
+            targetDate.setMonth(targetDate.getMonth() + monthsToTarget);
+            return `${targetDate.toLocaleString('pt-BR', { month: 'short' })}/${targetDate.getFullYear()} (Cenário Base)`;
+        };
+
+        const marcos = {
+            m20: { meta: 20, atual: pagamentosMes, percentual: Math.min(100, Math.round((pagamentosMes / 20) * 100)), projection: calcProjection(20) },
+            m70: { meta: 70, atual: pagamentosMes, percentual: Math.min(100, Math.round((pagamentosMes / 70) * 100)), projection: calcProjection(70) },
+            m120: { meta: 120, atual: pagamentosMes, percentual: Math.min(100, Math.round((pagamentosMes / 120) * 100)), projection: calcProjection(120) }
+        };
+
+        // Combine into payload
+        const payload = {
+            success: true,
+            dashboard: {
+                pagantesAtivos: unitEconomics.sampleData ? unitEconomics.sampleData.baseFinal : 0,
+                pagamentosMes,
+                mrr: unitEconomics.mrrTotal,
+                churnRate: (unitEconomics.weightedChurnRate * 100).toFixed(1) + '%',
+                novosClientes: unitEconomics.novosPagantes,
+                cancelamentos: unitEconomics.paidChurnCount,
+                arpu: unitEconomics.arpu,
+                cac: unitEconomics.cac || 'N/D',
+                ltv: unitEconomics.ltvProjetado,
+                investimentoAds: unitEconomics.totalMarketingSpend,
+                cacPayback: unitEconomics.payback > 0 ? unitEconomics.payback.toFixed(1) + ' meses' : 'N/D',
+                marcos,
+                recommendation: {
+                    action: investRecommendation,
+                    reason: investReason
+                },
+                bottleneck: {
+                    issue: bottleneck,
+                    reason: bottleneckReason
+                },
+                health: companyHealth
+            }
+        };
+
+        res.json(payload);
+    } catch (error) {
+        console.error("Erro no getCompanyHealthDashboard:", error);
+        res.status(500).json({ error: "Falha ao compilar health dashboard." });
+    }
+};
