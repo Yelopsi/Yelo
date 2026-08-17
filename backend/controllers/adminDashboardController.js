@@ -587,8 +587,15 @@ exports.getFinancials = async (req, res) => {
         const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !!(psy.subscriptionId)).length;
         const prevPayingActiveCount = payingActiveCount; // Simplificação para mantermos a mesma base no período anterior
         
-        const paidChurnRateReal = payingActiveCount > 0 ? paidChurnedCount / (payingActiveCount + paidChurnedCount) : 0;
-        const prevPaidChurnRateReal = prevPayingActiveCount > 0 ? prevPaidChurnedCount / (prevPayingActiveCount + prevPaidChurnedCount) : 0;
+        // --- Atualização: Lógica exata de C_inicio ---
+        let c_inicio_paid = payingActiveCount + paidChurnedCount - paidNewCount;
+        if (c_inicio_paid < 0) c_inicio_paid = 0;
+        
+        let c_inicio_prev_paid = prevPayingActiveCount + prevPaidChurnedCount - prevPaidNewCount;
+        if (c_inicio_prev_paid < 0) c_inicio_prev_paid = 0;
+
+        const paidChurnRateReal = c_inicio_paid > 0 ? paidChurnedCount / c_inicio_paid : (paidChurnedCount > 0 ? 1 : 0);
+        const prevPaidChurnRateReal = c_inicio_prev_paid > 0 ? prevPaidChurnedCount / c_inicio_prev_paid : (prevPaidChurnedCount > 0 ? 1 : 0);
         
         const paidChurnRate = paidChurnRateReal * 100;
         const prevPaidChurnRate = prevPaidChurnRateReal * 100;
@@ -600,8 +607,14 @@ exports.getFinancials = async (req, res) => {
         const prevTrialChurnRate = prevTrialActiveCount > 0 ? (prevTrialChurnedCount / (prevTrialActiveCount + prevTrialChurnedCount)) * 100 : 0;
 
         const arpu = payingActiveCount > 0 ? mrr / payingActiveCount : 0;
-        const ltv = (paidChurnRateReal > 0 && paidChurnedCount >= 3 && payingActiveCount >= 10) ? arpu / paidChurnRateReal : 0;
-        const prevLtv = (prevPaidChurnRateReal > 0 && prevPaidChurnedCount >= 3 && prevPayingActiveCount >= 10) ? arpu / prevPaidChurnRateReal : 0;
+        const ticketMedio = arpu > 0 ? arpu : 99.00;
+        
+        const lifetime = paidChurnRateReal > 0 ? 1 / paidChurnRateReal : 60; // 60 months max if no churn
+        const prevLifetime = prevPaidChurnRateReal > 0 ? 1 / prevPaidChurnRateReal : 60;
+
+        const ltv = ticketMedio * lifetime;
+        const prevLtv = ticketMedio * prevLifetime;
+        
         const prevMrr = Math.max(0, mrr - (paidNewCount * arpu) + (paidChurnedCount * arpu));
         
         // MRR Projections Linear Math

@@ -95,15 +95,19 @@ class GrowthMarketingService {
             }
         });
 
+        let c_inicio = activeCount + churnCount - novosPagantes;
+        if (c_inicio < 0) c_inicio = 0;
+
         let churnRate = 0;
-        if (activeCount > 0) {
-            churnRate = churnCount / (activeCount + churnCount); // Base simplificada
+        if (c_inicio > 0) {
+            churnRate = churnCount / c_inicio;
+        } else if (churnCount > 0) {
+            churnRate = 1;
         }
 
-        let ltv = 0;
-        if (churnRate > 0) {
-            ltv = arpu / churnRate;
-        }
+        const ticketMedio = arpu > 0 ? arpu : 99.00;
+        const lifetime = churnRate > 0 ? 1 / churnRate : 60; // 60 months max if no churn
+        const ltv = ticketMedio * lifetime;
 
         // 5. Payback (Meses para recuperar CAC)
         // Como o CAC é inatribuível, o payback também é N/D

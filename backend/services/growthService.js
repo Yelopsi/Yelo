@@ -89,8 +89,15 @@ class GrowthService {
         // 4.1 Ativos no INÍCIO do período (para o Churn Rate correto)
         // Ativos Iniciais = Ativos Finais + Cancelados no Período - Adquiridos no Período
         const ativosFinais = pagantesAtivos.length;
-        const ativosIniciais = (ativosFinais + churnPagantes) - novosPagantes;
-        const taxaChurnPagantes = ativosIniciais > 0 ? (churnPagantes / ativosIniciais) * 100 : 0;
+        let ativosIniciais = (ativosFinais + churnPagantes) - novosPagantes;
+        if (ativosIniciais < 0) ativosIniciais = 0;
+
+        let taxaChurnPagantes = 0;
+        if (ativosIniciais > 0) {
+            taxaChurnPagantes = (churnPagantes / ativosIniciais) * 100;
+        } else if (churnPagantes > 0) {
+            taxaChurnPagantes = 100;
+        }
 
         // 5. Trials Ativos
         const trialsAtivos = await db.Psychologist.count({
@@ -166,19 +173,9 @@ class GrowthService {
         let mrrAdicionado = 0;
         let mrrPerdido = 0;
 
-        // MRR Adicionado (aproximação usando novosPagantes)
-        // pagantesAtivos que atualizaram recentemente são considerados novos assinantes
-        for (const p of pagantesAtivos) {
-            if (new Date(p.updatedAt) >= periodStart) {
-                let valor = 0;
-                if (p.plano === 'ESSENTIAL' || p.plano === 'Essencial') valor = Number(priceEssencial);
-                else if (p.plano === 'CLINICAL' || p.plano === 'Clínico') valor = Number(priceClinico);
-                else if (p.plano === 'REFERENCE' || p.plano === 'Sol' || p.plano === 'SOL') valor = Number(priceReference);
-                
-                // Se foi criado no período ou atualizado (ex: trial para pagante)
-                mrrAdicionado += valor;
-            }
-        }
+        // MRR Adicionado (aproximação precisa usando novosPagantes)
+        const ticketMedio = totalAtivos > 0 ? (mrrTotal / totalAtivos) : 99.00;
+        mrrAdicionado = novosPagantes * ticketMedio;
 
         // MRR Perdido (calculado usando os churners com subscrição)
         for (const c of allChurners) {
