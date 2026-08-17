@@ -625,8 +625,13 @@ exports.getCompanyHealthDashboard = async (req, res) => {
         const GrowthMarketingService = require('../services/growthMarketingService');
         const MetricsService = require('../services/metricsService');
 
+        const growthService = require('../services/growthService');
+
         // 1. Get Marketing & Growth Unit Economics
         const unitEconomics = await GrowthMarketingService.getUnitEconomics(30);
+        
+        // 1.5 Get Overview (Exact same logic as Growth Dashboard)
+        const overview = await growthService.getOverview(30);
         
         // 2. Get Cash Flow Data (for pagamentos no mês)
         const cashFlowData = await CashFlowService.buildCashFlowData();
@@ -665,12 +670,17 @@ exports.getCompanyHealthDashboard = async (req, res) => {
 
         // 5. Heuristic: Company Health
         let companyHealth = 'ATENÇÃO';
-        if (pagamentosMes >= 70 && unitEconomics.weightedChurnRate < 0.08) {
+        let companyHealthReason = 'Métricas em nível de atenção. Monitore o Churn e MRR.';
+        
+        if (pagamentosMes >= 70 && overview.taxaChurnPagantes < 8.0) {
             companyHealth = 'SAUDÁVEL';
-        } else if (unitEconomics.weightedChurnRate > 0.15 || unitEconomics.mrrTotal < 1000) {
+            companyHealthReason = 'MRR sólido e Churn muito bem controlado.';
+        } else if (overview.taxaChurnPagantes > 15.0 || overview.mrrTotal < 1000) {
             companyHealth = 'PROBLEMA';
-        } else if (pagamentosMes >= 20 && unitEconomics.weightedChurnRate <= 0.10) {
+            companyHealthReason = 'Alerta vermelho. Churn altíssimo ou MRR abaixo da viabilidade.';
+        } else if (pagamentosMes >= 20 && overview.taxaChurnPagantes <= 10.0) {
             companyHealth = 'SAUDÁVEL';
+            companyHealthReason = 'Boa tração inicial. Crescimento e Retenção dentro da meta.';
         }
 
         // 6. Projections
@@ -704,13 +714,13 @@ exports.getCompanyHealthDashboard = async (req, res) => {
         const payload = {
             success: true,
             dashboard: {
-                pagantesAtivos: unitEconomics.sampleData ? unitEconomics.sampleData.baseFinal : 0,
+                pagantesAtivos: overview.totalAtivos,
                 pagamentosMes,
-                mrr: unitEconomics.mrrTotal,
-                churnRate: (unitEconomics.weightedChurnRate * 100).toFixed(1) + '%',
-                novosClientes: unitEconomics.novosPagantes,
-                cancelamentos: unitEconomics.paidChurnCount,
-                arpu: unitEconomics.arpu,
+                mrr: overview.mrrTotal,
+                churnRate: overview.taxaChurnPagantes.toFixed(1) + '%',
+                novosClientes: overview.novosPagantes,
+                cancelamentos: overview.churnPagantes,
+                arpu: overview.totalAtivos > 0 ? (overview.mrrTotal / overview.totalAtivos) : 0,
                 cac: unitEconomics.cac || 'N/D',
                 ltv: unitEconomics.ltvProjetado,
                 investimentoAds: unitEconomics.totalMarketingSpend,
@@ -724,7 +734,8 @@ exports.getCompanyHealthDashboard = async (req, res) => {
                     issue: bottleneck,
                     reason: bottleneckReason
                 },
-                health: companyHealth
+                health: companyHealth,
+                healthReason: companyHealthReason
             }
         };
 

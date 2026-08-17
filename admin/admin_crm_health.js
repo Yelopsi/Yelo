@@ -59,6 +59,9 @@ function renderDashboard(dashboard) {
     else if (dashboard.health === 'ATENÇÃO') { if(healthIcon) healthIcon.innerHTML = '⚠️'; }
     else if (dashboard.health === 'PROBLEMA') { if(healthIcon) healthIcon.innerHTML = '🚨'; }
     if(healthText) healthText.textContent = dashboard.health;
+    
+    const healthReason = document.getElementById('health-reason');
+    if(healthReason) healthReason.textContent = dashboard.healthReason;
 
     const investIcon = document.getElementById('invest-status-icon');
     const investText = document.getElementById('invest-status-text');

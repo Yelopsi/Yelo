@@ -92,27 +92,27 @@
     <h2 class="section-title">Diagnóstico Executivo</h2>
     <div class="diagnosis-grid">
         <!-- Saúde -->
-        <div class="diagnosis-card">
+        <div class="diagnosis-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">
             <h3>🩺 Saúde Geral</h3>
-            <div id="health-status-icon" class="status-indicator">...</div>
-            <h4 id="health-status-text" style="font-size: 1.4rem; margin: 0 0 10px 0; color: var(--saas-text);">Analisando...</h4>
-            <p style="color: var(--saas-muted); font-size: 0.9rem; margin: 0;">Baseado no MRR, Churn e Payback.</p>
+            <div id="health-status-icon" class="status-indicator status-ATENÇÃO">⚠️</div>
+            <h4 id="health-status-text" style="font-size: 1.4rem; margin: 0 0 10px 0; color: var(--saas-text);">ATENÇÃO</h4>
+            <p id="health-reason" style="color: var(--saas-muted); font-size: 0.9rem; margin: 0;">Baseado no MRR, Churn e Payback.</p>
         </div>
 
         <!-- Recomendação -->
-        <div class="diagnosis-card">
+        <div class="diagnosis-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">
             <h3>📈 Investimento (Ads)</h3>
-            <div id="invest-status-icon" class="status-indicator">...</div>
-            <h4 id="invest-status-text" style="font-size: 1.4rem; margin: 0 0 10px 0; color: var(--saas-text);">Analisando...</h4>
-            <p id="invest-reason" style="color: var(--saas-muted); font-size: 0.9rem; margin: 0;"></p>
+            <div id="invest-status-icon" class="status-indicator status-MANTER">🟡</div>
+            <h4 id="invest-status-text" style="font-size: 1.4rem; margin: 0 0 10px 0; color: var(--saas-text);">MANTER</h4>
+            <p id="invest-reason" style="color: var(--saas-muted); font-size: 0.9rem; margin: 0;">Coletando dados consistentes.</p>
         </div>
 
         <!-- Gargalo -->
-        <div class="diagnosis-card">
+        <div class="diagnosis-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">
             <h3>⚠️ Principal Gargalo</h3>
             <div class="status-indicator bg-red"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
-            <h4 id="bottleneck-issue" style="font-size: 1.2rem; margin: 0 0 10px 0; color: var(--saas-text);">Analisando...</h4>
-            <p id="bottleneck-reason" style="color: var(--saas-muted); font-size: 0.9rem; margin: 0;"></p>
+            <h4 id="bottleneck-issue" style="font-size: 1.2rem; margin: 0 0 10px 0; color: var(--saas-text);">Crescimento de Topo de Funil</h4>
+            <p id="bottleneck-reason" style="color: var(--saas-muted); font-size: 0.9rem; margin: 0;">Sempre precisamos de mais leads.</p>
         </div>
     </div>
 
@@ -169,7 +169,7 @@
     <h2 class="section-title">Métricas Base (Últimos 30 dias)</h2>
     <div class="saas-kpi-grid">
         <!-- MRR -->
-        <div class="saas-kpi-card">
+        <div class="saas-kpi-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">
             <div class="kpi-header">
                 <div class="kpi-icon bg-green"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
                 MRR
@@ -179,7 +179,7 @@
         </div>
 
         <!-- Pagantes -->
-        <div class="saas-kpi-card">
+        <div class="saas-kpi-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">
             <div class="kpi-header">
                 <div class="kpi-icon bg-blue"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
                 Base de Assinantes
@@ -189,7 +189,7 @@
         </div>
 
         <!-- Churn -->
-        <div class="saas-kpi-card">
+        <div class="saas-kpi-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">
             <div class="kpi-header">
                 <div class="kpi-icon bg-red"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h4l2-9 5 18 2-9h5"></path></svg></div>
                 Weighted Churn Rate
@@ -199,7 +199,7 @@
         </div>
 
         <!-- LTV/CAC -->
-        <div class="saas-kpi-card">
+        <div class="saas-kpi-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">
             <div class="kpi-header">
                 <div class="kpi-icon bg-yellow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
                 LTV & CAC
