@@ -37,7 +37,10 @@ class GrowthMarketingService {
         const novosPagantes = await db.Psychologist.count({
             where: {
                 is_exempt: { [Op.or]: [false, null] },
-                subscriptionId: { [Op.not]: null },
+                [Op.or]: [
+                    { subscriptionId: { [Op.not]: null } },
+                    { subscription_payments_count: { [Op.gt]: 0 } }
+                ],
                 updatedAt: { [Op.gte]: periodStart }
             },
             paranoid: false
@@ -57,7 +60,10 @@ class GrowthMarketingService {
         const pagantesAtivos = await db.Psychologist.findAll({
             where: {
                 ...activeFilter,
-                subscriptionId: { [Op.not]: null }
+                [Op.or]: [
+                    { subscriptionId: { [Op.not]: null } },
+                    { subscription_payments_count: { [Op.gt]: 0 } }
+                ]
             },
             attributes: ['id', 'valor_mensal_numero', 'plano', 'planExpiresAt', 'cancelAtPeriodEnd'],
             paranoid: false
@@ -89,7 +95,10 @@ class GrowthMarketingService {
         const churnCount = await db.Psychologist.count({
             where: {
                 is_exempt: { [Op.or]: [false, null] },
-                subscriptionId: { [Op.not]: null },
+                [Op.or]: [
+                    { subscriptionId: { [Op.not]: null } },
+                    { subscription_payments_count: { [Op.gt]: 0 } }
+                ],
                 status: 'inactive',
                 updatedAt: { [Op.gte]: periodStart }
             },

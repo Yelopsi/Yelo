@@ -507,7 +507,7 @@ exports.getFinancials = async (req, res) => {
 
         const mrr = activePsychologists.reduce((acc, psy) => {
             if (psy.is_exempt) return acc;
-            const hasSub = !!(psy.subscriptionId);
+            const hasSub = !!(psy.subscriptionId) || (psy.subscription_payments_count > 0);
             if (!hasSub) return acc;
             const planoKey = (psy.plano || '').toLowerCase();
             return acc + (planPrices[planoKey] || 0);
@@ -537,12 +537,19 @@ exports.getFinancials = async (req, res) => {
         }
 
         const payingCondition = {
-            subscriptionId: { [Op.ne]: null }
+            [Op.or]: [
+                { subscriptionId: { [Op.ne]: null } },
+                { subscription_payments_count: { [Op.gt]: 0 } }
+            ]
         };
 
         const trialCondition = {
             is_exempt: { [Op.not]: true },
-            subscriptionId: null
+            subscriptionId: null,
+            [Op.or]: [
+                { subscription_payments_count: 0 },
+                { subscription_payments_count: null }
+            ]
         };
 
         // Paid Period Data
@@ -593,7 +600,7 @@ exports.getFinancials = async (req, res) => {
             paranoid: false
         });
 
-        const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !!(psy.subscriptionId)).length;
+        const payingActiveCount = activePsychologists.filter(psy => !psy.is_exempt && (!!(psy.subscriptionId) || psy.subscription_payments_count > 0)).length;
         const prevPayingActiveCount = payingActiveCount; // Simplificação para mantermos a mesma base no período anterior
         
         // --- Atualização: Lógica exata de C_inicio ---
@@ -609,7 +616,7 @@ exports.getFinancials = async (req, res) => {
         const paidChurnRate = paidChurnRateReal * 100;
         const prevPaidChurnRate = prevPaidChurnRateReal * 100;
 
-        const trialActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !(psy.subscriptionId)).length;
+        const trialActiveCount = activePsychologists.filter(psy => !psy.is_exempt && !(psy.subscriptionId) && (!psy.subscription_payments_count || psy.subscription_payments_count === 0)).length;
         const prevTrialActiveCount = trialActiveCount;
 
         const trialChurnRate = trialActiveCount > 0 ? (trialChurnedCount / (trialActiveCount + trialChurnedCount)) * 100 : 0;
