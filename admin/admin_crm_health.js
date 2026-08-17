@@ -1,27 +1,47 @@
 async function initHealthDashboard() {
+    console.log("=== STARTING HEALTH DASHBOARD INITIALIZATION ===");
     try {
         const token = localStorage.getItem('yelo_admin_token');
-        if (!token) return;
+        if (!token) {
+            console.error("Token não encontrado!");
+            return;
+        }
 
+        console.log("Fetching /api/admin/growth/health...");
         const response = await fetch('/api/admin/growth/health', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
+        console.log("Response status:", response.status);
+        
         if (!response.ok) {
-            throw new Error('Falha ao carregar métricas.');
+            const errorText = await response.text();
+            console.error("Erro na resposta da API:", errorText);
+            throw new Error(`Falha ao carregar métricas. Status: ${response.status} - ${errorText}`);
         }
 
         const data = await response.json();
+        console.log("Data recebida:", data);
         
         if (data.success && data.dashboard) {
+            console.log("Renderizando dashboard...");
             renderDashboard(data.dashboard);
+            console.log("Dashboard renderizado com sucesso!");
+        } else {
+            console.error("Dados inválidos:", data);
+            alert("Dados da API vieram em formato inesperado.");
         }
     } catch (error) {
-        console.error("Erro:", error);
-        alert("Erro ao carregar Health Dashboard.");
+        console.error("=== ERRO FATAL NO HEALTH DASHBOARD ===", error);
+        alert("Erro ao carregar Health Dashboard: " + error.message);
+        
+        // Coloca o erro na tela para fácil visualização
+        const healthText = document.getElementById('health-status-text');
+        if (healthText) healthText.textContent = "Erro: " + error.message;
     } finally {
         const overlay = document.getElementById('loading-overlay');
         if (overlay) overlay.style.display = 'none';
+        console.log("=== END HEALTH DASHBOARD INITIALIZATION ===");
     }
 }
 
