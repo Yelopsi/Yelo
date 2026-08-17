@@ -1156,6 +1156,7 @@
 
         let patients = [];
         let events = [];
+        let phoneMask;
 
         // Elementos DOM
 
@@ -1684,6 +1685,7 @@
             pIdInput.value = String(patient.id); // Garante que seja string para o form
             document.getElementById('p-name').value = patient.name;
             document.getElementById('p-phone').value = patient.phone;
+            if (phoneMask) phoneMask.updateValue();
             document.getElementById('p-email').value = (patient.email && patient.email.includes('@temp.com')) ? '' : patient.email;
             document.getElementById('p-session-value').value = patient.sessionValue;
             pStatusInput.value = patient.status || 'ativo';
@@ -1764,6 +1766,7 @@
         window.handleNewPatient = () => {
             window.scrollTo({ top: 0, behavior: 'smooth' }); // Traz a tela para o modal
             if (form) form.reset();
+            if (phoneMask) phoneMask.updateValue(); // Sincroniza a máscara após o reset
             if (pIdInput) pIdInput.value = ''; // Limpa ID para indicar novo
             if (pStatusInput) pStatusInput.value = 'ativo';
             const checkboxAutomated = document.getElementById('p-automated-msg');
@@ -2281,7 +2284,7 @@
 
         // Máscara de telefone (se IMask estiver disponível)
         if (typeof IMask !== 'undefined') {
-            IMask(document.getElementById('p-phone'), { mask: '(00) 00000-0000' });
+            phoneMask = IMask(document.getElementById('p-phone'), { mask: '(00) 00000-0000' });
         }
 
         // Validação do campo Valor da Sessão (Impedir letras 'e', 'E', '+', '-')
