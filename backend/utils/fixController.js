@@ -7,7 +7,22 @@ exports.activatePsis = async (req, res) => { /* ... */ };
 
 exports.fixDbColumns = async (req, res) => { /* ... */ };
 
-exports.fixVipAll = async (req, res) => { /* ... */ };
+exports.fixVipAll = async (req, res) => {
+    try {
+        const [updatedRows] = await db.Psychologist.update(
+            { 
+                status: 'active', 
+                planExpiresAt: new Date('2099-12-31T23:59:59.000Z'),
+                subscriptionId: null,
+                stripeSubscriptionId: null
+            }, 
+            { where: { is_exempt: true } }
+        );
+        res.send(`✅ Sucesso! ${updatedRows} psicólogos VIP foram corrigidos (Status Ativo, Vencimento 2099).`);
+    } catch (error) {
+        res.status(500).send("❌ Erro ao corrigir VIPs: " + error.message);
+    }
+};
 
 exports.fixResetPayment = async (req, res) => { /* ... */ };
 

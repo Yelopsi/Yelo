@@ -72,6 +72,9 @@ exports.updateVipStatus = async (req, res) => {
             newPlan = plan;
             message = `Isenção do plano ${plan} concedida com sucesso.`;
             updatePayload.status = 'active'; 
+            updatePayload.planExpiresAt = new Date('2099-12-31T23:59:59.000Z');
+            updatePayload.subscriptionId = null;
+            updatePayload.stripeSubscriptionId = null;
         } else {
             newExemptStatus = false;
             newPlan = null;
