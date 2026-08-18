@@ -643,8 +643,8 @@ exports.updateProfilePhoto = async (req, res) => {
                     public_id: `patient-profile-${patient.id}`, // ID fixo para substituir a foto antiga
                     overwrite: true,
                     transformation: [
-                        { width: 500, height: 500, crop: 'fill', gravity: 'face' }, // Foca no rosto e corta quadrado
-                        { quality: 'auto' }, // Otimização automática de qualidade
+                        { width: 800, height: 800, crop: 'fill', gravity: 'face' }, // Resolução maior para evitar embaçamento
+                        { quality: 'auto:best' }, // Prioriza qualidade da imagem em vez de máxima compressão
                         { fetch_format: 'auto' } // Converte para WebP/AVIF se o navegador suportar
                     ]
                 },

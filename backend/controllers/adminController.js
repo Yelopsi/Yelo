@@ -275,7 +275,7 @@ exports.updateAdminPhoto = async (req, res) => {
                             folder: 'yelo/profiles',
                             public_id: `admin-profile-${userId}-${Date.now()}`,
                             overwrite: true,
-                            transformation: [{ width: 500, height: 500, crop: 'fill', gravity: 'face' }, { quality: 'auto' }, { fetch_format: 'auto' }]
+                            transformation: [{ width: 800, height: 800, crop: 'fill', gravity: 'face' }, { quality: 'auto:best' }, { fetch_format: 'auto' }]
                         },
                         (error, result) => {
                             if (error) reject(error);
