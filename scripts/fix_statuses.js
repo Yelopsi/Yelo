@@ -1,4 +1,4 @@
-require('dotenv').config({ path: '/Users/andehrson/Yelo/.env' });
+require('dotenv').config({ path: '/Users/andehrson/SITES/Yelo/.env' });
 const db = require('../backend/models');
 
 async function fixStatuses() {
@@ -74,14 +74,15 @@ async function fixStatuses() {
                 let updateData = { subscriptionId: null };
                 
                 const expDate = psi.planExpiresAt ? new Date(psi.planExpiresAt) : null;
+                const limitDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000); // 3 days grace period
                 
-                if (!expDate || expDate < now) {
-                    // Trial Vencido ou Assinatura Expirada
+                if (!expDate || expDate < limitDate) {
+                    // Trial Vencido ou Assinatura Expirada (com 3 dias de tolerância)
                     updateData.status = 'inactive';
-                    console.log(`❌ Vencido: ${psi.nome} | ID: ${psi.id} (Status -> inactive)`);
+                    console.log(`❌ Vencido (ou Inativo): ${psi.nome} | ID: ${psi.id} (Status -> inactive)`);
                 } else {
-                    // Trial Vigente
-                    console.log(`⏳ Em Trial: ${psi.nome} | ID: ${psi.id} (Vence: ${expDate.toLocaleDateString()})`);
+                    // Trial Vigente ou no período de tolerância
+                    console.log(`⏳ Em Trial/Tolerância: ${psi.nome} | ID: ${psi.id} (Vence: ${expDate.toLocaleDateString()})`);
                 }
 
                 updatePromises.push(psi.update(updateData));

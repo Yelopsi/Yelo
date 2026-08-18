@@ -4,18 +4,87 @@ const { Op } = require('sequelize');
 // 1. AUDITORIA DE INTEGRIDADE DA BASE DE DADOS (Limpeza de Inadimplentes)
 // ============================================================================
 async function runIntegrityAudit() {
-    console.log('🛡️ [CRON AUDIT] Executando auditoria de integridade da base de dados...');
+    console.log('🛡️ [CRON AUDIT] Executando auditoria de integridade da base de dados e Asaas...');
     try {
-        // Revoga is_exempt se a pessoa já for pagante
+        let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
+        if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
+            ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
+        }
+
+        // 1. Revoga is_exempt se a pessoa já for pagante
         await db.sequelize.query(`UPDATE "Psychologists" SET "is_exempt" = false WHERE "subscriptionId" IS NOT NULL AND "is_exempt" = true;`);
-        // Bloqueia quem não tem assinatura nem isenção e já venceu
-        await db.sequelize.query(`UPDATE "Psychologists" SET status = 'inactive' WHERE "subscriptionId" IS NULL AND ("is_exempt" IS NULL OR "is_exempt" = false) AND status = 'active' AND ("planExpiresAt" IS NULL OR "planExpiresAt" <= NOW());`);
-        // Bloqueia quem tem plano mas venceu
-        await db.sequelize.query(`UPDATE "Psychologists" SET status = 'inactive' WHERE "planExpiresAt" <= NOW() AND ("is_exempt" IS NULL OR "is_exempt" = false) AND status = 'active';`);
-        // Bloqueia VIPs que não tem plano setado
-        await db.sequelize.query(`UPDATE "Psychologists" SET "is_exempt" = false, status = 'inactive' WHERE "is_exempt" = true AND ("plano" IS NULL OR "plano" = '');`);
         
-        console.log('✅ [CRON AUDIT] Auditoria de integridade e limpeza de inadimplentes concluída.');
+        // 2. Bloqueia VIPs que não tem plano setado
+        await db.sequelize.query(`UPDATE "Psychologists" SET "is_exempt" = false, status = 'inactive' WHERE "is_exempt" = true AND ("plano" IS NULL OR "plano" = '');`);
+
+        // 3. Busca psicólogos com plano vencido ou sem assinatura
+        const expiredPsis = await db.Psychologist.findAll({
+            where: {
+                status: 'active',
+                [Op.or]: [
+                    { is_exempt: null },
+                    { is_exempt: false }
+                ],
+                [Op.or]: [
+                    { planExpiresAt: { [Op.lte]: new Date() } },
+                    { planExpiresAt: null }
+                ]
+            }
+        });
+
+        console.log(`[CRON AUDIT] Encontrados ${expiredPsis.length} psicólogos com plano vencido ou nulo. Iniciando checagem...`);
+
+        const now = new Date();
+        const fallbackDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000); // 3 dias atrás
+
+        for (const psi of expiredPsis) {
+            let shouldBlock = false;
+            let reason = '';
+
+            if (!psi.subscriptionId) {
+                // Sem assinatura no banco -> bloqueia direto na virada
+                shouldBlock = true;
+                reason = 'Sem assinatura no sistema';
+            } else {
+                // Tem assinatura -> Consulta Ativa no Asaas
+                try {
+                    const pRes = await fetch(`${ASAAS_API_URL}/payments?subscription=${psi.subscriptionId}`, { 
+                        headers: { 'access_token': process.env.ASAAS_API_KEY } 
+                    });
+                    
+                    if (pRes.ok) {
+                        const pData = await pRes.json();
+                        const payments = pData.data || [];
+                        
+                        const hasOverdue = payments.some(p => p.status === 'OVERDUE');
+                        
+                        if (hasOverdue) {
+                            shouldBlock = true;
+                            reason = 'Pagamento em atraso (OVERDUE) no Asaas';
+                        } else {
+                            // Não tem pagamento em atraso (ex: boleto aguardando, cartão agendado)
+                            // Só bloqueia se já passou da tolerância de 3 dias do Yelo
+                            const expDate = psi.planExpiresAt ? new Date(psi.planExpiresAt) : null;
+                            if (!expDate || expDate < fallbackDate) {
+                                shouldBlock = true;
+                                reason = 'Limite de tolerância de 3 dias estourado';
+                            }
+                        }
+                    } else {
+                        console.error(`[CRON AUDIT] Erro ao consultar Asaas para assinatura ${psi.subscriptionId}. Mantendo ativo por segurança.`);
+                    }
+                } catch (err) {
+                    console.error(`[CRON AUDIT] Falha na request Asaas para ${psi.subscriptionId}:`, err.message);
+                }
+            }
+
+            if (shouldBlock) {
+                console.log(`❌ [CRON AUDIT] Bloqueando psicólogo ID ${psi.id} (${psi.nome}). Motivo: ${reason}`);
+                await psi.update({ status: 'inactive' });
+            }
+        }
+        
+        console.log('✅ [CRON AUDIT] Auditoria inteligente e limpeza de inadimplentes concluída.');
     } catch (e) { 
         console.error('⚠️ [CRON AUDIT] Erro durante a auditoria de integridade:', e.message); 
     }
