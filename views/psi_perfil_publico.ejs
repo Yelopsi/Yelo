@@ -35,7 +35,10 @@
         : `Encontre acolhimento e suporte com ${psicologo.nome}. ${profTitleBase} especialista em saúde mental.`);
       const currentUrl = `https://www.yelopsi.com.br/${psicologo.slug || ''}`;
       
-      const imageUrl = psicologo.fotoUrl || 'https://www.yelopsi.com.br/img/logo_yelo_share.png';
+      let imageUrl = psicologo.fotoUrl || 'https://www.yelopsi.com.br/assets/images/apple-touch-icon.png';
+      if (imageUrl.includes('cloudinary.com') && imageUrl.includes('/upload/')) {
+          imageUrl = imageUrl.replace('/upload/', '/upload/w_256,h_256,c_fill,q_auto/');
+      }
       
       let especialidadesStr = 'Psicologia';
       if (psicologo.especialidades) {

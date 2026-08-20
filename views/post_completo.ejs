@@ -9,7 +9,10 @@
       const descSnippet = (post.meta_description ? post.meta_description : (rawFallback.substring(0, 155) + '...')).replace(/[\r\n]+/g, ' '); 
       const currentUrl = `https://www.yelopsi.com.br/blog/post/${post.slug || post.id}`;
       const autorNome = post.autor ? post.autor.nome : 'Equipe Yelo';
-      const imageUrl = post.imagem_url || 'https://www.yelopsi.com.br/img/logo_yelo_share.png';
+      let imageUrl = post.imagem_url || 'https://www.yelopsi.com.br/assets/images/apple-touch-icon.png';
+      if (imageUrl.includes('cloudinary.com') && imageUrl.includes('/upload/')) {
+          imageUrl = imageUrl.replace('/upload/', '/upload/w_256,h_256,c_fill,q_auto/');
+      }
       
       const schemaMarkup = {
         "@context": "https://schema.org",
