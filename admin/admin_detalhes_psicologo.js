@@ -161,6 +161,7 @@ function renderDetails(data) {
     renderList('forum-list', [...(data.forumPosts || []), ...(data.forumComments || [])], renderForumItem);
     renderList('reviews-list', data.reviews, renderReviewItem);
     renderList('whatsapp-list', data.whatsappLogs, renderWhatsappLogItem);
+    renderList('payments-list', data.payments, renderPaymentItem);
 }
 
 function renderTimeline(data) {
@@ -251,6 +252,39 @@ function renderBlogItem(post) {
             <h4>${post.titulo || post.title || 'Artigo'}</h4>
             <p>Publicado em: ${new Date(post.createdAt || post.created_at || new Date()).toLocaleDateString('pt-BR')}</p>
             <a href="/blog/post/${post.slug || post.id}" target="_blank">Ver Post</a>
+        </div>
+    `;
+}
+
+function renderPaymentItem(payment) {
+    const dataVenc = payment.dueDate ? new Date(payment.dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'N/A';
+    const dataPag = payment.paymentDate ? new Date(payment.paymentDate).toLocaleDateString('pt-BR') : 'Pendente';
+    const valor = parseFloat(payment.value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    let badgeClass = 'status-pending';
+    let badgeText = payment.status;
+    if (payment.status === 'RECEIVED' || payment.status === 'CONFIRMED' || payment.status === 'paid') {
+        badgeClass = 'status-active';
+        badgeText = 'Pago';
+    } else if (payment.status === 'OVERDUE' || payment.status === 'failed') {
+        badgeClass = 'status-cancelada';
+        badgeText = 'Atrasado/Falhou';
+    } else if (payment.status === 'REFUNDED') {
+        badgeClass = 'status-cancelada';
+        badgeText = 'Estornado';
+    }
+
+    return `
+        <div class="content-card" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h4 style="margin: 0; color: #1e293b;">Fatura ${payment.billingType || 'Cartão'}</h4>
+                <p style="margin: 5px 0 0 0; color: #64748b; font-size: 0.85rem;">
+                    Vencimento: <strong>${dataVenc}</strong> | Pagamento: ${dataPag}
+                </p>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 1.1rem; font-weight: 700; color: #0f172a;">${valor}</div>
+                <span class="status ${badgeClass}" style="margin-top: 5px; display: inline-block;">${badgeText}</span>
+            </div>
         </div>
     `;
 }

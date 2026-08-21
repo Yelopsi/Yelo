@@ -192,6 +192,11 @@ exports.getPsychologistFullDetails = async (req, res) => {
         
         let profileViewsFixed = profileViewsStats[0] ? parseInt(profileViewsStats[0].count) : 0;
 
+        const payments = await db.Payment.findAll({
+            where: { psychologistId: id },
+            order: [['dueDate', 'DESC']]
+        }).catch(() => []);
+
         res.json({
             psychologist,
             stats: {
@@ -205,7 +210,8 @@ exports.getPsychologistFullDetails = async (req, res) => {
             forumComments: forumComments.map(c => c.toJSON ? { ...c.toJSON(), postTitle: c.ForumPost?.titulo } : c),
             reviews,
             matches: matches.map(m => ({ ...m, createdAt: m.createdAt || m.created_at })) || [],
-            whatsappLogs
+            whatsappLogs,
+            payments
         });
 
     } catch (error) {
@@ -791,6 +797,101 @@ exports.getPendingActions = async (req, res) => {
                         dealClosed,
                         closedDealsCount,
                         daysLeft
+                    }
+                });
+            });
+        }
+
+        // 6. Pix Vencido (Atraso 1 Dia) - Playbook expired_pix_fomo
+        const yesterdayUpperBound = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const yesterdayLowerBound = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+        
+        const expiredPixCandidates = await db.Psychologist.findAll({
+            where: {
+                status: 'inactive', // Ao vencer, o cron passa para inactive
+                planExpiresAt: {
+                    [Op.lte]: yesterdayUpperBound,
+                    [Op.gte]: yesterdayLowerBound
+                },
+                deletedAt: null,
+                telefone: { [Op.ne]: null, [Op.not]: '' }
+            },
+            include: [{
+                model: db.Payment,
+                as: 'payments',
+                where: {
+                    billingType: 'PIX',
+                    status: { [Op.in]: ['OVERDUE', 'PENDING'] }
+                },
+                required: true // Só traz quem tem um pagamento PIX pendente/vencido
+            }],
+            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano', 'profile_appearances', 'whatsapp_clicks', 'abordagem']
+        });
+
+        if (expiredPixCandidates.length > 0) {
+            const expPixIds = expiredPixCandidates.map(c => c.id);
+            const wppLogsExpPix = await db.WhatsAppClickLog.findAll({
+                where: { psychologistId: { [Op.in]: expPixIds } },
+                attributes: ['psychologistId', 'dealClosed']
+            });
+            
+            const matchEventsExpPixCount = await db.sequelize.query(`
+                SELECT "psychologistId", COUNT(*) as count 
+                FROM "MatchEvents" 
+                WHERE "psychologistId" IN (:expPixIds) 
+                GROUP BY "psychologistId"
+            `, { replacements: { expPixIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`
+                SELECT "PsychologistId" as "psychologistId", COUNT(*) as count 
+                FROM "MatchEvents" 
+                WHERE "PsychologistId" IN (:expPixIds) 
+                GROUP BY "PsychologistId"
+            `, { replacements: { expPixIds }, type: db.sequelize.QueryTypes.SELECT })).catch(() => []);
+            
+            const profileViewsExpPixCount = await db.sequelize.query(`
+                SELECT "psychologistId", COUNT(*) as count 
+                FROM "ProfileAppearanceLogs" 
+                WHERE "psychologistId" IN (:expPixIds) 
+                GROUP BY "psychologistId"
+            `, { replacements: { expPixIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`
+                SELECT "PsychologistId" as "psychologistId", COUNT(*) as count 
+                FROM "ProfileAppearanceLogs" 
+                WHERE "PsychologistId" IN (:expPixIds) 
+                GROUP BY "PsychologistId"
+            `, { replacements: { expPixIds }, type: db.sequelize.QueryTypes.SELECT })).catch(() => []);
+
+            expiredPixCandidates.forEach(p => {
+                const logs = wppLogsExpPix.filter(l => l.psychologistId === p.id);
+                
+                const startedTherapyCount = logs.filter(l => l.dealClosed === 'yes').length;
+                const negotiatingCount = logs.filter(l => l.dealClosed === 'talking').length;
+                const noReplyCount = logs.filter(l => l.dealClosed !== 'yes' && l.dealClosed !== 'talking').length;
+                
+                const dealClosed = (startedTherapyCount + negotiatingCount) > 0;
+                const closedDealsCount = startedTherapyCount + negotiatingCount;
+                
+                const matchEv = matchEventsExpPixCount.find(m => m.psychologistId == p.id);
+                const profView = profileViewsExpPixCount.find(m => m.psychologistId == p.id);
+                
+                let appearances = p.profile_appearances || 0;
+                let views = 0;
+                if (matchEv) appearances += parseInt(matchEv.count, 10);
+                if (profView) views = parseInt(profView.count, 10);
+                const clicks = (p.whatsapp_clicks || 0) + logs.length;
+
+                pendingList.push({
+                    ...p.toJSON(),
+                    actionType: 'expired_pix_fomo',
+                    reason: 'PIX Vencido há 1 dia',
+                    metrics: {
+                        appearances,
+                        views,
+                        clicks,
+                        dealClosed,
+                        closedDealsCount,
+                        startedTherapyCount,
+                        negotiatingCount,
+                        noReplyCount,
+                        approach: p.abordagem || 'Psicologia'
                     }
                 });
             });

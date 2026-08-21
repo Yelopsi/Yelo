@@ -121,11 +121,18 @@
         <button class="tab-btn" onclick="switchDetailTab('forum')">Atividade no Fórum</button>
         <button class="tab-btn" onclick="switchDetailTab('reviews')">Avaliações & Feedback</button>
         <button class="tab-btn" onclick="switchDetailTab('whatsapp')">Leads WhatsApp</button>
+        <button class="tab-btn" onclick="switchDetailTab('payments')">Pagamentos</button>
     </div>
 
     <div class="tab-content" id="tab-timeline">
         <div class="timeline-container" id="timeline-list">
             <!-- Itens da timeline injetados via JS -->
+        </div>
+    </div>
+
+    <div class="tab-content" id="tab-payments" style="display: none;">
+        <div class="content-list" id="payments-list">
+            <p class="empty-state">Nenhum pagamento registrado.</p>
         </div>
     </div>
 

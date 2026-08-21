@@ -390,6 +390,38 @@ window.initializePage = function () {
         } else if (actionType === 'incomplete') {
             msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo. 🌿\n\nVi que você deu o primeiro passo e iniciou o seu cadastro na nossa plataforma, mas acabou não finalizando o preenchimento do seu perfil. Eu sei bem que a rotina de atendimentos acaba engolindo o nosso tempo, né? rs\n\nPassei só para te lembrar que os seus 14 dias de teste gratuito (sem precisar cadastrar cartão de crédito) só começam a contar depois que o seu perfil estiver completo e a sua página disponível para receber pacientes!\n\nÉ a oportunidade perfeita para você testar na prática como a plataforma te conecta com pacientes direto no seu WhatsApp, lembrando que a gente não cobra nenhuma taxa ou comissão pelas suas sessões.\n\nFalta bem pouco para o seu perfil ficar ativo nas buscas. Se precisar de uma mãozinha para preencher a sua bio ou tiver qualquer dúvida, é só me dar um toque respondendo esta mensagem. Sigo super à disposição por aqui!`;
         
+        } else if (actionType === 'expired_pix_fomo') {
+            const m = metrics || {};
+            const approach = m.approach || 'Psicologia';
+            
+            let performanceText = '';
+            if (m.startedTherapyCount > 0 || m.negotiatingCount > 0) {
+                let statusDetails = [];
+                if (m.startedTherapyCount > 0) {
+                    statusDetails.push(`*${m.startedTherapyCount} paciente(s) já iniciou(aram) terapia*`);
+                }
+                if (m.negotiatingCount > 0) {
+                    statusDetails.push(`*${m.negotiatingCount} ainda está(ão) em negociação*`);
+                }
+                
+                performanceText = `alcançando *${m.appearances || 0} aparições em buscas*, *${m.views || 0} visualizações na sua página* e *${m.clicks || 0} cliques para o seu WhatsApp*. Desses contatos, sabemos que ${statusDetails.join(' e ')} com você!`;
+            } else if (m.clicks > 0) {
+                performanceText = `alcançando *${m.appearances || 0} aparições em buscas* e *${m.clicks || 0} pacientes chegaram a te chamar no WhatsApp* para negociar.`;
+            } else {
+                performanceText = `alcançando *${m.appearances || 0} aparições em buscas de pacientes*.`;
+            }
+
+            let potentialText = '';
+            if (m.dealClosed) {
+                potentialText = `A sua apresentação focada na *${approach}* tem um potencial gigante para continuar atraindo os pacientes certos para a sua clínica.`;
+            } else if (m.clicks > 0) {
+                potentialText = `A sua apresentação focada na *${approach}* tem um potencial gigante e é só questão de tempo até convertermos esses contatos em pacientes reais para a sua clínica.`;
+            } else {
+                potentialText = `A sua apresentação focada na *${approach}* tem um diferencial enorme e o algoritmo estava justamente aprendendo o seu perfil para te ranquear melhor.`;
+            }
+
+            msg = `Bom dia, ${firstName}! Como vai?\n\nPassando por aqui com um aviso importante: a sua assinatura da Yelo venceu ontem e, por conta disso, o seu perfil acabou entrando em pausa no sistema e saiu do ar temporariamente.\n\nComo acompanho de perto a sua trajetória, não queria deixar você perder a ótima tração que construímos juntos. O seu perfil vinha com uma visibilidade excelente — ${performanceText}\n\n${potentialText}\n\nPara o seu perfil voltar ao ar imediatamente e não quebrarmos o ritmo que o algoritmo já gerou para você, basta regularizar a assinatura.\n\nÉ bem simples: basta acessar a sua conta, ir no menu *Ajustes > Assinaturas e Planos* e atualizar a forma de pagamento.\n\nSe precisar de qualquer ajuda com o acesso, sigo totalmente à disposição. 🌿`;
+
         } else if (actionType === 'paid_churn') {
             try {
                 if (window.showToast) window.showToast('Gerando copy de resgate (Pago) com IA... Aguarde.', 'info');
@@ -554,7 +586,9 @@ window.initializePage = function () {
             // 🧠 Sincronização Híbrida: Lê do Banco de Dados (isProfileAnalyzed) ou do cache local do navegador
             const isCopied = psy.isProfileAnalyzed === true || copiedList.includes(String(psy.id));
             const copyBadge = isCopied ? '<span class="badge-copied" title="Análise Copiada" style="margin-left: 5px; font-size: 0.8rem;">✅</span>' : '';
-            const pendingBadge = (psy.status === 'pending' && pendingReminders.includes(String(psy.id))) ? '<span class="badge-pending" title="Lembrete Enviado" style="margin-left: 5px; font-size: 0.8rem;">✉️</span>' : '';
+            
+            const hasPlaybookSent = psy.msg_analysis_sent_at || psy.msg_incomplete_profile_sent_at || psy.msg_churn_followup_sent_at || psy.msg_paid_churn_sent_at || psy.admin_billing_sent_at || (psy.aiOptimizationHistory && psy.aiOptimizationHistory.length > 0);
+            const pendingBadge = (hasPlaybookSent || pendingReminders.includes(String(psy.id))) ? '<span class="badge-pending" title="Playbook/Mensagem Enviada (Salvo no Banco de Dados)" style="margin-left: 5px; font-size: 0.8rem;">✉️</span>' : '';
             const dataInscricao = new Date(psy.createdAt).toLocaleDateString('pt-BR');
 
             let statusLabel = psy.status || 'inativo';
@@ -606,6 +640,7 @@ window.initializePage = function () {
                 
                 utmBadge = `<span style="background: ${bgBadge}; color: ${badgeColor}; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">${psy.utm_source}</span>`;
                 if (psy.utm_medium) utmBadge += `<br><span style="font-size: 0.7rem; color: #64748b; margin-top: 2px; display: inline-block;">${psy.utm_medium}</span>`;
+                if (psy.utm_content) utmBadge += `<br><span style="font-size: 0.7rem; color: #94a3b8; font-style: italic; display: inline-block;">${psy.utm_content}</span>`;
             }
 
             const row = document.createElement('tr');
