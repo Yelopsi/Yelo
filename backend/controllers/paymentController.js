@@ -29,6 +29,14 @@ exports.createPreference = async (req, res) => {
         localPsychologist = await db.Psychologist.findByPk(psychologistId);
         if (!localPsychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
 
+        // --- TRAVA DE INADIMPLÊNCIA (Evita bypass de dívida) ---
+        const hasOverdue = await db.Payment.findOne({
+            where: { psychologistId, status: 'OVERDUE' }
+        });
+        if (hasOverdue) {
+            return res.status(403).json({ error: 'Você possui uma fatura em aberto. Por favor, acesse o painel financeiro para regularizar sua situação antes de realizar uma nova assinatura.' });
+        }
+
         // --- IDEMPOTÊNCIA: RECUPERAÇÃO DA OPERAÇÃO ---
         const idempotencyKey = req.headers['idempotency-key'] || uuidv4();
         intent = await db.SubscriptionIntent.findOne({ where: { idempotencyKey } });

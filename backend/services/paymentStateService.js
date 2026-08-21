@@ -344,6 +344,27 @@ class PaymentStateService {
                 }, { transaction: t });
             }
         });
+
+        // Se ficou inadimplente, pausamos a criação de novas cobranças deletando a assinatura no Asaas
+        if (eventType === 'PAYMENT_OVERDUE' && payment.subscription) {
+            try {
+                let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
+                ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, '');
+                if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
+                    ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
+                }
+                const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
+
+                const fetch = require('node-fetch');
+                await fetch(`${ASAAS_API_URL}/subscriptions/${payment.subscription}`, {
+                    method: 'DELETE',
+                    headers: { 'access_token': ASAAS_API_KEY }
+                });
+                console.log(`[ASAAS] Assinatura ${payment.subscription} cancelada devido a inadimplência (PAYMENT_OVERDUE) para não gerar novas cobranças.`);
+            } catch (err) {
+                console.error(`[ASAAS] Falha ao tentar cancelar a assinatura ${payment.subscription} após PAYMENT_OVERDUE:`, err.message);
+            }
+        }
     }
 }
 
