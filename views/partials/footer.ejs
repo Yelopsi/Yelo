@@ -129,74 +129,6 @@
 </footer>
 
 <style>
-    .cookie-banner {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 90%;
-        max-width: 600px;
-        background-color: #ffffff;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        padding: 20px 25px;
-        z-index: 10000;
-        display: none; /* Oculto por padrão, JS ativa */
-        flex-direction: column;
-        gap: 15px;
-        border: 1px solid #e0e0e0;
-        font-family: var(--font-principal);
-    }
-
-    .cookie-content {
-        font-size: 0.95rem;
-        color: #333;
-        line-height: 1.5;
-    }
-
-    .cookie-content a {
-        color: #1B4332; /* Verde Yelo */
-        text-decoration: underline;
-        font-weight: bold;
-    }
-
-    .cookie-actions {
-        display: flex;
-        justify-content: flex-end;
-    }
-
-    .btn-cookie-accept {
-        background-color: #1B4332; /* Verde Yelo */
-        color: white;
-        border: none;
-        padding: 10px 24px;
-        border-radius: 8px;
-        font-weight: bold;
-        cursor: pointer;
-        font-size: 0.9rem;
-        transition: background-color 0.3s ease;
-    }
-
-    .btn-cookie-accept:hover {
-        background-color: #143326;
-    }
-
-    /* Responsivo: Em desktop fica lado a lado */
-    @media (min-width: 768px) {
-        .cookie-banner {
-            flex-direction: row;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .cookie-actions {
-            margin-top: 0;
-            flex-shrink: 0;
-            }
-            .mobile-break {
-                display: none;
-        }
-    }
-
     /* Estilos da Ilustração do Rodapé */
     .rodape-ilustracao {
         display: flex;
@@ -220,43 +152,7 @@
     }
 </style>
 
-<div id="cookie-consent-banner" class="cookie-banner">
-    <div class="cookie-content">
-        <p>A Yelo usa cookies essenciais para funcionar. Também gostaríamos de usar cookies de Analytics e Marketing para melhorar nosso serviço. <a href="/privacidade">Saiba mais</a>.</p>
-    </div>
-    <div class="cookie-actions" style="gap: 10px;">
-        <button id="btn-reject-cookies" class="btn-cookie-accept" style="background-color: transparent; color: #1B4332; border: 1px solid #1B4332;">Apenas Essenciais</button>
-        <button id="btn-accept-cookies" class="btn-cookie-accept">Aceitar Todos</button>
-    </div>
-</div>
-
-<script nonce="<%= nonce %>">
-    document.addEventListener("DOMContentLoaded", function() {
-        const cookieBanner = document.getElementById('cookie-consent-banner');
-        const acceptBtn = document.getElementById('btn-accept-cookies');
-        const rejectBtn = document.getElementById('btn-reject-cookies');
-        
-        if (window.ConsentManager && !window.ConsentManager.hasInteracted()) {
-            setTimeout(() => {
-                cookieBanner.style.display = 'flex';
-            }, 500);
-        }
-
-        if (acceptBtn) {
-            acceptBtn.addEventListener('click', function() {
-                window.ConsentManager.acceptAll();
-                cookieBanner.style.display = 'none';
-            });
-        }
-        
-        if (rejectBtn) {
-            rejectBtn.addEventListener('click', function() {
-                window.ConsentManager.rejectAll();
-                cookieBanner.style.display = 'none';
-            });
-        }
-    });
-</script>
+<%- include('cookie_banner') %>
 
 <div vw class="enabled">
     <div vw-access-button class="active"></div>
