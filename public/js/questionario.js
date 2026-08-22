@@ -520,6 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const valPsiOnly = "Psicanálise";
         const valHum = "Humanista,Gestalt-terapia";
         const valSis = "Sistêmica";
+        const valIndiferente = "Indiferente";
 
         if (categoria === "sintomas") {
             questionText = "Lidando com essas questões, como o terapeuta poderia te ajudar melhor?";
@@ -528,6 +529,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="choice-button" data-value="${valPsiOnly}"><strong>Foco Profundo:</strong> Quero um espaço livre para investigar a raiz dos meus problemas.</button>
                 <button class="choice-button" data-value="${valHum}"><strong>Acolhimento:</strong> Quero focar em entender e aceitar meus sentimentos no presente.</button>
                 <button class="choice-button" data-value="${valSis}"><strong>Foco no Ambiente:</strong> Quero entender como as pessoas ao meu redor influenciam o que sinto.</button>
+                <button class="choice-button" data-value="${valIndiferente}" style="margin-top: 10px; background: rgba(255,255,255,0.05);">Não tenho certeza</button>
             `;
         } else if (categoria === "relacional") {
             questionText = "Ao focar nas suas relações e intimidade, qual dinâmica de terapia te atrai mais?";
@@ -536,6 +538,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="choice-button" data-value="${valPsi}"><strong>Explorar o Passado:</strong> Quero entender de onde vêm os meus padrões de relacionamento.</button>
                 <button class="choice-button" data-value="${valTCC}"><strong>Estratégias:</strong> Gostaria de dicas diretas para me comunicar melhor e mudar atitudes.</button>
                 <button class="choice-button" data-value="${valHum}"><strong>Expressão Autêntica:</strong> Quero focar na forma como eu me sinto e me expresso na relação agora.</button>
+                <button class="choice-button" data-value="${valIndiferente}" style="margin-top: 10px; background: rgba(255,255,255,0.05);">Não tenho certeza</button>
             `;
         } else if (categoria === "outro") {
             questionText = "Independentemente do motivo que te trouxe aqui, como você prefere conduzir a sessão?";
@@ -544,6 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="choice-button" data-value="${valPsi}"><strong>Foco Profundo:</strong> Gosto da ideia de investigar a raiz das questões e o meu inconsciente.</button>
                 <button class="choice-button" data-value="${valHum}"><strong>Acolhimento:</strong> Quero um espaço focado na minha autoaceitação livre de julgamentos.</button>
                 <button class="choice-button" data-value="${valSis}"><strong>Foco no Ambiente:</strong> Quero entender como o meu convívio social influencia quem eu sou.</button>
+                <button class="choice-button" data-value="${valIndiferente}" style="margin-top: 10px; background: rgba(255,255,255,0.05);">Não tenho certeza</button>
             `;
         } else {
             questionText = "Buscando desenvolvimento pessoal, como você prefere conduzir a sessão?";
@@ -552,6 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="choice-button" data-value="${valPsi}"><strong>Mergulho Interior:</strong> Gosto da ideia de analisar meus sonhos e o meu inconsciente.</button>
                 <button class="choice-button" data-value="${valHum}"><strong>Potencial Humano:</strong> Quero focar na minha autoaceitação livre de julgamentos.</button>
                 <button class="choice-button" data-value="${valSis}"><strong>Padrões Sociais:</strong> Quero entender as expectativas que a sociedade colocou em mim.</button>
+                <button class="choice-button" data-value="${valIndiferente}" style="margin-top: 10px; background: rgba(255,255,255,0.05);">Não tenho certeza</button>
             `;
         }
 
