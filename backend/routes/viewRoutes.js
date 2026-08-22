@@ -450,8 +450,8 @@ router.get('/:slug', async (req, res, next) => {
                     slug: { [db.Sequelize.Op.not]: null } 
                 },
                 limit: 3,
-                order: [['createdAt', 'DESC']],
-                attributes: ['id', 'titulo', 'slug', 'imagem_url', 'createdAt'] // Apenas campos essenciais para a lista
+                order: [['curtidas', 'DESC']],
+                attributes: ['id', 'titulo', 'slug', 'imagem_url', 'curtidas', 'createdAt'] // Apenas campos essenciais para a lista
             });
 
             return res.render('psi_perfil_publico', { 

@@ -448,7 +448,7 @@
                     <!-- Artigos Publicados -->
                     <% if (typeof postsAutor !== 'undefined' && postsAutor.length > 0) { %>
                     <div id="artigos-autor-section" class="profile-info-card" style="margin-top: 30px;">
-                        <h3 class="profile-section-title">Últmos artigos publicados por <%= psicologo.nome.split(' ')[0] %></h3>
+                        <h3 class="profile-section-title">Artigos mais engajados de <%= psicologo.nome.split(' ')[0] %></h3>
                         <div class="artigos-autor-lista" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
                             <% postsAutor.forEach(postAutor => { %>
                                 <a href="/blog/post/<%= postAutor.slug %>" style="display: flex; gap: 15px; padding: 15px; border: 1px solid #eee; border-radius: 12px; text-decoration: none; color: inherit; transition: all 0.2s; align-items: center; background: #fff;">
@@ -459,7 +459,13 @@
                                     <% } %>
                                     <div style="flex-grow: 1;">
                                         <h4 style="margin: 0 0 5px 0; font-family: var(--font-principal); font-size: 1.05rem; color: #1B4332; line-height: 1.3;"><%= postAutor.titulo %></h4>
-                                        <div style="font-size: 0.8rem; color: #888;"><%= new Date(postAutor.createdAt).toLocaleDateString('pt-BR') %></div>
+                                        <div style="display: flex; align-items: center; gap: 12px; font-size: 0.8rem; color: #888;">
+                                            <span><%= new Date(postAutor.createdAt).toLocaleDateString('pt-BR') %></span>
+                                            <span style="display: flex; align-items: center; gap: 4px;">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                                                <%= postAutor.curtidas || 0 %>
+                                            </span>
+                                        </div>
                                     </div>
                                 </a>
                             <% }); %>
