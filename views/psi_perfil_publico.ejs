@@ -568,9 +568,18 @@
         <!-- STICKY BOTTOM BAR (Apenas Mobile) -->
         <div class="mobile-sticky-cta" style="width: 100%; box-sizing: border-box; flex-direction: column; gap: 12px; padding: 20px 24px calc(34px + env(safe-area-inset-bottom)) 24px;">
             
-            <!-- Gatilho de Próximo Horário (Mobile Fixed) -->
-            <div style="position: absolute; top: -50px; left: 0; width: 100%; display: flex; justify-content: center; pointer-events: none; overflow: hidden; padding: 0 15px; box-sizing: border-box;">
-                <div id="proximo-horario-badge-mobile" style="pointer-events: auto; display: none; align-items: center; justify-content: center; gap: 8px; background: #dcfce7; padding: 8px 16px; border-radius: 50px; border: 1px solid #86efac; text-align: center; animation: float-badge 3s ease-in-out infinite; box-shadow: 0 4px 10px rgba(22, 163, 74, 0.15); transition: transform 0.3s ease-out, opacity 0.3s ease-out; touch-action: pan-y; width: fit-content; max-width: 100%; position: relative;">
+            <!-- Container for Floating Badges (Mobile Fixed) -->
+            <div style="position: absolute; bottom: 100%; left: 0; width: 100%; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; padding: 0 24px 12px 15px; pointer-events: none; z-index: 10; box-sizing: border-box;">
+                
+                <% if (psicologo.free_session_active && psicologo.free_session_time) { %>
+                <div style="position: relative; display: inline-flex; align-items: center; gap: 4px; background-color: #FFF4E5; color: #B25E02; border: 1px solid #FFB020; padding: 4px 10px; border-radius: 12px; font-size: 0.70rem; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.04); animation: floatUpDown 3s ease-in-out infinite; pointer-events: auto; align-self: flex-end;">
+                    💬 Primeiro atendimento grátis: <%= psicologo.free_session_time %>
+                    <div style="position: absolute; bottom: -6px; right: 20px; border-width: 6px 6px 0 6px; border-style: solid; border-color: #FFB020 transparent transparent transparent;"></div>
+                    <div style="position: absolute; bottom: -5px; right: 20px; border-width: 6px 6px 0 6px; border-style: solid; border-color: #FFF4E5 transparent transparent transparent;"></div>
+                </div>
+                <% } %>
+
+                <div id="proximo-horario-badge-mobile" style="pointer-events: auto; display: none; align-items: center; justify-content: center; gap: 8px; background: #dcfce7; padding: 8px 16px; border-radius: 50px; border: 1px solid #86efac; text-align: center; animation: float-badge 3s ease-in-out infinite; box-shadow: 0 4px 10px rgba(22, 163, 74, 0.15); transition: transform 0.3s ease-out, opacity 0.3s ease-out; touch-action: pan-y; width: fit-content; max-width: 100%; align-self: center;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                     <span style="color: #15803d; font-size: 0.85rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Próximo horário: <span id="proximo-horario-texto-mobile" style="text-decoration: underline;"></span></span>
                     <button id="close-badge-mobile" style="background: transparent; border: none; padding: 4px; margin-left: 2px; color: #15803d; opacity: 0.7; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" aria-label="Fechar alerta de horário">
@@ -578,16 +587,6 @@
                     </button>
                 </div>
             </div>
-
-            <% if (psicologo.free_session_active && psicologo.free_session_time) { %>
-            <div style="position: absolute; top: -38px; right: 24px; pointer-events: none; display: flex; justify-content: flex-end; z-index: 10;">
-                <div style="position: relative; display: inline-flex; align-items: center; gap: 4px; background-color: #FFF4E5; color: #B25E02; border: 1px solid #FFB020; padding: 4px 10px; border-radius: 12px; font-size: 0.70rem; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.04); animation: floatUpDown 3s ease-in-out infinite; pointer-events: auto;">
-                    💬 Primeiro atendimento grátis: <%= psicologo.free_session_time %>
-                    <div style="position: absolute; bottom: -6px; right: 20px; border-width: 6px 6px 0 6px; border-style: solid; border-color: #FFB020 transparent transparent transparent;"></div>
-                    <div style="position: absolute; bottom: -5px; right: 20px; border-width: 6px 6px 0 6px; border-style: solid; border-color: #FFF4E5 transparent transparent transparent;"></div>
-                </div>
-            </div>
-            <% } %>
 
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <div style="display: flex; flex-direction: column; gap: 2px;">
