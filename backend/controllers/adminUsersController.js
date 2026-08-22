@@ -825,7 +825,7 @@ exports.getPendingActions = async (req, res) => {
                 },
                 required: true // Só traz quem tem um pagamento PIX pendente/vencido
             }],
-            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano', 'profile_appearances', 'whatsapp_clicks', 'abordagem']
+            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano', 'profile_appearances', 'whatsapp_clicks', 'abordagens_tecnicas']
         });
 
         if (expiredPixCandidates.length > 0) {
@@ -891,7 +891,7 @@ exports.getPendingActions = async (req, res) => {
                         startedTherapyCount,
                         negotiatingCount,
                         noReplyCount,
-                        approach: p.abordagem || 'Psicologia'
+                        approach: p.abordagens_tecnicas || 'Psicologia'
                     }
                 });
             });

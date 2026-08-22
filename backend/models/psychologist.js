@@ -10,6 +10,13 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
+      if (models.Payment) {
+          this.hasMany(models.Payment, {
+              foreignKey: 'psychologistId',
+              as: 'payments'
+          });
+      }
+
       // Um Psicólogo pode ter muitas Avaliações (Reviews)
       this.hasMany(models.Review, {
         foreignKey: 'psychologistId',
