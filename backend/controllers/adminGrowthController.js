@@ -698,19 +698,21 @@ exports.getCompanyHealthDashboard = async (req, res) => {
             projectionRate = cashFlowData[0].count - cashFlowData[1].count;
         }
         
+        const pagantesAtivos = overview.totalAtivos;
+        
         const calcProjection = (target) => {
-            if (pagamentosMes >= target) return 'Atingido';
+            if (pagantesAtivos >= target) return 'Atingido';
             if (projectionRate <= 0) return 'DADOS INSUFICIENTES PARA PROJEÇÃO.';
-            const monthsToTarget = Math.ceil((target - pagamentosMes) / projectionRate);
+            const monthsToTarget = Math.ceil((target - pagantesAtivos) / projectionRate);
             const targetDate = new Date();
             targetDate.setMonth(targetDate.getMonth() + monthsToTarget);
             return `${targetDate.toLocaleString('pt-BR', { month: 'short' })}/${targetDate.getFullYear()} (Cenário Base)`;
         };
 
         const marcos = {
-            m20: { meta: 20, atual: pagamentosMes, percentual: Math.min(100, Math.round((pagamentosMes / 20) * 100)), projection: calcProjection(20) },
-            m70: { meta: 70, atual: pagamentosMes, percentual: Math.min(100, Math.round((pagamentosMes / 70) * 100)), projection: calcProjection(70) },
-            m120: { meta: 120, atual: pagamentosMes, percentual: Math.min(100, Math.round((pagamentosMes / 120) * 100)), projection: calcProjection(120) }
+            m20: { meta: 20, atual: pagantesAtivos, percentual: Math.min(100, Math.round((pagantesAtivos / 20) * 100)), projection: calcProjection(20) },
+            m70: { meta: 70, atual: pagantesAtivos, percentual: Math.min(100, Math.round((pagantesAtivos / 70) * 100)), projection: calcProjection(70) },
+            m120: { meta: 120, atual: pagantesAtivos, percentual: Math.min(100, Math.round((pagantesAtivos / 120) * 100)), projection: calcProjection(120) }
         };
 
         // Combine into payload
