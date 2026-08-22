@@ -504,6 +504,13 @@
                             <% } %>
                         </div>
 
+                        <% if (psicologo.free_session_active && psicologo.free_session_time) { %>
+                        <div class="free-session-badge" style="margin: 15px auto 0; background: #FFF4E5; border: 1px solid #FFB020; color: #B25E02; padding: 10px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.9rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            Oferece um atendimento breve e gratuito de <br> <%= psicologo.free_session_time %>
+                        </div>
+                        <% } %>
+
                         <div class="conversion-card-details" style="margin: 25px 0; background: #f8f9fa; padding: 20px; border-radius: 16px; display: flex; flex-direction: row; justify-content: center; gap: 15px; flex-wrap: wrap; box-sizing: border-box;">
                             
                             <div class="info-row" style="display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; flex: 1; min-width: 100px;">
@@ -571,6 +578,16 @@
                     </button>
                 </div>
             </div>
+
+            <% if (psicologo.free_session_active && psicologo.free_session_time) { %>
+            <div style="position: absolute; top: -38px; right: 24px; pointer-events: none; display: flex; justify-content: flex-end; z-index: 10;">
+                <div style="position: relative; display: inline-flex; align-items: center; gap: 4px; background-color: #FFF4E5; color: #B25E02; border: 1px solid #FFB020; padding: 4px 10px; border-radius: 12px; font-size: 0.70rem; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.04); animation: floatUpDown 3s ease-in-out infinite; pointer-events: auto;">
+                    💬 Triagem grátis: <%= psicologo.free_session_time %>
+                    <div style="position: absolute; bottom: -6px; right: 20px; border-width: 6px 6px 0 6px; border-style: solid; border-color: #FFB020 transparent transparent transparent;"></div>
+                    <div style="position: absolute; bottom: -5px; right: 20px; border-width: 6px 6px 0 6px; border-style: solid; border-color: #FFF4E5 transparent transparent transparent;"></div>
+                </div>
+            </div>
+            <% } %>
 
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <div style="display: flex; flex-direction: column; gap: 2px;">

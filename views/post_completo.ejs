@@ -289,7 +289,7 @@
                         </div>
                         <% if (post.autor && post.autor.slug) { %>
                         <div class="autor-convite-balao" onclick="window.location.href='/<%= post.autor.slug %>'">
-                            💬 Gostou? Conheça mais sobre <%= post.autor.nome %>
+                            💬 Gostou? Conheça mais sobre <%= post.autor.nome.split(' ')[0] %>
                         </div>
                         <% } %>
                     </div>

@@ -219,7 +219,7 @@
                     
                     <div class="autor-destaque <%= destaque.autor && destaque.autor.slug ? 'autor-click' : '' %>" <%- destaque.autor && destaque.autor.slug ? `onclick="event.preventDefault(); event.stopPropagation(); window.location.href='/${destaque.autor.slug}';"` : '' %> <%- destaque.autor && destaque.autor.slug ? `title="Ver perfil de ${destaque.autor.nome}"` : '' %>>
                         <img src="<%= destaque.autor && destaque.autor.fotoUrl ? formatImageUrl(destaque.autor.fotoUrl) : 'https://placehold.co/40x40' %>" alt="Autor">
-                        <span>Psi. <%= destaque.autor ? destaque.autor.nome.split(' ')[0] : 'Yelo' %></span>
+                        <span>Psi. <%= destaque.autor ? destaque.autor.nome : 'Yelo' %></span>
                     </div>
                 </div>
             </a>
@@ -244,7 +244,7 @@
                                         
                                         <div class="<%= post.autor && post.autor.slug ? 'autor-click' : '' %>" style="display: flex; align-items: center; gap: 10px;" <%- post.autor && post.autor.slug ? `onclick="event.preventDefault(); event.stopPropagation(); window.location.href='/${post.autor.slug}';"` : '' %> <%- post.autor && post.autor.slug ? `title="Ver perfil de ${post.autor.nome}"` : '' %>>
                                             <img src="<%= post.autor && post.autor.fotoUrl ? formatImageUrl(post.autor.fotoUrl) : 'https://placehold.co/30x30' %>" alt="Autor" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;">
-                                            <span style="font-size: 0.85rem; color: #555; font-weight: 600;">Psi. <%= post.autor ? post.autor.nome.split(' ')[0] : 'Yelo' %></span>
+                                            <span style="font-size: 0.85rem; color: #555; font-weight: 600;">Psi. <%= post.autor ? post.autor.nome : 'Yelo' %></span>
                                         </div>
 
                                         <button onclick="darLike(event, '<%= post.id %>')" data-post-id="<%= post.id %>" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; color: #555; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">

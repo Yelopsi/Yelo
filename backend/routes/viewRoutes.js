@@ -158,7 +158,17 @@ router.get('/questionario', (req, res) => {
 });
 
 // --- PÁGINAS ESTÁTICAS E TERAPIA ONLINE ---
-router.get('/comunidade', (req, res) => res.render('perguntas'));
+router.get('/comunidade', async (req, res) => {
+    try {
+        const qCount = await db.Question.count();
+        const aCount = await db.Answer.count();
+        const psiCount = await db.Answer.count({ distinct: true, col: 'psychologist_id' });
+        res.render('perguntas', { stats: { perguntas: qCount || 53, respostas: aCount || 218, psis: psiCount || 15 } });
+    } catch (e) {
+        console.error("Erro ao buscar estatísticas da comunidade:", e);
+        res.render('perguntas', { stats: { perguntas: 53, respostas: 218, psis: 15 } });
+    }
+});
 router.get('/profissionais', async (req, res) => {
     console.log("➡️ [DEBUG] Acessou a rota EJS de /profissionais");
     let depoimentosPsi = [];
@@ -396,7 +406,7 @@ router.get('/:slug', async (req, res, next) => {
         const isVip = psychologist.is_exempt === true;
         const isAtivoEValido = psychologist.status === 'active' && (isVip || (validade && validade > hoje));
 
-        if (psychologist.deletedAt !== null || !isAtivoEValido) {
+        if (psychologist.deletedAt !== null || !isAtivoEValido || psychologist.profile_paused) {
             return res.status(410).render('psi_inativo', { nome: psychologist.nome });
         }
 

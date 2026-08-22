@@ -235,6 +235,16 @@ function initPerguntas() {
                 <div style="text-align: center; margin-top: 25px; margin-bottom: 30px;">
                     <button id="btn-load-more-details" style="display: none; background: transparent; border: 1px solid #1B4332; color: #1B4332; font-weight: 600; padding: 10px 24px; border-radius: 50px; cursor: pointer; margin: 0 auto;">Carregar mais respostas</button>
                 </div>
+                
+                <div class="cta-seo-perguntas" style="margin-top: 50px; background: #e8f5e9; border-radius: 16px; padding: 40px 20px; text-align: center; border: 1px dashed #1B4332;">
+                    <h2 style="font-family: 'Lora', serif; color: #1B4332; font-size: 1.8rem; margin-top: 0; margin-bottom: 15px;">Também tem alguma dúvida ou angústia?</h2>
+                    <p style="font-size: 1.1rem; color: #444; max-width: 600px; margin: 0 auto 25px auto; line-height: 1.5;">
+                        Nossa comunidade é um espaço <strong>seguro, anônimo e 100% gratuito</strong>. Envie sua pergunta e receba orientações e acolhimento de psicólogos verificados.
+                    </p>
+                    <button id="btn-cta-fazer-pergunta" style="display: inline-block; padding: 14px 30px; font-size: 1.1rem; font-weight: bold; border-radius: 50px; background: #1B4332; color: #fff; cursor: pointer; border: none; font-family: 'Mulish', sans-serif;">
+                        Fazer uma pergunta anônima
+                    </button>
+                </div>
             `;
             if (container && container.parentNode) {
                 container.parentNode.insertBefore(detailsView, container);
@@ -245,6 +255,14 @@ function initPerguntas() {
             };
             document.getElementById('btn-load-more-details').onclick = () => {
                 carregarMaisRespostasDetalhes();
+            };
+            document.getElementById('btn-cta-fazer-pergunta').onclick = () => {
+                toggleMainView(true);
+                const questionText = document.getElementById('question-text');
+                if (questionText) {
+                    questionText.focus();
+                    window.scrollTo({ top: questionText.offsetTop - 150, behavior: 'smooth' });
+                }
             };
         }
 

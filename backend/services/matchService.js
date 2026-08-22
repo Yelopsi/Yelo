@@ -229,7 +229,8 @@ exports.calculateMatches = async (preferences = {}) => {
             status: { [Op.in]: ['active', 'trial'] },
             bio: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] },
             cpf: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] },
-            fotoUrl: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] }
+            fotoUrl: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] },
+            profile_paused: { [Op.ne]: true }
         };
 
         debugLog.push(`[${Date.now() - startTime}ms] 🔍 Buscando candidatos elegíveis no banco de dados...`);

@@ -280,6 +280,14 @@
                 if (el && data[key]) el.value = data[key].replace(/https?:\/\/(www\.)?/, '').replace(/linkedin\.com\/in\//, '').replace(/instagram\.com\//, '');
             });
 
+            // --- NOVOS CAMPOS: Sessão Grátis e Pausa de Perfil ---
+            const freeSessionActive = document.getElementById('free_session_active');
+            if (freeSessionActive) freeSessionActive.checked = data.free_session_active === true;
+            const freeSessionTime = document.getElementById('free_session_time');
+            if (freeSessionTime) freeSessionTime.value = data.free_session_time || '';
+            const profilePaused = document.getElementById('profile_paused');
+            if (profilePaused) profilePaused.checked = data.profile_paused === true;
+
             // Multiselects e Selects Nativos
             const multiSelectIds = ['temas_atuacao', 'publico_alvo', 'praticas_inclusivas', 'abordagens_tecnicas', 'genero_identidade', 'modalidade', 'disponibilidade_periodo', 'formacao_nivel'];
             multiSelectIds.forEach(id => {
@@ -420,6 +428,8 @@
                         data[input.name] = !isNaN(parsed) ? parsed : null;
                     } else if (input.id === 'cpf' || input.id === 'telefone') {
                         data[input.name] = input.value.replace(/\D/g, '');
+                    } else if (input.type === 'checkbox') {
+                        data[input.name] = input.checked;
                     } else {
                         data[input.name] = input.value;
                     }

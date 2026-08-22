@@ -248,6 +248,19 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       comment: 'Se um usuário que cancelou voltar a pagar, esta é a data.'
     },
+    // --- NOVOS CAMPOS PARA SESSÃO GRÁTIS E PAUSA DE PERFIL ---
+    free_session_active: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    free_session_time: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    profile_paused: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     lifetimeRevenue: {
       type: DataTypes.FLOAT,
       allowNull: true,

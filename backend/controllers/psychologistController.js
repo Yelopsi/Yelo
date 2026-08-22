@@ -155,7 +155,8 @@ exports.updatePsychologistProfile = async (req, res) => {
             tipo_cobranca, valor_mensal_numero,
             ano_inicio_experiencia,
             razao_social,
-            data_nascimento
+            data_nascimento,
+            free_session_active, free_session_time, profile_paused // NOVOS CAMPOS
         } = req.body;
 
         // --- FALLBACK PARA CAMPOS LEGADOS (Especialidades/Temas) ---
@@ -285,6 +286,9 @@ exports.updatePsychologistProfile = async (req, res) => {
         if (facebook_url !== undefined) updatePayload.facebook_url = facebook_url;
         if (tiktok_url !== undefined) updatePayload.tiktok_url = tiktok_url;
         if (x_url !== undefined) updatePayload.x_url = x_url;
+        if (free_session_active !== undefined) updatePayload.free_session_active = free_session_active === 'true' || free_session_active === true;
+        if (free_session_time !== undefined) updatePayload.free_session_time = free_session_time;
+        if (profile_paused !== undefined) updatePayload.profile_paused = profile_paused === 'true' || profile_paused === true;
 
         // Passamos os Arrays JS diretamente. O Sequelize fará a serialização correta para JSONB.
         if (temas_atuacao !== undefined) updatePayload.temas_atuacao = temas_atuacao;
