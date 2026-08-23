@@ -90,8 +90,16 @@
             <!-- O Grid onde os cards serão injetados -->
             <div id="results-grid" class="results-grid"></div>
             
+            <!-- Botão de Carregar Mais -->
+            <div id="load-more-container" style="text-align: center; margin-top: 40px; display: none;">
+                <button id="btn-load-more" style="background-color: #E8F5E9; color: var(--verde-escuro); border: none; padding: 15px 40px; border-radius: 50px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: opacity 0.3s, transform 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span>Carregar mais opções</span>
+                    <span id="load-more-spinner" style="display: none; width: 18px; height: 18px; border: 2px solid rgba(27, 67, 50, 0.2); border-top-color: var(--verde-escuro); border-radius: 50%; animation: spin 1s linear infinite;"></span>
+                </button>
+            </div>
+            
             <!-- Botão de Ação Secundária -->
-            <div style="text-align: center; margin-top: 80px;">
+            <div style="text-align: center; margin-top: 60px;">
                 <p style="color: #666; margin-bottom: 20px; font-size: 1.1rem;">Quer explorar outras possibilidades?</p>
                 <a href="/questionario.html" class="btn-outline-refazer" style="color: var(--verde-escuro); border: 2px solid var(--verde-escuro); padding: 12px 30px; border-radius: 50px; font-weight: bold; text-decoration: none; transition: all 0.3s; display: inline-block;">Refazer Questionário</a>
                 <p style="font-size: 0.85rem; color: #888; margin-top: 12px; text-align: center; font-weight: 500;">
@@ -129,7 +137,7 @@
     <div id="toast-container"></div>
     
     <script nonce="<%= nonce %>" src="/config.js"></script>
-    <script nonce="<%= nonce %>" src="/js/resultados.js?v=2"></script> 
+    <script nonce="<%= nonce %>" src="/js/resultados.js?v=3"></script> 
 
 </body>
 </html>

@@ -233,6 +233,10 @@ exports.calculateMatches = async (preferences = {}) => {
             profile_paused: { [Op.ne]: true }
         };
 
+        if (preferences.excludeIds && Array.isArray(preferences.excludeIds) && preferences.excludeIds.length > 0) {
+            baseWhereConditions.id = { [Op.notIn]: preferences.excludeIds };
+        }
+
         debugLog.push(`[${Date.now() - startTime}ms] 🔍 Buscando candidatos elegíveis no banco de dados...`);
         const allEligiblePsychologists = await db.Psychologist.findAll({ where: baseWhereConditions });
         debugLog.push(`[${Date.now() - startTime}ms] ✅ Encontrados ${allEligiblePsychologists.length} candidatos elegíveis.`);
@@ -427,7 +431,8 @@ exports.calculateMatches = async (preferences = {}) => {
         debugLog.push(`[${Date.now() - startTime}ms] 🏁 Match finalizado.`);
         console.log(debugLog.join('\n'));
         
-        return { matchTier: tier, compromiseText, results };
+        const hasMore = eligibleForSlots.length > 0;
+        return { matchTier: tier, compromiseText, results, hasMore };
     } catch (error) {
         debugLog.push(`[${Date.now() - startTime}ms] 🔥 Erro fatal no calculateMatches: ${error.message}`);
         console.error(debugLog.join('\n'), error);

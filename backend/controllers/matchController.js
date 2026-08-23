@@ -61,7 +61,8 @@ const validateAndSanitizeMatchPreferences = (prefs) => {
         caracteristicas_prof: sanitizeArray(prefs.caracteristicas_prof),
         idade: sanitizeString(prefs.idade),
         modalidade_atendimento: sanitizeString(prefs.modalidade_atendimento),
-        abordagem_ideal: sanitizeString(prefs.abordagem_ideal)
+        abordagem_ideal: sanitizeString(prefs.abordagem_ideal),
+        excludeIds: Array.isArray(prefs.excludeIds) ? prefs.excludeIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id)) : []
     };
 };
 
@@ -154,7 +155,8 @@ async function executeMatchSingleFlight(safePreferences, matchHash, patient) {
             message: matchResult.matchTier === 'ideal' ? 'Psicólogos compatíveis encontrados!' : 'Psicólogos próximos encontrados!',
             matchTier: matchResult.matchTier,
             results: matchResult.results,
-            compromiseText: matchResult.compromiseText
+            compromiseText: matchResult.compromiseText,
+            hasMore: matchResult.hasMore
         };
         
         // Salva no cache LRU ANTES de resolver a promise

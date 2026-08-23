@@ -6,6 +6,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultsContent = document.getElementById('results-content');
     const grid = document.getElementById('results-grid');
     
+    // Elementos do Load More
+    const loadMoreContainer = document.getElementById('load-more-container');
+    const btnLoadMore = document.getElementById('btn-load-more');
+    const loadMoreSpinner = document.getElementById('load-more-spinner');
+    
+    let currentDisplayedIds = [];
+    
     function createCard(profile) {
         console.log("Card Data:", profile);
         // NOVA LÓGICA: Usa os motivos gerados pela IA ou faz fallback para as antigas tags
@@ -166,6 +173,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Recuperar excludeIds, se já existir
+        const storedExcludeIds = sessionStorage.getItem('yelo_excludeIds');
+        if (storedExcludeIds) {
+            currentDisplayedIds = JSON.parse(storedExcludeIds);
+        }
+
         if (loadingScreen) {
             loadingScreen.style.display = 'flex';
             loadingScreen.style.opacity = '1';
@@ -184,16 +197,24 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(res => res.ok ? res.json() : { matchTier: 'none', results: [] })
             .then(matchData => {
                 sessionStorage.setItem('matchResults', JSON.stringify(matchData));
+                sessionStorage.setItem('yelo_lastAnswers', pendingAnswers);
                 sessionStorage.removeItem('pendingMatchAnswers');
-                renderData(matchData);
+                
+                // Salvar IDs iniciais
+                if (matchData.results) {
+                    currentDisplayedIds = matchData.results.map(r => r.id);
+                    sessionStorage.setItem('yelo_excludeIds', JSON.stringify(currentDisplayedIds));
+                }
+                
+                renderData(matchData, false);
             })
-            .catch(() => renderData({ matchTier: 'none', results: [] }));
+            .catch(() => renderData({ matchTier: 'none', results: [] }, false));
         } else {
-            renderData(JSON.parse(storedResults));
+            renderData(JSON.parse(storedResults), false);
         }
     }
 
-    function renderData(parsed) {
+    function renderData(parsed, isAppend = false) {
         let dataToRender = [];
         if (parsed && parsed.results && parsed.results.length > 0) {
             const top3Results = parsed.results.slice(0, 3);
@@ -217,10 +238,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }));
         }
 
-        if (dataToRender.length === 0) {
+        if (dataToRender.length === 0 && !isAppend) {
             grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #666;">Nenhum profissional encontrado com os critérios selecionados. <br><a href="/questionario.html" style="color: var(--verde-escuro); font-weight: bold;">Refazer busca</a></div>';
-        } else {
-            grid.innerHTML = dataToRender.map(createCard).join('');
+        } else if (dataToRender.length > 0) {
+            const htmlToInject = dataToRender.map(createCard).join('');
+            if (isAppend) {
+                grid.insertAdjacentHTML('beforeend', htmlToInject);
+            } else {
+                grid.innerHTML = htmlToInject;
+            }
             
             // XSS MITIGATION (Vulnerabilidade #9): Preencher TODOS os dados controlados por usuário via DOM API segura.
             dataToRender.forEach(profile => {
@@ -266,6 +292,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
+        // Ativar botão de Load More baseado na flag hasMore
+        if (parsed.hasMore === true) {
+            loadMoreContainer.style.display = 'block';
+        } else {
+            loadMoreContainer.style.display = 'none';
+        }
+
         setupFavoriteButtons();
 
         loadingScreen.style.transition = 'opacity 0.3s ease';
@@ -288,6 +321,56 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.open(`/${slug}?ref=match`, '_blank');
                 }
             }
+        });
+    }
+
+    // --- LÓGICA DO BOTÃO CARREGAR MAIS ---
+    if (btnLoadMore) {
+        btnLoadMore.addEventListener('click', () => {
+            const lastAnswersStr = sessionStorage.getItem('yelo_lastAnswers');
+            if (!lastAnswersStr) {
+                showToast("Suas respostas expiraram. Por favor, refaça o questionário.", "error");
+                return;
+            }
+            
+            const userAnswers = JSON.parse(lastAnswersStr);
+            userAnswers.excludeIds = currentDisplayedIds;
+            
+            // UI Feedback
+            btnLoadMore.disabled = true;
+            btnLoadMore.style.opacity = '0.7';
+            if (loadMoreSpinner) loadMoreSpinner.style.display = 'inline-block';
+            
+            fetch(`${BASE_URL}/api/psychologists/match`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userAnswers),
+            })
+            .then(res => res.ok ? res.json() : { matchTier: 'none', results: [], hasMore: false })
+            .then(matchData => {
+                // UI Feedback Reset
+                btnLoadMore.disabled = false;
+                btnLoadMore.style.opacity = '1';
+                if (loadMoreSpinner) loadMoreSpinner.style.display = 'none';
+                
+                if (matchData.results && matchData.results.length > 0) {
+                    const newIds = matchData.results.map(r => r.id);
+                    currentDisplayedIds = currentDisplayedIds.concat(newIds);
+                    sessionStorage.setItem('yelo_excludeIds', JSON.stringify(currentDisplayedIds));
+                    
+                    renderData(matchData, true); // true = isAppend
+                } else {
+                    // Sem mais resultados
+                    loadMoreContainer.style.display = 'none';
+                    showToast("Você já viu todos os profissionais compatíveis!", "info");
+                }
+            })
+            .catch(() => {
+                btnLoadMore.disabled = false;
+                btnLoadMore.style.opacity = '1';
+                if (loadMoreSpinner) loadMoreSpinner.style.display = 'none';
+                showToast("Erro ao buscar mais profissionais.", "error");
+            });
         });
     }
 
