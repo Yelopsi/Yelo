@@ -543,6 +543,8 @@ exports.getPendingActions = async (req, res) => {
         const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
         const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
         const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+        const startOfToday = new Date(now);
+        startOfToday.setHours(0, 0, 0, 0);
 
         const pendingList = [];
 
@@ -930,18 +932,18 @@ exports.getPendingActions = async (req, res) => {
         }
 
         // 7. Churn de Pagantes (Assinatura não renovada ou cancelada)
-        // Regra: inativo, JÁ TEVE assinatura (subscriptionId NOT NULL),
-        // planExpiresAt expirou há mais de 1 dia, e msg_paid_churn_sent_at é NULL.
+        // Regra: ativo ou inativo, JÁ TEVE assinatura (subscriptionId NOT NULL),
+        // planExpiresAt expirou antes de hoje, e msg_paid_churn_sent_at é NULL.
         const paidChurnCandidates = await db.Psychologist.findAll({
             where: {
-                status: 'inactive',
+                status: { [Op.in]: ['active', 'inactive'] },
                 subscriptionId: { [Op.ne]: null },
-                planExpiresAt: { [Op.lte]: oneDayAgo },
+                planExpiresAt: { [Op.lt]: startOfToday },
                 msg_paid_churn_sent_at: null,
                 deletedAt: null,
                 telefone: { [Op.ne]: null, [Op.not]: '' }
             },
-            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano']
+            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano', 'status']
         });
 
         paidChurnCandidates.forEach(p => {
@@ -949,7 +951,7 @@ exports.getPendingActions = async (req, res) => {
                 id: p.id,
                 nome: p.nome,
                 telefone: p.telefone,
-                status: 'inactive',
+                status: p.status,
                 plano: p.plano,
                 planExpiresAt: p.planExpiresAt,
                 actionType: 'paid_churn',
