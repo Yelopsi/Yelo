@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadMoreSpinner = document.getElementById('load-more-spinner');
     
     let currentDisplayedIds = [];
+    let clickCount = 0;
+    const MAX_CLICKS = 2; // Limite de 2 cliques (trazendo mais 6 psicólogos no total, somando 9 na tela)
+    
     
     function createCard(profile) {
         console.log("Card Data:", profile);
@@ -292,8 +295,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        // Ativar botão de Load More baseado na flag hasMore
-        if (parsed.hasMore === true) {
+        // Ativar botão de Load More baseado na flag hasMore E no limite de cliques
+        if (parsed.hasMore === true && clickCount < MAX_CLICKS) {
             loadMoreContainer.style.display = 'block';
         } else {
             loadMoreContainer.style.display = 'none';
@@ -327,6 +330,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DO BOTÃO CARREGAR MAIS ---
     if (btnLoadMore) {
         btnLoadMore.addEventListener('click', () => {
+            if (clickCount >= MAX_CLICKS) return;
+            
             const lastAnswersStr = sessionStorage.getItem('yelo_lastAnswers');
             if (!lastAnswersStr) {
                 showToast("Suas respostas expiraram. Por favor, refaça o questionário.", "error");
@@ -358,6 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     currentDisplayedIds = currentDisplayedIds.concat(newIds);
                     sessionStorage.setItem('yelo_excludeIds', JSON.stringify(currentDisplayedIds));
                     
+                    clickCount++; // Incrementa o contador de cliques
                     renderData(matchData, true); // true = isAppend
                 } else {
                     // Sem mais resultados
