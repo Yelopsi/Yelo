@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let currentDisplayedIds = [];
     let clickCount = 0;
-    const MAX_CLICKS = 2; // Limite de 2 cliques (trazendo mais 6 psicólogos no total, somando 9 na tela)
+    const MAX_CLICKS = 1; // Limite de 1 clique (trazendo mais 3 psicólogos no total, somando 6 na tela)
     
     
     function createCard(profile) {
