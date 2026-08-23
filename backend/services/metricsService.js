@@ -128,8 +128,8 @@ class MetricsService {
                 if (hasPaid) {
                     totalHistoricalPaidChurned++;
                     const validPys = paymentsByPsy[psy.id].filter(p => this.getValidStatuses().includes(p.status));
-                    totalGrossRevenueFromChurned += validPys.reduce((acc, p) => acc + p.value, 0);
-                    totalNetRevenueFromChurned += validPys.reduce((acc, p) => acc + (p.netValue || p.value), 0);
+                    totalGrossRevenueFromChurned += validPys.reduce((acc, p) => acc + parseFloat(p.value || 0), 0);
+                    totalNetRevenueFromChurned += validPys.reduce((acc, p) => acc + parseFloat(p.netValue || p.value || 0), 0);
                 } else {
                     trialChurnCountTotal++;
                 }
