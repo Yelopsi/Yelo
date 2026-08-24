@@ -118,10 +118,10 @@
         }
 
         /* Ajuste de cores alternadas para o fluxo das ondas */
-        .jornada-section { background-color: var(--off-white) !important; }
-        .benefits-section { background-color: #ffffff !important; }
-        .diferenciais-section { background-color: var(--off-white) !important; }
-        .match-section { background-color: #ffffff !important; }
+        .jornada-section { background-color: #ffffff !important; }
+        .benefits-section { background-color: var(--off-white) !important; }
+        .diferenciais-section { background-color: #ffffff !important; }
+        .match-section { background-color: var(--off-white) !important; }
         .faq-psi-section { background-color: #ffffff !important; }
 
         .stats-grid {
@@ -517,7 +517,7 @@
         /* FAQ Section */
         .faq-psi-section {
             padding: 60px 20px;
-            background-color: var(--off-white) !important;
+            background-color: #ffffff !important;
             position: relative;
         }
         .acordeao-container { max-width: 800px; margin: 0 auto; text-align: left; }
@@ -633,6 +633,32 @@
                 100% { top: 25px; opacity: 0; }
             }
         }
+
+        /* Ocultar a bottom-nav do header apenas nesta Landing Page para maximizar conversão */
+        body .bottom-nav {
+            display: none !important;
+        }
+
+        /* Sticky CTA Mobile */
+        .sticky-cta-mobile {
+            display: none;
+            position: fixed;
+            bottom: calc(20px + env(safe-area-inset-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            z-index: 9999;
+            text-align: center;
+        }
+        @media (max-width: 991px) {
+            .sticky-cta-mobile {
+                display: block;
+            }
+            body {
+                padding-bottom: 90px !important; /* space for sticky cta only */
+            }
+        }
     </style>
 </head>
 <body>
@@ -646,17 +672,10 @@
             <svg class="doodle-hero right" viewBox="0 0 200 200" fill="currentColor"><path d="M38.1,-63.8C49.3,-54.6,58.3,-43.3,65.5,-30.8C72.7,-18.3,78.1,-4.6,76.3,8.3C74.5,21.2,65.5,33.3,55.3,43.4C45.1,53.5,33.7,61.6,21.1,66.1C8.5,70.6,-5.3,71.5,-18.4,67.8C-31.5,64.1,-43.9,55.8,-53.4,45.2C-62.9,34.6,-69.5,21.7,-70.8,8.2C-72.1,-5.3,-68.1,-19.4,-59.6,-31.1C-51.1,-42.8,-38.1,-52.1,-25.3,-60.1C-12.5,-68.1,0.1,-74.8,12.7,-74.8C25.3,-74.8,38.1,-68.1,38.1,-63.8Z" transform="translate(100 100)" /></svg>
 
             <div class="container" style="padding-bottom: 0; position: relative; z-index: 2;">
-                <!-- Novo Banner de Lançamento Yelo -->
-                <div class="banner-lancamento-yelo">
-                    <div class="banner-icone">🚀</div>
-                    <div class="banner-conteudo">
-                        <h4 class="banner-titulo">Plataforma em Fase de Lançamento</h4>
-                        <p class="banner-texto">Aproveite condições exclusivas e destaque-se como um dos primeiros profissionais na Yelo.</p>
-                    </div>
-                </div>
                 <h1>Viva da Psicologia com autonomia e segurança</h1>
                 <p>A Yelo conecta você a pacientes que buscam exatamente a sua abordagem. Simplifique sua gestão, receba pagamentos garantidos e foque no que importa: o atendimento.</p>
-                <a href="/psi_questionario" class="btn-cta-principal" style="background-color: #FFEE8C; color: #1B4332;">Criar meu perfil profissional</a>
+                <a href="/psi_questionario" class="btn-cta-principal" style="background-color: #FFEE8C; color: #1B4332;">Criar meu perfil (14 dias grátis)</a>
+                <p style="font-size: 0.95rem; margin-top: 15px; opacity: 0.9; font-weight: 500;">Sem cartão de crédito. Depois, apenas R$99/mês.</p>
             </div>
 
             <div class="wave-divider wave-bottom">
@@ -670,127 +689,22 @@
         <section class="stats-section">
             <div class="stats-grid">
                 <div class="stat-item">
-                    <span class="stat-number" data-count="100" data-suffix="%">0%</span>
-                    <span class="stat-label">Sigilo e Privacidade Absoluta</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number" data-count="1" data-suffix="º">0º</span>
-                    <span class="stat-label">Seu Bem-Estar em 1º Lugar</span>
+                    <span class="stat-number" data-count="14" data-suffix="">0</span>
+                    <span class="stat-label">Dias de Teste Gratuito</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-number" data-count="100" data-suffix="%">0%</span>
-                    <span class="stat-label">Profissionais Verificados</span>
+                    <span class="stat-label">Do Valor da Consulta é Seu</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" data-count="100" data-suffix="%">0%</span>
+                    <span class="stat-label">De Autonomia<br>(Sua Agenda, Seus Preços)</span>
                 </div>
             </div>
             
             <div class="wave-divider wave-bottom">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
                     <path fill="#fdfaf6" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-                </svg>
-            </div>
-        </section>
-
-        <!-- JORNADA DO PROFISSIONAL (Storytelling) -->
-        <section class="jornada-section">
-            <div class="container" style="position: relative; z-index: 2;">
-                <h2 class="titulo-secao">Do consultório vazio à gestão de alta performance</h2>
-                <div class="texto-leitura">
-                    <p>Sabemos que a faculdade nos prepara para a clínica, mas não para o mercado. Muitos psicólogos iniciam sua jornada divididos entre o desejo de ajudar e a burocracia de captar pacientes, cobrar sessões e gerir faltas. A Yelo nasce para eliminar esse ruído.</p>
-                    <p>Imagine não precisar mais enviar mensagens de cobrança constrangedoras ou passar horas tentando configurar anúncios no Google. Nós cuidamos da infraestrutura digital para que sua única preocupação seja o acolhimento e o manejo clínico.</p>
-                </div>
-            </div>
-            
-            <div class="wave-divider wave-bottom">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
-                    <path fill="#ffffff" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-                </svg>
-            </div>
-        </section>
-
-        <!-- BENEFÍCIOS -->
-        <section class="benefits-section">
-            <div class="container" style="position: relative; z-index: 2;">
-                <h2 class="titulo-secao">Por que escolher a Yelo?</h2>
-                <p class="subtitulo-secao">Não somos apenas um marketplace. Somos um ecossistema pensado para sustentar e alavancar sua carreira clínica.</p>
-                <div class="benefits-grid">
-                    <div class="benefit-card">
-                        <span class="benefit-icon">🎯</span>
-                        <h3>Match Inteligente</h3>
-                        <p>Nosso algoritmo conecta você a pacientes que realmente se beneficiam da sua abordagem, aumentando a adesão e reduzindo desistências.</p>
-                    </div>
-                    <div class="benefit-card">
-                        <span class="benefit-icon">📊</span>
-                        <h3>Gestão Financeira</h3>
-                        <p>Painel completo de faturamento. Visualize receitas, emita recibos automáticos e receba com segurança, sem cobrar o paciente diretamente.</p>
-                    </div>
-                    <div class="benefit-card">
-                        <span class="benefit-icon">🔄</span>
-                        <h3>Retenção e Fidelização</h3>
-                        <p>Sistema de lembretes automáticos via WhatsApp e reagendamento simplificado para reduzir faltas e manter a continuidade do tratamento.</p>
-                    </div>
-                </div>
-                <div class="mobile-scroll-hint">
-                    <div class="scroll-indicator-step"><span class="mouse dark"><span class="wheel"></span></span></div>
-                </div>
-            </div>
-            <div class="wave-divider wave-bottom">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
-                    <path fill="#fdfaf6" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-                </svg>
-            </div>
-        </section>
-
-        <!-- DIFERENCIAIS TÉCNICOS -->
-        <section class="diferenciais-section">
-            <div class="container" style="position: relative; z-index: 2;">
-                <h2 class="titulo-secao">Tecnologia de ponta com ética e segurança</h2>
-                <div class="diferenciais-grid">
-                    <div class="diferencial-card">
-                        <h3>Segurança de Dados (LGPD)</h3>
-                        <p>Seus dados e os de seus pacientes são protegidos por criptografia de ponta a ponta. Seguimos rigorosamente as normas do CFP e a Lei Geral de Proteção de Dados.</p>
-                    </div>
-                    <div class="diferencial-card">
-                        <h3>Visibilidade Regional e Nichada</h3>
-                        <p>Seja encontrado por quem busca sua especialidade. Seja ansiedade, depressão, luto ou terapia de casal, nosso algoritmo direciona o público certo.</p>
-                    </div>
-                    <div class="diferencial-card">
-                        <h3>Autonomia Total de Agenda</h3>
-                        <p>Você define seus horários, valores e disponibilidade. A plataforma trabalha para você, não o contrário. Sincronize sua vida pessoal com a profissional com um clique.</p>
-                    </div>
-                    <div class="diferencial-card">
-                        <h3>Relatórios de Desempenho</h3>
-                        <p>Entenda de onde vêm seus pacientes e qual sua taxa de retenção. Dados reais para você tomar decisões sobre sua carreira.</p>
-                    </div>
-                </div>
-                <div class="mobile-scroll-hint">
-                    <div class="scroll-indicator-step"><span class="mouse dark"><span class="wheel"></span></span></div>
-                </div>
-            </div>
-            <div class="wave-divider wave-bottom">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
-                    <path fill="#ffffff" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-                </svg>
-            </div>
-        </section>
-
-        <!-- MATCH SCIENCE -->
-        <section class="match-section">
-            <div class="match-container" style="position: relative; z-index: 2;">
-                <div class="match-text">
-                    <h2 class="titulo-secao" style="text-align: left; line-height: 1.2;">Chega de ser apenas mais um em catálogos infinitos.</h2>
-                    <p>Em outras plataformas, seu perfil fica perdido numa vitrine interminável. O paciente se sente sobrecarregado com tantas opções, compara apenas preços e frequentemente desiste sem agendar. <strong>Nós invertemos esse jogo.</strong></p>
-                    <p>Através do nosso <strong>Questionário de Match Inteligente</strong>, mapeamos a dor exata, as preferências e o perfil clínico de quem busca ajuda. Em vez de uma lista solta de nomes, entregamos recomendações cirúrgicas. Quando seu perfil aparece, o paciente já sente que você é a escolha certa.</p>
-                    <p style="border-left: 4px solid var(--cor-Yelo); padding-left: 15px; margin-top: 20px; font-weight: 500; color: #333;"><strong>O resultado?</strong> Pacientes pré-qualificados, muito mais engajados e prontos para criar vínculo. Menos abandono após a primeira sessão e uma taxa de conversão imbatível para o seu consultório.</p>
-                </div>
-                <div class="match-collage-wrapper">
-                    <img src="https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=600" class="match-img main" alt="Conexão humana">
-                    <img src="https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=400" class="match-img sat1" alt="Tecnologia">
-                    <img src="https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg?auto=compress&cs=tinysrgb&w=400" class="match-img sat2" alt="Empatia">
-                </div>
-            </div>
-            <div class="wave-divider wave-bottom">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
-                    <path fill="#fdfaf6" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
                 </svg>
             </div>
         </section>
@@ -857,6 +771,111 @@
         </div>
     </section>
 
+        <!-- JORNADA DO PROFISSIONAL (Storytelling) -->
+        <section class="jornada-section">
+            <div class="container" style="position: relative; z-index: 2;">
+                <h2 class="titulo-secao">Do consultório vazio à gestão de alta performance</h2>
+                <div class="texto-leitura">
+                    <p>Sabemos que a faculdade nos prepara para a clínica, mas não para o mercado. Muitos psicólogos iniciam sua jornada divididos entre o desejo de ajudar e a burocracia de captar pacientes, cobrar sessões e gerir faltas. A Yelo nasce para eliminar esse ruído.</p>
+                    <p>Imagine não precisar mais enviar mensagens de cobrança constrangedoras ou passar horas tentando configurar anúncios no Google. Nós cuidamos da infraestrutura digital para que sua única preocupação seja o acolhimento e o manejo clínico.</p>
+                </div>
+            </div>
+            
+            <div class="wave-divider wave-bottom">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#fdfaf6" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
+        </section>
+
+        <!-- BENEFÍCIOS -->
+        <section class="benefits-section">
+            <div class="container" style="position: relative; z-index: 2;">
+                <h2 class="titulo-secao">Por que escolher a Yelo?</h2>
+                <p class="subtitulo-secao">Não somos apenas um marketplace. Somos um ecossistema pensado para sustentar e alavancar sua carreira clínica.</p>
+                <div class="benefits-grid">
+                    <div class="benefit-card">
+                        <span class="benefit-icon">🎯</span>
+                        <h3>Match Inteligente</h3>
+                        <p>Nosso algoritmo conecta você a pacientes que realmente se beneficiam da sua abordagem, aumentando a adesão e reduzindo desistências.</p>
+                    </div>
+                    <div class="benefit-card">
+                        <span class="benefit-icon">📊</span>
+                        <h3>Gestão Financeira</h3>
+                        <p>Painel completo de faturamento. Visualize receitas, emita recibos automáticos e receba com segurança, sem cobrar o paciente diretamente.</p>
+                    </div>
+                    <div class="benefit-card">
+                        <span class="benefit-icon">🔄</span>
+                        <h3>Retenção e Fidelização</h3>
+                        <p>Sistema de lembretes automáticos via WhatsApp e reagendamento simplificado para reduzir faltas e manter a continuidade do tratamento.</p>
+                    </div>
+                </div>
+                <div class="mobile-scroll-hint">
+                    <div class="scroll-indicator-step"><span class="mouse dark"><span class="wheel"></span></span></div>
+                </div>
+            </div>
+            <div class="wave-divider wave-bottom">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#ffffff" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
+        </section>
+
+        <!-- DIFERENCIAIS TÉCNICOS -->
+        <section class="diferenciais-section">
+            <div class="container" style="position: relative; z-index: 2;">
+                <h2 class="titulo-secao">Tecnologia de ponta com ética e segurança</h2>
+                <div class="diferenciais-grid">
+                    <div class="diferencial-card">
+                        <h3>Segurança de Dados (LGPD)</h3>
+                        <p>Seus dados e os de seus pacientes são protegidos por criptografia de ponta a ponta. Seguimos rigorosamente as normas do CFP e a Lei Geral de Proteção de Dados.</p>
+                    </div>
+                    <div class="diferencial-card">
+                        <h3>Visibilidade Regional e Nichada</h3>
+                        <p>Seja encontrado por quem busca sua especialidade. Seja ansiedade, depressão, luto ou terapia de casal, nosso algoritmo direciona o público certo.</p>
+                    </div>
+                    <div class="diferencial-card">
+                        <h3>Autonomia Total de Agenda</h3>
+                        <p>Você define seus horários, valores e disponibilidade. A plataforma trabalha para você, não o contrário. Sincronize sua vida pessoal com a profissional com um clique.</p>
+                    </div>
+                    <div class="diferencial-card">
+                        <h3>Relatórios de Desempenho</h3>
+                        <p>Entenda de onde vêm seus pacientes e qual sua taxa de retenção. Dados reais para você tomar decisões sobre sua carreira.</p>
+                    </div>
+                </div>
+                <div class="mobile-scroll-hint">
+                    <div class="scroll-indicator-step"><span class="mouse dark"><span class="wheel"></span></span></div>
+                </div>
+            </div>
+            <div class="wave-divider wave-bottom">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#fdfaf6" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
+        </section>
+
+        <!-- MATCH SCIENCE -->
+        <section class="match-section">
+            <div class="match-container" style="position: relative; z-index: 2;">
+                <div class="match-text">
+                    <h2 class="titulo-secao" style="text-align: left; line-height: 1.2;">Chega de ser apenas mais um em catálogos infinitos.</h2>
+                    <p>Em outras plataformas, seu perfil fica perdido numa vitrine interminável. O paciente se sente sobrecarregado com tantas opções, compara apenas preços e frequentemente desiste sem agendar. <strong>Nós invertemos esse jogo.</strong></p>
+                    <p>Através do nosso <strong>Questionário de Match Inteligente</strong>, mapeamos a dor exata, as preferências e o perfil clínico de quem busca ajuda. Em vez de uma lista solta de nomes, entregamos recomendações cirúrgicas. Quando seu perfil aparece, o paciente já sente que você é a escolha certa.</p>
+                    <p style="border-left: 4px solid var(--cor-Yelo); padding-left: 15px; margin-top: 20px; font-weight: 500; color: #333;"><strong>O resultado?</strong> Pacientes pré-qualificados, muito mais engajados e prontos para criar vínculo. Menos abandono após a primeira sessão e uma taxa de conversão imbatível para o seu consultório.</p>
+                </div>
+                <div class="match-collage-wrapper">
+                    <img src="https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=600" class="match-img main" alt="Conexão humana">
+                    <img src="https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=400" class="match-img sat1" alt="Tecnologia">
+                    <img src="https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg?auto=compress&cs=tinysrgb&w=400" class="match-img sat2" alt="Empatia">
+                </div>
+            </div>
+            <div class="wave-divider wave-bottom">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="#ffffff" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
+        </section>
+
         <!-- FAQ -->
         <section class="faq-psi-section">
             <div class="container" style="position: relative; z-index: 2;">
@@ -870,121 +889,8 @@
             </div>
             <div class="wave-divider wave-bottom">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
-                    <path fill="#1B4332" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                    <path fill="#fdfaf6" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
                 </svg>
-            </div>
-        </section>
-
-        <!-- PLANOS (App-Like Mobile First) -->
-        <section class="app-pricing-section">
-            <div class="wave-divider wave-bottom" style="z-index: 1;">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
-                    <path fill="#fdfaf6" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-                </svg>
-            </div>
-            
-            <div class="container" style="position: relative; z-index: 2;">
-                <h2 class="titulo-secao" style="color: #fff;">Planos transparentes</h2>
-                <p class="subtitulo-secao" style="color: rgba(255,255,255,0.9);">Sem fidelidade, cancele quando quiser.</p>
-
-                <div class="app-pricing-slider" id="pricingSlider">
-                    <!-- Plano Essencial -->
-                    <a href="/psi_questionario" class="app-pricing-card">
-                        <h3 class="app-pricing-title">Essencial</h3>
-                        <div class="app-pricing-subtitle">Iniciando na plataforma</div>
-                        <ul class="app-pricing-features">
-                            <li>
-                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                                Perfil verificado
-                            </li>
-                            <li>
-                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                                Match Inteligente
-                            </li>
-                            <li>
-                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                                Página Pública
-                            </li>
-                        </ul>
-                        <div class="app-pricing-btn app-pricing-btn-outline">Começar na Yelo</div>
-                    </a>
-
-                    <!-- Plano Clínico (Destaque) -->
-                    <a href="/psi_questionario" class="app-pricing-card featured">
-                        <h3 class="app-pricing-title">Clínico</h3>
-                        <div class="app-pricing-subtitle">Alavanque seus atendimentos</div>
-                        <ul class="app-pricing-features">
-                            <li>
-                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                                Tudo do Plano Essencial
-                            </li>
-                            <li>
-                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                                Intervisão e Workshops
-                            </li>
-                            <li>
-                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                                Indicadores de Conversão
-                            </li>
-                        </ul>
-                        <div class="app-pricing-btn">Começar na Yelo</div>
-                    </a>
-
-                    <!-- Plano Referência -->
-                    <a href="/psi_questionario" class="app-pricing-card">
-                        <h3 class="app-pricing-title">Referência</h3>
-                        <div class="app-pricing-subtitle">Para profissionais estabelecidos</div>
-                        <ul class="app-pricing-features">
-                            <li>
-                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                                Tudo do Plano Clínico
-                            </li>
-                            <li>
-                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                                Supervisão Clínica
-                            </li>
-                            <li>
-                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                                Indicadores Avançados
-                            </li>
-                        </ul>
-                        <div class="app-pricing-btn app-pricing-btn-outline">Começar na Yelo</div>
-                    </a>
-                </div>
-
-                <div class="app-pricing-dots" id="pricingDots">
-                    <div class="app-pricing-dot"></div>
-                    <div class="app-pricing-dot active"></div>
-                    <div class="app-pricing-dot"></div>
-                </div>
-                
-                <script nonce="<%= nonce %>">
-                    document.addEventListener("DOMContentLoaded", function() {
-                        const slider = document.getElementById('pricingSlider');
-                        const dots = document.querySelectorAll('#pricingDots .app-pricing-dot');
-                        if(slider && dots.length > 0) {
-                            // Inicialmente tenta centralizar no Clínico se for mobile
-                            if (window.innerWidth < 992) {
-                                setTimeout(() => {
-                                    const cardWidth = slider.children[1].offsetWidth;
-                                    slider.scrollTo({ left: cardWidth - 20, behavior: 'smooth' });
-                                }, 300);
-                            }
-
-                            slider.addEventListener('scroll', () => {
-                                const scrollPos = slider.scrollLeft;
-                                const cardWidth = slider.offsetWidth;
-                                let index = Math.round(scrollPos / cardWidth);
-                                if(index < 0) index = 0;
-                                if(index > 2) index = 2;
-                                dots.forEach((d, i) => {
-                                    if(i === index) d.classList.add('active');
-                                    else d.classList.remove('active');
-                                });
-                            });
-                        }
-                    });
-                </script>
             </div>
         </section>
 
@@ -994,11 +900,17 @@
             <div class="cta-content">
                 <h2>Pronto para transformar sua carreira?</h2>
                 <p>Junte-se aos psicólogos que estão construindo o futuro da saúde mental no Brasil.</p>
-            <a href="/psi_questionario" class="btn-cta-principal" style="background-color: #FFEE8C; color: #1B4332;">Criar meu perfil profissional</a>
+                <a href="/psi_questionario" class="btn-cta-principal" style="background-color: #FFEE8C; color: #1B4332;">Criar meu perfil (14 dias grátis)</a>
+                <p style="font-size: 0.95rem; margin-top: 15px; color: #666; font-weight: 500;">Sem cartão de crédito. Depois, R$99/mês.</p>
             </div>
 
         </section>
     </main>
+
+    <!-- Sticky CTA Mobile -->
+    <div class="sticky-cta-mobile">
+        <a href="/psi_questionario" class="btn-cta-principal" style="background-color: #FFEE8C; color: #1B4332; width: 100%; display: block; padding: 15px; font-size: 1.05rem; box-sizing: border-box; box-shadow: 0 5px 20px rgba(0,0,0,0.25); border-radius: 50px;">Criar meu perfil (14 dias grátis)</a>
+    </div>
 
     <!-- Módulos Extraídos da Página de Profissionais -->
     <script nonce="<%= nonce %>" src="/js/profissionais_config.js" defer></script>
