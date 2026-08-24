@@ -205,6 +205,53 @@ window.loadGrowthData = async function() {
                 document.getElementById('g-sample-unknowns').innerText = `${d.sampleData.unknowns} sem data de início (Unknowns)`;
             }
 
+            // Sugestão de Investimento Baseada em SaaS Metrics (LTV : CAC)
+            const ltvVal = d.ltvProjetado || 0;
+            const cacVal = (metaSpend > 0 && novosPsis > 0) ? (metaSpend / novosPsis) : 0;
+            
+            let suggestionText = "";
+            let reasonText = "";
+            let cardColor = "#f0fdf4"; // green
+            let borderColor = "#bbf7d0";
+            let textColor = "#166534";
+            
+            if (ltvVal > 0 && cacVal > 0) {
+                const ratio = ltvVal / cacVal;
+                if (ratio >= 3) {
+                    suggestionText = "Aumentar Orçamento de Ads em 20% a 30%";
+                    reasonText = `Sua relação LTV/CAC é excelente (${ratio.toFixed(1)}x). Escalar Meta Ads agora trará lucro.`;
+                } else if (ratio >= 1.5) {
+                    suggestionText = "Manter Orçamento de Ads Atual";
+                    reasonText = `Sua relação LTV/CAC é de ${ratio.toFixed(1)}x. A aquisição é sustentável, otimize os criativos antes de escalar mais.`;
+                    cardColor = "#fdf8e6"; // yellow
+                    borderColor = "#fef08a";
+                    textColor = "#854d0e";
+                } else {
+                    suggestionText = "Reduzir/Pausar Orçamento (B2B)";
+                    reasonText = `Sua relação LTV/CAC é crítica (${ratio.toFixed(1)}x). O custo de aquisição está maior ou igual ao lucro projetado.`;
+                    cardColor = "#fef2f2"; // red
+                    borderColor = "#fecaca";
+                    textColor = "#991b1b";
+                }
+            } else if (cacVal === 0 && metaSpend > 0) {
+                suggestionText = "Pausar Campanhas (B2B)";
+                reasonText = "Você está gastando em anúncios mas não gerou assinantes pagantes neste período. Revise público ou landing page.";
+                cardColor = "#fef2f2"; borderColor = "#fecaca"; textColor = "#991b1b";
+            } else {
+                suggestionText = "Aguardando mais dados para recomendar (B2B)";
+                reasonText = "Preencha os valores de Ads no botão acima e gere vendas para calcularmos seu potencial de escala.";
+                cardColor = "#f8fafc"; borderColor = "#e2e8f0"; textColor = "#475569";
+            }
+            
+            const cardElement = document.getElementById('g-invest-suggestion').parentElement;
+            if(cardElement) {
+                cardElement.style.background = cardColor;
+                cardElement.style.borderColor = borderColor;
+            }
+            document.getElementById('g-invest-suggestion').style.color = textColor;
+            document.getElementById('g-invest-suggestion').innerText = suggestionText;
+            document.getElementById('g-invest-reason').innerText = reasonText;
+
             // Payback
             if (d.payback && d.payback > 0) {
                 document.getElementById('g-payback').innerText = `${d.payback.toFixed(1)} meses`;
