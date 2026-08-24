@@ -490,6 +490,39 @@ document.addEventListener('DOMContentLoaded', function () {
                 banner.innerHTML = `<span>🔒 Seu período de teste expirou. Ative o Premium para continuar.</span><button onclick="window.loadPage('psi_assinatura.html')">Assinar Agora</button>`;
                 document.body.appendChild(banner);
             }
+        } else if (psychologistData.plano === 'Comunidade' && !paginasPermitidas.includes(url)) {
+            // Verifica se já fechou na sessão atual
+            if (!sessionStorage.getItem('hideFreemiumBanner')) {
+                const banner = document.createElement('div');
+                banner.className = 'restriction-floating-banner';
+                // Sobrescrevendo estilos para ficar com cara de aviso Freemium
+                banner.style.background = '#FFF4E5';
+                banner.style.color = '#B25E02';
+                banner.style.borderBottom = '1px solid #FFB020';
+                banner.style.position = 'fixed';
+                banner.style.paddingRight = '45px'; // Espaço para o X
+
+                const isEligibleForTrial = !psychologistData.cpf;
+                const textMessage = isEligibleForTrial
+                    ? `👁️ Seu perfil público está oculto. Preencha seu CPF no Perfil para ativar 14 dias de acesso Premium grátis e receber pacientes.`
+                    : `👁️ Seu perfil público está oculto (Plano Grátis). Faça o upgrade para o Plano Essencial e receba novos pacientes.`;
+                const btnAction = isEligibleForTrial ? "window.loadPage('psi_meu_perfil.html')" : "window.loadPage('psi_assinatura.html')";
+                const btnText = isEligibleForTrial ? "Ativar Trial Grátis" : "Assinar Essencial";
+
+                banner.innerHTML = `
+                    <span>${textMessage}</span>
+                    <button onclick="${btnAction}" style="background: #1B4332; color: #fff; border-radius: 50px; font-size: 0.85rem; padding: 8px 16px;">${btnText}</button>
+                    <button id="close-freemium-banner" style="position: absolute; right: 10px; background: transparent; color: #B25E02; font-size: 1.2rem; border: none; padding: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 100%; top: 0; box-shadow: none;">✕</button>
+                `;
+                document.body.appendChild(banner);
+
+                // Lógica do botão X
+                document.getElementById('close-freemium-banner').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    banner.style.display = 'none';
+                    sessionStorage.setItem('hideFreemiumBanner', 'true');
+                });
+            }
         } else if (psychologistData.showTrialBanner && trialPremiumBanner) {
             // Exibe o banner de trial premium se a flag do backend for true
             trialPremiumBanner.style.display = 'flex';

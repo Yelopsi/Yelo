@@ -88,7 +88,7 @@ router.post('/psychologists/:id/appearance', async (req, res) => {
 router.get('/psychologists/list', async (req, res) => {
     try {
         const psis = await db.Psychologist.findAll({
-            where: { status: 'active', fotoUrl: { [Op.ne]: null } },
+            where: { status: 'active', fotoUrl: { [Op.ne]: null }, plano: { [Op.ne]: 'Comunidade' } },
             attributes: ['id', 'nome', 'fotoUrl', 'status', 'createdAt', 'planExpiresAt', 'is_exempt'],
             limit: 100, order: db.sequelize.random()
         });
@@ -124,6 +124,23 @@ router.post('/contato', emailSpamLimiter, async (req, res) => {
         await emailService.sendEmail(emailDestino, `Novo Contato pelo Site: ${assunto}`, conteudoHtml);
         res.json({ success: true, message: 'Mensagem enviada com sucesso!' });
     } catch (error) { res.status(500).json({ success: false, error: 'Erro interno ao enviar a mensagem.' }); }
+});
+router.post('/missed-lead', async (req, res) => {
+    try {
+        const { psychologistId, source } = req.body;
+        if (!psychologistId) return res.status(400).json({ error: 'ID do psicólogo obrigatório.' });
+
+        await db.WhatsAppClickLog.create({
+            psychologistId: psychologistId,
+            status: 'missed_freemium',
+            source: source || 'perfil_publico_freemium'
+        });
+
+        res.json({ success: true, message: 'Lead perdido registrado com sucesso.' });
+    } catch (error) {
+        console.error('Erro ao registrar missed lead:', error);
+        res.status(500).json({ error: 'Erro interno ao registrar lead.' });
+    }
 });
 
 module.exports = router;

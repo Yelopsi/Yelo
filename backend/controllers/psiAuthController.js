@@ -131,8 +131,8 @@ exports.registerPsychologist = async (req, res) => {
             senha: hashedPassword,
             crp,
             slug: generatedSlug,
-            status: cleanCpf ? 'active' : 'pending', // Só ativa e aparece nas buscas se tiver CPF
-            plano: cleanCpf ? 'Essencial' : null,
+            status: 'active', // Sempre ativo (se não tiver CPF, fica no Comunidade e não aparece nas buscas)
+            plano: cleanCpf ? 'Essencial' : 'Comunidade',
             planExpiresAt: cleanCpf ? trialEndDate : null,
             cpf: cleanCpf, // Salva na coluna CPF
             telefone, // Salva o número de telefone no banco

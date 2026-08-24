@@ -305,8 +305,9 @@ exports.updatePsychologistProfile = async (req, res) => {
         await psychologist.update(updatePayload);
 
         // --- ATIVAÇÃO DO TRIAL PÓS-CADASTRO (ANTI-ABUSO) ---
-        // Se o perfil estava pendente e o profissional preencheu um CPF válido agora, ativa os 14 dias
-        if (psychologist.status === 'pending' && cpf && cpf.replace(/\D/g, '').length >= 11) {
+        // Se o profissional não tinha CPF e preencheu um válido agora, ativa os 14 dias (se ele estava no Comunidade ou Pendente)
+        const isFirstCpf = !psychologist.cpf && cpf && cpf.replace(/\D/g, '').length >= 11;
+        if ((psychologist.status === 'pending' || psychologist.plano === 'Comunidade') && isFirstCpf) {
             const trialEndDate = new Date();
             trialEndDate.setDate(trialEndDate.getDate() + 14);
             await psychologist.update({

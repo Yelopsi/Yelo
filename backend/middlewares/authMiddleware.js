@@ -58,9 +58,10 @@ const protect = async (req, res, next) => {
                     if (user.status === 'active' && !isVip) {
                         const validade = user.planExpiresAt ? new Date(user.planExpiresAt) : null;
                         if (!validade || validade <= new Date()) {
-                            console.log(`[AUTH] ⏰ Assinatura expirada. Inativando perfil em tempo real: ${user.email}`);
-                            await user.update({ status: 'inactive' });
-                            user.status = 'inactive';
+                            console.log(`[AUTH] ⏰ Assinatura expirada. Migrando para o Plano Comunidade: ${user.email}`);
+                            await user.update({ plano: 'Comunidade', planExpiresAt: null });
+                            user.plano = 'Comunidade';
+                            user.planExpiresAt = null;
                         }
                     }
                 }

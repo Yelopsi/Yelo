@@ -15,7 +15,7 @@ async function runIntegrityAudit() {
         await db.sequelize.query(`UPDATE "Psychologists" SET "is_exempt" = false WHERE "subscriptionId" IS NOT NULL AND "is_exempt" = true;`);
         
         // 2. Bloqueia VIPs que não tem plano setado
-        await db.sequelize.query(`UPDATE "Psychologists" SET "is_exempt" = false, status = 'inactive' WHERE "is_exempt" = true AND ("plano" IS NULL OR "plano" = '');`);
+        await db.sequelize.query(`UPDATE "Psychologists" SET "is_exempt" = false, plano = 'Comunidade' WHERE "is_exempt" = true AND ("plano" IS NULL OR "plano" = '');`);
 
         // 3. Busca psicólogos com plano vencido ou sem assinatura
         const expiredPsis = await db.Psychologist.findAll({
@@ -79,8 +79,8 @@ async function runIntegrityAudit() {
             }
 
             if (shouldBlock) {
-                console.log(`❌ [CRON AUDIT] Bloqueando psicólogo ID ${psi.id} (${psi.nome}). Motivo: ${reason}`);
-                await psi.update({ status: 'inactive' });
+                console.log(`❌ [CRON AUDIT] Rebaixando psicólogo ID ${psi.id} (${psi.nome}) para Comunidade. Motivo: ${reason}`);
+                await psi.update({ plano: 'Comunidade', planExpiresAt: null });
             }
         }
         

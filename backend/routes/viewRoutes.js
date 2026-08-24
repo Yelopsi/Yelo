@@ -48,7 +48,7 @@ router.get(['/admin', '/admin/'], (req, res) => {
 router.get('/', async (req, res) => {
     try {
         const psicologos = await db.Psychologist.findAll({
-            where: { status: 'active', fotoUrl: { [Op.ne]: null } },
+            where: { status: 'active', fotoUrl: { [Op.ne]: null }, plano: { [Op.ne]: 'Comunidade' } },
             order: db.sequelize.random(),
             limit: 30,
             attributes: ['nome', 'fotoUrl', 'slug', 'status', 'createdAt', 'planExpiresAt', 'is_exempt']
@@ -291,7 +291,7 @@ router.get('/mapa-do-site', async (req, res) => {
     try {
         const agora = new Date();
         const psicologos = await db.Psychologist.findAll({
-            where: { status: 'active' },
+            where: { status: 'active', plano: { [Op.ne]: 'Comunidade' } },
             attributes: ['nome', 'slug', 'is_exempt', 'planExpiresAt'],
             order: [['nome', 'ASC']]
         });
@@ -404,10 +404,18 @@ router.get('/:slug', async (req, res, next) => {
 
         const hoje = new Date(); const validade = psychologist.planExpiresAt ? new Date(psychologist.planExpiresAt) : null;
         const isVip = psychologist.is_exempt === true;
-        const isAtivoEValido = psychologist.status === 'active' && (isVip || (validade && validade > hoje));
+        const isFreemium = psychologist.plano === 'Comunidade';
+        const isAtivoEValido = psychologist.status === 'active' && (isFreemium || isVip || (validade && validade > hoje));
 
         if (psychologist.deletedAt !== null || !isAtivoEValido || psychologist.profile_paused) {
             return res.status(410).render('psi_inativo', { nome: psychologist.nome });
+        }
+
+        if (isFreemium) {
+            let bio = psychologist.biografia || '';
+            bio = bio.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[Contato Oculto]');
+            bio = bio.replace(/(?:\+?55\s?)?(?:\(?\d{2}\)?\s?)?\d{4,5}[-\s]?\d{4}/g, '[Contato Oculto]');
+            psychologist.biografia = bio;
         }
 
         try {
@@ -460,7 +468,8 @@ router.get('/:slug', async (req, res, next) => {
                 reviews: formattedReviews,
                 averageRating,
                 reviewCount: formattedReviews.length,
-                postsAutor: postsAutor || []
+                postsAutor: postsAutor || [],
+                isFreemium
             });
         } catch (renderErr) {
             console.error('ERRO NO RENDER:', renderErr);

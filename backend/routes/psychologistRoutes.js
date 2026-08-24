@@ -110,8 +110,9 @@ const safeProtect = async (req, res, next) => {
                 if (user.status === 'active' && !isVip) {
                     const validade = user.planExpiresAt ? new Date(user.planExpiresAt) : null;
                     if (!validade || validade <= new Date()) {
-                        await user.update({ status: 'inactive' }).catch(() => {});
-                        user.status = 'inactive';
+                        await user.update({ plano: 'Comunidade', planExpiresAt: null }).catch(() => {});
+                        user.plano = 'Comunidade';
+                        user.planExpiresAt = null;
                     }
                 }
             }

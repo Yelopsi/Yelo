@@ -104,9 +104,8 @@ exports.cancelSubscription = async (req, res) => {
              // Se chegou aqui, o usuário quer cancelar. Se não temos ID para o Asaas,
              // cancelamos localmente para não prender o usuário.
              await psychologist.update({
-                status: 'inactive',
-                plano: null,
-                planExpiresAt: new Date(),
+                plano: 'Comunidade',
+                planExpiresAt: null,
                 cancelAtPeriodEnd: false,
                 subscriptionId: null
              });
@@ -123,9 +122,8 @@ exports.cancelSubscription = async (req, res) => {
         if (!subData.id) {
              // Se não achou no Asaas, assume cancelamento manual local e limpa tudo
              await psychologist.update({ 
-                  status: 'inactive',
-                  plano: null,
-                  planExpiresAt: new Date(),
+                  plano: 'Comunidade',
+                  planExpiresAt: null,
                   cancelAtPeriodEnd: false,
                   subscriptionId: null
               });
@@ -200,9 +198,8 @@ exports.cancelSubscription = async (req, res) => {
             }
 
             await psychologist.update({
-                status: 'inactive',
-                plano: null,
-                planExpiresAt: new Date(), // Expira já
+                plano: 'Comunidade',
+                planExpiresAt: null, // Expira já
                 cancelAtPeriodEnd: false,
                 subscriptionId: null, // Limpa o ID da assinatura
                 badges: currentBadges // Atualiza as badges
