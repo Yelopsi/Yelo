@@ -64,92 +64,93 @@ window.renderHistoryPage = function(page) {
                         </div>
                     </td>
                 </tr>`;
-            return;
         }
+        return;
+    }
 
-        const totalPages = Math.ceil(logs.length / window.yeloContactItemsPerPage);
-        if (page < 1) page = 1;
-        if (page > totalPages) page = totalPages;
-        window.yeloContactPage = page;
+    const totalPages = Math.ceil(logs.length / window.yeloContactItemsPerPage);
+    if (page < 1) page = 1;
+    if (page > totalPages) page = totalPages;
+    window.yeloContactPage = page;
 
-        const startIndex = (page - 1) * window.yeloContactItemsPerPage;
-        const endIndex = startIndex + window.yeloContactItemsPerPage;
-        const paginatedLogs = logs.slice(startIndex, endIndex);
+    const startIndex = (page - 1) * window.yeloContactItemsPerPage;
+    const endIndex = startIndex + window.yeloContactItemsPerPage;
+    const paginatedLogs = logs.slice(startIndex, endIndex);
 
-        if (tbody) tbody.innerHTML = '';
-        
-        paginatedLogs.forEach(log => {
+    if (tbody) tbody.innerHTML = '';
+    
+    paginatedLogs.forEach(log => {
 
-            const dataFormatada = new Date(log.createdAt).toLocaleDateString('pt-BR', {
-                day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-            });
-
-            // Determinar badge
-            let badgeClass = 'pendente';
-            let badgeText = 'Pendente de Feedback';
-
-            if (log.feedbackGiven) {
-                if (log.dealClosed === 'yes' || log.dealClosed === 'started') {
-                    badgeClass = 'fechado';
-                    badgeText = '✅ Fechou Negócio';
-                } else if (log.dealClosed === 'talking') {
-                    badgeClass = 'pendente';
-                    badgeText = '⏳ Em negociação';
-                } else if (log.dealClosed === 'not_started' || log.dealClosed === 'ghosted' || log.dealClosed === 'no') {
-                    badgeClass = 'nao-fechado';
-                    badgeText = '❌ Não Fechou';
-                } else if (!log.contactReceived || log.dealClosed === 'no_contact' || log.dealClosed === 'wpp_issue' || log.dealClosed === 'unknown') {
-                    badgeClass = 'fantasma';
-                    badgeText = '👻 Paciente Fantasma';
-                } else {
-                    badgeClass = 'pendente';
-                    badgeText = 'Feedback Registrado';
-                }
-            }
-            
-            let badgeStyle = '';
-            let clickAction = '';
-            
-            // Lógica de proteção de indicadores: Não permite reverter um fechamento.
-            // Só permite alterar se o feedback inicial já foi dado (modal principal)
-            if (log.feedbackGiven && log.dealClosed !== 'yes' && log.dealClosed !== 'started') {
-                badgeClass += ' clickable';
-                badgeStyle = 'title="Clique para atualizar status"';
-                clickAction = `onclick="window.abrirModalStatus('${log.id}', ${log.contactReceived}, '${log.dealClosed}')"`;
-            }
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td data-label="Data">${dataFormatada}</td>
-                <td data-label="Paciente / Contato" style="font-weight: 500;">${log.guestName || 'Um paciente'}</td>
-                <td data-label="Status do Retorno"><span class="status-badge ${badgeClass}" ${badgeStyle} ${clickAction}>${badgeText}</span></td>
-            `;
-            if (tbody) tbody.appendChild(tr);
+        const dataFormatada = new Date(log.createdAt).toLocaleDateString('pt-BR', {
+            day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
         });
 
-        // Atualiza UI de paginação
-        if (paginationControls) {
-            if (totalPages > 1) {
-                paginationControls.style.display = 'flex';
-                const pageInfo = document.getElementById('page-info');
-                if (pageInfo) pageInfo.textContent = `Página ${page} de ${totalPages}`;
-                
-                const prevBtn = document.getElementById('prev-page-btn');
-                const nextBtn = document.getElementById('next-page-btn');
-                
-                if (prevBtn) {
-                    prevBtn.disabled = page === 1;
-                    prevBtn.onclick = () => window.renderHistoryPage(page - 1);
-                }
-                if (nextBtn) {
-                    nextBtn.disabled = page === totalPages;
-                    nextBtn.onclick = () => window.renderHistoryPage(page + 1);
-                }
+        // Determinar badge
+        let badgeClass = 'pendente';
+        let badgeText = 'Pendente de Feedback';
+
+        if (log.feedbackGiven) {
+            if (log.dealClosed === 'yes' || log.dealClosed === 'started') {
+                badgeClass = 'fechado';
+                badgeText = '✅ Fechou Negócio';
+            } else if (log.dealClosed === 'talking') {
+                badgeClass = 'pendente';
+                badgeText = '⏳ Em negociação';
+            } else if (log.dealClosed === 'not_started' || log.dealClosed === 'ghosted' || log.dealClosed === 'no') {
+                badgeClass = 'nao-fechado';
+                badgeText = '❌ Não Fechou';
+            } else if (!log.contactReceived || log.dealClosed === 'no_contact' || log.dealClosed === 'wpp_issue' || log.dealClosed === 'unknown') {
+                badgeClass = 'fantasma';
+                badgeText = '👻 Paciente Fantasma';
             } else {
-                paginationControls.style.display = 'none';
+                badgeClass = 'pendente';
+                badgeText = 'Feedback Registrado';
             }
         }
+        
+        let badgeStyle = '';
+        let clickAction = '';
+        
+        // Lógica de proteção de indicadores: Não permite reverter um fechamento.
+        // Só permite alterar se o feedback inicial já foi dado (modal principal)
+        if (log.feedbackGiven && log.dealClosed !== 'yes' && log.dealClosed !== 'started') {
+            badgeClass += ' clickable';
+            badgeStyle = 'title="Clique para atualizar status"';
+            clickAction = `onclick="window.abrirModalStatus('${log.id}', ${log.contactReceived}, '${log.dealClosed}')"`;
+        }
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td data-label="Data">${dataFormatada}</td>
+            <td data-label="Paciente / Contato" style="font-weight: 500;">${log.guestName || 'Um paciente'}</td>
+            <td data-label="Status do Retorno"><span class="status-badge ${badgeClass}" ${badgeStyle} ${clickAction}>${badgeText}</span></td>
+        `;
+        if (tbody) tbody.appendChild(tr);
+    });
+
+    // Atualiza UI de paginação
+    if (paginationControls) {
+        if (totalPages > 1) {
+            paginationControls.style.display = 'flex';
+            const pageInfo = document.getElementById('page-info');
+            if (pageInfo) pageInfo.textContent = `Página ${page} de ${totalPages}`;
+            
+            const prevBtn = document.getElementById('prev-page-btn');
+            const nextBtn = document.getElementById('next-page-btn');
+            
+            if (prevBtn) {
+                prevBtn.disabled = page === 1;
+                prevBtn.onclick = () => window.renderHistoryPage(page - 1);
+            }
+            if (nextBtn) {
+                nextBtn.disabled = page === totalPages;
+                nextBtn.onclick = () => window.renderHistoryPage(page + 1);
+            }
+        } else {
+            paginationControls.style.display = 'none';
+        }
     }
+};
 
 window.abrirModalStatus = function(id, contact_received, deal_closed) {
     const modal = document.getElementById('yelo-status-modal');
