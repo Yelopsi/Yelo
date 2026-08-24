@@ -7,11 +7,7 @@ class GrowthMarketingService {
         const periodStart = new Date();
         periodStart.setDate(periodStart.getDate() - periodDays);
 
-        // 1. Despesas Totais e por Canal
-        const expenses = await db.YeloExpense.findAll({
-            where: { createdAt: { [Op.gte]: periodStart } }
-        });
-
+        // 1. Calcular Despesas Pro-Rata
         let totalMarketingSpend = 0;
         const spendByChannel = {
             'Google Ads': 0,
@@ -19,16 +15,45 @@ class GrowthMarketingService {
             'Outros': 0
         };
 
+        // Encontrar os meses envolvidos
+        const monthsInvolved = new Set();
+        for (let d = new Date(periodStart); d <= now; d.setDate(d.getDate() + 1)) {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            monthsInvolved.add(`${year}-${month}`);
+        }
+
+        const expenses = await db.YeloExpense.findAll({
+            where: { monthYear: { [Op.in]: Array.from(monthsInvolved) } }
+        });
+
+        // Agrupa por mês para cálculo
+        const expenseMap = {};
         for (const exp of expenses) {
-            const amount = Number(exp.amount) || 0;
-            totalMarketingSpend += amount;
-            
-            if (exp.category && exp.category.includes('Google')) {
-                spendByChannel['Google Ads'] += amount;
-            } else if (exp.category && exp.category.includes('Meta') || exp.category && exp.category.includes('Facebook')) {
-                spendByChannel['Meta Ads'] += amount;
-            } else {
-                spendByChannel['Outros'] += amount;
+            if (!expenseMap[exp.monthYear]) expenseMap[exp.monthYear] = [];
+            expenseMap[exp.monthYear].push(exp);
+        }
+
+        // Soma rateada por dia
+        for (let d = new Date(periodStart); d <= now; d.setDate(d.getDate() + 1)) {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const key = `${year}-${month}`;
+            const daysInMonth = new Date(year, d.getMonth() + 1, 0).getDate();
+
+            if (expenseMap[key]) {
+                for (const exp of expenseMap[key]) {
+                    const dailyAmount = (Number(exp.amount) || 0) / daysInMonth;
+                    totalMarketingSpend += dailyAmount;
+
+                    if (exp.category && exp.category.includes('Google')) {
+                        spendByChannel['Google Ads'] += dailyAmount;
+                    } else if (exp.category && exp.category.includes('Meta') || exp.category && exp.category.includes('Facebook')) {
+                        spendByChannel['Meta Ads'] += dailyAmount;
+                    } else {
+                        spendByChannel['Outros'] += dailyAmount;
+                    }
+                }
             }
         }
 
@@ -41,7 +66,7 @@ class GrowthMarketingService {
         // 3. CAC & Payback (Conservative / Not fully attributed yet)
         const cac = null; // N/D
         const cacDemanda = null; // N/D
-        const marketingNaoAtribuido = totalMarketingSpend;
+        const marketingNaoAtribuido = spendByChannel['Outros'] || 0;
         let payback = metrics.cacPaybackMonths;
 
         // 4. LTV, MRR, ARPU & Churn

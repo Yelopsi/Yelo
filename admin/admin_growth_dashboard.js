@@ -148,10 +148,29 @@ window.loadGrowthData = async function() {
             const d = result.data;
             window.growthDataState.marketing = d;
             
-            // Política: CAC é N/D por falta de atribuição
-            document.getElementById('g-cac-b2b').innerText = 'N/D';
-            document.getElementById('g-cac-b2c').innerText = 'N/D';
-            document.getElementById('g-marketing-na').innerText = formatBRL(d.marketingNaoAtribuido || d.totalMarketingSpend);
+            // CAC B2B (Meta Ads)
+            const metaSpend = d.spendByChannel ? d.spendByChannel['Meta Ads'] : 0;
+            const novosPsis = window.growthDataState.acquisition ? window.growthDataState.acquisition.viraramPagantes : d.novosPagantes;
+            if (metaSpend > 0 && novosPsis > 0) {
+                document.getElementById('g-cac-b2b').innerText = formatBRL(metaSpend / novosPsis);
+            } else if (metaSpend > 0) {
+                document.getElementById('g-cac-b2b').innerText = 'Sem conversões';
+            } else {
+                document.getElementById('g-cac-b2b').innerText = 'N/D';
+            }
+
+            // CAC B2C (Google Ads)
+            const googleSpend = d.spendByChannel ? d.spendByChannel['Google Ads'] : 0;
+            const contatosWpp = window.growthDataState.demand ? window.growthDataState.demand.funnel.contatos : 0;
+            if (googleSpend > 0 && contatosWpp > 0) {
+                document.getElementById('g-cac-b2c').innerText = formatBRL(googleSpend / contatosWpp);
+            } else if (googleSpend > 0) {
+                document.getElementById('g-cac-b2c').innerText = 'Sem conversões';
+            } else {
+                document.getElementById('g-cac-b2c').innerText = 'N/D';
+            }
+
+            document.getElementById('g-marketing-na').innerText = formatBRL(d.marketingNaoAtribuido || 0);
             
             // LTV Projetado
             if (d.ltvProjetado > 0) {
@@ -765,5 +784,106 @@ window.loadPaymentsEvolutionChart = async function() {
 
     } catch (err) {
         console.error('Erro ao carregar gráfico de pagamentos:', err);
+    }
+};
+
+// --- LÓGICA DE ADS SPEND ---
+window.openAdsModal = async function() {
+    const modal = document.getElementById('ads-spend-modal');
+    modal.style.display = 'flex';
+    
+    // Set default month to previous month
+    const now = new Date();
+    now.setMonth(now.getMonth() - 1);
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    document.getElementById('ads-month').value = `${y}-${m}`;
+    document.getElementById('ads-meta').value = '';
+    document.getElementById('ads-google').value = '';
+
+    await loadAdsHistory();
+};
+
+window.closeAdsModal = function() {
+    document.getElementById('ads-spend-modal').style.display = 'none';
+};
+
+window.loadAdsHistory = async function() {
+    const listDiv = document.getElementById('ads-history-list');
+    listDiv.innerHTML = 'Carregando...';
+    try {
+        const res = await fetch('/api/admin/analytics/growth/ads-expenses');
+        const data = await res.json();
+        if (data.success && data.data && data.data.length > 0) {
+            let html = '<table style="width:100%; border-collapse:collapse;">';
+            html += '<tr style="border-bottom:1px solid #e2e8f0; color:#64748b;"><th style="padding:5px;text-align:left;">Mês</th><th style="padding:5px;text-align:right;">Meta Ads</th><th style="padding:5px;text-align:right;">Google Ads</th></tr>';
+            
+            // Agrupar por mes
+            const grouped = {};
+            data.data.forEach(item => {
+                if (!grouped[item.monthYear]) grouped[item.monthYear] = { meta: 0, google: 0 };
+                if (item.category === 'Meta Ads') grouped[item.monthYear].meta += Number(item.amount);
+                if (item.category === 'Google Ads') grouped[item.monthYear].google += Number(item.amount);
+            });
+
+            for (const [month, amounts] of Object.entries(grouped)) {
+                html += `<tr style="border-bottom:1px solid #f1f5f9;">
+                    <td style="padding:8px 5px; font-weight:600;">${month}</td>
+                    <td style="padding:8px 5px; text-align:right; color:#3b82f6;">R$ ${amounts.meta.toFixed(2)}</td>
+                    <td style="padding:8px 5px; text-align:right; color:#10b981;">R$ ${amounts.google.toFixed(2)}</td>
+                </tr>`;
+            }
+            html += '</table>';
+            listDiv.innerHTML = html;
+        } else {
+            listDiv.innerHTML = '<span style="color:#94a3b8;">Nenhum gasto registrado ainda.</span>';
+        }
+    } catch (e) {
+        listDiv.innerHTML = '<span style="color:#ef4444;">Erro ao carregar histórico.</span>';
+    }
+};
+
+window.saveAdsSpend = async function() {
+    const monthYear = document.getElementById('ads-month').value;
+    const metaAds = document.getElementById('ads-meta').value;
+    const googleAds = document.getElementById('ads-google').value;
+    const btn = document.getElementById('btn-save-ads');
+
+    if (!monthYear) return alert('Selecione o mês.');
+
+    btn.innerText = 'Salvando...';
+    btn.disabled = true;
+
+    try {
+        const res = await fetch('/api/admin/analytics/growth/ads-expenses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                monthYear, 
+                metaAds: metaAds ? Number(metaAds) : undefined, 
+                googleAds: googleAds ? Number(googleAds) : undefined 
+            })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            btn.style.background = '#10b981';
+            btn.innerText = 'Salvo com sucesso!';
+            setTimeout(() => {
+                closeAdsModal();
+                loadGrowthData(); // Recarrega os funis para aplicar pro-rata
+                btn.style.background = '#1B4332';
+                btn.innerText = 'Salvar Gasto do Mês';
+                btn.disabled = false;
+            }, 1000);
+        } else {
+            alert(data.error || 'Erro ao salvar.');
+            btn.innerText = 'Tentar novamente';
+            btn.disabled = false;
+        }
+    } catch (e) {
+        alert('Erro de conexão ao salvar.');
+        btn.innerText = 'Salvar Gasto do Mês';
+        btn.disabled = false;
     }
 };

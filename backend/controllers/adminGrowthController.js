@@ -750,3 +750,69 @@ exports.getCompanyHealthDashboard = async (req, res) => {
         res.status(500).json({ error: "Falha ao compilar health dashboard." });
     }
 };
+
+exports.getAdsExpenses = async (req, res) => {
+    try {
+        const expenses = await db.YeloExpense.findAll({
+            where: {
+                category: {
+                    [Op.in]: ['Google Ads', 'Meta Ads']
+                }
+            },
+            order: [['monthYear', 'DESC']]
+        });
+        res.json({ success: true, data: expenses });
+    } catch (error) {
+        console.error('Error fetching ads expenses:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+exports.saveAdsExpense = async (req, res) => {
+    try {
+        const { monthYear, googleAds, metaAds } = req.body;
+        if (!monthYear) {
+            return res.status(400).json({ success: false, error: 'Mês/Ano é obrigatório.' });
+        }
+
+        const t = await db.sequelize.transaction();
+        try {
+            // Google Ads
+            if (googleAds !== undefined) {
+                const gAdsAmount = Number(googleAds) || 0;
+                let gExp = await db.YeloExpense.findOne({
+                    where: { monthYear, category: 'Google Ads' },
+                    transaction: t
+                });
+                if (gExp) {
+                    await gExp.update({ amount: gAdsAmount }, { transaction: t });
+                } else {
+                    await db.YeloExpense.create({ name: 'Google Ads', amount: gAdsAmount, monthYear, category: 'Google Ads' }, { transaction: t });
+                }
+            }
+
+            // Meta Ads
+            if (metaAds !== undefined) {
+                const mAdsAmount = Number(metaAds) || 0;
+                let mExp = await db.YeloExpense.findOne({
+                    where: { monthYear, category: 'Meta Ads' },
+                    transaction: t
+                });
+                if (mExp) {
+                    await mExp.update({ amount: mAdsAmount }, { transaction: t });
+                } else {
+                    await db.YeloExpense.create({ name: 'Meta Ads', amount: mAdsAmount, monthYear, category: 'Meta Ads' }, { transaction: t });
+                }
+            }
+
+            await t.commit();
+            res.json({ success: true, message: 'Gastos de anúncios salvos com sucesso.' });
+        } catch (err) {
+            await t.rollback();
+            throw err;
+        }
+    } catch (error) {
+        console.error('Error saving ads expenses:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
