@@ -158,6 +158,9 @@ window.loadGrowthData = async function() {
             } else {
                 document.getElementById('g-cac-b2b').innerText = 'N/D';
             }
+            if (document.getElementById('g-spend-b2b')) {
+                document.getElementById('g-spend-b2b').innerText = `Gasto: ${formatBRL(metaSpend)}`;
+            }
 
             // CAC B2C (Google Ads)
             const googleSpend = d.spendByChannel ? d.spendByChannel['Google Ads'] : 0;
@@ -168,6 +171,9 @@ window.loadGrowthData = async function() {
                 document.getElementById('g-cac-b2c').innerText = 'Sem conversões';
             } else {
                 document.getElementById('g-cac-b2c').innerText = 'N/D';
+            }
+            if (document.getElementById('g-spend-b2c')) {
+                document.getElementById('g-spend-b2c').innerText = `Gasto: ${formatBRL(googleSpend)}`;
             }
 
             document.getElementById('g-marketing-na').innerText = formatBRL(d.marketingNaoAtribuido || 0);
@@ -816,7 +822,7 @@ window.loadAdsHistory = async function() {
         const data = await res.json();
         if (data.success && data.data && data.data.length > 0) {
             let html = '<table style="width:100%; border-collapse:collapse;">';
-            html += '<tr style="border-bottom:1px solid #e2e8f0; color:#64748b;"><th style="padding:5px;text-align:left;">Mês</th><th style="padding:5px;text-align:right;">Meta Ads</th><th style="padding:5px;text-align:right;">Google Ads</th></tr>';
+            html += '<tr style="border-bottom:1px solid #e2e8f0; color:#64748b;"><th style="padding:5px;text-align:left;">Mês</th><th style="padding:5px;text-align:right;">Meta Ads</th><th style="padding:5px;text-align:right;">Google Ads</th><th style="padding:5px;text-align:center;width:30px;">Ação</th></tr>';
             
             // Agrupar por mes
             const grouped = {};
@@ -831,6 +837,7 @@ window.loadAdsHistory = async function() {
                     <td style="padding:8px 5px; font-weight:600;">${month}</td>
                     <td style="padding:8px 5px; text-align:right; color:#3b82f6;">R$ ${amounts.meta.toFixed(2)}</td>
                     <td style="padding:8px 5px; text-align:right; color:#10b981;">R$ ${amounts.google.toFixed(2)}</td>
+                    <td style="padding:8px 5px; text-align:center;"><button onclick="deleteAdsSpend('${month}')" style="background:none; border:none; color:#ef4444; font-size:1.1rem; cursor:pointer;" title="Excluir lançamentos deste mês">×</button></td>
                 </tr>`;
             }
             html += '</table>';
@@ -840,6 +847,23 @@ window.loadAdsHistory = async function() {
         }
     } catch (e) {
         listDiv.innerHTML = '<span style="color:#ef4444;">Erro ao carregar histórico.</span>';
+    }
+};
+
+window.deleteAdsSpend = async function(monthYear) {
+    if (!confirm(`Tem certeza que deseja excluir todos os lançamentos de Ads do mês ${monthYear}?`)) return;
+    
+    try {
+        const res = await fetch(`/api/admin/analytics/growth/ads-expenses/${monthYear}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+            await loadAdsHistory();
+            loadGrowthData();
+        } else {
+            alert(data.error || 'Erro ao excluir.');
+        }
+    } catch (e) {
+        alert('Erro de conexão ao excluir.');
     }
 };
 

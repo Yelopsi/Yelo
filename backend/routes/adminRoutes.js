@@ -138,6 +138,7 @@ router.get('/analytics/growth/health', adminGrowthController.getCompanyHealthDas
 router.get('/analytics/growth/pmf', adminGrowthController.getPMFDetails);
 router.get('/analytics/growth/ads-expenses', adminGrowthController.getAdsExpenses);
 router.post('/analytics/growth/ads-expenses', adminGrowthController.saveAdsExpense);
+router.delete('/analytics/growth/ads-expenses/:monthYear', adminGrowthController.deleteAdsExpense);
 router.get('/analytics/whatsapp-ab', adminAnalyticsController.getWhatsAppABStats);
 router.post('/analytics/growth/ai-insights', adminGrowthController.getAIInsights);
 router.get('/growth/overview', adminGrowthController.getOverview);

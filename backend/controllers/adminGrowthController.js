@@ -816,3 +816,26 @@ exports.saveAdsExpense = async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 };
+
+exports.deleteAdsExpense = async (req, res) => {
+    try {
+        const { monthYear } = req.params;
+        if (!monthYear) {
+            return res.status(400).json({ success: false, error: 'Mês/Ano é obrigatório.' });
+        }
+        
+        await db.YeloExpense.destroy({
+            where: {
+                monthYear,
+                category: {
+                    [Op.in]: ['Google Ads', 'Meta Ads']
+                }
+            }
+        });
+        
+        res.json({ success: true, message: 'Gastos removidos com sucesso.' });
+    } catch (error) {
+        console.error('Error deleting ads expenses:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
