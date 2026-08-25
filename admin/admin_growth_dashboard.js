@@ -205,52 +205,27 @@ window.loadGrowthData = async function() {
                 document.getElementById('g-sample-unknowns').innerText = `${d.sampleData.unknowns} sem data de início (Unknowns)`;
             }
 
-            // Sugestão de Investimento Baseada em SaaS Metrics (LTV : CAC)
-            const ltvVal = d.ltvProjetado || 0;
-            const cacVal = (metaSpend > 0 && novosPsis > 0) ? (metaSpend / novosPsis) : 0;
+            // Recomendação de Ads refatorada
+            const overviewData = window.growthDataState.overview || {};
             
-            let suggestionText = "";
-            let reasonText = "";
-            let cardColor = "#f0fdf4"; // green
-            let borderColor = "#bbf7d0";
-            let textColor = "#166534";
-            
-            if (ltvVal > 0 && cacVal > 0) {
-                const ratio = ltvVal / cacVal;
-                if (ratio >= 3) {
-                    suggestionText = "Aumentar Orçamento de Ads em 20% a 30%";
-                    reasonText = `Sua relação LTV/CAC é excelente (${ratio.toFixed(1)}x). Escalar Meta Ads agora trará lucro.`;
-                } else if (ratio >= 1.5) {
-                    suggestionText = "Manter Orçamento de Ads Atual";
-                    reasonText = `Sua relação LTV/CAC é de ${ratio.toFixed(1)}x. A aquisição é sustentável, otimize os criativos antes de escalar mais.`;
-                    cardColor = "#fdf8e6"; // yellow
-                    borderColor = "#fef08a";
-                    textColor = "#854d0e";
-                } else {
-                    suggestionText = "Reduzir/Pausar Orçamento (B2B)";
-                    reasonText = `Sua relação LTV/CAC é crítica (${ratio.toFixed(1)}x). O custo de aquisição está maior ou igual ao lucro projetado.`;
-                    cardColor = "#fef2f2"; // red
-                    borderColor = "#fecaca";
-                    textColor = "#991b1b";
-                }
-            } else if (cacVal === 0 && metaSpend > 0) {
-                suggestionText = "Pausar Campanhas (B2B)";
-                reasonText = "Você está gastando em anúncios mas não gerou assinantes pagantes neste período. Revise público ou landing page.";
-                cardColor = "#fef2f2"; borderColor = "#fecaca"; textColor = "#991b1b";
-            } else {
-                suggestionText = "Aguardando mais dados para recomendar (B2B)";
-                reasonText = "Preencha os valores de Ads no botão acima e gere vendas para calcularmos seu potencial de escala.";
-                cardColor = "#f8fafc"; borderColor = "#e2e8f0"; textColor = "#475569";
-            }
-            
+            const adsRec = window.calculateAdsRecommendation({
+                ltvProjetado: d.ltvProjetado || 0,
+                metaSpend: metaSpend || 0,
+                novosPsis: novosPsis || 0,
+                payback: d.payback || 0,
+                netNewMrr: overviewData.netNewMrr || 0,
+                weightedChurnRate: d.weightedChurnRate || 0,
+                sampleData: d.sampleData || {}
+            });
+
             const cardElement = document.getElementById('g-invest-suggestion').parentElement;
-            if(cardElement) {
-                cardElement.style.background = cardColor;
-                cardElement.style.borderColor = borderColor;
+            if (cardElement) {
+                cardElement.style.background = adsRec.cardColor;
+                cardElement.style.borderColor = adsRec.borderColor;
             }
-            document.getElementById('g-invest-suggestion').style.color = textColor;
-            document.getElementById('g-invest-suggestion').innerText = suggestionText;
-            document.getElementById('g-invest-reason').innerText = reasonText;
+            document.getElementById('g-invest-suggestion').style.color = adsRec.textColor;
+            document.getElementById('g-invest-suggestion').innerHTML = `${adsRec.status} <span style="font-size:0.75rem; color:#64748b; font-weight:normal; margin-left:8px;">[Confiabilidade: ${adsRec.confidenceStr}]</span>`;
+            document.getElementById('g-invest-reason').innerText = adsRec.reason;
 
             // Payback
             if (d.payback && d.payback > 0) {
@@ -957,4 +932,93 @@ window.saveAdsSpend = async function() {
         btn.innerText = 'Salvar Gasto do Mês';
         btn.disabled = false;
     }
+};
+
+/**
+ * Motor de Recomendação de Anúncios (B2B Meta Ads)
+ * Separa a avaliação de Saúde Econômica (LTV/CAC) da avaliação de Confiabilidade Estatística.
+ */
+window.calculateAdsRecommendation = function(metrics) {
+    const ltv = metrics.ltvProjetado;
+    const cac = (metrics.metaSpend > 0 && metrics.novosPsis > 0) ? (metrics.metaSpend / metrics.novosPsis) : 0;
+    const ratio = (ltv > 0 && cac > 0) ? (ltv / cac) : 0;
+    
+    const paidChurned = metrics.sampleData.totalHistoricalPaidChurned || 0;
+    const exposureMonths = metrics.sampleData.somaBaseInicial || 0;
+
+    // 1. CONFIABILIDADE DO LTV
+    let ltvConfidence = 'BAIXA';
+    if (paidChurned >= 10 && exposureMonths >= 100) ltvConfidence = 'ALTA';
+    else if (paidChurned >= 5 && exposureMonths >= 50) ltvConfidence = 'MÉDIA';
+
+    // 2. CONFIABILIDADE DO CAC
+    let cacConfidence = 'BAIXA';
+    if (metrics.novosPsis >= 10 && metrics.metaSpend >= 100) cacConfidence = 'ALTA';
+    else if (metrics.novosPsis >= 5 && metrics.metaSpend >= 50) cacConfidence = 'MÉDIA';
+    
+    // Confiabilidade geral mínima para escalar
+    const isMediumConfidence = (ltvConfidence === 'ALTA' || ltvConfidence === 'MÉDIA') && (cacConfidence === 'ALTA' || cacConfidence === 'MÉDIA');
+
+    // Inicializando retorno padrão
+    let result = {
+        status: '⚪ Aguardando mais dados...',
+        reason: 'Preencha valores de Ads e gere vendas para calcularmos seu potencial.',
+        cardColor: '#f8fafc', // gray
+        borderColor: '#e2e8f0',
+        textColor: '#475569',
+        confidenceStr: 'N/D'
+    };
+
+    if (metrics.metaSpend > 0 && metrics.novosPsis === 0) {
+        if (metrics.metaSpend > 200) {
+            result.status = "🔴 Pausar Temporariamente e Investigar";
+            result.reason = `Gasto de R$ ${metrics.metaSpend.toFixed(2)} sem nenhum assinante pagante gerado. Otimize os criativos ou público antes de retomar.`;
+            result.cardColor = "#fef2f2"; result.borderColor = "#fecaca"; result.textColor = "#991b1b";
+            result.confidenceStr = 'ALTA (Desperdício Confirmado)';
+        } else {
+            result.status = "⚪ Dados insuficientes";
+            result.reason = `Gasto inicial de R$ ${metrics.metaSpend.toFixed(2)} ainda não gerou assinantes. Continue rodando a campanha para acumular volume.`;
+            result.confidenceStr = 'BAIXA';
+        }
+        return result;
+    }
+
+    if (ltv > 0 && cac > 0) {
+        // Determina a string combinada de confiabilidade para exibição
+        result.confidenceStr = ltvConfidence === cacConfidence ? ltvConfidence : `LTV: ${ltvConfidence} / CAC: ${cacConfidence}`;
+
+        if (ratio >= 3) {
+            // LTV/CAC >= 3 (Excelente Economia)
+            if (isMediumConfidence && metrics.payback <= 6) {
+                // Warning signals em caso de MRR caindo
+                if (metrics.netNewMrr < 0) {
+                    result.status = "🟡 Manter e Otimizar Retenção";
+                    result.reason = `Eficiência excelente (${ratio.toFixed(1)}x), mas o Net New MRR está negativo. Fortaleça a retenção antes de injetar mais clientes.`;
+                    result.cardColor = "#fdf8e6"; result.borderColor = "#fef08a"; result.textColor = "#854d0e";
+                } else {
+                    result.status = "🟢 Aumentar Orçamento de Ads em 20%";
+                    result.reason = `A eficiência de aquisição está altamente sustentável (${ratio.toFixed(1)}x) e a amostra fornece confiança. É seguro escalar.`;
+                    result.cardColor = "#f0fdf4"; result.borderColor = "#bbf7d0"; result.textColor = "#166534";
+                }
+            } else {
+                result.status = "🟡 Manter Orçamento e Coletar Mais Dados";
+                result.reason = `A eficiência estimada é excelente (${ratio.toFixed(1)}x), mas a amostra de clientes ainda é muito pequena ou com longo payback para justificar uma escala segura.`;
+                result.cardColor = "#fdf8e6"; result.borderColor = "#fef08a"; result.textColor = "#854d0e";
+            }
+        } else if (ratio >= 1.5) {
+            // LTV/CAC 1.5 a 3 (Aceitável)
+            result.status = "🟠 Manter e Otimizar Aquisição";
+            result.reason = `A eficiência é de ${ratio.toFixed(1)}x. A campanha se paga, mas ainda pode melhorar os criativos para buscar uma proporção > 3x.`;
+            result.cardColor = "#fff7ed"; // orange-50
+            result.borderColor = "#ffedd5"; // orange-100
+            result.textColor = "#9a3412"; // orange-800
+        } else {
+            // LTV/CAC < 1.5 (Ruim)
+            result.status = "🔴 Reduzir/Pausar Orçamento";
+            result.reason = `A eficiência está crítica (${ratio.toFixed(1)}x). A receita gerada mal cobre o custo de aquisição. Interrompa a escala imediatamente.`;
+            result.cardColor = "#fef2f2"; result.borderColor = "#fecaca"; result.textColor = "#991b1b";
+        }
+    }
+
+    return result;
 };
