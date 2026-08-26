@@ -110,7 +110,7 @@ exports.getEfficiencyDashboard = async (req, res) => {
             WHERE "deletedAt" IS NULL
             GROUP BY month
         `;
-        const [conversions] = await db.sequelize.query(conversionsQuery, { type: db.sequelize.QueryTypes.SELECT });
+        const conversions = await db.sequelize.query(conversionsQuery, { type: db.sequelize.QueryTypes.SELECT });
         
         // 4. Montar Histórico Mensal (Últimos 6 meses)
         const weeklyHistory = [];
