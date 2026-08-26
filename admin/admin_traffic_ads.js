@@ -4,7 +4,7 @@ window.initializePage = function() {
     loadB2CLeads();
 };
 
-const API_BASE = window.API_BASE_URL || '';
+var API_BASE = window.API_BASE_URL || '';
 
 function formatBRL(value) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
