@@ -1,17 +1,10 @@
-document.addEventListener('DOMContentLoaded', () => {
+window.initializePage = function() {
     loadEfficiencyData();
     loadB2BLeads();
     loadB2CLeads();
-});
+};
 
-function getHeaders() {
-    return {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-    };
-}
-
-const API_BASE = window.API_BASE_URL || 'https://www.yelopsi.com.br';
+const API_BASE = window.API_BASE_URL || '';
 
 function formatBRL(value) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
@@ -23,9 +16,9 @@ function formatDate(dateString) {
 }
 
 // 1. EFICIÊNCIA GLOBAL E GRÁFICOS
-async function loadEfficiencyData() {
+window.loadEfficiencyData = async function() {
     try {
-        const res = await fetch(`${API_BASE}/api/admin/efficiency`, { headers: getHeaders() });
+        const res = await fetch(`${API_BASE}/api/admin/efficiency`);
         const data = await res.json();
 
         if (data.weeklyHistory && data.weeklyHistory.length > 0) {
@@ -96,7 +89,7 @@ function renderCharts(history) {
 }
 
 // 2. LEADS B2B (PSICÓLOGOS)
-async function loadB2BLeads() {
+window.loadB2BLeads = async function() {
     const status = document.getElementById('filter-b2b-status').value;
     const channel = document.getElementById('filter-b2b-channel').value;
     
@@ -107,7 +100,7 @@ async function loadB2BLeads() {
         if (status !== 'all') url += `&status=${status}`;
         if (channel !== 'all') url += `&status=${channel}`; // O backend usa status para filtros de UTM tb
 
-        const res = await fetch(url, { headers: getHeaders() });
+        const res = await fetch(url);
         const json = await res.json();
         
         let html = '';
@@ -137,7 +130,7 @@ async function loadB2BLeads() {
 }
 
 // 3. LEADS B2C (PACIENTES)
-async function loadB2CLeads() {
+window.loadB2CLeads = async function() {
     const channel = document.getElementById('filter-b2c-channel').value;
     
     document.querySelector('#table-b2c tbody').innerHTML = '<tr><td colspan="3">Carregando pacientes...</td></tr>';
@@ -146,7 +139,7 @@ async function loadB2CLeads() {
         let url = `${API_BASE}/api/admin/patients?limit=50`;
         if (channel !== 'all') url += `&status=${channel}`;
 
-        const res = await fetch(url, { headers: getHeaders() });
+        const res = await fetch(url);
         const json = await res.json();
         
         let html = '';
